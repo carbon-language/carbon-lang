@@ -141,6 +141,21 @@ class SHLL_QB_FMT<bits<5> op> : DSPInst {
   let Inst{5-0}   = 0b010011;
 }
 
+// LX sub-class format.
+class LX_FMT<bits<5> op> : DSPInst {
+  bits<5> rd;
+  bits<5> base;
+  bits<5> index;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = base;
+  let Inst{20-16} = index;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = op;
+  let Inst{5-0} = 0b001010;
+}
+
 // ADDUH.QB sub-class format.
 class ADDUH_QB_FMT<bits<5> op> : DSPInst {
   bits<5> rd;
@@ -154,6 +169,21 @@ class ADDUH_QB_FMT<bits<5> op> : DSPInst {
   let Inst{15-11} = rd;
   let Inst{10-6} = op;
   let Inst{5-0} = 0b011000;
+}
+
+// APPEND sub-class format.
+class APPEND_FMT<bits<5> op> : DSPInst {
+  bits<5> rt;
+  bits<5> rs;
+  bits<5> sa;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = sa;
+  let Inst{10-6} = op;
+  let Inst{5-0} = 0b110001;
 }
 
 // DPA.W.PH sub-class format.
@@ -243,6 +273,18 @@ class RDDSP_FMT<bits<5> op> : DSPInst {
   let Inst{5-0} = 0b111000;
 }
 
+class WRDSP_FMT<bits<5> op> : DSPInst {
+  bits<5> rs;
+  bits<10> mask;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-11} = mask;
+  let Inst{10-6} = op;
+  let Inst{5-0} = 0b111000;
+}
+
 class BPOSGE32_FMT<bits<5> op> : DSPInst {
   bits<16> offset;
 
@@ -251,4 +293,17 @@ class BPOSGE32_FMT<bits<5> op> : DSPInst {
   let Inst{25-21} = 0;
   let Inst{20-16} = op;
   let Inst{15-0} = offset;
+}
+
+// INSV sub-class format.
+class INSV_FMT<bits<6> op> : DSPInst {
+  bits<5> rt;
+  bits<5> rs;
+
+  let Opcode = SPECIAL3_OPCODE.V;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-6} = 0;
+  let Inst{5-0} = op;
 }

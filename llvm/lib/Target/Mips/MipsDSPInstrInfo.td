@@ -179,7 +179,11 @@ class REPLV_QB_ENC : ABSQ_S_PH_R2_FMT<0b00011>;
 class REPLV_PH_ENC : ABSQ_S_PH_R2_FMT<0b01011>;
 class PICK_QB_ENC : CMP_EQ_QB_R3_FMT<0b00011>;
 class PICK_PH_ENC : CMP_EQ_QB_R3_FMT<0b01011>;
+class LWX_ENC : LX_FMT<0b00000>;
+class LHX_ENC : LX_FMT<0b00100>;
+class LBUX_ENC : LX_FMT<0b00110>;
 class BPOSGE32_ENC : BPOSGE32_FMT<0b11100>;
+class INSV_ENC : INSV_FMT<0b001100>;
 
 class EXTP_ENC : EXTR_W_TY1_FMT<0b00010>;
 class EXTPV_ENC : EXTR_W_TY1_FMT<0b00011>;
@@ -198,6 +202,7 @@ class SHILOV_ENC : SHILO_R2_FMT<0b11011>;
 class MTHLIP_ENC : SHILO_R2_FMT<0b11111>;
 
 class RDDSP_ENC : RDDSP_FMT<0b10010>;
+class WRDSP_ENC : WRDSP_FMT<0b10011>;
 class ADDU_PH_ENC : ADDU_QB_FMT<0b01000>;
 class ADDU_S_PH_ENC : ADDU_QB_FMT<0b01100>;
 class SUBU_PH_ENC : ADDU_QB_FMT<0b01001>;
@@ -241,6 +246,9 @@ class SHRA_R_QB_ENC : SHLL_QB_FMT<0b00101>;
 class SHRAV_R_QB_ENC : SHLL_QB_FMT<0b00111>;
 class SHRL_PH_ENC : SHLL_QB_FMT<0b11001>;
 class SHRLV_PH_ENC : SHLL_QB_FMT<0b11011>;
+class APPEND_ENC : APPEND_FMT<0b00000>;
+class BALIGN_ENC : APPEND_FMT<0b10000>;
+class PREPEND_ENC : APPEND_FMT<0b00001>;
 
 // Instruction desc.
 class ADDU_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -341,6 +349,18 @@ class SHLL_QB_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<Register> Defs = [DSPCtrl];
 }
 
+class LX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                   InstrItinClass itin> {
+  dag OutOperandList = (outs CPURegs:$rd);
+  dag InOperandList = (ins CPURegs:$base, CPURegs:$index);
+  string AsmString = !strconcat(instr_asm, "\t$rd, ${index}(${base})");
+  list<dag> Pattern = [(set CPURegs:$rd,
+                       (OpNode CPURegs:$base, CPURegs:$index))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+  bit mayLoad = 1;
+}
+
 class ADDUH_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                          InstrItinClass itin, RegisterClass RCD,
                          RegisterClass RCS = RCD,  RegisterClass RCT = RCD> {
@@ -350,6 +370,18 @@ class ADDUH_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<dag> Pattern = [(set RCD:$rd, (OpNode RCS:$rs, RCT:$rt))];
   InstrItinClass Itinerary = itin;
   list<Register> Defs = [DSPCtrl];
+}
+
+class APPEND_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                       SDPatternOperator ImmOp, InstrItinClass itin> {
+  dag OutOperandList = (outs CPURegs:$rt);
+  dag InOperandList = (ins CPURegs:$rs, shamt:$sa, CPURegs:$src);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $sa");
+  list<dag> Pattern =  [(set CPURegs:$rt,
+                        (OpNode CPURegs:$src, CPURegs:$rs, ImmOp:$sa))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+  string Constraints = "$src = $rt";
 }
 
 class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -416,6 +448,16 @@ class RDDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<Register> Uses = [DSPCtrl];
 }
 
+class WRDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                      InstrItinClass itin> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins CPURegs:$rs, uimm16:$mask);
+  string AsmString = !strconcat(instr_asm, "\t$rs, $mask");
+  list<dag> Pattern = [(OpNode CPURegs:$rs, immZExt10:$mask)];
+  InstrItinClass Itinerary = itin;
+  list<Register> Defs = [DSPCtrl];
+}
+
 class DPA_W_PH_PSEUDO_BASE<SDPatternOperator OpNode, InstrItinClass itin,
                            Instruction realinst> :
   PseudoDSP<(outs), (ins CPURegs:$rs, CPURegs:$rt),
@@ -462,6 +504,17 @@ class BPOSGE32_DESC_BASE<string instr_asm, InstrItinClass itin> {
   bit isBranch = 1;
   bit isTerminator = 1;
   bit hasDelaySlot = 1;
+}
+
+class INSV_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                     InstrItinClass itin> {
+  dag OutOperandList = (outs CPURegs:$rt);
+  dag InOperandList = (ins CPURegs:$src, CPURegs:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $rs");
+  list<dag> Pattern = [(set CPURegs:$rt, (OpNode CPURegs:$src, CPURegs:$rs))];
+  InstrItinClass Itinerary = itin;
+  list<Register> Uses = [DSPCtrl];
+  string Constraints = "$src = $rt";
 }
 
 //===----------------------------------------------------------------------===//
@@ -777,6 +830,12 @@ class PICK_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"pick.ph", int_mips_pick_ph,
                                             NoItinerary, DSPRegs, DSPRegs>,
                      ClearDefs, UseDSPCtrl;
 
+class LWX_DESC : LX_DESC_BASE<"lwx", int_mips_lwx, NoItinerary>, ClearDefs;
+
+class LHX_DESC : LX_DESC_BASE<"lhx", int_mips_lhx, NoItinerary>, ClearDefs;
+
+class LBUX_DESC : LX_DESC_BASE<"lbux", int_mips_lbux, NoItinerary>, ClearDefs;
+
 class BPOSGE32_DESC : BPOSGE32_DESC_BASE<"bposge32", NoItinerary>;
 
 // Extr
@@ -819,6 +878,10 @@ class SHILOV_DESC : SHILO_R2_DESC_BASE<"shilov">;
 class MTHLIP_DESC : MTHLIP_DESC_BASE<"mthlip">;
 
 class RDDSP_DESC : RDDSP_DESC_BASE<"rddsp", int_mips_rddsp, NoItinerary>;
+
+class WRDSP_DESC : WRDSP_DESC_BASE<"wrdsp", int_mips_wrdsp, NoItinerary>;
+
+class INSV_DESC : INSV_DESC_BASE<"insv", int_mips_insv, NoItinerary>;
 
 //===----------------------------------------------------------------------===//
 // MIPS DSP Rev 2
@@ -969,6 +1032,16 @@ class SHRL_PH_DESC : SHLL_QB_R2_DESC_BASE<"shrl.ph", int_mips_shrl_ph, immZExt4,
 class SHRLV_PH_DESC : SHLL_QB_R3_DESC_BASE<"shrlv.ph", int_mips_shrl_ph,
                                            NoItinerary, DSPRegs>, ClearDefs;
 
+// Misc
+class APPEND_DESC : APPEND_DESC_BASE<"append", int_mips_append, immZExt5,
+                                     NoItinerary>, ClearDefs;
+
+class BALIGN_DESC : APPEND_DESC_BASE<"balign", int_mips_balign, immZExt2,
+                                     NoItinerary>, ClearDefs;
+
+class PREPEND_DESC : APPEND_DESC_BASE<"prepend", int_mips_prepend, immZExt5,
+                                      NoItinerary>, ClearDefs;
+
 // Pseudos.
 def BPOSGE32_PSEUDO : BPOSGE32_PSEUDO_DESC_BASE<int_mips_bposge32, NoItinerary>;
 
@@ -1061,7 +1134,11 @@ def REPLV_QB : REPLV_QB_ENC, REPLV_QB_DESC;
 def REPLV_PH : REPLV_PH_ENC, REPLV_PH_DESC;
 def PICK_QB : PICK_QB_ENC, PICK_QB_DESC;
 def PICK_PH : PICK_PH_ENC, PICK_PH_DESC;
+def LWX : LWX_ENC, LWX_DESC;
+def LHX : LHX_ENC, LHX_DESC;
+def LBUX : LBUX_ENC, LBUX_DESC;
 def BPOSGE32 : BPOSGE32_ENC, BPOSGE32_DESC;
+def INSV : INSV_ENC, INSV_DESC;
 def EXTP : EXTP_ENC, EXTP_DESC;
 def EXTPV : EXTPV_ENC, EXTPV_DESC;
 def EXTPDP : EXTPDP_ENC, EXTPDP_DESC;
@@ -1078,6 +1155,7 @@ def SHILO : SHILO_ENC, SHILO_DESC;
 def SHILOV : SHILOV_ENC, SHILOV_DESC;
 def MTHLIP : MTHLIP_ENC, MTHLIP_DESC;
 def RDDSP : RDDSP_ENC, RDDSP_DESC;
+def WRDSP : WRDSP_ENC, WRDSP_DESC;
 
 // MIPS DSP Rev 2
 let Predicates = [HasDSPR2] in {
@@ -1125,6 +1203,9 @@ def SHRA_R_QB : SHRA_R_QB_ENC, SHRA_R_QB_DESC;
 def SHRAV_R_QB : SHRAV_R_QB_ENC, SHRAV_R_QB_DESC;
 def SHRL_PH : SHRL_PH_ENC, SHRL_PH_DESC;
 def SHRLV_PH : SHRLV_PH_ENC, SHRLV_PH_DESC;
+def APPEND : APPEND_ENC, APPEND_DESC;
+def BALIGN : BALIGN_ENC, BALIGN_DESC;
+def PREPEND : PREPEND_ENC, PREPEND_DESC;
 
 }
 

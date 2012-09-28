@@ -1198,3 +1198,44 @@ entry:
 }
 
 declare i32 @llvm.mips.bitrev(i32) nounwind readnone
+
+define i32 @test__builtin_mips_lbux1(i32 %i0, i8* %a0, i32 %a1) nounwind readonly {
+entry:
+; CHECK: lbux
+
+  %0 = tail call i32 @llvm.mips.lbux(i8* %a0, i32 %a1)
+  ret i32 %0
+}
+
+declare i32 @llvm.mips.lbux(i8*, i32) nounwind readonly
+
+define i32 @test__builtin_mips_lhx1(i32 %i0, i8* %a0, i32 %a1) nounwind readonly {
+entry:
+; CHECK: lhx
+
+  %0 = tail call i32 @llvm.mips.lhx(i8* %a0, i32 %a1)
+  ret i32 %0
+}
+
+declare i32 @llvm.mips.lhx(i8*, i32) nounwind readonly
+
+define i32 @test__builtin_mips_lwx1(i32 %i0, i8* %a0, i32 %a1) nounwind readonly {
+entry:
+; CHECK: lwx
+
+  %0 = tail call i32 @llvm.mips.lwx(i8* %a0, i32 %a1)
+  ret i32 %0
+}
+
+declare i32 @llvm.mips.lwx(i8*, i32) nounwind readonly
+
+define i32 @test__builtin_mips_wrdsp1(i32 %i0, i32 %a0) nounwind {
+entry:
+; CHECK: wrdsp
+
+  tail call void @llvm.mips.wrdsp(i32 %a0, i32 31)
+  %0 = tail call i32 @llvm.mips.rddsp(i32 31)
+  ret i32 %0
+}
+
+declare void @llvm.mips.wrdsp(i32, i32) nounwind
