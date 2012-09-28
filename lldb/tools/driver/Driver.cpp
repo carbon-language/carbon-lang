@@ -859,7 +859,7 @@ Driver::HandleBreakpointEvent (const SBEvent &event)
             SBBreakpoint breakpoint = SBBreakpoint::GetBreakpointFromEvent(event);
             int message_len = ::snprintf (message, sizeof(message), "%d location%s added to breakpoint %d\n", 
                                           num_new_locations,
-                                          num_new_locations == 1 ? " " : "s ",
+                                          num_new_locations == 1 ? "" : "s",
                                           breakpoint.GetID());
             m_io_channel_ap->OutWrite(message, message_len, ASYNC);
         }
