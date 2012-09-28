@@ -16,3 +16,9 @@ void tf() {
 
 // Allowed by GNU extension
 int a4[] = {}; // expected-error {{zero size arrays}}
+
+struct Incomplete; // expected-note {{forward declaration of 'Incomplete'}}
+struct A {
+  Incomplete i; // expected-error {{field has incomplete type 'Incomplete'}}
+};
+A a[] = { 0 }; // PR13971: don't hang.
