@@ -1505,17 +1505,17 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   SVal baseExprVal = state->getSVal(baseExpr, Pred->getLocationContext());
-  if (isa<nonloc::LazyCompoundVal>(baseExprVal) ||
-      isa<nonloc::CompoundVal>(baseExprVal) ||
-      // FIXME: This can originate by conjuring a symbol for an unknown
-      // temporary struct object, see test/Analysis/fields.c:
-      // (p = getit()).x
-      isa<nonloc::SymbolVal>(baseExprVal)) {
-    Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, UnknownVal()));
-    return;
+
+  // If we're accessing a field of an rvalue, we need to treat it like a
+  // temporary object.
+  if (isa<NonLoc>(baseExprVal)) {
+    const MemRegion *R  =
+      svalBuilder.getRegionManager().getCXXTempObjectRegion(baseExpr, LCtx);
+    SVal L = loc::MemRegionVal(R);
+    state = state->bindLoc(L, baseExprVal);
+    baseExprVal = L;
   }
 
-  // For all other cases, compute an lvalue.    
   SVal L = state->getLValue(field, baseExprVal);
   if (M->isGLValue()) {
     ExplodedNodeSet Tmp;
