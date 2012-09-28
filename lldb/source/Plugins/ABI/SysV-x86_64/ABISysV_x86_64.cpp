@@ -1169,6 +1169,16 @@ ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
                     return name[3] == '\0';
                 break;
 
+            default:
+                break;
+            }
+        }
+
+        // Accept shorter-variant versions, rbx/ebx, rip/ eip, etc.
+        if (name[0] == 'r' || name[0] == 'e')
+        {
+            switch (name[1])
+            {
             case 'b': // rbp, rbx
                 if (name[2] == 'p' || name[2] == 'x')
                     return name[3] == '\0';
@@ -1184,8 +1194,6 @@ ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
                     return name[3] == '\0';
                 break;
 
-            default:
-                break;
             }
         }
     }
