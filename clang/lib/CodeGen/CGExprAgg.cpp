@@ -1362,11 +1362,17 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
       }
     }
   }
+
+  // Determine the metadata to describe the position of any padding in this
+  // memcpy, as well as the TBAA tags for the members of the struct, in case
+  // the optimizer wishes to expand it in to scalar memory operations.
+  llvm::MDNode *TBAAStructTag = CGM.getTBAAStructInfo(Ty);
   
   Builder.CreateMemCpy(DestPtr, SrcPtr,
                        llvm::ConstantInt::get(IntPtrTy, 
                                               TypeInfo.first.getQuantity()),
-                       alignment.getQuantity(), isVolatile);
+                       alignment.getQuantity(), isVolatile,
+                       /*TBAATag=*/0, TBAAStructTag);
 }
 
 void CodeGenFunction::MaybeEmitStdInitializerListCleanup(llvm::Value *loc,
