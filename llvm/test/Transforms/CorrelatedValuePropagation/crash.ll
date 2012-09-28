@@ -35,3 +35,28 @@ srf.exit.i:
 func_29.exit:
   ret void
 }
+
+; PR13972
+define void @test3() nounwind {
+for.body:
+  br label %return
+
+for.cond.i:                                       ; preds = %if.else.i, %for.body.i
+  %e.2.i = phi i32 [ %e.2.i, %if.else.i ], [ -8, %for.body.i ]
+  br i1 undef, label %return, label %for.body.i
+
+for.body.i:                                       ; preds = %for.cond.i
+  switch i32 %e.2.i, label %for.cond3.i [
+    i32 -3, label %if.else.i
+    i32 0, label %for.cond.i
+  ]
+
+for.cond3.i:                                      ; preds = %for.cond3.i, %for.body.i
+  br label %for.cond3.i
+
+if.else.i:                                        ; preds = %for.body.i
+  br label %for.cond.i
+
+return:                                           ; preds = %for.cond.i, %for.body
+  ret void
+}

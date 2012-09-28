@@ -235,6 +235,11 @@ bool CorrelatedValuePropagation::processSwitch(SwitchInst *SI) {
       // This case never fires - remove it.
       CI.getCaseSuccessor()->removePredecessor(BB);
       SI->removeCase(CI); // Does not invalidate the iterator.
+
+      // The condition can be modified by removePredecessor's PHI simplification
+      // logic.
+      Cond = SI->getCondition();
+
       ++NumDeadCases;
       Changed = true;
     } else if (State == LazyValueInfo::True) {
