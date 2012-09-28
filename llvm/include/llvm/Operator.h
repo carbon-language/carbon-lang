@@ -35,7 +35,9 @@ private:
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void *operator new(size_t s) LLVM_DELETED_FUNCTION;
   Operator() LLVM_DELETED_FUNCTION;
-  ~Operator() LLVM_DELETED_FUNCTION;
+  // NOTE: cannot use LLVM_DELETED_FUNCTION because gcc errors when deleting
+  // an override of a non-deleted function.
+  ~Operator();
 
 public:
   /// getOpcode - Return the opcode for this Instruction or ConstantExpr.
