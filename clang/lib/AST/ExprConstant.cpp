@@ -4296,6 +4296,15 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return Error(E);
   }
 
+  case Builtin::BI__builtin_bswap32:
+  case Builtin::BI__builtin_bswap64: {
+    APSInt Val;
+    if (!EvaluateInteger(E->getArg(0), Val, Info))
+      return false;
+
+    return Success(Val.byteSwap(), E);
+  }
+
   case Builtin::BI__builtin_classify_type:
     return Success(EvaluateBuiltinClassifyType(E), E);
 
