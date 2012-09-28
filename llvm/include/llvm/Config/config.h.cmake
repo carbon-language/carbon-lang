@@ -17,6 +17,9 @@
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #undef DEFAULT_SYSROOT
 
+/* Define if you want backtraces on crash */
+#cmakedefine ENABLE_BACKTRACES
+
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC
 
