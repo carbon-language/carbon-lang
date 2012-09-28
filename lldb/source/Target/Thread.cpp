@@ -210,7 +210,7 @@ Thread::GetStopReason()
 {
     lldb::StopInfoSP stop_info_sp (GetStopInfo ());
     if (stop_info_sp)
-        stop_info_sp->GetStopReason();
+        return stop_info_sp->GetStopReason();
     return eStopReasonNone;
 }
 
