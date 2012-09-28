@@ -430,6 +430,9 @@ class TemplateDiff {
       /// arguments or the type arguments that are templates.
       TemplateDecl *FromTD, *ToTD;
 
+      /// FromQual, ToQual - Qualifiers for template types.
+      Qualifiers FromQual, ToQual;
+
       /// FromDefault, ToDefault - Whether the argument is a default argument.
       bool FromDefault, ToDefault;
 
@@ -478,6 +481,12 @@ class TemplateDiff {
     void SetNode(Expr *FromExpr, Expr *ToExpr) {
       FlatTree[CurrentNode].FromExpr = FromExpr;
       FlatTree[CurrentNode].ToExpr = ToExpr;
+    }
+
+    /// SetNode - Set FromQual and ToQual of the current node.
+    void SetNode(Qualifiers FromQual, Qualifiers ToQual) {
+      FlatTree[CurrentNode].FromQual = FromQual;
+      FlatTree[CurrentNode].ToQual = ToQual;
     }
 
     /// SetSame - Sets the same flag of the current node.
@@ -573,6 +582,12 @@ class TemplateDiff {
     void GetNode(TemplateDecl *&FromTD, TemplateDecl *&ToTD) {
       FromTD = FlatTree[ReadNode].FromTD;
       ToTD = FlatTree[ReadNode].ToTD;
+    }
+
+    /// GetNode - Gets the FromQual and ToQual.
+    void GetNode(Qualifiers &FromQual, Qualifiers &ToQual) {
+      FromQual = FlatTree[ReadNode].FromQual;
+      ToQual = FlatTree[ReadNode].ToQual;
     }
 
     /// NodeIsSame - Returns true the arguments are the same.
@@ -778,6 +793,8 @@ class TemplateDiff {
           if (Context.hasSameType(FromType, ToType)) {
             Tree.SetSame(true);
           } else {
+            Qualifiers FromQual = FromType.getQualifiers(),
+                       ToQual = ToType.getQualifiers();
             const TemplateSpecializationType *FromArgTST =
                 GetTemplateSpecializationType(Context, FromType);
             const TemplateSpecializationType *ToArgTST =
@@ -785,8 +802,11 @@ class TemplateDiff {
 
             if (FromArgTST && ToArgTST &&
                 hasSameTemplate(FromArgTST, ToArgTST)) {
+              FromQual -= QualType(FromArgTST, 0).getQualifiers();
+              ToQual -= QualType(ToArgTST, 0).getQualifiers();
               Tree.SetNode(FromArgTST->getTemplateName().getAsTemplateDecl(),
                            ToArgTST->getTemplateName().getAsTemplateDecl());
+              Tree.SetNode(FromQual, ToQual);
               DiffTemplate(FromArgTST, ToArgTST);
             }
           }
@@ -1027,6 +1047,10 @@ class TemplateDiff {
 
     assert(Tree.HasChildren() && "Template difference not found in diff tree.");
 
+    Qualifiers FromQual, ToQual;
+    Tree.GetNode(FromQual, ToQual);
+    PrintQualifiers(FromQual, ToQual);
+
     OS << FromTD->getNameAsString() << '<'; 
     Tree.MoveToChild();
     unsigned NumElideArgs = 0;
@@ -1085,6 +1109,17 @@ class TemplateDiff {
 
     if (Same) {
       OS << FromType.getAsString();
+      return;
+    }
+
+    if (!FromType.isNull() && !ToType.isNull() &&
+        FromType.getLocalUnqualifiedType() ==
+        ToType.getLocalUnqualifiedType()) {
+      Qualifiers FromQual = FromType.getLocalQualifiers(),
+                 ToQual = ToType.getLocalQualifiers(),
+                 CommonQual;
+      PrintQualifiers(FromQual, ToQual);
+      FromType.getLocalUnqualifiedType().print(OS, Policy);
       return;
     }
 
@@ -1191,6 +1226,68 @@ class TemplateDiff {
       OS << "[" << NumElideArgs << " * ...]";
   }
 
+  // Prints and highlights differences in Qualifiers.
+  void PrintQualifiers(Qualifiers FromQual, Qualifiers ToQual) {
+    // Both types have no qualifiers
+    if (FromQual.empty() && ToQual.empty())
+      return;
+
+    // Both types have same qualifiers
+    if (FromQual == ToQual) {
+      PrintQualifier(FromQual, /*ApplyBold*/false);
+      return;
+    }
+
+    // Find common qualifiers and strip them from FromQual and ToQual.
+    Qualifiers CommonQual = Qualifiers::removeCommonQualifiers(FromQual,
+                                                               ToQual);
+
+    // The qualifiers are printed before the template name.
+    // Inline printing:
+    // The common qualifiers are printed.  Then, qualifiers only in this type
+    // are printed and highlighted.  Finally, qualifiers only in the other
+    // type are printed and highlighted inside parentheses after "missing".
+    // Tree printing:
+    // Qualifiers are printed next to each other, inside brackets, and
+    // separated by "!=".  The printing order is:
+    // common qualifiers, highlighted from qualifiers, "!=",
+    // common qualifiers, highlighted to qualifiers
+    if (PrintTree) {
+      OS << "[";
+      if (CommonQual.empty() && FromQual.empty()) {
+        Bold();
+        OS << "(no qualifiers) ";
+        Unbold();
+      } else {
+        PrintQualifier(CommonQual, /*ApplyBold*/false);
+        PrintQualifier(FromQual, /*ApplyBold*/true);
+      }
+      OS << "!= ";
+      if (CommonQual.empty() && ToQual.empty()) {
+        Bold();
+        OS << "(no qualifiers)";
+        Unbold();
+      } else {
+        PrintQualifier(CommonQual, /*ApplyBold*/false,
+                       /*appendSpaceIfNonEmpty*/!ToQual.empty());
+        PrintQualifier(ToQual, /*ApplyBold*/true,
+                       /*appendSpaceIfNonEmpty*/false);
+      }
+      OS << "] ";
+    } else {
+      PrintQualifier(CommonQual, /*ApplyBold*/false);
+      PrintQualifier(FromQual, /*ApplyBold*/true);
+    }
+  }
+
+  void PrintQualifier(Qualifiers Q, bool ApplyBold,
+                      bool AppendSpaceIfNonEmpty = true) {
+    if (Q.empty()) return;
+    if (ApplyBold) Bold();
+    Q.print(OS, Policy, AppendSpaceIfNonEmpty);
+    if (ApplyBold) Unbold();
+  }
+
 public:
 
   TemplateDiff(ASTContext &Context, QualType FromType, QualType ToType,
@@ -1210,6 +1307,9 @@ public:
 
   /// DiffTemplate - Start the template type diffing.
   void DiffTemplate() {
+    Qualifiers FromQual = FromType.getQualifiers(),
+               ToQual = ToType.getQualifiers();
+
     const TemplateSpecializationType *FromOrigTST =
         GetTemplateSpecializationType(Context, FromType);
     const TemplateSpecializationType *ToOrigTST =
@@ -1224,7 +1324,10 @@ public:
       return;
     }
 
+    FromQual -= QualType(FromOrigTST, 0).getQualifiers();
+    ToQual -= QualType(ToOrigTST, 0).getQualifiers();
     Tree.SetNode(FromType, ToType);
+    Tree.SetNode(FromQual, ToQual);
 
     // Same base template, but different arguments.
     Tree.SetNode(FromOrigTST->getTemplateName().getAsTemplateDecl(),

@@ -445,6 +445,191 @@ int k14 = f14(a14<char>());
 // CHECK-NOELIDE-TREE:   a14<
 // CHECK-NOELIDE-TREE:     [char != int]>
 
+void set15(vector<vector<int>>) {}
+void test15() {
+  set15(vector<vector<int>>());
+}
+// CHECK-ELIDE-NOTREE-NOT: set15
+// CHECK-NOELIDE-NOTREE-NOT: set15
+// CHECK-ELIDE-TREE-NOT: set15
+// CHECK-NOELIDE-TREE-NOT: set15
+// no error here
+
+void set16(vector<const vector<int>>) {}
+void test16() {
+  set16(vector<const vector<const int>>());
+}
+// CHECK-ELIDE-NOTREE: no matching function for call to 'set16'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<const int>>' to 'vector<const vector<int>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'set16'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<const int>>' to 'vector<const vector<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'set16'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   vector<
+// CHECK-ELIDE-TREE:     const vector<
+// CHECK-ELIDE-TREE:       [const != (no qualifiers)] int>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'set16'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   vector<
+// CHECK-NOELIDE-TREE:     const vector<
+// CHECK-NOELIDE-TREE:       [const != (no qualifiers)] int>>
+
+void set17(vector<vector<int>>) {}
+void test17() {
+  set17(vector<const vector<int>>());
+}
+// CHECK-ELIDE-NOTREE: no matching function for call to 'set17'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<[...]>>' to 'vector<vector<[...]>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'set17'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<int>>' to 'vector<vector<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'set17'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   vector<
+// CHECK-ELIDE-TREE:     [const != (no qualifiers)] vector<
+// CHECK-ELIDE-TREE:       [...]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'set17'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   vector<
+// CHECK-NOELIDE-TREE:     [const != (no qualifiers)] vector<
+// CHECK-NOELIDE-TREE:       int>>
+
+void set18(vector<const vector<int>>) {}
+void test18() {
+  set18(vector<vector<int>>());
+}
+// CHECK-ELIDE-NOTREE: no matching function for call to 'set18'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<vector<[...]>>' to 'vector<const vector<[...]>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'set18'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<vector<int>>' to 'vector<const vector<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'set18'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   vector<
+// CHECK-ELIDE-TREE:     [(no qualifiers) != const] vector<
+// CHECK-ELIDE-TREE:       [...]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'set18'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   vector<
+// CHECK-NOELIDE-TREE:     [(no qualifiers) != const] vector<
+// CHECK-NOELIDE-TREE:       int>>
+
+void set19(vector<volatile vector<int>>) {}
+void test19() {
+  set19(vector<const vector<int>>());
+}
+// CHECK-ELIDE-NOTREE: no matching function for call to 'set19'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<[...]>>' to 'vector<volatile vector<[...]>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'set19'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<int>>' to 'vector<volatile vector<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'set19'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   vector<
+// CHECK-ELIDE-TREE:     [const != volatile] vector<
+// CHECK-ELIDE-TREE:       [...]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'set19'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   vector<
+// CHECK-NOELIDE-TREE:     [const != volatile] vector<
+// CHECK-NOELIDE-TREE:       int>>
+
+void set20(vector<const volatile vector<int>>) {}
+void test20() {
+  set20(vector<const vector<int>>());
+}
+// CHECK-ELIDE-NOTREE: no matching function for call to 'set20'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<[...]>>' to 'vector<const volatile vector<[...]>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'set20'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<const vector<int>>' to 'vector<const volatile vector<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'set20'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   vector<
+// CHECK-ELIDE-TREE:     [const != const volatile] vector<
+// CHECK-ELIDE-TREE:       [...]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'set20'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   vector<
+// CHECK-NOELIDE-TREE:     [const != const volatile] vector<
+// CHECK-NOELIDE-TREE:       int>>
+
+
+// Checks that volatile does not show up in diagnostics.
+template<typename T> struct S21 {};
+template<typename T> using U21 = volatile S21<T>;
+int f21(vector<const U21<int>>);
+int k21 = f21(vector<U21<int>>());
+// CHECK-ELIDE-NOTREE: no matching function for call to 'f21'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<U21<[...]>>' to 'vector<const U21<[...]>>' for 1st argument 
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'f21'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<U21<int>>' to 'vector<const U21<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'f21'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:    vector<
+// CHECK-ELIDE-TREE:      [(no qualifiers) != const] U21<
+// CHECK-ELIDE-TREE:        [...]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'f21'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:    vector<
+// CHECK-NOELIDE-TREE:      [(no qualifiers) != const] U21<
+// CHECK-NOELIDE-TREE:        int>>
+
+// Checks that volatile does not show up in diagnostics.
+template<typename T> struct S22 {};
+template<typename T> using U22 = volatile S22<T>;
+int f22(vector<volatile const U22<int>>);
+int k22 = f22(vector<volatile U22<int>>());
+// CHECK-ELIDE-NOTREE: no matching function for call to 'f22'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<U22<[...]>>' to 'vector<const U22<[...]>>' for 1st argument 
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'f22'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'vector<U22<int>>' to 'vector<const U22<int>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'f22'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:    vector<
+// CHECK-ELIDE-TREE:      [(no qualifiers) != const] U22<
+// CHECK-ELIDE-TREE:        [...]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'f22'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:    vector<
+// CHECK-NOELIDE-TREE:      [(no qualifiers) != const] U22<
+// CHECK-NOELIDE-TREE:        int>>
+
+// Testing qualifiers and typedefs.
+template <class T> struct D23{};
+template <class T> using C23 = D23<T>;
+typedef const C23<int> B23;
+template<class ...T> using A23 = B23;
+
+void foo23(D23<A23<>> b) {}
+void test23() {
+  foo23(D23<D23<char>>());
+  foo23(C23<char>());
+}
+
+// CHECK-ELIDE-NOTREE: no matching function for call to 'foo23'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'D23<D23<char>>' to 'D23<const D23<int>>' for 1st argument
+// CHECK-ELIDE-NOTREE: no matching function for call to 'foo23'
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'D23<char>' to 'D23<A23<>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'foo23'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'D23<D23<char>>' to 'D23<const D23<int>>' for 1st argument
+// CHECK-NOELIDE-NOTREE: no matching function for call to 'foo23'
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'D23<char>' to 'D23<A23<>>' for 1st argument
+// CHECK-ELIDE-TREE: no matching function for call to 'foo23'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   D23<
+// CHECK-ELIDE-TREE:     [(no qualifiers) != const] D23<
+// CHECK-ELIDE-TREE:       [char != int]>>
+// CHECK-ELIDE-TREE: no matching function for call to 'foo23'
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-ELIDE-TREE:   D23<
+// CHECK-ELIDE-TREE:     [char != A23<>]>
+// CHECK-NOELIDE-TREE: no matching function for call to 'foo23'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   D23<
+// CHECK-NOELIDE-TREE:     [(no qualifiers) != const] D23<
+// CHECK-NOELIDE-TREE:       [char != int]>>
+// CHECK-NOELIDE-TREE: no matching function for call to 'foo23'
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion from argument type to parameter type for 1st argument
+// CHECK-NOELIDE-TREE:   D23<
+// CHECK-NOELIDE-TREE:     [char != A23<>]>
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
