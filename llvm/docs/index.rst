@@ -15,43 +15,43 @@ research projects.
 Similarly, documentation is broken down into several high-level groupings
 targeted at different audiences:
 
-  * **Design & Overview**
+* **Design & Overview**
 
-    Several introductory papers and presentations are available at
-    :ref:`design_and_overview`.
+ Several introductory papers and presentations are available at
+ :ref:`design_and_overview`.
 
-  * **Publications**
+* **Publications**
 
-    The list of `publications <http://llvm.org/pubs>`_ based on LLVM.
+ The list of `publications <http://llvm.org/pubs>`_ based on LLVM.
 
-  * **User Guides**
+* **User Guides**
 
-    Those new to the LLVM system should first vist the :ref:`userguides`.
+ Those new to the LLVM system should first vist the :ref:`userguides`.
 
-    NOTE: If you are a user who is only interested in using LLVM-based
-    compilers, you should look into `Clang <http://clang.llvm.org>`_ or
-    `DragonEgg <http://dragonegg.llvm.org>`_ instead. The documentation here is
-    intended for users who have a need to work with the intermediate LLVM
-    representation.
+ NOTE: If you are a user who is only interested in using LLVM-based
+ compilers, you should look into `Clang <http://clang.llvm.org>`_ or
+ `DragonEgg <http://dragonegg.llvm.org>`_ instead. The documentation here is
+ intended for users who have a need to work with the intermediate LLVM
+ representation.
 
-  * **API Clients**
+* **API Clients**
 
-    Developers of applications which use LLVM as a library should visit the
-    :ref:`programming`.
+ Developers of applications which use LLVM as a library should visit the
+ :ref:`programming`.
 
-  * **Subsystems**
+* **Subsystems**
 
-    API clients and LLVM developers may be interested in the
-    :ref:`subsystems` documentation.
+ API clients and LLVM developers may be interested in the
+ :ref:`subsystems` documentation.
 
-  * **Development Process**
+* **Development Process**
 
-    Additional documentation on the LLVM project can be found at
-    :ref:`development_process`.
+ Additional documentation on the LLVM project can be found at
+ :ref:`development_process`.
 
-  * **Mailing Lists**
+* **Mailing Lists**
 
-    For more information, consider consulting the LLVM :ref:`mailing_lists`.
+ For more information, consider consulting the LLVM :ref:`mailing_lists`.
 
 .. toctree::
    :maxdepth: 2
