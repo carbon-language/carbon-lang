@@ -104,7 +104,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBTypeSynthetic.h"\
 " ${SRC_ROOT}/include/lldb/API/SBValue.h"\
 " ${SRC_ROOT}/include/lldb/API/SBValueList.h"\
-" ${SRC_ROOT}/include/lldb/API/SBWatchpoint.h"\
+" ${SRC_ROOT}/include/lldb/API/SBWatchpoint.h"
 
 INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBBlock.i"\

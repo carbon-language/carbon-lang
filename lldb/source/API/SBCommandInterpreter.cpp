@@ -8,15 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/lldb-types.h"
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Target.h"
 
 #include "lldb/API/SBBroadcaster.h"
-#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBProcess.h"
@@ -28,6 +27,34 @@
 using namespace lldb;
 using namespace lldb_private;
 
+class CommandPluginInterfaceImplementation : public CommandObjectParsed
+{
+public:
+    CommandPluginInterfaceImplementation (CommandInterpreter &interpreter,
+                                          const char *name,
+                                          lldb::SBCommandPluginInterface* backend,
+                                          const char *help = NULL,
+                                          const char *syntax = NULL,
+                                          uint32_t flags = 0) :
+    CommandObjectParsed (interpreter, name, help, syntax, flags),
+    m_backend(backend) {}
+    
+    virtual bool
+    IsRemovable() { return true; }
+    
+protected:
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        SBCommandReturnObject sb_return(&result);
+        SBCommandInterpreter sb_interpreter(&m_interpreter);
+        SBDebugger debugger_sb(m_interpreter.GetDebugger().shared_from_this());
+        bool ret = m_backend->DoExecute (debugger_sb,(char**)command.GetArgumentVector(), sb_return);
+        sb_return.Release();
+        return ret;
+    }
+    lldb::SBCommandPluginInterface* m_backend;
+};
 
 SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter *interpreter) :
     m_opaque_ptr (interpreter)
@@ -218,6 +245,22 @@ SBCommandInterpreter::GetProcess ()
     return sb_process;
 }
 
+SBDebugger
+SBCommandInterpreter::GetDebugger ()
+{
+    SBDebugger sb_debugger;
+    if (m_opaque_ptr)
+        sb_debugger.reset(m_opaque_ptr->GetDebugger().shared_from_this());
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::GetDebugger () => SBDebugger(%p)",
+                     m_opaque_ptr, sb_debugger.get());
+    
+    
+    return sb_debugger;
+}
+
 CommandInterpreter *
 SBCommandInterpreter::get ()
 {
@@ -366,5 +409,84 @@ SBCommandInterpreter::InitializeSWIG ()
         ScriptInterpreter::InitializeInterpreter (init_lldb);
 #endif
     }
+}
+
+lldb::SBCommand
+SBCommandInterpreter::AddMultiwordCommand (const char* name, const char* help)
+{
+    CommandObjectMultiword *new_command = new CommandObjectMultiword(*m_opaque_ptr,name,help);
+    new_command->SetRemovable (true);
+    lldb::CommandObjectSP new_command_sp(new_command);
+    if (new_command_sp && m_opaque_ptr->AddUserCommand(name, new_command_sp, true))
+        return lldb::SBCommand(new_command_sp);
+    return lldb::SBCommand();
+}
+
+lldb::SBCommand
+SBCommandInterpreter::AddCommand (const char* name, lldb::SBCommandPluginInterface* impl, const char* help)
+{
+    lldb::CommandObjectSP new_command_sp;
+    new_command_sp.reset(new CommandPluginInterfaceImplementation(*m_opaque_ptr,name,impl,help));
+
+    if (new_command_sp && m_opaque_ptr->AddUserCommand(name, new_command_sp, true))
+        return lldb::SBCommand(new_command_sp);
+    return lldb::SBCommand();
+}
+
+SBCommand::SBCommand ()
+{}
+
+SBCommand::SBCommand (lldb::CommandObjectSP cmd_sp) : m_opaque_sp (cmd_sp)
+{}
+
+bool
+SBCommand::IsValid ()
+{
+    return (bool)m_opaque_sp;
+}
+
+const char*
+SBCommand::GetName ()
+{
+    if (IsValid ())
+        return m_opaque_sp->GetCommandName ();
+    return NULL;
+}
+
+const char*
+SBCommand::GetHelp ()
+{
+    if (IsValid ())
+        return m_opaque_sp->GetHelp ();
+    return NULL;
+}
+
+lldb::SBCommand
+SBCommand::AddMultiwordCommand (const char* name, const char* help)
+{
+    if (!IsValid ())
+        return lldb::SBCommand();
+    if (m_opaque_sp->IsMultiwordObject() == false)
+        return lldb::SBCommand();
+    CommandObjectMultiword *new_command = new CommandObjectMultiword(m_opaque_sp->GetCommandInterpreter(),name,help);
+    new_command->SetRemovable (true);
+    lldb::CommandObjectSP new_command_sp(new_command);
+    if (new_command_sp && m_opaque_sp->LoadSubCommand(name,new_command_sp))
+        return lldb::SBCommand(new_command_sp);
+    return lldb::SBCommand();
+}
+
+lldb::SBCommand
+SBCommand::AddCommand (const char* name, lldb::SBCommandPluginInterface *impl, const char* help)
+{
+    if (!IsValid ())
+        return lldb::SBCommand();
+    if (m_opaque_sp->IsMultiwordObject() == false)
+        return lldb::SBCommand();
+    lldb::CommandObjectSP new_command_sp;
+    new_command_sp.reset(new CommandPluginInterfaceImplementation(m_opaque_sp->GetCommandInterpreter(),name,impl,help));
+    if (new_command_sp && m_opaque_sp->LoadSubCommand(name,new_command_sp))
+        return lldb::SBCommand(new_command_sp);
+    return lldb::SBCommand();
 }
 

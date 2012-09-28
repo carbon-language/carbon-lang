@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/API/SBDebugger.h"
+
 #include "lldb/Core/Debugger.h"
 
 #include <map>
@@ -28,6 +30,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Host/DynamicLibrary.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionValueSInt64.h"
@@ -334,6 +337,109 @@ Debugger::SettingsTerminate ()
     Target::SettingsTerminate ();
 }
 
+bool
+Debugger::LoadPlugin (const FileSpec& spec)
+{
+    lldb::DynamicLibrarySP dynlib_sp(new lldb_private::DynamicLibrary(spec));
+    lldb::DebuggerSP debugger_sp(shared_from_this());
+    lldb::SBDebugger debugger_sb(debugger_sp);
+    // TODO: mangle this differently for your system - on OSX, the first underscore needs to be removed and the second one stays
+    LLDBCommandPluginInit init_func = dynlib_sp->GetSymbol<LLDBCommandPluginInit>("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
+    if (!init_func)
+        return false;
+    if (init_func(debugger_sb))
+    {
+        m_loaded_plugins.push_back(dynlib_sp);
+        return true;
+    }
+    return false;
+}
+
+static FileSpec::EnumerateDirectoryResult
+LoadPluginCallback
+(
+ void *baton,
+ FileSpec::FileType file_type,
+ const FileSpec &file_spec
+ )
+{
+    Error error;
+    
+    static ConstString g_dylibext("dylib");
+    
+    if (!baton)
+        return FileSpec::eEnumerateDirectoryResultQuit;
+    
+    Debugger *debugger = (Debugger*)baton;
+    
+    // If we have a regular file, a symbolic link or unknown file type, try
+    // and process the file. We must handle unknown as sometimes the directory
+    // enumeration might be enumerating a file system that doesn't have correct
+    // file type information.
+    if (file_type == FileSpec::eFileTypeRegular         ||
+        file_type == FileSpec::eFileTypeSymbolicLink    ||
+        file_type == FileSpec::eFileTypeUnknown          )
+    {
+        FileSpec plugin_file_spec (file_spec);
+        plugin_file_spec.ResolvePath ();
+        
+        if (plugin_file_spec.GetFileNameExtension() != g_dylibext)
+            return FileSpec::eEnumerateDirectoryResultNext;
+
+        debugger->LoadPlugin (plugin_file_spec);
+        
+        return FileSpec::eEnumerateDirectoryResultNext;
+    }
+    
+    else if (file_type == FileSpec::eFileTypeUnknown     ||
+        file_type == FileSpec::eFileTypeDirectory   ||
+        file_type == FileSpec::eFileTypeSymbolicLink )
+    {
+        // Try and recurse into anything that a directory or symbolic link.
+        // We must also do this for unknown as sometimes the directory enumeration
+        // might be enurating a file system that doesn't have correct file type
+        // information.
+        return FileSpec::eEnumerateDirectoryResultEnter;
+    }
+    
+    return FileSpec::eEnumerateDirectoryResultNext;
+}
+
+void
+Debugger::InstanceInitialize ()
+{
+    FileSpec dir_spec;
+    const bool find_directories = true;
+    const bool find_files = true;
+    const bool find_other = true;
+    char dir_path[PATH_MAX];
+    if (Host::GetLLDBPath (ePathTypeLLDBSystemPlugins, dir_spec))
+    {
+        if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
+        {
+            FileSpec::EnumerateDirectory (dir_path,
+                                          find_directories,
+                                          find_files,
+                                          find_other,
+                                          LoadPluginCallback,
+                                          this);
+        }
+    }
+    
+    if (Host::GetLLDBPath (ePathTypeLLDBUserPlugins, dir_spec))
+    {
+        if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
+        {
+            FileSpec::EnumerateDirectory (dir_path,
+                                          find_directories,
+                                          find_files,
+                                          find_other,
+                                          LoadPluginCallback,
+                                          this);
+        }
+    }
+}
+
 DebuggerSP
 Debugger::CreateInstance (lldb::LogOutputCallback log_callback, void *baton)
 {
@@ -343,6 +449,7 @@ Debugger::CreateInstance (lldb::LogOutputCallback log_callback, void *baton)
         Mutex::Locker locker (GetDebuggerListMutex ());
         GetDebuggerList().push_back(debugger_sp);
     }
+    debugger_sp->InstanceInitialize ();
     return debugger_sp;
 }
 

@@ -66,7 +66,6 @@ public:
 
 protected:
 
-    friend class SBArguments;
     friend class SBData;
     friend class SBDebugger;
     friend class SBCommunication;

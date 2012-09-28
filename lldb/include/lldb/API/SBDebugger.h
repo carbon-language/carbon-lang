@@ -295,11 +295,12 @@ public:
 
 private:
 
+    friend class SBCommandInterpreter;
     friend class SBInputReader;
+    friend class SBListener;
     friend class SBProcess;
     friend class SBSourceManager;
     friend class SBTarget;
-    friend class SBListener;
     
     lldb::SBTarget
     FindTargetWithLLDBProcess (const lldb::ProcessSP &processSP);

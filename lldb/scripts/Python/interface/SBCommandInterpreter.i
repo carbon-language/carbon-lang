@@ -101,6 +101,9 @@ public:
 
     lldb::SBProcess
     GetProcess ();
+    
+    lldb::SBDebugger
+    GetDebugger ();
 
     void
     SourceInitFileInHomeDirectory (lldb::SBCommandReturnObject &result);

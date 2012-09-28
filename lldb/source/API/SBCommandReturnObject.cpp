@@ -190,6 +190,13 @@ SBCommandReturnObject::AppendMessage (const char *message)
         m_opaque_ap->AppendMessage (message);
 }
 
+void
+SBCommandReturnObject::AppendWarning (const char *message)
+{
+    if (m_opaque_ap.get())
+        m_opaque_ap->AppendWarning (message);
+}
+
 CommandReturnObject *
 SBCommandReturnObject::operator ->() const
 {

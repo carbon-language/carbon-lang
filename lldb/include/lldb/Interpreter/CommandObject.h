@@ -144,6 +144,17 @@ public:
     virtual bool
     IsMultiwordObject () { return false; }
 
+    // this is needed in order to allow the SBCommand class to
+    // transparently try and load subcommands - it will fail on
+    // anything but a multiword command, but it avoids us doing
+    // type checkings and casts
+    virtual bool
+    LoadSubCommand (const char *cmd_name,
+                    const lldb::CommandObjectSP& command_obj)
+    {
+        return false;
+    }
+    
     virtual bool
     WantsRawCommandString() = 0;
 

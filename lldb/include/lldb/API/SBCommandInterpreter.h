@@ -11,6 +11,7 @@
 #define LLDB_SBCommandInterpreter_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBDebugger.h"
 
 namespace lldb {
 
@@ -65,6 +66,15 @@ public:
 
     lldb::SBProcess
     GetProcess ();
+    
+    lldb::SBDebugger
+    GetDebugger ();
+    
+    lldb::SBCommand
+    AddMultiwordCommand (const char* name, const char* help);
+    
+    lldb::SBCommand
+    AddCommand (const char* name, lldb::SBCommandPluginInterface *impl, const char* help);
 
     void
     SourceInitFileInHomeDirectory (lldb::SBCommandReturnObject &result);
@@ -99,6 +109,9 @@ public:
     SetCommandOverrideCallback (const char *command_name,
                                 lldb::CommandOverrideCallback callback,
                                 void *baton);
+    
+    SBCommandInterpreter (lldb_private::CommandInterpreter *interpreter_ptr = NULL);   // Access using SBDebugger::GetCommandInterpreter();
+    
 protected:
 
     lldb_private::CommandInterpreter &
@@ -112,14 +125,58 @@ protected:
 private:
     friend class SBDebugger;
 
-    SBCommandInterpreter (lldb_private::CommandInterpreter *interpreter_ptr = NULL);   // Access using SBDebugger::GetCommandInterpreter();
-
     static void
     InitializeSWIG ();
 
     lldb_private::CommandInterpreter *m_opaque_ptr;
 };
 
+class SBCommandPluginInterface
+{
+public:
+    virtual bool
+    DoExecute (lldb::SBDebugger debugger,
+               char** command,
+               lldb::SBCommandReturnObject &result)
+    {
+        return false;
+    }
+    
+    virtual
+    ~SBCommandPluginInterface ()
+    {}
+};
+    
+class SBCommand
+{
+public:
+    
+    SBCommand ();
+    
+    bool
+    IsValid ();
+    
+    const char*
+    GetName ();
+    
+    const char*
+    GetHelp ();
+    
+    lldb::SBCommand
+    AddMultiwordCommand (const char* name, const char* help = NULL);
+    
+    lldb::SBCommand
+    AddCommand (const char* name, lldb::SBCommandPluginInterface* impl, const char* help = NULL);
+    
+private:
+    
+    friend class SBDebugger;
+    friend class SBCommandInterpreter;
+    
+    SBCommand (lldb::CommandObjectSP cmd_sp);
+    
+    lldb::CommandObjectSP m_opaque_sp;
+};
 
 } // namespace lldb
 

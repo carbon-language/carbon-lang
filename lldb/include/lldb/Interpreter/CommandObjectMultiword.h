@@ -42,7 +42,7 @@ public:
     virtual bool
     IsMultiwordObject () { return true; }
 
-    bool
+    virtual bool
     LoadSubCommand (const char *cmd_name, 
                     const lldb::CommandObjectSP& command_obj);
 
@@ -72,9 +72,20 @@ public:
     virtual bool
     Execute (const char *args_string,
              CommandReturnObject &result);
+    
+    virtual bool
+    IsRemovable() { return m_can_be_removed; }
+    
+    void
+    SetRemovable (bool removable)
+    {
+        m_can_be_removed = removable;
+    }
+    
 protected:
 
     CommandObject::CommandMap m_subcommand_dict;
+    bool m_can_be_removed;
 };
 
 } // namespace lldb_private

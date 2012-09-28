@@ -515,6 +515,7 @@
 		941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568914E355F2003A195C /* SBTypeSynthetic.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9456F2211616644B00656F91 /* DynamicLibrary.cpp */; };
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9461569A14E358A6003A195C /* SBTypeFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568A14E35621003A195C /* SBTypeFilter.cpp */; };
 		9461569B14E358A6003A195C /* SBTypeFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568B14E35621003A195C /* SBTypeFormat.cpp */; };
@@ -527,6 +528,8 @@
 		9475C18914E5EA08001BFC6D /* SBTypeCategory.h in Headers */ = {isa = PBXBuildFile; fileRef = 9475C18514E5E9C5001BFC6D /* SBTypeCategory.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9475C18E14E5F834001BFC6D /* SBTypeNameSpecifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9475C18D14E5F834001BFC6D /* SBTypeNameSpecifier.cpp */; };
 		9475C18F14E5F858001BFC6D /* SBTypeNameSpecifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 9475C18C14E5F826001BFC6D /* SBTypeNameSpecifier.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 947A1D621616476A0017C8D1 /* CommandObjectPlugin.cpp */; };
+		947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 947A1D631616476A0017C8D1 /* CommandObjectPlugin.h */; };
 		949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
 		94CDEB9D15F0258500DD2A7A /* CXXFormatterFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CDEB9C15F0258400DD2A7A /* CXXFormatterFunctions.cpp */; };
@@ -1504,6 +1507,8 @@
 		9415F61713B2C0EF00A52B36 /* FormatManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = FormatManager.cpp; path = source/Core/FormatManager.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
 		9443B121140C18C10013457C /* SBData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBData.cpp; path = source/API/SBData.cpp; sourceTree = "<group>"; };
+		9456F2211616644B00656F91 /* DynamicLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLibrary.cpp; sourceTree = "<group>"; };
+		9456F2231616645A00656F91 /* DynamicLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DynamicLibrary.h; path = include/lldb/Host/DynamicLibrary.h; sourceTree = "<group>"; };
 		94611EAF13CCA363003A22AF /* RefCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RefCounter.h; path = include/lldb/Utility/RefCounter.h; sourceTree = "<group>"; };
 		94611EB113CCA4A4003A22AF /* RefCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RefCounter.cpp; path = source/Utility/RefCounter.cpp; sourceTree = "<group>"; };
 		9461568614E355F2003A195C /* SBTypeFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeFilter.h; path = include/lldb/API/SBTypeFilter.h; sourceTree = "<group>"; };
@@ -1530,6 +1535,8 @@
 		9475C18B14E5F818001BFC6D /* SBTypeNameSpecifier.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBTypeNameSpecifier.i; sourceTree = "<group>"; };
 		9475C18C14E5F826001BFC6D /* SBTypeNameSpecifier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeNameSpecifier.h; path = include/lldb/API/SBTypeNameSpecifier.h; sourceTree = "<group>"; };
 		9475C18D14E5F834001BFC6D /* SBTypeNameSpecifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBTypeNameSpecifier.cpp; path = source/API/SBTypeNameSpecifier.cpp; sourceTree = "<group>"; };
+		947A1D621616476A0017C8D1 /* CommandObjectPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectPlugin.cpp; path = source/Commands/CommandObjectPlugin.cpp; sourceTree = "<group>"; };
+		947A1D631616476A0017C8D1 /* CommandObjectPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectPlugin.h; path = source/Commands/CommandObjectPlugin.h; sourceTree = "<group>"; };
 		949ADF001406F62E004833E1 /* ValueObjectConstResultImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResultImpl.h; path = include/lldb/Core/ValueObjectConstResultImpl.h; sourceTree = "<group>"; };
 		949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResultImpl.cpp; path = source/Core/ValueObjectConstResultImpl.cpp; sourceTree = "<group>"; };
 		94A8287514031D05006C37A8 /* FormatNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatNavigator.h; path = include/lldb/Core/FormatNavigator.h; sourceTree = "<group>"; };
@@ -2741,6 +2748,8 @@
 				26BC7E3610F1B84700F91463 /* CommandObjectMemory.cpp */,
 				26879CE51333F5750012C1F8 /* CommandObjectPlatform.h */,
 				26879CE71333F58B0012C1F8 /* CommandObjectPlatform.cpp */,
+				947A1D631616476A0017C8D1 /* CommandObjectPlugin.h */,
+				947A1D621616476A0017C8D1 /* CommandObjectPlugin.cpp */,
 				26BC7D1F10F1B76300F91463 /* CommandObjectProcess.h */,
 				26BC7E3810F1B84700F91463 /* CommandObjectProcess.cpp */,
 				26BC7D2010F1B76300F91463 /* CommandObjectQuit.h */,
@@ -2822,6 +2831,7 @@
 				26BC7EE510F1B88100F91463 /* MacOSX */,
 				26BC7DD210F1B7D500F91463 /* Condition.h */,
 				266F5CBB12FC846200DFCE33 /* Config.h */,
+				9456F2231616645A00656F91 /* DynamicLibrary.h */,
 				26BC7DD310F1B7D500F91463 /* Endian.h */,
 				260C6EA013011578005E16B0 /* File.h */,
 				26FA4315130103F400E71120 /* FileSpec.h */,
@@ -3274,6 +3284,7 @@
 		69A01E1A1236C5D400C660B5 /* common */ = {
 			isa = PBXGroup;
 			children = (
+				9456F2211616644B00656F91 /* DynamicLibrary.cpp */,
 				260C6EA213011581005E16B0 /* File.cpp */,
 				26FA43171301048600E71120 /* FileSpec.cpp */,
 				69A01E1B1236C5D400C660B5 /* Condition.cpp */,
@@ -3399,6 +3410,7 @@
 				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
 				2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */,
 				260D9B2715EC369500960137 /* ModuleSpec.h in Headers */,
+				947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3758,6 +3770,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */,
 				49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */,
 				2689FFDA13353D9D00698AC0 /* lldb.cpp in Sources */,
 				2689FFDB13353DA300698AC0 /* lldb-log.cpp in Sources */,
@@ -4119,6 +4132,7 @@
 				94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */,
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
 				94CDEB9D15F0258500DD2A7A /* CXXFormatterFunctions.cpp in Sources */,
+				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

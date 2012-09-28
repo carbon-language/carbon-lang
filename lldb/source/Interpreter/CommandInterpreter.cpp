@@ -26,6 +26,7 @@
 #include "../Commands/CommandObjectLog.h"
 #include "../Commands/CommandObjectMemory.h"
 #include "../Commands/CommandObjectPlatform.h"
+#include "../Commands/CommandObjectPlugin.h"
 #include "../Commands/CommandObjectProcess.h"
 #include "../Commands/CommandObjectQuit.h"
 #include "../Commands/CommandObjectRegister.h"
@@ -356,6 +357,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (*this));
     m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (*this));
     m_command_dict["platform"]  = CommandObjectSP (new CommandObjectPlatform (*this));
+    m_command_dict["plugin"]    = CommandObjectSP (new CommandObjectPlugin (*this));
     m_command_dict["process"]   = CommandObjectSP (new CommandObjectMultiwordProcess (*this));
     m_command_dict["quit"]      = CommandObjectSP (new CommandObjectQuit (*this));
     m_command_dict["register"]  = CommandObjectSP (new CommandObjectRegister (*this));
@@ -627,6 +629,8 @@ CommandInterpreter::AddCommand (const char *name, const lldb::CommandObjectSP &c
             if (m_command_dict.find (name_sstr) != m_command_dict.end())
                 return false;
         }
+        if (m_command_dict[name_sstr]->IsRemovable() == false)
+            return false;
         m_command_dict[name_sstr] = cmd_sp;
         return true;
     }
@@ -645,11 +649,21 @@ CommandInterpreter::AddUserCommand (std::string name,
         
         // do not allow replacement of internal commands
         if (CommandExists(name_cstr))
-            return false;
+        {
+            if (can_replace == false)
+                return false;
+            if (m_command_dict[name]->IsRemovable() == false)
+                return false;
+        }
         
-        if (can_replace == false && UserCommandExists(name_cstr))
-            return false;
-
+        if (UserCommandExists(name_cstr))
+        {
+            if (can_replace == false)
+                return false;
+            if (m_user_dict[name]->IsRemovable() == false)
+                return false;
+        }
+        
         m_user_dict[name] = cmd_sp;
         return true;
     }

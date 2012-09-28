@@ -18,6 +18,9 @@
 #include <stack>
 
 #include "lldb/lldb-public.h"
+
+#include "lldb/API/SBDefines.h"
+
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/FormatManager.h"
@@ -319,6 +322,11 @@ public:
     {
         return m_instance_name;
     }
+    
+    typedef bool (*LLDBCommandPluginInit) (lldb::SBDebugger& debugger);
+    
+    bool
+    LoadPlugin (const FileSpec& spec);
 
 protected:
 
@@ -357,7 +365,12 @@ protected:
     LogStreamMap m_log_streams;
     lldb::StreamSP m_log_callback_stream_sp;
     ConstString m_instance_name;
-
+    typedef std::vector<lldb::DynamicLibrarySP> LoadedPluginsList;
+    LoadedPluginsList m_loaded_plugins;
+    
+    void
+    InstanceInitialize ();
+    
 private:
 
     // Use Debugger::CreateInstance() to get a shared pointer to a new

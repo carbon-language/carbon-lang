@@ -94,6 +94,7 @@ class   DataExtractor;
 class   Debugger;
 class   Declaration;
 class   Disassembler;
+class   DynamicLibrary;
 class   DynamicLoader;
 class   EmulateInstruction;
 class   Error;
@@ -289,6 +290,7 @@ namespace lldb {
     typedef STD_SHARED_PTR(lldb_private::Debugger) DebuggerSP;
     typedef STD_WEAK_PTR(  lldb_private::Debugger) DebuggerWP;
     typedef STD_SHARED_PTR(lldb_private::Disassembler) DisassemblerSP;
+    typedef STD_SHARED_PTR(lldb_private::DynamicLibrary) DynamicLibrarySP;
     typedef STD_SHARED_PTR(lldb_private::DynamicLoader) DynamicLoaderSP;
     typedef STD_SHARED_PTR(lldb_private::Event) EventSP;
     typedef STD_SHARED_PTR(lldb_private::ExecutionContextRef) ExecutionContextRefSP;

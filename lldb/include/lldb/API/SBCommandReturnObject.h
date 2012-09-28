@@ -74,6 +74,9 @@ public:
     void
     AppendMessage (const char *message);
 
+    void
+    AppendWarning (const char *message);
+    
     bool
     GetDescription (lldb::SBStream &description);
     
