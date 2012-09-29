@@ -111,6 +111,9 @@ static const char *GetArmArchForMArch(StringRef Value) {
     .Cases("armv7a", "armv7-a", "armv7")
     .Cases("armv7r", "armv7-r", "armv7")
     .Cases("armv7m", "armv7-m", "armv7")
+    .Cases("armv7f", "armv7-f", "armv7f")
+    .Cases("armv7k", "armv7-k", "armv7k")
+    .Cases("armv7s", "armv7-s", "armv7s")
     .Default(0);
 }
 
@@ -124,6 +127,8 @@ static const char *GetArmArchForMCpu(StringRef Value) {
            "arm1176jzf-s", "cortex-m0", "armv6")
     .Cases("cortex-a8", "cortex-r4", "cortex-m3", "cortex-a9", "cortex-a15",
            "armv7")
+    .Case("cortex-a9-mp", "armv7f")
+    .Case("swift", "armv7s")
     .Default(0);
 }
 
@@ -525,7 +530,8 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     // If no OSX or iOS target has been specified and we're compiling for armv7,
     // go ahead as assume we're targeting iOS.
     if (OSXTarget.empty() && iOSTarget.empty() &&
-        getDarwinArchName(Args) == "armv7")
+        (getDarwinArchName(Args) == "armv7" ||
+         getDarwinArchName(Args) == "armv7s"))
         iOSTarget = iOSVersionMin;
 
     // Handle conflicting deployment targets
@@ -879,6 +885,12 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       DAL->AddJoinedArg(0, MArch, "armv6k");
     else if (Name == "armv7")
       DAL->AddJoinedArg(0, MArch, "armv7a");
+    else if (Name == "armv7f")
+      DAL->AddJoinedArg(0, MArch, "armv7f");
+    else if (Name == "armv7k")
+      DAL->AddJoinedArg(0, MArch, "armv7k");
+    else if (Name == "armv7s")
+      DAL->AddJoinedArg(0, MArch, "armv7s");
 
     else
       llvm_unreachable("invalid Darwin arch");

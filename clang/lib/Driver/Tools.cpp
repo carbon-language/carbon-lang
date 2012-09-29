@@ -446,6 +446,8 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Case("cortex-m3", "v7m")
     .Case("cortex-m4", "v7m")
     .Case("cortex-m0", "v6m")
+    .Case("cortex-a9-mp", "v7f")
+    .Case("swift", "v7s")
     .Default("");
 }
 
@@ -500,6 +502,8 @@ static std::string getARMTargetCPU(const ArgList &Args,
     .Cases("armv6z", "armv6zk", "arm1176jzf-s")
     .Case("armv6t2", "arm1156t2-s")
     .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
+    .Cases("armv7f", "armv7-f", "cortex-a9-mp")
+    .Cases("armv7s", "armv7-s", "swift")
     .Cases("armv7r", "armv7-r", "cortex-r4")
     .Cases("armv7m", "armv7-m", "cortex-m3")
     .Case("ep9312", "ep9312")
