@@ -392,7 +392,8 @@ void PreprocessingRecord::InclusionDirective(
     CharSourceRange FilenameRange,
     const FileEntry *File,
     StringRef SearchPath,
-    StringRef RelativePath) {
+    StringRef RelativePath,
+    const Module *Imported) {
   InclusionDirective::InclusionKind Kind = InclusionDirective::Include;
   
   switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {

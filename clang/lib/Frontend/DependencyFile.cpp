@@ -62,7 +62,8 @@ public:
                                   CharSourceRange FilenameRange,
                                   const FileEntry *File,
                                   StringRef SearchPath,
-                                  StringRef RelativePath);
+                                  StringRef RelativePath,
+                                  const Module *Imported);
 
   virtual void EndOfMainFile() {
     OutputDependencyFile();
@@ -135,7 +136,8 @@ void DependencyFileCallback::InclusionDirective(SourceLocation HashLoc,
                                                 CharSourceRange FilenameRange,
                                                 const FileEntry *File,
                                                 StringRef SearchPath,
-                                                StringRef RelativePath) {
+                                                StringRef RelativePath,
+                                                const Module *Imported) {
   if (!File) {
     if (AddMissingHeaderDeps)
       AddFilename(FileName);

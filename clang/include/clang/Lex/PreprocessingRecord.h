@@ -600,7 +600,8 @@ namespace clang {
                                     CharSourceRange FilenameRange,
                                     const FileEntry *File,
                                     StringRef SearchPath,
-                                    StringRef RelativePath);
+                                    StringRef RelativePath,
+                                    const Module *Imported);
     virtual void If(SourceLocation Loc, SourceRange ConditionRange);
     virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
                       SourceLocation IfLoc);

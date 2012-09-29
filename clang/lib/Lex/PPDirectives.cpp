@@ -1314,6 +1314,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
   }
 
+  CharSourceRange FilenameRange
+    = CharSourceRange::getCharRange(FilenameTok.getLocation(), CharEnd);
   StringRef OriginalFilename = Filename;
   bool isAngled =
     GetIncludeFilenameSpelling(FilenameTok.getLocation(), Filename);
@@ -1384,10 +1386,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       }
     }
     
-    // Notify the callback object that we've seen an inclusion directive.
-    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
-              CharSourceRange::getCharRange(FilenameTok.getLocation(), CharEnd),
-                                  File, SearchPath, RelativePath);
+    if (!SuggestedModule) {
+      // Notify the callback object that we've seen an inclusion directive.
+      Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
+                                    FilenameRange, File,
+                                    SearchPath, RelativePath,
+                                    /*ImportedModule=*/0);
+    }
   }
   
   if (File == 0) {
@@ -1485,8 +1490,24 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
            "the imported module is different than the suggested one");
     
     // If this header isn't part of the module we're building, we're done.
-    if (!BuildingImportedModule && Imported)
+    if (!BuildingImportedModule && Imported) {
+      if (Callbacks) {
+        Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
+                                      FilenameRange, File,
+                                      SearchPath, RelativePath, Imported);
+      }
       return;
+    }
+  }
+
+  if (Callbacks && SuggestedModule) {
+    // We didn't notify the callback object that we've seen an inclusion
+    // directive before. Now that we are parsing the include normally and not
+    // turning it to a module import, notify the callback object.
+    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
+                                  FilenameRange, File,
+                                  SearchPath, RelativePath,
+                                  /*ImportedModule=*/0);
   }
   
   // The #included file will be considered to be a system header if either it is

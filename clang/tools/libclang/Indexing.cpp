@@ -71,7 +71,8 @@ public:
                                   CharSourceRange FilenameRange,
                                   const FileEntry *File,
                                   StringRef SearchPath,
-                                  StringRef RelativePath) {
+                                  StringRef RelativePath,
+                                  const Module *Imported) {
     bool isImport = (IncludeTok.is(tok::identifier) &&
             IncludeTok.getIdentifierInfo()->getPPKeywordID() == tok::pp_import);
     IndexCtx.ppIncludedFile(HashLoc, FileName, File, isImport, IsAngled);

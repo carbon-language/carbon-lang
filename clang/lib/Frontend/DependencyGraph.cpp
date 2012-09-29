@@ -54,7 +54,8 @@ public:
                                   CharSourceRange FilenameRange,
                                   const FileEntry *File,
                                   StringRef SearchPath,
-                                  StringRef RelativePath);
+                                  StringRef RelativePath,
+                                  const Module *Imported);
 
   virtual void EndOfMainFile() {
     OutputGraphFile();
@@ -75,7 +76,8 @@ void DependencyGraphCallback::InclusionDirective(SourceLocation HashLoc,
                                                  CharSourceRange FilenameRange,
                                                  const FileEntry *File,
                                                  StringRef SearchPath,
-                                                 StringRef RelativePath) {
+                                                 StringRef RelativePath,
+                                                 const Module *Imported) {
   if (!File)
     return;
   
