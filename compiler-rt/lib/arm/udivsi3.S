@@ -33,6 +33,15 @@
 // Ok, APCS and AAPCS agree on 32 bit args, so it's safe to use the same routine.
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)
+#if __ARM_ARCH_7S__
+	tst	r1,r1
+	beq	LOCAL_LABEL(divzero)
+	udiv	r0, r0, r1
+	bx  	lr
+	LOCAL_LABEL(divzero):
+	mov	r0,#0
+	bx	lr
+#else
 //  We use a simple digit by digit algorithm; before we get into the actual 
 //  divide loop, we must calculate the left-shift amount necessary to align
 //  the MSB of the divisor with that of the dividend (If this shift is
@@ -78,3 +87,4 @@ LOCAL_LABEL(return):
 //  Move the quotient to r0 and return.
     mov     r0,     q
     CLEAR_FRAME_AND_RETURN
+#endif

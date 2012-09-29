@@ -111,3 +111,6 @@ FUNCTIONS.armv7 := $(FUNCTIONS) \
                 nedf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4
+
+FUNCTIONS.armv7s := $(FUNCTIONS.armv7)
+

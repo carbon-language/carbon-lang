@@ -76,6 +76,11 @@ UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
 Configs += asan_osx_dynamic
 UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
 
+UniversalArchs.ios += $(call CheckArches,armv7f armv7k armv7s,ios)
+UniversalArchs.cc_kext += $(call CheckArches,armv7f armv7k armv7s,cc_kext)
+UniversalArchs.cc_kext_ios5 += $(call CheckArches,armv7f armv7k armv7s,cc_kext_ios5)
+UniversalArchs.profile_ios += $(call CheckArches,armv7f armv7k armv7s,profile_ios)
+
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
 #
@@ -123,17 +128,29 @@ CFLAGS.asan_osx_dynamic := \
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv7f	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv7k	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv7s	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.osx.i386		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.osx.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.armv7f	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.armv7k	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.armv7s	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext_ios5.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios5.armv7f := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios5.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios5.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.i386   := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.x86_64 := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.i386   := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.x86_64 := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.armv7f := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 
 # Configure the asan_osx_dynamic library to be built shared.
 SHARED_LIBRARY.asan_osx_dynamic := 1
@@ -306,7 +323,13 @@ CCKEXT_ARMVFP_FUNCTIONS := $(CCKEXT_ARM_FUNCTIONS) \
 	unordsf2vfp
 
 FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext.armv7f := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
 FUNCTIONS.cc_kext_ios5.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios5.armv7f := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios5.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios5.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
 
 CCKEXT_X86_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	divxc3 \
@@ -383,8 +406,20 @@ CCKEXT_MISSING_FUNCTIONS := \
 
 FUNCTIONS.cc_kext.armv7 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7))
+FUNCTIONS.cc_kext.armv7f := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7f))
+FUNCTIONS.cc_kext.armv7k := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7k))
+FUNCTIONS.cc_kext.armv7s := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7s))
 FUNCTIONS.cc_kext_ios5.armv7 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7))
+FUNCTIONS.cc_kext_ios5.armv7f := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7f))
+FUNCTIONS.cc_kext_ios5.armv7k := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7k))
+FUNCTIONS.cc_kext_ios5.armv7s := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7s))
 FUNCTIONS.cc_kext.i386 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.i386))
 FUNCTIONS.cc_kext.x86_64 := \

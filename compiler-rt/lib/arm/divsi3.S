@@ -25,7 +25,16 @@
 // Ok, APCS and AAPCS agree on 32 bit args, so it's safe to use the same routine.
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_idiv, __divsi3)
 DEFINE_COMPILERRT_FUNCTION(__divsi3)
-    ESTABLISH_FRAME
+#if __ARM_ARCH_7S__
+   tst     r1,r1
+   beq     LOCAL_LABEL(divzero)
+   sdiv    r0, r0, r1
+   bx      lr
+LOCAL_LABEL(divzero):
+   mov     r0,#0
+   bx      lr
+#else
+ESTABLISH_FRAME
 //  Set aside the sign of the quotient.
     eor     r4,     r0, r1
 //  Take absolute value of a and b via abs(x) = (x^(x >> 31)) - (x >> 31).
@@ -39,3 +48,4 @@ DEFINE_COMPILERRT_FUNCTION(__divsi3)
     eor     r0,     r0, r4, asr #31
     sub     r0,     r0, r4, asr #31
     CLEAR_FRAME_AND_RETURN
+#endif
