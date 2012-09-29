@@ -164,6 +164,10 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
     uint64_t value = 0;
     
     const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
     if (!strcmp(class_name,"__NSDictionaryI"))
     {
         Error error;
@@ -230,6 +234,10 @@ lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& s
     uint64_t value = 0;
     
     const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
     if (!strcmp(class_name,"__NSArrayI"))
     {
         Error error;
@@ -290,6 +298,10 @@ lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& st
     uint64_t value = 0;
     
     const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
     if (!strcmp(class_name,"NSConcreteData") ||
         !strcmp(class_name,"NSConcreteMutableData") ||
         !strcmp(class_name,"__NSCFData"))
@@ -340,6 +352,9 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
         return false;
     
     const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
     
     if (!strcmp(class_name,"NSNumber") || !strcmp(class_name,"__NSCFNumber"))
     {
@@ -979,6 +994,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCre
         return NULL;
     
     const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return NULL;
+    
     if (!strcmp(class_name,"__NSArrayI"))
     {
         return (new NSArrayISyntheticFrontEnd(valobj_sp));
@@ -1056,6 +1075,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
         return NULL;
     
     const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return NULL;
+    
     if (!strcmp(class_name,"__NSDictionaryI"))
     {
         return (new NSDictionaryISyntheticFrontEnd(valobj_sp));
