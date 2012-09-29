@@ -63,6 +63,10 @@ private:
   /// \brief A mapping from the submodule name to the index into the 
   /// \c SubModules vector at which that submodule resides.
   llvm::StringMap<unsigned> SubModuleIndex;
+
+  /// \brief The AST file if this is a top-level module which has a
+  /// corresponding serialized AST file, or null otherwise.
+  const FileEntry *ASTFile;
   
 public:
   /// \brief The headers that are part of this module.
@@ -158,7 +162,7 @@ public:
   /// \brief Construct a top-level module.
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)
-    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), Umbrella(),
+    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0),Umbrella(),ASTFile(0),
       IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework), 
       IsExplicit(false), IsSystem(false),
       InferSubmodules(false), InferExplicitSubmodules(false),
@@ -227,7 +231,18 @@ public:
   StringRef getTopLevelModuleName() const {
     return getTopLevelModule()->Name;
   }
-  
+
+  /// \brief The serialized AST file for this module, if one was created.
+  const FileEntry *getASTFile() const {
+    return getTopLevelModule()->ASTFile;
+  }
+
+  /// \brief Set the serialized AST file for the top-level module of this module.
+  void setASTFile(const FileEntry *File) {
+    assert((getASTFile() == 0 || getASTFile() == File) && "file path changed");
+    getTopLevelModule()->ASTFile = File;
+  }
+
   /// \brief Retrieve the directory for which this module serves as the
   /// umbrella.
   const DirectoryEntry *getUmbrellaDir() const;

@@ -23,8 +23,8 @@ using namespace clang;
 
 Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
                bool IsFramework, bool IsExplicit)
-  : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
-    Umbrella(), IsAvailable(true), IsFromModuleFile(false), 
+  : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent),
+    Umbrella(), ASTFile(0), IsAvailable(true), IsFromModuleFile(false),
     IsFramework(IsFramework), IsExplicit(IsExplicit), IsSystem(false),
     InferSubmodules(false), InferExplicitSubmodules(false), 
     InferExportWildcard(false), NameVisibility(Hidden) 
