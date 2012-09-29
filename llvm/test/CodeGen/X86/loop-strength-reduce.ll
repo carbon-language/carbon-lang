@@ -1,8 +1,7 @@
-; RUN: llc < %s -march=x86 -relocation-model=static | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=corei7 -relocation-model=static | FileCheck %s
 
 ; CHECK: align
-; CHECK: movl  $4, -4(%ecx)
-; CHECK: movl  $5, (%ecx)
+; CHECK: movlpd %xmm0, -4(%ecx)
 ; CHECK: addl  $4, %ecx
 ; CHECK: decl  %eax
 ; CHECK: jne
