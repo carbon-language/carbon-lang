@@ -12,5 +12,6 @@ void copy(struct A *a, struct A *b) {
   *a = *b;
 }
 
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 16, i32 4, i1 false), !tbaa.struct [[TS:!.*]]
+// CHECK: target datalayout = "{{.*}}p:[[P:64|32]]
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i[[P]](i8* %{{.*}}, i8* %{{.*}}, i[[P]] 16, i32 4, i1 false), !tbaa.struct [[TS:!.*]]
 // CHECK: [[TS]] = metadata !{i64 0, i64 2, metadata !{{.*}}, i64 4, i64 4, metadata !{{.*}}, i64 8, i64 1, metadata !{{.*}}, i64 12, i64 4, metadata !{{.*}}}
