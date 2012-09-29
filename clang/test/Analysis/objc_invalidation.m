@@ -10,7 +10,11 @@
 -(id)copy;
 - (Class)class;
 -(id)retain;
+-(id)description;
 @end
+@class NSString;
+
+extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 
 @protocol Invalidation1 <NSObject> 
 - (void) invalidate __attribute__((annotate("objc_instance_variable_invalidator")));
@@ -22,6 +26,7 @@
 
 @protocol Invalidation3 <NSObject>
 - (void) invalidate __attribute__((annotate("objc_instance_variable_invalidator")));
+- (void) invalidate2 __attribute__((annotate("objc_instance_variable_invalidator")));
 @end
 
 @interface Invalidation2Class <Invalidation2>
@@ -31,7 +36,7 @@
 @end
 
 @interface SomeInvalidationImplementingObject: NSObject <Invalidation3, Invalidation2> {
-  SomeInvalidationImplementingObject *ObjA;
+  SomeInvalidationImplementingObject *ObjA; // invalidation in the parent
 }
 @end
 
@@ -39,21 +44,28 @@
 - (void)invalidate{
   ObjA = 0;
 }
+- (void)invalidate2 {
+  [self invalidate];
+}
 @end
 
 @interface SomeSubclassInvalidatableObject : SomeInvalidationImplementingObject {
-  SomeInvalidationImplementingObject *Obj1; 
-  SomeInvalidationImplementingObject *Obj2;
-  SomeInvalidationImplementingObject *Obj3;
-  SomeInvalidationImplementingObject *_Prop1;
-  SomeInvalidationImplementingObject *_Prop4;
-  SomeInvalidationImplementingObject *_propIvar;
-  Invalidation1Class *MultipleProtocols;
-  Invalidation2Class *MultInheritance; 
-  SomeInvalidationImplementingObject *_Prop5; // invalidate via getter method
+  SomeInvalidationImplementingObject *Ivar1; // regular ivar
+  SomeInvalidationImplementingObject *Ivar2; // regular ivar, sending invalidate message
+  SomeInvalidationImplementingObject *_Ivar3; // no property, call -description
+  SomeInvalidationImplementingObject *_Ivar4; // no property, provide as argument to NSLog()
+
+  SomeInvalidationImplementingObject *_Prop1; // partially implemented property, set to 0 with dot syntax
+  SomeInvalidationImplementingObject *_Prop2; // fully implemented prop, set to 0 with dot syntax
+  SomeInvalidationImplementingObject *_propIvar; // property with custom named ivar, set to 0 via setter
+  Invalidation1Class *MultipleProtocols; // regular ivar belonging to a different class
+  Invalidation2Class *MultInheritance; // regular ivar belonging to a different class
+  SomeInvalidationImplementingObject *_Prop3; // property, invalidate via sending a message to a getter method
+  SomeInvalidationImplementingObject *_Prop4; // property with @synthesize, invalidate via property
+  SomeInvalidationImplementingObject *_Prop5; // property with @synthesize, invalidate via getter method
   
-  // No warnings on these.
-  NSObject *NObj1;
+  // No warnings on these as they are not invalidatable.
+  NSObject *NIvar1;
   NSObject *NObj2;
   NSObject *_NProp1;
   NSObject *_NpropIvar;
@@ -63,10 +75,12 @@
 @property (nonatomic, assign) SomeInvalidationImplementingObject* Prop1;
 @property (assign) SomeInvalidationImplementingObject* Prop2;
 @property (assign) SomeInvalidationImplementingObject* Prop3;
-@property (assign) SomeInvalidationImplementingObject* Prop4;
-@property (assign) SomeInvalidationImplementingObject* Prop5;
-@property (assign) SomeInvalidationImplementingObject *SynthIvarProp;
+@property (assign) SomeInvalidationImplementingObject *Prop5;
+@property (assign) SomeInvalidationImplementingObject *Prop4;
 
+@property (assign) SomeInvalidationImplementingObject* Prop6; // automatically synthesized prop
+@property (assign) SomeInvalidationImplementingObject* Prop7; // automatically synthesized prop
+@property (assign) SomeInvalidationImplementingObject *SynthIvarProp;
 
 @property (assign) NSObject* NProp0;
 @property (nonatomic, assign) NSObject* NProp1;
@@ -81,18 +95,21 @@
 
 @implementation SomeSubclassInvalidatableObject
 
-@synthesize Prop2 = _propIvar;
-@synthesize Prop3;
+@synthesize Prop7 = _propIvar;
+@synthesize Prop3 = _Prop3;
+@synthesize Prop5 = _Prop5;
+@synthesize Prop4 = _Prop4;
+
 
 - (void) setProp1: (SomeInvalidationImplementingObject*) InObj {
   _Prop1 = InObj;
 }
 
-- (void) setProp4: (SomeInvalidationImplementingObject*) InObj {
-  _Prop4 = InObj;
+- (void) setProp2: (SomeInvalidationImplementingObject*) InObj {
+  _Prop2 = InObj;
 }
-- (SomeInvalidationImplementingObject*) Prop4 {
-  return _Prop4;
+- (SomeInvalidationImplementingObject*) Prop2 {
+  return _Prop2;
 }
 
 @synthesize NProp2 = _NpropIvar;
@@ -102,17 +119,24 @@
 }
 
 - (void) invalidate {
-   [Obj3 invalidate];
+   [Ivar2 invalidate];
    self.Prop0 = 0;
    self.Prop1 = 0;
    [self setProp2:0];
    [self setProp3:0];
-   self.Prop4 = 0;
-   [[self Prop5] invalidate];
+   [[self Prop5] invalidate2];
+   [self.Prop4 invalidate];
+   self.Prop6 = 0;
+   [[self Prop7] invalidate];
+
+   [_Ivar3 description]; 
+   NSLog(@"%@", _Ivar4);
    [super invalidate];
-}// expected-warning {{Instance variable Obj1 needs to be invalidated}}
- // expected-warning@-1 {{Instance variable Obj2 needs to be invalidated}}
+}
+// expected-warning@-1 {{Instance variable Ivar1 needs to be invalidated}}
  // expected-warning@-2 {{Instance variable MultipleProtocols needs to be invalidated}}
  // expected-warning@-3 {{Instance variable MultInheritance needs to be invalidated}}
  // expected-warning@-4 {{Property SynthIvarProp needs to be invalidated}}
+ // expected-warning@-5 {{Instance variable _Ivar3 needs to be invalidated}}
+ // expected-warning@-6 {{Instance variable _Ivar4 needs to be invalidated}}
 @end
