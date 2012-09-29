@@ -332,7 +332,9 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
 
   // Darwin doesn't support real static executables, don't link any runtime
   // libraries with -static.
-  if (Args.hasArg(options::OPT_static))
+  if (Args.hasArg(options::OPT_static) ||
+      Args.hasArg(options::OPT_fapple_kext) ||
+      Args.hasArg(options::OPT_mkernel))
     return;
 
   // Reject -static-libgcc for now, we can deal with this when and if someone
@@ -676,7 +678,14 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
   llvm::sys::Path P(getDriver().ResourceDir);
   P.appendComponent("lib");
   P.appendComponent("darwin");
-  P.appendComponent("libclang_rt.cc_kext.a");
+
+  // Use the newer cc_kext for iOS ARM after 6.0.
+  if (!isTargetIPhoneOS() || isTargetIOSSimulator() ||
+      !isIPhoneOSVersionLT(6, 0)) {
+    P.appendComponent("libclang_rt.cc_kext.a");
+  } else {
+    P.appendComponent("libclang_rt.cc_kext_ios5.a");
+  }
 
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build.
@@ -901,6 +910,25 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // argument.
   if (BoundArch)
     AddDeploymentTarget(*DAL);
+
+  // For iOS 6, undo the translation to add -static for -mkernel/-fapple-kext.
+  // FIXME: It would be far better to avoid inserting those -static arguments,
+  // but we can't check the deployment target in the translation code until
+  // it is set here.
+  if (isTargetIPhoneOS() && !isIPhoneOSVersionLT(6, 0)) {
+    for (ArgList::iterator it = DAL->begin(), ie = DAL->end(); it != ie; ) {
+      Arg *A = *it;
+      ++it;
+      if (A->getOption().getID() != options::OPT_mkernel &&
+          A->getOption().getID() != options::OPT_fapple_kext)
+        continue;
+      assert(it != ie && "unexpected argument translation");
+      A = *it;
+      assert(A->getOption().getID() == options::OPT_static &&
+             "missing expected -static argument");
+      it = DAL->getArgs().erase(it);
+    }
+  }
 
   // Validate the C++ standard library choice.
   CXXStdlibType Type = GetCXXStdlibType(*DAL);

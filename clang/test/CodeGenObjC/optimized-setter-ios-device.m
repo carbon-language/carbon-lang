@@ -1,6 +1,5 @@
-// RUN: %clang_cc1 %s -emit-llvm -fobjc-runtime=macosx-10.8 -triple x86_64-apple-macosx10.8.0 -o - | FileCheck %s
-// RUN: %clang_cc1 %s -emit-llvm -fobjc-runtime=ios-6.0.0  -triple x86_64-apple-ios6.0.0 -o - | FileCheck %s
-// rdar://10179974
+// RUN: %clang_cc1 %s -emit-llvm -fobjc-runtime=ios-6.0.0 -triple thumbv7-apple-ios6.0.0 -o - | FileCheck %s
+// rdar://11915017
 
 @interface I
 // void objc_setProperty_nonatomic(id self, SEL _cmd, id newValue, ptrdiff_t offset);
@@ -27,8 +26,8 @@
 @synthesize atomicPropertyCopy;
 @end
 
-// CHECK: call void @objc_setProperty_nonatomic
-// CHECK: call void @objc_setProperty_nonatomic_copy
-// CHECK: call void @objc_setProperty_atomic
-// CHECK: call void @objc_setProperty_atomic_copy
+// CHECK: call arm_aapcscc void @objc_setProperty_nonatomic
+// CHECK: call arm_aapcscc void @objc_setProperty_nonatomic_copy
+// CHECK: call arm_aapcscc void @objc_setProperty_atomic
+// CHECK: call arm_aapcscc void @objc_setProperty_atomic_copy
 

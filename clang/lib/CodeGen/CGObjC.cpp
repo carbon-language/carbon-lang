@@ -1041,12 +1041,7 @@ static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
 static bool UseOptimizedSetter(CodeGenModule &CGM) {
   if (CGM.getLangOpts().getGC() != LangOptions::NonGC)
     return false;
-  const TargetInfo &Target = CGM.getContext().getTargetInfo();
-
-  if (Target.getPlatformName() != "macosx")
-    return false;
-
-  return Target.getPlatformMinVersion() >= VersionTuple(10, 8);
+  return CGM.getLangOpts().ObjCRuntime.hasOptimizedSetter();
 }
 
 void
@@ -1106,7 +1101,7 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     llvm::Value *setOptimizedPropertyFn = 0;
     llvm::Value *setPropertyFn = 0;
     if (UseOptimizedSetter(CGM)) {
-      // 10.8 code and GC is off
+      // 10.8 and iOS 6.0 code and GC is off
       setOptimizedPropertyFn = 
         CGM.getObjCRuntime()
            .GetOptimizedPropertySetFunction(strategy.isAtomic(),
