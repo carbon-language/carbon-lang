@@ -1041,7 +1041,7 @@ protected:
             
             if (process)
             {
-                error = process->ConnectRemote (remote_url);
+                error = process->ConnectRemote (&process->GetTarget().GetDebugger().GetOutputStream(), remote_url);
 
                 if (error.Fail())
                 {

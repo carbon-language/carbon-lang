@@ -342,7 +342,16 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
     {
         m_kernel.Clear(false);
         m_kernel.module_sp = m_process->GetTarget().GetExecutableModule();
-        strncpy(m_kernel.name, "mach_kernel", sizeof(m_kernel.name));
+
+        ConstString kernel_name("mach_kernel");
+        if (m_kernel.module_sp.get() 
+            && m_kernel.module_sp->GetObjectFile()
+            && !m_kernel.module_sp->GetObjectFile()->GetFileSpec().GetFilename().IsEmpty())
+        {
+            kernel_name = m_kernel.module_sp->GetObjectFile()->GetFileSpec().GetFilename();
+        }
+        strlcpy (m_kernel.name, kernel_name.AsCString(), sizeof(m_kernel.name));
+
         if (m_kernel.address == LLDB_INVALID_ADDRESS)
         {
             m_kernel.address = m_process->GetImageInfoAddress ();
@@ -353,7 +362,25 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
                 // the file if we have one
                 ObjectFile *kernel_object_file = m_kernel.module_sp->GetObjectFile();
                 if (kernel_object_file)
-                    m_kernel.address = kernel_object_file->GetHeaderAddress().GetFileAddress();
+                {
+                    addr_t load_address = kernel_object_file->GetHeaderAddress().GetLoadAddress(&m_process->GetTarget());
+                    addr_t file_address = kernel_object_file->GetHeaderAddress().GetFileAddress();
+                    if (load_address != LLDB_INVALID_ADDRESS && load_address != 0)
+                    {
+                        m_kernel.address = load_address;
+                        if (load_address != file_address)
+                        {
+                            // Don't accidentally relocate the kernel to the File address -- 
+                            // the Load address has already been set to its actual in-memory address.  
+                            // Mark it as IsLoaded.
+                            m_kernel.load_process_stop_id = m_process->GetStopID();
+                        }
+                    }
+                    else
+                    {
+                        m_kernel.address = file_address;
+                    }
+                }
             }
         }
         
@@ -725,7 +752,6 @@ DynamicLoaderDarwinKernel::PrivateInitialize(Process *process)
     DEBUG_PRINTF("DynamicLoaderDarwinKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
     Clear(true);
     m_process = process;
-    m_process->GetTarget().GetSectionLoadList().Clear();
 }
 
 void

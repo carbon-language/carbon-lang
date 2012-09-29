@@ -2906,7 +2906,7 @@ Process::CompleteAttach ()
 }
 
 Error
-Process::ConnectRemote (const char *remote_url)
+Process::ConnectRemote (Stream *strm, const char *remote_url)
 {
     m_abi_sp.reset();
     m_process_input_reader.reset();
@@ -2914,7 +2914,7 @@ Process::ConnectRemote (const char *remote_url)
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
     
-    Error error (DoConnectRemote (remote_url));
+    Error error (DoConnectRemote (strm, remote_url));
     if (error.Success())
     {
         if (GetID() != LLDB_INVALID_PROCESS_ID)

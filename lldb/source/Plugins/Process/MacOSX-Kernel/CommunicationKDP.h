@@ -213,6 +213,12 @@ public:
     uint32_t
     GetCPUSubtype ();
 
+    lldb_private::UUID 
+    GetUUID ();
+
+    lldb::addr_t
+    GetLoadAddress ();
+
     bool
     SendRequestResume ();
 

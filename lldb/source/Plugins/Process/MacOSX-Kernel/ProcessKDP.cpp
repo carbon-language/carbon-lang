@@ -17,8 +17,11 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/UUID.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -167,7 +170,7 @@ ProcessKDP::WillAttachToProcessWithName (const char *process_name, bool wait_for
 }
 
 Error
-ProcessKDP::DoConnectRemote (const char *remote_url)
+ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 {
     Error error;
 
@@ -214,6 +217,90 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
                     ArchSpec kernel_arch;
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
                     m_target.SetArchitecture(kernel_arch);
+
+                    /* Get the kernel's UUID and load address via kdp-kernelversion packet.  */
+                        
+                    UUID kernel_uuid = m_comm.GetUUID ();
+                    addr_t kernel_load_addr = m_comm.GetLoadAddress ();
+                    if (strm)
+                    {
+                        char uuidbuf[64];
+                        strm->Printf ("Kernel UUID: %s\n", kernel_uuid.GetAsCString (uuidbuf, sizeof (uuidbuf)));
+                        strm->Printf ("Load Address: 0x%llx\n", kernel_load_addr);
+                        strm->Flush ();
+                    }
+
+                    /* Set the kernel's LoadAddress based on the information from kdp.
+                       This would normally be handled by the DynamicLoaderDarwinKernel plugin but there's no easy
+                       way to communicate the UUID / load addr from kdp back up to that plugin so we'll set it here. */
+                    ModuleSP exe_module_sp = m_target.GetExecutableModule ();
+                    bool find_and_load_kernel = true;
+                    if (exe_module_sp.get ())
+                    {
+                        ObjectFile *exe_objfile = exe_module_sp->GetObjectFile();
+                        if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
+                            exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
+                        {
+                            UUID exe_objfile_uuid;
+                            if (exe_objfile->GetUUID (&exe_objfile_uuid) && kernel_uuid == exe_objfile_uuid
+                                && exe_objfile->GetHeaderAddress().IsValid())
+                            {
+                                find_and_load_kernel = false;
+                                addr_t slide = kernel_load_addr - exe_objfile->GetHeaderAddress().GetFileAddress();
+                                if (slide != 0)
+                                {
+                                    bool changed = false;
+                                    exe_module_sp->SetLoadAddress (m_target, slide, changed);
+                                    if (changed)
+                                    {
+                                        ModuleList modlist;
+                                        modlist.Append (exe_module_sp);
+                                        m_target.ModulesDidLoad (modlist);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // If the executable binary is not the same as the kernel being run on the remote host,
+                    // see if Symbols::DownloadObjectAndSymbolFile can find us a symbol file based on the UUID
+                    // and if so, load it at the correct address.
+                    if (find_and_load_kernel && kernel_load_addr != LLDB_INVALID_ADDRESS && kernel_uuid.IsValid())
+                    {
+                        ModuleSpec sym_spec;
+                        sym_spec.GetUUID() = kernel_uuid;
+                        if (Symbols::DownloadObjectAndSymbolFile (sym_spec) 
+                            && sym_spec.GetArchitecture().IsValid() 
+                            && sym_spec.GetSymbolFileSpec().Exists())
+                        {
+                            ModuleSP kernel_sp = m_target.GetSharedModule (sym_spec);
+                            if (kernel_sp.get())
+                            {
+                                m_target.SetExecutableModule(kernel_sp, false);
+                                if (kernel_sp->GetObjectFile() && kernel_sp->GetObjectFile()->GetHeaderAddress().IsValid())
+                                {
+                                    addr_t slide = kernel_load_addr - kernel_sp->GetObjectFile()->GetHeaderAddress().GetFileAddress();
+                                    bool changed = false;
+                                    kernel_sp->SetLoadAddress (m_target, slide, changed);
+                                    if (changed)
+                                    {
+                                        ModuleList modlist;
+                                        modlist.Append (kernel_sp);
+                                        m_target.ModulesDidLoad (modlist);
+                                    }
+                                    if (strm)
+                                    {
+                                        strm->Printf ("Loaded kernel file %s/%s\n", 
+                                                      kernel_sp->GetFileSpec().GetDirectory().AsCString(),
+                                                      kernel_sp->GetFileSpec().GetFilename().AsCString());
+                                        strm->Flush ();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
                     // Set the thread ID
                     UpdateThreadListIfNeeded ();
                     SetID (1);

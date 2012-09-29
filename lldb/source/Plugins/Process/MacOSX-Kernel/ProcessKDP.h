@@ -90,7 +90,7 @@ public:
     WillAttachToProcessWithName (const char *process_name, bool wait_for_launch);
     
     virtual lldb_private::Error
-    DoConnectRemote (const char *remote_url);
+    DoConnectRemote (lldb_private::Stream *strm, const char *remote_url);
     
     virtual lldb_private::Error
     DoAttachToProcessWithID (lldb::pid_t pid);

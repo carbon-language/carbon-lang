@@ -1087,7 +1087,7 @@ SBTarget::ConnectRemote
         if (process_sp)
         {
             sb_process.SetSP (process_sp);
-            error.SetError (process_sp->ConnectRemote (url));
+            error.SetError (process_sp->ConnectRemote (NULL, url));
         }
         else
         {

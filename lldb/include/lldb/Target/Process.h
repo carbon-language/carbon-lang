@@ -1673,8 +1673,22 @@ public:
     virtual Error
     Attach (ProcessAttachInfo &attach_info);
 
+    //------------------------------------------------------------------
+    /// Attach to a remote system via a URL
+    ///
+    /// @param[in] strm
+    ///     A stream where output intended for the user
+    ///     (if the driver has a way to display that) generated during
+    ///     the connection.  This may be NULL if no output is needed.A
+    ///
+    /// @param[in] remote_url
+    ///     The URL format that we are connecting to.
+    ///
+    /// @return
+    ///     Returns an error object.
+    //------------------------------------------------------------------
     virtual Error
-    ConnectRemote (const char *remote_url);
+    ConnectRemote (Stream *strm, const char *remote_url);
 
     bool
     GetShouldDetach () const
@@ -1896,8 +1910,22 @@ public:
         return Error(); 
     }
 
+    //------------------------------------------------------------------
+    /// Attach to a remote system via a URL
+    ///
+    /// @param[in] strm
+    ///     A stream where output intended for the user 
+    ///     (if the driver has a way to display that) generated during
+    ///     the connection.  This may be NULL if no output is needed.A
+    ///
+    /// @param[in] remote_url
+    ///     The URL format that we are connecting to.
+    ///
+    /// @return
+    ///     Returns an error object.
+    //------------------------------------------------------------------
     virtual Error
-    DoConnectRemote (const char *remote_url)
+    DoConnectRemote (Stream *strm, const char *remote_url)
     {
         Error error;
         error.SetErrorString ("remote connections are not supported");

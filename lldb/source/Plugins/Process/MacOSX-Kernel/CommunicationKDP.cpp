@@ -11,6 +11,7 @@
 #include "CommunicationKDP.h"
 
 // C Includes
+#include <errno.h>
 #include <limits.h>
 #include <string.h>
 
@@ -22,6 +23,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/UUID.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
@@ -497,6 +499,51 @@ CommunicationKDP::GetCPUSubtype ()
     if (!HostInfoIsValid())
         SendRequestHostInfo();
     return m_kdp_hostinfo_cpu_subtype;
+}
+
+lldb_private::UUID
+CommunicationKDP::GetUUID ()
+{
+    UUID uuid;
+    if (GetKernelVersion() == NULL)
+        return uuid;
+
+    if (m_kernel_version.find("UUID=") == std::string::npos)
+        return uuid;
+
+    size_t p = m_kernel_version.find("UUID=") + strlen ("UUID=");
+    std::string uuid_str = m_kernel_version.substr(p, 36);
+    if (uuid_str.size() < 32)
+        return uuid;
+
+    if (uuid.SetFromCString (uuid_str.c_str()) == 0)
+    {
+        UUID invalid_uuid;
+        return invalid_uuid;
+    }
+
+    return uuid;
+}
+
+lldb::addr_t
+CommunicationKDP::GetLoadAddress ()
+{
+    if (GetKernelVersion() == NULL)
+        return LLDB_INVALID_ADDRESS;
+
+    if (m_kernel_version.find("stext=") == std::string::npos)
+        return LLDB_INVALID_ADDRESS;
+    size_t p = m_kernel_version.find("stext=") + strlen ("stext=");
+    if (m_kernel_version[p] != '0' || m_kernel_version[p + 1] != 'x')
+        return LLDB_INVALID_ADDRESS;
+
+    addr_t kernel_load_address;
+    errno = 0;
+    kernel_load_address = ::strtoul (m_kernel_version.c_str() + p, NULL, 16);
+    if (errno != 0 || kernel_load_address == 0)
+        return LLDB_INVALID_ADDRESS;
+
+    return kernel_load_address;
 }
 
 bool

@@ -414,7 +414,7 @@ ProcessGDBRemote::WillAttachToProcessWithName (const char *process_name, bool wa
 }
 
 Error
-ProcessGDBRemote::DoConnectRemote (const char *remote_url)
+ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
 {
     Error error (WillLaunchOrAttach ());
     
@@ -426,6 +426,25 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
     if (error.Fail())
         return error;
     StartAsyncThread ();
+
+    const ArchSpec &gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
+    if (gdb_remote_arch.IsValid() && gdb_remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+    {
+        Module *exe_module = GetTarget().GetExecutableModulePointer();
+        
+        ObjectFile *exe_objfile = exe_module->GetObjectFile();
+
+        // If the remote system is an Apple device and we don't have an exec file
+        // OR we have an exec file and it is a kernel, look for the kernel's load address
+        // in memory and load/relocate the kernel symbols as appropriate.
+        if (exe_objfile == NULL 
+            || (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
+                exe_objfile->GetStrata() == ObjectFile::eStrataKernel))
+        {
+        
+
+        }
+    }
 
     lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID ();
     if (pid == LLDB_INVALID_PROCESS_ID)
