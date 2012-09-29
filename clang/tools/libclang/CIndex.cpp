@@ -5810,7 +5810,7 @@ CXComment clang_Cursor_getParsedComment(CXCursor C) {
 
   const Decl *D = getCursorDecl(C);
   const ASTContext &Context = getCursorContext(C);
-  const comments::FullComment *FC = Context.getCommentForDecl(D);
+  const comments::FullComment *FC = Context.getCommentForDecl(D, /*PP=*/ NULL);
 
   return cxcomment::createCXComment(FC, getCursorTU(C));
 }

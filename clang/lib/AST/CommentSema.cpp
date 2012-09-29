@@ -13,7 +13,9 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace clang {
 namespace comments {
@@ -23,9 +25,10 @@ namespace {
 } // unnamed namespace
 
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
-           DiagnosticsEngine &Diags, CommandTraits &Traits) :
+           DiagnosticsEngine &Diags, CommandTraits &Traits,
+           const Preprocessor *PP) :
     Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), Traits(Traits),
-    ThisDeclInfo(NULL), BriefCommand(NULL), ReturnsCommand(NULL) {
+    PP(PP), ThisDeclInfo(NULL), BriefCommand(NULL), ReturnsCommand(NULL) {
 }
 
 void Sema::setDecl(const Decl *D) {
@@ -527,10 +530,25 @@ void Sema::checkDeprecatedCommand(const BlockCommandComment *Command) {
         FD->doesThisDeclarationHaveABody())
       return;
 
+    StringRef AttributeSpelling = "__attribute__((deprecated))";
+    if (PP) {
+      TokenValue Tokens[] = {
+        tok::kw___attribute, tok::l_paren, tok::l_paren,
+        PP->getIdentifierInfo("deprecated"),
+        tok::r_paren, tok::r_paren
+      };
+      StringRef MacroName = PP->getLastMacroWithSpelling(FD->getLocation(),
+                                                         Tokens);
+      if (!MacroName.empty())
+        AttributeSpelling = MacroName;
+    }
+
+    SmallString<64> TextToInsert(" ");
+    TextToInsert += AttributeSpelling;
     Diag(FD->getLocEnd(),
          diag::note_add_deprecation_attr)
       << FixItHint::CreateInsertion(FD->getLocEnd().getLocWithOffset(1),
-                                    " __attribute__((deprecated))");
+                                    TextToInsert);
   }
 }
 

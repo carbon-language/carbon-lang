@@ -355,7 +355,9 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(
   return RC;
 }
 
-comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
+comments::FullComment *ASTContext::getCommentForDecl(
+                                              const Decl *D,
+                                              const Preprocessor *PP) const {
   D = adjustDeclToTemplate(D);
   const Decl *Canonical = D->getCanonicalDecl();
   llvm::DenseMap<const Decl *, comments::FullComment *>::iterator Pos =
@@ -373,9 +375,9 @@ comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
   // because comments can contain references to parameter names which can be
   // different across redeclarations.
   if (D != OriginalDecl)
-    return getCommentForDecl(OriginalDecl);
+    return getCommentForDecl(OriginalDecl, PP);
 
-  comments::FullComment *FC = RC->parse(*this, D);
+  comments::FullComment *FC = RC->parse(*this, PP, D);
   ParsedComments[Canonical] = FC;
   return FC;
 }

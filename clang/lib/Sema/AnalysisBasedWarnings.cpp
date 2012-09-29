@@ -41,6 +41,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
@@ -679,61 +680,6 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
   return true;
 }
 
-/// \brief Stores token information for comparing actual tokens with
-/// predefined values. Only handles simple tokens and identifiers.
-class TokenValue {
-  tok::TokenKind Kind;
-  IdentifierInfo *II;
-
-public:
-  TokenValue(tok::TokenKind Kind) : Kind(Kind), II(0) {
-    assert(Kind != tok::raw_identifier && "Raw identifiers are not supported.");
-    assert(Kind != tok::identifier &&
-           "Identifiers should be created by TokenValue(IdentifierInfo *)");
-    assert(!tok::isLiteral(Kind) && "Literals are not supported.");
-    assert(!tok::isAnnotation(Kind) && "Annotations are not supported.");
-  }
-  TokenValue(IdentifierInfo *II) : Kind(tok::identifier), II(II) {}
-  bool operator==(const Token &Tok) const {
-    return Tok.getKind() == Kind &&
-        (!II || II == Tok.getIdentifierInfo());
-  }
-};
-
-/// \brief Compares macro tokens with a specified token value sequence.
-static bool MacroDefinitionEquals(const MacroInfo *MI,
-                                  llvm::ArrayRef<TokenValue> Tokens) {
-  return Tokens.size() == MI->getNumTokens() &&
-      std::equal(Tokens.begin(), Tokens.end(), MI->tokens_begin());
-}
-
-static std::string GetSuitableSpelling(Preprocessor &PP, SourceLocation L,
-                                       llvm::ArrayRef<TokenValue> Tokens,
-                                       const char *Spelling) {
-  SourceManager &SM = PP.getSourceManager();
-  SourceLocation BestLocation;
-  std::string BestSpelling = Spelling;
-  for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
-       I != E; ++I) {
-    if (!I->second->isObjectLike())
-      continue;
-    const MacroInfo *MI = I->second->findDefinitionAtLoc(L, SM);
-    if (!MI)
-      continue;
-    if (!MacroDefinitionEquals(MI, Tokens))
-      continue;
-    SourceLocation Location = I->second->getDefinitionLoc();
-    // Choose the macro defined latest.
-    if (BestLocation.isInvalid() ||
-        (Location.isValid() &&
-         SM.isBeforeInTranslationUnit(BestLocation, Location))) {
-      BestLocation = Location;
-      BestSpelling = I->first->getName();
-    }
-  }
-  return BestSpelling;
-}
-
 namespace {
   class FallthroughMapper : public RecursiveASTVisitor<FallthroughMapper> {
   public:
@@ -914,11 +860,15 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
             tok::coloncolon, PP.getIdentifierInfo("fallthrough"),
             tok::r_square, tok::r_square
           };
-          std::string AnnotationSpelling = GetSuitableSpelling(
-              PP, L, Tokens, "[[clang::fallthrough]]");
+          StringRef AnnotationSpelling = "[[clang::fallthrough]]";
+          StringRef MacroName = PP.getLastMacroWithSpelling(L, Tokens);
+          if (!MacroName.empty())
+            AnnotationSpelling = MacroName;
+          SmallString<64> TextToInsert(AnnotationSpelling);
+          TextToInsert += "; ";
           S.Diag(L, diag::note_insert_fallthrough_fixit) <<
               AnnotationSpelling <<
-              FixItHint::CreateInsertion(L, AnnotationSpelling + "; ");
+              FixItHint::CreateInsertion(L, TextToInsert);
         }
       }
       S.Diag(L, diag::note_insert_break_fixit) <<

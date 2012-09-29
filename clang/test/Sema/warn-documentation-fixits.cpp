@@ -51,6 +51,12 @@ struct test_deprecated_6 {
   }
 };
 
+#define MY_ATTR_DEPRECATED __attribute__((deprecated))
+
+// expected-warning@+1 {{declaration is marked with '\deprecated' command but does not have a deprecation attribute}} expected-note@+2 {{add a deprecation attribute to the declaration to silence this warning}}
+/// \deprecated
+void test_deprecated_9(int a);
+
 // CHECK: fix-it:"{{.*}}":{5:12-5:22}:"a"
 // CHECK: fix-it:"{{.*}}":{9:12-9:15}:"aaa"
 // CHECK: fix-it:"{{.*}}":{13:13-13:23}:"T"
@@ -61,4 +67,5 @@ struct test_deprecated_6 {
 // CHECK: fix-it:"{{.*}}":{38:27-38:27}:" __attribute__((deprecated))"
 // CHECK: fix-it:"{{.*}}":{46:27-46:27}:" __attribute__((deprecated))"
 // CHECK: fix-it:"{{.*}}":{50:27-50:27}:" __attribute__((deprecated))"
+// CHECK: fix-it:"{{.*}}":{58:30-58:30}:" MY_ATTR_DEPRECATED"
 

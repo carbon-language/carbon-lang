@@ -59,7 +59,7 @@ FullComment *CommentParserTest::parseString(const char *Source) {
 
   Lexer L(Allocator, Traits, Begin, Source, Source + strlen(Source));
 
-  Sema S(Allocator, SourceMgr, Diags, Traits);
+  Sema S(Allocator, SourceMgr, Diags, Traits, /*PP=*/ NULL);
   Parser P(L, S, Allocator, SourceMgr, Diags, Traits);
   FullComment *FC = P.parseFullComment();
 

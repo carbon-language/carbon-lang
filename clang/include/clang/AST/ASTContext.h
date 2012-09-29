@@ -532,7 +532,11 @@ public:
 
   /// Return parsed documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
-  comments::FullComment *getCommentForDecl(const Decl *D) const;
+  ///
+  /// \param PP the Preprocessor used with this TU.  Could be NULL if
+  /// preprocessor is not available.
+  comments::FullComment *getCommentForDecl(const Decl *D,
+                                           const Preprocessor *PP) const;
 
 private:
   mutable comments::CommandTraits CommentCommandTraits;

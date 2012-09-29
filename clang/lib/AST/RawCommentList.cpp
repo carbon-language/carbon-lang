@@ -159,6 +159,7 @@ const char *RawComment::extractBriefText(const ASTContext &Context) const {
 }
 
 comments::FullComment *RawComment::parse(const ASTContext &Context,
+                                         const Preprocessor *PP,
                                          const Decl *D) const {
   // Make sure that RawText is valid.
   getRawText(Context.getSourceManager());
@@ -168,7 +169,8 @@ comments::FullComment *RawComment::parse(const ASTContext &Context,
                     RawText.begin(), RawText.end());
   comments::Sema S(Context.getAllocator(), Context.getSourceManager(),
                    Context.getDiagnostics(),
-                   Context.getCommentCommandTraits());
+                   Context.getCommentCommandTraits(),
+                   PP);
   S.setDecl(D);
   comments::Parser P(L, S, Context.getAllocator(), Context.getSourceManager(),
                      Context.getDiagnostics(),

@@ -55,6 +55,27 @@ class DirectoryLookup;
 class PreprocessingRecord;
 class ModuleLoader;
 
+/// \brief Stores token information for comparing actual tokens with
+/// predefined values.  Only handles simple tokens and identifiers.
+class TokenValue {
+  tok::TokenKind Kind;
+  IdentifierInfo *II;
+
+public:
+  TokenValue(tok::TokenKind Kind) : Kind(Kind), II(0) {
+    assert(Kind != tok::raw_identifier && "Raw identifiers are not supported.");
+    assert(Kind != tok::identifier &&
+           "Identifiers should be created by TokenValue(IdentifierInfo *)");
+    assert(!tok::isLiteral(Kind) && "Literals are not supported.");
+    assert(!tok::isAnnotation(Kind) && "Annotations are not supported.");
+  }
+  TokenValue(IdentifierInfo *II) : Kind(tok::identifier), II(II) {}
+  bool operator==(const Token &Tok) const {
+    return Tok.getKind() == Kind &&
+        (!II || II == Tok.getIdentifierInfo());
+  }
+};
+
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
@@ -490,6 +511,12 @@ public:
                          MacroInfo*>::const_iterator macro_iterator;
   macro_iterator macro_begin(bool IncludeExternalMacros = true) const;
   macro_iterator macro_end(bool IncludeExternalMacros = true) const;
+
+  /// \brief Return the name of the macro defined before \p Loc that has
+  /// spelling \p Tokens.  If there are multiple macros with same spelling,
+  /// return the last one defined.
+  StringRef getLastMacroWithSpelling(SourceLocation Loc,
+                                     ArrayRef<TokenValue> Tokens) const;
 
   const std::string &getPredefines() const { return Predefines; }
   /// setPredefines - Set the predefines for this Preprocessor.  These
