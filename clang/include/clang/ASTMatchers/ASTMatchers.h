@@ -342,8 +342,8 @@ AST_MATCHER_P(TemplateArgument, refersToType,
 ///     \c B::next
 AST_MATCHER_P(TemplateArgument, refersToDeclaration,
               internal::Matcher<Decl>, InnerMatcher) {
-  if (const Decl *Declaration = Node.getAsDecl())
-    return InnerMatcher.matches(*Declaration, Finder, Builder);
+  if (Node.getKind() == TemplateArgument::Declaration)
+    return InnerMatcher.matches(*Node.getAsDecl(), Finder, Builder);
   return false;
 }
 

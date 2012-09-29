@@ -1236,6 +1236,12 @@ TEST(Matcher, MatchesDeclarationReferenceTemplateArgument) {
       "A<&B::next> a;",
       classTemplateSpecializationDecl(hasAnyTemplateArgument(
           refersToDeclaration(fieldDecl(hasName("next")))))));
+
+  EXPECT_TRUE(notMatches(
+      "template <typename T> struct A {};"
+      "A<int> a;",
+      classTemplateSpecializationDecl(hasAnyTemplateArgument(
+          refersToDeclaration(decl())))));
 }
 
 TEST(Matcher, MatchesSpecificArgument) {
