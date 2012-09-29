@@ -1481,6 +1481,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     Module *Imported
       = TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
                                    /*IsIncludeDirective=*/true);
+    assert((Imported == 0 || Imported == SuggestedModule) &&
+           "the imported module is different than the suggested one");
     
     // If this header isn't part of the module we're building, we're done.
     if (!BuildingImportedModule && Imported)
