@@ -160,14 +160,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
         svalBuilder.getCXXThis(CCE->getConstructor()->getParent(), calleeCtx);
       SVal ThisV = state->getSVal(This);
 
-      // If the constructed object is a prvalue, get its bindings.
-      // Note that we have to be careful here because constructors embedded
-      // in DeclStmts are not marked as lvalues.
-      if (!CCE->isGLValue())
-        if (const MemRegion *MR = ThisV.getAsRegion())
-          if (isa<CXXTempObjectRegion>(MR))
-            ThisV = state->getSVal(cast<Loc>(ThisV));
-
+      // Always bind the region to the CXXConstructExpr.
       state = state->BindExpr(CCE, callerCtx, ThisV);
     }
   }
