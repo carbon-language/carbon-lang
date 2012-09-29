@@ -1470,23 +1470,6 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
   }
 }
 
-/// If the value of the given expression is a NonLoc, copy it into a new
-/// temporary region, and replace the value of the expression with that.
-static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
-                                                     const LocationContext *LC,
-                                                     const Expr *E) {
-  SVal V = State->getSVal(E, LC);
-
-  if (isa<NonLoc>(V)) {
-    MemRegionManager &MRMgr = State->getStateManager().getRegionManager();
-    const MemRegion *R  = MRMgr.getCXXTempObjectRegion(E, LC);
-    State = State->bindLoc(loc::MemRegionVal(R), V);
-    State = State->BindExpr(E, LC, loc::MemRegionVal(R));
-  }
-
-  return State;
-}
-
 /// VisitMemberExpr - Transfer function for member expressions.
 void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
                                  ExplodedNodeSet &TopDst) {
@@ -1495,7 +1478,6 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   ExplodedNodeSet Dst;
   Decl *member = M->getMemberDecl();
 
-  // Handle static member variables accessed via member syntax.
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
     assert(M->isGLValue());
     Bldr.takeNodes(Pred);
@@ -1504,27 +1486,36 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
     return;
   }
 
-  ProgramStateRef state = Pred->getState();
-  const LocationContext *LCtx = Pred->getLocationContext();
-  Expr *BaseExpr = M->getBase()->IgnoreParens();
-
   // Handle C++ method calls.
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(member)) {
-    if (MD->isInstance())
-      state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
-
+    Bldr.takeNodes(Pred);
     SVal MDVal = svalBuilder.getFunctionPointer(MD);
-    state = state->BindExpr(M, LCtx, MDVal);
-
+    ProgramStateRef state =
+      Pred->getState()->BindExpr(M, Pred->getLocationContext(), MDVal);
     Bldr.generateNode(M, Pred, state);
     return;
   }
 
-  // Handle regular struct fields / member variables.
-  state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
-  SVal baseExprVal = state->getSVal(BaseExpr, LCtx);
 
-  FieldDecl *field = cast<FieldDecl>(member);
+  FieldDecl *field = dyn_cast<FieldDecl>(member);
+  if (!field) // FIXME: skipping member expressions for non-fields
+    return;
+
+  Expr *baseExpr = M->getBase()->IgnoreParens();
+  ProgramStateRef state = Pred->getState();
+  const LocationContext *LCtx = Pred->getLocationContext();
+  SVal baseExprVal = state->getSVal(baseExpr, Pred->getLocationContext());
+
+  // If we're accessing a field of an rvalue, we need to treat it like a
+  // temporary object.
+  if (isa<NonLoc>(baseExprVal)) {
+    const MemRegion *R  =
+      svalBuilder.getRegionManager().getCXXTempObjectRegion(baseExpr, LCtx);
+    SVal L = loc::MemRegionVal(R);
+    state = state->bindLoc(L, baseExprVal);
+    baseExprVal = L;
+  }
+
   SVal L = state->getLValue(field, baseExprVal);
   if (M->isGLValue()) {
     ExplodedNodeSet Tmp;
