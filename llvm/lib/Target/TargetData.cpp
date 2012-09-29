@@ -314,6 +314,8 @@ void
 TargetData::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                          unsigned pref_align, uint32_t bit_width) {
   assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
+  assert(pref_align < (1 << 16) && "Alignment doesn't fit in bitfield");
+  assert(bit_width < (1 << 24) && "Bit width doesn't fit in bitfield");
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     if (Alignments[i].AlignType == align_type &&
         Alignments[i].TypeBitWidth == bit_width) {
