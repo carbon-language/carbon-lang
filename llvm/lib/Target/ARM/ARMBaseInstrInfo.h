@@ -182,7 +182,7 @@ public:
   virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
                                          unsigned NumCycles,
                                          const BranchProbability
-                                           &Probability) const {
+                                         &Probability) const {
     return NumCycles == 1;
   }
 

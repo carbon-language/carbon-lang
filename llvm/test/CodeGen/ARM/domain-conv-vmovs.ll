@@ -79,8 +79,8 @@ define float @test_ineligible(float, float %in) {
   ; internal fault).
   call void @bar()
 ; CHECL: bl bar
-; CHECK: vext.32 
-; CHECK: vext.32 
+; CHECK: vext.32
+; CHECK: vext.32
   ret float %val
 }
 
