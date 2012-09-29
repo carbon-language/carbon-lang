@@ -227,7 +227,7 @@ public:
         BasicVals.getValue(integer->getValue(),
                      integer->getType()->isUnsignedIntegerOrEnumerationType()));
   }
-  
+
   nonloc::ConcreteInt makeBoolVal(const ObjCBoolLiteralExpr *boolean) {
     return makeTruthVal(boolean->getValue(), boolean->getType());
   }
