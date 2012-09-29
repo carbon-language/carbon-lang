@@ -79,7 +79,7 @@ public:
   };
 
 private:
-  ~OverflowingBinaryOperator() LLVM_DELETED_FUNCTION;
+  ~OverflowingBinaryOperator(); // DO NOT IMPLEMENT
 
   friend class BinaryOperator;
   friend class ConstantExpr;
@@ -133,7 +133,7 @@ public:
   };
   
 private:
-  ~PossiblyExactOperator() LLVM_DELETED_FUNCTION;
+  ~PossiblyExactOperator(); // DO NOT IMPLEMENT
 
   friend class BinaryOperator;
   friend class ConstantExpr;
@@ -170,7 +170,7 @@ public:
 /// information about relaxed accuracy requirements attached to them.
 class FPMathOperator : public Operator {
 private:
-  ~FPMathOperator() LLVM_DELETED_FUNCTION;
+  ~FPMathOperator(); // DO NOT IMPLEMENT
 
 public:
 
