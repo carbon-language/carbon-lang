@@ -523,10 +523,12 @@ def VMOVRS : AVConv2I<0b11100001, 0b1010,
   let D = VFPNeonDomain;
 }
 
+// Bitcast i32 -> f32.  NEON prefers to use VMOVDRR.
 def VMOVSR : AVConv4I<0b11100000, 0b1010,
                       (outs SPR:$Sn), (ins GPR:$Rt),
                       IIC_fpMOVIS, "vmov", "\t$Sn, $Rt",
-                      [(set SPR:$Sn, (bitconvert GPR:$Rt))]> {
+                      [(set SPR:$Sn, (bitconvert GPR:$Rt))]>,
+             Requires<[HasVFP2, UseVMOVSR]> {
   // Instruction operands.
   bits<5> Sn;
   bits<4> Rt;

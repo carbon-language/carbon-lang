@@ -207,6 +207,8 @@ def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16","half-float">;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">,
                                  AssemblerPredicate<"FeatureHWDiv", "divide">;
+def HasDivideInARM   : Predicate<"Subtarget->hasDivideInARMMode()">,
+                                 AssemblerPredicate<"FeatureHWDivARM">;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
                                  AssemblerPredicate<"FeatureT2XtPk",
                                                      "pack/extract">;
@@ -242,6 +244,7 @@ def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;
 def UseMovt          : Predicate<"Subtarget->useMovt()">;
 def DontUseMovt      : Predicate<"!Subtarget->useMovt()">;
 def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
+def UseMulOps        : Predicate<"Subtarget->useMulOps()">;
 
 // Prefer fused MAC for fp mul + add over fp VMLA / VMLS if they are available.
 // But only select them if more precision in FP computation is allowed.
@@ -251,6 +254,20 @@ def UseFusedMAC      : Predicate<"(TM.Options.AllowFPOpFusion =="
                                  "!Subtarget->isTargetDarwin()">;
 def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4() || "
                                  "Subtarget->isTargetDarwin()">;
+
+// VGETLNi32 is microcoded on Swift - prefer VMOV.
+def HasFastVGETLNi32 : Predicate<"!Subtarget->isSwift()">;
+def HasSlowVGETLNi32 : Predicate<"Subtarget->isSwift()">;
+
+// VDUP.32 is microcoded on Swift - prefer VMOV.
+def HasFastVDUP32 : Predicate<"!Subtarget->isSwift()">;
+def HasSlowVDUP32 : Predicate<"Subtarget->isSwift()">;
+
+// Cortex-A9 prefers VMOVSR to VMOVDRR even when using NEON for scalar FP, as
+// this allows more effective execution domain optimization. See
+// setExecutionDomain().
+def UseVMOVSR : Predicate<"Subtarget->isCortexA9() || !Subtarget->useNEONForSinglePrecisionFP()">;
+def DontUseVMOVSR : Predicate<"!Subtarget->isCortexA9() && Subtarget->useNEONForSinglePrecisionFP()">;
 
 def IsLE             : Predicate<"TLI.isLittleEndian()">;
 def IsBE             : Predicate<"TLI.isBigEndian()">;
@@ -3446,13 +3463,13 @@ def MULv5: ARMPseudoExpand<(outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm,
                            4, IIC_iMUL32,
                [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))],
                (MUL GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p, cc_out:$s)>,
-               Requires<[IsARM, NoV6]>;
+               Requires<[IsARM, NoV6, UseMulOps]>;
 }
 
 def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                      IIC_iMAC32, "mla", "\t$Rd, $Rn, $Rm, $Ra",
                    [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
-                   Requires<[IsARM, HasV6]> {
+                   Requires<[IsARM, HasV6, UseMulOps]> {
   bits<4> Ra;
   let Inst{15-12} = Ra;
 }
@@ -3468,7 +3485,7 @@ def MLAv5: ARMPseudoExpand<(outs GPR:$Rd),
 def MLS  : AMul1I<0b0000011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                    IIC_iMAC32, "mls", "\t$Rd, $Rn, $Rm, $Ra",
                    [(set GPR:$Rd, (sub GPR:$Ra, (mul GPR:$Rn, GPR:$Rm)))]>,
-                   Requires<[IsARM, HasV6T2]> {
+                   Requires<[IsARM, HasV6T2, UseMulOps]> {
   bits<4> Rd;
   bits<4> Rm;
   bits<4> Rn;
@@ -3574,7 +3591,7 @@ def SMMLA : AMul2Ia <0b0111010, 0b0001, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                IIC_iMAC32, "smmla", "\t$Rd, $Rn, $Rm, $Ra",
                [(set GPR:$Rd, (add (mulhs GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
-            Requires<[IsARM, HasV6]>;
+            Requires<[IsARM, HasV6, UseMulOps]>;
 
 def SMMLAR : AMul2Ia <0b0111010, 0b0011, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
@@ -3584,7 +3601,7 @@ def SMMLAR : AMul2Ia <0b0111010, 0b0011, (outs GPR:$Rd),
 def SMMLS : AMul2Ia <0b0111010, 0b1101, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                IIC_iMAC32, "smmls", "\t$Rd, $Rn, $Rm, $Ra", []>,
-            Requires<[IsARM, HasV6]>;
+            Requires<[IsARM, HasV6, UseMulOps]>;
 
 def SMMLSR : AMul2Ia <0b0111010, 0b1111, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
@@ -3638,7 +3655,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               [(set GPRnopc:$Rd, (add GPR:$Ra,
                                (opnode (sext_inreg GPRnopc:$Rn, i16),
                                        (sext_inreg GPRnopc:$Rm, i16))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE, UseMulOps]>;
 
   def BT : AMulxyIa<0b0001000, 0b10, (outs GPRnopc:$Rd),
               (ins GPRnopc:$Rn, GPRnopc:$Rm, GPR:$Ra),
@@ -3646,7 +3663,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               [(set GPRnopc:$Rd,
                     (add GPR:$Ra, (opnode (sext_inreg GPRnopc:$Rn, i16),
                                           (sra GPRnopc:$Rm, (i32 16)))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE, UseMulOps]>;
 
   def TB : AMulxyIa<0b0001000, 0b01, (outs GPRnopc:$Rd),
               (ins GPRnopc:$Rn, GPRnopc:$Rm, GPR:$Ra),
@@ -3654,7 +3671,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               [(set GPRnopc:$Rd,
                     (add GPR:$Ra, (opnode (sra GPRnopc:$Rn, (i32 16)),
                                           (sext_inreg GPRnopc:$Rm, i16))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE, UseMulOps]>;
 
   def TT : AMulxyIa<0b0001000, 0b11, (outs GPRnopc:$Rd),
               (ins GPRnopc:$Rn, GPRnopc:$Rm, GPR:$Ra),
@@ -3662,7 +3679,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
              [(set GPRnopc:$Rd,
                    (add GPR:$Ra, (opnode (sra GPRnopc:$Rn, (i32 16)),
                                          (sra GPRnopc:$Rm, (i32 16)))))]>,
-            Requires<[IsARM, HasV5TE]>;
+            Requires<[IsARM, HasV5TE, UseMulOps]>;
 
   def WB : AMulxyIa<0b0001001, 0b00, (outs GPRnopc:$Rd),
               (ins GPRnopc:$Rn, GPRnopc:$Rm, GPR:$Ra),
@@ -3670,7 +3687,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               [(set GPRnopc:$Rd,
                     (add GPR:$Ra, (sra (opnode GPRnopc:$Rn,
                                   (sext_inreg GPRnopc:$Rm, i16)), (i32 16))))]>,
-           Requires<[IsARM, HasV5TE]>;
+           Requires<[IsARM, HasV5TE, UseMulOps]>;
 
   def WT : AMulxyIa<0b0001001, 0b10, (outs GPRnopc:$Rd),
               (ins GPRnopc:$Rn, GPRnopc:$Rm, GPR:$Ra),
@@ -3678,7 +3695,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               [(set GPRnopc:$Rd,
                  (add GPR:$Ra, (sra (opnode GPRnopc:$Rn,
                                     (sra GPRnopc:$Rm, (i32 16))), (i32 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
+            Requires<[IsARM, HasV5TE, UseMulOps]>;
   }
 }
 
@@ -3779,6 +3796,19 @@ multiclass AI_sdml<bit sub, string opc> {
 
 defm SMUA : AI_sdml<0, "smua">;
 defm SMUS : AI_sdml<1, "smus">;
+
+//===----------------------------------------------------------------------===//
+//  Division Instructions (ARMv7-A with virtualization extension)
+//
+def SDIV : ADivA1I<0b001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), IIC_iDIV,
+                   "sdiv", "\t$Rd, $Rn, $Rm",
+                   [(set GPR:$Rd, (sdiv GPR:$Rn, GPR:$Rm))]>,
+           Requires<[IsARM, HasDivideInARM]>;
+
+def UDIV : ADivA1I<0b011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), IIC_iDIV,
+                   "udiv", "\t$Rd, $Rn, $Rm",
+                   [(set GPR:$Rd, (udiv GPR:$Rn, GPR:$Rm))]>,
+           Requires<[IsARM, HasDivideInARM]>;
 
 //===----------------------------------------------------------------------===//
 //  Misc. Arithmetic Instructions.
@@ -4831,32 +4861,32 @@ def : ARMV5TEPat<(sra (mul GPR:$a, (sra (shl GPR:$b, (i32 16)), (i32 16))),
 def : ARMV5TEPat<(sra (mul GPR:$a, sext_16_node:$b), (i32 16)),
                  (SMULWB GPR:$a, GPR:$b)>;
 
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (mul (sra (shl GPR:$a, (i32 16)), (i32 16)),
                            (sra (shl GPR:$b, (i32 16)), (i32 16)))),
                  (SMLABB GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (mul sext_16_node:$a, sext_16_node:$b)),
                  (SMLABB GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (mul (sra (shl GPR:$a, (i32 16)), (i32 16)),
                            (sra GPR:$b, (i32 16)))),
                  (SMLABT GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (mul sext_16_node:$a, (sra GPR:$b, (i32 16)))),
                  (SMLABT GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (mul (sra GPR:$a, (i32 16)),
                            (sra (shl GPR:$b, (i32 16)), (i32 16)))),
                  (SMLATB GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (mul (sra GPR:$a, (i32 16)), sext_16_node:$b)),
                  (SMLATB GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (sra (mul GPR:$a, (sra (shl GPR:$b, (i32 16)), (i32 16))),
                            (i32 16))),
                  (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
-def : ARMV5TEPat<(add GPR:$acc,
+def : ARMV5MOPat<(add GPR:$acc,
                       (sra (mul GPR:$a, sext_16_node:$b), (i32 16))),
                  (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
 

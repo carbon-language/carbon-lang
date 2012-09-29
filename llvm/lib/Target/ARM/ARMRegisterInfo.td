@@ -247,11 +247,16 @@ def CCR : RegisterClass<"ARM", [i32], 32, (add CPSR)> {
 }
 
 // Scalar single precision floating point register class..
-def SPR : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 31)>;
+// FIXME: Allocation order changed to s0, s2, s4, ... as a quick hack to
+// avoid partial-write dependencies on D registers (S registers are
+// renamed as portions of D registers).
+def SPR : RegisterClass<"ARM", [f32], 32, (add (decimate
+                                                (sequence "S%u", 0, 31), 2),
+                                               (sequence "S%u", 0, 31))>;
 
 // Subset of SPR which can be used as a source of NEON scalars for 16-bit
 // operations
-def SPR_8 : RegisterClass<"ARM", [f32], 32, (trunc SPR, 16)>;
+def SPR_8 : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 15)>;
 
 // Scalar double precision floating point / generic 64-bit vector register
 // class.

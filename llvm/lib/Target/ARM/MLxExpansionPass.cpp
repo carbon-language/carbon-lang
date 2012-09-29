@@ -52,6 +52,7 @@ namespace {
     MachineRegisterInfo *MRI;
 
     bool isLikeA9;
+    bool isSwift;
     unsigned MIIdx;
     MachineInstr* LastMIs[4];
     SmallPtrSet<MachineInstr*, 4> IgnoreStall;
@@ -60,6 +61,7 @@ namespace {
     void pushStack(MachineInstr *MI);
     MachineInstr *getAccDefMI(MachineInstr *MI) const;
     unsigned getDefReg(MachineInstr *MI) const;
+    bool hasLoopHazard(MachineInstr *MI) const;
     bool hasRAWHazard(unsigned Reg, MachineInstr *MI) const;
     bool FindMLxHazard(MachineInstr *MI);
     void ExpandFPMLxInstruction(MachineBasicBlock &MBB, MachineInstr *MI,
@@ -135,6 +137,50 @@ unsigned MLxExpansion::getDefReg(MachineInstr *MI) const {
   return Reg;
 }
 
+/// hasLoopHazard - Check whether an MLx instruction is chained to itself across
+/// a single-MBB loop.
+bool MLxExpansion::hasLoopHazard(MachineInstr *MI) const {
+  unsigned Reg = MI->getOperand(1).getReg();
+  if (TargetRegisterInfo::isPhysicalRegister(Reg))
+    return false;
+
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineInstr *DefMI = MRI->getVRegDef(Reg);
+  while (true) {
+outer_continue:
+    if (DefMI->getParent() != MBB)
+      break;
+
+    if (DefMI->isPHI()) {
+      for (unsigned i = 1, e = DefMI->getNumOperands(); i < e; i += 2) {
+        if (DefMI->getOperand(i + 1).getMBB() == MBB) {
+          unsigned SrcReg = DefMI->getOperand(i).getReg();
+          if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
+            DefMI = MRI->getVRegDef(SrcReg);
+            goto outer_continue;
+          }
+        }
+      }
+    } else if (DefMI->isCopyLike()) {
+      Reg = DefMI->getOperand(1).getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        DefMI = MRI->getVRegDef(Reg);
+        continue;
+      }
+    } else if (DefMI->isInsertSubreg()) {
+      Reg = DefMI->getOperand(2).getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        DefMI = MRI->getVRegDef(Reg);
+        continue;
+      }
+    }
+
+    break;
+  }
+
+  return DefMI == MI;
+}
+
 bool MLxExpansion::hasRAWHazard(unsigned Reg, MachineInstr *MI) const {
   // FIXME: Detect integer instructions properly.
   const MCInstrDesc &MCID = MI->getDesc();
@@ -149,6 +195,19 @@ bool MLxExpansion::hasRAWHazard(unsigned Reg, MachineInstr *MI) const {
   return false;
 }
 
+static bool isFpMulInstruction(unsigned Opcode) {
+  switch (Opcode) {
+  case ARM::VMULS:
+  case ARM::VMULfd:
+  case ARM::VMULfq:
+  case ARM::VMULD:
+  case ARM::VMULslfd:
+  case ARM::VMULslfq:
+    return true;
+  default:
+    return false;
+  }
+}
 
 bool MLxExpansion::FindMLxHazard(MachineInstr *MI) {
   if (NumExpand >= ExpandLimit)
@@ -170,6 +229,12 @@ bool MLxExpansion::FindMLxHazard(MachineInstr *MI) {
     IgnoreStall.insert(DefMI);
     return true;
   }
+
+  // On Swift, we mostly care about hazards from multiplication instructions
+  // writing the accumulator and the pipelining of loop iterations by out-of-
+  // order execution. 
+  if (isSwift)
+    return isFpMulInstruction(DefMI->getOpcode()) || hasLoopHazard(MI);
 
   if (IgnoreStall.count(MI))
     return false;
@@ -316,7 +381,8 @@ bool MLxExpansion::runOnMachineFunction(MachineFunction &Fn) {
   TRI = Fn.getTarget().getRegisterInfo();
   MRI = &Fn.getRegInfo();
   const ARMSubtarget *STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
-  isLikeA9 = STI->isLikeA9();
+  isLikeA9 = STI->isLikeA9() || STI->isSwift();
+  isSwift = STI->isSwift();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;

@@ -186,6 +186,9 @@ public:
     return NumCycles == 1;
   }
 
+  virtual bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                         MachineBasicBlock &FMBB) const;
+
   /// analyzeCompare - For a comparison instruction, return the source registers
   /// in SrcReg and SrcReg2 if having two register operands, and the value it
   /// compares against in CmpValue. Return true if the comparison instruction
@@ -235,6 +238,10 @@ public:
   getExecutionDomain(const MachineInstr *MI) const;
   void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
 
+  unsigned getPartialRegUpdateClearance(const MachineInstr*, unsigned,
+                                        const TargetRegisterInfo*) const;
+  void breakPartialRegDependency(MachineBasicBlock::iterator, unsigned,
+                                 const TargetRegisterInfo *TRI) const;
   /// Get the number of addresses by LDM or VLDM or zero for unknown.
   unsigned getNumLDMAddresses(const MachineInstr *MI) const;
 

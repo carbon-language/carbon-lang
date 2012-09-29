@@ -4,14 +4,14 @@ target triple = "thumbv7-apple-ios"
 ;
 ; The vector %v2 is built like this:
 ;
-;   %vreg6:ssub_1<def> = VMOVSR %vreg0<kill>, pred:14, pred:%noreg, %vreg6<imp-def>; DPR_VFP2:%vreg6 GPR:%vreg0
+;   %vreg6:ssub_1<def> = ...
 ;   %vreg6:ssub_0<def> = VLDRS <cp#0>, 0, pred:14, pred:%noreg; mem:LD4[ConstantPool] DPR_VFP2:%vreg6
 ;
 ; When %vreg6 spills, the VLDRS constant pool load cannot be rematerialized
 ; since it implicitly reads the ssub_1 sub-register.
 ;
 ; CHECK: f1
-; CHECK: vmov    s1, r0
+; CHECK: vmov    d0, r0, r0
 ; CHECK: vldr s0, LCPI
 ; The vector must be spilled:
 ; CHECK: vstr d0,

@@ -55,6 +55,7 @@ def IIC_iMUL32     : InstrItinClass;
 def IIC_iMAC32     : InstrItinClass;
 def IIC_iMUL64     : InstrItinClass;
 def IIC_iMAC64     : InstrItinClass;
+def IIC_iDIV     : InstrItinClass;
 def IIC_iLoad_i    : InstrItinClass;
 def IIC_iLoad_r    : InstrItinClass;
 def IIC_iLoad_si   : InstrItinClass;
@@ -261,3 +262,4 @@ def IIC_VTBX4      : InstrItinClass;
 include "ARMScheduleV6.td"
 include "ARMScheduleA8.td"
 include "ARMScheduleA9.td"
+include "ARMScheduleSwift.td"

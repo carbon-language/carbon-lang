@@ -7,8 +7,8 @@ define float @foo(float %a, float %b) {
 entry:
 ; CHECK: foo
 ; CORTEXM3: blx ___mulsf3
-; CORTEXM4: vmul.f32  s0, s1, s0
-; CORTEXA8: vmul.f32  d0, d1, d0
+; CORTEXM4: vmul.f32  s0, s2, s0
+; CORTEXA8: vmul.f32  d
   %0 = fmul float %a, %b
   ret float %0
 }
@@ -19,6 +19,6 @@ entry:
   %0 = fmul double %a, %b
 ; CORTEXM3: blx ___muldf3
 ; CORTEXM4: blx ___muldf3
-; CORTEXA8: vmul.f64  d16, d17, d16
+; CORTEXA8: vmul.f64  d
   ret double %0
 }

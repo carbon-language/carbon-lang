@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=swift     | FileCheck %s
 ; Avoid some 's' 16-bit instruction which partially update CPSR (and add false
 ; dependency) when it isn't dependent on last CPSR defining instruction.
 ; rdar://8928208

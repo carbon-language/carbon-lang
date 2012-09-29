@@ -8,6 +8,6 @@ entry:
 	ret float %0
 }
 
-; VFP2: vsub.f32	s0, s1, s0
-; NFP1: vsub.f32	d0, d1, d0
-; NFP0: vsub.f32	s0, s1, s0
+; VFP2: vsub.f32	s
+; NFP1: vsub.f32	d
+; NFP0: vsub.f32	s

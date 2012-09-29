@@ -10,14 +10,14 @@ entry:
 }
 
 ; VFP2: test:
-; VFP2: 	vadd.f32	s0, s1, s0
+; VFP2: 	vadd.f32	s
 
 ; NFP1: test:
-; NFP1: 	vadd.f32	d0, d1, d0
+; NFP1: 	vadd.f32	d
 ; NFP0: test:
-; NFP0: 	vadd.f32	s0, s1, s0
+; NFP0: 	vadd.f32	s
 
 ; CORTEXA8: test:
-; CORTEXA8: 	vadd.f32	d0, d1, d0
+; CORTEXA8: 	vadd.f32	d
 ; CORTEXA9: test:
 ; CORTEXA9: 	vadd.f32	s{{.}}, s{{.}}, s{{.}}

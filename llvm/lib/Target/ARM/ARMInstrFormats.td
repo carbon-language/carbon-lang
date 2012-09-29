@@ -846,6 +846,23 @@ class AMiscA1I<bits<8> opcod, bits<4> opc7_4, dag oops, dag iops,
   let Inst{3-0}   = Rm;
 }
 
+// Division instructions.
+class ADivA1I<bits<3> opcod, dag oops, dag iops,
+              InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : I<oops, iops, AddrModeNone, 4, IndexModeNone, ArithMiscFrm, itin,
+      opc, asm, "", pattern> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{27-23} = 0b01110;
+  let Inst{22-20} = opcod;
+  let Inst{19-16} = Rd;
+  let Inst{15-12} = 0b1111;
+  let Inst{11-8}  = Rm;
+  let Inst{7-4}   = 0b0001;
+  let Inst{3-0}   = Rn;
+}
+
 // PKH instructions
 def PKHLSLAsmOperand : ImmAsmOperand {
   let Name = "PKHLSLImm";
@@ -892,6 +909,10 @@ class ARMV5TPat<dag pattern, dag result> : Pat<pattern, result> {
 }
 class ARMV5TEPat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM, HasV5TE];
+}
+// ARMV5MOPat - Same as ARMV5TEPat with UseMulOps.
+class ARMV5MOPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsARM, HasV5TE, UseMulOps];
 }
 class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM, HasV6];

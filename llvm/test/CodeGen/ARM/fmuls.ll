@@ -10,15 +10,15 @@ entry:
 }
 
 ; VFP2: test:
-; VFP2: 	vmul.f32	s0, s1, s0
+; VFP2: 	vmul.f32	s
 
 ; NFP1: test:
-; NFP1: 	vmul.f32	d0, d1, d0
+; NFP1: 	vmul.f32	d
 ; NFP0: test:
-; NFP0: 	vmul.f32	s0, s1, s0
+; NFP0: 	vmul.f32	s
 
 ; CORTEXA8: test:
-; CORTEXA8: 	vmul.f32	d0, d1, d0
+; CORTEXA8: 	vmul.f32	d
 ; CORTEXA9: test:
 ; CORTEXA9: 	vmul.f32	s{{.}}, s{{.}}, s{{.}}
 

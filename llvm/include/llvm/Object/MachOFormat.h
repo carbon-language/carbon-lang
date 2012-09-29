@@ -61,7 +61,10 @@ namespace mach {
     CSARM_V6     = 6,
     CSARM_V5TEJ  = 7,
     CSARM_XSCALE = 8,
-    CSARM_V7     = 9
+    CSARM_V7     = 9,
+    CSARM_V7F    = 10,
+    CSARM_V7S    = 11,
+    CSARM_V7K    = 12
   };
 
   /// \brief PowerPC Machine Subtypes.

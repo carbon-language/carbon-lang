@@ -32,6 +32,10 @@ static cl::opt<bool>
 DarwinUseMOVT("arm-darwin-use-movt", cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
+UseFusedMulOps("arm-use-mulops",
+               cl::init(true), cl::Hidden);
+
+static cl::opt<bool>
 StrictAlign("arm-strict-align", cl::Hidden,
             cl::desc("Disallow all unaligned memory accesses"));
 
@@ -50,6 +54,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , HasVFPv4(false)
   , HasNEON(false)
   , UseNEONForSinglePrecisionFP(false)
+  , UseMulOps(UseFusedMulOps)
   , SlowFPVMLx(false)
   , HasVMLxForwarding(false)
   , SlowFPBrcc(false)
@@ -64,6 +69,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , HasFP16(false)
   , HasD16(false)
   , HasHardwareDivide(false)
+  , HasHardwareDivideInARM(false)
   , HasT2ExtractPack(false)
   , HasDataBarrier(false)
   , Pref32BitThumb(false)

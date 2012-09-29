@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=swift | FileCheck %s
 
 ; CHECK: test1:
 ; CHECK: ldr {{.*!}}

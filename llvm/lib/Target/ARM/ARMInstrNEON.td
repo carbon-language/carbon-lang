@@ -5043,7 +5043,8 @@ def VGETLNi32 : NVGetLane<{1,1,1,0,0,0,?,1}, 0b1011, 0b00,
                           (outs GPR:$R), (ins DPR:$V, VectorIndex32:$lane),
                           IIC_VMOVSI, "vmov", "32", "$R, $V$lane",
                           [(set GPR:$R, (extractelt (v2i32 DPR:$V),
-                                           imm:$lane))]> {
+                                           imm:$lane))]>,
+                Requires<[HasNEON, HasFastVGETLNi32]> {
   let Inst{21} = lane{0};
 }
 // def VGETLNf32: see FMRDH and FMRDL in ARMInstrVFP.td
@@ -5066,7 +5067,16 @@ def : Pat<(NEONvgetlaneu (v8i16 QPR:$src), imm:$lane),
 def : Pat<(extractelt (v4i32 QPR:$src), imm:$lane),
           (VGETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src,
                              (DSubReg_i32_reg imm:$lane))),
-                     (SubReg_i32_lane imm:$lane))>;
+                     (SubReg_i32_lane imm:$lane))>,
+      Requires<[HasNEON, HasFastVGETLNi32]>;
+def : Pat<(extractelt (v2i32 DPR:$src), imm:$lane),
+          (COPY_TO_REGCLASS
+            (i32 (EXTRACT_SUBREG DPR:$src, (SSubReg_f32_reg imm:$lane))), GPR)>,
+      Requires<[HasNEON, HasSlowVGETLNi32]>;
+def : Pat<(extractelt (v4i32 QPR:$src), imm:$lane),
+          (COPY_TO_REGCLASS
+            (i32 (EXTRACT_SUBREG QPR:$src, (SSubReg_f32_reg imm:$lane))), GPR)>,
+      Requires<[HasNEON, HasSlowVGETLNi32]>;
 def : Pat<(extractelt (v2f32 DPR:$src1), imm:$src2),
           (EXTRACT_SUBREG (v2f32 (COPY_TO_REGCLASS (v2f32 DPR:$src1),DPR_VFP2)),
                           (SSubReg_f32_reg imm:$src2))>;
@@ -5175,13 +5185,22 @@ class VDUPQ<bits<8> opcod1, bits<2> opcod3, string Dt, ValueType Ty>
 
 def  VDUP8d   : VDUPD<0b11101100, 0b00, "8", v8i8>;
 def  VDUP16d  : VDUPD<0b11101000, 0b01, "16", v4i16>;
-def  VDUP32d  : VDUPD<0b11101000, 0b00, "32", v2i32>;
+def  VDUP32d  : VDUPD<0b11101000, 0b00, "32", v2i32>,
+                Requires<[HasNEON, HasFastVDUP32]>;
 def  VDUP8q   : VDUPQ<0b11101110, 0b00, "8", v16i8>;
 def  VDUP16q  : VDUPQ<0b11101010, 0b01, "16", v8i16>;
 def  VDUP32q  : VDUPQ<0b11101010, 0b00, "32", v4i32>;
 
-def : Pat<(v2f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VDUP32d GPR:$R)>;
+// NEONvdup patterns for uarchs with fast VDUP.32.
+def : Pat<(v2f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VDUP32d GPR:$R)>,
+      Requires<[HasNEON,HasFastVDUP32]>;
 def : Pat<(v4f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VDUP32q GPR:$R)>;
+
+// NEONvdup patterns for uarchs with slow VDUP.32 - use VMOVDRR instead.
+def : Pat<(v2i32 (NEONvdup (i32 GPR:$R))), (VMOVDRR GPR:$R, GPR:$R)>,
+      Requires<[HasNEON,HasSlowVDUP32]>;
+def : Pat<(v2f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VMOVDRR GPR:$R, GPR:$R)>,
+      Requires<[HasNEON,HasSlowVDUP32]>;
 
 //   VDUP     : Vector Duplicate Lane (from scalar to all elements)
 
@@ -5618,6 +5637,11 @@ def : N2VSPat<arm_ftosi, VCVTf2sd>;
 def : N2VSPat<arm_ftoui, VCVTf2ud>;
 def : N2VSPat<arm_sitof, VCVTs2fd>;
 def : N2VSPat<arm_uitof, VCVTu2fd>;
+
+// Prefer VMOVDRR for i32 -> f32 bitcasts, it can write all DPR registers.
+def : Pat<(f32 (bitconvert GPR:$a)),
+          (EXTRACT_SUBREG (VMOVDRR GPR:$a, GPR:$a), ssub_0)>,
+        Requires<[HasNEON, DontUseVMOVSR]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

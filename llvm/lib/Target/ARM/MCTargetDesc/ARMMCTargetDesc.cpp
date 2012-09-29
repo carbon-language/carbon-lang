@@ -71,6 +71,14 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
         else
           // Use CPU to figure out the exact features.
           ARMArchFeature = "+v7";
+      } else if (Len >= Idx+2 && TT[Idx+1] == 's') {
+        if (NoCPU)
+          // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
+          //      Swift
+          ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+t2xtpk";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
       } else {
         // v7 CPUs have lots of different feature sets. If no CPU is specified,
         // then assume v7a (e.g. cortex-a8) feature set. Otherwise, return

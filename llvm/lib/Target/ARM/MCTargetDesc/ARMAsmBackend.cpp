@@ -687,6 +687,15 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT, StringRef
     else if (TheTriple.getArchName() == "armv6" ||
         TheTriple.getArchName() == "thumbv6")
       return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V6);
+    else if (TheTriple.getArchName() == "armv7f" ||
+        TheTriple.getArchName() == "thumbv7f")
+      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7F);
+    else if (TheTriple.getArchName() == "armv7k" ||
+        TheTriple.getArchName() == "thumbv7k")
+      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7K);
+    else if (TheTriple.getArchName() == "armv7s" ||
+        TheTriple.getArchName() == "thumbv7s")
+      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7S);
     return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7);
   }
 
