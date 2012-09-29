@@ -305,7 +305,6 @@ public:
   }
 
   bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
-    checkerMgr->runCheckersOnASTDecl(MD, *Mgr, *RecVisitorBR);
     if (MD->isThisDeclarationADefinition())
       HandleCode(MD, RecVisitorMode);
     return true;
