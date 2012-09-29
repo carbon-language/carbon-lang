@@ -3002,9 +3002,19 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
     assert(PI == P.begin() && "Begin offset is zero on later partition");
     NewAI = &AI;
   } else {
-    // FIXME: The alignment here is overly conservative -- we could in many
-    // cases get away with much weaker alignment constraints.
-    NewAI = new AllocaInst(AllocaTy, 0, AI.getAlignment(),
+    unsigned Alignment = AI.getAlignment();
+    if (!Alignment) {
+      // The minimum alignment which users can rely on when the explicit
+      // alignment is omitted or zero is that required by the ABI for this
+      // type.
+      Alignment = TD->getABITypeAlignment(AI.getAllocatedType());
+    }
+    Alignment = MinAlign(Alignment, PI->BeginOffset);
+    // If we will get at least this much alignment from the type alone, leave
+    // the alloca's alignment unconstrained.
+    if (Alignment <= TD->getABITypeAlignment(AllocaTy))
+      Alignment = 0;
+    NewAI = new AllocaInst(AllocaTy, 0, Alignment,
                            AI.getName() + ".sroa." + Twine(PI - P.begin()),
                            &AI);
     ++NumNewAllocas;

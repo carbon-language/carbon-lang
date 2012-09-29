@@ -30,7 +30,7 @@ entry:
 
 define void @test2() {
 ; CHECK: @test2
-; CHECK: alloca i16, align 2
+; CHECK: alloca i16
 ; CHECK: load i8* %{{.*}}, align 1
 ; CHECK: store i8 42, i8* %{{.*}}, align 1
 ; CHECK: ret void
@@ -60,5 +60,26 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %aaptr, i8* %aptr, i32 16, i32 2, i1 false)
   %bptr = bitcast i16* %b to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %bptr, i8* %aaptr, i32 16, i32 2, i1 false)
+  ret void
+}
+
+define void @test3(i8* %x) {
+; Test that when we promote an alloca to a type with lower ABI alignment, we
+; provide the needed explicit alignment that code using the alloca may be
+; expecting. However, also check that any offset within an alloca can in turn
+; reduce the alignment.
+; CHECK: @test3
+; CHECK: alloca [22 x i8], align 8
+; CHECK: alloca [18 x i8], align 2
+; CHECK: ret void
+
+entry:
+  %a = alloca { i8*, i8*, i8* }
+  %b = alloca { i8*, i8*, i8* }
+  %a_raw = bitcast { i8*, i8*, i8* }* %a to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a_raw, i8* %x, i32 22, i32 8, i1 false)
+  %b_raw = bitcast { i8*, i8*, i8* }* %b to i8*
+  %b_gep = getelementptr i8* %b_raw, i32 6
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %b_gep, i8* %x, i32 18, i32 2, i1 false)
   ret void
 }
