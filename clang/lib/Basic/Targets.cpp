@@ -2825,14 +2825,14 @@ namespace {
 class ARMTargetInfo : public TargetInfo {
   // Possible FPU choices.
   enum FPUMode {
-    NoFPU,
-    VFP2FPU,
-    VFP3FPU,
-    NeonFPU
+    VFP2FPU = (1 << 0),
+    VFP3FPU = (1 << 1),
+    VFP4FPU = (1 << 2),
+    NeonFPU = (1 << 3)
   };
 
   static bool FPUModeIsVFP(FPUMode Mode) {
-    return Mode >= VFP2FPU && Mode <= NeonFPU;
+    return Mode & (VFP2FPU | VFP3FPU | VFP4FPU | NeonFPU);
   }
 
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
@@ -2840,7 +2840,7 @@ class ARMTargetInfo : public TargetInfo {
 
   std::string ABI, CPU;
 
-  unsigned FPU : 3;
+  unsigned FPU : 4;
 
   unsigned IsThumb : 1;
 
@@ -2941,16 +2941,21 @@ public:
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
-    else if (CPU == "cortex-a8" || CPU == "cortex-a9" || CPU == "cortex-a15")
+    else if (CPU == "cortex-a8" || CPU == "cortex-a15" ||
+             CPU == "cortex-a9" || CPU == "cortex-a9-mp")
       Features["neon"] = true;
+    else if (CPU == "swift") {
+      Features["vfp4"] = true;
+      Features["neon"] = true;
+    }
   }
 
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const {
     if (Name == "soft-float" || Name == "soft-float-abi" ||
-        Name == "vfp2" || Name == "vfp3" || Name == "neon" || Name == "d16" ||
-        Name == "neonfp") {
+        Name == "vfp2" || Name == "vfp3" || Name == "vfp4" || Name == "neon" ||
+        Name == "d16" || Name == "neonfp") {
       Features[Name] = Enabled;
     } else
       return false;
@@ -2959,7 +2964,7 @@ public:
   }
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
-    FPU = NoFPU;
+    FPU = 0;
     SoftFloat = SoftFloatABI = false;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+soft-float")
@@ -2967,11 +2972,13 @@ public:
       else if (Features[i] == "+soft-float-abi")
         SoftFloatABI = true;
       else if (Features[i] == "+vfp2")
-        FPU = VFP2FPU;
+        FPU |= VFP2FPU;
       else if (Features[i] == "+vfp3")
-        FPU = VFP3FPU;
+        FPU |= VFP3FPU;
+      else if (Features[i] == "+vfp4")
+        FPU |= VFP4FPU;
       else if (Features[i] == "+neon")
-        FPU = NeonFPU;
+        FPU |= NeonFPU;
     }
 
     // Remove front-end specific options which the backend handles differently.
@@ -3080,14 +3087,21 @@ public:
     // Note, this is always on in gcc, even though it doesn't make sense.
     Builder.defineMacro("__APCS_32__");
 
-    if (FPUModeIsVFP((FPUMode) FPU))
+    if (FPUModeIsVFP((FPUMode) FPU)) {
       Builder.defineMacro("__VFP_FP__");
-
+      if (FPU & VFP2FPU)
+        Builder.defineMacro("__ARM_VFPV2__");
+      if (FPU & VFP3FPU)
+        Builder.defineMacro("__ARM_VFPV3__");
+      if (FPU & VFP4FPU)
+        Builder.defineMacro("__ARM_VFPV4__");
+    }
+    
     // This only gets set when Neon instructions are actually available, unlike
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
-    if (FPU == NeonFPU && !SoftFloat && IsARMv7)
+    if ((FPU & NeonFPU) && !SoftFloat && IsARMv7)
       Builder.defineMacro("__ARM_NEON__");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
