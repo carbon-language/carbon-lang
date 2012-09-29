@@ -487,6 +487,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     
     const char* class_name = descriptor->GetClassName().GetCString();
     
+    if (!class_name || !*class_name)
+        return false;
+    
     uint64_t info_bits_location = valobj_addr + ptr_size;
     if (process_sp->GetByteOrder() != lldb::eByteOrderLittle)
         info_bits_location += 3;
