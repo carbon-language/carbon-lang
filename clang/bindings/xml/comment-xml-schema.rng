@@ -288,7 +288,7 @@
   </define>
 
   <define name="Attribute">
-   <element name="Availability">
+    <element name="Availability">
       <attribute name="distribution">
           <data type="string" />
       </attribute>
@@ -317,7 +317,7 @@
           <data type="boolean" />
         </element>
       </optional>
-   </element>
+    </element>
   </define>
 
   <define name="Abstract">
