@@ -2547,7 +2547,7 @@ public:
     /// Read a NULL terminated C string from memory
     ///
     /// This function will read a cache page at a time until the NULL
-    /// C stirng terminator is found. It will stop reading if the NULL
+    /// C string terminator is found. It will stop reading if the NULL
     /// termination byte isn't found before reading \a cstr_max_len
     /// bytes, and the results are always guaranteed to be NULL 
     /// terminated (at most cstr_max_len - 1 bytes will be read).

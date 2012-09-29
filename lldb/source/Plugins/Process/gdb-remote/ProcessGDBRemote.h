@@ -293,6 +293,13 @@ protected:
         lldb_private::Mutex::Locker locker (m_last_stop_packet_mutex);
         m_last_stop_packet = response;
     }
+
+    void
+    RelocateOrLoadKernel (lldb_private::Stream *strm);
+
+    void
+    LoadKernel (lldb_private::Stream *strm, lldb_private::UUID kernel_uuid, lldb::addr_t kernel_load_addr);
+
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------
