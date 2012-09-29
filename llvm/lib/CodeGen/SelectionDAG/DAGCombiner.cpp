@@ -3221,11 +3221,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, DebugLoc DL) {
     if ((LShVal + RShVal) != OpSizeInBits)
       return 0;
 
-    SDValue Rot;
-    if (HasROTL)
-      Rot = DAG.getNode(ISD::ROTL, DL, VT, LHSShiftArg, LHSShiftAmt);
-    else
-      Rot = DAG.getNode(ISD::ROTR, DL, VT, LHSShiftArg, RHSShiftAmt);
+    SDValue Rot = DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, DL, VT,
+                              LHSShiftArg, HasROTL ? LHSShiftAmt : RHSShiftAmt);
 
     // If there is an AND of either shifted operand, apply it to the result.
     if (LHSMask.getNode() || RHSMask.getNode()) {
@@ -3258,12 +3255,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, DebugLoc DL) {
     if (ConstantSDNode *SUBC =
           dyn_cast<ConstantSDNode>(RHSShiftAmt.getOperand(0))) {
       if (SUBC->getAPIntValue() == OpSizeInBits) {
-        if (HasROTL)
-          return DAG.getNode(ISD::ROTL, DL, VT,
-                             LHSShiftArg, LHSShiftAmt).getNode();
-        else
-          return DAG.getNode(ISD::ROTR, DL, VT,
-                             LHSShiftArg, RHSShiftAmt).getNode();
+        return DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, DL, VT, LHSShiftArg,
+                           HasROTL ? LHSShiftAmt : RHSShiftAmt).getNode();
       }
     }
   }
@@ -3275,12 +3268,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, DebugLoc DL) {
     if (ConstantSDNode *SUBC =
           dyn_cast<ConstantSDNode>(LHSShiftAmt.getOperand(0))) {
       if (SUBC->getAPIntValue() == OpSizeInBits) {
-        if (HasROTR)
-          return DAG.getNode(ISD::ROTR, DL, VT,
-                             LHSShiftArg, RHSShiftAmt).getNode();
-        else
-          return DAG.getNode(ISD::ROTL, DL, VT,
-                             LHSShiftArg, LHSShiftAmt).getNode();
+        return DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, DL, VT, LHSShiftArg,
+                           HasROTR ? RHSShiftAmt : LHSShiftAmt).getNode();
       }
     }
   }
