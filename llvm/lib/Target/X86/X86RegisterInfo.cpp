@@ -590,9 +590,10 @@ unsigned X86RegisterInfo::getEHHandlerRegister() const {
 }
 
 namespace llvm {
-unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
-  switch (VT.getSimpleVT().SimpleTy) {
-  default: return Reg;
+unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
+                                bool High) {
+  switch (VT) {
+  default: llvm_unreachable("Unexpected VT");
   case MVT::i8:
     if (High) {
       switch (Reg) {
@@ -608,7 +609,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
       }
     } else {
       switch (Reg) {
-      default: return 0;
+      default: llvm_unreachable("Unexpected register");
       case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
         return X86::AL;
       case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -645,7 +646,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
     }
   case MVT::i16:
     switch (Reg) {
-    default: return Reg;
+    default: llvm_unreachable("Unexpected register");
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::AX;
     case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -681,7 +682,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
     }
   case MVT::i32:
     switch (Reg) {
-    default: return Reg;
+    default: llvm_unreachable("Unexpected register");
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::EAX;
     case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -733,7 +734,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
       }
     }
     switch (Reg) {
-    default: return Reg;
+    default: llvm_unreachable("Unexpected register");
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::RAX;
     case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:

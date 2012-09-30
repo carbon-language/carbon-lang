@@ -12110,7 +12110,7 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   SrcReg = MI->getOperand(CurOp++).getReg();
 
   const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
-  EVT VT = *RC->vt_begin();
+  MVT::SimpleValueType VT = *RC->vt_begin();
   unsigned AccPhyReg = getX86SubSuperRegister(X86::EAX, VT);
 
   unsigned LCMPXCHGOpc = getCmpXChgOpcode(VT);

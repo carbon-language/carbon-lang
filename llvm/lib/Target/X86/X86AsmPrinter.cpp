@@ -243,7 +243,7 @@ void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (AsmVariant == 0) O << '%';
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-      EVT VT = (strcmp(Modifier+6,"64") == 0) ?
+      MVT::SimpleValueType VT = (strcmp(Modifier+6,"64") == 0) ?
         MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
                     ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
