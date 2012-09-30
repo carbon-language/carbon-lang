@@ -27,6 +27,11 @@ ifeq ($(MAKECMDGOALS),libs-only)
   DIRS := $(filter-out tools docs, $(DIRS))
   OPTIONAL_DIRS :=
 endif
+ifeq ($(MAKECMDGOALS),clang-only)
+  DIRS := $(filter-out tools docs unittests, $(DIRS))
+	tools/driver tools/libclang
+  OPTIONAL_DIRS :=
+endif
 
 ###
 # Common Makefile code, shared by all Clang Makefiles.
