@@ -1,8 +1,7 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=dynamic-no-pic | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=corei7 -relocation-model=dynamic-no-pic | FileCheck %s
 
 ; CHECK: align
-; CHECK: movl  $4, -4(%ecx)
-; CHECK: movl  $5, (%ecx)
+; CHECK: movlpd %xmm0, -4(%ecx)
 ; CHECK: addl  $4, %ecx
 ; CHECK: decl  %eax
 ; CHECK: jne
