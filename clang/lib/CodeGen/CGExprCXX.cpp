@@ -241,7 +241,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       // We don't like to generate the trivial copy/move assignment operator
       // when it isn't necessary; just produce the proper effect here.
       llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
-      EmitAggregateCopy(This, RHS, CE->getType());
+      EmitAggregateAssign(This, RHS, CE->getType());
       return RValue::get(This);
     }
     
@@ -378,7 +378,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
       MD->isTrivial()) {
     llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
     QualType Ty = E->getType();
-    EmitAggregateCopy(This, Src, Ty);
+    EmitAggregateAssign(This, Src, Ty);
     return RValue::get(This);
   }
 

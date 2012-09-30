@@ -1653,13 +1653,26 @@ public:
   void EmitExprAsInit(const Expr *init, const ValueDecl *D,
                       LValue lvalue, bool capturedByInit);
 
+  /// EmitAggregateCopy - Emit an aggrate assignment.
+  ///
+  /// The difference to EmitAggregateCopy is that tail padding is not copied.
+  /// This is required for correctness when assigning non-POD structures in C++.
+  void EmitAggregateAssign(llvm::Value *DestPtr, llvm::Value *SrcPtr,
+                           QualType EltTy, bool isVolatile=false,
+                           CharUnits Alignment = CharUnits::Zero()) {
+    EmitAggregateCopy(DestPtr, SrcPtr, EltTy, isVolatile, Alignment, true);
+  }
+
   /// EmitAggregateCopy - Emit an aggrate copy.
   ///
   /// \param isVolatile - True iff either the source or the destination is
   /// volatile.
+  /// \param isAssignment - If false, allow padding to be copied.  This often
+  /// yields more efficient.
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy, bool isVolatile=false,
-                         CharUnits Alignment = CharUnits::Zero());
+                         CharUnits Alignment = CharUnits::Zero(),
+                         bool isAssignment = false);
 
   /// StartBlock - Start new block named N. If insert block is a dummy block
   /// then reuse it.
