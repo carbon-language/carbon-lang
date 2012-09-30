@@ -430,13 +430,17 @@ void Lint::visitMemoryReference(Instruction &I,
         BaseAlign = AI->getAlignment();
         if (BaseAlign == 0 && ATy->isSized())
           BaseAlign = TD->getABITypeAlignment(ATy);
-      } else if (GlobalValue *GV = dyn_cast<GlobalVariable>(Base)) {
-        Type *GTy = GV->getType()->getElementType();
-        if (GTy->isSized())
-          BaseSize = TD->getTypeAllocSize(GTy);
-        BaseAlign = GV->getAlignment();
-        if (BaseAlign == 0 && GTy->isSized())
-          BaseAlign = TD->getABITypeAlignment(GTy);
+      } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Base)) {
+        // If the global may be defined differently in another compilation unit
+        // then don't warn about funky memory accesses.
+        if (GV->hasDefinitiveInitializer()) {
+          Type *GTy = GV->getType()->getElementType();
+          if (GTy->isSized())
+            BaseSize = TD->getTypeAllocSize(GTy);
+          BaseAlign = GV->getAlignment();
+          if (BaseAlign == 0 && GTy->isSized())
+            BaseAlign = TD->getABITypeAlignment(GTy);
+        }
       }
 
       // Accesses from before the start or after the end of the object are not

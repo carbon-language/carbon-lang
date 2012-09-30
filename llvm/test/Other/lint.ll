@@ -9,6 +9,7 @@ declare void @has_noaliases(i32* noalias %p, i32* %q)
 declare void @one_arg(i32)
 
 @CG = constant i32 7
+@E = external global i8
 
 define i32 @foo() noreturn {
   %buf = alloca i8
@@ -100,6 +101,10 @@ next:
   ret i32 0
 
 foo:
+; CHECK-NOT: Undefined behavior: Buffer overflow
+; CHECK-NOT: Memory reference address is misaligned
+  %e = bitcast i8* @E to i64*
+  store i64 0, i64* %e
   %z = add i32 0, 0
 ; CHECK: unreachable immediately preceded by instruction without side effects
   unreachable
