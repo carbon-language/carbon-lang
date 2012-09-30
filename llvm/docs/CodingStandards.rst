@@ -714,7 +714,7 @@ enforced, and hopefully what to do about it.  Here is one complete example:
 .. code-block:: c++
 
   inline Value *getOperand(unsigned i) { 
-    assert(i < Operands.size() &amp;&amp; "getOperand() out of range!");
+    assert(i < Operands.size() && "getOperand() out of range!");
     return Operands[i]; 
   }
 
