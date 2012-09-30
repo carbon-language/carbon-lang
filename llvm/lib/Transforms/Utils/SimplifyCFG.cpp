@@ -1173,10 +1173,14 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
 
   // Check that BBEnd has two predecessors and the other predecessor ends with
   // an unconditional branch.
-  SmallVector<BasicBlock*, 16> Preds(pred_begin(BBEnd), pred_end(BBEnd));
-  if (Preds.size() != 2)
+  pred_iterator PI = pred_begin(BBEnd), PE = pred_end(BBEnd);
+  BasicBlock *Pred0 = *PI++;
+  if (PI == PE) // Only one predecessor.
     return false;
-  BasicBlock *BB2 = (Preds[0] == BB1) ? Preds[1] : Preds[0];
+  BasicBlock *Pred1 = *PI++;
+  if (PI != PE) // More than two predecessors.
+    return false;
+  BasicBlock *BB2 = (Pred0 == BB1) ? Pred1 : Pred0;
   BranchInst *BI2 = dyn_cast<BranchInst>(BB2->getTerminator());
   if (!BI2 || !BI2->isUnconditional())
     return false;
