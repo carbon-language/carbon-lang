@@ -136,13 +136,11 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   // constants are.
   SDValue NotZero = N->getOperand(i);
   unsigned EltSize = N->getValueType(0).getVectorElementType().getSizeInBits();
-  if (isa<ConstantSDNode>(NotZero)) {
-    if (cast<ConstantSDNode>(NotZero)->getAPIntValue().countTrailingOnes() <
-        EltSize)
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(NotZero)) {
+    if (CN->getAPIntValue().countTrailingOnes() < EltSize)
       return false;
-  } else if (isa<ConstantFPSDNode>(NotZero)) {
-    if (cast<ConstantFPSDNode>(NotZero)->getValueAPF()
-              .bitcastToAPInt().countTrailingOnes() < EltSize)
+  } else if (ConstantFPSDNode *CFPN = dyn_cast<ConstantFPSDNode>(NotZero)) {
+    if (CFPN->getValueAPF().bitcastToAPInt().countTrailingOnes() < EltSize)
       return false;
   } else
     return false;
@@ -179,11 +177,11 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   // Do not accept build_vectors that aren't all constants or which have non-0
   // elements.
   SDValue Zero = N->getOperand(i);
-  if (isa<ConstantSDNode>(Zero)) {
-    if (!cast<ConstantSDNode>(Zero)->isNullValue())
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Zero)) {
+    if (!CN->isNullValue())
       return false;
-  } else if (isa<ConstantFPSDNode>(Zero)) {
-    if (!cast<ConstantFPSDNode>(Zero)->getValueAPF().isPosZero())
+  } else if (ConstantFPSDNode *CFPN = dyn_cast<ConstantFPSDNode>(Zero)) {
+    if (!CFPN->getValueAPF().isPosZero())
       return false;
   } else
     return false;
