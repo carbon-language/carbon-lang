@@ -95,11 +95,11 @@
 // RUN:   | FileCheck %s --check-prefix=CHECK-DYNAMIC-NO-PIC2
 
 // Checks for ARM
-// RUN: %clang -c %s -arch armv7 -fapple-kext -miphoneos-version-min=6.0.0 -### 2>&1 \
+// RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=6.0.0 -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
-// RUN: %clang -c %s -arch armv7 -mkernel -miphoneos-version-min=6.0.0 -### 2>&1 \
+// RUN: %clang -c %s -target armv7-apple-ios -mkernel -miphoneos-version-min=6.0.0 -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
-// RUN: %clang -c %s -arch armv7 -fapple-kext -miphoneos-version-min=5.0.0 -### 2>&1 \
+// RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=5.0.0 -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
-// RUN: %clang -c %s -arch armv7 -fapple-kext -miphoneos-version-min=6.0.0 -static -### 2>&1 \
+// RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=6.0.0 -static -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
