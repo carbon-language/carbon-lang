@@ -390,7 +390,7 @@ functions make it easy to build arbitrary machine instructions.  Usage of the
   MachineInstr *MI = BuildMI(X86::MOV32ri, 1, DestReg).addImm(42);
 
   // Create the same instr, but insert it at the end of a basic block.
-  MachineBasicBlock &amp;MBB = ...
+  MachineBasicBlock &MBB = ...
   BuildMI(MBB, X86::MOV32ri, 1, DestReg).addImm(42);
 
   // Create the same instr, but insert it before a specified iterator point.
@@ -404,7 +404,7 @@ functions make it easy to build arbitrary machine instructions.  Usage of the
   MI = BuildMI(X86::SAHF, 0);
 
   // Create a self looping branch instruction.
-  BuildMI(MBB, X86::JNE, 1).addMBB(&amp;MBB);
+  BuildMI(MBB, X86::JNE, 1).addMBB(&MBB);
 
 The key thing to remember with the ``BuildMI`` functions is that you have to
 specify the number of operands that the machine instruction will take.  This

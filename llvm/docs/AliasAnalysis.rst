@@ -230,7 +230,7 @@ any pass dependencies your pass has.  Thus you should have something like this:
 
 .. code-block:: c++
 
-  void getAnalysisUsage(AnalysisUsage &amp;AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const {
     AliasAnalysis::getAnalysisUsage(AU);
     // declare your dependencies here.
   }
