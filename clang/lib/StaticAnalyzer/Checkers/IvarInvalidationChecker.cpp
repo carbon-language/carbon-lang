@@ -90,8 +90,6 @@ class IvarInvalidationChecker :
   /// Statement visitor, which walks the method body and flags the ivars
   /// referenced in it (either directly or via property).
   class MethodCrawler : public ConstStmtVisitor<MethodCrawler> {
-    const ObjCMethodDecl *EnclosingMethod;
-
     /// The set of Ivars which need to be invalidated.
     IvarSet &IVars;
 
@@ -138,15 +136,13 @@ class IvarInvalidationChecker :
     void check(const Expr *E);
 
   public:
-    MethodCrawler(const ObjCMethodDecl *InMeth,
-                  IvarSet &InIVars,
+    MethodCrawler(IvarSet &InIVars,
                   bool &InCalledAnotherInvalidationMethod,
                   const MethToIvarMapTy &InPropertySetterToIvarMap,
                   const MethToIvarMapTy &InPropertyGetterToIvarMap,
                   const PropToIvarMapTy &InPropertyToIvarMap,
                   ASTContext &InCtx)
-    : EnclosingMethod(InMeth),
-      IVars(InIVars),
+    : IVars(InIVars),
       CalledAnotherInvalidationMethod(InCalledAnotherInvalidationMethod),
       PropertySetterToIvarMap(InPropertySetterToIvarMap),
       PropertyGetterToIvarMap(InPropertyGetterToIvarMap),
@@ -363,7 +359,7 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
 
   // Check which ivars have been invalidated in the method body.
   bool CalledAnotherInvalidationMethod = false;
-  MethodCrawler(D, Ivars,
+  MethodCrawler(Ivars,
                 CalledAnotherInvalidationMethod,
                 PropSetterToIvarMap,
                 PropGetterToIvarMap,
@@ -518,12 +514,9 @@ void IvarInvalidationChecker::MethodCrawler::VisitObjCMessageExpr(
 
   // Stop if we are calling '[self invalidate]'.
   if (Receiver && isInvalidationMethod(MD))
-    if (const DeclRefExpr *RD =
-          dyn_cast<DeclRefExpr>(Receiver->IgnoreParenCasts())) {
-      if (RD->getDecl() == EnclosingMethod->getSelfDecl()) {
-        CalledAnotherInvalidationMethod = true;
-        return;
-      }
+    if (Receiver->isObjCSelfExpr()) {
+      CalledAnotherInvalidationMethod = true;
+      return;
     }
 
   // Check if we call a setter and set the property to 'nil'.

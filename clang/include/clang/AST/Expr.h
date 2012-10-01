@@ -392,6 +392,9 @@ public:
   /// property, find the underlying property reference expression.
   const ObjCPropertyRefExpr *getObjCProperty() const;
 
+  /// \brief Check if this expression is the ObjC 'self' implicit parameter.
+  bool isObjCSelfExpr() const;
+
   /// \brief Returns whether this expression refers to a vector element.
   bool refersToVectorElement() const;
 

@@ -41,24 +41,6 @@ static const NamedDecl *getBestPropertyDecl(const ObjCPropertyRefExpr *PropE) {
   return PropE->getImplicitPropertyGetter();
 }
 
-static bool isSelfExpr(const Expr *E) {
-  E = E->IgnoreParenImpCasts();
-
-  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
-  if (!DRE)
-    return false;
-
-  const ImplicitParamDecl *Param = dyn_cast<ImplicitParamDecl>(DRE->getDecl());
-  if (!Param)
-    return false;
-
-  const ObjCMethodDecl *M = dyn_cast<ObjCMethodDecl>(Param->getDeclContext());
-  if (!M)
-    return false;
-
-  return M->getSelfDecl() == Param;
-}
-
 FunctionScopeInfo::WeakObjectProfileTy::BaseInfoTy
 FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
   E = E->IgnoreParenCasts();
@@ -80,7 +62,7 @@ FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
   case Stmt::ObjCIvarRefExprClass: {
     const ObjCIvarRefExpr *IE = cast<ObjCIvarRefExpr>(E);
     D = IE->getDecl();
-    IsExact = isSelfExpr(IE->getBase());
+    IsExact = IE->getBase()->isObjCSelfExpr();
     break;
   }
   case Stmt::PseudoObjectExprClass: {
@@ -94,7 +76,7 @@ FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
       if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(DoubleBase))
         DoubleBase = OVE->getSourceExpr();
 
-      IsExact = isSelfExpr(DoubleBase);
+      IsExact = DoubleBase->isObjCSelfExpr();
     }
     break;
   }
