@@ -40,7 +40,7 @@ class CallEvent;
 class CallEventManager;
 
 typedef ConstraintManager* (*ConstraintManagerCreator)(ProgramStateManager&,
-                                                       SubEngine&);
+                                                       SubEngine*);
 typedef StoreManager* (*StoreManagerCreator)(ProgramStateManager&);
 
 //===----------------------------------------------------------------------===//
@@ -447,7 +447,7 @@ public:
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc,
-                 SubEngine &subeng);
+                 SubEngine *subeng);
 
   ~ProgramStateManager();
 

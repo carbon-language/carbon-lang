@@ -22,10 +22,10 @@ namespace clang {
 namespace ento {
 
 class SimpleConstraintManager : public ConstraintManager {
-  SubEngine &SU;
+  SubEngine *SU;
   BasicValueFactory &BVF;
 public:
-  SimpleConstraintManager(SubEngine &subengine, BasicValueFactory &BV)
+  SimpleConstraintManager(SubEngine *subengine, BasicValueFactory &BV)
     : SU(subengine), BVF(BV) {}
   virtual ~SimpleConstraintManager();
 

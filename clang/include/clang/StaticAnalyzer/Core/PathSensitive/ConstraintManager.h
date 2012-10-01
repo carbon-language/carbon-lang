@@ -118,7 +118,7 @@ protected:
 };
 
 ConstraintManager* CreateRangeConstraintManager(ProgramStateManager& statemgr,
-                                                SubEngine &subengine);
+                                                SubEngine *subengine);
 
 } // end GR namespace
 

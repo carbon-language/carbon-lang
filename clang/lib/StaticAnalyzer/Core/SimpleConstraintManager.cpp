@@ -67,8 +67,8 @@ ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
 ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state, Loc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
-  if (NotifyAssumeClients)
-    return SU.processAssume(state, cond, assumption);
+  if (NotifyAssumeClients && SU)
+    return SU->processAssume(state, cond, assumption);
   return state;
 }
 
@@ -115,8 +115,8 @@ ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                NonLoc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
-  if (NotifyAssumeClients)
-    return SU.processAssume(state, cond, assumption);
+  if (NotifyAssumeClients && SU)
+    return SU->processAssume(state, cond, assumption);
   return state;
 }
 

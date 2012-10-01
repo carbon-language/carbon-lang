@@ -71,8 +71,8 @@ ProgramStateManager::ProgramStateManager(ASTContext &Ctx,
                                          StoreManagerCreator CreateSMgr,
                                          ConstraintManagerCreator CreateCMgr,
                                          llvm::BumpPtrAllocator &alloc,
-                                         SubEngine &SubEng)
-  : Eng(&SubEng), EnvMgr(alloc), GDMFactory(alloc),
+                                         SubEngine *SubEng)
+  : Eng(SubEng), EnvMgr(alloc), GDMFactory(alloc),
     svalBuilder(createSimpleSValBuilder(alloc, Ctx, *this)),
     CallEventMgr(new CallEventManager(alloc)), Alloc(alloc) {
   StoreMgr.reset((*CreateSMgr)(*this));

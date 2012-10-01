@@ -296,7 +296,7 @@ namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(ProgramStateRef state, SymbolRef sym);
 public:
-  RangeConstraintManager(SubEngine &subengine, BasicValueFactory &BVF)
+  RangeConstraintManager(SubEngine *subengine, BasicValueFactory &BVF)
     : SimpleConstraintManager(subengine, BVF) {}
 
   ProgramStateRef assumeSymNE(ProgramStateRef state, SymbolRef sym,
@@ -337,7 +337,7 @@ private:
 } // end anonymous namespace
 
 ConstraintManager *
-ento::CreateRangeConstraintManager(ProgramStateManager &StMgr, SubEngine &Eng) {
+ento::CreateRangeConstraintManager(ProgramStateManager &StMgr, SubEngine *Eng) {
   return new RangeConstraintManager(Eng, StMgr.getBasicVals());
 }
 
