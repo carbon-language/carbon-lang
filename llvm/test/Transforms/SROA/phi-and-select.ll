@@ -59,15 +59,24 @@ entry:
 	%a = alloca [2 x i32]
 ; CHECK-NOT: alloca
 
+  ; Note that we build redundant GEPs here to ensure that having different GEPs
+  ; into the same alloca partation continues to work with PHI speculation. This
+  ; was the underlying cause of PR13926.
   %a0 = getelementptr [2 x i32]* %a, i64 0, i32 0
+  %a0b = getelementptr [2 x i32]* %a, i64 0, i32 0
   %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a1b = getelementptr [2 x i32]* %a, i64 0, i32 1
 	store i32 0, i32* %a0
 	store i32 1, i32* %a1
 ; CHECK-NOT: store
 
   switch i32 %x, label %bb0 [ i32 1, label %bb1
                               i32 2, label %bb2
-                              i32 3, label %bb3 ]
+                              i32 3, label %bb3
+                              i32 4, label %bb4
+                              i32 5, label %bb5
+                              i32 6, label %bb6
+                              i32 7, label %bb7 ]
 
 bb0:
 	br label %exit
@@ -77,10 +86,19 @@ bb2:
 	br label %exit
 bb3:
 	br label %exit
+bb4:
+	br label %exit
+bb5:
+	br label %exit
+bb6:
+	br label %exit
+bb7:
+	br label %exit
 
 exit:
-	%phi = phi i32* [ %a1, %bb0 ], [ %a0, %bb1 ], [ %a0, %bb2 ], [ %a1, %bb3 ]
-; CHECK: phi i32 [ 1, %{{.*}} ], [ 0, %{{.*}} ], [ 0, %{{.*}} ], [ 1, %{{.*}} ]
+	%phi = phi i32* [ %a1, %bb0 ], [ %a0, %bb1 ], [ %a0, %bb2 ], [ %a1, %bb3 ],
+                  [ %a1b, %bb4 ], [ %a0b, %bb5 ], [ %a0b, %bb6 ], [ %a1b, %bb7 ]
+; CHECK: phi i32 [ 1, %{{.*}} ], [ 0, %{{.*}} ], [ 0, %{{.*}} ], [ 1, %{{.*}} ], [ 1, %{{.*}} ], [ 0, %{{.*}} ], [ 0, %{{.*}} ], [ 1, %{{.*}} ]
 
 	%result = load i32* %phi
 	ret i32 %result

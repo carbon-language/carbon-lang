@@ -155,16 +155,12 @@ public:
   /// memory use itself with a particular partition. As a consequence there is
   /// intentionally overlap between various uses of the same partition.
   struct PartitionUse : public ByteRange {
-    /// \brief The user of this range of the alloca.
-    AssertingVH<Instruction> User;
+    /// \brief The use in question. Provides access to both user and used value.
+    Use* U;
 
-    /// \brief The particular pointer value derived from this alloca in use.
-    AssertingVH<Instruction> Ptr;
-
-    PartitionUse() : ByteRange(), User(), Ptr() {}
-    PartitionUse(uint64_t BeginOffset, uint64_t EndOffset,
-                 Instruction *User, Instruction *Ptr)
-        : ByteRange(BeginOffset, EndOffset), User(User), Ptr(Ptr) {}
+    PartitionUse() : ByteRange(), U() {}
+    PartitionUse(uint64_t BeginOffset, uint64_t EndOffset, Use *U)
+        : ByteRange(BeginOffset, EndOffset), U(U) {}
   };
 
   /// \brief Construct a partitioning of a particular alloca.
@@ -202,11 +198,11 @@ public:
   use_iterator use_begin(const_iterator I) { return Uses[I - begin()].begin(); }
   use_iterator use_end(unsigned Idx) { return Uses[Idx].end(); }
   use_iterator use_end(const_iterator I) { return Uses[I - begin()].end(); }
-  void use_push_back(unsigned Idx, const PartitionUse &U) {
-    Uses[Idx].push_back(U);
+  void use_push_back(unsigned Idx, const PartitionUse &PU) {
+    Uses[Idx].push_back(PU);
   }
-  void use_push_back(const_iterator I, const PartitionUse &U) {
-    Uses[I - begin()].push_back(U);
+  void use_push_back(const_iterator I, const PartitionUse &PU) {
+    Uses[I - begin()].push_back(PU);
   }
   void use_erase(unsigned Idx, use_iterator UI) { Uses[Idx].erase(UI); }
   void use_erase(const_iterator I, use_iterator UI) {
@@ -267,10 +263,9 @@ public:
   /// When manipulating PHI nodes or selects, they can use more than one
   /// partition of an alloca. We store a special mapping to allow finding the
   /// partition referenced by each of these operands, if any.
-  iterator findPartitionForPHIOrSelectOperand(Instruction &I, Value *Op) {
-    SmallDenseMap<std::pair<Instruction *, Value *>,
-                  std::pair<unsigned, unsigned> >::const_iterator MapIt
-      = PHIOrSelectOpMap.find(std::make_pair(&I, Op));
+  iterator findPartitionForPHIOrSelectOperand(Use *U) {
+    SmallDenseMap<Use *, std::pair<unsigned, unsigned> >::const_iterator MapIt
+      = PHIOrSelectOpMap.find(U);
     if (MapIt == PHIOrSelectOpMap.end())
       return end();
 
@@ -282,11 +277,9 @@ public:
   ///
   /// Similar to mapping these operands back to the partitions, this maps
   /// directly to the use structure of that partition.
-  use_iterator findPartitionUseForPHIOrSelectOperand(Instruction &I,
-                                                     Value *Op) {
-    SmallDenseMap<std::pair<Instruction *, Value *>,
-                  std::pair<unsigned, unsigned> >::const_iterator MapIt
-      = PHIOrSelectOpMap.find(std::make_pair(&I, Op));
+  use_iterator findPartitionUseForPHIOrSelectOperand(Use *U) {
+    SmallDenseMap<Use *, std::pair<unsigned, unsigned> >::const_iterator MapIt
+      = PHIOrSelectOpMap.find(U);
     assert(MapIt != PHIOrSelectOpMap.end());
     return Uses[MapIt->second.first].begin() + MapIt->second.second;
   }
@@ -373,8 +366,7 @@ private:
   SmallDenseMap<Instruction *, std::pair<uint64_t, bool> > PHIOrSelectSizes;
 
   /// \brief Auxiliary information for particular PHI or select operands.
-  SmallDenseMap<std::pair<Instruction *, Value *>,
-                std::pair<unsigned, unsigned>, 4> PHIOrSelectOpMap;
+  SmallDenseMap<Use *, std::pair<unsigned, unsigned>, 4> PHIOrSelectOpMap;
 
   /// \brief A utility routine called from the constructor.
   ///
@@ -401,6 +393,8 @@ protected:
   const uint64_t AllocSize;
   AllocaPartitioning &P;
 
+  SmallPtrSet<Use *, 8> VisitedUses;
+
   struct OffsetUse {
     Use *U;
     int64_t Offset;
@@ -412,14 +406,12 @@ protected:
   int64_t Offset;
 
   void enqueueUsers(Instruction &I, int64_t UserOffset) {
-    SmallPtrSet<User *, 8> UserSet;
     for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
          UI != UE; ++UI) {
-      if (!UserSet.insert(*UI))
-        continue;
-
-      OffsetUse OU = { &UI.getUse(), UserOffset };
-      Queue.push_back(OU);
+      if (VisitedUses.insert(&UI.getUse())) {
+        OffsetUse OU = { &UI.getUse(), UserOffset };
+        Queue.push_back(OU);
+      }
     }
   }
 
@@ -858,12 +850,11 @@ private:
       B = llvm::prior(B);
     for (iterator I = B, E = P.end(); I != E && I->BeginOffset < EndOffset;
          ++I) {
-      PartitionUse NewUse(std::max(I->BeginOffset, BeginOffset),
-                          std::min(I->EndOffset, EndOffset),
-                          &User, cast<Instruction>(*U));
-      P.use_push_back(I, NewUse);
+      PartitionUse NewPU(std::max(I->BeginOffset, BeginOffset),
+                         std::min(I->EndOffset, EndOffset), U);
+      P.use_push_back(I, NewPU);
       if (isa<PHINode>(U->getUser()) || isa<SelectInst>(U->getUser()))
-        P.PHIOrSelectOpMap[std::make_pair(&User, U->get())]
+        P.PHIOrSelectOpMap[U]
           = std::make_pair(I - P.begin(), P.Uses[I - P.begin()].size() - 1);
     }
   }
@@ -1115,20 +1106,20 @@ AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
 Type *AllocaPartitioning::getCommonType(iterator I) const {
   Type *Ty = 0;
   for (const_use_iterator UI = use_begin(I), UE = use_end(I); UI != UE; ++UI) {
-    if (isa<IntrinsicInst>(*UI->User))
+    if (isa<IntrinsicInst>(*UI->U->getUser()))
       continue;
     if (UI->BeginOffset != I->BeginOffset || UI->EndOffset != I->EndOffset)
       continue;
 
     Type *UserTy = 0;
-    if (LoadInst *LI = dyn_cast<LoadInst>(&*UI->User)) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(UI->U->getUser())) {
       UserTy = LI->getType();
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(&*UI->User)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(UI->U->getUser())) {
       UserTy = SI->getValueOperand()->getType();
-    } else if (SelectInst *SI = dyn_cast<SelectInst>(&*UI->User)) {
+    } else if (SelectInst *SI = dyn_cast<SelectInst>(UI->U->getUser())) {
       if (PointerType *PtrTy = dyn_cast<PointerType>(SI->getType()))
         UserTy = PtrTy->getElementType();
-    } else if (PHINode *PN = dyn_cast<PHINode>(&*UI->User)) {
+    } else if (PHINode *PN = dyn_cast<PHINode>(UI->U->getUser())) {
       if (PointerType *PtrTy = dyn_cast<PointerType>(PN->getType()))
         UserTy = PtrTy->getElementType();
     }
@@ -1157,8 +1148,8 @@ void AllocaPartitioning::printUsers(raw_ostream &OS, const_iterator I,
   for (const_use_iterator UI = use_begin(I), UE = use_end(I);
        UI != UE; ++UI) {
     OS << Indent << "  [" << UI->BeginOffset << "," << UI->EndOffset << ") "
-       << "used by: " << *UI->User << "\n";
-    if (MemTransferInst *II = dyn_cast<MemTransferInst>(&*UI->User)) {
+       << "used by: " << *UI->U->getUser() << "\n";
+    if (MemTransferInst *II = dyn_cast<MemTransferInst>(UI->U->getUser())) {
       const MemTransferOffsets &MTO = MemTransferInstData.lookup(II);
       bool IsDest;
       if (!MTO.IsSplittable)
@@ -1710,19 +1701,20 @@ static bool isVectorPromotionViable(const TargetData &TD,
         (EndOffset - BeginOffset) != VecSize)
       return false;
 
-    if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&*I->User)) {
+    if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I->U->getUser())) {
       if (MI->isVolatile())
         return false;
-      if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(&*I->User)) {
+      if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(I->U->getUser())) {
         const AllocaPartitioning::MemTransferOffsets &MTO
           = P.getMemTransferOffsets(*MTI);
         if (!MTO.IsSplittable)
           return false;
       }
-    } else if (I->Ptr->getType()->getPointerElementType()->isStructTy()) {
+    } else if (I->U->get()->getType()->getPointerElementType()->isStructTy()) {
       // Disable vector promotion when there are loads or stores of an FCA.
       return false;
-    } else if (!isa<LoadInst>(*I->User) && !isa<StoreInst>(*I->User)) {
+    } else if (!isa<LoadInst>(I->U->getUser()) &&
+               !isa<StoreInst>(I->U->getUser())) {
       return false;
     }
   }
@@ -1751,20 +1743,20 @@ static bool isIntegerPromotionViable(const TargetData &TD,
   // splittable later) and lose the ability to promote each element access.
   bool WholeAllocaOp = false;
   for (; I != E; ++I) {
-    if (LoadInst *LI = dyn_cast<LoadInst>(&*I->User)) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(I->U->getUser())) {
       if (LI->isVolatile() || !LI->getType()->isIntegerTy())
         return false;
       if (LI->getType() == Ty)
         WholeAllocaOp = true;
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I->User)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(I->U->getUser())) {
       if (SI->isVolatile() || !SI->getValueOperand()->getType()->isIntegerTy())
         return false;
       if (SI->getValueOperand()->getType() == Ty)
         WholeAllocaOp = true;
-    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&*I->User)) {
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I->U->getUser())) {
       if (MI->isVolatile())
         return false;
-      if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(&*I->User)) {
+      if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(I->U->getUser())) {
         const AllocaPartitioning::MemTransferOffsets &MTO
           = P.getMemTransferOffsets(*MTI);
         if (!MTO.IsSplittable)
@@ -1816,6 +1808,7 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
 
   // The offset of the partition user currently being rewritten.
   uint64_t BeginOffset, EndOffset;
+  Use *OldUse;
   Instruction *OldPtr;
 
   // The name prefix to use when rewriting instructions for this alloca.
@@ -1854,9 +1847,10 @@ public:
     for (; I != E; ++I) {
       BeginOffset = I->BeginOffset;
       EndOffset = I->EndOffset;
-      OldPtr = I->Ptr;
+      OldUse = I->U;
+      OldPtr = cast<Instruction>(I->U->get());
       NamePrefix = (Twine(NewAI.getName()) + "." + Twine(BeginOffset)).str();
-      CanSROA &= visit(I->User);
+      CanSROA &= visit(cast<Instruction>(I->U->getUser()));
     }
     if (VecTy) {
       assert(CanSROA);
@@ -2471,7 +2465,8 @@ private:
 
       // Map the value to the new alloca pointer if this was the old alloca
       // pointer.
-      bool ThisOperand = InVal == OldPtr;
+      Use *InUse = &PN.getOperandUse(PN.getOperandNumForIncomingValue(Idx));
+      bool ThisOperand = InUse == OldUse;
       if (ThisOperand)
         InVal = NewPtr;
 
@@ -2484,31 +2479,28 @@ private:
         Load->setMetadata(LLVMContext::MD_tbaa, TBAATag);
       NewPN->addIncoming(Load, Pred);
 
-      if (ThisOperand)
-        continue;
-      Instruction *OtherPtr = dyn_cast<Instruction>(InVal);
-      if (!OtherPtr)
+      Instruction *Ptr = dyn_cast<Instruction>(InVal);
+      if (!Ptr)
         // No uses to rewrite.
         continue;
 
       // Try to lookup and rewrite any partition uses corresponding to this phi
       // input.
       AllocaPartitioning::iterator PI
-        = P.findPartitionForPHIOrSelectOperand(PN, OtherPtr);
-      if (PI != P.end()) {
-        // If the other pointer is within the partitioning, replace the PHI in
-        // its uses with the load we just speculated, or add another load for
-        // it to rewrite if we've already replaced the PHI.
-        AllocaPartitioning::use_iterator UI
-          = P.findPartitionUseForPHIOrSelectOperand(PN, OtherPtr);
-        if (isa<PHINode>(*UI->User))
-          UI->User = Load;
-        else {
-          AllocaPartitioning::PartitionUse OtherUse = *UI;
-          OtherUse.User = Load;
-          P.use_push_back(PI, OtherUse);
-        }
-      }
+        = P.findPartitionForPHIOrSelectOperand(InUse);
+      if (PI == P.end())
+        continue;
+
+      // Replace the Use in the PartitionUse for this operand with the Use
+      // inside the load. This will already have been re-written for the
+      // partition use currently being processed.
+      // FIXME: This is really gross. We should do PHI and select speculation
+      // as a pre-processing pass first, and then use the existing
+      // load-rewriting logic.
+      AllocaPartitioning::use_iterator UI
+        = P.findPartitionUseForPHIOrSelectOperand(InUse);
+      assert(isa<PHINode>(*UI->U->getUser()));
+      UI->U = &Load->getOperandUse(Load->getPointerOperandIndex());
     }
     DEBUG(dbgs() << "          speculated to: " << *NewPN << "\n");
     return NewPtr == &NewAI;
@@ -2575,15 +2567,15 @@ private:
       return false;
     }
 
-    Value *OtherPtr = IsTrueVal ? SI.getFalseValue() : SI.getTrueValue();
+    Use *OtherOp = &SI.getOperandUse(IsTrueVal ? 2 : 1);
     AllocaPartitioning::iterator PI
-      = P.findPartitionForPHIOrSelectOperand(SI, OtherPtr);
+      = P.findPartitionForPHIOrSelectOperand(OtherOp);
     AllocaPartitioning::PartitionUse OtherUse;
     if (PI != P.end()) {
       // If the other pointer is within the partitioning, remove the select
       // from its uses. We'll add in the new loads below.
       AllocaPartitioning::use_iterator UI
-        = P.findPartitionUseForPHIOrSelectOperand(SI, OtherPtr);
+        = P.findPartitionUseForPHIOrSelectOperand(OtherOp);
       OtherUse = *UI;
       P.use_erase(PI, UI);
     }
@@ -2600,12 +2592,6 @@ private:
       LoadInst *FL =
         IRB.CreateLoad(FV, getName("." + LI->getName() + ".false"));
       NumLoadsSpeculated += 2;
-      if (PI != P.end()) {
-        LoadInst *OtherLoad = IsTrueVal ? FL : TL;
-        assert(OtherUse.Ptr == OtherLoad->getOperand(0));
-        OtherUse.User = OtherLoad;
-        P.use_push_back(PI, OtherUse);
-      }
 
       // Transfer alignment and TBAA info if present.
       TL->setAlignment(LI->getAlignment());
@@ -2615,10 +2601,18 @@ private:
         FL->setMetadata(LLVMContext::MD_tbaa, Tag);
       }
 
-      Value *V = IRB.CreateSelect(SI.getCondition(), TL, FL);
-      V->takeName(LI);
-      DEBUG(dbgs() << "          speculated to: " << *V << "\n");
-      LI->replaceAllUsesWith(V);
+      SelectInst *NewSI
+        = cast<SelectInst>(IRB.CreateSelect(SI.getCondition(), TL, FL));
+      NewSI->takeName(LI);
+      if (PI != P.end()) {
+        LoadInst *OtherLoad = IsTrueVal ? FL : TL;
+        Use *OtherLoadUse = &OtherLoad->getOperandUse(0);
+        assert(OtherUse.U->get() == OtherLoadUse->get());
+        OtherUse.U = OtherLoadUse;
+        P.use_push_back(PI, OtherUse);
+      }
+      DEBUG(dbgs() << "          speculated to: " << *NewSI << "\n");
+      LI->replaceAllUsesWith(NewSI);
       Pass.DeadInsts.push_back(LI);
     }
 
