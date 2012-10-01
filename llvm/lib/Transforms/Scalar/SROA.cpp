@@ -1798,7 +1798,7 @@ private:
   ///   ...
   ///   %V = phi [i32 %V1, i32 %V2]
   ///
-  /// We can do this to a select if its only uses are loads and if the operand
+  /// We can do this to a select if its only uses are loads and if the operands
   /// to the select can be loaded unconditionally.
   ///
   /// FIXME: This should be hoisted into a generic utility, likely in
