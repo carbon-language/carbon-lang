@@ -12,6 +12,8 @@
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-function-08.xml
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-function-09.xml
 //
+// RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-availability-attr-01.xml
+//
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-class-01.xml
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-class-02.xml
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-class-03.xml
