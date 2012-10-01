@@ -175,3 +175,11 @@ void f18() {
   if (*q) { // no-warning
   }
 }
+
+
+// [PR13927] offsetof replacement macro flagged as "dereference of a null pointer"
+int offset_of_data_array(void)
+{
+  return ((char *)&(((struct s*)0)->data_array)) - ((char *)0); // no-warning
+}
+
