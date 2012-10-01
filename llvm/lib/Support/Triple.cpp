@@ -42,6 +42,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case nvptx64: return "nvptx64";
   case le32:    return "le32";
   case amdil:   return "amdil";
+  case spir:    return "spir";
   }
 
   llvm_unreachable("Invalid ArchType!");
@@ -83,6 +84,7 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case nvptx64: return "nvptx";
   case le32:    return "le32";
   case amdil:   return "amdil";
+  case spir:    return "spir";
   }
 }
 
@@ -171,6 +173,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("nvptx64", nvptx64)
     .Case("le32", le32)
     .Case("amdil", amdil)
+    .Case("spir", spir)
     .Default(UnknownArch);
 }
 
@@ -202,6 +205,7 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
     .Case("nvptx", Triple::nvptx)
     .Case("nvptx64", Triple::nvptx64)
     .Case("amdil", Triple::amdil)
+    .Case("spir", Triple::spir)
     .Default(Triple::UnknownArch);
 }
 
@@ -226,6 +230,7 @@ const char *Triple::getArchNameForAssembler() {
     .Case("nvptx64", "nvptx64")
     .Case("le32", "le32")
     .Case("amdil", "amdil")
+    .Case("spir", "spir")
     .Default(NULL);
 }
 
@@ -260,6 +265,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("nvptx64", Triple::nvptx64)
     .Case("le32", Triple::le32)
     .Case("amdil", Triple::amdil)
+    .Case("spir", Triple::spir)
     .Default(Triple::UnknownArch);
 }
 
@@ -670,6 +676,7 @@ void Triple::setOSAndEnvironmentName(StringRef Str) {
 
 static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   switch (Arch) {
+  case llvm::Triple::spir:
   case llvm::Triple::UnknownArch:
     return 0;
 
@@ -726,6 +733,7 @@ Triple Triple::get32BitArchVariant() const {
     break;
 
   case Triple::amdil:
+  case Triple::spir:
   case Triple::arm:
   case Triple::cellspu:
   case Triple::hexagon:
@@ -772,6 +780,7 @@ Triple Triple::get64BitArchVariant() const {
     T.setArch(UnknownArch);
     break;
 
+  case Triple::spir:
   case Triple::mips64:
   case Triple::mips64el:
   case Triple::nvptx64:

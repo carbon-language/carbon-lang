@@ -81,6 +81,7 @@ namespace lltok {
     kw_arm_apcscc, kw_arm_aapcscc, kw_arm_aapcs_vfpcc,
     kw_msp430_intrcc,
     kw_ptx_kernel, kw_ptx_device,
+    kw_spir_kernel, kw_spir_func,
 
     kw_signext,
     kw_zeroext,

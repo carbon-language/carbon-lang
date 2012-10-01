@@ -94,7 +94,25 @@ namespace CallingConv {
 
     /// MBLAZE_INTR - Calling convention used for MBlaze interrupt support
     /// routines (i.e. GCC's save_volatiles attribute).
-    MBLAZE_SVOL = 74
+    MBLAZE_SVOL = 74,
+
+    /// SPIR_FUNC - Calling convention for SPIR non-kernel device functions.
+    /// No lowering or expansion of arguments.
+    /// Structures are passed as a pointer to a struct with the byval attribute.
+    /// Functions can only call SPIR_FUNC and SPIR_KERNEL functions.
+    /// Functions can only have zero or one return values.
+    /// Variable arguments are not allowed, except for printf.
+    /// How arguments/return values are lowered are not specified.
+    /// Functions are only visible to the devices.
+    SPIR_FUNC = 75,
+
+    /// SPIR_KERNEL - Calling convention for SPIR kernel functions.
+    /// Inherits the restrictions of SPIR_FUNC, except
+    /// Cannot have non-void return values.
+    /// Cannot have variable arguments.
+    /// Can also be called by the host.
+    /// Is externally visible.
+    SPIR_KERNEL = 76
   };
 } // End CallingConv namespace
 
