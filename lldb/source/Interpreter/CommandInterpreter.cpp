@@ -624,12 +624,10 @@ CommandInterpreter::AddCommand (const char *name, const lldb::CommandObjectSP &c
     if (name && name[0])
     {
         std::string name_sstr(name);
-        if (!can_replace)
-        {
-            if (m_command_dict.find (name_sstr) != m_command_dict.end())
-                return false;
-        }
-        if (m_command_dict[name_sstr]->IsRemovable() == false)
+        bool found = (m_command_dict.find (name_sstr) != m_command_dict.end());
+        if (found && !can_replace)
+            return false;
+        if (found && m_command_dict[name_sstr]->IsRemovable() == false)
             return false;
         m_command_dict[name_sstr] = cmd_sp;
         return true;
