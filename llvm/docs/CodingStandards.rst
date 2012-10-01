@@ -79,10 +79,11 @@ tree.  The standard header looks like this:
   // License. See LICENSE.TXT for details.
   //
   //===----------------------------------------------------------------------===//
-  //
-  // This file contains the declaration of the Instruction class, which is the
-  // base class for all of the VM instructions.
-  //
+  ///
+  /// \file
+  /// \brief This file contains the declaration of the Instruction class, which is
+  /// the base class for all of the VM instructions.
+  ///
   //===----------------------------------------------------------------------===//
 
 A few things to note about this particular format: The "``-*- C++ -*-``" string
@@ -100,10 +101,12 @@ The next section in the file is a concise note that defines the license that the
 file is released under.  This makes it perfectly clear what terms the source
 code can be distributed under and should not be modified in any way.
 
-The main body of the description does not have to be very long in most cases.
-Here it's only two lines.  If an algorithm is being implemented or something
-tricky is going on, a reference to the paper where it is published should be
-included, as well as any notes or *gotchas* in the code to watch out for.
+The main body is a ``doxygen`` comment describing the purpose of the file.  It
+should have a ``\brief`` command that describes the file in one or two
+sentences.  Any additional information should be separated by a blank line.  If
+an algorithm is being implemented or something tricky is going on, a reference
+to the paper where it is published should be included, as well as any notes or
+*gotchas* in the code to watch out for.
 
 Class overviews
 """""""""""""""
