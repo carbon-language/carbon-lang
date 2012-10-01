@@ -811,8 +811,8 @@ TEST(Matcher, Lambda) {
 }
 
 TEST(Matcher, ForRange) {
-  EXPECT_TRUE(matches("#include <initializer_list>\n"
-                      "void f() { for (auto &a : {1, 2, 3}); }",
+  EXPECT_TRUE(matches("int as[] = { 1, 2, 3 };"
+                      "void f() { for (auto &a : as); }",
                       forRangeStmt()));
   EXPECT_TRUE(notMatches("void f() { for (int i; i<5; ++i); }",
                          forRangeStmt()));
@@ -2006,8 +2006,8 @@ TEST(AstPolymorphicMatcherPMacro, Works) {
 TEST(For, FindsForLoops) {
   EXPECT_TRUE(matches("void f() { for(;;); }", forStmt()));
   EXPECT_TRUE(matches("void f() { if(true) for(;;); }", forStmt()));
-  EXPECT_TRUE(notMatches("#include <initializer_list>\n"
-                         "void f() { for (auto &a : {1, 2, 3}); }",
+  EXPECT_TRUE(notMatches("int as[] = { 1, 2, 3 };"
+                         "void f() { for (auto &a : as); }",
                          forStmt()));
 }
 
