@@ -270,6 +270,14 @@ void MCObjectStreamer::EmitGPRel64Value(const MCExpr *Value) {
   DF->getContents().resize(DF->getContents().size() + 8, 0);
 }
 
+void MCObjectStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
+                                unsigned AddrSpace) {
+  assert(AddrSpace == 0 && "Address space must be 0!");
+  // FIXME: A MCFillFragment would be more memory efficient but MCExpr has
+  //        problems evaluating expressions across multiple fragments.
+  getOrCreateDataFragment()->getContents().append(NumBytes, FillValue);
+}
+
 void MCObjectStreamer::FinishImpl() {
   // Dump out the dwarf file & directory tables and line tables.
   const MCSymbol *LineSectionSymbol = NULL;
