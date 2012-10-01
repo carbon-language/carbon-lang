@@ -1,5 +1,6 @@
-// RUN: %clang -arch i386 -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: FileCheck %s < %t-rw.cpp
+// RUN: %clang -arch x86_64 -fms-extensions -rewrite-objc %s -o %t-rw-64bit.cpp
+// RUN: FileCheck %s < %t-rw-64bit.cpp
+// XFAIL: mingw32,win32
 // rdar://12189793
 
 #ifdef __cplusplus
@@ -22,5 +23,6 @@ int main() {
 
 // CHECK: static struct _class_ro_t _OBJC_CLASS_RO_$_MYINTF
 // CHECK-NEXT: 0, 0, 0,
+// CHECK-NEXT: (unsigned int)0,
 // CHECK-NEXT: 0,
-// CHECK-NEST: "MYINTF",
+// CHECK-NEXT: "MYINTF",
