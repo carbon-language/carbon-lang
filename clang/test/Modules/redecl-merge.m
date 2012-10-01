@@ -153,6 +153,9 @@ void testVector() {
 
   List<bool> list_bool;
   list_bool.push_back(false);
+
+  N::Set<char> set_char;
+  set_char.insert('A');
 }
 #endif
 

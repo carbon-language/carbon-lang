@@ -88,6 +88,13 @@ template<> class List<bool> {
 public:
   void push_back(int);
 };
+
+namespace N {
+template<typename T> class Set {
+public:
+  void insert(T);
+};
+}
 #endif
 
 // Make sure this doesn't introduce an ambiguity-creating 'id' at the
