@@ -103,3 +103,17 @@ namespace TemporaryConstructor {
       return;
   }
 }
+
+
+namespace ConstructorUsedAsRValue {
+  using TemporaryConstructor::BoolWrapper;
+
+  bool extractValue(BoolWrapper b) {
+    return b.value;
+  }
+
+  void test() {
+    bool result = extractValue(BoolWrapper());
+    clang_analyzer_eval(result); // expected-warning{{TRUE}}
+  }
+}

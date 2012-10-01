@@ -52,12 +52,6 @@ int getAssignedField(struct S s) {
 
 void testArgument() {
   clang_analyzer_eval(getConstrainedField(getS()) == 42); // expected-warning{{TRUE}}
-#if __cplusplus
-  // FIXME: Passing the struct by value seems to be confusing C++.
-  // Possibly related to <rdar://problem/12137950>.
-  // expected-warning@-4{{UNKNOWN}}
-#endif
-
   clang_analyzer_eval(getAssignedField(getS()) == 42); // expected-warning{{TRUE}}
 }
 
