@@ -114,7 +114,23 @@ readerSelected("reader",
     clEnumValN(readerELF,    "ELF",    "read as linux would"),
     clEnumValEnd));
     
-
+enum ArchChoice {
+  i386 = llvm::ELF::EM_386,
+  x86_64 = llvm::ELF::EM_X86_64,
+  hexagon = llvm::ELF::EM_HEXAGON
+};
+llvm::cl::opt<ArchChoice> 
+archSelected("arch",
+  llvm::cl::desc("Select architecture, only valid with ELF output"),
+  llvm::cl::values(
+    clEnumValN(i386, "i386", 
+               "output i386, EM_386 file"),
+    clEnumValN(x86_64, 
+               "x86_64", "output x86_64, EM_X86_64 file"),
+    clEnumValN(hexagon, 
+               "hexagon", "output Hexagon, EM_HEXAGON file"),
+    clEnumValEnd));
+    
 
 class TestingResolverOptions : public ResolverOptions {
 public:
@@ -146,12 +162,18 @@ int main(int argc, char *argv[]) {
   if (cmdLineOutputFilePath.empty())
     cmdLineOutputFilePath.assign("-");
 
-  // create writer for final output
+  // create writer for final output, default to i386 if none selected
+  WriterOptionsELF writerOptionsELF(false, llvm::support::little,
+                                    llvm::ELF::ET_EXEC,
+                                    archSelected.getValue() == 0
+                                    ? i386
+                                    : archSelected);
+
   TestingWriterOptionsYAML  writerOptionsYAML(cmdLineDoStubsPass, 
                                               cmdLineDoGotPass);
   WriterOptionsMachO        writerOptionsMachO;
   WriterOptionsPECOFF       writerOptionsPECOFF;
-  WriterOptionsELF          writerOptionsELF;
+
   Writer* writer = nullptr;
   switch ( writeSelected ) {
     case writeYAML:

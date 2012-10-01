@@ -1,5 +1,5 @@
 RUN: lld-core -reader ELF %p/Inputs/object-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
-RUN: lld-core -reader ELF %p/Inputs/object-test.elf-hexagon | FileCheck %s -check-prefix ELF-hexagon
+RUN: lld-core -arch hexagon -reader ELF %p/Inputs/object-test.elf-hexagon | FileCheck %s -check-prefix ELF-hexagon
 
 ELF-i386:atoms:
 ELF-i386:    - name:              global_func

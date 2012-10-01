@@ -278,17 +278,37 @@ public:
 
   virtual ContentType contentType() const {
 
-    if (_symbol->getType() == llvm::ELF::STT_FUNC)
-      return typeCode;
+    ContentType ret = typeUnknown;
 
-    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
-        || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
-      return typeZeroFill;
 
-    if (_symbol->getType() == llvm::ELF::STT_OBJECT)
-      return typeData;
-
-    return typeUnknown;
+    switch (_section->sh_type) {
+    case llvm::ELF::SHT_PROGBITS:
+    case llvm::ELF::SHT_DYNAMIC:
+      switch (_section->sh_flags) {
+      case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR):
+        ret = typeCode;
+        break;
+      case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE):
+        ret = typeData;
+        break;
+      case llvm::ELF::SHF_ALLOC:
+      case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_MERGE):
+      case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_MERGE |
+            llvm::ELF::SHF_STRINGS):
+        ret = typeConstant;
+        break;
+      }
+      break;
+    case llvm::ELF::SHT_NOBITS:
+      ret = typeZeroFill;
+      break;
+    case llvm::ELF::SHT_NULL:
+      if ((_symbol->getType() == llvm::ELF::STT_COMMON)
+          || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
+        ret = typeZeroFill;
+      break;
+    }
+    return ret;
   }
 
   virtual Alignment alignment() const {
