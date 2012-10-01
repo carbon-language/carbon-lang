@@ -26,10 +26,3 @@ void test() {
   Point p;
   (void)(p = getit()).x;
 }
-
-
-void testNullAddress() {
-  Point *p = 0;
-  int *px = &p->x; // expected-warning{{Access to field 'x' results in a dereference of a null pointer (loaded from variable 'p')}}
-  *px = 1; // No warning because analysis stops at the previous line.
-}

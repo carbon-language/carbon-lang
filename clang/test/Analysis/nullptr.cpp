@@ -23,11 +23,10 @@ void foo3(void) {
   };
   char *np = nullptr;
   // casting a nullptr to anything should be caught eventually
-  int *ip = &(((struct foo *)np)->f);  // expected-warning{{Access to field 'f' results in a dereference of a null pointer (loaded from variable 'np')}}
-
-  // Analysis stops at the first problem case, so we won't actually warn here.
-  *ip = 0;
-  *np = 0;
+  int *ip = &(((struct foo *)np)->f);
+  *ip = 0;  // expected-warning{{Dereference of null pointer}}
+  // should be error here too, but analysis gets stopped
+//  *np = 0;
 }
 
 // nullptr is implemented as a zero integer value, so should be able to compare
