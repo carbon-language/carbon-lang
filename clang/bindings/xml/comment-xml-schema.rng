@@ -80,7 +80,7 @@
         <ref name="Parameters" />
       </optional>
       <zeroOrMore>
-        <ref name="Attribute" />
+        <ref name="Availability" />
       </zeroOrMore>
       <optional>
         <ref name="ResultDiscussion" />
@@ -287,7 +287,7 @@
     </element>
   </define>
 
-  <define name="Attribute">
+  <define name="Availability">
     <element name="Availability">
       <attribute name="distribution">
           <data type="string" />

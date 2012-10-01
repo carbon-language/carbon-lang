@@ -10,10 +10,10 @@ void f5(int) __attribute__((availability(ios,introduced=3.2), availability(macos
 void test() {
   f0(0);
   f1(0);
-  f2(0); // expected-warning{{'f2' is deprecated: first deprecated in Mac OS X 10.5}}
+  f2(0); // expected-warning{{'f2' is deprecated: first deprecated in OS X 10.5}}
   f3(0);
-  f4(0); // expected-error{{f4' is unavailable: obsoleted in Mac OS X 10.5}}
-  f5(0); // expected-error{{'f5' is unavailable: not available on Mac OS X}}
+  f4(0); // expected-error{{f4' is unavailable: obsoleted in OS X 10.5}}
+  f5(0); // expected-error{{'f5' is unavailable: not available on OS X}}
 }
 
 // rdar://10535640

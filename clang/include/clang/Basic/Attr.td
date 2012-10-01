@@ -190,7 +190,7 @@ def Availability : InheritableAttr {
 [{static llvm::StringRef getPrettyPlatformName(llvm::StringRef Platform) {
     return llvm::StringSwitch<llvm::StringRef>(Platform)
              .Case("ios", "iOS")
-             .Case("macosx", "Mac OS X")
+             .Case("macosx", "OS X")
              .Default(llvm::StringRef());
 } }];
 }

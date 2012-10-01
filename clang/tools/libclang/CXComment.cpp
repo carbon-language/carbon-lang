@@ -1173,59 +1173,53 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
   
   if (DI->ThisDecl->hasAttrs()) {
     const AttrVec &Attrs = DI->ThisDecl->getAttrs();
-    for (unsigned i = 0, e = Attrs.size(); i != e;) {
-      const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attrs[i++]);
+    for (unsigned i = 0, e = Attrs.size(); i != e; i++) {
+      const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attrs[i]);
       if (!AA)
         continue;
-      // availability attribute info.
-  
+
+      // 'availability' attribute.
       Result << "<Availability";
-      StringRef distribution;
+      StringRef Distribution;
       if (AA->getPlatform()) {
-        distribution = AA->getPlatform()->getName();
-        if (distribution == "macosx")
-          distribution = "OSX";
-        else
-          distribution = "iOS";
+        Distribution = AvailabilityAttr::getPrettyPlatformName(
+                                        AA->getPlatform()->getName());
+        if (Distribution.empty())
+          Distribution = AA->getPlatform()->getName();
       }
-      
-      Result << " distribution=\"";
-      Result << distribution;
-      Result << "\">";
+      Result << " distribution=\"" << Distribution << "\">";
       VersionTuple IntroducedInVersion = AA->getIntroduced();
       if (!IntroducedInVersion.empty()) {
-        Result << " <IntroducedInVersion>";
-        Result << IntroducedInVersion.getAsString();
-        Result << "</IntroducedInVersion>";
+        Result << "<IntroducedInVersion>"
+               << IntroducedInVersion.getAsString()
+               << "</IntroducedInVersion>";
       }
       VersionTuple DeprecatedInVersion = AA->getDeprecated();
       if (!DeprecatedInVersion.empty()) {
-        Result << " <DeprecatedInVersion>";
-        Result << DeprecatedInVersion.getAsString();
-        Result << "</DeprecatedInVersion>";
+        Result << "<DeprecatedInVersion>"
+               << DeprecatedInVersion.getAsString()
+               << "</DeprecatedInVersion>";
       }
       VersionTuple RemovedAfterVersion = AA->getObsoleted();
       if (!RemovedAfterVersion.empty()) {
-        Result << " <RemovedAfterVersion>";
-        Result << RemovedAfterVersion.getAsString();
-        Result << "</RemovedAfterVersion>";
+        Result << "<RemovedAfterVersion>"
+               << RemovedAfterVersion.getAsString()
+               << "</RemovedAfterVersion>";
       }
+      // 'deprecated' attribute.
       StringRef DeprecationSummary = AA->getMessage();
       if (!DeprecationSummary.empty()) {
-        Result << " <DeprecationSummary>";
-        Result << DeprecationSummary;
-        Result << "</DeprecationSummary>";
+        Result << " <DeprecationSummary>"
+               << DeprecationSummary
+               << "</DeprecationSummary>";
       }
-      Result << " <Unavailable>";
+      // 'unavailable' attribute.
       if (AA->getUnavailable())
-        Result << "true";
-      else
-        Result << "false";
-      Result << "</Unavailable>";
-      Result << " </Availability>";
+        Result << "<Unavailable>true</Unavailable>";
+      Result << "</Availability>";
     }
   }
-  
+
   {
     bool StartTagEmitted = false;
     for (unsigned i = 0, e = Parts.MiscBlocks.size(); i != e; ++i) {

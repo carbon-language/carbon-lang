@@ -14,8 +14,8 @@
 @end
 
 void f(A *a, B *b) {
-  [a method]; // expected-warning{{'method' is deprecated: first deprecated in Mac OS X 10.2}}
-  [b method]; // expected-warning {{'method' is deprecated: first deprecated in Mac OS X 10.2}}
-  [a proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in Mac OS X 10.2}}
-  [b proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in Mac OS X 10.2}}
+  [a method]; // expected-warning{{'method' is deprecated: first deprecated in OS X 10.2}}
+  [b method]; // expected-warning {{'method' is deprecated: first deprecated in OS X 10.2}}
+  [a proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in OS X 10.2}}
+  [b proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in OS X 10.2}}
 }
