@@ -25,21 +25,11 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex,
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   SVal baseVal = state->getSVal(Ex->getBase(), LCtx);
-
-  // First check that the base object is valid.
-  ExplodedNodeSet DstLoc;
-  evalLocation(DstLoc, Ex, Ex, Pred, state, baseVal,
-               /*Tag=*/0, /*isLoad=*/true);
-
-  // Bind the lvalue to the expression.
   SVal location = state->getLValue(Ex->getDecl(), baseVal);
   
   ExplodedNodeSet dstIvar;
-  StmtNodeBuilder Bldr(DstLoc, dstIvar, *currBldrCtx);
-  for (ExplodedNodeSet::iterator I = DstLoc.begin(), E = DstLoc.end();
-       I != E; ++I) {
-    Bldr.generateNode(Ex, (*I), (*I)->getState()->BindExpr(Ex, LCtx, location));
-  }
+  StmtNodeBuilder Bldr(Pred, dstIvar, *currBldrCtx);
+  Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, location));
   
   // Perform the post-condition check of the ObjCIvarRefExpr and store
   // the created nodes in 'Dst'.

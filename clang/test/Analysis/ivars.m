@@ -135,6 +135,6 @@ struct S makeS();
 int testNull(Root *obj) {
   if (obj) return 0;
 
-  int *x = &obj->uniqueID; // expected-warning{{Access to instance variable 'uniqueID' results in a dereference of a null pointer (loaded from variable 'obj')}}
-  return *x;
+  int *x = &obj->uniqueID;
+  return *x; // expected-warning{{Dereference of null pointer (loaded from variable 'x')}}
 }
