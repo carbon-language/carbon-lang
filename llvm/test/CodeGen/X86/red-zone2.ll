@@ -1,6 +1,7 @@
-; RUN: llc < %s -mcpu=generic -march=x86-64 > %t
-; RUN: grep subq %t | count 1
-; RUN: grep addq %t | count 1
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux | FileCheck %s
+; CHECK: f0:
+; CHECK: subq
+; CHECK: addq
 
 define x86_fp80 @f0(float %f) nounwind readnone noredzone {
 entry:
