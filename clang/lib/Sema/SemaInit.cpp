@@ -2819,14 +2819,6 @@ static void TryConstructorInitialization(Sema &S,
   assert((!InitListSyntax || (NumArgs == 1 && isa<InitListExpr>(Args[0]))) &&
          "InitListSyntax must come with a single initializer list argument.");
 
-  // Check constructor arguments for self reference.
-  if (DeclaratorDecl *DD = Entity.getDecl())
-    // Parameters arguments are occassionially constructed with itself,
-    // for instance, in recursive functions.  Skip them.
-    if (!isa<ParmVarDecl>(DD))
-      for (unsigned i = 0; i < NumArgs; ++i)
-        S.CheckSelfReference(DD, Args[i]);
-
   // The type we're constructing needs to be complete.
   if (S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {
     Sequence.setIncompleteTypeFailure(DestType);

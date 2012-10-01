@@ -114,6 +114,8 @@ void setupA(bool x) {
   A a17(a17.get2());  // expected-warning {{variable 'a17' is uninitialized when used within its own initialization}}
   A a18 = x ? a18 : a17;  // expected-warning {{variable 'a18' is uninitialized when used within its own initialization}}
   A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
+  A a20{a20};  // expected-warning {{variable 'a20' is uninitialized when used within its own initialization}}
+  A a21 = {a21};  // expected-warning {{variable 'a21' is uninitialized when used within its own initialization}}
 }
 
 bool x;
@@ -138,6 +140,8 @@ A a16(&a16.num);  // expected-warning {{variable 'a16' is uninitialized when use
 A a17(a17.get2());  // expected-warning {{variable 'a17' is uninitialized when used within its own initialization}}
 A a18 = x ? a18 : a17;  // expected-warning {{variable 'a18' is uninitialized when used within its own initialization}}
 A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
+A a20{a20};  // expected-warning {{variable 'a20' is uninitialized when used within its own initialization}}
+A a21 = {a21};  // expected-warning {{variable 'a21' is uninitialized when used within its own initialization}}
 
 struct B {
   // POD struct.
@@ -400,6 +404,9 @@ namespace in_class_initializers {
 
 namespace references {
   int &a = a; // expected-warning{{reference 'a' is not yet bound to a value when used within its own initialization}}
+  int &b(b); // expected-warning{{reference 'b' is not yet bound to a value when used within its own initialization}}
+  int &c = a ? b : c; // expected-warning{{reference 'c' is not yet bound to a value when used within its own initialization}}
+  int &d{d}; // expected-warning{{reference 'd' is not yet bound to a value when used within its own initialization}}
 
   struct S {
     S() : a(a) {} // expected-warning{{reference 'a' is not yet bound to a value when used here}}
@@ -408,6 +415,9 @@ namespace references {
 
   void f() {
     int &a = a; // expected-warning{{reference 'a' is not yet bound to a value when used within its own initialization}}
+    int &b(b); // expected-warning{{reference 'b' is not yet bound to a value when used within its own initialization}}
+    int &c = a ? b : c; // expected-warning{{reference 'c' is not yet bound to a value when used within its own initialization}}
+    int &d{d}; // expected-warning{{reference 'd' is not yet bound to a value when used within its own initialization}}
   }
 
   struct T {

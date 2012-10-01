@@ -27,10 +27,11 @@ void f() {
   if (S b(n) = 0) {} // expected-error {{a function type is not allowed here}}
   if (S b(n) == 0) {} // expected-error {{a function type is not allowed here}} expected-error {{did you mean '='?}}
 
-  if (S{a}) {} // ok
-  if (S a{a}) {} // ok
-  if (S a = {a}) {} // ok
-  if (S a == {a}) {} // expected-error {{did you mean '='?}}
+  S s(a);
+  if (S{s}) {} // ok
+  if (S a{s}) {} // ok
+  if (S a = {s}) {} // ok
+  if (S a == {s}) {} // expected-error {{did you mean '='?}}
 
   if (S(b){a}) {} // ok
   if (S(b) = {a}) {} // ok
