@@ -3400,7 +3400,6 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   switch (DS.getTypeSpecType()) {
   case DeclSpec::TST_typename:
   case DeclSpec::TST_typeofType:
-  case DeclSpec::TST_decltype:
   case DeclSpec::TST_underlyingType:
   case DeclSpec::TST_atomic: {
     // Grab the type from the parser.
@@ -3424,6 +3423,7 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
     break;
   }
 
+  case DeclSpec::TST_decltype:
   case DeclSpec::TST_typeofExpr: {
     Expr *E = DS.getRepAsExpr();
     ExprResult Result = S.RebuildExprInCurrentInstantiation(E);
