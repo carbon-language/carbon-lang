@@ -1118,7 +1118,7 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIn
     StreamString value_fetcher_expr;
     value_fetcher_expr.Printf("(id)[%s objectForKey:%s]",valobj_expr_path.GetData(),key_fetcher_expr.GetData());
     StreamString object_fetcher_expr;
-    object_fetcher_expr.Printf("struct { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = %s; _lldb_valgen_item.value = %s; _lldb_valgen_item;",key_fetcher_expr.GetData(),value_fetcher_expr.GetData());
+    object_fetcher_expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = %s; _lldb_valgen_item.value = %s; _lldb_valgen_item;",key_fetcher_expr.GetData(),value_fetcher_expr.GetData());
     lldb::ValueObjectSP child_sp;
     m_backend.GetTargetSP()->EvaluateExpression(object_fetcher_expr.GetData(), m_backend.GetFrameSP().get(), child_sp,
                                                 Target::EvaluateExpressionOptions().SetKeepInMemory(true));
@@ -1268,7 +1268,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (uint3
     {
         // make the new ValueObject
         StreamString expr;
-        expr.Printf("struct { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%llu ; _lldb_valgen_item.value = (id)%llu; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
+        expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%llu ; _lldb_valgen_item.value = (id)%llu; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
         StreamString idx_name;
         idx_name.Printf("[%d]",idx);
         dict_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
@@ -1404,7 +1404,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (uint3
     {
         // make the new ValueObject
         StreamString expr;
-        expr.Printf("struct { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%llu ; _lldb_valgen_item.value = (id)%llu; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
+        expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%llu ; _lldb_valgen_item.value = (id)%llu; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
         StreamString idx_name;
         idx_name.Printf("[%d]",idx);
         dict_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
