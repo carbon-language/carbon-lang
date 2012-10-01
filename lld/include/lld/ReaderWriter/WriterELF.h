@@ -31,6 +31,7 @@ public:
     : _is64Bit(false)
     , _endianness(llvm::support::little)
     , _type(llvm::ELF::ET_EXEC)
+    , _pointerWidth(4)
     , _machine(llvm::ELF::EM_386)
   {}
 
@@ -43,16 +44,19 @@ public:
   WriterOptionsELF(const bool Is64Bit,
                    const llvm::support::endianness endian,
                    const uint16_t Type,
-                   const uint16_t Machine)
+                   const uint16_t Machine,
+                   uint64_t pointerWidth = 4)
   : _is64Bit(Is64Bit)
   , _endianness(endian)
   , _type(Type)
+  , _pointerWidth(pointerWidth)
   , _machine(Machine) {}
 
   bool is64Bit() const { return _is64Bit; }
   llvm::support::endianness endianness() const { return _endianness; }
   uint16_t type() const { return _type; }
   uint16_t machine() const { return _machine; }
+  uint16_t pointerWidth() const { return _pointerWidth; }
 
   /// \brief Get the entry point if type() is ET_EXEC. Empty otherwise.
   StringRef entryPoint() const;
@@ -61,6 +65,7 @@ protected:
   bool                      _is64Bit;
   llvm::support::endianness _endianness;
   uint16_t                  _type;
+  uint16_t                  _pointerWidth;
   uint16_t                  _machine;
 };
 

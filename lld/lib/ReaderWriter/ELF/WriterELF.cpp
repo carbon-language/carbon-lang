@@ -63,51 +63,86 @@ public:
   uint64_t            fileOffset() const;
   uint64_t            align2() const;
   static uint64_t     alignTo(uint64_t value, uint8_t align2);
+  uint64_t            ordinal() const { return _ordinal;}
+  void                setOrdinal(uint64_t newVal) { _ordinal = newVal;}
 
 protected:
   Chunk();
-
   uint64_t _size;
   uint64_t _address;
   uint64_t _fileOffset;
   uint64_t _align2;
+  uint64_t _ordinal;
 };
+
+template<support::endianness target_endianness, bool is64Bits>
+static void swapChunkPositions(Chunk<target_endianness, is64Bits>&a,
+                               Chunk<target_endianness, is64Bits>&b) {
+  uint64_t tempOrdinal;
+  if (a.ordinal() == b.ordinal()) return;
+  tempOrdinal = a.ordinal();
+  a.setOrdinal(b.ordinal());
+  b.setOrdinal(tempOrdinal);
+}
 
 /// Pair of atom and offset in section.
 typedef std::tuple<const DefinedAtom*, uint64_t> AtomInfo;
 
-/// \brief A Section represents a set of Atoms assigned to a specific ELF
-///        Section.
+/// \brief A SectionChunk represents ELF sections 
 template<support::endianness target_endianness, bool is64Bits>
 class SectionChunk : public Chunk<target_endianness, is64Bits> {
 public:
-  SectionChunk(DefinedAtom::ContentType,
-               StringRef sectionName,
-               const WriterOptionsELF &options,
+  virtual StringRef   segmentName() const { return _segmentName; }
+  virtual bool        occupiesNoDiskSpace();
+  virtual const char  *info();
+  StringRef           sectionName() { return _sectionName; }
+  uint64_t            shStrtableOffset(){ return _offsetInStringTable; }
+  void                setShStrtableOffset (uint64_t val) {
+                       _offsetInStringTable = val; } 
+  uint32_t            flags()  { return _flags; }
+  uint32_t            type()   { return _type; }
+  uint64_t            link()   { return _link; }
+  void                link(uint64_t val)   { _link = val; }
+  uint16_t            shinfo() { return _shinfo; }
+  bool                isLoadable() { return _isLoadable; }
+  void                isLoadable(uint64_t val) {  _isLoadable = val; }
+  uint64_t            entsize() { return _entsize; }
+  SectionChunk(StringRef secName, StringRef segName, bool loadable, 
+               uint64_t flags , uint64_t link,  uint64_t info ,
+               uint64_t type, uint64_t entsz, const WriterOptionsELF &op, 
                ELFWriter<target_endianness, is64Bits> &writer);
 
-  virtual StringRef        segmentName() const;
-  virtual bool             occupiesNoDiskSpace();
-  virtual void             write(uint8_t *fileBuffer);
-  virtual const char      *info();
-  StringRef                sectionName();
-  uint32_t                 flags() const;
-  uint32_t                 type() const;
-  uint32_t                 permissions();
-  void                     appendAtom(const DefinedAtom*);
-  const ArrayRef<AtomInfo> atoms() const;
-
-private:
+protected:
+  bool                                    _isLoadable;
+  uint64_t                                _link;
+  uint64_t                                _shinfo;
+  uint16_t                                _entsize;
   StringRef                               _segmentName;
   StringRef                               _sectionName;
   const WriterOptionsELF                 &_options;
   ELFWriter<target_endianness, is64Bits> &_writer;
-  uint32_t                                _flags;
-  uint32_t                                _type;
-  uint32_t                                _permissions;
-  std::vector<AtomInfo>                   _atoms;
+  uint64_t                                _flags;
+  uint64_t                                _type;
+  uint64_t                                _offsetInStringTable;
 };
 
+/// \brief A StockSectionChunk is a section created by linker with all 
+///        attributes concluded from the defined atom contained within.
+template<support::endianness target_endianness, bool is64Bits>
+class StockSectionChunk : public SectionChunk<target_endianness, is64Bits> {
+public:
+  virtual StringRef   segmentName() { return this->_segmentName; }
+  void                appendAtom(const DefinedAtom*);
+  virtual void        write(uint8_t *filebuffer);
+  const               ArrayRef<AtomInfo> atoms() const;
+  StockSectionChunk(StringRef sectionName, bool loadable,
+                    DefinedAtom::ContentType type, 
+                    const WriterOptionsELF &options,
+                    ELFWriter<target_endianness, is64Bits> &writer);
+private:
+  std::vector<AtomInfo>                   _atoms;
+};
+                        
 /// \brief An ELFHeaderChunk represents the Elf[32/64]_Ehdr structure at the
 ///        start of an ELF executable file.
 template<support::endianness target_endianness, bool is64Bits>
@@ -133,8 +168,7 @@ public:
   void e_shentsize(uint16_t shentsize) { _eh.e_shentsize = shentsize; }
   void e_shnum(uint16_t shnum)         { _eh.e_shnum = shnum; }
   void e_shstrndx(uint16_t shstrndx)   { _eh.e_shstrndx = shstrndx; }
-
-  uint64_t  size() { return sizeof (Elf_Ehdr); }
+  uint64_t  size()                     { return sizeof (Elf_Ehdr); }
 
   virtual StringRef   segmentName() const;
   virtual void        write(uint8_t *fileBuffer);
@@ -144,12 +178,9 @@ private:
   Elf_Ehdr             _eh;
 };
 
-
 /// \brief An ELFSectionHeaderChunk represents the Elf[32/64]_Shdr structure
 ///        that is placed right after the ELFHeader.
 ///
-/// When this is finished it will need to update the header with the size and
-/// number of section headers, e_shentsize, e_shnum.
 template<support::endianness target_endianness, bool is64Bits>
 class ELFSectionHeaderChunk : public Chunk<target_endianness, is64Bits> {
 public:
@@ -157,19 +188,16 @@ public:
   typedef object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
   ELFSectionHeaderChunk(const WriterOptionsELF &Options,
                         ELFWriter<target_endianness, is64Bits>&);
-
+  void createHeaders();
   virtual StringRef   segmentName() const;
   virtual void        write(uint8_t *filebuffer);
   virtual const char *info();
   void                computeSize(const lld::File &file);
   uint16_t            count();
   uint16_t            size();
-
   const ArrayRef<Elf_Shdr*> sectionInfo() {
     return _sectionInfo;
   }
-
-  bool is64Bit() { return _options.is64Bit(); }
 
 private:
   const WriterOptionsELF                 &_options;
@@ -184,31 +212,43 @@ private:
 /// null character. We might need more than one such chunks shstrtab for setting
 /// e_shstrndx in ELHHeaderChunk and strtab for use with symtab
 template<support::endianness target_endianness, bool is64Bits>
-class ELFStringSectionChunk : public Chunk<target_endianness, is64Bits> {
+class ELFStringSectionChunk : public SectionChunk<target_endianness, is64Bits> {
 public:
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
   ELFStringSectionChunk(const WriterOptionsELF &Options,
                         ELFWriter<target_endianness, is64Bits> &writer,
                         StringRef secName);
-
-  uint64_t addString(StringRef symName);
-
-  virtual StringRef   segmentName() const;
+  virtual StringRef   segmentName() const { return this->_segmentName; }
+  uint64_t            addString(StringRef symName);
+  const char          *info();
   virtual void        write(uint8_t *filebuffer);
-  virtual const char *info();
-  StringRef           sectionName();
-
-
 
 private:
-  StringRef _segName;
-  std::vector<StringRef> _StringSection;
-  StringRef _sectionName;
-  ELFWriter<target_endianness, is64Bits> &_writer;
-  const WriterOptionsELF &_options;
-
+  std::vector<StringRef> _stringSection;
 };
 
+/// \brief Represents the symtab section
+/// 
+/// ELFSymbolTableChunk represents the Symbol table as per ELF ABI
+/// This is a table with Elf[32/64]_Sym entries in it. 
+template<support::endianness target_endianness, bool is64Bits>
+class ELFSymbolTableChunk : public SectionChunk<target_endianness, is64Bits> {
+public:
+  typedef object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
+  ELFSymbolTableChunk(const WriterOptionsELF &options,
+                      ELFWriter<target_endianness, is64Bits> &writer,
+                      StringRef secName);
+  virtual StringRef   segmentName() const { return this->_segmentName; }
+  void                addSymbol(const Atom *a, uint16_t shndx);
+  void                addSymbol(Elf_Sym *x); 
+  const char          *info();
+  void                setAttributes();
+  virtual void               write(uint8_t *fileBuffer);
+
+private:
+  std::vector<Elf_Sym*> _symbolTable;
+  ELFStringSectionChunk<target_endianness, is64Bits> *_stringSection;
+  llvm::BumpPtrAllocator _symbolAllocate;
+};
 
 /// An ELFProgramHeaderChunk represents the Elf[32/64]_Phdr structure near
 /// the start of an ELF executable file. Will need to update ELFHeader's
@@ -221,16 +261,13 @@ public:
                         const WriterOptionsELF &options,
                         const File &file);
 
-
   virtual StringRef   segmentName() const;
   virtual void        write(uint8_t *filebuffer);
   virtual const char *info();
 
 private:
 // TODO: Replace this with correct ELF::* type method
-//uint32_t              filetype(WriterOptionsELF::OutputKind kind);
 };
-
 
 //===----------------------------------------------------------------------===//
 //  Chunk
@@ -239,6 +276,9 @@ private:
 template<support::endianness target_endianness, bool is64Bits>
 Chunk<target_endianness, is64Bits>::Chunk()
  : _size(0), _address(0), _fileOffset(0), _align2(0) {
+   // 0 and 1 are reserved. 0 for ELF header and 1 for Sectiontable header.
+   static uint64_t orderNumber = 0;
+   _ordinal = orderNumber++;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -308,41 +348,21 @@ void Chunk<target_endianness, is64Bits>::
 
 template<support::endianness target_endianness, bool is64Bits>
 SectionChunk<target_endianness, is64Bits>::
-  SectionChunk(DefinedAtom::ContentType type,
-               StringRef sectionName,
-               const WriterOptionsELF &options,
-               ELFWriter<target_endianness, is64Bits> &writer)
-  :  _options(options)
-  , _writer(writer) {
-  switch(type) {
-  case DefinedAtom::typeCode:
-    _segmentName = "PT_LOAD";
-    _sectionName = sectionName;
-    _flags       = ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
-    _type        = ELF::SHT_PROGBITS;
-    break;
-  case DefinedAtom::typeData:
-    _segmentName = "PT_LOAD";
-    _sectionName = sectionName;
-    _flags       = ELF::SHF_ALLOC | ELF::SHF_WRITE;
-    _type        = ELF::SHT_PROGBITS;
-    break;
-  case DefinedAtom::typeZeroFill:
-    _segmentName = "PT_LOAD";
-    _sectionName = sectionName;
-    _flags       = ELF::SHF_ALLOC | ELF::SHF_WRITE;
-    _type        = ELF::SHT_NOBITS;
-    break;
-  case DefinedAtom::typeConstant:
-    _segmentName = "PT_LOAD";
-    _sectionName = sectionName;
-    _flags       = ELF::SHF_ALLOC;
-    _type        = ELF::SHT_PROGBITS;
-    break;
-  default:
-    llvm_unreachable("Unhandled content type for section!");
-  }
-}
+ SectionChunk(StringRef secName, StringRef segName, bool loadable, 
+              uint64_t flags , uint64_t link,  uint64_t info , uint64_t type,
+              uint64_t entsz, const WriterOptionsELF &op, 
+              ELFWriter<target_endianness, is64Bits> &writer)
+  : _isLoadable(loadable)
+  , _link(link)
+  , _shinfo(info)
+  , _entsize(entsz)
+  , _segmentName(segName)
+  , _sectionName(secName)
+  , _options(op)
+  , _writer(writer)
+  , _flags(flags)
+  , _type(type)
+  , _offsetInStringTable(0) {}
 
 template<support::endianness target_endianness, bool is64Bits>
 bool SectionChunk<target_endianness, is64Bits>::occupiesNoDiskSpace() {
@@ -350,45 +370,51 @@ bool SectionChunk<target_endianness, is64Bits>::occupiesNoDiskSpace() {
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-StringRef SectionChunk<target_endianness, is64Bits>::segmentName() const {
-  return _segmentName;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-StringRef SectionChunk<target_endianness, is64Bits>::sectionName() {
-  return _sectionName;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-uint32_t SectionChunk<target_endianness, is64Bits>::flags() const {
-  return _flags;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-uint32_t SectionChunk<target_endianness, is64Bits>::type() const {
-  return _type;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-uint32_t SectionChunk<target_endianness, is64Bits>::permissions() {
-  return _permissions;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
 const char *SectionChunk<target_endianness, is64Bits>::info() {
   return _sectionName.data();
 }
 
+//===----------------------------------------------------------------------===//
+//  StockSectionChunk
+//===----------------------------------------------------------------------===//
+
 template<support::endianness target_endianness, bool is64Bits>
-const ArrayRef<AtomInfo> SectionChunk<target_endianness, is64Bits>::
+StockSectionChunk<target_endianness, is64Bits>::
+  StockSectionChunk(StringRef secName, bool loadable, 
+                    DefinedAtom::ContentType type,
+                    const WriterOptionsELF &options, 
+                    ELFWriter<target_endianness, is64Bits> &writer)
+ : SectionChunk<target_endianness, is64Bits>(secName, "PT_NULL", 
+                                             loadable, 0lu, 0lu, 0u, 0lu, 0lu,
+                                             options, writer) {
+  this->_segmentName = this->_isLoadable ? "PT_LOAD" : "PT_NULL" ;
+  switch(type) {
+  case DefinedAtom::typeCode:
+    this->_type        = ELF::SHT_PROGBITS;
+    break;
+  case DefinedAtom::typeData:
+    this->_type        = ELF::SHT_PROGBITS;
+    break;
+  case DefinedAtom::typeZeroFill:
+    this->_type        = ELF::SHT_NOBITS;
+  case DefinedAtom::typeConstant:
+    this->_type        = ELF::SHT_PROGBITS;
+    break;
+  default:
+    llvm_unreachable("Unhandled content type for section!");
+  }
+}
+ 
+
+template<support::endianness target_endianness, bool is64Bits>
+const ArrayRef<AtomInfo> StockSectionChunk<target_endianness, is64Bits>::
     atoms() const {
   return _atoms;
 }
 
-
 template<support::endianness target_endianness, bool is64Bits>
-void SectionChunk<target_endianness, is64Bits>::
-    appendAtom(const DefinedAtom *atom) {
+void StockSectionChunk<target_endianness, is64Bits>::
+     appendAtom(const DefinedAtom *atom) {
   // Figure out offset for atom in this section given alignment constraints.
   uint64_t offset = this->_size;
   DefinedAtom::Alignment atomAlign = atom->alignment();
@@ -413,41 +439,43 @@ void SectionChunk<target_endianness, is64Bits>::
 
   // TODO: Check content permissions and figure out what to do with .bss
   if ((perms & DefinedAtom::permR__) == DefinedAtom::permR__)
-    this->_permissions |= ELF::SHF_ALLOC;
+    this->_flags |= ELF::SHF_ALLOC;
   if ((perms & DefinedAtom::permRW_) == DefinedAtom::permRW_)
-    this->_permissions |= (ELF::SHF_ALLOC | ELF::SHF_WRITE);
+    this->_flags |= (ELF::SHF_ALLOC | ELF::SHF_WRITE);
   if ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X)
-    this->_permissions |= (ELF::SHF_ALLOC | ELF::SHF_EXECINSTR);
+    this->_flags |= (ELF::SHF_ALLOC | ELF::SHF_EXECINSTR);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-void SectionChunk<target_endianness, is64Bits>::write(uint8_t *chunkBuffer) {
+void StockSectionChunk<target_endianness, is64Bits>
+                      ::write(uint8_t *chunkBuffer) {
   // Each section's content is just its atoms' content.
   for (const auto &ai : _atoms ) {
     // Copy raw content of atom to file buffer.
-    ArrayRef<uint8_t> content = std::get<0>(ai)->rawContent();
-    uint64_t contentSize = content.size();
-    if (contentSize == 0)
-      continue;
-    uint8_t *atomContent = chunkBuffer + std::get<1>(ai);
-    std::copy_n(content.data(), contentSize, atomContent);
+   ArrayRef<uint8_t> content = std::get<0>(ai)->rawContent();
+   uint64_t contentSize = content.size();
+   if (contentSize == 0)
+     continue;
+   uint8_t *atomContent = chunkBuffer + std::get<1>(ai);
+   std::copy_n(content.data(), contentSize, atomContent);
 
-    for (const Reference *ref : *std::get<0>(ai)){
-      uint32_t offset = ref->offsetInAtom();
-      uint64_t targetAddress = 0;
+  for (const Reference *ref : *std::get<0>(ai)){
+    uint32_t offset = ref->offsetInAtom();
+    uint64_t targetAddress = 0;
 
-      if ( ref->target() != nullptr )
-         targetAddress = _writer.addressOfAtom(ref->target());
+    if ( ref->target() != nullptr )
+      targetAddress = this->_writer.addressOfAtom(ref->target());
 
-      uint64_t fixupAddress = _writer.addressOfAtom(std::get<0>(ai)) + offset;
-      _writer.kindHandler()->applyFixup(ref->kind(), ref->addend(),
-                                        &atomContent[offset],
-                                        fixupAddress,
-                                        targetAddress);
+    uint64_t fixupAddress = this->_writer.addressOfAtom(std::get<0>(ai)) +
+                            offset;
+    this->_writer.kindHandler()->applyFixup(ref->kind(), ref->addend(),
+                                            &atomContent[offset],
+                                            fixupAddress,
+                                            targetAddress);
     }
   }
 }
-//
+
 //===----------------------------------------------------------------------===//
 //  ELFStringSectionChunk
 //===----------------------------------------------------------------------===//
@@ -456,54 +484,168 @@ ELFStringSectionChunk<target_endianness, is64Bits>::
     ELFStringSectionChunk(const WriterOptionsELF &options,
                           ELFWriter<target_endianness, is64Bits> &writer, 
                           StringRef secName) 
-  : _segName("PT_NULL")
-  , _sectionName(secName)
-  , _writer(writer)
-  , _options(options) {
+  : SectionChunk<target_endianness, is64Bits>(secName, "PT_NULL", 
+                                              false, 0lu, 0lu, 0lu, 
+                                              ELF::SHT_STRTAB, 0lu, options, 
+                                              writer) {
   // First Add a null character. It also occupies 1 byte
-  _StringSection.emplace_back("");
+  _stringSection.emplace_back("");
   this->_size = 1;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 uint64_t ELFStringSectionChunk<target_endianness, is64Bits>::
          addString(StringRef symName) {
-  _StringSection.emplace_back(symName);
-  
+  _stringSection.emplace_back(symName);
   uint64_t offset = this->_size;
   this->_size += symName.size() + 1;
 
   return offset;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const char *ELFStringSectionChunk<target_endianness, is64Bits>::info() {
-  return _sectionName.data();
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-StringRef ELFStringSectionChunk<target_endianness, is64Bits>::sectionName() {
-  return _sectionName ;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-StringRef ELFStringSectionChunk<target_endianness, is64Bits>::
-          segmentName() const {
-  return _segName;
-}
-
-// We need to unwrap the _StringSection and then make one large memory 
+// We need to unwrap the _stringSection and then make one large memory 
 // chunk of null terminated strings
 template<support::endianness target_endianness, bool is64Bits>
 void ELFStringSectionChunk<target_endianness, is64Bits>::
      write(uint8_t *chunkBuffer) {
   uint64_t chunkOffset = 0;
  
-  for (auto it : _StringSection) {
+  for (auto it : _stringSection) {
     ::memcpy(chunkBuffer + chunkOffset, it.data(), it.size());
     chunkOffset += it.size();
     ::memcpy(chunkBuffer + chunkOffset, "", 1);
     chunkOffset += 1;
+  }
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+const char *ELFStringSectionChunk<target_endianness, is64Bits>::info() {
+  return "String Table";
+}
+
+//===----------------------------------------------------------------------===//
+//  ELFSymbolTableChunk
+//===----------------------------------------------------------------------===//
+template< support::endianness target_endianness, bool is64Bits>
+ELFSymbolTableChunk<target_endianness, is64Bits>::ELFSymbolTableChunk
+                    (const WriterOptionsELF &options, 
+                     ELFWriter<target_endianness, is64Bits> &writer, 
+                     StringRef secName)
+  : SectionChunk<target_endianness, is64Bits>(secName, StringRef("PT_NULL"), 
+                                              false, 0, 0, 0, ELF::SHT_SYMTAB,
+                                              sizeof(Elf_Sym), options, writer)
+{
+  _stringSection = this->_writer.strtab();
+  Elf_Sym *symbol = new (_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
+  memset ((void *)symbol,0, sizeof(Elf_Sym));
+  _symbolTable.push_back(symbol);
+  this->_link = 0;
+  this->_entsize = sizeof(Elf_Sym);
+  this->_size = sizeof(Elf_Sym);
+}
+
+template< support::endianness target_endianness, bool is64Bits>
+void ELFSymbolTableChunk<target_endianness, is64Bits>::addSymbol(Elf_Sym *sym){
+   _symbolTable.push_back(sym);
+   this->_size+= sizeof(Elf_Sym) ;
+}
+
+/// \brief Add symbols to symbol table
+/// We examine each property of atom to infer the various st_* fields in Elf*_Sym
+template< support::endianness target_endianness, bool is64Bits>
+void ELFSymbolTableChunk<target_endianness, is64Bits>
+                  ::addSymbol(const Atom *a, uint16_t shndx) {
+ Elf_Sym *symbol = new(_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
+ unsigned char b = 0, t = 0;
+
+ symbol->st_name = _stringSection->addString(a->name());
+// In relocatable files, st_value holds a section offset for a defined symbol.
+// st_value is an offset from the beginning of the section that st_shndx
+// identifies. After we assign file offsets we can set this value correctly.
+ symbol->st_size = 0;
+ symbol->st_shndx = shndx;
+ symbol->st_value = 0;
+// FIXME: Need to change and account all STV* when visibilities are supported
+ symbol->st_other = ELF::STV_DEFAULT;
+ if (const DefinedAtom *da = llvm::dyn_cast<const DefinedAtom>(a)){
+    symbol->st_size = da->size();
+    lld::DefinedAtom::ContentType ct;
+    switch (ct = da->contentType()){
+    case  DefinedAtom::typeCode:
+      t = ELF::STT_FUNC;
+      break;
+    case  DefinedAtom::typeData:
+      t = ELF::STT_OBJECT;
+      break;
+    case  DefinedAtom::typeZeroFill:
+   // In relocatable files, st_value holds alignment constraints for a symbol whose 
+   // section index is SHN_COMMON
+      if (this->_options.type() == ELF::ET_REL){
+        t = ELF::STT_COMMON;
+        symbol->st_value = 1 << (da->alignment()).powerOf2;
+        symbol->st_shndx = ELF::SHN_COMMON;
+      }
+      break;
+    case DefinedAtom::typeFirstInSection:
+      t = ELF::STT_SECTION;
+      break;
+   // TODO:: How to find STT_FILE symbols?
+    default:
+      t = ELF::STT_NOTYPE;
+    }
+ 
+    if (da->scope() == DefinedAtom::scopeTranslationUnit)  
+      b = ELF::STB_LOCAL;
+    else if (da->merge() == DefinedAtom::mergeAsWeak)
+      b = ELF::STB_WEAK;
+    else
+      b = ELF::STB_GLOBAL;
+ } else if (const AbsoluteAtom *aa = llvm::dyn_cast<const AbsoluteAtom>(a)){
+//FIXME: Absolute atoms need more properties to differentiate each other
+// based on binding and type of symbol
+ symbol->st_value = aa->value();
+ } else {
+ symbol->st_value = 0;
+ t = ELF::STT_NOTYPE;
+ b = ELF::STB_LOCAL;
+ }
+ symbol->setBindingAndType(b, t);
+
+ _symbolTable.push_back(symbol);
+ this->_size += sizeof(Elf_Sym);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+void ELFSymbolTableChunk<target_endianness, is64Bits>::setAttributes() {
+// sh_info should be one greater than last symbol with STB_LOCAL binding
+// we sort the symbol table to keep all local symbols at the beginning
+ std::stable_sort(_symbolTable.begin(), _symbolTable.end(), ([]
+                  (const Elf_Sym *A, const Elf_Sym *B) -> bool {
+                   return (A->getBinding() < B->getBinding());}));
+  uint16_t shInfo = 0;
+  for (auto i : _symbolTable) {
+    if (i->getBinding() != ELF::STB_LOCAL)
+      break;
+    shInfo++;
+  }
+  this->_shinfo = shInfo;
+// we set the associated string table index in th sh_link member
+  this->_link = this->_writer.strtab()->ordinal() - 1;
+  this->_align2 = this->_options.pointerWidth();
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+const char *ELFSymbolTableChunk<target_endianness, is64Bits>::info() {
+  return "Symbol Table";
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+void ELFSymbolTableChunk<target_endianness, is64Bits>::
+     write(uint8_t *chunkBuffer) {
+  uint64_t chunkOffset = 0;
+  for (auto it : _symbolTable) {
+    ::memcpy(chunkBuffer + chunkOffset, it, this->_entsize);
+    chunkOffset += this->_entsize;
   }
 }
 
@@ -573,7 +715,6 @@ ELFSectionHeaderChunk<target_endianness, is64Bits>
                                                        is64Bits> &writer) 
   : _options(options)
   , _writer(writer) {
-
   this->_size = 0;
   this->_align2 = 0;
   // The first element in the list is always NULL
@@ -582,14 +723,20 @@ ELFSectionHeaderChunk<target_endianness, is64Bits>
   _sectionInfo.push_back(nullshdr);
 
   this->_size += sizeof (Elf_Shdr);
+  }
 
+template<support::endianness target_endianness, bool is64Bits>
+void ELFSectionHeaderChunk<target_endianness, is64Bits>::createHeaders(){
   ELFStringSectionChunk<target_endianness, is64Bits> *str = _writer.shstrtab();
 
-  for (const auto &chunk : _writer.sectionChunks()) {
+ for (const  auto &chunk : _writer.sectionChunks()) {
     Elf_Shdr *shdr  = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
     StringRef Name  = chunk->sectionName();
-    uint64_t offset = str->addString(Name);
-    shdr->sh_name   = offset;
+    if (chunk->shStrtableOffset() == 0){
+      chunk->setShStrtableOffset(str->addString(Name));
+    }
+    shdr->sh_name   = chunk->shStrtableOffset();
+
     shdr->sh_type   = chunk->type();
     shdr->sh_flags  = chunk->flags();
     // TODO: At the time of creation of this section header, we will not have
@@ -598,72 +745,21 @@ ELFSectionHeaderChunk<target_endianness, is64Bits>
     shdr->sh_offset = chunk->fileOffset();
     shdr->sh_addr   = chunk->address();
     shdr->sh_size   = chunk->size();
-// The next two fields have special meanings:
-// sh_type           sh_link                             sh_info
-// SHT_DYNAMIC  The section header index of the string
-//                table used by entries in the section.   0
-// SHT_HASH     The section header index of the symbol
-//                table to which the hash table applies.  0
-// SHT_REL
-// SHT_RELA     The section header index of the
-//                associated symbol table.                The section header
-//                                                        index of the section
-//                                                        to which the
-//                                                        relocation applies.
-// SHT_SYMTAB
-// SHT_DYNSYM   The section header index of the
-//                associated string table.                One greater than the
-//                                                        symbol table index of
-//                                                        the last local symbol
-//                                                        (binding STB_LOCAL).
-// SHT_GROUP    The section header index of the
-//              associated symbol table.                  The symbol table
-//                                                        index of an entry in
-//                                                        the associated symbol
-//                                                        table. The name of
-//                                                        the specified symbol
-//                                                        table entry provides
-//                                                        a signature for the
-//                                                        section group.
-// SHT_SYMTAB_SHNDX The section header index of
-//                  the associated symbol table section.  0
-// None of these chunks are of the above mentioned type, so we short them.
-    shdr->sh_link = 0;
-    shdr->sh_info = 0;
+    shdr->sh_link = chunk->link() ;
+    shdr->sh_info = chunk->shinfo();
     shdr->sh_addralign = chunk->align2();
-    // Not a special section with fixed entries
-    shdr->sh_entsize = 0;
+    shdr->sh_entsize = chunk->entsize();
 
     _sectionInfo.push_back(shdr);
     this->_size += sizeof (Elf_Shdr);
+    _writer.symtab()->setAttributes();
   }
-
-  // Now I add in the section string table. For some reason This seems to be 
-  // preferred location of string sections in contemporary
-  // (ones that must not be named) linker(s).
-  Elf_Shdr *shdr = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
-  // I push the name of the string table into the string table as soon as
-  // it is created.
-  shdr->sh_name   = 1;
-  shdr->sh_type   = ELF::SHT_STRTAB;
-  shdr->sh_flags  = 0;
-  // NOTE: Refer to above note when assigning st_addr for other sections.
-  shdr->sh_addr   = str->address();
-  shdr->sh_offset = str->fileOffset();
-  shdr->sh_size   = str->size();
-  shdr->sh_link   = 0;
-  shdr->sh_info   = 0;
-  // This section is not a loadable section, hence we do not care about
-  // alignment.
-  shdr->sh_addralign = 1;
-  _sectionInfo.push_back(shdr);
-  this->_size += sizeof (Elf_Shdr);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 StringRef ELFSectionHeaderChunk<target_endianness, is64Bits>
                                ::segmentName() const {
-  return "SHDR";
+  return "PT_NULL";
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -702,6 +798,7 @@ class ELFWriter : public Writer {
 public:
   LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
   typedef object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
+  typedef object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
   ELFWriter(const WriterOptionsELF &options);
   virtual error_code writeFile(const lld::File &File, StringRef path);
   uint64_t addressOfAtom(const Atom *atom);
@@ -714,6 +811,13 @@ public:
   
   ELFStringSectionChunk<target_endianness, is64Bits> *shstrtab() {
     return _shstrtable;
+  }
+  
+  ELFStringSectionChunk<target_endianness, is64Bits> *strtab() {
+    return _strtable;
+  }
+  ELFSymbolTableChunk<target_endianness, is64Bits> *symtab() {
+    return _symtable;
   }
 
 private:
@@ -728,12 +832,16 @@ private:
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
 
   ELFStringSectionChunk<target_endianness, is64Bits> *_shstrtable ;
+  ELFStringSectionChunk<target_endianness, is64Bits> *_strtable ;
+  ELFSymbolTableChunk<target_endianness, is64Bits> *_symtable;
   std::unique_ptr<KindHandler> _referenceKindHandler;
   ELFSectionHeaderChunk<target_endianness, is64Bits> *_sectionHeaderChunk;
   AtomToAddress _atomToAddress;
   std::vector<Chunk<target_endianness, is64Bits>*> _chunks;
   const DefinedAtom *_entryAtom;
   std::vector<SectionChunk<target_endianness, is64Bits>*> _sectionChunks;
+  std::vector<StockSectionChunk<target_endianness, is64Bits>*> 
+                                                      _stockSectionChunks;
   llvm::BumpPtrAllocator _chunkAllocate;
 };
 
@@ -749,7 +857,7 @@ ELFWriter<target_endianness, is64Bits>
 
 template<support::endianness target_endianness, bool is64Bits>
 void ELFWriter<target_endianness, is64Bits>::build(const lld::File &file){
-  // Create objects for each chunk.
+// Create objects for each chunk.
   createChunks(file);
   assignFileOffsets();
   buildAtomToAddressMap();
@@ -758,68 +866,144 @@ void ELFWriter<target_endianness, is64Bits>::build(const lld::File &file){
 template<support::endianness target_endianness, bool is64Bits>
 void ELFWriter<target_endianness, is64Bits>
               ::createChunks (const lld::File &file) {
-  std::map<StringRef, SectionChunk<target_endianness, is64Bits>*> sectionMap;
+  std::map<StringRef, StockSectionChunk<target_endianness, is64Bits>*> 
+             sectionMap;
 
-  // We need to create hand crafted sections such as shstrtab strtab hash and
-  // symtab to put relevant information in ELF structures and then process the
-  // atoms.
+// Make header chunk
+  ELFHeaderChunk<target_endianness, is64Bits> *ehc = 
+    new (_chunkAllocate.Allocate
+        <ELFHeaderChunk<target_endianness, is64Bits>>())
+        ELFHeaderChunk<target_endianness, is64Bits>(_options, file);
+  _chunks.push_back(ehc);
+        
+  _sectionHeaderChunk = new (_chunkAllocate.Allocate<ELFSectionHeaderChunk
+                               <target_endianness, is64Bits>>())
+                              ELFSectionHeaderChunk
+                               <target_endianness, is64Bits>(_options, *this); 
+  _chunks.push_back(_sectionHeaderChunk);
+// We need to create hand crafted sections such as shstrtab strtab hash and
+// symtab to put relevant information in ELF structures and then process the
+// atoms.
 
   _shstrtable = new (_chunkAllocate.Allocate
                      <ELFStringSectionChunk<target_endianness, is64Bits>>()) 
                     ELFStringSectionChunk<target_endianness, is64Bits>
                              (_options, *this, ".shstrtab");
-  _shstrtable->addString(".shstrtab");
+  _shstrtable->setShStrtableOffset(_shstrtable->addString(".shstrtab"));
+  _sectionChunks.push_back(_shstrtable);
+  
+  _strtable = new (_chunkAllocate.Allocate
+                     <ELFStringSectionChunk<target_endianness, is64Bits>>()) 
+                    ELFStringSectionChunk<target_endianness, is64Bits>
+                             (_options, *this, ".strtab");
+  _strtable->setShStrtableOffset( _shstrtable->addString(".strtab"));
+  _sectionChunks.push_back(_strtable);
+  
+  _symtable = new (_chunkAllocate.Allocate
+                     <ELFSymbolTableChunk<target_endianness, is64Bits>>()) 
+                    ELFSymbolTableChunk<target_endianness, is64Bits>
+                             (_options, *this, ".symtab");
+  _symtable->setShStrtableOffset( _shstrtable->addString(".symtab"));
+  _sectionChunks.push_back(_symtable);
 
-  //we also need to process undefined atoms
+//TODO: implement .hash section
+
   for (const DefinedAtom *a : file.defined() ) {
-    // TODO: Add sectionChoice.
-    // assert( atom->sectionChoice() == DefinedAtom::sectionBasedOnContent );
     StringRef sectionName = a->customSectionName();
+    if (a->sectionChoice() == 
+        DefinedAtom::SectionChoice::sectionBasedOnContent) {
+      if (a->size() <8)
+         sectionName = ".sbss";
+      else
+         sectionName = ".bss";
+    }
     auto pos = sectionMap.find(sectionName);
     DefinedAtom::ContentType type = a->contentType();
-    if (pos == sectionMap.end()) {
-      if (type != DefinedAtom::typeUnknown){
-    	  SectionChunk<target_endianness, is64Bits>
-                  *chunk = new (_chunkAllocate.Allocate
-                                <SectionChunk<target_endianness, is64Bits>>())
-                                SectionChunk<target_endianness, is64Bits>
-                                   (type, sectionName, _options, *this);
+    if (type != DefinedAtom::typeUnknown){
+      if (pos == sectionMap.end()) {
+       StockSectionChunk<target_endianness, is64Bits>
+                  *chunk = new(_chunkAllocate.Allocate
+                               <StockSectionChunk<target_endianness, is64Bits>>
+                               ())StockSectionChunk<target_endianness, is64Bits>
+                                   (sectionName, true, type, _options, *this);
 
-         sectionMap[sectionName] = chunk;
-         chunk->appendAtom(a);
-         _sectionChunks.push_back(chunk);
+       sectionMap[sectionName] = chunk;
+       chunk->appendAtom(a);
+       _sectionChunks.push_back(chunk);
+       _stockSectionChunks.push_back(chunk);
+                            
+      } else {
+        pos->second->appendAtom(a);
       }
-    } else {
-      pos->second->appendAtom(a);
     }
   }
 
-  //put in the Undefined atoms as well
-  // Make header chunk
-  ELFHeaderChunk<target_endianness, is64Bits> *ehc = 
-    new (_chunkAllocate.Allocate
-        <ELFHeaderChunk<target_endianness, is64Bits>>())
-        ELFHeaderChunk<target_endianness, is64Bits>(_options, file);
-
-  _sectionHeaderChunk = new (_chunkAllocate.Allocate<ELFSectionHeaderChunk
-                               <target_endianness, is64Bits>>())
-                              ELFSectionHeaderChunk
-                               <target_endianness, is64Bits>(_options, *this); 
-
-  ehc->e_shoff(ehc->size());
-  ehc->e_shentsize(_sectionHeaderChunk->size());
-  ehc->e_shnum(_sectionHeaderChunk->count());
- 
-   // I am pushing string section after all sections are in.
-   // Hence the index will be total number of non-custom sections we have
-
-  ehc->e_shstrndx(_sectionChunks.size() + 1);
-  _chunks.push_back(ehc);
-  _chunks.push_back(_sectionHeaderChunk);
-  // We have ELF header, section header. Now push rest of sections
   for (auto chnk : _sectionChunks)
     _chunks.push_back(chnk);
-  _chunks.push_back(_shstrtable);
+
+// After creating chunks, we might lay them out diffrently.
+// Lets make sure symbol table, string table and section string table
+// are at the end. In future we might provide knob
+// to the driver to decide layout.
+  swapChunkPositions(*_chunks[_chunks.size() - 1],
+                     *reinterpret_cast<Chunk<target_endianness,
+                                             is64Bits>*>(_shstrtable));
+  swapChunkPositions(*_chunks[_chunks.size() - 2],
+                     *reinterpret_cast<Chunk<target_endianness, 
+                                             is64Bits>*>(_strtable));
+  swapChunkPositions(*_chunks[_chunks.size() - 3],
+                     *reinterpret_cast<Chunk<target_endianness, 
+                                             is64Bits>*>(_symtable));
+// We sort the _chunks vector to have all chunks as per ordianl number
+// this will help to write out the chunks in the order we decided
+
+  std::stable_sort(_chunks.begin(), _chunks.end(),([]
+  (const Chunk<target_endianness, is64Bits> *A, 
+   const Chunk<target_endianness, is64Bits> *B) -> bool {
+     return (A->ordinal() < B->ordinal());}));
+
+  std::stable_sort(_sectionChunks.begin(), _sectionChunks.end(),([]
+  (const SectionChunk<target_endianness, is64Bits> *A, 
+   const SectionChunk<target_endianness, is64Bits> *B) -> bool {
+     return (A->ordinal() < B->ordinal());}));
+  
+// Once the layout is fixed, we can now go and populate symbol table 
+// with correct st_shndx member.
+
+ for (auto chnk : _sectionChunks ){
+    Elf_Sym *sym  = new (_chunkAllocate.Allocate<Elf_Sym>())Elf_Sym;
+    sym->st_name  = 0;
+    sym->st_value = 0;
+    sym->st_size  = 0;
+    sym->st_other = ELF::STV_DEFAULT;
+// first two chunks are not sections hence we subtract 2 but there is a 
+// NULL section in section table so add 1
+    sym->st_shndx = chnk->ordinal() - 1 ;
+    sym->setBindingAndType(ELF::STB_LOCAL, ELF::STT_SECTION);
+    _symtable->addSymbol(sym);
+ }
+ 
+ for (const auto ssc : _stockSectionChunks){
+   for (const auto da : ssc->atoms()) {
+     _symtable->addSymbol(std::get<0>(da), ssc->ordinal() -1);
+   }
+ }
+ for (const UndefinedAtom *a : file.undefined()) {
+   _symtable->addSymbol(a, ELF::SHN_UNDEF);
+ }
+ 
+ for (const AbsoluteAtom *a : file.absolute()) {
+   _symtable->addSymbol(a, ELF::SHN_ABS);
+ }
+ 
+ _sectionHeaderChunk->createHeaders();
+ ehc->e_shoff(ehc->size());
+ ehc->e_shentsize(_sectionHeaderChunk->size());
+ ehc->e_shnum(_sectionHeaderChunk->count());
+// We need to put the index of section string table in ELF header
+// first two chunks are not sections so we subtract 2 to start sections
+// and add 1 since we have a NULL header
+ ehc->e_shstrndx(_shstrtable->ordinal() - 1);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -828,13 +1012,11 @@ void ELFWriter<target_endianness, is64Bits>
 
 // _atomToAddress is a DenseMap that maps an atom its file address.
 // std::get<1>(ai) is the offset from the start of the section to the atom.
-  for (auto &chunk : _sectionChunks){
+  for (auto chunk : _stockSectionChunks){
     for (auto &ai : chunk->atoms() ) {
       _atomToAddress[std::get<0>(ai)] = chunk->address() + std::get<1>(ai);
     }
   }
-  
-
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -859,11 +1041,6 @@ void ELFWriter<target_endianness, is64Bits>::assignFileOffsets() {
     (*it)->sh_addr = chunk->address();
     ++it;
   }
-  // We  have taken care of  all the stock sections. We need to deal with 
-  // custom sections
-  // They are section string table, string table and symbol table
-  (*it)->sh_offset = _shstrtable->fileOffset();
-  (*it)->sh_addr = _shstrtable->address();
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -895,7 +1072,7 @@ uint64_t ELFWriter<target_endianness, is64Bits>
 
 Writer *createWriterELF(const WriterOptionsELF &options) {
   if (!options.is64Bit() && options.endianness() == llvm::support::little)
-	  return new lld::elf::ELFWriter<support::little, false>(options);
+    return new lld::elf::ELFWriter<support::little, false>(options);
   else if (options.is64Bit() && options.endianness() == llvm::support::little)
     return new lld::elf::ELFWriter<support::little, true>(options);
   else if (!options.is64Bit() && options.endianness() == llvm::support::big)
@@ -905,5 +1082,4 @@ Writer *createWriterELF(const WriterOptionsELF &options) {
 
   llvm_unreachable("Invalid Options!");
 }
-
 } // namespace lld
