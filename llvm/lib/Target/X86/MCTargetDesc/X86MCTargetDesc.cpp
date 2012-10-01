@@ -243,9 +243,14 @@ unsigned X86_MC::getX86RegNum(unsigned RegNo) {
   case X86::R15: case X86::R15D: case X86::R15W: case X86::R15B:
     return N86::EDI;
 
-  case X86::ST0: case X86::ST1: case X86::ST2: case X86::ST3:
-  case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
-    return RegNo-X86::ST0;
+  case X86::ST0: return 0;
+  case X86::ST1: return 1;
+  case X86::ST2: return 2;
+  case X86::ST3: return 3;
+  case X86::ST4: return 4;
+  case X86::ST5: return 5;
+  case X86::ST6: return 6;
+  case X86::ST7: return 7;
 
   case X86::XMM0: case X86::XMM8:
   case X86::YMM0: case X86::YMM8: case X86::MM0:
