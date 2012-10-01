@@ -269,3 +269,27 @@ if.end:
 ; CHECK: switch
 ; CHECK: phi
 }
+
+; PR13985
+define i1 @undef(i32 %tmp) uwtable ssp {
+bb:
+  switch i32 %tmp, label %bb3 [
+    i32 0, label %bb1
+    i32 1, label %bb1
+    i32 7, label %bb2
+    i32 8, label %bb2
+  ]
+
+bb1:                                              ; preds = %bb, %bb
+  br label %bb3
+
+bb2:                                              ; preds = %bb, %bb
+  br label %bb3
+
+bb3:                                              ; preds = %bb2, %bb1, %bb
+  %tmp4 = phi i1 [ undef, %bb ], [ false, %bb2 ], [ true, %bb1 ]
+  ret i1 %tmp4
+; CHECK: define i1 @undef
+; CHECK: %switch.cast = trunc i32 %switch.tableidx to i9
+; CHECK: %switch.downshift = lshr i9 3, %switch.shiftamt
+}

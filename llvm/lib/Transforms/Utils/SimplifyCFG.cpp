@@ -3351,8 +3351,11 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
     APInt TableInt(TableSize * IT->getBitWidth(), 0);
     for (uint64_t I = TableSize; I > 0; --I) {
       TableInt <<= IT->getBitWidth();
-      ConstantInt *Val = cast<ConstantInt>(TableContents[I - 1]);
-      TableInt |= Val->getValue().zext(TableInt.getBitWidth());
+      // Insert values into the bitmap. Undef values are set to zero.
+      if (!isa<UndefValue>(TableContents[I - 1])) {
+        ConstantInt *Val = cast<ConstantInt>(TableContents[I - 1]);
+        TableInt |= Val->getValue().zext(TableInt.getBitWidth());
+      }
     }
     BitMap = ConstantInt::get(M.getContext(), TableInt);
     BitMapElementTy = IT;
