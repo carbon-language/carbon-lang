@@ -12,12 +12,9 @@
 using namespace llvm;
 
 MCAsmBackend::MCAsmBackend()
-  : HasReliableSymbolDifference(false)
-{
-}
+  : HasReliableSymbolDifference(false), HasDataInCodeSupport(false) {}
 
-MCAsmBackend::~MCAsmBackend() {
-}
+MCAsmBackend::~MCAsmBackend() {}
 
 const MCFixupKindInfo &
 MCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {

@@ -36,6 +36,7 @@ protected: // Can only create subclasses.
   MCAsmBackend();
 
   unsigned HasReliableSymbolDifference : 1;
+  unsigned HasDataInCodeSupport : 1;
 
 public:
   virtual ~MCAsmBackend();
@@ -63,6 +64,12 @@ public:
   /// eventually should be eliminated.
   bool hasReliableSymbolDifference() const {
     return HasReliableSymbolDifference;
+  }
+
+  /// hasDataInCodeSupport - Check whether this target implements data-in-code
+  /// markers. If not, data region directives will be ignored.
+  bool hasDataInCodeSupport() const {
+    return HasDataInCodeSupport;
   }
 
   /// doesSectionRequireSymbols - Check whether the given section requires that

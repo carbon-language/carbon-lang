@@ -593,7 +593,9 @@ public:
   const object::mach::CPUSubtypeARM Subtype;
   DarwinARMAsmBackend(const Target &T, const StringRef TT,
                       object::mach::CPUSubtypeARM st)
-    : ARMAsmBackend(T, TT), Subtype(st) { }
+    : ARMAsmBackend(T, TT), Subtype(st) {
+      HasDataInCodeSupport = true;
+    }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createARMMachObjectWriter(OS, /*Is64Bit=*/false,
