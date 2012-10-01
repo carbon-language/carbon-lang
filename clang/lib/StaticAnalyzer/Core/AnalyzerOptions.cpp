@@ -48,17 +48,20 @@ AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const {
   return CXXMemberInliningMode >= K;
 }
 
-bool AnalyzerOptions::getBooleanOption(StringRef Name, bool DefaultVal) const {
+static StringRef toString(bool b) { return b ? "true" : "false"; }
+
+bool AnalyzerOptions::getBooleanOption(StringRef Name, bool DefaultVal) {
   // FIXME: We should emit a warning here if the value is something other than
   // "true", "false", or the empty string (meaning the default value),
   // but the AnalyzerOptions doesn't have access to a diagnostic engine.
-  return llvm::StringSwitch<bool>(Config.lookup(Name))
-    .Case("true", true)
-    .Case("false", false)
-    .Default(DefaultVal);
+  StringRef V(Config.GetOrCreateValue(Name, toString(DefaultVal)).getValue());
+  return llvm::StringSwitch<bool>(V)
+      .Case("true", true)
+      .Case("false", false)
+      .Default(DefaultVal);
 }
 
-bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
+bool AnalyzerOptions::includeTemporaryDtorsInCFG() {
   if (!IncludeTemporaryDtorsInCFG.hasValue())
     const_cast<llvm::Optional<bool> &>(IncludeTemporaryDtorsInCFG) =
       getBooleanOption("cfg-temporary-dtors", /*Default=*/false);
@@ -66,7 +69,7 @@ bool AnalyzerOptions::includeTemporaryDtorsInCFG() const {
   return *IncludeTemporaryDtorsInCFG;
 }
 
-bool AnalyzerOptions::mayInlineCXXStandardLibrary() const {
+bool AnalyzerOptions::mayInlineCXXStandardLibrary() {
   if (!InlineCXXStandardLibrary.hasValue())
     const_cast<llvm::Optional<bool> &>(InlineCXXStandardLibrary) =
       getBooleanOption("c++-stdlib-inlining", /*Default=*/true);
@@ -74,7 +77,7 @@ bool AnalyzerOptions::mayInlineCXXStandardLibrary() const {
   return *InlineCXXStandardLibrary;
 }
 
-bool AnalyzerOptions::mayInlineTemplateFunctions() const {
+bool AnalyzerOptions::mayInlineTemplateFunctions() {
   if (!InlineTemplateFunctions.hasValue())
     const_cast<llvm::Optional<bool> &>(InlineTemplateFunctions) =
       getBooleanOption("c++-template-inlining", /*Default=*/true);
@@ -82,7 +85,7 @@ bool AnalyzerOptions::mayInlineTemplateFunctions() const {
   return *InlineTemplateFunctions;
 }
 
-bool AnalyzerOptions::mayInlineObjCMethod() const {
+bool AnalyzerOptions::mayInlineObjCMethod() {
   if (!ObjCInliningMode.hasValue())
     const_cast<llvm::Optional<bool> &>(ObjCInliningMode) =
       getBooleanOption("objc-inlining", /*Default=*/true);
@@ -90,7 +93,7 @@ bool AnalyzerOptions::mayInlineObjCMethod() const {
   return *ObjCInliningMode;
 }
 
-bool AnalyzerOptions::shouldPruneNullReturnPaths() const {
+bool AnalyzerOptions::shouldPruneNullReturnPaths() {
   if (!PruneNullReturnPaths.hasValue())
     const_cast<llvm::Optional<bool> &>(PruneNullReturnPaths) =
       getBooleanOption("suppress-null-return-paths", /*Default=*/true);
@@ -120,6 +123,6 @@ unsigned AnalyzerOptions::getAlwaysInlineSize() const {
   return AlwaysInlineSize.getValue();
 }
 
-bool AnalyzerOptions::shouldSynthesizeBodies() const {
+bool AnalyzerOptions::shouldSynthesizeBodies() {
   return getBooleanOption("faux-bodies", true);
 }

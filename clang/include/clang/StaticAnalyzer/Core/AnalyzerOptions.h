@@ -192,7 +192,7 @@ private:
   ///
   /// Accepts the strings "true" and "false".
   /// If an option value is not provided, returns the given \p DefaultVal.
-  bool getBooleanOption(StringRef Name, bool DefaultVal) const;
+  bool getBooleanOption(StringRef Name, bool DefaultVal);
 
   /// Interprets an option's string value as an integer value.
   int getOptionAsInteger(llvm::StringRef Name, int DefaultVal) const;
@@ -207,27 +207,27 @@ public:
   bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const;
 
   /// Returns true if ObjectiveC inlining is enabled, false otherwise.
-  bool mayInlineObjCMethod() const;
+  bool mayInlineObjCMethod();
 
   /// Returns whether or not the destructors for C++ temporary objects should
   /// be included in the CFG.
   ///
   /// This is controlled by the 'cfg-temporary-dtors' config option, which
   /// accepts the values "true" and "false".
-  bool includeTemporaryDtorsInCFG() const;
+  bool includeTemporaryDtorsInCFG();
 
   /// Returns whether or not C++ standard library functions may be considered
   /// for inlining.
   ///
   /// This is controlled by the 'c++-stdlib-inlining' config option, which
   /// accepts the values "true" and "false".
-  bool mayInlineCXXStandardLibrary() const;
+  bool mayInlineCXXStandardLibrary();
 
   /// Returns whether or not templated functions may be considered for inlining.
   ///
   /// This is controlled by the 'c++-template-inlining' config option, which
   /// accepts the values "true" and "false".
-  bool mayInlineTemplateFunctions() const;
+  bool mayInlineTemplateFunctions();
 
   /// Returns whether or not paths that go through null returns should be
   /// suppressed.
@@ -237,7 +237,7 @@ public:
   ///
   /// This is controlled by the 'suppress-null-return-paths' config option,
   /// which accepts the values "true" and "false".
-  bool shouldPruneNullReturnPaths() const;
+  bool shouldPruneNullReturnPaths();
 
   // Returns the size of the functions (in basic blocks), which should be
   // considered to be small enough to always inline.
@@ -247,7 +247,7 @@ public:
   
   /// Returns true if the analyzer engine should synthesize fake bodies
   /// for well-known functions.
-  bool shouldSynthesizeBodies() const;
+  bool shouldSynthesizeBodies();
 
 public:
   AnalyzerOptions() : CXXMemberInliningMode() {

@@ -42,7 +42,7 @@ class AnalysisManager : public BugReporterData {
   CheckerManager *CheckerMgr;
 
 public:
-  const AnalyzerOptions &options;
+  AnalyzerOptions &options;
   
   AnalysisManager(ASTContext &ctx,DiagnosticsEngine &diags,
                   const LangOptions &lang,
@@ -50,7 +50,7 @@ public:
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
-                  const AnalyzerOptions &Options);
+                  AnalyzerOptions &Options);
 
   ~AnalysisManager();
   

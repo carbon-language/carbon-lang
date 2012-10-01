@@ -385,7 +385,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
   const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
   const LocationContext *ParentOfCallee = 0;
 
-  const AnalyzerOptions &Opts = getAnalysisManager().options;
+  AnalyzerOptions &Opts = getAnalysisManager().options;
 
   // FIXME: Refactor this check into a hypothetical CallEvent::canInline.
   switch (Call.getKind()) {

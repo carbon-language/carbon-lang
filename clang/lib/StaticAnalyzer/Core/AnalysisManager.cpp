@@ -20,7 +20,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  StoreManagerCreator storemgr,
                                  ConstraintManagerCreator constraintmgr, 
                                  CheckerManager *checkerMgr,
-                                 const AnalyzerOptions &Options)
+                                 AnalyzerOptions &Options)
   : AnaCtxMgr(Options.UnoptimizedCFG,
               /*AddImplicitDtors=*/true,
               /*AddInitializers=*/true,
