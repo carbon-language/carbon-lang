@@ -1,7 +1,9 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | not grep readonly
-// RUN: %clang_cc1 -emit-llvm -o - %s | not grep readnone
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 
-// XFAIL: arm,mips
+// XFAIL: mips
+
+// CHECK-NOT: readonly
+// CHECK-NOT: readnone
 
 // The struct being passed byval means that we cannot mark the
 // function readnone.  Readnone would allow stores to the arg to

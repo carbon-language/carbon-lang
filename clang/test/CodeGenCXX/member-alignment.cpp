@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
-// XFAIL: arm,powerpc
+// XFAIL: powerpc
 
 // rdar://7268289
 
