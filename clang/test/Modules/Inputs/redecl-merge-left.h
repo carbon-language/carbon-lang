@@ -82,6 +82,12 @@ extern double var3;
 template<typename T> class Vector;
 
 template<typename T> class Vector;
+
+template<typename T> class List;
+template<> class List<bool> {
+public:
+  void push_back(int);
+};
 #endif
 
 // Make sure this doesn't introduce an ambiguity-creating 'id' at the

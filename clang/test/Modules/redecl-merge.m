@@ -150,6 +150,9 @@ id<P3> p3;
 void testVector() {
   Vector<int> vec_int;
   vec_int.push_back(0);
+
+  List<bool> list_bool;
+  list_bool.push_back(false);
 }
 #endif
 

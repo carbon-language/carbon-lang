@@ -1106,6 +1106,7 @@ void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
   Writer.AddTemplateArgumentList(&D->getTemplateArgs(), Record);
   Writer.AddSourceLocation(D->getPointOfInstantiation(), Record);
   Record.push_back(D->getSpecializationKind());
+  Record.push_back(D->isCanonicalDecl());
 
   if (D->isCanonicalDecl()) {
     // When reading, we'll add it to the folding set of the following template. 

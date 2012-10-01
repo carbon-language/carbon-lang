@@ -83,6 +83,12 @@ template<typename T> class Vector {
 public:
   void push_back(const T&);
 };
+
+template<typename T> class List;
+template<> class List<bool> {
+public:
+  void push_back(int);
+};
 #endif
 
 int ONE;
