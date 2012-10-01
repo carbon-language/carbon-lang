@@ -66,12 +66,11 @@ private:
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
-
-  bool MatchInstruction(SMLoc IDLoc,  unsigned &Kind,
+  bool MatchInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        SmallVectorImpl<MCInst> &MCInsts,
-                        unsigned &OrigErrorInfo,
-                        bool matchingInlineAsm = false);
+                        MCStreamer &Out, unsigned &Kind, unsigned &Opcode,
+  SmallVectorImpl<std::pair< unsigned, std::string > > &MapAndConstraints,
+                       unsigned &OrigErrorInfo, bool matchingInlineAsm = false);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
@@ -1521,22 +1520,20 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   unsigned Kind;
+  unsigned Opcode;
   unsigned ErrorInfo;
-  SmallVector<MCInst, 2> Insts;
-
-  bool Error = MatchInstruction(IDLoc, Kind, Operands, Insts,
-                                ErrorInfo);
-  if (!Error)
-    for (unsigned i = 0, e = Insts.size(); i != e; ++i)
-      Out.EmitInstruction(Insts[i]);
+  SmallVector<std::pair< unsigned, std::string >, 4> MapAndConstraints;
+  bool Error = MatchInstruction(IDLoc, Operands, Out, Kind, Opcode,
+                                MapAndConstraints, ErrorInfo);
   return Error;
 }
 
 bool X86AsmParser::
-MatchInstruction(SMLoc IDLoc, unsigned &Kind,
+MatchInstruction(SMLoc IDLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                 SmallVectorImpl<MCInst> &MCInsts, unsigned &OrigErrorInfo,
-                 bool matchingInlineAsm) {
+                 MCStreamer &Out, unsigned &Kind, unsigned &Opcode,
+  SmallVectorImpl<std::pair< unsigned, std::string > > &MapAndConstraints,
+                 unsigned &OrigErrorInfo, bool matchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
@@ -1553,7 +1550,8 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind,
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Inst.setLoc(IDLoc);
-    MCInsts.push_back(Inst);
+    if (!matchingInlineAsm)
+      Out.EmitInstruction(Inst);
 
     const char *Repl =
       StringSwitch<const char*>(Op->getToken())
@@ -1575,18 +1573,22 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind,
   MCInst Inst;
 
   // First, try a direct match.
-  switch (MatchInstructionImpl(Operands, Kind, Inst, OrigErrorInfo,
+  switch (MatchInstructionImpl(Operands, Kind, Inst, MapAndConstraints,
+                               OrigErrorInfo, matchingInlineAsm,
                                isParsingIntelSyntax())) {
   default: break;
   case Match_Success:
     // Some instructions need post-processing to, for example, tweak which
     // encoding is selected. Loop on it while changes happen so the
     // individual transformations can chain off each other.
-    while (processInstruction(Inst, Operands))
-      ;
+    if (!matchingInlineAsm)
+      while (processInstruction(Inst, Operands))
+        ;
 
     Inst.setLoc(IDLoc);
-    MCInsts.push_back(Inst);
+    if (!matchingInlineAsm)
+      Out.EmitInstruction(Inst);
+    Opcode = Inst.getOpcode();
     return false;
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled",
@@ -1625,20 +1627,21 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind,
   unsigned Match1, Match2, Match3, Match4;
   unsigned tKind;
 
-  Match1 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
-                                isParsingIntelSyntax());
+  SmallVector<std::pair< unsigned, std::string >, 4> tMapAndConstraints[4];
+  Match1 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[0],
+                                ErrorInfoIgnore, isParsingIntelSyntax());
   if (Match1 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[1];
-  Match2 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
-                                isParsingIntelSyntax());
+  Match2 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[1],
+                                ErrorInfoIgnore, isParsingIntelSyntax());
   if (Match2 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[2];
-  Match3 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
-                                isParsingIntelSyntax());
+  Match3 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[2],
+                                ErrorInfoIgnore, isParsingIntelSyntax());
   if (Match3 == Match_Success) Kind = tKind;
   Tmp[Base.size()] = Suffixes[3];
-  Match4 = MatchInstructionImpl(Operands, tKind, Inst, ErrorInfoIgnore,
-                                isParsingIntelSyntax());
+  Match4 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[3],
+                                ErrorInfoIgnore, isParsingIntelSyntax());
   if (Match4 == Match_Success) Kind = tKind;
 
   // Restore the old token.
@@ -1652,7 +1655,10 @@ MatchInstruction(SMLoc IDLoc, unsigned &Kind,
     (Match3 == Match_Success) + (Match4 == Match_Success);
   if (NumSuccessfulMatches == 1) {
     Inst.setLoc(IDLoc);
-    MCInsts.push_back(Inst);
+    if (!matchingInlineAsm)
+      Out.EmitInstruction(Inst);
+    Opcode = Inst.getOpcode();
+    // FIXME: Handle the map and constraints.
     return false;
   }
 
