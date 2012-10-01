@@ -2145,6 +2145,20 @@ private:
     return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy, getName(""));
   }
 
+  unsigned getAdjustedAlign(uint64_t Offset) {
+    unsigned NewAIAlign = NewAI.getAlignment();
+    if (!NewAIAlign)
+      NewAIAlign = TD.getABITypeAlignment(NewAI.getAllocatedType());
+    return MinAlign(NewAIAlign, Offset);
+  }
+  unsigned getAdjustedAlign() {
+    return getAdjustedAlign(BeginOffset - NewAllocaBeginOffset);
+  }
+
+  bool isTypeAlignSufficient(Type *Ty) {
+    return TD.getABITypeAlignment(Ty) >= getAdjustedAlign();
+  }
+
   ConstantInt *getIndex(IRBuilder<> &IRB, uint64_t Offset) {
     assert(VecTy && "Can only call getIndex when rewriting a vector");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
@@ -2253,9 +2267,8 @@ private:
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          LI.getPointerOperand()->getType());
     LI.setOperand(0, NewPtr);
-    if (LI.getAlignment())
-      LI.setAlignment(MinAlign(NewAI.getAlignment(),
-                               BeginOffset - NewAllocaBeginOffset));
+    if (LI.getAlignment() || !isTypeAlignSufficient(LI.getType()))
+      LI.setAlignment(getAdjustedAlign());
     DEBUG(dbgs() << "          to: " << LI << "\n");
 
     deleteIfTriviallyDead(OldOp);
@@ -2307,6 +2320,9 @@ private:
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());
     SI.setOperand(1, NewPtr);
+    if (SI.getAlignment() ||
+        !isTypeAlignSufficient(SI.getValueOperand()->getType()))
+      SI.setAlignment(getAdjustedAlign());
     if (SI.getAlignment())
       SI.setAlignment(MinAlign(NewAI.getAlignment(),
                                BeginOffset - NewAllocaBeginOffset));
@@ -2325,14 +2341,8 @@ private:
     // pointer to the new alloca.
     if (!isa<Constant>(II.getLength())) {
       II.setDest(getAdjustedAllocaPtr(IRB, II.getRawDest()->getType()));
-
       Type *CstTy = II.getAlignmentCst()->getType();
-      if (!NewAI.getAlignment())
-        II.setAlignment(ConstantInt::get(CstTy, 0));
-      else
-        II.setAlignment(
-          ConstantInt::get(CstTy, MinAlign(NewAI.getAlignment(),
-                                           BeginOffset - NewAllocaBeginOffset)));
+      II.setAlignment(ConstantInt::get(CstTy, getAdjustedAlign()));
 
       deleteIfTriviallyDead(OldPtr);
       return false;
@@ -2353,15 +2363,10 @@ private:
                    !TD.isLegalInteger(TD.getTypeSizeInBits(ScalarTy)))) {
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, EndOffset - BeginOffset);
-      unsigned Align = 1;
-      if (NewAI.getAlignment())
-        Align = MinAlign(NewAI.getAlignment(),
-                         BeginOffset - NewAllocaBeginOffset);
-
       CallInst *New
         = IRB.CreateMemSet(getAdjustedAllocaPtr(IRB,
                                                 II.getRawDest()->getType()),
-                           II.getValue(), Size, Align,
+                           II.getValue(), Size, getAdjustedAlign(),
                            II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
@@ -2443,6 +2448,16 @@ private:
     const AllocaPartitioning::MemTransferOffsets &MTO
       = P.getMemTransferOffsets(II);
 
+    // Compute the relative offset within the transfer.
+    unsigned IntPtrWidth = TD.getPointerSizeInBits();
+    APInt RelOffset(IntPtrWidth, BeginOffset - (IsDest ? MTO.DestBegin
+                                                       : MTO.SourceBegin));
+
+    unsigned Align = II.getAlignment();
+    if (Align > 1)
+      Align = MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
+                       MinAlign(II.getAlignment(), getAdjustedAlign()));
+
     // For unsplit intrinsics, we simply modify the source and destination
     // pointers in place. This isn't just an optimization, it is a matter of
     // correctness. With unsplit intrinsics we may be dealing with transfers
@@ -2458,11 +2473,7 @@ private:
         II.setSource(getAdjustedAllocaPtr(IRB, II.getRawSource()->getType()));
 
       Type *CstTy = II.getAlignmentCst()->getType();
-      if (II.getAlignment() > 1)
-        II.setAlignment(ConstantInt::get(
-            CstTy, MinAlign(II.getAlignment(),
-                            MinAlign(NewAI.getAlignment(),
-                                     BeginOffset - NewAllocaBeginOffset))));
+      II.setAlignment(ConstantInt::get(CstTy, Align));
 
       DEBUG(dbgs() << "          to: " << II << "\n");
       deleteIfTriviallyDead(OldOp);
@@ -2473,11 +2484,6 @@ private:
     // least one of them does not escape. This means that we can replace
     // memmove with memcpy, and we don't need to worry about all manner of
     // downsides to splitting and transforming the operations.
-
-    // Compute the relative offset within the transfer.
-    unsigned IntPtrWidth = TD.getPointerSizeInBits();
-    APInt RelOffset(IntPtrWidth, BeginOffset - (IsDest ? MTO.DestBegin
-                                                       : MTO.SourceBegin));
 
     // If this doesn't map cleanly onto the alloca type, and that type isn't
     // a single value type, just emit a memcpy.
@@ -2520,11 +2526,6 @@ private:
     Value *OtherPtr = IsDest ? II.getRawSource() : II.getRawDest();
     OtherPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
                               getName("." + OtherPtr->getName()));
-
-    unsigned Align = II.getAlignment();
-    if (Align > 1)
-      Align = MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
-                       MinAlign(II.getAlignment(), NewAI.getAlignment()));
 
     // Strip all inbounds GEPs and pointer casts to try to dig out any root
     // alloca that should be re-examined after rewriting this instruction.
