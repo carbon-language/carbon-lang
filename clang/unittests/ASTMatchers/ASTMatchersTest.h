@@ -51,13 +51,14 @@ private:
 template <typename T>
 testing::AssertionResult matchesConditionally(const std::string &Code,
                                               const T &AMatcher,
-                                              bool ExpectMatch) {
+                                              bool ExpectMatch,
+                                              llvm::StringRef CompileArg) {
   bool Found = false;
   MatchFinder Finder;
   Finder.addMatcher(AMatcher, new VerifyMatch(0, &Found));
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
-  std::vector<std::string> Args(1, "-std=gnu++98");
+  std::vector<std::string> Args(1, CompileArg);
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }
@@ -73,13 +74,13 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
 
 template <typename T>
 testing::AssertionResult matches(const std::string &Code, const T &AMatcher) {
-  return matchesConditionally(Code, AMatcher, true);
+  return matchesConditionally(Code, AMatcher, true, "-std=c++11");
 }
 
 template <typename T>
 testing::AssertionResult notMatches(const std::string &Code,
                                     const T &AMatcher) {
-  return matchesConditionally(Code, AMatcher, false);
+  return matchesConditionally(Code, AMatcher, false, "-std=c++11");
 }
 
 template <typename T>

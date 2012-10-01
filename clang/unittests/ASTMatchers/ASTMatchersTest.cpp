@@ -805,6 +805,27 @@ TEST(Matcher, Call) {
                  MethodOnYPointer));
 }
 
+TEST(Matcher, Lambda) {
+  EXPECT_TRUE(matches("auto f = [&] (int i) { return i; };",
+                      lambdaExpr()));
+}
+
+TEST(Matcher, ForRange) {
+  EXPECT_TRUE(matches("#include <initializer_list>\n"
+                      "void f() { for (auto &a : {1, 2, 3}); }",
+                      forRangeStmt()));
+  EXPECT_TRUE(notMatches("void f() { for (int i; i<5; ++i); }",
+                         forRangeStmt()));
+}
+
+TEST(Matcher, UserDefinedLiteral) {
+  EXPECT_TRUE(matches("constexpr char operator \"\" _inc (const char i) {"
+                      "  return i + 1;"
+                      "}"
+                      "char c = 'a'_inc;",
+                      userDefinedLiteral()));
+}
+
 TEST(Matcher, FlowControl) {
   EXPECT_TRUE(matches("void f() { while(true) { break; } }", breakStmt()));
   EXPECT_TRUE(matches("void f() { while(true) { continue; } }",
@@ -1556,6 +1577,10 @@ TEST(Matcher, IntegerLiterals) {
   EXPECT_TRUE(notMatches("int i = 10.0;", HasIntLiteral));
 }
 
+TEST(Matcher, NullPtrLiteral) {
+  EXPECT_TRUE(matches("int* i = nullptr;", nullPtrLiteralExpr()));
+}
+
 TEST(Matcher, AsmStatement) {
   EXPECT_TRUE(matches("void foo() { __asm(\"mov al, 2\"); }", asmStmt()));
 }
@@ -1981,6 +2006,9 @@ TEST(AstPolymorphicMatcherPMacro, Works) {
 TEST(For, FindsForLoops) {
   EXPECT_TRUE(matches("void f() { for(;;); }", forStmt()));
   EXPECT_TRUE(matches("void f() { if(true) for(;;); }", forStmt()));
+  EXPECT_TRUE(notMatches("#include <initializer_list>\n"
+                         "void f() { for (auto &a : {1, 2, 3}); }",
+                         forStmt()));
 }
 
 TEST(For, ForLoopInternals) {
@@ -2105,17 +2133,20 @@ TEST(Member, MatchesInMemberFunctionCall) {
 }
 
 TEST(Member, MatchesMemberAllocationFunction) {
-  EXPECT_TRUE(matches("namespace std { typedef typeof(sizeof(int)) size_t; }"
-                      "class X { void *operator new(std::size_t); };",
-                      methodDecl(ofClass(hasName("X")))));
+  // Fails in C++11 mode
+  EXPECT_TRUE(matchesConditionally(
+      "namespace std { typedef typeof(sizeof(int)) size_t; }"
+      "class X { void *operator new(std::size_t); };",
+      methodDecl(ofClass(hasName("X"))), true, "-std=gnu++98"));
 
   EXPECT_TRUE(matches("class X { void operator delete(void*); };",
                       methodDecl(ofClass(hasName("X")))));
 
-  EXPECT_TRUE(matches(
+  // Fails in C++11 mode
+  EXPECT_TRUE(matchesConditionally(
       "namespace std { typedef typeof(sizeof(int)) size_t; }"
       "class X { void operator delete[](void*, std::size_t); };",
-      methodDecl(ofClass(hasName("X")))));
+      methodDecl(ofClass(hasName("X"))), true, "-std=gnu++98"));
 }
 
 TEST(HasObjectExpression, DoesNotMatchMember) {

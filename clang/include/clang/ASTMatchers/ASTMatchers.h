@@ -489,6 +489,14 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, MemberExpr> memberExpr;
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Stmt, CallExpr> callExpr;
 
+/// \brief Matches lambda expressions.
+///
+/// Example matches [&](){return 5;}
+/// \code
+///   [&](){return 5;}
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Stmt, LambdaExpr> lambdaExpr;
+
 /// \brief Matches member call expressions.
 ///
 /// Example matches x.y()
@@ -664,8 +672,18 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, IfStmt> ifStmt;
 /// Example matches 'for (;;) {}'
 /// \code
 ///   for (;;) {}
+///   int i[] =  {1, 2, 3}; for (auto a : i);
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Stmt, ForStmt> forStmt;
+
+/// \brief Matches range-based for statements.
+///
+/// forRangeStmt() matches 'for (auto a : i)'
+/// \code
+///   int i[] =  {1, 2, 3}; for (auto a : i);
+///   for(int j = 0; j < 5; ++j);
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Stmt, CXXForRangeStmt> forRangeStmt;
 
 /// \brief Matches the increment statement of a for loop.
 ///
@@ -883,6 +901,18 @@ const internal::VariadicDynCastAllOfMatcher<
 const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   IntegerLiteral> integerLiteral;
+
+/// \brief Matches user defined literal operator call.
+///
+/// Example match: "foo"_suffix
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  UserDefinedLiteral> userDefinedLiteral;
+
+/// \brief Matches nullptr literal.
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  CXXNullPtrLiteralExpr> nullPtrLiteralExpr;
 
 /// \brief Matches binary operator expressions.
 ///
