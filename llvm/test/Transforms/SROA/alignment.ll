@@ -87,8 +87,8 @@ entry:
 %struct.S = type { i8, { i64 } }
 
 define void @test4() {
-; This test case triggered very strange alginment behavior with memcpy due to
-; strang splitting. Reported by Duncan.
+; This test case triggered very strange alignment behavior with memcpy due to
+; strange splitting. Reported by Duncan.
 ; CHECK: @test4
 
 entry:
