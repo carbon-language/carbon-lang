@@ -88,12 +88,14 @@ template<> class List<bool> {
 public:
   void push_back(int);
 };
-
 namespace N {
-template<typename T> class Set {
-public:
-  void insert(T);
-};
+  template<typename T> class Set;
+}
+namespace N {
+  template<typename T> class Set {
+  public:
+    void insert(T);
+  };
 }
 #endif
 
