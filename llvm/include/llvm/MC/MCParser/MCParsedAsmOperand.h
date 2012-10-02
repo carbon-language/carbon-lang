@@ -34,6 +34,13 @@ public:
   /// isMem - Is this a memory operand?
   virtual bool isMem() const = 0;
 
+  /// isMSAsmWildcard - Is this a wildcard operand?  This is specific to
+  /// MS-style inline assembly and should never happen in normal assembly.
+  virtual bool isMSAsmWildcard() const { return false; }
+
+  /// setMSAsmWildcard - Convert the operand into a wildcard.
+  virtual void setMSAsmWildcard(unsigned Size) { }
+
   /// getStartLoc - Get the location of the first token of this operand.
   virtual SMLoc getStartLoc() const = 0;
   /// getEndLoc - Get the location of the last token of this operand.
