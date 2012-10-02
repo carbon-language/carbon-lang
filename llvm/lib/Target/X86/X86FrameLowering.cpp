@@ -924,7 +924,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     }
   } else if (NumBytes)
     emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
-                 UseLEA, TII, *RegInfo, MBB.findDebugLoc(MBBI));
+                 UseLEA, TII, *RegInfo, DL);
 
   // If we need a base pointer, set it up here. It's whatever the value
   // of the stack pointer is at this point. Any variable size objects
