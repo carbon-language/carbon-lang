@@ -710,6 +710,8 @@ bool X86FastISel::X86SelectStore(const Instruction *I) {
 bool X86FastISel::X86SelectRet(const Instruction *I) {
   const ReturnInst *Ret = cast<ReturnInst>(I);
   const Function &F = *I->getParent()->getParent();
+  const X86MachineFunctionInfo *X86MFInfo =
+      FuncInfo.MF->getInfo<X86MachineFunctionInfo>();
 
   if (!FuncInfo.CanLowerReturn)
     return false;
@@ -724,8 +726,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
     return false;
 
   // Don't handle popping bytes on return for now.
-  if (FuncInfo.MF->getInfo<X86MachineFunctionInfo>()
-        ->getBytesToPopOnReturn() != 0)
+  if (X86MFInfo->getBytesToPopOnReturn() != 0)
     return 0;
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
@@ -807,6 +808,19 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
     // Mark the register as live out of the function.
     MRI.addLiveOut(VA.getLocReg());
+  }
+
+  // The x86-64 ABI for returning structs by value requires that we copy
+  // the sret argument into %rax for the return. We saved the argument into
+  // a virtual register in the entry block, so now we copy the value out
+  // and into %rax.
+  if (Subtarget->is64Bit() && F.hasStructRetAttr()) {
+    unsigned Reg = X86MFInfo->getSRetReturnReg();
+    assert(Reg &&
+           "SRetReturnReg should have been set in LowerFormalArguments()!");
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            X86::RAX).addReg(Reg);
+    MRI.addLiveOut(X86::RAX);
   }
 
   // Now emit the RET.

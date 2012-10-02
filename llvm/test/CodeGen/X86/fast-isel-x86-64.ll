@@ -291,3 +291,16 @@ entry:
 }
 
 declare void @foo22(i32)
+
+; PR13563
+define void @test23(i8* noalias sret %result) {
+  %a = alloca i8
+  %b = call i8* @foo23()
+  ret void
+; CHECK: test23:
+; CHECK: call
+; CHECK: movq  %rdi, %rax
+; CHECK: ret
+}
+
+declare i8* @foo23()
