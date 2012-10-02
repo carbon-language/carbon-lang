@@ -77,6 +77,7 @@ ifeq ($(MAKECMDGOALS),install-clang)
 endif
 
 ifeq ($(MAKECMDGOALS),clang-only)
+  BUILD_CLANG_ONLY := YES
   DIRS := $(filter-out tools docs unittests, $(DIRS)) \
           tools/clang tools/lto
   OPTIONAL_DIRS :=
