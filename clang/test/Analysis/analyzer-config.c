@@ -7,5 +7,6 @@ void foo() { bar(); }
 // CHECK: [config]
 // CHECK-NEXT: cfg-temporary-dtors = false
 // CHECK-NEXT: faux-bodies = true
+// CHECK-NEXT: ipa-always-inline-size = 3
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 2
+// CHECK-NEXT: num-entries = 3

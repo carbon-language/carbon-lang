@@ -195,7 +195,7 @@ private:
   bool getBooleanOption(StringRef Name, bool DefaultVal);
 
   /// Interprets an option's string value as an integer value.
-  int getOptionAsInteger(llvm::StringRef Name, int DefaultVal) const;
+  int getOptionAsInteger(llvm::StringRef Name, int DefaultVal);
 
 public:
   /// Returns the option controlling which C++ member functions will be
@@ -243,7 +243,7 @@ public:
   // considered to be small enough to always inline.
   //
   // This is controlled by "ipa-always-inline-size" analyzer-config option.
-  unsigned getAlwaysInlineSize() const;
+  unsigned getAlwaysInlineSize();
   
   /// Returns true if the analyzer engine should synthesize fake bodies
   /// for well-known functions.

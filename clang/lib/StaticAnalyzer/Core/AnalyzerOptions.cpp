@@ -14,6 +14,8 @@
 
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 using namespace llvm;
@@ -102,25 +104,21 @@ bool AnalyzerOptions::shouldPruneNullReturnPaths() {
   return *PruneNullReturnPaths;
 }
 
-int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) const {
-  std::string OptStr = Config.lookup(Name);
-  if (OptStr.empty())
-    return DefaultVal;
-
+int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
+  llvm::SmallString<10> StrBuf;
+  llvm::raw_svector_ostream OS(StrBuf);
+  OS << DefaultVal;
+  
+  StringRef V(Config.GetOrCreateValue(Name, OS.str()).getValue());
   int Res = DefaultVal;
-  assert(StringRef(OptStr).getAsInteger(10, Res) == false &&
-         "analyzer-config option should be numeric.");
-
+  bool b = V.getAsInteger(10, Res);
+  assert(!b && "analyzer-config option should be numeric");
   return Res;
 }
 
-unsigned AnalyzerOptions::getAlwaysInlineSize() const {
-  if (!AlwaysInlineSize.hasValue()) {
-    unsigned DefaultSize = 3;
-    const_cast<Optional<unsigned> &>(AlwaysInlineSize) =
-      getOptionAsInteger("ipa-always-inline-size", DefaultSize);
-  }
-
+unsigned AnalyzerOptions::getAlwaysInlineSize() {
+  if (!AlwaysInlineSize.hasValue())
+    AlwaysInlineSize = getOptionAsInteger("ipa-always-inline-size", 3);
   return AlwaysInlineSize.getValue();
 }
 
