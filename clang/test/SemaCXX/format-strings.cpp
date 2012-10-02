@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -pedantic -fblocks %s
 
 #include <stdarg.h>
 
@@ -75,3 +75,61 @@ int Foo::printf2(const char *fmt, ...) {
 
   return 0;
 }
+
+
+namespace Templates {
+  template<typename T>
+  void my_uninstantiated_print(const T &arg) {
+    printf("%d", arg); // no-warning
+  }
+
+  template<typename T>
+  void my_print(const T &arg) {
+    printf("%d", arg); // expected-warning {{format specifies type 'int' but the argument has type 'const char *'}}
+  }
+
+  void use_my_print() {
+    my_print("abc"); // expected-note {{requested here}}
+  }
+
+
+  template<typename T>
+  class UninstantiatedPrinter {
+  public:
+    static void print(const T &arg) {
+      printf("%d", arg); // no-warning
+    }
+  };
+
+  template<typename T>
+  class Printer {
+    void format(const char *fmt, ...) __attribute__((format(printf,2,3)));
+  public:
+
+    void print(const T &arg) {
+      format("%d", arg); // expected-warning {{format specifies type 'int' but the argument has type 'const char *'}}
+    }
+  };
+
+  void use_class(Printer<const char *> &p) {
+    p.print("abc"); // expected-note {{requested here}}
+  }
+
+  
+  extern void (^block_print)(const char * format, ...) __attribute__((format(printf, 1, 2)));
+
+  template<typename T>
+  void uninstantiated_call_block_print(const T &arg) {
+    block_print("%d", arg); // no-warning
+  }
+
+  template<typename T>
+  void call_block_print(const T &arg) {
+    block_print("%d", arg); // expected-warning {{format specifies type 'int' but the argument has type 'const char *'}}
+  }
+
+  void use_block_print() {
+    call_block_print("abc"); // expected-note {{requested here}}
+  }
+}
+

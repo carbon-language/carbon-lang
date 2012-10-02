@@ -495,9 +495,8 @@ void Sema::checkCall(NamedDecl *FDecl, Expr **Args,
                      SourceLocation Loc,
                      SourceRange Range,
                      VariadicCallType CallType) {
-  // FIXME: This mechanism should be abstracted to be less fragile and
-  // more efficient. For example, just map function ids to custom
-  // handlers.
+  if (CurContext->isDependentContext())
+    return;
 
   // Printf and scanf checking.
   bool HandledFormatString = false;
