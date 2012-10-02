@@ -6509,4 +6509,5 @@ ASTReader::~ASTReader() {
          J != F; ++J)
       delete J->first;
   }
+  assert(RedeclsAddedToAST.empty() && "RedeclsAddedToAST not empty!");
 }

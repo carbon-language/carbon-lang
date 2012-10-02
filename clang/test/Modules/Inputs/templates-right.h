@@ -19,7 +19,9 @@ namespace N {
 }
 
 template <typename T>
-void pendingInstantiation(T) {}
+void pendingInstantiationEmit(T) {}
 void triggerPendingInstantiationToo() {
-  pendingInstantiation(12);
+  pendingInstantiationEmit(12);
 }
+
+void redeclDefinitionEmit(){}

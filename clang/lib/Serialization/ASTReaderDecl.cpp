@@ -1777,9 +1777,11 @@ ASTDeclReader::FindExistingResult::~FindExistingResult() {
   
   DeclContext *DC = New->getDeclContext()->getRedeclContext();
   if (DC->isTranslationUnit() && Reader.SemaObj) {
-    Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
+    if (Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName()))
+      Reader.RedeclsAddedToAST.insert(New);
   } else if (DC->isNamespace()) {
     DC->addDecl(New);
+    Reader.RedeclsAddedToAST.insert(New);
   }
 }
 
@@ -2154,7 +2156,13 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   // AST consumer might need to know about, queue it.
   // We don't pass it to the consumer immediately because we may be in recursive
   // loading, and some declarations may still be initializing.
-  if (isConsumerInterestedIn(D))
+  if (getContext().getLangOpts().Modules) {
+    if (RedeclsAddedToAST.count(D)) {
+      RedeclsAddedToAST.erase(D);
+      if (isConsumerInterestedIn(D))
+        InterestingDecls.push_back(D);
+    }
+  } else if (isConsumerInterestedIn(D))
     InterestingDecls.push_back(D);
 
   return D;
