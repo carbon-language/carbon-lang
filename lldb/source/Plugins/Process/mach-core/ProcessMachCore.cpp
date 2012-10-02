@@ -308,25 +308,13 @@ ProcessMachCore::DoLoadCore ()
             if (header_addr != LLDB_INVALID_ADDRESS)
                 GetDynamicLoaderAddress (header_addr);
         }
-
-//        if (m_dyld_addr == LLDB_INVALID_ADDRESS)
-//        {
-//            // We haven't found our dyld or mach_kernel yet, 
-//            // so we need to exhaustively look
-//            const size_t num_core_aranges = m_core_aranges.GetSize();
-//            bool done = false;
-//            for (size_t i=0; !done && i<num_core_aranges; ++i)
-//            {
-//                const addr_t start_vaddr = m_core_aranges.GetEntryRef(i).GetRangeBase();
-//                const addr_t end_vaddr = m_core_aranges.GetEntryRef(i).GetRangeEnd();
-//                //            printf("core_arange[%u] [0x%16.16llx - 0x%16.16llx)\n", (uint32_t)i, start_vaddr, end_vaddr);
-//                
-//                for (addr_t vaddr = start_vaddr; !done && start_vaddr < end_vaddr; vaddr += 0x1000)
-//                {
-//                    done = GetDynamicLoaderAddress (vaddr);
-//                }
-//            }
-//        }
+        else
+        {
+            Error header_addr_error;
+            addr_t header_addr = ReadPointerFromMemory (0xffff0110, header_addr_error);
+            if (header_addr != LLDB_INVALID_ADDRESS)
+                GetDynamicLoaderAddress (header_addr);
+        }
     }
 
     return error;

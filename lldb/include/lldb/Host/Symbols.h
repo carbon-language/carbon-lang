@@ -51,7 +51,7 @@ public:
     // Locate the object and symbol file given a module specification.
     //
     // Locating the file can try to download the file from a corporate build
-    // respository, or using any other meeans necessary to locate both the
+    // respository, or using any other means necessary to locate both the
     // unstripped object file and the debug symbols.
     //----------------------------------------------------------------------
     static bool

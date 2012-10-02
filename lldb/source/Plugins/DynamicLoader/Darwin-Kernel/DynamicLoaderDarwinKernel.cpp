@@ -14,16 +14,19 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
+#include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
-#include "lldb/Target/StackFrame.h"
+
 
 #include "DynamicLoaderDarwinKernel.h"
 
@@ -188,6 +191,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
         return true;
 
     bool uuid_is_valid = uuid.IsValid();
+    bool memory_module_is_kernel = false;
 
     Target &target = process->GetTarget();
     ModuleSP memory_module_sp;
@@ -205,6 +209,12 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
         {
             uuid = memory_module_sp->GetUUID();
             uuid_is_valid = uuid.IsValid();
+        }
+        if (memory_module_sp->GetObjectFile() 
+            && memory_module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeExecutable
+            && memory_module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
+        {
+            memory_module_is_kernel = true;
         }
     }
 
@@ -279,12 +289,46 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                 module_sp.reset(); // UUID mismatch
         }
         
+        // If this is the kernel, see if we can locate a copy of the binary based on the UUID (and maybe even debug info)
+        // FIXME: Symbols::DownloadObjectAndSymbolFile is forcing the download of the binaries via dsymForUUID regardless
+        // of the current pref settings; don't want to do this for all the kexts unless the user has enabled it..
+        if (!module_sp && memory_module_is_kernel)
+        {
+            ModuleSpec sym_spec;
+            sym_spec.GetUUID() = memory_module_sp->GetUUID();
+            if (Symbols::DownloadObjectAndSymbolFile (sym_spec) 
+                && sym_spec.GetArchitecture().IsValid() 
+                && sym_spec.GetSymbolFileSpec().Exists())
+            {
+                module_sp = target.GetSharedModule (sym_spec);
+                if (module_sp.get ())
+                {
+                    target.SetExecutableModule(module_sp, false);
+                    if (address != LLDB_INVALID_ADDRESS 
+                        && module_sp->GetObjectFile() 
+                        && module_sp->GetObjectFile()->GetHeaderAddress().IsValid())
+                    {
+                        addr_t slide = address - module_sp->GetObjectFile()->GetHeaderAddress().GetFileAddress();
+                        bool changed = false;
+                        module_sp->SetLoadAddress (target, slide, changed);
+                        if (changed)
+                        {
+                            ModuleList modlist;
+                            modlist.Append (module_sp);
+                            target.ModulesDidLoad (modlist);
+                        }
+                        load_process_stop_id = process->GetStopID();
+                    }
+                }
+            }
+        }
+
         // Use the memory module as the module if we didn't like the file
         // module we either found or were supplied with
         if (!module_sp)
         {
             module_sp = memory_module_sp;
-            // Load the memory image in the target as all adresses are already correct
+            // Load the memory image in the target as all addresses are already correct
             bool changed = false;
             target.GetImages().Append (memory_module_sp);
             if (module_sp->SetLoadAddress (target, 0, changed))
@@ -300,6 +344,21 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
         else
             target.GetImages().ResolveFileAddress (address, so_address);
 
+    }
+
+    if (is_loaded && module_sp && memory_module_is_kernel)
+    {
+        Stream *s = &target.GetDebugger().GetOutputStream();
+        if (s)
+        {
+            char uuidbuf[64];
+            s->Printf ("Kernel UUID: %s\n", module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
+            s->Printf ("Load Address: 0x%llx\n", address);
+            s->Printf ("Loaded kernel file %s/%s\n",
+                          module_sp->GetFileSpec().GetDirectory().AsCString(),
+                          module_sp->GetFileSpec().GetFilename().AsCString());
+            s->Flush ();
+        }
     }
     return is_loaded;
 }
@@ -511,46 +570,25 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
         return false;
 
     Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
+    if (s)
+        s->Printf ("Loading %d kext modules ", count);
     for (uint32_t i = 0; i < count; i++)
     {
-        if (s)
-        {
-            const uint8_t *u = (const uint8_t *)kext_summaries[i].uuid.GetBytes();
-            if (u)
-            {
-                s->Printf("Loading kext: %2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X 0x%16.16llx \"%s\"...",
-                          u[ 0], u[ 1], u[ 2], u[ 3], u[ 4], u[ 5], u[ 6], u[ 7],
-                          u[ 8], u[ 9], u[10], u[11], u[12], u[13], u[14], u[15],
-                          kext_summaries[i].address, kext_summaries[i].name);
-            }   
-            else
-            {
-                s->Printf("0x%16.16llx \"%s\"...", kext_summaries[i].address, kext_summaries[i].name);
-            }
-        }
-        
         if (!kext_summaries[i].LoadImageUsingMemoryModule (m_process))
             kext_summaries[i].LoadImageAtFileAddress (m_process);
 
         if (s)
-        {
-            if (kext_summaries[i].module_sp)
-            {
-                if (kext_summaries[i].module_sp->GetFileSpec().GetDirectory())
-                    s->Printf("\n  found kext: %s/%s\n", 
-                              kext_summaries[i].module_sp->GetFileSpec().GetDirectory().AsCString(),
-                              kext_summaries[i].module_sp->GetFileSpec().GetFilename().AsCString());
-                else
-                    s->Printf("\n  found kext: %s\n", 
-                              kext_summaries[i].module_sp->GetFileSpec().GetFilename().AsCString());
-            }
-            else
-                s->Printf (" failed to locate/load.\n");
-        }
-            
+            s->Printf (".");
+
         if (log)
             kext_summaries[i].PutToLog (log.get());
     }
+    if (s)
+    {
+        s->Printf (" done.\n");
+        s->Flush ();
+    }
+
     bool return_value = AddModulesUsingImageInfos (kext_summaries);
     return return_value;
 }
@@ -594,10 +632,6 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
     DataBufferHeap data(count, 0);
     Error error;
     
-    Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
-
-    if (s)
-        s->Printf ("Reading %u kext summaries...\n", image_infos_count);
     const bool prefer_file_cache = false;
     const size_t bytes_read = m_process->GetTarget().ReadMemory (kext_summary_addr, 
                                                                  prefer_file_cache,
