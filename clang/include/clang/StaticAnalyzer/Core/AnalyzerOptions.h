@@ -204,7 +204,7 @@ public:
   /// This is controlled by the 'c++-inlining' config option.
   ///
   /// \sa CXXMemberInliningMode
-  bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const;
+  bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K);
 
   /// Returns true if ObjectiveC inlining is enabled, false otherwise.
   bool mayInlineObjCMethod();

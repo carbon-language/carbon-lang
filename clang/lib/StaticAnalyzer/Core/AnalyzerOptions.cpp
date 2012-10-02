@@ -19,19 +19,20 @@ using namespace clang;
 using namespace llvm;
 
 bool
-AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const {
+AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) {
   if (IPAMode < Inlining)
     return false;
 
   if (!CXXMemberInliningMode) {
     static const char *ModeKey = "c++-inlining";
-    std::string ModeStr = Config.lookup(ModeKey);
+    
+    StringRef ModeStr(Config.GetOrCreateValue(ModeKey,
+                                              "methods").getValue());
 
     CXXInlineableMemberKind &MutableMode =
       const_cast<CXXInlineableMemberKind &>(CXXMemberInliningMode);
 
     MutableMode = llvm::StringSwitch<CXXInlineableMemberKind>(ModeStr)
-      .Case("", CIMK_MemberFunctions)
       .Case("constructors", CIMK_Constructors)
       .Case("destructors", CIMK_Destructors)
       .Case("none", CIMK_None)
