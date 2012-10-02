@@ -82,6 +82,12 @@
       <zeroOrMore>
         <ref name="Availability" />
       </zeroOrMore>
+      <zeroOrMore>
+        <ref name="Deprecated" />
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="Unavailable" />
+      </zeroOrMore>
       <optional>
         <ref name="ResultDiscussion" />
       </optional>
@@ -313,10 +319,20 @@
         </element>
       </optional>
       <optional>
-        <element name="Unavailable">
-          <data type="boolean" />
-        </element>
+        <ref name="Unavailable" />
       </optional>
+    </element>
+  </define>
+
+  <define name="Deprecated">
+    <element name="Deprecated">
+      <data type="boolean" />
+    </element>
+  </define>
+
+  <define name="Unavailable">
+    <element name="Unavailable">
+      <data type="boolean" />
     </element>
   </define>
 

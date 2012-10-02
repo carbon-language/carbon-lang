@@ -1175,8 +1175,13 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     const AttrVec &Attrs = DI->ThisDecl->getAttrs();
     for (unsigned i = 0, e = Attrs.size(); i != e; i++) {
       const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attrs[i]);
-      if (!AA)
+      if (!AA) {
+        if (isa<DeprecatedAttr>(Attrs[i]))
+          Result << "<Deprecated>true</Deprecated>";
+        else if (isa<UnavailableAttr>(Attrs[i]))
+          Result << "<Unavailable>true</Unavailable>";
         continue;
+      }
 
       // 'availability' attribute.
       Result << "<Availability";
