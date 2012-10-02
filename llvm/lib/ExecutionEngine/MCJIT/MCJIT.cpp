@@ -12,8 +12,10 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/ExecutionEngine/ObjectBuffer.h"
+#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -50,7 +52,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
              bool AllocateGVsWithCode)
   : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM),
-    isCompiled(false), M(m), OS(Buffer)  {
+    isCompiled(false), M(m)  {
 
   setTargetData(TM->getTargetData());
 }
@@ -63,7 +65,7 @@ MCJIT::~MCJIT() {
 void MCJIT::emitObject(Module *m) {
   /// Currently, MCJIT only supports a single module and the module passed to
   /// this function call is expected to be the contained module.  The module
-  /// is passed as a parameter here to prepare for multiple module support in 
+  /// is passed as a parameter here to prepare for multiple module support in
   /// the future.
   assert(M == m);
 
@@ -80,29 +82,31 @@ void MCJIT::emitObject(Module *m) {
 
   PM.add(new TargetData(*TM->getTargetData()));
 
+  // The RuntimeDyld will take ownership of this shortly
+  OwningPtr<ObjectBufferStream> Buffer(new ObjectBufferStream());
+
   // Turn the machine code intermediate representation into bytes in memory
   // that may be executed.
-  if (TM->addPassesToEmitMC(PM, Ctx, OS, false)) {
+  if (TM->addPassesToEmitMC(PM, Ctx, Buffer->getOStream(), false)) {
     report_fatal_error("Target does not support MC emission!");
   }
 
   // Initialize passes.
-  // FIXME: When we support multiple modules, we'll want to move the code
-  // gen and finalization out of the constructor here and do it more
-  // on-demand as part of getPointerToFunction().
   PM.run(*m);
-  // Flush the output buffer so the SmallVector gets its data.
-  OS.flush();
+  // Flush the output buffer to get the generated code into memory
+  Buffer->flush();
 
   // Load the object into the dynamic linker.
-  MemoryBuffer* MB = MemoryBuffer::getMemBuffer(StringRef(Buffer.data(),
-                                                          Buffer.size()),
-                                                "", false);
-  if (Dyld.loadObject(MB))
+  // handing off ownership of the buffer
+  LoadedObject.reset(Dyld.loadObject(Buffer.take()));
+  if (!LoadedObject)
     report_fatal_error(Dyld.getErrorString());
 
   // Resolve any relocations.
   Dyld.resolveRelocations();
+
+  // FIXME: Make this optional, maybe even move it to a JIT event listener
+  LoadedObject->registerWithDebugger();
 
   // FIXME: Add support for per-module compilation state
   isCompiled = true;

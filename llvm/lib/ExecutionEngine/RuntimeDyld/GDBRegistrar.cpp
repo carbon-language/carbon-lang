@@ -78,12 +78,12 @@ public:
   /// Creates an entry in the JIT registry for the buffer @p Object,
   /// which must contain an object file in executable memory with any
   /// debug information for the debugger.
-  void registerObject(const MemoryBuffer &Object);
+  void registerObject(const ObjectBuffer &Object);
 
   /// Removes the internal registration of @p Object, and
   /// frees associated resources.
   /// Returns true if @p Object was found in ObjectBufferMap.
-  bool deregisterObject(const MemoryBuffer &Object);
+  bool deregisterObject(const ObjectBuffer &Object);
 
 private:
   /// Deregister the debug info for the given object file from the debugger
@@ -124,7 +124,7 @@ GDBJITRegistrar::~GDBJITRegistrar() {
   ObjectBufferMap.clear();
 }
 
-void GDBJITRegistrar::registerObject(const MemoryBuffer &Object) {
+void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
 
   const char *Buffer = Object.getBufferStart();
   size_t      Size = Object.getBufferSize();
@@ -147,7 +147,7 @@ void GDBJITRegistrar::registerObject(const MemoryBuffer &Object) {
   }
 }
 
-bool GDBJITRegistrar::deregisterObject(const MemoryBuffer& Object) {
+bool GDBJITRegistrar::deregisterObject(const ObjectBuffer& Object) {
   const char *Buffer = Object.getBufferStart();
   RegisteredObjectBufferMap::iterator I = ObjectBufferMap.find(Buffer);
 

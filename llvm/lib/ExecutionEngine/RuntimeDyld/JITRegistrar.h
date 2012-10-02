@@ -10,7 +10,7 @@
 #ifndef LLVM_EXECUTION_ENGINE_JIT_REGISTRAR_H
 #define LLVM_EXECUTION_ENGINE_JIT_REGISTRAR_H
 
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/ExecutionEngine/ObjectBuffer.h"
 
 namespace llvm {
 
@@ -27,12 +27,12 @@ public:
   /// Creates an entry in the JIT registry for the buffer @p Object,
   /// which must contain an object file in executable memory with any
   /// debug information for the debugger.
-  virtual void registerObject(const MemoryBuffer &Object) = 0;
+  virtual void registerObject(const ObjectBuffer &Object) = 0;
 
   /// Removes the internal registration of @p Object, and
   /// frees associated resources.
   /// Returns true if @p Object was previously registered.
-  virtual bool deregisterObject(const MemoryBuffer &Object) = 0;
+  virtual bool deregisterObject(const ObjectBuffer &Object) = 0;
 
   /// Returns a reference to a GDB JIT registrar singleton
   static JITRegistrar& getGDBRegistrar();

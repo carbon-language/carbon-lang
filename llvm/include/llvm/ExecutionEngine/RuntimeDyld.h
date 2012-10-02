@@ -15,12 +15,13 @@
 #define LLVM_RUNTIME_DYLD_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/Support/Memory.h"
 
 namespace llvm {
 
 class RuntimeDyldImpl;
-class MemoryBuffer;
+class ObjectImage;
 
 // RuntimeDyld clients often want to handle the memory management of
 // what gets placed where. For JIT clients, this is an abstraction layer
@@ -65,8 +66,11 @@ public:
   RuntimeDyld(RTDyldMemoryManager*);
   ~RuntimeDyld();
 
-  /// Load an in-memory object file into the dynamic linker.
-  bool loadObject(MemoryBuffer *InputBuffer);
+  /// loadObject - prepare the object contained in the input buffer for
+  /// execution.  Ownership of the input buffer is transferred to the
+  /// ObjectImage instance returned from this function if successful.
+  /// In the case of load failure, the input buffer will be deleted.
+  ObjectImage *loadObject(ObjectBuffer *InputBuffer);
 
   /// Get the address of our local copy of the symbol. This may or may not
   /// be the address used for relocation (clients can copy the data around

@@ -14,6 +14,8 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/ExecutionEngine/ObjectImage.h"
+#include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -120,12 +122,14 @@ static int executeInput() {
   for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
     // Load the input memory buffer.
     OwningPtr<MemoryBuffer> InputBuffer;
+    OwningPtr<ObjectImage>  LoadedObject;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFileList[i],
                                                      InputBuffer))
       return Error("unable to read input: '" + ec.message() + "'");
 
-    // Load the object file into it.
-    if (Dyld.loadObject(InputBuffer.take())) {
+    // Load the object file
+    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.take())));
+    if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }
   }

@@ -63,7 +63,7 @@ public:
 
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
-  bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const;
+  bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
 };
 
 } // end namespace llvm

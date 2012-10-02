@@ -295,8 +295,10 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
 
 
 bool RuntimeDyldMachO::isCompatibleFormat(
-        const MemoryBuffer *InputBuffer) const {
-  StringRef Magic = InputBuffer->getBuffer().slice(0, 4);
+        const ObjectBuffer *InputBuffer) const {
+  if (InputBuffer->getBufferSize() < 4)
+    return false;
+  StringRef Magic(InputBuffer->getBufferStart(), 4);
   if (Magic == "\xFE\xED\xFA\xCE") return true;
   if (Magic == "\xCE\xFA\xED\xFE") return true;
   if (Magic == "\xFE\xED\xFA\xCF") return true;

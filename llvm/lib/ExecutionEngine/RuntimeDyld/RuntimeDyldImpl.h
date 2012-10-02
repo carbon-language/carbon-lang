@@ -14,8 +14,8 @@
 #ifndef LLVM_RUNTIME_DYLD_IMPL_H
 #define LLVM_RUNTIME_DYLD_IMPL_H
 
-#include "ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -33,7 +33,7 @@ using namespace llvm::object;
 
 namespace llvm {
 
-class MemoryBuffer;
+class ObjectBuffer;
 class Twine;
 
 
@@ -251,19 +251,13 @@ protected:
 
   /// \brief Resolve relocations to external symbols.
   void resolveExternalSymbols();
-  virtual ObjectImage *createObjectImage(const MemoryBuffer *InputBuffer);
-  virtual void handleObjectLoaded(ObjectImage *Obj)
-  {
-    // Subclasses may choose to retain this image if they have a use for it
-    delete Obj;
-  }
-
+  virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
 
   virtual ~RuntimeDyldImpl();
 
-  bool loadObject(const MemoryBuffer *InputBuffer);
+  ObjectImage *loadObject(ObjectBuffer *InputBuffer);
 
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
@@ -298,8 +292,7 @@ public:
   // Get the error message.
   StringRef getErrorString() { return ErrorStr; }
 
-  virtual bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const = 0;
-
+  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
 };
 
 } // end namespace llvm
