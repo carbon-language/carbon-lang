@@ -70,7 +70,7 @@ BinaryOperator *ASTMaker::makeAssignment(const Expr *LHS, const Expr *RHS,
                                          QualType Ty) {
  return new (C) BinaryOperator(const_cast<Expr*>(LHS), const_cast<Expr*>(RHS),
                                BO_Assign, Ty, VK_RValue,
-                               OK_Ordinary, SourceLocation());
+                               OK_Ordinary, SourceLocation(), false);
 }
 
 DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {

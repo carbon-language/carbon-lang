@@ -45,6 +45,7 @@ struct BinOpInfo {
   Value *RHS;
   QualType Ty;  // Computation Type.
   BinaryOperator::Opcode Opcode; // Opcode of BinOp to perform
+  bool FPContractable;
   const Expr *E;      // Entire expr, for error unsupported.  May not be binop.
 };
 
@@ -1654,6 +1655,7 @@ BinOpInfo ScalarExprEmitter::EmitBinOps(const BinaryOperator *E) {
   Result.RHS = Visit(E->getRHS());
   Result.Ty  = E->getType();
   Result.Opcode = E->getOpcode();
+  Result.FPContractable = E->isFPContractable();
   Result.E = E;
   return Result;
 }
@@ -1982,6 +1984,77 @@ static Value *emitPointerArithmetic(CodeGenFunction &CGF,
   return CGF.Builder.CreateInBoundsGEP(pointer, index, "add.ptr");
 }
 
+// Construct an fmuladd intrinsic to represent a fused mul-add of MulOp and
+// Addend. Use negMul and negAdd to negate the first operand of the Mul or
+// the add operand respectively. This allows fmuladd to represent a*b-c, or
+// c-a*b. Patterns in LLVM should catch the negated forms and translate them to
+// efficient operations.
+static Value* buildFMulAdd(llvm::BinaryOperator *MulOp, Value *Addend,
+                           const CodeGenFunction &CGF, CGBuilderTy &Builder,
+                           bool negMul, bool negAdd) {
+  assert(!(negMul && negAdd) && "Only one of negMul and negAdd should be set.");
+ 
+  Value *MulOp0 = MulOp->getOperand(0);
+  Value *MulOp1 = MulOp->getOperand(1);
+  if (negMul) {
+    MulOp0 =
+      Builder.CreateFSub(
+        llvm::ConstantFP::getZeroValueForNegation(MulOp0->getType()), MulOp0,
+        "neg");
+  } else if (negAdd) {
+    Addend =
+      Builder.CreateFSub(
+        llvm::ConstantFP::getZeroValueForNegation(Addend->getType()), Addend,
+        "neg");
+  }
+
+  Value *FMulAdd =
+    Builder.CreateCall3(
+      CGF.CGM.getIntrinsic(llvm::Intrinsic::fmuladd, Addend->getType()),
+                           MulOp0, MulOp1, Addend);
+   MulOp->eraseFromParent();
+
+   return FMulAdd;
+}
+
+// Check whether it would be legal to emit an fmuladd intrinsic call to
+// represent op and if so, build the fmuladd.
+//
+// Checks that (a) the operation is fusable, and (b) -ffp-contract=on.
+// Does NOT check the type of the operation - it's assumed that this function
+// will be called from contexts where it's known that the type is contractable.
+static Value* tryEmitFMulAdd(const BinOpInfo &op, 
+                         const CodeGenFunction &CGF, CGBuilderTy &Builder,
+                         bool isSub=false) {
+
+  assert((op.Opcode == BO_Add || op.Opcode == BO_AddAssign ||
+          op.Opcode == BO_Sub || op.Opcode == BO_SubAssign) &&
+         "Only fadd/fsub can be the root of an fmuladd.");
+
+  // Check whether this op is marked as fusable.
+  if (!op.FPContractable)
+    return 0;
+
+  // Check whether -ffp-contract=on. (If -ffp-contract=off/fast, fusing is
+  // either disabled, or handled entirely by the LLVM backend).
+  if (CGF.getContext().getLangOpts().getFPContractMode() != LangOptions::FPC_On)
+    return 0;
+
+  // We have a potentially fusable op. Look for a mul on one of the operands.
+  if (llvm::BinaryOperator* LHSBinOp = dyn_cast<llvm::BinaryOperator>(op.LHS)) {
+    if (LHSBinOp->getOpcode() == llvm::Instruction::FMul) {
+      return buildFMulAdd(LHSBinOp, op.RHS, CGF, Builder, false, isSub);
+    }
+  } else if (llvm::BinaryOperator* RHSBinOp =
+               dyn_cast<llvm::BinaryOperator>(op.RHS)) {
+    if (RHSBinOp->getOpcode() == llvm::Instruction::FMul) {
+      return buildFMulAdd(RHSBinOp, op.LHS, CGF, Builder, isSub, false);
+    }
+  }
+
+  return 0;
+}
+
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
   if (op.LHS->getType()->isPointerTy() ||
       op.RHS->getType()->isPointerTy())
@@ -2000,8 +2073,13 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
     }
   }
     
-  if (op.LHS->getType()->isFPOrFPVectorTy())
+  if (op.LHS->getType()->isFPOrFPVectorTy()) {
+    // Try to form an fmuladd.
+    if (Value *FMulAdd = tryEmitFMulAdd(op, CGF, Builder))
+      return FMulAdd;
+
     return Builder.CreateFAdd(op.LHS, op.RHS, "add");
+  }
 
   return Builder.CreateAdd(op.LHS, op.RHS, "add");
 }
@@ -2022,8 +2100,12 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
       }
     }
     
-    if (op.LHS->getType()->isFPOrFPVectorTy())
+    if (op.LHS->getType()->isFPOrFPVectorTy()) {
+      // Try to form an fmuladd.
+      if (Value *FMulAdd = tryEmitFMulAdd(op, CGF, Builder, true))
+        return FMulAdd;
       return Builder.CreateFSub(op.LHS, op.RHS, "sub");
+    }
 
     return Builder.CreateSub(op.LHS, op.RHS, "sub");
   }

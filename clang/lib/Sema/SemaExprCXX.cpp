@@ -4833,7 +4833,8 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
                                                 BO_Comma, BO->getType(),
                                                 BO->getValueKind(),
                                                 BO->getObjectKind(),
-                                                BO->getOperatorLoc()));
+                                                BO->getOperatorLoc(),
+                                                BO->isFPContractable()));
     }
   }
 

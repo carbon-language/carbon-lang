@@ -4082,7 +4082,8 @@ Expr *ASTNodeImporter::VisitBinaryOperator(BinaryOperator *E) {
   return new (Importer.getToContext()) BinaryOperator(LHS, RHS, E->getOpcode(),
                                                       T, E->getValueKind(),
                                                       E->getObjectKind(),
-                                          Importer.Import(E->getOperatorLoc()));
+                                           Importer.Import(E->getOperatorLoc()),
+                                                      E->isFPContractable());
 }
 
 Expr *ASTNodeImporter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
@@ -4111,7 +4112,8 @@ Expr *ASTNodeImporter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
                                                T, E->getValueKind(),
                                                E->getObjectKind(),
                                                CompLHSType, CompResultType,
-                                          Importer.Import(E->getOperatorLoc()));
+                                           Importer.Import(E->getOperatorLoc()),
+                                               E->isFPContractable());
 }
 
 static bool ImportCastPath(CastExpr *E, CXXCastPath &Path) {

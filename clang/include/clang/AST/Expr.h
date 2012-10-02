@@ -2785,6 +2785,12 @@ public:
 
 private:
   unsigned Opc : 6;
+
+  // Records the FP_CONTRACT pragma status at the point that this binary
+  // operator was parsed. This bit is only meaningful for operations on
+  // floating point types. For all other types it should default to
+  // false.
+  unsigned FPContractable : 1;
   SourceLocation OpLoc;
 
   enum { LHS, RHS, END_EXPR };
@@ -2793,7 +2799,7 @@ public:
 
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
                  ExprValueKind VK, ExprObjectKind OK,
-                 SourceLocation opLoc)
+                 SourceLocation opLoc, bool fpContractable)
     : Expr(BinaryOperatorClass, ResTy, VK, OK,
            lhs->isTypeDependent() || rhs->isTypeDependent(),
            lhs->isValueDependent() || rhs->isValueDependent(),
@@ -2801,7 +2807,7 @@ public:
             rhs->isInstantiationDependent()),
            (lhs->containsUnexpandedParameterPack() ||
             rhs->containsUnexpandedParameterPack())),
-      Opc(opc), OpLoc(opLoc) {
+      Opc(opc), FPContractable(fpContractable), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
     assert(!isCompoundAssignmentOp() &&
@@ -2902,10 +2908,18 @@ public:
     return child_range(&SubExprs[0], &SubExprs[0]+END_EXPR);
   }
 
+  // Set the FP contractability status of this operator. Only meaningful for
+  // operations on floating point types.
+  void setFPContractable(bool FPC) { FPContractable = FPC; }
+
+  // Get the FP contractability status of this operator. Only meaningful for
+  // operations on floating point types.
+  bool isFPContractable() const { return FPContractable; }
+
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
                  ExprValueKind VK, ExprObjectKind OK,
-                 SourceLocation opLoc, bool dead)
+                 SourceLocation opLoc, bool fpContractable, bool dead2)
     : Expr(CompoundAssignOperatorClass, ResTy, VK, OK,
            lhs->isTypeDependent() || rhs->isTypeDependent(),
            lhs->isValueDependent() || rhs->isValueDependent(),
@@ -2913,7 +2927,7 @@ protected:
             rhs->isInstantiationDependent()),
            (lhs->containsUnexpandedParameterPack() ||
             rhs->containsUnexpandedParameterPack())),
-      Opc(opc), OpLoc(opLoc) {
+      Opc(opc), FPContractable(fpContractable), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
   }
@@ -2935,8 +2949,9 @@ public:
   CompoundAssignOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResType,
                          ExprValueKind VK, ExprObjectKind OK,
                          QualType CompLHSType, QualType CompResultType,
-                         SourceLocation OpLoc)
-    : BinaryOperator(lhs, rhs, opc, ResType, VK, OK, OpLoc, true),
+                         SourceLocation OpLoc, bool fpContractable)
+    : BinaryOperator(lhs, rhs, opc, ResType, VK, OK, OpLoc, fpContractable,
+                     true),
       ComputationLHSType(CompLHSType),
       ComputationResultType(CompResultType) {
     assert(isCompoundAssignmentOp() &&

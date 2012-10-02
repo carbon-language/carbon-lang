@@ -8416,7 +8416,8 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
 
   if (CompResultTy.isNull())
     return Owned(new (Context) BinaryOperator(LHS.take(), RHS.take(), Opc,
-                                              ResultTy, VK, OK, OpLoc));
+                                              ResultTy, VK, OK, OpLoc,
+                                              FPFeatures.fp_contract));
   if (getLangOpts().CPlusPlus && LHS.get()->getObjectKind() !=
       OK_ObjCProperty) {
     VK = VK_LValue;
@@ -8424,7 +8425,8 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   }
   return Owned(new (Context) CompoundAssignOperator(LHS.take(), RHS.take(), Opc,
                                                     ResultTy, VK, OK, CompLHSTy,
-                                                    CompResultTy, OpLoc));
+                                                    CompResultTy, OpLoc,
+                                                    FPFeatures.fp_contract));
 }
 
 /// DiagnoseBitwisePrecedence - Emit a warning when bitwise and comparison

@@ -53,14 +53,19 @@ class CXXOperatorCallExpr : public CallExpr {
   OverloadedOperatorKind Operator;
   SourceRange Range;
 
+  // Record the FP_CONTRACT state that applies to this operator call. Only
+  // meaningful for floating point types. For other types this value can be
+  // set to false.
+  unsigned FPContractable : 1;
+
   SourceRange getSourceRangeImpl() const LLVM_READONLY;
 public:
   CXXOperatorCallExpr(ASTContext& C, OverloadedOperatorKind Op, Expr *fn,
                       ArrayRef<Expr*> args, QualType t, ExprValueKind VK,
-                      SourceLocation operatorloc)
+                      SourceLocation operatorloc, bool fpContractable)
     : CallExpr(C, CXXOperatorCallExprClass, fn, 0, args, t, VK,
                operatorloc),
-      Operator(Op) {
+      Operator(Op), FPContractable(fpContractable) {
     Range = getSourceRangeImpl();
   }
   explicit CXXOperatorCallExpr(ASTContext& C, EmptyShell Empty) :
@@ -84,6 +89,14 @@ public:
     return T->getStmtClass() == CXXOperatorCallExprClass;
   }
   static bool classof(const CXXOperatorCallExpr *) { return true; }
+
+  // Set the FP contractability status of this operator. Only meaningful for
+  // operations on floating point types.
+  void setFPContractable(bool FPC) { FPContractable = FPC; }
+
+  // Get the FP contractability status of this operator. Only meaningful for
+  // operations on floating point types.
+  bool isFPContractable() const { return FPContractable; }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;

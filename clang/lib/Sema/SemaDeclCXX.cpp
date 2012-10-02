@@ -7504,7 +7504,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     = new (S.Context) BinaryOperator(IterationVarRefRVal,
                      IntegerLiteral::Create(S.Context, Upper, SizeType, Loc),
                                      BO_NE, S.Context.BoolTy,
-                                     VK_RValue, OK_Ordinary, Loc);
+                                     VK_RValue, OK_Ordinary, Loc, false);
   
   // Create the pre-increment of the iteration variable.
   Expr *Increment
