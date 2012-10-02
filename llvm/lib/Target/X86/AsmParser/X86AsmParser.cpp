@@ -158,8 +158,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Token,
     Register,
     Immediate,
-    Memory,
-    MSAsmWildcard
+    Memory
   } Kind;
 
   SMLoc StartLoc, EndLoc;
@@ -186,10 +185,6 @@ struct X86Operand : public MCParsedAsmOperand {
       unsigned Scale;
       unsigned Size;
     } Mem;
-
-    struct {
-      unsigned Size;
-    } MSAsm;
   };
 
   X86Operand(KindTy K, SMLoc Start, SMLoc End)
@@ -323,32 +318,25 @@ struct X86Operand : public MCParsedAsmOperand {
 
   bool isMem() const { return Kind == Memory; }
   bool isMem8() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 8)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 8);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 8);
   }
   bool isMem16() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 16)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 16);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 16);
   }
   bool isMem32() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 32)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 32);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 32);
   }
   bool isMem64() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 64)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 64);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 64);
   }
   bool isMem80() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 80)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 80);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 80);
   }
   bool isMem128() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 128)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 128);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 128);
   }
   bool isMem256() const {
-    return (Kind == Memory && (!Mem.Size || Mem.Size == 256)) ||
-      (Kind == MSAsmWildcard && MSAsm.Size == 256);
+    return Kind == Memory && (!Mem.Size || Mem.Size == 256);
   }
 
   bool isMemVX32() const {
@@ -374,12 +362,6 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   bool isReg() const { return Kind == Register; }
-
-  bool isMSAsmWildcard() const { return Kind == MSAsmWildcard; }
-  void setMSAsmWildcard(unsigned Size) {
-    Kind = MSAsmWildcard;
-    this->MSAsm.Size = Size;
-  }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.
