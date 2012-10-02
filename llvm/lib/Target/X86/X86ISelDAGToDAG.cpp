@@ -362,7 +362,7 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
 /// MoveBelowCallOrigChain - Replace the original chain operand of the call with
 /// load's chain operand and move load below the call's chain operand.
 static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
-                                  SDValue Call, SDValue OrigChain) {
+                               SDValue Call, SDValue OrigChain) {
   SmallVector<SDValue, 8> Ops;
   SDValue Chain = OrigChain.getOperand(0);
   if (Chain.getNode() == Load.getNode())
@@ -386,11 +386,22 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
   CurDAG->UpdateNodeOperands(OrigChain.getNode(), &Ops[0], Ops.size());
   CurDAG->UpdateNodeOperands(Load.getNode(), Call.getOperand(0),
                              Load.getOperand(1), Load.getOperand(2));
+
+  bool IsGlued = Call.getOperand(0).getNode()->getGluedUser() == Call.getNode();
+  unsigned NumOps = Call.getNode()->getNumOperands();
   Ops.clear();
   Ops.push_back(SDValue(Load.getNode(), 1));
-  for (unsigned i = 1, e = Call.getNode()->getNumOperands(); i != e; ++i)
+  for (unsigned i = 1, e = NumOps; i != e; ++i)
     Ops.push_back(Call.getOperand(i));
-  CurDAG->UpdateNodeOperands(Call.getNode(), &Ops[0], Ops.size());
+  if (!IsGlued)
+    CurDAG->UpdateNodeOperands(Call.getNode(), &Ops[0], NumOps);
+  else
+    // If call's chain was glued to the call (tailcall), and now the load
+    // is moved between them. Remove the glue to avoid a cycle (where the
+    // call is glued to its old chain and the load is using the old chain
+    // as its new chain).
+    CurDAG->MorphNodeTo(Call.getNode(), Call.getOpcode(),
+                        Call.getNode()->getVTList(), &Ops[0], NumOps-1);
 }
 
 /// isCalleeLoad - Return true if call address is a load and it can be
