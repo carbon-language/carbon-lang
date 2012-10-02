@@ -629,7 +629,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
     while ((tid = atomic_load(&p->tid, memory_order_acquire)) == 0)
       pthread_yield();
     atomic_store(&p->tid, 0, memory_order_release);
-    ThreadStart(thr, tid);
+    ThreadStart(thr, tid, GetTid());
     CHECK_EQ(thr->in_rtl, 1);
   }
   void *res = callback(param);

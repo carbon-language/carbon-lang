@@ -137,7 +137,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   return tid;
 }
 
-void ThreadStart(ThreadState *thr, int tid) {
+void ThreadStart(ThreadState *thr, int tid, int os_id) {
   CHECK_GT(thr->in_rtl, 0);
   uptr stk_addr = 0;
   uptr stk_size = 0;
@@ -169,6 +169,7 @@ void ThreadStart(ThreadState *thr, int tid) {
   CHECK_NE(tctx, 0);
   CHECK_EQ(tctx->status, ThreadStatusCreated);
   tctx->status = ThreadStatusRunning;
+  tctx->os_id = os_id;
   tctx->epoch0 = tctx->epoch1 + 1;
   tctx->epoch1 = (u64)-1;
   new(thr) ThreadState(CTX(), tid, tctx->unique_id,

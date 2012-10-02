@@ -74,6 +74,7 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
 ThreadContext::ThreadContext(int tid)
   : tid(tid)
   , unique_id()
+  , os_id()
   , user_id()
   , thr()
   , status(ThreadStatusInvalid)
@@ -201,7 +202,7 @@ void Initialize(ThreadState *thr) {
   ctx->thread_seq = 0;
   int tid = ThreadCreate(thr, 0, 0, true);
   CHECK_EQ(tid, 0);
-  ThreadStart(thr, tid);
+  ThreadStart(thr, tid, GetPid());
   CHECK_EQ(thr->in_rtl, 1);
   ctx->initialized = true;
 

@@ -27,6 +27,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <syscall.h>
 #include <unistd.h>
 
 namespace __sanitizer {
@@ -35,6 +36,10 @@ namespace __sanitizer {
 
 int GetPid() {
   return getpid();
+}
+
+int GetTid() {
+  return syscall(__NR_gettid);
 }
 
 uptr GetThreadSelf() {

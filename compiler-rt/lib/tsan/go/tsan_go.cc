@@ -149,7 +149,7 @@ void __tsan_go_start(int pgoid, int chgoid, void *pc) {
   thr->in_rtl++;
   parent->in_rtl++;
   int goid2 = ThreadCreate(parent, (uptr)pc, 0, true);
-  ThreadStart(thr, goid2);
+  ThreadStart(thr, goid2, 0);
   parent->in_rtl--;
   thr->in_rtl--;
 }
