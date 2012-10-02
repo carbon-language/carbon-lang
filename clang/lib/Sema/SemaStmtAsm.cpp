@@ -575,43 +575,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     // If we had an error parsing the operands, fail gracefully.
     if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
-    // Rewrite the symbol references as wildcard MCParsedAsmOperands.
-    for (unsigned i = 1, e = Operands.size(); i != e; ++i)
-      if (Operands[i]->isMem()) {
-        StringRef Name = getMSInlineAsmExprName(Pieces[StrIdx][i]);
-
-        // The expr may be a register.  E.g., DWORD PTR [eax]
-        if (Context.getTargetInfo().isValidGCCRegisterName(Name))
-          continue;
-
-        IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
-                                               AsmTokRanges[StrIdx].first,
-                                               AsmTokRanges[StrIdx].second);
-        // Lookup the identifier.
-        // TODO: Someone with more experience with clang should verify this the
-        // proper way of doing a symbol lookup.
-        DeclarationName DeclName(II);
-        Scope *CurScope = getCurScope();
-        LookupResult R(*this, DeclName, AsmLoc, Sema::LookupOrdinaryName);
-        if (!this->LookupName(R, CurScope, false/*AllowBuiltinCreation*/))
-          assert(0 && "Sema::LookupName failed!");
-        assert (R.isSingleResult() && "Expected a single result?!");
-        NamedDecl *Decl = R.getFoundDecl();
-        switch (Decl->getKind()) {
-        default:
-          assert(0 && "Unknown decl kind.");
-          break;
-        case Decl::Var: {
-        case Decl::ParmVar:
-          VarDecl *Var = cast<VarDecl>(Decl);
-          QualType Ty = Var->getType();
-          // Set the expected operand size.
-          Operands[i]->setMSAsmWildcard(Context.getTypeInfo(Ty).first);
-          break;
-        }
-        }
-      }
-
     // Match the MCInstr.
     unsigned Kind;
     unsigned Opcode;
@@ -656,7 +619,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       // Expr/Input or Output.
       StringRef Name = getMSInlineAsmExprName(Pieces[StrIdx][i]);
 
-      // The expr may be a register.  E.g., DWORD PTR [eax]
+      // The expr may be a register.
+      // E.g., DWORD PTR [eax]
       if (Context.getTargetInfo().isValidGCCRegisterName(Name))
         continue;
 
