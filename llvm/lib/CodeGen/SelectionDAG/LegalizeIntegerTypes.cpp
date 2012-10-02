@@ -644,8 +644,9 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
   EVT SmallVT = LHS.getValueType();
 
   // To determine if the result overflowed in a larger type, we extend the
-  // input to the larger type, do the multiply, then check the high bits of
-  // the result to see if the overflow happened.
+  // input to the larger type, do the multiply (checking if it overflows),
+  // then also check the high bits of the result to see if overflow happened
+  // there.
   if (N->getOpcode() == ISD::SMULO) {
     LHS = SExtPromotedInteger(LHS);
     RHS = SExtPromotedInteger(RHS);
@@ -653,23 +654,30 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
     LHS = ZExtPromotedInteger(LHS);
     RHS = ZExtPromotedInteger(RHS);
   }
-  SDValue Mul = DAG.getNode(ISD::MUL, DL, LHS.getValueType(), LHS, RHS);
+  SDVTList VTs = DAG.getVTList(LHS.getValueType(), N->getValueType(1));
+  SDValue Mul = DAG.getNode(N->getOpcode(), DL, VTs, LHS, RHS);
 
-  // Overflow occurred iff the high part of the result does not
-  // zero/sign-extend the low part.
+  // Overflow occurred if it occurred in the larger type, or if the high part
+  // of the result does not zero/sign-extend the low part.  Check this second
+  // possibility first.
   SDValue Overflow;
   if (N->getOpcode() == ISD::UMULO) {
-    // Unsigned overflow occurred iff the high part is non-zero.
+    // Unsigned overflow occurred if the high part is non-zero.
     SDValue Hi = DAG.getNode(ISD::SRL, DL, Mul.getValueType(), Mul,
                              DAG.getIntPtrConstant(SmallVT.getSizeInBits()));
     Overflow = DAG.getSetCC(DL, N->getValueType(1), Hi,
                             DAG.getConstant(0, Hi.getValueType()), ISD::SETNE);
   } else {
-    // Signed overflow occurred iff the high part does not sign extend the low.
+    // Signed overflow occurred if the high part does not sign extend the low.
     SDValue SExt = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, Mul.getValueType(),
                                Mul, DAG.getValueType(SmallVT));
     Overflow = DAG.getSetCC(DL, N->getValueType(1), SExt, Mul, ISD::SETNE);
   }
+
+  // The only other way for overflow to occur is if the multiplication in the
+  // larger type itself overflowed.
+  Overflow = DAG.getNode(ISD::OR, DL, N->getValueType(1), Overflow,
+                         SDValue(Mul.getNode(), 1));
 
   // Use the calculated overflow everywhere.
   ReplaceValueWith(SDValue(N, 1), Overflow);
