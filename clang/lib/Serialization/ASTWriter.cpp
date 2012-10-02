@@ -1435,6 +1435,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
        I != N; ++I) {
     // Get this source location entry.
     const SrcMgr::SLocEntry *SLoc = &SourceMgr.getLocalSLocEntry(I);
+    FileID FID = FileID::get(I);
+    assert(&SourceMgr.getSLocEntry(FID) == SLoc);
 
     // Record the offset of this source-location entry.
     SLocEntryOffsets.push_back(Stream.GetCurrentBitNo());
@@ -1475,7 +1477,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         Record.push_back(Content->BufferOverridden);
         Record.push_back(File.NumCreatedFIDs);
         
-        FileDeclIDsTy::iterator FDI = FileDeclIDs.find(SLoc);
+        FileDeclIDsTy::iterator FDI = FileDeclIDs.find(FID);
         if (FDI != FileDeclIDs.end()) {
           Record.push_back(FDI->second->FirstDeclIndex);
           Record.push_back(FDI->second->DeclIDs.size());
@@ -3954,10 +3956,9 @@ void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   llvm::tie(FID, Offset) = SM.getDecomposedLoc(FileLoc);
   if (FID.isInvalid())
     return;
-  const SrcMgr::SLocEntry *Entry = &SM.getSLocEntry(FID);
-  assert(Entry->isFile());
+  assert(SM.getSLocEntry(FID).isFile());
 
-  DeclIDInFileInfo *&Info = FileDeclIDs[Entry];
+  DeclIDInFileInfo *&Info = FileDeclIDs[FID];
   if (!Info)
     Info = new DeclIDInFileInfo();
 

@@ -171,8 +171,7 @@ private:
     /// indicates the index that this particular vector has in the global one.
     unsigned FirstDeclIndex;
   };
-  typedef llvm::DenseMap<const SrcMgr::SLocEntry *,
-                         DeclIDInFileInfo *> FileDeclIDsTy;
+  typedef llvm::DenseMap<FileID, DeclIDInFileInfo *> FileDeclIDsTy;
 
   /// \brief Map from file SLocEntries to info about the file-level declarations
   /// that it contains.
