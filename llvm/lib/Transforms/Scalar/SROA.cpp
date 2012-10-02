@@ -152,7 +152,10 @@ public:
   /// intentionally overlap between various uses of the same partition.
   struct PartitionUse : public ByteRange {
     /// \brief The use in question. Provides access to both user and used value.
-    Use* U;
+    ///
+    /// Note that this may be null if the partition use is *dead*, that is, it
+    /// should be ignored.
+    Use *U;
 
     PartitionUse() : ByteRange(), U() {}
     PartitionUse(uint64_t BeginOffset, uint64_t EndOffset, Use *U)
@@ -219,10 +222,6 @@ public:
   }
   void use_push_back(const_iterator I, const PartitionUse &PU) {
     Uses[I - begin()].push_back(PU);
-  }
-  void use_erase(unsigned Idx, use_iterator UI) { Uses[Idx].erase(UI); }
-  void use_erase(const_iterator I, use_iterator UI) {
-    Uses[I - begin()].erase(UI);
   }
   /// @}
 
@@ -1112,6 +1111,8 @@ AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
 Type *AllocaPartitioning::getCommonType(iterator I) const {
   Type *Ty = 0;
   for (const_use_iterator UI = use_begin(I), UE = use_end(I); UI != UE; ++UI) {
+    if (!UI->U)
+      continue; // Skip dead uses.
     if (isa<IntrinsicInst>(*UI->U->getUser()))
       continue;
     if (UI->BeginOffset != I->BeginOffset || UI->EndOffset != I->EndOffset)
@@ -1147,6 +1148,8 @@ void AllocaPartitioning::printUsers(raw_ostream &OS, const_iterator I,
                                     StringRef Indent) const {
   for (const_use_iterator UI = use_begin(I), UE = use_end(I);
        UI != UE; ++UI) {
+    if (!UI->U)
+      continue; // Skip dead uses.
     OS << Indent << "  [" << UI->BeginOffset << "," << UI->EndOffset << ") "
        << "used by: " << *UI->U->getUser() << "\n";
     if (MemTransferInst *II = dyn_cast<MemTransferInst>(UI->U->getUser())) {
@@ -1685,6 +1688,9 @@ static bool isVectorPromotionViable(const TargetData &TD,
   ElementSize /= 8;
 
   for (; I != E; ++I) {
+    if (!I->U)
+      continue; // Skip dead use.
+
     uint64_t BeginOffset = I->BeginOffset - PartitionBeginOffset;
     uint64_t BeginIndex = BeginOffset / ElementSize;
     if (BeginIndex * ElementSize != BeginOffset ||
@@ -1744,6 +1750,8 @@ static bool isIntegerPromotionViable(const TargetData &TD,
   // splittable later) and lose the ability to promote each element access.
   bool WholeAllocaOp = false;
   for (; I != E; ++I) {
+    if (!I->U)
+      continue; // Skip dead use.
     if (LoadInst *LI = dyn_cast<LoadInst>(I->U->getUser())) {
       if (LI->isVolatile() || !LI->getType()->isIntegerTy())
         return false;
@@ -1789,8 +1797,13 @@ public:
     // Note that we need to use an index here as the underlying vector of uses
     // may be grown during speculation. However, we never need to re-visit the
     // new uses, and so we can use the initial size bound.
-    for (unsigned Idx = 0, Size = P.use_size(PI); Idx != Size; ++Idx)
-      visit(cast<Instruction>(P.getUse(PI, Idx).U->getUser()));
+    for (unsigned Idx = 0, Size = P.use_size(PI); Idx != Size; ++Idx) {
+      const AllocaPartitioning::PartitionUse &PU = P.getUse(PI, Idx);
+      if (!PU.U)
+        continue; // Skip dead use.
+
+      visit(cast<Instruction>(PU.U->getUser()));
+    }
   }
 
 private:
@@ -2000,7 +2013,9 @@ private:
         AllocaPartitioning::use_iterator UI
           = P.findPartitionUseForPHIOrSelectOperand(Ops[i]);
         PUs[i] = *UI;
-        P.use_erase(PIs[i], UI);
+        // Clear out the use here so that the offsets into the use list remain
+        // stable but this use is ignored when rewriting.
+        UI->U = 0;
       }
     }
 
@@ -2120,6 +2135,8 @@ public:
     }
     bool CanSROA = true;
     for (; I != E; ++I) {
+      if (!I->U)
+        continue; // Skip dead uses.
       BeginOffset = I->BeginOffset;
       EndOffset = I->EndOffset;
       OldUse = I->U;
@@ -2994,7 +3011,13 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
                                   AllocaPartitioning &P,
                                   AllocaPartitioning::iterator PI) {
   uint64_t AllocaSize = PI->EndOffset - PI->BeginOffset;
-  if (P.use_begin(PI) == P.use_end(PI))
+  bool IsLive = false;
+  for (AllocaPartitioning::use_iterator UI = P.use_begin(PI),
+                                        UE = P.use_end(PI);
+       UI != UE && !IsLive; ++UI)
+    if (UI->U)
+      IsLive = true;
+  if (!IsLive)
     return false; // No live uses left of this partition.
 
   DEBUG(dbgs() << "Speculating PHIs and selects in partition "
