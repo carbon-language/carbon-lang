@@ -146,39 +146,8 @@ class DarwinSymbolizer(Symbolizer):
     self.vmaddr = None
     self.pipe = None
 
-  def get_binary_vmaddr(self):
-    """Get the slide value to be added to the address.
-
-    We're looking for the following piece in otool -l output:
-      Load command 0
-      cmd LC_SEGMENT
-      cmdsize 736
-      segname __TEXT
-      vmaddr 0x00000000
-    """
-    if self.vmaddr:
-      return self.vmaddr
-    cmdline = ['otool', '-l', self.binary]
-    pipe = subprocess.Popen(cmdline,
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE)
-    is_text = False
-    vmaddr = 0
-    for line in pipe.stdout:
-      line = line.strip()
-      if line.startswith('segname'):
-        is_text = (line == 'segname __TEXT')
-        continue
-      if line.startswith('vmaddr') and is_text:
-        sv = line.split(' ')
-        vmaddr = int(sv[-1], 16)
-        break
-    self.vmaddr = vmaddr
-    return self.vmaddr
-
   def write_addr_to_pipe(self, offset):
-    slide = self.get_binary_vmaddr()
-    print >> self.pipe.stdin, '0x%x' % (int(offset, 16) + slide)
+    print >> self.pipe.stdin, '0x%x' % int(offset, 16)
 
   def open_atos(self):
     if DEBUG:
