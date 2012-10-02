@@ -80,7 +80,7 @@
 // LINK_OLDER_NODEMANGLE-NOT: "-demangle"
 // LINK_OLDER_NODEMANGLE: "-lSystem"
 
-// RUN: %clang -target x86_64-apple-darwin10 -### %t.o \
+// RUN: %clang -target x86_64-apple-darwin10 -### %s \
 // RUN:   -mlinker-version=117 -flto 2> %t.log
 // RUN: cat %t.log
 // RUN: FileCheck -check-prefix=LINK_OBJECT_LTO_PATH %s < %t.log
