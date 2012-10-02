@@ -144,6 +144,8 @@ void AsanPlatformThreadInit() {
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
 
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
 bool __asan_symbolize(const void *addr, char *out_buffer, int buffer_size) {
   ScopedLock lock(&dbghelp_lock);
   if (!dbghelp_initialized) {
@@ -184,7 +186,7 @@ bool __asan_symbolize(const void *addr, char *out_buffer, int buffer_size) {
   }
   return true;
 }
-
+}  // extern "C"
 
 
 #endif  // _WIN32
