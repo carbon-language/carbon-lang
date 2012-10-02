@@ -3638,6 +3638,13 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   default: llvm_unreachable("unexpected attribute kind");
   }
 
+  const TargetInfo &TI = Context.getTargetInfo();
+  TargetInfo::CallingConvCheckResult A = TI.checkCallingConvention(CC);
+  if (A == TargetInfo::CCCR_Warning) {
+    Diag(attr.getLoc(), diag::warn_cconv_ignored) << attr.getName();
+    CC = TI.getDefaultCallingConv();
+  }
+
   return false;
 }
 

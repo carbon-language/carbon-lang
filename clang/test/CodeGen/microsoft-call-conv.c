@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-pc-linux -emit-llvm < %s | FileCheck %s
 
 void __fastcall f1(void);
 void __stdcall f2(void);

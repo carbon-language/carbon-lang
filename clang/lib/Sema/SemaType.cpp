@@ -3886,13 +3886,13 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     return true;
   }
 
+  // Delay if the type didn't work out to a function.
+  if (!unwrapped.isFunctionType()) return false;
+
   // Otherwise, a calling convention.
   CallingConv CC;
   if (S.CheckCallingConvAttr(attr, CC))
     return true;
-
-  // Delay if the type didn't work out to a function.
-  if (!unwrapped.isFunctionType()) return false;
 
   const FunctionType *fn = unwrapped.get();
   CallingConv CCOld = fn->getCallConv();

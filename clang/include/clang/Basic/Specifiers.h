@@ -175,6 +175,19 @@ namespace clang {
     ICIS_CopyInit, ///< Copy initialization.
     ICIS_ListInit  ///< Direct list-initialization.
   };
+
+  /// \brief CallingConv - Specifies the calling convention that a function uses.
+  enum CallingConv {
+    CC_Default,
+    CC_C,           // __attribute__((cdecl))
+    CC_X86StdCall,  // __attribute__((stdcall))
+    CC_X86FastCall, // __attribute__((fastcall))
+    CC_X86ThisCall, // __attribute__((thiscall))
+    CC_X86Pascal,   // __attribute__((pascal))
+    CC_AAPCS,       // __attribute__((pcs("aapcs")))
+    CC_AAPCS_VFP    // __attribute__((pcs("aapcs-vfp")))
+  };
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fms-compatibility -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
 
 // CHECK: @"\01?a@@3HA"
 // CHECK: @"\01?b@N@@3HA"
@@ -109,6 +110,7 @@ bool __fastcall beta(long long a, wchar_t b) throw(signed char, unsigned char) {
 }
 
 // CHECK: @"\01?alpha@@YGXMN@Z"
+// X64: @"\01?alpha@@YAXMN@Z"
 
 // Make sure tag-type mangling works.
 void gamma(class foo, struct bar, union baz, enum quux) {}
