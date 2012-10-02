@@ -281,6 +281,11 @@ public:
   
   /// \brief Retrieve the path to the module cache.
   StringRef getModuleCachePath() const { return ModuleCachePath; }
+
+  /// \brief Consider modules when including files from this directory.
+  void setDirectoryHasModuleMap(const DirectoryEntry* Dir) {
+    DirectoryHasModuleMap[Dir] = true;
+  }
   
   /// \brief Forget everything we know about headers so far.
   void ClearFileInfo() {
