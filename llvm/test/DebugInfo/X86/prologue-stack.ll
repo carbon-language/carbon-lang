@@ -9,7 +9,7 @@
 define i32 @isel_line_test2() nounwind uwtable {
   ; The stack adjustment should be part of the prologue.
   ; CHECK: isel_line_test2:
-  ; CHECK: subq {{.*}}, %rsp
+  ; CHECK: {{subq|leaq}} {{.*}}, %rsp
   ; CHECK: .loc 1 5 3 prologue_end
 entry:
   %call = call i32 @callme(i32 400), !dbg !10
