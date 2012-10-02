@@ -1775,7 +1775,7 @@ ASTDeclReader::FindExistingResult::~FindExistingResult() {
   if (!AddResult || Existing)
     return;
   
-  DeclContext *DC = New->getDeclContext()->getRedeclContext();
+  DeclContext *DC = New->getLexicalDeclContext();
   if (DC->isTranslationUnit() && Reader.SemaObj) {
     if (Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName()))
       Reader.RedeclsAddedToAST.insert(New);
