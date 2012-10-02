@@ -51,6 +51,7 @@ namespace polly {
 
 #ifdef ISL_CODEGEN_FOUND
   llvm::Pass *createIslAstInfoPass();
+  llvm::Pass *createIslCodeGenerationPass();
 #endif
 
   llvm::Pass *createIslScheduleOptimizerPass();
@@ -107,6 +108,7 @@ namespace {
 #endif
 #ifdef ISL_CODEGEN_FOUND
        createIslAstInfoPass();
+       createIslCodeGenerationPass();
 #endif
        createIslScheduleOptimizerPass();
        createTempScopInfoPass();
@@ -137,6 +139,7 @@ namespace llvm {
   void initializeJSONImporterPass(llvm::PassRegistry&);
 #ifdef ISL_CODEGEN_FOUND
   void initializeIslAstInfoPass(llvm::PassRegistry&);
+  void initializeIslCodeGenerationPass(llvm::PassRegistry&);
 #endif
   void initializeIslScheduleOptimizerPass(llvm::PassRegistry&);
 #ifdef PLUTO_FOUND
