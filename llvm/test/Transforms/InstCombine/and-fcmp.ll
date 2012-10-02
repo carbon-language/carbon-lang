@@ -10,7 +10,7 @@ define zeroext i8 @t1(float %x, float %y) nounwind {
 ; CHECK: fcmp oeq float %x, %y
 ; CHECK-NOT: fcmp ueq float %x, %y
 ; CHECK-NOT: fcmp ord float %x, %y
-; CHECK-NOW: and
+; CHECK-NOT: and
 }
 
 define zeroext i8 @t2(float %x, float %y) nounwind {

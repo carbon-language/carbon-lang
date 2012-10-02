@@ -54,7 +54,7 @@ entry:
 ; V8: {{be|bne}}
 ; V9: test_select_dfp_icc
 ; V9: subcc
-; V9=NOT: {{be|bne}}
+; V9-NOT: {{be|bne}}
 ; V9: fmovd{{e|ne}} %icc
   %0 = icmp eq i32 %a, 0
   %1 = select i1 %0, double %f1, double %f2

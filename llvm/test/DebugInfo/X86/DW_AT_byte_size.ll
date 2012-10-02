@@ -4,7 +4,8 @@
 ; Checks that we don't emit a size for a pointer type.
 ; CHECK: DW_TAG_pointer_type
 ; CHECK-NEXT: DW_AT_type
-; CHECK-NOT-NEXT: DW_AT_byte_size
+; CHECK-NOT: DW_AT_byte_size
+; CHECK: .debug_info contents
 
 %struct.A = type { i32 }
 

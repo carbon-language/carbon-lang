@@ -534,7 +534,7 @@ entry:
 define i16 @icmp_slt_immed04_i16(i16 %arg1, i16 %val1, i16 %val2) nounwind {
 ; CHECK:      icmp_slt_immed04_i16:
 ; CHECK:        lr
-; CHECK-NETX:   bi
+; CHECK-NEXT:   bi
 
 entry:
        %A = icmp slt i16 %arg1, 32768
@@ -559,7 +559,7 @@ define i1 @icmp_sle_setcc_i16(i16 %arg1, i16 %arg2, i16 %val1, i16 %val2) nounwi
 ; CHECK:        ilhu
 ; CHECK:        xorhi
 ; CHECK:        iohl
-; CHECK-NETX:   bi
+; CHECK:   bi
 
 entry:
        %A = icmp sle i16 %arg1, %arg2
