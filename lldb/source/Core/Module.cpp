@@ -1171,7 +1171,7 @@ Module::MatchesModuleSpec (const ModuleSpec &module_ref)
     const FileSpec &platform_file_spec = module_ref.GetPlatformFileSpec();
     if (platform_file_spec)
     {
-        if (!FileSpec::Equal (platform_file_spec, m_platform_file, platform_file_spec.GetDirectory()))
+        if (!FileSpec::Equal (platform_file_spec, GetPlatformFileSpec (), platform_file_spec.GetDirectory()))
             return false;
     }
     
