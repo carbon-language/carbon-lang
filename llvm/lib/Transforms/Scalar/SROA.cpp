@@ -194,16 +194,6 @@ public:
   use_iterator use_begin(const_iterator I) { return Uses[I - begin()].begin(); }
   use_iterator use_end(unsigned Idx) { return Uses[Idx].end(); }
   use_iterator use_end(const_iterator I) { return Uses[I - begin()].end(); }
-  void use_push_back(unsigned Idx, const PartitionUse &PU) {
-    Uses[Idx].push_back(PU);
-  }
-  void use_push_back(const_iterator I, const PartitionUse &PU) {
-    Uses[I - begin()].push_back(PU);
-  }
-  void use_erase(unsigned Idx, use_iterator UI) { Uses[Idx].erase(UI); }
-  void use_erase(const_iterator I, use_iterator UI) {
-    Uses[I - begin()].erase(UI);
-  }
 
   typedef SmallVectorImpl<PartitionUse>::const_iterator const_use_iterator;
   const_use_iterator use_begin(unsigned Idx) const { return Uses[Idx].begin(); }
@@ -213,6 +203,26 @@ public:
   const_use_iterator use_end(unsigned Idx) const { return Uses[Idx].end(); }
   const_use_iterator use_end(const_iterator I) const {
     return Uses[I - begin()].end();
+  }
+
+  unsigned use_size(unsigned Idx) const { return Uses[Idx].size(); }
+  unsigned use_size(const_iterator I) const { return Uses[I - begin()].size(); }
+  const PartitionUse &getUse(unsigned PIdx, unsigned UIdx) const {
+    return Uses[PIdx][UIdx];
+  }
+  const PartitionUse &getUse(const_iterator I, unsigned UIdx) const {
+    return Uses[I - begin()][UIdx];
+  }
+
+  void use_push_back(unsigned Idx, const PartitionUse &PU) {
+    Uses[Idx].push_back(PU);
+  }
+  void use_push_back(const_iterator I, const PartitionUse &PU) {
+    Uses[I - begin()].push_back(PU);
+  }
+  void use_erase(unsigned Idx, use_iterator UI) { Uses[Idx].erase(UI); }
+  void use_erase(const_iterator I, use_iterator UI) {
+    Uses[I - begin()].erase(UI);
   }
   /// @}
 
@@ -1774,11 +1784,13 @@ public:
   PHIOrSelectSpeculator(const TargetData &TD, AllocaPartitioning &P, SROA &Pass)
     : TD(TD), P(P), Pass(Pass) {}
 
-  /// \brief Visit the users of the alloca partition and rewrite them.
-  void visitUsers(AllocaPartitioning::const_use_iterator I,
-                  AllocaPartitioning::const_use_iterator E) {
-    for (; I != E; ++I)
-      visit(cast<Instruction>(I->U->getUser()));
+  /// \brief Visit the users of an alloca partition and rewrite them.
+  void visitUsers(AllocaPartitioning::const_iterator PI) {
+    // Note that we need to use an index here as the underlying vector of uses
+    // may be grown during speculation. However, we never need to re-visit the
+    // new uses, and so we can use the initial size bound.
+    for (unsigned Idx = 0, Size = P.use_size(PI); Idx != Size; ++Idx)
+      visit(cast<Instruction>(P.getUse(PI, Idx).U->getUser()));
   }
 
 private:
@@ -2991,7 +3003,7 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
   PHIOrSelectSpeculator Speculator(*TD, P, *this);
   DEBUG(dbgs() << "  speculating ");
   DEBUG(P.print(dbgs(), PI, ""));
-  Speculator.visitUsers(P.use_begin(PI), P.use_end(PI));
+  Speculator.visitUsers(PI);
 
   // Try to compute a friendly type for this partition of the alloca. This
   // won't always succeed, in which case we fall back to a legal integer type
