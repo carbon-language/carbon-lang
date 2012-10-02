@@ -247,7 +247,7 @@ static NOINLINE void force_interface_symbols() {
     case 33: __asan_after_dynamic_init(); break;
     case 34: __asan_malloc_hook(0, 0); break;
     case 35: __asan_free_hook(0); break;
-    case 36: __asan_set_symbolize_callback(0); break;
+    case 36: __asan_symbolize(0, 0, 0); break;
   }
 }
 
@@ -376,9 +376,6 @@ void __asan_init() {
       InitializeExternalSymbolizer(external_symbolizer);
     }
   }
-#ifdef _WIN32
-  __asan_set_symbolize_callback(WinSymbolize);
-#endif  // _WIN32
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.

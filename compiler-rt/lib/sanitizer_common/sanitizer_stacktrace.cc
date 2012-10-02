@@ -36,6 +36,26 @@ static uptr patch_pc(uptr pc) {
   return pc - 1;
 }
 
+static void PrintStackFramePrefix(uptr frame_num, uptr pc) {
+  Printf("    #%zu 0x%zx", frame_num, pc);
+}
+
+static void PrintSourceLocation(const char *file, int line, int column,
+                                const char *strip_file_prefix) {
+  CHECK(file);
+  Printf(" %s", StripPathPrefix(file, strip_file_prefix));
+  if (line > 0) {
+    Printf(":%d", line);
+    if (column > 0)
+      Printf(":%d", column);
+  }
+}
+
+static void PrintModuleAndOffset(const char *module, uptr offset,
+                                 const char *strip_file_prefix) {
+  Printf(" (%s+0x%zx)", StripPathPrefix(module, strip_file_prefix), offset);
+}
+
 void StackTrace::PrintStack(const uptr *addr, uptr size,
                             bool symbolize, const char *strip_file_prefix,
                             SymbolizeCallback symbolize_callback ) {
@@ -45,45 +65,49 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
     uptr pc = patch_pc(addr[i]);
+    uptr addr_frames_num = 0;  // The number of stack frames for current
+                               // instruction address.
     if (symbolize_callback) {
-      symbolize_callback((void*)pc, buff.data(), buff.size());
-      // We can't know anything about the string returned by external
-      // symbolizer, but if it starts with filename, try to strip path prefix
-      // from it.
-      Printf("  #%zu 0x%zx %s\n", frame_num, pc,
-             StripPathPrefix(buff.data(), strip_file_prefix));
-      frame_num++;
-      continue;
-    }
-    uptr addr_frames_num =
-      symbolize ? SymbolizeCode(pc, addr_frames.data(), addr_frames.size()) : 0;
-    if (addr_frames_num > 0) {
+      if (symbolize_callback((void*)pc, buff.data(), buff.size())) {
+        addr_frames_num = 1;
+        PrintStackFramePrefix(frame_num, pc);
+        // We can't know anything about the string returned by external
+        // symbolizer, but if it starts with filename, try to strip path prefix
+        // from it.
+        Printf(" %s\n", StripPathPrefix(buff.data(), strip_file_prefix));
+        frame_num++;
+      }
+    } else if (symbolize) {
+      // Use our own (online) symbolizer, if necessary.
+      addr_frames_num = SymbolizeCode(pc, addr_frames.data(), addr_frames.size());
       for (uptr j = 0; j < addr_frames_num; j++) {
         AddressInfo &info = addr_frames[j];
-        Printf("    #%zu 0x%zx", frame_num, pc);
+        PrintStackFramePrefix(frame_num, pc);
         if (info.function) {
           Printf(" in %s", info.function);
         }
         if (info.file) {
-          Printf(" %s:%d:%d", StripPathPrefix(info.file, strip_file_prefix),
-                 info.line, info.column);
+          PrintSourceLocation(info.file, info.line, info.column,
+                              strip_file_prefix);
         } else if (info.module) {
-          Printf(" (%s+0x%zx)", StripPathPrefix(info.module, strip_file_prefix),
-                 info.module_offset);
+          PrintModuleAndOffset(info.module, info.module_offset,
+                               strip_file_prefix);
         }
         Printf("\n");
         info.Clear();
         frame_num++;
       }
-    } else {
+    }
+    if (addr_frames_num == 0) {
+      // If online symbolization failed, try to output at least module and
+      // offset for instruction.
+      PrintStackFramePrefix(frame_num, pc);
       uptr offset;
       if (proc_maps.GetObjectNameAndOffset(pc, &offset,
                                            buff.data(), buff.size())) {
-        Printf("    #%zu 0x%zx (%s+0x%zx)\n", frame_num, pc,
-               StripPathPrefix(buff.data(), strip_file_prefix), offset);
-      } else {
-        Printf("    #%zu 0x%zx\n", frame_num, pc);
+        PrintModuleAndOffset(buff.data(), offset, strip_file_prefix);
       }
+      Printf("\n");
       frame_num++;
     }
   }

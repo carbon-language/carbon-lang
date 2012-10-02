@@ -149,10 +149,6 @@ extern int asan_inited;
 extern bool asan_init_is_running;
 extern void (*death_callback)(void);
 
-#ifdef _WIN32
-bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
-#endif  // _WIN32
-
 // These magic values are written to shadow for better error reporting.
 const int kAsanHeapLeftRedzoneMagic = 0xfa;
 const int kAsanHeapRightRedzoneMagic = 0xfb;

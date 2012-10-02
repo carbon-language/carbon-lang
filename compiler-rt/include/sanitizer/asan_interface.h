@@ -135,15 +135,13 @@ extern "C" {
   void __asan_set_on_error_callback(void (*callback)(void))
       SANITIZER_INTERFACE_ATTRIBUTE;
 
-  // User may register its own symbolization function. It should print
-  // the description of instruction at address "pc" to "out_buffer".
-  // Description should be at most "out_size" bytes long.
+  // User may provide its own implementation for symbolization function.
+  // It should print the description of instruction at address "pc" to
+  // "out_buffer". Description should be at most "out_size" bytes long.
   // User-specified function should return true if symbolization was
   // successful.
-  typedef bool (*__asan_symbolize_callback)(const void *pc, char *out_buffer,
-                                            int out_size);
-  void __asan_set_symbolize_callback(__asan_symbolize_callback callback)
-      SANITIZER_INTERFACE_ATTRIBUTE;
+  bool __asan_symbolize(const void *pc, char *out_buffer, int out_size)
+      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 
   // Returns the estimated number of bytes that will be reserved by allocator
   // for request of "size" bytes. If ASan allocator can't allocate that much

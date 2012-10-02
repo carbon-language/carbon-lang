@@ -17,20 +17,21 @@
 
 namespace __asan {
 
-static __asan_symbolize_callback symbolize_callback;
-
 void PrintStack(StackTrace *stack) {
   stack->PrintStack(stack->trace, stack->size, flags()->symbolize,
-                    flags()->strip_path_prefix, symbolize_callback);
+                    flags()->strip_path_prefix, __asan_symbolize);
 }
-
 
 }  // namespace __asan
 
 // ------------------ Interface -------------- {{{1
-using namespace __asan;  // NOLINT
 
-void NOINLINE __asan_set_symbolize_callback(
-    __asan_symbolize_callback callback) {
-  symbolize_callback = callback;
+// Provide default implementation of __asan_symbolize that does nothing
+// and may be overriden by user if he wants to use his own symbolization.
+// ASan on Windows has its own implementation of this.
+#ifndef _WIN32
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
+bool __asan_symbolize(const void *pc, char *out_buffer, int out_size) {
+  return false;
 }
+#endif
