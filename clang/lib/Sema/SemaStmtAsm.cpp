@@ -522,11 +522,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   // AsmParser doesn't fully support these asm statements.
   if (bailOnMSAsm(Pieces)) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
-  // Initialize targets and assembly printers/parsers.
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-
   // Get the target specific parser.
   std::string Error;
   const std::string &TT = Context.getTargetInfo().getTriple().getTriple();
