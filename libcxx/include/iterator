@@ -1301,6 +1301,38 @@ operator<=(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEX
     return !(__y < __x);
 }
 
+template <class _Iter1>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+operator!=(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter1>& __y) _NOEXCEPT
+{
+    return !(__x == __y);
+}
+
+template <class _Iter1>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+operator>(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter1>& __y) _NOEXCEPT
+{
+    return __y < __x;
+}
+
+template <class _Iter1>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+operator>=(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter1>& __y) _NOEXCEPT
+{
+    return !(__x < __y);
+}
+
+template <class _Iter1>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+operator<=(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter1>& __y) _NOEXCEPT
+{
+    return !(__y < __x);
+}
+
 template <class _Iter1, class _Iter2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename __wrap_iter<_Iter1>::difference_type
