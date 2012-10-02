@@ -545,7 +545,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
         StubAM.GVOpFlags = GVFlags;
 
         // Prepare for inserting code in the local-value area.
-        SavePoint SaveInsertPt = enterLocalValueArea();
+	MachineBasicBlock::iterator SaveIter = enterLocalValueArea();
 
         if (TLI.getPointerTy() == MVT::i64) {
           Opc = X86::MOV64rm;
@@ -564,7 +564,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
         addFullAddress(LoadMI, StubAM);
 
         // Ok, back to normal mode.
-        leaveLocalValueArea(SaveInsertPt);
+        leaveLocalValueArea(SaveIter);
 
         // Prevent loading GV stub multiple times in same MBB.
         LocalValueMap[V] = LoadReg;

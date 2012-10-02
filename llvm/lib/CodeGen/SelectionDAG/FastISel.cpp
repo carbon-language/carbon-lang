@@ -149,13 +149,13 @@ unsigned FastISel::getRegForValue(const Value *V) {
        !FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(V))))
     return FuncInfo.InitializeRegForValue(V);
 
-  SavePoint SaveInsertPt = enterLocalValueArea();
+  MachineBasicBlock::iterator SaveIter = enterLocalValueArea();
 
   // Materialize the value in a register. Emit any instructions in the
   // local value area.
   Reg = materializeRegForValue(V, VT);
 
-  leaveLocalValueArea(SaveInsertPt);
+  leaveLocalValueArea(SaveIter);
 
   return Reg;
 }
@@ -238,7 +238,16 @@ unsigned FastISel::lookUpRegForValue(const Value *V) {
   DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(V);
   if (I != FuncInfo.ValueMap.end())
     return I->second;
-  return LocalValueMap[V];
+  unsigned Reg = LocalValueMap[V];
+
+  // If we managed to find a register here then go ahead and replace the
+  // current location with the location we're currently emitted for,
+  // 'moving' the value to a place that's closer to where it originally
+  // started.
+  if (Reg)
+    MRI.getVRegDef(Reg)->setDebugLoc(DL);
+
+  return Reg;
 }
 
 /// UpdateValueMap - Update the value map to include the new mapping for this
@@ -316,22 +325,18 @@ void FastISel::removeDeadCode(MachineBasicBlock::iterator I,
   recomputeInsertPt();
 }
 
-FastISel::SavePoint FastISel::enterLocalValueArea() {
+MachineBasicBlock::iterator FastISel::enterLocalValueArea() {
   MachineBasicBlock::iterator OldInsertPt = FuncInfo.InsertPt;
-  DebugLoc OldDL = DL;
   recomputeInsertPt();
-  DL = DebugLoc();
-  SavePoint SP = { OldInsertPt, OldDL };
-  return SP;
+  return OldInsertPt;
 }
 
-void FastISel::leaveLocalValueArea(SavePoint OldInsertPt) {
+void FastISel::leaveLocalValueArea(MachineBasicBlock::iterator I) {
   if (FuncInfo.InsertPt != FuncInfo.MBB->begin())
     LastLocalValue = llvm::prior(FuncInfo.InsertPt);
 
   // Restore the previous insert position.
-  FuncInfo.InsertPt = OldInsertPt.InsertPt;
-  DL = OldInsertPt.DL;
+  FuncInfo.InsertPt = I;
 }
 
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
