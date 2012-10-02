@@ -64,44 +64,42 @@ bool AnalyzerOptions::getBooleanOption(StringRef Name, bool DefaultVal) {
       .Default(DefaultVal);
 }
 
+bool AnalyzerOptions::getBooleanOption(llvm::Optional<bool> &V,
+                                       StringRef Name,
+                                       bool DefaultVal) {
+  if (!V.hasValue())
+    V = getBooleanOption(Name, DefaultVal);
+  return V.getValue();
+}
+
 bool AnalyzerOptions::includeTemporaryDtorsInCFG() {
-  if (!IncludeTemporaryDtorsInCFG.hasValue())
-    const_cast<llvm::Optional<bool> &>(IncludeTemporaryDtorsInCFG) =
-      getBooleanOption("cfg-temporary-dtors", /*Default=*/false);
-  
-  return *IncludeTemporaryDtorsInCFG;
+  return getBooleanOption(IncludeTemporaryDtorsInCFG,
+                          "cfg-temporary-dtors",
+                          /* Default = */ false);
 }
 
 bool AnalyzerOptions::mayInlineCXXStandardLibrary() {
-  if (!InlineCXXStandardLibrary.hasValue())
-    const_cast<llvm::Optional<bool> &>(InlineCXXStandardLibrary) =
-      getBooleanOption("c++-stdlib-inlining", /*Default=*/true);
-  
-  return *InlineCXXStandardLibrary;
+  return getBooleanOption(InlineCXXStandardLibrary,
+                          "c++-stdlib-inlining",
+                          /*Default=*/true);
 }
 
 bool AnalyzerOptions::mayInlineTemplateFunctions() {
-  if (!InlineTemplateFunctions.hasValue())
-    const_cast<llvm::Optional<bool> &>(InlineTemplateFunctions) =
-      getBooleanOption("c++-template-inlining", /*Default=*/true);
-  
-  return *InlineTemplateFunctions;
+  return getBooleanOption(InlineTemplateFunctions,
+                          "c++-template-inlining",
+                          /*Default=*/true);
 }
 
 bool AnalyzerOptions::mayInlineObjCMethod() {
-  if (!ObjCInliningMode.hasValue())
-    const_cast<llvm::Optional<bool> &>(ObjCInliningMode) =
-      getBooleanOption("objc-inlining", /*Default=*/true);
-
-  return *ObjCInliningMode;
+  return getBooleanOption(ObjCInliningMode,
+                          "objc-inlining",
+                          /* Default = */ true);
 }
 
 bool AnalyzerOptions::shouldPruneNullReturnPaths() {
-  if (!PruneNullReturnPaths.hasValue())
-    const_cast<llvm::Optional<bool> &>(PruneNullReturnPaths) =
-      getBooleanOption("suppress-null-return-paths", /*Default=*/true);
-
-  return *PruneNullReturnPaths;
+  return getBooleanOption(PruneNullReturnPaths,
+                          "suppress-null-return-paths",
+                          /* Default = */ true);
 }
 
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {

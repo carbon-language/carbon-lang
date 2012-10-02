@@ -194,6 +194,10 @@ private:
   /// If an option value is not provided, returns the given \p DefaultVal.
   bool getBooleanOption(StringRef Name, bool DefaultVal);
 
+  /// Variant that accepts a Optional value to cache the result.
+  bool getBooleanOption(llvm::Optional<bool> &V, StringRef Name,
+                        bool DefaultVal);
+  
   /// Interprets an option's string value as an integer value.
   int getOptionAsInteger(llvm::StringRef Name, int DefaultVal);
 
