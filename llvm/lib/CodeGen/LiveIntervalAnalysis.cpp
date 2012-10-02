@@ -1164,18 +1164,17 @@ private:
 
       unsigned Reg = MO.getReg();
 
-      // TODO: Currently we're skipping uses that are reserved or have no
-      // interval, but we're not updating their kills. This should be
-      // fixed.
-      if (TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.isReserved(Reg))
-        continue;
+      // Don't track uses of reserved registers - they're not accurate.
+      // Reserved register live ranges look like a set of dead defs.
+      bool Resv =
+        TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.isReserved(Reg);
 
       // Collect ranges for register units. These live ranges are computed on
       // demand, so just skip any that haven't been computed yet.
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units)
           if (LiveInterval *LI = LIS.getCachedRegUnit(*Units))
-            collectRanges(MO, LI, Entering, Internal, Exiting, OldIdx);
+            collectRanges(MO, LI, Entering, Internal, Exiting, OldIdx, Resv);
       } else {
         // Collect ranges for individual virtual registers.
         collectRanges(MO, &LIS.getInterval(Reg),
@@ -1186,8 +1185,8 @@ private:
 
   void collectRanges(const MachineOperand &MO, LiveInterval *LI,
                      RangeSet &Entering, RangeSet &Internal, RangeSet &Exiting,
-                     SlotIndex OldIdx) {
-    if (MO.readsReg()) {
+                     SlotIndex OldIdx, bool IgnoreReads = false) {
+    if (!IgnoreReads && MO.readsReg()) {
       LiveRange* LR = LI->getLiveRangeContaining(OldIdx);
       if (LR != 0)
         Entering.insert(std::make_pair(LI, LR));
