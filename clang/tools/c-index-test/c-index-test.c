@@ -2552,7 +2552,8 @@ static int index_file(int argc, const char **argv) {
   idxAction = clang_IndexAction_create(Idx);
   result = clang_indexSourceFile(idxAction, &index_data,
                                  &IndexCB,sizeof(IndexCB), index_opts,
-                                 0, argv, argc, 0, 0, 0, 0);
+                                 0, argv, argc, 0, 0, 0,
+                                 getDefaultParsingOptions());
   if (index_data.fail_for_error)
     result = -1;
 

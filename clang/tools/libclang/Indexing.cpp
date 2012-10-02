@@ -192,10 +192,20 @@ public:
                          unsigned indexOptions,
                          CXTranslationUnit cxTU)
     : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU),
-      CXTU(cxTU) { }
+      CXTU(cxTU), EnablePPDetailedRecordForModules(false) { }
+
+  bool EnablePPDetailedRecordForModules;
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
+    // We usually disable the preprocessing record for indexing even if the
+    // original preprocessing options had it enabled. Now that the indexing
+    // Preprocessor has been created (without a preprocessing record), re-enable
+    // the option in case modules are enabled, so that the detailed record
+    // option can be propagated when the module file is generated.
+    if (CI.getLangOpts().Modules && EnablePPDetailedRecordForModules)
+      CI.getPreprocessorOpts().DetailedRecord = true;
+
     IndexCtx.setASTContext(CI.getASTContext());
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(new IndexPPCallbacks(PP, IndexCtx));
@@ -353,9 +363,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   // precompiled headers are involved), we disable it.
   CInvok->getLangOpts()->SpellChecking = false;
 
-  if (!requestedToGetTU)
-    CInvok->getPreprocessorOpts().DetailedRecord = false;
-
   if (index_options & CXIndexOpt_SuppressWarnings)
     CInvok->getDiagnosticOpts().IgnoreWarnings = true;
 
@@ -381,7 +388,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   bool PrecompilePreamble = false;
   bool CacheCodeCompletionResults = false;
   PreprocessorOptions &PPOpts = CInvok->getPreprocessorOpts(); 
-  PPOpts.DetailedRecord = false;
   PPOpts.AllowPCHWithCompilerErrors = true;
 
   if (requestedToGetTU) {
@@ -394,6 +400,13 @@ static void clang_indexSourceFile_Impl(void *UserData) {
       PPOpts.DetailedRecord = true;
     }
   }
+
+  IndexAction->EnablePPDetailedRecordForModules
+    = PPOpts.DetailedRecord ||
+      (TU_options & CXTranslationUnit_DetailedPreprocessingRecord);
+
+  if (!requestedToGetTU)
+    PPOpts.DetailedRecord = false;
 
   DiagnosticErrorTrap DiagTrap(*Diags);
   bool Success = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
