@@ -382,6 +382,10 @@ public:
                       StringRef filename, const FileEntry *File,
                       bool isImport, bool isAngled);
 
+  void importedModule(SourceLocation Loc,
+                      StringRef name, bool isIncludeDirective,
+                      const Module *module);
+
   void startedTranslationUnit();
 
   void indexDecl(const Decl *D);

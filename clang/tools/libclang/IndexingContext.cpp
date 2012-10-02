@@ -253,6 +253,27 @@ void IndexingContext::ppIncludedFile(SourceLocation hashLoc,
   FileMap[File] = idxFile;
 }
 
+void IndexingContext::importedModule(SourceLocation Loc,
+                                     StringRef name, bool isIncludeDirective,
+                                     const Module *module) {
+  if (!CB.importedASTFile)
+    return;
+
+  std::string ModuleName = module->getFullModuleName();
+
+  ScratchAlloc SA(*this);
+  CXIdxImportedASTFileInfo Info = {
+                                    (CXFile)module->getASTFile(),
+                                    getIndexLoc(Loc),
+                                    /*isModule=*/true,
+                                    isIncludeDirective,
+                                    SA.toCStr(name),
+                                    ModuleName.c_str(),
+                                  };
+  CXIdxClientASTFile astFile = CB.importedASTFile(ClientData, &Info);
+  (void)astFile;
+}
+
 void IndexingContext::startedTranslationUnit() {
   CXIdxClientContainer idxCont = 0;
   if (CB.startedTranslationUnit)

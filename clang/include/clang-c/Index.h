@@ -4921,16 +4921,35 @@ typedef struct {
  * \brief Data for IndexerCallbacks#importedASTFile.
  */
 typedef struct {
+  /**
+   * \brief Top level AST file containing the imported PCH, module or submodule.
+   */
   CXFile file;
   /**
-   * \brief Location where the file is imported. It is useful mostly for
-   * modules.
+   * \brief Location where the file is imported. Applicable only for modules.
    */
   CXIdxLoc loc;
   /**
    * \brief Non-zero if the AST file is a module otherwise it's a PCH.
    */
   int isModule;
+  /**
+   * \brief Non-zero if an inclusion directive was automatically turned into
+   * a module import.
+   */
+  int isIncludeDirective;
+  /**
+   * \brief The name of the file being included or the module being imported,
+   * as written in the source code.
+   */
+  const char *sourceName;
+  /**
+   * \brief The actual name of the module or submodule being imported.
+   * The syntax is a sequence of identifiers separated by dots, e.g "std.vector"
+   * Applicable only for modules.
+   */
+  const char *moduleName;
+
 } CXIdxImportedASTFileInfo;
 
 typedef enum {
@@ -5182,8 +5201,8 @@ typedef struct {
    * 
    * AST files will not get indexed (there will not be callbacks to index all
    * the entities in an AST file). The recommended action is that, if the AST
-   * file is not already indexed, to block further indexing and initiate a new
-   * indexing job specific to the AST file.
+   * file is not already indexed, to initiate a new indexing job specific to
+   * the AST file.
    */
   CXIdxClientASTFile (*importedASTFile)(CXClientData client_data,
                                         const CXIdxImportedASTFileInfo *);

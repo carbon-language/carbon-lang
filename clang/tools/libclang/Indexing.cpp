@@ -73,6 +73,12 @@ public:
                                   StringRef SearchPath,
                                   StringRef RelativePath,
                                   const Module *Imported) {
+    if (Imported) {
+      IndexCtx.importedModule(HashLoc, FileName, /*isIncludeDirective=*/true,
+                              Imported);
+      return;
+    }
+
     bool isImport = (IncludeTok.is(tok::identifier) &&
             IncludeTok.getIdentifierInfo()->getPPKeywordID() == tok::pp_import);
     IndexCtx.ppIncludedFile(HashLoc, FileName, File, isImport, IsAngled);

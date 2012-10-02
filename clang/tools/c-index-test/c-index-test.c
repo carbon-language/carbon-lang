@@ -2349,6 +2349,24 @@ static CXIdxClientFile index_ppIncludedFile(CXClientData client_data,
   return (CXIdxClientFile)info->file;
 }
 
+static CXIdxClientFile index_importedASTFile(CXClientData client_data,
+                                         const CXIdxImportedASTFileInfo *info) {
+  IndexData *index_data;
+  index_data = (IndexData *)client_data;
+  printCheck(index_data);
+
+  printf("[importedASTFile]: ");
+  printCXIndexFile((CXIdxClientFile)info->file);
+  printf(" | loc: ");
+  printCXIndexLoc(info->loc, client_data);
+  printf(" | module name: \"%s\"", info->moduleName);
+  printf(" | source name: \"%s\"", info->sourceName);
+  printf(" | isModule: %d | isIncludeDirective: %d\n",
+         info->isModule, info->isIncludeDirective);
+
+  return (CXIdxClientFile)info->file;
+}
+
 static CXIdxClientContainer index_startedTranslationUnit(CXClientData client_data,
                                                    void *reserved) {
   IndexData *index_data;
@@ -2479,7 +2497,7 @@ static IndexerCallbacks IndexCB = {
   index_diagnostic,
   index_enteredMainFile,
   index_ppIncludedFile,
-  0, /*importedASTFile*/
+  index_importedASTFile,
   index_startedTranslationUnit,
   index_indexDeclaration,
   index_indexEntityReference
