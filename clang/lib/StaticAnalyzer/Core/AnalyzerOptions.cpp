@@ -111,6 +111,7 @@ int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   int Res = DefaultVal;
   bool b = V.getAsInteger(10, Res);
   assert(!b && "analyzer-config option should be numeric");
+  (void) b;
   return Res;
 }
 
