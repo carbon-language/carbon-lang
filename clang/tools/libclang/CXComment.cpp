@@ -1176,10 +1176,24 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     for (unsigned i = 0, e = Attrs.size(); i != e; i++) {
       const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attrs[i]);
       if (!AA) {
-        if (isa<DeprecatedAttr>(Attrs[i]))
-          Result << "<Deprecated>true</Deprecated>";
-        else if (isa<UnavailableAttr>(Attrs[i]))
-          Result << "<Unavailable>true</Unavailable>";
+        if (const DeprecatedAttr *DA = dyn_cast<DeprecatedAttr>(Attrs[i])) {
+          if (DA->getMessage().empty())
+            Result << "<Deprecated/>";
+          else {
+            Result << "<Deprecated>"
+                   << DA->getMessage()
+                   << "</Deprecated>";
+          }
+        }
+        else if (const UnavailableAttr *UA = dyn_cast<UnavailableAttr>(Attrs[i])) {
+          if (UA->getMessage().empty())
+            Result << "<Unavailable/>";
+          else {
+            Result << "<Unavailable>"
+                   << UA->getMessage()
+                   << "</Unavailable>";
+          }
+        }
         continue;
       }
 
@@ -1220,7 +1234,7 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
       }
       // 'unavailable' attribute.
       if (AA->getUnavailable())
-        Result << "<Unavailable>true</Unavailable>";
+        Result << "<Unavailable/>";
       Result << "</Availability>";
     }
   }

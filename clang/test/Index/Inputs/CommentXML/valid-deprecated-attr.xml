@@ -2,5 +2,5 @@
 <Function>
 <Name>aaa</Name>
 <Abstract><Para>Aaa.</Para></Abstract>
-<Deprecated>true</Deprecated>
+<Deprecated>since OS X 10.6</Deprecated>
 </Function>
