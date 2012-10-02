@@ -2792,6 +2792,30 @@ ASTUnit::getLocalPreprocessingEntities() const {
                         PreprocessingRecord::iterator());
 }
 
+bool ASTUnit::applyOnLocalTopLevelDecls(void *context, DeclReceiverFn Fn) {
+  if (isMainFileAST()) {
+    serialization::ModuleFile &
+      Mod = Reader->getModuleManager().getPrimaryModule();
+    ASTReader::ModuleDeclIterator MDI, MDE;
+    llvm::tie(MDI, MDE) = Reader->getModuleFileLevelDecls(Mod);
+    for (; MDI != MDE; ++MDI) {
+      if (!Fn(context, *MDI))
+        return false;
+    }
+
+    return true;
+  }
+
+  for (ASTUnit::top_level_iterator TL = top_level_begin(),
+                                TLEnd = top_level_end();
+         TL != TLEnd; ++TL) {
+    if (!Fn(context, *TL))
+      return false;
+  }
+
+  return true;
+}
+
 void ASTUnit::PreambleData::countLines() const {
   NumLines = 0;
   if (empty())

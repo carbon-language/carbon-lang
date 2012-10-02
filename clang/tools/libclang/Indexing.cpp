@@ -472,30 +472,16 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
   }
 }
 
+static bool topLevelDeclReceiver(void *context, const Decl *D) {
+  IndexingContext &IdxCtx = *static_cast<IndexingContext*>(context);
+  IdxCtx.indexTopLevelDecl(D);
+  if (IdxCtx.shouldAbort())
+    return false;
+  return true;
+}
+
 static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IdxCtx) {
-  // FIXME: Only deserialize stuff from the last chained PCH, not the PCH/Module
-  // that it depends on.
-
-  bool OnlyLocal = !Unit.isMainFileAST() && Unit.getOnlyLocalDecls();
-
-  if (OnlyLocal) {
-    for (ASTUnit::top_level_iterator TL = Unit.top_level_begin(),
-                                  TLEnd = Unit.top_level_end();
-           TL != TLEnd; ++TL) {
-      IdxCtx.indexTopLevelDecl(*TL);
-      if (IdxCtx.shouldAbort())
-        return;
-    }
-
-  } else {
-    TranslationUnitDecl *TUDecl = Unit.getASTContext().getTranslationUnitDecl();
-    for (TranslationUnitDecl::decl_iterator
-           I = TUDecl->decls_begin(), E = TUDecl->decls_end(); I != E; ++I) {
-      IdxCtx.indexTopLevelDecl(*I);
-      if (IdxCtx.shouldAbort())
-        return;
-    }
-  }
+  Unit.applyOnLocalTopLevelDecls(&IdxCtx, topLevelDeclReceiver);
 }
 
 static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx) {

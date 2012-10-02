@@ -2251,9 +2251,11 @@ void ASTWriter::WriteFileDeclIDsMap() {
 
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(FILE_SORTED_DECLS));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
   Record.push_back(FILE_SORTED_DECLS);
+  Record.push_back(FileSortedIDs.size());
   Stream.EmitRecordWithBlob(AbbrevCode, Record, data(FileSortedIDs));
 }
 

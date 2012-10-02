@@ -294,6 +294,7 @@ public:
 
   /// \brief Array of file-level DeclIDs sorted by file.
   const serialization::DeclID *FileSortedDecls;
+  unsigned NumFileSortedDecls;
 
   /// \brief Array of redeclaration chain location information within this 
   /// module file, sorted by the first declaration ID.
