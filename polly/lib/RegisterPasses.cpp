@@ -139,6 +139,9 @@ static void initializePollyPasses(PassRegistry &Registry) {
   initializeIndependentBlocksPass(Registry);
   initializeJSONExporterPass(Registry);
   initializeJSONImporterPass(Registry);
+#ifdef ISL_CODEGEN_FOUND
+  initializeIslAstInfoPass(Registry);
+#endif
   initializeIslScheduleOptimizerPass(Registry);
 #ifdef SCOPLIB_FOUND
   initializePoccPass(Registry);

@@ -6,6 +6,7 @@ endif (CLOOG_FOUND)
 
 if (ISL_CODEGEN_FOUND)
   set(ISL_CODEGEN_FILES
+      IslAst.cpp
       IslCodeGeneration.cpp)
 endif (ISL_CODEGEN_FOUND)
 

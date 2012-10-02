@@ -302,7 +302,7 @@ public:
   /// @brief Get the iteration domain of this ScopStmt.
   ///
   /// @return The iteration domain of this ScopStmt.
-  isl_set *getDomain() const;
+  __isl_give isl_set *getDomain() const;
 
   /// @brief Get the space of the iteration domain
   ///
@@ -320,7 +320,7 @@ public:
   /// @brief Get the scattering function of this ScopStmt.
   ///
   /// @return The scattering function of this ScopStmt.
-  isl_map *getScattering() const;
+  __isl_give isl_map *getScattering() const;
   void setScattering(isl_map *scattering);
 
   /// @brief Get an isl string representing this scattering.
