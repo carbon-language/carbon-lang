@@ -3302,7 +3302,11 @@ bool SROA::runOnFunction(Function &F) {
   while (!Worklist.empty()) {
     Changed |= runOnAlloca(*Worklist.pop_back_val());
     deleteDeadInstructions(DeletedAllocas);
+
+    // Remove the deleted allocas from various lists so that we don't try to
+    // continue processing them.
     if (!DeletedAllocas.empty()) {
+      Worklist.remove_if(IsAllocaInSet(DeletedAllocas));
       PromotableAllocas.erase(std::remove_if(PromotableAllocas.begin(),
                                              PromotableAllocas.end(),
                                              IsAllocaInSet(DeletedAllocas)),

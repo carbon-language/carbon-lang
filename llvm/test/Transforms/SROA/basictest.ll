@@ -897,3 +897,32 @@ if.end:
   %tmp2 = load i8* %gep
   ret void
 }
+
+define void @PR13990() {
+; Ensure we can handle cases where processing one alloca causes the other
+; alloca to become dead and get deleted. This might crash or fail under
+; Valgrind if we regress.
+; CHECK: @PR13990
+; CHECK-NOT: alloca
+; CHECK: unreachable
+; CHECK: unreachable
+
+entry:
+  %tmp1 = alloca i8*
+  %tmp2 = alloca i8*
+  br i1 undef, label %bb1, label %bb2
+
+bb1:
+  store i8* undef, i8** %tmp2
+  br i1 undef, label %bb2, label %bb3
+
+bb2:
+  %tmp50 = select i1 undef, i8** %tmp2, i8** %tmp1
+  br i1 undef, label %bb3, label %bb4
+
+bb3:
+  unreachable
+
+bb4:
+  unreachable
+}

@@ -126,6 +126,32 @@ public:
     return false;
   }
 
+  /// \brief Remove items from the set vector based on a predicate function.
+  ///
+  /// This is intended to be equivalent to the following code, if we could
+  /// write it:
+  ///
+  /// \code
+  ///   V.erase(std::remove_if(V.begin(), V.end(), P), V.end());
+  /// \endcode
+  ///
+  /// However, SetVector doesn't expose non-const iterators, making any
+  /// algorithm like remove_if impossible to use.
+  ///
+  /// \returns true if any element is removed.
+  template <typename UnaryPredicate>
+  bool remove_if(UnaryPredicate P) {
+    typename vector_type::iterator B = std::remove_if(vector_.begin(),
+                                                      vector_.end(), P),
+                                   E = vector_.end();
+    if (B == E)
+      return false;
+    for (typename vector_type::iterator I = B; I != E; ++I)
+      set_.erase(*I);
+    vector_.erase(B, E);
+    return true;
+  }
+
 
   /// \brief Count the number of elements of a given key in the SetVector.
   /// \returns 0 if the element is not in the SetVector, 1 if it is.
