@@ -40,8 +40,6 @@ void AppendToErrorMessageBuffer(const char *buffer) {
   }
 }
 
-static void (*on_error_callback)(void);
-
 // ---------------------- Helper functions ----------------------- {{{1
 
 static void PrintBytes(const char *before, uptr *a) {
@@ -293,9 +291,7 @@ class ScopedInErrorReport {
       }
       Die();
     }
-    if (on_error_callback) {
-      on_error_callback();
-    }
+    __asan_on_error();
     reporting_thread_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
     Printf("===================================================="
            "=============\n");
@@ -492,6 +488,7 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   }
 }
 
-void NOINLINE __asan_set_on_error_callback(void (*callback)(void)) {
-  on_error_callback = callback;
-}
+// Provide default implementation of __asan_on_error that does nothing
+// and may be overriden by user.
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
+void __asan_on_error() {}

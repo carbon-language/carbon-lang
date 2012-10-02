@@ -128,12 +128,11 @@ extern "C" {
   void __asan_set_error_report_callback(void (*callback)(const char*))
       SANITIZER_INTERFACE_ATTRIBUTE;
 
-  // Sets the callback to be called right when ASan detects an error.
-  // This can be used to notice cases when ASan detects an error, but the
-  // program crashes before ASan report is printed.
-  // Passing 0 unsets the callback.
-  void __asan_set_on_error_callback(void (*callback)(void))
-      SANITIZER_INTERFACE_ATTRIBUTE;
+  // User may provide function that would be called right when ASan detects
+  // an error. This can be used to notice cases when ASan detects an error, but
+  // the program crashes before ASan report is printed.
+  void __asan_on_error()
+      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 
   // User may provide its own implementation for symbolization function.
   // It should print the description of instruction at address "pc" to
