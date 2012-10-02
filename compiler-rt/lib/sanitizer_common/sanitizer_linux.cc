@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 namespace __sanitizer {
 
@@ -56,11 +57,15 @@ fd_t internal_open(const char *filename, bool write) {
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
-  return (uptr)syscall(__NR_read, fd, buf, count);
+  sptr res;
+  HANDLE_EINTR(res, (sptr)syscall(__NR_read, fd, buf, count));
+  return res;
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
-  return (uptr)syscall(__NR_write, fd, buf, count);
+  sptr res;
+  HANDLE_EINTR(res, (sptr)syscall(__NR_write, fd, buf, count));
+  return res;
 }
 
 uptr internal_filesize(fd_t fd) {

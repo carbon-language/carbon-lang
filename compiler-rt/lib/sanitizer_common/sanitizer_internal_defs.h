@@ -179,4 +179,10 @@ extern "C" void* _ReturnAddress(void);
 # define GET_CURRENT_FRAME() (uptr)0xDEADBEEF
 #endif
 
+#define HANDLE_EINTR(res, f) {                               \
+  do {                                                                  \
+    res = (f);                                                         \
+  } while (res == -1 && errno == EINTR); \
+  }
+
 #endif  // SANITIZER_DEFS_H
