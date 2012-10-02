@@ -4578,8 +4578,10 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
       && !NewVD->hasAttr<BlocksAttr>()) {
     if (getLangOpts().getGC() != LangOptions::NonGC)
       Diag(NewVD->getLocation(), diag::warn_gc_attribute_weak_on_local);
-    else
+    else {
+      assert(!getLangOpts().ObjCAutoRefCount);
       Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
+    }
   }
   
   bool isVM = T->isVariablyModifiedType();

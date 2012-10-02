@@ -1744,7 +1744,8 @@ def warn_nsobject_attribute : Warning<
   "__attribute ((NSObject)) may be put on a typedef only, "
   "attribute is ignored">, InGroup<NSobjectAttribute>;
 def warn_attribute_weak_on_local : Warning<
-  "__weak attribute cannot be specified on an automatic variable">,
+  "__weak attribute cannot be specified on an automatic variable when ARC "
+  "is not enabled">,
   InGroup<IgnoredAttributes>;
 def warn_weak_identifier_undeclared : Warning<
   "weak identifier %0 never declared">;
