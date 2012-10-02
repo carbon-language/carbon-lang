@@ -3,28 +3,27 @@ RUN: lld-core -reader ELF %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-pr
 ELF-i386:---
 ELF-i386:atoms:
 ELF-i386:    - name:              .text
-ELF-i386:      type:              unknown
+ELF-i386:      type:              code
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .text
 
 ELF-i386:    - name:              .data
-ELF-i386:      type:              unknown
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .data
 
 ELF-i386:    - name:              .bss
-ELF-i386:      type:              unknown
+ELF-i386:      type:              zero-fill
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .bss
 
 ELF-i386:    - name:              .rodata.str1.1
-ELF-i386:      type:              unknown
+ELF-i386:      type:              constant
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .rodata.str1.1
 ELF-i386:      content:           [ 68, 65, 6C, 6C, 6F, 20, 77, 6F, 72, 6C, 64, 00 ]
 
 ELF-i386:    - name:              .text.startup
-ELF-i386:      type:              unknown
+ELF-i386:      type:              code
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .text.startup
 
@@ -57,7 +56,7 @@ ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .note.GNU-stack
 
 ELF-i386:    - name:              .eh_frame
-ELF-i386:      type:              unknown
+ELF-i386:      type:              constant
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .eh_frame
 ELF-i386:      content:           [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00, 

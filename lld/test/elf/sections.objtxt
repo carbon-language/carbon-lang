@@ -17,8 +17,8 @@ READOBJ: Address Size: 32 bits
 READOBJ: Symbols
 READOBJ: .anotherspecial                   DBG                1c8                 0               1c8  formatspecific
 READOBJ: .symtab                           DBG                1e0                 0               1e0  formatspecific
-READOBJ: baz                               FUNC               1d0                 a               1d0  global
-READOBJ:  z                                 DATA               1c8                 4               1c8  global
+READOBJ: baz                               FUNC               0                 a               1d0  global
+READOBJ:  z                                 DATA               0                 4               1c8  global
 READOBJ: Total: 20
 
 ED: 'e_indent[EI_DATA]', 0x01
