@@ -1,5 +1,5 @@
-// RUN: %clang -fsyntax-only -Wunused-function %s > %t.nonarc 2>&1
-// RUN: %clang -fsyntax-only -Wunused-function -fobjc-arc %s > %t.arc 2>&1
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.8.0 -fobjc-runtime=macosx-10.8.0 -fsyntax-only -Wunused-function %s > %t.nonarc 2>&1
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.8.0 -fobjc-runtime=macosx-10.8.0 -fsyntax-only -Wunused-function -fobjc-arc %s > %t.arc 2>&1
 // RUN: FileCheck -input-file=%t.nonarc %s
 // RUN: FileCheck -input-file=%t.arc -check-prefix=ARC %s
 
