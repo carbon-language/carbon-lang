@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s test
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s test
 
 declare i32 @puts(i8*)
 

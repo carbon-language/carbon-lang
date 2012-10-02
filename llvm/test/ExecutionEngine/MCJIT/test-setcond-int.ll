@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s > /dev/null
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
 
 define i32 @main() {
 	%int1 = add i32 0, 0		; <i32> [#uses=6]

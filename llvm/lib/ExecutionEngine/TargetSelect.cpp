@@ -26,7 +26,14 @@
 using namespace llvm;
 
 TargetMachine *EngineBuilder::selectTarget() {
-  Triple TT(LLVM_HOSTTRIPLE);
+  Triple TT;
+
+  // MCJIT can generate code for remote targets, but the old JIT and Interpreter
+  // must use the host architecture.
+  if (UseMCJIT && WhichEngine != EngineKind::Interpreter && M)
+    TT.setTriple(M->getTargetTriple());
+  else
+    TT.setTriple(LLVM_HOSTTRIPLE);
   return selectTarget(TT, MArch, MCPU, MAttrs);
 }
 

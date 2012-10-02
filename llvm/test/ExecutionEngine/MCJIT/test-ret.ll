@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s > /dev/null
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
 
 ; test return instructions
 define void @test1() {

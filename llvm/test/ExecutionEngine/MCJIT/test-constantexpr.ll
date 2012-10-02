@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s > /dev/null
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
 
 ; This tests to make sure that we can evaluate weird constant expressions
 

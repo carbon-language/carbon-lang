@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s > /dev/null
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
 
 @.LC0 = internal global [12 x i8] c"Hello World\00"		; <[12 x i8]*> [#uses=1]
 

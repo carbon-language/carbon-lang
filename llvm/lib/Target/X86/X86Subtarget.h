@@ -237,10 +237,10 @@ public:
   bool isTargetSolaris() const {
     return TargetTriple.getOS() == Triple::Solaris;
   }
-
-  // ELF is a reasonably sane default and the only other X86 targets we
-  // support are Darwin and Windows. Just use "not those".
-  bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
+  bool isTargetELF() const {
+    return (TargetTriple.getEnvironment() == Triple::ELF ||
+            TargetTriple.isOSBinFormatELF());
+  }
   bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
   bool isTargetNaCl() const {
     return TargetTriple.getOS() == Triple::NativeClient;
@@ -251,7 +251,10 @@ public:
   bool isTargetMingw() const { return TargetTriple.getOS() == Triple::MinGW32; }
   bool isTargetCygwin() const { return TargetTriple.getOS() == Triple::Cygwin; }
   bool isTargetCygMing() const { return TargetTriple.isOSCygMing(); }
-  bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }
+  bool isTargetCOFF() const {
+    return (TargetTriple.getEnvironment() != Triple::ELF &&
+            TargetTriple.isOSBinFormatCOFF());
+  }
   bool isTargetEnvMacho() const { return TargetTriple.isEnvironmentMachO(); }
 
   bool isTargetWin64() const {

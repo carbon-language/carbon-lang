@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit -force-interpreter=true %s | grep 40091eb8
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -force-interpreter=true %s | grep 40091eb8
 ;
 define i32 @test(double %x) {
 entry:

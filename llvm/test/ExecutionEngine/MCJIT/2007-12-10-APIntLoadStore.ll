@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit -force-interpreter %s
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -force-interpreter %s
 ; PR1836
 
 define i32 @main() {

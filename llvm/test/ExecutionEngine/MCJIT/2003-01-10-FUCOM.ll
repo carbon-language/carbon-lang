@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s > /dev/null
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
 
 define i32 @main() {
 	%X = fadd double 0.000000e+00, 1.000000e+00		; <double> [#uses=1]

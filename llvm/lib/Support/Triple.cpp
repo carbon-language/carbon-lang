@@ -142,6 +142,7 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case EABI: return "eabi";
   case MachO: return "macho";
   case Android: return "android";
+  case ELF: return "elf";
   }
 
   llvm_unreachable("Invalid EnvironmentType!");
@@ -314,6 +315,7 @@ static Triple::EnvironmentType parseEnvironment(StringRef EnvironmentName) {
     .StartsWith("gnu", Triple::GNU)
     .StartsWith("macho", Triple::MachO)
     .StartsWith("android", Triple::Android)
+    .StartsWith("elf", Triple::ELF)
     .Default(Triple::UnknownEnvironment);
 }
 

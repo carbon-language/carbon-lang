@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit -force-interpreter=true %s
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -force-interpreter=true %s > /dev/null
 
 define i32 @main() {
        %a = add i32 0, undef

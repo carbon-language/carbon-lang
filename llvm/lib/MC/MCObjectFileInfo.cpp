@@ -565,6 +565,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
     Env = IsMachO;
     InitMachOMCObjectFileInfo(T);
   } else if ((Arch == Triple::x86 || Arch == Triple::x86_64) &&
+             (T.getEnvironment() != Triple::ELF) &&
              (T.getOS() == Triple::MinGW32 || T.getOS() == Triple::Cygwin ||
               T.getOS() == Triple::Win32)) {
     Env = IsCOFF;

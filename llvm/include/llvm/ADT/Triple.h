@@ -111,7 +111,8 @@ public:
     GNUEABIHF,
     EABI,
     MachO,
-    Android
+    Android,
+    ELF
   };
 
 private:

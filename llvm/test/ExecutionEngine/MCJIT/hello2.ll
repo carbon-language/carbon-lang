@@ -1,4 +1,4 @@
-; RUN: %lli -use-mcjit %s > /dev/null
+; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
 
 @X = global i32 7		; <i32*> [#uses=0]
 @msg = internal global [13 x i8] c"Hello World\0A\00"		; <[13 x i8]*> [#uses=1]
