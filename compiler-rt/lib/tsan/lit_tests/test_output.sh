@@ -41,9 +41,11 @@ if [ "$1" == "" ]; then
     case $c in
       *.c) COMPILER=$CC
     esac
-    test_file $c $COMPILER
+    test_file $c $COMPILER &
   done
-  wait
+  for job in `jobs -p`; do
+    wait $job || exit 1
+  done
 else
   test_file $ROOTDIR/lit_tests/$1 $CXX "DUMP"
 fi
