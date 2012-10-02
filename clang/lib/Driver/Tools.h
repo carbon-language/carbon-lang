@@ -288,8 +288,9 @@ namespace darwin {
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public DarwinTool  {
+    bool NeedsTempPath(const InputInfoList &Inputs) const;
     void AddLinkArgs(Compilation &C, const ArgList &Args,
-                     ArgStringList &CmdArgs) const;
+                     ArgStringList &CmdArgs, const InputInfoList &Inputs) const;
 
   public:
     Link(const ToolChain &TC) : DarwinTool("darwin::Link", "linker", TC) {}

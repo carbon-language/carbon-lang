@@ -4175,9 +4175,22 @@ void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
     CmdArgs.push_back("-force_cpusubtype_ALL");
 }
 
+bool darwin::Link::NeedsTempPath(const InputInfoList &Inputs) const {
+  // We only need to generate a temp path for LTO if we aren't compiling object
+  // files. When compiling source files, we run 'dsymutil' after linking. We
+  // don't run 'dsymutil' when compiling object files.
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it)
+    if (it->getType() != types::TY_Object)
+      return true;
+
+  return false;
+}
+
 void darwin::Link::AddLinkArgs(Compilation &C,
                                const ArgList &Args,
-                               ArgStringList &CmdArgs) const {
+                               ArgStringList &CmdArgs,
+                               const InputInfoList &Inputs) const {
   const Driver &D = getToolChain().getDriver();
   const toolchains::Darwin &DarwinTC = getDarwinToolChain();
 
@@ -4216,7 +4229,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   // If we are using LTO, then automatically create a temporary file path for
   // the linker to use, so that it's lifetime will extend past a possible
   // dsymutil step.
-  if (Version[0] >= 116 && D.IsUsingLTO(Args)) {
+  if (Version[0] >= 116 && D.IsUsingLTO(Args) && NeedsTempPath(Inputs)) {
     const char *TmpPath = C.getArgs().MakeArgString(
       D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
     C.addTempFile(TmpPath);
@@ -4403,7 +4416,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // I'm not sure why this particular decomposition exists in gcc, but
   // we follow suite for ease of comparison.
-  AddLinkArgs(C, Args, CmdArgs);
+  AddLinkArgs(C, Args, CmdArgs, Inputs);
 
   Args.AddAllArgs(CmdArgs, options::OPT_d_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_s);
