@@ -687,7 +687,7 @@ private:
   /// Objective-C protocols.
   std::deque<Decl *> InterestingDecls;
 
-  /// \brief The set of redeclarable declaraations that have been deserialized
+  /// \brief The set of redeclarable declarations that have been deserialized
   /// since the last time the declaration chains were linked.
   llvm::SmallPtrSet<Decl *, 16> RedeclsDeserialized;
   
@@ -853,6 +853,10 @@ private:
   void PassInterestingDeclToConsumer(Decl *D);
 
   void finishPendingActions();
+
+  /// \brief Whether D needs to be instantiated, i.e. whether an instantiation
+  /// for D does not exist yet.
+  bool needPendingInstantiation(ValueDecl* D) const;
 
   /// \brief Produce an error diagnostic and return true.
   ///

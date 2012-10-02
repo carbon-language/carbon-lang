@@ -1,6 +1,5 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -fmodule-cache-path %t -I %S/Inputs %s -verify -Wno-objc-root-class
-// RUN: %clang_cc1 -x objective-c++ -fmodules -fmodule-cache-path %t -I %S/Inputs %s -verify -Wno-objc-root-class
 @class C2;
 @class C3;
 @class C3;
@@ -57,26 +56,26 @@ void testTagMerge() {
 
 void testTypedefMerge(int i, double d) {
   T1 *ip = &i;
-  // in other file: expected-note{{candidate found by name lookup is 'T2'}}
   // FIXME: Typedefs aren't actually merged in the sense of other merges, because
   // we should only merge them when the types are identical.
-  // in other file: expected-note{{candidate found by name lookup is 'T2'}}
-  // in other file: expected-note{{candidate function}}
+  // in other file: expected-note@60{{candidate found by name lookup is 'T2'}}
+  // in other file: expected-note@63{{candidate found by name lookup is 'T2'}}
   T2 *dp = &d; // expected-error{{reference to 'T2' is ambiguous}}
 }
 
 void testFuncMerge(int i) {
   func0(i);
-  // in other file: expected-note{{candidate function}}
   func1(i);
+  // in other file: expected-note@64{{candidate function}}
+  // in other file: expected-note@70{{candidate function}}
   func2(i); // expected-error{{call to 'func2' is ambiguous}}
 }
 
 void testVarMerge(int i) {
   var1 = i;
-  // in other files: expected-note 2{{candidate found by name lookup is 'var2'}}
+  // in other files: expected-note@77 2{{candidate found by name lookup is 'var2'}}
   var2 = i; // expected-error{{reference to 'var2' is ambiguous}}
-  // in other files: expected-note 2{{candidate found by name lookup is 'var3'}}
+  // in other files: expected-note@79 2{{candidate found by name lookup is 'var3'}}
   var3 = i; // expected-error{{reference to 'var3' is ambiguous}}
 }
 
@@ -145,19 +144,6 @@ void g(A *a) {
 
 id<P4> p4;
 id<P3> p3;
-
-#ifdef __cplusplus
-void testVector() {
-  Vector<int> vec_int;
-  vec_int.push_back(0);
-
-  List<bool> list_bool;
-  list_bool.push_back(false);
-
-  N::Set<char> set_char;
-  set_char.insert('A');
-}
-#endif
 
 // Make sure we don't get conflicts with 'id'.
 funcptr_with_id fid;

@@ -78,27 +78,6 @@ extern float var2;
 
 extern double var3;
 
-#ifdef __cplusplus
-template<typename T> class Vector;
-
-template<typename T> class Vector;
-
-template<typename T> class List;
-template<> class List<bool> {
-public:
-  void push_back(int);
-};
-namespace N {
-  template<typename T> class Set;
-}
-namespace N {
-  template<typename T> class Set {
-  public:
-    void insert(T);
-  };
-}
-#endif
-
 // Make sure this doesn't introduce an ambiguity-creating 'id' at the
 // top level.
 typedef void funcptr_with_id(int id);

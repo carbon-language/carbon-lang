@@ -78,6 +78,18 @@ module namespaces_right {
   header "namespaces-right.h"
   export *
 }
+module templates_top { 
+  header "templates-top.h"
+  export *
+}
+module templates_left { 
+  header "templates-left.h"
+  export *
+}
+module templates_right { 
+  header "templates-right.h"
+  export *
+}
 module MethodPoolA {
   header "MethodPoolA.h"
 }

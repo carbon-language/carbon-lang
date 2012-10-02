@@ -78,26 +78,6 @@ extern int var2;
 
 static double var3;
 
-#ifdef __cplusplus
-template<typename T> class Vector { 
-public:
-  void push_back(const T&);
-};
-
-template<typename T> class List;
-template<> class List<bool> {
-public:
-  void push_back(int);
-};
-
-namespace N {
-  template<typename T> class Set {
-  public:
-    void insert(T);
-  };
-}
-#endif
-
 int ONE;
 @__experimental_modules_import redecl_merge_top.Explicit;
 const int one = ONE;
