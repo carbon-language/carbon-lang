@@ -836,8 +836,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     MI->getOperand(3).setIsDead();
   }
 
-  DL = MBB.findDebugLoc(MBBI);
-
   // If there is an SUB32ri of ESP immediately before this instruction, merge
   // the two. This can be the case when tail call elimination is enabled and
   // the callee has more arguments then the caller.
