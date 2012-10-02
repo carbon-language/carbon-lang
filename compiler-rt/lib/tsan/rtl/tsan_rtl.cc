@@ -219,6 +219,10 @@ int Finalize(ThreadState *thr) {
   Context *ctx = __tsan::ctx;
   bool failed = false;
 
+  // Wait for pending reports.
+  ctx->report_mtx.Lock();
+  ctx->report_mtx.Unlock();
+
   ThreadFinalize(thr);
 
   if (ctx->nreported) {
