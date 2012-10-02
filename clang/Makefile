@@ -27,7 +27,7 @@ ifeq ($(MAKECMDGOALS),libs-only)
   DIRS := $(filter-out tools docs, $(DIRS))
   OPTIONAL_DIRS :=
 endif
-ifeq ($(MAKECMDGOALS),clang-only)
+ifeq ($(BUILD_CLANG_ONLY),YES)
   DIRS := $(filter-out tools docs unittests, $(DIRS))
 	tools/driver tools/libclang
   OPTIONAL_DIRS :=
