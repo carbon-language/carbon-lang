@@ -227,13 +227,18 @@ namespace clang {
     /// This is a value of type InclusionKind.
     unsigned Kind : 2;
 
+    /// \brief Whether the inclusion directive was automatically turned into
+    /// a module import.
+    unsigned ImportedModule : 1;
+
     /// \brief The file that was included.
     const FileEntry *File;
 
   public:
     InclusionDirective(PreprocessingRecord &PPRec,
                        InclusionKind Kind, StringRef FileName, 
-                       bool InQuotes, const FileEntry *File, SourceRange Range);
+                       bool InQuotes, bool ImportedModule,
+                       const FileEntry *File, SourceRange Range);
     
     /// \brief Determine what kind of inclusion directive this is.
     InclusionKind getKind() const { return static_cast<InclusionKind>(Kind); }
@@ -244,6 +249,10 @@ namespace clang {
     /// \brief Determine whether the included file name was written in quotes;
     /// otherwise, it was written in angle brackets.
     bool wasInQuotes() const { return InQuotes; }
+
+    /// \brief Determine whether the inclusion directive was automatically
+    /// turned into a module import.
+    bool importedModule() const { return ImportedModule; }
     
     /// \brief Retrieve the file entry for the actual file that was included
     /// by this directive.

@@ -475,7 +475,8 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
     PreprocessedEntity *PPE = *I;
 
     if (InclusionDirective *ID = dyn_cast<InclusionDirective>(PPE)) {
-      IdxCtx.ppIncludedFile(ID->getSourceRange().getBegin(), ID->getFileName(),
+      if (!ID->importedModule())
+        IdxCtx.ppIncludedFile(ID->getSourceRange().getBegin(),ID->getFileName(),
                      ID->getFile(), ID->getKind() == InclusionDirective::Import,
                      !ID->wasInQuotes());
     }

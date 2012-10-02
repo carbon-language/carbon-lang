@@ -25,10 +25,11 @@ ExternalPreprocessingRecordSource::~ExternalPreprocessingRecordSource() { }
 InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
                                        InclusionKind Kind, 
                                        StringRef FileName, 
-                                       bool InQuotes, const FileEntry *File, 
+                                       bool InQuotes, bool ImportedModule,
+                                       const FileEntry *File,
                                        SourceRange Range)
   : PreprocessingDirective(InclusionDirectiveKind, Range), 
-    InQuotes(InQuotes), Kind(Kind), File(File) 
+    InQuotes(InQuotes), Kind(Kind), ImportedModule(ImportedModule), File(File)
 { 
   char *Memory 
     = (char*)PPRec.Allocate(FileName.size() + 1, llvm::alignOf<char>());
@@ -427,7 +428,8 @@ void PreprocessingRecord::InclusionDirective(
                                             // a token range.
   }
   clang::InclusionDirective *ID
-    = new (*this) clang::InclusionDirective(*this, Kind, FileName, !IsAngled, 
+    = new (*this) clang::InclusionDirective(*this, Kind, FileName, !IsAngled,
+                                            (bool)Imported,
                                             File, SourceRange(HashLoc, EndLoc));
   addPreprocessedEntity(ID);
 }

@@ -3471,7 +3471,7 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
     InclusionDirective *ID
       = new (PPRec) InclusionDirective(PPRec, Kind,
                                        StringRef(BlobStart, Record[0]),
-                                       Record[1],
+                                       Record[1], Record[3],
                                        File,
                                        Range);
     return ID;
