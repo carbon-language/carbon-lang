@@ -1,6 +1,6 @@
 ; RUN: opt -insert-edge-profiling -o %t1 < %s
 ; RUN: rm -f %t1.prof_data
-; RUN: lli -load %llvmshlibdir/libprofile_rt%shlibext %t1 \
+; RUN: lli %defaultjit -load %llvmshlibdir/libprofile_rt%shlibext %t1 \
 ; RUN:     -llvmprof-output %t1.prof_data
 ; RUN: opt -profile-file %t1.prof_data -profile-metadata-loader -S -o - < %s \
 ; RUN:     | FileCheck %s
