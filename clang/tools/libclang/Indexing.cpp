@@ -455,21 +455,10 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
   if (!PP.getPreprocessingRecord())
     return;
 
-  PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
-
   // FIXME: Only deserialize inclusion directives.
-  // FIXME: Only deserialize stuff from the last chained PCH, not the PCH/Module
-  // that it depends on.
 
-  bool OnlyLocal = !Unit.isMainFileAST() && Unit.getOnlyLocalDecls();
   PreprocessingRecord::iterator I, E;
-  if (OnlyLocal) {
-    I = PPRec.local_begin();
-    E = PPRec.local_end();
-  } else {
-    I = PPRec.begin();
-    E = PPRec.end();
-  }
+  llvm::tie(I, E) = Unit.getLocalPreprocessingEntities();
 
   for (; I != E; ++I) {
     PreprocessedEntity *PPE = *I;

@@ -3381,6 +3381,16 @@ ASTReader::getModulePreprocessedEntity(unsigned GlobalIndex) {
   return std::make_pair(M, LocalIndex);
 }
 
+std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+ASTReader::getModulePreprocessedEntities(ModuleFile &Mod) const {
+  if (PreprocessingRecord *PPRec = PP.getPreprocessingRecord())
+    return PPRec->getIteratorsForLoadedRange(Mod.BasePreprocessedEntityID,
+                                             Mod.NumPreprocessedEntities);
+
+  return std::make_pair(PreprocessingRecord::iterator(),
+                        PreprocessingRecord::iterator());
+}
+
 PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   PreprocessedEntityID PPID = Index+1;
   std::pair<ModuleFile *, unsigned> PPInfo = getModulePreprocessedEntity(Index);

@@ -607,6 +607,12 @@ public:
     return CachedCompletionResults.size(); 
   }
 
+  /// \brief Returns an iterator range for the local preprocessing entities
+  /// of the local Preprocessor, if this is a parsed source file, or the loaded
+  /// preprocessing entities of the primary module if this is an AST file.
+  std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+    getLocalPreprocessingEntities() const;
+
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 

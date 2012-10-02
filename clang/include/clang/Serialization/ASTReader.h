@@ -855,6 +855,11 @@ private:
   std::pair<ModuleFile *, unsigned>
     getModulePreprocessedEntity(unsigned GlobalIndex);
 
+  /// \brief Returns (begin, end) pair for the preprocessed entities of a
+  /// particular module.
+  std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+    getModulePreprocessedEntities(ModuleFile &Mod) const;
+
   void PassInterestingDeclsToConsumer();
   void PassInterestingDeclToConsumer(Decl *D);
 
