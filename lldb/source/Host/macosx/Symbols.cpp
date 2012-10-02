@@ -378,7 +378,7 @@ LocateMacOSXFilesUsingDebugSymbols
                         char uuid_cstr_buf[64];
                         const char *uuid_cstr = uuid->GetAsCString (uuid_cstr_buf, sizeof(uuid_cstr_buf));
                         CFCString uuid_cfstr (uuid_cstr);
-                        CFDictionaryRef uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
+                        uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
                         if (uuid_dict)
                         {
 
@@ -693,9 +693,9 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec)
             
             StreamString command;
             if (uuid_cstr)
-                command.Printf("%s --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_cstr);
+                command.Printf("%s --ignoreNegativeCache --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_cstr);
             else if (file_path && file_path[0])
-                command.Printf("%s --copyExecutable %s", g_dsym_for_uuid_exe_path, file_path);
+                command.Printf("%s --ignoreNegativeCache --copyExecutable %s", g_dsym_for_uuid_exe_path, file_path);
             
             if (!command.GetString().empty())
             {

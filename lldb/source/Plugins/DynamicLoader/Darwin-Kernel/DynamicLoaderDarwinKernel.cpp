@@ -289,16 +289,15 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                 module_sp.reset(); // UUID mismatch
         }
         
-        // If this is the kernel, see if we can locate a copy of the binary based on the UUID (and maybe even debug info)
-        // FIXME: Symbols::DownloadObjectAndSymbolFile is forcing the download of the binaries via dsymForUUID regardless
-        // of the current pref settings; don't want to do this for all the kexts unless the user has enabled it..
-        if (!module_sp && memory_module_is_kernel)
+        // Try to locate the kext/kernel binary on the local filesystem, maybe with additional 
+        // debug info/symbols still present, before we resort to copying it out of memory.
+        if (!module_sp)
         {
             ModuleSpec sym_spec;
             sym_spec.GetUUID() = memory_module_sp->GetUUID();
-            if (Symbols::DownloadObjectAndSymbolFile (sym_spec) 
-                && sym_spec.GetArchitecture().IsValid() 
-                && sym_spec.GetSymbolFileSpec().Exists())
+            if (Symbols::LocateExecutableObjectFile (sym_spec) 
+                && sym_spec.GetArchitecture().IsValid()
+                && sym_spec.GetFileSpec().Exists())
             {
                 module_sp = target.GetSharedModule (sym_spec);
                 if (module_sp.get ())
@@ -354,9 +353,16 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
             char uuidbuf[64];
             s->Printf ("Kernel UUID: %s\n", module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
             s->Printf ("Load Address: 0x%llx\n", address);
-            s->Printf ("Loaded kernel file %s/%s\n",
-                          module_sp->GetFileSpec().GetDirectory().AsCString(),
-                          module_sp->GetFileSpec().GetFilename().AsCString());
+            if (module_sp->GetFileSpec().GetDirectory().IsEmpty())
+            {
+                s->Printf ("Loaded kernel file %s\n", module_sp->GetFileSpec().GetFilename().AsCString());
+            }
+            else
+            {
+                s->Printf ("Loaded kernel file %s/%s\n",
+                              module_sp->GetFileSpec().GetDirectory().AsCString(),
+                              module_sp->GetFileSpec().GetFilename().AsCString());
+            }
             s->Flush ();
         }
     }
