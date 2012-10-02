@@ -80,6 +80,10 @@ int internal_sched_yield() {
 }
 
 // ----------------- sanitizer_common.h
+uptr GetTid() {
+  return reinterpret_cast<uptr>(pthread_self());
+}
+
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   CHECK(stack_top);

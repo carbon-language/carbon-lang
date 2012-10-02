@@ -67,7 +67,7 @@ struct ReportLocation {
 
 struct ReportThread {
   int id;
-  int pid;
+  uptr pid;
   bool running;
   char *name;
   ReportStack *stack;

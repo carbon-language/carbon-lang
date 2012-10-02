@@ -104,7 +104,7 @@ static void PrintThread(const ReportThread *rt) {
   TsanPrintf("  Thread %d", rt->id);
   if (rt->name)
     TsanPrintf(" '%s'", rt->name);
-  TsanPrintf(" (tid=%d, %s)", rt->pid, rt->running ? "running" : "finished");
+  TsanPrintf(" (tid=%zu, %s)", rt->pid, rt->running ? "running" : "finished");
   if (rt->stack)
     TsanPrintf(" created at:");
   TsanPrintf("\n");

@@ -89,6 +89,10 @@ int internal_sched_yield() {
 }
 
 // ----------------- sanitizer_common.h
+uptr GetTid() {
+  return syscall(__NR_gettid);
+}
+
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   static const uptr kMaxThreadStackSize = 256 * (1 << 20);  // 256M

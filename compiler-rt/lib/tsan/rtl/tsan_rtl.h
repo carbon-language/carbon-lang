@@ -327,7 +327,7 @@ struct ThreadDeadInfo {
 struct ThreadContext {
   const int tid;
   int unique_id;  // Non-rolling thread id.
-  int os_id;  // pid
+  uptr os_id;  // pid
   uptr user_id;  // Some opaque user thread id (e.g. pthread_t).
   ThreadState *thr;
   ThreadStatus status;
@@ -481,7 +481,7 @@ void FuncEntry(ThreadState *thr, uptr pc);
 void FuncExit(ThreadState *thr);
 
 int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached);
-void ThreadStart(ThreadState *thr, int tid, int os_id);
+void ThreadStart(ThreadState *thr, int tid, uptr os_id);
 void ThreadFinish(ThreadState *thr);
 int ThreadTid(ThreadState *thr, uptr pc, uptr uid);
 void ThreadJoin(ThreadState *thr, uptr pc, int tid);

@@ -34,7 +34,7 @@ const uptr kMmapGranularity = 1UL << 16;
 
 // Threads
 int GetPid();
-int GetTid();
+uptr GetTid();
 uptr GetThreadSelf();
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom);
