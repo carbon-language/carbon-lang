@@ -11,8 +11,8 @@
 // left to the assembler to lower such as large shifts.
 //
 //===----------------------------------------------------------------------===//
-#include "MipsDirectObjLower.h"
 #include "MipsInstrInfo.h"
+#include "MCTargetDesc/MipsDirectObjLower.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 
@@ -25,32 +25,28 @@ void Mips::LowerLargeShift(MCInst& Inst) {
   assert(Inst.getNumOperands() == 3 && "Invalid no. of operands for shift!");
   assert(Inst.getOperand(2).isImm());
 
-  bool isLarge = false;
-  int64_t Shift;
-  Shift = Inst.getOperand(2).getImm();
-  if (Shift > 31) {
-    Shift -= 32;
-    isLarge = true;
-  }
+  int64_t Shift = Inst.getOperand(2).getImm();
+  if (Shift <= 31)
+    return; // Do nothing
+  Shift -= 32;
 
   // saminus32
-  (Inst.getOperand(2)).setImm(Shift);
+  Inst.getOperand(2).setImm(Shift);
 
-  if (isLarge)
-    switch (Inst.getOpcode()) {
-    default:
-      // Calling function is not synchronized
-      llvm_unreachable("Unexpected shift instruction");
-    case Mips::DSLL:
-      Inst.setOpcode(Mips::DSLL32);
-      return;
-    case Mips::DSRL:
-      Inst.setOpcode(Mips::DSRL32);
-      return;
-    case Mips::DSRA:
-      Inst.setOpcode(Mips::DSRA32);
-      return;
-    }
+  switch (Inst.getOpcode()) {
+  default:
+    // Calling function is not synchronized
+    llvm_unreachable("Unexpected shift instruction");
+  case Mips::DSLL:
+    Inst.setOpcode(Mips::DSLL32);
+    return;
+  case Mips::DSRL:
+    Inst.setOpcode(Mips::DSRL32);
+    return;
+  case Mips::DSRA:
+    Inst.setOpcode(Mips::DSRA32);
+    return;
+  }
 }
 
 // Pick a DEXT or DINS instruction variant based on the pos and size operands
@@ -70,17 +66,16 @@ void Mips::LowerDextDins(MCInst& InstIn) {
   int64_t size = InstIn.getOperand(3).getImm();
 
   if (size <= 32) {
-    if ((pos < 32)) { // DEXT/DINS, do nothing
+    if (pos < 32)  // DEXT/DINS, do nothing
       return;
-    } else { // DEXTU/DINSU
-      InstIn.getOperand(2).setImm(pos - 32);
-      InstIn.setOpcode((Opcode == Mips::DEXT) ? Mips::DEXTU : Mips::DINSU);
-      return;
-    }
-  } else { // DEXTM/DINSM
-    assert(pos < 32 && "DEXT/DINS cannot have both size and pos > 32");
-    InstIn.getOperand(3).setImm(size - 32);
-    InstIn.setOpcode((Opcode == Mips::DEXT) ? Mips::DEXTM : Mips::DINSM);
+    // DEXTU/DINSU
+    InstIn.getOperand(2).setImm(pos - 32);
+    InstIn.setOpcode((Opcode == Mips::DEXT) ? Mips::DEXTU : Mips::DINSU);
     return;
   }
+  // DEXTM/DINSM
+  assert(pos < 32 && "DEXT/DINS cannot have both size and pos > 32");
+  InstIn.getOperand(3).setImm(size - 32);
+  InstIn.setOpcode((Opcode == Mips::DEXT) ? Mips::DEXTM : Mips::DINSM);
+  return;
 }

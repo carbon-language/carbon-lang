@@ -13,6 +13,7 @@
 //
 #define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MCTargetDesc/MipsDirectObjLower.h"
 #include "MCTargetDesc/MipsFixupKinds.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/ADT/APFloat.h"
@@ -109,16 +110,35 @@ void MipsMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const
 {
-  uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
+
+  // Non-pseudo instructions that get changed for direct object
+  // only based on operand values.
+  // If this list of instructions get much longer we will move
+  // the check to a function call. Until then, this is more efficient.
+  MCInst TmpInst = MI;
+  switch (MI.getOpcode()) {
+  // If shift amount is >= 32 it the inst needs to be lowered further
+  case Mips::DSLL:
+  case Mips::DSRL:
+  case Mips::DSRA:
+    Mips::LowerLargeShift(TmpInst);
+    break;
+    // Double extract instruction is chosen by pos and size operands
+  case Mips::DEXT:
+  case Mips::DINS:
+    Mips::LowerDextDins(TmpInst);
+  }
+
+  uint32_t Binary = getBinaryCodeForInstr(TmpInst, Fixups);
 
   // Check for unimplemented opcodes.
-  // Unfortunately in MIPS both NOT and SLL will come in with Binary == 0
+  // Unfortunately in MIPS both NOP and SLL will come in with Binary == 0
   // so we have to special check for them.
-  unsigned Opcode = MI.getOpcode();
+  unsigned Opcode = TmpInst.getOpcode();
   if ((Opcode != Mips::NOP) && (Opcode != Mips::SLL) && !Binary)
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
 
-  const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+  const MCInstrDesc &Desc = MCII.get(TmpInst.getOpcode());
   uint64_t TSFlags = Desc.TSFlags;
 
   // Pseudo instructions don't get encoded and shouldn't be here
