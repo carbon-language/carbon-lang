@@ -1,6 +1,4 @@
-// RUN: %clang -arch x86_64 -fms-extensions -rewrite-objc %s -o %t-rw-64bit.cpp
-// RUN: FileCheck %s < %t-rw-64bit.cpp
-// XFAIL: mingw32,win32
+// RUN: %clang -target x86_64-unkown-unknown -fms-extensions -rewrite-objc %s -o - | FileCheck %s
 // rdar://12189793
 
 #ifdef __cplusplus
