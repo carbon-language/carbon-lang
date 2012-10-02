@@ -157,7 +157,7 @@ void InclusionRewriter::InclusionDirective(SourceLocation HashLoc,
                                            const FileEntry * /*File*/,
                                            StringRef /*SearchPath*/,
                                            StringRef /*RelativePath*/,
-                                           const Module */*Imported*/) {
+                                           const Module * /*Imported*/) {
   assert(LastInsertedFileChange == FileChanges.end() && "Another inclusion "
     "directive was found before the previous one was processed");
   std::pair<FileChangeMap::iterator, bool> p = FileChanges.insert(
