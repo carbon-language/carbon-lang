@@ -2581,6 +2581,39 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
 // PowerPC-64
 
 namespace {
+/// PPC64_SVR4_ABIInfo - The 64-bit PowerPC ELF (SVR4) ABI information.
+class PPC64_SVR4_ABIInfo : public DefaultABIInfo {
+
+public:
+  PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT) : DefaultABIInfo(CGT) {}
+
+  // TODO: Could override computeInfo to model the ABI more completely if
+  // it would be helpful.  Example: We might remove the byVal flag from
+  // aggregate arguments that fit in a register to avoid pushing them to
+  // memory on function entry.  Note that this is a performance optimization,
+  // not a compliance issue.  In general we prefer to keep ABI details in
+  // the back end where possible, but modifying an argument flag seems like
+  // a good thing to do before invoking the back end.
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, 
+                                 QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+
+class PPC64_SVR4_TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  PPC64_SVR4_TargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT)) {}
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
+    // This is recovered from gcc output.
+    return 1; // r1 is the dedicated stack pointer
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const;
+};
+
 class PPC64TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
 public:
   PPC64TargetCodeGenInfo(CodeGenTypes &CGT) : DefaultTargetCodeGenInfo(CGT) {}
@@ -2596,9 +2629,56 @@ public:
 
 }
 
-bool
-PPC64TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
-                                                llvm::Value *Address) const {
+// Based on ARMABIInfo::EmitVAArg, adjusted for 64-bit machine.
+llvm::Value *PPC64_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
+                                           QualType Ty,
+                                           CodeGenFunction &CGF) const {
+  llvm::Type *BP = CGF.Int8PtrTy;
+  llvm::Type *BPP = CGF.Int8PtrPtrTy;
+
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+
+  // Handle address alignment for type alignment > 64 bits.  Although
+  // long double normally requires 16-byte alignment, this is not the
+  // case when it is passed as an argument; so handle that special case.
+  const BuiltinType *BT = Ty->getAs<BuiltinType>();
+  unsigned TyAlign = CGF.getContext().getTypeAlign(Ty) / 8;
+
+  if (TyAlign > 8 && (!BT || !BT->isFloatingPoint())) {
+    assert((TyAlign & (TyAlign - 1)) == 0 &&
+           "Alignment is not power of 2!");
+    llvm::Value *AddrAsInt = Builder.CreatePtrToInt(Addr, CGF.Int64Ty);
+    AddrAsInt = Builder.CreateAdd(AddrAsInt, Builder.getInt64(TyAlign - 1));
+    AddrAsInt = Builder.CreateAnd(AddrAsInt, Builder.getInt64(~(TyAlign - 1)));
+    Addr = Builder.CreateIntToPtr(AddrAsInt, BP);
+  }
+
+  // Update the va_list pointer.
+  unsigned SizeInBytes = CGF.getContext().getTypeSize(Ty) / 8;
+  unsigned Offset = llvm::RoundUpToAlignment(SizeInBytes, 8);
+  llvm::Value *NextAddr =
+    Builder.CreateGEP(Addr, llvm::ConstantInt::get(CGF.Int64Ty, Offset),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  // If the argument is smaller than 8 bytes, it is right-adjusted in
+  // its doubleword slot.  Adjust the pointer to pick it up from the
+  // correct offset.
+  if (SizeInBytes < 8) {
+    llvm::Value *AddrAsInt = Builder.CreatePtrToInt(Addr, CGF.Int64Ty);
+    AddrAsInt = Builder.CreateAdd(AddrAsInt, Builder.getInt64(8 - SizeInBytes));
+    Addr = Builder.CreateIntToPtr(AddrAsInt, BP);
+  }
+
+  llvm::Type *PTy = llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  return Builder.CreateBitCast(Addr, PTy);
+}
+
+static bool
+PPC64_initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                              llvm::Value *Address) {
   // This is calculated from the LLVM and GCC tables and verified
   // against gcc output.  AFAIK all ABIs use the same encoding.
 
@@ -2635,6 +2715,21 @@ PPC64TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
   AssignToArrayRange(Builder, Address, Four8, 109, 113);
 
   return false;
+}
+
+bool
+PPC64_SVR4_TargetCodeGenInfo::initDwarfEHRegSizeTable(
+  CodeGen::CodeGenFunction &CGF,
+  llvm::Value *Address) const {
+
+  return PPC64_initDwarfEHRegSizeTable(CGF, Address);
+}
+
+bool
+PPC64TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                                                llvm::Value *Address) const {
+
+  return PPC64_initDwarfEHRegSizeTable(CGF, Address);
 }
 
 //===----------------------------------------------------------------------===//
@@ -3878,7 +3973,10 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::ppc:
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
   case llvm::Triple::ppc64:
-    return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
+    if (Triple.isOSBinFormatELF())
+      return *(TheTargetCodeGenInfo = new PPC64_SVR4_TargetCodeGenInfo(Types));
+    else
+      return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
 
   case llvm::Triple::nvptx:
   case llvm::Triple::nvptx64:
