@@ -340,3 +340,30 @@ namespace QualifiedCalls {
     clang_analyzer_eval(object->A::getZero() == 0); // expected-warning{{TRUE}}
 }
 }
+
+
+namespace rdar12409977  {
+  struct Base {
+    int x;
+  };
+
+  struct Parent : public Base {
+    virtual Parent *vGetThis();
+    Parent *getThis() { return vGetThis(); }
+  };
+
+  struct Child : public Parent {
+    virtual Child *vGetThis() { return this; }
+  };
+
+  void test() {
+    Child obj;
+    obj.x = 42;
+
+    // Originally, calling a devirtualized method with a covariant return type
+    // caused a crash because the return value had the wrong type. When we then
+    // go to layer a CXXBaseObjectRegion on it, the base isn't a direct base of
+    // the object region and we get an assertion failure.
+    clang_analyzer_eval(obj.getThis()->x == 42); // expected-warning{{TRUE}}
+  }
+}
