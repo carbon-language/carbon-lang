@@ -42,7 +42,7 @@ void unscoped(int n) {
   switch (n % 2) {
     case 0:
       // FIXME: This should be typo-corrected, probably.
-      [[fallthrough]];
+      [[fallthrough]]; // expected-warning{{unknown attribute 'fallthrough' ignored}}
     case 2: // expected-warning{{unannotated fall-through}} expected-note{{clang::fallthrough}} expected-note{{break;}}
       [[clang::fallthrough]];
     case 1:

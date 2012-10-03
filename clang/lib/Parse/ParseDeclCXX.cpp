@@ -2879,6 +2879,21 @@ IdentifierInfo *Parser::TryParseCXX11AttributeIdentifier(SourceLocation &Loc) {
   }
 }
 
+static bool IsBuiltInOrStandardCXX11Attribute(IdentifierInfo *AttrName,
+                                               IdentifierInfo *ScopeName) {
+  switch (AttributeList::getKind(AttrName, ScopeName,
+                                 AttributeList::AS_CXX11)) {
+  case AttributeList::AT_CarriesDependency:
+  case AttributeList::AT_FallThrough:
+  case AttributeList::AT_NoReturn: {
+    return true;
+  }
+
+  default:
+    return false;
+  }
+}
+
 /// ParseCXX11AttributeSpecifier - Parse a C++11 attribute-specifier. Currently
 /// only parses standard attributes.
 ///
@@ -2963,46 +2978,38 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
       }
     }
 
+    bool StandardAttr = IsBuiltInOrStandardCXX11Attribute(AttrName,ScopeName);
     bool AttrParsed = false;
-    switch (AttributeList::getKind(AttrName, ScopeName,
-                                   AttributeList::AS_CXX11)) {
-    // No arguments
-    case AttributeList::AT_CarriesDependency:
-    // FIXME: implement generic support of attributes with C++11 syntax
-    // see Parse/ParseDecl.cpp: ParseGNUAttributes
-    case AttributeList::AT_FallThrough:
-    case AttributeList::AT_NoReturn: {
-      if (Tok.is(tok::l_paren)) {
-        Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
-          << AttrName->getName();
-        break;
-      }
 
+    // Parse attribute arguments
+    if (Tok.is(tok::l_paren)) {
+      if (ScopeName && ScopeName->getName() == "gnu") {
+        ParseGNUAttributeArgs(AttrName, AttrLoc, attrs, endLoc,
+                              ScopeName, ScopeLoc, AttributeList::AS_CXX11);
+        AttrParsed = true;
+      } else {
+        if (StandardAttr)
+          Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
+            << AttrName->getName();
+
+        // FIXME: handle other formats of c++11 attribute arguments
+        ConsumeParen();
+        SkipUntil(tok::r_paren, false);
+      }
+    }
+
+    if (!AttrParsed)
       attrs.addNew(AttrName,
                    SourceRange(ScopeLoc.isValid() ? ScopeLoc : AttrLoc,
                                AttrLoc),
                    ScopeName, ScopeLoc, 0,
                    SourceLocation(), 0, 0, AttributeList::AS_CXX11);
-      AttrParsed = true;
-      break;
-    }
-
-    // Silence warnings
-    default: break;
-    }
-
-    // Skip the entire parameter clause, if any
-    if (!AttrParsed && Tok.is(tok::l_paren)) {
-      ConsumeParen();
-      // SkipUntil maintains the balancedness of tokens.
-      SkipUntil(tok::r_paren, false);
-    }
 
     if (Tok.is(tok::ellipsis)) {
-      if (AttrParsed)
-        Diag(Tok, diag::err_cxx11_attribute_forbids_ellipsis)
-          << AttrName->getName();
       ConsumeToken();
+
+      Diag(Tok, diag::err_cxx11_attribute_forbids_ellipsis)
+        << AttrName->getName();
     }
   }
 

@@ -154,7 +154,8 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
           Eof.setLocation(Tok.getLocation());
           LA->Toks.push_back(Eof);
         } else {
-          ParseGNUAttributeArgs(AttrName, AttrNameLoc, attrs, endLoc);
+          ParseGNUAttributeArgs(AttrName, AttrNameLoc, attrs, endLoc,
+                                0, AttrNameLoc, AttributeList::AS_GNU);
         }
       } else {
         attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc,
@@ -173,11 +174,15 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
 }
 
 
-/// Parse the arguments to a parameterized GNU attribute
+/// Parse the arguments to a parameterized GNU attribute or
+/// a C++11 attribute in "gnu" namespace.
 void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
                                    SourceLocation AttrNameLoc,
                                    ParsedAttributes &Attrs,
-                                   SourceLocation *EndLoc) {
+                                   SourceLocation *EndLoc,
+                                   IdentifierInfo *ScopeName,
+                                   SourceLocation ScopeLoc,
+                                   AttributeList::Syntax Syntax) {
 
   assert(Tok.is(tok::l_paren) && "Attribute arg list not starting with '('");
 
@@ -278,9 +283,9 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   SourceLocation RParen = Tok.getLocation();
   if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
     AttributeList *attr =
-      Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
-                   ParmName, ParmLoc, ArgExprs.data(), ArgExprs.size(),
-                   AttributeList::AS_GNU);
+      Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen),
+                   ScopeName, ScopeLoc, ParmName, ParmLoc,
+                   ArgExprs.data(), ArgExprs.size(), Syntax);
     if (BuiltinType && attr->getKind() == AttributeList::AT_IBOutletCollection)
       Diag(Tok, diag::err_iboutletcollection_builtintype);
   }
@@ -923,7 +928,8 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
       if (HasFunScope)
         Actions.ActOnReenterFunctionContext(Actions.CurScope, D);
 
-      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
+      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc,
+                            0, LA.AttrNameLoc, AttributeList::AS_GNU);
 
       if (HasFunScope) {
         Actions.ActOnExitFunctionContext();
@@ -935,7 +941,8 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     } else {
       // If there are multiple decls, then the decl cannot be within the
       // function scope.
-      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
+      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc,
+                            0, LA.AttrNameLoc, AttributeList::AS_GNU);
     }
   } else {
     Diag(Tok, diag::warn_attribute_no_decl) << LA.AttrName.getName();

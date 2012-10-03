@@ -31,9 +31,13 @@ void f(X *noreturn) {
 
   // An attribute is OK.
   [[]];
-  [[int(), noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}}
-  [[class, test(foo 'x' bar),,,]];
-  [[bitand, noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}}
+  [[int(), noreturn]]; // expected-warning {{unknown attribute 'int' ignored}} \
+  // expected-warning {{attribute noreturn cannot be specified on a statement}}
+  [[class, test(foo 'x' bar),,,]]; // expected-warning {{unknown attribute 'test' ignored}}\
+  // expected-warning {{unknown attribute 'class' ignored}}
+
+  [[bitand, noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}} \
+  expected-warning {{unknown attribute 'bitand' ignored}} 
 
   // FIXME: Suppress vexing parse warning
   [[noreturn]]int(e)(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}} 
@@ -52,7 +56,11 @@ void f(X *noreturn) {
 }
 
 template<typename...Ts> void f(Ts ...x) {
-  [[test::foo(bar, baz)...]];
-  [[used(x)...]];
+  [[test::foo(bar, baz)...]]; // expected-error {{attribute 'foo' cannot be used as an attribute pack}} \
+  // expected-warning {{unknown attribute 'foo' ignored}}
+
+  [[used(x)...]]; // expected-error {{attribute 'used' cannot be used as an attribute pack}} \
+  // expected-warning {{unknown attribute 'used' ignored}}
+
   [[x...] { return [ X alloc ]; }() init];
 }
