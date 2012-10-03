@@ -238,14 +238,24 @@ bool llvm::bypassSlowDivision(Function &F,
     if (!UseDivOp && !UseRemOp)
       continue;
 
-    // Continue if div/rem type is not bypassed
-    DenseMap<Type *, Type *>::const_iterator BT =
-      BypassTypeMap.find(J->getType());
-    if (BT == BypassTypeMap.end())
+    // Skip division on vector types, only optimize integer instructions
+    if (!J->getType()->isIntegerTy())
       continue;
 
-    IntegerType *BypassType = cast<IntegerType>(BT->second);
-    MadeChange |= reuseOrInsertFastDiv(F, I, J, BypassType, UseDivOp,
+    // Get same type in global context
+    IntegerType *T = cast<IntegerType>(J->getType());
+    IntegerType *GT = IntegerType::get(getGlobalContext(), T->getBitWidth());
+
+    // Continue if div/rem type is not bypassed
+    DenseMap<Type *, Type *>::const_iterator BI = BypassTypeMap.find(GT);
+    if (BI == BypassTypeMap.end())
+      continue;
+
+    // Get the bypass type in the original context
+    IntegerType *GBT = cast<IntegerType>(BI->second);
+    IntegerType *BT = IntegerType::get(J->getContext(), GBT->getBitWidth());
+
+    MadeChange |= reuseOrInsertFastDiv(F, I, J, BT, UseDivOp,
                                        UseSignedOp, DivCache);
   }
 
