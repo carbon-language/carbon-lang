@@ -25,6 +25,7 @@ namespace clang {
   class TagDecl;
   class VarDecl;
   class FunctionDecl;
+  class ImportDecl;
 
 /// ASTConsumer - This is an abstract interface that should be implemented by
 /// clients that read ASTs.  This abstraction layer allows the client to be
@@ -78,6 +79,11 @@ public:
   /// and ObjC container.
   /// The default implementation ignored them.
   virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D);
+
+  /// \brief Handle an ImportDecl that was implicitly created due to an
+  /// inclusion directive.
+  /// The default implementation passes it to HandleTopLevelDecl.
+  virtual void HandleImplicitImportDecl(ImportDecl *D);
 
   /// CompleteTentativeDefinition - Callback invoked at the end of a translation
   /// unit to notify the consumer that the given tentative definition should be

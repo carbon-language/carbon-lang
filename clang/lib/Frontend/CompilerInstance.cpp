@@ -1082,9 +1082,12 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   // implicit import declaration to capture it in the AST.
   if (IsInclusionDirective && hasASTContext()) {
     TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
-    TU->addDecl(ImportDecl::CreateImplicit(getASTContext(), TU,
-                                           ImportLoc, Module, 
-                                           Path.back().second));
+    ImportDecl *ImportD = ImportDecl::CreateImplicit(getASTContext(), TU,
+                                                     ImportLoc, Module,
+                                                     Path.back().second);
+    TU->addDecl(ImportD);
+    if (Consumer)
+      Consumer->HandleImplicitImportDecl(ImportD);
   }
   
   LastModuleImportLoc = ImportLoc;

@@ -13,6 +13,7 @@
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/Decl.h"
 using namespace clang;
 
 bool ASTConsumer::HandleTopLevelDecl(DeclGroupRef D) {
@@ -24,3 +25,7 @@ void ASTConsumer::HandleInterestingDecl(DeclGroupRef D) {
 }
 
 void ASTConsumer::HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {}
+
+void ASTConsumer::HandleImplicitImportDecl(ImportDecl *D) {
+  HandleTopLevelDecl(DeclGroupRef(D));
+}
