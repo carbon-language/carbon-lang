@@ -1581,7 +1581,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 
 std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
-  // attempting to use this prefix when lokup up program paths.
+  // attempting to use this prefix when lookup up program paths.
   for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
        ie = PrefixDirs.end(); it != ie; ++it) {
     std::string Dir(*it);
