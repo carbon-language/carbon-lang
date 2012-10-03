@@ -34,7 +34,7 @@ class ModuleManager {
   
   /// \brief FileManager that handles translating between filenames and
   /// FileEntry *.
-  FileManager FileMgr;
+  FileManager &FileMgr;
   
   /// \brief A lookup of in-memory (virtual file) buffers
   llvm::DenseMap<const FileEntry *, llvm::MemoryBuffer *> InMemoryBuffers;
@@ -45,7 +45,7 @@ public:
   typedef SmallVector<ModuleFile*, 2>::reverse_iterator ModuleReverseIterator;
   typedef std::pair<uint32_t, StringRef> ModuleOffset;
   
-  ModuleManager(const FileSystemOptions &FSO);
+  explicit ModuleManager(FileManager &FileMgr);
   ~ModuleManager();
   
   /// \brief Forward iterator to traverse all loaded modules.  This is reverse

@@ -25,6 +25,7 @@
 
 namespace clang {
 
+class FileEntry;
 class DeclContext;
 class Module;
 template<typename Info> class OnDiskChainedHashTable;
@@ -73,6 +74,9 @@ public:
 
   /// \brief The file name of the module file.
   std::string FileName;
+
+  /// \brief The file entry for the module file.
+  const FileEntry *File;
 
   /// \brief Whether this module has been directly imported by the
   /// user.

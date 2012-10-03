@@ -50,6 +50,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     // Allocate a new module.
     ModuleFile *New = new ModuleFile(Type, Generation);
     New->FileName = FileName.str();
+    New->File = Entry;
     Chain.push_back(New);
     NewModule = true;
     ModuleEntry = New;
@@ -95,7 +96,7 @@ void ModuleManager::addInMemoryBuffer(StringRef FileName,
   InMemoryBuffers[Entry] = Buffer;
 }
 
-ModuleManager::ModuleManager(const FileSystemOptions &FSO) : FileMgr(FSO) { }
+ModuleManager::ModuleManager(FileManager &FileMgr) : FileMgr(FileMgr) { }
 
 ModuleManager::~ModuleManager() {
   for (unsigned i = 0, e = Chain.size(); i != e; ++i)

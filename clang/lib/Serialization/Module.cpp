@@ -21,7 +21,8 @@ using namespace serialization;
 using namespace reader;
 
 ModuleFile::ModuleFile(ModuleKind Kind, unsigned Generation)
-  : Kind(Kind), DirectlyImported(false), Generation(Generation), SizeInBits(0), 
+  : Kind(Kind), File(0), DirectlyImported(false),
+    Generation(Generation), SizeInBits(0),
     LocalNumSLocEntries(0), SLocEntryBaseID(0),
     SLocEntryBaseOffset(0), SLocEntryOffsets(0),
     SLocFileOffsets(0), LocalNumIdentifiers(0), 
