@@ -1193,7 +1193,10 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   static const char *const MIPSLibDirs[] = { "/lib" };
   static const char *const MIPSTriples[] = { "mips-linux-gnu" };
   static const char *const MIPSELLibDirs[] = { "/lib" };
-  static const char *const MIPSELTriples[] = { "mipsel-linux-gnu" };
+  static const char *const MIPSELTriples[] = {
+    "mipsel-linux-gnu",
+    "mipsel-linux-android"
+  };
 
   static const char *const MIPS64LibDirs[] = { "/lib64", "/lib" };
   static const char *const MIPS64Triples[] = { "mips64-linux-gnu" };
@@ -2079,6 +2082,25 @@ static bool isMipsArch(llvm::Triple::ArchType Arch) {
          Arch == llvm::Triple::mips64el;
 }
 
+static bool isMipsR2Arch(llvm::Triple::ArchType Arch,
+                         const ArgList &Args) {
+  if (Arch != llvm::Triple::mips &&
+      Arch != llvm::Triple::mipsel)
+    return false;
+
+  Arg *A = Args.getLastArg(options::OPT_march_EQ,
+                           options::OPT_mcpu_EQ,
+                           options::OPT_mips_CPUs_Group);
+
+  if (!A)
+    return false;
+
+  if (A->getOption().matches(options::OPT_mips_CPUs_Group))
+    return A->getOption().matches(options::OPT_mips32r2);
+
+  return A->getValue(Args) == StringRef("mips32r2");
+}
+
 static StringRef getMultilibDir(const llvm::Triple &Triple,
                                 const ArgList &Args) {
   if (!isMipsArch(Triple.getArch()))
@@ -2160,9 +2182,16 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   if (GCCInstallation.isValid()) {
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     const std::string &LibPath = GCCInstallation.getParentLibPath();
-    addPathIfExists((GCCInstallation.getInstallPath() +
-                     GCCInstallation.getMultiarchSuffix()),
-                    Paths);
+
+    if (IsAndroid && isMipsR2Arch(Triple.getArch(), Args))
+      addPathIfExists(GCCInstallation.getInstallPath() +
+                      GCCInstallation.getMultiarchSuffix() +
+                      "/mips-r2",
+                      Paths);
+    else
+      addPathIfExists((GCCInstallation.getInstallPath() +
+                       GCCInstallation.getMultiarchSuffix()),
+                      Paths);
 
     // If the GCC installation we found is inside of the sysroot, we want to
     // prefer libraries installed in the parent prefix of the GCC installation.
