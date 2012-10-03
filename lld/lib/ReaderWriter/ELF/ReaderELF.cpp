@@ -237,11 +237,11 @@ public:
 
   virtual uint64_t size() const {
 
-    // Common symbols are not allocated in object files so
-    // their size is zero.
+    // Common symbols are not allocated in object files,
+    // so use st_size to tell how many bytes are required.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON)
         || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
-      return (uint64_t)0;
+      return (uint64_t)_symbol->st_size;
 
     return _contentData.size();
 
@@ -317,7 +317,7 @@ public:
     // constraints in st_value.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON)
         || _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
-      return (Alignment(_symbol->st_value));
+      return Alignment(llvm::Log2_64(_symbol->st_value));
     }
 
     return Alignment(llvm::Log2_64(_section->sh_addralign));

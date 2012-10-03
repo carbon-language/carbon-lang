@@ -24,7 +24,7 @@ READOBJ: Total: 20
 ED: 'e_indent[EI_DATA]', 0x01
 ED: 'e_machine', 0x0003
 ED: Section 1
-ED: 'sh_addralign', 0x00000002
+ED: 'sh_addralign', 0x00000001
 ED: Section 2
 ED: 'sh_addralign', 0x00000008
 ED: Section 7
