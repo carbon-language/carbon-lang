@@ -1262,7 +1262,10 @@ static bool needsLFTR(Loop *L, DominatorTree *DT) {
     return true;
 
   // Do LFTR if the exit condition's IV is *not* a simple counter.
-  Value *IncV = Phi->getIncomingValueForBlock(L->getLoopLatch());
+  int Idx = Phi->getBasicBlockIndex(L->getLoopLatch());
+  if (Idx < 0)
+    return true;
+  Value *IncV = Phi->getIncomingValue(Idx);
   return Phi != getLoopPhiForCounter(IncV, L, DT);
 }
 
