@@ -3,7 +3,7 @@
 // branch to bypass the slow IDIV instruction. This test verifies that global
 // context types are used when comparing with those in the BypassTypeMap.
 
-// RUN: %clang_cc1 %s -march=atom -m32 -O2 -S -o - | FileCheck %s
+// RUN: %clang %s -triple i386-unknown-unknown -march=atom -m32 -O2 -S -o - | FileCheck %s
 // CHECK: div32
 // CHECK: orl
 // CHECK: testl
