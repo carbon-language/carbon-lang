@@ -229,6 +229,9 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSNumber *) num8_N = ',' @"0"',
                     '(NSNumber *) num9 = ',' (short)-31616'])
 
+        self.expect('frame variable decimal_one',
+                    substrs = ['(NSDecimalNumber *) decimal_one = 0x','1'])
+
         self.expect('frame variable num_at1 num_at2 num_at3 num_at4',
                     substrs = ['(NSNumber *) num_at1 = ',' (int)12',
                     '(NSNumber *) num_at2 = ',' (int)-12',
@@ -308,6 +311,15 @@ class ObjCDataFormatterTestCase(TestBase):
 
         self.expect('frame variable date1 date2',
                     substrs = ['1985-04','2011-01'])
+
+        self.expect('frame variable localhost',
+                    substrs = ['<NSHost ','> localhost ((','"127.0.0.1"'])
+
+        self.expect('frame variable my_task',
+                    substrs = ['<NS','Task: 0x'])
+
+        self.expect('frame variable range_value',
+                    substrs = ['NSRange: {4, 4}'])
 
         # this test might fail if we hit the breakpoint late on December 31st of some given year
         # and midnight comes between hitting the breakpoint and running this line of code

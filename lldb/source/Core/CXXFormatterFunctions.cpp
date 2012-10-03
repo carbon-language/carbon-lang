@@ -767,6 +767,13 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     
 }
 
+bool
+lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    stream.Printf("%s",valobj.GetObjectDescription());
+    return true;
+}
+
 lldb_private::formatters::NSArrayMSyntheticFrontEnd::NSArrayMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_exe_ctx_ref(),

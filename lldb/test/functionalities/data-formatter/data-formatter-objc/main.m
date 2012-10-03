@@ -158,6 +158,8 @@ int main (int argc, const char * argv[])
 	    NSNumber* num_at3 = @12.5;
 	    NSNumber* num_at4 = @-12.5;
 
+		NSDecimalNumber* decimal_one = [NSDecimalNumber one];
+
 	    NSString *str0 = [num6 stringValue];
 
 	    NSString *str1 = [NSString stringWithCString:"A rather short ASCII NSString object is here" encoding:NSASCIIStringEncoding];
@@ -582,12 +584,19 @@ int main (int argc, const char * argv[])
 		NSTimeZone *home_ns = [NSTimeZone timeZoneWithName:@"Europe/Rome"];
 		NSTimeZone *europe_ns = [NSTimeZone timeZoneWithAbbreviation:@"CET"];
 
+		NSHost *localhost = [NSHost hostWithAddress:@"127.0.0.1"];
+
+		NSTask *my_task = [[NSTask alloc] init];
+
 
 	CFGregorianUnits cf_greg_units = {1,3,5,12,5,7};
 	CFGregorianDate cf_greg_date = CFAbsoluteTimeGetGregorianDate(CFDateGetAbsoluteTime(date1), NULL);
 	CFRange cf_range = {4,4};
 	NSPoint ns_point = {4,4};
 	NSRange ns_range = {4,4};
+	
+	NSValue *range_value = [NSValue valueWithRange:ns_range];
+	
 	NSRect ns_rect = {{1,1},{5,5}};
 	NSRect* ns_rect_ptr = &ns_rect;
 	NSRectArray ns_rect_arr = &ns_rect;
