@@ -121,8 +121,8 @@ def FeatureBMI2    : SubtargetFeature<"bmi2", "HasBMI2", "true",
 def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
 def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",
-                                     "HasSlowDivide", "true",
-                                     "Use small divide for positive values less than 256">;
+                          "HasSlowDivide", "true",
+                          "Use small divide for positive values less than 256">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
