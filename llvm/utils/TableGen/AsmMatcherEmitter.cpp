@@ -1728,7 +1728,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
        << "    case CVT_Reg:\n"
        << "    case CVT_Tied:\n"
        << "      MapAndConstraints.push_back(std::make_pair(NumMCOperands,"
-       << "\"r\"));\n"
+       << "\"m\"));\n"
        << "      ++NumMCOperands;\n"
        << "      break;\n";
 
@@ -1826,7 +1826,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
         // Add a handler for the operand number lookup.
         OpOS << "    case " << Name << ":\n"
              << "      MapAndConstraints.push_back(std::make_pair(NumMCOperands"
-             << ",\"r\"));\n"
+             << ",\"m\"));\n"
              << "      NumMCOperands += " << OpInfo.MINumOperands << ";\n"
              << "      break;\n";
         break;
@@ -1896,7 +1896,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
         OpOS << "    case " << Name << ":\n"
              << "      MapAndConstraints.push_back(std::make_pair(NumMCOperands"
-             << ",\"r\"));\n"
+             << ",\"m\"));\n"
              << "      ++NumMCOperands;\n"
              << "      break;\n";
       }
