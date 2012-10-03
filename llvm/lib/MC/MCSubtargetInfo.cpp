@@ -19,7 +19,7 @@ using namespace llvm;
 
 MCSchedModel MCSchedModel::DefaultSchedModel; // For unknown processors.
 
-/// ReInitMCSubtargetInfo - Set or change the CPU (optionally supplemented
+/// InitMCProcessorInfo - Set or change the CPU (optionally supplemented
 /// with feature string). Recompute feature bits and scheduling model.
 void
 MCSubtargetInfo::InitMCProcessorInfo(StringRef CPU, StringRef FS) {
