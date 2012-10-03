@@ -49,8 +49,8 @@ static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
     cl::desc("Disable Stack Slot Coloring"));
 static cl::opt<bool> DisableMachineDCE("disable-machine-dce", cl::Hidden,
     cl::desc("Disable Machine Dead Code Elimination"));
-static cl::opt<bool> EnableEarlyIfConversion("enable-early-ifcvt", cl::Hidden,
-    cl::desc("Enable Early If-conversion"));
+static cl::opt<bool> DisableEarlyIfConversion("disable-early-ifcvt", cl::Hidden,
+    cl::desc("Disable Early If-conversion"));
 static cl::opt<bool> DisableMachineLICM("disable-machine-licm", cl::Hidden,
     cl::desc("Disable Machine LICM"));
 static cl::opt<bool> DisableMachineCSE("disable-machine-cse", cl::Hidden,
@@ -161,7 +161,7 @@ static AnalysisID overridePass(AnalysisID StandardID, AnalysisID TargetID) {
     return applyDisable(TargetID, DisableMachineDCE);
 
   if (StandardID == &EarlyIfConverterID)
-    return applyDisable(TargetID, !EnableEarlyIfConversion);
+    return applyDisable(TargetID, DisableEarlyIfConversion);
 
   if (StandardID == &MachineLICMID)
     return applyDisable(TargetID, DisableMachineLICM);

@@ -113,6 +113,12 @@ UseVZeroUpper("x86-use-vzeroupper",
   cl::desc("Minimize AVX to SSE transition penalty"),
   cl::init(true));
 
+// Temporary option to control early if-conversion for x86 while adding machine
+// models.
+static cl::opt<bool>
+X86EarlyIfConv("x86-early-ifcvt",
+	       cl::desc("Enable early if-conversion on X86"));
+
 //===----------------------------------------------------------------------===//
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
@@ -142,7 +148,7 @@ public:
 TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM) {
   X86PassConfig *PC = new X86PassConfig(this, PM);
 
-  if (Subtarget.hasCMov())
+  if (X86EarlyIfConv && Subtarget.hasCMov())
     PC->enablePass(&EarlyIfConverterID);
 
   return PC;
