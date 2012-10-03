@@ -146,8 +146,7 @@ static
 void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                   unsigned StackPtr, int64_t NumBytes,
                   bool Is64Bit, bool UseLEA,
-                  const TargetInstrInfo &TII, const TargetRegisterInfo &TRI,
-		  DebugLoc DL) {
+                  const TargetInstrInfo &TII, const TargetRegisterInfo &TRI) {
   bool isSub = NumBytes < 0;
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
   unsigned Opc;
@@ -159,6 +158,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
       : getADDriOpcode(Is64Bit, Offset);
 
   uint64_t Chunk = (1LL << 31) - 1;
+  DebugLoc DL = MBB.findDebugLoc(MBBI);
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
@@ -912,7 +912,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     // FIXME: %rax preserves the offset and should be available.
     if (isSPUpdateNeeded)
       emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
-                   UseLEA, TII, *RegInfo, MBB.findDebugLoc(MBBI));
+                   UseLEA, TII, *RegInfo);
 
     if (isEAXAlive) {
         // Restore EAX
@@ -924,7 +924,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     }
   } else if (NumBytes)
     emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
-                 UseLEA, TII, *RegInfo, DL);
+                 UseLEA, TII, *RegInfo);
 
   // If we need a base pointer, set it up here. It's whatever the value
   // of the stack pointer is at this point. Any variable size objects
@@ -1075,8 +1075,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
-    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, UseLEA, TII,
-		 *RegInfo, MBB.findDebugLoc(MBBI));
+    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, UseLEA, TII, *RegInfo);
   }
 
   // We're returning from function via eh_return.
@@ -1111,8 +1110,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (Offset) {
       // Check for possible merge with preceding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, UseLEA, TII,
-		   *RegInfo, MBB.findDebugLoc(MBBI));
+      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, UseLEA, TII, *RegInfo);
     }
 
     // Jump to label or value in register.
@@ -1155,8 +1153,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Check for possible merge with preceding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, UseLEA, TII,
-		 *RegInfo, MBB.findDebugLoc(MBBI));
+    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, UseLEA, TII, *RegInfo);
   }
 }
 
