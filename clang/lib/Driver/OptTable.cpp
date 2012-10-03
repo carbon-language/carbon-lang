@@ -134,13 +134,7 @@ bool OptTable::isOptionHelpHidden(OptSpecifier id) const {
 }
 
 Option *OptTable::CreateOption(unsigned id) const {
-  const Info &info = getInfo(id);
-  const Option *Group = getOption(info.GroupID);
-  const Option *Alias = getOption(info.AliasID);
-
-  Option *Opt = new Option(&info, Group, Alias);
-
-  return Opt;
+  return new Option(&getInfo(id), this);
 }
 
 Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {

@@ -70,23 +70,17 @@ namespace options {
 
   private:
     const OptTable::Info *Info;
-
-    /// Group this option is a member of, if any.
-    const Option *Group;
-
-    /// Option that this is an alias for, if any.
-    const Option *Alias;
+    const OptTable *Owner;
 
   public:
-    Option(const OptTable::Info *Info,
-           const Option *Group, const Option *Alias);
+    Option(const OptTable::Info *Info, const OptTable *Owner);
     ~Option();
 
     unsigned getID() const { return Info->ID; }
     OptionClass getKind() const { return OptionClass(Info->Kind); }
     StringRef getName() const { return Info->Name; }
-    const Option *getGroup() const { return Group; }
-    const Option *getAlias() const { return Alias; }
+    const Option *getGroup() const { return Owner->getOption(Info->GroupID); }
+    const Option *getAlias() const { return Owner->getOption(Info->AliasID); }
 
     unsigned getNumArgs() const { return Info->Param; }
 
@@ -137,6 +131,7 @@ namespace options {
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).
     const Option *getUnaliasedOption() const {
+      const Option *Alias = getAlias();
       if (Alias) return Alias->getUnaliasedOption();
       return this;
     }
