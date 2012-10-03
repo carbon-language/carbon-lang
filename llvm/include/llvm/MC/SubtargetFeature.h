@@ -95,10 +95,6 @@ public:
                           const SubtargetFeatureKV *FeatureTable,
                           size_t FeatureTableSize);
 
-  /// Get scheduling itinerary of a CPU.
-  const void *getItinerary(const StringRef CPU,
-                           const SubtargetInfoKV *Table, size_t TableSize);
-
   /// Print feature string.
   void print(raw_ostream &OS) const;
 
