@@ -70,6 +70,10 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
 
   void printPICLabel(const MachineInstr *MI, unsigned Op, raw_ostream &O);
 
+  void printIntelMemReference(const MachineInstr *MI, unsigned Op,
+                              raw_ostream &O, const char *Modifier=NULL,
+                              unsigned AsmVariant = 1);                         
+
   bool runOnMachineFunction(MachineFunction &F);
 
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);

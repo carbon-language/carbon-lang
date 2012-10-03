@@ -365,6 +365,53 @@ void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   printLeaMemReference(MI, Op, O, Modifier);
 }
 
+void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
+                                           raw_ostream &O, const char *Modifier,
+                                           unsigned AsmVariant){
+  const MachineOperand &BaseReg  = MI->getOperand(Op);
+  unsigned ScaleVal = MI->getOperand(Op+1).getImm();
+  const MachineOperand &IndexReg = MI->getOperand(Op+2);
+  const MachineOperand &DispSpec = MI->getOperand(Op+3);
+  const MachineOperand &SegReg   = MI->getOperand(Op+4);
+  
+  // If this has a segment register, print it.
+  if (SegReg.getReg()) {
+    printOperand(MI, Op+4, O, Modifier, AsmVariant);
+    O << ':';
+  }
+  
+  O << '[';
+  
+  bool NeedPlus = false;
+  if (BaseReg.getReg()) {
+    printOperand(MI, Op, O, Modifier, AsmVariant);
+    NeedPlus = true;
+  }
+  
+  if (IndexReg.getReg()) {
+    if (NeedPlus) O << " + ";
+    if (ScaleVal != 1)
+      O << ScaleVal << '*';
+    printOperand(MI, Op+2, O, Modifier, AsmVariant);
+    NeedPlus = true;
+  }
+
+  assert (DispSpec.isImm() && "Displacement is not an immediate!");
+  int64_t DispVal = DispSpec.getImm();
+  if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg())) {
+    if (NeedPlus) {
+      if (DispVal > 0)
+        O << " + ";
+      else {
+        O << " - ";
+        DispVal = -DispVal;
+      }
+    }
+    O << DispVal;
+  }  
+  O << ']';
+}
+
 void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op,
                                   raw_ostream &O) {
   O << *MF->getPICBaseSymbol() << '\n';
@@ -481,6 +528,11 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           unsigned OpNo, unsigned AsmVariant,
                                           const char *ExtraCode,
                                           raw_ostream &O) {
+  if (AsmVariant) {
+    printIntelMemReference(MI, OpNo, O);
+    return false;
+  }
+
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
 

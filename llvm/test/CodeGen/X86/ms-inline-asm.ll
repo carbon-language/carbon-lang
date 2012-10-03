@@ -24,3 +24,17 @@ entry:
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 }
+
+define void @t3(i32 %V) nounwind {
+entry:
+  %V.addr = alloca i32, align 4
+  store i32 %V, i32* %V.addr, align 4
+  call void asm sideeffect inteldialect "mov eax, DWORD PTR [$0]", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %V.addr) nounwind
+  ret void
+; CHECK: t3
+; CHECK: {{## InlineAsm Start|#APP}}
+; CHECK: .intel_syntax
+; CHECK: mov eax, DWORD PTR {{[[esp]}}
+; CHECK: .att_syntax
+; CHECK: {{## InlineAsm End|#NO_APP}}
+}
