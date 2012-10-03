@@ -20,7 +20,6 @@
 #include "lldb/Core/State.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
@@ -40,11 +39,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
-/// FIXME - The ObjC Runtime trampoline handler doesn't really belong here.
-/// I am putting it here so I can invoke it in the Trampoline code here, but
-/// it should be moved to the ObjC Runtime support when it is set up.
-
 
 //----------------------------------------------------------------------
 // Create an instance of this class. This function is filled into

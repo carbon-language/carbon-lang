@@ -104,6 +104,12 @@ public:
     virtual void
     DidAttach ();
     
+    lldb::addr_t
+    GetImageInfoAddress();
+
+    lldb_private::DynamicLoader *
+    GetDynamicLoader ();
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -252,6 +258,8 @@ protected:
     lldb_private::Broadcaster m_async_broadcaster;
     lldb::thread_t m_async_thread;
     bool m_destroy_in_process;
+    std::string m_dyld_plugin_name;
+    lldb::addr_t m_kernel_load_addr;
 
     bool
     StartAsyncThread ();

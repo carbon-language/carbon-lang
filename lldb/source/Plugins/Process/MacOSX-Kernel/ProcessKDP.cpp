@@ -31,6 +31,7 @@
 #include "ProcessKDP.h"
 #include "ProcessKDPLog.h"
 #include "ThreadKDP.h"
+#include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -105,7 +106,9 @@ ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     m_comm("lldb.process.kdp-remote.communication"),
     m_async_broadcaster (NULL, "lldb.process.kdp-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
-    m_destroy_in_process (false)
+    m_destroy_in_process (false),
+    m_dyld_plugin_name (),
+    m_kernel_load_addr (LLDB_INVALID_ADDRESS)
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -222,84 +225,12 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                         
                     UUID kernel_uuid = m_comm.GetUUID ();
                     addr_t kernel_load_addr = m_comm.GetLoadAddress ();
-                    if (strm)
-                    {
-                        char uuidbuf[64];
-                        strm->Printf ("Kernel UUID: %s\n", kernel_uuid.GetAsCString (uuidbuf, sizeof (uuidbuf)));
-                        strm->Printf ("Load Address: 0x%llx\n", kernel_load_addr);
-                        strm->Flush ();
-                    }
 
-                    /* Set the kernel's LoadAddress based on the information from kdp.
-                       This would normally be handled by the DynamicLoaderDarwinKernel plugin but there's no easy
-                       way to communicate the UUID / load addr from kdp back up to that plugin so we'll set it here. */
-                    ModuleSP exe_module_sp = m_target.GetExecutableModule ();
-                    bool find_and_load_kernel = true;
-                    if (exe_module_sp.get ())
+                    if (kernel_load_addr != LLDB_INVALID_ADDRESS)
                     {
-                        ObjectFile *exe_objfile = exe_module_sp->GetObjectFile();
-                        if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
-                            exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
-                        {
-                            UUID exe_objfile_uuid;
-                            if (exe_objfile->GetUUID (&exe_objfile_uuid) && kernel_uuid == exe_objfile_uuid
-                                && exe_objfile->GetHeaderAddress().IsValid())
-                            {
-                                find_and_load_kernel = false;
-                                addr_t slide = kernel_load_addr - exe_objfile->GetHeaderAddress().GetFileAddress();
-                                if (slide != 0)
-                                {
-                                    bool changed = false;
-                                    exe_module_sp->SetLoadAddress (m_target, slide, changed);
-                                    if (changed)
-                                    {
-                                        ModuleList modlist;
-                                        modlist.Append (exe_module_sp);
-                                        m_target.ModulesDidLoad (modlist);
-                                    }
-                                }
-                            }
-                        }
+                        m_kernel_load_addr = kernel_load_addr;
+                        m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
                     }
-
-                    // If the executable binary is not the same as the kernel being run on the remote host,
-                    // see if Symbols::DownloadObjectAndSymbolFile can find us a symbol file based on the UUID
-                    // and if so, load it at the correct address.
-                    if (find_and_load_kernel && kernel_load_addr != LLDB_INVALID_ADDRESS && kernel_uuid.IsValid())
-                    {
-                        ModuleSpec sym_spec;
-                        sym_spec.GetUUID() = kernel_uuid;
-                        if (Symbols::DownloadObjectAndSymbolFile (sym_spec) 
-                            && sym_spec.GetArchitecture().IsValid() 
-                            && sym_spec.GetSymbolFileSpec().Exists())
-                        {
-                            ModuleSP kernel_sp = m_target.GetSharedModule (sym_spec);
-                            if (kernel_sp.get())
-                            {
-                                m_target.SetExecutableModule(kernel_sp, false);
-                                if (kernel_sp->GetObjectFile() && kernel_sp->GetObjectFile()->GetHeaderAddress().IsValid())
-                                {
-                                    addr_t slide = kernel_load_addr - kernel_sp->GetObjectFile()->GetHeaderAddress().GetFileAddress();
-                                    bool changed = false;
-                                    kernel_sp->SetLoadAddress (m_target, slide, changed);
-                                    if (changed)
-                                    {
-                                        ModuleList modlist;
-                                        modlist.Append (kernel_sp);
-                                        m_target.ModulesDidLoad (modlist);
-                                    }
-                                    if (strm)
-                                    {
-                                        strm->Printf ("Loaded kernel file %s/%s\n", 
-                                                      kernel_sp->GetFileSpec().GetDirectory().AsCString(),
-                                                      kernel_sp->GetFileSpec().GetFilename().AsCString());
-                                        strm->Flush ();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
 
                     // Set the thread ID
                     UpdateThreadListIfNeeded ();
@@ -398,6 +329,20 @@ ProcessKDP::DidAttach ()
     {
         // TODO: figure out the register context that we will use
     }
+}
+
+addr_t
+ProcessKDP::GetImageInfoAddress()
+{
+    return m_kernel_load_addr;
+}
+
+lldb_private::DynamicLoader *
+ProcessKDP::GetDynamicLoader ()
+{
+    if (m_dyld_ap.get() == NULL)
+        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, m_dyld_plugin_name.empty() ? NULL : m_dyld_plugin_name.c_str()));
+    return m_dyld_ap.get();
 }
 
 Error

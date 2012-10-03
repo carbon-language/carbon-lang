@@ -58,6 +58,8 @@
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
 
+#include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
+
 namespace lldb
 {
     // Provide a function that can easily dump the packet history if we know a
@@ -192,7 +194,9 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_addr_to_mmap_size (),
     m_thread_create_bp_sp (),
     m_waiting_for_attach (false),
-    m_destroy_tried_resuming (false)
+    m_destroy_tried_resuming (false),
+    m_dyld_plugin_name(),
+    m_kernel_load_addr (LLDB_INVALID_ADDRESS)
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -428,7 +432,7 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
         return error;
     StartAsyncThread ();
 
-    RelocateOrLoadKernel (strm);
+    CheckForKernel (strm);
 
     lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID ();
     if (pid == LLDB_INVALID_PROCESS_ID)
@@ -471,28 +475,14 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
 // or the executable is a kernel, we may be looking at a KASLR situation (where the kernel has been
 // slid in memory.)
 //
-// This function does several things:
+// This function tries to locate the kernel in memory if this is possibly a kernel debug session.
 //
-// 1. If a non-kernel executable is provided, do nothing.  If the executable provided is a kernel and
-//    it loaded at a non-slid address (FileAddress == LoadAddress), do nothing.
-//
-// 2. When in debug mode the kernel will record its actual load address at a fixed address in memory.
-//    Check those addresses, see if there is a kernel binary at them.
-//
-// 3. If we find a kernel in memory and it matches the executable provided, adjust to the slide.
-//
-// 4. If lldb was given no executable at startup, or the one we find in memory does not match the one
-//    provided, try to locate a copy of the correct kernel on the host system.  Else read it out of memory.
-//
-// gdb would take an additional series of steps where it would scan through memory looking for a kernel
-// to find a slid kernel that was not booted in debug mode (these were also needed back when the kernel
-// didn't record its load address anywhere).  With luck we won't need to pull those in to lldb.
-//
-// The obvious location for all of this code would be in the DynamicLoaderDarwinKernel -- but if we're started
-// without any executable binary provided, we won't know to use that plugin.
+// If a kernel is found, return the address of the kernel in GetImageInfoAddress() -- the 
+// DynamicLoaderDarwinKernel plugin uses this address as the kernel load address and will load the
+// binary, if needed, along with all the kexts.
 
 void
-ProcessGDBRemote::RelocateOrLoadKernel (Stream *strm)
+ProcessGDBRemote::CheckForKernel (Stream *strm)
 {
     // early return if this isn't an "unknown" system (kernel debugging doesn't have a system type)
     const ArchSpec &gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
@@ -519,8 +509,8 @@ ProcessGDBRemote::RelocateOrLoadKernel (Stream *strm)
             && memory_module_sp->GetUUID().IsValid() 
             && memory_module_sp->GetUUID() == exe_module->GetUUID())
         {
-            bool changed = false;
-            exe_module->SetLoadAddress (GetTarget(), 0, changed);
+            m_kernel_load_addr = exe_objfile->GetHeaderAddress().GetFileAddress();
+            m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
             return;
         }
     }
@@ -573,86 +563,13 @@ ProcessGDBRemote::RelocateOrLoadKernel (Stream *strm)
         }
     }
 
-    if (memory_module_sp.get())
+    if (memory_module_sp.get() 
+        && memory_module_sp->GetArchitecture().IsValid() 
+        && memory_module_sp->GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
     {
-        if (strm)
-        {
-            char uuidbuf[64];
-            strm->Printf ("Kernel UUID: %s\n", memory_module_sp->GetUUID().GetAsCString (uuidbuf, sizeof (uuidbuf)));
-            strm->Printf ("Load Address: 0x%llx\n", kernel_addr);
-            strm->Flush ();
-        }
-
-        // Did the user already give us the correct binary?  Don't re-load it if so, just set the load addr.
-        if (exe_module && exe_objfile && exe_module->GetUUID() == memory_module_sp->GetUUID())
-        {
-            bool changed = false;
-            addr_t slide = kernel_addr - exe_objfile->GetHeaderAddress().GetFileAddress();
-            exe_module->SetLoadAddress (GetTarget(), slide, changed);
-            if (changed)
-            {
-                    ModuleList modlist;
-                    modlist.Append (GetTarget().GetExecutableModule());
-                    GetTarget().ModulesDidLoad (modlist);
-            }
-            return;
-        }
-
-        // OK try to find a kernel on the local system, or get it from memory
-        LoadKernel (strm, memory_module_sp->GetUUID(), kernel_addr);
-    }
-}
-
-void
-ProcessGDBRemote::LoadKernel (Stream *strm, UUID kernel_uuid, addr_t kernel_load_addr)
-{
-
-    // First try to find the kernel binary by calling Symbols::DownloadObjectAndSymbolFile
-    ModuleSpec sym_spec;
-    sym_spec.GetUUID() = kernel_uuid;
-    if (Symbols::DownloadObjectAndSymbolFile (sym_spec) 
-        && sym_spec.GetArchitecture().IsValid() 
-        && sym_spec.GetSymbolFileSpec().Exists())
-    {
-        ModuleSP kernel_sp = GetTarget().GetSharedModule (sym_spec);
-        if (kernel_sp.get())
-        {
-            GetTarget().SetExecutableModule(kernel_sp, false);
-            if (kernel_sp->GetObjectFile() && kernel_sp->GetObjectFile()->GetHeaderAddress().IsValid())
-            {
-                addr_t slide = kernel_load_addr - kernel_sp->GetObjectFile()->GetHeaderAddress().GetFileAddress();
-                bool changed = false;
-                kernel_sp->SetLoadAddress (GetTarget(), slide, changed);
-                if (changed)
-                {
-                    ModuleList modlist;
-                    modlist.Append (kernel_sp);
-                    GetTarget().ModulesDidLoad (modlist);
-                }
-                if (strm)
-                {
-                    strm->Printf ("Loaded kernel file %s/%s\n", 
-                                  kernel_sp->GetFileSpec().GetDirectory().AsCString(),
-                                  kernel_sp->GetFileSpec().GetFilename().AsCString());
-                    strm->Flush ();
-                }
-                return;
-            }
-        }
-    }
-
-    // If nothing better, load the kernel binary out of memory - this is likely slow and may not get us symbols.
-    ModuleSP memory_module_sp = ReadModuleFromMemory (FileSpec("mach_kernel", false), kernel_load_addr, true, true);
-    if (memory_module_sp.get()
-        && memory_module_sp->GetUUID().IsValid()
-        && memory_module_sp->GetObjectFile()
-        && memory_module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeExecutable
-        && memory_module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
-    {
-        bool changed;
-        uint64_t slide = kernel_load_addr - memory_module_sp->GetObjectFile()->GetHeaderAddress().GetFileAddress();
-        memory_module_sp->SetLoadAddress (GetTarget(), slide, changed);
-        GetTarget().SetExecutableModule(memory_module_sp, false);
+        m_kernel_load_addr = kernel_addr;
+        m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
+        return;
     }
 }
 
@@ -2067,7 +1984,10 @@ ProcessGDBRemote::IsAlive ()
 addr_t
 ProcessGDBRemote::GetImageInfoAddress()
 {
-    return m_gdb_comm.GetShlibInfoAddr();
+    if (m_kernel_load_addr != LLDB_INVALID_ADDRESS)
+        return m_kernel_load_addr;
+    else
+        return m_gdb_comm.GetShlibInfoAddr();
 }
 
 //------------------------------------------------------------------
@@ -3080,4 +3000,11 @@ ProcessGDBRemote::StopNoticingNewThreads()
     return true;
 }
     
+lldb_private::DynamicLoader *
+ProcessGDBRemote::GetDynamicLoader ()
+{
+    if (m_dyld_ap.get() == NULL)
+        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, m_dyld_plugin_name.empty() ? NULL : m_dyld_plugin_name.c_str()));
+    return m_dyld_ap.get();
+}
 

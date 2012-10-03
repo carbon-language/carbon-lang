@@ -295,10 +295,7 @@ protected:
     }
 
     void
-    RelocateOrLoadKernel (lldb_private::Stream *strm);
-
-    void
-    LoadKernel (lldb_private::Stream *strm, lldb_private::UUID kernel_uuid, lldb::addr_t kernel_load_addr);
+    CheckForKernel (lldb_private::Stream *strm);
 
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
@@ -332,6 +329,8 @@ protected:
     lldb::BreakpointSP m_thread_create_bp_sp;
     bool m_waiting_for_attach;
     bool m_destroy_tried_resuming;
+    std::string m_dyld_plugin_name;
+    lldb::addr_t m_kernel_load_addr;
     
     bool
     StartAsyncThread ();
@@ -379,6 +378,9 @@ protected:
     InterruptIfRunning (bool discard_thread_plans, 
                         bool catch_stop_event, 
                         lldb::EventSP &stop_event_sp);
+
+    lldb_private::DynamicLoader *
+    GetDynamicLoader ();
 
 private:
     //------------------------------------------------------------------
