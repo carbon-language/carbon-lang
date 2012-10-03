@@ -92,6 +92,10 @@ endif
 ifeq ($(ARCH),x86_64)
 RuntimeLibrary.linux.Configs += \
 	full-x86_64.a profile-x86_64.a asan-x86_64.a tsan-x86_64.a
+# We assume that 32-bit ASan library can be built by Clang on 64-bit platform,
+# and add it to the list of runtime libraries so that
+# "clang -faddress-sanitizer -m32" would work.
+RuntimeLibrary.linux.Configs += asan-i386.a
 endif
 
 endif
