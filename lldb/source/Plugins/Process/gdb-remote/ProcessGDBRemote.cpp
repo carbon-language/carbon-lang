@@ -2497,8 +2497,8 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url, const Pr
                 ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
                 debugserver_args.AppendArgument(arg_cstr);
             }
-            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
-            debugserver_args.AppendArgument("--log-flags=0x802e0e");
+//            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
+//            debugserver_args.AppendArgument("--log-flags=0x802e0e");
 
             // We currently send down all arguments, attach pids, or attach 
             // process names in dedicated GDB server packets, so we don't need
