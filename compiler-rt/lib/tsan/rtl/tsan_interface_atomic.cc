@@ -61,7 +61,26 @@ static void AtomicStatInc(ThreadState *thr, uptr size, morder mo, StatType t) {
              :                    StatAtomicSeq_Cst);
 }
 
+static bool IsLoadOrder(morder mo) {
+  return mo == mo_relaxed || mo == mo_consume
+      || mo == mo_acquire || mo == mo_seq_cst;
+}
+
+static bool IsStoreOrder(morder mo) {
+  return mo == mo_relaxed || mo == mo_release || mo == mo_seq_cst;
+}
+
+static bool IsReleaseOrder(morder mo) {
+  return mo == mo_release || mo == mo_acq_rel || mo == mo_seq_cst;
+}
+
+static bool IsAcquireOrder(morder mo) {
+  return mo == mo_consume || mo == mo_acquire
+      || mo == mo_acq_rel || mo == mo_seq_cst;
+}
+
 #define SCOPED_ATOMIC(func, ...) \
+    if ((u32)mo > 100500) mo = (morder)((u32)mo - 100500); \
     mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
     ThreadState *const thr = cur_thread(); \
     const uptr pc = (uptr)__builtin_return_address(0); \
@@ -73,9 +92,9 @@ static void AtomicStatInc(ThreadState *thr, uptr size, morder mo, StatType t) {
 template<typename T>
 static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
     morder mo) {
-  CHECK(mo & (mo_relaxed | mo_consume | mo_acquire | mo_seq_cst));
+  CHECK(IsLoadOrder(mo));
   T v = *a;
-  if (mo & (mo_consume | mo_acquire | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   return v;
 }
@@ -83,8 +102,8 @@ static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
 template<typename T>
 static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  CHECK(mo & (mo_relaxed | mo_release | mo_seq_cst));
-  if (mo & (mo_release | mo_seq_cst))
+  CHECK(IsStoreOrder(mo));
+  if (IsReleaseOrder(mo))
     ReleaseStore(thr, pc, (uptr)a);
   *a = v;
 }
@@ -92,10 +111,10 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
 template<typename T>
 static T AtomicExchange(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (mo & (mo_release | mo_acq_rel | mo_seq_cst))
+  if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   v = __sync_lock_test_and_set(a, v);
-  if (mo & (mo_consume | mo_acquire | mo_acq_rel | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   return v;
 }
@@ -103,10 +122,10 @@ static T AtomicExchange(ThreadState *thr, uptr pc, volatile T *a, T v,
 template<typename T>
 static T AtomicFetchAdd(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (mo & (mo_release | mo_acq_rel | mo_seq_cst))
+  if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   v = __sync_fetch_and_add(a, v);
-  if (mo & (mo_consume | mo_acquire | mo_acq_rel | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   return v;
 }
@@ -114,10 +133,10 @@ static T AtomicFetchAdd(ThreadState *thr, uptr pc, volatile T *a, T v,
 template<typename T>
 static T AtomicFetchAnd(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (mo & (mo_release | mo_acq_rel | mo_seq_cst))
+  if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   v = __sync_fetch_and_and(a, v);
-  if (mo & (mo_consume | mo_acquire | mo_acq_rel | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   return v;
 }
@@ -125,10 +144,10 @@ static T AtomicFetchAnd(ThreadState *thr, uptr pc, volatile T *a, T v,
 template<typename T>
 static T AtomicFetchOr(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (mo & (mo_release | mo_acq_rel | mo_seq_cst))
+  if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   v = __sync_fetch_and_or(a, v);
-  if (mo & (mo_consume | mo_acquire | mo_acq_rel | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   return v;
 }
@@ -136,10 +155,10 @@ static T AtomicFetchOr(ThreadState *thr, uptr pc, volatile T *a, T v,
 template<typename T>
 static T AtomicFetchXor(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (mo & (mo_release | mo_acq_rel | mo_seq_cst))
+  if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   v = __sync_fetch_and_xor(a, v);
-  if (mo & (mo_consume | mo_acquire | mo_acq_rel | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   return v;
 }
@@ -147,11 +166,11 @@ static T AtomicFetchXor(ThreadState *thr, uptr pc, volatile T *a, T v,
 template<typename T>
 static bool AtomicCAS(ThreadState *thr, uptr pc,
     volatile T *a, T *c, T v, morder mo) {
-  if (mo & (mo_release | mo_acq_rel | mo_seq_cst))
+  if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   T cc = *c;
   T pr = __sync_val_compare_and_swap(a, cc, v);
-  if (mo & (mo_consume | mo_acquire | mo_acq_rel | mo_seq_cst))
+  if (IsAcquireOrder(mo))
     Acquire(thr, pc, (uptr)a);
   if (pr == cc)
     return true;

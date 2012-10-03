@@ -22,6 +22,8 @@ typedef short __tsan_atomic16;  // NOLINT
 typedef int   __tsan_atomic32;
 typedef long  __tsan_atomic64;  // NOLINT
 
+// Part of ABI, do not change.
+// http://llvm.org/viewvc/llvm-project/libcxx/trunk/include/atomic?view=markup
 typedef enum {
   __tsan_memory_order_relaxed = 1 << 0,
   __tsan_memory_order_consume = 1 << 1,
