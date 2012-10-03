@@ -397,6 +397,7 @@ StockSectionChunk<target_endianness, is64Bits>::
     break;
   case DefinedAtom::typeZeroFill:
     this->_type        = ELF::SHT_NOBITS;
+    break;
   case DefinedAtom::typeConstant:
     this->_type        = ELF::SHT_PROGBITS;
     break;
@@ -912,9 +913,7 @@ void ELFWriter<target_endianness, is64Bits>
     StringRef sectionName = a->customSectionName();
     if (a->sectionChoice() == 
         DefinedAtom::SectionChoice::sectionBasedOnContent) {
-      if (a->size() <8)
-         sectionName = ".sbss";
-      else
+      if (a->contentType() == DefinedAtom::typeZeroFill)
          sectionName = ".bss";
     }
     auto pos = sectionMap.find(sectionName);
