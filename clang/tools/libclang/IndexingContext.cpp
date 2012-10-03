@@ -273,6 +273,21 @@ void IndexingContext::importedModule(const ImportDecl *ImportD) {
   (void)astFile;
 }
 
+void IndexingContext::importedPCH(const FileEntry *File) {
+  if (!CB.importedASTFile)
+    return;
+
+  CXIdxImportedASTFileInfo Info = {
+                                    (CXFile)File,
+                                    getIndexLoc(SourceLocation()),
+                                    /*isModule=*/false,
+                                    /*isImplicit=*/false,
+                                    /*moduleName=*/NULL
+                                  };
+  CXIdxClientASTFile astFile = CB.importedASTFile(ClientData, &Info);
+  (void)astFile;
+}
+
 void IndexingContext::startedTranslationUnit() {
   CXIdxClientContainer idxCont = 0;
   if (CB.startedTranslationUnit)

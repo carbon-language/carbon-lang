@@ -383,6 +383,7 @@ public:
                       bool isImport, bool isAngled);
 
   void importedModule(const ImportDecl *ImportD);
+  void importedPCH(const FileEntry *File);
 
   void startedTranslationUnit();
 

@@ -623,6 +623,9 @@ public:
   /// \returns true if the iteration was complete or false if it was aborted.
   bool visitLocalTopLevelDecls(void *context, DeclVisitorFn Fn);
 
+  /// \brief Get the PCH file if one was included.
+  const FileEntry *getPCHFile();
+
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 

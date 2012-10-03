@@ -197,13 +197,20 @@ public:
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
+    PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+
     // We usually disable the preprocessing record for indexing even if the
     // original preprocessing options had it enabled. Now that the indexing
     // Preprocessor has been created (without a preprocessing record), re-enable
     // the option in case modules are enabled, so that the detailed record
     // option can be propagated when the module file is generated.
     if (CI.getLangOpts().Modules && EnablePPDetailedRecordForModules)
-      CI.getPreprocessorOpts().DetailedRecord = true;
+      PPOpts.DetailedRecord = true;
+
+    if (!PPOpts.ImplicitPCHInclude.empty()) {
+      IndexCtx.importedPCH(
+                        CI.getFileManager().getFile(PPOpts.ImplicitPCHInclude));
+    }
 
     IndexCtx.setASTContext(CI.getASTContext());
     Preprocessor &PP = CI.getPreprocessor();
@@ -535,6 +542,9 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
     return;
 
   ASTUnit::ConcurrencyCheck Check(*Unit);
+
+  if (const FileEntry *PCHFile = Unit->getPCHFile())
+    IndexCtx->importedPCH(PCHFile);
 
   FileManager &FileMgr = Unit->getFileManager();
 

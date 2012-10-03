@@ -2816,6 +2816,42 @@ bool ASTUnit::visitLocalTopLevelDecls(void *context, DeclVisitorFn Fn) {
   return true;
 }
 
+namespace {
+struct PCHLocatorInfo {
+  serialization::ModuleFile *Mod;
+  PCHLocatorInfo() : Mod(0) {}
+};
+}
+
+static bool PCHLocator(serialization::ModuleFile &M, void *UserData) {
+  PCHLocatorInfo &Info = *static_cast<PCHLocatorInfo*>(UserData);
+  switch (M.Kind) {
+  case serialization::MK_Module:
+    return true; // skip dependencies.
+  case serialization::MK_PCH:
+    Info.Mod = &M;
+    return true; // found it.
+  case serialization::MK_Preamble:
+    return false; // look in dependencies.
+  case serialization::MK_MainFile:
+    return false; // look in dependencies.
+  }
+
+  return true;
+}
+
+const FileEntry *ASTUnit::getPCHFile() {
+  if (!Reader)
+    return 0;
+
+  PCHLocatorInfo Info;
+  Reader->getModuleManager().visit(PCHLocator, &Info);
+  if (Info.Mod)
+    return Info.Mod->File;
+
+  return 0;
+}
+
 void ASTUnit::PreambleData::countLines() const {
   NumLines = 0;
   if (empty())
