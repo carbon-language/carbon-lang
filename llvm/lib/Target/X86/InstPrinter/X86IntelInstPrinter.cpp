@@ -1,4 +1,4 @@
-//===-- X86IntelInstPrinter.cpp - AT&T assembly instruction printing ------===//
+//===-- X86IntelInstPrinter.cpp - Intel assembly instruction printing -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file includes code for rendering MCInst instances as AT&T-style
+// This file includes code for rendering MCInst instances as Intel-style
 // assembly.
 //
 //===----------------------------------------------------------------------===//
@@ -160,8 +160,7 @@ void X86IntelInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
     printOperand(MI, Op+2, O);
     NeedPlus = true;
   }
-  
-  
+
   if (!DispSpec.isImm()) {
     if (NeedPlus) O << " + ";
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This class prints an X86 MCInst to intel style .s file syntax.
+// This class prints an X86 MCInst to Intel style .s file syntax.
 //
 //===----------------------------------------------------------------------===//
 
