@@ -16,11 +16,6 @@
 
 namespace llvm {
 
-class TableGenAction;
-
-/// Run the table generator, performing the specified Action on parsed records.
-int TableGenMain(char *argv0, TableGenAction &Action);
-
 class RecordKeeper;
 class raw_ostream;
 typedef bool TableGenMainFn(raw_ostream &OS, RecordKeeper &Records);

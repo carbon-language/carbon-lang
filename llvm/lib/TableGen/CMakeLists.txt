@@ -7,7 +7,6 @@ add_llvm_library(LLVMTableGen
   Main.cpp
   Record.cpp
   StringMatcher.cpp
-  TableGenAction.cpp
   TableGenBackend.cpp
   TGLexer.cpp
   TGParser.cpp
