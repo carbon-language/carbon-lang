@@ -917,10 +917,6 @@ private:
 
   void finishPendingActions();
 
-  /// \brief Whether D needs to be instantiated, i.e. whether an instantiation
-  /// for D does not exist yet.
-  bool needPendingInstantiation(ValueDecl* D) const;
-
   /// \brief Produce an error diagnostic and return true.
   ///
   /// This routine should only be used for fatal errors that have to
