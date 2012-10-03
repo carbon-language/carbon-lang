@@ -830,8 +830,8 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(
       // Issue a diagnostic.
       DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-        "cannot mangle this %select{ERROR|ERROR|pointer/reference|ERROR|"
-        "template|template pack expansion|expression|parameter pack}0 "
+        "cannot mangle this %select{ERROR|ERROR|pointer/reference|nullptr|"
+        "integral|template|template pack expansion|ERROR|parameter pack}0 "
         "template argument yet");
       Diags.Report(TAL.getLocation(), DiagID)
         << TA.getKind()
