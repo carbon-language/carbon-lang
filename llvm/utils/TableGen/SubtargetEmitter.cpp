@@ -664,15 +664,16 @@ Record *SubtargetEmitter::FindWriteResources(
   if (SchedWrite.TheDef->isSubClassOf("SchedWriteRes"))
     return SchedWrite.TheDef;
 
-  // Check this processor's list of aliases for SchedWrite.
   Record *AliasDef = 0;
   for (RecIter AI = SchedWrite.Aliases.begin(), AE = SchedWrite.Aliases.end();
        AI != AE; ++AI) {
     const CodeGenSchedRW &AliasRW =
       SchedModels.getSchedRW((*AI)->getValueAsDef("AliasRW"));
-    Record *ModelDef = AliasRW.TheDef->getValueAsDef("SchedModel");
-    if (&SchedModels.getProcModel(ModelDef) != &ProcModel)
-      continue;
+    if (AliasRW.TheDef->getValueInit("SchedModel")->isComplete()) {
+      Record *ModelDef = AliasRW.TheDef->getValueAsDef("SchedModel");
+      if (&SchedModels.getProcModel(ModelDef) != &ProcModel)
+        continue;
+    }
     if (AliasDef)
       throw TGError(AliasRW.TheDef->getLoc(), "Multiple aliases "
                     "defined for processor " + ProcModel.ModelName +
@@ -722,9 +723,11 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
        AI != AE; ++AI) {
     const CodeGenSchedRW &AliasRW =
       SchedModels.getSchedRW((*AI)->getValueAsDef("AliasRW"));
-    Record *ModelDef = AliasRW.TheDef->getValueAsDef("SchedModel");
-    if (&SchedModels.getProcModel(ModelDef) != &ProcModel)
-      continue;
+    if (AliasRW.TheDef->getValueInit("SchedModel")->isComplete()) {
+      Record *ModelDef = AliasRW.TheDef->getValueAsDef("SchedModel");
+      if (&SchedModels.getProcModel(ModelDef) != &ProcModel)
+        continue;
+    }
     if (AliasDef)
       throw TGError(AliasRW.TheDef->getLoc(), "Multiple aliases "
                     "defined for processor " + ProcModel.ModelName +
@@ -833,6 +836,8 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
         }
       }
       if (RWDef) {
+        Writes.clear();
+        Reads.clear();
         SchedModels.findRWs(RWDef->getValueAsListOfDefs("OperandReadWrites"),
                             Writes, Reads);
       }
@@ -844,7 +849,8 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
     std::vector<MCReadAdvanceEntry> ReadAdvanceEntries;
     for (IdxIter WI = Writes.begin(), WE = Writes.end(); WI != WE; ++WI) {
       IdxVec WriteSeq;
-      SchedModels.expandRWSequence(*WI, WriteSeq, /*IsRead=*/false);
+      SchedModels.expandRWSeqForProc(*WI, WriteSeq, /*IsRead=*/false,
+                                     ProcModel);
 
       // For each operand, create a latency entry.
       MCWriteLatencyEntry WLEntry;

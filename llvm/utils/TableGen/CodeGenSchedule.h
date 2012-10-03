@@ -43,8 +43,10 @@ void splitSchedReadWrites(const RecVec &RWDefs,
 /// IsVariadic controls whether the variants are expanded into multiple operands
 /// or a sequence of writes on one operand.
 struct CodeGenSchedRW {
+  unsigned Index;
   std::string Name;
   Record *TheDef;
+  bool IsRead;
   bool IsAlias;
   bool HasVariants;
   bool IsVariadic;
@@ -52,10 +54,12 @@ struct CodeGenSchedRW {
   IdxVec Sequence;
   RecVec Aliases;
 
-  CodeGenSchedRW(): TheDef(0), IsAlias(false), HasVariants(false),
+  CodeGenSchedRW(): Index(0), TheDef(0), IsAlias(false), HasVariants(false),
                     IsVariadic(false), IsSequence(false) {}
-  CodeGenSchedRW(Record *Def): TheDef(Def), IsAlias(false), IsVariadic(false) {
+  CodeGenSchedRW(unsigned Idx, Record *Def): Index(Idx), TheDef(Def),
+                                             IsAlias(false), IsVariadic(false) {
     Name = Def->getName();
+    IsRead = Def->isSubClassOf("SchedRead");
     HasVariants = Def->isSubClassOf("SchedVariant");
     if (HasVariants)
       IsVariadic = Def->getValueAsBit("Variadic");
@@ -66,9 +70,10 @@ struct CodeGenSchedRW {
     IsSequence = Def->isSubClassOf("WriteSequence");
   }
 
-  CodeGenSchedRW(const IdxVec &Seq, const std::string &Name):
-    Name(Name), TheDef(0), IsAlias(false), HasVariants(false),
-    IsVariadic(false), IsSequence(true), Sequence(Seq) {
+  CodeGenSchedRW(unsigned Idx, bool Read, const IdxVec &Seq,
+                 const std::string &Name):
+    Index(Idx), Name(Name), TheDef(0), IsRead(Read), IsAlias(false),
+    HasVariants(false), IsVariadic(false), IsSequence(true), Sequence(Seq) {
     assert(Sequence.size() > 1 && "implied sequence needs >1 RWs");
   }
 
@@ -286,15 +291,14 @@ public:
   const CodeGenSchedRW &getSchedRW(unsigned Idx, bool IsRead) const {
     return IsRead ? getSchedRead(Idx) : getSchedWrite(Idx);
   }
-  CodeGenSchedRW &getSchedRW(Record *Def, unsigned &Idx) {
+  CodeGenSchedRW &getSchedRW(Record *Def) {
     bool IsRead = Def->isSubClassOf("SchedRead");
-    Idx = getSchedRWIdx(Def, IsRead);
+    unsigned Idx = getSchedRWIdx(Def, IsRead);
     return const_cast<CodeGenSchedRW&>(
       IsRead ? getSchedRead(Idx) : getSchedWrite(Idx));
   }
-  CodeGenSchedRW &getSchedRW(Record *Def) {
-    unsigned Idx;
-    return getSchedRW(Def, Idx);
+  const CodeGenSchedRW &getSchedRW(Record*Def) const {
+    return const_cast<CodeGenSchedModels&>(*this).getSchedRW(Def);
   }
 
   unsigned getSchedRWIdx(Record *Def, bool IsRead, unsigned After = 0) const;
@@ -340,6 +344,8 @@ public:
   void findRWs(const RecVec &RWDefs, IdxVec &Writes, IdxVec &Reads) const;
   void findRWs(const RecVec &RWDefs, IdxVec &RWs, bool IsRead) const;
   void expandRWSequence(unsigned RWIdx, IdxVec &RWSeq, bool IsRead) const;
+  void expandRWSeqForProc(unsigned RWIdx, IdxVec &RWSeq, bool IsRead,
+                          const CodeGenProcModel &ProcModel) const;
 
   unsigned addSchedClass(const IdxVec &OperWrites, const IdxVec &OperReads,
                          const IdxVec &ProcIndices);
