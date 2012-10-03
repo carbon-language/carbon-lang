@@ -626,9 +626,12 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   }
   dv->Instrs.push_back(mi);
 
-  // Finally set all defs and non-collapsed uses to dv.
-  for (unsigned i = 0, e = mi->getDesc().getNumOperands(); i != e; ++i) {
-    MachineOperand &mo = mi->getOperand(i);
+  // Finally set all defs and non-collapsed uses to dv. We must iterate through
+  // all the operators, including imp-def ones.
+  for (MachineInstr::mop_iterator ii = mi->operands_begin(),
+                                  ee = mi->operands_end();
+                                  ii != ee; ++ii) {
+    MachineOperand &mo = *ii;
     if (!mo.isReg()) continue;
     int rx = regIndex(mo.getReg());
     if (rx < 0) continue;
