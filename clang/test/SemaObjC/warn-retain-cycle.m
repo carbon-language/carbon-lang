@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-runtime-has-weak -fobjc-arc -fblocks -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-runtime-has-weak -fobjc-arc -fblocks -verify -Wno-objc-root-class -Wno-implicit-retain-self %s
 
 void *_Block_copy(const void *block);
 

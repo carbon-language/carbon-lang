@@ -2008,6 +2008,9 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
           if (Level != DiagnosticsEngine::Ignored)
             getCurFunction()->recordUseOfWeak(Result);
         }
+        if (CurContext->isClosure())
+          Diag(Loc, diag::warn_implicitly_retains_self)
+            << FixItHint::CreateInsertion(Loc, "self->");
       }
       
       return Owned(Result);

@@ -717,6 +717,10 @@ def warn_arc_repeated_use_of_weak : Warning <
   "but may be unpredictably set to nil; assign to a strong variable to keep "
   "the object alive">,
   InGroup<ARCRepeatedUseOfWeak>, DefaultIgnore;
+def warn_implicitly_retains_self : Warning <
+  "block implicitily retains 'self' - explicitly mention 'self' to indicate "
+  "this is intended behavior">,
+  InGroup<DiagGroup<"implicit-retain-self">>;
 def warn_arc_possible_repeated_use_of_weak : Warning <
   "weak %select{variable|property|implicit property|instance variable}0 %1 may "
   "be accessed multiple times in this %select{function|method|block|lambda}2 "
