@@ -15,6 +15,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 
 using namespace clang;
@@ -231,6 +232,91 @@ SVal StoreManager::evalDerivedToBase(SVal Derived, const CastExpr *Cast) {
     Result = evalDerivedToBase(Result, (*I)->getType());
   }
   return Result;
+}
+
+SVal StoreManager::evalDerivedToBase(SVal Derived, const CXXBasePath &Path) {
+  // Walk through the path to create nested CXXBaseRegions.
+  SVal Result = Derived;
+  for (CXXBasePath::const_iterator I = Path.begin(), E = Path.end();
+       I != E; ++I) {
+    Result = evalDerivedToBase(Result, I->Base->getType());
+  }
+  return Result;
+}
+
+SVal StoreManager::evalDerivedToBase(SVal Derived, QualType BaseType) {
+  loc::MemRegionVal *DerivedRegVal = dyn_cast<loc::MemRegionVal>(&Derived);
+  if (!DerivedRegVal)
+    return Derived;
+
+  const CXXRecordDecl *BaseDecl = BaseType->getPointeeCXXRecordDecl();
+  if (!BaseDecl)
+    BaseDecl = BaseType->getAsCXXRecordDecl();
+  assert(BaseDecl && "not a C++ object?");
+
+  const MemRegion *BaseReg =
+    MRMgr.getCXXBaseObjectRegion(BaseDecl, DerivedRegVal->getRegion());
+
+  return loc::MemRegionVal(BaseReg);
+}
+
+SVal StoreManager::evalDynamicCast(SVal Base, QualType DerivedType,
+                                   bool &Failed) {
+  Failed = false;
+
+  loc::MemRegionVal *BaseRegVal = dyn_cast<loc::MemRegionVal>(&Base);
+  if (!BaseRegVal)
+    return UnknownVal();
+  const MemRegion *BaseRegion = BaseRegVal->stripCasts(/*StripBases=*/false);
+
+  // Assume the derived class is a pointer or a reference to a CXX record.
+  DerivedType = DerivedType->getPointeeType();
+  assert(!DerivedType.isNull());
+  const CXXRecordDecl *DerivedDecl = DerivedType->getAsCXXRecordDecl();
+  if (!DerivedDecl && !DerivedType->isVoidType())
+    return UnknownVal();
+
+  // Drill down the CXXBaseObject chains, which represent upcasts (casts from
+  // derived to base).
+  const MemRegion *SR = BaseRegion;
+  while (const TypedRegion *TSR = dyn_cast_or_null<TypedRegion>(SR)) {
+    QualType BaseType = TSR->getLocationType()->getPointeeType();
+    assert(!BaseType.isNull());
+    const CXXRecordDecl *SRDecl = BaseType->getAsCXXRecordDecl();
+    if (!SRDecl)
+      return UnknownVal();
+
+    // If found the derived class, the cast succeeds.
+    if (SRDecl == DerivedDecl)
+      return loc::MemRegionVal(TSR);
+
+    if (!DerivedType->isVoidType()) {
+      // Static upcasts are marked as DerivedToBase casts by Sema, so this will
+      // only happen when multiple or virtual inheritance is involved.
+      CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/true,
+                         /*DetectVirtual=*/false);
+      if (SRDecl->isDerivedFrom(DerivedDecl, Paths))
+        return evalDerivedToBase(loc::MemRegionVal(TSR), Paths.front());
+    }
+
+    if (const CXXBaseObjectRegion *R = dyn_cast<CXXBaseObjectRegion>(TSR))
+      // Drill down the chain to get the derived classes.
+      SR = R->getSuperRegion();
+    else {
+      // We reached the bottom of the hierarchy.
+
+      // If this is a cast to void*, return the region.
+      if (DerivedType->isVoidType())
+        return loc::MemRegionVal(TSR);
+
+      // We did not find the derived class. We we must be casting the base to
+      // derived, so the cast should fail.
+      Failed = true;
+      return UnknownVal();
+    }
+  }
+  
+  return UnknownVal();
 }
 
 
