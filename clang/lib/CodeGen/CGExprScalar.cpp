@@ -1056,19 +1056,18 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     return Visit(const_cast<Expr*>(E));
 
   case CK_BaseToDerived: {
-    const CXXRecordDecl *DerivedClassDecl = 
-      DestTy->getCXXRecordDeclForPointerType();
-    
-    return CGF.GetAddressOfDerivedClass(Visit(E), DerivedClassDecl, 
+    const CXXRecordDecl *DerivedClassDecl = DestTy->getPointeeCXXRecordDecl();
+    assert(DerivedClassDecl && "BaseToDerived arg isn't a C++ object pointer!");
+
+    return CGF.GetAddressOfDerivedClass(Visit(E), DerivedClassDecl,
                                         CE->path_begin(), CE->path_end(),
                                         ShouldNullCheckClassCastValue(CE));
   }
   case CK_UncheckedDerivedToBase:
   case CK_DerivedToBase: {
-    const RecordType *DerivedClassTy = 
-      E->getType()->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
-    CXXRecordDecl *DerivedClassDecl = 
-      cast<CXXRecordDecl>(DerivedClassTy->getDecl());
+    const CXXRecordDecl *DerivedClassDecl =
+      E->getType()->getPointeeCXXRecordDecl();
+    assert(DerivedClassDecl && "DerivedToBase arg isn't a C++ object pointer!");
 
     return CGF.GetAddressOfBaseClass(Visit(E), DerivedClassDecl, 
                                      CE->path_begin(), CE->path_end(),

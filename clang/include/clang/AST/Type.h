@@ -1675,12 +1675,18 @@ public:
   const ObjCObjectPointerType *getAsObjCQualifiedIdType() const;
   const ObjCObjectPointerType *getAsObjCQualifiedClassType() const;
   const ObjCObjectType *getAsObjCQualifiedInterfaceType() const;
-  const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
 
   /// \brief Retrieves the CXXRecordDecl that this type refers to, either
   /// because the type is a RecordType or because it is the injected-class-name
   /// type of a class template or class template partial specialization.
   CXXRecordDecl *getAsCXXRecordDecl() const;
+
+  /// If this is a pointer or reference to a RecordType, return the
+  /// CXXRecordDecl that that type refers to.
+  ///
+  /// If this is not a pointer or reference, or the type being pointed to does
+  /// not refer to a CXXRecordDecl, returns NULL.
+  const CXXRecordDecl *getPointeeCXXRecordDecl() const;
 
   /// \brief Get the AutoType whose type will be deduced for a variable with
   /// an initializer of this type. This looks through declarators like pointer

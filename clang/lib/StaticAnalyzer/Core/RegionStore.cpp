@@ -900,30 +900,15 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
 }
 
-// This mirrors Type::getCXXRecordDeclForPointerType(), but there doesn't
-// appear to be another need for this in the rest of the codebase.
-static const CXXRecordDecl *GetCXXRecordDeclForReferenceType(QualType Ty) {
-  if (const ReferenceType *RT = Ty->getAs<ReferenceType>())
-    if (const RecordType *RCT = RT->getPointeeType()->getAs<RecordType>())
-      return dyn_cast<CXXRecordDecl>(RCT->getDecl());
-  return 0;
-}
-
 SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType baseType) {
-  const CXXRecordDecl *baseDecl;
-  
-  if (baseType->isPointerType())
-    baseDecl = baseType->getCXXRecordDeclForPointerType();
-  else if (baseType->isReferenceType())
-    baseDecl = GetCXXRecordDeclForReferenceType(baseType);
-  else
-    baseDecl = baseType->getAsCXXRecordDecl();
-
-  assert(baseDecl && "not a CXXRecordDecl?");
-
   loc::MemRegionVal *derivedRegVal = dyn_cast<loc::MemRegionVal>(&derived);
   if (!derivedRegVal)
     return derived;
+
+  const CXXRecordDecl *baseDecl = baseType->getPointeeCXXRecordDecl();
+  if (!baseDecl)
+    baseDecl = baseType->getAsCXXRecordDecl();
+  assert(baseDecl && "not a C++ object?");
 
   const MemRegion *baseReg = 
     MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal->getRegion()); 

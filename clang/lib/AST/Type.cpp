@@ -512,10 +512,18 @@ const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
   return 0;
 }
 
-const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
+const CXXRecordDecl *Type::getPointeeCXXRecordDecl() const {
+  QualType PointeeType;
   if (const PointerType *PT = getAs<PointerType>())
-    if (const RecordType *RT = PT->getPointeeType()->getAs<RecordType>())
-      return dyn_cast<CXXRecordDecl>(RT->getDecl());
+    PointeeType = PT->getPointeeType();
+  else if (const ReferenceType *RT = getAs<ReferenceType>())
+    PointeeType = RT->getPointeeType();
+  else
+    return 0;
+
+  if (const RecordType *RT = PointeeType->getAs<RecordType>())
+    return dyn_cast<CXXRecordDecl>(RT->getDecl());
+
   return 0;
 }
 
