@@ -401,6 +401,10 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     }
   }
 
+  // CPUName may have been set by the CPU detection code. Make sure the
+  // new MCSchedModel is used.
+  InitMCProcessorInfo(CPUName, FS);
+
   if (X86ProcFamily == IntelAtom)
     PostRAScheduler = true;
 
