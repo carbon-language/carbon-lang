@@ -116,6 +116,17 @@ void setupA(bool x) {
   A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
   A a20{a20};  // expected-warning {{variable 'a20' is uninitialized when used within its own initialization}}
   A a21 = {a21};  // expected-warning {{variable 'a21' is uninitialized when used within its own initialization}}
+
+  // FIXME: Make the local uninitialized warning consistant with the global
+  // uninitialized checking.
+  A *a22 = new A(a22->count);  // expected-warning {{variable 'a22' is uninitialized when used within its own initialization}}
+  A *a23 = new A(a23->ONE);  // expected-warning {{variable 'a23' is uninitialized when used within its own initialization}}
+  A *a24 = new A(a24->TWO);  // expected-warning {{variable 'a24' is uninitialized when used within its own initialization}}
+  A *a25 = new A(a25->zero());  // expected-warning {{variable 'a25' is uninitialized when used within its own initialization}}
+
+  A *a26 = new A(a26->get());    // expected-warning {{variable 'a26' is uninitialized when used within its own initialization}}
+  A *a27 = new A(a27->get2());  // expected-warning {{variable 'a27' is uninitialized when used within its own initialization}}
+  A *a28 = new A(a28->num);  // expected-warning {{variable 'a28' is uninitialized when used within its own initialization}}
 }
 
 bool x;
@@ -143,6 +154,15 @@ A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitiali
 A a20{a20};  // expected-warning {{variable 'a20' is uninitialized when used within its own initialization}}
 A a21 = {a21};  // expected-warning {{variable 'a21' is uninitialized when used within its own initialization}}
 
+A *a22 = new A(a22->count);
+A *a23 = new A(a23->ONE);
+A *a24 = new A(a24->TWO);
+A *a25 = new A(a25->zero());
+
+A *a26 = new A(a26->get());    // expected-warning {{variable 'a26' is uninitialized when used within its own initialization}}
+A *a27 = new A(a27->get2());  // expected-warning {{variable 'a27' is uninitialized when used within its own initialization}}
+A *a28 = new A(a28->num);  // expected-warning {{variable 'a28' is uninitialized when used within its own initialization}}
+
 struct B {
   // POD struct.
   int x;
@@ -153,6 +173,11 @@ B getB() { return B(); };
 B getB(int x) { return B(); };
 B getB(int *x) { return B(); };
 B getB(B *b) { return B(); };
+
+B* getPtrB() { return 0; };
+B* getPtrB(int x) { return 0; };
+B* getPtrB(int *x) { return 0; };
+B* getPtrB(B **b) { return 0; };
 
 void setupB() {
   B b1;
@@ -170,7 +195,45 @@ void setupB() {
   B b8 = getB(b8.x);  // expected-warning {{variable 'b8' is uninitialized when used within its own initialization}}
   B b9 = getB(b9.y);  // expected-warning {{variable 'b9' is uninitialized when used within its own initialization}}
   B b10 = getB(-b10.x);  // expected-warning {{variable 'b10' is uninitialized when used within its own initialization}}
+
+  B* b11 = 0;
+  B* b12(b11);
+  B* b13 = getPtrB();
+  B* b14 = getPtrB(&b14);
+
+  (void) b12;
+  (void) b13;
+
+  B* b15 = getPtrB(b15->x);  // expected-warning {{variable 'b15' is uninitialized when used within its own initialization}}
+  B* b16 = getPtrB(b16->y);  // expected-warning {{variable 'b16' is uninitialized when used within its own initialization}}
+
+  B b17 = { b17.x = 5, b17.y = 0 };
+  B b18 = { b18.x + 1, b18.y };  // expected-warning 2{{variable 'b18' is uninitialized when used within its own initialization}}
 }
+
+B b1;
+B b2(b1);
+B b3 = { 5, &b3.x };
+B b4 = getB();
+B b5 = getB(&b5);
+B b6 = getB(&b6.x);
+
+B b7(b7);  // expected-warning {{variable 'b7' is uninitialized when used within its own initialization}}
+B b8 = getB(b8.x);  // expected-warning {{variable 'b8' is uninitialized when used within its own initialization}}
+B b9 = getB(b9.y);  // expected-warning {{variable 'b9' is uninitialized when used within its own initialization}}
+B b10 = getB(-b10.x);  // expected-warning {{variable 'b10' is uninitialized when used within its own initialization}}
+
+B* b11 = 0;
+B* b12(b11);
+B* b13 = getPtrB();
+B* b14 = getPtrB(&b14);
+
+B* b15 = getPtrB(b15->x);  // expected-warning {{variable 'b15' is uninitialized when used within its own initialization}}
+B* b16 = getPtrB(b16->y);  // expected-warning {{variable 'b16' is uninitialized when used within its own initialization}}
+
+B b17 = { b17.x = 5, b17.y = 0 };
+B b18 = { b18.x + 1, b18.y };  // expected-warning 2{{variable 'b18' is uninitialized when used within its own initialization}}
+
 
 // Also test similar constructs in a field's initializer.
 struct S {

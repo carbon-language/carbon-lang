@@ -6276,6 +6276,20 @@ namespace {
       if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
         HandleValue(CO->getTrueExpr());
         HandleValue(CO->getFalseExpr());
+        return;
+      }
+
+      if (isa<MemberExpr>(E)) {
+        Expr *Base = E->IgnoreParenImpCasts();
+        while (MemberExpr *ME = dyn_cast<MemberExpr>(Base)) {
+          // Check for static member variables and don't warn on them.
+          if (!isa<FieldDecl>(ME->getMemberDecl()))
+            return;
+          Base = ME->getBase()->IgnoreParenImpCasts();
+        }
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base))
+          HandleDeclRefExpr(DRE);
+        return;
       }
     }
 
@@ -6287,7 +6301,7 @@ namespace {
     }
 
     void VisitImplicitCastExpr(ImplicitCastExpr *E) {
-      if ((!isRecordType && E->getCastKind() == CK_LValueToRValue) ||
+      if (E->getCastKind() == CK_LValueToRValue ||
           (isRecordType && E->getCastKind() == CK_NoOp))
         HandleValue(E->getSubExpr());
 
@@ -6298,22 +6312,36 @@ namespace {
       // Don't warn on arrays since they can be treated as pointers.
       if (E->getType()->canDecayToPointerType()) return;
 
-      ValueDecl *VD = E->getMemberDecl();
-      CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(VD);
-      if (isa<FieldDecl>(VD) || (MD && !MD->isStatic()))
-        if (DeclRefExpr *DRE
-              = dyn_cast<DeclRefExpr>(E->getBase()->IgnoreParenImpCasts())) {
-          HandleDeclRefExpr(DRE);
-          return;
-        }
+      // Warn when a non-static method call is followed by non-static member
+      // field accesses, which is followed by a DeclRefExpr.
+      CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(E->getMemberDecl());
+      bool Warn = (MD && !MD->isStatic());
+      Expr *Base = E->getBase()->IgnoreParenImpCasts();
+      while (MemberExpr *ME = dyn_cast<MemberExpr>(Base)) {
+        if (!isa<FieldDecl>(ME->getMemberDecl()))
+          Warn = false;
+        Base = ME->getBase()->IgnoreParenImpCasts();
+      }
 
-      Inherited::VisitMemberExpr(E);
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
+        if (Warn)
+          HandleDeclRefExpr(DRE);
+        return;
+      }
+
+      // The base of a MemberExpr is not a MemberExpr or a DeclRefExpr.
+      // Visit that expression.
+      Visit(Base);
     }
 
     void VisitUnaryOperator(UnaryOperator *E) {
       // For POD record types, addresses of its own members are well-defined.
-      if (E->getOpcode() == UO_AddrOf && isRecordType && isPODType &&
-          isa<MemberExpr>(E->getSubExpr()->IgnoreParens())) return;
+      if (E->getOpcode() == UO_AddrOf && isRecordType &&
+          isa<MemberExpr>(E->getSubExpr()->IgnoreParens())) {
+        if (!isPODType)
+          HandleValue(E->getSubExpr());
+        return;
+      }
       Inherited::VisitUnaryOperator(E);
     } 
 
