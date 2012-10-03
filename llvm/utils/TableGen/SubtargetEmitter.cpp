@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "subtarget-emitter"
+
 #include "CodeGenTarget.h"
 #include "CodeGenSchedule.h"
 #include "llvm/ADT/StringExtras.h"
@@ -769,6 +771,8 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
   std::vector<MCSchedClassDesc> &SCTab = SchedTables.ProcSchedClasses.back();
   for (CodeGenSchedModels::SchedClassIter SCI = SchedModels.schedClassBegin(),
          SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
+    DEBUG(SCI->dump(&SchedModels));
+
     SCTab.resize(SCTab.size() + 1);
     MCSchedClassDesc &SCDesc = SCTab.back();
     // SCDesc.Name is guarded by NDEBUG
@@ -817,8 +821,8 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
       }
     }
     else if (!SCI->InstRWs.empty()) {
-      assert(SCI->Writes.empty() && SCI->Reads.empty() &&
-             "InstRW class should not have its own ReadWrites");
+      // This class may have a default ReadWrite list which can be overriden by
+      // InstRW definitions.
       Record *RWDef = 0;
       for (RecIter RWI = SCI->InstRWs.begin(), RWE = SCI->InstRWs.end();
            RWI != RWE; ++RWI) {

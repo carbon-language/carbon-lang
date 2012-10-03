@@ -72,9 +72,6 @@ CodeGenSchedModels::CodeGenSchedModels(RecordKeeper &RK,
   // Infer new SchedClasses from SchedVariant.
   inferSchedClasses();
 
-  DEBUG(for (unsigned i = 0; i < SchedClasses.size(); ++i)
-          SchedClasses[i].dump(this));
-
   // Populate each CodeGenProcModel's WriteResDefs, ReadAdvanceDefs, and
   // ProcResourceDefs.
   collectProcResources();
@@ -475,7 +472,7 @@ void CodeGenSchedModels::collectSchedClasses() {
            RWI != RWE; ++RWI) {
         const CodeGenProcModel &ProcModel =
           getProcModel((*RWI)->getValueAsDef("SchedModel"));
-        dbgs() << "InstrRW on " << ProcModel.ModelName << " for " << InstName;
+        dbgs() << "InstRW on " << ProcModel.ModelName << " for " << InstName;
         IdxVec Writes;
         IdxVec Reads;
         findRWs((*RWI)->getValueAsListOfDefs("OperandReadWrites"),
