@@ -81,6 +81,10 @@ The compound statement body establishes a new lexical scope within that of its p
 
 Local automatic (stack) variables referenced within the compound statement of a Block are imported and captured by the Block as const copies. The capture (binding) is performed at the time of the Block literal expression evaluation.
 
+The compiler is not required to capture a variable if it can prove that no references to the variable will actually be evaluated.  Programmers can force a variable to be captured by referencing it in a statement at the beginning of the Block, like so:
+  (void) foo;
+This matters when capturing the variable has side-effects, as it can in Objective-C or C++.
+
 The lifetime of variables declared in a Block is that of a function; each activation frame contains a new copy of variables declared within the local scope of the Block. Such variable declarations should be allowed anywhere [testme] rather than only when C99 parsing is requested, including for statements. [testme]
 
 Block literal expressions may occur within Block literal expressions (nest) and all variables captured by any nested blocks are implicitly also captured in the scopes of their enclosing Blocks.
@@ -143,23 +147,25 @@ C++ Extensions
 
 Block literal expressions within functions are extended to allow const use of C++ objects, pointers, or references held in automatic storage.
 
-For example, given class Foo with member function fighter(void):
+As usual, within the block, references to captured variables become const-qualified, as if they were references to members of a const object.  Note that this does not change the type of a variable of reference type.
+
+For example, given a class Foo:
       Foo foo;
       Foo &fooRef = foo;
       Foo *fooPtr = &foo;
 
-...a Block that used foo would import the variables as const variations:
-       const Foo block_foo = foo;	// const copy constructor
-       const Foo &block_fooRef = fooRef;
-       Foo *const block_fooPtr = fooPtr;
+A Block that referenced these variables would import the variables as const variations:
+      const Foo block_foo = foo;
+      Foo &block_fooRef = fooRef;
+      Foo *const block_fooPtr = fooPtr;
 
-Stack-local objects are copied into a Block via a copy const constructor.  If no such constructor exists, it is considered an error to reference such objects from within the Block compound statements. A destructor is run as control leaves the compound statement that contains the Block literal expression.
+Captured variables are copied into the Block at the instant of evaluating the Block literal expression.  They are also copied when calling Block_copy() on a Block allocated on the stack.  In both cases, they are copied as if the variable were const-qualified, and it's an error if there's no such constructor.
 
-If a Block originates on the stack, a const copy constructor of the stack-based Block const copy is performed when a Block_copy operation is called; when the last Block_release (or subsequently GC) occurs, a destructor is run on the heap copy.
+Captured variables in Blocks on the stack are destroyed when control leaves the compound statement that contains the Block literal expression.  Captured variables in Blocks on the heap are destroyed when the reference count of the Block drops to zero.
 
-Variables declared as residing in __block storage may be initially allocated in the heap or may first appear on the stack and be copied to the heap as a result of a Block_copy() operation. When copied from the stack, a normal copy constructor is used to initialize the heap-based version from the original stack version. The destructor for a const copied object is run at the normal end of scope. The destructor for any initial stack based version is also called at normal end of scope.
+Variables declared as residing in __block storage may be initially allocated in the heap or may first appear on the stack and be copied to the heap as a result of a Block_copy() operation. When copied from the stack, __block variables are copied using their normal qualification (i.e. without adding const).  In C++11, __block variables are copied as x-values if that is possible, then as l-values if not;  if both fail, it's an error.  The destructor for any initial stack-based version is called at the variable's normal end of scope.
 
-Within a member function, access to member functions and variables is done via an implicit const copy of a this pointer.
+References to 'this', as well as references to non-static members of any enclosing class, are evaluated by capturing 'this' just like a normal variable of C pointer type.
 
 Member variables that are Blocks may not be overloaded by the types of their arguments.
 
