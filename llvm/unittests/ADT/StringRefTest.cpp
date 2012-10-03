@@ -462,13 +462,17 @@ static const char* BadStrings[] = {
   , "123456789012345678901" // value way too large
   , "4t23v"                 // illegal decimal characters
   , "0x123W56"              // illegal hex characters
+  , "0b2"                   // illegal bin characters
+  , "08"                    // illegal oct characters
+  , "0o8"                   // illegal oct characters
+  , "-123"                  // negative unsigned value
 };
 
 
 TEST(StringRefTest, getAsUnsignedIntegerBadStrings) {
   uint64_t U64;
   for (size_t i = 0; i < array_lengthof(BadStrings); ++i) {
-    bool IsBadNumber = getAsUnsignedInteger(BadStrings[i], 0, U64);
+    bool IsBadNumber = StringRef(BadStrings[i]).getAsInteger(0, U64);
     ASSERT_TRUE(IsBadNumber);
   }
 }
