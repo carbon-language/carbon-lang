@@ -518,7 +518,10 @@ public:
   /// getParamAttributes - The attributes for the specified index are
   /// returned.
   Attributes getParamAttributes(unsigned Idx) const {
-    assert (Idx && Idx != ~0U && "Invalid parameter index!");
+    if (Idx == 0)
+      return getRetAttributes();
+    if (Idx == ~0U)
+      return getFnAttributes();
     return getAttributes(Idx);
   }
 
