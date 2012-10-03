@@ -470,7 +470,7 @@ static const char* BadStrings[] = {
 
 
 TEST(StringRefTest, getAsUnsignedIntegerBadStrings) {
-  uint64_t U64;
+  unsigned long long U64;
   for (size_t i = 0; i < array_lengthof(BadStrings); ++i) {
     bool IsBadNumber = StringRef(BadStrings[i]).getAsInteger(0, U64);
     ASSERT_TRUE(IsBadNumber);
