@@ -76,10 +76,10 @@ UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
 Configs += asan_osx_dynamic
 UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
 
-#UniversalArchs.ios += $(call CheckArches,armv7f armv7k armv7s,ios)
-#UniversalArchs.cc_kext += $(call CheckArches,armv7f armv7k armv7s,cc_kext)
-#UniversalArchs.cc_kext_ios5 += $(call CheckArches,armv7f armv7k armv7s,cc_kext_ios5)
-#UniversalArchs.profile_ios += $(call CheckArches,armv7f armv7k armv7s,profile_ios)
+UniversalArchs.ios += $(call CheckArches,armv7f armv7k armv7s,ios)
+UniversalArchs.cc_kext += $(call CheckArches,armv7f armv7k armv7s,cc_kext)
+UniversalArchs.cc_kext_ios5 += $(call CheckArches,armv7f armv7k armv7s,cc_kext_ios5)
+UniversalArchs.profile_ios += $(call CheckArches,armv7f armv7k armv7s,profile_ios)
 
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
