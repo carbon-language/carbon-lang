@@ -3541,7 +3541,7 @@ SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
 
   if (!MatchEvenMask && !MatchOddMask)
     return SDValue();
-  
+
   SDValue UndefNode = DAG.getNode(ISD::UNDEF, dl, VT);
 
   SDValue Op0 = SVOp->getOperand(0);
@@ -6053,7 +6053,7 @@ SDValue LowerVECTOR_SHUFFLEv32i8(ShuffleVectorSDNode *SVOp,
   bool V1IsAllZero = ISD::isBuildVectorAllZeros(V1.getNode());
   bool V2IsAllZero = ISD::isBuildVectorAllZeros(V2.getNode());
 
-  // VPSHUFB may be generated if 
+  // VPSHUFB may be generated if
   // (1) one of input vector is undefined or zeroinitializer.
   // The mask value 0x80 puts 0 in the corresponding slot of the vector.
   // And (2) the mask indexes don't cross the 128-bit lane.
