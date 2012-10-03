@@ -21,6 +21,14 @@ class TableGenAction;
 /// Run the table generator, performing the specified Action on parsed records.
 int TableGenMain(char *argv0, TableGenAction &Action);
 
+class RecordKeeper;
+class raw_ostream;
+typedef bool TableGenMainFn(raw_ostream &OS, RecordKeeper &Records);
+
+/// Perform the action using Records, and write output to OS.
+/// \returns true on error, false otherwise
+int TableGenMain(char *argv0, TableGenMainFn *MainFn);
+
 }
 
 #endif

@@ -22,6 +22,7 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Main.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenAction.h"
 #include <algorithm>
@@ -47,7 +48,25 @@ namespace {
               cl::value_desc("directory"), cl::Prefix);
 }
 
+namespace {
+// XXX: this is a crutch for transitioning to the new TableGenMain API
+// (with a TableGenMainFn* instead of a pointless class).
+class StubTransitionalTableGenAction : public TableGenAction {
+  TableGenMainFn *MainFn;
+public:
+  StubTransitionalTableGenAction(TableGenMainFn *M) : MainFn(M) {}
+  bool operator()(raw_ostream &OS, RecordKeeper &Records) {
+    return MainFn(OS, Records);
+  }
+};
+}
+
 namespace llvm {
+
+int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
+  StubTransitionalTableGenAction Action(MainFn);
+  return TableGenMain(argv0, Action);
+}
 
 int TableGenMain(char *argv0, TableGenAction &Action) {
   RecordKeeper Records;
