@@ -189,6 +189,26 @@ public:
     CALLSITE_DELEGATE_GETTER(hasFnAttr(N));
   }
 
+  /// paramHas*Attr - whether the call or the callee has the given attribute.
+  bool paramHasSExtAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasSExtAttr(i));
+  }
+  bool paramHasZExtAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasZExtAttr(i));
+  }
+  bool paramHasInRegAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasInRegAttr(i));
+  }
+  bool paramHasStructRetAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasStructRetAttr(i));
+  }
+  bool paramHasNestAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasNestAttr(i));
+  }
+  bool paramHasByValAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasByValAttr(i));
+  }
+
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, Attributes attr) const {
     CALLSITE_DELEGATE_GETTER(paramHasAttr(i, attr));

@@ -1272,6 +1272,14 @@ public:
     return paramHasAttr(~0, N);
   }
 
+  /// @brief Determine whether the call or the callee has the given attributes.
+  bool paramHasSExtAttr(unsigned i) const;
+  bool paramHasZExtAttr(unsigned i) const;
+  bool paramHasInRegAttr(unsigned i) const;
+  bool paramHasStructRetAttr(unsigned i) const;
+  bool paramHasNestAttr(unsigned i) const;
+  bool paramHasByValAttr(unsigned i) const;
+
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const;
 
@@ -3033,6 +3041,14 @@ public:
   bool hasFnAttr(Attributes N) const {
     return paramHasAttr(~0, N);
   }
+
+  /// @brief Determine whether the call or the callee has the given attributes.
+  bool paramHasSExtAttr(unsigned i) const;
+  bool paramHasZExtAttr(unsigned i) const;
+  bool paramHasInRegAttr(unsigned i) const;
+  bool paramHasStructRetAttr(unsigned i) const;
+  bool paramHasNestAttr(unsigned i) const;
+  bool paramHasByValAttr(unsigned i) const;
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const;

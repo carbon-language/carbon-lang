@@ -342,6 +342,54 @@ void CallInst::removeAttribute(unsigned i, Attributes attr) {
   setAttributes(PAL);
 }
 
+bool CallInst::paramHasSExtAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasSExtAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasSExtAttr();
+  return false;
+}
+
+bool CallInst::paramHasZExtAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasZExtAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasZExtAttr();
+  return false;
+}
+
+bool CallInst::paramHasInRegAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasInRegAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasInRegAttr();
+  return false;
+}
+
+bool CallInst::paramHasStructRetAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasStructRetAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasStructRetAttr();
+  return false;
+}
+
+bool CallInst::paramHasNestAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasNestAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasNestAttr();
+  return false;
+}
+
+bool CallInst::paramHasByValAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasByValAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasByValAttr();
+  return false;
+}
+
 bool CallInst::paramHasAttr(unsigned i, Attributes attr) const {
   if (AttributeList.paramHasAttr(i, attr))
     return true;
@@ -560,6 +608,54 @@ unsigned InvokeInst::getNumSuccessorsV() const {
 }
 void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
+}
+
+bool InvokeInst::paramHasSExtAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasSExtAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasSExtAttr();
+  return false;
+}
+
+bool InvokeInst::paramHasZExtAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasZExtAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasZExtAttr();
+  return false;
+}
+
+bool InvokeInst::paramHasInRegAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasInRegAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasInRegAttr();
+  return false;
+}
+
+bool InvokeInst::paramHasStructRetAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasStructRetAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasStructRetAttr();
+  return false;
+}
+
+bool InvokeInst::paramHasNestAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasNestAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasNestAttr();
+  return false;
+}
+
+bool InvokeInst::paramHasByValAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasByValAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasByValAttr();
+  return false;
 }
 
 bool InvokeInst::paramHasAttr(unsigned i, Attributes attr) const {
