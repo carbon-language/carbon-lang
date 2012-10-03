@@ -541,7 +541,7 @@ it depends on), reparsing of that source file can use the precompiled
 preamble and start parsing after the #includes, so parsing time is
 proportional to the size of the source file (rather than all of its
 includes). However, the compilation of that translation unit
-may already uses a precompiled header: in this case, Clang will create
+may already use a precompiled header: in this case, Clang will create
 the precompiled preamble as a chained precompiled header that refers
 to the original precompiled header. This drastically reduces the time
 needed to serialize the precompiled preamble for use in reparsing.</p>
