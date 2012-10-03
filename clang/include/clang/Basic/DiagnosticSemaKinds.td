@@ -718,7 +718,7 @@ def warn_arc_repeated_use_of_weak : Warning <
   "the object alive">,
   InGroup<ARCRepeatedUseOfWeak>, DefaultIgnore;
 def warn_implicitly_retains_self : Warning <
-  "block implicitily retains 'self' - explicitly mention 'self' to indicate "
+  "block implicitly retains 'self' - explicitly mention 'self' to indicate "
   "this is intended behavior">,
   InGroup<DiagGroup<"implicit-retain-self">>;
 def warn_arc_possible_repeated_use_of_weak : Warning <
