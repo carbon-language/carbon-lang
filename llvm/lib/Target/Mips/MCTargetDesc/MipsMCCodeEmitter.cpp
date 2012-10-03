@@ -146,8 +146,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if ((TSFlags & MipsII::FormMask) == MipsII::Pseudo)
     llvm_unreachable("Pseudo opcode found in EncodeInstruction()");
 
-  // For now all instructions are 4 bytes
-  int Size = 4; // FIXME: Have Desc.getSize() return the correct value!
+  // Get byte count of instruction
+  unsigned Size = Desc.getSize();
+  if (!Size)
+    llvm_unreachable("Desc.getSize() returns 0");
 
   EmitInstruction(Binary, Size, OS);
 }
