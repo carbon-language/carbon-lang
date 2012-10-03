@@ -98,6 +98,7 @@ public:
   llvm::BitstreamCursor Stream;
 
   /// \brief The source location where this module was first imported.
+  /// FIXME: This is not properly initialized yet.
   SourceLocation ImportLoc;
 
   /// \brief The first source location in this module.
