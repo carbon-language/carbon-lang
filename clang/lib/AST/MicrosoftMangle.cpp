@@ -810,7 +810,12 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(
         break;
       }
       /* fallthrough */
-    } default: {
+    }
+    case TemplateArgument::Template:
+    case TemplateArgument::TemplateExpansion:
+    case TemplateArgument::Declaration:
+    case TemplateArgument::NullPtr:
+    case TemplateArgument::Pack: {
       // Issue a diagnostic.
       DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
