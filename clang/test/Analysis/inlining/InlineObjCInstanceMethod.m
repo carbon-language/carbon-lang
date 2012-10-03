@@ -1,4 +1,4 @@
-// RUN: %clang --analyze -Xanalyzer -analyzer-checker=core -Xclang -verify %s
+// RUN: %clang --analyze -Xanalyzer -analyzer-checker=osx.cocoa.IncompatibleMethodTypes -Xclang -verify %s
 
 #include "InlineObjCInstanceMethod.h"
 
@@ -83,4 +83,29 @@
 // Don't crash if we don't know the receiver's region.
 void randomlyMessageAnObject(MyClass *arr[], int i) {
   (void)[arr[i] getInt];
+}
+
+
+@interface EvilChild : MyParent
+- (id)getInt;
+@end
+
+@implementation EvilChild
+- (id)getInt { // expected-warning {{types are incompatible}}
+  return self;
+}
+@end
+
+int testNonCovariantReturnType() {
+  MyParent *obj = [[EvilChild alloc] init];
+
+  // Devirtualization allows us to directly call -[EvilChild getInt], but
+  // that returns an id, not an int. There is an off-by-default warning for
+  // this, -Woverriding-method-mismatch, and an on-by-default analyzer warning,
+  // osx.cocoa.IncompatibleMethodTypes. This code would probably crash at
+  // runtime, but at least the analyzer shouldn't crash.
+  int x = 1 + [obj getInt];
+
+  [obj release];
+  return 5/(x-1); // no-warning
 }
