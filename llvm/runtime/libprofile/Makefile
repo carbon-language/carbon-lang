@@ -44,8 +44,15 @@ ifeq ($(HOST_OS),Darwin)
     # command line.
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
     ifneq ($(DARWIN_VERS),8)
-       LLVMLibsOptions    := $(LLVMLibsOptions)  \
+       LLVMLibsOptions    := $(LLVMLibsOptions) \
                             -Wl,-install_name \
                             -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
+    endif
+
+    # If we're doing an Apple-style build, add the LTO object path.
+    ifeq ($(RC_BUILDIT),YES)
+       TempFile            = $(shell mktemp ${OBJROOT}/profile_rt-lto.XXXXXX)
+       LLVMLibsOptions    := $(LLVMLibsOptions) \
+                             -Wl,-object_path_lto -Wl,$(TempFile)
     endif
 endif

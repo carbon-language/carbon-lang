@@ -49,4 +49,11 @@ ifeq ($(HOST_OS),Darwin)
                             -Wl,-install_name \
                             -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
+
+    # If we're doing an Apple-style build, add the LTO object path.
+    ifeq ($(RC_BUILDIT),YES)
+       TempFile            = $(shell mktemp ${OBJROOT}/llvm-lto.XXXXXX)
+       LLVMLibsOptions    := $(LLVMLibsOptions) \
+                             -Wl,-object_path_lto -Wl,$(TempFile)
+    endif
 endif
