@@ -3273,8 +3273,10 @@ namespace {
     const SetType &Set;
 
   public:
+    typedef AllocaInst *argument_type;
+
     IsAllocaInSet(const SetType &Set) : Set(Set) {}
-    bool operator()(AllocaInst *AI) { return Set.count(AI); }
+    bool operator()(AllocaInst *AI) const { return Set.count(AI); }
   };
 }
 

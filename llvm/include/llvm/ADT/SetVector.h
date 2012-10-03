@@ -141,8 +141,9 @@ public:
   /// \returns true if any element is removed.
   template <typename UnaryPredicate>
   bool remove_if(UnaryPredicate P) {
-    typename vector_type::iterator B = std::remove_if(vector_.begin(),
-                                                      vector_.end(), P),
+    typename vector_type::iterator B = std::partition(vector_.begin(),
+                                                      vector_.end(),
+                                                      std::not1(P)),
                                    E = vector_.end();
     if (B == E)
       return false;
