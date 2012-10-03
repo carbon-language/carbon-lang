@@ -17,4 +17,9 @@ DIRS := driver libclang c-index-test arcmt-test c-arcmt-test diagtool \
 # Recurse into the extra repository of tools if present.
 OPTIONAL_DIRS := extra
 
+ifeq ($(BUILD_CLANG_ONLY),YES)
+  DIRS := tools/driver tools/libclang
+  OPTIONAL_DIRS :=
+endif
+
 include $(CLANG_LEVEL)/Makefile
