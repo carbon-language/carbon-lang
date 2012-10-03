@@ -7722,7 +7722,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   unsigned LastLegalVectorType = 0;
   unsigned LastLegalIntegerType = 0;
   StartAddress = LoadNodes[0].OffsetFromBase;
-  for (unsigned i=1; i<LoadNodes.size(); ++i) {
+  SDValue FirstChain = LoadNodes[0].MemNode->getChain();
+  for (unsigned i = 1; i < LoadNodes.size(); ++i) {
+    // All loads much share the same chain.
+    if (LoadNodes[i].MemNode->getChain() != FirstChain)
+      break;
+    
     int64_t CurrAddress = LoadNodes[i].OffsetFromBase;
     if (CurrAddress - StartAddress != (ElementSizeBytes * i))
       break;
@@ -7791,16 +7796,23 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
                                   FirstInChain->getPointerInfo(), false, false,
                                   FirstInChain->getAlignment());
 
-  // Replace the first store with the new store
-  CombineTo(EarliestOp, NewStore);
-  // Erase all other stores.
-  for (unsigned i = 0; i < NumElem ; ++i) {
+  // Replace one of the loads with the new load.
+  LoadSDNode *Ld = cast<LoadSDNode>(LoadNodes[0].MemNode);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1),
+                                SDValue(NewLoad.getNode(), 1));
+
+  // Remove the rest of the load chains.
+  for (unsigned i = 1; i < NumElem ; ++i) {
     // Replace all chain users of the old load nodes with the chain of the new
     // load node.
     LoadSDNode *Ld = cast<LoadSDNode>(LoadNodes[i].MemNode);
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1),
-                                  SDValue(NewLoad.getNode(), 1));
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Ld->getChain());
+  }
 
+  // Replace the first store with the new store.
+  CombineTo(EarliestOp, NewStore);
+  // Erase all other stores.
+  for (unsigned i = 0; i < NumElem ; ++i) {
     // Remove all Store nodes.
     if (StoreNodes[i].MemNode == EarliestOp)
       continue;
