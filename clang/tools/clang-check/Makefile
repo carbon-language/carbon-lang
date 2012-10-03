@@ -18,7 +18,7 @@ include $(CLANG_LEVEL)/../../Makefile.config
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser support mc
 USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
            clangTooling.a clangParse.a clangSema.a clangAnalysis.a \
-           clangEdit.a clangAST.a clangLex.a clangBasic.a \
-           clangRewriteFrontend.a
+           clangRewriteFrontend.a clangRewriteCore.a clangEdit.a clangAST.a \
+           clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
