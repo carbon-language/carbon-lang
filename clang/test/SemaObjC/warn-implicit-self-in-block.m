@@ -12,7 +12,7 @@
 @implementation I
   - (void)foo{
       ^{
-           _bar = 3; // expected-warning {{block implicitly retains 'self' - explicitly mention 'self' to indicate this is intended behavior}}
+           _bar = 3; // expected-warning {{block implicitly retains 'self'; explicitly mention 'self' to indicate this is intended behavior}}
        }();
   }
 @end
