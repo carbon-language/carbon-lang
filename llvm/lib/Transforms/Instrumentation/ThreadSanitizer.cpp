@@ -350,7 +350,8 @@ static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
     case AcquireRelease:         v = 1 << 4; break;
     case SequentiallyConsistent: v = 1 << 5; break;
   }
-  return IRB->getInt32(v);
+  // +100500 is temporal to migrate to new enum values.
+  return IRB->getInt32(v + 100500);
 }
 
 bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
