@@ -984,6 +984,7 @@ void ASTDeclWriter::VisitCXXConversionDecl(CXXConversionDecl *D) {
 
 void ASTDeclWriter::VisitImportDecl(ImportDecl *D) {
   VisitDecl(D);
+  Record.push_back(Writer.getSubmoduleID(D->getImportedModule()));
   ArrayRef<SourceLocation> IdentifierLocs = D->getIdentifierLocs();
   Record.push_back(!IdentifierLocs.empty());
   if (IdentifierLocs.empty()) {
