@@ -472,7 +472,7 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
   }
 }
 
-static bool topLevelDeclReceiver(void *context, const Decl *D) {
+static bool topLevelDeclVisitor(void *context, const Decl *D) {
   IndexingContext &IdxCtx = *static_cast<IndexingContext*>(context);
   IdxCtx.indexTopLevelDecl(D);
   if (IdxCtx.shouldAbort())
@@ -481,7 +481,7 @@ static bool topLevelDeclReceiver(void *context, const Decl *D) {
 }
 
 static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IdxCtx) {
-  Unit.applyOnLocalTopLevelDecls(&IdxCtx, topLevelDeclReceiver);
+  Unit.visitLocalTopLevelDecls(&IdxCtx, topLevelDeclVisitor);
 }
 
 static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx) {

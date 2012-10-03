@@ -2792,7 +2792,7 @@ ASTUnit::getLocalPreprocessingEntities() const {
                         PreprocessingRecord::iterator());
 }
 
-bool ASTUnit::applyOnLocalTopLevelDecls(void *context, DeclReceiverFn Fn) {
+bool ASTUnit::visitLocalTopLevelDecls(void *context, DeclVisitorFn Fn) {
   if (isMainFileAST()) {
     serialization::ModuleFile &
       Mod = Reader->getModuleManager().getPrimaryModule();

@@ -615,13 +615,13 @@ public:
 
   /// \brief Type for a function iterating over a number of declarations.
   /// \returns true to continue iteration and false to abort.
-  typedef bool (*DeclReceiverFn)(void *context, const Decl *D);
+  typedef bool (*DeclVisitorFn)(void *context, const Decl *D);
 
   /// \brief Iterate over local declarations (locally parsed if this is a parsed
   /// source file or the loaded declarations of the primary module if this is an
   /// AST file).
   /// \returns true if the iteration was complete or false if it was aborted.
-  bool applyOnLocalTopLevelDecls(void *context, DeclReceiverFn Fn);
+  bool visitLocalTopLevelDecls(void *context, DeclVisitorFn Fn);
 
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
