@@ -293,53 +293,6 @@
     </element>
   </define>
 
-  <define name="Availability">
-    <element name="Availability">
-      <attribute name="distribution">
-          <data type="string" />
-      </attribute>
-      <optional>
-        <element name="IntroducedInVersion">
-          <data type="float" />
-        </element>
-      </optional>
-      <optional>
-        <element name="DeprecatedInVersion">
-          <data type="float" />
-        </element>
-      </optional>
-      <optional>
-        <element name="RemovedAfterVersion">
-          <data type="float" />
-        </element>
-      </optional>
-      <optional>
-        <element name="DeprecationSummary">
-          <data type="string" />
-        </element>
-      </optional>
-      <optional>
-        <ref name="Unavailable" />
-      </optional>
-    </element>
-  </define>
-
-  <define name="Deprecated">
-    <element name="Deprecated">
-      <optional>
-        <data type="string" />
-      </optional>
-    </element>
-  </define>
-
-  <define name="Unavailable">
-    <element name="Unavailable">
-      <optional>
-        <data type="string" />
-      </optional>
-    </element>
-  </define>
-
   <define name="Abstract">
     <element name="Abstract">
       <zeroOrMore>
@@ -422,6 +375,59 @@
           </element>
         </element>
       </oneOrMore>
+    </element>
+  </define>
+
+  <define name="Availability">
+    <element name="Availability">
+      <attribute name="distribution">
+          <data type="string" />
+      </attribute>
+      <optional>
+        <element name="IntroducedInVersion">
+          <data type="string">
+            <param name="pattern">\d+|\d+\.\d+|\d+\.\d+.\d+</param>
+          </data>
+        </element>
+      </optional>
+      <optional>
+        <element name="DeprecatedInVersion">
+          <data type="string">
+            <param name="pattern">\d+|\d+\.\d+|\d+\.\d+.\d+</param>
+          </data>
+        </element>
+      </optional>
+      <optional>
+        <element name="RemovedAfterVersion">
+          <data type="string">
+            <param name="pattern">\d+|\d+\.\d+|\d+\.\d+.\d+</param>
+          </data>
+        </element>
+      </optional>
+      <optional>
+        <element name="DeprecationSummary">
+          <data type="string" />
+        </element>
+      </optional>
+      <optional>
+        <ref name="Unavailable" />
+      </optional>
+    </element>
+  </define>
+
+  <define name="Deprecated">
+    <element name="Deprecated">
+      <optional>
+        <data type="string" />
+      </optional>
+    </element>
+  </define>
+
+  <define name="Unavailable">
+    <element name="Unavailable">
+      <optional>
+        <data type="string" />
+      </optional>
     </element>
   </define>
 

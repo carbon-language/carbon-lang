@@ -1180,18 +1180,18 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
           if (DA->getMessage().empty())
             Result << "<Deprecated/>";
           else {
-            Result << "<Deprecated>"
-                   << DA->getMessage()
-                   << "</Deprecated>";
+            Result << "<Deprecated>";
+            appendToResultWithXMLEscaping(DA->getMessage());
+            Result << "</Deprecated>";
           }
         }
         else if (const UnavailableAttr *UA = dyn_cast<UnavailableAttr>(Attrs[i])) {
           if (UA->getMessage().empty())
             Result << "<Unavailable/>";
           else {
-            Result << "<Unavailable>"
-                   << UA->getMessage()
-                   << "</Unavailable>";
+            Result << "<Unavailable>";
+            appendToResultWithXMLEscaping(UA->getMessage());
+            Result << "</Unavailable>";
           }
         }
         continue;
@@ -1225,14 +1225,12 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
                << RemovedAfterVersion.getAsString()
                << "</RemovedAfterVersion>";
       }
-      // 'deprecated' attribute.
       StringRef DeprecationSummary = AA->getMessage();
       if (!DeprecationSummary.empty()) {
-        Result << " <DeprecationSummary>"
-               << DeprecationSummary
-               << "</DeprecationSummary>";
+        Result << "<DeprecationSummary>";
+        appendToResultWithXMLEscaping(DeprecationSummary);
+        Result << "</DeprecationSummary>";
       }
-      // 'unavailable' attribute.
       if (AA->getUnavailable())
         Result << "<Unavailable/>";
       Result << "</Availability>";
