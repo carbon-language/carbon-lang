@@ -1261,6 +1261,7 @@ EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
     BinOp.RHS = NextVal;
     BinOp.Ty = E->getType();
     BinOp.Opcode = BO_Add;
+    BinOp.FPContractable = false;
     BinOp.E = E;
     return EmitOverflowCheckedBinOp(BinOp);
   }
@@ -1446,6 +1447,7 @@ Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
     BinOp.LHS = llvm::Constant::getNullValue(BinOp.RHS->getType());
   BinOp.Ty = E->getType();
   BinOp.Opcode = BO_Sub;
+  BinOp.FPContractable = false;
   BinOp.E = E;
   return EmitSub(BinOp);
 }
@@ -1681,6 +1683,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   OpInfo.RHS = Visit(E->getRHS());
   OpInfo.Ty = E->getComputationResultType();
   OpInfo.Opcode = E->getOpcode();
+  OpInfo.FPContractable = false;
   OpInfo.E = E;
   // Load/convert the LHS.
   LValue LHSLV = EmitCheckedLValue(E->getLHS(), CodeGenFunction::TCK_Store);
