@@ -264,14 +264,19 @@ void RuntimeDyldELF::resolveARMRelocation(uint8_t *LocalAddress,
   default:
     llvm_unreachable("Not implemented relocation type!");
 
-  // Just write 32bit value to relocation address
+  // Write a 32bit value to relocation address, taking into account the 
+  // implicit addend encoded in the target.
   case ELF::R_ARM_ABS32 :
-    *TargetPtr = Value;
+    *TargetPtr += Value;
     break;
 
   // Write first 16 bit of 32 bit value to the mov instruction.
   // Last 4 bit should be shifted.
   case ELF::R_ARM_MOVW_ABS_NC :
+    // We are not expecting any other addend in the relocation address.
+    // Using 0x000F0FFF because MOVW has its 16 bit immediate split into 2 
+    // non-contiguous fields.
+    assert((*TargetPtr & 0x000F0FFF) == 0);
     Value = Value & 0xFFFF;
     *TargetPtr |= Value & 0xFFF;
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
@@ -280,6 +285,9 @@ void RuntimeDyldELF::resolveARMRelocation(uint8_t *LocalAddress,
   // Write last 16 bit of 32 bit value to the mov instruction.
   // Last 4 bit should be shifted.
   case ELF::R_ARM_MOVT_ABS :
+    // We are not expecting any other addend in the relocation address.
+    // Use 0x000F0FFF for the same reason as R_ARM_MOVW_ABS_NC.
+    assert((*TargetPtr & 0x000F0FFF) == 0);
     Value = (Value >> 16) & 0xFFFF;
     *TargetPtr |= Value & 0xFFF;
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
