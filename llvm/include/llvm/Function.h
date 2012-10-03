@@ -195,6 +195,12 @@ public:
   void setGC(const char *Str);
   void clearGC();
 
+
+  /// getRetAttributes - Return the return attributes for querying.
+  Attributes getRetAttributes() const {
+    return AttributeList.getRetAttributes();
+  }
+
   /// getParamAttributes - Return the parameter attributes for querying.
   Attributes getParamAttributes(unsigned Idx) const {
     return AttributeList.getParamAttributes(Idx);
