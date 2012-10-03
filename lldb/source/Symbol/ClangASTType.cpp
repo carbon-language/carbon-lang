@@ -283,7 +283,7 @@ ClangASTType::GetMinimumLanguage (clang::ASTContext *ctx,
             return lldb::eLanguageTypeObjC;
         
         clang::QualType pointee_type (qual_type->getPointeeType());
-        if (pointee_type->getCXXRecordDeclForPointerType() != NULL)
+        if (pointee_type->getPointeeCXXRecordDecl() != NULL)
             return lldb::eLanguageTypeC_plus_plus;
         if (pointee_type->isObjCObjectOrInterfaceType())
             return lldb::eLanguageTypeObjC;
