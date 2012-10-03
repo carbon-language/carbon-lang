@@ -162,7 +162,7 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   for (; Start != End; ++Start) {
     // Scan for first option which is a proper prefix.
     for (; Start != End; ++Start)
-      if (memcmp(Str, Start->Name, strlen(Start->Name)) == 0)
+      if (strncmp(Str, Start->Name, strlen(Start->Name)) == 0)
         break;
     if (Start == End)
       break;
