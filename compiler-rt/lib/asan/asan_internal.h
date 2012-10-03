@@ -62,7 +62,7 @@
 
 // If set, asan will install its own SEGV signal handler.
 #ifndef ASAN_NEEDS_SEGV
-# ifdef ASAN_ANDROID
+# if ASAN_ANDROID == 1
 #  define ASAN_NEEDS_SEGV 0
 # else
 #  define ASAN_NEEDS_SEGV 1
