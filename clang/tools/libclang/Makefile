@@ -52,4 +52,10 @@ ifeq ($(HOST_OS),Darwin)
        LLVMLibsOptions += -Wl,-install_name \
                           -Wl,"@rpath/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
+
+    # If we're doing an Apple-style build, add the LTO object path.
+    ifeq ($(RC_BUILDIT),YES)
+       TempFile         = $(shell mktemp ${OBJROOT}/clang-lto.XXXXXX)
+       LLVMLibsOptions += -Wl,-object_path_lto -Wl,$(TempFile)
+    endif
 endif
