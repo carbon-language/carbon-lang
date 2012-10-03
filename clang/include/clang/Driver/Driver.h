@@ -335,13 +335,9 @@ public:
   ///
   /// \param TC - The provided tool chain for additional information on
   /// directories to search.
-  ///
-  /// \param WantFile - False when searching for an executable file, otherwise
-  /// true.  Defaults to false.
   //
   // FIXME: This should be in CompilationInfo.
-  std::string GetProgramPath(const char *Name, const ToolChain &TC,
-                              bool WantFile = false) const;
+  std::string GetProgramPath(const char *Name, const ToolChain &TC) const;
 
   /// HandleImmediateArgs - Handle any arguments which should be
   /// treated before building actions or binding tools.

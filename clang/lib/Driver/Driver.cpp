@@ -1620,14 +1620,8 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   return Name;
 }
 
-static bool isPathExecutable(llvm::sys::Path &P, bool WantFile) {
-    bool Exists;
-    return (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists
-                 : P.canExecute());
-}
-
-std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
-                                   bool WantFile) const {
+std::string Driver::GetProgramPath(const char *Name,
+                                   const ToolChain &TC) const {
   // FIXME: Needs a better variable than DefaultTargetTriple
   std::string TargetSpecificExecutable(DefaultTargetTriple + "-" + Name);
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
@@ -1636,10 +1630,10 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
        ie = PrefixDirs.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(TargetSpecificExecutable);
-    if (isPathExecutable(P, WantFile)) return P.str();
+    if (P.canExecute()) return P.str();
     P.eraseComponent();
     P.appendComponent(Name);
-    if (isPathExecutable(P, WantFile)) return P.str();
+    if (P.canExecute()) return P.str();
   }
 
   const ToolChain::path_list &List = TC.getProgramPaths();
@@ -1647,10 +1641,10 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(TargetSpecificExecutable);
-    if (isPathExecutable(P, WantFile)) return P.str();
+    if (P.canExecute()) return P.str();
     P.eraseComponent();
     P.appendComponent(Name);
-    if (isPathExecutable(P, WantFile)) return P.str();
+    if (P.canExecute()) return P.str();
   }
 
   // If all else failed, search the path.

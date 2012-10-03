@@ -41,8 +41,8 @@ std::string ToolChain::GetFilePath(const char *Name) const {
 
 }
 
-std::string ToolChain::GetProgramPath(const char *Name, bool WantFile) const {
-  return D.GetProgramPath(Name, *this, WantFile);
+std::string ToolChain::GetProgramPath(const char *Name) const {
+  return D.GetProgramPath(Name, *this);
 }
 
 types::ID ToolChain::LookupTypeForExtension(const char *Ext) const {
