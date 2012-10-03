@@ -253,21 +253,20 @@ void IndexingContext::ppIncludedFile(SourceLocation hashLoc,
   FileMap[File] = idxFile;
 }
 
-void IndexingContext::importedModule(SourceLocation Loc,
-                                     StringRef name, bool isIncludeDirective,
-                                     const Module *module) {
+void IndexingContext::importedModule(const ImportDecl *ImportD) {
   if (!CB.importedASTFile)
     return;
 
-  std::string ModuleName = module->getFullModuleName();
+  Module *Mod = ImportD->getImportedModule();
+  if (!Mod)
+    return;
+  std::string ModuleName = Mod->getFullModuleName();
 
-  ScratchAlloc SA(*this);
   CXIdxImportedASTFileInfo Info = {
-                                    (CXFile)module->getASTFile(),
-                                    getIndexLoc(Loc),
+                                    (CXFile)Mod->getASTFile(),
+                                    getIndexLoc(ImportD->getLocation()),
                                     /*isModule=*/true,
-                                    isIncludeDirective,
-                                    SA.toCStr(name),
+                                    ImportD->isImplicit(),
                                     ModuleName.c_str(),
                                   };
   CXIdxClientASTFile astFile = CB.importedASTFile(ClientData, &Info);
@@ -1109,6 +1108,8 @@ bool IndexingContext::shouldIgnoreIfImplicit(const Decl *D) {
   if (isa<ObjCIvarDecl>(D))
     return false;
   if (isa<ObjCMethodDecl>(D))
+    return false;
+  if (isa<ImportDecl>(D))
     return false;
   return true;
 }

@@ -10,7 +10,6 @@
 #include "IndexingContext.h"
 
 #include "clang/AST/DeclVisitor.h"
-#include "clang/Basic/Module.h"
 
 using namespace clang;
 using namespace cxindex;
@@ -308,10 +307,7 @@ public:
   }
 
   bool VisitImportDecl(ImportDecl *D) {
-    Module *Imported = D->getImportedModule();
-    if (Imported)
-      IndexCtx.importedModule(D->getLocation(), Imported->getFullModuleName(),
-                              /*isIncludeDirective=*/false, Imported);
+    IndexCtx.importedModule(D);
     return true;
   }
 };

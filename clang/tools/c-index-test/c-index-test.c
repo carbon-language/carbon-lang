@@ -2359,10 +2359,9 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
   printCXIndexFile((CXIdxClientFile)info->file);
   printf(" | loc: ");
   printCXIndexLoc(info->loc, client_data);
-  printf(" | module name: \"%s\"", info->moduleName);
-  printf(" | source name: \"%s\"", info->sourceName);
-  printf(" | isModule: %d | isIncludeDirective: %d\n",
-         info->isModule, info->isIncludeDirective);
+  printf(" | name: \"%s\"", info->moduleName);
+  printf(" | isModule: %d | isImplicit: %d\n",
+         info->isModule, info->isImplicit);
 
   return (CXIdxClientFile)info->file;
 }

@@ -4937,12 +4937,7 @@ typedef struct {
    * \brief Non-zero if an inclusion directive was automatically turned into
    * a module import.
    */
-  int isIncludeDirective;
-  /**
-   * \brief The name of the file being included or the module being imported,
-   * as written in the source code.
-   */
-  const char *sourceName;
+  int isImplicit;
   /**
    * \brief The actual name of the module or submodule being imported.
    * The syntax is a sequence of identifiers separated by dots, e.g "std.vector"

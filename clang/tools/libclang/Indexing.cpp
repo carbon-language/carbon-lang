@@ -74,8 +74,7 @@ public:
                                   StringRef RelativePath,
                                   const Module *Imported) {
     if (Imported) {
-      IndexCtx.importedModule(HashLoc, FileName, /*isIncludeDirective=*/true,
-                              Imported);
+      // We handle implicit imports via ImportDecls.
       return;
     }
 
