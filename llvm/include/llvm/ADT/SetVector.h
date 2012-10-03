@@ -141,15 +141,12 @@ public:
   /// \returns true if any element is removed.
   template <typename UnaryPredicate>
   bool remove_if(UnaryPredicate P) {
-    typename vector_type::iterator B = std::partition(vector_.begin(),
-                                                      vector_.end(),
-                                                      std::not1(P)),
-                                   E = vector_.end();
-    if (B == E)
+    typename vector_type::iterator I
+      = std::remove_if(vector_.begin(), vector_.end(),
+                       TestAndEraseFromSet<UnaryPredicate>(P, set_));
+    if (I == vector_.end())
       return false;
-    for (typename vector_type::iterator I = B; I != E; ++I)
-      set_.erase(*I);
-    vector_.erase(B, E);
+    vector_.erase(I, vector_.end());
     return true;
   }
 
@@ -188,6 +185,29 @@ public:
   }
 
 private:
+  /// \brief A wrapper predicate designed for use with std::remove_if.
+  ///
+  /// This predicate wraps a predicate suitable for use with std::remove_if to
+  /// call set_.erase(x) on each element which is slated for removal.
+  template <typename UnaryPredicate>
+  class TestAndEraseFromSet {
+    UnaryPredicate P;
+    set_type &set_;
+
+  public:
+    typedef typename UnaryPredicate::argument_type argument_type;
+
+    TestAndEraseFromSet(UnaryPredicate P, set_type &set_) : P(P), set_(set_) {}
+
+    bool operator()(argument_type Arg) {
+      if (P(Arg)) {
+        set_.erase(Arg);
+        return true;
+      }
+      return false;
+    }
+  };
+
   set_type set_;         ///< The set.
   vector_type vector_;   ///< The vector.
 };
