@@ -169,3 +169,34 @@ entry:
 
   ret void
 }
+
+define void @test7(i8* %out) {
+; Test that we properly compute the destination alignment when rewriting
+; memcpys as direct loads or stores.
+; CHECK: @test7
+; CHECK-NOT: alloca
+
+entry:
+  %a = alloca [16 x i8]
+  %raw1 = getelementptr inbounds [16 x i8]* %a, i32 0, i32 0
+  %ptr1 = bitcast i8* %raw1 to double*
+  %raw2 = getelementptr inbounds [16 x i8]* %a, i32 0, i32 8
+  %ptr2 = bitcast i8* %raw2 to double*
+
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %raw1, i8* %out, i32 16, i32 0, i1 false)
+; CHECK: %[[val2:.*]] = load double* %{{.*}}, align 1
+; CHECK: %[[val1:.*]] = load double* %{{.*}}, align 1
+
+  %val1 = load double* %ptr2, align 1
+  %val2 = load double* %ptr1, align 1
+
+  store double %val1, double* %ptr1, align 1
+  store double %val2, double* %ptr2, align 1
+
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %out, i8* %raw1, i32 16, i32 0, i1 false)
+; CHECK: store double %[[val1]], double* %{{.*}}, align 1
+; CHECK: store double %[[val2]], double* %{{.*}}, align 1
+
+  ret void
+; CHECK: ret void
+}

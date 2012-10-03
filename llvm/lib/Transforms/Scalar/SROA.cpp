@@ -2585,6 +2585,12 @@ private:
       return false;
     }
 
+    // Note that we clamp the alignment to 1 here as a 0 alignment for a memcpy
+    // is equivalent to 1, but that isn't true if we end up rewriting this as
+    // a load or store.
+    if (!Align)
+      Align = 1;
+
     Value *SrcPtr = OtherPtr;
     Value *DstPtr = &NewAI;
     if (!IsDest)
