@@ -322,6 +322,8 @@ void ASTDeclReader::Visit(Decl *D) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     // We only read it if FD doesn't already have a body (e.g., from another
     // module).
+    // FIXME: Also consider = default and = delete.
+    // FIXME: Can we diagnose ODR violations somehow?
     if (Record[Idx++] &&
         (!Reader.getContext().getLangOpts().Modules || !FD->hasBody()))
       FD->setLazyBody(GetCurrentCursorOffset());
