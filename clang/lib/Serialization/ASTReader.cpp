@@ -5614,10 +5614,7 @@ void ASTReader::ReadPendingInstantiations(
     SourceLocation Loc
       = SourceLocation::getFromRawEncoding(PendingInstantiations[Idx++]);
 
-    // For modules, find out whether an instantiation already exists
-    if (!getContext().getLangOpts().Modules
-        || needPendingInstantiation(D))
-      Pending.push_back(std::make_pair(D, Loc));
+    Pending.push_back(std::make_pair(D, Loc));
   }  
   PendingInstantiations.clear();
 }
@@ -6528,5 +6525,4 @@ ASTReader::~ASTReader() {
          J != F; ++J)
       delete J->first;
   }
-  assert(RedeclsAddedToAST.empty() && "RedeclsAddedToAST not empty!");
 }

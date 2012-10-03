@@ -320,7 +320,10 @@ void ASTDeclReader::Visit(Decl *D) {
     ID->TypeForDecl = Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull();
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
-    if (Record[Idx++])
+    // We only read it if FD doesn't already have a body (e.g., from another
+    // module).
+    if (Record[Idx++] &&
+        (!Reader.getContext().getLangOpts().Modules || !FD->hasBody()))
       FD->setLazyBody(GetCurrentCursorOffset());
   } else if (D->isTemplateParameter()) {
     // If we have a fully initialized template parameter, we can now
@@ -1778,11 +1781,9 @@ ASTDeclReader::FindExistingResult::~FindExistingResult() {
   
   DeclContext *DC = New->getLexicalDeclContext();
   if (DC->isTranslationUnit() && Reader.SemaObj) {
-    if (Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName()))
-      Reader.RedeclsAddedToAST.insert(New);
+    Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
   } else if (DC->isNamespace()) {
     DC->addDecl(New);
-    Reader.RedeclsAddedToAST.insert(New);
   }
 }
 
@@ -2157,13 +2158,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   // AST consumer might need to know about, queue it.
   // We don't pass it to the consumer immediately because we may be in recursive
   // loading, and some declarations may still be initializing.
-  if (getContext().getLangOpts().Modules) {
-    if (RedeclsAddedToAST.count(D)) {
-      RedeclsAddedToAST.erase(D);
-      if (isConsumerInterestedIn(D))
-        InterestingDecls.push_back(D);
-    }
-  } else if (isConsumerInterestedIn(D))
+  if (isConsumerInterestedIn(D))
     InterestingDecls.push_back(D);
 
   return D;
