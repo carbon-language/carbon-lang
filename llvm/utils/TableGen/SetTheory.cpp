@@ -294,7 +294,10 @@ const RecVec *SetTheory::expand(Record *Set) {
   // This is the first time we see Set. Find a suitable expander.
   try {
     const std::vector<Record*> &SC = Set->getSuperClasses();
-    for (unsigned i = 0, e = SC.size(); i != e; ++i)
+    for (unsigned i = 0, e = SC.size(); i != e; ++i) {
+      // Skip unnamed superclasses.
+      if (!dynamic_cast<const StringInit *>(SC[i]->getNameInit()))
+        continue;
       if (Expander *Exp = Expanders.lookup(SC[i]->getName())) {
         // This breaks recursive definitions.
         RecVec &EltVec = Expansions[Set];
@@ -303,6 +306,7 @@ const RecVec *SetTheory::expand(Record *Set) {
         EltVec.assign(Elts.begin(), Elts.end());
         return &EltVec;
       }
+    }
   } catch (const std::string &Error) {
     throw TGError(Set->getLoc(), Error);
   }

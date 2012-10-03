@@ -55,6 +55,15 @@ include "llvm/Target/TargetItinerary.td"
 
 class Instruction; // Forward def
 
+// DAG operator that interprets the DAG args as Instruction defs.
+def instrs;
+
+// DAG operator that interprets each DAG arg as a regex pattern for
+// matching Instruction opcode names.
+// The regex must match the beginning of the opcode (as in Python re.match).
+// To avoid matching prefixes, append '$' to the pattern.
+def instregex;
+
 // Define the SchedMachineModel and provide basic properties for
 // coarse grained instruction cost model. Default values for the
 // properties are defined in MCSchedModel. A value of "-1" in the
@@ -325,9 +334,9 @@ class SchedReadVariant<list<SchedVar> variants> : SchedRead,
 // the subtarget to easily override specific operations.
 //
 // SchedModel ties this opcode mapping to a processor.
-class InstRW<list<SchedReadWrite> rw, list<Instruction> instrs> {
+class InstRW<list<SchedReadWrite> rw, dag instrlist> {
   list<SchedReadWrite> OperandReadWrites = rw;
-  list<Instruction> Instrs = instrs;
+  dag Instrs = instrlist;
   SchedMachineModel SchedModel = ?;
 }
 

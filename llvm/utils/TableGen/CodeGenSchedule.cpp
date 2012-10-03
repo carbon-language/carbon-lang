@@ -18,6 +18,8 @@
 #include "CodeGenTarget.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Regex.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
 
@@ -34,10 +36,63 @@ static void dumpIdxVec(const SmallVectorImpl<unsigned> &V) {
 }
 #endif
 
+// (instrs a, b, ...) Evaluate and union all arguments. Identical to AddOp.
+struct InstrsOp : public SetTheory::Operator {
+  void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts) {
+    ST.evaluate(Expr->arg_begin(), Expr->arg_end(), Elts);
+  }
+};
+
+// (instregex "OpcPat",...) Find all instructions matching an opcode pattern.
+//
+// TODO: Since this is a prefix match, perform a binary search over the
+// instruction names using lower_bound. Note that the predefined instrs must be
+// scanned linearly first. However, this is only safe if the regex pattern has
+// no top-level bars. The DAG already has a list of patterns, so there's no
+// reason to use top-level bars, but we need a way to verify they don't exist
+// before implementing the optimization.
+struct InstRegexOp : public SetTheory::Operator {
+  const CodeGenTarget &Target;
+  InstRegexOp(const CodeGenTarget &t): Target(t) {}
+
+  void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts) {
+    SmallVector<Regex*, 4> RegexList;
+    for (DagInit::const_arg_iterator
+           AI = Expr->arg_begin(), AE = Expr->arg_end(); AI != AE; ++AI) {
+      StringInit *SI = dynamic_cast<StringInit*>(*AI);
+      if (!SI)
+        throw "instregex requires pattern string: " + Expr->getAsString();
+      std::string pat = SI->getValue();
+      // Implement a python-style prefix match.
+      if (pat[0] != '^') {
+        pat.insert(0, "^(");
+        pat.insert(pat.end(), ')');
+      }
+      RegexList.push_back(new Regex(pat));
+    }
+    for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
+           E = Target.inst_end(); I != E; ++I) {
+      for (SmallVectorImpl<Regex*>::iterator
+             RI = RegexList.begin(), RE = RegexList.end(); RI != RE; ++RI) {
+        if ((*RI)->match((*I)->TheDef->getName()))
+          Elts.insert((*I)->TheDef);
+      }
+    }
+    DeleteContainerPointers(RegexList);
+  }
+};
+
 /// CodeGenModels ctor interprets machine model records and populates maps.
 CodeGenSchedModels::CodeGenSchedModels(RecordKeeper &RK,
                                        const CodeGenTarget &TGT):
   Records(RK), Target(TGT), NumItineraryClasses(0) {
+
+  Sets.addFieldExpander("InstRW", "Instrs");
+
+  // Allow Set evaluation to recognize the dags used in InstRW records:
+  // (instrs Op1, Op1...)
+  Sets.addOperator("instrs", new InstrsOp);
+  Sets.addOperator("instregex", new InstRegexOp(Target));
 
   // Instantiate a CodeGenProcModel for each SchedMachineModel with the values
   // that are explicitly referenced in tablegen records. Resources associated
@@ -646,9 +701,11 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
   // determined from ItinDef or SchedRW.
   SmallVector<std::pair<unsigned, SmallVector<Record *, 8> >, 4> ClassInstrs;
   // Sort Instrs into sets.
-  RecVec InstDefs = InstRWDef->getValueAsListOfDefs("Instrs");
-  std::sort(InstDefs.begin(), InstDefs.end(), LessRecord());
-  for (RecIter I = InstDefs.begin(), E = InstDefs.end(); I != E; ++I) {
+  const RecVec *InstDefs = Sets.expand(InstRWDef);
+  if (InstDefs->empty())
+    throw TGError(InstRWDef->getLoc(), "No matching instruction opcodes");
+
+  for (RecIter I = InstDefs->begin(), E = InstDefs->end(); I != E; ++I) {
     unsigned SCIdx = 0;
     InstClassMapTy::const_iterator Pos = InstrClassMap.find(*I);
     if (Pos != InstrClassMap.end())
@@ -697,13 +754,22 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
     SC.ProcIndices.push_back(0);
     // Map each Instr to this new class.
     // Note that InstDefs may be a smaller list than InstRWDef's "Instrs".
+    Record *RWModelDef = InstRWDef->getValueAsDef("SchedModel");
+    SmallSet<unsigned, 4> RemappedClassIDs;
     for (ArrayRef<Record*>::const_iterator
            II = InstDefs.begin(), IE = InstDefs.end(); II != IE; ++II) {
       unsigned OldSCIdx = InstrClassMap[*II];
-      if (OldSCIdx) {
-        SC.InstRWs.insert(SC.InstRWs.end(),
-                          SchedClasses[OldSCIdx].InstRWs.begin(),
-                          SchedClasses[OldSCIdx].InstRWs.end());
+      if (OldSCIdx && RemappedClassIDs.insert(OldSCIdx)) {
+        for (RecIter RI = SchedClasses[OldSCIdx].InstRWs.begin(),
+               RE = SchedClasses[OldSCIdx].InstRWs.end(); RI != RE; ++RI) {
+          if ((*RI)->getValueAsDef("SchedModel") == RWModelDef) {
+            throw TGError(InstRWDef->getLoc(), "Overlapping InstRW def " +
+                          (*II)->getName() + " also matches " +
+                          (*RI)->getValue("Instrs")->getValue()->getAsString());
+          }
+          assert(*RI != InstRWDef && "SchedClass has duplicate InstRW def");
+          SC.InstRWs.push_back(*RI);
+        }
       }
       InstrClassMap[*II] = SCIdx;
     }
@@ -814,8 +880,8 @@ void CodeGenSchedModels::inferFromItinClass(Record *ItinClassDef,
 void CodeGenSchedModels::inferFromInstRWs(unsigned SCIdx) {
   const RecVec &RWDefs = SchedClasses[SCIdx].InstRWs;
   for (RecIter RWI = RWDefs.begin(), RWE = RWDefs.end(); RWI != RWE; ++RWI) {
-    RecVec Instrs = (*RWI)->getValueAsListOfDefs("Instrs");
-    RecIter II = Instrs.begin(), IE = Instrs.end();
+    const RecVec *InstDefs = Sets.expand(*RWI);
+    RecIter II = InstDefs->begin(), IE = InstDefs->end();
     for (; II != IE; ++II) {
       if (InstrClassMap[*II] == SCIdx)
         break;

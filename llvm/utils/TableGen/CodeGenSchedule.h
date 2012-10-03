@@ -15,6 +15,7 @@
 #ifndef CODEGEN_SCHEDULE_H
 #define CODEGEN_SCHEDULE_H
 
+#include "SetTheory.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/DenseMap.h"
@@ -207,6 +208,9 @@ struct CodeGenProcModel {
 class CodeGenSchedModels {
   RecordKeeper &Records;
   const CodeGenTarget &Target;
+
+  // Map dag expressions to Instruction lists.
+  SetTheory Sets;
 
   // List of unique processor models.
   std::vector<CodeGenProcModel> ProcModels;
