@@ -31,8 +31,8 @@ entry:
 define void @test2() {
 ; CHECK: @test2
 ; CHECK: alloca i16
-; CHECK: load i8* %{{.*}}, align 1
-; CHECK: store i8 42, i8* %{{.*}}, align 1
+; CHECK: load i8* %{{.*}}
+; CHECK: store i8 42, i8* %{{.*}}
 ; CHECK: ret void
 
 entry:
@@ -41,8 +41,8 @@ entry:
   %cast1 = bitcast i8* %gep1 to i16*
   store volatile i16 0, i16* %cast1
   %gep2 = getelementptr { i8, i8, i8, i8 }* %a, i32 0, i32 2
-  %result = load i8* %gep2, align 2
-  store i8 42, i8* %gep2, align 2
+  %result = load i8* %gep2
+  store i8 42, i8* %gep2
   ret void
 }
 
@@ -111,6 +111,61 @@ entry:
 ; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 3, i32 1, i1 false)
 ; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 8, i32 1, i1 false)
 ; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 11, i32 1, i1 false)
+
+  ret void
+}
+
+define void @test5() {
+; Test that we preserve underaligned loads and stores when splitting.
+; CHECK: @test5
+; CHECK: alloca [9 x i8]
+; CHECK: alloca [9 x i8]
+; CHECK: store volatile double 0.0{{.*}}, double* %{{.*}}, align 1
+; CHECK: load i16* %{{.*}}, align 1
+; CHECK: load double* %{{.*}}, align 1
+; CHECK: store volatile double %{{.*}}, double* %{{.*}}, align 1
+; CHECK: load i16* %{{.*}}, align 1
+; CHECK: ret void
+
+entry:
+  %a = alloca [18 x i8]
+  %raw1 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 0
+  %ptr1 = bitcast i8* %raw1 to double*
+  store volatile double 0.0, double* %ptr1, align 1
+  %weird_gep1 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 7
+  %weird_cast1 = bitcast i8* %weird_gep1 to i16*
+  %weird_load1 = load i16* %weird_cast1, align 1
+
+  %raw2 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 9
+  %ptr2 = bitcast i8* %raw2 to double*
+  %d1 = load double* %ptr1, align 1
+  store volatile double %d1, double* %ptr2, align 1
+  %weird_gep2 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 16
+  %weird_cast2 = bitcast i8* %weird_gep2 to i16*
+  %weird_load2 = load i16* %weird_cast2, align 1
+
+  ret void
+}
+
+define void @test6() {
+; Test that we promote alignment when the underlying alloca switches to one
+; that innately provides it.
+; CHECK: @test6
+; CHECK: alloca double
+; CHECK: alloca double
+; CHECK-NOT: align
+; CHECK: ret void
+
+entry:
+  %a = alloca [16 x i8]
+  %raw1 = getelementptr inbounds [16 x i8]* %a, i32 0, i32 0
+  %ptr1 = bitcast i8* %raw1 to double*
+  store volatile double 0.0, double* %ptr1, align 1
+
+  %raw2 = getelementptr inbounds [16 x i8]* %a, i32 0, i32 8
+  %ptr2 = bitcast i8* %raw2 to double*
+  %val = load double* %ptr1, align 1
+  store volatile double %val, double* %ptr2, align 1
 
   ret void
 }

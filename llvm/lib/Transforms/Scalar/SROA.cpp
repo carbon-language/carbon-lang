@@ -2170,18 +2170,36 @@ private:
     return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy, getName(""));
   }
 
-  unsigned getAdjustedAlign(uint64_t Offset) {
+  /// \brief Compute suitable alignment to access an offset into the new alloca.
+  unsigned getOffsetAlign(uint64_t Offset) {
     unsigned NewAIAlign = NewAI.getAlignment();
     if (!NewAIAlign)
       NewAIAlign = TD.getABITypeAlignment(NewAI.getAllocatedType());
     return MinAlign(NewAIAlign, Offset);
   }
-  unsigned getAdjustedAlign() {
-    return getAdjustedAlign(BeginOffset - NewAllocaBeginOffset);
+
+  /// \brief Compute suitable alignment to access this partition of the new
+  /// alloca.
+  unsigned getPartitionAlign() {
+    return getOffsetAlign(BeginOffset - NewAllocaBeginOffset);
   }
 
-  bool isTypeAlignSufficient(Type *Ty) {
-    return TD.getABITypeAlignment(Ty) >= getAdjustedAlign();
+  /// \brief Compute suitable alignment to access a type at an offset of the
+  /// new alloca.
+  ///
+  /// \returns zero if the type's ABI alignment is a suitable alignment,
+  /// otherwise returns the maximal suitable alignment.
+  unsigned getOffsetTypeAlign(Type *Ty, uint64_t Offset) {
+    unsigned Align = getOffsetAlign(Offset);
+    return Align == TD.getABITypeAlignment(Ty) ? 0 : Align;
+  }
+
+  /// \brief Compute suitable alignment to access a type at the beginning of
+  /// this partition of the new alloca.
+  ///
+  /// See \c getOffsetTypeAlign for details; this routine delegates to it.
+  unsigned getPartitionTypeAlign(Type *Ty) {
+    return getOffsetTypeAlign(Ty, BeginOffset - NewAllocaBeginOffset);
   }
 
   ConstantInt *getIndex(IRBuilder<> &IRB, uint64_t Offset) {
@@ -2292,8 +2310,7 @@ private:
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          LI.getPointerOperand()->getType());
     LI.setOperand(0, NewPtr);
-    if (LI.getAlignment() || !isTypeAlignSufficient(LI.getType()))
-      LI.setAlignment(getAdjustedAlign());
+    LI.setAlignment(getPartitionTypeAlign(LI.getType()));
     DEBUG(dbgs() << "          to: " << LI << "\n");
 
     deleteIfTriviallyDead(OldOp);
@@ -2345,12 +2362,7 @@ private:
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());
     SI.setOperand(1, NewPtr);
-    if (SI.getAlignment() ||
-        !isTypeAlignSufficient(SI.getValueOperand()->getType()))
-      SI.setAlignment(getAdjustedAlign());
-    if (SI.getAlignment())
-      SI.setAlignment(MinAlign(NewAI.getAlignment(),
-                               BeginOffset - NewAllocaBeginOffset));
+    SI.setAlignment(getPartitionTypeAlign(SI.getValueOperand()->getType()));
     DEBUG(dbgs() << "          to: " << SI << "\n");
 
     deleteIfTriviallyDead(OldOp);
@@ -2367,7 +2379,7 @@ private:
     if (!isa<Constant>(II.getLength())) {
       II.setDest(getAdjustedAllocaPtr(IRB, II.getRawDest()->getType()));
       Type *CstTy = II.getAlignmentCst()->getType();
-      II.setAlignment(ConstantInt::get(CstTy, getAdjustedAlign()));
+      II.setAlignment(ConstantInt::get(CstTy, getPartitionAlign()));
 
       deleteIfTriviallyDead(OldPtr);
       return false;
@@ -2391,7 +2403,7 @@ private:
       CallInst *New
         = IRB.CreateMemSet(getAdjustedAllocaPtr(IRB,
                                                 II.getRawDest()->getType()),
-                           II.getValue(), Size, getAdjustedAlign(),
+                           II.getValue(), Size, getPartitionAlign(),
                            II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
@@ -2481,7 +2493,7 @@ private:
     unsigned Align = II.getAlignment();
     if (Align > 1)
       Align = MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
-                       MinAlign(II.getAlignment(), getAdjustedAlign()));
+                       MinAlign(II.getAlignment(), getPartitionAlign()));
 
     // For unsplit intrinsics, we simply modify the source and destination
     // pointers in place. This isn't just an optimization, it is a matter of
