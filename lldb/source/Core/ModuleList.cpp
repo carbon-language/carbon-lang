@@ -454,13 +454,14 @@ ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool na
     
     if (total_matches < max_matches)
     {
+        SymbolContext world_sc;
         for (pos = m_modules.begin(); pos != end; ++pos)
         {
             // Search the module if the module is not equal to the one in the symbol
             // context "sc". If "sc" contains a empty module shared pointer, then
             // the comparisong will always be true (valid_module_ptr != NULL).
             if (sc.module_sp.get() != (*pos).get())
-                total_matches += (*pos)->FindTypes (sc, name, name_is_fully_qualified, max_matches, types);
+                total_matches += (*pos)->FindTypes (world_sc, name, name_is_fully_qualified, max_matches, types);
             
             if (total_matches >= max_matches)
                 break;
