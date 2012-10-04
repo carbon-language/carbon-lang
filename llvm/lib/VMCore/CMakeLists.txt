@@ -8,6 +8,7 @@ add_llvm_library(LLVMCore
   ConstantFold.cpp
   Constants.cpp
   Core.cpp
+  DataLayout.cpp
   DebugInfo.cpp
   DebugLoc.cpp
   DIBuilder.cpp
