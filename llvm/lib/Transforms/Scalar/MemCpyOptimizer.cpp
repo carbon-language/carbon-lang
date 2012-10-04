@@ -332,7 +332,7 @@ namespace {
     bool processMemCpy(MemCpyInst *M);
     bool processMemMove(MemMoveInst *M);
     bool performCallSlotOptzn(Instruction *cpy, Value *cpyDst, Value *cpySrc,
-                              uint64_t cpyLen, CallInst *C);
+                              uint64_t cpyLen, unsigned cpyAlign, CallInst *C);
     bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
                                        uint64_t MSize);
     bool processByValArgument(CallSite CS, unsigned ArgNo);
@@ -509,10 +509,18 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       }
 
       if (C) {
+        unsigned storeAlign = SI->getAlignment();
+        if (!storeAlign)
+          storeAlign = TD->getABITypeAlignment(SI->getOperand(0)->getType());
+        unsigned loadAlign = LI->getAlignment();
+        if (!loadAlign)
+          loadAlign = TD->getABITypeAlignment(LI->getType());
+
         bool changed = performCallSlotOptzn(LI,
                         SI->getPointerOperand()->stripPointerCasts(),
                         LI->getPointerOperand()->stripPointerCasts(),
-                        TD->getTypeStoreSize(SI->getOperand(0)->getType()), C);
+                        TD->getTypeStoreSize(SI->getOperand(0)->getType()),
+                        std::min(storeAlign, loadAlign), C);
         if (changed) {
           MD->removeInstruction(SI);
           SI->eraseFromParent();
@@ -559,7 +567,8 @@ bool MemCpyOpt::processMemSet(MemSetInst *MSI, BasicBlock::iterator &BBI) {
 /// the call write its result directly into the destination of the memcpy.
 bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
                                      Value *cpyDest, Value *cpySrc,
-                                     uint64_t cpyLen, CallInst *C) {
+                                     uint64_t cpyLen, unsigned cpyAlign,
+                                     CallInst *C) {
   // The general transformation to keep in mind is
   //
   //   call @func(..., src, ...)
@@ -594,6 +603,16 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
     srcArraySize->getZExtValue();
 
   if (cpyLen < srcSize)
+    return false;
+
+  // Check that dest points to memory that is at least as aligned as src.
+  unsigned srcAlign = srcAlloca->getAlignment();
+  if (!srcAlign)
+    srcAlign = TD->getABITypeAlignment(srcAlloca->getAllocatedType());
+  bool isDestSufficientlyAligned = srcAlign <= cpyAlign;
+  // If dest is not aligned enough and we can't increase its alignment then
+  // bail out.
+  if (!isDestSufficientlyAligned && !isa<AllocaInst>(cpyDest))
     return false;
 
   // Check that accessing the first srcSize bytes of dest will not cause a
@@ -686,6 +705,12 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
 
   if (!changedArgument)
     return false;
+
+  // If the destination wasn't sufficiently aligned then increase its alignment.
+  if (!isDestSufficientlyAligned) {
+    assert(isa<AllocaInst>(cpyDest) && "Can only increase alloca alignment!");
+    cast<AllocaInst>(cpyDest)->setAlignment(srcAlign);
+  }
 
   // Drop any cached information about the call, because we may have changed
   // its dependence information by changing its parameter.
@@ -813,7 +838,8 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   if (DepInfo.isClobber()) {
     if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
       if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
-                               CopySize->getZExtValue(), C)) {
+                               CopySize->getZExtValue(), M->getAlignment(),
+                               C)) {
         MD->removeInstruction(M);
         M->eraseFromParent();
         return true;
