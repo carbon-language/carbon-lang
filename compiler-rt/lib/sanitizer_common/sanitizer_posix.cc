@@ -47,6 +47,14 @@ void *MmapOrDie(uptr size, const char *mem_type) {
                             PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANON, -1, 0);
   if (res == (void*)-1) {
+    static int recursion_count;
+    if (recursion_count) {
+      // The Report() and CHECK calls below may call mmap recursively and fail.
+      // If we went into recursion, just die.
+      RawWrite("AddressSanitizer is unable to mmap\n");
+      Die();
+    }
+    recursion_count++;
     Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s: %s\n",
            size, size, mem_type, strerror(errno));
     DumpProcessMap();
