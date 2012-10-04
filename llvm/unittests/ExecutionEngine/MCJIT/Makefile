@@ -1,4 +1,4 @@
-##===- unittests/ExecutionEngine/Makefile ------------------*- Makefile -*-===##
+##===- unittests/ExecutionEngine/MCJIT/Makefile ------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,10 +7,12 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-TESTNAME = ExecutionEngine
-LINK_COMPONENTS :=interpreter
-PARALLEL_DIRS = JIT MCJIT
+LEVEL = ../../..
+TESTNAME = MCJIT
+LINK_COMPONENTS := core jit mcjit native support
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
+
+# Permit these tests to use the MCJIT's symbolic lookup.
+LD.Flags += $(RDYNAMIC)

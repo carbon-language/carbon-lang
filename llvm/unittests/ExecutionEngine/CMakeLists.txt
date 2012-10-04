@@ -7,3 +7,4 @@ add_llvm_unittest(ExecutionEngineTests
   )
 
 add_subdirectory(JIT)
+add_subdirectory(MCJIT)
