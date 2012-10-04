@@ -602,6 +602,41 @@ ANNOTATION(pragma_pack)
 // handles them.
 ANNOTATION(pragma_parser_crash)
 
+// Annotation for #pragma ms_struct...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_msstruct)
+
+// Annotation for #pragma align...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_align)
+
+// Annotation for #pragma weak id
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_weak)
+
+// Annotation for #pragma weak id = id
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_weakalias)
+
+// Annotation for #pragma redefine_extname...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_redefine_extname)
+
+// Annotation for #pragma STDC FP_CONTRACT...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_fp_contract)
+
+// Annotation for #pragma OPENCL EXTENSION...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_opencl_extension)
+
 #undef ANNOTATION
 #undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD

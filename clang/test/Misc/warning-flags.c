@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (158):
+CHECK: Warnings without flags (157):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -133,7 +133,6 @@ CHECK-NEXT:   warn_pragma_expected_rparen
 CHECK-NEXT:   warn_pragma_extra_tokens_at_eol
 CHECK-NEXT:   warn_pragma_ms_struct
 CHECK-NEXT:   warn_pragma_options_align_reset_failed
-CHECK-NEXT:   warn_pragma_options_align_unsupported_option
 CHECK-NEXT:   warn_pragma_options_expected_align
 CHECK-NEXT:   warn_pragma_pack_invalid_action
 CHECK-NEXT:   warn_pragma_pack_invalid_alignment

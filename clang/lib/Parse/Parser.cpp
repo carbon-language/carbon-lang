@@ -60,35 +60,35 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool SkipFunctionBodies)
 
   // Add #pragma handlers. These are removed and destroyed in the
   // destructor.
-  AlignHandler.reset(new PragmaAlignHandler(actions));
+  AlignHandler.reset(new PragmaAlignHandler());
   PP.AddPragmaHandler(AlignHandler.get());
 
-  GCCVisibilityHandler.reset(new PragmaGCCVisibilityHandler(actions));
+  GCCVisibilityHandler.reset(new PragmaGCCVisibilityHandler());
   PP.AddPragmaHandler("GCC", GCCVisibilityHandler.get());
 
-  OptionsHandler.reset(new PragmaOptionsHandler(actions));
+  OptionsHandler.reset(new PragmaOptionsHandler());
   PP.AddPragmaHandler(OptionsHandler.get());
 
-  PackHandler.reset(new PragmaPackHandler(actions));
+  PackHandler.reset(new PragmaPackHandler());
   PP.AddPragmaHandler(PackHandler.get());
     
-  MSStructHandler.reset(new PragmaMSStructHandler(actions));
+  MSStructHandler.reset(new PragmaMSStructHandler());
   PP.AddPragmaHandler(MSStructHandler.get());
 
-  UnusedHandler.reset(new PragmaUnusedHandler(actions));
+  UnusedHandler.reset(new PragmaUnusedHandler());
   PP.AddPragmaHandler(UnusedHandler.get());
 
-  WeakHandler.reset(new PragmaWeakHandler(actions));
+  WeakHandler.reset(new PragmaWeakHandler());
   PP.AddPragmaHandler(WeakHandler.get());
 
-  RedefineExtnameHandler.reset(new PragmaRedefineExtnameHandler(actions));
+  RedefineExtnameHandler.reset(new PragmaRedefineExtnameHandler());
   PP.AddPragmaHandler(RedefineExtnameHandler.get());
 
-  FPContractHandler.reset(new PragmaFPContractHandler(actions));
+  FPContractHandler.reset(new PragmaFPContractHandler());
   PP.AddPragmaHandler("STDC", FPContractHandler.get());
 
   if (getLangOpts().OpenCL) {
-    OpenCLExtensionHandler.reset(new PragmaOpenCLExtensionHandler(actions));
+    OpenCLExtensionHandler.reset(new PragmaOpenCLExtensionHandler());
     PP.AddPragmaHandler("OPENCL", OpenCLExtensionHandler.get());
 
     PP.AddPragmaHandler("OPENCL", FPContractHandler.get());
@@ -634,6 +634,27 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     return DeclGroupPtrTy();
   case tok::annot_pragma_pack:
     HandlePragmaPack();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_msstruct:
+    HandlePragmaMSStruct();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_align:
+    HandlePragmaAlign();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_weak:
+    HandlePragmaWeak();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_weakalias:
+    HandlePragmaWeakAlias();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_redefine_extname:
+    HandlePragmaRedefineExtname();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_fp_contract:
+    HandlePragmaFPContract();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_opencl_extension:
+    HandlePragmaOpenCLExtension();
     return DeclGroupPtrTy();
   case tok::semi:
     ConsumeExtraSemi(OutsideFunction);

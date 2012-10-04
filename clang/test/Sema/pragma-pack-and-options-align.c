@@ -38,5 +38,16 @@ struct s3 {
 };
 extern int a[sizeof(struct s3) == 8 ? 1 : -1];
 
+#pragma pack(push,2)
+#pragma options align=power
+struct s4 {
+  char c;
+  int x;
+};
+#pragma pack(pop)
+#pragma options align=reset
+extern int a[sizeof(struct s4) == 8 ? 1 : -1];
+
 /* expected-warning {{#pragma options align=reset failed: stack empty}} */ #pragma options align=reset
 /* expected-warning {{#pragma pack(pop, ...) failed: stack empty}} */ #pragma pack(pop)
+

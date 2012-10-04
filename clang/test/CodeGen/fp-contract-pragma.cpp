@@ -34,3 +34,15 @@ float fp_contract_3(float a, float b, float c) {
 // CHECK: tail call float @llvm.fmuladd
   return template_muladd<float>(a, b, c);
 }
+
+template<typename T> class fp_contract_4 {
+  float method(float a, float b, float c) {
+    #pragma STDC FP_CONTRACT ON
+    return a * b + c;
+    #pragma STDC FP_CONTRACT OFF    
+  }
+};
+
+template class fp_contract_4<int>;
+// CHECK: _ZN13fp_contract_4IiE6methodEfff
+// CHECK: tail call float @llvm.fmuladd

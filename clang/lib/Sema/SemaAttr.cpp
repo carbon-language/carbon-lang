@@ -136,22 +136,11 @@ void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
 }
 
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
-                                   SourceLocation PragmaLoc,
-                                   SourceLocation KindLoc) {
+                                   SourceLocation PragmaLoc) {
   if (PackContext == 0)
     PackContext = new PragmaPackStack();
 
   PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
-
-  // Reset just pops the top of the stack, or resets the current alignment to
-  // default.
-  if (Kind == Sema::POAK_Reset) {
-    if (!Context->pop(0, /*IsReset=*/true)) {
-      Diag(PragmaLoc, diag::warn_pragma_options_align_reset_failed)
-        << "stack empty";
-    }
-    return;
-  }
 
   switch (Kind) {
     // For all targets we support native and natural are the same.
@@ -181,9 +170,13 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
     Context->setAlignment(PackStackEntry::kMac68kAlignmentSentinel);
     break;
 
-  default:
-    Diag(PragmaLoc, diag::warn_pragma_options_align_unsupported_option)
-      << KindLoc;
+  case POAK_Reset:
+    // Reset just pops the top of the stack, or resets the current alignment to
+    // default.
+    if (!Context->pop(0, /*IsReset=*/true)) {
+      Diag(PragmaLoc, diag::warn_pragma_options_align_reset_failed)
+        << "stack empty";
+    }
     break;
   }
 }
