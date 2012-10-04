@@ -1,4 +1,4 @@
-//===-- TargetData.cpp - Data size & alignment routines --------------------==//
+//===-- DataLayout.cpp - Data size & alignment routines --------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines target properties related to datatype size/offset/alignment
+// This file defines layout properties related to datatype size/offset/alignment
 // information.
 //
 // This structure should be created once, filled in if the defaults are not
@@ -16,7 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -31,17 +31,17 @@
 #include <cstdlib>
 using namespace llvm;
 
-// Handle the Pass registration stuff necessary to use TargetData's.
+// Handle the Pass registration stuff necessary to use DataLayout's.
 
 // Register the default SparcV9 implementation...
-INITIALIZE_PASS(TargetData, "targetdata", "Target Data Layout", false, true)
-char TargetData::ID = 0;
+INITIALIZE_PASS(DataLayout, "datalayout", "Data Layout", false, true)
+char DataLayout::ID = 0;
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout
 //===----------------------------------------------------------------------===//
 
-StructLayout::StructLayout(StructType *ST, const TargetData &TD) {
+StructLayout::StructLayout(StructType *ST, const DataLayout &TD) {
   assert(!ST->isOpaque() && "Cannot get layout of opaque structs");
   StructAlignment = 0;
   StructSize = 0;
@@ -54,7 +54,7 @@ StructLayout::StructLayout(StructType *ST, const TargetData &TD) {
 
     // Add padding if necessary to align the data element properly.
     if ((StructSize & (TyAlign-1)) != 0)
-      StructSize = TargetData::RoundUpAlignment(StructSize, TyAlign);
+      StructSize = DataLayout::RoundUpAlignment(StructSize, TyAlign);
 
     // Keep track of maximum alignment constraint.
     StructAlignment = std::max(TyAlign, StructAlignment);
@@ -69,7 +69,7 @@ StructLayout::StructLayout(StructType *ST, const TargetData &TD) {
   // Add padding to the end of the struct so that it could be put in an array
   // and all array elements would be aligned correctly.
   if ((StructSize & (StructAlignment-1)) != 0)
-    StructSize = TargetData::RoundUpAlignment(StructSize, StructAlignment);
+    StructSize = DataLayout::RoundUpAlignment(StructSize, StructAlignment);
 }
 
 
@@ -94,14 +94,14 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
 }
 
 //===----------------------------------------------------------------------===//
-// TargetAlignElem, TargetAlign support
+// LayoutAlignElem, LayoutAlign support
 //===----------------------------------------------------------------------===//
 
-TargetAlignElem
-TargetAlignElem::get(AlignTypeEnum align_type, unsigned abi_align,
+LayoutAlignElem
+LayoutAlignElem::get(AlignTypeEnum align_type, unsigned abi_align,
                      unsigned pref_align, uint32_t bit_width) {
   assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
-  TargetAlignElem retval;
+  LayoutAlignElem retval;
   retval.AlignType = align_type;
   retval.ABIAlign = abi_align;
   retval.PrefAlign = pref_align;
@@ -110,18 +110,18 @@ TargetAlignElem::get(AlignTypeEnum align_type, unsigned abi_align,
 }
 
 bool
-TargetAlignElem::operator==(const TargetAlignElem &rhs) const {
+LayoutAlignElem::operator==(const LayoutAlignElem &rhs) const {
   return (AlignType == rhs.AlignType
           && ABIAlign == rhs.ABIAlign
           && PrefAlign == rhs.PrefAlign
           && TypeBitWidth == rhs.TypeBitWidth);
 }
 
-const TargetAlignElem
-TargetData::InvalidAlignmentElem = { (AlignTypeEnum)0xFF, 0, 0, 0 };
+const LayoutAlignElem
+DataLayout::InvalidAlignmentElem = { (AlignTypeEnum)0xFF, 0, 0, 0 };
 
 //===----------------------------------------------------------------------===//
-//                       TargetData Class Implementation
+//                       DataLayout Class Implementation
 //===----------------------------------------------------------------------===//
 
 /// getInt - Get an integer ignoring errors.
@@ -131,8 +131,8 @@ static int getInt(StringRef R) {
   return Result;
 }
 
-void TargetData::init() {
-  initializeTargetDataPass(*PassRegistry::getPassRegistry());
+void DataLayout::init() {
+  initializeDataLayoutPass(*PassRegistry::getPassRegistry());
 
   LayoutMap = 0;
   LittleEndian = false;
@@ -156,7 +156,7 @@ void TargetData::init() {
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
 }
 
-std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
+std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
 
   if (td)
     td->init();
@@ -256,7 +256,7 @@ std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
       unsigned PrefAlign = PrefAlignBits / 8;
       if (PrefAlign == 0)
         PrefAlign = ABIAlign;
-      
+
       if (td)
         td->setAlignment(AlignType, ABIAlign, PrefAlign, Size);
       break;
@@ -266,8 +266,8 @@ std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
       do {
         int Width = getInt(Specifier);
         if (Width <= 0) {
-          return std::string("invalid native integer size \'") + Specifier.str() +
-                 "\', must be a positive integer.";
+          return std::string("invalid native integer size \'") +
+            Specifier.str() + "\', must be a positive integer.";
         }
         if (td && Width != 0)
           td->LegalIntWidths.push_back(Width);
@@ -298,20 +298,20 @@ std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
 ///
 /// @note This has to exist, because this is a pass, but it should never be
 /// used.
-TargetData::TargetData() : ImmutablePass(ID) {
-  report_fatal_error("Bad TargetData ctor used.  "
-                    "Tool did not specify a TargetData to use?");
+DataLayout::DataLayout() : ImmutablePass(ID) {
+  report_fatal_error("Bad DataLayout ctor used.  "
+                    "Tool did not specify a DataLayout to use?");
 }
 
-TargetData::TargetData(const Module *M)
+DataLayout::DataLayout(const Module *M)
   : ImmutablePass(ID) {
   std::string errMsg = parseSpecifier(M->getDataLayout(), this);
-  assert(errMsg == "" && "Module M has malformed target data layout string.");
+  assert(errMsg == "" && "Module M has malformed data layout string.");
   (void)errMsg;
 }
 
 void
-TargetData::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
+DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                          unsigned pref_align, uint32_t bit_width) {
   assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
   assert(pref_align < (1 << 16) && "Alignment doesn't fit in bitfield");
@@ -326,13 +326,13 @@ TargetData::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
     }
   }
 
-  Alignments.push_back(TargetAlignElem::get(align_type, abi_align,
+  Alignments.push_back(LayoutAlignElem::get(align_type, abi_align,
                                             pref_align, bit_width));
 }
 
 /// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or
-/// preferred if ABIInfo = false) the target wants for the specified datatype.
-unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
+/// preferred if ABIInfo = false) the layout wants for the specified datatype.
+unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
                                       uint32_t BitWidth, bool ABIInfo,
                                       Type *Ty) const {
   // Check to see if we have an exact match and remember the best match we see.
@@ -412,11 +412,11 @@ public:
 
 } // end anonymous namespace
 
-TargetData::~TargetData() {
+DataLayout::~DataLayout() {
   delete static_cast<StructLayoutMap*>(LayoutMap);
 }
 
-const StructLayout *TargetData::getStructLayout(StructType *Ty) const {
+const StructLayout *DataLayout::getStructLayout(StructType *Ty) const {
   if (!LayoutMap)
     LayoutMap = new StructLayoutMap();
 
@@ -439,7 +439,7 @@ const StructLayout *TargetData::getStructLayout(StructType *Ty) const {
   return L;
 }
 
-std::string TargetData::getStringRepresentation() const {
+std::string DataLayout::getStringRepresentation() const {
   std::string Result;
   raw_string_ostream OS(Result);
 
@@ -449,7 +449,7 @@ std::string TargetData::getStringRepresentation() const {
      << "-S" << StackNaturalAlign*8;
 
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
-    const TargetAlignElem &AI = Alignments[i];
+    const LayoutAlignElem &AI = Alignments[i];
     OS << '-' << (char)AI.AlignType << AI.TypeBitWidth << ':'
        << AI.ABIAlign*8 << ':' << AI.PrefAlign*8;
   }
@@ -464,7 +464,7 @@ std::string TargetData::getStringRepresentation() const {
 }
 
 
-uint64_t TargetData::getTypeSizeInBits(Type *Ty) const {
+uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
   case Type::LabelTyID:
@@ -498,7 +498,7 @@ uint64_t TargetData::getTypeSizeInBits(Type *Ty) const {
   case Type::VectorTyID:
     return cast<VectorType>(Ty)->getBitWidth();
   default:
-    llvm_unreachable("TargetData::getTypeSizeInBits(): Unsupported type");
+    llvm_unreachable("DataLayout::getTypeSizeInBits(): Unsupported type");
   }
 }
 
@@ -510,7 +510,7 @@ uint64_t TargetData::getTypeSizeInBits(Type *Ty) const {
   Get the ABI (\a abi_or_pref == true) or preferred alignment (\a abi_or_pref
   == false) for the requested type \a Ty.
  */
-unsigned TargetData::getAlignment(Type *Ty, bool abi_or_pref) const {
+unsigned DataLayout::getAlignment(Type *Ty, bool abi_or_pref) const {
   int AlignType = -1;
 
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
@@ -560,18 +560,18 @@ unsigned TargetData::getAlignment(Type *Ty, bool abi_or_pref) const {
                           abi_or_pref, Ty);
 }
 
-unsigned TargetData::getABITypeAlignment(Type *Ty) const {
+unsigned DataLayout::getABITypeAlignment(Type *Ty) const {
   return getAlignment(Ty, true);
 }
 
 /// getABIIntegerTypeAlignment - Return the minimum ABI-required alignment for
 /// an integer type of the specified bitwidth.
-unsigned TargetData::getABIIntegerTypeAlignment(unsigned BitWidth) const {
+unsigned DataLayout::getABIIntegerTypeAlignment(unsigned BitWidth) const {
   return getAlignmentInfo(INTEGER_ALIGN, BitWidth, true, 0);
 }
 
 
-unsigned TargetData::getCallFrameTypeAlignment(Type *Ty) const {
+unsigned DataLayout::getCallFrameTypeAlignment(Type *Ty) const {
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i)
     if (Alignments[i].AlignType == STACK_ALIGN)
       return Alignments[i].ABIAlign;
@@ -579,11 +579,11 @@ unsigned TargetData::getCallFrameTypeAlignment(Type *Ty) const {
   return getABITypeAlignment(Ty);
 }
 
-unsigned TargetData::getPrefTypeAlignment(Type *Ty) const {
+unsigned DataLayout::getPrefTypeAlignment(Type *Ty) const {
   return getAlignment(Ty, false);
 }
 
-unsigned TargetData::getPreferredTypeAlignmentShift(Type *Ty) const {
+unsigned DataLayout::getPreferredTypeAlignmentShift(Type *Ty) const {
   unsigned Align = getPrefTypeAlignment(Ty);
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
   return Log2_32(Align);
@@ -591,12 +591,12 @@ unsigned TargetData::getPreferredTypeAlignmentShift(Type *Ty) const {
 
 /// getIntPtrType - Return an unsigned integer type that is the same size or
 /// greater to the host pointer size.
-IntegerType *TargetData::getIntPtrType(LLVMContext &C) const {
+IntegerType *DataLayout::getIntPtrType(LLVMContext &C) const {
   return IntegerType::get(C, getPointerSizeInBits());
 }
 
 
-uint64_t TargetData::getIndexedOffset(Type *ptrTy,
+uint64_t DataLayout::getIndexedOffset(Type *ptrTy,
                                       ArrayRef<Value *> Indices) const {
   Type *Ty = ptrTy;
   assert(Ty->isPointerTy() && "Illegal argument for getIndexedOffset()");
@@ -636,7 +636,7 @@ uint64_t TargetData::getIndexedOffset(Type *ptrTy,
 /// getPreferredAlignment - Return the preferred alignment of the specified
 /// global.  This includes an explicitly requested alignment (if the global
 /// has one).
-unsigned TargetData::getPreferredAlignment(const GlobalVariable *GV) const {
+unsigned DataLayout::getPreferredAlignment(const GlobalVariable *GV) const {
   Type *ElemType = GV->getType()->getElementType();
   unsigned Alignment = getPrefTypeAlignment(ElemType);
   unsigned GVAlignment = GV->getAlignment();
@@ -660,6 +660,6 @@ unsigned TargetData::getPreferredAlignment(const GlobalVariable *GV) const {
 /// getPreferredAlignmentLog - Return the preferred alignment of the
 /// specified global, returned in log form.  This includes an explicitly
 /// requested alignment (if the global has one).
-unsigned TargetData::getPreferredAlignmentLog(const GlobalVariable *GV) const {
+unsigned DataLayout::getPreferredAlignmentLog(const GlobalVariable *GV) const {
   return Log2_32(getPreferredAlignment(GV));
 }
