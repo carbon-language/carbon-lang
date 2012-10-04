@@ -63,7 +63,7 @@ def HI48_64 : SDNodeXForm<imm, [{
 //
 
 let Defs = [LR8] in
-  def MovePCtoLR8 : Pseudo<(outs), (ins), "", []>,
+  def MovePCtoLR8 : Pseudo<(outs), (ins), "#MovePCtoLR8", []>,
                     PPC970_Unit_BRU;
 
 // Darwin ABI Calls.
@@ -141,31 +141,31 @@ def : Pat<(PPCnop),
 let usesCustomInserter = 1 in {
   let Defs = [CR0] in {
     def ATOMIC_LOAD_ADD_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "#ATOMIC_LOAD_ADD_I64",
       [(set G8RC:$dst, (atomic_load_add_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_SUB_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "#ATOMIC_LOAD_SUB_I64",
       [(set G8RC:$dst, (atomic_load_sub_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_OR_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "#ATOMIC_LOAD_OR_I64",
       [(set G8RC:$dst, (atomic_load_or_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_XOR_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "#ATOMIC_LOAD_XOR_I64",
       [(set G8RC:$dst, (atomic_load_xor_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_AND_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "#ATOMIC_LOAD_AND_i64",
       [(set G8RC:$dst, (atomic_load_and_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_NAND_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "#ATOMIC_LOAD_NAND_I64",
       [(set G8RC:$dst, (atomic_load_nand_64 xoaddr:$ptr, G8RC:$incr))]>;
 
     def ATOMIC_CMP_SWAP_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new), "#ATOMIC_CMP_SWAP_I64",
       [(set G8RC:$dst, 
                     (atomic_cmp_swap_64 xoaddr:$ptr, G8RC:$old, G8RC:$new))]>;
 
     def ATOMIC_SWAP_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new), "",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new), "#ATOMIC_SWAP_I64",
       [(set G8RC:$dst, (atomic_swap_64 xoaddr:$ptr, G8RC:$new))]>;
   }
 }
@@ -247,7 +247,7 @@ def MTCRF8 : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins G8RC:$rS),
             PPC970_MicroCode, PPC970_Unit_CRU;
 
 def MFCR8pseud: XFXForm_3<31, 19, (outs G8RC:$rT), (ins crbitm:$FXM),
-                       "", SprMFCR>,
+                       "#MFCR8pseud", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
             
 def MFCR8 : XFXForm_3<31, 19, (outs G8RC:$rT), (ins),
@@ -278,7 +278,7 @@ def MFTB8 : XFXForm_1_ext<31, 339, 268, (outs G8RC:$rT), (ins),
 // the POWER3.
 
 let Defs = [X1], Uses = [X1] in
-def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),"",
+def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),"#DYNALLOC8",
                        [(set G8RC:$result,
                              (PPCdynalloc G8RC:$negsize, iaddr:$fpsi))]>;
 
@@ -626,15 +626,15 @@ def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
 def LDtoc: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
-                  "",
+                  "#LDtoc",
                   [(set G8RC:$rD,
                      (PPCtoc_entry tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
 def LDtocJTI: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
-                  "",
+                  "#LDtocJTI",
                   [(set G8RC:$rD,
                      (PPCtoc_entry tjumptable:$disp, G8RC:$reg))]>, isPPC64;
 def LDtocCPT: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
-                  "",
+                  "#LDtocCPT",
                   [(set G8RC:$rD,
                      (PPCtoc_entry tconstpool:$disp, G8RC:$reg))]>, isPPC64;
 
