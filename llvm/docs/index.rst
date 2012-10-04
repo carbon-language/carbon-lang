@@ -26,7 +26,7 @@ targeted at different audiences:
 
 * **User Guides**
 
- Those new to the LLVM system should first vist the :ref:`userguides`.
+ Those new to the LLVM system should first visit the :ref:`userguides`.
 
  NOTE: If you are a user who is only interested in using LLVM-based
  compilers, you should look into `Clang <http://clang.llvm.org>`_ or
