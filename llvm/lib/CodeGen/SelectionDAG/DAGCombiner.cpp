@@ -7570,13 +7570,20 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (!IsLoadSrc) {
     unsigned LastConst = 0;
     unsigned LastLegalType = 0;
+    unsigned LastLegalVectorType = 0;
+    bool NonZero = false;
     for (unsigned i=0; i<LastConsecutiveStore+1; ++i) {
       StoreSDNode *St  = cast<StoreSDNode>(StoreNodes[i].MemNode);
       SDValue StoredVal = St->getValue();
-      bool IsConst = (isa<ConstantSDNode>(StoredVal) ||
-                      isa<ConstantFPSDNode>(StoredVal));
-      if (!IsConst)
+
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(StoredVal)) {
+        NonZero |= (C->getZExtValue() != 0);
+      } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(StoredVal)) {
+        NonZero |= C->getValueAPF().bitcastToAPInt().getZExtValue();
+      } else {
+        // Non constant.
         break;
+      }
 
       // Mark this index as the largest legal constant.
       LastConst = i;
@@ -7586,16 +7593,27 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
       if (TLI.isTypeLegal(StoreTy))
         LastLegalType = i+1;
+
+      // Find a legal type for the vector store.
+      EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
+      if (TLI.isTypeLegal(Ty))
+        LastLegalVectorType = i + 1;
     }
 
+    // We only use vectors if the constant is known to be zero.
+    if (NonZero)
+      LastLegalVectorType = 0;
+
     // Check if we found a legal integer type to store.
-    if (LastLegalType == 0)
+    if (LastLegalType == 0 && LastLegalVectorType == 0)
       return false;
 
-    // We add a +1 because the LastXXX variables refer to array location
-    // while NumElem holds the size.
-    unsigned NumElem = std::min(LastConsecutiveStore, LastConst) + 1;
-    NumElem = std::min(LastLegalType, NumElem);
+    bool UseVector = LastLegalVectorType > LastLegalType;
+    unsigned NumElem = UseVector ? LastLegalVectorType : LastLegalType;
+
+    // Make sure we have something to merge.
+    if (NumElem < 2)
+      return false;
 
     unsigned EarliestNodeUsed = 0;
     for (unsigned i=0; i < NumElem; ++i) {
@@ -7609,36 +7627,41 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
     // The earliest Node in the DAG.
     LSBaseSDNode *EarliestOp = StoreNodes[EarliestNodeUsed].MemNode;
-
-    // Make sure we have something to merge.
-    if (NumElem < 2)
-      return false;
-
     DebugLoc DL = StoreNodes[0].MemNode->getDebugLoc();
-    unsigned StoreBW = NumElem * ElementSizeBytes * 8;
-    APInt StoreInt(StoreBW, 0);
 
-    // Construct a single integer constant which is made of the smaller
-    // constant inputs.
-    bool IsLE = TLI.isLittleEndian();
-    for (unsigned i = 0; i < NumElem ; ++i) {
-      unsigned Idx = IsLE ?(NumElem - 1 - i) : i;
-      StoreSDNode *St  = cast<StoreSDNode>(StoreNodes[Idx].MemNode);
-      SDValue Val = St->getValue();
-      StoreInt<<=ElementSizeBytes*8;
-      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Val)) {
-        StoreInt|=C->getAPIntValue().zext(StoreBW);
-      } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Val)) {
-        StoreInt|= C->getValueAPF().bitcastToAPInt().zext(StoreBW);
-      } else {
-        assert(false && "Invalid constant element type");
+    SDValue StoredVal;
+    if (UseVector) {
+      // Find a legal type for the vector store.
+      EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, NumElem);
+      assert(TLI.isTypeLegal(Ty) && "Illegal vector store");
+      StoredVal = DAG.getConstant(0, Ty);
+    } else {
+      unsigned StoreBW = NumElem * ElementSizeBytes * 8;
+      APInt StoreInt(StoreBW, 0);
+
+      // Construct a single integer constant which is made of the smaller
+      // constant inputs.
+      bool IsLE = TLI.isLittleEndian();
+      for (unsigned i = 0; i < NumElem ; ++i) {
+        unsigned Idx = IsLE ?(NumElem - 1 - i) : i;
+        StoreSDNode *St  = cast<StoreSDNode>(StoreNodes[Idx].MemNode);
+        SDValue Val = St->getValue();
+        StoreInt<<=ElementSizeBytes*8;
+        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Val)) {
+          StoreInt|=C->getAPIntValue().zext(StoreBW);
+        } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Val)) {
+          StoreInt|= C->getValueAPF().bitcastToAPInt().zext(StoreBW);
+        } else {
+          assert(false && "Invalid constant element type");
+        }
       }
+
+      // Create the new Load and Store operations.
+      EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
+      StoredVal = DAG.getConstant(StoreInt, StoreTy);
     }
 
-    // Create the new Load and Store operations.
-    EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
-    SDValue WideInt = DAG.getConstant(StoreInt, StoreTy);
-    SDValue NewStore = DAG.getStore(EarliestOp->getChain(), DL, WideInt,
+    SDValue NewStore = DAG.getStore(EarliestOp->getChain(), DL, StoredVal,
                                     FirstInChain->getBasePtr(),
                                     FirstInChain->getPointerInfo(),
                                     false, false,
@@ -8027,7 +8050,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   }
 
   // Only perform this optimization before the types are legal, because we
-  // don't want to perform this optimization multiple times.
+  // don't want to perform this optimization on every DAGCombine invocation.
   if (!LegalTypes && MergeConsecutiveStores(ST))
     return SDValue(N, 0);
 

@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 -mcpu=corei7 < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mcpu=corei7 -mattr=+avx < %s | FileCheck %s
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.8.0"
@@ -6,7 +6,6 @@ target triple = "x86_64-apple-macosx10.8.0"
 %struct.A = type { i8, i8, i8, i8, i8, i8, i8, i8 }
 %struct.B = type { i32, i32, i32, i32, i32, i32, i32, i32 }
 
-; Move all of the constants using a single vector store.
 ; CHECK: merge_const_store
 ; save 1,2,3 ... as one big integer.
 ; CHECK: movabsq $578437695752307201
@@ -35,6 +34,40 @@ define void @merge_const_store(i32 %count, %struct.A* nocapture %p) nounwind uwt
   store i8 8, i8* %9, align 1
   %10 = add nsw i32 %i.02, 1
   %11 = getelementptr inbounds %struct.A* %.01, i64 1
+  %exitcond = icmp eq i32 %10, %count
+  br i1 %exitcond, label %._crit_edge, label %.lr.ph
+._crit_edge:
+  ret void
+}
+
+; Move the constants using a single vector store.
+; CHECK: merge_const_store_vec
+; CHECK: vmovups  %ymm0, (%rsi)
+; CHECK: ret
+define void @merge_const_store_vec(i32 %count, %struct.B* nocapture %p) nounwind uwtable noinline ssp {
+  %1 = icmp sgt i32 %count, 0
+  br i1 %1, label %.lr.ph, label %._crit_edge
+.lr.ph:
+  %i.02 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
+  %.01 = phi %struct.B* [ %11, %.lr.ph ], [ %p, %0 ]
+  %2 = getelementptr inbounds %struct.B* %.01, i64 0, i32 0
+  store i32 0, i32* %2, align 4
+  %3 = getelementptr inbounds %struct.B* %.01, i64 0, i32 1
+  store i32 0, i32* %3, align 4
+  %4 = getelementptr inbounds %struct.B* %.01, i64 0, i32 2
+  store i32 0, i32* %4, align 4
+  %5 = getelementptr inbounds %struct.B* %.01, i64 0, i32 3
+  store i32 0, i32* %5, align 4
+  %6 = getelementptr inbounds %struct.B* %.01, i64 0, i32 4
+  store i32 0, i32* %6, align 4
+  %7 = getelementptr inbounds %struct.B* %.01, i64 0, i32 5
+  store i32 0, i32* %7, align 4
+  %8 = getelementptr inbounds %struct.B* %.01, i64 0, i32 6
+  store i32 0, i32* %8, align 4
+  %9 = getelementptr inbounds %struct.B* %.01, i64 0, i32 7
+  store i32 0, i32* %9, align 4
+  %10 = add nsw i32 %i.02, 1
+  %11 = getelementptr inbounds %struct.B* %.01, i64 1
   %exitcond = icmp eq i32 %10, %count
   br i1 %exitcond, label %._crit_edge, label %.lr.ph
 ._crit_edge:
@@ -222,7 +255,6 @@ block4:                                       ; preds = %4, %.lr.ph
 ._crit_edge:                                      ; preds = %4, %0
   ret void
 }
-
 
 ;CHECK: merge_loads_no_align
 ; load:
