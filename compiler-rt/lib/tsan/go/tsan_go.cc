@@ -105,7 +105,7 @@ void __tsan_fini() {
   thr->in_rtl++;
   int res = Finalize(thr);
   thr->in_rtl--;
-  exit(res);  
+  exit(res);
 }
 
 void __tsan_read(int goid, void *addr, void *pc) {
@@ -130,6 +130,8 @@ void __tsan_func_exit(int goid) {
 
 void __tsan_malloc(int goid, void *p, uptr sz, void *pc) {
   ThreadState *thr = goroutines[goid];
+  if (thr == 0)  // probably before __tsan_init()
+    return;
   thr->in_rtl++;
   MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
   MemoryAccessRange(thr, (uptr)pc, (uptr)p, sz, true);
