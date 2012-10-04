@@ -64,8 +64,6 @@ namespace X86_MC {
 
   unsigned getDwarfRegFlavour(StringRef TT, bool isEH);
 
-  unsigned getX86RegNum(unsigned RegNo);
-
   void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 
   /// createX86MCSubtargetInfo - Create a X86 MCSubtargetInfo instance.

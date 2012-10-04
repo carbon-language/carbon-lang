@@ -109,6 +109,14 @@ namespace {
     void emitMemModRMByte(const MachineInstr &MI,
                           unsigned Op, unsigned RegOpcodeField,
                           intptr_t PCAdj = 0);
+
+    unsigned getX86RegNum(unsigned RegNo) const {
+      const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+      return TRI->getEncodingValue(RegNo) & 0x7;
+    }
+
+    unsigned char getVEXRegisterEncoding(const MachineInstr &MI,
+                                         unsigned OpNum) const;
   };
 
 template<class CodeEmitter>
@@ -363,7 +371,7 @@ inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitRegModRMByte(unsigned ModRMReg,
                                             unsigned RegOpcodeFld){
-  MCE.emitByte(ModRMByte(3, RegOpcodeFld, X86_MC::getX86RegNum(ModRMReg)));
+  MCE.emitByte(ModRMByte(3, RegOpcodeFld, getX86RegNum(ModRMReg)));
 }
 
 template<class CodeEmitter>
@@ -501,7 +509,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // 2-7) and absolute references.
   unsigned BaseRegNo = -1U;
   if (BaseReg != 0 && BaseReg != X86::RIP)
-    BaseRegNo = X86_MC::getX86RegNum(BaseReg);
+    BaseRegNo = getX86RegNum(BaseReg);
 
   if (// The SIB byte must be used if there is an index register.
       IndexReg.getReg() == 0 &&
@@ -577,15 +585,15 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
     // Manual 2A, table 2-7. The displacement has already been output.
     unsigned IndexRegNo;
     if (IndexReg.getReg())
-      IndexRegNo = X86_MC::getX86RegNum(IndexReg.getReg());
+      IndexRegNo = getX86RegNum(IndexReg.getReg());
     else // Examples: [ESP+1*<noreg>+4] or [scaled idx]+disp32 (MOD=0,BASE=5)
       IndexRegNo = 4;
     emitSIBByte(SS, IndexRegNo, 5);
   } else {
-    unsigned BaseRegNo = X86_MC::getX86RegNum(BaseReg);
+    unsigned BaseRegNo = getX86RegNum(BaseReg);
     unsigned IndexRegNo;
     if (IndexReg.getReg())
-      IndexRegNo = X86_MC::getX86RegNum(IndexReg.getReg());
+      IndexRegNo = getX86RegNum(IndexReg.getReg());
     else
       IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
     emitSIBByte(SS, IndexRegNo, BaseRegNo);
@@ -756,10 +764,12 @@ void Emitter<CodeEmitter>::emitOpcodePrefix(uint64_t TSFlags,
 //  VEX.VVVV    => XMM9 => ~9
 //
 // See table 4-35 of Intel AVX Programming Reference for details.
-static unsigned char getVEXRegisterEncoding(const MachineInstr &MI,
-                                            unsigned OpNum) {
+template<class CodeEmitter>
+unsigned char
+Emitter<CodeEmitter>::getVEXRegisterEncoding(const MachineInstr &MI,
+                                             unsigned OpNum) const {
   unsigned SrcReg = MI.getOperand(OpNum).getReg();
-  unsigned SrcRegNum = X86_MC::getX86RegNum(MI.getOperand(OpNum).getReg());
+  unsigned SrcRegNum = getX86RegNum(MI.getOperand(OpNum).getReg());
   if (X86II::isX86_64ExtendedReg(SrcReg))
     SrcRegNum |= 8;
 
@@ -1235,7 +1245,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 
   case X86II::AddRegFrm: {
     MCE.emitByte(BaseOpcode +
-                 X86_MC::getX86RegNum(MI.getOperand(CurOp++).getReg()));
+                 getX86RegNum(MI.getOperand(CurOp++).getReg()));
 
     if (CurOp == NumOps)
       break;
@@ -1270,7 +1280,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::MRMDestReg: {
     MCE.emitByte(BaseOpcode);
     emitRegModRMByte(MI.getOperand(CurOp).getReg(),
-                     X86_MC::getX86RegNum(MI.getOperand(CurOp+1).getReg()));
+                     getX86RegNum(MI.getOperand(CurOp+1).getReg()));
     CurOp += 2;
     break;
   }
@@ -1281,7 +1291,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       SrcRegNum++;
     emitMemModRMByte(MI, CurOp,
-                X86_MC::getX86RegNum(MI.getOperand(SrcRegNum).getReg()));
+                     getX86RegNum(MI.getOperand(SrcRegNum).getReg()));
     CurOp = SrcRegNum + 1;
     break;
   }
@@ -1297,7 +1307,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
       ++SrcRegNum;
 
     emitRegModRMByte(MI.getOperand(SrcRegNum).getReg(),
-                     X86_MC::getX86RegNum(MI.getOperand(CurOp).getReg()));
+                     getX86RegNum(MI.getOperand(CurOp).getReg()));
     // 2 operands skipped with HasMemOp4, compensate accordingly
     CurOp = HasMemOp4 ? SrcRegNum : SrcRegNum + 1;
     if (HasVEX_4VOp3)
@@ -1319,7 +1329,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     intptr_t PCAdj = (CurOp + AddrOperands + 1 != NumOps) ?
       X86II::getSizeOfImm(Desc->TSFlags) : 0;
     emitMemModRMByte(MI, FirstMemOp,
-                     X86_MC::getX86RegNum(MI.getOperand(CurOp).getReg()),PCAdj);
+                     getX86RegNum(MI.getOperand(CurOp).getReg()),PCAdj);
     CurOp += AddrOperands + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
@@ -1409,7 +1419,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     MCE.emitByte(BaseOpcode);
     // Duplicate register, used by things like MOV8r0 (aka xor reg,reg).
     emitRegModRMByte(MI.getOperand(CurOp).getReg(),
-                     X86_MC::getX86RegNum(MI.getOperand(CurOp).getReg()));
+                     getX86RegNum(MI.getOperand(CurOp).getReg()));
     ++CurOp;
     break;
 
@@ -1442,7 +1452,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
       const MachineOperand &MO = MI.getOperand(HasMemOp4 ? MemOp4_I8IMMOperand
                                                          : CurOp);
       ++CurOp;
-      unsigned RegNum = X86_MC::getX86RegNum(MO.getReg()) << 4;
+      unsigned RegNum = getX86RegNum(MO.getReg()) << 4;
       if (X86II::isX86_64ExtendedReg(MO.getReg()))
         RegNum |= 1 << 7;
       // If there is an additional 5th operand it must be an immediate, which

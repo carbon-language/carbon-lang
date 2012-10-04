@@ -16,6 +16,7 @@
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86FixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -51,8 +52,8 @@ public:
     return (STI.getFeatureBits() & X86::Mode64Bit) == 0;
   }
 
-  static unsigned GetX86RegNum(const MCOperand &MO) {
-    return X86_MC::getX86RegNum(MO.getReg());
+  unsigned GetX86RegNum(const MCOperand &MO) const {
+    return Ctx.getRegisterInfo().getEncodingValue(MO.getReg()) & 0x7;
   }
 
   // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the range
@@ -64,8 +65,8 @@ public:
   //  VEX.VVVV    => XMM9 => ~9
   //
   // See table 4-35 of Intel AVX Programming Reference for details.
-  static unsigned char getVEXRegisterEncoding(const MCInst &MI,
-                                              unsigned OpNum) {
+  unsigned char getVEXRegisterEncoding(const MCInst &MI,
+                                       unsigned OpNum) const {
     unsigned SrcReg = MI.getOperand(OpNum).getReg();
     unsigned SrcRegNum = GetX86RegNum(MI.getOperand(OpNum));
     if (X86II::isX86_64ExtendedReg(SrcReg))
