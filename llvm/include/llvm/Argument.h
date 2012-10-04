@@ -68,8 +68,8 @@ public:
   /// attribute on it in its containing function.
   bool hasNoCaptureAttr() const;
   
-  /// hasSRetAttr - Return true if this argument has the sret attribute on it in
-  /// its containing function.
+  /// hasStructRetAttr - Return true if this argument has the sret attribute on
+  /// it in its containing function.
   bool hasStructRetAttr() const;
 
   /// addAttr - Add a Attribute to an argument
