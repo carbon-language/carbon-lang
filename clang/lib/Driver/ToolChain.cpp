@@ -14,6 +14,7 @@
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -280,4 +281,25 @@ void ToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
 void ToolChain::AddCCKextLibArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   CmdArgs.push_back("-lcc_kext");
+}
+
+bool ToolChain::AddFastMathRuntimeIfAvailable(const ArgList &Args,
+                                              ArgStringList &CmdArgs) const {
+  // Check if -ffast-math or -funsafe-math is enabled.
+  Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                           options::OPT_fno_fast_math,
+                           options::OPT_funsafe_math_optimizations,
+                           options::OPT_fno_unsafe_math_optimizations);
+
+  if (!A || A->getOption().getID() == options::OPT_fno_fast_math ||
+      A->getOption().getID() == options::OPT_fno_unsafe_math_optimizations)
+    return false;
+
+  // If crtfastmath.o exists add it to the arguments.
+  std::string Path = GetFilePath("crtfastmath.o");
+  if (Path == "crtfastmath.o") // Not found.
+    return false;
+
+  CmdArgs.push_back(Args.MakeArgString(Path));
+  return true;
 }

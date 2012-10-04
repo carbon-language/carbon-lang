@@ -501,3 +501,24 @@
 // CHECK-FSL-PPC64: "{{.*}}/crt1.o"
 // CHECK-FSL-PPC64: "{{.*}}/crtbegin.o"
 // CHECK-FSL-PPC64: "-L[[SYSROOT]]/usr/lib64/powerpc64-fsl-linux/4.6.2/../.."
+//
+// Check that crtfastmath.o is linked with -ffast-math.
+// RUN: %clang -target x86_64-unknown-linux -### %s \
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOCRTFASTMATH %s
+// RUN: %clang -target x86_64-unknown-linux -### %s -ffast-math \
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-CRTFASTMATH %s
+// RUN: %clang -target x86_64-unknown-linux -### %s -funsafe-math-optimizations\
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-CRTFASTMATH %s
+// RUN: %clang -target x86_64-unknown-linux -### %s -ffast-math -fno-fast-math \
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOCRTFASTMATH %s
+// We don't have crtfastmath.o in the i386 tree, use it to check that file
+// detection works.
+// RUN: %clang -target i386-unknown-linux -### %s -ffast-math \
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOCRTFASTMATH %s
+// CHECK-CRTFASTMATH: usr/lib/gcc/x86_64-unknown-linux/4.6.0/crtfastmath.o
+// CHECK-NOCRTFASTMATH-NOT: crtfastmath.o
