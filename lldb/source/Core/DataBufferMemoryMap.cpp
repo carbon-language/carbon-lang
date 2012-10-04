@@ -97,15 +97,15 @@ DataBufferMemoryMap::Clear()
 // offset.
 //----------------------------------------------------------------------
 size_t
-DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* file, 
+DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
                                             off_t offset, 
                                             size_t length,
                                             bool writeable)
 {
-    if (file != NULL)
+    if (filespec != NULL)
     {
         char path[PATH_MAX];
-        if (file->GetPath(path, sizeof(path)))
+        if (filespec->GetPath(path, sizeof(path)))
         {
             uint32_t options = File::eOpenOptionRead;
             if (writeable)

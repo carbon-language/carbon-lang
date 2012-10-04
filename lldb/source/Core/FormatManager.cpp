@@ -413,7 +413,7 @@ CategoryMap::AnyMatches (ConstString type_name,
                          const char** matching_category,
                          TypeCategoryImpl::FormatCategoryItems* matching_type)
 {
-    Mutex::Locker(m_map_mutex);
+    Mutex::Locker locker(m_map_mutex);
     
     MapIterator pos, end = m_map.end();
     for (pos = m_map.begin(); pos != end; pos++)
@@ -432,7 +432,7 @@ lldb::TypeSummaryImplSP
 CategoryMap::GetSummaryFormat (ValueObject& valobj,
                                lldb::DynamicValueType use_dynamic)
 {
-    Mutex::Locker(m_map_mutex);
+    Mutex::Locker locker(m_map_mutex);
     
     uint32_t reason_why;        
     ActiveCategoriesIterator begin, end = m_active_categories.end();
@@ -548,7 +548,7 @@ lldb::SyntheticChildrenSP
 CategoryMap::GetSyntheticChildren (ValueObject& valobj,
                                    lldb::DynamicValueType use_dynamic)
 {
-    Mutex::Locker(m_map_mutex);
+    Mutex::Locker locker(m_map_mutex);
     
     uint32_t reason_why;
     
@@ -571,7 +571,7 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
 {
     if (callback)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         
         // loop through enabled categories in respective order
         {
@@ -603,7 +603,7 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
 TypeCategoryImplSP
 CategoryMap::GetAtIndex (uint32_t index)
 {
-    Mutex::Locker(m_map_mutex);
+    Mutex::Locker locker(m_map_mutex);
     
     if (index < m_map.size())
     {

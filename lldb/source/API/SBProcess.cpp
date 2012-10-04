@@ -1078,7 +1078,6 @@ SBProcess::GetNumSupportedHardwareWatchpoints (lldb::SBError &sb_error) const
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         sb_error.SetError(process_sp->GetWatchpointSupportInfo (num));
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
         if (log)
             log->Printf ("SBProcess(%p)::GetNumSupportedHardwareWatchpoints () => %u",
                          process_sp.get(), num);

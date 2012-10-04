@@ -117,7 +117,7 @@ bool
 AppleObjCRuntimeV2::RunFunctionToFindClassName(addr_t object_addr, Thread *thread, char *name_dst, size_t max_name_len)
 {
     // Since we are going to run code we have to make sure only one thread at a time gets to try this.
-    Mutex::Locker (m_get_class_name_args_mutex);
+    Mutex::Locker locker(m_get_class_name_args_mutex);
     
     StreamString errors;
     

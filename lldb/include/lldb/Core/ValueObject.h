@@ -1086,7 +1086,7 @@ protected:
         bool
         HasChildAtIndex (uint32_t idx)
         {
-            Mutex::Locker(m_mutex);
+            Mutex::Locker locker(m_mutex);
             ChildrenIterator iter = m_children.find(idx);
             ChildrenIterator end = m_children.end();
             return (iter != end);
@@ -1095,7 +1095,7 @@ protected:
         ValueObject*
         GetChildAtIndex (uint32_t idx)
         {
-            Mutex::Locker(m_mutex);
+            Mutex::Locker locker(m_mutex);
             ChildrenIterator iter = m_children.find(idx);
             ChildrenIterator end = m_children.end();
             if (iter == end)
@@ -1108,7 +1108,7 @@ protected:
         SetChildAtIndex (uint32_t idx, ValueObject* valobj)
         {
             ChildrenPair pair(idx,valobj); // we do not need to be mutex-protected to make a pair
-            Mutex::Locker(m_mutex);
+            Mutex::Locker locker(m_mutex);
             m_children.insert(pair);
         }
         
@@ -1128,7 +1128,7 @@ protected:
         Clear()
         {
             m_children_count = 0;
-            Mutex::Locker(m_mutex);
+            Mutex::Locker locker(m_mutex);
             m_children.clear();
         }
         

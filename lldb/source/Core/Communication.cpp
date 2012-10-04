@@ -208,7 +208,7 @@ Communication::Write (const void *src, size_t src_len, ConnectionStatus &status,
 {
     lldb::ConnectionSP connection_sp (m_connection_sp);
 
-    Mutex::Locker (m_write_mutex);
+    Mutex::Locker locker(m_write_mutex);
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
                                          "%p Communication::Write (src = %p, src_len = %llu) connection = %p",
                                          this, 

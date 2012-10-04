@@ -301,9 +301,7 @@ ClangExpressionDeclMap::BuildCastVariable (const ConstString &name,
                            context);
     
     if (!user_type.GetOpaqueQualType())
-    {
-        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-        
+    {        
         if (log)
             log->Printf("ClangExpressionDeclMap::BuildCastVariable - Couldn't export the type for a constant cast result");
         

@@ -168,9 +168,9 @@ BreakpointResolverName::SearchCallback
             if (context.module_sp)
             {
                 size_t num_names = m_func_names.size();
-                for (int i = 0; i < num_names; i++)
+                for (int j = 0; j < num_names; j++)
                 {
-                    uint32_t num_functions = context.module_sp->FindFunctions (m_func_names[i], 
+                    uint32_t num_functions = context.module_sp->FindFunctions (m_func_names[j], 
                                                                                NULL,
                                                                                m_func_name_type_mask, 
                                                                                include_symbols,
@@ -183,7 +183,7 @@ BreakpointResolverName::SearchCallback
                     if (num_functions == 0 && !filter_by_cu)
                     {
                         if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeAuto))
-                            context.module_sp->FindSymbolsWithNameAndType (m_func_names[i], eSymbolTypeCode, sym_list);
+                            context.module_sp->FindSymbolsWithNameAndType (m_func_names[j], eSymbolTypeCode, sym_list);
                     }
                 }
             }

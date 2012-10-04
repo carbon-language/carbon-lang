@@ -3131,7 +3131,6 @@ Process::Destroy ()
         
                 if (state != eStateStopped)
                 {
-                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
                     if (log)
                         log->Printf("Process::Destroy() Halt failed to stop, state is: %s", StateAsCString(state));
                     // If we really couldn't stop the process then we should just error out here, but if the
@@ -3147,7 +3146,6 @@ Process::Destroy ()
             }
             else
             {
-                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
                 if (log)
                     log->Printf("Process::Destroy() Halt got error: %s", error.AsCString());
                 return error;

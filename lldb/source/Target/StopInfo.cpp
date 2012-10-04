@@ -316,10 +316,10 @@ public:
         {
             m_should_stop = true;
             m_should_stop_is_valid = true;
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+            LogSP log_process(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
-            if (log)
-                log->Printf ("Process::%s could not find breakpoint site id: %lld...", __FUNCTION__, m_value);
+            if (log_process)
+                log_process->Printf ("Process::%s could not find breakpoint site id: %lld...", __FUNCTION__, m_value);
         }
         if (log)
             log->Printf ("Process::%s returning from action with m_should_stop: %d.", __FUNCTION__, m_should_stop);
@@ -676,10 +676,10 @@ public:
         }
         else
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+            LogSP log_process(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
-            if (log)
-                log->Printf ("Process::%s could not find watchpoint id: %lld...", __FUNCTION__, m_value);
+            if (log_process)
+                log_process->Printf ("Process::%s could not find watchpoint id: %lld...", __FUNCTION__, m_value);
         }
         if (log)
             log->Printf ("Process::%s returning from action with m_should_stop: %d.", __FUNCTION__, m_should_stop);

@@ -151,9 +151,9 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
                     {
                         // Sort and then erase in reverse so indexes are always valid
                         std::sort(remove_indexes.begin(), remove_indexes.end());
-                        for (int i=num_remove_indexes-1; i<num_remove_indexes; ++i)
+                        for (int j=num_remove_indexes-1; j<num_remove_indexes; ++j)
                         {
-                            m_path_mappings.Remove (i, m_notify_changes);
+                            m_path_mappings.Remove (j, m_notify_changes);
                         }
                     }
                 }

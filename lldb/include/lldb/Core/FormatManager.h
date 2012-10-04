@@ -294,7 +294,7 @@ private:
     Enable (bool value,
             uint32_t position)
     {
-        Mutex::Locker(m_mutex);
+        Mutex::Locker locker(m_mutex);
         m_enabled = value;
         m_enabled_position = position;
         if (m_change_listener)
@@ -358,7 +358,7 @@ public:
     Add (KeyType name,
          const ValueSP& entry)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         m_map[name] = entry;
         if (listener)
             listener->Changed();
@@ -367,7 +367,7 @@ public:
     bool
     Delete (KeyType name)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.find(name);
         if (iter == m_map.end())
             return false;
@@ -382,7 +382,7 @@ public:
     Enable (KeyType category_name,
             Position pos = Default)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         ValueSP category;
         if (!Get(category_name,category))
             return false;
@@ -392,7 +392,7 @@ public:
     bool
     Disable (KeyType category_name)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         ValueSP category;
         if (!Get(category_name,category))
             return false;
@@ -403,7 +403,7 @@ public:
     Enable (ValueSP category,
             Position pos = Default)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         if (category.get())
         {
             Position pos_w = pos;
@@ -432,7 +432,7 @@ public:
     bool
     Disable (ValueSP category)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         if (category.get())
         {
             m_active_categories.remove_if(delete_matching_categories(category));
@@ -445,7 +445,7 @@ public:
     void
     Clear ()
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         m_map.clear();
         m_active_categories.clear();
         if (listener)
@@ -456,7 +456,7 @@ public:
     Get (KeyType name,
          ValueSP& entry)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.find(name);
         if (iter == m_map.end())
             return false;
@@ -468,7 +468,7 @@ public:
     Get (uint32_t pos,
          ValueSP& entry)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.begin();
         MapIterator end = m_map.end();
         while (pos > 0)

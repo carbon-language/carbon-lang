@@ -555,7 +555,6 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
     if (m_opaque_sp)
     {
         FileSpec file_spec (filename, true);
-        TargetSP target_sp;
         const bool add_dependent_modules = true;
         Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
                                                                 file_spec, 

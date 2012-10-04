@@ -129,7 +129,7 @@ public:
         else
             entry->GetRevision() = 0;
 
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         m_map[name] = entry;
         if (listener)
             listener->Changed();
@@ -138,7 +138,7 @@ public:
     bool
     Delete (KeyType name)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.find(name);
         if (iter == m_map.end())
             return false;
@@ -151,7 +151,7 @@ public:
     void
     Clear ()
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         m_map.clear();
         if (listener)
             listener->Changed();
@@ -161,7 +161,7 @@ public:
     Get(KeyType name,
         ValueSP& entry)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.find(name);
         if (iter == m_map.end())
             return false;
@@ -174,7 +174,7 @@ public:
     {
         if (callback)
         {
-            Mutex::Locker(m_map_mutex);
+            Mutex::Locker locker(m_map_mutex);
             MapIterator pos, end = m_map.end();
             for (pos = m_map.begin(); pos != end; pos++)
             {
@@ -194,7 +194,7 @@ public:
     ValueSP
     GetValueAtIndex (uint32_t index)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.begin();
         MapIterator end = m_map.end();
         while (index > 0)
@@ -210,7 +210,7 @@ public:
     KeyType
     GetKeyAtIndex (uint32_t index)
     {
-        Mutex::Locker(m_map_mutex);
+        Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.begin();
         MapIterator end = m_map.end();
         while (index > 0)
