@@ -749,7 +749,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     }
   }
 
-  if (FnAttrs != Attribute::None)
+  if (FnAttrs.hasAttributes())
     AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
   // Reconstruct the AttributesList based on the vector we constructed.
@@ -811,7 +811,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
     }
 
-    if (FnAttrs != Attribute::None)
+    if (FnAttrs.hasAttributes())
       AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
     // Reconstruct the AttributesList based on the vector we constructed.
