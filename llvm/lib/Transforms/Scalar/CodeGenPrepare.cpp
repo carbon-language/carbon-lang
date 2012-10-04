@@ -714,7 +714,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   // See llvm::isInTailCallPosition().
   const Function *F = BB->getParent();
   Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
-  if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
+  if (CallerRetAttr.hasZExtAttr() || CallerRetAttr.hasSExtAttr())
     return false;
 
   // Make sure there are no instructions between the PHI and return, or that the

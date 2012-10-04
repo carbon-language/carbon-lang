@@ -1243,7 +1243,7 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
   // Print the type
   TypePrinter.print(Operand->getType(), Out);
   // Print parameter attributes list
-  if (Attrs != Attribute::None)
+  if (Attrs.hasAttributes())
     Out << ' ' << Attrs.getAsString();
   Out << ' ';
   // Print the operand
@@ -1556,7 +1556,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   FunctionType *FT = F->getFunctionType();
   const AttrListPtr &Attrs = F->getAttributes();
   Attributes RetAttrs = Attrs.getRetAttributes();
-  if (RetAttrs != Attribute::None)
+  if (RetAttrs.hasAttributes())
     Out <<  Attrs.getRetAttributes().getAsString() << ' ';
   TypePrinter.print(F->getReturnType(), Out);
   Out << ' ';
@@ -1586,7 +1586,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       TypePrinter.print(FT->getParamType(i), Out);
 
       Attributes ArgAttrs = Attrs.getParamAttributes(i+1);
-      if (ArgAttrs != Attribute::None)
+      if (ArgAttrs.hasAttributes())
         Out << ' ' << ArgAttrs.getAsString();
     }
   }
@@ -1600,7 +1600,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->hasUnnamedAddr())
     Out << " unnamed_addr";
   Attributes FnAttrs = Attrs.getFnAttributes();
-  if (FnAttrs != Attribute::None)
+  if (FnAttrs.hasAttributes())
     Out << ' ' << Attrs.getFnAttributes().getAsString();
   if (F->hasSection()) {
     Out << " section \"";
@@ -1634,7 +1634,7 @@ void AssemblyWriter::printArgument(const Argument *Arg,
   TypePrinter.print(Arg->getType(), Out);
 
   // Output parameter attributes list
-  if (Attrs != Attribute::None)
+  if (Attrs.hasAttributes())
     Out << ' ' << Attrs.getAsString();
 
   // Output name, if available...
@@ -1849,7 +1849,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Type *RetTy = FTy->getReturnType();
     const AttrListPtr &PAL = CI->getAttributes();
 
-    if (PAL.getRetAttributes() != Attribute::None)
+    if (PAL.getRetAttributes().hasAttributes())
       Out << ' ' << PAL.getRetAttributes().getAsString();
 
     // If possible, print out the short form of the call instruction.  We can
@@ -1873,7 +1873,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeParamOperand(CI->getArgOperand(op), PAL.getParamAttributes(op + 1));
     }
     Out << ')';
-    if (PAL.getFnAttributes() != Attribute::None)
+    if (PAL.getFnAttributes().hasAttributes())
       Out << ' ' << PAL.getFnAttributes().getAsString();
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     Operand = II->getCalledValue();
@@ -1888,7 +1888,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       PrintCallingConv(II->getCallingConv(), Out);
     }
 
-    if (PAL.getRetAttributes() != Attribute::None)
+    if (PAL.getRetAttributes().hasAttributes())
       Out << ' ' << PAL.getRetAttributes().getAsString();
 
     // If possible, print out the short form of the invoke instruction. We can
@@ -1913,7 +1913,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
 
     Out << ')';
-    if (PAL.getFnAttributes() != Attribute::None)
+    if (PAL.getFnAttributes().hasAttributes())
       Out << ' ' << PAL.getFnAttributes().getAsString();
 
     Out << "\n          to ";

@@ -2063,7 +2063,7 @@ static void ChangeCalleesToFastCall(Function *F) {
 
 static AttrListPtr StripNest(const AttrListPtr &Attrs) {
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    if ((Attrs.getSlot(i).Attrs & Attribute::Nest) == 0)
+    if (!Attrs.getSlot(i).Attrs.hasNestAttr())
       continue;
 
     // There can be only one.
