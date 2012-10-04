@@ -208,6 +208,9 @@ public:
   bool paramHasByValAttr(unsigned i) const {
     CALLSITE_DELEGATE_GETTER(paramHasByValAttr(i));
   }
+  bool paramHasNoAliasAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasNoAliasAttr(i));
+  }
 
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, Attributes attr) const {

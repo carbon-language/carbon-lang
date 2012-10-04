@@ -520,7 +520,7 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
         case Instruction::Call:
         case Instruction::Invoke: {
           CallSite CS(RVI);
-          if (CS.paramHasAttr(0, Attribute::NoAlias))
+          if (CS.paramHasNoAliasAttr(0))
             break;
           if (CS.getCalledFunction() &&
               SCCNodes.count(CS.getCalledFunction()))
