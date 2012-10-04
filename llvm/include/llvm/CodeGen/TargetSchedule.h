@@ -63,6 +63,7 @@ public:
                                  bool FindMin) const;
 
   unsigned getProcessorID() const { return SchedModel.getProcessorID(); }
+  unsigned getIssueWidth() const { return SchedModel.IssueWidth; }
 
 private:
   /// getDefLatency is a helper for computeOperandLatency. Return the

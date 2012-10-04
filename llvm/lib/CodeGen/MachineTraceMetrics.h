@@ -50,6 +50,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 
 namespace llvm {
 
@@ -67,9 +68,9 @@ class MachineTraceMetrics : public MachineFunctionPass {
   const MachineFunction *MF;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
-  const InstrItineraryData *ItinData;
   const MachineRegisterInfo *MRI;
   const MachineLoopInfo *Loops;
+  TargetSchedModel SchedModel;
 
 public:
   class Ensemble;
