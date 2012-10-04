@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-static cl::opt<bool> EnableSchedModel("schedmodel", cl::Hidden, cl::init(false),
+static cl::opt<bool> EnableSchedModel("schedmodel", cl::Hidden, cl::init(true),
   cl::desc("Use TargetSchedModel for latency lookup"));
 
 static cl::opt<bool> EnableSchedItins("scheditins", cl::Hidden, cl::init(true),
@@ -123,60 +123,59 @@ unsigned TargetSchedModel::computeOperandLatency(
   if (DefLatency >= 0)
     return DefLatency;
 
-  if (!FindMin && EnableSchedModel && hasInstrSchedModel()) {
-    const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
-    unsigned DefIdx = findDefIdx(DefMI, DefOperIdx);
-    if (DefIdx < SCDesc->NumWriteLatencyEntries) {
-      // Lookup the definition's write latency in SubtargetInfo.
-      const MCWriteLatencyEntry *WLEntry =
-        STI->getWriteLatencyEntry(SCDesc, DefIdx);
-      unsigned WriteID = WLEntry->WriteResourceID;
-      unsigned Latency = WLEntry->Cycles;
-      if (!UseMI)
-        return Latency;
-
-      // Lookup the use's latency adjustment in SubtargetInfo.
-      const MCSchedClassDesc *UseDesc = resolveSchedClass(UseMI);
-      if (UseDesc->NumReadAdvanceEntries == 0)
-        return Latency;
-      unsigned UseIdx = findUseIdx(UseMI, UseOperIdx);
-      return Latency - STI->getReadAdvanceCycles(UseDesc, UseIdx, WriteID);
+  if (EnableSchedItins && hasInstrItineraries()) {
+    int OperLatency = 0;
+    if (UseMI) {
+      OperLatency =
+        TII->getOperandLatency(&InstrItins, DefMI, DefOperIdx, UseMI, UseOperIdx);
     }
-    // If DefIdx does not exist in the model (e.g. implicit defs), then return
-    // unit latency (defaultDefLatency may be too conservative).
+    else {
+      unsigned DefClass = DefMI->getDesc().getSchedClass();
+      OperLatency = InstrItins.getOperandCycle(DefClass, DefOperIdx);
+    }
+    if (OperLatency >= 0)
+      return OperLatency;
+
+    // No operand latency was found.
+    unsigned InstrLatency = TII->getInstrLatency(&InstrItins, DefMI);
+
+    // Expected latency is the max of the stage latency and itinerary props.
+    if (!FindMin)
+      InstrLatency = std::max(InstrLatency,
+                              TII->defaultDefLatency(&SchedModel, DefMI));
+    return InstrLatency;
+  }
+  assert(!FindMin && EnableSchedModel && hasInstrSchedModel() &&
+         "Expected a SchedModel for this cpu");
+  const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
+  unsigned DefIdx = findDefIdx(DefMI, DefOperIdx);
+  if (DefIdx < SCDesc->NumWriteLatencyEntries) {
+    // Lookup the definition's write latency in SubtargetInfo.
+    const MCWriteLatencyEntry *WLEntry =
+      STI->getWriteLatencyEntry(SCDesc, DefIdx);
+    unsigned WriteID = WLEntry->WriteResourceID;
+    unsigned Latency = WLEntry->Cycles;
+    if (!UseMI)
+      return Latency;
+
+    // Lookup the use's latency adjustment in SubtargetInfo.
+    const MCSchedClassDesc *UseDesc = resolveSchedClass(UseMI);
+    if (UseDesc->NumReadAdvanceEntries == 0)
+      return Latency;
+    unsigned UseIdx = findUseIdx(UseMI, UseOperIdx);
+    return Latency - STI->getReadAdvanceCycles(UseDesc, UseIdx, WriteID);
+  }
+  // If DefIdx does not exist in the model (e.g. implicit defs), then return
+  // unit latency (defaultDefLatency may be too conservative).
 #ifndef NDEBUG
-    if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit()
-        && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()) {
-      std::string Err;
-      raw_string_ostream ss(Err);
-      ss << "DefIdx " << DefIdx << " exceeds machine model writes for "
-         << *DefMI;
-      report_fatal_error(ss.str());
-    }
+  if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit()
+      && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()) {
+    std::string Err;
+    raw_string_ostream ss(Err);
+    ss << "DefIdx " << DefIdx << " exceeds machine model writes for "
+       << *DefMI;
+    report_fatal_error(ss.str());
+  }
 #endif
-    return 1;
-  }
-  assert(EnableSchedItins && hasInstrItineraries() &&
-         "operand latency requires itinerary");
-
-  int OperLatency = 0;
-  if (UseMI) {
-    OperLatency =
-      TII->getOperandLatency(&InstrItins, DefMI, DefOperIdx, UseMI, UseOperIdx);
-  }
-  else {
-    unsigned DefClass = DefMI->getDesc().getSchedClass();
-    OperLatency = InstrItins.getOperandCycle(DefClass, DefOperIdx);
-  }
-  if (OperLatency >= 0)
-    return OperLatency;
-
-  // No operand latency was found.
-  unsigned InstrLatency = TII->getInstrLatency(&InstrItins, DefMI);
-
-  // Expected latency is the max of the stage latency and itinerary props.
-  if (!FindMin)
-    InstrLatency = std::max(InstrLatency,
-                            TII->defaultDefLatency(&SchedModel, DefMI));
-  return InstrLatency;
+  return 1;
 }
