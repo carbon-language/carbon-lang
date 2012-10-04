@@ -157,12 +157,12 @@ public:
 
   /// isSlowDivBypassed - Returns true if target has indicated at least one
   /// type should be bypassed.
-  bool isSlowDivBypassed() const { return !BypassSlowDivTypes.empty(); }
+  bool isSlowDivBypassed() const { return !BypassSlowDivWidths.empty(); }
 
   /// getBypassSlowDivTypes - Returns map of slow types for division or
   /// remainder with corresponding fast types
-  const DenseMap<Type *, Type *> &getBypassSlowDivTypes() const {
-    return BypassSlowDivTypes;
+  const DenseMap<unsigned int, unsigned int> &getBypassSlowDivWidths() const {
+    return BypassSlowDivWidths;
   }
 
   /// isPow2DivCheap() - Return true if pow2 div is cheaper than a chain of
@@ -1083,9 +1083,9 @@ protected:
   /// of instructions not containing an integer divide.
   void setIntDivIsCheap(bool isCheap = true) { IntDivIsCheap = isCheap; }
 
-  /// addBypassSlowDivType - Tells the code generator which types to bypass.
-  void addBypassSlowDivType(Type *slow_type, Type *fast_type) {
-    BypassSlowDivTypes[slow_type] = fast_type;
+  /// addBypassSlowDiv - Tells the code generator which bitwidths to bypass.
+  void addBypassSlowDiv(unsigned int SlowBitWidth, unsigned int FastBitWidth) {
+    BypassSlowDivWidths[SlowBitWidth] = FastBitWidth;
   }
 
   /// setPow2DivIsCheap - Tells the code generator that it shouldn't generate
@@ -1810,11 +1810,11 @@ private:
   /// set to true unconditionally.
   bool IntDivIsCheap;
 
-  /// BypassSlowDivTypes - Tells the code generator to bypass slow divide or
-  /// remainder instructions. For example, SlowDivBypass[i32,u8] tells the code
-  /// generator to bypass 32-bit signed integer div/rem with an 8-bit unsigned
+  /// BypassSlowDivMap - Tells the code generator to bypass slow divide or
+  /// remainder instructions. For example, BypassSlowDivWidths[32,8] tells the
+  /// code generator to bypass 32-bit integer div/rem with an 8-bit unsigned
   /// integer div/rem when the operands are positive and less than 256.
-  DenseMap <Type *, Type *> BypassSlowDivTypes;
+  DenseMap <unsigned int, unsigned int> BypassSlowDivWidths;
 
   /// Pow2DivIsCheap - Tells the code generator that it shouldn't generate
   /// srl/add/sra for a signed divide by power of two, and let the target handle

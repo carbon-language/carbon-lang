@@ -184,7 +184,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // Bypass i32 with i8 on Atom when compiling with O2
   if (Subtarget->hasSlowDivide() && TM.getOptLevel() >= CodeGenOpt::Default)
-    addBypassSlowDivType(Type::getInt32Ty(getGlobalContext()), Type::getInt8Ty(getGlobalContext()));
+    addBypassSlowDiv(32, 8);
 
   if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing()) {
     // Setup Windows compiler runtime calls.

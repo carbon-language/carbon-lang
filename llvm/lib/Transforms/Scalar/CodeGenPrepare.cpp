@@ -154,9 +154,10 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   /// This optimization identifies DIV instructions that can be
   /// profitably bypassed and carried out with a shorter, faster divide.
   if (TLI && TLI->isSlowDivBypassed()) {
-    const DenseMap<Type*, Type*> &BypassTypeMap = TLI->getBypassSlowDivTypes();
+    const DenseMap<unsigned int, unsigned int> &BypassWidths =
+       TLI->getBypassSlowDivWidths();
     for (Function::iterator I = F.begin(); I != F.end(); I++)
-      EverMadeChange |= bypassSlowDivision(F, I, BypassTypeMap);
+      EverMadeChange |= bypassSlowDivision(F, I, BypassWidths);
   }
 
   // Eliminate blocks that contain only PHI nodes and an
