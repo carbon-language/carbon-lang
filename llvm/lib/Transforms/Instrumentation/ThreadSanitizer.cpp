@@ -47,6 +47,15 @@ using namespace llvm;
 
 static cl::opt<std::string>  ClBlackListFile("tsan-blacklist",
        cl::desc("Blacklist file"), cl::Hidden);
+static cl::opt<bool>  ClInstrumentMemoryAccesses(
+    "tsan-instrument-memory-accesses", cl::init(true),
+    cl::desc("Instrument memory accesses"), cl::Hidden);
+static cl::opt<bool>  ClInstrumentFuncEntryExit(
+    "tsan-instrument-func-entry-exit", cl::init(true),
+    cl::desc("Instrument function entry and exit"), cl::Hidden);
+static cl::opt<bool>  ClInstrumentAtomics(
+    "tsan-instrument-atomics", cl::init(true),
+    cl::desc("Instrument atomics"), cl::Hidden);
 
 STATISTIC(NumInstrumentedReads, "Number of instrumented reads");
 STATISTIC(NumInstrumentedWrites, "Number of instrumented writes");
@@ -284,17 +293,19 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   // (e.g. variables that do not escape, etc).
 
   // Instrument memory accesses.
-  for (size_t i = 0, n = AllLoadsAndStores.size(); i < n; ++i) {
-    Res |= instrumentLoadOrStore(AllLoadsAndStores[i]);
-  }
+  if (ClInstrumentMemoryAccesses)
+    for (size_t i = 0, n = AllLoadsAndStores.size(); i < n; ++i) {
+      Res |= instrumentLoadOrStore(AllLoadsAndStores[i]);
+    }
 
   // Instrument atomic memory accesses.
-  for (size_t i = 0, n = AtomicAccesses.size(); i < n; ++i) {
-    Res |= instrumentAtomic(AtomicAccesses[i]);
-  }
+  if (ClInstrumentAtomics)
+    for (size_t i = 0, n = AtomicAccesses.size(); i < n; ++i) {
+      Res |= instrumentAtomic(AtomicAccesses[i]);
+    }
 
   // Instrument function entry/exit points if there were instrumented accesses.
-  if (Res || HasCalls) {
+  if ((Res || HasCalls) && ClInstrumentFuncEntryExit) {
     IRBuilder<> IRB(F.getEntryBlock().getFirstNonPHI());
     Value *ReturnAddress = IRB.CreateCall(
         Intrinsic::getDeclaration(F.getParent(), Intrinsic::returnaddress),
