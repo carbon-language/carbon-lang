@@ -4771,7 +4771,7 @@ ClangASTContext::GetIndexOfChildWithName
                         ObjCInterfaceDecl::ivar_iterator ivar_pos, ivar_end = class_interface_decl->ivar_end();
                         ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
                         
-                        for (ivar_pos = class_interface_decl->ivar_begin(); ivar_pos != ivar_end; ++ivar_pos)
+                        for (ivar_pos = class_interface_decl->ivar_begin(); ivar_pos != ivar_end; ++ivar_pos, ++child_idx)
                         {
                             const ObjCIvarDecl* ivar_decl = *ivar_pos;
                             
