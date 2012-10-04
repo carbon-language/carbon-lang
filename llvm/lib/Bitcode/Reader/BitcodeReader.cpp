@@ -482,7 +482,7 @@ bool BitcodeReader::ParseAttributeBlock() {
       }
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        if (Attributes(Record[i+1]) != Attribute::None)
+        if (Attributes(Record[i+1]).hasAttributes())
           Attrs.push_back(AttributeWithIndex::get(Record[i],
                                                   Attributes(Record[i+1])));
       }
