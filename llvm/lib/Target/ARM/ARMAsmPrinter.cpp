@@ -23,6 +23,8 @@
 #include "InstPrinter/ARMInstPrinter.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMMCExpr.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Constants.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/Module.h"
@@ -42,7 +44,6 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -592,9 +593,24 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       const TargetLoweringObjectFileMachO &TLOFMacho =
         static_cast<const TargetLoweringObjectFileMachO &>(
           getObjFileLowering());
-      OutStreamer.SwitchSection(TLOFMacho.getTextSection());
-      OutStreamer.SwitchSection(TLOFMacho.getTextCoalSection());
-      OutStreamer.SwitchSection(TLOFMacho.getConstTextCoalSection());
+
+      // Collect the set of sections our functions will go into.
+      SetVector<const MCSection *, SmallVector<const MCSection *, 8>,
+        SmallPtrSet<const MCSection *, 8> > TextSections;
+      // Default text section comes first.
+      TextSections.insert(TLOFMacho.getTextSection());
+      // Now any user defined text sections from function attributes.
+      for (Module::iterator F = M.begin(), e = M.end(); F != e; ++F)
+        if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage())
+          TextSections.insert(TLOFMacho.SectionForGlobal(F, Mang, TM));
+      // Now the coalescable sections.
+      TextSections.insert(TLOFMacho.getTextCoalSection());
+      TextSections.insert(TLOFMacho.getConstTextCoalSection());
+
+      // Emit the sections in the .s file header to fix the order.
+      for (unsigned i = 0, e = TextSections.size(); i != e; ++i)
+        OutStreamer.SwitchSection(TextSections[i]);
+
       if (RelocM == Reloc::DynamicNoPIC) {
         const MCSection *sect =
           OutContext.getMachOSection("__TEXT", "__symbol_stub4",
