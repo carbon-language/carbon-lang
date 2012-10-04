@@ -1280,6 +1280,7 @@ public:
   bool paramHasNestAttr(unsigned i) const;
   bool paramHasByValAttr(unsigned i) const;
   bool paramHasNoAliasAttr(unsigned i) const;
+  bool paramHasNoCaptureAttr(unsigned i) const;
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const;
@@ -3051,6 +3052,7 @@ public:
   bool paramHasNestAttr(unsigned i) const;
   bool paramHasByValAttr(unsigned i) const;
   bool paramHasNoAliasAttr(unsigned i) const;
+  bool paramHasNoCaptureAttr(unsigned i) const;
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const;

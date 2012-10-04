@@ -398,6 +398,14 @@ bool CallInst::paramHasNoAliasAttr(unsigned i) const {
   return false;
 }
 
+bool CallInst::paramHasNoCaptureAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasNoCaptureAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasNoCaptureAttr();
+  return false;
+}
+
 bool CallInst::paramHasAttr(unsigned i, Attributes attr) const {
   if (AttributeList.paramHasAttr(i, attr))
     return true;
@@ -671,6 +679,14 @@ bool InvokeInst::paramHasNoAliasAttr(unsigned i) const {
     return true;
   if (const Function *F = getCalledFunction())
     return F->getParamAttributes(i).hasNoAliasAttr();
+  return false;
+}
+
+bool InvokeInst::paramHasNoCaptureAttr(unsigned i) const {
+  if (AttributeList.getParamAttributes(i).hasNoCaptureAttr())
+    return true;
+  if (const Function *F = getCalledFunction())
+    return F->getParamAttributes(i).hasNoCaptureAttr();
   return false;
 }
 

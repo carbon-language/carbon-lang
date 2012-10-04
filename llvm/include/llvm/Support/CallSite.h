@@ -211,6 +211,9 @@ public:
   bool paramHasNoAliasAttr(unsigned i) const {
     CALLSITE_DELEGATE_GETTER(paramHasNoAliasAttr(i));
   }
+  bool paramHasNoCaptureAttr(unsigned i) const {
+    CALLSITE_DELEGATE_GETTER(paramHasNoCaptureAttr(i));
+  }
 
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, Attributes attr) const {
@@ -267,12 +270,12 @@ public:
 
   /// @brief Determine whether this argument is not captured.
   bool doesNotCapture(unsigned ArgNo) const {
-    return paramHasAttr(ArgNo + 1, Attribute::NoCapture);
+    return paramHasNoCaptureAttr(ArgNo + 1);
   }
 
   /// @brief Determine whether this argument is passed by value.
   bool isByValArgument(unsigned ArgNo) const {
-    return paramHasAttr(ArgNo + 1, Attribute::ByVal);
+    return paramHasByValAttr(ArgNo + 1);
   }
 
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
