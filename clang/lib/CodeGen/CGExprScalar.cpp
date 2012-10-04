@@ -2045,11 +2045,15 @@ static Value* tryEmitFMulAdd(const BinOpInfo &op,
   // We have a potentially fusable op. Look for a mul on one of the operands.
   if (llvm::BinaryOperator* LHSBinOp = dyn_cast<llvm::BinaryOperator>(op.LHS)) {
     if (LHSBinOp->getOpcode() == llvm::Instruction::FMul) {
+      assert(LHSBinOp->getNumUses() == 0 &&
+             "Operations with multiple uses shouldn't be contracted.");
       return buildFMulAdd(LHSBinOp, op.RHS, CGF, Builder, false, isSub);
     }
   } else if (llvm::BinaryOperator* RHSBinOp =
                dyn_cast<llvm::BinaryOperator>(op.RHS)) {
     if (RHSBinOp->getOpcode() == llvm::Instruction::FMul) {
+      assert(RHSBinOp->getNumUses() == 0 &&
+             "Operations with multiple uses shouldn't be contracted.");
       return buildFMulAdd(RHSBinOp, op.LHS, CGF, Builder, isSub, false);
     }
   }
