@@ -7574,6 +7574,9 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
         unsigned DiagID; // unused
         DS.SetTypeSpecType(DeclSpec::TST_int, FTI.ArgInfo[i].IdentLoc,
                            PrevSpec, DiagID);
+        // Use the identifier location for the type source range.
+        DS.SetRangeStart(FTI.ArgInfo[i].IdentLoc);
+        DS.SetRangeEnd(FTI.ArgInfo[i].IdentLoc);
         Declarator ParamD(DS, Declarator::KNRTypeListContext);
         ParamD.SetIdentifier(FTI.ArgInfo[i].Ident, FTI.ArgInfo[i].IdentLoc);
         FTI.ArgInfo[i].Param = ActOnParamDeclarator(S, ParamD);
