@@ -153,7 +153,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   SmallPtrSet<Argument*, 8> ArgsToPromote;
   SmallPtrSet<Argument*, 8> ByValArgsToTransform;
   for (unsigned i = 0; i != PointerArgs.size(); ++i) {
-    bool isByVal = F->paramHasAttr(PointerArgs[i].second+1, Attribute::ByVal);
+    bool isByVal=F->getParamAttributes(PointerArgs[i].second+1).hasByValAttr();
     Argument *PtrArg = PointerArgs[i].first;
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
