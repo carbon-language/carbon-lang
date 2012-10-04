@@ -131,6 +131,17 @@ static T AtomicFetchAdd(ThreadState *thr, uptr pc, volatile T *a, T v,
 }
 
 template<typename T>
+static T AtomicFetchSub(ThreadState *thr, uptr pc, volatile T *a, T v,
+    morder mo) {
+  if (IsReleaseOrder(mo))
+    Release(thr, pc, (uptr)a);
+  v = __sync_fetch_and_sub(a, v);
+  if (IsAcquireOrder(mo))
+    Acquire(thr, pc, (uptr)a);
+  return v;
+}
+
+template<typename T>
 static T AtomicFetchAnd(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
   if (IsReleaseOrder(mo))
@@ -246,6 +257,22 @@ a64 __tsan_atomic64_fetch_add(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchAdd, a, v, mo);
 }
 
+a8 __tsan_atomic8_fetch_sub(volatile a8 *a, a8 v, morder mo) {
+  SCOPED_ATOMIC(FetchSub, a, v, mo);
+}
+
+a16 __tsan_atomic16_fetch_sub(volatile a16 *a, a16 v, morder mo) {
+  SCOPED_ATOMIC(FetchSub, a, v, mo);
+}
+
+a32 __tsan_atomic32_fetch_sub(volatile a32 *a, a32 v, morder mo) {
+  SCOPED_ATOMIC(FetchSub, a, v, mo);
+}
+
+a64 __tsan_atomic64_fetch_sub(volatile a64 *a, a64 v, morder mo) {
+  SCOPED_ATOMIC(FetchSub, a, v, mo);
+}
+
 a8 __tsan_atomic8_fetch_and(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchAnd, a, v, mo);
 }
@@ -337,4 +364,7 @@ int __tsan_atomic64_compare_exchange_weak(volatile a64 *a, a64 *c, a64 v,
 void __tsan_atomic_thread_fence(morder mo) {
   char* a;
   SCOPED_ATOMIC(Fence, mo);
+}
+
+void __tsan_atomic_signal_fence(morder mo) {
 }

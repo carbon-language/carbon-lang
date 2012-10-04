@@ -73,6 +73,7 @@ enum StatType {
   StatAtomicStore,
   StatAtomicExchange,
   StatAtomicFetchAdd,
+  StatAtomicFetchSub,
   StatAtomicFetchAnd,
   StatAtomicFetchOr,
   StatAtomicFetchXor,
