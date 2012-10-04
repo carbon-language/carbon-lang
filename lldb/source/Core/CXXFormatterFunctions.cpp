@@ -1170,39 +1170,8 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::NSDictionaryISynthetic
     m_data_32(NULL),
     m_data_64(NULL)
 {
-    if (!valobj_sp)
-        return;
-    if (valobj_sp->IsDynamic())
-        valobj_sp = valobj_sp->GetStaticValue();
-    if (!valobj_sp)
-        return;
-    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
-    Error error;
-    if (valobj_sp->IsPointerType())
-    {
-        valobj_sp = valobj_sp->Dereference(error);
-        if (error.Fail() || !valobj_sp)
-            return;
-    }
-    error.Clear();
-    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
-    if (!process_sp)
-        return;
-    m_ptr_size = process_sp->GetAddressByteSize();
-    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
-    if (m_ptr_size == 4)
-    {
-        m_data_32 = new DataDescriptor_32();
-        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
-    }
-    else
-    {
-        m_data_64 = new DataDescriptor_64();
-        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
-    }
-    if (error.Fail())
-        return;
-    m_data_ptr = data_location + m_ptr_size;
+    if (valobj_sp)
+        Update();
 }
 
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::~NSDictionaryISyntheticFrontEnd ()
@@ -1235,6 +1204,45 @@ bool
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::Update()
 {
     m_children.clear();
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+    m_ptr_size = 0;
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    if (!valobj_sp)
+        return false;
+    if (valobj_sp->IsDynamic())
+        valobj_sp = valobj_sp->GetStaticValue();
+    if (!valobj_sp)
+        return false;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    Error error;
+    if (valobj_sp->IsPointerType())
+    {
+        valobj_sp = valobj_sp->Dereference(error);
+        if (error.Fail() || !valobj_sp)
+            return false;
+    }
+    error.Clear();
+    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return false;
+    m_ptr_size = process_sp->GetAddressByteSize();
+    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    if (m_ptr_size == 4)
+    {
+        m_data_32 = new DataDescriptor_32();
+        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
+    }
+    else
+    {
+        m_data_64 = new DataDescriptor_64();
+        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
+    }
+    if (error.Fail())
+        return false;
+    m_data_ptr = data_location + m_ptr_size;
     return false;
 }
 
@@ -1304,38 +1312,8 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::NSDictionaryMSynthetic
     m_data_32(NULL),
     m_data_64(NULL)
 {
-    if (!valobj_sp)
-        return;
-    if (valobj_sp->IsDynamic())
-        valobj_sp = valobj_sp->GetStaticValue();
-    if (!valobj_sp)
-        return;
-    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
-    Error error;
-    if (valobj_sp->IsPointerType())
-    {
-        valobj_sp = valobj_sp->Dereference(error);
-        if (error.Fail() || !valobj_sp)
-            return;
-    }
-    error.Clear();
-    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
-    if (!process_sp)
-        return;
-    m_ptr_size = process_sp->GetAddressByteSize();
-    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
-    if (m_ptr_size == 4)
-    {
-        m_data_32 = new DataDescriptor_32();
-        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
-    }
-    else
-    {
-        m_data_64 = new DataDescriptor_64();
-        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
-    }
-    if (error.Fail())
-        return;
+    if (valobj_sp)
+        Update ();
 }
 
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::~NSDictionaryMSyntheticFrontEnd ()
@@ -1368,6 +1346,44 @@ bool
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::Update()
 {
     m_children.clear();
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    m_ptr_size = 0;
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+    if (!valobj_sp)
+        return false;
+    if (valobj_sp->IsDynamic())
+        valobj_sp = valobj_sp->GetStaticValue();
+    if (!valobj_sp)
+        return false;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    Error error;
+    if (valobj_sp->IsPointerType())
+    {
+        valobj_sp = valobj_sp->Dereference(error);
+        if (error.Fail() || !valobj_sp)
+            return false;
+    }
+    error.Clear();
+    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return false;
+    m_ptr_size = process_sp->GetAddressByteSize();
+    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    if (m_ptr_size == 4)
+    {
+        m_data_32 = new DataDescriptor_32();
+        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
+    }
+    else
+    {
+        m_data_64 = new DataDescriptor_64();
+        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
+    }
+    if (error.Fail())
+        return false;
     return false;
 }
 

@@ -110,6 +110,9 @@ protected:
     
     virtual lldb::clang_type_t
     GetClangTypeImpl ();
+    
+    virtual void
+    CreateSynthFilter ();
 
     // we need to hold on to the SyntheticChildren because someone might delete the type binding while we are alive
     lldb::SyntheticChildrenSP m_synth_sp;
@@ -124,6 +127,8 @@ protected:
     ByIndexMap      m_children_byindex;
     NameToIndexMap  m_name_toindex;
     uint32_t        m_synthetic_children_count; // FIXME use the ValueObject's ChildrenManager instead of a special purpose solution
+    
+    ConstString     m_parent_type_name;
 
 private:
     friend class ValueObject;

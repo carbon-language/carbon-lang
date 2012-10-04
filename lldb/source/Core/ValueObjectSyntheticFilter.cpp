@@ -55,10 +55,10 @@ public:
 ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter) :
     ValueObject(parent),
     m_synth_sp(filter),
-    m_synth_filter_ap(filter->GetFrontEnd(parent)),
     m_children_byindex(),
     m_name_toindex(),
-    m_synthetic_children_count(UINT32_MAX)
+    m_synthetic_children_count(UINT32_MAX),
+    m_parent_type_name(parent.GetTypeName())
 {
 #ifdef LLDB_CONFIGURATION_DEBUG
     std::string new_name(parent.GetName().AsCString());
@@ -67,8 +67,7 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
 #else
     SetName(parent.GetName());
 #endif
-    if (!m_synth_filter_ap.get())
-        m_synth_filter_ap.reset(new DummySyntheticFrontEnd(parent));
+    CreateSynthFilter();
 }
 
 ValueObjectSynthetic::~ValueObjectSynthetic()
@@ -114,6 +113,14 @@ ValueObjectSynthetic::GetValueType() const
     return m_parent->GetValueType();
 }
 
+void
+ValueObjectSynthetic::CreateSynthFilter ()
+{
+    m_synth_filter_ap = (m_synth_sp->GetFrontEnd(*m_parent));
+    if (!m_synth_filter_ap.get())
+        m_synth_filter_ap.reset(new DummySyntheticFrontEnd(*m_parent));
+}
+
 bool
 ValueObjectSynthetic::UpdateValue ()
 {
@@ -126,6 +133,15 @@ ValueObjectSynthetic::UpdateValue ()
         if (m_parent->GetError().Fail())
             m_error = m_parent->GetError();
         return false;
+    }
+    
+    // regenerate the synthetic filter if our typename changes
+    // <rdar://problem/12424824>
+    ConstString new_parent_type_name = m_parent->GetTypeName();
+    if (new_parent_type_name != m_parent_type_name)
+    {
+        m_parent_type_name = new_parent_type_name;
+        CreateSynthFilter();
     }
 
     // let our backend do its update
