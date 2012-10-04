@@ -926,3 +926,27 @@ bb3:
 bb4:
   unreachable
 }
+
+define double @PR13969(double %x) {
+; Check that we detect when promotion will un-escape an alloca and iterate to
+; re-try running SROA over that alloca. Without that, the two allocas that are
+; stored into a dead alloca don't get rewritten and promoted.
+; CHECK: @PR13969
+
+entry:
+  %a = alloca double
+  %b = alloca double*
+  %c = alloca double
+; CHECK-NOT: alloca
+
+  store double %x, double* %a
+  store double* %c, double** %b
+  store double* %a, double** %b
+  store double %x, double* %c
+  %ret = load double* %a
+; CHECK-NOT: store
+; CHECK-NOT: load
+
+  ret double %ret
+; CHECK: ret double %x
+}

@@ -1316,6 +1316,16 @@ class SROA : public FunctionPass {
   /// uses as dead. Only used to guard insertion into DeadInsts.
   SmallPtrSet<Instruction *, 4> DeadSplitInsts;
 
+  /// \brief Post-promotion worklist.
+  ///
+  /// Sometimes we discover an alloca which has a high probability of becoming
+  /// viable for SROA after a round of promotion takes place. In those cases,
+  /// the alloca is enqueued here for re-processing.
+  ///
+  /// Note that we have to be very careful to clear allocas out of this list in
+  /// the event they are deleted.
+  SetVector<AllocaInst *, SmallVector<AllocaInst *, 16> > PostPromotionWorklist;
+
   /// \brief A collection of alloca instructions we can directly promote.
   std::vector<AllocaInst *> PromotableAllocas;
 
@@ -2379,6 +2389,13 @@ private:
     if (IntPromotionTy)
       return rewriteIntegerStore(IRB, SI);
 
+    // Strip all inbounds GEPs and pointer casts to try to dig out any root
+    // alloca that should be re-examined after promoting this alloca.
+    if (SI.getValueOperand()->getType()->isPointerTy())
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(SI.getValueOperand()
+                                                  ->stripInBoundsOffsets()))
+        Pass.PostPromotionWorklist.insert(AI);
+
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());
     SI.setOperand(1, NewPtr);
@@ -3119,11 +3136,16 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
                << "[" << PI->BeginOffset << "," << PI->EndOffset << ") to: "
                << *NewAI << "\n");
 
+  // Track the high watermark of the post-promotion worklist. We will reset it
+  // to this point if the alloca is not in fact scheduled for promotion.
+  unsigned PPWOldSize = PostPromotionWorklist.size();
+
   AllocaPartitionRewriter Rewriter(*TD, P, PI, *this, AI, *NewAI,
                                    PI->BeginOffset, PI->EndOffset);
   DEBUG(dbgs() << "  rewriting ");
   DEBUG(P.print(dbgs(), PI, ""));
-  if (Rewriter.visitUsers(P.use_begin(PI), P.use_end(PI))) {
+  bool Promotable = Rewriter.visitUsers(P.use_begin(PI), P.use_end(PI));
+  if (Promotable) {
     DEBUG(dbgs() << "  and queuing for promotion\n");
     PromotableAllocas.push_back(NewAI);
   } else if (NewAI != &AI) {
@@ -3132,6 +3154,12 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
     // alloca which didn't actually change and didn't get promoted.
     Worklist.insert(NewAI);
   }
+
+  // Drop any post-promotion work items if promotion didn't happen.
+  if (!Promotable)
+    while (PostPromotionWorklist.size() > PPWOldSize)
+      PostPromotionWorklist.pop_back();
+
   return true;
 }
 
@@ -3164,13 +3192,6 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
   if (AI.isArrayAllocation() || !AI.getAllocatedType()->isSized() ||
       TD->getTypeAllocSize(AI.getAllocatedType()) == 0)
     return false;
-
-  // First check if this is a non-aggregate type that we should simply promote.
-  if (!AI.getAllocatedType()->isAggregateType() && isAllocaPromotable(&AI)) {
-    DEBUG(dbgs() << "  Trivially scalar type, queuing for promotion...\n");
-    PromotableAllocas.push_back(&AI);
-    return false;
-  }
 
   bool Changed = false;
 
@@ -3339,23 +3360,29 @@ bool SROA::runOnFunction(Function &F) {
   // the list of promotable allocas.
   SmallPtrSet<AllocaInst *, 4> DeletedAllocas;
 
-  while (!Worklist.empty()) {
-    Changed |= runOnAlloca(*Worklist.pop_back_val());
-    deleteDeadInstructions(DeletedAllocas);
+  do {
+    while (!Worklist.empty()) {
+      Changed |= runOnAlloca(*Worklist.pop_back_val());
+      deleteDeadInstructions(DeletedAllocas);
 
-    // Remove the deleted allocas from various lists so that we don't try to
-    // continue processing them.
-    if (!DeletedAllocas.empty()) {
-      Worklist.remove_if(IsAllocaInSet(DeletedAllocas));
-      PromotableAllocas.erase(std::remove_if(PromotableAllocas.begin(),
-                                             PromotableAllocas.end(),
-                                             IsAllocaInSet(DeletedAllocas)),
-                              PromotableAllocas.end());
-      DeletedAllocas.clear();
+      // Remove the deleted allocas from various lists so that we don't try to
+      // continue processing them.
+      if (!DeletedAllocas.empty()) {
+        Worklist.remove_if(IsAllocaInSet(DeletedAllocas));
+        PostPromotionWorklist.remove_if(IsAllocaInSet(DeletedAllocas));
+        PromotableAllocas.erase(std::remove_if(PromotableAllocas.begin(),
+                                               PromotableAllocas.end(),
+                                               IsAllocaInSet(DeletedAllocas)),
+                                PromotableAllocas.end());
+        DeletedAllocas.clear();
+      }
     }
-  }
 
-  Changed |= promoteAllocas(F);
+    Changed |= promoteAllocas(F);
+
+    Worklist = PostPromotionWorklist;
+    PostPromotionWorklist.clear();
+  } while (!Worklist.empty());
 
   return Changed;
 }
