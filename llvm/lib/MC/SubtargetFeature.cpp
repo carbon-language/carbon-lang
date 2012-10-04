@@ -119,14 +119,15 @@ void SubtargetFeatures::AddFeature(const StringRef String,
 }
 
 /// Find KV in array using binary search.
-template<typename T> const T *Find(const StringRef S, const T *A, size_t L) {
+const SubtargetFeatureKV *Find(const StringRef S, const SubtargetFeatureKV *A,
+                               size_t L) {
   // Make the lower bound element we're looking for
-  T KV;
+  SubtargetFeatureKV KV;
   KV.Key = S.data();
   // Determine the end of the array
-  const T *Hi = A + L;
+  const SubtargetFeatureKV *Hi = A + L;
   // Binary search the array
-  const T *F = std::lower_bound(A, Hi, KV);
+  const SubtargetFeatureKV *F = std::lower_bound(A, Hi, KV);
   // If not found then return NULL
   if (F == Hi || StringRef(F->Key) != S) return NULL;
   // Return the found array item
