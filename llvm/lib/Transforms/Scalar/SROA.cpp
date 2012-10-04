@@ -1737,11 +1737,12 @@ static bool isVectorPromotionViable(const TargetData &TD,
 /// that the result will be promotable, so we have an early test here.
 static bool isIntegerPromotionViable(const TargetData &TD,
                                      Type *AllocaTy,
+                                     uint64_t AllocBeginOffset,
                                      AllocaPartitioning &P,
                                      AllocaPartitioning::const_use_iterator I,
                                      AllocaPartitioning::const_use_iterator E) {
   IntegerType *Ty = dyn_cast<IntegerType>(AllocaTy);
-  if (!Ty)
+  if (!Ty || 8*TD.getTypeStoreSize(Ty) != Ty->getBitWidth())
     return false;
 
   // Check the uses to ensure the uses are (likely) promoteable integer uses.
@@ -1752,6 +1753,12 @@ static bool isIntegerPromotionViable(const TargetData &TD,
   for (; I != E; ++I) {
     if (!I->U)
       continue; // Skip dead use.
+
+    // We can't reasonably handle cases where the load or store extends past
+    // the end of the aloca's type and into its padding.
+    if ((I->EndOffset - AllocBeginOffset) > TD.getTypeStoreSize(Ty))
+      return false;
+
     if (LoadInst *LI = dyn_cast<LoadInst>(I->U->getUser())) {
       if (LI->isVolatile() || !LI->getType()->isIntegerTy())
         return false;
@@ -2130,7 +2137,7 @@ public:
              "Only multiple-of-8 sized vector elements are viable");
       ElementSize = VecTy->getScalarSizeInBits() / 8;
     } else if (isIntegerPromotionViable(TD, NewAI.getAllocatedType(),
-                                        P, I, E)) {
+                                        NewAllocaBeginOffset, P, I, E)) {
       IntPromotionTy = cast<IntegerType>(NewAI.getAllocatedType());
     }
     bool CanSROA = true;
@@ -2218,8 +2225,15 @@ private:
                                      getName(".load"));
     assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
-    if (RelOffset)
-      V = IRB.CreateLShr(V, RelOffset*8, getName(".shift"));
+    assert(TD.getTypeStoreSize(TargetTy) + RelOffset <=
+           TD.getTypeStoreSize(IntPromotionTy) &&
+           "Element load outside of alloca store");
+    uint64_t ShAmt = 8*RelOffset;
+    if (TD.isBigEndian())
+      ShAmt = 8*(TD.getTypeStoreSize(IntPromotionTy) -
+                 TD.getTypeStoreSize(TargetTy) - RelOffset);
+    if (ShAmt)
+      V = IRB.CreateLShr(V, ShAmt, getName(".shift"));
     if (TargetTy != IntPromotionTy) {
       assert(TargetTy->getBitWidth() < IntPromotionTy->getBitWidth() &&
              "Cannot extract to a larger integer!");
@@ -2238,11 +2252,17 @@ private:
     V = IRB.CreateZExt(V, IntPromotionTy, getName(".ext"));
     assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
-    if (RelOffset)
-      V = IRB.CreateShl(V, RelOffset*8, getName(".shift"));
+    assert(TD.getTypeStoreSize(Ty) + RelOffset <=
+           TD.getTypeStoreSize(IntPromotionTy) &&
+           "Element store outside of alloca store");
+    uint64_t ShAmt = 8*RelOffset;
+    if (TD.isBigEndian())
+      ShAmt = 8*(TD.getTypeStoreSize(IntPromotionTy) - TD.getTypeStoreSize(Ty)
+                 - RelOffset);
+    if (ShAmt)
+      V = IRB.CreateShl(V, ShAmt, getName(".shift"));
 
-    APInt Mask = ~Ty->getMask().zext(IntPromotionTy->getBitWidth())
-                               .shl(RelOffset*8);
+    APInt Mask = ~Ty->getMask().zext(IntPromotionTy->getBitWidth()).shl(ShAmt);
     Value *Old = IRB.CreateAnd(IRB.CreateAlignedLoad(&NewAI,
                                                      NewAI.getAlignment(),
                                                      getName(".oldload")),
