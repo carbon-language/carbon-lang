@@ -29,6 +29,8 @@ bitcode files. This tight integration between the linker and LLVM optimizer
 helps to do optimizations that are not possible in other models. The linker
 input allows the optimizer to avoid relying on conservative escape analysis.
 
+.. _libLTO-example:
+
 Example of link time optimization
 ---------------------------------
 

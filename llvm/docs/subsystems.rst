@@ -16,6 +16,7 @@ Subsystem Documentation
    SegmentedStacks
    TableGenFundamentals
    DebuggingJITedCode
+   GoldPlugin
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
@@ -75,7 +76,7 @@ Subsystem Documentation
    This document describes the interface between LLVM intermodular optimizer
    and the linker and its design
     
-* `The LLVM gold plugin <GoldPlugin.html>`_
+* :ref:`gold-plugin`
     
    How to build your programs with link-time optimization on Linux.
     
