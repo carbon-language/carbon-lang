@@ -225,6 +225,9 @@ INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
 }
 
 INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(memcpy)(to, from, size);
+#endif
   // memcpy is called during __asan_init() from the internals
   // of printf(...).
   if (asan_init_is_running) {
@@ -244,6 +247,9 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
 }
 
 INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(memmove)(to, from, size);
+#endif
   if (asan_init_is_running) {
     return REAL(memmove)(to, from, size);
   }
@@ -256,6 +262,9 @@ INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
 }
 
 INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
+#if MAC_INTERPOSE_FUNCTIONS
+  if (!asan_inited) return REAL(memset)(block, c, size);
+#endif
   // memset is called inside Printf.
   if (asan_init_is_running) {
     return REAL(memset)(block, c, size);
