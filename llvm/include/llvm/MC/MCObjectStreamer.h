@@ -72,6 +72,13 @@ public:
   virtual void ChangeSection(const MCSection *Section);
   virtual void EmitInstruction(const MCInst &Inst);
   virtual void EmitInstToFragment(const MCInst &Inst);
+  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
+  virtual void EmitValueToAlignment(unsigned ByteAlignment,
+                                    int64_t Value = 0,
+                                    unsigned ValueSize = 1,
+                                    unsigned MaxBytesToEmit = 0);
+  virtual void EmitCodeAlignment(unsigned ByteAlignment,
+                                 unsigned MaxBytesToEmit = 0);
   virtual bool EmitValueToOffset(const MCExpr *Offset, unsigned char Value);
   virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                         const MCSymbol *LastLabel,

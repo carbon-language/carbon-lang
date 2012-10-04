@@ -70,11 +70,6 @@ public:
                             uint64_t Size,unsigned ByteAlignment);
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment);
-  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
-  virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
-                                   unsigned ValueSize, unsigned MaxBytesToEmit);
-  virtual void EmitCodeAlignment(unsigned ByteAlignment,
-                                 unsigned MaxBytesToEmit);
   virtual void EmitFileDirective(StringRef Filename);
   virtual void EmitInstruction(const MCInst &Instruction);
   virtual void EmitWin64EHHandlerData();
@@ -331,43 +326,6 @@ void WinCOFFStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 void WinCOFFStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                                      uint64_t Size, unsigned ByteAlignment) {
   llvm_unreachable("not implemented");
-}
-
-void WinCOFFStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
-  // TODO: This is copied exactly from the MachOStreamer. Consider merging into
-  // MCObjectStreamer?
-  getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());
-}
-
-void WinCOFFStreamer::EmitValueToAlignment(unsigned ByteAlignment,
-                                           int64_t Value,
-                                           unsigned ValueSize,
-                                           unsigned MaxBytesToEmit) {
-  // TODO: This is copied exactly from the MachOStreamer. Consider merging into
-  // MCObjectStreamer?
-  if (MaxBytesToEmit == 0)
-    MaxBytesToEmit = ByteAlignment;
-  new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
-                      getCurrentSectionData());
-
-  // Update the maximum alignment on the current section if necessary.
-  if (ByteAlignment > getCurrentSectionData()->getAlignment())
-    getCurrentSectionData()->setAlignment(ByteAlignment);
-}
-
-void WinCOFFStreamer::EmitCodeAlignment(unsigned ByteAlignment,
-                                        unsigned MaxBytesToEmit) {
-  // TODO: This is copied exactly from the MachOStreamer. Consider merging into
-  // MCObjectStreamer?
-  if (MaxBytesToEmit == 0)
-    MaxBytesToEmit = ByteAlignment;
-  MCAlignFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
-                                           getCurrentSectionData());
-  F->setEmitNops(true);
-
-  // Update the maximum alignment on the current section if necessary.
-  if (ByteAlignment > getCurrentSectionData()->getAlignment())
-    getCurrentSectionData()->setAlignment(ByteAlignment);
 }
 
 void WinCOFFStreamer::EmitFileDirective(StringRef Filename) {

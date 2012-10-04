@@ -232,6 +232,31 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
   new MCDwarfCallFrameFragment(*AddrDelta, getCurrentSectionData());
 }
 
+void MCObjectStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
+  assert(AddrSpace == 0 && "Address space must be 0!");
+  getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());
+}
+
+void MCObjectStreamer::EmitValueToAlignment(unsigned ByteAlignment,
+                                            int64_t Value,
+                                            unsigned ValueSize,
+                                            unsigned MaxBytesToEmit) {
+  if (MaxBytesToEmit == 0)
+    MaxBytesToEmit = ByteAlignment;
+  new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
+                      getCurrentSectionData());
+
+  // Update the maximum alignment on the current section if necessary.
+  if (ByteAlignment > getCurrentSectionData()->getAlignment())
+    getCurrentSectionData()->setAlignment(ByteAlignment);
+}
+
+void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
+                                         unsigned MaxBytesToEmit) {
+  EmitValueToAlignment(ByteAlignment, 0, 1, MaxBytesToEmit);
+  cast<MCAlignFragment>(getCurrentFragment())->setEmitNops(true);
+}
+
 bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
                                          unsigned char Value) {
   int64_t Res;
