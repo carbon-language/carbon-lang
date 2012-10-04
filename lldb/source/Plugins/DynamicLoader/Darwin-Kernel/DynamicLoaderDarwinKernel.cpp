@@ -409,7 +409,8 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
         {
             kernel_name = m_kernel.module_sp->GetObjectFile()->GetFileSpec().GetFilename();
         }
-        strlcpy (m_kernel.name, kernel_name.AsCString(), sizeof(m_kernel.name));
+        strncpy (m_kernel.name, kernel_name.AsCString(), sizeof(m_kernel.name));
+        m_kernel.name[sizeof (m_kernel.name) - 1] = '\0';
 
         if (m_kernel.address == LLDB_INVALID_ADDRESS)
         {
