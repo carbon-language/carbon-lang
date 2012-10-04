@@ -1107,9 +1107,9 @@ declare signext i8 @returns_signed_char()
   <dd>This indicates that the pointer parameter specifies the address of a
       structure that is the return value of the function in the source program.
       This pointer must be guaranteed by the caller to be valid: loads and
-      stores to the structure may be assumed by the callee to not to trap.  This
-      may only be applied to the first parameter. This is not a valid attribute
-      for return values. </dd>
+      stores to the structure may be assumed by the callee to not to trap and
+      to be properly aligned.  This may only be applied to the first parameter.
+      This is not a valid attribute for return values. </dd>
 
   <dt><tt><b><a name="noalias">noalias</a></b></tt></dt>
   <dd>This indicates that pointer values

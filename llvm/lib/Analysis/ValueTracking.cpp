@@ -308,11 +308,20 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   }
   
   if (Argument *A = dyn_cast<Argument>(V)) {
-    // Get alignment information off byval arguments if specified in the IR.
-    if (A->hasByValAttr())
-      if (unsigned Align = A->getParamAlignment())
-        KnownZero = APInt::getLowBitsSet(BitWidth,
-                                         CountTrailingZeros_32(Align));
+    unsigned Align = 0;
+
+    if (A->hasByValAttr()) {
+      // Get alignment information off byval arguments if specified in the IR.
+      Align = A->getParamAlignment();
+    } else if (TD && A->hasStructRetAttr()) {
+      // An sret parameter has at least the ABI alignment of the return type.
+      Type *EltTy = cast<PointerType>(A->getType())->getElementType();
+      if (EltTy->isSized())
+        Align = TD->getABITypeAlignment(EltTy);
+    }
+
+    if (Align)
+      KnownZero = APInt::getLowBitsSet(BitWidth, CountTrailingZeros_32(Align));
     return;
   }
 
