@@ -38,7 +38,11 @@ Arch.profile-x86_64 := x86_64
 endif
 
 # Configuration for ASAN runtime.
-ifeq ($(call contains,i386 x86_64,$(CompilerTargetArch)),true)
+ifeq ($(CompilerTargetArch),i386)
+Configs += asan-i386
+Arch.asan-i386 := i386
+endif
+ifeq ($(CompilerTargetArch),x86_64)
 Configs += asan-i386 asan-x86_64
 Arch.asan-i386 := i386
 Arch.asan-x86_64 := x86_64
