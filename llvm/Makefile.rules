@@ -1524,7 +1524,7 @@ ifneq ($(strip $(ToolAliasBuildPath)),)
 $(ToolAliasBuildPath): $(ToolBuildPath)
 	$(Echo) Creating $(BuildMode) Alias $(TOOLALIAS) $(StripWarnMsg)
 	$(Verb) $(RM) -f $(ToolAliasBuildPath)
-	$(Verb) $(AliasTool) $(TOOLEXENAME) $(ToolAliasBuildPath)
+	$(Verb) $(AliasTool) $(notdir $(ToolBuildPath)) $(ToolAliasBuildPath)
 	$(Echo) ======= Finished Creating $(BuildMode) Alias $(TOOLALIAS) \
           $(StripWarnMsg)
 endif
@@ -1563,7 +1563,7 @@ install-local:: $(DestToolAlias)
 $(DestToolAlias): $(DestTool)
 	$(Echo) Installing $(BuildMode) $(DestToolAlias)
 	$(Verb) $(RM) -f $(DestToolAlias)
-	$(Verb) $(AliasTool) $(TOOLEXENAME) $(DestToolAlias)
+	$(Verb) $(AliasTool) $(notdir $(DestTool)) $(DestToolAlias)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) $(DestToolAlias)
