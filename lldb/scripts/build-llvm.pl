@@ -129,9 +129,6 @@ else
     {
         do_command ("cd '$llvm_srcroot/tools/clang' && patch -p0 < $patch");
     }
-    
-    print "Removing the llvm/test and llvm/tools/clang/test directories...\n";
-    do_command ("cd '$llvm_srcroot' && rm -rf test && rm -rf tools/clang/test ", "removing test directories", 1); 
 }
 
 # If our output file already exists then we need not generate it again.
