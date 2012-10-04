@@ -1319,9 +1319,9 @@ public:
                      FunctionType *FTy, bool isTailCall, SDValue callee,
                      ArgListTy &args, SelectionDAG &dag, DebugLoc dl,
                      ImmutableCallSite &cs)
-    : Chain(chain), RetTy(retTy), RetSExt(cs.paramHasAttr(0, Attribute::SExt)),
-      RetZExt(cs.paramHasAttr(0, Attribute::ZExt)), IsVarArg(FTy->isVarArg()),
-      IsInReg(cs.paramHasAttr(0, Attribute::InReg)),
+    : Chain(chain), RetTy(retTy), RetSExt(cs.paramHasSExtAttr(0)),
+      RetZExt(cs.paramHasZExtAttr(0)), IsVarArg(FTy->isVarArg()),
+      IsInReg(cs.paramHasInRegAttr(0)),
       DoesNotReturn(cs.doesNotReturn()),
       IsReturnValueUsed(!cs.getInstruction()->use_empty()),
       IsTailCall(isTailCall), NumFixedArgs(FTy->getNumParams()),
