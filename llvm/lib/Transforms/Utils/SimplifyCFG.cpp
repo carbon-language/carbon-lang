@@ -3786,11 +3786,12 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
   if (!C)
     return false;
 
-  if (!I->hasOneUse()) // Only look at single-use instructions, for compile time
+  if (I->use_empty())
     return false;
 
   if (C->isNullValue()) {
-    Instruction *Use = I->use_back();
+    // Only look at the first use, avoid hurting compile time with long uselists
+    User *Use = *I->use_begin();
 
     // Now make sure that there are no instructions in between that can alter
     // control flow (eg. calls)
