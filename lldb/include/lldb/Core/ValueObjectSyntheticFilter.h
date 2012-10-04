@@ -101,6 +101,12 @@ public:
     virtual lldb::ValueObjectSP
     GetNonSyntheticValue ();
     
+    virtual bool
+    ResolveValue (Scalar &scalar)
+    {
+        return m_parent->ResolveValue(scalar);
+    }
+    
 protected:
     virtual bool
     UpdateValue ();
