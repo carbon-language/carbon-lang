@@ -66,7 +66,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
     // Silently force 64-bit register use on ppc64.
     Use64BitRegs = true;
   }
-  
+
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
   // support it, ignore.
   if (use64BitRegs() && !has64BitSupport())
