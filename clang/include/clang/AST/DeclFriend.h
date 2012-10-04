@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_DECLFRIEND_H
 
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
@@ -104,10 +105,15 @@ public:
 
   /// Retrieves the source range for the friend declaration.
   SourceRange getSourceRange() const LLVM_READONLY {
-    // FIXME: If this is a friend function declaration, the 'friend' keyword
-    // might not be the first token of the declaration.
-    if (NamedDecl *ND = getFriendDecl())
+    if (NamedDecl *ND = getFriendDecl()) {
+      if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
+        return FTD->getSourceRange();
+      if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(ND)) {
+        if (DD->getOuterLocStart() != DD->getInnerLocStart())
+          return DD->getSourceRange();
+      }
       return SourceRange(getFriendLoc(), ND->getLocEnd());
+    }
     else if (TypeSourceInfo *TInfo = getFriendType())
       return SourceRange(getFriendLoc(), TInfo->getTypeLoc().getEndLoc());
     else
