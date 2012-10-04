@@ -231,7 +231,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
         continue;
 
       // vregLI crosses a regmask operand that clobbers preg.
-      if (!regMaskOverlaps.empty() && !regMaskOverlaps.test(preg))
+      if (!regMaskOverlaps.empty() && regMaskOverlaps.test(preg))
         continue;
 
       // vregLI overlaps fixed regunit interference.
@@ -432,6 +432,7 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<SlotIndexes>();
   au.addPreserved<SlotIndexes>();
   au.addRequired<LiveIntervals>();
+  au.addPreserved<LiveIntervals>();
   //au.addRequiredID(SplitCriticalEdgesID);
   if (customPassID)
     au.addRequiredID(*customPassID);
@@ -443,6 +444,7 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<MachineLoopInfo>();
   au.addPreserved<MachineLoopInfo>();
   au.addRequired<VirtRegMap>();
+  au.addPreserved<VirtRegMap>();
   MachineFunctionPass::getAnalysisUsage(au);
 }
 
