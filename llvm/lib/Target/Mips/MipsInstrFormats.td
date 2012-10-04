@@ -92,6 +92,14 @@ class PseudoSE<dag outs, dag ins, string asmstr, list<dag> pattern>:
   let Predicates = [HasStandardEncoding];
 }
 
+// Pseudo-instructions for alternate assembly syntax (never used by codegen).
+// These are aliases that require C++ handling to convert to the target
+// instruction, while InstAliases can be handled directly by tblgen.
+class MipsAsmPseudoInst<dag outs, dag ins, string asmstr>:
+  MipsInst<outs, ins, asmstr, [], IIPseudo, Pseudo> {
+  let isPseudo = 1;
+  let Pattern = [];
+}
 //===----------------------------------------------------------------------===//
 // Format R instruction class in Mips : <|opcode|rs|rt|rd|shamt|funct|>
 //===----------------------------------------------------------------------===//
