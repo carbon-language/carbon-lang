@@ -46,3 +46,20 @@ template<typename T> class fp_contract_4 {
 template class fp_contract_4<int>;
 // CHECK: _ZN13fp_contract_4IiE6methodEfff
 // CHECK: tail call float @llvm.fmuladd
+
+// Check file-scoped FP_CONTRACT
+#pragma STDC FP_CONTRACT ON
+float fp_contract_5(float a, float b, float c) {
+// CHECK: _Z13fp_contract_5fff
+// CHECK: tail call float @llvm.fmuladd
+  return a * b + c;
+}
+
+#pragma STDC FP_CONTRACT OFF
+float fp_contract_6(float a, float b, float c) {
+// CHECK: _Z13fp_contract_6fff
+// CHECK: %[[M:.+]] = fmul float %a, %b
+// CHECK-NEXT: fadd float %[[M]], %c
+  return a * b + c;
+}
+
