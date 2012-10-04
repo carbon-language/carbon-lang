@@ -104,7 +104,9 @@ public:
     virtual bool
     ResolveValue (Scalar &scalar)
     {
-        return m_parent->ResolveValue(scalar);
+        if (m_parent)
+            return m_parent->ResolveValue(scalar);
+        return false;
     }
     
 protected:
