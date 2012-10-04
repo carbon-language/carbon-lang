@@ -44,3 +44,11 @@ int rsh_inbounds(int a, int b) {
   // CHECK-NEXT: ret i32 %[[RET]]
   return a >> b;
 }
+
+// CHECK: @no_return
+int no_return() {
+  // Reaching the end of a noreturn function is fine in C.
+  // CHECK-NOT: call
+  // CHECK-NOT: unreachable
+  // CHECK: ret i32
+}

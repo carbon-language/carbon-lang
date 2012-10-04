@@ -86,3 +86,9 @@ int lsh_overflow(int a, int b) {
   // CHECK-NEXT: ret i32 %[[RET]]
   return a << b;
 }
+
+// CHECK: @_Z9no_return
+int no_return() {
+  // CHECK: call void @llvm.trap
+  // CHECK: unreachable
+}

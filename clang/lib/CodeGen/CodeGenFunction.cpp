@@ -535,6 +535,20 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   else
     EmitFunctionBody(Args);
 
+  // C++11 [stmt.return]p2:
+  //   Flowing off the end of a function [...] results in undefined behavior in
+  //   a value-returning function.
+  // C11 6.9.1p12:
+  //   If the '}' that terminates a function is reached, and the value of the
+  //   function call is used by the caller, the behavior is undefined.
+  if (getContext().getLangOpts().CPlusPlus && !FD->hasImplicitReturnZero() &&
+      !FD->getResultType()->isVoidType() && Builder.GetInsertBlock()) {
+    if (CatchUndefined)
+      EmitCheck(Builder.getFalse());
+    Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+  }
+
   // Emit the standard function epilogue.
   FinishFunction(BodyRange.getEnd());
 
