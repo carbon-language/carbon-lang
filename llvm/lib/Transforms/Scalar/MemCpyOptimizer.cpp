@@ -692,15 +692,15 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   bool changedArgument = false;
   for (unsigned i = 0; i < CS.arg_size(); ++i)
     if (CS.getArgument(i)->stripPointerCasts() == cpySrc) {
-      if (cpySrc->getType() != cpyDest->getType())
-        cpyDest = CastInst::CreatePointerCast(cpyDest, cpySrc->getType(),
-                                              cpyDest->getName(), C);
+      Value *Dest = cpySrc->getType() == cpyDest->getType() ?  cpyDest
+        : CastInst::CreatePointerCast(cpyDest, cpySrc->getType(),
+                                      cpyDest->getName(), C);
       changedArgument = true;
-      if (CS.getArgument(i)->getType() == cpyDest->getType())
-        CS.setArgument(i, cpyDest);
+      if (CS.getArgument(i)->getType() == Dest->getType())
+        CS.setArgument(i, Dest);
       else
-        CS.setArgument(i, CastInst::CreatePointerCast(cpyDest,
-                          CS.getArgument(i)->getType(), cpyDest->getName(), C));
+        CS.setArgument(i, CastInst::CreatePointerCast(Dest,
+                          CS.getArgument(i)->getType(), Dest->getName(), C));
     }
 
   if (!changedArgument)
