@@ -255,13 +255,11 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                 }
                 else
                 {
-                    puts ("KDP_CONNECT failed"); // REMOVE THIS
                     error.SetErrorString("KDP_REATTACH failed");
                 }
             }
             else
             {
-                puts ("KDP_REATTACH failed"); // REMOVE THIS
                 error.SetErrorString("KDP_REATTACH failed");
             }
         }
@@ -372,17 +370,14 @@ ProcessKDP::DoResume ()
             case eStateSuspended:
                 // Nothing to do here when a thread will stay suspended
                 // we just leave the CPU mask bit set to zero for the thread
-                puts("REMOVE THIS: ProcessKDP::DoResume () -- thread suspended");
                 break;
                 
             case eStateStepping:
-                puts("REMOVE THIS: ProcessKDP::DoResume () -- thread stepping");
                 kernel_thread_sp->GetRegisterContext()->HardwareSingleStep (true);
                 resume = true;
                 break;
     
             case eStateRunning:
-                puts("REMOVE THIS: ProcessKDP::DoResume () -- thread running");
                 kernel_thread_sp->GetRegisterContext()->HardwareSingleStep (false);
                 resume = true;
                 break;
