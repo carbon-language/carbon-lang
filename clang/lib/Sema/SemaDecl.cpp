@@ -8043,13 +8043,28 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   bool Error = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, Dummy, DiagID);
   (void)Error; // Silence warning.
   assert(!Error && "Error setting up implicit decl!");
+  SourceLocation NoLoc;
   Declarator D(DS, Declarator::BlockContext);
-  D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, false,
-                                             SourceLocation(), 0, 0, 0, true, 
-                                             SourceLocation(), SourceLocation(),
-                                             SourceLocation(), SourceLocation(),
-                                             EST_None, SourceLocation(),
-                                             0, 0, 0, 0, Loc, Loc, D),
+  D.AddTypeInfo(DeclaratorChunk::getFunction(/*HasProto=*/false,
+                                             /*IsAmbiguous=*/false,
+                                             /*RParenLoc=*/NoLoc,
+                                             /*ArgInfo=*/0,
+                                             /*NumArgs=*/0,
+                                             /*EllipsisLoc=*/NoLoc,
+                                             /*RParenLoc=*/NoLoc,
+                                             /*TypeQuals=*/0,
+                                             /*RefQualifierIsLvalueRef=*/true,
+                                             /*RefQualifierLoc=*/NoLoc,
+                                             /*ConstQualifierLoc=*/NoLoc,
+                                             /*VolatileQualifierLoc=*/NoLoc,
+                                             /*MutableLoc=*/NoLoc,
+                                             EST_None,
+                                             /*ESpecLoc=*/NoLoc,
+                                             /*Exceptions=*/0,
+                                             /*ExceptionRanges=*/0,
+                                             /*NumExceptions=*/0,
+                                             /*NoexceptExpr=*/0,
+                                             Loc, Loc, D),
                 DS.getAttributes(),
                 SourceLocation());
   D.SetIdentifier(&II, Loc);

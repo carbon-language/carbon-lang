@@ -1102,7 +1102,7 @@ struct DeclaratorChunk {
     /// \brief Whether the ref-qualifier (if any) is an lvalue reference.
     /// Otherwise, it's an rvalue reference.
     unsigned RefQualifierIsLValueRef : 1;
-    
+
     /// The type qualifiers: const/volatile/restrict.
     /// The qualifier bitmask values are the same as in QualType.
     unsigned TypeQuals : 3;
@@ -1117,8 +1117,14 @@ struct DeclaratorChunk {
     /// specified.
     unsigned HasTrailingReturnType : 1;
 
+    /// The location of the left parenthesis in the source.
+    unsigned LParenLoc;
+
     /// When isVariadic is true, the location of the ellipsis in the source.
     unsigned EllipsisLoc;
+
+    /// The location of the right parenthesis in the source.
+    unsigned RParenLoc;
 
     /// NumArgs - This is the number of formal arguments provided for the
     /// declarator.
@@ -1194,10 +1200,19 @@ struct DeclaratorChunk {
     bool isKNRPrototype() const {
       return !hasPrototype && NumArgs != 0;
     }
-    
+
+    SourceLocation getLParenLoc() const {
+      return SourceLocation::getFromRawEncoding(LParenLoc);
+    }
+
     SourceLocation getEllipsisLoc() const {
       return SourceLocation::getFromRawEncoding(EllipsisLoc);
     }
+
+    SourceLocation getRParenLoc() const {
+      return SourceLocation::getFromRawEncoding(RParenLoc);
+    }
+
     SourceLocation getExceptionSpecLoc() const {
       return SourceLocation::getFromRawEncoding(ExceptionSpecLoc);
     }
@@ -1350,11 +1365,13 @@ struct DeclaratorChunk {
 
   /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
   /// "TheDeclarator" is the declarator that this will be added to.
-  static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
+  static DeclaratorChunk getFunction(bool hasProto,
                                      bool isAmbiguous,
-                                     SourceLocation EllipsisLoc,
+                                     SourceLocation LParenLoc,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
-                                     unsigned TypeQuals, 
+                                     SourceLocation EllipsisLoc,
+                                     SourceLocation RParenLoc,
+                                     unsigned TypeQuals,
                                      bool RefQualifierIsLvalueRef,
                                      SourceLocation RefQualifierLoc,
                                      SourceLocation ConstQualifierLoc,

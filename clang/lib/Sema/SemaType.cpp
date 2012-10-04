@@ -552,19 +552,28 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
   SourceLocation loc = declarator.getLocStart();
 
   // ...and *prepend* it to the declarator.
+  SourceLocation NoLoc;
   declarator.AddInnermostTypeInfo(DeclaratorChunk::getFunction(
-                             /*proto*/ true,
-                             /*variadic*/ false,
-                             /*ambiguous*/ false, SourceLocation(),
-                             /*args*/ 0, 0,
-                             /*type quals*/ 0,
-                             /*ref-qualifier*/true, SourceLocation(),
-                             /*const qualifier*/SourceLocation(),
-                             /*volatile qualifier*/SourceLocation(),
-                             /*mutable qualifier*/SourceLocation(),
-                             /*EH*/ EST_None, SourceLocation(), 0, 0, 0, 0,
-                             /*parens*/ loc, loc,
-                             declarator));
+                             /*HasProto=*/true,
+                             /*IsAmbiguous=*/false,
+                             /*LParenLoc=*/NoLoc,
+                             /*ArgInfo=*/0,
+                             /*NumArgs=*/0,
+                             /*EllipsisLoc=*/NoLoc,
+                             /*RParenLoc=*/NoLoc,
+                             /*TypeQuals=*/0,
+                             /*RefQualifierIsLvalueRef=*/true,
+                             /*RefQualifierLoc=*/NoLoc,
+                             /*ConstQualifierLoc=*/NoLoc,
+                             /*VolatileQualifierLoc=*/NoLoc,
+                             /*MutableLoc=*/NoLoc,
+                             EST_None,
+                             /*ESpecLoc=*/NoLoc,
+                             /*Exceptions=*/0,
+                             /*ExceptionRanges=*/0,
+                             /*NumExceptions=*/0,
+                             /*NoexceptExpr=*/0,
+                             loc, loc, declarator));
 
   // For consistency, make sure the state still has us as processing
   // the decl spec.
@@ -3281,6 +3290,8 @@ namespace {
       TL.setLocalRangeEnd(Chunk.EndLoc);
 
       const DeclaratorChunk::FunctionTypeInfo &FTI = Chunk.Fun;
+      TL.setLParenLoc(FTI.getLParenLoc());
+      TL.setRParenLoc(FTI.getRParenLoc());
       for (unsigned i = 0, e = TL.getNumArgs(), tpi = 0; i != e; ++i) {
         ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
         TL.setArg(tpi++, Param);

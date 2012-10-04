@@ -144,11 +144,13 @@ CXXScopeSpec::getWithLocInContext(ASTContext &Context) const {
 
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
 /// "TheDeclarator" is the declarator that this will be added to.
-DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
+DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
                                              bool isAmbiguous,
-                                             SourceLocation EllipsisLoc,
+                                             SourceLocation LParenLoc,
                                              ParamInfo *ArgInfo,
                                              unsigned NumArgs,
+                                             SourceLocation EllipsisLoc,
+                                             SourceLocation RParenLoc,
                                              unsigned TypeQuals,
                                              bool RefQualifierIsLvalueRef,
                                              SourceLocation RefQualifierLoc,
@@ -173,9 +175,11 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
   I.EndLoc                      = LocalRangeEnd;
   I.Fun.AttrList                = 0;
   I.Fun.hasPrototype            = hasProto;
-  I.Fun.isVariadic              = isVariadic;
+  I.Fun.isVariadic              = EllipsisLoc.isValid();
   I.Fun.isAmbiguous             = isAmbiguous;
+  I.Fun.LParenLoc               = LParenLoc.getRawEncoding();
   I.Fun.EllipsisLoc             = EllipsisLoc.getRawEncoding();
+  I.Fun.RParenLoc               = RParenLoc.getRawEncoding();
   I.Fun.DeleteArgInfo           = false;
   I.Fun.TypeQuals               = TypeQuals;
   I.Fun.NumArgs                 = NumArgs;

@@ -4581,7 +4581,11 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
   Actions.ActOnStartFunctionDeclarator();
 
-  SourceLocation EndLoc;
+  SourceLocation StartLoc, EndLoc;
+  SourceLocation LParenLoc, RParenLoc;
+  LParenLoc = Tracker.getOpenLocation();
+  StartLoc = LParenLoc;
+
   if (isFunctionDeclaratorIdentifierList()) {
     if (RequiresArg)
       Diag(Tok, diag::err_argument_required_after_attribute);
@@ -4589,7 +4593,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
     ParseFunctionDeclaratorIdentifierList(D, ParamInfo);
 
     Tracker.consumeClose();
-    EndLoc = Tracker.getCloseLocation();
+    RParenLoc = Tracker.getCloseLocation();
+    EndLoc = RParenLoc;
   } else {
     if (Tok.isNot(tok::r_paren))
       ParseParameterDeclarationClause(D, FirstArgAttrs, ParamInfo, EllipsisLoc);
@@ -4600,7 +4605,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
     // If we have the closing ')', eat it.
     Tracker.consumeClose();
-    EndLoc = Tracker.getCloseLocation();
+    RParenLoc = Tracker.getCloseLocation();
+    EndLoc = RParenLoc;
 
     if (getLangOpts().CPlusPlus) {
       // FIXME: Accept these components in any order, and produce fixits to
@@ -4658,19 +4664,21 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       // Parse trailing-return-type[opt].
       if (getLangOpts().CPlusPlus0x && Tok.is(tok::arrow)) {
         Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
+        if (D.getDeclSpec().getTypeSpecType() == TST_auto)
+          StartLoc = D.getDeclSpec().getTypeSpecTypeLoc();
+        EndLoc = Tok.getLocation();
         SourceRange Range;
         TrailingReturnType = ParseTrailingReturnType(Range);
-        if (Range.getEnd().isValid())
-          EndLoc = Range.getEnd();
       }
     }
   }
 
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorChunk::getFunction(HasProto,
-                                             /*isVariadic=*/EllipsisLoc.isValid(),
-                                             IsAmbiguous, EllipsisLoc,
+                                             IsAmbiguous,
+                                             LParenLoc,
                                              ParamInfo.data(), ParamInfo.size(),
+                                             EllipsisLoc, RParenLoc,
                                              DS.getTypeQualifiers(),
                                              RefQualifierIsLValueRef,
                                              RefQualifierLoc, ConstQualifierLoc,
@@ -4682,8 +4690,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              DynamicExceptions.size(),
                                              NoexceptExpr.isUsable() ?
                                                NoexceptExpr.get() : 0,
-                                             Tracker.getOpenLocation(),
-                                             EndLoc, D,
+                                             StartLoc, EndLoc, D,
                                              TrailingReturnType),
                 FnAttrs, EndLoc);
 

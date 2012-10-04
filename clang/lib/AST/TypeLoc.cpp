@@ -98,6 +98,7 @@ void TypeLoc::initializeImpl(ASTContext &Context, TypeLoc TL,
 
 SourceLocation TypeLoc::getBeginLoc() const {
   TypeLoc Cur = *this;
+  SourceLocation SavedParenLoc;
   while (true) {
     switch (Cur.getTypeLocClass()) {
     // FIXME: Currently QualifiedTypeLoc does not have a source range
@@ -106,6 +107,44 @@ SourceLocation TypeLoc::getBeginLoc() const {
     case DependentName:
     case DependentTemplateSpecialization:
       break;
+
+    case Paren:
+      // Save local source begin, if still unset.
+      if (SavedParenLoc.isInvalid())
+        SavedParenLoc = Cur.getLocalSourceRange().getBegin();
+      Cur = Cur.getNextTypeLoc();
+      assert(!Cur.isNull());
+      continue;
+      break;
+
+    case Pointer:
+    case BlockPointer:
+    case MemberPointer:
+    case ObjCObjectPointer:
+    case LValueReference:
+    case RValueReference:
+    case ConstantArray:
+    case DependentSizedArray:
+    case IncompleteArray:
+    case VariableArray:
+    case FunctionNoProto:
+      // Discard previously saved paren loc, if any.
+      SavedParenLoc = SourceLocation();
+      Cur = Cur.getNextTypeLoc();
+      assert(!Cur.isNull());
+      continue;
+      break;
+
+    case FunctionProto:
+      // Discard previously saved paren loc, if any.
+      SavedParenLoc = SourceLocation();
+      if (cast<FunctionProtoTypeLoc>(&Cur)->getTypePtr()->hasTrailingReturn())
+        return Cur.getLocalSourceRange().getBegin();
+      Cur = Cur.getNextTypeLoc();
+      assert(!Cur.isNull());
+      continue;
+      break;
+
     default:
       TypeLoc Next = Cur.getNextTypeLoc();
       if (Next.isNull()) break;
@@ -114,7 +153,9 @@ SourceLocation TypeLoc::getBeginLoc() const {
     }
     break;
   }
-  return Cur.getLocalSourceRange().getBegin();
+  return SavedParenLoc.isValid()
+    ? SavedParenLoc
+    : Cur.getLocalSourceRange().getBegin();
 }
 
 SourceLocation TypeLoc::getEndLoc() const {
@@ -131,9 +172,14 @@ SourceLocation TypeLoc::getEndLoc() const {
     case DependentSizedArray:
     case IncompleteArray:
     case VariableArray:
-    case FunctionProto:
     case FunctionNoProto:
       Last = Cur;
+      break;
+    case FunctionProto:
+      if (cast<FunctionProtoTypeLoc>(&Cur)->getTypePtr()->hasTrailingReturn())
+        Last = TypeLoc();
+      else
+        Last = Cur;
       break;
     case Pointer:
     case BlockPointer:
