@@ -710,6 +710,7 @@ private:
         = MemTransferPartitionMap.insert(std::make_pair(&II, NewIdx)).second;
       assert(Inserted &&
              "Already have intrinsic in map but haven't seen both ends");
+      (void)Inserted;
     }
 
     return true;
