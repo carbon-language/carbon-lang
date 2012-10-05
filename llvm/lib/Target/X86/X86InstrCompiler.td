@@ -230,25 +230,19 @@ def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         IIC_ALU_NONMEM>;
 
 // Use sbb to materialize carry bit.
-let Uses = [EFLAGS], Defs = [EFLAGS], isCodeGenOnly = 1 in {
+let Uses = [EFLAGS], Defs = [EFLAGS], isPseudo = 1 in {
 // FIXME: These are pseudo ops that should be replaced with Pat<> patterns.
 // However, Pat<> can't replicate the destination reg into the inputs of the
 // result.
-// FIXME: Change these to have encoding Pseudo when X86MCCodeEmitter replaces
-// X86CodeEmitter.
-def SETB_C8r : I<0x18, MRMInitReg, (outs GR8:$dst), (ins), "",
-                 [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
-                 IIC_ALU_NONMEM>;
-def SETB_C16r : I<0x19, MRMInitReg, (outs GR16:$dst), (ins), "",
-                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
-                 IIC_ALU_NONMEM>,
+def SETB_C8r : I<0, Pseudo, (outs GR8:$dst), (ins), "",
+                 [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+def SETB_C16r : I<0, Pseudo, (outs GR16:$dst), (ins), "",
+                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>,
                 OpSize;
-def SETB_C32r : I<0x19, MRMInitReg, (outs GR32:$dst), (ins), "",
-                 [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
-                 IIC_ALU_NONMEM>;
-def SETB_C64r : RI<0x19, MRMInitReg, (outs GR64:$dst), (ins), "",
-                 [(set GR64:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
-                 IIC_ALU_NONMEM>;
+def SETB_C32r : I<0, Pseudo, (outs GR32:$dst), (ins), "",
+                 [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+def SETB_C64r : RI<0, Pseudo, (outs GR64:$dst), (ins), "",
+                 [(set GR64:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
 } // isCodeGenOnly
 
 

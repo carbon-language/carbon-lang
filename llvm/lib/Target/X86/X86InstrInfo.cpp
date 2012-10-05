@@ -3509,6 +3509,14 @@ static bool Expand2AddrUndef(MachineInstr *MI, const MCInstrDesc &Desc) {
 bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   switch (MI->getOpcode()) {
+  case X86::SETB_C8r:
+    return Expand2AddrUndef(MI, get(X86::SBB8rr));
+  case X86::SETB_C16r:
+    return Expand2AddrUndef(MI, get(X86::SBB16rr));
+  case X86::SETB_C32r:
+    return Expand2AddrUndef(MI, get(X86::SBB32rr));
+  case X86::SETB_C64r:
+    return Expand2AddrUndef(MI, get(X86::SBB64rr));
   case X86::V_SET0:
   case X86::FsFLD0SS:
   case X86::FsFLD0SD:
