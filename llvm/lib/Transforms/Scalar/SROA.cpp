@@ -1368,6 +1368,289 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_END(SROA, "sroa", "Scalar Replacement Of Aggregates",
                     false, false)
 
+namespace {
+/// \brief Visitor to speculate PHIs and Selects where possible.
+class PHIOrSelectSpeculator : public InstVisitor<PHIOrSelectSpeculator> {
+  // Befriend the base class so it can delegate to private visit methods.
+  friend class llvm::InstVisitor<PHIOrSelectSpeculator>;
+
+  const TargetData &TD;
+  AllocaPartitioning &P;
+  SROA &Pass;
+
+public:
+  PHIOrSelectSpeculator(const TargetData &TD, AllocaPartitioning &P, SROA &Pass)
+    : TD(TD), P(P), Pass(Pass) {}
+
+  /// \brief Visit the users of an alloca partition and rewrite them.
+  void visitUsers(AllocaPartitioning::const_iterator PI) {
+    // Note that we need to use an index here as the underlying vector of uses
+    // may be grown during speculation. However, we never need to re-visit the
+    // new uses, and so we can use the initial size bound.
+    for (unsigned Idx = 0, Size = P.use_size(PI); Idx != Size; ++Idx) {
+      const AllocaPartitioning::PartitionUse &PU = P.getUse(PI, Idx);
+      if (!PU.U)
+        continue; // Skip dead use.
+
+      visit(cast<Instruction>(PU.U->getUser()));
+    }
+  }
+
+private:
+  // By default, skip this instruction.
+  void visitInstruction(Instruction &I) {}
+
+  /// PHI instructions that use an alloca and are subsequently loaded can be
+  /// rewritten to load both input pointers in the pred blocks and then PHI the
+  /// results, allowing the load of the alloca to be promoted.
+  /// From this:
+  ///   %P2 = phi [i32* %Alloca, i32* %Other]
+  ///   %V = load i32* %P2
+  /// to:
+  ///   %V1 = load i32* %Alloca      -> will be mem2reg'd
+  ///   ...
+  ///   %V2 = load i32* %Other
+  ///   ...
+  ///   %V = phi [i32 %V1, i32 %V2]
+  ///
+  /// We can do this to a select if its only uses are loads and if the operands
+  /// to the select can be loaded unconditionally.
+  ///
+  /// FIXME: This should be hoisted into a generic utility, likely in
+  /// Transforms/Util/Local.h
+  bool isSafePHIToSpeculate(PHINode &PN, SmallVectorImpl<LoadInst *> &Loads) {
+    // For now, we can only do this promotion if the load is in the same block
+    // as the PHI, and if there are no stores between the phi and load.
+    // TODO: Allow recursive phi users.
+    // TODO: Allow stores.
+    BasicBlock *BB = PN.getParent();
+    unsigned MaxAlign = 0;
+    for (Value::use_iterator UI = PN.use_begin(), UE = PN.use_end();
+         UI != UE; ++UI) {
+      LoadInst *LI = dyn_cast<LoadInst>(*UI);
+      if (LI == 0 || !LI->isSimple()) return false;
+
+      // For now we only allow loads in the same block as the PHI.  This is
+      // a common case that happens when instcombine merges two loads through
+      // a PHI.
+      if (LI->getParent() != BB) return false;
+
+      // Ensure that there are no instructions between the PHI and the load that
+      // could store.
+      for (BasicBlock::iterator BBI = &PN; &*BBI != LI; ++BBI)
+        if (BBI->mayWriteToMemory())
+          return false;
+
+      MaxAlign = std::max(MaxAlign, LI->getAlignment());
+      Loads.push_back(LI);
+    }
+
+    // We can only transform this if it is safe to push the loads into the
+    // predecessor blocks. The only thing to watch out for is that we can't put
+    // a possibly trapping load in the predecessor if it is a critical edge.
+    for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num;
+         ++Idx) {
+      TerminatorInst *TI = PN.getIncomingBlock(Idx)->getTerminator();
+      Value *InVal = PN.getIncomingValue(Idx);
+
+      // If the value is produced by the terminator of the predecessor (an
+      // invoke) or it has side-effects, there is no valid place to put a load
+      // in the predecessor.
+      if (TI == InVal || TI->mayHaveSideEffects())
+        return false;
+
+      // If the predecessor has a single successor, then the edge isn't
+      // critical.
+      if (TI->getNumSuccessors() == 1)
+        continue;
+
+      // If this pointer is always safe to load, or if we can prove that there
+      // is already a load in the block, then we can move the load to the pred
+      // block.
+      if (InVal->isDereferenceablePointer() ||
+          isSafeToLoadUnconditionally(InVal, TI, MaxAlign, &TD))
+        continue;
+
+      return false;
+    }
+
+    return true;
+  }
+
+  void visitPHINode(PHINode &PN) {
+    DEBUG(dbgs() << "    original: " << PN << "\n");
+
+    SmallVector<LoadInst *, 4> Loads;
+    if (!isSafePHIToSpeculate(PN, Loads))
+      return;
+
+    assert(!Loads.empty());
+
+    Type *LoadTy = cast<PointerType>(PN.getType())->getElementType();
+    IRBuilder<> PHIBuilder(&PN);
+    PHINode *NewPN = PHIBuilder.CreatePHI(LoadTy, PN.getNumIncomingValues(),
+                                          PN.getName() + ".sroa.speculated");
+
+    // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
+    // matter which one we get and if any differ, it doesn't matter.
+    LoadInst *SomeLoad = cast<LoadInst>(Loads.back());
+    MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
+    unsigned Align = SomeLoad->getAlignment();
+
+    // Rewrite all loads of the PN to use the new PHI.
+    do {
+      LoadInst *LI = Loads.pop_back_val();
+      LI->replaceAllUsesWith(NewPN);
+      Pass.DeadInsts.push_back(LI);
+    } while (!Loads.empty());
+
+    // Inject loads into all of the pred blocks.
+    for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num; ++Idx) {
+      BasicBlock *Pred = PN.getIncomingBlock(Idx);
+      TerminatorInst *TI = Pred->getTerminator();
+      Use *InUse = &PN.getOperandUse(PN.getOperandNumForIncomingValue(Idx));
+      Value *InVal = PN.getIncomingValue(Idx);
+      IRBuilder<> PredBuilder(TI);
+
+      LoadInst *Load
+        = PredBuilder.CreateLoad(InVal, (PN.getName() + ".sroa.speculate.load." +
+                                         Pred->getName()));
+      ++NumLoadsSpeculated;
+      Load->setAlignment(Align);
+      if (TBAATag)
+        Load->setMetadata(LLVMContext::MD_tbaa, TBAATag);
+      NewPN->addIncoming(Load, Pred);
+
+      Instruction *Ptr = dyn_cast<Instruction>(InVal);
+      if (!Ptr)
+        // No uses to rewrite.
+        continue;
+
+      // Try to lookup and rewrite any partition uses corresponding to this phi
+      // input.
+      AllocaPartitioning::iterator PI
+        = P.findPartitionForPHIOrSelectOperand(InUse);
+      if (PI == P.end())
+        continue;
+
+      // Replace the Use in the PartitionUse for this operand with the Use
+      // inside the load.
+      AllocaPartitioning::use_iterator UI
+        = P.findPartitionUseForPHIOrSelectOperand(InUse);
+      assert(isa<PHINode>(*UI->U->getUser()));
+      UI->U = &Load->getOperandUse(Load->getPointerOperandIndex());
+    }
+    DEBUG(dbgs() << "          speculated to: " << *NewPN << "\n");
+  }
+
+  /// Select instructions that use an alloca and are subsequently loaded can be
+  /// rewritten to load both input pointers and then select between the result,
+  /// allowing the load of the alloca to be promoted.
+  /// From this:
+  ///   %P2 = select i1 %cond, i32* %Alloca, i32* %Other
+  ///   %V = load i32* %P2
+  /// to:
+  ///   %V1 = load i32* %Alloca      -> will be mem2reg'd
+  ///   %V2 = load i32* %Other
+  ///   %V = select i1 %cond, i32 %V1, i32 %V2
+  ///
+  /// We can do this to a select if its only uses are loads and if the operand
+  /// to the select can be loaded unconditionally.
+  bool isSafeSelectToSpeculate(SelectInst &SI,
+                               SmallVectorImpl<LoadInst *> &Loads) {
+    Value *TValue = SI.getTrueValue();
+    Value *FValue = SI.getFalseValue();
+    bool TDerefable = TValue->isDereferenceablePointer();
+    bool FDerefable = FValue->isDereferenceablePointer();
+
+    for (Value::use_iterator UI = SI.use_begin(), UE = SI.use_end();
+         UI != UE; ++UI) {
+      LoadInst *LI = dyn_cast<LoadInst>(*UI);
+      if (LI == 0 || !LI->isSimple()) return false;
+
+      // Both operands to the select need to be dereferencable, either
+      // absolutely (e.g. allocas) or at this point because we can see other
+      // accesses to it.
+      if (!TDerefable && !isSafeToLoadUnconditionally(TValue, LI,
+                                                      LI->getAlignment(), &TD))
+        return false;
+      if (!FDerefable && !isSafeToLoadUnconditionally(FValue, LI,
+                                                      LI->getAlignment(), &TD))
+        return false;
+      Loads.push_back(LI);
+    }
+
+    return true;
+  }
+
+  void visitSelectInst(SelectInst &SI) {
+    DEBUG(dbgs() << "    original: " << SI << "\n");
+    IRBuilder<> IRB(&SI);
+
+    // If the select isn't safe to speculate, just use simple logic to emit it.
+    SmallVector<LoadInst *, 4> Loads;
+    if (!isSafeSelectToSpeculate(SI, Loads))
+      return;
+
+    Use *Ops[2] = { &SI.getOperandUse(1), &SI.getOperandUse(2) };
+    AllocaPartitioning::iterator PIs[2];
+    AllocaPartitioning::PartitionUse PUs[2];
+    for (unsigned i = 0, e = 2; i != e; ++i) {
+      PIs[i] = P.findPartitionForPHIOrSelectOperand(Ops[i]);
+      if (PIs[i] != P.end()) {
+        // If the pointer is within the partitioning, remove the select from
+        // its uses. We'll add in the new loads below.
+        AllocaPartitioning::use_iterator UI
+          = P.findPartitionUseForPHIOrSelectOperand(Ops[i]);
+        PUs[i] = *UI;
+        // Clear out the use here so that the offsets into the use list remain
+        // stable but this use is ignored when rewriting.
+        UI->U = 0;
+      }
+    }
+
+    Value *TV = SI.getTrueValue();
+    Value *FV = SI.getFalseValue();
+    // Replace the loads of the select with a select of two loads.
+    while (!Loads.empty()) {
+      LoadInst *LI = Loads.pop_back_val();
+
+      IRB.SetInsertPoint(LI);
+      LoadInst *TL =
+        IRB.CreateLoad(TV, LI->getName() + ".sroa.speculate.load.true");
+      LoadInst *FL =
+        IRB.CreateLoad(FV, LI->getName() + ".sroa.speculate.load.false");
+      NumLoadsSpeculated += 2;
+
+      // Transfer alignment and TBAA info if present.
+      TL->setAlignment(LI->getAlignment());
+      FL->setAlignment(LI->getAlignment());
+      if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa)) {
+        TL->setMetadata(LLVMContext::MD_tbaa, Tag);
+        FL->setMetadata(LLVMContext::MD_tbaa, Tag);
+      }
+
+      Value *V = IRB.CreateSelect(SI.getCondition(), TL, FL,
+                                  LI->getName() + ".sroa.speculated");
+
+      LoadInst *Loads[2] = { TL, FL };
+      for (unsigned i = 0, e = 2; i != e; ++i) {
+        if (PIs[i] != P.end()) {
+          Use *LoadUse = &Loads[i]->getOperandUse(0);
+          assert(PUs[i].U->get() == LoadUse->get());
+          PUs[i].U = LoadUse;
+          P.use_push_back(PIs[i], PUs[i]);
+        }
+      }
+
+      DEBUG(dbgs() << "          speculated to: " << *V << "\n");
+      LI->replaceAllUsesWith(V);
+      Pass.DeadInsts.push_back(LI);
+    }
+  }
+};
+}
+
 /// \brief Accumulate the constant offsets in a GEP into a single APInt offset.
 ///
 /// If the provided GEP is all-constant, the total byte offset formed by the
@@ -1796,287 +2079,6 @@ static bool isIntegerPromotionViable(const TargetData &TD,
 }
 
 namespace {
-/// \brief Visitor to speculate PHIs and Selects where possible.
-class PHIOrSelectSpeculator : public InstVisitor<PHIOrSelectSpeculator> {
-  // Befriend the base class so it can delegate to private visit methods.
-  friend class llvm::InstVisitor<PHIOrSelectSpeculator>;
-
-  const TargetData &TD;
-  AllocaPartitioning &P;
-  SROA &Pass;
-
-public:
-  PHIOrSelectSpeculator(const TargetData &TD, AllocaPartitioning &P, SROA &Pass)
-    : TD(TD), P(P), Pass(Pass) {}
-
-  /// \brief Visit the users of an alloca partition and rewrite them.
-  void visitUsers(AllocaPartitioning::const_iterator PI) {
-    // Note that we need to use an index here as the underlying vector of uses
-    // may be grown during speculation. However, we never need to re-visit the
-    // new uses, and so we can use the initial size bound.
-    for (unsigned Idx = 0, Size = P.use_size(PI); Idx != Size; ++Idx) {
-      const AllocaPartitioning::PartitionUse &PU = P.getUse(PI, Idx);
-      if (!PU.U)
-        continue; // Skip dead use.
-
-      visit(cast<Instruction>(PU.U->getUser()));
-    }
-  }
-
-private:
-  // By default, skip this instruction.
-  void visitInstruction(Instruction &I) {}
-
-  /// PHI instructions that use an alloca and are subsequently loaded can be
-  /// rewritten to load both input pointers in the pred blocks and then PHI the
-  /// results, allowing the load of the alloca to be promoted.
-  /// From this:
-  ///   %P2 = phi [i32* %Alloca, i32* %Other]
-  ///   %V = load i32* %P2
-  /// to:
-  ///   %V1 = load i32* %Alloca      -> will be mem2reg'd
-  ///   ...
-  ///   %V2 = load i32* %Other
-  ///   ...
-  ///   %V = phi [i32 %V1, i32 %V2]
-  ///
-  /// We can do this to a select if its only uses are loads and if the operands
-  /// to the select can be loaded unconditionally.
-  ///
-  /// FIXME: This should be hoisted into a generic utility, likely in
-  /// Transforms/Util/Local.h
-  bool isSafePHIToSpeculate(PHINode &PN, SmallVectorImpl<LoadInst *> &Loads) {
-    // For now, we can only do this promotion if the load is in the same block
-    // as the PHI, and if there are no stores between the phi and load.
-    // TODO: Allow recursive phi users.
-    // TODO: Allow stores.
-    BasicBlock *BB = PN.getParent();
-    unsigned MaxAlign = 0;
-    for (Value::use_iterator UI = PN.use_begin(), UE = PN.use_end();
-         UI != UE; ++UI) {
-      LoadInst *LI = dyn_cast<LoadInst>(*UI);
-      if (LI == 0 || !LI->isSimple()) return false;
-
-      // For now we only allow loads in the same block as the PHI.  This is
-      // a common case that happens when instcombine merges two loads through
-      // a PHI.
-      if (LI->getParent() != BB) return false;
-
-      // Ensure that there are no instructions between the PHI and the load that
-      // could store.
-      for (BasicBlock::iterator BBI = &PN; &*BBI != LI; ++BBI)
-        if (BBI->mayWriteToMemory())
-          return false;
-
-      MaxAlign = std::max(MaxAlign, LI->getAlignment());
-      Loads.push_back(LI);
-    }
-
-    // We can only transform this if it is safe to push the loads into the
-    // predecessor blocks. The only thing to watch out for is that we can't put
-    // a possibly trapping load in the predecessor if it is a critical edge.
-    for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num;
-         ++Idx) {
-      TerminatorInst *TI = PN.getIncomingBlock(Idx)->getTerminator();
-      Value *InVal = PN.getIncomingValue(Idx);
-
-      // If the value is produced by the terminator of the predecessor (an
-      // invoke) or it has side-effects, there is no valid place to put a load
-      // in the predecessor.
-      if (TI == InVal || TI->mayHaveSideEffects())
-        return false;
-
-      // If the predecessor has a single successor, then the edge isn't
-      // critical.
-      if (TI->getNumSuccessors() == 1)
-        continue;
-
-      // If this pointer is always safe to load, or if we can prove that there
-      // is already a load in the block, then we can move the load to the pred
-      // block.
-      if (InVal->isDereferenceablePointer() ||
-          isSafeToLoadUnconditionally(InVal, TI, MaxAlign, &TD))
-        continue;
-
-      return false;
-    }
-
-    return true;
-  }
-
-  void visitPHINode(PHINode &PN) {
-    DEBUG(dbgs() << "    original: " << PN << "\n");
-
-    SmallVector<LoadInst *, 4> Loads;
-    if (!isSafePHIToSpeculate(PN, Loads))
-      return;
-
-    assert(!Loads.empty());
-
-    Type *LoadTy = cast<PointerType>(PN.getType())->getElementType();
-    IRBuilder<> PHIBuilder(&PN);
-    PHINode *NewPN = PHIBuilder.CreatePHI(LoadTy, PN.getNumIncomingValues(),
-                                          PN.getName() + ".sroa.speculated");
-
-    // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
-    // matter which one we get and if any differ, it doesn't matter.
-    LoadInst *SomeLoad = cast<LoadInst>(Loads.back());
-    MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
-    unsigned Align = SomeLoad->getAlignment();
-
-    // Rewrite all loads of the PN to use the new PHI.
-    do {
-      LoadInst *LI = Loads.pop_back_val();
-      LI->replaceAllUsesWith(NewPN);
-      Pass.DeadInsts.push_back(LI);
-    } while (!Loads.empty());
-
-    // Inject loads into all of the pred blocks.
-    for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num; ++Idx) {
-      BasicBlock *Pred = PN.getIncomingBlock(Idx);
-      TerminatorInst *TI = Pred->getTerminator();
-      Use *InUse = &PN.getOperandUse(PN.getOperandNumForIncomingValue(Idx));
-      Value *InVal = PN.getIncomingValue(Idx);
-      IRBuilder<> PredBuilder(TI);
-
-      LoadInst *Load
-        = PredBuilder.CreateLoad(InVal, (PN.getName() + ".sroa.speculate.load." +
-                                         Pred->getName()));
-      ++NumLoadsSpeculated;
-      Load->setAlignment(Align);
-      if (TBAATag)
-        Load->setMetadata(LLVMContext::MD_tbaa, TBAATag);
-      NewPN->addIncoming(Load, Pred);
-
-      Instruction *Ptr = dyn_cast<Instruction>(InVal);
-      if (!Ptr)
-        // No uses to rewrite.
-        continue;
-
-      // Try to lookup and rewrite any partition uses corresponding to this phi
-      // input.
-      AllocaPartitioning::iterator PI
-        = P.findPartitionForPHIOrSelectOperand(InUse);
-      if (PI == P.end())
-        continue;
-
-      // Replace the Use in the PartitionUse for this operand with the Use
-      // inside the load.
-      AllocaPartitioning::use_iterator UI
-        = P.findPartitionUseForPHIOrSelectOperand(InUse);
-      assert(isa<PHINode>(*UI->U->getUser()));
-      UI->U = &Load->getOperandUse(Load->getPointerOperandIndex());
-    }
-    DEBUG(dbgs() << "          speculated to: " << *NewPN << "\n");
-  }
-
-  /// Select instructions that use an alloca and are subsequently loaded can be
-  /// rewritten to load both input pointers and then select between the result,
-  /// allowing the load of the alloca to be promoted.
-  /// From this:
-  ///   %P2 = select i1 %cond, i32* %Alloca, i32* %Other
-  ///   %V = load i32* %P2
-  /// to:
-  ///   %V1 = load i32* %Alloca      -> will be mem2reg'd
-  ///   %V2 = load i32* %Other
-  ///   %V = select i1 %cond, i32 %V1, i32 %V2
-  ///
-  /// We can do this to a select if its only uses are loads and if the operand
-  /// to the select can be loaded unconditionally.
-  bool isSafeSelectToSpeculate(SelectInst &SI,
-                               SmallVectorImpl<LoadInst *> &Loads) {
-    Value *TValue = SI.getTrueValue();
-    Value *FValue = SI.getFalseValue();
-    bool TDerefable = TValue->isDereferenceablePointer();
-    bool FDerefable = FValue->isDereferenceablePointer();
-
-    for (Value::use_iterator UI = SI.use_begin(), UE = SI.use_end();
-         UI != UE; ++UI) {
-      LoadInst *LI = dyn_cast<LoadInst>(*UI);
-      if (LI == 0 || !LI->isSimple()) return false;
-
-      // Both operands to the select need to be dereferencable, either
-      // absolutely (e.g. allocas) or at this point because we can see other
-      // accesses to it.
-      if (!TDerefable && !isSafeToLoadUnconditionally(TValue, LI,
-                                                      LI->getAlignment(), &TD))
-        return false;
-      if (!FDerefable && !isSafeToLoadUnconditionally(FValue, LI,
-                                                      LI->getAlignment(), &TD))
-        return false;
-      Loads.push_back(LI);
-    }
-
-    return true;
-  }
-
-  void visitSelectInst(SelectInst &SI) {
-    DEBUG(dbgs() << "    original: " << SI << "\n");
-    IRBuilder<> IRB(&SI);
-
-    // If the select isn't safe to speculate, just use simple logic to emit it.
-    SmallVector<LoadInst *, 4> Loads;
-    if (!isSafeSelectToSpeculate(SI, Loads))
-      return;
-
-    Use *Ops[2] = { &SI.getOperandUse(1), &SI.getOperandUse(2) };
-    AllocaPartitioning::iterator PIs[2];
-    AllocaPartitioning::PartitionUse PUs[2];
-    for (unsigned i = 0, e = 2; i != e; ++i) {
-      PIs[i] = P.findPartitionForPHIOrSelectOperand(Ops[i]);
-      if (PIs[i] != P.end()) {
-        // If the pointer is within the partitioning, remove the select from
-        // its uses. We'll add in the new loads below.
-        AllocaPartitioning::use_iterator UI
-          = P.findPartitionUseForPHIOrSelectOperand(Ops[i]);
-        PUs[i] = *UI;
-        // Clear out the use here so that the offsets into the use list remain
-        // stable but this use is ignored when rewriting.
-        UI->U = 0;
-      }
-    }
-
-    Value *TV = SI.getTrueValue();
-    Value *FV = SI.getFalseValue();
-    // Replace the loads of the select with a select of two loads.
-    while (!Loads.empty()) {
-      LoadInst *LI = Loads.pop_back_val();
-
-      IRB.SetInsertPoint(LI);
-      LoadInst *TL =
-        IRB.CreateLoad(TV, LI->getName() + ".sroa.speculate.load.true");
-      LoadInst *FL =
-        IRB.CreateLoad(FV, LI->getName() + ".sroa.speculate.load.false");
-      NumLoadsSpeculated += 2;
-
-      // Transfer alignment and TBAA info if present.
-      TL->setAlignment(LI->getAlignment());
-      FL->setAlignment(LI->getAlignment());
-      if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa)) {
-        TL->setMetadata(LLVMContext::MD_tbaa, Tag);
-        FL->setMetadata(LLVMContext::MD_tbaa, Tag);
-      }
-
-      Value *V = IRB.CreateSelect(SI.getCondition(), TL, FL,
-                                  LI->getName() + ".sroa.speculated");
-
-      LoadInst *Loads[2] = { TL, FL };
-      for (unsigned i = 0, e = 2; i != e; ++i) {
-        if (PIs[i] != P.end()) {
-          Use *LoadUse = &Loads[i]->getOperandUse(0);
-          assert(PUs[i].U->get() == LoadUse->get());
-          PUs[i].U = LoadUse;
-          P.use_push_back(PIs[i], PUs[i]);
-        }
-      }
-
-      DEBUG(dbgs() << "          speculated to: " << *V << "\n");
-      LI->replaceAllUsesWith(V);
-      Pass.DeadInsts.push_back(LI);
-    }
-  }
-};
-
 /// \brief Visitor to rewrite instructions using a partition of an alloca to
 /// use a new alloca.
 ///
