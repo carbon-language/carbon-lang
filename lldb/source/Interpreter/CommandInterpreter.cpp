@@ -160,10 +160,6 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
         AddAlias ("tbreak", cmd_obj_sp);
 
-    cmd_obj_sp = GetCommandSPExact ("thread backtrace", false);
-    if (cmd_obj_sp)
-        AddAlias ("bt", cmd_obj_sp);
-
     cmd_obj_sp = GetCommandSPExact ("thread step-inst", false);
     if (cmd_obj_sp)
     {
