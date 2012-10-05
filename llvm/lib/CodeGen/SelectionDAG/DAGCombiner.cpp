@@ -7577,9 +7577,9 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       SDValue StoredVal = St->getValue();
 
       if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(StoredVal)) {
-        NonZero |= (C->getZExtValue() != 0);
+        NonZero |= !C->isNullValue();
       } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(StoredVal)) {
-        NonZero |= C->getValueAPF().bitcastToAPInt().getZExtValue();
+        NonZero |= !C->getConstantFPValue()->isNullValue();
       } else {
         // Non constant.
         break;
