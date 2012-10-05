@@ -5407,10 +5407,15 @@ static void DiagnoseNamespaceInlineMismatch(Sema &S, SourceLocation KeywordLoc,
                                             NamespaceDecl *PrevNS) {
   assert(*IsInline != PrevNS->isInline());
 
+  // HACK: Work around a bug in libstdc++4.6's <atomic>, where
+  // std::__atomic[0,1,2] are defined as non-inline namespaces, then reopened as
+  // inline namespaces, with the intention of bringing names into namespace std.
+  //
+  // We support this just well enough to get that case working; this is not
+  // sufficient to support reopening namespaces as inline in general.
   if (*IsInline && II && II->getName().startswith("__atomic") &&
       S.getSourceManager().isInSystemHeader(Loc)) {
-    // libstdc++4.6's <atomic> reopens a non-inline namespace as inline, and
-    // expects that to affect the earlier declaration.
+    // Mark all prior declarations of the namespace as inline.
     for (NamespaceDecl *NS = PrevNS->getMostRecentDecl(); NS;
          NS = NS->getPreviousDecl())
       NS->setInline(*IsInline);
