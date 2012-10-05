@@ -550,7 +550,7 @@ DIType DIBuilder::createEnumerationType(DIDescriptor Scope, StringRef Name,
                                         uint64_t SizeInBits,
                                         uint64_t AlignInBits,
                                         DIArray Elements,
-                                        DIType ClassType, unsigned Flags) {
+                                        DIType ClassType) {
   // TAG_enumeration_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_enumeration_type),
@@ -561,7 +561,7 @@ DIType DIBuilder::createEnumerationType(DIDescriptor Scope, StringRef Name,
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ClassType,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
@@ -706,7 +706,9 @@ DIType DIBuilder::createTemporaryType(DIFile F) {
 /// can be RAUW'd if the full type is seen.
 DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
                                     DIDescriptor Scope, DIFile F,
-                                    unsigned Line, unsigned RuntimeLang) {
+                                    unsigned Line, unsigned RuntimeLang,
+                                    uint64_t SizeInBits,
+                                    uint64_t AlignInBits) {
   // Create a temporary MDNode.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
@@ -714,9 +716,8 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
     MDString::get(VMContext, Name),
     F,
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
-    // To ease transition include sizes etc of 0.
-    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt32Ty(VMContext),
                      DIDescriptor::FlagFwdDecl),
