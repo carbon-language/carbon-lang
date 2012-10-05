@@ -317,7 +317,7 @@ DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
   assert(pref_align < (1 << 16) && "Alignment doesn't fit in bitfield");
   assert(bit_width < (1 << 24) && "Bit width doesn't fit in bitfield");
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
-    if (Alignments[i].AlignType == align_type &&
+    if (Alignments[i].AlignType == (unsigned)align_type &&
         Alignments[i].TypeBitWidth == bit_width) {
       // Update the abi, preferred alignments.
       Alignments[i].ABIAlign = abi_align;
@@ -339,7 +339,7 @@ unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
   int BestMatchIdx = -1;
   int LargestInt = -1;
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
-    if (Alignments[i].AlignType == AlignType &&
+    if (Alignments[i].AlignType == (unsigned)AlignType &&
         Alignments[i].TypeBitWidth == BitWidth)
       return ABIInfo ? Alignments[i].ABIAlign : Alignments[i].PrefAlign;
 
