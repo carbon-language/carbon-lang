@@ -413,6 +413,35 @@ struct Elf_Ehdr_Impl {
 };
 
 template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Phdr;
+
+template<support::endianness target_endianness>
+struct Elf_Phdr<target_endianness, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+  Elf_Word p_type;   // Type of segment
+  Elf_Off  p_offset; // FileOffset where segment is located, in bytes
+  Elf_Addr p_vaddr;  // Virtual Address of beginning of segment 
+  Elf_Addr p_paddr;  // Physical address of beginning of segment (OS-specific)
+  Elf_Word p_filesz; // Num. of bytes in file image of segment (may be zero)
+  Elf_Word p_memsz;  // Num. of bytes in mem image of segment (may be zero)
+  Elf_Word p_flags;  // Segment flags
+  Elf_Word p_align;  // Segment alignment constraint
+};
+
+template<support::endianness target_endianness>
+struct Elf_Phdr<target_endianness, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+  Elf_Word p_type;   // Type of segment
+  Elf_Word p_flags;  // Segment flags
+  Elf_Off  p_offset; // FileOffset where segment is located, in bytes
+  Elf_Addr p_vaddr;  // Virtual Address of beginning of segment 
+  Elf_Addr p_paddr;  // Physical address of beginning of segment (OS-specific)
+  Elf_Word p_filesz; // Num. of bytes in file image of segment (may be zero)
+  Elf_Word p_memsz;  // Num. of bytes in mem image of segment (may be zero)
+  Elf_Word p_align;  // Segment alignment constraint
+};
+
+template<support::endianness target_endianness, bool is64Bits>
 class ELFObjectFile : public ObjectFile {
   LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
 
