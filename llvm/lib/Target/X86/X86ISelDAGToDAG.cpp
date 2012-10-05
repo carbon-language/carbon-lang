@@ -387,21 +387,12 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
   CurDAG->UpdateNodeOperands(Load.getNode(), Call.getOperand(0),
                              Load.getOperand(1), Load.getOperand(2));
 
-  bool IsGlued = Call.getOperand(0).getNode()->getGluedUser() == Call.getNode();
   unsigned NumOps = Call.getNode()->getNumOperands();
   Ops.clear();
   Ops.push_back(SDValue(Load.getNode(), 1));
   for (unsigned i = 1, e = NumOps; i != e; ++i)
     Ops.push_back(Call.getOperand(i));
-  if (!IsGlued)
-    CurDAG->UpdateNodeOperands(Call.getNode(), &Ops[0], NumOps);
-  else
-    // If call's chain was glued to the call (tailcall), and now the load
-    // is moved between them. Remove the glue to avoid a cycle (where the
-    // call is glued to its old chain and the load is using the old chain
-    // as its new chain).
-    CurDAG->MorphNodeTo(Call.getNode(), Call.getOpcode(),
-                        Call.getNode()->getVTList(), &Ops[0], NumOps-1);
+  CurDAG->UpdateNodeOperands(Call.getNode(), &Ops[0], NumOps);
 }
 
 /// isCalleeLoad - Return true if call address is a load and it can be
@@ -410,6 +401,10 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
 /// In the case of a tail call, there isn't a callseq node between the call
 /// chain and the load.
 static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
+  // The transformation is somewhat dangerous if the call's chain was glued to
+  // the call. After MoveBelowOrigChain the load is moved between the call and
+  // the chain, this can create a cycle if the load is not folded. So it is
+  // *really* important that we are sure the load will be folded.
   if (Callee.getNode() == Chain.getNode() || !Callee.hasOneUse())
     return false;
   LoadSDNode *LD = dyn_cast<LoadSDNode>(Callee.getNode());
@@ -447,7 +442,10 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
 
     if (OptLevel != CodeGenOpt::None &&
         (N->getOpcode() == X86ISD::CALL ||
-         N->getOpcode() == X86ISD::TC_RETURN)) {
+         (N->getOpcode() == X86ISD::TC_RETURN &&
+          // Only does this if load can be foled into TC_RETURN.
+          (Subtarget->is64Bit() ||
+           getTargetMachine().getRelocationModel() != Reloc::PIC_)))) {
       /// Also try moving call address load from outside callseq_start to just
       /// before the call to allow it to be folded.
       ///
