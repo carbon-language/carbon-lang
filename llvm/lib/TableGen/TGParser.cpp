@@ -864,8 +864,8 @@ Init *TGParser::ParseOperation(Record *CurRec) {
         return 0;
       }
       if (LHSt) {
-        ListRecTy *LType = dynamic_cast<ListRecTy*>(LHSt->getType());
-        StringRecTy *SType = dynamic_cast<StringRecTy*>(LHSt->getType());
+        ListRecTy *LType = dyn_cast<ListRecTy>(LHSt->getType());
+        StringRecTy *SType = dyn_cast<StringRecTy>(LHSt->getType());
         if (LType == 0 && SType == 0) {
           TokError("expected list or string type argumnet in unary operator");
           return 0;
@@ -897,7 +897,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
           }
         } else {
           assert(LHSt && "expected list type argument in unary operator");
-          ListRecTy *LType = dynamic_cast<ListRecTy*>(LHSt->getType());
+          ListRecTy *LType = dyn_cast<ListRecTy>(LHSt->getType());
           if (LType == 0) {
             TokError("expected list type argumnet in unary operator");
             return 0;
@@ -1271,7 +1271,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     ListRecTy *GivenListTy = 0;
 
     if (ItemType != 0) {
-      ListRecTy *ListType = dynamic_cast<ListRecTy*>(ItemType);
+      ListRecTy *ListType = dyn_cast<ListRecTy>(ItemType);
       if (ListType == 0) {
         std::stringstream s;
         s << "Type mismatch for list, expected list type, got "
@@ -1723,7 +1723,7 @@ VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
       return 0;
     }
     RecTy *ValueType = ForeachListValue->getType();
-    ListRecTy *ListType = dynamic_cast<ListRecTy *>(ValueType);
+    ListRecTy *ListType = dyn_cast<ListRecTy>(ValueType);
     if (ListType == 0) {
       TokError("Value list is not of list type");
       return 0;

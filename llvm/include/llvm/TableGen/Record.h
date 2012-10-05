@@ -1085,9 +1085,9 @@ class VarBitInit : public Init {
 
   VarBitInit(TypedInit *T, unsigned B) : TI(T), Bit(B) {
     assert(T->getType() &&
-           (dynamic_cast<IntRecTy*>(T->getType()) ||
-            (dynamic_cast<BitsRecTy*>(T->getType()) &&
-             dynamic_cast<BitsRecTy*>(T->getType())->getNumBits() > B)) &&
+           (dyn_cast<IntRecTy>(T->getType()) ||
+            (dyn_cast<BitsRecTy>(T->getType()) &&
+             dyn_cast<BitsRecTy>(T->getType())->getNumBits() > B)) &&
            "Illegal VarBitInit expression!");
   }
 
@@ -1120,9 +1120,9 @@ class VarListElementInit : public TypedInit {
   unsigned Element;
 
   VarListElementInit(TypedInit *T, unsigned E)
-      : TypedInit(dynamic_cast<ListRecTy*>(T->getType())->getElementType()),
+      : TypedInit(dyn_cast<ListRecTy>(T->getType())->getElementType()),
           TI(T), Element(E) {
-    assert(T->getType() && dynamic_cast<ListRecTy*>(T->getType()) &&
+    assert(T->getType() && dyn_cast<ListRecTy>(T->getType()) &&
            "Illegal VarBitInit expression!");
   }
 
