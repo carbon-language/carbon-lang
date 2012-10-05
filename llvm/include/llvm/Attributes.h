@@ -27,8 +27,8 @@ class Type;
 
 namespace Attribute {
 
-/// We use this proxy POD type to allow constructing Attributes constants using
-/// initializer lists. Do not use this class directly.
+/// AttrConst - We use this proxy POD type to allow constructing Attributes
+/// constants using initializer lists. Do not use this class directly.
 struct AttrConst {
   uint64_t v;
   AttrConst operator | (const AttrConst Attrs) const {
@@ -157,95 +157,34 @@ public:
     Builder() : Bits(0) {}
     Builder(const Attributes &A) : Bits(A.Bits) {}
 
-    void addZExtAttr() {
-      Bits |= Attribute::ZExt_i;
-    }
-    void addSExtAttr() {
-      Bits |= Attribute::SExt_i;
-    }
-    void addNoReturnAttr() {
-      Bits |= Attribute::NoReturn_i;
-    }
-    void addInRegAttr() {
-      Bits |= Attribute::InReg_i;
-    }
-    void addStructRetAttr() {
-      Bits |= Attribute::StructRet_i;
-    }
-    void addNoUnwindAttr() {
-      Bits |= Attribute::NoUnwind_i;
-    }
-    void addNoAliasAttr() {
-      Bits |= Attribute::NoAlias_i;
-    }
-    void addByValAttr() {
-      Bits |= Attribute::ByVal_i;
-    }
-    void addNestAttr() {
-      Bits |= Attribute::Nest_i;
-    }
-    void addReadNoneAttr() {
-      Bits |= Attribute::ReadNone_i;
-    }
-    void addReadOnlyAttr() {
-      Bits |= Attribute::ReadOnly_i;
-    }
-    void addNoInlineAttr() {
-      Bits |= Attribute::NoInline_i;
-    }
-    void addAlwaysInlineAttr() {
-      Bits |= Attribute::AlwaysInline_i;
-    }
-    void addOptimizeForSizeAttr() {
-      Bits |= Attribute::OptimizeForSize_i;
-    }
-    void addStackProtectAttr() {
-      Bits |= Attribute::StackProtect_i;
-    }
-    void addStackProtectReqAttr() {
-      Bits |= Attribute::StackProtectReq_i;
-    }
-    void addNoCaptureAttr() {
-      Bits |= Attribute::NoCapture_i;
-    }
-    void addNoRedZoneAttr() {
-      Bits |= Attribute::NoRedZone_i;
-    }
-    void addNoImplicitFloatAttr() {
-      Bits |= Attribute::NoImplicitFloat_i;
-    }
-    void addNakedAttr() {
-      Bits |= Attribute::Naked_i;
-    }
-    void addInlineHintAttr() {
-      Bits |= Attribute::InlineHint_i;
-    }
-    void addReturnsTwiceAttr() {
-      Bits |= Attribute::ReturnsTwice_i;
-    }
-    void addUWTableAttr() {
-      Bits |= Attribute::UWTable_i;
-    }
-    void addNonLazyBindAttr() {
-      Bits |= Attribute::NonLazyBind_i;
-    }
-    void addAddressSafetyAttr() {
-      Bits |= Attribute::AddressSafety_i;
-    }
-    void addAlignmentAttr(unsigned Align) {
-      if (Align == 0) return;
-      assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
-      assert(Align <= 0x40000000 && "Alignment too large.");
-      Bits |= (Log2_32(Align) + 1) << 16;
-    }
-    void addStackAlignmentAttr(unsigned Align) {
-      // Default alignment, allow the target to define how to align it.
-      if (Align == 0) return;
+    void addAddressSafetyAttr();
+    void addAlwaysInlineAttr();
+    void addByValAttr();
+    void addInlineHintAttr();
+    void addInRegAttr();
+    void addNakedAttr();
+    void addNestAttr();
+    void addNoAliasAttr();
+    void addNoCaptureAttr();
+    void addNoImplicitFloatAttr();
+    void addNoInlineAttr();
+    void addNonLazyBindAttr();
+    void addNoRedZoneAttr();
+    void addNoReturnAttr();
+    void addNoUnwindAttr();
+    void addOptimizeForSizeAttr();
+    void addReadNoneAttr();
+    void addReadOnlyAttr();
+    void addReturnsTwiceAttr();
+    void addSExtAttr();
+    void addStackProtectAttr();
+    void addStackProtectReqAttr();
+    void addStructRetAttr();
+    void addUWTableAttr();
+    void addZExtAttr();
 
-      assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
-      assert(Align <= 0x100 && "Alignment too large.");
-      Bits |= (Log2_32(Align) + 1) << 26;
-    }
+    void addAlignmentAttr(unsigned Align);
+    void addStackAlignmentAttr(unsigned Align);
   };
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
@@ -261,103 +200,41 @@ public:
     return Bits & A.Bits;
   }
 
-  bool hasZExtAttr() const {
-    return Bits & Attribute::ZExt_i;
-  }
-  bool hasSExtAttr() const {
-    return Bits & Attribute::SExt_i;
-  }
-  bool hasNoReturnAttr() const {
-    return Bits & Attribute::NoReturn_i;
-  }
-  bool hasInRegAttr() const {
-    return Bits & Attribute::InReg_i;
-  }
-  bool hasStructRetAttr() const {
-    return Bits & Attribute::StructRet_i;
-  }
-  bool hasNoUnwindAttr() const {
-    return Bits & Attribute::NoUnwind_i;
-  }
-  bool hasNoAliasAttr() const {
-    return Bits & Attribute::NoAlias_i;
-  }
-  bool hasByValAttr() const {
-    return Bits & Attribute::ByVal_i;
-  }
-  bool hasNestAttr() const {
-    return Bits & Attribute::Nest_i;
-  }
-  bool hasReadNoneAttr() const {
-    return Bits & Attribute::ReadNone_i;
-  }
-  bool hasReadOnlyAttr() const {
-    return Bits & Attribute::ReadOnly_i;
-  }
-  bool hasNoInlineAttr() const {
-    return Bits & Attribute::NoInline_i;
-  }
-  bool hasAlwaysInlineAttr() const {
-    return Bits & Attribute::AlwaysInline_i;
-  }
-  bool hasOptimizeForSizeAttr() const {
-    return Bits & Attribute::OptimizeForSize_i;
-  }
-  bool hasStackProtectAttr() const {
-    return Bits & Attribute::StackProtect_i;
-  }
-  bool hasStackProtectReqAttr() const {
-    return Bits & Attribute::StackProtectReq_i;
-  }
-  bool hasAlignmentAttr() const {
-    return Bits & Attribute::Alignment_i;
-  }
-  bool hasNoCaptureAttr() const {
-    return Bits & Attribute::NoCapture_i;
-  }
-  bool hasNoRedZoneAttr() const {
-    return Bits & Attribute::NoRedZone_i;
-  }
-  bool hasNoImplicitFloatAttr() const {
-    return Bits & Attribute::NoImplicitFloat_i;
-  }
-  bool hasNakedAttr() const {
-    return Bits & Attribute::Naked_i;
-  }
-  bool hasInlineHintAttr() const {
-    return Bits & Attribute::InlineHint_i;
-  }
-  bool hasReturnsTwiceAttr() const {
-    return Bits & Attribute::ReturnsTwice_i;
-  }
-  bool hasStackAlignmentAttr() const {
-    return Bits & Attribute::StackAlignment_i;
-  }
-  bool hasUWTableAttr() const {
-    return Bits & Attribute::UWTable_i;
-  }
-  bool hasNonLazyBindAttr() const {
-    return Bits & Attribute::NonLazyBind_i;
-  }
-  bool hasAddressSafetyAttr() const {
-    return Bits & Attribute::AddressSafety_i;
-  }
+  bool hasAddressSafetyAttr() const;
+  bool hasAlignmentAttr() const;
+  bool hasAlwaysInlineAttr() const;
+  bool hasByValAttr() const;
+  bool hasInRegAttr() const;
+  bool hasInlineHintAttr() const;
+  bool hasNakedAttr() const;
+  bool hasNestAttr() const;
+  bool hasNoAliasAttr() const;
+  bool hasNoCaptureAttr() const;
+  bool hasNoImplicitFloatAttr() const;
+  bool hasNoInlineAttr() const;
+  bool hasNonLazyBindAttr() const;
+  bool hasNoRedZoneAttr() const;
+  bool hasNoReturnAttr() const;
+  bool hasNoUnwindAttr() const;
+  bool hasOptimizeForSizeAttr() const;
+  bool hasReadNoneAttr() const;
+  bool hasReadOnlyAttr() const;
+  bool hasReturnsTwiceAttr() const;
+  bool hasSExtAttr() const;
+  bool hasStackAlignmentAttr() const;
+  bool hasStackProtectAttr() const;
+  bool hasStackProtectReqAttr() const;
+  bool hasStructRetAttr() const;
+  bool hasUWTableAttr() const;
+  bool hasZExtAttr() const;
 
   /// This returns the alignment field of an attribute as a byte alignment
   /// value.
-  unsigned getAlignment() const {
-    if (!hasAlignmentAttr())
-      return 0;
-    return 1U << (((Bits & Attribute::Alignment_i) >> 16) - 1);
-  }
+  unsigned getAlignment() const;
 
   /// This returns the stack alignment field of an attribute as a byte alignment
   /// value.
-  unsigned getStackAlignment() const {
-    if (!hasStackAlignmentAttr())
-      return 0;
-    return 1U << (((Bits & Attribute::StackAlignment_i) >> 26) - 1);
-  }
+  unsigned getStackAlignment() const;
 
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
@@ -368,6 +245,7 @@ public:
   bool operator != (const Attributes &Attrs) const {
     return Bits != Attrs.Bits;
   }
+
   Attributes operator | (const Attributes &Attrs) const {
     return Attributes(Bits | Attrs.Bits);
   }
@@ -388,8 +266,8 @@ public:
   Attributes operator ~ () const { return Attributes(~Bits); }
   uint64_t Raw() const { return Bits; }
 
-  /// This turns an int alignment (a power of 2, normally) into the form used
-  /// internally in Attributes.
+  /// constructAlignmentFromInt - This turns an int alignment (a power of 2,
+  /// normally) into the form used internally in Attributes.
   static Attributes constructAlignmentFromInt(unsigned i) {
     // Default alignment, allow the target to define how to align it.
     if (i == 0)
@@ -400,8 +278,8 @@ public:
     return Attributes((Log2_32(i)+1) << 16);
   }
 
-  /// This turns an int stack alignment (which must be a power of 2) into the
-  /// form used internally in Attributes.
+  /// constructStackAlignmentFromInt - This turns an int stack alignment (which
+  /// must be a power of 2) into the form used internally in Attributes.
   static Attributes constructStackAlignmentFromInt(unsigned i) {
     // Default alignment, allow the target to define how to align it.
     if (i == 0)
@@ -415,9 +293,9 @@ public:
   /// @brief Which attributes cannot be applied to a type.
   static Attributes typeIncompatible(Type *Ty);
 
-  /// This returns an integer containing an encoding of all the LLVM attributes
-  /// found in the given attribute bitset.  Any change to this encoding is a
-  /// breaking change to bitcode compatibility.
+  /// encodeLLVMAttributesForBitcode - This returns an integer containing an
+  /// encoding of all the LLVM attributes found in the given attribute bitset.
+  /// Any change to this encoding is a breaking change to bitcode compatibility.
   static uint64_t encodeLLVMAttributesForBitcode(Attributes Attrs) {
     // FIXME: It doesn't make sense to store the alignment information as an
     // expanded out value, we should store it as a log2 value.  However, we
@@ -429,16 +307,17 @@ public:
     // Store the alignment in the bitcode as a 16-bit raw value instead of a
     // 5-bit log2 encoded value. Shift the bits above the alignment up by 11
     // bits.
-    uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
+    uint64_t EncodedAttrs = Attrs.Bits & 0xffff;
     if (Attrs.hasAlignmentAttr())
       EncodedAttrs |= (1ULL << 16) <<
         (((Attrs.Bits & Attribute::Alignment_i) - 1) >> 16);
-    EncodedAttrs |= (Attrs.Raw() & (0xfffULL << 21)) << 11;
+    EncodedAttrs |= (Attrs.Bits & (0xfffULL << 21)) << 11;
     return EncodedAttrs;
   }
 
-  /// This returns an attribute bitset containing the LLVM attributes that have
-  /// been decoded from the given integer.  This function must stay in sync with
+  /// decodeLLVMAttributesForBitcode - This returns an attribute bitset
+  /// containing the LLVM attributes that have been decoded from the given
+  /// integer.  This function must stay in sync with
   /// 'encodeLLVMAttributesForBitcode'.
   static Attributes decodeLLVMAttributesForBitcode(uint64_t EncodedAttrs) {
     // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
@@ -454,15 +333,19 @@ public:
     return Attrs;
   }
 
-  /// The set of Attributes set in Attributes is converted to a string of
-  /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
-  /// for the assembly writer.
+  /// getAsString - The set of Attributes set in Attributes is converted to a
+  /// string of equivalent mnemonics. This is, presumably, for writing out the
+  /// mnemonics for the assembly writer.
   /// @brief Convert attribute bits to text
   std::string getAsString() const;
 };
 
-/// This is just a pair of values to associate a set of attributes
-/// with an index.
+//===----------------------------------------------------------------------===//
+// AttributeWithIndex
+//===----------------------------------------------------------------------===//
+
+/// AttributeWithIndex - This is just a pair of values to associate a set of
+/// attributes with an index.
 struct AttributeWithIndex {
   Attributes Attrs;  ///< The attributes that are set, or'd together.
   unsigned Index;    ///< Index of the parameter for which the attributes apply.

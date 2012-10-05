@@ -28,6 +28,124 @@ using namespace llvm;
 // Attribute Function Definitions
 //===----------------------------------------------------------------------===//
 
+bool Attributes::hasAddressSafetyAttr() const {
+  return Bits & Attribute::AddressSafety_i;
+}
+bool Attributes::hasAlignmentAttr() const {
+  return Bits & Attribute::Alignment_i;
+}
+bool Attributes::hasAlwaysInlineAttr() const {
+  return Bits & Attribute::AlwaysInline_i;
+}
+bool Attributes::hasByValAttr() const {
+  return Bits & Attribute::ByVal_i;
+}
+bool Attributes::hasInlineHintAttr() const {
+  return Bits & Attribute::InlineHint_i;
+}
+bool Attributes::hasInRegAttr() const {
+  return Bits & Attribute::InReg_i;
+}
+bool Attributes::hasNakedAttr() const {
+  return Bits & Attribute::Naked_i;
+}
+bool Attributes::hasNestAttr() const {
+  return Bits & Attribute::Nest_i;
+}
+bool Attributes::hasNoAliasAttr() const {
+  return Bits & Attribute::NoAlias_i;
+}
+bool Attributes::hasNoCaptureAttr() const {
+  return Bits & Attribute::NoCapture_i;
+}
+bool Attributes::hasNoImplicitFloatAttr() const {
+  return Bits & Attribute::NoImplicitFloat_i;
+}
+bool Attributes::hasNoInlineAttr() const {
+  return Bits & Attribute::NoInline_i;
+}
+bool Attributes::hasNonLazyBindAttr() const {
+  return Bits & Attribute::NonLazyBind_i;
+}
+bool Attributes::hasNoRedZoneAttr() const {
+  return Bits & Attribute::NoRedZone_i;
+}
+bool Attributes::hasNoReturnAttr() const {
+  return Bits & Attribute::NoReturn_i;
+}
+bool Attributes::hasNoUnwindAttr() const {
+  return Bits & Attribute::NoUnwind_i;
+}
+bool Attributes::hasOptimizeForSizeAttr() const {
+  return Bits & Attribute::OptimizeForSize_i;
+}
+bool Attributes::hasReadNoneAttr() const {
+  return Bits & Attribute::ReadNone_i;
+}
+bool Attributes::hasReadOnlyAttr() const {
+  return Bits & Attribute::ReadOnly_i;
+}
+bool Attributes::hasReturnsTwiceAttr() const {
+  return Bits & Attribute::ReturnsTwice_i;
+}
+bool Attributes::hasSExtAttr() const {
+  return Bits & Attribute::SExt_i;
+}
+bool Attributes::hasStackAlignmentAttr() const {
+  return Bits & Attribute::StackAlignment_i;
+}
+bool Attributes::hasStackProtectAttr() const {
+  return Bits & Attribute::StackProtect_i;
+}
+bool Attributes::hasStackProtectReqAttr() const {
+  return Bits & Attribute::StackProtectReq_i;
+}
+bool Attributes::hasStructRetAttr() const {
+  return Bits & Attribute::StructRet_i;
+}
+bool Attributes::hasUWTableAttr() const {
+  return Bits & Attribute::UWTable_i;
+}
+bool Attributes::hasZExtAttr() const {
+  return Bits & Attribute::ZExt_i;
+}
+
+/// This returns the alignment field of an attribute as a byte alignment value.
+unsigned Attributes::getAlignment() const {
+  if (!hasAlignmentAttr())
+    return 0;
+  return 1U << (((Bits & Attribute::Alignment_i) >> 16) - 1);
+}
+
+/// This returns the stack alignment field of an attribute as a byte alignment
+/// value.
+unsigned Attributes::getStackAlignment() const {
+  if (!hasStackAlignmentAttr())
+    return 0;
+  return 1U << (((Bits & Attribute::StackAlignment_i) >> 26) - 1);
+}
+
+Attributes Attributes::typeIncompatible(Type *Ty) {
+  Attributes::Builder Incompatible;
+  
+  if (!Ty->isIntegerTy()) {
+    // Attributes that only apply to integers.
+    Incompatible.addSExtAttr();
+    Incompatible.addZExtAttr();
+  }
+  
+  if (!Ty->isPointerTy()) {
+    // Attributes that only apply to pointers.
+    Incompatible.addByValAttr();
+    Incompatible.addNestAttr();
+    Incompatible.addNoAliasAttr();
+    Incompatible.addNoCaptureAttr();
+    Incompatible.addStructRetAttr();
+  }
+  
+  return Attributes(Incompatible.Bits); // FIXME: Use Attributes::get().
+}
+
 std::string Attributes::getAsString() const {
   std::string Result;
   if (hasZExtAttr())
@@ -96,19 +214,98 @@ std::string Attributes::getAsString() const {
   return Result;
 }
 
-Attributes Attributes::typeIncompatible(Type *Ty) {
-  Attributes Incompatible = Attribute::None;
-  
-  if (!Ty->isIntegerTy())
-    // Attributes that only apply to integers.
-    Incompatible |= Attribute::SExt | Attribute::ZExt;
-  
-  if (!Ty->isPointerTy())
-    // Attributes that only apply to pointers.
-    Incompatible |= Attribute::ByVal | Attribute::Nest | Attribute::NoAlias |
-      Attribute::StructRet | Attribute::NoCapture;
-  
-  return Incompatible;
+//===----------------------------------------------------------------------===//
+// Attributes::Builder Implementation
+//===----------------------------------------------------------------------===//
+
+void Attributes::Builder::addAddressSafetyAttr() {
+  Bits |= Attribute::AddressSafety_i;
+}
+void Attributes::Builder::addAlwaysInlineAttr() {
+  Bits |= Attribute::AlwaysInline_i;
+}
+void Attributes::Builder::addByValAttr() {
+  Bits |= Attribute::ByVal_i;
+}
+void Attributes::Builder::addInlineHintAttr() {
+  Bits |= Attribute::InlineHint_i;
+}
+void Attributes::Builder::addInRegAttr() {
+  Bits |= Attribute::InReg_i;
+}
+void Attributes::Builder::addNakedAttr() {
+  Bits |= Attribute::Naked_i;
+}
+void Attributes::Builder::addNestAttr() {
+  Bits |= Attribute::Nest_i;
+}
+void Attributes::Builder::addNoAliasAttr() {
+  Bits |= Attribute::NoAlias_i;
+}
+void Attributes::Builder::addNoCaptureAttr() {
+  Bits |= Attribute::NoCapture_i;
+}
+void Attributes::Builder::addNoImplicitFloatAttr() {
+  Bits |= Attribute::NoImplicitFloat_i;
+}
+void Attributes::Builder::addNoInlineAttr() {
+  Bits |= Attribute::NoInline_i;
+}
+void Attributes::Builder::addNonLazyBindAttr() {
+  Bits |= Attribute::NonLazyBind_i;
+}
+void Attributes::Builder::addNoRedZoneAttr() {
+  Bits |= Attribute::NoRedZone_i;
+}
+void Attributes::Builder::addNoReturnAttr() {
+  Bits |= Attribute::NoReturn_i;
+}
+void Attributes::Builder::addNoUnwindAttr() {
+  Bits |= Attribute::NoUnwind_i;
+}
+void Attributes::Builder::addOptimizeForSizeAttr() {
+  Bits |= Attribute::OptimizeForSize_i;
+}
+void Attributes::Builder::addReadNoneAttr() {
+  Bits |= Attribute::ReadNone_i;
+}
+void Attributes::Builder::addReadOnlyAttr() {
+  Bits |= Attribute::ReadOnly_i;
+}
+void Attributes::Builder::addReturnsTwiceAttr() {
+  Bits |= Attribute::ReturnsTwice_i;
+}
+void Attributes::Builder::addSExtAttr() {
+  Bits |= Attribute::SExt_i;
+}
+void Attributes::Builder::addStackProtectAttr() {
+  Bits |= Attribute::StackProtect_i;
+}
+void Attributes::Builder::addStackProtectReqAttr() {
+  Bits |= Attribute::StackProtectReq_i;
+}
+void Attributes::Builder::addStructRetAttr() {
+  Bits |= Attribute::StructRet_i;
+}
+void Attributes::Builder::addUWTableAttr() {
+  Bits |= Attribute::UWTable_i;
+}
+void Attributes::Builder::addZExtAttr() {
+  Bits |= Attribute::ZExt_i;
+}
+
+void Attributes::Builder::addAlignmentAttr(unsigned Align) {
+  if (Align == 0) return;
+  assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
+  assert(Align <= 0x40000000 && "Alignment too large.");
+  Bits |= (Log2_32(Align) + 1) << 16;
+}
+void Attributes::Builder::addStackAlignmentAttr(unsigned Align) {
+  // Default alignment, allow the target to define how to align it.
+  if (Align == 0) return;
+  assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
+  assert(Align <= 0x100 && "Alignment too large.");
+  Bits |= (Log2_32(Align) + 1) << 26;
 }
 
 //===----------------------------------------------------------------------===//
