@@ -2272,6 +2272,8 @@ StringRef ELFObjectFile<target_endianness, is64Bits>
       return "ELF64-i386";
     case ELF::EM_X86_64:
       return "ELF64-x86-64";
+    case ELF::EM_PPC64:
+      return "ELF64-ppc64";
     default:
       return "ELF64-unknown";
     }
@@ -2295,6 +2297,8 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
   case ELF::EM_MIPS:
     return (target_endianness == support::little) ?
            Triple::mipsel : Triple::mips;
+  case ELF::EM_PPC64:
+    return Triple::ppc64;
   default:
     return Triple::UnknownArch;
   }
