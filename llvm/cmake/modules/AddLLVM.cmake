@@ -135,16 +135,22 @@ endmacro(add_llvm_target)
 # lld, and Polly. This adds two options. One for the source directory of the
 # project, which defaults to ${CMAKE_CURRENT_SOURCE_DIR}/${name}. Another to
 # enable or disable building it with everthing else.
+# Additional parameter can be specified as the name of directory.
 macro(add_llvm_external_project name)
-  string(TOUPPER ${name} nameUPPER)
-  set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${name}"
+  set(add_llvm_external_dir "${ARGN}")
+  if("${add_llvm_external_dir}" STREQUAL "")
+    set(add_llvm_external_dir ${name})
+  endif()
+  string(REPLACE "-" "_" nameUNDERSCORE ${name})
+  string(TOUPPER ${nameUNDERSCORE} nameUPPER)
+  set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}"
       CACHE PATH "Path to ${name} source directory")
   if (NOT ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} STREQUAL ""
       AND EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}/CMakeLists.txt)
     option(LLVM_EXTERNAL_${nameUPPER}_BUILD
            "Whether to build ${name} as part of LLVM" ON)
     if (LLVM_EXTERNAL_${nameUPPER}_BUILD)
-      add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${name})
+      add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${add_llvm_external_dir})
     endif()
   endif()
 endmacro(add_llvm_external_project)
