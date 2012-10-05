@@ -664,7 +664,9 @@ ELFHeaderChunk<target_endianness, is64Bits>
   e_ident(ELF::EI_MAG3, 'F');
   e_ident(ELF::EI_CLASS, (options.is64Bit() ? ELF::ELFCLASS64
                                             : ELF::ELFCLASS32));
-  e_ident(ELF::EI_DATA, options.endianness());
+  e_ident(ELF::EI_DATA, (options.endianness() == llvm::support::big)
+                         ? ELF::ELFDATA2MSB
+                         : ELF::ELFDATA2LSB);
   e_ident(ELF::EI_VERSION, 1);
   e_ident(ELF::EI_OSABI, ELF::ELFOSABI_NONE);
 
