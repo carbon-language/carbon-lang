@@ -1543,22 +1543,6 @@ namespace constructor_destructor_tests {
 }
 
 
-namespace invalid_lock_expression_test {
-
-class LOCKABLE MyLockable {
-public:
-  MyLockable() __attribute__((exclusive_lock_function)) { }
-  ~MyLockable() { }
-};
-
-// create an empty lock expression
-void foo() {
-  MyLockable lock;  // \
-    // expected-warning {{cannot resolve lock expression}}
-}
-
-} // end namespace invalid_lock_expression_test
-
 namespace template_member_test {
 
   struct S { int n; };
@@ -3602,4 +3586,38 @@ void testFooT() {
 }
 
 }  // end namespace TemplateFunctionParamRemapTest
+
+
+namespace SelfConstructorTest {
+
+class SelfLock {
+public:
+  SelfLock()  EXCLUSIVE_LOCK_FUNCTION(mu_);
+  ~SelfLock() UNLOCK_FUNCTION(mu_);
+
+  void foo() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+
+  Mutex mu_;
+};
+
+class LOCKABLE SelfLock2 {
+public:
+  SelfLock2()  EXCLUSIVE_LOCK_FUNCTION();
+  ~SelfLock2() UNLOCK_FUNCTION();
+
+  void foo() EXCLUSIVE_LOCKS_REQUIRED(this);
+};
+
+
+void test() {
+  SelfLock s;
+  s.foo();
+}
+
+void test2() {
+  SelfLock2 s2;
+  s2.foo();
+}
+
+}  // end namespace SelfConstructorTest
 

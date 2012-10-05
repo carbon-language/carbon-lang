@@ -463,7 +463,8 @@ private:
   /// \param DeclExp An expression involving the Decl on which the attribute
   ///        occurs.
   /// \param D  The declaration to which the lock/unlock attribute is attached.
-  void buildSExprFromExpr(Expr *MutexExp, Expr *DeclExp, const NamedDecl *D) {
+  void buildSExprFromExpr(Expr *MutexExp, Expr *DeclExp, const NamedDecl *D,
+                          VarDecl *SelfDecl = 0) {
     CallingContext CallCtx(D);
 
     if (MutexExp) {
@@ -499,7 +500,7 @@ private:
       CallCtx.NumArgs = CE->getNumArgs();
       CallCtx.FunArgs = CE->getArgs();
     } else if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(DeclExp)) {
-      CallCtx.SelfArg = 0;  // FIXME -- get the parent from DeclStmt
+      CallCtx.SelfArg = 0;  // Will be set below
       CallCtx.NumArgs = CE->getNumArgs();
       CallCtx.FunArgs = CE->getArgs();
     } else if (D && isa<CXXDestructorDecl>(D)) {
@@ -507,14 +508,26 @@ private:
       CallCtx.SelfArg = DeclExp;
     }
 
-    // If the attribute has no arguments, then assume the argument is "this".
-    if (MutexExp == 0) {
-      buildSExpr(CallCtx.SelfArg, 0);
+    // Hack to handle constructors, where self cannot be recovered from
+    // the expression.
+    if (SelfDecl && !CallCtx.SelfArg) {
+      DeclRefExpr SelfDRE(SelfDecl, false, SelfDecl->getType(), VK_LValue,
+                          SelfDecl->getLocation());
+      CallCtx.SelfArg = &SelfDRE;
+
+      // If the attribute has no arguments, then assume the argument is "this".
+      if (MutexExp == 0)
+        buildSExpr(CallCtx.SelfArg, 0);
+      else  // For most attributes.
+        buildSExpr(MutexExp, &CallCtx);
       return;
     }
 
-    // For most attributes.
-    buildSExpr(MutexExp, &CallCtx);
+    // If the attribute has no arguments, then assume the argument is "this".
+    if (MutexExp == 0)
+      buildSExpr(CallCtx.SelfArg, 0);
+    else  // For most attributes.
+      buildSExpr(MutexExp, &CallCtx);
   }
 
   /// \brief Get index of next sibling of node i.
@@ -530,8 +543,9 @@ public:
   ///        occurs.
   /// \param D  The declaration to which the lock/unlock attribute is attached.
   /// Caller must check isValid() after construction.
-  SExpr(Expr* MutexExp, Expr *DeclExp, const NamedDecl* D) {
-    buildSExprFromExpr(MutexExp, DeclExp, D);
+  SExpr(Expr* MutexExp, Expr *DeclExp, const NamedDecl* D,
+        VarDecl *SelfDecl=0) {
+    buildSExprFromExpr(MutexExp, DeclExp, D, SelfDecl);
   }
 
   /// Return true if this is a valid decl sequence.
@@ -1421,7 +1435,7 @@ public:
 
   template <typename AttrType>
   void getMutexIDs(MutexIDList &Mtxs, AttrType *Attr, Expr *Exp,
-                   const NamedDecl *D);
+                   const NamedDecl *D, VarDecl *SelfDecl=0);
 
   template <class AttrType>
   void getMutexIDs(MutexIDList &Mtxs, AttrType *Attr, Expr *Exp,
@@ -1511,12 +1525,13 @@ void ThreadSafetyAnalyzer::removeLock(FactSet &FSet,
 /// and push them onto Mtxs, discarding any duplicates.
 template <typename AttrType>
 void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
-                                       Expr *Exp, const NamedDecl *D) {
+                                       Expr *Exp, const NamedDecl *D,
+                                       VarDecl *SelfDecl) {
   typedef typename AttrType::args_iterator iterator_type;
 
   if (Attr->args_size() == 0) {
     // The mutex held is the "this" object.
-    SExpr Mu(0, Exp, D);
+    SExpr Mu(0, Exp, D, SelfDecl);
     if (!Mu.isValid())
       SExpr::warnInvalidLock(Handler, 0, Exp, D);
     else
@@ -1525,7 +1540,7 @@ void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
   }
 
   for (iterator_type I=Attr->args_begin(), E=Attr->args_end(); I != E; ++I) {
-    SExpr Mu(*I, Exp, D);
+    SExpr Mu(*I, Exp, D, SelfDecl);
     if (!Mu.isValid())
       SExpr::warnInvalidLock(Handler, *I, Exp, D);
     else
@@ -1884,7 +1899,7 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
       // to our lockset with kind exclusive.
       case attr::ExclusiveLockFunction: {
         ExclusiveLockFunctionAttr *A = cast<ExclusiveLockFunctionAttr>(At);
-        Analyzer->getMutexIDs(ExclusiveLocksToAdd, A, Exp, D);
+        Analyzer->getMutexIDs(ExclusiveLocksToAdd, A, Exp, D, VD);
         break;
       }
 
@@ -1892,7 +1907,7 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
       // to our lockset with kind shared.
       case attr::SharedLockFunction: {
         SharedLockFunctionAttr *A = cast<SharedLockFunctionAttr>(At);
-        Analyzer->getMutexIDs(SharedLocksToAdd, A, Exp, D);
+        Analyzer->getMutexIDs(SharedLocksToAdd, A, Exp, D, VD);
         break;
       }
 
@@ -1900,7 +1915,7 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
       // mutexes from the lockset, and flag a warning if they are not there.
       case attr::UnlockFunction: {
         UnlockFunctionAttr *A = cast<UnlockFunctionAttr>(At);
-        Analyzer->getMutexIDs(LocksToRemove, A, Exp, D);
+        Analyzer->getMutexIDs(LocksToRemove, A, Exp, D, VD);
         break;
       }
 
