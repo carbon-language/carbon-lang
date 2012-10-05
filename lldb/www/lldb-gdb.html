@@ -368,7 +368,7 @@
                             <b>(gdb)</b> watch -location g_char_ptr
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> watchpoint set expression -w write -- my_ptr<br>
+                            <b>(lldb)</b> watchpoint set expression -- my_ptr<br>
                             <b>(lldb)</b> wa s e -- my_ptr<br>
                       </td>
                     </tr>
@@ -378,7 +378,7 @@
                         <td class="content">
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> watch set var -w write global<br>
+                            <b>(lldb)</b> watch set var global<br>
                             <b>(lldb)</b> watchpoint modify -c '(global==5)'<br>
                             <b>(lldb)</b> c<br>
                             ...<br>
