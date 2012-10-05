@@ -3205,6 +3205,64 @@ CINDEX_LINKAGE CXComment clang_Cursor_getParsedComment(CXCursor C);
  */
 
 /**
+ * \defgroup CINDEX_MODULE Module introspection
+ *
+ * The functions in this group provide access to information about modules.
+ *
+ * @{
+ */
+
+typedef void *CXModule;
+
+/**
+ * \brief Given a CXCursor_ModuleImportDecl cursor, return the associated module.
+ */
+CINDEX_LINKAGE CXModule clang_Cursor_getModule(CXCursor C);
+
+/**
+ * \param Module object.
+ *
+ * \returns the parent of a sub-module or NULL if the given module is top-level,
+ * e.g. for 'std.vector' it will return the 'std' module.
+ */
+CINDEX_LINKAGE CXModule clang_Module_getParent(CXModule);
+
+/**
+ * \param Module object.
+ *
+ * \returns the name of the module, e.g. for the 'std.vector' sub-module it
+ * will return "vector".
+ */
+CINDEX_LINKAGE CXString clang_Module_getName(CXModule);
+
+/**
+ * \param Module object.
+ *
+ * \returns the full name of the module, e.g. "std.vector".
+ */
+CINDEX_LINKAGE CXString clang_Module_getFullName(CXModule);
+
+/**
+ * \param Module object.
+ *
+ * \returns the number of top level headers associated with this module.
+ */
+CINDEX_LINKAGE unsigned clang_Module_getNumTopLevelHeaders(CXModule);
+
+/**
+ * \param Module object.
+ *
+ * \param Index top level header index (zero-based).
+ *
+ * \returns the specified top level header associated with the module.
+ */
+CINDEX_LINKAGE CXFile clang_Module_getTopLevelHeader(CXModule, unsigned Index);
+
+/**
+ * @}
+ */
+
+/**
  * \defgroup CINDEX_COMMENT Comment AST introspection
  *
  * The routines in this group provide access to information in the

@@ -5834,6 +5834,54 @@ CXComment clang_Cursor_getParsedComment(CXCursor C) {
   return cxcomment::createCXComment(FC, getCursorTU(C));
 }
 
+CXModule clang_Cursor_getModule(CXCursor C) {
+  if (C.kind == CXCursor_ModuleImportDecl) {
+    if (ImportDecl *ImportD = dyn_cast_or_null<ImportDecl>(getCursorDecl(C)))
+      return ImportD->getImportedModule();
+  }
+
+  return 0;
+}
+
+CXModule clang_Module_getParent(CXModule CXMod) {
+  if (!CXMod)
+    return 0;
+  Module *Mod = static_cast<Module*>(CXMod);
+  return Mod->Parent;
+}
+
+CXString clang_Module_getName(CXModule CXMod) {
+  if (!CXMod)
+    return createCXString("");
+  Module *Mod = static_cast<Module*>(CXMod);
+  return createCXString(Mod->Name);
+}
+
+CXString clang_Module_getFullName(CXModule CXMod) {
+  if (!CXMod)
+    return createCXString("");
+  Module *Mod = static_cast<Module*>(CXMod);
+  return createCXString(Mod->getFullModuleName());
+}
+
+unsigned clang_Module_getNumTopLevelHeaders(CXModule CXMod) {
+  if (!CXMod)
+    return 0;
+  Module *Mod = static_cast<Module*>(CXMod);
+  return Mod->TopHeaders.size();
+}
+
+CXFile clang_Module_getTopLevelHeader(CXModule CXMod, unsigned Index) {
+  if (!CXMod)
+    return 0;
+  Module *Mod = static_cast<Module*>(CXMod);
+
+  if (Index < Mod->TopHeaders.size())
+    return const_cast<FileEntry *>(Mod->TopHeaders[Index]);
+
+  return 0;
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
