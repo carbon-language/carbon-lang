@@ -18,6 +18,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -66,10 +67,28 @@ class RecordKeeper;
 //===----------------------------------------------------------------------===//
 
 class RecTy {
+public:
+  /// \brief Subclass discriminator (for dyn_cast<> et al.)
+  enum RecTyKind {
+    BitRecTyKind,
+    BitsRecTyKind,
+    IntRecTyKind,
+    StringRecTyKind,
+    ListRecTyKind,
+    DagRecTyKind,
+    RecordRecTyKind
+  };
+
+private:
+  RecTyKind Kind;
   ListRecTy *ListTy;
   virtual void anchor();
+
 public:
-  RecTy() : ListTy(0) {}
+  static bool classof(const RecTy *) { return true; }
+  RecTyKind getRecTyKind() const { return Kind; }
+
+  RecTy(RecTyKind K) : Kind(K), ListTy(0) {}
   virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
@@ -132,8 +151,13 @@ inline raw_ostream &operator<<(raw_ostream &OS, const RecTy &Ty) {
 ///
 class BitRecTy : public RecTy {
   static BitRecTy Shared;
-  BitRecTy() {}
+  BitRecTy() : RecTy(BitRecTyKind) {}
 public:
+  static bool classof(const BitRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == BitRecTyKind;
+  }
+
   static BitRecTy *get() { return &Shared; }
 
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
@@ -173,8 +197,13 @@ public:
 ///
 class BitsRecTy : public RecTy {
   unsigned Size;
-  explicit BitsRecTy(unsigned Sz) : Size(Sz) {}
+  explicit BitsRecTy(unsigned Sz) : RecTy(BitsRecTyKind), Size(Sz) {}
 public:
+  static bool classof(const BitsRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == BitsRecTyKind;
+  }
+
   static BitsRecTy *get(unsigned Sz);
 
   unsigned getNumBits() const { return Size; }
@@ -217,8 +246,13 @@ public:
 ///
 class IntRecTy : public RecTy {
   static IntRecTy Shared;
-  IntRecTy() {}
+  IntRecTy() : RecTy(IntRecTyKind) {}
 public:
+  static bool classof(const IntRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == IntRecTyKind;
+  }
+
   static IntRecTy *get() { return &Shared; }
 
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
@@ -257,8 +291,13 @@ public:
 ///
 class StringRecTy : public RecTy {
   static StringRecTy Shared;
-  StringRecTy() {}
+  StringRecTy() : RecTy(StringRecTyKind) {}
 public:
+  static bool classof(const StringRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == StringRecTyKind;
+  }
+
   static StringRecTy *get() { return &Shared; }
 
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
@@ -300,9 +339,14 @@ public:
 ///
 class ListRecTy : public RecTy {
   RecTy *Ty;
-  explicit ListRecTy(RecTy *T) : Ty(T) {}
+  explicit ListRecTy(RecTy *T) : RecTy(ListRecTyKind), Ty(T) {}
   friend ListRecTy *RecTy::getListTy();
 public:
+  static bool classof(const ListRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == ListRecTyKind;
+  }
+
   static ListRecTy *get(RecTy *T) { return T->getListTy(); }
   RecTy *getElementType() const { return Ty; }
 
@@ -343,8 +387,13 @@ public:
 ///
 class DagRecTy : public RecTy {
   static DagRecTy Shared;
-  DagRecTy() {}
+  DagRecTy() : RecTy(DagRecTyKind) {}
 public:
+  static bool classof(const DagRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == DagRecTyKind;
+  }
+
   static DagRecTy *get() { return &Shared; }
 
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
@@ -384,9 +433,14 @@ public:
 ///
 class RecordRecTy : public RecTy {
   Record *Rec;
-  explicit RecordRecTy(Record *R) : Rec(R) {}
+  explicit RecordRecTy(Record *R) : RecTy(RecordRecTyKind), Rec(R) {}
   friend class Record;
 public:
+  static bool classof(const RecordRecTy *) { return true; }
+  static bool classof(const RecTy *RT) {
+    return RT->getRecTyKind() == RecordRecTyKind;
+  }
+
   static RecordRecTy *get(Record *R);
 
   Record *getRecord() const { return Rec; }
