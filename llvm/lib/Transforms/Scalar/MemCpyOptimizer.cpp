@@ -605,16 +605,6 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   if (cpyLen < srcSize)
     return false;
 
-  // Check that dest points to memory that is at least as aligned as src.
-  unsigned srcAlign = srcAlloca->getAlignment();
-  if (!srcAlign)
-    srcAlign = TD->getABITypeAlignment(srcAlloca->getAllocatedType());
-  bool isDestSufficientlyAligned = srcAlign <= cpyAlign;
-  // If dest is not aligned enough and we can't increase its alignment then
-  // bail out.
-  if (!isDestSufficientlyAligned && !isa<AllocaInst>(cpyDest))
-    return false;
-
   // Check that accessing the first srcSize bytes of dest will not cause a
   // trap.  Otherwise the transform is invalid since it might cause a trap
   // to occur earlier than it otherwise would.
@@ -643,6 +633,16 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   } else {
     return false;
   }
+
+  // Check that dest points to memory that is at least as aligned as src.
+  unsigned srcAlign = srcAlloca->getAlignment();
+  if (!srcAlign)
+    srcAlign = TD->getABITypeAlignment(srcAlloca->getAllocatedType());
+  bool isDestSufficientlyAligned = srcAlign <= cpyAlign;
+  // If dest is not aligned enough and we can't increase its alignment then
+  // bail out.
+  if (!isDestSufficientlyAligned && !isa<AllocaInst>(cpyDest))
+    return false;
 
   // Check that src is not accessed except via the call and the memcpy.  This
   // guarantees that it holds only undefined values when passed in (so the final
