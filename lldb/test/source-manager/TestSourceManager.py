@@ -78,7 +78,7 @@ class SourceManagerTestCase(TestBase):
             patterns = ['=> %d.*Hello world' % self.line])
 
         # Boundary condition testings for SBStream().  LLDB should not crash!
-        stream.Printf(None)
+        stream.Print(None)
         stream.RedirectToFile(None, True)
 
     def move_and_then_display_source(self):
