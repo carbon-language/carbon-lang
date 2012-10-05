@@ -3047,6 +3047,10 @@ static CXString getDeclSpelling(Decl *D) {
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
         return createCXString(Property->getIdentifier()->getName());
     
+    if (ImportDecl *ImportD = dyn_cast<ImportDecl>(D))
+      if (Module *Mod = ImportD->getImportedModule())
+        return createCXString(Mod->getFullModuleName());
+
     return createCXString("");
   }
   
@@ -3246,6 +3250,18 @@ CXSourceRange clang_Cursor_getSpellingNameRange(CXCursor C,
     if (ObjCCategoryImplDecl *
           CID = dyn_cast_or_null<ObjCCategoryImplDecl>(getCursorDecl(C)))
       return cxloc::translateSourceRange(Ctx, CID->getCategoryNameLoc());
+  }
+
+  if (C.kind == CXCursor_ModuleImportDecl) {
+    if (pieceIndex > 0)
+      return clang_getNullRange();
+    if (ImportDecl *ImportD = dyn_cast_or_null<ImportDecl>(getCursorDecl(C))) {
+      ArrayRef<SourceLocation> Locs = ImportD->getIdentifierLocs();
+      if (!Locs.empty())
+        return cxloc::translateSourceRange(Ctx,
+                                         SourceRange(Locs.front(), Locs.back()));
+    }
+    return clang_getNullRange();
   }
 
   // FIXME: A CXCursor_InclusionDirective should give the location of the
@@ -3643,6 +3659,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("ObjCDynamicDecl");
   case CXCursor_CXXAccessSpecifier:
     return createCXString("CXXAccessSpecifier");
+  case CXCursor_ModuleImportDecl:
+    return createCXString("ModuleImport");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
@@ -3839,7 +3857,8 @@ unsigned clang_isInvalid(enum CXCursorKind K) {
 }
 
 unsigned clang_isDeclaration(enum CXCursorKind K) {
-  return K >= CXCursor_FirstDecl && K <= CXCursor_LastDecl;
+  return (K >= CXCursor_FirstDecl && K <= CXCursor_LastDecl) ||
+         (K >= CXCursor_FirstExtraDecl && K <= CXCursor_LastExtraDecl);
 }
 
 unsigned clang_isReference(enum CXCursorKind K) {
@@ -3986,7 +4005,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
 
-  if (C.kind < CXCursor_FirstDecl || C.kind > CXCursor_LastDecl)
+  if (!clang_isDeclaration(C.kind))
     return clang_getNullLocation();
 
   Decl *D = getCursorDecl(C);
@@ -4121,7 +4140,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     return SourceRange(Start, End);
   }
 
-  if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
+  if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
     if (!D)
       return SourceRange();
@@ -4144,7 +4163,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 /// \brief Retrieves the "raw" cursor extent, which is then extended to include
 /// the decl-specifier-seq for declarations.
 static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
-  if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
+  if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
     if (!D)
       return SourceRange();
@@ -5108,7 +5127,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
 
   // Adjust the annotated range based specific declarations.
   const enum CXCursorKind cursorK = clang_getCursorKind(cursor);
-  if (cursorK >= CXCursor_FirstDecl && cursorK <= CXCursor_LastDecl) {
+  if (clang_isDeclaration(cursorK)) {
     Decl *D = cxcursor::getCursorDecl(cursor);
     
     SourceLocation StartLoc;
