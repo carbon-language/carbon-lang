@@ -418,7 +418,7 @@ def RESTORE_CR : Pseudo<(outs CRRC:$cond), (ins memri:$F),
                      "#RESTORE_CR", []>;
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
-  let isReturn = 1, Uses = [LR, RM] in
+  let isCodeGenOnly = 1, isReturn = 1, Uses = [LR, RM] in
     def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
                           "b${p:cc}lr ${p:reg}", BrB, 
                           [(retflag)]>;
@@ -439,10 +439,11 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
 
   // BCC represents an arbitrary conditional branch on a predicate.
   // FIXME: should be able to write a pattern for PPCcondbranch, but can't use
-  // a two-value operand where a dag node expects two operands. :( 
-  def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
-                  "b${cond:cc} ${cond:reg}, $dst"
-                  /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
+  // a two-value operand where a dag node expects two operands. :(
+  let isCodeGenOnly = 1 in
+    def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
+                    "b${cond:cc} ${cond:reg}, $dst"
+                    /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
 
   let Defs = [CTR], Uses = [CTR] in {
     def BDZ  : IForm_ext<16, 18, 0, 0, (outs), (ins condbrtarget:$dst),
