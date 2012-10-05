@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/Basic/AllDiagnostics.h"
+#include "llvm/Support/Process.h"
 
 DEF_DIAGTOOL("tree",
              "Show warning flags in a tree view",
@@ -31,11 +32,37 @@ static void printUsage() {
   llvm::errs() << "Usage: diagtool tree [--flags-only] [<diagnostic-group>]\n";
 }
 
+static bool showColors(llvm::raw_ostream &out) {
+  if (&out != &llvm::errs() && &out != &llvm::outs())
+    return false;
+  return llvm::errs().is_displayed() && llvm::outs().is_displayed();
+}
+
+static void setColor(bool ShowColors, llvm::raw_ostream &out,
+                     llvm::raw_ostream::Colors Color) {
+  if (ShowColors)
+    out << llvm::sys::Process::OutputColor(Color, false, false);
+}
+
+static void resetColor(bool ShowColors, llvm::raw_ostream &out) {
+  if (ShowColors)
+    out << llvm::sys::Process::ResetColor();
+}
+
+static clang::DiagnosticsEngine::Level getLevel(unsigned DiagID) {
+  static clang::DiagnosticsEngine Diags(new DiagnosticIDs);
+  return Diags.getDiagnosticLevel(DiagID, SourceLocation());
+}
+
 static void printGroup(llvm::raw_ostream &out, const GroupRecord &Group,
                        bool FlagsOnly, unsigned Indent = 0) {
   out.indent(Indent * 2);
+  
+  bool ShowColors = showColors(out);
+  setColor(ShowColors, out, llvm::raw_ostream::YELLOW);
   out << "-W" << Group.getName() << "\n";
-
+  resetColor(ShowColors, out);
+  
   ++Indent;
   for (GroupRecord::subgroup_iterator I = Group.subgroup_begin(),
                                       E = Group.subgroup_end();
@@ -47,8 +74,15 @@ static void printGroup(llvm::raw_ostream &out, const GroupRecord &Group,
     for (GroupRecord::diagnostics_iterator I = Group.diagnostics_begin(),
                                            E = Group.diagnostics_end();
          I != E; ++I) {
+      if (ShowColors) {
+        if (getLevel(I->DiagID) != DiagnosticsEngine::Ignored) {
+          setColor(ShowColors, out, llvm::raw_ostream::GREEN);
+        }
+      }
       out.indent(Indent * 2);
-      out << I->getName() << "\n";
+      out << I->getName();
+      resetColor(ShowColors, out);
+      out << "\n";
     }
   }
 }
@@ -106,7 +140,7 @@ int TreeView::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
       ++argv;
     }
   }
-
+  
   bool ShowAll = false;
   StringRef RootGroup;
 
@@ -127,6 +161,14 @@ int TreeView::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
     return -1;
   }
 
+  if (showColors(out)) {
+    out << '\n';
+    setColor(true, out, llvm::raw_ostream::GREEN);
+    out << "GREEN";
+    resetColor(true, out);
+    out << " = enabled by default\n\n";
+  }
+  
   if (ShowAll)
     return showAll(out, FlagsOnly);
 
