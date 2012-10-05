@@ -537,16 +537,18 @@ namespace clang {
       SUBMODULE_UMBRELLA_HEADER = 2,
       /// \brief Specifies a header that falls into this (sub)module.
       SUBMODULE_HEADER = 3,
+      /// \brief Specifies a top-level header that falls into this (sub)module.
+      SUBMODULE_TOPHEADER = 4,
       /// \brief Specifies an umbrella directory.
-      SUBMODULE_UMBRELLA_DIR = 4,
+      SUBMODULE_UMBRELLA_DIR = 5,
       /// \brief Specifies the submodules that are imported by this 
       /// submodule.
-      SUBMODULE_IMPORTS = 5,
+      SUBMODULE_IMPORTS = 6,
       /// \brief Specifies the submodules that are re-exported from this 
       /// submodule.
-      SUBMODULE_EXPORTS = 6,
+      SUBMODULE_EXPORTS = 7,
       /// \brief Specifies a required feature.
-      SUBMODULE_REQUIRES = 7
+      SUBMODULE_REQUIRES = 8
     };
 
     /// \brief Record types used within a comments block.

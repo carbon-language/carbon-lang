@@ -132,7 +132,7 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
 }
 
 /// \brief Collect the set of header includes needed to construct the given 
-/// module.
+/// module and update the TopHeaders file set of the module.
 ///
 /// \param Module The module we're collecting includes from.
 ///
@@ -149,15 +149,18 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
 
   // Add includes for each of these headers.
   for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I) {
+    const FileEntry *Header = Module->Headers[I];
+    Module->TopHeaders.insert(Header);
     if (LangOpts.ObjC1)
       Includes += "#import \"";
     else
       Includes += "#include \"";
-    Includes += Module->Headers[I]->getName();
+    Includes += Header->getName();
     Includes += "\"\n";
   }
 
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader()) {
+    Module->TopHeaders.insert(UmbrellaHeader);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
       if (LangOpts.ObjC1)
@@ -184,9 +187,11 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
       
       // If this header is marked 'unavailable' in this module, don't include 
       // it.
-      if (const FileEntry *Header = FileMgr.getFile(Dir->path()))
+      if (const FileEntry *Header = FileMgr.getFile(Dir->path())) {
         if (ModMap.isHeaderInUnavailableModule(Header))
           continue;
+        Module->TopHeaders.insert(Header);
+      }
       
       // Include this header umbrella header for submodules.
       if (LangOpts.ObjC1)

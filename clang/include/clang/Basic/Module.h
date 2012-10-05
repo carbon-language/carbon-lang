@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SetVector.h"
 #include <string>
 #include <utility>
 #include <vector>
@@ -71,6 +72,9 @@ private:
 public:
   /// \brief The headers that are part of this module.
   llvm::SmallVector<const FileEntry *, 2> Headers;
+
+  /// \brief The top-level headers associated with this module.
+  llvm::SmallSetVector<const FileEntry *, 2> TopHeaders;
 
   /// \brief The set of language features required to use this module.
   ///
