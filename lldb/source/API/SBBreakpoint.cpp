@@ -234,6 +234,33 @@ SBBreakpoint::IsEnabled ()
         return false;
 }
 
+void
+SBBreakpoint::SetOneShot (bool one_shot)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetOneShot (one_shot=%i)", m_opaque_sp.get(), one_shot);
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        m_opaque_sp->SetOneShot (one_shot);
+    }
+}
+
+bool
+SBBreakpoint::IsOneShot () const
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        return m_opaque_sp->IsOneShot();
+    }
+    else
+        return false;
+}
+
 bool
 SBBreakpoint::IsInternal ()
 {

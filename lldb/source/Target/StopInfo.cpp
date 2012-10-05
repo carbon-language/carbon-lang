@@ -99,13 +99,11 @@ public:
         m_should_stop (false),
         m_should_stop_is_valid (false),
         m_should_perform_action (true),
-        m_address (LLDB_INVALID_ADDRESS)
+        m_address (LLDB_INVALID_ADDRESS),
+        m_break_id(LLDB_INVALID_BREAK_ID),
+        m_was_one_shot (false)
     {
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
-        if (bp_site_sp)
-        {
-          m_address = bp_site_sp->GetLoadAddress();
-        }
+        StoreBPInfo();
     }
     
     StopInfoBreakpoint (Thread &thread, break_id_t break_id, bool should_stop) :
@@ -114,12 +112,28 @@ public:
         m_should_stop (should_stop),
         m_should_stop_is_valid (true),
         m_should_perform_action (true),
-        m_address (LLDB_INVALID_ADDRESS)
+        m_address (LLDB_INVALID_ADDRESS),
+        m_break_id(LLDB_INVALID_BREAK_ID),
+        m_was_one_shot (false)
+    {
+        StoreBPInfo();
+    }
+
+    void StoreBPInfo ()
     {
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         if (bp_site_sp)
         {
-          m_address = bp_site_sp->GetLoadAddress();
+            if (bp_site_sp->GetNumberOfOwners() == 1)
+            {
+                BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(0);
+                if (bp_loc_sp)
+                {
+                    m_break_id = bp_loc_sp->GetBreakpoint().GetID();
+                    m_was_one_shot = bp_loc_sp->GetBreakpoint().IsOneShot();
+                }
+            }
+            m_address = bp_site_sp->GetLoadAddress();
         }
     }
 
@@ -298,6 +312,12 @@ public:
                     
                     if (callback_says_stop)
                         m_should_stop = true;
+                    
+                    // If we are going to stop for this breakpoint, then remove the breakpoint.
+                    if (callback_says_stop && bp_loc_sp && bp_loc_sp->GetBreakpoint().IsOneShot())
+                    {
+                        m_thread.GetProcess()->GetTarget().RemoveBreakpointByID (bp_loc_sp->GetBreakpoint().GetID());
+                    }
                         
                     // Also make sure that the callback hasn't continued the target.  
                     // If it did, when we'll set m_should_start to false and get out of here.
@@ -362,10 +382,18 @@ public:
             else
             {
                 StreamString strm;
-                if (m_address == LLDB_INVALID_ADDRESS)
+                if (m_break_id != LLDB_INVALID_BREAK_ID)
+                {
+                    if (m_was_one_shot)
+                        strm.Printf ("one-shot breakpoint %d", m_break_id);
+                    else
+                        strm.Printf ("breakpoint %d which has been deleted.", m_break_id);
+                }
+                else if (m_address == LLDB_INVALID_ADDRESS)
                     strm.Printf("breakpoint site %lli which has been deleted - unknown address", m_value);
                 else
                     strm.Printf("breakpoint site %lli which has been deleted - was at 0x%llx", m_value, m_address);
+                
                 m_description.swap (strm.GetString());
             }
         }
@@ -381,6 +409,8 @@ private:
     lldb::addr_t m_address;       // We use this to capture the breakpoint site address when we create the StopInfo,
                                   // in case somebody deletes it between the time the StopInfo is made and the
                                   // description is asked for.
+    lldb::break_id_t m_break_id;
+    bool m_was_one_shot;
 };
 
 

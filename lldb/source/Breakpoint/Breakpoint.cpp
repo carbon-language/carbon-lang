@@ -189,6 +189,18 @@ Breakpoint::GetHitCount () const
     return m_locations.GetHitCount();
 }
 
+bool
+Breakpoint::IsOneShot () const
+{
+    return m_options.IsOneShot();
+}
+
+void
+Breakpoint::SetOneShot (bool one_shot)
+{
+    m_options.SetOneShot (one_shot);
+}
+
 void
 Breakpoint::SetThreadID (lldb::tid_t thread_id)
 {

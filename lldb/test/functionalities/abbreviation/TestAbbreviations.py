@@ -36,6 +36,7 @@ class AbbreviationsTestCase(TestBase):
                     startstr = "The following is a list of built-in, permanent debugger commands:")
 
         # Several matching commands: list them and error out.
+        self.runCmd("command unalias t")
         self.expect("t",
                     COMMAND_FAILED_AS_EXPECTED, error = True,
                     substrs = ["Ambiguous command 't'. Possible matches:",

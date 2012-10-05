@@ -356,6 +356,20 @@ public:
 
 
     //------------------------------------------------------------------
+    /// If \a one_shot is \b true, breakpoint will be deleted on first hit.
+    //------------------------------------------------------------------
+    void
+    SetOneShot (bool one_shot);
+
+    //------------------------------------------------------------------
+    /// Check the OneShot state.
+    /// @return
+    ///     \b true if the breakpoint is one shot, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsOneShot () const;
+
+    //------------------------------------------------------------------
     /// Set the valid thread to be checked when the breakpoint is hit.
     /// @param[in] thread_id
     ///    If this thread hits the breakpoint, we stop, otherwise not.

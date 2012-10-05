@@ -156,6 +156,14 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
         AddAlias ("b", cmd_obj_sp);
 
+    cmd_obj_sp = GetCommandSPExact ("_regexp-tbreak",false);
+    if (cmd_obj_sp)
+        AddAlias ("tbreak", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("thread backtrace", false);
+    if (cmd_obj_sp)
+        AddAlias ("bt", cmd_obj_sp);
+
     cmd_obj_sp = GetCommandSPExact ("thread step-inst", false);
     if (cmd_obj_sp)
     {
@@ -194,6 +202,12 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
     {
         AddAlias ("f", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("thread select", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("t", cmd_obj_sp);
     }
 
     cmd_obj_sp = GetCommandSPExact ("source list", false);
@@ -366,24 +380,65 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["version"]   = CommandObjectSP (new CommandObjectVersion (*this));
     m_command_dict["watchpoint"]= CommandObjectSP (new CommandObjectMultiwordWatchpoint (*this));
 
+    const char *break_regexes[][2] = {{"^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2"},
+                                      {"^([[:digit:]]+)[[:space:]]*$", "breakpoint set --line %1"},
+                                      {"^(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1"},
+                                      {"^[\"']?([-+]\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'"},
+                                      {"^(-.*)$", "breakpoint set %1"},
+                                      {"^(.*[^[:space:]])`(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%2' --shlib '%1'"},
+                                      {"^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"}};
+    
+    size_t num_regexes = sizeof break_regexes/sizeof(char *[2]);
+        
     std::auto_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-break",
                                                       "Set a breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
                                                       "_regexp-break [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
+
     if (break_regex_cmd_ap.get())
     {
-        if (break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2") &&
-            break_regex_cmd_ap->AddRegexCommand("^([[:digit:]]+)[[:space:]]*$", "breakpoint set --line %1") &&
-            break_regex_cmd_ap->AddRegexCommand("^(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1") &&
-            break_regex_cmd_ap->AddRegexCommand("^[\"']?([-+]\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'") &&
-            break_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list --full") &&
-            break_regex_cmd_ap->AddRegexCommand("^(-.*)$", "breakpoint set %1") &&
-            break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])`(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%2' --shlib '%1'") &&
-            break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"))
+        bool success = true;
+        for (size_t i = 0; i < num_regexes; i++)
+        {
+            success = break_regex_cmd_ap->AddRegexCommand (break_regexes[i][0], break_regexes[i][1]);
+            if (!success)
+                break;
+        }
+        success = break_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list --full");
+
+        if (success)
         {
             CommandObjectSP break_regex_cmd_sp(break_regex_cmd_ap.release());
             m_command_dict[break_regex_cmd_sp->GetCommandName ()] = break_regex_cmd_sp;
+        }
+    }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    tbreak_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                      "_regexp-tbreak",
+                                                      "Set a one shot breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
+                                                      "_regexp-tbreak [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
+
+    if (tbreak_regex_cmd_ap.get())
+    {
+        bool success = true;
+        for (size_t i = 0; i < num_regexes; i++)
+        {
+            // If you add a resultant command string longer than 1024 characters be sure to increase the size of this buffer.
+            char buffer[1024];
+            int num_printed = snprintf(buffer, 1024, "%s %s", break_regexes[i][1], "-o");
+            assert (num_printed < 1024);
+            success = tbreak_regex_cmd_ap->AddRegexCommand (break_regexes[i][0], buffer);
+            if (!success)
+                break;
+        }
+        success = tbreak_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list --full");
+
+        if (success)
+        {
+            CommandObjectSP tbreak_regex_cmd_sp(tbreak_regex_cmd_ap.release());
+            m_command_dict[tbreak_regex_cmd_sp->GetCommandName ()] = tbreak_regex_cmd_sp;
         }
     }
 

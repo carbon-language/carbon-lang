@@ -119,6 +119,12 @@ public:
     bool
     IsEnabled ();
     
+    void
+    SetOneShot (bool one_shot);
+
+    bool
+    IsOneShot ();
+    
     bool
     IsInternal ();
 
