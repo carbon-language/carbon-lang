@@ -76,11 +76,11 @@ You can produce bitcode files from ``clang`` using ``-emit-llvm`` or
 Any of these flags will also cause ``clang`` to look for the gold plugin in
 the ``lib`` directory under its prefix and pass the ``-plugin`` option to
 ``ld``. It will not look for an alternate linker, which is why you need
-gold to be the installed system linker in your path.``
+gold to be the installed system linker in your path.
 
 If you want ``ar`` and ``nm`` to work seamlessly as well, install
 ``LLVMgold.so`` to ``/usr/lib/bfd-plugins``. If you built your own gold, be
-sure to install the ``ar`` and ``nm-new`` you built to ``/usr/bin``
+sure to install the ``ar`` and ``nm-new`` you built to ``/usr/bin``.
 
 
 Example of link time optimization
@@ -181,6 +181,6 @@ Licensing
 =========
 
 Gold is licensed under the GPLv3. LLVMgold uses the interface file
-``plugin-api.h`` from gold which means that the resulting LLVMgold.so
+``plugin-api.h`` from gold which means that the resulting ``LLVMgold.so``
 binary is also GPLv3. This can still be used to link non-GPLv3 programs
 just as much as gold could without the plugin.
