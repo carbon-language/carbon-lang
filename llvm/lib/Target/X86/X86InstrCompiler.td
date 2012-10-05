@@ -237,11 +237,10 @@ let Uses = [EFLAGS], Defs = [EFLAGS], isPseudo = 1 in {
 def SETB_C8r : I<0, Pseudo, (outs GR8:$dst), (ins), "",
                  [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
 def SETB_C16r : I<0, Pseudo, (outs GR16:$dst), (ins), "",
-                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>,
-                OpSize;
+                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
 def SETB_C32r : I<0, Pseudo, (outs GR32:$dst), (ins), "",
                  [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
-def SETB_C64r : RI<0, Pseudo, (outs GR64:$dst), (ins), "",
+def SETB_C64r : I<0, Pseudo, (outs GR64:$dst), (ins), "",
                  [(set GR64:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
 } // isCodeGenOnly
 
