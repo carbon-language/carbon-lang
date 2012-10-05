@@ -526,7 +526,7 @@ void Verifier::visitMDNode(MDNode &MD, Function *F) {
 // value of the specified type.  The value V is printed in error messages.
 void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
                                     bool isReturnValue, const Value *V) {
-  if (Attrs == Attribute::None)
+  if (!Attrs.hasAttributes())
     return;
 
   Attributes FnCheckAttr = Attrs & Attribute::FunctionOnly;
