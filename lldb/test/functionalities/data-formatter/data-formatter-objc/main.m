@@ -556,7 +556,7 @@ int main (int argc, const char * argv[])
 	    NSIndexSet *iset2 = [[NSIndexSet alloc] initWithIndexesInRange:NSMakeRange(1, 512)];
 
 	    NSMutableIndexSet *imset = [[NSMutableIndexSet alloc] init];
-	    [imset addIndex:4];
+	    [imset addIndex:1936];
 	    [imset addIndex:7];
 	    [imset addIndex:9];
 	    [imset addIndex:11];

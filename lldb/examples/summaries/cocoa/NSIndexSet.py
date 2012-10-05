@@ -32,8 +32,12 @@ class NSIndexSetClass_SummaryProvider:
 		if not(self.sys_params.types_cache.NSUInteger):
 			if self.sys_params.is_64_bit:
 				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+				self.sys_params.types_cache.uint32 = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 			else:
 				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
+				self.sys_params.types_cache.uint32 = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
+		if not(self.sys_params.types_cache.uint32):
+			self.sys_params.types_cache.uint32 = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
@@ -44,21 +48,22 @@ class NSIndexSetClass_SummaryProvider:
 	# the count is stored in the set itself, 3 pointers into it
 	# otherwise, it will store a pointer to an additional data structure (2 pointers into itself) and this
 	# additional structure will contain the count two pointers deep
-	# to distinguish the two modes, one reads two pointers deep into the object data: if only the MSB
-	# is set, then we are in mode 1, using that area to store flags, otherwise, the read pointer is the
-	# location to go look for count in mode 2
+	# a bunch of flags allow us to detect an empty set, vs. a one-range set, vs. a multi-range set
 	def count(self):
 		logger = lldb.formatters.Logger.Logger()
 		mode_chooser_vo = self.valobj.CreateChildAtOffset("mode_chooser",
-							2*self.sys_params.pointer_size,
-							self.sys_params.types_cache.NSUInteger)
+							self.sys_params.pointer_size,
+							self.sys_params.types_cache.uint32)
 		mode_chooser =  mode_chooser_vo.GetValueAsUnsigned(0)
 		if self.sys_params.is_64_bit:
-			mode_chooser = mode_chooser & 0xFFFFFFFFFFFFFF00
-		else:
-			mode_chooser = mode_chooser & 0xFFFFFF00
-		if mode_chooser == 0:
+			mode_chooser = mode_chooser & 0x00000000FFFFFFFF
+		# empty set
+		if mode_chooser & 0x01 == 1:
+			return 0
+		# single range
+		if mode_chooser & 0x02 == 2:
 			mode = 1
+		# multi range
 		else:
 			mode = 2
 		if mode == 1:
@@ -66,9 +71,11 @@ class NSIndexSetClass_SummaryProvider:
 								3*self.sys_params.pointer_size,
 								self.sys_params.types_cache.NSUInteger)
 		else:
-			count_ptr = mode_chooser_vo.GetValueAsUnsigned(0)
+			count_ptr = self.valobj.CreateChildAtOffset("count_ptr",
+								2*self.sys_params.pointer_size,
+								self.sys_params.types_cache.NSUInteger)
 			count_vo = self.valobj.CreateValueFromAddress("count",
-								count_ptr+2*self.sys_params.pointer_size,
+								count_ptr.GetValueAsUnsigned()+2*self.sys_params.pointer_size,
 								self.sys_params.types_cache.NSUInteger)
 		return count_vo.GetValueAsUnsigned(0)
 
