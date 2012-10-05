@@ -9,6 +9,7 @@ Programming Documentation
    CodingStandards
    CommandLine
    Atomics
+   HowToSetUpLLVMStyleRTTI
 
 * `LLVM Language Reference Manual <LangRef.html>`_
 
@@ -32,6 +33,11 @@ Programming Documentation
 
   Details the LLVM coding standards and provides useful information on writing
   efficient C++ code.
+
+* :doc:`HowToSetUpLLVMStyleRTTI`
+
+  How to make ``isa<>``, ``dyn_cast<>``, etc. available for clients of your
+  class hierarchy.
 
 * `Extending LLVM <ExtendingLLVM.html>`_
 
