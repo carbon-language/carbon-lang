@@ -7568,7 +7568,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
   // Store the constants into memory as one consecutive store.
   if (!IsLoadSrc) {
-    unsigned LastConst = 0;
     unsigned LastLegalType = 0;
     unsigned LastLegalVectorType = 0;
     bool NonZero = false;
@@ -7584,9 +7583,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
         // Non constant.
         break;
       }
-
-      // Mark this index as the largest legal constant.
-      LastConst = i;
 
       // Find a legal type for the constant store.
       unsigned StoreBW = (i+1) * ElementSizeBytes * 8;
