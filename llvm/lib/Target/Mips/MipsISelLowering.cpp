@@ -1746,8 +1746,10 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
     // %hi/%lo relocation
-    SDValue BAHi = DAG.getTargetBlockAddress(BA, MVT::i32, 0, MipsII::MO_ABS_HI);
-    SDValue BALo = DAG.getTargetBlockAddress(BA, MVT::i32, 0, MipsII::MO_ABS_LO);
+    SDValue BAHi =
+      DAG.getTargetBlockAddress(BA, MVT::i32, 0, MipsII::MO_ABS_HI);
+    SDValue BALo =
+      DAG.getTargetBlockAddress(BA, MVT::i32, 0, MipsII::MO_ABS_LO);
     SDValue Hi = DAG.getNode(MipsISD::Hi, dl, MVT::i32, BAHi);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, BALo);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, Hi, Lo);

@@ -372,14 +372,16 @@ MipsDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty,
   SDValue InFlag = SDValue(Mul, 0);
 
   if (HasLo) {
-    Lo = CurDAG->getMachineNode(Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64, dl,
-                                Ty, MVT::Glue, InFlag);
+    unsigned Opcode = Subtarget.inMips16Mode() ? Mips::Mflo16 :
+      (Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64);
+    Lo = CurDAG->getMachineNode(Opcode, dl, Ty, MVT::Glue, InFlag);
     InFlag = SDValue(Lo, 1);
   }
-  if (HasHi)
-    Hi = CurDAG->getMachineNode(Ty == MVT::i32 ? Mips::MFHI : Mips::MFHI64, dl,
-                                Ty, InFlag);
-
+  if (HasHi) {
+    unsigned Opcode = Subtarget.inMips16Mode() ? Mips::Mfhi16 :
+      (Ty == MVT::i32 ? Mips::MFHI : Mips::MFHI64);
+    Hi = CurDAG->getMachineNode(Opcode, dl, Ty, InFlag);
+  }
   return std::make_pair(Lo, Hi);
 }
 
@@ -443,8 +445,13 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   /// Mul with two results
   case ISD::SMUL_LOHI:
   case ISD::UMUL_LOHI: {
-    if (NodeTy == MVT::i32)
-      MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
+    if (NodeTy == MVT::i32) {
+      if (Subtarget.inMips16Mode())
+        MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::MultuRxRy16 :
+                   Mips::MultRxRy16);
+      else
+        MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
+    }
     else
       MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::DMULTu : Mips::DMULT);
 
@@ -470,8 +477,13 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   }
   case ISD::MULHS:
   case ISD::MULHU: {
-    if (NodeTy == MVT::i32)
-      MultOpc = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
+    if (NodeTy == MVT::i32) {
+      if (Subtarget.inMips16Mode())
+        MultOpc = (Opcode == ISD::MULHU ?
+                   Mips::MultuRxRy16 : Mips::MultRxRy16);
+      else
+        MultOpc = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
+    }
     else
       MultOpc = (Opcode == ISD::MULHU ? Mips::DMULTu : Mips::DMULT);
 

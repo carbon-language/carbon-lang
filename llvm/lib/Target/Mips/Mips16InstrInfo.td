@@ -10,7 +10,19 @@
 // This file describes Mips16 instructions.
 //
 //===----------------------------------------------------------------------===//
+//
+// This are pseudo formats for multiply
+// This first one can be changed to non pseudo now.
+//fmul
+class FMULT16_ins<string asmstr, InstrItinClass itin> :
+  MipsPseudo16<(outs), (ins CPU16Regs:$rx, CPU16Regs:$ry),
+               !strconcat(asmstr, "\t$rx, $ry"), []>;
 
+class FMULT16_LO_ins<string asmstr, InstrItinClass itin> :
+  MipsPseudo16<(outs CPU16Regs:$rz), (ins CPU16Regs:$rx, CPU16Regs:$ry),
+               !strconcat(asmstr, "\t$rx, $ry\n\tmflo\t$rz"), []> {
+  let isCodeGenOnly=1;
+}
 //
 // RRR-type instruction format
 //
@@ -43,7 +55,11 @@ class FRR16_ins<bits<5> f, string asmstr, InstrItinClass itin> :
   FRR16<f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry),
         !strconcat(asmstr, "\t$rx, $ry"), [], itin> {
 }
-
+class FRR16_M_ins<bits<5> f, string asmstr,
+                  InstrItinClass itin> :
+  FRR16<f, (outs CPU16Regs:$rx), (ins),
+        !strconcat(asmstr, "\t$rx"), [], itin>;
+        
 class FRxRxRy16_ins<bits<5> f, string asmstr,
                     InstrItinClass itin> :
   FRR16<f, (outs CPU16Regs:$rz), (ins CPU16Regs:$rx, CPU16Regs:$ry),
@@ -81,14 +97,13 @@ class FEXT_2RI16_ins<bits<5> _op, string asmstr,
             !strconcat(asmstr, "\t$rx, $imm"), [], itin> {
   let Constraints = "$rx_ = $rx";
 }
+
 // this has an explicit sp argument that we ignore to work around a problem
 // in the compiler
 class FEXT_RI16_SP_explicit_ins<bits<5> _op, string asmstr,
                                 InstrItinClass itin>:
   FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPUSPReg:$ry, simm16:$imm),
-                  !strconcat(asmstr, "\t$rx, $imm ( $ry ); "), [], itin> {
-}
-
+            !strconcat(asmstr, "\t$rx, $imm ( $ry ); "), [], itin>;
 
 //
 // EXT-RRI instruction format
@@ -243,6 +258,63 @@ def Move32R16: FI8_MOV32R16_ins<"move", IIAlu>;
 // To move the contents of a GPR to a GPR.
 //
 def MoveR3216: FI8_MOVR3216_ins<"move", IIAlu>;
+
+//
+// Format: MFHI rx MIPS16e
+// Purpose: Move From HI Register
+// To copy the special purpose HI register to a GPR.
+//
+def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
+  let Uses = [HI];
+  let neverHasSideEffects = 1;
+}
+
+//
+// Format: MFLO rx MIPS16e
+// Purpose: Move From LO Register
+// To copy the special purpose LO register to a GPR.
+//
+def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
+  let Uses = [LO];
+  let neverHasSideEffects = 1;
+}
+
+//
+// Pseudo Instruction for mult
+//
+def MultRxRy16:  FMULT16_ins<"mult",  IIAlu> {
+  let isCommutable = 1;
+  let neverHasSideEffects = 1;
+  let Defs = [HI, LO];
+}
+
+def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
+  let isCommutable = 1;
+  let neverHasSideEffects = 1;
+  let Defs = [HI, LO];
+}
+
+//
+// Format: MULT rx, ry MIPS16e
+// Purpose: Multiply Word
+// To multiply 32-bit signed integers.
+//
+def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
+  let isCommutable = 1;
+  let neverHasSideEffects = 1;
+  let Defs = [HI, LO];
+}
+
+//
+// Format: MULTU rx, ry MIPS16e
+// Purpose: Multiply Unsigned Word
+// To multiply 32-bit unsigned integers.
+//
+def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIAlu> {
+  let isCommutable = 1;
+  let neverHasSideEffects = 1;
+  let Defs = [HI, LO];
+}
 
 //
 // Format: NEG rx, ry MIPS16e
@@ -413,6 +485,7 @@ class ArithLogic16_pat<SDNode OpNode, Instruction I> :
 
 def: ArithLogic16_pat<add, AdduRxRyRz16>;
 def: ArithLogic16_pat<and, AndRxRxRy16>;
+def: ArithLogic16_pat<mul, MultRxRyRz16>;
 def: ArithLogic16_pat<or, OrRxRxRy16>;
 def: ArithLogic16_pat<sub, SubuRxRyRz16>;
 def: ArithLogic16_pat<xor, XorRxRxRy16>;
