@@ -690,7 +690,15 @@ class value(object):
         return '0x%x' % self.sbvalue.GetValueAsUnsigned()
 
     def __eq__(self, other):
-        return self.sbvalue.GetValueAsUnsigned() == self.sbvalue.GetValueAsUnsigned()
+        self_err = SBError()
+        other_err = SBError()
+        self_val = self.sbvalue.GetValueAsUnsigned(self_err)
+        if self_err.fail:
+                raise ValueError("unable to extract value of self")
+        other_val = other.sbvalue.GetValueAsUnsigned(other_err)
+        if other_err.fail:
+                raise ValueError("unable to extract value of other")
+        return self_val == other_val
                                                                     
     def __neq__(self, other):
         return not self.__eq__(other)
