@@ -156,10 +156,6 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
         AddAlias ("b", cmd_obj_sp);
 
-    cmd_obj_sp = GetCommandSPExact ("thread backtrace", false);
-    if (cmd_obj_sp)
-        AddAlias ("bt", cmd_obj_sp);
-
     cmd_obj_sp = GetCommandSPExact ("thread step-inst", false);
     if (cmd_obj_sp)
     {
@@ -490,6 +486,26 @@ CommandInterpreter::LoadCommandDictionary ()
             connect_kdp_remote_cmd_ap->AddRegexCommand("^(.+)$", "process connect --plugin kdp-remote udp://%1:41139"))
         {
             CommandObjectSP command_sp(connect_kdp_remote_cmd_ap.release());
+            m_command_dict[command_sp->GetCommandName ()] = command_sp;
+        }
+    }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    bt_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                     "bt",
+                                                     "Show a backtrace.  An optional argument is accepted; if that argument is a number, it specifies the number of frames to display.  If that argument is 'all', full backtraces of all threads are displayed.",
+                                                     "bt [<digit>|all]", 2));
+    if (bt_regex_cmd_ap.get())
+    {
+        // accept but don't document "bt -c <number>" -- before bt was a regex command if you wanted to backtrace
+        // three frames you would do "bt -c 3" but the intention is to have this emulate the gdb "bt" command and
+        // so now "bt 3" is the preferred form, in line with gdb.
+        if (bt_regex_cmd_ap->AddRegexCommand("^([[:digit:]]+)$", "thread backtrace -c %1") &&
+            bt_regex_cmd_ap->AddRegexCommand("^-c ([[:digit:]]+)$", "thread backtrace -c %1") &&
+            bt_regex_cmd_ap->AddRegexCommand("^all$", "thread backtrace all") &&
+            bt_regex_cmd_ap->AddRegexCommand("^$", "thread backtrace"))
+        {
+            CommandObjectSP command_sp(bt_regex_cmd_ap.release());
             m_command_dict[command_sp->GetCommandName ()] = command_sp;
         }
     }
