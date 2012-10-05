@@ -113,9 +113,7 @@ Init *BitRecTy::convertValue(IntInit *II) {
 
 Init *BitRecTy::convertValue(TypedInit *VI) {
   RecTy *Ty = VI->getType();
-  if (dyn_cast<BitRecTy>(Ty) ||
-      dyn_cast<BitsRecTy>(Ty) ||
-      dyn_cast<IntRecTy>(Ty))
+  if (isa<BitRecTy>(Ty) || isa<BitsRecTy>(Ty) || isa<IntRecTy>(Ty))
     return VI;  // Accept variable if it is already of bit type!
   return 0;
 }
@@ -181,7 +179,7 @@ Init *BitsRecTy::convertValue(BitsInit *BI) {
 }
 
 Init *BitsRecTy::convertValue(TypedInit *VI) {
-  if (Size == 1 && dyn_cast<BitRecTy>(VI->getType()))
+  if (Size == 1 && isa<BitRecTy>(VI->getType()))
     return BitsInit::get(VI);
 
   if (VI->getType()->typeIsConvertibleTo(this)) {
@@ -243,7 +241,7 @@ Init *StringRecTy::convertValue(BinOpInit *BO) {
 
 
 Init *StringRecTy::convertValue(TypedInit *TI) {
-  if (dyn_cast<StringRecTy>(TI->getType()))
+  if (isa<StringRecTy>(TI->getType()))
     return TI;  // Accept variable if already of the right type!
   return 0;
 }
@@ -263,10 +261,8 @@ Init *ListRecTy::convertValue(ListInit *LI) {
     else
       return 0;
 
-  ListRecTy *LType = dyn_cast<ListRecTy>(LI->getType());
-  if (LType == 0) {
+  if (!isa<ListRecTy>(LI->getType()))
     return 0;
-  }
 
   return ListInit::get(Elements, this);
 }
@@ -1039,9 +1035,6 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
   DagInit *MHSd = dynamic_cast<DagInit*>(MHS);
   ListInit *MHSl = dynamic_cast<ListInit*>(MHS);
 
-  DagRecTy *DagType = dyn_cast<DagRecTy>(Type);
-  ListRecTy *ListType = dyn_cast<ListRecTy>(Type);
-
   OpInit *RHSo = dynamic_cast<OpInit*>(RHS);
 
   if (!RHSo) {
@@ -1054,7 +1047,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
     throw TGError(CurRec->getLoc(), "!foreach requires typed variable\n");
   }
 
-  if ((MHSd && DagType) || (MHSl && ListType)) {
+  if ((MHSd && isa<DagRecTy>(Type)) || (MHSl && isa<ListRecTy>(Type))) {
     if (MHSd) {
       Init *Val = MHSd->getOperator();
       Init *Result = EvaluateOperation(RHSo, LHS, Val,
@@ -1235,13 +1228,9 @@ std::string TernOpInit::getAsString() const {
 }
 
 RecTy *TypedInit::getFieldType(const std::string &FieldName) const {
-  RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType());
-  if (RecordType) {
-    RecordVal *Field = RecordType->getRecord()->getValue(FieldName);
-    if (Field) {
+  if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType()))
+    if (RecordVal *Field = RecordType->getRecord()->getValue(FieldName))
       return Field->getType();
-    }
-  }
   return 0;
 }
 
@@ -1344,7 +1333,7 @@ RecTy *VarInit::getFieldType(const std::string &FieldName) const {
 
 Init *VarInit::getFieldInit(Record &R, const RecordVal *RV,
                             const std::string &FieldName) const {
-  if (dyn_cast<RecordRecTy>(getType()))
+  if (isa<RecordRecTy>(getType()))
     if (const RecordVal *Val = R.getValue(VarName)) {
       if (RV != Val && (RV || dynamic_cast<UnsetInit*>(Val->getValue())))
         return 0;
@@ -1655,9 +1644,8 @@ void Record::checkName() {
   const TypedInit *TypedName = dynamic_cast<const TypedInit *>(Name);
   assert(TypedName && "Record name is not typed!");
   RecTy *Type = TypedName->getType();
-  if (dyn_cast<StringRecTy>(Type) == 0) {
+  if (!isa<StringRecTy>(Type))
     throw TGError(getLoc(), "Record name is not a string!");
-  }
 }
 
 DefInit *Record::getDefInit() {
