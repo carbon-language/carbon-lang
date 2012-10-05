@@ -137,6 +137,23 @@ public:
     /// splittable and eagerly split them into scalar values.
     bool IsSplittable;
 
+    /// \brief Test whether a partition has been marked as dead.
+    bool isDead() const {
+      if (BeginOffset == UINT64_MAX) {
+        assert(EndOffset == UINT64_MAX);
+        return true;
+      }
+      return false;
+    }
+
+    /// \brief Kill a partition.
+    /// This is accomplished by setting both its beginning and end offset to
+    /// the maximum possible value.
+    void kill() {
+      assert(!isDead() && "He's Dead, Jim!");
+      BeginOffset = EndOffset = UINT64_MAX;
+    }
+
     Partition() : ByteRange(), IsSplittable() {}
     Partition(uint64_t BeginOffset, uint64_t EndOffset, bool IsSplittable)
         : ByteRange(BeginOffset, EndOffset), IsSplittable(IsSplittable) {}
@@ -255,8 +272,16 @@ public:
   /// correctly represent. We stash extra data to help us untangle this
   /// after the partitioning is complete.
   struct MemTransferOffsets {
+    /// The destination begin and end offsets when the destination is within
+    /// this alloca. If the end offset is zero the destination is not within
+    /// this alloca.
     uint64_t DestBegin, DestEnd;
+
+    /// The source begin and end offsets when the source is within this alloca.
+    /// If the end offset is zero, the source is not within this alloca.
     uint64_t SourceBegin, SourceEnd;
+
+    /// Flag for whether an alloca is splittable.
     bool IsSplittable;
   };
   MemTransferOffsets getMemTransferOffsets(MemTransferInst &II) const {
@@ -555,14 +580,6 @@ private:
       EndOffset = AllocSize;
     }
 
-    // See if we can just add a user onto the last slot currently occupied.
-    if (!P.Partitions.empty() &&
-        P.Partitions.back().BeginOffset == BeginOffset &&
-        P.Partitions.back().EndOffset == EndOffset) {
-      P.Partitions.back().IsSplittable &= IsSplittable;
-      return;
-    }
-
     Partition New(BeginOffset, EndOffset, IsSplittable);
     P.Partitions.push_back(New);
   }
@@ -643,33 +660,56 @@ private:
     // Only intrinsics with a constant length can be split.
     Offsets.IsSplittable = Length;
 
-    if (*U != II.getRawDest()) {
-      assert(*U == II.getRawSource());
-      Offsets.SourceBegin = Offset;
-      Offsets.SourceEnd = Offset + Size;
-    } else {
+    if (*U == II.getRawDest()) {
       Offsets.DestBegin = Offset;
       Offsets.DestEnd = Offset + Size;
     }
+    if (*U == II.getRawSource()) {
+      Offsets.SourceBegin = Offset;
+      Offsets.SourceEnd = Offset + Size;
+    }
 
-    insertUse(II, Offset, Size, Offsets.IsSplittable);
-    unsigned NewIdx = P.Partitions.size() - 1;
+    // If we have set up end offsets for both the source and the destination,
+    // we have found both sides of this transfer pointing at the same alloca.
+    bool SeenBothEnds = Offsets.SourceEnd && Offsets.DestEnd;
+    if (SeenBothEnds && II.getRawDest() != II.getRawSource()) {
+      unsigned PrevIdx = MemTransferPartitionMap[&II];
 
-    SmallDenseMap<Instruction *, unsigned>::const_iterator PMI;
-    bool Inserted = false;
-    llvm::tie(PMI, Inserted)
-      = MemTransferPartitionMap.insert(std::make_pair(&II, NewIdx));
-    if (Offsets.IsSplittable &&
-        (!Inserted || II.getRawSource() == II.getRawDest())) {
-      // We've found a memory transfer intrinsic which refers to the alloca as
-      // both a source and dest. This is detected either by direct equality of
-      // the operand values, or when we visit the intrinsic twice due to two
-      // different chains of values leading to it. We refuse to split these to
-      // simplify splitting logic. If possible, SROA will still split them into
-      // separate allocas and then re-analyze.
+      // Check if the begin offsets match and this is a non-volatile transfer.
+      // In that case, we can completely elide the transfer.
+      if (!II.isVolatile() && Offsets.SourceBegin == Offsets.DestBegin) {
+        P.Partitions[PrevIdx].kill();
+        return true;
+      }
+
+      // Otherwise we have an offset transfer within the same alloca. We can't
+      // split those.
+      P.Partitions[PrevIdx].IsSplittable = Offsets.IsSplittable = false;
+    } else if (SeenBothEnds) {
+      // Handle the case where this exact use provides both ends of the
+      // operation.
+      assert(II.getRawDest() == II.getRawSource());
+
+      // For non-volatile transfers this is a no-op.
+      if (!II.isVolatile())
+        return true;
+
+      // Otherwise just suppress splitting.
       Offsets.IsSplittable = false;
-      P.Partitions[PMI->second].IsSplittable = false;
-      P.Partitions[NewIdx].IsSplittable = false;
+    }
+
+
+    // Insert the use now that we've fixed up the splittable nature.
+    insertUse(II, Offset, Size, Offsets.IsSplittable);
+
+    // Setup the mapping from intrinsic to partition of we've not seen both
+    // ends of this transfer.
+    if (!SeenBothEnds) {
+      unsigned NewIdx = P.Partitions.size() - 1;
+      bool Inserted
+        = MemTransferPartitionMap.insert(std::make_pair(&II, NewIdx)).second;
+      assert(Inserted &&
+             "Already have intrinsic in map but haven't seen both ends");
     }
 
     return true;
@@ -913,6 +953,14 @@ private:
   void visitMemTransferInst(MemTransferInst &II) {
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
     uint64_t Size = Length ? Length->getZExtValue() : AllocSize - Offset;
+    if (!Size)
+      return markAsDead(II);
+
+    MemTransferOffsets &Offsets = P.MemTransferInstData[&II];
+    if (!II.isVolatile() && Offsets.DestEnd && Offsets.SourceEnd &&
+        Offsets.DestBegin == Offsets.SourceBegin)
+      return markAsDead(II); // Skip identity transfers without side-effects.
+
     insertUse(II, Offset, Size);
   }
 
@@ -1011,7 +1059,7 @@ void AllocaPartitioning::splitAndMergePartitions() {
         SplitEndOffset = std::max(SplitEndOffset, Partitions[j].EndOffset);
       }
 
-      Partitions[j].BeginOffset = Partitions[j].EndOffset = UINT64_MAX;
+      Partitions[j].kill();
       ++NumDeadPartitions;
       ++j;
     }
@@ -1032,7 +1080,7 @@ void AllocaPartitioning::splitAndMergePartitions() {
       if (New.BeginOffset != New.EndOffset)
         Partitions.push_back(New);
       // Mark the old one for removal.
-      Partitions[i].BeginOffset = Partitions[i].EndOffset = UINT64_MAX;
+      Partitions[i].kill();
       ++NumDeadPartitions;
     }
 
@@ -1059,8 +1107,7 @@ void AllocaPartitioning::splitAndMergePartitions() {
   // replaced in the process.
   std::sort(Partitions.begin(), Partitions.end());
   if (NumDeadPartitions) {
-    assert(Partitions.back().BeginOffset == UINT64_MAX);
-    assert(Partitions.back().EndOffset == UINT64_MAX);
+    assert(Partitions.back().isDead());
     assert((ptrdiff_t)NumDeadPartitions ==
            std::count(Partitions.begin(), Partitions.end(), Partitions.back()));
   }
@@ -1077,11 +1124,15 @@ AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
   if (!PB())
     return;
 
-  if (Partitions.size() > 1) {
-    // Sort the uses. This arranges for the offsets to be in ascending order,
-    // and the sizes to be in descending order.
-    std::sort(Partitions.begin(), Partitions.end());
+  // Sort the uses. This arranges for the offsets to be in ascending order,
+  // and the sizes to be in descending order.
+  std::sort(Partitions.begin(), Partitions.end());
 
+  // Remove any partitions from the back which are marked as dead.
+  while (!Partitions.empty() && Partitions.back().isDead())
+    Partitions.pop_back();
+
+  if (Partitions.size() > 1) {
     // Intersect splittability for all partitions with equal offsets and sizes.
     // Then remove all but the first so that we have a sequence of non-equal but
     // potentially overlapping partitions.
@@ -3208,10 +3259,6 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
   if (P.isEscaped())
     return Changed;
 
-  // No partitions to split. Leave the dead alloca for a later pass to clean up.
-  if (P.begin() == P.end())
-    return Changed;
-
   // Delete all the dead users of this alloca before splitting and rewriting it.
   for (AllocaPartitioning::dead_user_iterator DI = P.dead_user_begin(),
                                               DE = P.dead_user_end();
@@ -3232,6 +3279,10 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
         DeadInsts.push_back(OldI);
       }
   }
+
+  // No partitions to split. Leave the dead alloca for a later pass to clean up.
+  if (P.begin() == P.end())
+    return Changed;
 
   return splitAlloca(AI, P) || Changed;
 }

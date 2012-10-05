@@ -862,8 +862,7 @@ define void @PR13916.1() {
 ; Ensure that we handle overlapping memcpy intrinsics correctly, especially in
 ; the case where there is a directly identical value for both source and dest.
 ; CHECK: @PR13916.1
-; FIXME: We shouldn't leave this alloca around.
-; CHECK: alloca
+; CHECK-NOT: alloca
 ; CHECK: ret void
 
 entry:
@@ -878,8 +877,7 @@ define void @PR13916.2() {
 ; different pointer value chains, but during rewriting we coalesce them into the
 ; same value.
 ; CHECK: @PR13916.2
-; FIXME: We shouldn't leave this alloca around.
-; CHECK: alloca
+; CHECK-NOT: alloca
 ; CHECK: ret void
 
 entry:
