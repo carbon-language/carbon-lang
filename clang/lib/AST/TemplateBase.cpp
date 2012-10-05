@@ -364,9 +364,9 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     break;
   }
 
-  case NullPtr: {
+  case NullPtr:
     Out << "nullptr";
-  }
+    break;
 
   case Template:
     getAsTemplate().print(Out, Policy);
