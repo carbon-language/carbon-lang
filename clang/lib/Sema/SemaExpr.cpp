@@ -8570,6 +8570,20 @@ static void DiagnoseBitwiseAndInBitwiseOr(Sema &S, SourceLocation OpLoc,
   }
 }
 
+static void DiagnoseAdditionInShift(Sema &S, SourceLocation OpLoc,
+                                    Expr *SubExpr, StringRef shift) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(SubExpr)) {
+    if (Bop->getOpcode() == BO_Add || Bop->getOpcode() == BO_Sub) {
+      StringRef op = Bop->getOpcode() == BO_Add ? "+" : "-";
+      S.Diag(Bop->getOperatorLoc(), diag::warn_addition_in_bitshift)
+          << Bop->getSourceRange() << OpLoc << op << shift;
+      SuggestParentheses(S, Bop->getOperatorLoc(),
+          S.PDiag(diag::note_addition_in_bitshift_silence) << op,
+          Bop->getSourceRange());
+    }
+  }
+}
+
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
 /// precedence.
 static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
@@ -8590,6 +8604,13 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
   if (Opc == BO_LOr && !OpLoc.isMacroID()/* Don't warn in macros. */) {
     DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, LHSExpr, RHSExpr);
     DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, LHSExpr, RHSExpr);
+  }
+
+  if ((Opc == BO_Shl && LHSExpr->getType()->isIntegralType(Self.getASTContext()))
+      || Opc == BO_Shr) {
+    StringRef shift = Opc == BO_Shl ? "<<" : ">>";
+    DiagnoseAdditionInShift(Self, OpLoc, LHSExpr, shift);
+    DiagnoseAdditionInShift(Self, OpLoc, RHSExpr, shift);
   }
 }
 

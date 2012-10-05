@@ -3863,6 +3863,11 @@ def warn_logical_and_in_logical_or : Warning<
 def note_logical_and_in_logical_or_silence : Note<
   "place parentheses around the '&&' expression to silence this warning">;
 
+def warn_addition_in_bitshift : Warning<
+  "'%0' within '%1'">, InGroup<ShiftOpParentheses>;
+def note_addition_in_bitshift_silence : Note<
+  "place parentheses around the '%0' expression to silence this warning">;
+
 def warn_self_assignment : Warning<
   "explicitly assigning a variable of type %0 to itself">,
   InGroup<SelfAssignment>, DefaultIgnore;

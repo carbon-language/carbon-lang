@@ -119,6 +119,7 @@ def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
 def BitwiseOpParentheses: DiagGroup<"bitwise-op-parentheses">;
 def LogicalOpParentheses: DiagGroup<"logical-op-parentheses">;
+def ShiftOpParentheses: DiagGroup<"shift-op-parentheses">;
 def DanglingElse: DiagGroup<"dangling-else">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
