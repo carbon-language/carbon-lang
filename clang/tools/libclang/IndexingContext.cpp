@@ -264,10 +264,9 @@ void IndexingContext::importedModule(const ImportDecl *ImportD) {
 
   CXIdxImportedASTFileInfo Info = {
                                     (CXFile)Mod->getASTFile(),
+                                    Mod,
                                     getIndexLoc(ImportD->getLocation()),
-                                    /*isModule=*/true,
-                                    ImportD->isImplicit(),
-                                    ModuleName.c_str(),
+                                    ImportD->isImplicit()
                                   };
   CXIdxClientASTFile astFile = CB.importedASTFile(ClientData, &Info);
   (void)astFile;
@@ -279,10 +278,9 @@ void IndexingContext::importedPCH(const FileEntry *File) {
 
   CXIdxImportedASTFileInfo Info = {
                                     (CXFile)File,
+                                    /*module=*/NULL,
                                     getIndexLoc(SourceLocation()),
-                                    /*isModule=*/false,
-                                    /*isImplicit=*/false,
-                                    /*moduleName=*/NULL
+                                    /*isImplicit=*/false
                                   };
   CXIdxClientASTFile astFile = CB.importedASTFile(ClientData, &Info);
   (void)astFile;

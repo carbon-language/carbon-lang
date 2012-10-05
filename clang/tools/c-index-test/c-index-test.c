@@ -2376,11 +2376,14 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
 
   printf("[importedASTFile]: ");
   printCXIndexFile((CXIdxClientFile)info->file);
-  printf(" | loc: ");
-  printCXIndexLoc(info->loc, client_data);
-  printf(" | name: \"%s\"", info->moduleName);
-  printf(" | isModule: %d | isImplicit: %d\n",
-         info->isModule, info->isImplicit);
+  if (info->module) {
+    CXString name = clang_Module_getFullName(info->module);
+    printf(" | loc: ");
+    printCXIndexLoc(info->loc, client_data);
+    printf(" | name: \"%s\"", clang_getCString(name));
+    printf(" | isImplicit: %d\n", info->isImplicit);
+    clang_disposeString(name);
+  }
 
   return (CXIdxClientFile)info->file;
 }

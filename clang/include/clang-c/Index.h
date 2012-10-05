@@ -4992,24 +4992,18 @@ typedef struct {
    */
   CXFile file;
   /**
+   * \brief The imported module or NULL if the AST file is a PCH.
+   */
+  CXModule module;
+  /**
    * \brief Location where the file is imported. Applicable only for modules.
    */
   CXIdxLoc loc;
   /**
-   * \brief Non-zero if the AST file is a module otherwise it's a PCH.
-   */
-  int isModule;
-  /**
    * \brief Non-zero if an inclusion directive was automatically turned into
-   * a module import.
+   * a module import. Applicable only for modules.
    */
   int isImplicit;
-  /**
-   * \brief The actual name of the module or submodule being imported.
-   * The syntax is a sequence of identifiers separated by dots, e.g "std.vector"
-   * Applicable only for modules.
-   */
-  const char *moduleName;
 
 } CXIdxImportedASTFileInfo;
 
