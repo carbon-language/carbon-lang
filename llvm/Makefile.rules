@@ -631,19 +631,23 @@ endif
 
 # Adjust linker flags for building an executable
 ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
-ifneq ($(HOST_OS), Darwin)
-ifdef TOOLNAME
-  LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
-  ifdef EXAMPLE_TOOL
-    LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(DynamicFlag)
-  else
-    LD.Flags += $(RPATH) -Wl,$(ToolDir) $(DynamicFlag)
+  ifneq ($(HOST_OS), Darwin)
+    ifdef TOOLNAME
+      LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
+      ifdef EXAMPLE_TOOL
+        LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(DynamicFlag)
+      else
+        LD.Flags += $(RPATH) -Wl,$(ToolDir) $(DynamicFlag)
+    endif
   endif
-endif
 else
-ifneq ($(DARWIN_MAJVERS),4)
-  LD.Flags += $(RPATH) -Wl,@executable_path/../lib
-endif
+  ifneq ($(DARWIN_MAJVERS),4)
+    LD.Flags += $(RPATH) -Wl,@executable_path/../lib
+  endif
+  ifeq ($(RC_BUILDIT),YES)
+    TempFile := $(shell mktemp ${OBJROOT}/llvm-lto.XXXXXX)
+    LD.Flags += -Wl,-object_path_lto -Wl,$(TempFile)
+  endif
 endif
 endif
 
