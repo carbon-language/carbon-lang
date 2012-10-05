@@ -338,6 +338,10 @@ void LLIMCJITMemoryManager::invalidateInstructionCache() {
                                             AllocatedCodeMem[i].size());
 }
 
+static int jit_noop() {
+  return 0;
+}
+
 void *LLIMCJITMemoryManager::getPointerToNamedFunction(const std::string &Name,
                                                        bool AbortOnFailure) {
 #if defined(__linux__)
@@ -359,6 +363,14 @@ void *LLIMCJITMemoryManager::getPointerToNamedFunction(const std::string &Name,
   if (Name == "atexit") return (void*)(intptr_t)&atexit;
   if (Name == "mknod") return (void*)(intptr_t)&mknod;
 #endif // __linux__
+
+  // We should not invoke parent's ctors/dtors from generated main()!
+  // On Mingw and Cygwin, the symbol __main is resolved to
+  // callee's(eg. tools/lli) one, to invoke wrong duplicated ctors
+  // (and register wrong callee's dtors with atexit(3)).
+  // We expect ExecutionEngine::runStaticConstructorsDestructors()
+  // is called before ExecutionEngine::runFunctionAsMain() is called.
+  if (Name == "__main") return (void*)(intptr_t)&jit_noop;
 
   const char *NameStr = Name.c_str();
   void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
