@@ -1324,6 +1324,7 @@ static void process_pending_signals(ThreadState *thr) {
   SignalContext *sctx = SigCtx(thr);
   if (sctx == 0 || sctx->pending_signal_count == 0 || thr->in_signal_handler)
     return;
+  Context *ctx = CTX();
   thr->in_signal_handler = true;
   sctx->pending_signal_count = 0;
   // These are too big for stack.
@@ -1351,8 +1352,10 @@ static void process_pending_signals(ThreadState *thr) {
               (uptr)sigactions[sig].sa_handler;
           stack.Init(&pc, 1);
           ScopedReport rep(ReportTypeErrnoInSignal);
-          rep.AddStack(&stack);
-          OutputReport(rep, rep.GetReport()->stacks[0]);
+          if (!IsFiredSuppression(ctx, rep, stack)) {
+            rep.AddStack(&stack);
+            OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+          }
         }
         errno = saved_errno;
       }

@@ -35,7 +35,7 @@ static void MaybeReportThreadLeak(ThreadContext *tctx) {
     return;
   ScopedReport rep(ReportTypeThreadLeak);
   rep.AddThread(tctx);
-  OutputReport(rep);
+  OutputReport(CTX(), rep);
 }
 
 void ThreadFinalize(ThreadState *thr) {

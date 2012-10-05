@@ -45,11 +45,14 @@ void AlloctorThreadFinish(ThreadState *thr) {
 static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
   if (!thr->in_signal_handler || !flags()->report_signal_unsafe)
     return;
+  Context *ctx = CTX();
   StackTrace stack;
   stack.ObtainCurrent(thr, pc);
   ScopedReport rep(ReportTypeSignalUnsafe);
-  rep.AddStack(&stack);
-  OutputReport(rep, rep.GetReport()->stacks[0]);
+  if (!IsFiredSuppression(ctx, rep, stack)) {
+    rep.AddStack(&stack);
+    OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+  }
 }
 
 void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {

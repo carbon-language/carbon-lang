@@ -134,9 +134,9 @@ void InitializeSuppressions() {
   g_suppressions = SuppressionParse(supp);
 }
 
-bool IsSuppressed(ReportType typ, const ReportStack *stack) {
+uptr IsSuppressed(ReportType typ, const ReportStack *stack) {
   if (g_suppressions == 0 || stack == 0)
-    return false;
+    return 0;
   SuppressionType stype;
   if (typ == ReportTypeRace)
     stype = SuppressionRace;
@@ -147,17 +147,17 @@ bool IsSuppressed(ReportType typ, const ReportStack *stack) {
   else if (typ == ReportTypeSignalUnsafe)
     stype = SuppressionSignal;
   else
-    return false;
+    return 0;
   for (const ReportStack *frame = stack; frame; frame = frame->next) {
     for (Suppression *supp = g_suppressions; supp; supp = supp->next) {
       if (stype == supp->type &&
           (SuppressionMatch(supp->templ, frame->func) ||
           SuppressionMatch(supp->templ, frame->file))) {
         DPrintf("ThreadSanitizer: matched suppression '%s'\n", supp->templ);
-        return true;
+        return frame->pc;
       }
     }
   }
-  return false;
+  return 0;
 }
 }  // namespace __tsan

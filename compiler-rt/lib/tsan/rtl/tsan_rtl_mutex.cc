@@ -64,7 +64,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
     RestoreStack(last.tid(), last.epoch(), &trace);
     rep.AddStack(&trace);
     rep.AddLocation(s->addr, 1);
-    OutputReport(rep);
+    OutputReport(ctx, rep);
   }
   DestroyAndFree(s);
 }

@@ -362,6 +362,11 @@ struct RacyAddress {
   uptr addr_max;
 };
 
+struct FiredSuppression {
+  ReportType type;
+  uptr pc;
+};
+
 struct Context {
   Context();
 
@@ -385,6 +390,7 @@ struct Context {
 
   Vector<RacyStacks> racy_stacks;
   Vector<RacyAddress> racy_addresses;
+  Vector<FiredSuppression> fired_suppressions;
 
   Flags flags;
 
@@ -439,8 +445,12 @@ void InitializeInterceptors();
 void InitializeDynamicAnnotations();
 
 void ReportRace(ThreadState *thr);
-bool OutputReport(const ScopedReport &srep,
+bool OutputReport(Context *ctx,
+                  const ScopedReport &srep,
                   const ReportStack *suppress_stack = 0);
+bool IsFiredSuppression(Context *ctx,
+                        const ScopedReport &srep,
+                        const StackTrace &trace);
 bool IsExpectedReport(uptr addr, uptr size);
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 1

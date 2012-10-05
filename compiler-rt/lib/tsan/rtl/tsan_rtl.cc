@@ -49,7 +49,8 @@ Context::Context()
   , nmissed_expected()
   , thread_mtx(MutexTypeThreads, StatMtxThreads)
   , racy_stacks(MBlockRacyStacks)
-  , racy_addresses(MBlockRacyAddresses) {
+  , racy_addresses(MBlockRacyAddresses)
+  , fired_suppressions(MBlockRacyAddresses) {
 }
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.

@@ -19,7 +19,7 @@ namespace __tsan {
 
 void InitializeSuppressions();
 void FinalizeSuppressions();
-bool IsSuppressed(ReportType typ, const ReportStack *stack);
+uptr IsSuppressed(ReportType typ, const ReportStack *stack);
 
 // Exposed for testing.
 enum SuppressionType {
