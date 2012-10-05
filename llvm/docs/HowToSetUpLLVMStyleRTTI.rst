@@ -36,7 +36,7 @@ RTTI for this class hierarchy:
 
    class Shape {
    public:
-     Shape() {};
+     Shape() {}
      virtual double computeArea() = 0;
    };
 
@@ -86,7 +86,7 @@ steps:
       +public:
       +  ShapeKind getKind() const { return Kind; }
       +
-         Shape() {};
+         Shape() {}
          virtual double computeArea() = 0;
        };
 
@@ -130,8 +130,8 @@ steps:
        public:
          ShapeKind getKind() const { return Kind; }
 
-      -  Shape() {};
-      +  Shape(ShapeKind K) : Kind(K) {};
+      -  Shape() {}
+      +  Shape(ShapeKind K) : Kind(K) {}
          virtual double computeArea() = 0;
        };
 
@@ -172,7 +172,7 @@ steps:
        public:
          ShapeKind getKind() const { return Kind; }
 
-         Shape(ShapeKind K) : Kind(K) {};
+         Shape(ShapeKind K) : Kind(K) {}
          virtual double computeArea() = 0;
       +
       +  static bool classof(const Shape *) { return true; }
