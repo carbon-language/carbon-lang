@@ -61,7 +61,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
-  MipsAssemblerOptions *Options;
+  MipsAssemblerOptions Options;
 
 
 #define GET_ASSEMBLER_HEADER
@@ -146,7 +146,6 @@ public:
     : MCTargetAsmParser(), STI(sti), Parser(parser) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
-    Options = new MipsAssemblerOptions();
   }
 
   MCAsmParser &getParser() const { return Parser; }
@@ -521,11 +520,11 @@ bool MipsAssemblerOptions::setATReg(unsigned Reg) {
 }
 
 unsigned MipsAsmParser::getATReg() {
-  unsigned Reg = Options->getATRegNum();
+  unsigned Reg = Options.getATRegNum();
   if (isMips64())
     return getReg(Mips::CPU64RegsRegClassID,Reg);
-  else
-    return getReg(Mips::CPURegsRegClassID,Reg);
+  
+  return getReg(Mips::CPURegsRegClassID,Reg);
 }
 
 unsigned MipsAsmParser::getReg(int RC,int RegNo) {
@@ -1020,7 +1019,7 @@ bool MipsAsmParser::parseSetNoAtDirective() {
   // line should look like:
   //  .set noat
   // set at reg to 0
-  Options->setATReg(0);
+  Options.setATReg(0);
   // eat noat
   Parser.Lex();
   // if this is not the end of the statement, report error
@@ -1037,7 +1036,7 @@ bool MipsAsmParser::parseSetAtDirective() {
   // or .set at=$reg
   getParser().Lex();
   if (getLexer().is(AsmToken::EndOfStatement)) {
-    Options->setATReg(1);
+    Options.setATReg(1);
     Parser.Lex(); // Consume the EndOfStatement
     return false;
   } else if (getLexer().is(AsmToken::Equal)) {
@@ -1052,7 +1051,7 @@ bool MipsAsmParser::parseSetAtDirective() {
       return false;
     }
     const AsmToken &Reg = Parser.getTok();
-    if (!Options->setATReg(Reg.getIntVal())) {
+    if (!Options.setATReg(Reg.getIntVal())) {
       reportParseError("unexpected token in statement");
       return false;
     }
@@ -1077,7 +1076,7 @@ bool MipsAsmParser::parseSetReorderDirective() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  Options->setReorder();
+  Options.setReorder();
   Parser.Lex(); // Consume the EndOfStatement
   return false;
 }
@@ -1089,7 +1088,7 @@ bool MipsAsmParser::parseSetNoReorderDirective() {
       reportParseError("unexpected token in statement");
       return false;
     }
-    Options->setNoreorder();
+    Options.setNoreorder();
     Parser.Lex(); // Consume the EndOfStatement
     return false;
 }
@@ -1101,7 +1100,7 @@ bool MipsAsmParser::parseSetMacroDirective() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  Options->setMacro();
+  Options.setMacro();
   Parser.Lex(); // Consume the EndOfStatement
   return false;
 }
@@ -1113,11 +1112,11 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
     reportParseError("`noreorder' must be set before `nomacro'");
     return false;
   }
-  if (Options->isReorder()) {
+  if (Options.isReorder()) {
     reportParseError("`noreorder' must be set before `nomacro'");
     return false;
   }
-  Options->setNomacro();
+  Options.setNomacro();
   Parser.Lex(); // Consume the EndOfStatement
   return false;
 }
