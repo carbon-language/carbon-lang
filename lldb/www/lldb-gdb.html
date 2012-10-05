@@ -356,8 +356,8 @@
                             <b>(gdb)</b> watch global_var
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> watchpoint set variable -w write global_var<br>
-                            <b>(lldb)</b> watch set var -w write global_var<br>
+                            <b>(lldb)</b> watchpoint set variable global_var<br>
+                            <b>(lldb)</b> wa s v global_var<br>
                         </td>
                     </tr>
 
@@ -369,7 +369,7 @@
                         </td>
                         <td class="content">
                             <b>(lldb)</b> watchpoint set expression -w write -- my_ptr<br>
-                            <b>(lldb)</b> watch set exp -w write -- my_ptr<br>
+                            <b>(lldb)</b> wa s e -- my_ptr<br>
                       </td>
                     </tr>
 
@@ -437,6 +437,7 @@
                         </td>
                         <td class="content">
                             <b>(lldb)</b> frame variable<br>
+                            <b>(lldb)</b> fr v<br>
                         </td>
                     </tr>
 
@@ -631,6 +632,8 @@
                         </td>
                         <td class="content">
                             <b>(lldb)</b> frame select 12<br>
+                            <b>(lldb)</b> fr s 12<br>
+                            <b>(lldb)</b> f 12<br>
                         </td>
                     </tr>
 
