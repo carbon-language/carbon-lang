@@ -1716,9 +1716,9 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
   OpOS << "void " << Target.getName() << ClassName << "::\n"
        << "convertToMapAndConstraints(unsigned Kind,\n";
   OpOS.indent(27);
-  OpOS << "const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
-       << "      SmallVectorImpl<std::pair< unsigned, std::string > >"
-       << " &MapAndConstraints) {\n"
+  OpOS << "const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
+  OpOS.indent(27);
+  OpOS << "MatchInstMapAndConstraintsImpl &MapAndConstraints) {\n"
        << "  assert(Kind < CVT_NUM_SIGNATURES && \"Invalid signature!\");\n"
        << "  unsigned NumMCOperands = 0;\n"
        << "  const uint8_t *Converter = ConversionTable[Kind];\n"
@@ -2606,15 +2606,16 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
   OS << "  void convertToMapAndConstraints(unsigned Kind,\n                ";
-  OS << "           const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
-     << "       SmallVectorImpl<std::pair< unsigned, std::string > >"
-     << " &MapAndConstraints);\n";
+  OS << "           const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
+  OS.indent(29);
+  OS << "MatchInstMapAndConstraintsImpl &MapAndConstraints);\n";
   OS << "  bool mnemonicIsValid(StringRef Mnemonic);\n";
-  OS << "  unsigned MatchInstructionImpl(\n"
-     << "        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
-     << "                                unsigned &Kind, MCInst &Inst,\n"
-     << "        SmallVectorImpl<std::pair< unsigned, std::string > > "
-     << "&MapAndConstraints,\n"
+  OS << "  unsigned MatchInstructionImpl(\n";
+  OS.indent(27);
+  OS << "const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"
+     << "                                unsigned &Kind, MCInst &Inst,\n";
+  OS.indent(30);
+  OS << "MatchInstMapAndConstraintsImpl &MapAndConstraints,\n"
      << "                                unsigned &ErrorInfo,"
      << " bool matchingInlineAsm,\n"
      << "                                unsigned VariantID = 0);\n";

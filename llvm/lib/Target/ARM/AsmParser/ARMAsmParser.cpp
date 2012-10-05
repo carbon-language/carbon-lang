@@ -7480,7 +7480,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   unsigned Kind;
   unsigned ErrorInfo;
   unsigned MatchResult;
-  SmallVector<std::pair< unsigned, std::string >, 4> MapAndConstraints;
+  MatchInstMapAndConstraints MapAndConstraints;
   MatchResult = MatchInstructionImpl(Operands, Kind, Inst,
                                      MapAndConstraints, ErrorInfo,
                                      /*matchingInlineAsm*/ false);

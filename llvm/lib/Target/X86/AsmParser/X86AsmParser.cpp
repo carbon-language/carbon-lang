@@ -69,7 +69,7 @@ private:
   bool MatchInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out, unsigned &Kind, unsigned &Opcode,
-  SmallVectorImpl<std::pair< unsigned, std::string > > &MapAndConstraints,
+                        MatchInstMapAndConstraintsImpl &MapAndConstraints,
                        unsigned &OrigErrorInfo, bool matchingInlineAsm = false);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
@@ -1526,7 +1526,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   unsigned Kind;
   unsigned Opcode;
   unsigned ErrorInfo;
-  SmallVector<std::pair< unsigned, std::string >, 4> MapAndConstraints;
+  MatchInstMapAndConstraints MapAndConstraints;
   bool Error = MatchInstruction(IDLoc, Operands, Out, Kind, Opcode,
                                 MapAndConstraints, ErrorInfo);
   return Error;
@@ -1631,7 +1631,7 @@ MatchInstruction(SMLoc IDLoc,
   unsigned Match1, Match2, Match3, Match4;
   unsigned tKind;
 
-  SmallVector<std::pair< unsigned, std::string >, 4> tMapAndConstraints[4];
+  MatchInstMapAndConstraints tMapAndConstraints[4];
   Match1 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[0],
                                 ErrorInfoIgnore, isParsingIntelSyntax());
   if (Match1 == Match_Success) Kind = tKind;

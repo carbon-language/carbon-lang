@@ -318,7 +318,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   MCInst Inst;
   unsigned Kind;
   unsigned ErrorInfo;
-  SmallVector<std::pair< unsigned, std::string >, 4> MapAndConstraints;
+  MatchInstMapAndConstraints MapAndConstraints;
   switch (MatchInstructionImpl(Operands, Kind, Inst, MapAndConstraints,
                                ErrorInfo, /*matchingInlineAsm*/ false)) {
   default: break;
