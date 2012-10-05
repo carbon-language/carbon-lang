@@ -30,7 +30,7 @@ public:
   ///
   /// @note This has to exist, because this is a pass, but it should never be
   /// used.
-  TargetData() : DataLayout() {};
+  TargetData() : DataLayout() {}
 
   /// Constructs a TargetData from a specification string.
   /// See DataLayout::init().
