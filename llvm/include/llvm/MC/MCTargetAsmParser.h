@@ -50,6 +50,8 @@ public:
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
                              SMLoc &EndLoc) = 0;
 
+  /// MapAndConstraints - Map inline assembly operands to MCInst operands
+  /// and an associated constraint.
   typedef std::pair< unsigned, std::string > MapAndConstraint;
   typedef SmallVector<MapAndConstraint, 4> MatchInstMapAndConstraints;
   typedef SmallVectorImpl<MapAndConstraint> MatchInstMapAndConstraintsImpl;
