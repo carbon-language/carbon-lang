@@ -356,7 +356,7 @@ LocateMacOSXFilesUsingDebugSymbols
                     {
                         if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
                         {
-                            out_dsym_fspec->SetFile(path, false);
+                            out_dsym_fspec->SetFile(path, path[0] == '~');
 
                             if (out_dsym_fspec->GetFileType () == FileSpec::eFileTypeDirectory)
                             {
