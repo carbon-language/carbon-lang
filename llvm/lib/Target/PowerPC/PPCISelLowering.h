@@ -467,7 +467,13 @@ namespace llvm {
                   DebugLoc dl, SelectionDAG &DAG) const;
 
     SDValue
-      LowerFormalArguments_Darwin_Or_64SVR4(SDValue Chain,
+      LowerFormalArguments_Darwin(SDValue Chain,
+                                  CallingConv::ID CallConv, bool isVarArg,
+                                  const SmallVectorImpl<ISD::InputArg> &Ins,
+                                  DebugLoc dl, SelectionDAG &DAG,
+                                  SmallVectorImpl<SDValue> &InVals) const;
+    SDValue
+      LowerFormalArguments_64SVR4(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
                                   DebugLoc dl, SelectionDAG &DAG,
