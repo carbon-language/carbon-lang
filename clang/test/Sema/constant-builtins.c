@@ -16,8 +16,9 @@ extern int f();
 int h0 = __builtin_types_compatible_p(int,float);
 //int h1 = __builtin_choose_expr(1, 10, f());
 //int h2 = __builtin_expect(0, 0);
-int h3 = __builtin_bswap32(0x1234) == 0x34120000 ? 1 : f();
-int h4 = __builtin_bswap64(0x1234) == 0x3412000000000000 ? 1 : f();
+int h3 = __builtin_bswap16(0x1234) == 0x3412 ? 1 : f();
+int h4 = __builtin_bswap32(0x1234) == 0x34120000 ? 1 : f();
+int h5 = __builtin_bswap64(0x1234) == 0x3412000000000000 ? 1 : f();
 
 short somefunc();
 

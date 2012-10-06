@@ -113,6 +113,7 @@ int main() {
 
   // Whatever
 
+  P(bswap16, (N));
   P(bswap32, (N));
   P(bswap64, (N));
   // FIXME
