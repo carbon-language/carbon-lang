@@ -3220,43 +3220,44 @@ typedef void *CXModule;
 CINDEX_LINKAGE CXModule clang_Cursor_getModule(CXCursor C);
 
 /**
- * \param Module object.
+ * \param Module a module object.
  *
  * \returns the parent of a sub-module or NULL if the given module is top-level,
  * e.g. for 'std.vector' it will return the 'std' module.
  */
-CINDEX_LINKAGE CXModule clang_Module_getParent(CXModule);
+CINDEX_LINKAGE CXModule clang_Module_getParent(CXModule Module);
 
 /**
- * \param Module object.
+ * \param Module a module object.
  *
  * \returns the name of the module, e.g. for the 'std.vector' sub-module it
  * will return "vector".
  */
-CINDEX_LINKAGE CXString clang_Module_getName(CXModule);
+CINDEX_LINKAGE CXString clang_Module_getName(CXModule Module);
 
 /**
- * \param Module object.
+ * \param Module a module object.
  *
  * \returns the full name of the module, e.g. "std.vector".
  */
-CINDEX_LINKAGE CXString clang_Module_getFullName(CXModule);
+CINDEX_LINKAGE CXString clang_Module_getFullName(CXModule Module);
 
 /**
- * \param Module object.
+ * \param Module a module object.
  *
  * \returns the number of top level headers associated with this module.
  */
-CINDEX_LINKAGE unsigned clang_Module_getNumTopLevelHeaders(CXModule);
+CINDEX_LINKAGE unsigned clang_Module_getNumTopLevelHeaders(CXModule Module);
 
 /**
- * \param Module object.
+ * \param Module a module object.
  *
  * \param Index top level header index (zero-based).
  *
  * \returns the specified top level header associated with the module.
  */
-CINDEX_LINKAGE CXFile clang_Module_getTopLevelHeader(CXModule, unsigned Index);
+CINDEX_LINKAGE
+CXFile clang_Module_getTopLevelHeader(CXModule Module, unsigned Index);
 
 /**
  * @}
