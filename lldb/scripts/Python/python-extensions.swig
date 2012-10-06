@@ -539,13 +539,15 @@ class value(object):
         # Allow array access if this value has children...
         if type(key) is int:
             return value(self.sbvalue.GetValueForExpressionPath("[%i]" % key))
-        raise TypeError
+        if type(key) is value:
+            return value(self.sbvalue.GetValueForExpressionPath("[%i]" % int(key))
+        raise TypeError("No array item of type %s" % str(type(key)))
 
     def __getattr__(self, name):
         child_sbvalue = self.sbvalue.GetChildMemberWithName (name)
         if child_sbvalue:
             return value(child_sbvalue)
-        raise AttributeError
+        raise AttributeError("Attribute '%s' is not defined" % name)
 
     def __add__(self, other):
         return int(self) + int(other)
@@ -690,15 +692,22 @@ class value(object):
         return '0x%x' % self.sbvalue.GetValueAsUnsigned()
 
     def __eq__(self, other):
-        self_err = SBError()
-        other_err = SBError()
-        self_val = self.sbvalue.GetValueAsUnsigned(self_err)
-        if self_err.fail:
-                raise ValueError("unable to extract value of self")
-        other_val = other.sbvalue.GetValueAsUnsigned(other_err)
-        if other_err.fail:
-                raise ValueError("unable to extract value of other")
-        return self_val == other_val
+        if type(other) is int:
+            return int(self) == other
+        elif type(other) is str:
+            return str(self) == other
+        elif type(other) is value:
+                self_err = SBError()
+                other_err = SBError()
+                self_val = self.sbvalue.GetValueAsUnsigned(self_err)
+                if self_err.fail:
+                        raise ValueError("unable to extract value of self")
+                other_val = other.sbvalue.GetValueAsUnsigned(other_err)
+                if other_err.fail:
+                        raise ValueError("unable to extract value of other")
+                return self_val == other_val
+        raise TypeError("Unknown type %s, No equality operation defined." % str(type(other)))
+
                                                                     
     def __neq__(self, other):
         return not self.__eq__(other)
