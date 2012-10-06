@@ -266,10 +266,12 @@ void f() throw(int) {
 <col class="namedescr"><col class="example"><col class="progress">
 <thead><tr><td>Name, Description</td><td>Example</td><td>Progress</td></tr></thead>
 
-<tr><td><span class="name">smartptr.AutoPtrInit<br>
-(C++03)</span><br><br>
-auto_ptr should store a pointer to an object obtained via new as allocated 
-memory will be cleaned using delete
+<tr><td><span class="name">smartptr.SmartPtrInit<br>
+(C++)</span><br><br>
+C++03: auto_ptr should store a pointer to an object obtained via new as allocated
+memory will be cleaned using delete<br>
+C++11: unique_ptr and shared_ptr allow
+to specify a custom deleter to handle the new[]/delete[] case correctly
 </td><td><pre>
 #include &lt;stdlib.h&gt;
 #include &lt;memory&gt;
