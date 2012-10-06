@@ -511,6 +511,7 @@ ProcessGDBRemote::CheckForKernel (Stream *strm)
         {
             m_kernel_load_addr = exe_objfile->GetHeaderAddress().GetFileAddress();
             m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
+            SetCanJIT(false);
             return;
         }
     }
@@ -569,6 +570,7 @@ ProcessGDBRemote::CheckForKernel (Stream *strm)
     {
         m_kernel_load_addr = kernel_addr;
         m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
+        SetCanJIT(false);
         return;
     }
 }
@@ -1981,6 +1983,9 @@ ProcessGDBRemote::IsAlive ()
     return m_gdb_comm.IsConnected() && m_private_state.GetValue() != eStateExited;
 }
 
+// For kernel debugging, we return the load address of the kernel binary as the
+// ImageInfoAddress and we return the DynamicLoaderDarwinKernel as the GetDynamicLoader()
+// name so the correct DynamicLoader plugin is chosen.
 addr_t
 ProcessGDBRemote::GetImageInfoAddress()
 {

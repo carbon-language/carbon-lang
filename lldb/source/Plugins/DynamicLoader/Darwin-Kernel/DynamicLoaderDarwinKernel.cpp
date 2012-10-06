@@ -209,6 +209,10 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
             && memory_module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
         {
             memory_module_is_kernel = true;
+            if (memory_module_sp->GetArchitecture().IsValid())
+            {
+                target.SetArchitecture(memory_module_sp->GetArchitecture());
+            }
         }
     }
 
@@ -219,10 +223,17 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
             ModuleList &target_images = target.GetImages();
             module_sp = target_images.FindModule(uuid);
             
+            // Ask the Target to find this file on the local system, if possible.
+            // This will search in the list of currently-loaded files, look in the 
+            // standard search paths on the system, and on a Mac it will try calling
+            // the DebugSymbols framework with the UUID to find the binary via its
+            // search methods.
+
             if (!module_sp)
             {
                 ModuleSpec module_spec;
                 module_spec.GetUUID() = uuid;
+                module_spec.GetArchitecture() = target.GetArchitecture();
                 module_sp = target.GetSharedModule (module_spec);
             }
         }
@@ -231,7 +242,6 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
 
     if (memory_module_sp)
     {
-        // Someone already supplied a file, make sure it is the right one.
         if (module_sp)
         {
             if (module_sp->GetUUID() == memory_module_sp->GetUUID())
@@ -250,10 +260,11 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                         // segments in mach-o parlance)
                         uint32_t sect_idx = 0;
                         
-                        
-                        // We now iterate through all sections in the file module 
-                        // and look to see if the memory module has a load address
-                        // for that section.
+                        // Use the memory_module's addresses for each section to set the 
+                        // file module's load address as appropriate.  We don't want to use
+                        // a single slide value for the entire kext - different segments may
+                        // be slid different amounts by the kext loader.
+
                         uint32_t num_sections_loaded = 0;
                         for (sect_idx=0; sect_idx<num_ondisk_sections; ++sect_idx)
                         {
@@ -283,41 +294,8 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                 module_sp.reset(); // UUID mismatch
         }
         
-        // Try to locate the kext/kernel binary on the local filesystem, maybe with additional 
-        // debug info/symbols still present, before we resort to copying it out of memory.
-        if (!module_sp)
-        {
-            ModuleSpec sym_spec;
-            sym_spec.GetUUID() = memory_module_sp->GetUUID();
-            if (Symbols::LocateExecutableObjectFile (sym_spec) 
-                && sym_spec.GetArchitecture().IsValid()
-                && sym_spec.GetFileSpec().Exists())
-            {
-                module_sp = target.GetSharedModule (sym_spec);
-                if (module_sp.get ())
-                {
-                    target.SetExecutableModule(module_sp, false);
-                    if (address != LLDB_INVALID_ADDRESS 
-                        && module_sp->GetObjectFile() 
-                        && module_sp->GetObjectFile()->GetHeaderAddress().IsValid())
-                    {
-                        addr_t slide = address - module_sp->GetObjectFile()->GetHeaderAddress().GetFileAddress();
-                        bool changed = false;
-                        module_sp->SetLoadAddress (target, slide, changed);
-                        if (changed)
-                        {
-                            ModuleList modlist;
-                            modlist.Append (module_sp);
-                            target.ModulesDidLoad (modlist);
-                        }
-                        load_process_stop_id = process->GetStopID();
-                    }
-                }
-            }
-        }
-
-        // Use the memory module as the module if we didn't like the file
-        // module we either found or were supplied with
+        // Use the memory module as the module if we didn't find an on-disk file 
+        // here on the debug system.
         if (!module_sp)
         {
             module_sp = memory_module_sp;
