@@ -20,22 +20,63 @@ using namespace clang;
 
 typedef llvm::DenseMap<Stmt*, Stmt*> MapTy;
 
-static void BuildParentMap(MapTy& M, Stmt* S) {
-  for (Stmt::child_range I = S->children(); I; ++I)
-    if (*I) {
-      // Prefer the first time we see this statement in the traversal.
-      // This is important for PseudoObjectExprs.
-      Stmt *&Parent = M[*I];
-      if (!Parent) {
-        Parent = S;
-        BuildParentMap(M, *I);
+enum OpaqueValueMode {
+  OV_Transparent,
+  OV_Opaque
+};
+
+static void BuildParentMap(MapTy& M, Stmt* S,
+                           OpaqueValueMode OVMode = OV_Transparent) {
+
+  switch (S->getStmtClass()) {
+  case Stmt::PseudoObjectExprClass: {
+    assert(OVMode == OV_Transparent && "Should not appear alongside OVEs");
+    PseudoObjectExpr *POE = cast<PseudoObjectExpr>(S);
+
+    M[POE->getSyntacticForm()] = S;
+    BuildParentMap(M, POE->getSyntacticForm(), OV_Transparent);
+
+    for (PseudoObjectExpr::semantics_iterator I = POE->semantics_begin(),
+                                              E = POE->semantics_end();
+         I != E; ++I) {
+      M[*I] = S;
+      BuildParentMap(M, *I, OV_Opaque);
+    }
+    break;
+  }
+  case Stmt::BinaryConditionalOperatorClass: {
+    assert(OVMode == OV_Transparent && "Should not appear alongside OVEs");
+    BinaryConditionalOperator *BCO = cast<BinaryConditionalOperator>(S);
+
+    M[BCO->getCommon()] = S;
+    BuildParentMap(M, BCO->getCommon(), OV_Transparent);
+
+    M[BCO->getCond()] = S;
+    BuildParentMap(M, BCO->getCond(), OV_Opaque);
+
+    M[BCO->getTrueExpr()] = S;
+    BuildParentMap(M, BCO->getTrueExpr(), OV_Opaque);
+
+    M[BCO->getFalseExpr()] = S;
+    BuildParentMap(M, BCO->getFalseExpr(), OV_Transparent);
+
+    break;
+  }
+  case Stmt::OpaqueValueExprClass:
+    if (OVMode == OV_Transparent) {
+      OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(S);
+      M[OVE->getSourceExpr()] = S;
+      BuildParentMap(M, OVE->getSourceExpr(), OV_Transparent);
+    }
+    break;
+  default:
+    for (Stmt::child_range I = S->children(); I; ++I) {
+      if (*I) {
+        M[*I] = S;
+        BuildParentMap(M, *I, OVMode);
       }
     }
-  
-  // Also include the source expr tree of an OpaqueValueExpr in the map.
-  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S)) {
-    M[OVE->getSourceExpr()] = S;
-    BuildParentMap(M, OVE->getSourceExpr());
+    break;
   }
 }
 
