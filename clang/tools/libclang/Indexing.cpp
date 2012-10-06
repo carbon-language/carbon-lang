@@ -191,21 +191,11 @@ public:
                          unsigned indexOptions,
                          CXTranslationUnit cxTU)
     : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU),
-      CXTU(cxTU), EnablePPDetailedRecordForModules(false) { }
-
-  bool EnablePPDetailedRecordForModules;
+      CXTU(cxTU) { }
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
     PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
-
-    // We usually disable the preprocessing record for indexing even if the
-    // original preprocessing options had it enabled. Now that the indexing
-    // Preprocessor has been created (without a preprocessing record), re-enable
-    // the option in case modules are enabled, so that the detailed record
-    // option can be propagated when the module file is generated.
-    if (CI.getLangOpts().Modules && EnablePPDetailedRecordForModules)
-      PPOpts.DetailedRecord = true;
 
     if (!PPOpts.ImplicitPCHInclude.empty()) {
       IndexCtx.importedPCH(
@@ -402,17 +392,11 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     // FIXME: Add a flag for modules.
     CacheCodeCompletionResults
       = TU_options & CXTranslationUnit_CacheCompletionResults;
-    if (TU_options & CXTranslationUnit_DetailedPreprocessingRecord) {
-      PPOpts.DetailedRecord = true;
-    }
   }
 
-  IndexAction->EnablePPDetailedRecordForModules
-    = PPOpts.DetailedRecord ||
-      (TU_options & CXTranslationUnit_DetailedPreprocessingRecord);
-
-  if (!requestedToGetTU)
-    PPOpts.DetailedRecord = false;
+  if (TU_options & CXTranslationUnit_DetailedPreprocessingRecord) {
+    PPOpts.DetailedRecord = true;
+  }
 
   DiagnosticErrorTrap DiagTrap(*Diags);
   bool Success = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
