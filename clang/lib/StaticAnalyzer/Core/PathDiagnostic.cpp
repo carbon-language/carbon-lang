@@ -612,19 +612,24 @@ PathDiagnosticLocation
   assert(N && "Cannot create a location with a null node.");
 
   const ExplodedNode *NI = N;
+  const Stmt *S = 0;
 
   while (NI) {
     ProgramPoint P = NI->getLocation();
-    const LocationContext *LC = P.getLocationContext();
     if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P))
-      return PathDiagnosticLocation(PS->getStmt(), SM, LC);
-    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      const Stmt *Term = BE->getSrc()->getTerminator();
-      if (Term) {
-        return PathDiagnosticLocation(Term, SM, LC);
-      }
-    }
+      S = PS->getStmt();
+    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P))
+      S = BE->getSrc()->getTerminator();
+    if (S)
+      break;
     NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
+  }
+
+  if (S) {
+    const LocationContext *LC = NI->getLocationContext();
+    if (S->getLocStart().isValid())
+      return PathDiagnosticLocation(S, SM, LC);
+    return PathDiagnosticLocation(getValidSourceLocation(S, LC), SM);
   }
 
   return createDeclEnd(N->getLocationContext(), SM);
