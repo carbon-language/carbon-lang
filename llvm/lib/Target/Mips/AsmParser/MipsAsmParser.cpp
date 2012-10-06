@@ -95,9 +95,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool needsExpansion(MCInst &Inst);
 
   void expandInstruction(MCInst &Inst, SMLoc IDLoc,
-                         SmallVectorImpl<MCInst*> &Instructions);
+                         SmallVectorImpl<MCInst> &Instructions);
   void expandLoadImm(MCInst &Inst, SMLoc IDLoc,
-                     SmallVectorImpl<MCInst*> &Instructions);
+                     SmallVectorImpl<MCInst> &Instructions);
   bool reportParseError(StringRef ErrorMsg);
 
   bool parseMemOffset(const MCExpr *&Res);
@@ -310,59 +310,61 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
       return false;
   }
 }
+
 void MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
-                        SmallVectorImpl<MCInst*> &Instructions){
+                        SmallVectorImpl<MCInst> &Instructions){
   switch(Inst.getOpcode()) {
     case Mips::LoadImm32Reg:
       return expandLoadImm(Inst, IDLoc, Instructions);
     }
-  return;
 }
+
 void MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
-                        SmallVectorImpl<MCInst*> &Instructions){
-  MCInst *tmpInst = new MCInst();
+                        SmallVectorImpl<MCInst> &Instructions){
+  MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(1);
   assert(ImmOp.isImm() && "expected imediate operand kind");
   const MCOperand &RegOp = Inst.getOperand(0);
   assert(RegOp.isReg() && "expected register operand kind");
 
   int ImmValue = ImmOp.getImm();
-  tmpInst->setLoc(IDLoc);
+  tmpInst.setLoc(IDLoc);
   if ( 0 <= ImmValue && ImmValue <= 65535) {
-    // for 0 = j = 65535.
+    // for 0 <= j <= 65535.
     // li d,j => ori d,$zero,j
-    tmpInst->setOpcode(isMips64() ? Mips::ORi64 : Mips::ORi);
-    tmpInst->addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst->addOperand(
+    tmpInst.setOpcode(isMips64() ? Mips::ORi64 : Mips::ORi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(
               MCOperand::CreateReg(isMips64() ? Mips::ZERO_64 : Mips::ZERO));
-    tmpInst->addOperand(MCOperand::CreateImm(ImmValue));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if ( ImmValue < 0 && ImmValue >= -32768) {
-    // for -32768 = j < 0.
+    // for -32768 <= j < 0.
     // li d,j => addiu d,$zero,j
-    tmpInst->setOpcode(Mips::ADDiu); //TODO:no ADDiu64 in td files?
-    tmpInst->addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst->addOperand(
+    tmpInst.setOpcode(Mips::ADDiu); //TODO:no ADDiu64 in td files?
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(
               MCOperand::CreateReg(isMips64() ? Mips::ZERO_64 : Mips::ZERO));
-    tmpInst->addOperand(MCOperand::CreateImm(ImmValue));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else {
     // for any other value of j that is representable as a 32-bit integer.
     // li d,j => lui d,hi16(j)
     // ori d,d,lo16(j)
-    tmpInst->setOpcode(isMips64() ? Mips::LUi64 : Mips::LUi);
-    tmpInst->addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst->addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
+    tmpInst.setOpcode(isMips64() ? Mips::LUi64 : Mips::LUi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
     Instructions.push_back(tmpInst);
-    tmpInst = new MCInst();
-    tmpInst->setOpcode(isMips64() ? Mips::ORi64 : Mips::ORi);
-    tmpInst->addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst->addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst->addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
-    tmpInst->setLoc(IDLoc);
+    tmpInst.clear();
+    tmpInst.setOpcode(isMips64() ? Mips::ORi64 : Mips::ORi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
+    tmpInst.setLoc(IDLoc);
     Instructions.push_back(tmpInst);
   }
 }
+
 bool MipsAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -379,11 +381,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   default: break;
   case Match_Success: {
     if (needsExpansion(Inst)) {
-      SmallVector<MCInst*, 4> Instructions;
+      SmallVector<MCInst, 4> Instructions;
       expandInstruction(Inst, IDLoc, Instructions);
       for(unsigned i =0; i < Instructions.size(); i++){
-        Inst = *(Instructions[i]);
-        Out.EmitInstruction(Inst);
+        Out.EmitInstruction(Instructions[i]);
       }
     } else {
         Inst.setLoc(IDLoc);
