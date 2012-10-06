@@ -270,8 +270,10 @@ void f() throw(int) {
 (C++)</span><br><br>
 C++03: auto_ptr should store a pointer to an object obtained via new as allocated
 memory will be cleaned using delete<br>
-C++11: unique_ptr and shared_ptr allow
-to specify a custom deleter to handle the new[]/delete[] case correctly
+C++11: one should use unique_ptr&lt;T[]&gt; to keep a pointer to memory
+allocated by new[]<br>
+C++11: to keep a pointer to memory allocated by new[] in a shared_ptr one
+should use a custom deleter that calls delete[]
 </td><td><pre>
 #include &lt;stdlib.h&gt;
 #include &lt;memory&gt;
