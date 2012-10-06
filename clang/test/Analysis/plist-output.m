@@ -1,4 +1,4 @@
-// RUN: %clang --analyze %s -o %t.plist
+// RUN: %clang --analyze %s -Xanalyzer -analyzer-checker=osx.cocoa.RetainCount -o %t.plist
 // RUN: FileCheck --input-file=%t.plist %s
 
 void test_null_init(void) {
