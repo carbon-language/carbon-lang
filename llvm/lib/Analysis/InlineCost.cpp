@@ -142,6 +142,7 @@ public:
 
   int getThreshold() { return Threshold; }
   int getCost() { return Cost; }
+  bool isAlwaysInline() { return AlwaysInline; }
 
   // Keep a bunch of stats about the cost savings found so we can print them
   // out when debugging.
@@ -1057,7 +1058,8 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
   // Check if there was a reason to force inlining or no inlining.
   if (!ShouldInline && CA.getCost() < CA.getThreshold())
     return InlineCost::getNever();
-  if (ShouldInline && CA.getCost() >= CA.getThreshold())
+  if (ShouldInline && (CA.isAlwaysInline() ||
+                       CA.getCost() >= CA.getThreshold()))
     return InlineCost::getAlways();
 
   return llvm::InlineCost::get(CA.getCost(), CA.getThreshold());
