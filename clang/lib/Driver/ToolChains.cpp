@@ -955,9 +955,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
 }
 
 bool Darwin::IsUnwindTablesDefault() const {
-  // FIXME: Gross; we should probably have some separate target
-  // definition, possibly even reusing the one in clang.
-  return getArchName() == "x86_64";
+  return getArch() == llvm::Triple::x86_64;
 }
 
 bool Darwin::UseDwarfDebugFlags() const {
@@ -1457,8 +1455,6 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {
-  // FIXME: Gross; we should probably have some separate target
-  // definition, possibly even reusing the one in clang.
   return getArch() == llvm::Triple::x86_64;
 }
 

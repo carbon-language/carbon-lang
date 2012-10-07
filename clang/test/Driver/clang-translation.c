@@ -91,3 +91,11 @@
 // AMD64: "-triple"
 // AMD64: "amd64-unknown-openbsd5.2"
 // AMD64: "-munwind-tables"
+
+// RUN: %clang -target amd64--mingw32 -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=AMD64-MINGW %s
+// AMD64-MINGW: clang
+// AMD64-MINGW: "-cc1"
+// AMD64-MINGW: "-triple"
+// AMD64-MINGW: "amd64--mingw32"
+// AMD64-MINGW: "-munwind-tables"

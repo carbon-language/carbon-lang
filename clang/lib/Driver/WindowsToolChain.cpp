@@ -81,9 +81,7 @@ bool Windows::IsIntegratedAssemblerDefault() const {
 }
 
 bool Windows::IsUnwindTablesDefault() const {
-  // FIXME: Gross; we should probably have some separate target
-  // definition, possibly even reusing the one in clang.
-  return getArchName() == "x86_64";
+  return getArch() == llvm::Triple::x86_64;
 }
 
 const char *Windows::GetDefaultRelocationModel() const {
