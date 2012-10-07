@@ -321,7 +321,7 @@ compiles LLVM at -O2.  A work around is to build release LLVM builds with
 "``make ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2 ...``"
 
 **GCC 3.4.x on X86-64/amd64**: GCC `miscompiles portions of LLVM
-<http://llvm.org/PR1056>`_.
+<http://llvm.org/PR1056>`__.
 
 **GCC 3.4.4 (CodeSourcery ARM 2005q3-2)**: this compiler miscompiles LLVM when
 building with optimizations enabled.  It appears to work with "``make
@@ -338,7 +338,7 @@ compiling some files.  At the time of this writing, GCC mainline (4.2) did not
 share the problem.
 
 **GCC 4.1.1 on X86-64/amd64**: GCC `miscompiles portions of LLVM
-<http://llvm.org/PR1063>`_ when compiling llvm itself into 64-bit code.  LLVM
+<http://llvm.org/PR1063>`__ when compiling llvm itself into 64-bit code.  LLVM
 will appear to mostly work but will be buggy, e.g. failing portions of its
 testsuite.
 
@@ -374,12 +374,12 @@ defined in a discarded section. You can safely ignore these messages as they are
 erroneous and the linkage is correct.  These messages disappear using ld 2.17.
 
 **GNU binutils 2.17**: Binutils 2.17 contains `a bug
-<http://sourceware.org/bugzilla/show_bug.cgi?id=3111>`_ which causes huge link
+<http://sourceware.org/bugzilla/show_bug.cgi?id=3111>`__ which causes huge link
 times (minutes instead of seconds) when building LLVM.  We recommend upgrading
 to a newer version (2.17.50.0.4 or later).
 
 **GNU Binutils 2.19.1 Gold**: This version of Gold contained `a bug
-<http://sourceware.org/bugzilla/show_bug.cgi?id=9836>`_ which causes
+<http://sourceware.org/bugzilla/show_bug.cgi?id=9836>`__ which causes
 intermittent failures when building LLVM with position independent code.  The
 symptom is an error about cyclic dependencies.  We recommend upgrading to a
 newer version of Gold.
