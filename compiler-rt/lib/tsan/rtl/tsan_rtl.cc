@@ -228,7 +228,11 @@ int Finalize(ThreadState *thr) {
 
   if (ctx->nreported) {
     failed = true;
+#ifndef TSAN_GO
     TsanPrintf("ThreadSanitizer: reported %d warnings\n", ctx->nreported);
+#else
+    TsanPrintf("Found %d data race(s)\n", ctx->nreported);
+#endif
   }
 
   if (ctx->nmissed_expected) {
