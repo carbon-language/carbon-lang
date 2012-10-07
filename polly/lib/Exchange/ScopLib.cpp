@@ -372,8 +372,9 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   // The access dimension has to be one.
   isl_constraint_get_coefficient(c, isl_dim_out, 0, &v);
-  assert(isl_int_is_one(v));
-  bool inverse = true ;
+  assert((isl_int_is_one(v) || isl_int_is_negone(v))
+         && "Access relations not supported in scoplib");
+  bool inverse = isl_int_is_one(v);
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
