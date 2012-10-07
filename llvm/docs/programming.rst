@@ -8,6 +8,7 @@ Programming Documentation
 
    CodingStandards
    CommandLine
+   CompilerWriterInfo
    Atomics
    HowToSetUpLLVMStyleRTTI
 
@@ -49,3 +50,7 @@ Programming Documentation
   (`tarball <http://llvm.org/doxygen/doxygen.tar.gz>`_)
 
 * `ViewVC Repository Browser <http://llvm.org/viewvc/>`_
+
+* :ref:`compiler_writer_info`
+
+  A list of helpful links for compiler writers.
