@@ -10,6 +10,7 @@ User Guides
    HowToBuildOnARM
    CommandGuide/index
    DeveloperPolicy
+   GettingStarted
    GettingStartedVS
    FAQ
    Lexicon
@@ -18,7 +19,7 @@ User Guides
    yaml2obj
    HowToSubmitABug
 
-* `The LLVM Getting Started Guide <GettingStarted.html>`_
+* :ref:`getting_started`
     
    Discusses how to get up and running quickly with the LLVM infrastructure.
    Everything from unpacking and compilation of the distribution to execution
