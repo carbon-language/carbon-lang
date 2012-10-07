@@ -654,7 +654,7 @@ CursorKind.TEMPLATE_TYPE_PARAMETER = CursorKind(27)
 CursorKind.TEMPLATE_NON_TYPE_PARAMETER = CursorKind(28)
 
 # A C++ template template parameter.
-CursorKind.TEMPLATE_TEMPLATE_PARAMTER = CursorKind(29)
+CursorKind.TEMPLATE_TEMPLATE_PARAMETER = CursorKind(29)
 
 # A C++ function template.
 CursorKind.FUNCTION_TEMPLATE = CursorKind(30)
