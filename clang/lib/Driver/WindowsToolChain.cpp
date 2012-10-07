@@ -89,7 +89,7 @@ const char *Windows::GetDefaultRelocationModel() const {
 }
 
 const char *Windows::GetForcedPicModel() const {
-  if (getArchName() == "x86_64")
+  if (getArch() == llvm::Triple::x86_64)
     return "pic";
   return 0;
 }

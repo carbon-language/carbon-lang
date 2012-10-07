@@ -3194,17 +3194,17 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   RenderExtraToolArgs(JA, CmdArgs);
 
   // If using a driver driver, force the arch.
-  const std::string &Arch = getToolChain().getArchName();
+  llvm::Triple::ArchType Arch = getToolChain().getArch();
   if (getToolChain().getTriple().isOSDarwin()) {
     CmdArgs.push_back("-arch");
 
     // FIXME: Remove these special cases.
-    if (Arch == "powerpc")
+    if (Arch == llvm::Triple::ppc)
       CmdArgs.push_back("ppc");
-    else if (Arch == "powerpc64")
+    else if (Arch == llvm::Triple::ppc64)
       CmdArgs.push_back("ppc64");
     else
-      CmdArgs.push_back(Args.MakeArgString(Arch));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName()));
   }
 
   // Try to force gcc to match the tool chain we want, if we recognize
@@ -3212,9 +3212,9 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: The triple class should directly provide the information we want
   // here.
-  if (Arch == "i386" || Arch == "powerpc")
+  if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc)
     CmdArgs.push_back("-m32");
-  else if (Arch == "x86_64" || Arch == "powerpc64")
+  else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::x86_64)
     CmdArgs.push_back("-m64");
 
   if (Output.isFilename()) {
@@ -3874,7 +3874,7 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
   Args.AddLastArg(CmdArgs, options::OPT_P);
 
   // FIXME: Handle %I properly.
-  if (getToolChain().getArchName() == "x86_64") {
+  if (getToolChain().getArch() == llvm::Triple::x86_64) {
     CmdArgs.push_back("-imultilib");
     CmdArgs.push_back("x86_64");
   }
@@ -4552,7 +4552,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     // Avoid linking compatibility stubs on i386 mac.
     if (!getDarwinToolChain().isTargetMacOS() ||
-        getDarwinToolChain().getArchName() != "i386") {
+        getDarwinToolChain().getArch() != llvm::Triple::x86) {
       // If we don't have ARC or subscripting runtime support, link in the
       // runtime stubs.  We have to do this *before* adding any of the normal
       // linker inputs so that its initializer gets run first.
@@ -5301,12 +5301,12 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // When building 32-bit code on FreeBSD/amd64, we have to explicitly
   // instruct ld in the base system to link 32-bit code.
-  if (ToolChain.getArchName() == "i386") {
+  if (ToolChain.getArch() == llvm::Triple::x86) {
     CmdArgs.push_back("-m");
     CmdArgs.push_back("elf_i386_fbsd");
   }
 
-  if (ToolChain.getArchName() == "powerpc") {
+  if (ToolChain.getArch() == llvm::Triple::ppc) {
     CmdArgs.push_back("-m");
     CmdArgs.push_back("elf32ppc_fbsd");
   }
@@ -5442,9 +5442,9 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--32");
 
   // Set byte order explicitly
-  if (getToolChain().getArchName() == "mips")
+  if (getToolChain().getArch() == llvm::Triple::mips)
     CmdArgs.push_back("-EB");
-  else if (getToolChain().getArchName() == "mipsel")
+  else if (getToolChain().getArch() == llvm::Triple::mipsel)
     CmdArgs.push_back("-EL");
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -6002,7 +6002,7 @@ void dragonfly::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   // When building 32-bit code on DragonFly/pc64, we have to explicitly
   // instruct as in the base system to assemble 32-bit code.
-  if (getToolChain().getArchName() == "i386")
+  if (getToolChain().getArch() == llvm::Triple::x86)
     CmdArgs.push_back("--32");
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -6046,7 +6046,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // When building 32-bit code on DragonFly/pc64, we have to explicitly
   // instruct ld in the base system to link 32-bit code.
-  if (getToolChain().getArchName() == "i386") {
+  if (getToolChain().getArch() == llvm::Triple::x86) {
     CmdArgs.push_back("-m");
     CmdArgs.push_back("elf_i386");
   }
