@@ -357,9 +357,8 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   if (I1 == MBB1->begin() && I2 != MBB2->begin()) {
     --I2;
     while (I2->isDebugValue()) {
-      if (I2 == MBB2->begin()) {
+      if (I2 == MBB2->begin())
         return TailLen;
-        }
       --I2;
     }
     ++I2;
@@ -482,21 +481,19 @@ bool
 BranchFolder::MergePotentialsElt::operator<(const MergePotentialsElt &o) const {
   if (getHash() < o.getHash())
     return true;
-   else if (getHash() > o.getHash())
+  if (getHash() > o.getHash())
     return false;
-  else if (getBlock()->getNumber() < o.getBlock()->getNumber())
+  if (getBlock()->getNumber() < o.getBlock()->getNumber())
     return true;
-  else if (getBlock()->getNumber() > o.getBlock()->getNumber())
+  if (getBlock()->getNumber() > o.getBlock()->getNumber())
     return false;
-  else {
-    // _GLIBCXX_DEBUG checks strict weak ordering, which involves comparing
-    // an object with itself.
+  // _GLIBCXX_DEBUG checks strict weak ordering, which involves comparing
+  // an object with itself.
 #ifndef _GLIBCXX_DEBUG
-    llvm_unreachable("Predecessor appears twice");
+  llvm_unreachable("Predecessor appears twice");
 #else
-    return false;
+  return false;
 #endif
-  }
 }
 
 /// CountTerminators - Count the number of terminators in the given
