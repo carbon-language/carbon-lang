@@ -446,6 +446,11 @@ def CMOV_GR16 : I<0, Pseudo,
                     "#CMOV_GR16* PSEUDO!",
                     [(set GR16:$dst,
                       (X86cmov GR16:$src1, GR16:$src2, imm:$cond, EFLAGS))]>;
+} // Predicates = [NoCMov]
+
+// fcmov doesn't handle all possible EFLAGS, provide a fallback if there is no
+// SSE1.
+let Predicates = [FPStackf32] in
 def CMOV_RFP32 : I<0, Pseudo,
                     (outs RFP32:$dst),
                     (ins RFP32:$src1, RFP32:$src2, i8imm:$cond),
@@ -453,6 +458,9 @@ def CMOV_RFP32 : I<0, Pseudo,
                     [(set RFP32:$dst,
                       (X86cmov RFP32:$src1, RFP32:$src2, imm:$cond,
                                                   EFLAGS))]>;
+// fcmov doesn't handle all possible EFLAGS, provide a fallback if there is no
+// SSE2.
+let Predicates = [FPStackf64] in
 def CMOV_RFP64 : I<0, Pseudo,
                     (outs RFP64:$dst),
                     (ins RFP64:$src1, RFP64:$src2, i8imm:$cond),
@@ -467,7 +475,6 @@ def CMOV_RFP80 : I<0, Pseudo,
                     [(set RFP80:$dst,
                       (X86cmov RFP80:$src1, RFP80:$src2, imm:$cond,
                                                   EFLAGS))]>;
-} // Predicates = [NoCMov]
 } // UsesCustomInserter = 1, Uses = [EFLAGS]
 
 
