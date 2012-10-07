@@ -540,20 +540,6 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// MachineInstr ctor - This constructor creates a MachineInstr and adds the
 /// implicit operands. It reserves space for the number of operands specified by
 /// the MCInstrDesc.
-MachineInstr::MachineInstr(const MCInstrDesc &tid, bool NoImp)
-  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    NumMemRefs(0), MemRefs(0), Parent(0) {
-  unsigned NumImplicitOps = 0;
-  if (!NoImp)
-    NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
-  Operands.reserve(NumImplicitOps + MCID->getNumOperands());
-  if (!NoImp)
-    addImplicitDefUseOperands();
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
-}
-
-/// MachineInstr ctor - As above, but with a DebugLoc.
 MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
                            bool NoImp)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
@@ -571,21 +557,6 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
 /// MachineInstr ctor - Work exactly the same as the ctor two above, except
 /// that the MachineInstr is created and added to the end of the specified
 /// basic block.
-MachineInstr::MachineInstr(MachineBasicBlock *MBB, const MCInstrDesc &tid)
-  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    NumMemRefs(0), MemRefs(0), Parent(0) {
-  assert(MBB && "Cannot use inserting ctor with null basic block!");
-  unsigned NumImplicitOps =
-    MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
-  Operands.reserve(NumImplicitOps + MCID->getNumOperands());
-  addImplicitDefUseOperands();
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
-  MBB->push_back(this);  // Add instruction to end of basic block!
-}
-
-/// MachineInstr ctor - As above, but with a DebugLoc.
-///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
                            const MCInstrDesc &tid)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
