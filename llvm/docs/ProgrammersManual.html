@@ -98,6 +98,7 @@ option</a></li>
       <li><a href="#dss_valuemap">"llvm/ADT/ValueMap.h"</a></li>
       <li><a href="#dss_intervalmap">"llvm/ADT/IntervalMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
+      <li><a href="#dss_mapvector">"llvm/ADT/MapVector.h"</a></li>
       <li><a href="#dss_inteqclasses">"llvm/ADT/IntEqClasses.h"</a></li>
       <li><a href="#dss_immutablemap">"llvm/ADT/ImmutableMap.h"</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
@@ -1845,6 +1846,24 @@ pair in the map, etc.</p>
 to iterate over the collection in sorted order, or if you need stable iterators
 into the map (i.e. they don't get invalidated if an insertion or deletion of
 another element takes place).</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_mapvector">"llvm/ADT/MapVector.h"</a>
+</h4>
+<div>
+
+<p> MapVector&lt;KeyT,ValueT&gt provides a subset of the DenseMap interface.
+  The main difference is that the iteration order is guaranteed to be
+  the insertion order, making it an easy (but somewhat expensive) solution
+  for non-deterministic iteration over maps of pointers. </p>
+
+<p> It is implemented by mapping from key to an index in a vector of key,value
+  pairs. This provides fast lookup and iteration, but has two main drawbacks:
+  The key is stored twice and it doesn't support removing elements. </p>
 
 </div>
 
