@@ -70,6 +70,37 @@
 
   <table id="news">
   <tr><td><b>2012</b></td></tr>
+  <tr><td width="120"><p>September</p></td>
+  <td>
+  <p>Experimental support for the <b>new isl code generator</b>
+     was committed. The code generator can be parameterized on a fine-grained
+     level. It gives direct control for example over unrolling, the amount of
+     control overhead and the code size. It can also be used to
+     create loops to handle border conditions or to perform full-partial tile
+     separation.<br />
+     We also relicensed isl under the <b>MIT license</b>. This means, with the
+     exception of GMP, there is no GPL licensed software used in Polly. The
+     use of GMP is limited to a well defined interface. Replacing it with
+     a BSD licensed replacement is a tractable engineering project we would
+     be very interested in. For more information about isl see the <a
+     href="http://www.kotnet.org/~skimo/isl/manual.pdf">isl manual</a>.
+     </p>
+  </td></tr>
+  <tr><td width="120"><p>July</p></td>
+  <td>
+  <p> Polly can now be directly linked to the <a
+href="http://pluto-compiler.sourceforge.net/">Pluto optimizer</a>. We were
+already able to perform Pluto-like optimizations with Polly, as a similer
+algorithm was added to isl half a year ago. However, being able to directly
+compare with the original implementation will not only bring in competition in
+the optimizer field. It will also allow new experiments with a cutting edge
+research tool.<br \>
+  This support was on of the outcomes of the 1-day Polly workshop and the
+  following week of joint work at IISC Bangalore and in cooperation with
+  AMD India.
+  </td></tr>
+  <td>
+  </td></tr>
   <tr><td width="120"><p>February</p></td>
   <td>
   <p>Polly is an official LLVM project, reachable at <a
