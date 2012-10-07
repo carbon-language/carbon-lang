@@ -28,6 +28,9 @@ using namespace llvm;
 // Attribute Function Definitions
 //===----------------------------------------------------------------------===//
 
+bool Attributes::hasAttributes(const Attributes &A) const {
+  return Bits & A.Bits;
+}
 bool Attributes::hasAddressSafetyAttr() const {
   return Bits & Attribute::AddressSafety_i;
 }
@@ -123,6 +126,31 @@ unsigned Attributes::getStackAlignment() const {
   if (!hasStackAlignmentAttr())
     return 0;
   return 1U << (((Bits & Attribute::StackAlignment_i) >> 26) - 1);
+}
+
+bool Attributes::isEmptyOrSingleton() const {
+  return (Bits & (Bits - 1)) == 0;
+}
+
+Attributes Attributes::operator | (const Attributes &Attrs) const {
+  return Attributes(Bits | Attrs.Bits);
+}
+Attributes Attributes::operator & (const Attributes &Attrs) const {
+  return Attributes(Bits & Attrs.Bits);
+}
+Attributes Attributes::operator ^ (const Attributes &Attrs) const {
+  return Attributes(Bits ^ Attrs.Bits);
+}
+Attributes &Attributes::operator |= (const Attributes &Attrs) {
+  Bits |= Attrs.Bits;
+  return *this;
+}
+Attributes &Attributes::operator &= (const Attributes &Attrs) {
+  Bits &= Attrs.Bits;
+  return *this;
+}
+Attributes Attributes::operator ~ () const {
+  return Attributes(~Bits);
 }
 
 Attributes Attributes::typeIncompatible(Type *Ty) {

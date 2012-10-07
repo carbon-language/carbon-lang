@@ -196,10 +196,7 @@ public:
   bool hasAttributes() const {
     return Bits != 0;
   }
-  bool hasAttributes(const Attributes &A) const {
-    return Bits & A.Bits;
-  }
-
+  bool hasAttributes(const Attributes &A) const;
   bool hasAddressSafetyAttr() const;
   bool hasAlignmentAttr() const;
   bool hasAlwaysInlineAttr() const;
@@ -236,9 +233,10 @@ public:
   /// value.
   unsigned getStackAlignment() const;
 
+  bool isEmptyOrSingleton() const;
+
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
-  bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
   bool operator == (const Attributes &Attrs) const {
     return Bits == Attrs.Bits;
   }
@@ -246,24 +244,13 @@ public:
     return Bits != Attrs.Bits;
   }
 
-  Attributes operator | (const Attributes &Attrs) const {
-    return Attributes(Bits | Attrs.Bits);
-  }
-  Attributes operator & (const Attributes &Attrs) const {
-    return Attributes(Bits & Attrs.Bits);
-  }
-  Attributes operator ^ (const Attributes &Attrs) const {
-    return Attributes(Bits ^ Attrs.Bits);
-  }
-  Attributes &operator |= (const Attributes &Attrs) {
-    Bits |= Attrs.Bits;
-    return *this;
-  }
-  Attributes &operator &= (const Attributes &Attrs) {
-    Bits &= Attrs.Bits;
-    return *this;
-  }
-  Attributes operator ~ () const { return Attributes(~Bits); }
+  Attributes operator | (const Attributes &Attrs) const;
+  Attributes operator & (const Attributes &Attrs) const;
+  Attributes operator ^ (const Attributes &Attrs) const;
+  Attributes &operator |= (const Attributes &Attrs);
+  Attributes &operator &= (const Attributes &Attrs);
+  Attributes operator ~ () const;
+
   uint64_t Raw() const { return Bits; }
 
   /// constructAlignmentFromInt - This turns an int alignment (a power of 2,
@@ -307,11 +294,11 @@ public:
     // Store the alignment in the bitcode as a 16-bit raw value instead of a
     // 5-bit log2 encoded value. Shift the bits above the alignment up by 11
     // bits.
-    uint64_t EncodedAttrs = Attrs.Bits & 0xffff;
+    uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
     if (Attrs.hasAlignmentAttr())
       EncodedAttrs |= (1ULL << 16) <<
-        (((Attrs.Bits & Attribute::Alignment_i) - 1) >> 16);
-    EncodedAttrs |= (Attrs.Bits & (0xfffULL << 21)) << 11;
+        (((Attrs.Raw() & Attribute::Alignment_i) - 1) >> 16);
+    EncodedAttrs |= (Attrs.Raw() & (0xfffULL << 21)) << 11;
     return EncodedAttrs;
   }
 
