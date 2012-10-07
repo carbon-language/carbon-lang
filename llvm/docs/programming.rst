@@ -6,10 +6,11 @@ Programming Documentation
 .. toctree::
    :hidden:
 
+   Atomics
    CodingStandards
    CommandLine
    CompilerWriterInfo
-   Atomics
+   ExtendingLLVM
    HowToSetUpLLVMStyleRTTI
 
 * `LLVM Language Reference Manual <LangRef.html>`_
@@ -40,7 +41,7 @@ Programming Documentation
   How to make ``isa<>``, ``dyn_cast<>``, etc. available for clients of your
   class hierarchy.
 
-* `Extending LLVM <ExtendingLLVM.html>`_
+* :ref:`extending_llvm`
 
   Look here to see how to add instructions and intrinsics to LLVM.
 
