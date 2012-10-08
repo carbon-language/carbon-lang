@@ -84,7 +84,8 @@ protected:
   /// this is the section to emit them into.
   const MCSection *CompactUnwindSection;
 
-  /// DwarfAccelNamesSection, DwarfAccelObjCSection
+  /// DwarfAccelNamesSection, DwarfAccelObjCSection,
+  /// DwarfAccelNamespaceSection, DwarfAccelTypesSection -
   /// If we use the DWARF accelerated hash tables then we want toe emit these
   /// sections.
   const MCSection *DwarfAccelNamesSection;
