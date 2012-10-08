@@ -325,8 +325,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   Builder.defineMacro("__clang_patchlevel__", "0");
 #endif
   Builder.defineMacro("__clang_version__", 
-                      "\"" CLANG_VERSION_STRING " ("
-                      + getClangFullRepositoryVersion() + ")\"");
+                      "\"" CLANG_VERSION_STRING " "
+                      + getClangFullRepositoryVersion() + "\"");
 #undef TOSTR
 #undef TOSTR2
   if (!LangOpts.MicrosoftMode) {
