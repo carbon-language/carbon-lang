@@ -133,8 +133,8 @@ void DwarfAccelTable::EmitHeader(AsmPrinter *Asm) {
   }
 }
 
-// Walk through and emit the buckets for the table. This will look
-// like a list of numbers of how many elements are in each bucket.
+// Walk through and emit the buckets for the table. Each index is
+// an offset into the list of hashes.
 void DwarfAccelTable::EmitBuckets(AsmPrinter *Asm) {
   unsigned index = 0;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
