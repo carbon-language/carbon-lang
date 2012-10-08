@@ -158,6 +158,12 @@ namespace llvm {
       void InitNodeNumDefs();
     };
 
+  protected:
+    /// ForceUnitLatencies - Return true if all scheduling edges should be given
+    /// a latency value of one.  The default is to return false; schedulers may
+    /// override this as needed.
+    virtual bool forceUnitLatencies() const { return false; }
+
   private:
     /// ClusterNeighboringLoads - Cluster loads from "near" addresses into
     /// combined SUnits.
