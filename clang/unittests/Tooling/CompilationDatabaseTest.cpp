@@ -14,6 +14,7 @@
 #include "clang/Tooling/FileMatchTrie.h"
 #include "clang/Tooling/JSONCompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/PathV2.h"
 #include "gtest/gtest.h"
 
 namespace clang {
@@ -56,8 +57,11 @@ TEST(JSONCompilationDatabase, GetAllFiles) {
             getAllFiles("[]", ErrorMessage)) << ErrorMessage;
 
   std::vector<std::string> expected_files;
-  expected_files.push_back("//net/dir/file1");
-  expected_files.push_back("//net/dir/file2");
+  SmallString<16> PathStorage;
+  llvm::sys::path::native("//net/dir/file1", PathStorage);
+  expected_files.push_back(PathStorage.str());
+  llvm::sys::path::native("//net/dir/file2", PathStorage);
+  expected_files.push_back(PathStorage.str());
   EXPECT_EQ(expected_files, getAllFiles(
     "[{\"directory\":\"//net/dir\","
       "\"command\":\"command\","
