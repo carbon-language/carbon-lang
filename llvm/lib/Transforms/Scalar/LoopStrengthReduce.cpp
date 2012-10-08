@@ -54,7 +54,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-reduce"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/AddressingMode.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -64,6 +64,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/SmallBitVector.h"
@@ -225,7 +226,7 @@ namespace {
 struct Formula {
   /// AM - This is used to represent complex addressing, as well as other kinds
   /// of interesting uses.
-  TargetLowering::AddrMode AM;
+  AddrMode AM;
 
   /// BaseRegs - The list of "base" registers for this use. When this is
   /// non-empty, AM.HasBaseReg should be set to true.
@@ -1269,7 +1270,7 @@ void LSRUse::dump() const {
 /// isLegalUse - Test whether the use described by AM is "legal", meaning it can
 /// be completely folded into the user instruction at isel time. This includes
 /// address-mode folding and special icmp tricks.
-static bool isLegalUse(const TargetLowering::AddrMode &AM,
+static bool isLegalUse(const AddrMode &AM,
                        LSRUse::KindType Kind, Type *AccessTy,
                        const TargetLowering *TLI) {
   switch (Kind) {
@@ -1326,7 +1327,7 @@ static bool isLegalUse(const TargetLowering::AddrMode &AM,
   llvm_unreachable("Invalid LSRUse Kind!");
 }
 
-static bool isLegalUse(TargetLowering::AddrMode AM,
+static bool isLegalUse(AddrMode AM,
                        int64_t MinOffset, int64_t MaxOffset,
                        LSRUse::KindType Kind, Type *AccessTy,
                        const TargetLowering *TLI) {
@@ -1357,7 +1358,7 @@ static bool isAlwaysFoldable(int64_t BaseOffs,
 
   // Conservatively, create an address with an immediate and a
   // base and a scale.
-  TargetLowering::AddrMode AM;
+  AddrMode AM;
   AM.BaseOffs = BaseOffs;
   AM.BaseGV = BaseGV;
   AM.HasBaseReg = HasBaseReg;
@@ -1395,7 +1396,7 @@ static bool isAlwaysFoldable(const SCEV *S,
 
   // Conservatively, create an address with an immediate and a
   // base and a scale.
-  TargetLowering::AddrMode AM;
+  AddrMode AM;
   AM.BaseOffs = BaseOffs;
   AM.BaseGV = BaseGV;
   AM.HasBaseReg = HasBaseReg;
@@ -2020,7 +2021,7 @@ LSRInstance::OptimizeLoopTermCond() {
               goto decline_post_inc;
             // Check for possible scaled-address reuse.
             Type *AccessTy = getAccessType(UI->getUser());
-            TargetLowering::AddrMode AM;
+            AddrMode AM;
             AM.Scale = C->getSExtValue();
             if (TLI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
