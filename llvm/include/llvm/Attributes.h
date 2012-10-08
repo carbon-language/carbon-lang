@@ -216,6 +216,7 @@ public:
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
   /// value from the Builder and wraps it in the Attributes class.
+  static Attributes get(Builder &B);
   static Attributes get(LLVMContext &Context, Builder &B);
 
   // Attribute query methods.

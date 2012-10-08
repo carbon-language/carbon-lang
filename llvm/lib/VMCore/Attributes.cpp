@@ -33,6 +33,12 @@ Attributes::Attributes(Attribute::AttrConst Val) : Attrs(Val.v) {}
 
 Attributes::Attributes(AttributesImpl *A) : Attrs(A->Bits) {}
 
+// FIXME: This is temporary until we have implemented the uniquified version of
+// AttributesImpl.
+Attributes Attributes::get(Attributes::Builder &B) {
+  return Attributes(B.Bits);
+}
+
 Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
   // If there are no attributes, return an empty Attributes class.
   if (B.Bits == 0)
