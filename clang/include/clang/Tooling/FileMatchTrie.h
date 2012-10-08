@@ -18,7 +18,6 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Twine.h"
 
 #include <string>
 #include <vector>
@@ -28,7 +27,7 @@ namespace tooling {
 
 struct PathComparator {
   virtual ~PathComparator() {}
-  virtual bool equivalent(const Twine &FileA, const Twine &FileB) const = 0;
+  virtual bool equivalent(StringRef FileA, StringRef FileB) const = 0;
 };
 class FileMatchTrieNode;
 

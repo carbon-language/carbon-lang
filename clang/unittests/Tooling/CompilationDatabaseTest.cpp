@@ -84,8 +84,8 @@ static CompileCommand findCompileArgsInJsonDatabase(StringRef FileName,
 
 struct FakeComparator : public PathComparator {
   virtual ~FakeComparator() {}
-  virtual bool equivalent(const Twine &FileA, const Twine &FileB) const {
-    return StringRef(FileA.str()).equals_lower(FileB.str());
+  virtual bool equivalent(StringRef FileA, StringRef FileB) const {
+    return FileA.equals_lower(FileB);
   }
 };
 
