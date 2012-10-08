@@ -392,6 +392,18 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfMacroInfoSection =
     Ctx->getELFSection(".debug_macinfo", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
+  DwarfAccelNamesSection =
+    Ctx->getELFSection(".apple_names", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
+  DwarfAccelObjCSection =
+    Ctx->getELFSection(".apple_objc", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
+  DwarfAccelNamespaceSection =
+    Ctx->getELFSection(".apple_namespaces", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
+  DwarfAccelTypesSection =
+    Ctx->getELFSection(".apple_types", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
 }
 
 
