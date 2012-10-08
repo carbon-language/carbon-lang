@@ -224,6 +224,9 @@ class JITTest : public testing::Test {
   OwningPtr<ExecutionEngine> TheJIT;
 };
 
+// Tests on ARM disabled as we're running the old jit
+#if !defined(__arm__)
+
 // Regression test for a bug.  The JIT used to allocate globals inside the same
 // memory block used for the function, and when the function code was freed,
 // the global was left in the same place.  This test allocates a function
@@ -291,6 +294,8 @@ TEST(JIT, GlobalInFunction) {
   F2Ptr();
   EXPECT_EQ(3, *GPtr);
 }
+
+#endif // !defined(__arm__)
 
 int PlusOne(int arg) {
   return arg + 1;
@@ -521,6 +526,9 @@ TEST_F(JITTest, NoStubs) {
 }
 #endif  // !ARM && !PPC
 
+// Tests on ARM disabled as we're running the old jit
+#if !defined(__arm__)
+
 TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
   TheJIT->DisableLazyCompilation(true);
   LoadAssembly("define i8()* @get_foo_addr() { "
@@ -554,6 +562,8 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
   EXPECT_EQ((intptr_t)foo, (intptr_t)foo_addr);
 #endif
 }
+
+#endif //!defined(__arm__)
 
 // ARM does not have an implementation
 // of replaceMachineCodeForFunction(), so recompileAndRelinkFunction
@@ -599,6 +609,9 @@ extern "C" int32_t JITTest_AvailableExternallyGlobal;
 int32_t JITTest_AvailableExternallyGlobal = 42;
 namespace {
 
+// Tests on ARM disabled as we're running the old jit
+#if !defined(__arm__)
+
 TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
   TheJIT->DisableLazyCompilation(true);
   LoadAssembly("@JITTest_AvailableExternallyGlobal = "
@@ -615,7 +628,7 @@ TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
   EXPECT_EQ(42, loader()) << "func should return 42 from the external global,"
                           << " not 7 from the IR version.";
 }
-
+#endif //!defined(__arm__)
 }  // anonymous namespace
 // This function is intentionally defined differently in the statically-compiled
 // program from the IR input to the JIT to assert that the JIT doesn't use its
