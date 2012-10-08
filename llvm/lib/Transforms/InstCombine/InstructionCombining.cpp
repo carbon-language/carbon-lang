@@ -40,7 +40,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
@@ -88,7 +88,7 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
 
 
 Value *InstCombiner::EmitGEPOffset(User *GEP) {
-  return llvm::EmitGEPOffset(Builder, *getTargetData(), GEP);
+  return llvm::EmitGEPOffset(Builder, *getDataLayout(), GEP);
 }
 
 /// ShouldChangeType - Return true if it is desirable to convert a computation
@@ -1854,7 +1854,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 static bool AddReachableCodeToWorklist(BasicBlock *BB,
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
-                                       const TargetData *TD,
+                                       const DataLayout *TD,
                                        const TargetLibraryInfo *TLI) {
   bool MadeIRChange = false;
   SmallVector<BasicBlock*, 256> Worklist;
@@ -2120,7 +2120,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
 
 bool InstCombiner::runOnFunction(Function &F) {
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   /// Builder - This is an IRBuilder that automatically inserts new

@@ -394,7 +394,7 @@ static bool isDereferenceablePointer(const Value *V,
   // It's also not always safe to follow a bitcast, for example:
   //   bitcast i8* (alloca i8) to i32*
   // would result in a 4-byte load from a 1-byte alloca. Some cases could
-  // be handled using TargetData to check sizes and alignments though.
+  // be handled using DataLayout to check sizes and alignments though.
 
   // These are obviously ok.
   if (isa<AllocaInst>(V)) return true;

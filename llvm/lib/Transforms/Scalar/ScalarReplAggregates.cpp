@@ -46,7 +46,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
@@ -87,7 +87,7 @@ namespace {
 
   private:
     bool HasDomTree;
-    TargetData *TD;
+    DataLayout *TD;
 
     /// DeadInsts - Keep track of instructions we have made dead, so that
     /// we can remove them after we are done working.
@@ -258,7 +258,7 @@ namespace {
 class ConvertToScalarInfo {
   /// AllocaSize - The size of the alloca being considered in bytes.
   unsigned AllocaSize;
-  const TargetData &TD;
+  const DataLayout &TD;
   unsigned ScalarLoadThreshold;
 
   /// IsNotTrivial - This is set to true if there is some access to the object
@@ -301,7 +301,7 @@ class ConvertToScalarInfo {
   bool HadDynamicAccess;
 
 public:
-  explicit ConvertToScalarInfo(unsigned Size, const TargetData &td,
+  explicit ConvertToScalarInfo(unsigned Size, const DataLayout &td,
                                unsigned SLT)
     : AllocaSize(Size), TD(td), ScalarLoadThreshold(SLT), IsNotTrivial(false),
     ScalarKind(Unknown), VectorTy(0), HadNonMemTransferAccess(false),
@@ -1020,11 +1020,11 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
 
 
 bool SROA::runOnFunction(Function &F) {
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
 
   bool Changed = performPromotion(F);
 
-  // FIXME: ScalarRepl currently depends on TargetData more than it
+  // FIXME: ScalarRepl currently depends on DataLayout more than it
   // theoretically needs to. It should be refactored in order to support
   // target-independent IR. Until this is done, just skip the actual
   // scalar-replacement portion of this pass.
@@ -1134,7 +1134,7 @@ public:
 ///
 /// We can do this to a select if its only uses are loads and if the operand to
 /// the select can be loaded unconditionally.
-static bool isSafeSelectToSpeculate(SelectInst *SI, const TargetData *TD) {
+static bool isSafeSelectToSpeculate(SelectInst *SI, const DataLayout *TD) {
   bool TDerefable = SI->getTrueValue()->isDereferenceablePointer();
   bool FDerefable = SI->getFalseValue()->isDereferenceablePointer();
 
@@ -1172,7 +1172,7 @@ static bool isSafeSelectToSpeculate(SelectInst *SI, const TargetData *TD) {
 ///
 /// We can do this to a select if its only uses are loads and if the operand to
 /// the select can be loaded unconditionally.
-static bool isSafePHIToSpeculate(PHINode *PN, const TargetData *TD) {
+static bool isSafePHIToSpeculate(PHINode *PN, const DataLayout *TD) {
   // For now, we can only do this promotion if the load is in the same block as
   // the PHI, and if there are no stores between the phi and load.
   // TODO: Allow recursive phi users.
@@ -1236,7 +1236,7 @@ static bool isSafePHIToSpeculate(PHINode *PN, const TargetData *TD) {
 /// direct (non-volatile) loads and stores to it.  If the alloca is close but
 /// not quite there, this will transform the code to allow promotion.  As such,
 /// it is a non-pure predicate.
-static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
+static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *TD) {
   SetVector<Instruction*, SmallVector<Instruction*, 4>,
             SmallPtrSet<Instruction*, 4> > InstsToRewrite;
 
@@ -2537,7 +2537,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
 /// HasPadding - Return true if the specified type has any structure or
 /// alignment padding in between the elements that would be split apart
 /// by SROA; return false otherwise.
-static bool HasPadding(Type *Ty, const TargetData &TD) {
+static bool HasPadding(Type *Ty, const DataLayout &TD) {
   if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Ty = ATy->getElementType();
     return TD.getTypeSizeInBits(Ty) != TD.getTypeAllocSizeInBits(Ty);

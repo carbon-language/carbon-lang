@@ -25,7 +25,7 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-// Handle the Pass registration stuff necessary to use TargetData's.
+// Handle the Pass registration stuff necessary to use DataLayout's.
 INITIALIZE_PASS(MachineModuleInfo, "machinemoduleinfo",
                 "Machine Module Information", false, false)
 char MachineModuleInfo::ID = 0;

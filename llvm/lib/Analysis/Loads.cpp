@@ -13,7 +13,7 @@
 
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
@@ -52,8 +52,8 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
 /// bitcasts to get back to the underlying object being addressed, keeping
 /// track of the offset in bytes from the GEPs relative to the result.
 /// This is closely related to GetUnderlyingObject but is located
-/// here to avoid making VMCore depend on TargetData.
-static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
+/// here to avoid making VMCore depend on DataLayout.
+static Value *getUnderlyingObjectWithOffset(Value *V, const DataLayout *TD,
                                             uint64_t &ByteOffset,
                                             unsigned MaxLookup = 6) {
   if (!V->getType()->isPointerTy())
@@ -85,7 +85,7 @@ static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
-                                       unsigned Align, const TargetData *TD) {
+                                       unsigned Align, const DataLayout *TD) {
   uint64_t ByteOffset = 0;
   Value *Base = V;
   if (TD)

@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -718,7 +718,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
             Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
-            unsigned ABIAlignment= TLI.getTargetData()->getABITypeAlignment(Ty);
+            unsigned ABIAlignment= TLI.getDataLayout()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
               ExpandUnalignedStore(cast<StoreSDNode>(Node),
                                    DAG, TLI, this);
@@ -824,7 +824,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
             Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
-            unsigned ABIAlignment= TLI.getTargetData()->getABITypeAlignment(Ty);
+            unsigned ABIAlignment= TLI.getDataLayout()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
               ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
           }
@@ -874,7 +874,7 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
         Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
         unsigned ABIAlignment =
-          TLI.getTargetData()->getABITypeAlignment(Ty);
+          TLI.getDataLayout()->getABITypeAlignment(Ty);
         if (LD->getAlignment() < ABIAlignment){
           ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, RVal, RChain);
         }
@@ -1059,7 +1059,7 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
                  Type *Ty =
                    LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
                  unsigned ABIAlignment =
-                   TLI.getTargetData()->getABITypeAlignment(Ty);
+                   TLI.getDataLayout()->getABITypeAlignment(Ty);
                  if (LD->getAlignment() < ABIAlignment){
                    ExpandUnalignedLoad(cast<LoadSDNode>(Node),
                                        DAG, TLI, Value, Chain);
@@ -1625,7 +1625,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
                                                DebugLoc dl) {
   // Create the stack frame object.
   unsigned SrcAlign =
-    TLI.getTargetData()->getPrefTypeAlignment(SrcOp.getValueType().
+    TLI.getDataLayout()->getPrefTypeAlignment(SrcOp.getValueType().
                                               getTypeForEVT(*DAG.getContext()));
   SDValue FIPtr = DAG.CreateStackTemporary(SlotVT, SrcAlign);
 
@@ -1637,7 +1637,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
   Type *DestType = DestVT.getTypeForEVT(*DAG.getContext());
-  unsigned DestAlign = TLI.getTargetData()->getPrefTypeAlignment(DestType);
+  unsigned DestAlign = TLI.getDataLayout()->getPrefTypeAlignment(DestType);
 
   // Emit a store to the stack slot.  Use a truncstore if the input value is
   // later than DestVT.
@@ -2786,7 +2786,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     // Increment the pointer, VAList, to the next vaarg
     Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
-                       DAG.getConstant(TLI.getTargetData()->
+                       DAG.getConstant(TLI.getDataLayout()->
                           getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext())),
                                        TLI.getPointerTy()));
     // Store the incremented VAList to the legalized pointer
@@ -3365,7 +3365,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     EVT PTy = TLI.getPointerTy();
 
-    const TargetData &TD = *TLI.getTargetData();
+    const DataLayout &TD = *TLI.getDataLayout();
     unsigned EntrySize =
       DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(TD);
 

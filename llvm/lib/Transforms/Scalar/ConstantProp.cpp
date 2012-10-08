@@ -24,7 +24,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -67,7 +67,7 @@ bool ConstantPropagation::runOnFunction(Function &F) {
       WorkList.insert(&*i);
   }
   bool Changed = false;
-  TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
   TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   while (!WorkList.empty()) {

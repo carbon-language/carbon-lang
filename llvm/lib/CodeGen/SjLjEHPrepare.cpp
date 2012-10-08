@@ -30,7 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -191,7 +191,7 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
   // that needs to be restored on all exits from the function. This is an alloca
   // because the value needs to be added to the global context list.
   unsigned Align =
-    TLI->getTargetData()->getPrefTypeAlignment(FunctionContextTy);
+    TLI->getDataLayout()->getPrefTypeAlignment(FunctionContextTy);
   FuncCtx =
     new AllocaInst(FunctionContextTy, 0, Align, "fn_context", EntryBB->begin());
 

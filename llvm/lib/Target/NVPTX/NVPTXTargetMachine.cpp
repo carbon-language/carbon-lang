@@ -32,7 +32,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -71,7 +71,7 @@ NVPTXTargetMachine::NVPTXTargetMachine(const Target &T,
                                        bool is64bit)
 : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
   Subtarget(TT, CPU, FS, is64bit),
-  DataLayout(Subtarget.getDataLayout()),
+  DL(Subtarget.getDataLayout()),
   InstrInfo(*this), TLInfo(*this), TSInfo(*this), FrameLowering(*this,is64bit)
 /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {
 }

@@ -22,7 +22,7 @@
 #include "MipsSubtarget.h"
 #include "MipsELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
@@ -31,7 +31,7 @@ class MipsRegisterInfo;
 
 class MipsTargetMachine : public LLVMTargetMachine {
   MipsSubtarget       Subtarget;
-  const TargetData    DataLayout; // Calculates type size & alignment
+  const DataLayout    DL; // Calculates type size & alignment
   const MipsInstrInfo *InstrInfo;
   const MipsFrameLowering *FrameLowering;
   MipsTargetLowering  TLInfo;
@@ -54,8 +54,8 @@ public:
   { return FrameLowering; }
   virtual const MipsSubtarget *getSubtargetImpl() const
   { return &Subtarget; }
-  virtual const TargetData *getTargetData()    const
-  { return &DataLayout;}
+  virtual const DataLayout *getDataLayout()    const
+  { return &DL;}
   virtual MipsJITInfo *getJITInfo()
   { return &JITInfo; }
 

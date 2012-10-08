@@ -152,7 +152,7 @@ stuff too.
 
 //===---------------------------------------------------------------------===//
 
-For vector types, TargetData.cpp::getTypeInfo() returns alignment that is equal
+For vector types, DataLayout.cpp::getTypeInfo() returns alignment that is equal
 to the type size. It works but can be overly conservative as the alignment of
 specific vector types are target dependent.
 

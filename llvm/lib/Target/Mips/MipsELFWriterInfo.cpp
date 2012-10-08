@@ -15,7 +15,7 @@
 #include "MipsRelocations.h"
 #include "llvm/Function.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/ELF.h"
 

@@ -23,7 +23,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;

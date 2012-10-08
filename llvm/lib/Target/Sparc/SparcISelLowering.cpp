@@ -637,7 +637,7 @@ SparcTargetLowering::getSRetArgSize(SelectionDAG &DAG, SDValue Callee) const
 
   PointerType *Ty = cast<PointerType>(CalleeFn->arg_begin()->getType());
   Type *ElementTy = Ty->getElementType();
-  return getTargetData()->getTypeAllocSize(ElementTy);
+  return getDataLayout()->getTypeAllocSize(ElementTy);
 }
 
 //===----------------------------------------------------------------------===//

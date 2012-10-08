@@ -25,7 +25,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
@@ -190,7 +190,7 @@ const CallInst *llvm::extractMallocCall(const Value *I,
   return isMallocLikeFn(I, TLI) ? dyn_cast<CallInst>(I) : 0;
 }
 
-static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
+static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
                                const TargetLibraryInfo *TLI,
                                bool LookThroughSExt = false) {
   if (!CI)
@@ -220,7 +220,7 @@ static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
 const CallInst *llvm::isArrayMalloc(const Value *I,
-                                    const TargetData *TD,
+                                    const DataLayout *TD,
                                     const TargetLibraryInfo *TLI) {
   const CallInst *CI = extractMallocCall(I, TLI);
   Value *ArraySize = computeArraySize(CI, TD, TLI);
@@ -281,7 +281,7 @@ Type *llvm::getMallocAllocatedType(const CallInst *CI,
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value *llvm::getMallocArraySize(CallInst *CI, const TargetData *TD,
+Value *llvm::getMallocArraySize(CallInst *CI, const DataLayout *TD,
                                 const TargetLibraryInfo *TLI,
                                 bool LookThroughSExt) {
   assert(isMallocLikeFn(CI, TLI) && "getMallocArraySize and not malloc call");
@@ -341,7 +341,7 @@ const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
 /// object size in Size if successful, and false otherwise.
 /// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
 /// byval arguments, and global variables.
-bool llvm::getObjectSize(const Value *Ptr, uint64_t &Size, const TargetData *TD,
+bool llvm::getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
                          const TargetLibraryInfo *TLI, bool RoundToAlign) {
   if (!TD)
     return false;
@@ -373,7 +373,7 @@ APInt ObjectSizeOffsetVisitor::align(APInt Size, uint64_t Align) {
   return Size;
 }
 
-ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const TargetData *TD,
+ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *TD,
                                                  const TargetLibraryInfo *TLI,
                                                  LLVMContext &Context,
                                                  bool RoundToAlign)
@@ -559,7 +559,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitInstruction(Instruction &I) {
 }
 
 
-ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const TargetData *TD,
+ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const DataLayout *TD,
                                                    const TargetLibraryInfo *TLI,
                                                      LLVMContext &Context)
 : TD(TD), TLI(TLI), Context(Context), Builder(Context, TargetFolder(TD)) {

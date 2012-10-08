@@ -73,7 +73,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
@@ -2582,7 +2582,7 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
 }
 
 const SCEV *ScalarEvolution::getSizeOfExpr(Type *AllocTy) {
-  // If we have TargetData, we can bypass creating a target-independent
+  // If we have DataLayout, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
   if (TD)
@@ -2608,7 +2608,7 @@ const SCEV *ScalarEvolution::getAlignOfExpr(Type *AllocTy) {
 
 const SCEV *ScalarEvolution::getOffsetOfExpr(StructType *STy,
                                              unsigned FieldNo) {
-  // If we have TargetData, we can bypass creating a target-independent
+  // If we have DataLayout, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
   if (TD)
@@ -2673,7 +2673,7 @@ bool ScalarEvolution::isSCEVable(Type *Ty) const {
 uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
 
-  // If we have a TargetData, use it!
+  // If we have a DataLayout, use it!
   if (TD)
     return TD->getTypeSizeInBits(Ty);
 
@@ -2681,7 +2681,7 @@ uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
   if (Ty->isIntegerTy())
     return Ty->getPrimitiveSizeInBits();
 
-  // The only other support type is pointer. Without TargetData, conservatively
+  // The only other support type is pointer. Without DataLayout, conservatively
   // assume pointers are 64-bit.
   assert(Ty->isPointerTy() && "isSCEVable permitted a non-SCEVable type!");
   return 64;
@@ -2701,7 +2701,7 @@ Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
   if (TD) return TD->getIntPtrType(getContext());
 
-  // Without TargetData, conservatively assume pointers are 64-bit.
+  // Without DataLayout, conservatively assume pointers are 64-bit.
   return Type::getInt64Ty(getContext());
 }
 
@@ -4751,7 +4751,7 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
 /// reason, return null.
 static Constant *EvaluateExpression(Value *V, const Loop *L,
                                     DenseMap<Instruction *, Constant *> &Vals,
-                                    const TargetData *TD,
+                                    const DataLayout *TD,
                                     const TargetLibraryInfo *TLI) {
   // Convenient constant check, but redundant for recursive calls.
   if (Constant *C = dyn_cast<Constant>(V)) return C;
@@ -6590,7 +6590,7 @@ ScalarEvolution::ScalarEvolution()
 bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   LI = &getAnalysis<LoopInfo>();
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTree>();
   return false;

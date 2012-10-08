@@ -16,7 +16,7 @@
 using namespace llvm;
 
 TargetSelectionDAGInfo::TargetSelectionDAGInfo(const TargetMachine &TM)
-  : TD(TM.getTargetData()) {
+  : TD(TM.getDataLayout()) {
 }
 
 TargetSelectionDAGInfo::~TargetSelectionDAGInfo() {

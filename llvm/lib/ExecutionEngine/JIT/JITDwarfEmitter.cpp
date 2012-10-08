@@ -24,7 +24,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -42,7 +42,7 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
   assert(MMI && "MachineModuleInfo not registered!");
 
   const TargetMachine& TM = F.getTarget();
-  TD = TM.getTargetData();
+  TD = TM.getDataLayout();
   stackGrowthDirection = TM.getFrameLowering()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
   MAI = TM.getMCAsmInfo();

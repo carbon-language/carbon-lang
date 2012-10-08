@@ -18,7 +18,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -66,7 +66,7 @@ Pass *llvm::createLoopInstSimplifyPass() {
 bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
   LoopInfo *LI = &getAnalysis<LoopInfo>();
-  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;

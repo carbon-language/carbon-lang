@@ -54,7 +54,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
@@ -65,7 +65,7 @@ STATISTIC(NumMemCpy, "Number of memcpy's formed from loop load+stores");
 namespace {
   class LoopIdiomRecognize : public LoopPass {
     Loop *CurLoop;
-    const TargetData *TD;
+    const DataLayout *TD;
     DominatorTree *DT;
     ScalarEvolution *SE;
     TargetLibraryInfo *TLI;
@@ -199,7 +199,7 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
       return false;
 
   // We require target data for now.
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
   if (TD == 0) return false;
 
   DT = &getAnalysis<DominatorTree>();
@@ -408,7 +408,7 @@ static bool mayLoopAccessLocation(Value *Ptr,AliasAnalysis::ModRefResult Access,
 ///
 /// Note that we don't ever attempt to use memset_pattern8 or 4, because these
 /// just replicate their input array and then pass on to memset_pattern16.
-static Constant *getMemSetPatternValue(Value *V, const TargetData &TD) {
+static Constant *getMemSetPatternValue(Value *V, const DataLayout &TD) {
   // If the value isn't a constant, we can't promote it to being in a constant
   // array.  We could theoretically do a store to an alloca or something, but
   // that doesn't seem worthwhile.

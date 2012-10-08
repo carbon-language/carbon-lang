@@ -12,7 +12,7 @@
 //
 // Also, to supplement the basic VMCore ConstantExpr simplifications,
 // this file declares some additional folding routines that can make use of
-// TargetData information. These functions cannot go in VMCore due to library
+// DataLayout information. These functions cannot go in VMCore due to library
 // dependency issues.
 //
 //===----------------------------------------------------------------------===//
@@ -24,7 +24,7 @@ namespace llvm {
   class Constant;
   class ConstantExpr;
   class Instruction;
-  class TargetData;
+  class DataLayout;
   class TargetLibraryInfo;
   class Function;
   class Type;
@@ -36,14 +36,14 @@ namespace llvm {
 /// Note that this fails if not all of the operands are constant.  Otherwise,
 /// this function can only fail when attempting to fold instructions like loads
 /// and stores, which have no constant expression form.
-Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0,
+Constant *ConstantFoldInstruction(Instruction *I, const DataLayout *TD = 0,
                                   const TargetLibraryInfo *TLI = 0);
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
-/// using the specified TargetData.  If successful, the constant result is
+/// using the specified DataLayout.  If successful, the constant result is
 /// result is returned, if not, null is returned.
 Constant *ConstantFoldConstantExpression(const ConstantExpr *CE,
-                                         const TargetData *TD = 0,
+                                         const DataLayout *TD = 0,
                                          const TargetLibraryInfo *TLI = 0);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
@@ -54,7 +54,7 @@ Constant *ConstantFoldConstantExpression(const ConstantExpr *CE,
 ///
 Constant *ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
                                    ArrayRef<Constant *> Ops,
-                                   const TargetData *TD = 0,
+                                   const DataLayout *TD = 0,
                                    const TargetLibraryInfo *TLI = 0);
 
 /// ConstantFoldCompareInstOperands - Attempt to constant fold a compare
@@ -63,7 +63,7 @@ Constant *ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
 ///
 Constant *ConstantFoldCompareInstOperands(unsigned Predicate,
                                           Constant *LHS, Constant *RHS,
-                                          const TargetData *TD = 0,
+                                          const DataLayout *TD = 0,
                                           const TargetLibraryInfo *TLI = 0);
 
 /// ConstantFoldInsertValueInstruction - Attempt to constant fold an insertvalue
@@ -75,7 +75,7 @@ Constant *ConstantFoldInsertValueInstruction(Constant *Agg, Constant *Val,
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.
-Constant *ConstantFoldLoadFromConstPtr(Constant *C, const TargetData *TD = 0);
+Constant *ConstantFoldLoadFromConstPtr(Constant *C, const DataLayout *TD = 0);
 
 /// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
 /// getelementptr constantexpr, return the constant value being addressed by the

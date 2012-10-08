@@ -145,7 +145,7 @@ static inline LLVMBool LLVMInitializeNativeTarget(void) {
 /*===-- Target Data -------------------------------------------------------===*/
 
 /** Creates target data from a target layout string.
-    See the constructor llvm::TargetData::TargetData. */
+    See the constructor llvm::DataLayout::DataLayout. */
 LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep);
 
 /** Adds target data information to a pass manager. This does not take ownership
@@ -160,48 +160,48 @@ void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef, LLVMPassManagerRef);
 
 /** Converts target data to a target layout string. The string must be disposed
     with LLVMDisposeMessage.
-    See the constructor llvm::TargetData::TargetData. */
+    See the constructor llvm::DataLayout::DataLayout. */
 char *LLVMCopyStringRepOfTargetData(LLVMTargetDataRef);
 
 /** Returns the byte order of a target, either LLVMBigEndian or
     LLVMLittleEndian.
-    See the method llvm::TargetData::isLittleEndian. */
+    See the method llvm::DataLayout::isLittleEndian. */
 enum LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef);
 
 /** Returns the pointer size in bytes for a target.
-    See the method llvm::TargetData::getPointerSize. */
+    See the method llvm::DataLayout::getPointerSize. */
 unsigned LLVMPointerSize(LLVMTargetDataRef);
 
 /** Returns the integer type that is the same size as a pointer on a target.
-    See the method llvm::TargetData::getIntPtrType. */
+    See the method llvm::DataLayout::getIntPtrType. */
 LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef);
 
 /** Computes the size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeSizeInBits. */
+    See the method llvm::DataLayout::getTypeSizeInBits. */
 unsigned long long LLVMSizeOfTypeInBits(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the storage size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeStoreSize. */
+    See the method llvm::DataLayout::getTypeStoreSize. */
 unsigned long long LLVMStoreSizeOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the ABI size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeAllocSize. */
+    See the method llvm::DataLayout::getTypeAllocSize. */
 unsigned long long LLVMABISizeOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the ABI alignment of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeABISize. */
+    See the method llvm::DataLayout::getTypeABISize. */
 unsigned LLVMABIAlignmentOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the call frame alignment of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeABISize. */
+    See the method llvm::DataLayout::getTypeABISize. */
 unsigned LLVMCallFrameAlignmentOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the preferred alignment of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeABISize. */
+    See the method llvm::DataLayout::getTypeABISize. */
 unsigned LLVMPreferredAlignmentOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the preferred alignment of a global variable in bytes for a target.
-    See the method llvm::TargetData::getPreferredAlignment. */
+    See the method llvm::DataLayout::getPreferredAlignment. */
 unsigned LLVMPreferredAlignmentOfGlobal(LLVMTargetDataRef,
                                         LLVMValueRef GlobalVar);
 
@@ -216,7 +216,7 @@ unsigned long long LLVMOffsetOfElement(LLVMTargetDataRef, LLVMTypeRef StructTy,
                                        unsigned Element);
 
 /** Deallocates a TargetData.
-    See the destructor llvm::TargetData::~TargetData. */
+    See the destructor llvm::DataLayout::~DataLayout. */
 void LLVMDisposeTargetData(LLVMTargetDataRef);
 
 /**
@@ -227,15 +227,15 @@ void LLVMDisposeTargetData(LLVMTargetDataRef);
 }
 
 namespace llvm {
-  class TargetData;
+  class DataLayout;
   class TargetLibraryInfo;
 
-  inline TargetData *unwrap(LLVMTargetDataRef P) {
-    return reinterpret_cast<TargetData*>(P);
+  inline DataLayout *unwrap(LLVMTargetDataRef P) {
+    return reinterpret_cast<DataLayout*>(P);
   }
   
-  inline LLVMTargetDataRef wrap(const TargetData *P) {
-    return reinterpret_cast<LLVMTargetDataRef>(const_cast<TargetData*>(P));
+  inline LLVMTargetDataRef wrap(const DataLayout *P) {
+    return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout*>(P));
   }
 
   inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {

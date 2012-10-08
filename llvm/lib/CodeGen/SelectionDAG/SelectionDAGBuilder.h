@@ -66,7 +66,7 @@ class ShuffleVectorInst;
 class SIToFPInst;
 class StoreInst;
 class SwitchInst;
-class TargetData;
+class DataLayout;
 class TargetLibraryInfo;
 class TargetLowering;
 class TruncInst;
@@ -285,7 +285,7 @@ public:
   const TargetMachine &TM;
   const TargetLowering &TLI;
   SelectionDAG &DAG;
-  const TargetData *TD;
+  const DataLayout *TD;
   AliasAnalysis *AA;
   const TargetLibraryInfo *LibInfo;
 

@@ -41,7 +41,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Vectorize.h"
 #include <algorithm>
@@ -178,7 +178,7 @@ namespace {
       : BasicBlockPass(ID), Config(C) {
       AA = &P->getAnalysis<AliasAnalysis>();
       SE = &P->getAnalysis<ScalarEvolution>();
-      TD = P->getAnalysisIfAvailable<TargetData>();
+      TD = P->getAnalysisIfAvailable<DataLayout>();
     }
 
     typedef std::pair<Value *, Value *> ValuePair;
@@ -192,7 +192,7 @@ namespace {
 
     AliasAnalysis *AA;
     ScalarEvolution *SE;
-    TargetData *TD;
+    DataLayout *TD;
 
     // FIXME: const correct?
 
@@ -364,7 +364,7 @@ namespace {
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       AA = &getAnalysis<AliasAnalysis>();
       SE = &getAnalysis<ScalarEvolution>();
-      TD = getAnalysisIfAvailable<TargetData>();
+      TD = getAnalysisIfAvailable<DataLayout>();
 
       return vectorizeBB(BB);
     }

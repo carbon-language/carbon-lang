@@ -16,7 +16,7 @@
 #include "llvm-c/Initialization.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/LLVMContext.h"
 #include <cstring>
@@ -33,11 +33,11 @@ void LLVMInitializeTarget(LLVMPassRegistryRef R) {
 }
 
 LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep) {
-  return wrap(new TargetData(StringRep));
+  return wrap(new DataLayout(StringRep));
 }
 
 void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM) {
-  unwrap(PM)->add(new TargetData(*unwrap(TD)));
+  unwrap(PM)->add(new DataLayout(*unwrap(TD)));
 }
 
 void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef TLI,

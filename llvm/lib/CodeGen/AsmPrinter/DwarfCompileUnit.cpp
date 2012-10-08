@@ -22,7 +22,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -510,7 +510,7 @@ bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
   const char *FltPtr = (const char*)FltVal.getRawData();
 
   int NumBytes = FltVal.getBitWidth() / 8; // 8 bits per byte.
-  bool LittleEndian = Asm->getTargetData().isLittleEndian();
+  bool LittleEndian = Asm->getDataLayout().isLittleEndian();
   int Incr = (LittleEndian ? 1 : -1);
   int Start = (LittleEndian ? 0 : NumBytes - 1);
   int Stop = (LittleEndian ? NumBytes : -1);
@@ -552,7 +552,7 @@ bool CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
   const uint64_t *Ptr64 = Val.getRawData();
 
   int NumBytes = Val.getBitWidth() / 8; // 8 bits per byte.
-  bool LittleEndian = Asm->getTargetData().isLittleEndian();
+  bool LittleEndian = Asm->getDataLayout().isLittleEndian();
 
   // Output the constant to DWARF one byte at a time.
   for (int i = 0; i < NumBytes; i++) {
@@ -1227,7 +1227,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     SmallVector<Value*, 3> Idx(CE->op_begin()+1, CE->op_end());
     addUInt(Block, 0, dwarf::DW_FORM_udata, 
-                   Asm->getTargetData().getIndexedOffset(Ptr->getType(), Idx));
+                   Asm->getDataLayout().getIndexedOffset(Ptr->getType(), Idx));
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
     addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
   }
@@ -1459,7 +1459,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
     Offset -= FieldOffset;
 
     // Maybe we need to work from the other end.
-    if (Asm->getTargetData().isLittleEndian())
+    if (Asm->getDataLayout().isLittleEndian())
       Offset = FieldSize - (Offset + Size);
     addUInt(MemberDie, dwarf::DW_AT_bit_offset, 0, Offset);
 

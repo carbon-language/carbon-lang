@@ -23,12 +23,12 @@ class MachineFunction;
 class MachineModuleInfo;
 class MachineMove;
 class MCAsmInfo;
-class TargetData;
+class DataLayout;
 class TargetMachine;
 class TargetRegisterInfo;
 
 class JITDwarfEmitter {
-  const TargetData* TD;
+  const DataLayout* TD;
   JITCodeEmitter* JCE;
   const TargetRegisterInfo* RI;
   const MCAsmInfo *MAI;

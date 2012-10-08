@@ -48,7 +48,7 @@ Interpreter::Interpreter(Module *M)
   : ExecutionEngine(M), TD(M) {
       
   memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
-  setTargetData(&TD);
+  setDataLayout(&TD);
   // Initialize the "backend"
   initializeExecutionEngine();
   initializeExternalFunctions();

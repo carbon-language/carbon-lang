@@ -62,7 +62,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/ADT/Statistic.h"
@@ -98,9 +98,9 @@ namespace {
     }
 
     struct GlobalCmp {
-      const TargetData *TD;
+      const DataLayout *TD;
 
-      GlobalCmp(const TargetData *td) : TD(td) { }
+      GlobalCmp(const DataLayout *td) : TD(td) { }
 
       bool operator()(const GlobalVariable *GV1, const GlobalVariable *GV2) {
         Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
@@ -119,7 +119,7 @@ INITIALIZE_PASS(GlobalMerge, "global-merge",
 
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                              Module &M, bool isConst) const {
-  const TargetData *TD = TLI->getTargetData();
+  const DataLayout *TD = TLI->getDataLayout();
 
   // FIXME: Infer the maximum possible offset depending on the actual users
   // (these max offsets are different for the users inside Thumb or ARM
@@ -170,7 +170,7 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
 
 bool GlobalMerge::doInitialization(Module &M) {
   SmallVector<GlobalVariable*, 16> Globals, ConstGlobals, BSSGlobals;
-  const TargetData *TD = TLI->getTargetData();
+  const DataLayout *TD = TLI->getDataLayout();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
 

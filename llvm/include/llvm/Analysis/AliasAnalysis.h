@@ -45,7 +45,7 @@ namespace llvm {
 class LoadInst;
 class StoreInst;
 class VAArgInst;
-class TargetData;
+class DataLayout;
 class TargetLibraryInfo;
 class Pass;
 class AnalysisUsage;
@@ -55,7 +55,7 @@ class DominatorTree;
 
 class AliasAnalysis {
 protected:
-  const TargetData *TD;
+  const DataLayout *TD;
   const TargetLibraryInfo *TLI;
 
 private:
@@ -83,17 +83,17 @@ public:
   /// know the sizes of the potential memory references.
   static uint64_t const UnknownSize = ~UINT64_C(0);
 
-  /// getTargetData - Return a pointer to the current TargetData object, or
-  /// null if no TargetData object is available.
+  /// getDataLayout - Return a pointer to the current DataLayout object, or
+  /// null if no DataLayout object is available.
   ///
-  const TargetData *getTargetData() const { return TD; }
+  const DataLayout *getDataLayout() const { return TD; }
 
   /// getTargetLibraryInfo - Return a pointer to the current TargetLibraryInfo
   /// object, or null if no TargetLibraryInfo object is available.
   ///
   const TargetLibraryInfo *getTargetLibraryInfo() const { return TLI; }
 
-  /// getTypeStoreSize - Return the TargetData store size for the given type,
+  /// getTypeStoreSize - Return the DataLayout store size for the given type,
   /// if known, or a conservative value otherwise.
   ///
   uint64_t getTypeStoreSize(Type *Ty);

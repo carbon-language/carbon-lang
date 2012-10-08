@@ -33,8 +33,8 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          CodeGenOpt::Level OL)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS),
-    // FIXME: Check TargetData string.
-    DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),
+    // FIXME: Check DataLayout string.
+    DL("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),
     InstrInfo(*this), TLInfo(*this), TSInfo(*this),
     FrameLowering(Subtarget) { }
 

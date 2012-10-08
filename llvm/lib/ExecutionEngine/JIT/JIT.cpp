@@ -24,7 +24,7 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Dwarf.h"
@@ -272,7 +272,7 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
   : ExecutionEngine(M), TM(tm), TJI(tji),
     JMM(jmm ? jmm : JITMemoryManager::CreateDefaultMemManager()),
     AllocateGVsWithCode(GVsWithCode), isAlreadyCodeGenerating(false) {
-  setTargetData(TM.getTargetData());
+  setDataLayout(TM.getDataLayout());
 
   jitstate = new JITState(M);
 
@@ -285,7 +285,7 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
   // Add target data
   MutexGuard locked(lock);
   FunctionPassManager &PM = jitstate->getPM(locked);
-  PM.add(new TargetData(*TM.getTargetData()));
+  PM.add(new DataLayout(*TM.getDataLayout()));
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
@@ -339,7 +339,7 @@ void JIT::addModule(Module *M) {
     jitstate = new JITState(M);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new TargetData(*TM.getTargetData()));
+    PM.add(new DataLayout(*TM.getDataLayout()));
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
@@ -370,7 +370,7 @@ bool JIT::removeModule(Module *M) {
     jitstate = new JITState(Modules[0]);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new TargetData(*TM.getTargetData()));
+    PM.add(new DataLayout(*TM.getDataLayout()));
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
@@ -815,8 +815,8 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   // through the memory manager which puts them near the code but not in the
   // same buffer.
   Type *GlobalType = GV->getType()->getElementType();
-  size_t S = getTargetData()->getTypeAllocSize(GlobalType);
-  size_t A = getTargetData()->getPreferredAlignment(GV);
+  size_t S = getDataLayout()->getTypeAllocSize(GlobalType);
+  size_t A = getDataLayout()->getPreferredAlignment(GV);
   if (GV->isThreadLocal()) {
     MutexGuard locked(lock);
     Ptr = TJI.allocateThreadLocalMemory(S);

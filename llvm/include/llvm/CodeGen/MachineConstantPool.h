@@ -25,7 +25,7 @@ namespace llvm {
 
 class Constant;
 class FoldingSetNodeID;
-class TargetData;
+class DataLayout;
 class TargetMachine;
 class Type;
 class MachineConstantPool;
@@ -132,14 +132,14 @@ public:
 /// address of the function constant pool values.
 /// @brief The machine constant pool.
 class MachineConstantPool {
-  const TargetData *TD;   ///< The machine's TargetData.
+  const DataLayout *TD;   ///< The machine's DataLayout.
   unsigned PoolAlignment; ///< The alignment for the pool.
   std::vector<MachineConstantPoolEntry> Constants; ///< The pool of constants.
   /// MachineConstantPoolValues that use an existing MachineConstantPoolEntry.
   DenseSet<MachineConstantPoolValue*> MachineCPVsSharingEntries;
 public:
   /// @brief The only constructor.
-  explicit MachineConstantPool(const TargetData *td)
+  explicit MachineConstantPool(const DataLayout *td)
     : TD(td), PoolAlignment(1) {}
   ~MachineConstantPool();
     

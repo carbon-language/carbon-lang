@@ -13,7 +13,7 @@
 
 #include "llvm/Function.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 

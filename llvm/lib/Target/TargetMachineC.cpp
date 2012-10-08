@@ -14,7 +14,7 @@
 #include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -146,7 +146,7 @@ char* LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T) {
 }
 
 LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T) {
-  return wrap(unwrap(T)->getTargetData());
+  return wrap(unwrap(T)->getDataLayout());
 }
 
 LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
@@ -158,14 +158,14 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
 
   std::string error;
 
-  const TargetData* td = TM->getTargetData();
+  const DataLayout* td = TM->getDataLayout();
 
   if (!td) {
-    error = "No TargetData in TargetMachine";
+    error = "No DataLayout in TargetMachine";
     *ErrorMessage = strdup(error.c_str());
     return true;
   }
-  pass.add(new TargetData(*td));
+  pass.add(new DataLayout(*td));
 
   TargetMachine::CodeGenFileType ft;
   switch (codegen) {
@@ -184,7 +184,7 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
   }
 
   if (TM->addPassesToEmitFile(pass, destf, ft)) {
-    error = "No TargetData in TargetMachine";
+    error = "No DataLayout in TargetMachine";
     *ErrorMessage = strdup(error.c_str());
     return true;
   }

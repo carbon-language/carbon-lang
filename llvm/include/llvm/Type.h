@@ -252,7 +252,7 @@ public:
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
   /// get the actual size for a particular target, it is reasonable to use the
-  /// TargetData subsystem to do this.
+  /// DataLayout subsystem to do this.
   ///
   bool isSized() const {
     // If it's a primitive, it is always sized.
@@ -276,7 +276,7 @@ public:
   ///
   /// Note that this may not reflect the size of memory allocated for an
   /// instance of the type or the number of bytes that are written when an
-  /// instance of the type is stored to memory. The TargetData class provides
+  /// instance of the type is stored to memory. The DataLayout class provides
   /// additional query functions to provide this information.
   ///
   unsigned getPrimitiveSizeInBits() const;

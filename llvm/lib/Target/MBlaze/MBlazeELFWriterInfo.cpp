@@ -16,7 +16,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
@@ -26,8 +26,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 MBlazeELFWriterInfo::MBlazeELFWriterInfo(TargetMachine &TM)
-  : TargetELFWriterInfo(TM.getTargetData()->getPointerSizeInBits() == 64,
-                        TM.getTargetData()->isLittleEndian()) {
+  : TargetELFWriterInfo(TM.getDataLayout()->getPointerSizeInBits() == 64,
+                        TM.getDataLayout()->isLittleEndian()) {
 }
 
 MBlazeELFWriterInfo::~MBlazeELFWriterInfo() {}

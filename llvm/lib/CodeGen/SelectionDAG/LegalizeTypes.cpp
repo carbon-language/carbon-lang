@@ -15,7 +15,7 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/CallingConv.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"

@@ -402,7 +402,7 @@ std::string NVPTXTargetLowering::getPrototype(Type *retTy,
 
     if (isABI) {
       unsigned align = Outs[i].Flags.getByValAlign();
-      unsigned sz = getTargetData()->getTypeAllocSize(ETy);
+      unsigned sz = getDataLayout()->getTypeAllocSize(ETy);
       O << ".param .align " << align
           << " .b8 ";
       O << "_";
@@ -655,11 +655,11 @@ NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       else {
         if (Func) { // direct call
           if (!llvm::getAlign(*(CS->getCalledFunction()), 0, retAlignment))
-            retAlignment = getTargetData()->getABITypeAlignment(retTy);
+            retAlignment = getDataLayout()->getABITypeAlignment(retTy);
         } else { // indirect call
           const CallInst *CallI = dyn_cast<CallInst>(CS->getInstruction());
           if (!llvm::getAlign(*CallI, 0, retAlignment))
-            retAlignment = getTargetData()->getABITypeAlignment(retTy);
+            retAlignment = getDataLayout()->getABITypeAlignment(retTy);
         }
         SDVTList DeclareRetVTs = DAG.getVTList(MVT::Other, MVT::Glue);
         SDValue DeclareRetOps[] = { Chain, DAG.getConstant(retAlignment,
@@ -916,7 +916,7 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
                                           DebugLoc dl, SelectionDAG &DAG,
                                        SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
-  const TargetData *TD = getTargetData();
+  const DataLayout *TD = getDataLayout();
 
   const Function *F = MF.getFunction();
   const AttrListPtr &PAL = F->getAttributes();

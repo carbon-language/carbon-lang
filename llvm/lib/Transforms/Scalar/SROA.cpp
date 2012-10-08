@@ -51,7 +51,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
@@ -183,7 +183,7 @@ public:
   ///
   /// Construction does most of the work for partitioning the alloca. This
   /// performs the necessary walks of users and builds a partitioning from it.
-  AllocaPartitioning(const TargetData &TD, AllocaInst &AI);
+  AllocaPartitioning(const DataLayout &TD, AllocaInst &AI);
 
   /// \brief Test whether a pointer to the allocation escapes our analysis.
   ///
@@ -411,7 +411,7 @@ template <typename DerivedT, typename RetT>
 class AllocaPartitioning::BuilderBase
     : public InstVisitor<DerivedT, RetT> {
 public:
-  BuilderBase(const TargetData &TD, AllocaInst &AI, AllocaPartitioning &P)
+  BuilderBase(const DataLayout &TD, AllocaInst &AI, AllocaPartitioning &P)
       : TD(TD),
         AllocSize(TD.getTypeAllocSize(AI.getAllocatedType())),
         P(P) {
@@ -419,7 +419,7 @@ public:
   }
 
 protected:
-  const TargetData &TD;
+  const DataLayout &TD;
   const uint64_t AllocSize;
   AllocaPartitioning &P;
 
@@ -520,7 +520,7 @@ class AllocaPartitioning::PartitionBuilder
   SmallDenseMap<Instruction *, unsigned> MemTransferPartitionMap;
 
 public:
-  PartitionBuilder(const TargetData &TD, AllocaInst &AI, AllocaPartitioning &P)
+  PartitionBuilder(const DataLayout &TD, AllocaInst &AI, AllocaPartitioning &P)
       : BuilderBase<PartitionBuilder, bool>(TD, AI, P) {}
 
   /// \brief Run the builder over the allocation.
@@ -849,7 +849,7 @@ class AllocaPartitioning::UseBuilder : public BuilderBase<UseBuilder> {
   SmallPtrSet<Instruction *, 4> VisitedDeadInsts;
 
 public:
-  UseBuilder(const TargetData &TD, AllocaInst &AI, AllocaPartitioning &P)
+  UseBuilder(const DataLayout &TD, AllocaInst &AI, AllocaPartitioning &P)
       : BuilderBase<UseBuilder>(TD, AI, P) {}
 
   /// \brief Run the builder over the allocation.
@@ -1115,7 +1115,7 @@ void AllocaPartitioning::splitAndMergePartitions() {
   Partitions.erase(Partitions.end() - NumDeadPartitions, Partitions.end());
 }
 
-AllocaPartitioning::AllocaPartitioning(const TargetData &TD, AllocaInst &AI)
+AllocaPartitioning::AllocaPartitioning(const DataLayout &TD, AllocaInst &AI)
     :
 #ifndef NDEBUG
       AI(AI),
@@ -1347,7 +1347,7 @@ class SROA : public FunctionPass {
   const bool RequiresDomTree;
 
   LLVMContext *C;
-  const TargetData *TD;
+  const DataLayout *TD;
   DominatorTree *DT;
 
   /// \brief Worklist of alloca instructions to simplify.
@@ -1426,12 +1426,12 @@ class PHIOrSelectSpeculator : public InstVisitor<PHIOrSelectSpeculator> {
   // Befriend the base class so it can delegate to private visit methods.
   friend class llvm::InstVisitor<PHIOrSelectSpeculator>;
 
-  const TargetData &TD;
+  const DataLayout &TD;
   AllocaPartitioning &P;
   SROA &Pass;
 
 public:
-  PHIOrSelectSpeculator(const TargetData &TD, AllocaPartitioning &P, SROA &Pass)
+  PHIOrSelectSpeculator(const DataLayout &TD, AllocaPartitioning &P, SROA &Pass)
     : TD(TD), P(P), Pass(Pass) {}
 
   /// \brief Visit the users of an alloca partition and rewrite them.
@@ -1708,7 +1708,7 @@ private:
 /// If the provided GEP is all-constant, the total byte offset formed by the
 /// GEP is computed and Offset is set to it. If the GEP has any non-constant
 /// operands, the function returns false and the value of Offset is unmodified.
-static bool accumulateGEPOffsets(const TargetData &TD, GEPOperator &GEP,
+static bool accumulateGEPOffsets(const DataLayout &TD, GEPOperator &GEP,
                                  APInt &Offset) {
   APInt GEPOffset(Offset.getBitWidth(), 0);
   for (gep_type_iterator GTI = gep_type_begin(GEP), GTE = gep_type_end(GEP);
@@ -1768,7 +1768,7 @@ static Value *buildGEP(IRBuilder<> &IRB, Value *BasePtr,
 /// TargetTy. If we can't find one with the same type, we at least try to use
 /// one with the same size. If none of that works, we just produce the GEP as
 /// indicated by Indices to have the correct offset.
-static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const TargetData &TD,
+static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const DataLayout &TD,
                                     Value *BasePtr, Type *Ty, Type *TargetTy,
                                     SmallVectorImpl<Value *> &Indices,
                                     const Twine &Prefix) {
@@ -1803,7 +1803,7 @@ static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const TargetData &TD,
 ///
 /// This is the recursive step for getNaturalGEPWithOffset that walks down the
 /// element types adding appropriate indices for the GEP.
-static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const TargetData &TD,
+static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const DataLayout &TD,
                                        Value *Ptr, Type *Ty, APInt &Offset,
                                        Type *TargetTy,
                                        SmallVectorImpl<Value *> &Indices,
@@ -1874,7 +1874,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const TargetData &TD,
 /// Indices, and setting Ty to the result subtype.
 ///
 /// If no natural GEP can be constructed, this function returns null.
-static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const TargetData &TD,
+static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const DataLayout &TD,
                                       Value *Ptr, APInt Offset, Type *TargetTy,
                                       SmallVectorImpl<Value *> &Indices,
                                       const Twine &Prefix) {
@@ -1914,7 +1914,7 @@ static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const TargetData &TD,
 /// properities. The algorithm tries to fold as many constant indices into
 /// a single GEP as possible, thus making each GEP more independent of the
 /// surrounding code.
-static Value *getAdjustedPtr(IRBuilder<> &IRB, const TargetData &TD,
+static Value *getAdjustedPtr(IRBuilder<> &IRB, const DataLayout &TD,
                              Value *Ptr, APInt Offset, Type *PointerTy,
                              const Twine &Prefix) {
   // Even though we don't look through PHI nodes, we could be called on an
@@ -2010,7 +2010,7 @@ static Value *getAdjustedPtr(IRBuilder<> &IRB, const TargetData &TD,
 /// SSA value. We only can ensure this for a limited set of operations, and we
 /// don't want to do the rewrites unless we are confident that the result will
 /// be promotable, so we have an early test here.
-static bool isVectorPromotionViable(const TargetData &TD,
+static bool isVectorPromotionViable(const DataLayout &TD,
                                     Type *AllocaTy,
                                     AllocaPartitioning &P,
                                     uint64_t PartitionBeginOffset,
@@ -2080,7 +2080,7 @@ static bool isVectorPromotionViable(const TargetData &TD,
 /// promotion to an SSA value. We only can ensure this for a limited set of
 /// operations, and we don't want to do the rewrites unless we are confident
 /// that the result will be promotable, so we have an early test here.
-static bool isIntegerPromotionViable(const TargetData &TD,
+static bool isIntegerPromotionViable(const DataLayout &TD,
                                      Type *AllocaTy,
                                      uint64_t AllocBeginOffset,
                                      AllocaPartitioning &P,
@@ -2142,7 +2142,7 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
   // Befriend the base class so it can delegate to private visit methods.
   friend class llvm::InstVisitor<AllocaPartitionRewriter, bool>;
 
-  const TargetData &TD;
+  const DataLayout &TD;
   AllocaPartitioning &P;
   SROA &Pass;
   AllocaInst &OldAI, &NewAI;
@@ -2176,7 +2176,7 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
   std::string NamePrefix;
 
 public:
-  AllocaPartitionRewriter(const TargetData &TD, AllocaPartitioning &P,
+  AllocaPartitionRewriter(const DataLayout &TD, AllocaPartitioning &P,
                           AllocaPartitioning::iterator PI,
                           SROA &Pass, AllocaInst &OldAI, AllocaInst &NewAI,
                           uint64_t NewBeginOffset, uint64_t NewEndOffset)
@@ -2791,7 +2791,7 @@ class AggLoadStoreRewriter : public InstVisitor<AggLoadStoreRewriter, bool> {
   // Befriend the base class so it can delegate to private visit methods.
   friend class llvm::InstVisitor<AggLoadStoreRewriter, bool>;
 
-  const TargetData &TD;
+  const DataLayout &TD;
 
   /// Queue of pointer uses to analyze and potentially rewrite.
   SmallVector<Use *, 8> Queue;
@@ -2804,7 +2804,7 @@ class AggLoadStoreRewriter : public InstVisitor<AggLoadStoreRewriter, bool> {
   Use *U;
 
 public:
-  AggLoadStoreRewriter(const TargetData &TD) : TD(TD) {}
+  AggLoadStoreRewriter(const DataLayout &TD) : TD(TD) {}
 
   /// Rewrite loads and stores through a pointer and all pointers derived from
   /// it.
@@ -3004,7 +3004,7 @@ private:
 /// when the size or offset cause either end of type-based partition to be off.
 /// Also, this is a best-effort routine. It is reasonable to give up and not
 /// return a type if necessary.
-static Type *getTypePartition(const TargetData &TD, Type *Ty,
+static Type *getTypePartition(const DataLayout &TD, Type *Ty,
                               uint64_t Offset, uint64_t Size) {
   if (Offset == 0 && TD.getTypeAllocSize(Ty) == Size)
     return Ty;
@@ -3396,7 +3396,7 @@ namespace {
 bool SROA::runOnFunction(Function &F) {
   DEBUG(dbgs() << "SROA function: " << F.getName() << "\n");
   C = &F.getContext();
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
   if (!TD) {
     DEBUG(dbgs() << "  Skipping SROA -- no target data!\n");
     return false;

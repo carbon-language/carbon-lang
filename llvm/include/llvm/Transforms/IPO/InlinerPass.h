@@ -21,7 +21,7 @@
 
 namespace llvm {
   class CallSite;
-  class TargetData;
+  class DataLayout;
   class InlineCost;
   template<class PtrType, unsigned SmallSize>
   class SmallPtrSet;

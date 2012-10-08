@@ -190,7 +190,7 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
       V = IC.Builder->CreateLShr(C, NumBits);
     // If we got a constantexpr back, try to simplify it with TD info.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      V = ConstantFoldConstantExpression(CE, IC.getTargetData(),
+      V = ConstantFoldConstantExpression(CE, IC.getDataLayout(),
                                          IC.getTargetLibraryInfo());
     return V;
   }

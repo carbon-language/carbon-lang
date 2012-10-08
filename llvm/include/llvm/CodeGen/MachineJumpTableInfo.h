@@ -26,7 +26,7 @@
 namespace llvm {
 
 class MachineBasicBlock;
-class TargetData;
+class DataLayout;
 class raw_ostream;
 
 /// MachineJumpTableEntry - One jump table in the jump table info.
@@ -84,9 +84,9 @@ public:
   JTEntryKind getEntryKind() const { return EntryKind; }
 
   /// getEntrySize - Return the size of each entry in the jump table.
-  unsigned getEntrySize(const TargetData &TD) const;
+  unsigned getEntrySize(const DataLayout &TD) const;
   /// getEntryAlignment - Return the alignment of each entry in the jump table.
-  unsigned getEntryAlignment(const TargetData &TD) const;
+  unsigned getEntryAlignment(const DataLayout &TD) const;
 
   /// createJumpTableIndex - Create a new jump table.
   ///

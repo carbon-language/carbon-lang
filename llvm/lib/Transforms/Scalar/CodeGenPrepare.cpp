@@ -38,7 +38,7 @@
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
@@ -623,7 +623,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     // happens.
     WeakVH IterHandle(CurInstIterator);
 
-    replaceAndRecursivelySimplify(CI, RetVal, TLI ? TLI->getTargetData() : 0,
+    replaceAndRecursivelySimplify(CI, RetVal, TLI ? TLI->getDataLayout() : 0,
                                   TLInfo, ModifiedDT ? 0 : DT);
 
     // If the iterator instruction was recursively deleted, start over at the
@@ -647,8 +647,8 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   // From here on out we're working with named functions.
   if (CI->getCalledFunction() == 0) return false;
 
-  // We'll need TargetData from here on out.
-  const TargetData *TD = TLI ? TLI->getTargetData() : 0;
+  // We'll need DataLayout from here on out.
+  const DataLayout *TD = TLI ? TLI->getDataLayout() : 0;
   if (!TD) return false;
 
   // Lower all default uses of _chk calls.  This is very similar
@@ -930,7 +930,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
     Type *IntPtrTy =
-          TLI->getTargetData()->getIntPtrType(AccessTy->getContext());
+          TLI->getDataLayout()->getIntPtrType(AccessTy->getContext());
 
     Value *Result = 0;
 

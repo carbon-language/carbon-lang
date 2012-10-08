@@ -11,7 +11,7 @@
 //
 // Also, to supplement the basic VMCore ConstantExpr simplifications,
 // this file defines some additional folding routines that can make use of
-// TargetData information. These functions cannot go in VMCore due to library
+// DataLayout information. These functions cannot go in VMCore due to library
 // dependency issues.
 //
 //===----------------------------------------------------------------------===//
@@ -25,7 +25,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Operator.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -42,10 +42,10 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
-/// TargetData.  This always returns a non-null constant, but it may be a
+/// DataLayout.  This always returns a non-null constant, but it may be a
 /// ConstantExpr if unfoldable.
 static Constant *FoldBitCast(Constant *C, Type *DestTy,
-                             const TargetData &TD) {
+                             const DataLayout &TD) {
   // Catch the obvious splat cases.
   if (C->isNullValue() && !DestTy->isX86_MMXTy())
     return Constant::getNullValue(DestTy);
@@ -218,7 +218,7 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
 /// from a global, return the global and the constant.  Because of
 /// constantexprs, this function is recursive.
 static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
-                                       int64_t &Offset, const TargetData &TD) {
+                                       int64_t &Offset, const DataLayout &TD) {
   // Trivial case, constant is the global.
   if ((GV = dyn_cast<GlobalValue>(C))) {
     Offset = 0;
@@ -274,7 +274,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
 /// the CurPtr buffer.  TD is the target data.
 static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
                                unsigned char *CurPtr, unsigned BytesLeft,
-                               const TargetData &TD) {
+                               const DataLayout &TD) {
   assert(ByteOffset <= TD.getTypeAllocSize(C->getType()) &&
          "Out of range access");
   
@@ -388,7 +388,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
 }
 
 static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
-                                                 const TargetData &TD) {
+                                                 const DataLayout &TD) {
   Type *LoadTy = cast<PointerType>(C->getType())->getElementType();
   IntegerType *IntType = dyn_cast<IntegerType>(LoadTy);
   
@@ -455,7 +455,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.
 Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
-                                             const TargetData *TD) {
+                                             const DataLayout *TD) {
   // First, try the easy cases:
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
@@ -529,7 +529,7 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
   return 0;
 }
 
-static Constant *ConstantFoldLoadInst(const LoadInst *LI, const TargetData *TD){
+static Constant *ConstantFoldLoadInst(const LoadInst *LI, const DataLayout *TD){
   if (LI->isVolatile()) return 0;
   
   if (Constant *C = dyn_cast<Constant>(LI->getOperand(0)))
@@ -543,7 +543,7 @@ static Constant *ConstantFoldLoadInst(const LoadInst *LI, const TargetData *TD){
 /// these together.  If target data info is available, it is provided as TD, 
 /// otherwise TD is null.
 static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
-                                           Constant *Op1, const TargetData *TD){
+                                           Constant *Op1, const DataLayout *TD){
   // SROA
   
   // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
@@ -572,7 +572,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
 /// explicitly cast them so that they aren't implicitly casted by the
 /// getelementptr.
 static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
-                                Type *ResultTy, const TargetData *TD,
+                                Type *ResultTy, const DataLayout *TD,
                                 const TargetLibraryInfo *TLI) {
   if (!TD) return 0;
   Type *IntPtrTy = TD->getIntPtrType(ResultTy->getContext());
@@ -622,7 +622,7 @@ static Constant* StripPtrCastKeepAS(Constant* Ptr) {
 /// SymbolicallyEvaluateGEP - If we can symbolically evaluate the specified GEP
 /// constant expression, do so.
 static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
-                                         Type *ResultTy, const TargetData *TD,
+                                         Type *ResultTy, const DataLayout *TD,
                                          const TargetLibraryInfo *TLI) {
   Constant *Ptr = Ops[0];
   if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized() ||
@@ -786,7 +786,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
 /// this function can only fail when attempting to fold instructions like loads
 /// and stores, which have no constant expression form.
 Constant *llvm::ConstantFoldInstruction(Instruction *I,
-                                        const TargetData *TD,
+                                        const DataLayout *TD,
                                         const TargetLibraryInfo *TLI) {
   // Handle PHI nodes quickly here...
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
@@ -856,10 +856,10 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I,
 }
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
-/// using the specified TargetData.  If successful, the constant result is
+/// using the specified DataLayout.  If successful, the constant result is
 /// result is returned, if not, null is returned.
 Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
-                                               const TargetData *TD,
+                                               const DataLayout *TD,
                                                const TargetLibraryInfo *TLI) {
   SmallVector<Constant*, 8> Ops;
   for (User::const_op_iterator i = CE->op_begin(), e = CE->op_end();
@@ -889,7 +889,7 @@ Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
 ///
 Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy, 
                                          ArrayRef<Constant *> Ops,
-                                         const TargetData *TD,
+                                         const DataLayout *TD,
                                          const TargetLibraryInfo *TLI) {                                         
   // Handle easy binops first.
   if (Instruction::isBinaryOp(Opcode)) {
@@ -976,7 +976,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
 ///
 Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
                                                 Constant *Ops0, Constant *Ops1, 
-                                                const TargetData *TD,
+                                                const DataLayout *TD,
                                                 const TargetLibraryInfo *TLI) {
   // fold: icmp (inttoptr x), null         -> icmp x, 0
   // fold: icmp (ptrtoint x), 0            -> icmp x, null

@@ -19,8 +19,8 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -184,7 +184,7 @@ public:
 /// Independent of what kind of struct you have, the body of a struct type are
 /// laid out in memory consequtively with the elements directly one after the
 /// other (if the struct is packed) or (if not packed) with padding between the
-/// elements as defined by TargetData (which is required to match what the code
+/// elements as defined by DataLayout (which is required to match what the code
 /// generator for a target expects).
 ///
 class StructType : public CompositeType {

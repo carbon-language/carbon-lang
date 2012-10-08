@@ -32,7 +32,7 @@ class MachineFunction;
 class MachineInstr;
 class MachineFrameInfo;
 class MachineRegisterInfo;
-class TargetData;
+class DataLayout;
 class TargetInstrInfo;
 class TargetLibraryInfo;
 class TargetLowering;
@@ -54,7 +54,7 @@ protected:
   MachineConstantPool &MCP;
   DebugLoc DL;
   const TargetMachine &TM;
-  const TargetData &TD;
+  const DataLayout &TD;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
   const TargetRegisterInfo &TRI;

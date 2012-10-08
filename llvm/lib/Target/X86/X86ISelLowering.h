@@ -701,7 +701,7 @@ namespace llvm {
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
     const X86RegisterInfo *RegInfo;
-    const TargetData *TD;
+    const DataLayout *TD;
 
     /// X86StackPtr - X86 physical register used as stack ptr.
     unsigned X86StackPtr;

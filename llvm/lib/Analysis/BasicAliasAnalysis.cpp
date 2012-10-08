@@ -29,7 +29,7 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -84,7 +84,7 @@ static bool isEscapeSource(const Value *V) {
 
 /// getObjectSize - Return the size of the object specified by V, or
 /// UnknownSize if unknown.
-static uint64_t getObjectSize(const Value *V, const TargetData &TD,
+static uint64_t getObjectSize(const Value *V, const DataLayout &TD,
                               const TargetLibraryInfo &TLI,
                               bool RoundToAlign = false) {
   uint64_t Size;
@@ -96,7 +96,7 @@ static uint64_t getObjectSize(const Value *V, const TargetData &TD,
 /// isObjectSmallerThan - Return true if we can prove that the object specified
 /// by V is smaller than Size.
 static bool isObjectSmallerThan(const Value *V, uint64_t Size,
-                                const TargetData &TD,
+                                const DataLayout &TD,
                                 const TargetLibraryInfo &TLI) {
   // This function needs to use the aligned object size because we allow
   // reads a bit past the end given sufficient alignment.
@@ -108,7 +108,7 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
 /// isObjectSize - Return true if we can prove that the object specified
 /// by V has size Size.
 static bool isObjectSize(const Value *V, uint64_t Size,
-                         const TargetData &TD, const TargetLibraryInfo &TLI) {
+                         const DataLayout &TD, const TargetLibraryInfo &TLI) {
   uint64_t ObjectSize = getObjectSize(V, TD, TLI);
   return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize == Size;
 }
@@ -151,7 +151,7 @@ namespace {
 /// represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
                                   ExtensionKind &Extension,
-                                  const TargetData &TD, unsigned Depth) {
+                                  const DataLayout &TD, unsigned Depth) {
   assert(V->getType()->isIntegerTy() && "Not an integer value");
 
   // Limit our recursion depth.
@@ -226,14 +226,14 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 /// specified amount, but which may have other unrepresented high bits. As such,
 /// the gep cannot necessarily be reconstructed from its decomposed form.
 ///
-/// When TargetData is around, this function is capable of analyzing everything
+/// When DataLayout is around, this function is capable of analyzing everything
 /// that GetUnderlyingObject can look through.  When not, it just looks
 /// through pointer casts.
 ///
 static const Value *
 DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                        SmallVectorImpl<VariableGEPIndex> &VarIndices,
-                       const TargetData *TD) {
+                       const DataLayout *TD) {
   // Limit recursion depth to limit compile time in crazy cases.
   unsigned MaxLookup = 6;
   
@@ -277,7 +277,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
         ->getElementType()->isSized())
       return V;
     
-    // If we are lacking TargetData information, we can't compute the offets of
+    // If we are lacking DataLayout information, we can't compute the offets of
     // elements computed by GEPs.  However, we can handle bitcast equivalent
     // GEPs.
     if (TD == 0) {
@@ -868,7 +868,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         const Value *GEP1BasePtr =
           DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
         // DecomposeGEPExpression and GetUnderlyingObject should return the
-        // same result except when DecomposeGEPExpression has no TargetData.
+        // same result except when DecomposeGEPExpression has no DataLayout.
         if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
           assert(TD == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
@@ -902,7 +902,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
     
     // DecomposeGEPExpression and GetUnderlyingObject should return the
-    // same result except when DecomposeGEPExpression has no TargetData.
+    // same result except when DecomposeGEPExpression has no DataLayout.
     if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
       assert(TD == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
@@ -937,7 +937,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
     
     // DecomposeGEPExpression and GetUnderlyingObject should return the
-    // same result except when DecomposeGEPExpression has no TargetData.
+    // same result except when DecomposeGEPExpression has no DataLayout.
     if (GEP1BasePtr != UnderlyingV1) {
       assert(TD == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");

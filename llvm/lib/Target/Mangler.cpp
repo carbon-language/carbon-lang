@@ -14,7 +14,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/raw_ostream.h"
@@ -157,7 +157,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
 /// a suffix on their name indicating the number of words of arguments they
 /// take.
 static void AddFastCallStdCallSuffix(SmallVectorImpl<char> &OutName,
-                                     const Function *F, const TargetData &TD) {
+                                     const Function *F, const DataLayout &TD) {
   // Calculate arguments size total.
   unsigned ArgWords = 0;
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();

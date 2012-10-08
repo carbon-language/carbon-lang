@@ -15,7 +15,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 using namespace llvm;
 
@@ -54,7 +54,7 @@ bool llvm::callIsSmall(ImmutableCallSite CS) {
   return false;
 }
 
-bool llvm::isInstructionFree(const Instruction *I, const TargetData *TD) {
+bool llvm::isInstructionFree(const Instruction *I, const DataLayout *TD) {
   if (isa<PHINode>(I))
     return true;
 
@@ -119,7 +119,7 @@ bool llvm::isInstructionFree(const Instruction *I, const TargetData *TD) {
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
-                                    const TargetData *TD) {
+                                    const DataLayout *TD) {
   ++NumBlocks;
   unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
@@ -189,7 +189,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
 }
 
-void CodeMetrics::analyzeFunction(Function *F, const TargetData *TD) {
+void CodeMetrics::analyzeFunction(Function *F, const DataLayout *TD) {
   // If this function contains a call that "returns twice" (e.g., setjmp or
   // _setjmp) and it isn't marked with "returns twice" itself, never inline it.
   // This is a hack because we depend on the user marking their local variables

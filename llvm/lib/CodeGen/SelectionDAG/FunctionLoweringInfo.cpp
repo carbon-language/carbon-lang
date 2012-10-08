@@ -29,7 +29,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
@@ -80,9 +80,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (const ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         Type *Ty = AI->getAllocatedType();
-        uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
+        uint64_t TySize = TLI.getDataLayout()->getTypeAllocSize(Ty);
         unsigned Align =
-          std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
+          std::max((unsigned)TLI.getDataLayout()->getPrefTypeAlignment(Ty),
                    AI->getAlignment());
 
         TySize *= CUI->getZExtValue();   // Get total allocated size.

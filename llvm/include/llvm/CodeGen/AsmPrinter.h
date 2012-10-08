@@ -48,7 +48,7 @@ namespace llvm {
   class DwarfException;
   class Mangler;
   class TargetLoweringObjectFile;
-  class TargetData;
+  class DataLayout;
   class TargetMachine;
 
   /// AsmPrinter - This class is intended to be used as a driving class for all
@@ -131,8 +131,8 @@ namespace llvm {
     /// getObjFileLowering - Return information about object file lowering.
     const TargetLoweringObjectFile &getObjFileLowering() const;
 
-    /// getTargetData - Return information about data layout.
-    const TargetData &getTargetData() const;
+    /// getDataLayout - Return information about data layout.
+    const DataLayout &getDataLayout() const;
 
     /// getCurrentSection() - Return the current section we are emitting to.
     const MCSection *getCurrentSection() const;

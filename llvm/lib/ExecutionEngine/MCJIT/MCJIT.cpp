@@ -21,7 +21,7 @@
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MutexGuard.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 using namespace llvm;
 
@@ -54,7 +54,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
   : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM),
     isCompiled(false), M(m)  {
 
-  setTargetData(TM->getTargetData());
+  setDataLayout(TM->getDataLayout());
 }
 
 MCJIT::~MCJIT() {
@@ -80,7 +80,7 @@ void MCJIT::emitObject(Module *m) {
 
   PassManager PM;
 
-  PM.add(new TargetData(*TM->getTargetData()));
+  PM.add(new DataLayout(*TM->getDataLayout()));
 
   // The RuntimeDyld will take ownership of this shortly
   OwningPtr<ObjectBufferStream> Buffer(new ObjectBufferStream());

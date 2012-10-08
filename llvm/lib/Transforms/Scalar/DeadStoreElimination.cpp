@@ -29,7 +29,7 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
@@ -199,7 +199,7 @@ getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
     // If we don't have target data around, an unknown size in Location means
     // that we should use the size of the pointee type.  This isn't valid for
     // memset/memcpy, which writes more than an i8.
-    if (Loc.Size == AliasAnalysis::UnknownSize && AA.getTargetData() == 0)
+    if (Loc.Size == AliasAnalysis::UnknownSize && AA.getDataLayout() == 0)
       return AliasAnalysis::Location();
     return Loc;
   }
@@ -213,7 +213,7 @@ getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
     // If we don't have target data around, an unknown size in Location means
     // that we should use the size of the pointee type.  This isn't valid for
     // init.trampoline, which writes more than an i8.
-    if (AA.getTargetData() == 0) return AliasAnalysis::Location();
+    if (AA.getDataLayout() == 0) return AliasAnalysis::Location();
 
     // FIXME: We don't know the size of the trampoline, so we can't really
     // handle it here.
@@ -318,7 +318,7 @@ static Value *getStoredPointerOperand(Instruction *I) {
 
 static uint64_t getPointerSize(const Value *V, AliasAnalysis &AA) {
   uint64_t Size;
-  if (getObjectSize(V, Size, AA.getTargetData(), AA.getTargetLibraryInfo()))
+  if (getObjectSize(V, Size, AA.getDataLayout(), AA.getTargetLibraryInfo()))
     return Size;
   return AliasAnalysis::UnknownSize;
 }
@@ -351,10 +351,10 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
     // comparison.
     if (Later.Size == AliasAnalysis::UnknownSize ||
         Earlier.Size == AliasAnalysis::UnknownSize) {
-      // If we have no TargetData information around, then the size of the store
+      // If we have no DataLayout information around, then the size of the store
       // is inferrable from the pointee type.  If they are the same type, then
       // we know that the store is safe.
-      if (AA.getTargetData() == 0 &&
+      if (AA.getDataLayout() == 0 &&
           Later.Ptr->getType() == Earlier.Ptr->getType())
         return OverwriteComplete;
 
@@ -370,13 +370,13 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
   // larger than the earlier one.
   if (Later.Size == AliasAnalysis::UnknownSize ||
       Earlier.Size == AliasAnalysis::UnknownSize ||
-      AA.getTargetData() == 0)
+      AA.getDataLayout() == 0)
     return OverwriteUnknown;
 
   // Check to see if the later store is to the entire object (either a global,
   // an alloca, or a byval argument).  If so, then it clearly overwrites any
   // other store to the same object.
-  const TargetData &TD = *AA.getTargetData();
+  const DataLayout &TD = *AA.getDataLayout();
 
   const Value *UO1 = GetUnderlyingObject(P1, &TD),
               *UO2 = GetUnderlyingObject(P2, &TD);

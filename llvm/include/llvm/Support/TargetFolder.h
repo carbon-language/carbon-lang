@@ -26,11 +26,11 @@
 
 namespace llvm {
 
-class TargetData;
+class DataLayout;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {
-  const TargetData *TD;
+  const DataLayout *TD;
 
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
@@ -41,7 +41,7 @@ class TargetFolder {
   }
 
 public:
-  explicit TargetFolder(const TargetData *TheTD) : TD(TheTD) {}
+  explicit TargetFolder(const DataLayout *TheTD) : TD(TheTD) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators

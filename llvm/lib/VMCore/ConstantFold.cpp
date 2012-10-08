@@ -12,7 +12,7 @@
 // ConstantExpr::get* methods to automatically fold constants when possible.
 //
 // The current constant folding implementation is implemented in two pieces: the
-// pieces that don't need TargetData, and the pieces that do. This is to avoid
+// pieces that don't need DataLayout, and the pieces that do. This is to avoid
 // a dependence in VMCore on Target.
 //
 //===----------------------------------------------------------------------===//

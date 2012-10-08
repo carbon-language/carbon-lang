@@ -19,14 +19,14 @@
 
 namespace llvm {
   class Constant;
-  class TargetData;
+  class DataLayout;
   class TargetLibraryInfo;
   class Value;
   
 /// LazyValueInfo - This pass computes, caches, and vends lazy value constraint
 /// information.
 class LazyValueInfo : public FunctionPass {
-  class TargetData *TD;
+  class DataLayout *TD;
   class TargetLibraryInfo *TLI;
   void *PImpl;
   LazyValueInfo(const LazyValueInfo&) LLVM_DELETED_FUNCTION;

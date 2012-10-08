@@ -40,7 +40,7 @@ namespace llvm {
   class DominatorTree;
   class Type;
   class ScalarEvolution;
-  class TargetData;
+  class DataLayout;
   class TargetLibraryInfo;
   class LLVMContext;
   class Loop;
@@ -227,7 +227,7 @@ namespace llvm {
 
     /// TD - The target data information for the target we are targeting.
     ///
-    TargetData *TD;
+    DataLayout *TD;
 
     /// TLI - The target library information for the target we are targeting.
     ///

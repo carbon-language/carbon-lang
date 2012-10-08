@@ -23,7 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -50,7 +50,7 @@ namespace {
     // alignment to a concrete value.
     unsigned getAlignment(GlobalVariable *GV) const;
 
-    const TargetData *TD;
+    const DataLayout *TD;
   };
 }
 
@@ -98,7 +98,7 @@ unsigned ConstantMerge::getAlignment(GlobalVariable *GV) const {
 }
 
 bool ConstantMerge::runOnModule(Module &M) {
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
 
   // Find all the globals that are marked "used".  These cannot be merged.
   SmallPtrSet<const GlobalValue*, 8> UsedGlobals;
@@ -107,7 +107,7 @@ bool ConstantMerge::runOnModule(Module &M) {
   
   // Map unique <constants, has-unknown-alignment> pairs to globals.  We don't
   // want to merge globals of unknown alignment with those of explicit
-  // alignment.  If we have TargetData, we always know the alignment.
+  // alignment.  If we have DataLayout, we always know the alignment.
   DenseMap<PointerIntPair<Constant*, 1, bool>, GlobalVariable*> CMap;
 
   // Replacements - This vector contains a list of replacements to perform.

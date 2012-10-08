@@ -42,7 +42,7 @@ namespace {
   template<class CodeEmitter>
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
-    const TargetData    *TD;
+    const DataLayout    *TD;
     X86TargetMachine    &TM;
     CodeEmitter         &MCE;
     MachineModuleInfo   *MMI;
@@ -56,7 +56,7 @@ namespace {
       MCE(mce), PICBaseOffset(0), Is64BitMode(false),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
     Emitter(X86TargetMachine &tm, CodeEmitter &mce,
-            const X86InstrInfo &ii, const TargetData &td, bool is64)
+            const X86InstrInfo &ii, const DataLayout &td, bool is64)
       : MachineFunctionPass(ID), II(&ii), TD(&td), TM(tm),
       MCE(mce), PICBaseOffset(0), Is64BitMode(is64),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
@@ -136,7 +136,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   MCE.setModuleInfo(MMI);
 
   II = TM.getInstrInfo();
-  TD = TM.getTargetData();
+  TD = TM.getDataLayout();
   Is64BitMode = TM.getSubtarget<X86Subtarget>().is64Bit();
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
 

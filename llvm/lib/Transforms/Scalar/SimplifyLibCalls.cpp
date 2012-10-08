@@ -31,7 +31,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Config/config.h"            // FIXME: Shouldn't depend on host!
 using namespace llvm;
@@ -53,7 +53,7 @@ namespace {
 class LibCallOptimization {
 protected:
   Function *Caller;
-  const TargetData *TD;
+  const DataLayout *TD;
   const TargetLibraryInfo *TLI;
   LLVMContext* Context;
 public:
@@ -68,7 +68,7 @@ public:
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B)
     =0;
 
-  Value *OptimizeCall(CallInst *CI, const TargetData *TD,
+  Value *OptimizeCall(CallInst *CI, const DataLayout *TD,
                       const TargetLibraryInfo *TLI, IRBuilder<> &B) {
     Caller = CI->getParent()->getParent();
     this->TD = TD;
@@ -159,7 +159,7 @@ struct StrCatOpt : public LibCallOptimization {
     if (Len == 0)
       return Dst;
 
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     return EmitStrLenMemCpy(Src, Dst, Len, B);
@@ -220,7 +220,7 @@ struct StrNCatOpt : public StrCatOpt {
     // strncat(x,  c, 0) -> x
     if (SrcLen == 0 || Len == 0) return Dst;
 
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     // We don't optimize this case
@@ -251,7 +251,7 @@ struct StrChrOpt : public LibCallOptimization {
     // of the input string and turn this into memchr.
     ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
     if (CharC == 0) {
-      // These optimizations require TargetData.
+      // These optimizations require DataLayout.
       if (!TD) return 0;
 
       uint64_t Len = GetStringLength(SrcStr);
@@ -356,7 +356,7 @@ struct StrCmpOpt : public LibCallOptimization {
     uint64_t Len1 = GetStringLength(Str1P);
     uint64_t Len2 = GetStringLength(Str2P);
     if (Len1 && Len2) {
-      // These optimizations require TargetData.
+      // These optimizations require DataLayout.
       if (!TD) return 0;
 
       return EmitMemCmp(Str1P, Str2P,
@@ -444,7 +444,7 @@ struct StrCpyOpt : public LibCallOptimization {
     if (Dst == Src)      // strcpy(x,x)  -> x
       return Src;
 
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     // See if we can get the length of the input string.
@@ -481,7 +481,7 @@ struct StpCpyOpt: public LibCallOptimization {
         FT->getParamType(0) != B.getInt8PtrTy())
       return 0;
 
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
@@ -543,7 +543,7 @@ struct StrNCpyOpt : public LibCallOptimization {
 
     if (Len == 0) return Dst; // strncpy(x, y, 0) -> x
 
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     // Let strncpy handle the zero padding
@@ -832,7 +832,7 @@ struct MemCmpOpt : public LibCallOptimization {
 
 struct MemCpyOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
@@ -854,7 +854,7 @@ struct MemCpyOpt : public LibCallOptimization {
 
 struct MemMoveOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
@@ -876,7 +876,7 @@ struct MemMoveOpt : public LibCallOptimization {
 
 struct MemSetOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
@@ -1304,7 +1304,7 @@ struct SPrintFOpt : public LibCallOptimization {
         if (FormatStr[i] == '%')
           return 0; // we found a format specifier, bail out.
 
-      // These optimizations require TargetData.
+      // These optimizations require DataLayout.
       if (!TD) return 0;
 
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
@@ -1334,7 +1334,7 @@ struct SPrintFOpt : public LibCallOptimization {
     }
 
     if (FormatStr[1] == 's') {
-      // These optimizations require TargetData.
+      // These optimizations require DataLayout.
       if (!TD) return 0;
 
       // sprintf(dest, "%s", str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
@@ -1422,7 +1422,7 @@ struct FWriteOpt : public LibCallOptimization {
 
 struct FPutsOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
+    // These optimizations require DataLayout.
     if (!TD) return 0;
 
     // Require two pointers.  Also, we can't optimize if return value is used.
@@ -1459,7 +1459,7 @@ struct FPrintFOpt : public LibCallOptimization {
         if (FormatStr[i] == '%')  // Could handle %% -> % if we cared.
           return 0; // We found a format specifier.
 
-      // These optimizations require TargetData.
+      // These optimizations require DataLayout.
       if (!TD) return 0;
 
       Value *NewCI = EmitFWrite(CI->getArgOperand(1),
@@ -1749,7 +1749,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   if (Optimizations.empty())
     InitOptimizations();
 
-  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
 
   IRBuilder<> Builder(F.getContext());
 

@@ -22,11 +22,11 @@ namespace llvm {
   class BasicBlock;
   class Function;
   class Instruction;
-  class TargetData;
+  class DataLayout;
   class Value;
 
   /// \brief Check whether an instruction is likely to be "free" when lowered.
-  bool isInstructionFree(const Instruction *I, const TargetData *TD = 0);
+  bool isInstructionFree(const Instruction *I, const DataLayout *TD = 0);
 
   /// \brief Check whether a call will lower to something small.
   ///
@@ -85,10 +85,10 @@ namespace llvm {
                     NumRets(0) {}
 
     /// \brief Add information about a block to the current state.
-    void analyzeBasicBlock(const BasicBlock *BB, const TargetData *TD = 0);
+    void analyzeBasicBlock(const BasicBlock *BB, const DataLayout *TD = 0);
 
     /// \brief Add information about a function to the current state.
-    void analyzeFunction(Function *F, const TargetData *TD = 0);
+    void analyzeFunction(Function *F, const DataLayout *TD = 0);
   };
 }
 

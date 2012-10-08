@@ -53,7 +53,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Analysis/Loads.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -1059,7 +1059,7 @@ FastISel::FastISel(FunctionLoweringInfo &funcInfo,
     MFI(*FuncInfo.MF->getFrameInfo()),
     MCP(*FuncInfo.MF->getConstantPool()),
     TM(FuncInfo.MF->getTarget()),
-    TD(*TM.getTargetData()),
+    TD(*TM.getDataLayout()),
     TII(*TM.getInstrInfo()),
     TLI(*TM.getTargetLowering()),
     TRI(*TM.getRegisterInfo()),

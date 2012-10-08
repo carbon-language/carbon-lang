@@ -21,7 +21,7 @@
 #include "MSP430SelectionDAGInfo.h"
 #include "MSP430RegisterInfo.h"
 #include "MSP430Subtarget.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -31,7 +31,7 @@ namespace llvm {
 ///
 class MSP430TargetMachine : public LLVMTargetMachine {
   MSP430Subtarget        Subtarget;
-  const TargetData       DataLayout;       // Calculates type size & alignment
+  const DataLayout       DL;       // Calculates type size & alignment
   MSP430InstrInfo        InstrInfo;
   MSP430TargetLowering   TLInfo;
   MSP430SelectionDAGInfo TSInfo;
@@ -47,7 +47,7 @@ public:
     return &FrameLowering;
   }
   virtual const MSP430InstrInfo *getInstrInfo() const  { return &InstrInfo; }
-  virtual const TargetData *getTargetData() const     { return &DataLayout;}
+  virtual const DataLayout *getDataLayout() const     { return &DL;}
   virtual const MSP430Subtarget *getSubtargetImpl() const { return &Subtarget; }
 
   virtual const TargetRegisterInfo *getRegisterInfo() const {

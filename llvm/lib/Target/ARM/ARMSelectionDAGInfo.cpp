@@ -155,7 +155,7 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
   TargetLowering::ArgListEntry Entry;
 
   // First argument: data pointer
-  Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
+  Type *IntPtrTy = TLI.getDataLayout()->getIntPtrType(*DAG.getContext());
   Entry.Node = Dst;
   Entry.Ty = IntPtrTy;
   Args.push_back(Entry);

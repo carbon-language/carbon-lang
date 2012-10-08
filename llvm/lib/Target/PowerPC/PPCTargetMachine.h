@@ -21,7 +21,7 @@
 #include "PPCISelLowering.h"
 #include "PPCSelectionDAGInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 namespace llvm {
 
@@ -29,7 +29,7 @@ namespace llvm {
 ///
 class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
-  const TargetData    DataLayout;       // Calculates type size & alignment
+  const DataLayout    DL;       // Calculates type size & alignment
   PPCInstrInfo        InstrInfo;
   PPCFrameLowering    FrameLowering;
   PPCJITInfo          JITInfo;
@@ -58,7 +58,7 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const TargetData    *getTargetData() const    { return &DataLayout; }
+  virtual const DataLayout    *getDataLayout() const    { return &DL; }
   virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return &InstrItins;

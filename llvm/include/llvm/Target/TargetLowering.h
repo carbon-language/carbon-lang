@@ -50,7 +50,7 @@ namespace llvm {
   class MCContext;
   class MCExpr;
   template<typename T> class SmallVectorImpl;
-  class TargetData;
+  class DataLayout;
   class TargetRegisterClass;
   class TargetLibraryInfo;
   class TargetLoweringObjectFile;
@@ -137,7 +137,7 @@ public:
   virtual ~TargetLowering();
 
   const TargetMachine &getTargetMachine() const { return TM; }
-  const TargetData *getTargetData() const { return TD; }
+  const DataLayout *getDataLayout() const { return TD; }
   const TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
 
   bool isBigEndian() const { return !IsLittleEndian; }
@@ -1789,7 +1789,7 @@ public:
 
 private:
   const TargetMachine &TM;
-  const TargetData *TD;
+  const DataLayout *TD;
   const TargetLoweringObjectFile &TLOF;
 
   /// PointerTy - The type to use for pointers, usually i32 or i64.

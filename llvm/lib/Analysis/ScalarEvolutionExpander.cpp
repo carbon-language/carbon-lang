@@ -18,7 +18,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -212,7 +212,7 @@ static bool FactorOutConstant(const SCEV *&S,
                               const SCEV *&Remainder,
                               const SCEV *Factor,
                               ScalarEvolution &SE,
-                              const TargetData *TD) {
+                              const DataLayout *TD) {
   // Everything is divisible by one.
   if (Factor->isOne())
     return true;
@@ -253,7 +253,7 @@ static bool FactorOutConstant(const SCEV *&S,
   // of the given factor.
   if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
     if (TD) {
-      // With TargetData, the size is known. Check if there is a constant
+      // With DataLayout, the size is known. Check if there is a constant
       // operand which is a multiple of the given factor. If so, we can
       // factor it.
       const SCEVConstant *FC = cast<SCEVConstant>(Factor);
@@ -267,7 +267,7 @@ static bool FactorOutConstant(const SCEV *&S,
           return true;
         }
     } else {
-      // Without TargetData, check if Factor can be factored out of any of the
+      // Without DataLayout, check if Factor can be factored out of any of the
       // Mul's operands. If so, we can just remove it.
       for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
         const SCEV *SOp = M->getOperand(i);
@@ -458,7 +458,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
       // An empty struct has no fields.
       if (STy->getNumElements() == 0) break;
       if (SE.TD) {
-        // With TargetData, field offsets are known. See if a constant offset
+        // With DataLayout, field offsets are known. See if a constant offset
         // falls within any of the struct fields.
         if (Ops.empty()) break;
         if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[0]))
@@ -477,7 +477,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
             }
           }
       } else {
-        // Without TargetData, just check for an offsetof expression of the
+        // Without DataLayout, just check for an offsetof expression of the
         // appropriate struct type.
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Ops[i])) {

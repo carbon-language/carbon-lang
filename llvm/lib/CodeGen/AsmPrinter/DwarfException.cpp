@@ -24,7 +24,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -417,7 +417,7 @@ void DwarfException::EmitExceptionTable() {
     // that we're omitting that bit.
     TTypeEncoding = dwarf::DW_EH_PE_omit;
     // dwarf::DW_EH_PE_absptr
-    TypeFormatSize = Asm->getTargetData().getPointerSize();
+    TypeFormatSize = Asm->getDataLayout().getPointerSize();
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to

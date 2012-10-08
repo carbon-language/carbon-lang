@@ -112,7 +112,7 @@ namespace {
                                            "_GLOBAL_OFFSET_TABLE_");
       unsigned Id = AFI->createPICLabelUId();
       ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(GV, Id);
-      unsigned Align = TM->getTargetData()->getPrefTypeAlignment(GV->getType());
+      unsigned Align = TM->getDataLayout()->getPrefTypeAlignment(GV->getType());
       unsigned Idx = MF.getConstantPool()->getConstantPoolIndex(CPV, Align);
 
       MachineBasicBlock &FirstMBB = MF.front();

@@ -24,7 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 
@@ -44,7 +44,7 @@ namespace {
     Loop             *L;
     LoopInfo         *LI;
     ScalarEvolution  *SE;
-    const TargetData *TD; // May be NULL
+    const DataLayout *TD; // May be NULL
 
     SmallVectorImpl<WeakVH> &DeadInsts;
 
@@ -56,7 +56,7 @@ namespace {
       L(Loop),
       LI(LPM->getAnalysisIfAvailable<LoopInfo>()),
       SE(SE),
-      TD(LPM->getAnalysisIfAvailable<TargetData>()),
+      TD(LPM->getAnalysisIfAvailable<DataLayout>()),
       DeadInsts(Dead),
       Changed(false) {
       assert(LI && "IV simplification requires LoopInfo");

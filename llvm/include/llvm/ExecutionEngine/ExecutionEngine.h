@@ -42,7 +42,7 @@ class JITMemoryManager;
 class MachineCodeInfo;
 class Module;
 class MutexGuard;
-class TargetData;
+class DataLayout;
 class Triple;
 class Type;
 
@@ -104,7 +104,7 @@ class ExecutionEngine {
   ExecutionEngineState EEState;
 
   /// The target data for the platform for which execution is being performed.
-  const TargetData *TD;
+  const DataLayout *TD;
 
   /// Whether lazy JIT compilation is enabled.
   bool CompilingLazily;
@@ -123,7 +123,7 @@ protected:
   /// optimize for the case where there is only one module.
   SmallVector<Module*, 1> Modules;
 
-  void setTargetData(const TargetData *td) { TD = td; }
+  void setDataLayout(const DataLayout *td) { TD = td; }
 
   /// getMemoryforGV - Allocate memory for a global variable.
   virtual char *getMemoryForGV(const GlobalVariable *GV);
@@ -213,7 +213,7 @@ public:
 
   //===--------------------------------------------------------------------===//
 
-  const TargetData *getTargetData() const { return TD; }
+  const DataLayout *getDataLayout() const { return TD; }
 
   /// removeModule - Remove a Module from the list of modules.  Returns true if
   /// M is found.

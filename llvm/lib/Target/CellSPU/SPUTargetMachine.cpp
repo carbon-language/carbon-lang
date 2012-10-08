@@ -38,7 +38,7 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, StringRef TT,
                                    CodeGenOpt::Level OL)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS),
-    DataLayout(Subtarget.getTargetDataString()),
+    DL(Subtarget.getDataLayoutString()),
     InstrInfo(*this),
     FrameLowering(Subtarget),
     TLInfo(*this),

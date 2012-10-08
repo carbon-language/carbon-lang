@@ -80,9 +80,9 @@ namespace llvm {
       return UseLargeMem;
     }
 
-    /// getTargetDataString - Return the pointer size and type alignment
+    /// getDataLayoutString - Return the pointer size and type alignment
     /// properties of this subtarget.
-    const char *getTargetDataString() const {
+    const char *getDataLayoutString() const {
       return "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128"
              "-i16:16:128-i8:8:128-i1:8:128-a:0:128-v64:64:128-v128:128:128"
              "-s:128:128-n32:64";

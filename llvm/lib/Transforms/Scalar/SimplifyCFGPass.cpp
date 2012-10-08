@@ -31,7 +31,7 @@
 #include "llvm/Attributes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -293,7 +293,7 @@ static bool mergeEmptyReturnBlocks(Function &F) {
 
 /// iterativelySimplifyCFG - Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
-static bool iterativelySimplifyCFG(Function &F, const TargetData *TD) {
+static bool iterativelySimplifyCFG(Function &F, const DataLayout *TD) {
   bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
@@ -316,7 +316,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetData *TD) {
 // simplify the CFG.
 //
 bool CFGSimplifyPass::runOnFunction(Function &F) {
-  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
   bool EverChanged = removeUnreachableBlocksFromFn(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
   EverChanged |= iterativelySimplifyCFG(F, TD);

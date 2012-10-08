@@ -21,7 +21,7 @@
 
 namespace llvm {
 class raw_ostream;
-class TargetData;
+class DataLayout;
 class TargetRegisterClass;
 class Type;
 class MachineFunction;

@@ -15,7 +15,7 @@
 #include "ARMRelocations.h"
 #include "llvm/Function.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/ELF.h"
 
@@ -26,8 +26,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 ARMELFWriterInfo::ARMELFWriterInfo(TargetMachine &TM)
-  : TargetELFWriterInfo(TM.getTargetData()->getPointerSizeInBits() == 64,
-                        TM.getTargetData()->isLittleEndian()) {
+  : TargetELFWriterInfo(TM.getDataLayout()->getPointerSizeInBits() == 64,
+                        TM.getDataLayout()->isLittleEndian()) {
 }
 
 ARMELFWriterInfo::~ARMELFWriterInfo() {}

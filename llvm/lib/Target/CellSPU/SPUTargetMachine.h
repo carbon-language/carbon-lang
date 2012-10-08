@@ -20,7 +20,7 @@
 #include "SPUSelectionDAGInfo.h"
 #include "SPUFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 namespace llvm {
 
@@ -28,7 +28,7 @@ namespace llvm {
 ///
 class SPUTargetMachine : public LLVMTargetMachine {
   SPUSubtarget        Subtarget;
-  const TargetData    DataLayout;
+  const DataLayout    DL;
   SPUInstrInfo        InstrInfo;
   SPUFrameLowering    FrameLowering;
   SPUTargetLowering   TLInfo;
@@ -70,8 +70,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const TargetData *getTargetData() const {
-    return &DataLayout;
+  virtual const DataLayout *getDataLayout() const {
+    return &DL;
   }
 
   virtual const InstrItineraryData *getInstrItineraryData() const {

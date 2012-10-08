@@ -20,7 +20,7 @@
 
 namespace llvm {
   class X86MachineFunctionInfo;
-  class TargetData;
+  class DataLayout;
 
 /// X86COFFMachineModuleInfo - This is a MachineModuleInfoImpl implementation
 /// for X86 COFF targets.

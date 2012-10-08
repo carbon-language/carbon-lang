@@ -202,14 +202,14 @@ namespace {
     bool ModuleLevelChanges;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
-    const TargetData *TD;
+    const DataLayout *TD;
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
                           ValueToValueMapTy &valueMap,
                           bool moduleLevelChanges,
                           const char *nameSuffix, 
                           ClonedCodeInfo *codeInfo,
-                          const TargetData *td)
+                          const DataLayout *td)
     : NewFunc(newFunc), OldFunc(oldFunc),
       VMap(valueMap), ModuleLevelChanges(moduleLevelChanges),
       NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td) {
@@ -365,7 +365,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      SmallVectorImpl<ReturnInst*> &Returns,
                                      const char *NameSuffix, 
                                      ClonedCodeInfo *CodeInfo,
-                                     const TargetData *TD,
+                                     const DataLayout *TD,
                                      Instruction *TheCall) {
   assert(NameSuffix && "NameSuffix cannot be null!");
   

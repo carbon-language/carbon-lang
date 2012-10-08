@@ -169,7 +169,7 @@ namespace llvm {
                                             SelectionDAG &DAG) const;
 
     const MSP430Subtarget &Subtarget;
-    const TargetData *TD;
+    const DataLayout *TD;
   };
 } // namespace llvm
 

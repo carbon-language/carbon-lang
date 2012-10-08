@@ -18,7 +18,7 @@
 #include "llvm/IRBuilder.h"
 #include "llvm/Operator.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 namespace llvm {
 
@@ -35,7 +35,7 @@ class Pass;
 class PHINode;
 class AllocaInst;
 class ConstantExpr;
-class TargetData;
+class DataLayout;
 class TargetLibraryInfo;
 class DIBuilder;
 
@@ -84,7 +84,7 @@ bool RecursivelyDeleteDeadPHINode(PHINode *PN, const TargetLibraryInfo *TLI=0);
 ///
 /// This returns true if it changed the code, note that it can delete
 /// instructions in other blocks as well in this block.
-bool SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD = 0,
+bool SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD = 0,
                                  const TargetLibraryInfo *TLI = 0);
     
 //===----------------------------------------------------------------------===//
@@ -103,7 +103,7 @@ bool SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD = 0,
 /// .. and delete the predecessor corresponding to the '1', this will attempt to
 /// recursively fold the 'and' to 0.
 void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
-                                  TargetData *TD = 0);
+                                  DataLayout *TD = 0);
     
   
 /// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its
@@ -134,7 +134,7 @@ bool EliminateDuplicatePHINodes(BasicBlock *BB);
 /// of the CFG.  It returns true if a modification was made, possibly deleting
 /// the basic block that was pointed to.
 ///
-bool SimplifyCFG(BasicBlock *BB, const TargetData *TD = 0);
+bool SimplifyCFG(BasicBlock *BB, const DataLayout *TD = 0);
 
 /// FoldBranchToCommonDest - If this basic block is ONLY a setcc and a branch,
 /// and if a predecessor branches to us and one of our successors, fold the
@@ -162,10 +162,10 @@ AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
 /// and it is more than the alignment of the ultimate object, see if we can
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
-                                    const TargetData *TD = 0);
+                                    const DataLayout *TD = 0);
 
 /// getKnownAlignment - Try to infer an alignment for the specified pointer.
-static inline unsigned getKnownAlignment(Value *V, const TargetData *TD = 0) {
+static inline unsigned getKnownAlignment(Value *V, const DataLayout *TD = 0) {
   return getOrEnforceKnownAlignment(V, 0, TD);
 }
 
@@ -175,7 +175,7 @@ static inline unsigned getKnownAlignment(Value *V, const TargetData *TD = 0) {
 /// When NoAssumptions is true, no assumptions about index computation not
 /// overflowing is made.
 template<typename IRBuilderTy>
-Value *EmitGEPOffset(IRBuilderTy *Builder, const TargetData &TD, User *GEP,
+Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
                      bool NoAssumptions = false) {
   gep_type_iterator GTI = gep_type_begin(GEP);
   Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());

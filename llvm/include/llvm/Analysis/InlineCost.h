@@ -26,7 +26,7 @@
 namespace llvm {
 
   class CallSite;
-  class TargetData;
+  class DataLayout;
 
   namespace InlineConstants {
     // Various magic constants used to adjust heuristics.
@@ -104,13 +104,13 @@ namespace llvm {
 
   /// InlineCostAnalyzer - Cost analyzer used by inliner.
   class InlineCostAnalyzer {
-    // TargetData if available, or null.
-    const TargetData *TD;
+    // DataLayout if available, or null.
+    const DataLayout *TD;
 
   public:
     InlineCostAnalyzer(): TD(0) {}
 
-    void setTargetData(const TargetData *TData) { TD = TData; }
+    void setDataLayout(const DataLayout *TData) { TD = TData; }
 
     /// \brief Get an InlineCost object representing the cost of inlining this
     /// callsite.

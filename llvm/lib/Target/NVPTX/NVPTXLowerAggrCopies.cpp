@@ -21,7 +21,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 using namespace llvm;
 
@@ -110,7 +110,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   SmallVector<MemTransferInst *, 4> aggrMemcpys;
   SmallVector<MemSetInst *, 4> aggrMemsets;
 
-  TargetData *TD = &getAnalysis<TargetData>();
+  DataLayout *TD = &getAnalysis<DataLayout>();
   LLVMContext &Context = F.getParent()->getContext();
 
   //

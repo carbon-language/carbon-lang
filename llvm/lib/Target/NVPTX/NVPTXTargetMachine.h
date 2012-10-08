@@ -21,7 +21,7 @@
 #include "NVPTXSubtarget.h"
 #include "NVPTXFrameLowering.h"
 #include "ManagedStringPool.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"
@@ -32,7 +32,7 @@ namespace llvm {
 ///
 class NVPTXTargetMachine : public LLVMTargetMachine {
   NVPTXSubtarget        Subtarget;
-  const TargetData      DataLayout;       // Calculates type size & alignment
+  const DataLayout      DL;       // Calculates type size & alignment
   NVPTXInstrInfo        InstrInfo;
   NVPTXTargetLowering   TLInfo;
   TargetSelectionDAGInfo   TSInfo;
@@ -58,7 +58,7 @@ public:
     return &FrameLowering;
   }
   virtual const NVPTXInstrInfo *getInstrInfo() const  { return &InstrInfo; }
-  virtual const TargetData *getTargetData() const     { return &DataLayout;}
+  virtual const DataLayout *getDataLayout() const     { return &DL;}
   virtual const NVPTXSubtarget *getSubtargetImpl() const { return &Subtarget;}
 
   virtual const NVPTXRegisterInfo *getRegisterInfo() const {

@@ -22,7 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include <climits>
 
 using namespace llvm;
@@ -113,7 +113,7 @@ Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial) {
 
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
-                                    const TargetData *TD) {
+                                    const DataLayout *TD) {
   CodeMetrics Metrics;
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
@@ -178,7 +178,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Enforce the threshold.
   if (Threshold != NoThreshold) {
-    const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+    const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
     unsigned NumInlineCandidates;
     unsigned LoopSize = ApproximateLoopSize(L, NumInlineCandidates, TD);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");

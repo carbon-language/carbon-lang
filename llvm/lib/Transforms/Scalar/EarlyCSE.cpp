@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
@@ -216,7 +216,7 @@ namespace {
 /// cases.
 class EarlyCSE : public FunctionPass {
 public:
-  const TargetData *TD;
+  const DataLayout *TD;
   const TargetLibraryInfo *TLI;
   DominatorTree *DT;
   typedef RecyclingAllocator<BumpPtrAllocator,
@@ -508,7 +508,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 bool EarlyCSE::runOnFunction(Function &F) {
   std::deque<StackNode *> nodesToProcess;
 
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTree>();
 

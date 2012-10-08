@@ -47,7 +47,7 @@ namespace {
 class MipsCodeEmitter : public MachineFunctionPass {
   MipsJITInfo *JTI;
   const MipsInstrInfo *II;
-  const TargetData *TD;
+  const DataLayout *TD;
   const MipsSubtarget *Subtarget;
   TargetMachine &TM;
   JITCodeEmitter &MCE;
@@ -66,7 +66,7 @@ class MipsCodeEmitter : public MachineFunctionPass {
     MipsCodeEmitter(TargetMachine &tm, JITCodeEmitter &mce) :
       MachineFunctionPass(ID), JTI(0),
       II((const MipsInstrInfo *) tm.getInstrInfo()),
-      TD(tm.getTargetData()), TM(tm), MCE(mce), MCPEs(0), MJTEs(0),
+      TD(tm.getDataLayout()), TM(tm), MCE(mce), MCPEs(0), MJTEs(0),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {
     }
 
@@ -128,7 +128,7 @@ char MipsCodeEmitter::ID = 0;
 bool MipsCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   JTI = ((MipsTargetMachine&) MF.getTarget()).getJITInfo();
   II = ((const MipsTargetMachine&) MF.getTarget()).getInstrInfo();
-  TD = ((const MipsTargetMachine&) MF.getTarget()).getTargetData();
+  TD = ((const MipsTargetMachine&) MF.getTarget()).getDataLayout();
   Subtarget = &TM.getSubtarget<MipsSubtarget> ();
   MCPEs = &MF.getConstantPool()->getConstants();
   MJTEs = 0;

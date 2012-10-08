@@ -23,7 +23,7 @@
 #include "MBlazeELFWriterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
@@ -31,7 +31,7 @@ namespace llvm {
 
   class MBlazeTargetMachine : public LLVMTargetMachine {
     MBlazeSubtarget        Subtarget;
-    const TargetData       DataLayout; // Calculates type size & alignment
+    const DataLayout       DL; // Calculates type size & alignment
     MBlazeInstrInfo        InstrInfo;
     MBlazeFrameLowering    FrameLowering;
     MBlazeTargetLowering   TLInfo;
@@ -59,8 +59,8 @@ namespace llvm {
     virtual const MBlazeSubtarget *getSubtargetImpl() const
     { return &Subtarget; }
 
-    virtual const TargetData *getTargetData() const
-    { return &DataLayout;}
+    virtual const DataLayout *getDataLayout() const
+    { return &DL;}
 
     virtual const MBlazeRegisterInfo *getRegisterInfo() const
     { return &InstrInfo.getRegisterInfo(); }

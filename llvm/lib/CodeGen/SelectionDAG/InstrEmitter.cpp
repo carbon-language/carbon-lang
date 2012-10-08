@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -390,10 +390,10 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
     Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      Align = TM->getTargetData()->getPrefTypeAlignment(Type);
+      Align = TM->getDataLayout()->getPrefTypeAlignment(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
-        Align = TM->getTargetData()->getTypeAllocSize(Type);
+        Align = TM->getDataLayout()->getTypeAllocSize(Type);
       }
     }
 

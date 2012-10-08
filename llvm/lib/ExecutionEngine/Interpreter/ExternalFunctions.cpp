@@ -25,7 +25,7 @@
 #include "llvm/Config/config.h"     // Detect libffi
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include <csignal>
@@ -180,7 +180,7 @@ static void *ffiValueFor(Type *Ty, const GenericValue &AV,
 
 static bool ffiInvoke(RawFunc Fn, Function *F,
                       const std::vector<GenericValue> &ArgVals,
-                      const TargetData *TD, GenericValue &Result) {
+                      const DataLayout *TD, GenericValue &Result) {
   ffi_cif cif;
   FunctionType *FTy = F->getFunctionType();
   const unsigned NumArgs = F->arg_size();
@@ -276,7 +276,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   FunctionsLock->release();
 
   GenericValue Result;
-  if (RawFn != 0 && ffiInvoke(RawFn, F, ArgVals, getTargetData(), Result))
+  if (RawFn != 0 && ffiInvoke(RawFn, F, ArgVals, getDataLayout(), Result))
     return Result;
 #endif // USE_LIBFFI
 
@@ -376,7 +376,7 @@ GenericValue lle_X_sprintf(FunctionType *FT,
       case 'x': case 'X':
         if (HowLong >= 1) {
           if (HowLong == 1 &&
-              TheInterpreter->getTargetData()->getPointerSizeInBits() == 64 &&
+              TheInterpreter->getDataLayout()->getPointerSizeInBits() == 64 &&
               sizeof(long) < sizeof(int64_t)) {
             // Make sure we use %lld with a 64 bit argument because we might be
             // compiling LLI on a 32 bit compiler.

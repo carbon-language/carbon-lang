@@ -33,7 +33,7 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
                                        bool is64bit)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS, is64bit),
-    DataLayout(Subtarget.getDataLayout()),
+    DL(Subtarget.getDataLayout()),
     InstrInfo(Subtarget),
     TLInfo(*this), TSInfo(*this),
     FrameLowering(Subtarget) {

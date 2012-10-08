@@ -563,7 +563,7 @@ public:
   /// IntPtrTy argument is used to make accurate determinations for casts
   /// involving Integer and Pointer types. They are no-op casts if the integer
   /// is the same size as the pointer. However, pointer size varies with
-  /// platform. Generally, the result of TargetData::getIntPtrType() should be
+  /// platform. Generally, the result of DataLayout::getIntPtrType() should be
   /// passed in. If that's not available, use Type::Int64Ty, which will make
   /// the isNoopCast call conservative.
   /// @brief Determine if the described cast is a no-op cast.

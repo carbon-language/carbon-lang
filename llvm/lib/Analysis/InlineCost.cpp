@@ -24,7 +24,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
 #include "llvm/GlobalAlias.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -41,8 +41,8 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   typedef InstVisitor<CallAnalyzer, bool> Base;
   friend class InstVisitor<CallAnalyzer, bool>;
 
-  // TargetData if available, or null.
-  const TargetData *const TD;
+  // DataLayout if available, or null.
+  const DataLayout *const TD;
 
   // The called function.
   Function &F;
@@ -126,7 +126,7 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   bool visitCallSite(CallSite CS);
 
 public:
-  CallAnalyzer(const TargetData *TD, Function &Callee, int Threshold)
+  CallAnalyzer(const DataLayout *TD, Function &Callee, int Threshold)
     : TD(TD), F(Callee), Threshold(Threshold), Cost(0),
       AlwaysInline(F.getFnAttributes().hasAlwaysInlineAttr()),
       IsCallerRecursive(false), IsRecursiveCall(false),
@@ -833,7 +833,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
         // one load and one store per word copied.
         // FIXME: The maxStoresPerMemcpy setting from the target should be used
         // here instead of a magic number of 8, but it's not available via
-        // TargetData.
+        // DataLayout.
         NumStores = std::min(NumStores, 8U);
 
         Cost -= 2 * NumStores * InlineConstants::InstrCost;

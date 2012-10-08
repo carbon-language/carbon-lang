@@ -27,7 +27,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
@@ -357,7 +357,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
 
   Type *VoidPtrTy = Type::getInt8PtrTy(Context);
   
-  // Create the alloca.  If we have TargetData, use nice alignment.
+  // Create the alloca.  If we have DataLayout, use nice alignment.
   unsigned Align = 1;
   if (IFI.TD)
     Align = IFI.TD->getPrefTypeAlignment(AggTy);
