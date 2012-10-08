@@ -57,7 +57,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/Dwarf.h"
@@ -1945,7 +1945,7 @@ int main(int argc, char *argv[]) {
     // Set up the optimizer pipeline.  
     // Start with registering info about how the
     // target lays out data structures.
-    fpm.add(new llvm::TargetData(*executionEngine->getTargetData()));
+    fpm.add(new llvm::DataLayout(*executionEngine->getDataLayout()));
     
     // Optimizations turned on
 #ifdef ADD_OPT_PASSES
