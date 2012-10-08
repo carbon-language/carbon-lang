@@ -3834,16 +3834,14 @@ def warn_precedence_bitwise_rel : Warning<
   InGroup<Parentheses>;
 def note_precedence_bitwise_first : Note<
   "place parentheses around the %0 expression to evaluate it first">;
-def note_precedence_bitwise_silence : Note<
-  "place parentheses around the %0 expression to silence this warning">;
+def note_precedence_silence : Note<
+  "place parentheses around the '%0' expression to silence this warning">;
 
 def warn_precedence_conditional : Warning<
   "operator '?:' has lower precedence than '%0'; '%0' will be evaluated first">,
   InGroup<Parentheses>;
 def note_precedence_conditional_first : Note<
   "place parentheses around the '?:' expression to evaluate it first">;
-def note_precedence_conditional_silence : Note<
-  "place parentheses around the '%0' expression to silence this warning">;
 
 def warn_logical_instead_of_bitwise : Warning<
   "use of logical '%0' with constant operand">,
@@ -3855,18 +3853,12 @@ def note_logical_instead_of_bitwise_remove_constant : Note<
 
 def warn_bitwise_and_in_bitwise_or : Warning<
   "'&' within '|'">, InGroup<BitwiseOpParentheses>;
-def note_bitwise_and_in_bitwise_or_silence : Note<
-  "place parentheses around the '&' expression to silence this warning">;
 
 def warn_logical_and_in_logical_or : Warning<
   "'&&' within '||'">, InGroup<LogicalOpParentheses>;
-def note_logical_and_in_logical_or_silence : Note<
-  "place parentheses around the '&&' expression to silence this warning">;
 
 def warn_addition_in_bitshift : Warning<
   "'%0' within '%1'">, InGroup<ShiftOpParentheses>;
-def note_addition_in_bitshift_silence : Note<
-  "place parentheses around the '%0' expression to silence this warning">;
 
 def warn_self_assignment : Warning<
   "explicitly assigning a variable of type %0 to itself">,

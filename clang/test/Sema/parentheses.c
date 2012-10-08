@@ -13,13 +13,13 @@ void if_assign(void) {
 void bitwise_rel(unsigned i) {
   (void)(i & 0x2 == 0); // expected-warning {{& has lower precedence than ==}} \
                         // expected-note{{place parentheses around the & expression to evaluate it first}} \
-  // expected-note{{place parentheses around the == expression to silence this warning}}
+  // expected-note{{place parentheses around the '==' expression to silence this warning}}
   (void)(0 == i & 0x2); // expected-warning {{& has lower precedence than ==}} \
                         // expected-note{{place parentheses around the & expression to evaluate it first}} \
-  // expected-note{{place parentheses around the == expression to silence this warning}}
+  // expected-note{{place parentheses around the '==' expression to silence this warning}}
   (void)(i & 0xff < 30); // expected-warning {{& has lower precedence than <}} \
                         // expected-note{{place parentheses around the & expression to evaluate it first}} \
-  // expected-note{{place parentheses around the < expression to silence this warning}}
+  // expected-note{{place parentheses around the '<' expression to silence this warning}}
   (void)((i & 0x2) == 0);
   (void)(i & (0x2 == 0));
   // Eager logical op
