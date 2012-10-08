@@ -168,7 +168,9 @@ unsigned PPCMCCodeEmitter::
 get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                     SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
+  assert((MI.getOpcode() == PPC::MTCRF || 
+          MI.getOpcode() == PPC::MFOCRF ||
+          MI.getOpcode() == PPC::MTCRF8) &&
          (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
   return 0x80 >> getPPCRegisterNumbering(MO.getReg());
 }
