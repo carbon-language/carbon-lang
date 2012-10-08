@@ -542,7 +542,9 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 EVT PPCTargetLowering::getSetCCResultType(EVT VT) const {
-  return MVT::i32;
+  if (!VT.isVector())
+    return MVT::i32;
+  return VT.changeVectorElementTypeToInteger();
 }
 
 //===----------------------------------------------------------------------===//

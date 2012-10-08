@@ -701,10 +701,29 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
     }
   }
 
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+
+  // Altivec Vector compare instructions do not set any CR register by default
+  if (LHS.getValueType().isVector()) {
+    unsigned int Opc;
+    if (LHS.getValueType() == MVT::v16i8)
+      Opc = PPC::VCMPEQUB;
+    else if (LHS.getValueType() == MVT::v4i32)
+      Opc = PPC::VCMPEQUW;
+    else if (LHS.getValueType() == MVT::v8i16)
+      Opc = PPC::VCMPEQUH;
+    else if (LHS.getValueType() == MVT::v4f32)
+      Opc = PPC::VCMPEQFP;
+    else
+      llvm_unreachable("Invalid vector compare type: should be expanded by legalize");
+    return CurDAG->SelectNodeTo(N, Opc, LHS.getValueType(), LHS, RHS);
+  }
+
   bool Inv;
   int OtherCondIdx;
   unsigned Idx = getCRIdxForSetCC(CC, Inv, OtherCondIdx);
-  SDValue CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC, dl);
+  SDValue CCReg = SelectCC(LHS, RHS, CC, dl);
   SDValue IntCR;
 
   // Force the ccreg into CR7.
@@ -717,7 +736,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   if (PPCSubTarget.hasMFOCRF() && OtherCondIdx == -1)
     IntCR = SDValue(CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32, CR7Reg,
                                            CCReg), 0);
- else
+  else
     IntCR = SDValue(CurDAG->getMachineNode(PPC::MFCRpseud, dl, MVT::i32,
                                            CR7Reg, CCReg), 0);
 
