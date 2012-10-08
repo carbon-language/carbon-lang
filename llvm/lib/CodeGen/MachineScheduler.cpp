@@ -495,6 +495,7 @@ void ScheduleDAGMI::schedule() {
 
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
+    assert(!SU->isScheduled && "Node already scheduled");
     if (!checkSchedLimit())
       break;
 
@@ -1119,33 +1120,36 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
     return NULL;
   }
   SUnit *SU;
-  if (ForceTopDown) {
-    SU = Top.pickOnlyChoice();
-    if (!SU) {
-      SchedCandidate TopCand;
-      CandResult TopResult =
-        pickNodeFromQueue(Top.Available, DAG->getTopRPTracker(), TopCand);
-      assert(TopResult != NoCand && "failed to find the first candidate");
-      (void)TopResult;
-      SU = TopCand.SU;
+  do {
+    if (ForceTopDown) {
+      SU = Top.pickOnlyChoice();
+      if (!SU) {
+        SchedCandidate TopCand;
+        CandResult TopResult =
+          pickNodeFromQueue(Top.Available, DAG->getTopRPTracker(), TopCand);
+        assert(TopResult != NoCand && "failed to find the first candidate");
+        (void)TopResult;
+        SU = TopCand.SU;
+      }
+      IsTopNode = true;
     }
-    IsTopNode = true;
-  }
-  else if (ForceBottomUp) {
-    SU = Bot.pickOnlyChoice();
-    if (!SU) {
-      SchedCandidate BotCand;
-      CandResult BotResult =
-        pickNodeFromQueue(Bot.Available, DAG->getBotRPTracker(), BotCand);
-      assert(BotResult != NoCand && "failed to find the first candidate");
-      (void)BotResult;
-      SU = BotCand.SU;
+    else if (ForceBottomUp) {
+      SU = Bot.pickOnlyChoice();
+      if (!SU) {
+        SchedCandidate BotCand;
+        CandResult BotResult =
+          pickNodeFromQueue(Bot.Available, DAG->getBotRPTracker(), BotCand);
+        assert(BotResult != NoCand && "failed to find the first candidate");
+        (void)BotResult;
+        SU = BotCand.SU;
+      }
+      IsTopNode = false;
     }
-    IsTopNode = false;
-  }
-  else {
-    SU = pickNodeBidrectional(IsTopNode);
-  }
+    else {
+      SU = pickNodeBidrectional(IsTopNode);
+    }
+  } while (SU->isScheduled);
+
   if (SU->isTopReady())
     Top.removeReady(SU);
   if (SU->isBottomReady())
