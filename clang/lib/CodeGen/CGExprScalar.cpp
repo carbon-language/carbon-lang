@@ -28,7 +28,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include <cstdarg>
 
 using namespace clang;

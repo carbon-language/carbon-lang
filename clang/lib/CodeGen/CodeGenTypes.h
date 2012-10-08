@@ -23,7 +23,7 @@
 namespace llvm {
   class FunctionType;
   class Module;
-  class TargetData;
+  class DataLayout;
   class Type;
   class LLVMContext;
   class StructType;
@@ -62,7 +62,7 @@ class CodeGenTypes {
   ASTContext &Context;
   const TargetInfo &Target;
   llvm::Module &TheModule;
-  const llvm::TargetData &TheTargetData;
+  const llvm::DataLayout &TheDataLayout;
   const ABIInfo &TheABIInfo;
   CGCXXABI &TheCXXABI;
   const CodeGenOptions &CodeGenOpts;
@@ -108,7 +108,7 @@ public:
   CodeGenTypes(CodeGenModule &CGM);
   ~CodeGenTypes();
 
-  const llvm::TargetData &getTargetData() const { return TheTargetData; }
+  const llvm::DataLayout &getDataLayout() const { return TheDataLayout; }
   const TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const { return TheABIInfo; }

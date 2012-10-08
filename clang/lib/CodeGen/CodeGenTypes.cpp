@@ -23,13 +23,13 @@
 #include "clang/AST/RecordLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 using namespace clang;
 using namespace CodeGen;
 
 CodeGenTypes::CodeGenTypes(CodeGenModule &CGM)
   : Context(CGM.getContext()), Target(Context.getTargetInfo()),
-    TheModule(CGM.getModule()), TheTargetData(CGM.getTargetData()),
+    TheModule(CGM.getModule()), TheDataLayout(CGM.getDataLayout()),
     TheABIInfo(CGM.getTargetCodeGenInfo().getABIInfo()),
     TheCXXABI(CGM.getCXXABI()),
     CodeGenOpts(CGM.getCodeGenOpts()), CGM(CGM) {

@@ -19,7 +19,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include <algorithm>
 
 using namespace clang;
@@ -1879,7 +1879,7 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
     
     // And either 2 or 4 pointers.
     CurrentOffsetInBytes += (HasCopyAndDispose ? 4 : 2) *
-      CGM.getTargetData().getTypeAllocSize(Int8PtrTy);
+      CGM.getDataLayout().getTypeAllocSize(Int8PtrTy);
     
     // Align the offset.
     unsigned AlignedOffsetInBytes = 

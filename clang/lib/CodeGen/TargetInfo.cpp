@@ -18,7 +18,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Type.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -51,8 +51,8 @@ llvm::LLVMContext &ABIInfo::getVMContext() const {
   return CGT.getLLVMContext();
 }
 
-const llvm::TargetData &ABIInfo::getTargetData() const {
-  return CGT.getTargetData();
+const llvm::DataLayout &ABIInfo::getDataLayout() const {
+  return CGT.getDataLayout();
 }
 
 
@@ -1792,7 +1792,7 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
 /// float at offset 4.  It is conservatively correct for this routine to return
 /// false.
 static bool ContainsFloatAtOffset(llvm::Type *IRType, unsigned IROffset,
-                                  const llvm::TargetData &TD) {
+                                  const llvm::DataLayout &TD) {
   // Base case if we find a float.
   if (IROffset == 0 && IRType->isFloatTy())
     return true;
@@ -1832,8 +1832,8 @@ GetSSETypeAtOffset(llvm::Type *IRType, unsigned IROffset,
   // We want to pass as <2 x float> if the LLVM IR type contains a float at
   // offset+0 and offset+4.  Walk the LLVM IR type to find out if this is the
   // case.
-  if (ContainsFloatAtOffset(IRType, IROffset, getTargetData()) &&
-      ContainsFloatAtOffset(IRType, IROffset+4, getTargetData()))
+  if (ContainsFloatAtOffset(IRType, IROffset, getDataLayout()) &&
+      ContainsFloatAtOffset(IRType, IROffset+4, getDataLayout()))
     return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2);
 
   return llvm::Type::getDoubleTy(getVMContext());
@@ -1882,7 +1882,7 @@ GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
 
   if (llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType)) {
     // If this is a struct, recurse into the field at the specified offset.
-    const llvm::StructLayout *SL = getTargetData().getStructLayout(STy);
+    const llvm::StructLayout *SL = getDataLayout().getStructLayout(STy);
     if (IROffset < SL->getSizeInBytes()) {
       unsigned FieldIdx = SL->getElementContainingOffset(IROffset);
       IROffset -= SL->getElementOffset(FieldIdx);
@@ -1894,7 +1894,7 @@ GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
 
   if (llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(IRType)) {
     llvm::Type *EltTy = ATy->getElementType();
-    unsigned EltSize = getTargetData().getTypeAllocSize(EltTy);
+    unsigned EltSize = getDataLayout().getTypeAllocSize(EltTy);
     unsigned EltOffset = IROffset/EltSize*EltSize;
     return GetINTEGERTypeAtOffset(EltTy, IROffset-EltOffset, SourceTy,
                                   SourceOffset);
@@ -1921,14 +1921,14 @@ GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
 /// return {i32*, float}.
 static llvm::Type *
 GetX86_64ByValArgumentPair(llvm::Type *Lo, llvm::Type *Hi,
-                           const llvm::TargetData &TD) {
+                           const llvm::DataLayout &TD) {
   // In order to correctly satisfy the ABI, we need to the high part to start
   // at offset 8.  If the high and low parts we inferred are both 4-byte types
   // (e.g. i32 and i32) then the resultant struct type ({i32,i32}) won't have
   // the second element at offset 8.  Check for this:
   unsigned LoSize = (unsigned)TD.getTypeAllocSize(Lo);
   unsigned HiAlign = TD.getABITypeAlignment(Hi);
-  unsigned HiStart = llvm::TargetData::RoundUpAlignment(LoSize, HiAlign);
+  unsigned HiStart = llvm::DataLayout::RoundUpAlignment(LoSize, HiAlign);
   assert(HiStart != 0 && HiStart <= 8 && "Invalid x86-64 argument pair!");
 
   // To handle this, we have to increase the size of the low part so that the
@@ -2080,7 +2080,7 @@ classifyReturnType(QualType RetTy) const {
   // known to pass in the high eightbyte of the result.  We do this by forming a
   // first class struct aggregate with the high and low part: {low, high}
   if (HighPart)
-    ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getTargetData());
+    ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getDataLayout());
 
   return ABIArgInfo::getDirect(ResType);
 }
@@ -2206,7 +2206,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(
   // known to pass in the high eightbyte of the result.  We do this by forming a
   // first class struct aggregate with the high and low part: {low, high}
   if (HighPart)
-    ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getTargetData());
+    ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getDataLayout());
 
   return ABIArgInfo::getDirect(ResType);
 }

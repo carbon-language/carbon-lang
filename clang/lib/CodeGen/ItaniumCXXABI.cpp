@@ -26,7 +26,7 @@
 #include "clang/AST/Mangle.h"
 #include "clang/AST/Type.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Value.h"
 
 using namespace clang;

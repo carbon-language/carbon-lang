@@ -24,7 +24,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -79,12 +79,12 @@ private:
   CharUnits getAlignment(const llvm::Constant *C) const {
     if (Packed)  return CharUnits::One();
     return CharUnits::fromQuantity(
-        CGM.getTargetData().getABITypeAlignment(C->getType()));
+        CGM.getDataLayout().getABITypeAlignment(C->getType()));
   }
 
   CharUnits getSizeInChars(const llvm::Constant *C) const {
     return CharUnits::fromQuantity(
-        CGM.getTargetData().getTypeAllocSize(C->getType()));
+        CGM.getDataLayout().getTypeAllocSize(C->getType()));
   }
 };
 
@@ -204,7 +204,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     if (!FitsCompletelyInPreviousByte) {
       unsigned NewFieldWidth = FieldSize - BitsInPreviousByte;
 
-      if (CGM.getTargetData().isBigEndian()) {
+      if (CGM.getDataLayout().isBigEndian()) {
         Tmp = Tmp.lshr(NewFieldWidth);
         Tmp = Tmp.trunc(BitsInPreviousByte);
 
@@ -220,7 +220,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     }
 
     Tmp = Tmp.zext(CharWidth);
-    if (CGM.getTargetData().isBigEndian()) {
+    if (CGM.getDataLayout().isBigEndian()) {
       if (FitsCompletelyInPreviousByte)
         Tmp = Tmp.shl(BitsInPreviousByte - FieldValue.getBitWidth());
     } else {
@@ -269,7 +269,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
   while (FieldValue.getBitWidth() > CharWidth) {
     llvm::APInt Tmp;
 
-    if (CGM.getTargetData().isBigEndian()) {
+    if (CGM.getDataLayout().isBigEndian()) {
       // We want the high bits.
       Tmp = 
         FieldValue.lshr(FieldValue.getBitWidth() - CharWidth).trunc(CharWidth);
@@ -292,7 +292,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
          "Should not have more than a byte left!");
 
   if (FieldValue.getBitWidth() < CharWidth) {
-    if (CGM.getTargetData().isBigEndian()) {
+    if (CGM.getDataLayout().isBigEndian()) {
       unsigned BitWidth = FieldValue.getBitWidth();
 
       FieldValue = FieldValue.zext(CharWidth) << (CharWidth - BitWidth);
@@ -337,7 +337,7 @@ void ConstStructBuilder::ConvertStructToPacked() {
     llvm::Constant *C = Elements[i];
 
     CharUnits ElementAlign = CharUnits::fromQuantity(
-      CGM.getTargetData().getABITypeAlignment(C->getType()));
+      CGM.getDataLayout().getABITypeAlignment(C->getType()));
     CharUnits AlignedElementOffsetInChars =
       ElementOffsetInChars.RoundUpToAlignment(ElementAlign);
 
@@ -665,8 +665,8 @@ public:
       SmallVector<llvm::Type*, 2> Types;
       Elts.push_back(C);
       Types.push_back(C->getType());
-      unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
-      unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(destType);
+      unsigned CurSize = CGM.getDataLayout().getTypeAllocSize(C->getType());
+      unsigned TotalSize = CGM.getDataLayout().getTypeAllocSize(destType);
 
       assert(CurSize <= TotalSize && "Union size mismatch!");
       if (unsigned NumPadBytes = TotalSize - CurSize) {

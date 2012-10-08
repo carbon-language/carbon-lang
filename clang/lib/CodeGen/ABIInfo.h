@@ -16,7 +16,7 @@
 namespace llvm {
   class Value;
   class LLVMContext;
-  class TargetData;
+  class DataLayout;
 }
 
 namespace clang {
@@ -178,7 +178,7 @@ namespace clang {
 
     ASTContext &getContext() const;
     llvm::LLVMContext &getVMContext() const;
-    const llvm::TargetData &getTargetData() const;
+    const llvm::DataLayout &getDataLayout() const;
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI) const = 0;
 

@@ -24,7 +24,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
@@ -1060,7 +1060,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   // If the initializer is all or mostly zeros, codegen with memset then do
   // a few stores afterward.
   if (shouldUseMemSetPlusStoresToInitialize(constant,
-                CGM.getTargetData().getTypeAllocSize(constant->getType()))) {
+                CGM.getDataLayout().getTypeAllocSize(constant->getType()))) {
     Builder.CreateMemSet(Loc, llvm::ConstantInt::get(Int8Ty, 0), SizeVal,
                          alignment.getQuantity(), isVolatile);
     // Zero and undef don't require a stores.

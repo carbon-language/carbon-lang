@@ -33,7 +33,7 @@ namespace llvm {
   class Constant;
   class Function;
   class GlobalValue;
-  class TargetData;
+  class DataLayout;
   class FunctionType;
   class PointerType;
   class Value;

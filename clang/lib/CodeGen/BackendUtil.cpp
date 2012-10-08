@@ -27,7 +27,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -57,7 +57,7 @@ private:
   PassManager *getCodeGenPasses() const {
     if (!CodeGenPasses) {
       CodeGenPasses = new PassManager();
-      CodeGenPasses->add(new TargetData(TheModule));
+      CodeGenPasses->add(new DataLayout(TheModule));
     }
     return CodeGenPasses;
   }
@@ -65,7 +65,7 @@ private:
   PassManager *getPerModulePasses() const {
     if (!PerModulePasses) {
       PerModulePasses = new PassManager();
-      PerModulePasses->add(new TargetData(TheModule));
+      PerModulePasses->add(new DataLayout(TheModule));
     }
     return PerModulePasses;
   }
@@ -73,7 +73,7 @@ private:
   FunctionPassManager *getPerFunctionPasses() const {
     if (!PerFunctionPasses) {
       PerFunctionPasses = new FunctionPassManager(TheModule);
-      PerFunctionPasses->add(new TargetData(TheModule));
+      PerFunctionPasses->add(new DataLayout(TheModule));
     }
     return PerFunctionPasses;
   }

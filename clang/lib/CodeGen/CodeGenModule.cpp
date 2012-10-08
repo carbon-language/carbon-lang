@@ -42,7 +42,7 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -62,10 +62,10 @@ static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
-                             llvm::Module &M, const llvm::TargetData &TD,
+                             llvm::Module &M, const llvm::DataLayout &TD,
                              DiagnosticsEngine &diags)
   : Context(C), LangOpts(C.getLangOpts()), CodeGenOpts(CGO), TheModule(M),
-    TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
+    TheDataLayout(TD), TheTargetCodeGenInfo(0), Diags(diags),
     ABI(createCXXABI(*this)), 
     Types(*this),
     TBAA(0),
@@ -1431,7 +1431,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(llvm::Type *Ty) const {
     return Context.toCharUnitsFromBits(
-      TheTargetData.getTypeStoreSizeInBits(Ty));
+      TheDataLayout.getTypeStoreSizeInBits(Ty));
 }
 
 llvm::Constant *
@@ -2038,7 +2038,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   bool isUTF16 = false;
   llvm::StringMapEntry<llvm::Constant*> &Entry =
     GetConstantCFStringEntry(CFConstantStringMap, Literal,
-                             getTargetData().isLittleEndian(),
+                             getDataLayout().isLittleEndian(),
                              isUTF16, StringLength);
 
   if (llvm::Constant *C = Entry.getValue())

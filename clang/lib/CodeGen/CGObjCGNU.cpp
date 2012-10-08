@@ -33,7 +33,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 #include <cstdarg>
 
@@ -1471,7 +1471,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(Zero);
   Elements.push_back(llvm::ConstantInt::get(LongTy, info));
   if (isMeta) {
-    llvm::TargetData td(&TheModule);
+    llvm::DataLayout td(&TheModule);
     Elements.push_back(
         llvm::ConstantInt::get(LongTy,
                                td.getTypeSizeInBits(ClassTy) /
@@ -2369,7 +2369,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   // Runtime version, used for ABI compatibility checking.
   Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
   // sizeof(ModuleTy)
-  llvm::TargetData td(&TheModule);
+  llvm::DataLayout td(&TheModule);
   Elements.push_back(
     llvm::ConstantInt::get(LongTy,
                            td.getTypeSizeInBits(ModuleTy) /

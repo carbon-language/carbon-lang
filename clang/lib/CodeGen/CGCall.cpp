@@ -25,7 +25,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace clang;
@@ -588,9 +588,9 @@ EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
   // If the first elt is at least as large as what we're looking for, or if the
   // first element is the same size as the whole struct, we can enter it.
   uint64_t FirstEltSize =
-    CGF.CGM.getTargetData().getTypeAllocSize(FirstElt);
+    CGF.CGM.getDataLayout().getTypeAllocSize(FirstElt);
   if (FirstEltSize < DstSize &&
-      FirstEltSize < CGF.CGM.getTargetData().getTypeAllocSize(SrcSTy))
+      FirstEltSize < CGF.CGM.getDataLayout().getTypeAllocSize(SrcSTy))
     return SrcPtr;
 
   // GEP into the first element.
@@ -653,14 +653,14 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   if (SrcTy == Ty)
     return CGF.Builder.CreateLoad(SrcPtr);
 
-  uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
+  uint64_t DstSize = CGF.CGM.getDataLayout().getTypeAllocSize(Ty);
 
   if (llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy)) {
     SrcPtr = EnterStructPointerForCoercedAccess(SrcPtr, SrcSTy, DstSize, CGF);
     SrcTy = cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
   }
 
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  uint64_t SrcSize = CGF.CGM.getDataLayout().getTypeAllocSize(SrcTy);
 
   // If the source and destination are integer or pointer types, just do an
   // extension or truncation to the desired type.
@@ -740,7 +740,7 @@ static void CreateCoercedStore(llvm::Value *Src,
     return;
   }
 
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  uint64_t SrcSize = CGF.CGM.getDataLayout().getTypeAllocSize(SrcTy);
 
   if (llvm::StructType *DstSTy = dyn_cast<llvm::StructType>(DstTy)) {
     DstPtr = EnterStructPointerForCoercedAccess(DstPtr, DstSTy, SrcSize, CGF);
@@ -756,7 +756,7 @@ static void CreateCoercedStore(llvm::Value *Src,
     return;
   }
 
-  uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(DstTy);
+  uint64_t DstSize = CGF.CGM.getDataLayout().getTypeAllocSize(DstTy);
 
   // If store is legal, just bitcast the src pointer.
   if (SrcSize <= DstSize) {
@@ -1205,7 +1205,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // The alignment we need to use is the max of the requested alignment for
       // the argument plus the alignment required by our access code below.
       unsigned AlignmentToUse =
-        CGM.getTargetData().getABITypeAlignment(ArgI.getCoerceToType());
+        CGM.getDataLayout().getABITypeAlignment(ArgI.getCoerceToType());
       AlignmentToUse = std::max(AlignmentToUse,
                         (unsigned)getContext().getDeclAlign(Arg).getQuantity());
 
@@ -1226,10 +1226,10 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // and the optimizer generally likes scalar values better than FCAs.
       llvm::StructType *STy = dyn_cast<llvm::StructType>(ArgI.getCoerceToType());
       if (STy && STy->getNumElements() > 1) {
-        uint64_t SrcSize = CGM.getTargetData().getTypeAllocSize(STy);
+        uint64_t SrcSize = CGM.getDataLayout().getTypeAllocSize(STy);
         llvm::Type *DstTy =
           cast<llvm::PointerType>(Ptr->getType())->getElementType();
-        uint64_t DstSize = CGM.getTargetData().getTypeAllocSize(DstTy);
+        uint64_t DstSize = CGM.getDataLayout().getTypeAllocSize(DstTy);
 
         if (SrcSize <= DstSize) {
           Ptr = Builder.CreateBitCast(Ptr, llvm::PointerType::getUnqual(STy));
@@ -1980,7 +1980,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         //    we cannot force it to be sufficiently aligned.
         llvm::Value *Addr = RV.getAggregateAddr();
         unsigned Align = ArgInfo.getIndirectAlign();
-        const llvm::TargetData *TD = &CGM.getTargetData();
+        const llvm::DataLayout *TD = &CGM.getDataLayout();
         if ((!ArgInfo.getIndirectByVal() && I->NeedsCopy) ||
             (ArgInfo.getIndirectByVal() && TypeAlign < Align &&
              llvm::getOrEnforceKnownAlignment(Addr, Align, TD) < Align)) {

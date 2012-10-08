@@ -26,7 +26,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/MDBuilder.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -1160,7 +1160,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
 
   // Get the output type.
   llvm::Type *ResLTy = ConvertType(LV.getType());
-  unsigned ResSizeInBits = CGM.getTargetData().getTypeSizeInBits(ResLTy);
+  unsigned ResSizeInBits = CGM.getDataLayout().getTypeSizeInBits(ResLTy);
 
   // Compute the result as an OR of all of the individual component accesses.
   llvm::Value *Res = 0;
@@ -1358,7 +1358,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
   // Get the output type.
   llvm::Type *ResLTy = ConvertTypeForMem(Dst.getType());
-  unsigned ResSizeInBits = CGM.getTargetData().getTypeSizeInBits(ResLTy);
+  unsigned ResSizeInBits = CGM.getDataLayout().getTypeSizeInBits(ResLTy);
 
   // Get the source value, truncated to the width of the bit-field.
   llvm::Value *SrcVal = Src.getScalarVal();

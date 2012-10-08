@@ -35,7 +35,7 @@ namespace llvm {
   class ConstantInt;
   class Function;
   class GlobalValue;
-  class TargetData;
+  class DataLayout;
   class FunctionType;
   class LLVMContext;
 }
@@ -219,7 +219,7 @@ class CodeGenModule : public CodeGenTypeCache {
   const LangOptions &LangOpts;
   const CodeGenOptions &CodeGenOpts;
   llvm::Module &TheModule;
-  const llvm::TargetData &TheTargetData;
+  const llvm::DataLayout &TheDataLayout;
   mutable const TargetCodeGenInfo *TheTargetCodeGenInfo;
   DiagnosticsEngine &Diags;
   CGCXXABI &ABI;
@@ -357,7 +357,7 @@ class CodeGenModule : public CodeGenTypeCache {
   /// @}
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
-                llvm::Module &M, const llvm::TargetData &TD,
+                llvm::Module &M, const llvm::DataLayout &TD,
                 DiagnosticsEngine &Diags);
 
   ~CodeGenModule();
@@ -451,7 +451,7 @@ public:
   CodeGenVTables &getVTables() { return VTables; }
   VTableContext &getVTableContext() { return VTables.getVTableContext(); }
   DiagnosticsEngine &getDiags() const { return Diags; }
-  const llvm::TargetData &getTargetData() const { return TheTargetData; }
+  const llvm::DataLayout &getDataLayout() const { return TheDataLayout; }
   const TargetInfo &getTarget() const { return Context.getTargetInfo(); }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
   const TargetCodeGenInfo &getTargetCodeGenInfo();
