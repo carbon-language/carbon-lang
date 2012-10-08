@@ -308,7 +308,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(RegionInfo)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(TargetData)
+INITIALIZE_PASS_DEPENDENCY(DataLayout)
 INITIALIZE_PASS_END(TempScopInfo, "polly-analyze-ir",
                     "Polly - Analyse the LLVM-IR in the detected regions",
                     false, false)

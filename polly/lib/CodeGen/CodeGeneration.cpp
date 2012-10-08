@@ -1029,7 +1029,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(RegionInfo)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(ScopDetection)
-INITIALIZE_PASS_DEPENDENCY(TargetData)
+INITIALIZE_PASS_DEPENDENCY(DataLayout)
 INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
                       "Polly - Create LLVM-IR from SCoPs", false, false)
 
