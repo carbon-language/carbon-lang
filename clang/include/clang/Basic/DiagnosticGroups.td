@@ -328,15 +328,15 @@ def Parentheses : DiagGroup<"parentheses",
 //   - bool-to-pointer conversion warnings are on by default
 //   - __null-to-integer conversion warnings are on by default
 def Conversion : DiagGroup<"conversion",
-                           [DiagGroup<"shorten-64-to-32">,
+                           [BoolConversion,
                             ConstantConversion,
+                            DiagGroup<"shorten-64-to-32">,
+                            IntConversion,
                             LiteralConversion,
-                            StringConversion,
-                            SignConversion,
-                            BoolConversion,
-                            NullConversion, // NULL->non-pointer
                             NonLiteralNullConversion, // (1-1)->pointer (etc)
-                            IntConversion]>,
+                            NullConversion, // NULL->non-pointer
+                            SignConversion,
+                            StringConversion]>,
                  DiagCategory<"Value Conversion Issue">;
 
 def Unused : DiagGroup<"unused",
