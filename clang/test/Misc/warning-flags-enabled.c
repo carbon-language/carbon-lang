@@ -25,3 +25,11 @@
 // CHECK-NO-LEVELS-NOT: E
 // CHECK-NO-LEVELS-NOT: F
 // CHECK-NO-LEVELS: warn_objc_root_class_missing [-Wobjc-root-class]
+
+// Test if EnumConversion is a subgroup of -Wconversion.
+// RUN: diagtool show-enabled --no-levels -Wno-conversion -Wenum-conversion %s | FileCheck --check-prefix CHECK-ENUM-CONVERSION %s
+// RUN: diagtool show-enabled --no-levels %s | FileCheck --check-prefix CHECK-ENUM-CONVERSION %s
+// RUN: diagtool show-enabled --no-levels -Wno-conversion %s | FileCheck --check-prefix CHECK-NO-ENUM-CONVERSION %s
+//
+// CHECK-ENUM-CONVERSION: -Wenum-conversion
+// CHECK-NO-ENUM-CONVERSION-NOT: -Wenum-conversion
