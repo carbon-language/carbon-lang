@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV2.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 namespace tooling {
