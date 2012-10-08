@@ -20,7 +20,7 @@ namespace llvm {
     class Function;
     class Instruction;
     class Module;
-    class TargetData;
+    class DataLayout;
     class Value;
 }
 

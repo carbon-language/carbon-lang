@@ -11,12 +11,12 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ValueSymbolTable.h"
 
@@ -2686,7 +2686,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     m_module = &llvm_module;
-    m_target_data.reset(new TargetData(m_module));
+    m_target_data.reset(new DataLayout(m_module));
     
     Function* function = m_module->getFunction(StringRef(m_func_name.c_str()));
     

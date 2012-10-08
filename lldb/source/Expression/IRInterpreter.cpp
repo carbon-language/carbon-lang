@@ -20,7 +20,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 #include <map>
 
@@ -176,7 +176,7 @@ private:
     MemoryMap           m_memory;
     lldb::ByteOrder     m_byte_order;
     lldb::addr_t        m_addr_byte_size;
-    TargetData         &m_target_data;
+    DataLayout         &m_target_data;
     
     lldb_private::ClangExpressionDeclMap   &m_decl_map;
     
@@ -195,7 +195,7 @@ private:
     }
     
 public:
-    Memory (TargetData &target_data,
+    Memory (DataLayout &target_data,
             lldb_private::ClangExpressionDeclMap &decl_map,
             lldb::addr_t alloc_start,
             lldb::addr_t alloc_max) :
@@ -408,7 +408,7 @@ public:
 
     ValueMap                                m_values;
     Memory                                 &m_memory;
-    TargetData                             &m_target_data;
+    DataLayout                             &m_target_data;
     lldb_private::ClangExpressionDeclMap   &m_decl_map;
     const BasicBlock                       *m_bb;
     BasicBlock::const_iterator              m_ii;
@@ -417,7 +417,7 @@ public:
     lldb::ByteOrder                         m_byte_order;
     size_t                                  m_addr_byte_size;
     
-    InterpreterStackFrame (TargetData &target_data,
+    InterpreterStackFrame (DataLayout &target_data,
                            Memory &memory,
                            lldb_private::ClangExpressionDeclMap &decl_map) :
         m_memory (memory),
@@ -1041,7 +1041,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
         break;
     }
     
-    TargetData target_data(&llvm_module);
+    DataLayout target_data(&llvm_module);
     if (target_data.getPointerSize() != target_info.address_byte_size)
     {
         err.SetErrorToGenericError();
