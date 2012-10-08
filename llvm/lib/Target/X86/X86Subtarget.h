@@ -305,12 +305,6 @@ public:
   /// returns null.
   const char *getBZeroEntry() const;
 
-  /// getSpecialAddressLatency - For targets where it is beneficial to
-  /// backschedule instructions that compute addresses, return a value
-  /// indicating the number of scheduling cycles of backscheduling that
-  /// should be attempted.
-  unsigned getSpecialAddressLatency() const;
-
   /// enablePostRAScheduler - run for Atom optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,

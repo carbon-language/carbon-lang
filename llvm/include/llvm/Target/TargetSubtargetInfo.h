@@ -54,12 +54,6 @@ public:
     return 0;
   }
 
-  /// getSpecialAddressLatency - For targets where it is beneficial to
-  /// backschedule instructions that compute addresses, return a value
-  /// indicating the number of scheduling cycles of backscheduling that
-  /// should be attempted.
-  virtual unsigned getSpecialAddressLatency() const { return 0; }
-
   // enablePostRAScheduler - If the target can benefit from post-regalloc
   // scheduling and the specified optimization level meets the requirement
   // return true to enable post-register-allocation scheduling. In

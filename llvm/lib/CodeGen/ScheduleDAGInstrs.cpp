@@ -238,8 +238,6 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
 
   // Ask the target if address-backscheduling is desirable, and if so how much.
   const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
-  unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
-  unsigned DataLatency = SU->Latency;
 
   for (MCRegAliasIterator Alias(MO.getReg(), TRI, true);
        Alias.isValid(); ++Alias) {
@@ -250,29 +248,13 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       SUnit *UseSU = UseList[i].SU;
       if (UseSU == SU)
         continue;
-      MachineInstr *UseMI = UseSU->getInstr();
+
+      SDep dep(SU, SDep::Data, 1, *Alias);
+
+      // Adjust the dependence latency using operand def/use information,
+      // then allow the target to perform its own adjustments.
       int UseOp = UseList[i].OpIdx;
-      unsigned LDataLatency = DataLatency;
-      // Optionally add in a special extra latency for nodes that
-      // feed addresses.
-      // TODO: Perhaps we should get rid of
-      // SpecialAddressLatency and just move this into
-      // adjustSchedDependency for the targets that care about it.
-      if (SpecialAddressLatency != 0 && UseSU != &ExitSU) {
-        const MCInstrDesc &UseMCID = UseMI->getDesc();
-        int RegUseIndex = UseMI->findRegisterUseOperandIdx(*Alias);
-        assert(RegUseIndex >= 0 && "UseMI doesn't use register!");
-        if (RegUseIndex >= 0 &&
-            (UseMI->mayLoad() || UseMI->mayStore()) &&
-            (unsigned)RegUseIndex < UseMCID.getNumOperands() &&
-            UseMCID.OpInfo[RegUseIndex].isLookupPtrRegClass())
-          LDataLatency += SpecialAddressLatency;
-      }
-      // Adjust the dependence latency using operand def/use
-      // information (if any), and then allow the target to
-      // perform its own adjustments.
-      SDep dep(SU, SDep::Data, LDataLatency, *Alias);
-      MachineInstr *RegUse = UseOp < 0 ? 0 : UseMI;
+      MachineInstr *RegUse = UseOp < 0 ? 0 : UseSU->getInstr();
       dep.setLatency(
         SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
                                          RegUse, UseOp, /*FindMin=*/false));
@@ -346,9 +328,6 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
         const MachineInstr *UseMI = UseMO->getParent();
         unsigned UseMOIdx = UseMO - &UseMI->getOperand(0);
         const MCInstrDesc &UseMCID = UseMI->getDesc();
-        const TargetSubtargetInfo &ST =
-          TM.getSubtarget<TargetSubtargetInfo>();
-        unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
         // TODO: If we knew the total depth of the region here, we could
         // handle the case where the whole loop is inside the region but
         // is large enough that the isScheduleHigh trick isn't needed.
@@ -358,8 +337,6 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
           // the same region by checking to see if it has the same parent.
           if (UseMI->getParent() != MI->getParent()) {
             unsigned Latency = SU->Latency;
-            if (UseMCID.OpInfo[UseMOIdx].isLookupPtrRegClass())
-              Latency += SpecialAddressLatency;
             // This is a wild guess as to the portion of the latency which
             // will be overlapped by work done outside the current
             // scheduling region.
@@ -369,14 +346,6 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
                                 /*Reg=*/0, /*isNormalMemory=*/false,
                                 /*isMustAlias=*/false,
                                 /*isArtificial=*/true));
-          } else if (SpecialAddressLatency > 0 &&
-                     UseMCID.OpInfo[UseMOIdx].isLookupPtrRegClass()) {
-            // The entire loop body is within the current scheduling region
-            // and the latency of this operation is assumed to be greater
-            // than the latency of the loop.
-            // TODO: Recursively mark data-edge predecessors as
-            //       isScheduleHigh too.
-            SU->isScheduleHigh = true;
           }
         }
         LoopRegs.Deps.erase(I);
@@ -465,9 +434,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
     if (DefSU) {
       // The reaching Def lives within this scheduling region.
       // Create a data dependence.
-      //
-      // TODO: Handle "special" address latencies cleanly.
-      SDep dep(DefSU, SDep::Data, DefSU->Latency, Reg);
+      SDep dep(DefSU, SDep::Data, 1, Reg);
       // Adjust the dependence latency using operand def/use information, then
       // allow the target to perform its own adjustments.
       int DefOp = Def->findRegisterDefOperandIdx(Reg);
