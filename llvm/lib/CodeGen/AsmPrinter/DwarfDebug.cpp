@@ -1322,7 +1322,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
             // Coalesce identical entries at the end of History.
             if (History.size() >= 2 &&
                 Prev->isIdenticalTo(History[History.size() - 2])) {
-              DEBUG(dbgs() << "Coalesce identical DBG_VALUE entries:\n"
+              DEBUG(dbgs() << "Coalescing identical DBG_VALUE entries:\n"
                     << "\t" << *Prev 
                     << "\t" << *History[History.size() - 2] << "\n");
               History.pop_back();
@@ -1338,7 +1338,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                 PrevMBB->getLastNonDebugInstr();
               if (LastMI == PrevMBB->end()) {
                 // Drop DBG_VALUE for empty range.
-                DEBUG(dbgs() << "Drop DBG_VALUE for empty range:\n"
+                DEBUG(dbgs() << "Dropping DBG_VALUE for empty range:\n"
                       << "\t" << *Prev << "\n");
                 History.pop_back();
               }
