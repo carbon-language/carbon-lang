@@ -276,8 +276,6 @@ namespace {
 
     void tooManyUses() { Captured = true; }
 
-    bool shouldExplore(Use *U) { return true; }
-
     bool captured(Use *U) {
       CallSite CS(U->getUser());
       if (!CS.getInstruction()) { Captured = true; return true; }

@@ -23,14 +23,14 @@ using namespace llvm;
 
 CaptureTracker::~CaptureTracker() {}
 
+bool CaptureTracker::shouldExplore(Use *U) { return true; }
+
 namespace {
   struct SimpleCaptureTracker : public CaptureTracker {
     explicit SimpleCaptureTracker(bool ReturnCaptures)
       : ReturnCaptures(ReturnCaptures), Captured(false) {}
 
     void tooManyUses() { Captured = true; }
-
-    bool shouldExplore(Use *U) { return true; }
 
     bool captured(Use *U) {
       if (isa<ReturnInst>(U->getUser()) && !ReturnCaptures)
