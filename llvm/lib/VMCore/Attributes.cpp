@@ -33,6 +33,8 @@ Attributes::Attributes(Attribute::AttrConst Val) : Attrs(Val.v) {}
 
 Attributes::Attributes(AttributesImpl *A) : Attrs(A->Bits) {}
 
+Attributes::Attributes(const Attributes &A) : Attrs(A.Attrs) {}
+
 // FIXME: This is temporary until we have implemented the uniquified version of
 // AttributesImpl.
 Attributes Attributes::get(Attributes::Builder &B) {
@@ -449,6 +451,26 @@ void Attributes::Builder::removeUWTableAttr() {
 }
 void Attributes::Builder::removeZExtAttr() {
   Bits &= ~Attribute::ZExt_i;
+}
+
+void Attributes::Builder::removeAlignmentAttr() {
+  Bits &= ~Attribute::Alignment_i;
+}
+void Attributes::Builder::removeStackAlignmentAttr() {
+  Bits &= ~Attribute::StackAlignment_i;
+}
+
+bool Attributes::Builder::hasAttributes() const {
+  return Bits != 0;
+}
+bool Attributes::Builder::hasAlignmentAttr() const {
+  return Bits & Attribute::Alignment_i;
+}
+
+uint64_t Attributes::Builder::getAlignment() const {
+  if (!hasAlignmentAttr())
+    return 0;
+  return 1U << (((Bits & Attribute::Alignment_i) >> 16) - 1);
 }
 
 //===----------------------------------------------------------------------===//

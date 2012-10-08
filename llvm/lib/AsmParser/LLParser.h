@@ -175,7 +175,7 @@ namespace llvm {
     bool ParseTLSModel(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalThreadLocal(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalAddrSpace(unsigned &AddrSpace);
-    bool ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind);
+    bool ParseOptionalAttrs(Attributes::Builder &Attrs, unsigned AttrKind);
     bool ParseOptionalLinkage(unsigned &Linkage, bool &HasLinkage);
     bool ParseOptionalLinkage(unsigned &Linkage) {
       bool HasLinkage; return ParseOptionalLinkage(Linkage, HasLinkage);

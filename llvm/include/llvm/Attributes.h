@@ -144,12 +144,50 @@ class AttributesImpl;
 class Attributes {
   // Currently, we need less than 64 bits.
   AttributesImpl Attrs;
-
+#if 0
+  enum Attribute {
+    None            = 0,        ///< No attributes have been set
+    ZExt            = 1 << 0,   ///< Zero extended before/after call
+    SExt            = 1 << 1,   ///< Sign extended before/after call
+    NoReturn        = 1 << 2,   ///< Mark the function as not returning
+    InReg           = 1 << 3,   ///< Force argument to be passed in register
+    StructRet       = 1 << 4,   ///< Hidden pointer to structure to return
+    NoUnwind        = 1 << 5,   ///< Function doesn't unwind stack
+    NoAlias         = 1 << 6,   ///< Considered to not alias after call
+    ByVal           = 1 << 7,   ///< Pass structure by value
+    Nest            = 1 << 8,   ///< Nested function static chain
+    ReadNone        = 1 << 9,   ///< Function does not access memory
+    ReadOnly        = 1 << 10,  ///< Function only reads from memory
+    NoInline        = 1 << 11,  ///< inline=never
+    AlwaysInline    = 1 << 12,  ///< inline=always
+    OptimizeForSize = 1 << 13,  ///< opt_size
+    StackProtect    = 1 << 14,  ///< Stack protection.
+    StackProtectReq = 1 << 15,  ///< Stack protection required.
+    Alignment       = 31 << 16, ///< Alignment of parameter (5 bits)
+                                ///< stored as log2 of alignment with +1 bias
+                                ///< 0 means unaligned different from align 1
+    NoCapture       = 1 << 21,  ///< Function creates no aliases of pointer
+    NoRedZone       = 1 << 22,  ///< Disable redzone
+    NoImplicitFloat = 1 << 23,  ///< Disable implicit floating point insts
+    Naked           = 1 << 24,  ///< Naked function
+    InlineHint      = 1 << 25,  ///< Source said inlining was desirable
+    StackAlignment  = 7 << 26,  ///< Alignment of stack for function (3 bits)
+                                ///< stored as log2 of alignment with +1 bias 0
+                                ///< means unaligned (different from
+                                ///< alignstack={1))
+    ReturnsTwice    = 1 << 29,  ///< Function can return twice
+    UWTable         = 1 << 30,  ///< Function must be in a unwind table
+    NonLazyBind     = 1U << 31, ///< Function is called early and/or
+                                ///< often, so lazy binding isn't worthwhile
+    AddressSafety   = 1ULL << 32 ///< Address safety checking is on.
+  };
+#endif
   explicit Attributes(AttributesImpl *A);
 public:
   Attributes() : Attrs(0) {}
   explicit Attributes(uint64_t Val);
   /*implicit*/ Attributes(Attribute::AttrConst Val);
+  Attributes(const Attributes &A);
 
   class Builder {
     friend class Attributes;
@@ -157,6 +195,13 @@ public:
   public:
     Builder() : Bits(0) {}
     Builder(const Attributes &A) : Bits(A.Raw()) {}
+
+    void clear() { Bits = 0; }
+
+    bool hasAttributes() const;
+    bool hasAlignmentAttr() const;
+
+    uint64_t getAlignment() const;
 
     void addAddressSafetyAttr();
     void addAlwaysInlineAttr();
@@ -212,6 +257,9 @@ public:
     void removeStructRetAttr();
     void removeUWTableAttr();
     void removeZExtAttr();
+
+    void removeAlignmentAttr();
+    void removeStackAlignmentAttr();
   };
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
