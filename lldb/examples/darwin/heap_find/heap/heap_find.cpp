@@ -68,6 +68,7 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <mach/mach.h>
+#include <mach/mach_vm.h>
 #include <malloc/malloc.h>
 #include <objc/objc-runtime.h>
 #include <stdio.h>
@@ -91,6 +92,8 @@ typedef struct {
 #define stack_logging_type_generic	1
 #define stack_logging_type_alloc	2
 #define stack_logging_type_dealloc	4
+// This bit is made up by this code
+#define stack_logging_type_vm_region 8 
 
 //----------------------------------------------------------------------
 // Redefine private function prototypes from 
@@ -130,6 +133,13 @@ __mach_stack_logging_frames_for_uniqued_stack (
 
 extern "C" void *gdb_class_getClass (void *objc_class);
 
+static void
+range_info_callback (task_t task, 
+                     void *baton, 
+                     unsigned type, 
+                     uint64_t ptr_addr, 
+                     uint64_t ptr_size);
+
 //----------------------------------------------------------------------
 // Redefine private gloval variables prototypes from 
 // "/usr/local/include/stack_logging.h"
@@ -153,6 +163,7 @@ struct range_callback_info_t
     zone_callback_t *zone_callback;
     range_callback_t *range_callback;
     void *baton;
+    int check_vm_regions;
 };
 
 enum data_type_t
@@ -188,6 +199,7 @@ struct range_contains_data_callback_info_t
     };
     uint32_t match_count;
     bool done;
+    bool unique;    
 };
 
 struct malloc_match
@@ -195,6 +207,7 @@ struct malloc_match
     void *addr;
     intptr_t size;
     intptr_t offset;
+    uintptr_t type;
 };
 
 struct malloc_stack_entry
@@ -239,6 +252,7 @@ public:
     clear()
     {
         m_size = 0;
+        bzero (&m_entries, sizeof(m_entries));
     }
     
     bool
@@ -248,8 +262,17 @@ public:
     }
 
     void
-    push_back (const malloc_match& m)
+    push_back (const malloc_match& m, bool unique = false)
     {
+        if (unique)
+        {
+            // Don't add the entry if there is already a match for this address
+            for (uint32_t i=0; i<m_size; ++i)
+            {
+                if (((uint8_t *)m_entries[i].addr + m_entries[i].offset) == ((uint8_t *)m.addr + m.offset))
+                    return; // Duplicate entry
+            }
+        }
         if (m_size < k_max_entries - 1)
         {
             m_entries[m_size] = m;
@@ -264,7 +287,7 @@ public:
         if (empty())
             return NULL;
         // In not empty, terminate and return the result
-        malloc_match terminator_entry = { NULL, 0, 0 };
+        malloc_match terminator_entry = { NULL, 0, 0, 0 };
         // We always leave room for an empty entry at the end
         m_entries[m_size] = terminator_entry;
         return m_entries;
@@ -584,6 +607,49 @@ foreach_zone_in_this_process (range_callback_info_t *info)
             info->zone_callback (info, (const malloc_zone_t *)zones[i]);
         }
     }
+    
+    if (info->check_vm_regions)
+    {
+#if defined (VM_REGION_SUBMAP_SHORT_INFO_COUNT_64)
+        typedef vm_region_submap_short_info_data_64_t RegionInfo;
+        enum { kRegionInfoSize = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64 };
+#else
+        typedef vm_region_submap_info_data_64_t RegionInfo;
+        enum { kRegionInfoSize = VM_REGION_SUBMAP_INFO_COUNT_64 };
+#endif
+        task_t task = mach_task_self();
+    	mach_vm_address_t vm_region_base_addr;
+    	mach_vm_size_t vm_region_size;
+    	natural_t vm_region_depth;
+    	RegionInfo vm_region_info;
+
+        ((range_contains_data_callback_info_t *)info->baton)->unique = true;
+
+        for (vm_region_base_addr = 0, vm_region_size = 1; vm_region_size != 0; vm_region_base_addr += vm_region_size)
+        {
+            mach_msg_type_number_t vm_region_info_size = kRegionInfoSize;
+            const kern_return_t err = mach_vm_region_recurse (task,
+                                                              &vm_region_base_addr,
+                                                              &vm_region_size,
+                                                              &vm_region_depth,
+                                                              (vm_region_recurse_info_t)&vm_region_info,
+                                                              &vm_region_info_size);
+            if (err)
+                break;
+            // Check all read + write regions. This will cover the thread stacks 
+            // and any regions of memory that aren't covered by the heap
+            if (vm_region_info.protection & VM_PROT_WRITE && 
+                vm_region_info.protection & VM_PROT_READ)
+            {
+                //printf ("checking vm_region: [0x%16.16llx - 0x%16.16llx)\n", (uint64_t)vm_region_base_addr, (uint64_t)vm_region_base_addr + vm_region_size);
+                range_info_callback (task, 
+                                     info->baton, 
+                                     stack_logging_type_vm_region, 
+                                     vm_region_base_addr, 
+                                     vm_region_size);
+            }
+        }
+    }
 }
 
 //----------------------------------------------------------------------
@@ -635,8 +701,8 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
         if (ptr_addr <= info->addr && info->addr < end_addr)
         {
             ++info->match_count;
-            malloc_match match = { (void *)ptr_addr, ptr_size, info->addr - ptr_addr };
-            g_matches.push_back(match);
+            malloc_match match = { (void *)ptr_addr, ptr_size, info->addr - ptr_addr, type };
+            g_matches.push_back(match, info->unique);
         }
         break;
     
@@ -659,8 +725,8 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
                         if (memcmp (buffer, ptr_data, size) == 0)
                         {
                             ++info->match_count;
-                            malloc_match match = { (void *)ptr_addr, ptr_size, addr - ptr_addr };
-                            g_matches.push_back(match);
+                            malloc_match match = { (void *)ptr_addr, ptr_size, addr - ptr_addr, type };
+                            g_matches.push_back(match, info->unique);
                         }
                     }
                 }
@@ -714,8 +780,8 @@ range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr,
                     {
                         //printf (" success\n");
                         ++info->match_count;
-                        malloc_match match = { (void *)ptr_addr, ptr_size, 0 };
-                        g_matches.push_back(match);                        
+                        malloc_match match = { (void *)ptr_addr, ptr_size, 0, type };
+                        g_matches.push_back(match, info->unique);
                     }
                     else
                     {
@@ -830,7 +896,7 @@ get_stack_history_for_address (const void * addr, int history)
 // blocks.
 //----------------------------------------------------------------------
 malloc_match *
-find_pointer_in_heap (const void * addr)
+find_pointer_in_heap (const void * addr, int check_vm_regions)
 {
     g_matches.clear();
     // Setup "info" to look for a malloc block that contains data
@@ -844,8 +910,11 @@ find_pointer_in_heap (const void * addr)
         data_info.data.align = sizeof(addr);         // Align to a pointer byte size
         data_info.match_count = 0;                   // Initialize the match count to zero
         data_info.done = false;                      // Set done to false so searching doesn't stop
-        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+        data_info.unique = false;                    // Set to true when iterating on the vm_regions
+        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info, check_vm_regions };
         foreach_zone_in_this_process (&info);
+        
+        
     }
     return g_matches.data();
 }
@@ -869,6 +938,7 @@ find_pointer_in_memory (uint64_t memory_addr, uint64_t memory_size, const void *
     data_info.data.align = sizeof(addr);         // Align to a pointer byte size
     data_info.match_count = 0;                   // Initialize the match count to zero
     data_info.done = false;                      // Set done to false so searching doesn't stop
+    data_info.unique = false;                    // Set to true when iterating on the vm_regions
     range_info_callback (mach_task_self(), &data_info, stack_logging_type_generic, memory_addr, memory_size);
     return g_matches.data();
 }
@@ -881,7 +951,7 @@ find_pointer_in_memory (uint64_t memory_addr, uint64_t memory_size, const void *
 // inherit from 'c'
 //----------------------------------------------------------------------
 malloc_match *
-find_objc_objects_in_memory (void *isa)
+find_objc_objects_in_memory (void *isa, int check_vm_regions)
 {
     g_matches.clear();
     if (g_objc_classes.Update())
@@ -894,7 +964,8 @@ find_objc_objects_in_memory (void *isa)
         data_info.objc.match_superclasses = true;
         data_info.match_count = 0;                   // Initialize the match count to zero
         data_info.done = false;                      // Set done to false so searching doesn't stop
-        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+        data_info.unique = false;                    // Set to true when iterating on the vm_regions
+        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info, check_vm_regions };
         foreach_zone_in_this_process (&info);
     }
     return g_matches.data();
@@ -920,7 +991,9 @@ get_heap_info (int sort_type)
         data_info.type = eDataTypeHeapInfo; // Check each block for data
         data_info.match_count = 0;          // Initialize the match count to zero
         data_info.done = false;             // Set done to false so searching doesn't stop
-        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+        data_info.unique = false;           // Set to true when iterating on the vm_regions
+        const int check_vm_regions = false;
+        range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info, check_vm_regions };
         foreach_zone_in_this_process (&info);
         
         // Sort and print byte total bytes
@@ -949,7 +1022,7 @@ get_heap_info (int sort_type)
 // Finds a C string inside one or more currently valid malloc blocks.
 //----------------------------------------------------------------------
 malloc_match *
-find_cstring_in_heap (const char *s)
+find_cstring_in_heap (const char *s, int check_vm_regions)
 {
     g_matches.clear();
     if (s == NULL || s[0] == '\0')
@@ -966,7 +1039,8 @@ find_cstring_in_heap (const char *s)
     data_info.data.align = 1;                // Data doesn't need to be aligned, so set the alignment to 1
     data_info.match_count = 0;               // Initialize the match count to zero
     data_info.done = false;                  // Set done to false so searching doesn't stop
-    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+    data_info.unique = false;                // Set to true when iterating on the vm_regions
+    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info, check_vm_regions };
     foreach_zone_in_this_process (&info);
     return g_matches.data();
 }
@@ -977,7 +1051,7 @@ find_cstring_in_heap (const char *s)
 // Find the malloc block that whose address range contains "addr".
 //----------------------------------------------------------------------
 malloc_match *
-find_block_for_address (const void *addr)
+find_block_for_address (const void *addr, int check_vm_regions)
 {
     g_matches.clear();
     // Setup "info" to look for a malloc block that contains data
@@ -987,7 +1061,8 @@ find_block_for_address (const void *addr)
     data_info.addr = (uintptr_t)addr;   // What data? The C string passed in
     data_info.match_count = 0;          // Initialize the match count to zero
     data_info.done = false;             // Set done to false so searching doesn't stop
-    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+    data_info.unique = false;           // Set to true when iterating on the vm_regions
+    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info, check_vm_regions };
     foreach_zone_in_this_process (&info);
     return g_matches.data();
 }

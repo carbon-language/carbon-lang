@@ -133,6 +133,7 @@ def add_common_options(parser):
     parser.add_option('-S', '--stack-history', action='store_true', dest='stack_history', help='gets the stack history for all allocations whose start address matches each malloc block if MallocStackLogging is enabled', default=False)
     parser.add_option('-M', '--max-matches', type='int', dest='max_matches', help='the maximum number of matches to print', default=256)
     parser.add_option('-O', '--offset', type='int', dest='offset', help='the matching data must be at this offset', default=-1)
+    parser.add_option('-V', '--vm-regions', action='store_true', dest='check_vm_regions', help='Also check the VM regions', default=False)
 
 def dump_stack_history_entry(result, stack_history_entry, idx):
     address = int(stack_history_entry.address)
@@ -313,22 +314,22 @@ def heap_search(result, options, arg_str):
     print_no_matches = True
     arg_str_description = arg_str
     if options.type == 'pointer':
-        expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
+        expr = 'find_pointer_in_heap((void *)%s, (int)%u)' % (arg_str, options.check_vm_regions)
         arg_str_description = 'malloc block containing pointer %s' % arg_str
         if options.format == None: 
             options.format = "A" # 'A' is "address" format
     elif options.type == 'isa':
-        expr = 'find_objc_objects_in_memory ((void *)%s)' % (arg_str)
+        expr = 'find_objc_objects_in_memory ((void *)%s, (int)%u)' % (arg_str, options.check_vm_regions)
         #result.AppendMessage ('expr -u0 -- %s' % expr) # REMOVE THIS LINE
         arg_str_description = 'objective C classes with isa %s' % arg_str
         options.offset = 0
         if options.format == None: 
             options.format = "A" # 'A' is "address" format
     elif options.type == 'cstr':
-        expr = 'find_cstring_in_heap("%s")' % arg_str
+        expr = 'find_cstring_in_heap("%s", (int)%u)' % (arg_str, options.check_vm_regions)
         arg_str_description = 'malloc block containing "%s"' % arg_str
     elif options.type == 'addr':
-        expr = 'find_block_for_address((void *)%s)' % arg_str
+        expr = 'find_block_for_address((void *)%s, (int)%u)' % (arg_str, options.check_vm_regions)
         arg_str_description = 'malloc block for %s' % arg_str
     elif options.type == 'all':
         expr = 'get_heap_info(1)'
@@ -430,6 +431,56 @@ def heap(debugger, command, result, dict):
     else:
         heap_search (result, options, None)
 
+def stack_ptr_refs(debugger, command, result, dict):
+    command_args = shlex.split(command)
+    usage = "usage: %prog [options] <EXPR> [EXPR ...]"
+    description='''Searches thread stack contents for pointer values in darwin user space programs.'''
+    parser = optparse.OptionParser(description=description, prog='section_ptr_refs',usage=usage)
+    add_common_options(parser)
+    try:
+        (options, args) = parser.parse_args(command_args)
+    except:
+        return
+
+    options.type = 'pointer'
+    
+    stack_threads = list()
+    stack_bases = list()
+    stack_sizes = list()
+    for thread in lldb.process:
+        min_sp = thread.frame[0].sp
+        max_sp = min_sp
+        for frame in thread.frames:
+            sp = frame.sp
+            if sp < min_sp: min_sp = sp
+            if sp > max_sp: max_sp = sp
+        result.AppendMessage ('%s stack [%#x - %#x)' % (thread, min_sp, max_sp))
+        if min_sp < max_sp:
+            stack_threads.append (thread)
+            stack_bases.append (min_sp)
+            stack_sizes.append (max_sp-min_sp)
+        
+    if stack_bases:
+        dylid_load_err = load_dylib()
+        if dylid_load_err:
+            result.AppendMessage(dylid_load_err)
+            return
+        for expr_str in args:
+            for (idx, stack_base) in enumerate(stack_bases):
+                stack_size = stack_sizes[idx]
+                expr = 'find_pointer_in_memory(0x%xllu, %ullu, (void *)%s)' % (stack_base, stack_size, expr_str)
+                arg_str_description = 'thead %s stack containing "%s"' % (stack_threads[idx], expr_str)
+                num_matches = display_match_results (result, options, arg_str_description, lldb.frame.EvaluateExpression (expr), False)
+                if num_matches:
+                    if num_matches < options.max_matches:
+                        options.max_matches = options.max_matches - num_matches
+                    else:
+                        options.max_matches = 0
+                if options.max_matches == 0:
+                    return
+    else:
+        result.AppendMessage('error: no thread stacks were found that match any of %s' % (', '.join(options.section_names)))
+
 def section_ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
     usage = "usage: %prog [options] <EXPR> [EXPR ...]"
@@ -443,7 +494,7 @@ def section_ptr_refs(debugger, command, result, dict):
         return
 
     options.type = 'pointer'
-    
+
     sections = list()
     section_modules = list()
     if not options.section_names:
@@ -520,8 +571,9 @@ lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.cstr_refs cs
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_info malloc_info')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.heap heap')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.section_ptr_refs section_ptr_refs')
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.stack_ptr_refs stack_ptr_refs')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.objc_refs objc_refs')
-print '"ptr_refs", "cstr_refs", "malloc_info", "heap" and "section_ptr_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
+print '"ptr_refs", "cstr_refs", "malloc_info", "heap", "section_ptr_refs" and "stack_ptr_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
 
 
 
