@@ -23,7 +23,7 @@
 #include "llvm/Instructions.h"
 
 namespace llvm {
-  class TargetData;
+  class DataLayout;
 }
 
 using namespace llvm;
@@ -228,7 +228,7 @@ class TempScopInfo : public FunctionPass {
   PostDominatorTree *PDT;
 
   // Target data for element size computing.
-  TargetData *TD;
+  DataLayout *TD;
 
   // Remember the bounds of loops, to help us build iteration domain of BBs.
   LoopBoundMapType LoopBounds;

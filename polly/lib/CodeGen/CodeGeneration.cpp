@@ -42,7 +42,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #define CLOOG_INT_GMP 1
@@ -358,7 +358,7 @@ private:
 }
 
 IntegerType *ClastStmtCodeGen::getIntPtrTy() {
-  return P->getAnalysis<TargetData>().getIntPtrType(Builder.getContext());
+  return P->getAnalysis<DataLayout>().getIntPtrType(Builder.getContext());
 }
 
 const std::vector<std::string> &ClastStmtCodeGen::getParallelLoops() {
@@ -998,7 +998,7 @@ class CodeGeneration : public ScopPass {
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
-    AU.addRequired<TargetData>();
+    AU.addRequired<DataLayout>();
 
     AU.addPreserved<CloogInfo>();
     AU.addPreserved<Dependences>();

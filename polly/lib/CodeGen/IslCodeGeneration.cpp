@@ -38,7 +38,7 @@
 #define DEBUG_TYPE "polly-codegen-isl"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "isl/union_map.h"

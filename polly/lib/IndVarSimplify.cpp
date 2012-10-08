@@ -47,7 +47,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -70,7 +70,7 @@ namespace {
     LoopInfo        *LI;
     ScalarEvolution *SE;
     DominatorTree   *DT;
-    TargetData      *TD;
+    DataLayout      *TD;
 
     SmallVector<WeakVH, 16> DeadInsts;
     bool Changed;
@@ -732,13 +732,13 @@ namespace {
 
   class WideIVVisitor : public IVVisitor {
     ScalarEvolution *SE;
-    const TargetData *TD;
+    const DataLayout *TD;
 
   public:
     WideIVInfo WI;
 
     WideIVVisitor(PHINode *NarrowIV, ScalarEvolution *SCEV,
-                  const TargetData *TData) :
+                  const DataLayout *TData) :
       SE(SCEV), TD(TData) { WI.NarrowIV = NarrowIV; }
 
     // Implement the interface used by simplifyUsersOfIV.
@@ -1461,7 +1461,7 @@ static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
 /// could at least handle constant BECounts.
 static PHINode *
 FindLoopCounter(Loop *L, const SCEV *BECount,
-                ScalarEvolution *SE, DominatorTree *DT, const TargetData *TD) {
+                ScalarEvolution *SE, DominatorTree *DT, const DataLayout *TD) {
   uint64_t BCWidth = SE->getTypeSizeInBits(BECount->getType());
 
   Value *Cond =
@@ -1808,7 +1808,7 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
-  TD = getAnalysisIfAvailable<TargetData>();
+  TD = getAnalysisIfAvailable<DataLayout>();
 
   DeadInsts.clear();
   Changed = false;

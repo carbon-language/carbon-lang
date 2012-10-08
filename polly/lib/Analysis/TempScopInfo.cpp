@@ -22,7 +22,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/RegionIterator.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -261,7 +261,7 @@ bool TempScopInfo::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   SD = &getAnalysis<ScopDetection>();
   AA = &getAnalysis<AliasAnalysis>();
-  TD = &getAnalysis<TargetData>();
+  TD = &getAnalysis<DataLayout>();
 
   for (ScopDetection::iterator I = SD->begin(), E = SD->end(); I != E; ++I) {
     Region *R = const_cast<Region*>(*I);
@@ -272,7 +272,7 @@ bool TempScopInfo::runOnFunction(Function &F) {
 }
 
 void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<TargetData>();
+  AU.addRequired<DataLayout>();
   AU.addRequiredTransitive<DominatorTree>();
   AU.addRequiredTransitive<PostDominatorTree>();
   AU.addRequiredTransitive<LoopInfo>();
