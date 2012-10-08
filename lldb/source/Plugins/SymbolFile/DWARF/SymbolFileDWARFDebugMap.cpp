@@ -50,6 +50,11 @@ public:
     {
     }
 
+    virtual
+    ~DebugMapModule ()
+    {
+    }
+
     virtual ObjectFile *
     GetObjectFile ()
     {
