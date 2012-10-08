@@ -808,7 +808,7 @@ namespace clang {
     void NoteCandidates(Sema &S,
                         OverloadCandidateDisplayKind OCD,
                         llvm::ArrayRef<Expr *> Args,
-                        const char *Opc = 0,
+                        StringRef Opc = "",
                         SourceLocation Loc = SourceLocation());
   };
 

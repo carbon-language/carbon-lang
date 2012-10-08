@@ -501,7 +501,7 @@ static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
 
     // Information used when building the diagnostic.
     unsigned DiagKind;
-    const char *Str;
+    StringRef Str;
     SourceRange Range;
 
     // FixIts to suppress the diagnosic by removing the dead condition.

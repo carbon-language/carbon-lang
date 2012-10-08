@@ -1613,7 +1613,7 @@ public:
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
-  static const char *getOpcodeStr(Opcode Op);
+  static StringRef getOpcodeStr(Opcode Op);
 
   /// \brief Retrieve the unary opcode that corresponds to the given
   /// overloaded operator.
@@ -2836,9 +2836,9 @@ public:
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "<<=".
-  static const char *getOpcodeStr(Opcode Op);
+  static StringRef getOpcodeStr(Opcode Op);
 
-  const char *getOpcodeStr() const { return getOpcodeStr(getOpcode()); }
+  StringRef getOpcodeStr() const { return getOpcodeStr(getOpcode()); }
 
   /// \brief Retrieve the binary opcode that corresponds to the given
   /// overloaded operator.

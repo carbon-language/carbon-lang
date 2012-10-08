@@ -8464,8 +8464,8 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
   SourceRange DiagRange = isLeftComp ? SourceRange(LHSExpr->getLocStart(),
                                                    OpLoc)
                                      : SourceRange(OpLoc, RHSExpr->getLocEnd());
-  std::string OpStr = isLeftComp ? BinOp::getOpcodeStr(LHSopc)
-                                 : BinOp::getOpcodeStr(RHSopc);
+  StringRef OpStr = isLeftComp ? BinOp::getOpcodeStr(LHSopc)
+                               : BinOp::getOpcodeStr(RHSopc);
   SourceRange ParensRange = isLeftComp ?
       SourceRange(cast<BinOp>(LHSExpr)->getRHS()->getLocStart(),
                   RHSExpr->getLocEnd())
