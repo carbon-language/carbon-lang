@@ -254,6 +254,11 @@ Retry:
     HandlePragmaPack();
     return StmtEmpty();
 
+  case tok::annot_pragma_align:
+    ProhibitAttributes(Attrs);
+    HandlePragmaAlign();
+    return StmtEmpty();
+
   case tok::annot_pragma_fp_contract:
     ProhibitAttributes(Attrs);
     HandlePragmaFPContract();

@@ -96,3 +96,15 @@ extern int a11_0[offsetof(struct s11, f0) == 0 ? 1 : -1];
 extern int a11_1[offsetof(struct s11, f1) == 2 ? 1 : -1];
 extern int a11_2[sizeof(struct s11) == 10 ? 1 : -1];
 extern int a11_3[__alignof(struct s11) == 2 ? 1 : -1];
+
+#pragma options align=reset
+
+void f12(void) {
+  #pragma options align=mac68k
+  struct s12 {
+    char f0;
+    int  f1;
+  };
+  #pragma options align=reset
+  extern int a12[sizeof(struct s12) == 6 ? 1 : -1];
+}
