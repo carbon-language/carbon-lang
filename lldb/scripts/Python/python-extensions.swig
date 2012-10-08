@@ -540,7 +540,7 @@ class value(object):
         if type(key) is int:
             return value(self.sbvalue.GetValueForExpressionPath("[%i]" % key))
         if type(key) is value:
-            return value(self.sbvalue.GetValueForExpressionPath("[%i]" % int(key))
+            return value(self.sbvalue.GetValueForExpressionPath("[%i]" % int(key)))
         raise TypeError("No array item of type %s" % str(type(key)))
 
     def __getattr__(self, name):
