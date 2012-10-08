@@ -1803,7 +1803,7 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg);
  * Set the alignment for a function parameter.
  *
  * @see llvm::Argument::addAttr()
- * @see llvm::Attribute::constructAlignmentFromInt()
+ * @see llvm::Attributes::constructAlignmentFromInt()
  */
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align);
 
