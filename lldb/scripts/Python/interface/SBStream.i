@@ -73,7 +73,7 @@ public:
     %extend {
         void Print (const char* str)
         {
-            self->Printf(str);
+            self->Printf("%s", str);
         }
     }
     
