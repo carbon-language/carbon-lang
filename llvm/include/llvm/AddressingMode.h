@@ -14,7 +14,7 @@
 #ifndef LLVM_ADDRESSING_MODE_H
 #define LLVM_ADDRESSING_MODE_H
 
-#include <sys/types.h>
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
