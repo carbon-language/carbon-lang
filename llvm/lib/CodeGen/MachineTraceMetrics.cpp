@@ -677,7 +677,7 @@ computeCrossBlockCriticalPath(const TraceBlockInfo &TBI) {
     const MachineInstr *DefMI = MTM.MRI->getVRegDef(LIR.Reg);
     // Ignore dependencies outside the current trace.
     const TraceBlockInfo &DefTBI = BlockInfo[DefMI->getParent()->getNumber()];
-    if (!DefTBI.hasValidDepth() || DefTBI.Head != TBI.Head)
+    if (!DefTBI.isEarlierInSameTrace(TBI))
       continue;
     unsigned Len = LIR.Height + Cycles[DefMI].Depth;
     MaxLen = std::max(MaxLen, Len);
@@ -740,7 +740,7 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
         const TraceBlockInfo&DepTBI =
           BlockInfo[Dep.DefMI->getParent()->getNumber()];
         // Ignore dependencies from outside the current trace.
-        if (!DepTBI.hasValidDepth() || DepTBI.Head != TBI.Head)
+        if (!DepTBI.isEarlierInSameTrace(TBI))
           continue;
         assert(DepTBI.HasValidInstrDepths && "Inconsistent dependency");
         unsigned DepCycle = Cycles.lookup(Dep.DefMI).Depth;
