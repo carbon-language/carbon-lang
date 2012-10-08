@@ -17,6 +17,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Tooling/CompilationDatabase.h"
+#include "clang/Tooling/FileMatchTrie.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -92,6 +93,8 @@ private:
 
   // Maps file paths to the compile command lines for that file.
   llvm::StringMap< std::vector<CompileCommandRef> > IndexByFile;
+
+  FileMatchTrie MatchTrie;
 
   llvm::OwningPtr<llvm::MemoryBuffer> Database;
   llvm::SourceMgr SM;

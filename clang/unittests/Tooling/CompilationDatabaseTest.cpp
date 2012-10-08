@@ -11,6 +11,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Tooling/FileMatchTrie.h"
 #include "clang/Tooling/JSONCompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
 #include "gtest/gtest.h"
@@ -55,13 +56,13 @@ TEST(JSONCompilationDatabase, GetAllFiles) {
             getAllFiles("[]", ErrorMessage)) << ErrorMessage;
 
   std::vector<std::string> expected_files;
-  expected_files.push_back("file1");
-  expected_files.push_back("file2");
+  expected_files.push_back("/dir/file1");
+  expected_files.push_back("/dir/file2");
   EXPECT_EQ(expected_files, getAllFiles(
-    "[{\"directory\":\"dir\","
+    "[{\"directory\":\"/dir\","
       "\"command\":\"command\","
       "\"file\":\"file1\"},"
-    " {\"directory\":\"dir\","
+    " {\"directory\":\"/dir\","
       "\"command\":\"command\","
       "\"file\":\"file2\"}]",
     ErrorMessage)) << ErrorMessage;
@@ -79,6 +80,82 @@ static CompileCommand findCompileArgsInJsonDatabase(StringRef FileName,
   if (Commands.empty())
     return CompileCommand();
   return Commands[0];
+}
+
+struct FakeComparator : public PathComparator {
+  virtual ~FakeComparator() {}
+  virtual bool equivalent(const Twine &FileA, const Twine &FileB) const {
+    return StringRef(FileA.str()).equals_lower(FileB.str());
+  }
+};
+
+class FileMatchTrieTest : public ::testing::Test {
+protected:
+  FileMatchTrieTest() : Trie(new FakeComparator()) {}
+
+  StringRef find(StringRef Path) {
+    llvm::raw_string_ostream ES(Error);
+    return Trie.findEquivalent(Path, ES);
+  }
+
+  FileMatchTrie Trie;
+  std::string Error;
+};
+
+TEST_F(FileMatchTrieTest, InsertingRelativePath) {
+  Trie.insert("/path/file.cc");
+  Trie.insert("file.cc");
+  EXPECT_EQ("/path/file.cc", find("/path/file.cc"));
+}
+
+TEST_F(FileMatchTrieTest, MatchingRelativePath) {
+  EXPECT_EQ("", find("file.cc"));
+}
+
+TEST_F(FileMatchTrieTest, ReturnsBestResults) {
+  Trie.insert("/d/c/b.cc");
+  Trie.insert("/d/b/b.cc");
+  EXPECT_EQ("/d/b/b.cc", find("/d/b/b.cc"));
+}
+
+TEST_F(FileMatchTrieTest, HandlesSymlinks) {
+  Trie.insert("/AA/file.cc");
+  EXPECT_EQ("/AA/file.cc", find("/aa/file.cc"));
+}
+
+TEST_F(FileMatchTrieTest, ReportsSymlinkAmbiguity) {
+  Trie.insert("/Aa/file.cc");
+  Trie.insert("/aA/file.cc");
+  EXPECT_TRUE(find("/aa/file.cc").empty());
+  EXPECT_EQ("Path is ambiguous", Error);
+}
+
+TEST_F(FileMatchTrieTest, LongerMatchingSuffixPreferred) {
+  Trie.insert("/src/Aa/file.cc");
+  Trie.insert("/src/aA/file.cc");
+  Trie.insert("/SRC/aa/file.cc");
+  EXPECT_EQ("/SRC/aa/file.cc", find("/src/aa/file.cc"));
+}
+
+TEST_F(FileMatchTrieTest, EmptyTrie) {
+  EXPECT_TRUE(find("/some/path").empty());
+}
+
+TEST_F(FileMatchTrieTest, NoResult) {
+  Trie.insert("/somepath/otherfile.cc");
+  Trie.insert("/otherpath/somefile.cc");
+  EXPECT_EQ("", find("/somepath/somefile.cc"));
+}
+
+TEST_F(FileMatchTrieTest, RootElementDifferent) {
+  Trie.insert("/path/file.cc");
+  Trie.insert("/otherpath/file.cc");
+  EXPECT_EQ("/path/file.cc", find("/path/file.cc"));
+}
+
+TEST_F(FileMatchTrieTest, CannotResolveRelativePath) {
+  EXPECT_EQ("", find("relative-path.cc"));
+  EXPECT_EQ("Cannot resolve relative paths", Error);
 }
 
 TEST(findCompileArgsInJsonDatabase, FindsNothingIfEmpty) {
@@ -148,7 +225,7 @@ TEST(findCompileArgsInJsonDatabase, ReadsDirectoryWithSpaces) {
 }
 
 TEST(findCompileArgsInJsonDatabase, FindsEntry) {
-  StringRef Directory("directory");
+  StringRef Directory("/directory");
   StringRef FileName("file");
   StringRef Command("command");
   std::string JsonDatabase = "[";
@@ -162,19 +239,19 @@ TEST(findCompileArgsInJsonDatabase, FindsEntry) {
   JsonDatabase += "]";
   std::string ErrorMessage;
   CompileCommand FoundCommand = findCompileArgsInJsonDatabase(
-    "file4", JsonDatabase, ErrorMessage);
-  EXPECT_EQ("directory4", FoundCommand.Directory) << ErrorMessage;
+    "/directory4/file4", JsonDatabase, ErrorMessage);
+  EXPECT_EQ("/directory4", FoundCommand.Directory) << ErrorMessage;
   ASSERT_EQ(1u, FoundCommand.CommandLine.size()) << ErrorMessage;
   EXPECT_EQ("command4", FoundCommand.CommandLine[0]) << ErrorMessage;
 }
 
 static std::vector<std::string> unescapeJsonCommandLine(StringRef Command) {
   std::string JsonDatabase =
-    ("[{\"directory\":\"\", \"file\":\"test\", \"command\": \"" +
+    ("[{\"directory\":\"/root\", \"file\":\"test\", \"command\": \"" +
      Command + "\"}]").str();
   std::string ErrorMessage;
   CompileCommand FoundCommand = findCompileArgsInJsonDatabase(
-    "test", JsonDatabase, ErrorMessage);
+    "/root/test", JsonDatabase, ErrorMessage);
   EXPECT_TRUE(ErrorMessage.empty()) << ErrorMessage;
   return FoundCommand.CommandLine;
 }
