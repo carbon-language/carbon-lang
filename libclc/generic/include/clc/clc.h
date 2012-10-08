@@ -69,6 +69,7 @@
 #include <clc/geometric/normalize.h>
 
 /* 6.11.6 Relational Functions */
+#include <clc/relational/any.h>
 #include <clc/relational/select.h>
 
 /* 6.11.8 Synchronization Functions */

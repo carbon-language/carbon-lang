@@ -12,5 +12,6 @@ integer/sub_sat.ll
 integer/sub_sat_impl.ll
 math/hypot.cl
 math/mad.cl
+relational/any.cl
 workitem/get_global_id.cl
 workitem/get_global_size.cl
