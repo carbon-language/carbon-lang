@@ -15,6 +15,7 @@
 #ifndef LLVM_ATTRIBUTES_H
 #define LLVM_ATTRIBUTES_H
 
+#include "llvm/AttributesImpl.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <cassert>
@@ -142,20 +143,20 @@ class AttributesImpl;
 /// Attributes - A bitset of attributes.
 class Attributes {
   // Currently, we need less than 64 bits.
-  uint64_t Bits;
+  AttributesImpl Attrs;
 
   explicit Attributes(AttributesImpl *A);
 public:
-  Attributes() : Bits(0) {}
-  explicit Attributes(uint64_t Val) : Bits(Val) {}
-  /*implicit*/ Attributes(Attribute::AttrConst Val) : Bits(Val.v) {}
+  Attributes() : Attrs(0) {}
+  explicit Attributes(uint64_t Val);
+  /*implicit*/ Attributes(Attribute::AttrConst Val);
 
   class Builder {
     friend class Attributes;
     uint64_t Bits;
   public:
     Builder() : Bits(0) {}
-    Builder(const Attributes &A) : Bits(A.Bits) {}
+    Builder(const Attributes &A) : Bits(A.Raw()) {}
 
     void addAddressSafetyAttr();
     void addAlwaysInlineAttr();
@@ -185,6 +186,32 @@ public:
 
     void addAlignmentAttr(unsigned Align);
     void addStackAlignmentAttr(unsigned Align);
+
+    void removeAddressSafetyAttr();
+    void removeAlwaysInlineAttr();
+    void removeByValAttr();
+    void removeInlineHintAttr();
+    void removeInRegAttr();
+    void removeNakedAttr();
+    void removeNestAttr();
+    void removeNoAliasAttr();
+    void removeNoCaptureAttr();
+    void removeNoImplicitFloatAttr();
+    void removeNoInlineAttr();
+    void removeNonLazyBindAttr();
+    void removeNoRedZoneAttr();
+    void removeNoReturnAttr();
+    void removeNoUnwindAttr();
+    void removeOptimizeForSizeAttr();
+    void removeReadNoneAttr();
+    void removeReadOnlyAttr();
+    void removeReturnsTwiceAttr();
+    void removeSExtAttr();
+    void removeStackProtectAttr();
+    void removeStackProtectReqAttr();
+    void removeStructRetAttr();
+    void removeUWTableAttr();
+    void removeZExtAttr();
   };
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
@@ -194,7 +221,7 @@ public:
   // Attribute query methods.
   // FIXME: StackAlignment & Alignment attributes have no predicate methods.
   bool hasAttributes() const {
-    return Bits != 0;
+    return Attrs.hasAttributes();
   }
   bool hasAttributes(const Attributes &A) const;
   bool hasAddressSafetyAttr() const;
@@ -236,22 +263,22 @@ public:
   bool isEmptyOrSingleton() const;
 
   // This is a "safe bool() operator".
-  operator const void *() const { return Bits ? this : 0; }
-  bool operator == (const Attributes &Attrs) const {
-    return Bits == Attrs.Bits;
+  operator const void *() const { return Attrs.Bits ? this : 0; }
+  bool operator == (const Attributes &A) const {
+    return Attrs.Bits == A.Attrs.Bits;
   }
-  bool operator != (const Attributes &Attrs) const {
-    return Bits != Attrs.Bits;
+  bool operator != (const Attributes &A) const {
+    return Attrs.Bits != A.Attrs.Bits;
   }
 
-  Attributes operator | (const Attributes &Attrs) const;
-  Attributes operator & (const Attributes &Attrs) const;
-  Attributes operator ^ (const Attributes &Attrs) const;
-  Attributes &operator |= (const Attributes &Attrs);
-  Attributes &operator &= (const Attributes &Attrs);
+  Attributes operator | (const Attributes &A) const;
+  Attributes operator & (const Attributes &A) const;
+  Attributes operator ^ (const Attributes &A) const;
+  Attributes &operator |= (const Attributes &A);
+  Attributes &operator &= (const Attributes &A);
   Attributes operator ~ () const;
 
-  uint64_t Raw() const { return Bits; }
+  uint64_t Raw() const;
 
   /// constructAlignmentFromInt - This turns an int alignment (a power of 2,
   /// normally) into the form used internally in Attributes.

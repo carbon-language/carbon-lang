@@ -16,9 +16,9 @@
 #define LLVM_LLVMCONTEXT_IMPL_H
 
 #include "llvm/LLVMContext.h"
-#include "AttributesImpl.h"
 #include "ConstantsContext.h"
 #include "LeaksContext.h"
+#include "llvm/AttributesImpl.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Metadata.h"

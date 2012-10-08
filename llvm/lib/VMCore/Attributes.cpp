@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Attributes.h"
-#include "AttributesImpl.h"
 #include "LLVMContextImpl.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
@@ -25,99 +24,129 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// Attribute Function Definitions
+// Attributes Implementation
 //===----------------------------------------------------------------------===//
 
+Attributes::Attributes(uint64_t Val) : Attrs(Val) {}
+
+Attributes::Attributes(Attribute::AttrConst Val) : Attrs(Val.v) {}
+
+Attributes::Attributes(AttributesImpl *A) : Attrs(A->Bits) {}
+
+Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
+  // If there are no attributes, return an empty Attributes class.
+  if (B.Bits == 0)
+    return Attributes();
+
+  // Otherwise, build a key to look up the existing attributes.
+  LLVMContextImpl *pImpl = Context.pImpl;
+  FoldingSetNodeID ID;
+  ID.AddInteger(B.Bits);
+
+  void *InsertPoint;
+  AttributesImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (!PA) {
+    // If we didn't find any existing attributes of the same shape then create a
+    // new one and insert it.
+    PA = new AttributesImpl(B.Bits);
+    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
+  }
+
+  // Return the AttributesList that we found or created.
+  return Attributes(PA);
+}
+
 bool Attributes::hasAttributes(const Attributes &A) const {
-  return Bits & A.Bits;
+  return Attrs.hasAttributes(A);
 }
 bool Attributes::hasAddressSafetyAttr() const {
-  return Bits & Attribute::AddressSafety_i;
+  return Attrs.hasAttribute(Attribute::AddressSafety_i);
 }
 bool Attributes::hasAlignmentAttr() const {
-  return Bits & Attribute::Alignment_i;
+  return Attrs.hasAttribute(Attribute::Alignment_i);
 }
 bool Attributes::hasAlwaysInlineAttr() const {
-  return Bits & Attribute::AlwaysInline_i;
+  return Attrs.hasAttribute(Attribute::AlwaysInline_i);
 }
 bool Attributes::hasByValAttr() const {
-  return Bits & Attribute::ByVal_i;
+  return Attrs.hasAttribute(Attribute::ByVal_i);
 }
 bool Attributes::hasInlineHintAttr() const {
-  return Bits & Attribute::InlineHint_i;
+  return Attrs.hasAttribute(Attribute::InlineHint_i);
 }
 bool Attributes::hasInRegAttr() const {
-  return Bits & Attribute::InReg_i;
+  return Attrs.hasAttribute(Attribute::InReg_i);
 }
 bool Attributes::hasNakedAttr() const {
-  return Bits & Attribute::Naked_i;
+  return Attrs.hasAttribute(Attribute::Naked_i);
 }
 bool Attributes::hasNestAttr() const {
-  return Bits & Attribute::Nest_i;
+  return Attrs.hasAttribute(Attribute::Nest_i);
 }
 bool Attributes::hasNoAliasAttr() const {
-  return Bits & Attribute::NoAlias_i;
+  return Attrs.hasAttribute(Attribute::NoAlias_i);
 }
 bool Attributes::hasNoCaptureAttr() const {
-  return Bits & Attribute::NoCapture_i;
+  return Attrs.hasAttribute(Attribute::NoCapture_i);
 }
 bool Attributes::hasNoImplicitFloatAttr() const {
-  return Bits & Attribute::NoImplicitFloat_i;
+  return Attrs.hasAttribute(Attribute::NoImplicitFloat_i);
 }
 bool Attributes::hasNoInlineAttr() const {
-  return Bits & Attribute::NoInline_i;
+  return Attrs.hasAttribute(Attribute::NoInline_i);
 }
 bool Attributes::hasNonLazyBindAttr() const {
-  return Bits & Attribute::NonLazyBind_i;
+  return Attrs.hasAttribute(Attribute::NonLazyBind_i);
 }
 bool Attributes::hasNoRedZoneAttr() const {
-  return Bits & Attribute::NoRedZone_i;
+  return Attrs.hasAttribute(Attribute::NoRedZone_i);
 }
 bool Attributes::hasNoReturnAttr() const {
-  return Bits & Attribute::NoReturn_i;
+  return Attrs.hasAttribute(Attribute::NoReturn_i);
 }
 bool Attributes::hasNoUnwindAttr() const {
-  return Bits & Attribute::NoUnwind_i;
+  return Attrs.hasAttribute(Attribute::NoUnwind_i);
 }
 bool Attributes::hasOptimizeForSizeAttr() const {
-  return Bits & Attribute::OptimizeForSize_i;
+  return Attrs.hasAttribute(Attribute::OptimizeForSize_i);
 }
 bool Attributes::hasReadNoneAttr() const {
-  return Bits & Attribute::ReadNone_i;
+  return Attrs.hasAttribute(Attribute::ReadNone_i);
 }
 bool Attributes::hasReadOnlyAttr() const {
-  return Bits & Attribute::ReadOnly_i;
+  return Attrs.hasAttribute(Attribute::ReadOnly_i);
 }
 bool Attributes::hasReturnsTwiceAttr() const {
-  return Bits & Attribute::ReturnsTwice_i;
+  return Attrs.hasAttribute(Attribute::ReturnsTwice_i);
 }
 bool Attributes::hasSExtAttr() const {
-  return Bits & Attribute::SExt_i;
+  return Attrs.hasAttribute(Attribute::SExt_i);
 }
 bool Attributes::hasStackAlignmentAttr() const {
-  return Bits & Attribute::StackAlignment_i;
+  return Attrs.hasAttribute(Attribute::StackAlignment_i);
 }
 bool Attributes::hasStackProtectAttr() const {
-  return Bits & Attribute::StackProtect_i;
+  return Attrs.hasAttribute(Attribute::StackProtect_i);
 }
 bool Attributes::hasStackProtectReqAttr() const {
-  return Bits & Attribute::StackProtectReq_i;
+  return Attrs.hasAttribute(Attribute::StackProtectReq_i);
 }
 bool Attributes::hasStructRetAttr() const {
-  return Bits & Attribute::StructRet_i;
+  return Attrs.hasAttribute(Attribute::StructRet_i);
 }
 bool Attributes::hasUWTableAttr() const {
-  return Bits & Attribute::UWTable_i;
+  return Attrs.hasAttribute(Attribute::UWTable_i);
 }
 bool Attributes::hasZExtAttr() const {
-  return Bits & Attribute::ZExt_i;
+  return Attrs.hasAttribute(Attribute::ZExt_i);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attributes::getAlignment() const {
   if (!hasAlignmentAttr())
     return 0;
-  return 1U << (((Bits & Attribute::Alignment_i) >> 16) - 1);
+  return 1U << ((Attrs.getAlignment() >> 16) - 1);
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
@@ -125,32 +154,36 @@ unsigned Attributes::getAlignment() const {
 unsigned Attributes::getStackAlignment() const {
   if (!hasStackAlignmentAttr())
     return 0;
-  return 1U << (((Bits & Attribute::StackAlignment_i) >> 26) - 1);
+  return 1U << ((Attrs.getStackAlignment() >> 26) - 1);
 }
 
 bool Attributes::isEmptyOrSingleton() const {
-  return (Bits & (Bits - 1)) == 0;
+  return Attrs.isEmptyOrSingleton();
 }
 
-Attributes Attributes::operator | (const Attributes &Attrs) const {
-  return Attributes(Bits | Attrs.Bits);
+Attributes Attributes::operator | (const Attributes &A) const {
+  return Attributes(Raw() | A.Raw());
 }
-Attributes Attributes::operator & (const Attributes &Attrs) const {
-  return Attributes(Bits & Attrs.Bits);
+Attributes Attributes::operator & (const Attributes &A) const {
+  return Attributes(Raw() & A.Raw());
 }
-Attributes Attributes::operator ^ (const Attributes &Attrs) const {
-  return Attributes(Bits ^ Attrs.Bits);
+Attributes Attributes::operator ^ (const Attributes &A) const {
+  return Attributes(Raw() ^ A.Raw());
 }
-Attributes &Attributes::operator |= (const Attributes &Attrs) {
-  Bits |= Attrs.Bits;
+Attributes &Attributes::operator |= (const Attributes &A) {
+  Attrs.Bits |= A.Raw();
   return *this;
 }
-Attributes &Attributes::operator &= (const Attributes &Attrs) {
-  Bits &= Attrs.Bits;
+Attributes &Attributes::operator &= (const Attributes &A) {
+  Attrs.Bits &= A.Raw();
   return *this;
 }
 Attributes Attributes::operator ~ () const {
-  return Attributes(~Bits);
+  return Attributes(~Raw());
+}
+
+uint64_t Attributes::Raw() const {
+  return Attrs.Bits;
 }
 
 Attributes Attributes::typeIncompatible(Type *Ty) {
@@ -336,34 +369,108 @@ void Attributes::Builder::addStackAlignmentAttr(unsigned Align) {
   Bits |= (Log2_32(Align) + 1) << 26;
 }
 
+void Attributes::Builder::removeAddressSafetyAttr() {
+  Bits &= ~Attribute::AddressSafety_i;
+}
+void Attributes::Builder::removeAlwaysInlineAttr() {
+  Bits &= ~Attribute::AlwaysInline_i;
+}
+void Attributes::Builder::removeByValAttr() {
+  Bits &= ~Attribute::ByVal_i;
+}
+void Attributes::Builder::removeInlineHintAttr() {
+  Bits &= ~Attribute::InlineHint_i;
+}
+void Attributes::Builder::removeInRegAttr() {
+  Bits &= ~Attribute::InReg_i;
+}
+void Attributes::Builder::removeNakedAttr() {
+  Bits &= ~Attribute::Naked_i;
+}
+void Attributes::Builder::removeNestAttr() {
+  Bits &= ~Attribute::Nest_i;
+}
+void Attributes::Builder::removeNoAliasAttr() {
+  Bits &= ~Attribute::NoAlias_i;
+}
+void Attributes::Builder::removeNoCaptureAttr() {
+  Bits &= ~Attribute::NoCapture_i;
+}
+void Attributes::Builder::removeNoImplicitFloatAttr() {
+  Bits &= ~Attribute::NoImplicitFloat_i;
+}
+void Attributes::Builder::removeNoInlineAttr() {
+  Bits &= ~Attribute::NoInline_i;
+}
+void Attributes::Builder::removeNonLazyBindAttr() {
+  Bits &= ~Attribute::NonLazyBind_i;
+}
+void Attributes::Builder::removeNoRedZoneAttr() {
+  Bits &= ~Attribute::NoRedZone_i;
+}
+void Attributes::Builder::removeNoReturnAttr() {
+  Bits &= ~Attribute::NoReturn_i;
+}
+void Attributes::Builder::removeNoUnwindAttr() {
+  Bits &= ~Attribute::NoUnwind_i;
+}
+void Attributes::Builder::removeOptimizeForSizeAttr() {
+  Bits &= ~Attribute::OptimizeForSize_i;
+}
+void Attributes::Builder::removeReadNoneAttr() {
+  Bits &= ~Attribute::ReadNone_i;
+}
+void Attributes::Builder::removeReadOnlyAttr() {
+  Bits &= ~Attribute::ReadOnly_i;
+}
+void Attributes::Builder::removeReturnsTwiceAttr() {
+  Bits &= ~Attribute::ReturnsTwice_i;
+}
+void Attributes::Builder::removeSExtAttr() {
+  Bits &= ~Attribute::SExt_i;
+}
+void Attributes::Builder::removeStackProtectAttr() {
+  Bits &= ~Attribute::StackProtect_i;
+}
+void Attributes::Builder::removeStackProtectReqAttr() {
+  Bits &= ~Attribute::StackProtectReq_i;
+}
+void Attributes::Builder::removeStructRetAttr() {
+  Bits &= ~Attribute::StructRet_i;
+}
+void Attributes::Builder::removeUWTableAttr() {
+  Bits &= ~Attribute::UWTable_i;
+}
+void Attributes::Builder::removeZExtAttr() {
+  Bits &= ~Attribute::ZExt_i;
+}
+
 //===----------------------------------------------------------------------===//
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-Attributes::Attributes(AttributesImpl *A) : Bits(0) {}
+bool AttributesImpl::hasAttribute(uint64_t A) const {
+  return (Bits & A) != 0;
+}
 
-Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
-  // If there are no attributes, return an empty Attributes class.
-  if (B.Bits == 0)
-    return Attributes();
+bool AttributesImpl::hasAttributes() const {
+  return Bits != 0;
+}
 
-  // Otherwise, build a key to look up the existing attributes.
-  LLVMContextImpl *pImpl = Context.pImpl;
-  FoldingSetNodeID ID;
-  ID.AddInteger(B.Bits);
+bool AttributesImpl::hasAttributes(const Attributes &A) const {
+  return Bits & A.Raw();        // FIXME: Raw() won't work here in the future.
+}
 
-  void *InsertPoint;
-  AttributesImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+uint64_t AttributesImpl::getAlignment() const {
+  return Bits & Attribute::Alignment_i;
+}
 
-  if (!PA) {
-    // If we didn't find any existing attributes of the same shape then create a
-    // new one and insert it.
-    PA = new AttributesImpl(B.Bits);
-    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
-  }
+uint64_t AttributesImpl::getStackAlignment() const {
+  return Bits & Attribute::StackAlignment_i;
+}
 
-  // Return the AttributesList that we found or created.
-  return Attributes(PA);
+bool AttributesImpl::isEmptyOrSingleton() const {
+  return (Bits & (Bits - 1)) == 0;
 }
 
 //===----------------------------------------------------------------------===//

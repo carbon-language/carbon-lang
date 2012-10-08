@@ -19,13 +19,23 @@
 
 namespace llvm {
 
-class AttributesImpl : public FoldingSetNode {
-  uint64_t Bits;                // FIXME: We will be expanding this.
+class Attributes;
 
-  void operator=(const AttributesImpl &) LLVM_DELETED_FUNCTION;
-  AttributesImpl(const AttributesImpl &) LLVM_DELETED_FUNCTION;
+class AttributesImpl : public FoldingSetNode {
+  friend class Attributes;
+
+  uint64_t Bits;                // FIXME: We will be expanding this.
 public:
   AttributesImpl(uint64_t bits) : Bits(bits) {}
+
+  bool hasAttribute(uint64_t A) const;
+  bool hasAttributes() const;
+  bool hasAttributes(const Attributes &A) const;
+
+  uint64_t getAlignment() const;
+  uint64_t getStackAlignment() const;
+
+  bool isEmptyOrSingleton() const;
 
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Bits);
