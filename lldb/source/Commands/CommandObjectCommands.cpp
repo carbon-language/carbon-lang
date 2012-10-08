@@ -1186,7 +1186,7 @@ public:
     }
     
     virtual bool
-    IsRemovable ()
+    IsRemovable () const
     {
         return true;
     }

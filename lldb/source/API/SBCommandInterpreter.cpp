@@ -40,7 +40,7 @@ public:
     m_backend(backend) {}
     
     virtual bool
-    IsRemovable() { return true; }
+    IsRemovable() const { return true; }
     
 protected:
     virtual bool

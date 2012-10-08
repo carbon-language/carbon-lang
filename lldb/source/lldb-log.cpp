@@ -135,6 +135,7 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits &= ~LIBLLDB_LOG_UNWIND;
                 else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits &= ~LIBLLDB_LOG_TYPES;
                 else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits &= ~LIBLLDB_LOG_SYMBOLS;
+                else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits &= ~LIBLLDB_LOG_MODULES;
                 else
                 {
                     feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
@@ -201,6 +202,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits |= LIBLLDB_LOG_UNWIND;
             else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits |= LIBLLDB_LOG_TYPES;
             else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits |= LIBLLDB_LOG_SYMBOLS;
+            else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits |= LIBLLDB_LOG_MODULES;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
@@ -220,23 +222,24 @@ void
 lldb_private::ListLogCategories (Stream *strm)
 {
     strm->Printf("Logging categories for 'lldb':\n"
-        "  all - turn on all available logging categories\n"
-        "  api - enable logging of API calls and return values\n"
-        "  command - log command argument parsing\n"
-        "  default - enable the default set of logging categories for liblldb\n"
-        "  break - log breakpoints\n"
-        "  events - log broadcaster, listener and event queue activities\n"
-        "  expr - log expressions\n"
-        "  object - log object construction/destruction for important objects\n"
-        "  process - log process events and activities\n"
-        "  thread - log thread events and activities\n"
-        "  script - log events about the script interpreter\n"
-        "  dyld - log shared library related activities\n"
-        "  state - log private and public process state changes\n"
-        "  step - log step related activities\n"
-        "  unwind - log stack unwind activities\n"
-        "  verbose - enable verbose logging\n"
-        "  symbol - log symbol related issues and warnings\n"
-        "  watch - log watchpoint related activities\n"
-        "  types - log type system related activities\n");
+                 "  all - turn on all available logging categories\n"
+                 "  api - enable logging of API calls and return values\n"
+                 "  break - log breakpoints\n"
+                 "  command - log command argument parsing\n"
+                 "  default - enable the default set of logging categories for liblldb\n"
+                 "  dyld - log shared library related activities\n"
+                 "  events - log broadcaster, listener and event queue activities\n"
+                 "  expr - log expressions\n"
+                 "  object - log object construction/destruction for important objects\n"
+                 "  module - log module activities such as when modules are created, detroyed, replaced, and more\n"
+                 "  process - log process events and activities\n"
+                 "  script - log events about the script interpreter\n"
+                 "  state - log private and public process state changes\n"
+                 "  step - log step related activities\n"
+                 "  symbol - log symbol related issues and warnings\n"
+                 "  thread - log thread events and activities\n"
+                 "  types - log type system related activities\n"
+                 "  unwind - log stack unwind activities\n"
+                 "  verbose - enable verbose logging\n"
+                 "  watch - log watchpoint related activities\n");
 }

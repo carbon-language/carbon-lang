@@ -144,6 +144,7 @@ public:
             case 'T':  log_options |= LLDB_LOG_OPTION_PREPEND_TIMESTAMP;      break;
             case 'p':  log_options |= LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD;break;
             case 'n':  log_options |= LLDB_LOG_OPTION_PREPEND_THREAD_NAME;    break;
+            case 'S':  log_options |= LLDB_LOG_OPTION_BACKTRACE;              break;
             default:
                 error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                 break;
@@ -215,6 +216,7 @@ CommandObjectLogEnable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "timestamp",  'T', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with a timestamp." },
 { LLDB_OPT_SET_1, false, "pid-tid",    'p', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with the process and thread ID that generates the log line." },
 { LLDB_OPT_SET_1, false, "thread-name",'n', no_argument,       NULL, 0, eArgTypeNone,       "Prepend all log lines with the thread name for the thread that generates the log line." },
+{ LLDB_OPT_SET_1, false, "stack",      'S', no_argument,       NULL, 0, eArgTypeNone,       "Append a stack backtrace to each log line." },
 { 0, false, NULL,                       0,  0,                 NULL, 0, eArgTypeNone,       NULL }
 };
 

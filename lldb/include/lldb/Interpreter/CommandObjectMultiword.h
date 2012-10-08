@@ -74,7 +74,7 @@ public:
              CommandReturnObject &result);
     
     virtual bool
-    IsRemovable() { return m_can_be_removed; }
+    IsRemovable() const { return m_can_be_removed; }
     
     void
     SetRemovable (bool removable)
