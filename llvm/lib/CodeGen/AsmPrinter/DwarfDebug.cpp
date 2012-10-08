@@ -1069,7 +1069,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     if (AbsVar)
       AbsVar->setMInsn(MInsn);
 
-    // Simple ranges that are fully coalesced.
+    // Simplify ranges that are fully coalesced.
     if (History.size() <= 1 || (History.size() == 2 &&
                                 MInsn->isIdenticalTo(History.back()))) {
       RegVar->setMInsn(MInsn);
