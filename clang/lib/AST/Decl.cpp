@@ -1204,8 +1204,11 @@ void VarDecl::setStorageClass(StorageClass SC) {
 }
 
 SourceRange VarDecl::getSourceRange() const {
-  if (getInit())
-    return SourceRange(getOuterLocStart(), getInit()->getLocEnd());
+  if (const Expr *Init = getInit()) {
+    SourceLocation InitEnd = Init->getLocEnd();
+    if (InitEnd.isValid())
+      return SourceRange(getOuterLocStart(), InitEnd);
+  }
   return DeclaratorDecl::getSourceRange();
 }
 

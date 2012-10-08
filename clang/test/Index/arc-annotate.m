@@ -4,7 +4,12 @@
 @property (unsafe_unretained, nonatomic) id third_property;
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:5:1 %s -fobjc-arc -fobjc-nonfragile-abi | FileCheck %s
+void foo() {
+  A *avar;
+  avar = 0;
+}
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:11:1 %s -fobjc-arc -fobjc-nonfragile-abi | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=A:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=A:1:12
 // CHECK: Identifier: "A" [1:12 - 1:13] ObjCInterfaceDecl=A:1:12
@@ -36,3 +41,17 @@
 // CHECK: Punctuation: ")" [4:40 - 4:41] ObjCPropertyDecl=third_property:4:45
 // CHECK: Identifier: "id" [4:42 - 4:44] TypeRef=id:0:0
 // CHECK: Identifier: "third_property" [4:45 - 4:59] ObjCPropertyDecl=third_property:4:45
+
+// CHECK: Identifier: "A" [8:3 - 8:4] ObjCClassRef=A:1:12
+// CHECK: Punctuation: "*" [8:5 - 8:6] VarDecl=avar:8:6 (Definition)
+// CHECK: Identifier: "avar" [8:6 - 8:10] VarDecl=avar:8:6 (Definition)
+// CHECK: Punctuation: ";" [8:10 - 8:11] DeclStmt=
+// CHECK: Identifier: "avar" [9:3 - 9:7] DeclRefExpr=avar:8:6
+// CHECK: Punctuation: "=" [9:8 - 9:9] BinaryOperator=
+// CHECK: Literal: "0" [9:10 - 9:11] IntegerLiteral=
+// CHECK: Punctuation: ";" [9:11 - 9:12] CompoundStmt=
+
+// RUN: c-index-test -file-refs-at=%s:8:8 %s -fobjc-arc -fobjc-nonfragile-abi | FileCheck %s -check-prefix=CHECK-REFS
+// CHECK-REFS: VarDecl=avar:8:6 (Definition)
+// CHECK-REFS: VarDecl=avar:8:6 (Definition) =[8:6 - 8:10]
+// CHECK-REFS: DeclRefExpr=avar:8:6 =[9:3 - 9:7]
