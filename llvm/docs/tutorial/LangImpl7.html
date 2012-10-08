@@ -524,7 +524,7 @@ good codegen once again:</p>
 <pre>
     // Set up the optimizer pipeline.  Start with registering info about how the
     // target lays out data structures.
-    OurFPM.add(new TargetData(*TheExecutionEngine-&gt;getTargetData()));
+    OurFPM.add(new DataLayout(*TheExecutionEngine-&gt;getDataLayout()));
     <b>// Promote allocas to registers.
     OurFPM.add(createPromoteMemoryToRegisterPass());</b>
     // Do simple "peephole" optimizations and bit-twiddling optzns.
@@ -1008,7 +1008,7 @@ clang++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/TargetSelect.h"
 #include &lt;cstdio&gt;
@@ -2113,7 +2113,7 @@ int main() {
 
   // Set up the optimizer pipeline.  Start with registering info about how the
   // target lays out data structures.
-  OurFPM.add(new TargetData(*TheExecutionEngine-&gt;getTargetData()));
+  OurFPM.add(new DataLayout(*TheExecutionEngine-&gt;getDataLayout()));
   // Provide basic AliasAnalysis support for GVN.
   OurFPM.add(createBasicAliasAnalysisPass());
   // Promote allocas to registers.

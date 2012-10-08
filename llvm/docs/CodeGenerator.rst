@@ -81,7 +81,7 @@ Required components in the code generator
 The two pieces of the LLVM code generator are the high-level interface to the
 code generator and the set of reusable components that can be used to build
 target-specific backends.  The two most important interfaces (:raw-html:`<tt>`
-`TargetMachine`_ :raw-html:`</tt>` and :raw-html:`<tt>` `TargetData`_
+`TargetMachine`_ :raw-html:`</tt>` and :raw-html:`<tt>` `DataLayout`_
 :raw-html:`</tt>`) are the only ones that are required to be defined for a
 backend to fit into the LLVM system, but the others must be defined if the
 reusable code generator components are going to be used.
@@ -197,7 +197,7 @@ any particular client.  These classes are designed to capture the *abstract*
 properties of the target (such as the instructions and registers it has), and do
 not incorporate any particular pieces of code generation algorithms.
 
-All of the target description classes (except the :raw-html:`<tt>` `TargetData`_
+All of the target description classes (except the :raw-html:`<tt>` `DataLayout`_
 :raw-html:`</tt>` class) are designed to be subclassed by the concrete target
 implementation, and have virtual methods implemented.  To get to these
 implementations, the :raw-html:`<tt>` `TargetMachine`_ :raw-html:`</tt>` class
@@ -214,18 +214,18 @@ the ``get*Info`` methods (``getInstrInfo``, ``getRegisterInfo``,
 ``getFrameInfo``, etc.).  This class is designed to be specialized by a concrete
 target implementation (e.g., ``X86TargetMachine``) which implements the various
 virtual methods.  The only required target description class is the
-:raw-html:`<tt>` `TargetData`_ :raw-html:`</tt>` class, but if the code
+:raw-html:`<tt>` `DataLayout`_ :raw-html:`</tt>` class, but if the code
 generator components are to be used, the other interfaces should be implemented
 as well.
 
-.. _TargetData:
+.. _DataLayout:
 
-The ``TargetData`` class
+The ``DataLayout`` class
 ------------------------
 
-The ``TargetData`` class is the only required target description class, and it
+The ``DataLayout`` class is the only required target description class, and it
 is the only class that is not extensible (you cannot derived a new class from
-it).  ``TargetData`` specifies information about how the target lays out memory
+it).  ``DataLayout`` specifies information about how the target lays out memory
 for structures, the alignment requirements for various data types, the size of
 pointers in the target, and whether the target is little-endian or
 big-endian.

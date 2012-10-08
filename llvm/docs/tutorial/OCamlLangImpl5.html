@@ -1498,7 +1498,7 @@ let main () =
 
   (* Set up the optimizer pipeline.  Start with registering info about how the
    * target lays out data structures. *)
-  TargetData.add (ExecutionEngine.target_data the_execution_engine) the_fpm;
+  DataLayout.add (ExecutionEngine.target_data the_execution_engine) the_fpm;
 
   (* Do simple "peephole" optimizations and bit-twiddling optzn. *)
   add_instruction_combination the_fpm;

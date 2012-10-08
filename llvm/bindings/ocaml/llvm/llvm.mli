@@ -375,7 +375,7 @@ val module_context : llmodule -> llcontext
 val classify_type : lltype -> TypeKind.t
 
 (** [type_is_sized ty] returns whether the type has a size or not.
- * If it doesn't then it is not safe to call the [TargetData::] methods on it.
+ * If it doesn't then it is not safe to call the [DataLayout::] methods on it.
  * *)
 val type_is_sized : lltype -> bool
 

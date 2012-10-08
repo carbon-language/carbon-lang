@@ -14,7 +14,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/CallGraphSCCPass.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
@@ -94,7 +94,7 @@ namespace llvm {
         initializeModuleNDMPass(*PassRegistry::getPassRegistry());
       }
       virtual bool runOnModule(Module &M) {
-        EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
+        EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         run++;
         return false;
       }
@@ -167,7 +167,7 @@ namespace llvm {
         initializeCGPassPass(*PassRegistry::getPassRegistry());
       }
       virtual bool runOnSCC(CallGraphSCC &SCMM) {
-        EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
+        EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         run();
         return false;
       }
@@ -177,7 +177,7 @@ namespace llvm {
     public:
       virtual bool runOnFunction(Function &F) {
         // FIXME: PR4112
-        // EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
+        // EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         run();
         return false;
       }
@@ -204,7 +204,7 @@ namespace llvm {
         return false;
       }
       virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
-        EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
+        EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         run();
         return false;
       }
@@ -241,7 +241,7 @@ namespace llvm {
         return false;
       }
       virtual bool runOnBasicBlock(BasicBlock &BB) {
-        EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
+        EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         run();
         return false;
       }
@@ -266,7 +266,7 @@ namespace llvm {
         initializeFPassPass(*PassRegistry::getPassRegistry());
       }
       virtual bool runOnModule(Module &M) {
-        EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
+        EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         for (Module::iterator I=M.begin(),E=M.end(); I != E; ++I) {
           Function &F = *I;
           {
@@ -292,7 +292,7 @@ namespace llvm {
       mNDM->run = mNDNM->run = mDNM->run = mNDM2->run = 0;
 
       PassManager Passes;
-      Passes.add(new TargetData(&M));
+      Passes.add(new DataLayout(&M));
       Passes.add(mNDM2);
       Passes.add(mNDM);
       Passes.add(mNDNM);
@@ -316,7 +316,7 @@ namespace llvm {
       mNDM->run = mNDNM->run = mDNM->run = mNDM2->run = 0;
 
       PassManager Passes;
-      Passes.add(new TargetData(&M));
+      Passes.add(new DataLayout(&M));
       Passes.add(mNDM);
       Passes.add(mNDNM);
       Passes.add(mNDM2);// invalidates mNDM needed by mDNM
@@ -338,7 +338,7 @@ namespace llvm {
       OwningPtr<Module> M(makeLLVMModule());
       T *P = new T();
       PassManager Passes;
-      Passes.add(new TargetData(M.get()));
+      Passes.add(new DataLayout(M.get()));
       Passes.add(P);
       Passes.run(*M);
       T::finishedOK(run);
@@ -349,7 +349,7 @@ namespace llvm {
       Module *M = makeLLVMModule();
       T *P = new T();
       PassManager Passes;
-      Passes.add(new TargetData(M));
+      Passes.add(new DataLayout(M));
       Passes.add(P);
       Passes.run(*M);
       T::finishedOK(run, N);
@@ -387,7 +387,7 @@ namespace llvm {
         SCOPED_TRACE("Running OnTheFlyTest");
         struct OnTheFlyTest *O = new OnTheFlyTest();
         PassManager Passes;
-        Passes.add(new TargetData(M));
+        Passes.add(new DataLayout(M));
         Passes.add(O);
         Passes.run(*M);
 

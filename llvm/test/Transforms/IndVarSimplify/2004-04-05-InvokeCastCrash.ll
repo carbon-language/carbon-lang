@@ -39,11 +39,11 @@
 	%"struct.llvm::SymbolTable" = type opaque
 	%"struct.llvm::SymbolTableListTraits<llvm::Argument,llvm::Function,llvm::Function,llvm::ilist_traits<llvm::Argument> >" = type { %"struct.llvm::Function"*, %"struct.llvm::Function"* }
 	%"struct.llvm::SymbolTableListTraits<llvm::Instruction,llvm::BasicBlock,llvm::Function,llvm::ilist_traits<llvm::Instruction> >" = type { %"struct.llvm::Function"*, %"struct.llvm::BasicBlock"* }
-	%"struct.llvm::TargetData" = type { %"struct.llvm::FunctionPass", i1, i8, i8, i8, i8, i8, i8, i8, i8 }
+	%"struct.llvm::DataLayout" = type { %"struct.llvm::FunctionPass", i1, i8, i8, i8, i8, i8, i8, i8, i8 }
 	%"struct.llvm::TargetFrameInfo" = type { i32 (...)**, i32, i32, i32 }
 	%"struct.llvm::TargetInstrDescriptor" = type { i8*, i32, i32, i32, i1, i32, i32, i32, i32, i32, i32*, i32* }
 	%"struct.llvm::TargetInstrInfo" = type { i32 (...)**, %"struct.llvm::TargetInstrDescriptor"*, i32, i32 }
-	%"struct.llvm::TargetMachine" = type { i32 (...)**, %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >", %"struct.llvm::TargetData", %"struct.llvm::IntrinsicLowering"* }
+	%"struct.llvm::TargetMachine" = type { i32 (...)**, %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >", %"struct.llvm::DataLayout", %"struct.llvm::IntrinsicLowering"* }
 	%"struct.llvm::TargetRegClassInfo" = type { i32 (...)**, i32, i32, i32 }
 	%"struct.llvm::TargetRegInfo" = type { i32 (...)**, %"struct.std::vector<const llvm::TargetRegClassInfo*,std::allocator<const llvm::TargetRegClassInfo*> >", %"struct.llvm::TargetMachine"* }
 	%"struct.llvm::Type" = type { %"struct.llvm::Value", i32, i32, i1, i32, %"struct.llvm::Type"*, %"struct.std::vector<llvm::PATypeHandle,std::allocator<llvm::PATypeHandle> >" }

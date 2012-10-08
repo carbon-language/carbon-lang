@@ -83,8 +83,8 @@ module ExecutionEngine = struct
   external free_machine_code: Llvm.llvalue -> t -> unit
     = "llvm_ee_free_machine_code"
 
-  external target_data: t -> Llvm_target.TargetData.t
-    = "LLVMGetExecutionEngineTargetData"
+  external target_data: t -> Llvm_target.DataLayout.t
+    = "LLVMGetExecutionEngineDataLayout"
   
   (* The following are not bound. Patches are welcome.
   

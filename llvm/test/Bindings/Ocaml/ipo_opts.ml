@@ -43,10 +43,10 @@ let test_transforms () =
       ignore (build_ret (build_call fn [| |] "" b) b);
   end;
 
-  let td = TargetData.create (target_triple m) in
+  let td = DataLayout.create (target_triple m) in
   
   ignore (PassManager.create ()
-           ++ TargetData.add td
+           ++ DataLayout.add td
            ++ add_argument_promotion
            ++ add_constant_merge
            ++ add_dead_arg_elimination
@@ -63,7 +63,7 @@ let test_transforms () =
            ++ PassManager.run_module m
            ++ PassManager.dispose);
 
-  TargetData.dispose td
+  DataLayout.dispose td
 
 
 (*===-- Driver ------------------------------------------------------------===*)

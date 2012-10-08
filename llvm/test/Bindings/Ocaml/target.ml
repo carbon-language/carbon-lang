@@ -33,10 +33,10 @@ let m = create_module context filename
 (*===-- Target Data -------------------------------------------------------===*)
 
 let test_target_data () =
-  let td = TargetData.create (target_triple m) in
+  let td = DataLayout.create (target_triple m) in
   let sty = struct_type context [| i32_type; i64_type |] in
   
-  ignore (TargetData.as_string td);
+  ignore (DataLayout.as_string td);
   ignore (byte_order td);
   ignore (pointer_size td);
   ignore (intptr_type td);
@@ -49,7 +49,7 @@ let test_target_data () =
   ignore (element_at_offset td sty (Int64.of_int 1));
   ignore (offset_of_element td sty 1);
   
-  TargetData.dispose td
+  DataLayout.dispose td
 
 
 (*===-- Driver ------------------------------------------------------------===*)

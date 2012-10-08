@@ -13,7 +13,7 @@ module Endian = struct
   | Little
 end
 
-module TargetData = struct
+module DataLayout = struct
   type t
 
   external create : string -> t = "llvm_targetdata_create"
@@ -23,20 +23,20 @@ module TargetData = struct
   external dispose : t -> unit = "llvm_targetdata_dispose"
 end
 
-external byte_order : TargetData.t -> Endian.t = "llvm_byte_order"
-external pointer_size : TargetData.t -> int = "llvm_pointer_size"
-external intptr_type : TargetData.t -> Llvm.lltype = "LLVMIntPtrType"
-external size_in_bits : TargetData.t -> Llvm.lltype -> Int64.t
+external byte_order : DataLayout.t -> Endian.t = "llvm_byte_order"
+external pointer_size : DataLayout.t -> int = "llvm_pointer_size"
+external intptr_type : DataLayout.t -> Llvm.lltype = "LLVMIntPtrType"
+external size_in_bits : DataLayout.t -> Llvm.lltype -> Int64.t
                       = "llvm_size_in_bits"
-external store_size : TargetData.t -> Llvm.lltype -> Int64.t = "llvm_store_size"
-external abi_size : TargetData.t -> Llvm.lltype -> Int64.t = "llvm_abi_size"
-external abi_align : TargetData.t -> Llvm.lltype -> int = "llvm_abi_align"
-external stack_align : TargetData.t -> Llvm.lltype -> int = "llvm_stack_align"
-external preferred_align : TargetData.t -> Llvm.lltype -> int
+external store_size : DataLayout.t -> Llvm.lltype -> Int64.t = "llvm_store_size"
+external abi_size : DataLayout.t -> Llvm.lltype -> Int64.t = "llvm_abi_size"
+external abi_align : DataLayout.t -> Llvm.lltype -> int = "llvm_abi_align"
+external stack_align : DataLayout.t -> Llvm.lltype -> int = "llvm_stack_align"
+external preferred_align : DataLayout.t -> Llvm.lltype -> int
                          = "llvm_preferred_align"
-external preferred_align_of_global : TargetData.t -> Llvm.llvalue -> int
+external preferred_align_of_global : DataLayout.t -> Llvm.llvalue -> int
                                    = "llvm_preferred_align_of_global"
-external element_at_offset : TargetData.t -> Llvm.lltype -> Int64.t -> int
+external element_at_offset : DataLayout.t -> Llvm.lltype -> Int64.t -> int
                            = "llvm_element_at_offset"
-external offset_of_element : TargetData.t -> Llvm.lltype -> int -> Int64.t
+external offset_of_element : DataLayout.t -> Llvm.lltype -> int -> Int64.t
                            = "llvm_offset_of_element"

@@ -1253,7 +1253,7 @@ methods. Here's a realistic example:</p>
 >#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Function.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetAsmInfo.h"
 
 void MyGCPrinter::beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
@@ -1266,7 +1266,7 @@ void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
   // Set up for emitting addresses.
   const char *AddressDirective;
   int AddressAlignLog;
-  if (AP.TM.getTargetData()->getPointerSize() == sizeof(int32_t)) {
+  if (AP.TM.getDataLayout()->getPointerSize() == sizeof(int32_t)) {
     AddressDirective = TAI.getData32bitsDirective();
     AddressAlignLog = 2;
   } else {

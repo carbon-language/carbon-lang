@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -23,7 +24,6 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringSet.h"
@@ -568,13 +568,13 @@ int main(int argc, char **argv) {
     TLI->disableAllFunctions();
   Passes.add(TLI);
 
-  // Add an appropriate TargetData instance for this module.
-  TargetData *TD = 0;
+  // Add an appropriate DataLayout instance for this module.
+  DataLayout *TD = 0;
   const std::string &ModuleDataLayout = M.get()->getDataLayout();
   if (!ModuleDataLayout.empty())
-    TD = new TargetData(ModuleDataLayout);
+    TD = new DataLayout(ModuleDataLayout);
   else if (!DefaultDataLayout.empty())
-    TD = new TargetData(DefaultDataLayout);
+    TD = new DataLayout(DefaultDataLayout);
 
   if (TD)
     Passes.add(TD);
@@ -583,7 +583,7 @@ int main(int argc, char **argv) {
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (TD)
-      FPasses->add(new TargetData(*TD));
+      FPasses->add(new DataLayout(*TD));
   }
 
   if (PrintBreakpoints) {

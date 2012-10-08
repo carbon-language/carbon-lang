@@ -177,12 +177,12 @@ void CallingConvEmitter::EmitAction(Record *Action,
       if (Size)
         O << Size << ", ";
       else
-        O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
+        O << "\n" << IndentStr << "  State.getTarget().getDataLayout()"
           "->getTypeAllocSize(EVT(LocVT).getTypeForEVT(State.getContext())), ";
       if (Align)
         O << Align;
       else
-        O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
+        O << "\n" << IndentStr << "  State.getTarget().getDataLayout()"
           "->getABITypeAlignment(EVT(LocVT).getTypeForEVT(State.getContext()))";
       if (Action->isSubClassOf("CCAssignToStackWithShadow"))
         O << ", " << getQualifiedName(Action->getValueAsDef("ShadowReg"));

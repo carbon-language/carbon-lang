@@ -2104,7 +2104,7 @@ in signal handlers).</p>
 <p>Structures may optionally be "packed" structures, which indicate that the 
   alignment of the struct is one byte, and that there is no padding between
   the elements.  In non-packed structs, padding between field types is inserted
-  as defined by the TargetData string in the module, which is required to match
+  as defined by the DataLayout string in the module, which is required to match
   what the underlying code generator expects.</p>
 
 <p>Structures can either be "literal" or "identified".  A literal structure is

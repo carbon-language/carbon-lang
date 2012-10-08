@@ -155,7 +155,7 @@ module ExecutionEngine: sig
 
   (** [target_data ee] is the target data owned by the execution engine
       [ee]. *)
-  val target_data : t -> Llvm_target.TargetData.t
+  val target_data : t -> Llvm_target.DataLayout.t
 
 end
 

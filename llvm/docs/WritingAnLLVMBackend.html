@@ -314,14 +314,14 @@ represent target components.  These methods are named <tt>get*Info</tt>, and are
 intended to obtain the instruction set (<tt>getInstrInfo</tt>), register set
 (<tt>getRegisterInfo</tt>), stack frame layout (<tt>getFrameInfo</tt>), and
 similar information. <tt>XXXTargetMachine</tt> must also implement the
-<tt>getTargetData</tt> method to access an object with target-specific data
+<tt>getDataLayout</tt> method to access an object with target-specific data
 characteristics, such as data type size and alignment requirements.
 </p>
 
 <p>
 For instance, for the SPARC target, the header file
 <tt>SparcTargetMachine.h</tt> declares prototypes for several <tt>get*Info</tt>
-and <tt>getTargetData</tt> methods that simply return a class member.
+and <tt>getDataLayout</tt> methods that simply return a class member.
 </p>
 
 <div class="doc_code">
@@ -331,7 +331,7 @@ namespace llvm {
 class Module;
 
 class SparcTargetMachine : public LLVMTargetMachine {
-  const TargetData DataLayout;       // Calculates type size &amp; alignment
+  const DataLayout DataLayout;       // Calculates type size &amp; alignment
   SparcSubtarget Subtarget;
   SparcInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
@@ -348,7 +348,7 @@ public:
   virtual const TargetRegisterInfo *getRegisterInfo() const {
     return &amp;InstrInfo.getRegisterInfo();
   }
-  virtual const TargetData *getTargetData() const { return &amp;DataLayout; }
+  virtual const DataLayout *getDataLayout() const { return &amp;DataLayout; }
   static unsigned getModuleMatchQuality(const Module &amp;M);
 
   // Pass Pipeline Configuration
@@ -364,7 +364,7 @@ public:
 <li><tt>getInstrInfo()</tt></li>
 <li><tt>getRegisterInfo()</tt></li>
 <li><tt>getFrameInfo()</tt></li>
-<li><tt>getTargetData()</tt></li>
+<li><tt>getDataLayout()</tt></li>
 <li><tt>getSubtargetImpl()</tt></li>
 </ul>
 

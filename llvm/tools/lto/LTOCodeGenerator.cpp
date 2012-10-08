@@ -15,6 +15,7 @@
 #include "LTOCodeGenerator.h"
 #include "LTOModule.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Linker.h"
 #include "llvm/LLVMContext.h"
@@ -29,7 +30,6 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Transforms/IPO.h"
@@ -293,7 +293,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 
   // mark which symbols can not be internalized
   MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(),NULL);
-  Mangler mangler(Context, *_target->getTargetData());
+  Mangler mangler(Context, *_target->getDataLayout());
   std::vector<const char*> mustPreserveList;
   SmallPtrSet<GlobalValue*, 8> asmUsed;
 
@@ -361,8 +361,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Start off with a verification pass.
   passes.add(createVerifierPass());
 
-  // Add an appropriate TargetData instance for this module...
-  passes.add(new TargetData(*_target->getTargetData()));
+  // Add an appropriate DataLayout instance for this module...
+  passes.add(new DataLayout(*_target->getDataLayout()));
 
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead
@@ -376,7 +376,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   FunctionPassManager *codeGenPasses = new FunctionPassManager(mergedModule);
 
-  codeGenPasses->add(new TargetData(*_target->getTargetData()));
+  codeGenPasses->add(new DataLayout(*_target->getDataLayout()));
 
   formatted_raw_ostream Out(out);
 
