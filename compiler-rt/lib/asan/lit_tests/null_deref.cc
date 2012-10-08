@@ -31,4 +31,4 @@ int main() {
 // CHECK-Linux: {{    #0 0x.* in NullDeref.*null_deref.cc:20}}
 // CHECK-Darwin: {{    #0 0x.* in .*NullDeref.*null_deref.cc:20}}
 
-// CHECK: {{    #1 0x.* in main.*null_deref.cc:23}}
+// CHECK: {{    #1 0x.* in _?main.*null_deref.cc:23}}

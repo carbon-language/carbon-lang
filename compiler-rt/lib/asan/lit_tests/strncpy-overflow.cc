@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   // CHECK: {{WRITE of size 1 at 0x.* thread T0}}
   // CHECK-Linux: {{    #0 0x.* in .*strncpy}}
   // CHECK-Darwin: {{    #0 0x.* in wrap_strncpy}}
-  // CHECK: {{    #1 0x.* in main .*strncpy-overflow.cc:24}}
+  // CHECK: {{    #1 0x.* in _?main .*strncpy-overflow.cc:24}}
   // CHECK: {{0x.* is located 0 bytes to the right of 9-byte region}}
   // CHECK: {{allocated by thread T0 here:}}
 
@@ -35,6 +35,6 @@ int main(int argc, char **argv) {
   // CHECK-Darwin: {{    #0 0x.* in .*mz_malloc.*}}
   // CHECK-Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
   // CHECK-Darwin: {{    #2 0x.* in malloc.*}}
-  // CHECK-Darwin: {{    #3 0x.* in main .*strncpy-overflow.cc:23}}
+  // CHECK-Darwin: {{    #3 0x.* in _?main .*strncpy-overflow.cc:23}}
   return short_buffer[8];
 }

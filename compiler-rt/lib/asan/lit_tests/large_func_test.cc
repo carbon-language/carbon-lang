@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
 // CHECK-Linux:  {{    #0 0x.* in LargeFunction.*large_func_test.cc:32}}
 // CHECK-Darwin: {{    #0 0x.* in .*LargeFunction.*large_func_test.cc:32}}
 
-// CHECK: {{    #1 0x.* in main .*large_func_test.cc:48}}
+// CHECK: {{    #1 0x.* in _?main .*large_func_test.cc:48}}
 // CHECK: {{0x.* is located 44 bytes to the right of 400-byte region}}
 // CHECK: {{allocated by thread T0 here:}}
 // CHECK: {{    #0 0x.* in operator new.*}}
-// CHECK: {{    #1 0x.* in main .*large_func_test.cc:47}}
+// CHECK: {{    #1 0x.* in _?main .*large_func_test.cc:47}}

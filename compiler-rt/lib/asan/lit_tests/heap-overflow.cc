@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   memset(x, 0, 10);
   int res = x[argc * 10];  // BOOOM
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in main .*heap-overflow.cc:23}}
+  // CHECK: {{    #0 0x.* in _?main .*heap-overflow.cc:23}}
   // CHECK: {{0x.* is located 0 bytes to the right of 10-byte region}}
   // CHECK: {{allocated by thread T0 here:}}
 
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   // CHECK-Darwin: {{    #0 0x.* in .*mz_malloc.*}}
   // CHECK-Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
   // CHECK-Darwin: {{    #2 0x.* in malloc.*}}
-  // CHECK-Darwin: {{    #3 0x.* in main heap-overflow.cc:21}}
+  // CHECK-Darwin: {{    #3 0x.* in _?main .*heap-overflow.cc:21}}
   free(x);
   return res;
 }

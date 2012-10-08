@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
   memset(ZZZ, 0, 10);
   int res = YYY[argc * 10];  // BOOOM
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in main .*global-overflow.cc:18}}
+  // CHECK: {{    #0 0x.* in _?main .*global-overflow.cc:18}}
   // CHECK: {{0x.* is located 0 bytes to the right of global variable}}
   // CHECK:   {{.*YYY.* of size 10}}
   res += XXX[argc] + ZZZ[argc];

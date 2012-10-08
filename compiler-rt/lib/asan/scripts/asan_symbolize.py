@@ -97,13 +97,11 @@ class LLVMSymbolizer(Symbolizer):
 
 
 def LLVMSymbolizerFactory(system):
-  if system == 'Linux':
-    symbolizer_path = os.getenv('LLVM_SYMBOLIZER_PATH')
-    if not symbolizer_path:
-      # Assume llvm-symbolizer is in PATH.
-      symbolizer_path = 'llvm-symbolizer'
-    return LLVMSymbolizer(symbolizer_path)
-  return None
+  symbolizer_path = os.getenv('LLVM_SYMBOLIZER_PATH')
+  if not symbolizer_path:
+    # Assume llvm-symbolizer is in PATH.
+    symbolizer_path = 'llvm-symbolizer'
+  return LLVMSymbolizer(symbolizer_path)
 
 
 class Addr2LineSymbolizer(Symbolizer):
