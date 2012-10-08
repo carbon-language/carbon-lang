@@ -1664,19 +1664,43 @@ void Bitrig::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
       DriverArgs.hasArg(options::OPT_nostdincxx))
     return;
 
-  std::string Triple = getTriple().str();
-  if (Triple.substr(0, 5) == "amd64")
-    Triple.replace(0, 5, "x86_64");
+  switch (GetCXXStdlibType(DriverArgs)) {
+  case ToolChain::CST_Libcxx:
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/c++/");
+    break;
+  case ToolChain::CST_Libstdcxx:
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/c++/stdc++");
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/c++/stdc++/backward");
 
-  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/4.6.2");
-  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/4.6.2/backward");
-  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/4.6.2/" + Triple);
-
+    StringRef Triple = getTriple().str();
+    if (Triple.startswith("amd64"))
+      addSystemInclude(DriverArgs, CC1Args,
+                       getDriver().SysRoot + "/usr/include/c++/stdc++/x86_64" +
+                       Triple.substr(5));
+    else
+      addSystemInclude(DriverArgs, CC1Args,
+                       getDriver().SysRoot + "/usr/include/c++/stdc++/" +
+                       Triple);
+    break;
+  }
 }
 
 void Bitrig::AddCXXStdlibLibArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
-  CmdArgs.push_back("-lstdc++");
+  switch (GetCXXStdlibType(Args)) {
+  case ToolChain::CST_Libcxx:
+    CmdArgs.push_back("-lc++");
+    CmdArgs.push_back("-lcxxrt");
+    // Include supc++ to provide Unwind until provided by libcxx.
+    CmdArgs.push_back("-lgcc");
+    break;
+  case ToolChain::CST_Libstdcxx:
+    CmdArgs.push_back("-lstdc++");
+    break;
+  }
 }
 
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
