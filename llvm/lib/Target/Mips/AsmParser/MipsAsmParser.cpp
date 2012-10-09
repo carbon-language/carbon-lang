@@ -98,6 +98,10 @@ class MipsAsmParser : public MCTargetAsmParser {
                          SmallVectorImpl<MCInst> &Instructions);
   void expandLoadImm(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
+  void expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
+                            SmallVectorImpl<MCInst> &Instructions);
+  void expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
+                            SmallVectorImpl<MCInst> &Instructions);
   bool reportParseError(StringRef ErrorMsg);
 
   bool parseMemOffset(const MCExpr *&Res);
@@ -305,6 +309,8 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
 
   switch(Inst.getOpcode()) {
     case Mips::LoadImm32Reg:
+    case Mips::LoadAddr32Imm:
+    case Mips::LoadAddr32Reg:
       return true;
     default:
       return false;
@@ -316,14 +322,18 @@ void MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   switch(Inst.getOpcode()) {
     case Mips::LoadImm32Reg:
       return expandLoadImm(Inst, IDLoc, Instructions);
+    case Mips::LoadAddr32Imm:
+      return expandLoadAddressImm(Inst,IDLoc,Instructions);
+    case Mips::LoadAddr32Reg:
+      return expandLoadAddressReg(Inst,IDLoc,Instructions);
     }
 }
 
 void MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
-                        SmallVectorImpl<MCInst> &Instructions){
+                                  SmallVectorImpl<MCInst> &Instructions){
   MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(1);
-  assert(ImmOp.isImm() && "expected imediate operand kind");
+  assert(ImmOp.isImm() && "expected immediate operand kind");
   const MCOperand &RegOp = Inst.getOperand(0);
   assert(RegOp.isReg() && "expected register operand kind");
 
@@ -350,7 +360,7 @@ void MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
   } else {
     // for any other value of j that is representable as a 32-bit integer.
     // li d,j => lui d,hi16(j)
-    // ori d,d,lo16(j)
+    //           ori d,d,lo16(j)
     tmpInst.setOpcode(isMips64() ? Mips::LUi64 : Mips::LUi);
     tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
     tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
@@ -361,6 +371,82 @@ void MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
     tmpInst.setLoc(IDLoc);
+    Instructions.push_back(tmpInst);
+  }
+}
+
+void MipsAsmParser::expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
+                                         SmallVectorImpl<MCInst> &Instructions){
+  MCInst tmpInst;
+  const MCOperand &ImmOp = Inst.getOperand(2);
+  assert(ImmOp.isImm() && "expected immediate operand kind");
+  const MCOperand &SrcRegOp = Inst.getOperand(1);
+  assert(SrcRegOp.isReg() && "expected register operand kind");
+  const MCOperand &DstRegOp = Inst.getOperand(0);
+  assert(DstRegOp.isReg() && "expected register operand kind");
+  int ImmValue = ImmOp.getImm();
+  if ( -32768 <= ImmValue && ImmValue <= 65535) {
+    //for -32768 <= j <= 65535.
+    //la d,j(s) => addiu d,s,j
+    tmpInst.setOpcode(Mips::ADDiu); //TODO:no ADDiu64 in td files?
+    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateReg(SrcRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
+    Instructions.push_back(tmpInst);
+  } else {
+    //for any other value of j that is representable as a 32-bit integer.
+    //la d,j(s) => lui d,hi16(j)
+    //             ori d,d,lo16(j)
+    //             addu d,d,s
+    tmpInst.setOpcode(isMips64()?Mips::LUi64:Mips::LUi);
+    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
+    Instructions.push_back(tmpInst);
+    tmpInst.clear();
+    tmpInst.setOpcode(isMips64()?Mips::ORi64:Mips::ORi);
+    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
+    Instructions.push_back(tmpInst);
+    tmpInst.clear();
+    tmpInst.setOpcode(Mips::ADDu);
+    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateReg(SrcRegOp.getReg()));
+    Instructions.push_back(tmpInst);
+  }
+}
+
+void MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
+                                         SmallVectorImpl<MCInst> &Instructions){
+  MCInst tmpInst;
+  const MCOperand &ImmOp = Inst.getOperand(1);
+  assert(ImmOp.isImm() && "expected immediate operand kind");
+  const MCOperand &RegOp = Inst.getOperand(0);
+  assert(RegOp.isReg() && "expected register operand kind");
+  int ImmValue = ImmOp.getImm();
+  if ( -32768 <= ImmValue && ImmValue <= 65535) {
+    //for -32768 <= j <= 65535.
+    //la d,j => addiu d,$zero,j
+    tmpInst.setOpcode(Mips::ADDiu);
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(
+              MCOperand::CreateReg(isMips64()?Mips::ZERO_64:Mips::ZERO));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
+    Instructions.push_back(tmpInst);
+  } else {
+    //for any other value of j that is representable as a 32-bit integer.
+    //la d,j => lui d,hi16(j)
+    //          ori d,d,lo16(j)
+    tmpInst.setOpcode(isMips64()?Mips::LUi64:Mips::LUi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
+    Instructions.push_back(tmpInst);
+    tmpInst.clear();
+    tmpInst.setOpcode(isMips64()?Mips::ORi64:Mips::ORi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
+    tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
     Instructions.push_back(tmpInst);
   }
 }
@@ -820,13 +906,19 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
 
   const AsmToken &Tok = Parser.getTok(); // get next token
   if (Tok.isNot(AsmToken::LParen)) {
+    MipsOperand *Mnemonic = static_cast<MipsOperand*>(Operands[0]);
+    if (Mnemonic->getToken() == "la") {
+      SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer()-1);
+      Operands.push_back(MipsOperand::CreateImm(IdVal, S, E));
+      return MatchOperand_Success;
+    }
     Error(Parser.getTok().getLoc(), "'(' expected");
     return MatchOperand_ParseFail;
   }
 
   Parser.Lex(); // Eat '(' token.
 
-  const AsmToken &Tok1 = Parser.getTok(); //get next token
+  const AsmToken &Tok1 = Parser.getTok(); // get next token
   if (Tok1.is(AsmToken::Dollar)) {
     Parser.Lex(); // Eat '$' token.
     if (tryParseRegisterOperand(Operands,"")) {

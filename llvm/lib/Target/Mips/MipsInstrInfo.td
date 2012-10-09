@@ -883,8 +883,19 @@ let usesCustomInserter = 1 in {
 
 class LoadImm32< string instr_asm, Operand Od, RegisterClass RC> :
   MipsAsmPseudoInst<(outs RC:$rt), (ins Od:$imm32),
-     !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadImm32Reg : LoadImm32<"li",shamt,CPURegs>;
+                     !strconcat(instr_asm, "\t$rt, $imm32")> ;
+def LoadImm32Reg : LoadImm32<"li", shamt,CPURegs>;
+
+class LoadAddress<string instr_asm, Operand MemOpnd, RegisterClass RC> :
+  MipsAsmPseudoInst<(outs RC:$rt), (ins MemOpnd:$addr),
+                     !strconcat(instr_asm, "\t$rt, $addr")> ;
+def LoadAddr32Reg : LoadAddress<"la", mem, CPURegs>;
+
+class LoadAddressImm<string instr_asm, Operand Od, RegisterClass RC> :
+  MipsAsmPseudoInst<(outs RC:$rt), (ins Od:$imm32),
+                     !strconcat(instr_asm, "\t$rt, $imm32")> ;
+def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
+
 //===----------------------------------------------------------------------===//
 // MipsI Instructions
 //===----------------------------------------------------------------------===//
