@@ -83,6 +83,8 @@ let usesCustomInserter = 1, Predicates = [HasMips64, HasStandardEncoding],
 //===----------------------------------------------------------------------===//
 let DecoderNamespace = "Mips64" in {
 /// Arithmetic Instructions (ALU Immediate)
+def DADDi    : ArithOverflowI<0x18, "daddi", add, simm16_64, immSExt16,
+                           CPU64Regs>;
 def DADDiu   : ArithLogicI<0x19, "daddiu", add, simm16_64, immSExt16,
                            CPU64Regs>;
 def DANDi    : ArithLogicI<0x0c, "andi", and, uimm16_64, immZExt16, CPU64Regs>;
@@ -93,6 +95,7 @@ def XORi64   : ArithLogicI<0x0e, "xori", xor, uimm16_64, immZExt16, CPU64Regs>;
 def LUi64    : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
+def DADD     : ArithOverflowR<0x00, 0x2C, "dadd", IIAlu, CPU64Regs, 1>;
 def DADDu    : ArithLogicR<0x00, 0x2d, "daddu", add, IIAlu, CPU64Regs, 1>;
 def DSUBu    : ArithLogicR<0x00, 0x2f, "dsubu", sub, IIAlu, CPU64Regs>;
 def SLT64    : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
@@ -307,3 +310,8 @@ def : MipsPat<(i64 (sext_inreg CPU64Regs:$src, i32)),
 
 // bswap MipsPattern
 def : MipsPat<(bswap CPU64Regs:$rt), (DSHD (DSBH CPU64Regs:$rt))>;
+
+//===----------------------------------------------------------------------===//
+// Instruction aliases
+//===----------------------------------------------------------------------===//
+def : InstAlias<"move $dst,$src", (DADD CPU64Regs:$dst,CPU64Regs:$src,ZERO_64)>;

@@ -415,48 +415,82 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
 int MipsAsmParser::matchRegisterName(StringRef Name) {
 
-   int CC = StringSwitch<unsigned>(Name)
-    .Case("zero",  Mips::ZERO)
-    .Case("a0",  Mips::A0)
-    .Case("a1",  Mips::A1)
-    .Case("a2",  Mips::A2)
-    .Case("a3",  Mips::A3)
-    .Case("v0",  Mips::V0)
-    .Case("v1",  Mips::V1)
-    .Case("s0",  Mips::S0)
-    .Case("s1",  Mips::S1)
-    .Case("s2",  Mips::S2)
-    .Case("s3",  Mips::S3)
-    .Case("s4",  Mips::S4)
-    .Case("s5",  Mips::S5)
-    .Case("s6",  Mips::S6)
-    .Case("s7",  Mips::S7)
-    .Case("k0",  Mips::K0)
-    .Case("k1",  Mips::K1)
-    .Case("sp",  Mips::SP)
-    .Case("fp",  Mips::FP)
-    .Case("gp",  Mips::GP)
-    .Case("ra",  Mips::RA)
-    .Case("t0",  Mips::T0)
-    .Case("t1",  Mips::T1)
-    .Case("t2",  Mips::T2)
-    .Case("t3",  Mips::T3)
-    .Case("t4",  Mips::T4)
-    .Case("t5",  Mips::T5)
-    .Case("t6",  Mips::T6)
-    .Case("t7",  Mips::T7)
-    .Case("t8",  Mips::T8)
-    .Case("t9",  Mips::T9)
-    .Case("at",  Mips::AT)
-    .Case("fcc0",  Mips::FCC0)
-    .Default(-1);
+   int CC;
+   if (!isMips64())
+    CC = StringSwitch<unsigned>(Name)
+      .Case("zero",  Mips::ZERO)
+      .Case("a0",  Mips::A0)
+      .Case("a1",  Mips::A1)
+      .Case("a2",  Mips::A2)
+      .Case("a3",  Mips::A3)
+      .Case("v0",  Mips::V0)
+      .Case("v1",  Mips::V1)
+      .Case("s0",  Mips::S0)
+      .Case("s1",  Mips::S1)
+      .Case("s2",  Mips::S2)
+      .Case("s3",  Mips::S3)
+      .Case("s4",  Mips::S4)
+      .Case("s5",  Mips::S5)
+      .Case("s6",  Mips::S6)
+      .Case("s7",  Mips::S7)
+      .Case("k0",  Mips::K0)
+      .Case("k1",  Mips::K1)
+      .Case("sp",  Mips::SP)
+      .Case("fp",  Mips::FP)
+      .Case("gp",  Mips::GP)
+      .Case("ra",  Mips::RA)
+      .Case("t0",  Mips::T0)
+      .Case("t1",  Mips::T1)
+      .Case("t2",  Mips::T2)
+      .Case("t3",  Mips::T3)
+      .Case("t4",  Mips::T4)
+      .Case("t5",  Mips::T5)
+      .Case("t6",  Mips::T6)
+      .Case("t7",  Mips::T7)
+      .Case("t8",  Mips::T8)
+      .Case("t9",  Mips::T9)
+      .Case("at",  Mips::AT)
+      .Case("fcc0",  Mips::FCC0)
+      .Default(-1);
+   else
+    CC = StringSwitch<unsigned>(Name)
+      .Case("zero", Mips::ZERO_64)
+      .Case("at", Mips::AT_64)
+      .Case("v0", Mips::V0_64)
+      .Case("v1", Mips::V1_64)
+      .Case("a0", Mips::A0_64)
+      .Case("a1", Mips::A1_64)
+      .Case("a2", Mips::A2_64)
+      .Case("a3", Mips::A3_64)
+      .Case("a4", Mips::T0_64)
+      .Case("a5", Mips::T1_64)
+      .Case("a6", Mips::T2_64)
+      .Case("a7", Mips::T3_64)
+      .Case("t4", Mips::T4_64)
+      .Case("t5", Mips::T5_64)
+      .Case("t6", Mips::T6_64)
+      .Case("t7", Mips::T7_64)
+      .Case("s0", Mips::S0_64)
+      .Case("s1", Mips::S1_64)
+      .Case("s2", Mips::S2_64)
+      .Case("s3", Mips::S3_64)
+      .Case("s4", Mips::S4_64)
+      .Case("s5", Mips::S5_64)
+      .Case("s6", Mips::S6_64)
+      .Case("s7", Mips::S7_64)
+      .Case("t8", Mips::T8_64)
+      .Case("t9", Mips::T9_64)
+      .Case("kt0", Mips::K0_64)
+      .Case("kt1", Mips::K1_64)
+      .Case("gp", Mips::GP_64)
+      .Case("sp", Mips::SP_64)
+      .Case("fp", Mips::FP_64)
+      .Case("s8", Mips::FP_64)
+      .Case("ra", Mips::RA_64)
+      .Default(-1);
 
-  if (CC != -1) {
-    // 64 bit register in Mips are following 32 bit definitions.
-    if (isMips64())
-      CC++;
+  if (CC != -1)
     return CC;
-  }
 
   if (Name[0] == 'f') {
     StringRef NumString = Name.substr(1);
@@ -544,7 +578,8 @@ int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, StringRef Mnemonic) {
   if (RegNum > 31)
     return -1;
 
-  return getReg(Mips::CPURegsRegClassID, RegNum);
+  // MIPS64 registers are numbered 1 after the 32-bit equivalents
+  return getReg(Mips::CPURegsRegClassID, RegNum) + isMips64();
 }
 
 int MipsAsmParser::tryParseRegister(StringRef Mnemonic) {
