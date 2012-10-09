@@ -1941,11 +1941,11 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
 /// format of a type descriptor is
 ///
 /// \code
-///   { i8* Name, i16 TypeKind, i16 TypeInfo }
+///   { i16 TypeKind, i16 TypeInfo }
 /// \endcode
 ///
-/// where TypeKind is 0 for an integer, 1 for a floating point value, and -1 for
-/// anything else.
+/// followed by an array of i8 containing the type name. TypeKind is 0 for an
+/// integer, 1 for a floating point value, and -1 for anything else.
 llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
   // FIXME: Only emit each type's descriptor once.
   uint16_t TypeKind = -1;
@@ -1969,8 +1969,8 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
                                     ArrayRef<intptr_t>());
 
   llvm::Constant *Components[] = {
-    cast<llvm::Constant>(Builder.CreateGlobalStringPtr(Buffer)),
-    Builder.getInt16(TypeKind), Builder.getInt16(TypeInfo)
+    Builder.getInt16(TypeKind), Builder.getInt16(TypeInfo),
+    llvm::ConstantDataArray::getString(getLLVMContext(), Buffer)
   };
   llvm::Constant *Descriptor = llvm::ConstantStruct::getAnon(Components);
 
