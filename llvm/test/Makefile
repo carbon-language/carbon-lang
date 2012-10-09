@@ -29,11 +29,6 @@ else
 LIT_ARGS := -s -v
 endif
 
-# -jN causes crash on Cygwin's python.
-ifneq (,$(filter $(HOST_OS),Cygwin))
-  LIT_ARGS += -j1
-endif
-
 ifdef TESTSUITE
 LIT_TESTSUITE := $(TESTSUITE)
 CLEANED_TESTSUITE := $(patsubst %/,%,$(TESTSUITE))
