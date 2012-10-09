@@ -538,12 +538,34 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
             "Attributes 'byval', 'nest', 'sret', and 'nocapture' "
             "do not apply to return values!", V);
 
-  for (unsigned i = 0;
-       i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
-    Attributes MutI = Attrs & Attribute::MutuallyIncompatible[i];
-    Assert1(MutI.isEmptyOrSingleton(), "Attributes '" +
-            MutI.getAsString() + "' are incompatible!", V);
-  }
+  // Check for mutually incompatible attributes.
+  Assert1(!((Attrs.hasAttribute(Attributes::ByVal) &&
+             Attrs.hasAttribute(Attributes::Nest)) ||
+            (Attrs.hasAttribute(Attributes::ByVal) &&
+             Attrs.hasAttribute(Attributes::StructRet)) ||
+            (Attrs.hasAttribute(Attributes::Nest) &&
+             Attrs.hasAttribute(Attributes::StructRet))), "Attributes "
+          "'byval, nest, and sret' are incompatible!", V);
+
+  Assert1(!((Attrs.hasAttribute(Attributes::ByVal) &&
+             Attrs.hasAttribute(Attributes::Nest)) ||
+            (Attrs.hasAttribute(Attributes::ByVal) &&
+             Attrs.hasAttribute(Attributes::InReg)) ||
+            (Attrs.hasAttribute(Attributes::Nest) &&
+             Attrs.hasAttribute(Attributes::InReg))), "Attributes "
+          "'byval, nest, and inreg' are incompatible!", V);
+
+  Assert1(!(Attrs.hasAttribute(Attributes::ZExt) &&
+            Attrs.hasAttribute(Attributes::SExt)), "Attributes "
+          "'zeroext and signext' are incompatible!", V);
+
+  Assert1(!(Attrs.hasAttribute(Attributes::ReadNone) &&
+            Attrs.hasAttribute(Attributes::ReadOnly)), "Attributes "
+          "'readnone and readonly' are incompatible!", V);
+
+  Assert1(!(Attrs.hasAttribute(Attributes::NoInline) &&
+            Attrs.hasAttribute(Attributes::AlwaysInline)), "Attributes "
+          "'noinline and alwaysinline' are incompatible!", V);
 
   Attributes TypeI = Attrs & Attributes::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
@@ -598,12 +620,34 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
           Attributes::get(NotFn).getAsString() +
           "' do not apply to the function!", V);
 
-  for (unsigned i = 0;
-       i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
-    Attributes MutI = FAttrs & Attribute::MutuallyIncompatible[i];
-    Assert1(MutI.isEmptyOrSingleton(), "Attributes " +
-            MutI.getAsString() + " are incompatible!", V);
-  }
+  // Check for mutually incompatible attributes.
+  Assert1(!((FAttrs.hasAttribute(Attributes::ByVal) &&
+             FAttrs.hasAttribute(Attributes::Nest)) ||
+            (FAttrs.hasAttribute(Attributes::ByVal) &&
+             FAttrs.hasAttribute(Attributes::StructRet)) ||
+            (FAttrs.hasAttribute(Attributes::Nest) &&
+             FAttrs.hasAttribute(Attributes::StructRet))), "Attributes "
+          "'byval, nest, and sret' are incompatible!", V);
+
+  Assert1(!((FAttrs.hasAttribute(Attributes::ByVal) &&
+             FAttrs.hasAttribute(Attributes::Nest)) ||
+            (FAttrs.hasAttribute(Attributes::ByVal) &&
+             FAttrs.hasAttribute(Attributes::InReg)) ||
+            (FAttrs.hasAttribute(Attributes::Nest) &&
+             FAttrs.hasAttribute(Attributes::InReg))), "Attributes "
+          "'byval, nest, and inreg' are incompatible!", V);
+
+  Assert1(!(FAttrs.hasAttribute(Attributes::ZExt) &&
+            FAttrs.hasAttribute(Attributes::SExt)), "Attributes "
+          "'zeroext and signext' are incompatible!", V);
+
+  Assert1(!(FAttrs.hasAttribute(Attributes::ReadNone) &&
+            FAttrs.hasAttribute(Attributes::ReadOnly)), "Attributes "
+          "'readnone and readonly' are incompatible!", V);
+
+  Assert1(!(FAttrs.hasAttribute(Attributes::NoInline) &&
+            FAttrs.hasAttribute(Attributes::AlwaysInline)), "Attributes "
+          "'noinline and alwaysinline' are incompatible!", V);
 }
 
 static bool VerifyAttributeCount(const AttrListPtr &Attrs, unsigned Params) {

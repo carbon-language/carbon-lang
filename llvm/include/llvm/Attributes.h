@@ -110,15 +110,6 @@ DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is o
 ///                      an exception might pass by.
 /// uwtable + nounwind = Needs an entry because the ABI says so.
 
-/// @brief Attributes that are mutually incompatible.
-const AttrConst MutuallyIncompatible[5] = {
-  {ByVal_i | Nest_i | StructRet_i},
-  {ByVal_i | Nest_i | InReg_i },
-  {ZExt_i  | SExt_i},
-  {ReadNone_i | ReadOnly_i},
-  {NoInline_i | AlwaysInline_i}
-};
-
 }  // namespace Attribute
 
 /// AttributeImpl - The internal representation of the Attributes class. This is
