@@ -34,17 +34,17 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 
-  virtual const char *getPassName() const {
+  virtual const char *getPassName() const LLVM_OVERRIDE {
     return "X86 AT&T-Style Assembly Printer";
   }
 
   const X86Subtarget &getSubtarget() const { return *Subtarget; }
 
-  virtual void EmitStartOfAsmFile(Module &M);
+  virtual void EmitStartOfAsmFile(Module &M) LLVM_OVERRIDE;
 
-  virtual void EmitEndOfAsmFile(Module &M);
+  virtual void EmitEndOfAsmFile(Module &M) LLVM_OVERRIDE;
 
-  virtual void EmitInstruction(const MachineInstr *MI);
+  virtual void EmitInstruction(const MachineInstr *MI) LLVM_OVERRIDE;
 
   void printSymbolOperand(const MachineOperand &MO, raw_ostream &O);
 
@@ -54,31 +54,28 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   void printPCRelImm(const MachineInstr *MI, unsigned OpNo, raw_ostream &O);
 
   bool printAsmMRegister(const MachineOperand &MO, char Mode, raw_ostream &O);
-  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                       unsigned AsmVariant, const char *ExtraCode,
-                       raw_ostream &OS);
-  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                             unsigned AsmVariant, const char *ExtraCode,
-                             raw_ostream &OS);
+  virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                               unsigned AsmVariant, const char *ExtraCode,
+                               raw_ostream &OS) LLVM_OVERRIDE;
+  virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                                     unsigned AsmVariant, const char *ExtraCode,
+                                     raw_ostream &OS) LLVM_OVERRIDE;
 
-  void printMachineInstruction(const MachineInstr *MI);
-  void printSSECC(const MachineInstr *MI, unsigned Op, raw_ostream &O);
   void printMemReference(const MachineInstr *MI, unsigned Op, raw_ostream &O,
                          const char *Modifier=NULL);
   void printLeaMemReference(const MachineInstr *MI, unsigned Op, raw_ostream &O,
                             const char *Modifier=NULL);
 
-  void printPICLabel(const MachineInstr *MI, unsigned Op, raw_ostream &O);
-
   void printIntelMemReference(const MachineInstr *MI, unsigned Op,
                               raw_ostream &O, const char *Modifier=NULL,
-                              unsigned AsmVariant = 1);                         
+                              unsigned AsmVariant = 1);
 
-  bool runOnMachineFunction(MachineFunction &F);
+  virtual bool runOnMachineFunction(MachineFunction &F) LLVM_OVERRIDE;
 
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 
-  MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
+  virtual MachineLocation
+    getDebugValueLocation(const MachineInstr *MI) const LLVM_OVERRIDE;
 };
 
 } // end namespace llvm
