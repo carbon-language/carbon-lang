@@ -212,35 +212,6 @@ public:
     void addStackAlignmentAttr(unsigned Align);
 
     void removeAttributes(const Attributes &A);
-
-    void removeAddressSafetyAttr();
-    void removeAlwaysInlineAttr();
-    void removeByValAttr();
-    void removeInlineHintAttr();
-    void removeInRegAttr();
-    void removeNakedAttr();
-    void removeNestAttr();
-    void removeNoAliasAttr();
-    void removeNoCaptureAttr();
-    void removeNoImplicitFloatAttr();
-    void removeNoInlineAttr();
-    void removeNonLazyBindAttr();
-    void removeNoRedZoneAttr();
-    void removeNoReturnAttr();
-    void removeNoUnwindAttr();
-    void removeOptimizeForSizeAttr();
-    void removeReadNoneAttr();
-    void removeReadOnlyAttr();
-    void removeReturnsTwiceAttr();
-    void removeSExtAttr();
-    void removeStackProtectAttr();
-    void removeStackProtectReqAttr();
-    void removeStructRetAttr();
-    void removeUWTableAttr();
-    void removeZExtAttr();
-
-    void removeAlignmentAttr();
-    void removeStackAlignmentAttr();
   };
 
   /// get - Return a uniquified Attributes object. This takes the uniquified

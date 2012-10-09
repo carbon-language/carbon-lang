@@ -2757,7 +2757,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   // If the alignment was parsed as an attribute, move to the alignment field.
   if (FuncAttrs.hasAlignmentAttr()) {
     Alignment = FuncAttrs.getAlignment();
-    FuncAttrs.removeAlignmentAttr();
+    FuncAttrs.removeAttribute(Attributes::Alignment);
   }
 
   // Okay, if we got here, the function is syntactically valid.  Convert types
