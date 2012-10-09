@@ -51,8 +51,33 @@ void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
 
 void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
                                      raw_ostream &O) {
-  switch (MI->getOperand(Op).getImm()) {
+  int64_t Imm = MI->getOperand(Op).getImm() & 0xf;
+  switch (Imm) {
   default: llvm_unreachable("Invalid ssecc argument!");
+  case    0: O << "eq"; break;
+  case    1: O << "lt"; break;
+  case    2: O << "le"; break;
+  case    3: O << "unord"; break;
+  case    4: O << "neq"; break;
+  case    5: O << "nlt"; break;
+  case    6: O << "nle"; break;
+  case    7: O << "ord"; break;
+  case    8: O << "eq_uq"; break;
+  case    9: O << "nge"; break;
+  case  0xa: O << "ngt"; break;
+  case  0xb: O << "false"; break;
+  case  0xc: O << "neq_oq"; break;
+  case  0xd: O << "ge"; break;
+  case  0xe: O << "gt"; break;
+  case  0xf: O << "true"; break;
+  }
+}
+
+void X86IntelInstPrinter::printAVXCC(const MCInst *MI, unsigned Op,
+                                     raw_ostream &O) {
+  int64_t Imm = MI->getOperand(Op).getImm() & 0x1f;
+  switch (Imm) {
+  default: llvm_unreachable("Invalid avxcc argument!");
   case    0: O << "eq"; break;
   case    1: O << "lt"; break;
   case    2: O << "le"; break;
@@ -85,7 +110,6 @@ void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
   case 0x1d: O << "ge_oq"; break;
   case 0x1e: O << "gt_oq"; break;
   case 0x1f: O << "true_us"; break;
-
   }
 }
 

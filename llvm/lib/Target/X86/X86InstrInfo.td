@@ -418,7 +418,7 @@ def SSECC : Operand<i8> {
 }
 
 def AVXCC : Operand<i8> {
-  let PrintMethod = "printSSECC";
+  let PrintMethod = "printAVXCC";
   let OperandType = "OPERAND_IMMEDIATE";
 }
 

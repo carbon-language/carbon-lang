@@ -40,6 +40,7 @@ public:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemReference(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printSSECC(const MCInst *MI, unsigned Op, raw_ostream &OS);
+  void printAVXCC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
