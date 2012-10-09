@@ -6484,8 +6484,8 @@ void ASTReader::finishPendingActions() {
   // Load the bodies of any functions or methods we've encountered. We do
   // this now (delayed) so that we can be sure that the declaration chains
   // have been fully wired up.
-  for (llvm::SmallDenseMap<Decl *, uint64_t, 4>::iterator
-         PB = PendingBodies.begin(), PBEnd = PendingBodies.end();
+  for (PendingBodiesMap::iterator PB = PendingBodies.begin(),
+                               PBEnd = PendingBodies.end();
        PB != PBEnd; ++PB) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(PB->first)) {
       // FIXME: Check for =delete/=default?

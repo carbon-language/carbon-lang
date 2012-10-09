@@ -33,6 +33,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -342,8 +343,13 @@ private:
   /// declarations that have not yet been linked to their definitions.
   llvm::SmallPtrSet<Decl *, 4> PendingDefinitions;
 
+  typedef llvm::MapVector<Decl *, uint64_t,
+                          llvm::SmallDenseMap<Decl *, unsigned, 4>,
+                          llvm::SmallVector<std::pair<Decl *, uint64_t>, 4> >
+    PendingBodiesMap;
+
   /// \brief Functions or methods that have bodies that will be attached.
-  llvm::SmallDenseMap<Decl *, uint64_t, 4> PendingBodies;
+  PendingBodiesMap PendingBodies;
 
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(ModuleFile &M,
