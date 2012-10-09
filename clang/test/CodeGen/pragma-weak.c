@@ -157,6 +157,15 @@ void PR10878() { SHA384Pad(0); }
 // CHECK: call void @SHA384Pad(i8* null)
 
 
+// PR14046: Parse #pragma weak in function-local context
+extern int PR14046e(void);
+void PR14046f() {
+#pragma weak PR14046e
+  PR14046e();
+}
+// CHECK: declare extern_weak i32 @PR14046e()
+
+
 ///////////// TODO: stuff that still doesn't work
 
 // due to the fact that disparate TopLevelDecls cannot affect each other
