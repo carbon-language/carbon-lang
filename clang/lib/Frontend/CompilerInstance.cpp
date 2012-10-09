@@ -946,6 +946,8 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
           getASTConsumer().GetASTDeserializationListener());
         getASTContext().setASTMutationListener(
           getASTConsumer().GetASTMutationListener());
+        getPreprocessor().setPPMutationListener(
+          getASTConsumer().GetPPMutationListener());
       }
       OwningPtr<ExternalASTSource> Source;
       Source.reset(ModuleManager);

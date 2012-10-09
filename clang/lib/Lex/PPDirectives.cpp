@@ -1944,8 +1944,20 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   if (MI->isWarnIfUnused())
     WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
 
-  MI->setUndefLoc(MacroNameTok.getLocation());
-  clearMacroInfo(MacroNameTok.getIdentifierInfo());
+  UndefineMacro(MacroNameTok.getIdentifierInfo(), MI,
+                MacroNameTok.getLocation());
+}
+
+void Preprocessor::UndefineMacro(IdentifierInfo *II, MacroInfo *MI,
+                                 SourceLocation UndefLoc) {
+  MI->setUndefLoc(UndefLoc);
+  if (MI->isFromAST()) {
+    MI->setChangedAfterLoad();
+    if (Listener)
+      Listener->UndefinedMacro(MI);
+  }
+
+  clearMacroInfo(II);
 }
 
 

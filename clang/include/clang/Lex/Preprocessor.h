@@ -18,6 +18,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/PPCallbacks.h"
+#include "clang/Lex/PPMutationListener.h"
 #include "clang/Lex/TokenLexer.h"
 #include "clang/Lex/PTHManager.h"
 #include "clang/Basic/Builtins.h"
@@ -288,6 +289,11 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// encountered (e.g. a file is \#included, etc).
   PPCallbacks *Callbacks;
 
+  /// \brief Listener whose actions are invoked when an entity in the
+  /// preprocessor (e.g., a macro) that was loaded from an AST file is
+  /// later mutated.
+  PPMutationListener *Listener;
+
   struct MacroExpandsInfo {
     Token Tok;
     MacroInfo *MI;
@@ -479,6 +485,19 @@ public:
       C = new PPChainedCallbacks(C, Callbacks);
     Callbacks = C;
   }
+
+  /// \brief Attach an preprocessor mutation listener to the preprocessor.
+  ///
+  /// The preprocessor mutation listener provides the ability to track
+  /// modifications to the preprocessor entities committed after they were
+  /// initially created.
+  void setPPMutationListener(PPMutationListener *Listener) {
+    this->Listener = Listener;
+  }
+
+  /// \brief Retrieve a pointer to the preprocessor mutation listener
+  /// associated with this preprocessor, if any.
+  PPMutationListener *getPPMutationListener() const { return Listener; }
 
   /// \brief Given an identifier, return the MacroInfo it is \#defined to
   /// or null if it isn't \#define'd.
@@ -1339,6 +1358,8 @@ private:
   // Macro handling.
   void HandleDefineDirective(Token &Tok);
   void HandleUndefDirective(Token &Tok);
+  void UndefineMacro(IdentifierInfo *II, MacroInfo *MI,
+                     SourceLocation UndefLoc);
 
   // Conditional Inclusion.
   void HandleIfdefDirective(Token &Tok, bool isIfndef,

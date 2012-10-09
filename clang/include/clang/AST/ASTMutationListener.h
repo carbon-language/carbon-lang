@@ -13,6 +13,8 @@
 #ifndef LLVM_CLANG_AST_ASTMUTATIONLISTENER_H
 #define LLVM_CLANG_AST_ASTMUTATIONLISTENER_H
 
+#include "clang/Basic/SourceLocation.h"
+
 namespace clang {
   class Decl;
   class DeclContext;

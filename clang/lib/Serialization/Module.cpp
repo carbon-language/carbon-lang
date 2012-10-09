@@ -25,9 +25,11 @@ ModuleFile::ModuleFile(ModuleKind Kind, unsigned Generation)
     Generation(Generation), SizeInBits(0),
     LocalNumSLocEntries(0), SLocEntryBaseID(0),
     SLocEntryBaseOffset(0), SLocEntryOffsets(0),
-    SLocFileOffsets(0), LocalNumIdentifiers(0), 
+    SLocFileOffsets(0), LocalNumIdentifiers(0),
     IdentifierOffsets(0), BaseIdentifierID(0), IdentifierTableData(0),
-    IdentifierLookupTable(0), BasePreprocessedEntityID(0),
+    IdentifierLookupTable(0),
+    LocalNumMacros(0), MacroOffsets(0),
+    BasePreprocessedEntityID(0),
     PreprocessedEntityOffsets(0), NumPreprocessedEntities(0),
     LocalNumHeaderFileInfos(0), 
     HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
@@ -90,6 +92,10 @@ void ModuleFile::dump() {
   llvm::errs() << "  Base identifier ID: " << BaseIdentifierID << '\n'
                << "  Number of identifiers: " << LocalNumIdentifiers << '\n';
   dumpLocalRemap("Identifier ID local -> global map", IdentifierRemap);
+
+  llvm::errs() << "  Base macro ID: " << BaseMacroID << '\n'
+               << "  Number of macros: " << LocalNumMacros << '\n';
+  dumpLocalRemap("Macro ID local -> global map", MacroRemap);
 
   llvm::errs() << "  Base submodule ID: " << BaseSubmoduleID << '\n'
                << "  Number of submodules: " << LocalNumSubmodules << '\n';

@@ -10,5 +10,7 @@ int foo() {
   f();
   g();
   h();
+  h2(); // expected-warning{{implicit declaration of function 'h2' is invalid in C99}}
+  h3();
   return x;
 }

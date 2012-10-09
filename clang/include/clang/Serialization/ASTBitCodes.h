@@ -126,7 +126,13 @@ namespace clang {
 
     /// \brief The number of predefined identifier IDs.
     const unsigned int NUM_PREDEF_IDENT_IDS = 1;
+
+    /// \brief An ID number that refers to a macro in an AST file.
+    typedef uint32_t MacroID;
     
+    /// \brief The number of predefined macro IDs.
+    const unsigned int NUM_PREDEF_MACRO_IDS = 1;
+
     /// \brief An ID number that refers to an ObjC selector in an AST file.
     typedef uint32_t SelectorID;
 
@@ -472,7 +478,18 @@ namespace clang {
       ///
       /// This array can only be interpreted properly using the Objective-C
       /// categories map.
-      OBJC_CATEGORIES = 54
+      OBJC_CATEGORIES = 54,
+
+      /// \brief Record code for the table of offsets of each macro ID.
+      ///
+      /// The offset table contains offsets into the blob stored in
+      /// the preprocessor block. Each offset points to the corresponding
+      /// macro definition.
+      MACRO_OFFSET = 55,
+
+      /// \brief Record of updates for a macro that was modified after
+      /// being deserialized.
+      MACRO_UPDATES = 56
     };
 
     /// \brief Record types used within a source manager block.

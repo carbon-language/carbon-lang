@@ -24,6 +24,7 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/PPMutationListener.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
@@ -368,10 +369,32 @@ private:
   typedef ContinuousRangeMap<serialization::IdentID, ModuleFile *, 4>
     GlobalIdentifierMapType;
 
-  /// \brief Mapping from global identifer IDs to the module in which the
+  /// \brief Mapping from global identifier IDs to the module in which the
   /// identifier resides along with the offset that should be added to the
   /// global identifier ID to produce a local ID.
   GlobalIdentifierMapType GlobalIdentifierMap;
+
+  /// \brief A vector containing macros that have already been
+  /// loaded.
+  ///
+  /// If the pointer at index I is non-NULL, then it refers to the
+  /// MacroInfo for the identifier with ID=I+1 that has already
+  /// been loaded.
+  std::vector<MacroInfo *> MacrosLoaded;
+
+  typedef ContinuousRangeMap<serialization::MacroID, ModuleFile *, 4>
+    GlobalMacroMapType;
+
+  /// \brief Mapping from global macro IDs to the module in which the
+  /// macro resides along with the offset that should be added to the
+  /// global macro ID to produce a local ID.
+  GlobalMacroMapType GlobalMacroMap;
+
+  typedef llvm::DenseMap<serialization::MacroID, MacroUpdate> MacroUpdatesMap;
+
+  /// \brief Mapping from (global) macro IDs to the set of updates to be
+  /// performed to the corresponding macro.
+  MacroUpdatesMap MacroUpdates;
 
   /// \brief A vector containing submodules that have already been loaded.
   ///
@@ -441,9 +464,8 @@ private:
   llvm::DenseMap<Selector, unsigned> SelectorGeneration;
 
   /// \brief Mapping from identifiers that represent macros whose definitions
-  /// have not yet been deserialized to the global offset where the macro
-  /// record resides.
-  llvm::DenseMap<IdentifierInfo *, uint64_t> UnreadMacroRecordOffsets;
+  /// have not yet been deserialized to the global ID of the macro.
+  llvm::DenseMap<IdentifierInfo *, serialization::MacroID> UnreadMacroIDs;
 
   typedef ContinuousRangeMap<unsigned, ModuleFile *, 4>
     GlobalPreprocessedEntityMapType;
@@ -1065,6 +1087,11 @@ public:
     return static_cast<unsigned>(IdentifiersLoaded.size());
   }
 
+  /// \brief Returns the number of macros found in the chain.
+  unsigned getTotalNumMacros() const {
+    return static_cast<unsigned>(MacrosLoaded.size());
+  }
+
   /// \brief Returns the number of types found in the chain.
   unsigned getTotalNumTypes() const {
     return static_cast<unsigned>(TypesLoaded.size());
@@ -1366,6 +1393,13 @@ public:
   serialization::IdentifierID getGlobalIdentifierID(ModuleFile &M,
                                                     unsigned LocalID);
 
+  /// \brief Retrieve the macro with the given ID.
+  MacroInfo *getMacro(serialization::MacroID ID);
+
+  /// \brief Retrieve the global macro ID corresponding to the given local
+  /// ID within the given module file.
+  serialization::MacroID getGlobalMacroID(ModuleFile &M, unsigned LocalID);
+
   /// \brief Read the source location entry with index ID.
   virtual bool ReadSLocEntry(int ID);
 
@@ -1521,14 +1555,11 @@ public:
   ///
   /// \param II The name of the macro.
   ///
-  /// \param F The module file from which the macro definition was deserialized.
-  ///
-  /// \param Offset The offset into the module file at which the macro 
-  /// definition is located.
+  /// \param ID The global macro ID.
   ///
   /// \param Visible Whether the macro should be made visible.
-  void setIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
-                            uint64_t Offset, bool Visible);
+  void setIdentifierIsMacro(IdentifierInfo *II, serialization::MacroID ID,
+                            bool Visible);
 
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
@@ -1541,11 +1572,11 @@ public:
 
   /// \brief Note that this identifier is up-to-date.
   void markIdentifierUpToDate(IdentifierInfo *II);
-  
+
   /// \brief Read the macro definition corresponding to this iterator
   /// into the unread macro record offsets table.
   void LoadMacroDefinition(
-                     llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos);
+         llvm::DenseMap<IdentifierInfo *,serialization::MacroID>::iterator Pos);
 
   /// \brief Load all external visible decls in the given DeclContext.
   void completeVisibleDeclsMap(const DeclContext *DC);
