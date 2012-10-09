@@ -107,7 +107,8 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
                                         const ModuleSP &objc_module_sp) : 
     AppleObjCRuntime (process),
     m_get_class_name_args(LLDB_INVALID_ADDRESS),
-    m_get_class_name_args_mutex(Mutex::eMutexTypeNormal)
+    m_get_class_name_args_mutex(Mutex::eMutexTypeNormal),
+    m_process_wp (process->shared_from_this())
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
@@ -973,7 +974,12 @@ private:
 class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor
 {
 public:
-    ClassDescriptorV2 (ObjCLanguageRuntime &runtime, ValueObject &ptr_to_object) :
+    friend class lldb_private::AppleObjCRuntimeV2;
+    
+private:
+    // The constructor should only be invoked by the runtime as it builds its caches
+    // or populates them.  A ClassDescriptorV2 should only ever exist in a cache.
+    ClassDescriptorV2 (AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa) :
         m_runtime (runtime),
         m_valid (false),
         m_objc_class_ptr (0),
@@ -983,30 +989,10 @@ public:
         m_realized (eLazyBoolCalculate),
         m_process_wp ()
     {
-        lldb::addr_t object_ptr = ptr_to_object.GetValueAsUnsigned(0);
-        lldb::ProcessSP process_sp = ptr_to_object.GetProcessSP();
-        
-        Error error;
-        ObjCLanguageRuntime::ObjCISA isa = process_sp->ReadPointerFromMemory(object_ptr,
-                                                                             error);
-        
-        if (isa != LLDB_INVALID_ADDRESS)
-            Initialize (isa, process_sp);
+        Initialize (isa, m_runtime.GetProcessSP());
     }
     
-    ClassDescriptorV2 (ObjCLanguageRuntime &runtime, ObjCLanguageRuntime::ObjCISA isa, lldb::ProcessSP process_sp) :
-        m_runtime (runtime),
-        m_valid (false),
-        m_objc_class_ptr (0),
-        m_objc_class (),
-        m_name (),
-        m_instance_size (0),
-        m_realized (eLazyBoolCalculate),
-        m_process_wp ()
-    {
-        Initialize (isa, process_sp);
-    }
-    
+public:
     virtual ConstString
     GetClassName ()
     {
@@ -1062,7 +1048,7 @@ public:
         if (!m_valid)
             return ObjCLanguageRuntime::ClassDescriptorSP();
         
-        return m_runtime.GetClassDescriptor(m_objc_class.m_superclass);
+        return m_runtime.ObjCLanguageRuntime::GetClassDescriptor(m_objc_class.m_superclass);
     }
     
     virtual bool
@@ -1178,7 +1164,7 @@ public:
         
         if (class_method_func)
         {
-            ObjCLanguageRuntime::ClassDescriptorSP metaclass = m_runtime.GetClassDescriptor(m_objc_class.m_isa);
+            ObjCLanguageRuntime::ClassDescriptorSP metaclass = m_runtime.ObjCLanguageRuntime::GetClassDescriptor(m_objc_class.m_isa);
             
             // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
             // our class methods.
@@ -1590,7 +1576,7 @@ private:
         }
     };
 
-    ObjCLanguageRuntime &m_runtime;         // The runtime, so we can read our metaclass.
+    AppleObjCRuntimeV2 &m_runtime;          // The runtime, so we can read our metaclass.
     bool                m_valid;            // Gates whether we trust anything here at all.
     lldb::addr_t        m_objc_class_ptr;   // The address of the objc_class_t.
     objc_class_t        m_objc_class;
@@ -1800,7 +1786,7 @@ AppleObjCRuntimeV2::CreateClassDescriptor (ObjCISA isa)
 {
     ClassDescriptorSP objc_class_sp;
     if (isa != 0)
-        objc_class_sp.reset (new ClassDescriptorV2(*this, isa, m_process->CalculateProcess()));
+        objc_class_sp.reset (new ClassDescriptorV2(*this, isa));
     return objc_class_sp;
 }
 
@@ -1904,7 +1890,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
             if (m_isa_to_descriptor_cache.count(elt.second))
                 continue;
             
-            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second, process_sp));
+            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second));
             
             if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
@@ -1950,7 +1936,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
             if (m_isa_to_descriptor_cache.count(objc_isa))
                 continue;
             
-            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa, process_sp));
+            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
             
             if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());

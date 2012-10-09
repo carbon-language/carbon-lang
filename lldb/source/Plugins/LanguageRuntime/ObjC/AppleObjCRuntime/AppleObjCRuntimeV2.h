@@ -110,6 +110,12 @@ public:
     virtual TypeVendor *
     GetTypeVendor();
     
+    lldb::ProcessSP
+    GetProcessSP ()
+    {
+        return m_process_wp.lock();
+    }
+    
 protected:
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
@@ -131,6 +137,7 @@ private:
     Mutex                               m_get_class_name_args_mutex;
     
     std::auto_ptr<TypeVendor>           m_type_vendor_ap;
+    lldb::ProcessWP                     m_process_wp; // used by class descriptors to lazily fill their own data
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;
