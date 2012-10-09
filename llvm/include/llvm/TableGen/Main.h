@@ -18,10 +18,10 @@ namespace llvm {
 
 class RecordKeeper;
 class raw_ostream;
+/// \brief Perform the action using Records, and write output to OS.
+/// \returns true on error, false otherwise
 typedef bool TableGenMainFn(raw_ostream &OS, RecordKeeper &Records);
 
-/// Perform the action using Records, and write output to OS.
-/// \returns true on error, false otherwise
 int TableGenMain(char *argv0, TableGenMainFn *MainFn);
 
 }
