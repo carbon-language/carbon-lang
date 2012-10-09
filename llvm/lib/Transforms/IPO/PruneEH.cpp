@@ -137,16 +137,16 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
   // If the SCC doesn't unwind or doesn't throw, note this fact.
   if (!SCCMightUnwind || !SCCMightReturn)
     for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-      Attributes NewAttributes = Attribute::None;
+      Attributes::Builder NewAttributes;
 
       if (!SCCMightUnwind)
-        NewAttributes |= Attribute::NoUnwind;
+        NewAttributes.addNoUnwindAttr();
       if (!SCCMightReturn)
-        NewAttributes |= Attribute::NoReturn;
+        NewAttributes.addNoReturnAttr();
 
       Function *F = (*I)->getFunction();
       const AttrListPtr &PAL = F->getAttributes();
-      const AttrListPtr &NPAL = PAL.addAttr(~0, NewAttributes);
+      const AttrListPtr &NPAL = PAL.addAttr(~0, Attributes::get(NewAttributes));
       if (PAL != NPAL) {
         MadeChange = true;
         F->setAttributes(NPAL);
