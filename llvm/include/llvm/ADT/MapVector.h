@@ -78,6 +78,11 @@ public:
     }
     return Vector[I].second;
   }
+
+  unsigned count(const KeyT &Key) const {
+    typename MapType::const_iterator Pos = Map.find(Key);
+    return Pos == Map.end()? 0 : 1;
+  }
 };
 
 }
