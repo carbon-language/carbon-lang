@@ -22,6 +22,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -47,8 +48,8 @@ enum AlignTypeEnum {
 
 /// Layout alignment element.
 ///
-/// Stores the alignment data associated with a given alignment type (pointer,
-/// integer, vector, float) and type bit width.
+/// Stores the alignment data associated with a given alignment type (integer,
+/// vector, float) and type bit width.
 ///
 /// @note The unusual order of elements in the structure attempts to reduce
 /// padding and make the structure slightly more cache friendly.
@@ -65,6 +66,26 @@ struct LayoutAlignElem {
   bool operator==(const LayoutAlignElem &rhs) const;
 };
 
+/// Layout pointer alignment element.
+///
+/// Stores the alignment data associated with a given pointer and address space.
+///
+/// @note The unusual order of elements in the structure attempts to reduce
+/// padding and make the structure slightly more cache friendly.
+struct PointerAlignElem {
+  unsigned            ABIAlign;       ///< ABI alignment for this type/bitw
+  unsigned            PrefAlign;      ///< Pref. alignment for this type/bitw
+  uint32_t            TypeBitWidth;   ///< Type bit width
+  uint32_t            AddressSpace;   ///< Address space for the pointer type
+
+  /// Initializer
+  static PointerAlignElem get(uint32_t addr_space, unsigned abi_align,
+                             unsigned pref_align, uint32_t bit_width);
+  /// Equality predicate
+  bool operator==(const PointerAlignElem &rhs) const;
+};
+
+
 /// DataLayout - This class holds a parsed version of the target data layout
 /// string in a module and provides methods for querying it.  The target data
 /// layout string is specified *by the target* - a frontend generating LLVM IR
@@ -74,9 +95,6 @@ struct LayoutAlignElem {
 class DataLayout : public ImmutablePass {
 private:
   bool          LittleEndian;          ///< Defaults to false
-  unsigned      PointerMemSize;        ///< Pointer size in bytes
-  unsigned      PointerABIAlign;       ///< Pointer ABI alignment
-  unsigned      PointerPrefAlign;      ///< Pointer preferred alignment
   unsigned      StackNaturalAlign;     ///< Stack natural alignment
 
   SmallVector<unsigned char, 8> LegalIntWidths; ///< Legal Integers.
@@ -88,10 +106,15 @@ private:
   /// pointers vs. 64-bit pointers by extending LayoutAlignment, but for now,
   /// we don't.
   SmallVector<LayoutAlignElem, 16> Alignments;
+  DenseMap<unsigned, PointerAlignElem> Pointers;
 
   /// InvalidAlignmentElem - This member is a signal that a requested alignment
   /// type and bit width were not found in the SmallVector.
   static const LayoutAlignElem InvalidAlignmentElem;
+
+  /// InvalidPointerElem - This member is a signal that a requested pointer
+  /// type and bit width were not found in the DenseSet.
+  static const PointerAlignElem InvalidPointerElem;
 
   // The StructType -> StructLayout map.
   mutable void *LayoutMap;
@@ -101,6 +124,11 @@ private:
                     unsigned pref_align, uint32_t bit_width);
   unsigned getAlignmentInfo(AlignTypeEnum align_type, uint32_t bit_width,
                             bool ABIAlign, Type *Ty) const;
+
+  //! Set/initialize pointer alignments
+  void setPointerAlignment(uint32_t addr_space, unsigned abi_align,
+      unsigned pref_align, uint32_t bit_width);
+
   //! Internal helper method that returns requested alignment for type.
   unsigned getAlignment(Type *Ty, bool abi_or_pref) const;
 
@@ -110,6 +138,14 @@ private:
   /// InvalidAlignmentElem.
   bool validAlignment(const LayoutAlignElem &align) const {
     return &align != &InvalidAlignmentElem;
+  }
+
+  /// Valid pointer predicate.
+  ///
+  /// Predicate that tests a PointerAlignElem reference returned by get() against
+  /// InvalidPointerElem.
+  bool validPointer(const PointerAlignElem &align) const {
+    return &align != &InvalidPointerElem;
   }
 
   /// Initialise a DataLayout object with default values, ensure that the
@@ -143,11 +179,9 @@ public:
   DataLayout(const DataLayout &TD) :
     ImmutablePass(ID),
     LittleEndian(TD.isLittleEndian()),
-    PointerMemSize(TD.PointerMemSize),
-    PointerABIAlign(TD.PointerABIAlign),
-    PointerPrefAlign(TD.PointerPrefAlign),
     LegalIntWidths(TD.LegalIntWidths),
     Alignments(TD.Alignments),
+    Pointers(TD.Pointers),
     LayoutMap(0)
   { }
 
@@ -197,14 +231,45 @@ public:
   }
 
   /// Layout pointer alignment
-  unsigned getPointerABIAlignment() const { return PointerABIAlign; }
-  /// Return layout's alignment for stack-based pointers
-  unsigned getPointerPrefAlignment() const { return PointerPrefAlign; }
+  /// FIXME: The defaults need to be removed once all of
+  /// the backends/clients are updated.
+  unsigned getPointerABIAlignment(unsigned AS = 0)  const {
+    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+    if (val == Pointers.end()) {
+      val = Pointers.find(0);
+    }
+    return val->second.ABIAlign;
+  }
+  /// Return target's alignment for stack-based pointers
+  /// FIXME: The defaults need to be removed once all of
+  /// the backends/clients are updated.
+  unsigned getPointerPrefAlignment(unsigned AS = 0) const {
+    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+    if (val == Pointers.end()) {
+      val = Pointers.find(0);
+    }
+    return val->second.PrefAlign;
+  }
   /// Layout pointer size
-  unsigned getPointerSize()         const { return PointerMemSize; }
+  /// FIXME: The defaults need to be removed once all of
+  /// the backends/clients are updated.
+  unsigned getPointerSize(unsigned AS = 0)          const {
+    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+    if (val == Pointers.end()) {
+      val = Pointers.find(0);
+    }
+    return val->second.TypeBitWidth;
+  }
   /// Layout pointer size, in bits
-  unsigned getPointerSizeInBits()   const { return 8*PointerMemSize; }
-
+  /// FIXME: The defaults need to be removed once all of
+  /// the backends/clients are updated.
+  unsigned getPointerSizeInBits(unsigned AS = 0)    const {
+    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+    if (val == Pointers.end()) {
+      val = Pointers.find(0);
+    }
+    return 8*val->second.TypeBitWidth;
+  }
   /// Size examples:
   ///
   /// Type        SizeInBits  StoreSizeInBits  AllocSizeInBits[*]
@@ -282,8 +347,9 @@ public:
 
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
-  ///
-  IntegerType *getIntPtrType(LLVMContext &C) const;
+  /// FIXME: Need to remove the default argument when the rest of the LLVM code
+  /// base has been updated.
+  IntegerType *getIntPtrType(LLVMContext &C, unsigned AddressSpace = 0) const;
 
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.

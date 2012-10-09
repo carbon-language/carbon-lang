@@ -118,7 +118,35 @@ LayoutAlignElem::operator==(const LayoutAlignElem &rhs) const {
 }
 
 const LayoutAlignElem
-DataLayout::InvalidAlignmentElem = { (AlignTypeEnum)0xFF, 0, 0, 0 };
+DataLayout::InvalidAlignmentElem =
+            LayoutAlignElem::get((AlignTypeEnum) -1, 0, 0, 0);
+
+//===----------------------------------------------------------------------===//
+// PointerAlignElem, PointerAlign support
+//===----------------------------------------------------------------------===//
+
+PointerAlignElem
+PointerAlignElem::get(uint32_t addr_space, unsigned abi_align,
+                     unsigned pref_align, uint32_t bit_width) {
+  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
+  PointerAlignElem retval;
+  retval.AddressSpace = addr_space;
+  retval.ABIAlign = abi_align;
+  retval.PrefAlign = pref_align;
+  retval.TypeBitWidth = bit_width;
+  return retval;
+}
+
+bool
+PointerAlignElem::operator==(const PointerAlignElem &rhs) const {
+  return (ABIAlign == rhs.ABIAlign
+          && AddressSpace == rhs.AddressSpace
+          && PrefAlign == rhs.PrefAlign
+          && TypeBitWidth == rhs.TypeBitWidth);
+}
+
+const PointerAlignElem
+DataLayout::InvalidPointerElem = PointerAlignElem::get(~0U, 0U, 0U, 0U);
 
 //===----------------------------------------------------------------------===//
 //                       DataLayout Class Implementation
@@ -136,9 +164,6 @@ void DataLayout::init() {
 
   LayoutMap = 0;
   LittleEndian = false;
-  PointerMemSize = 8;
-  PointerABIAlign = 8;
-  PointerPrefAlign = PointerABIAlign;
   StackNaturalAlign = 0;
 
   // Default alignments
@@ -154,6 +179,7 @@ void DataLayout::init() {
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32, v1i64, ...
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
+  setPointerAlignment(0, 8, 8, 8);
 }
 
 std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
@@ -185,13 +211,16 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
         td->LittleEndian = true;
       break;
     case 'p': {
-      // Pointer size.
+      int AddrSpace = 0;
+      if (Specifier.size() > 1) {
+        AddrSpace = getInt(Specifier.substr(1));
+        if (AddrSpace < 0 || AddrSpace > (1 << 24))
+          return "Invalid address space, must be a positive 24bit integer";
+      }
       Split = Token.split(':');
       int PointerMemSizeBits = getInt(Split.first);
       if (PointerMemSizeBits < 0 || PointerMemSizeBits % 8 != 0)
         return "invalid pointer size, must be a positive 8-bit multiple";
-      if (td)
-        td->PointerMemSize = PointerMemSizeBits / 8;
 
       // Pointer ABI alignment.
       Split = Split.second.split(':');
@@ -200,8 +229,6 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
         return "invalid pointer ABI alignment, "
                "must be a positive 8-bit multiple";
       }
-      if (td)
-        td->PointerABIAlign = PointerABIAlignBits / 8;
 
       // Pointer preferred alignment.
       Split = Split.second.split(':');
@@ -210,11 +237,12 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
         return "invalid pointer preferred alignment, "
                "must be a positive 8-bit multiple";
       }
-      if (td) {
-        td->PointerPrefAlign = PointerPrefAlignBits / 8;
-        if (td->PointerPrefAlign == 0)
-          td->PointerPrefAlign = td->PointerABIAlign;
-      }
+
+      if (PointerPrefAlignBits == 0)
+        PointerPrefAlignBits = PointerABIAlignBits;
+      if (td)
+        td->setPointerAlignment(AddrSpace, PointerABIAlignBits/8,
+            PointerPrefAlignBits/8, PointerMemSizeBits/8);
       break;
     }
     case 'i':
@@ -330,6 +358,21 @@ DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                                             pref_align, bit_width));
 }
 
+void
+DataLayout::setPointerAlignment(uint32_t addr_space, unsigned abi_align,
+                         unsigned pref_align, uint32_t bit_width) {
+  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
+  DenseMap<unsigned,PointerAlignElem>::iterator val = Pointers.find(addr_space);
+  if (val == Pointers.end()) {
+    Pointers[addr_space] = PointerAlignElem::get(addr_space,
+          abi_align, pref_align, bit_width);
+  } else {
+    val->second.ABIAlign = abi_align;
+    val->second.PrefAlign = pref_align;
+    val->second.TypeBitWidth = bit_width;
+  }
+}
+
 /// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or
 /// preferred if ABIInfo = false) the layout wants for the specified datatype.
 unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
@@ -443,10 +486,28 @@ std::string DataLayout::getStringRepresentation() const {
   std::string Result;
   raw_string_ostream OS(Result);
 
-  OS << (LittleEndian ? "e" : "E")
-     << "-p:" << PointerMemSize*8 << ':' << PointerABIAlign*8
-     << ':' << PointerPrefAlign*8
-     << "-S" << StackNaturalAlign*8;
+  OS << (LittleEndian ? "e" : "E");
+  SmallVector<unsigned, 8> addrSpaces;
+  // Lets get all of the known address spaces and sort them
+  // into increasing order so that we can emit the string
+  // in a cleaner format.
+  for (DenseMap<unsigned, PointerAlignElem>::const_iterator
+      pib = Pointers.begin(), pie = Pointers.end();
+      pib != pie; ++pib) {
+    addrSpaces.push_back(pib->first);
+  }
+  std::sort(addrSpaces.begin(), addrSpaces.end());
+  for (SmallVector<unsigned, 8>::iterator asb = addrSpaces.begin(),
+      ase = addrSpaces.end(); asb != ase; ++asb) {
+    const PointerAlignElem &PI = Pointers.find(*asb)->second;
+    OS << "-p";
+    if (PI.AddressSpace) {
+      OS << PI.AddressSpace;
+    }
+     OS << ":" << PI.TypeBitWidth*8 << ':' << PI.ABIAlign*8
+        << ':' << PI.PrefAlign*8;
+  }
+  OS << "-S" << StackNaturalAlign*8;
 
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     const LayoutAlignElem &AI = Alignments[i];
@@ -468,8 +529,11 @@ uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
   case Type::LabelTyID:
-  case Type::PointerTyID:
-    return getPointerSizeInBits();
+    return getPointerSizeInBits(0);
+  case Type::PointerTyID: {
+    unsigned AS = dyn_cast<PointerType>(Ty)->getAddressSpace();
+    return getPointerSizeInBits(AS);
+    }
   case Type::ArrayTyID: {
     ArrayType *ATy = cast<ArrayType>(Ty);
     return getTypeAllocSizeInBits(ATy->getElementType())*ATy->getNumElements();
@@ -517,10 +581,15 @@ unsigned DataLayout::getAlignment(Type *Ty, bool abi_or_pref) const {
   switch (Ty->getTypeID()) {
   // Early escape for the non-numeric types.
   case Type::LabelTyID:
-  case Type::PointerTyID:
     return (abi_or_pref
-            ? getPointerABIAlignment()
-            : getPointerPrefAlignment());
+            ? getPointerABIAlignment(0)
+            : getPointerPrefAlignment(0));
+  case Type::PointerTyID: {
+    unsigned AS = dyn_cast<PointerType>(Ty)->getAddressSpace();
+    return (abi_or_pref
+            ? getPointerABIAlignment(AS)
+            : getPointerPrefAlignment(AS));
+    }
   case Type::ArrayTyID:
     return getAlignment(cast<ArrayType>(Ty)->getElementType(), abi_or_pref);
 
@@ -591,8 +660,9 @@ unsigned DataLayout::getPreferredTypeAlignmentShift(Type *Ty) const {
 
 /// getIntPtrType - Return an unsigned integer type that is the same size or
 /// greater to the host pointer size.
-IntegerType *DataLayout::getIntPtrType(LLVMContext &C) const {
-  return IntegerType::get(C, getPointerSizeInBits());
+IntegerType *DataLayout::getIntPtrType(LLVMContext &C,
+                                       unsigned AddressSpace) const {
+  return IntegerType::get(C, getPointerSizeInBits(AddressSpace));
 }
 
 

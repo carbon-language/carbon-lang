@@ -143,7 +143,10 @@ public:
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
-  MVT getPointerTy() const { return PointerTy; }
+  // Return the pointer type for the given address space, defaults to
+  // the pointer type from the data layout.
+  // FIXME: The default needs to be removed once all the code is updated.
+  virtual MVT getPointerTy(uint32_t addrspace = 0) const { return PointerTy; }
   virtual MVT getShiftAmountTy(EVT LHSTy) const;
 
   /// isSelectExpensive - Return true if the select operation is expensive for
@@ -1777,7 +1780,8 @@ private:
   const DataLayout *TD;
   const TargetLoweringObjectFile &TLOF;
 
-  /// PointerTy - The type to use for pointers, usually i32 or i64.
+  /// PointerTy - The type to use for pointers for the default address space,
+  /// usually i32 or i64.
   ///
   MVT PointerTy;
 
