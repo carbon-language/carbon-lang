@@ -53,7 +53,6 @@ struct AttrConst {
 /// declarations. This is done to avoid static CTORs and at the same time to
 /// keep type-safety of Attributes.
 #define DECLARE_LLVM_ATTRIBUTE(name, value) \
-  const uint64_t name##_i = value; \
   const AttrConst name = {value};
 
 DECLARE_LLVM_ATTRIBUTE(None,0)    ///< No attributes have been set
