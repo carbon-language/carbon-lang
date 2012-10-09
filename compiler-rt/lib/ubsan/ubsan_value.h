@@ -65,9 +65,6 @@ public:
 
 /// \brief A description of a type.
 class TypeDescriptor {
-  /// The name of the type, in a format suitable for including in diagnostics.
-  const char *TypeName;
-
   /// A value from the \c Kind enumeration, specifying what flavor of type we
   /// have.
   u16 TypeKind;
@@ -75,6 +72,10 @@ class TypeDescriptor {
   /// A \c Type-specific value providing information which allows us to
   /// interpret the meaning of a ValueHandle of this type.
   u16 TypeInfo;
+
+  /// The name of the type follows, in a format suitable for including in
+  /// diagnostics.
+  char TypeName[1];
 
 public:
   enum Kind {
