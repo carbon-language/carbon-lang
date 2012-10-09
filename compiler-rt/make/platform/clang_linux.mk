@@ -18,42 +18,55 @@ $(error "unable to infer compiler target triple for $(CC)")
 endif
 endif
 
-CompilerTargetArch := $(firstword $(subst -, ,$(CompilerTargetTriple)))
-
 # Only define configs if we detected a linux target.
 ifneq ($(findstring -linux-,$(CompilerTargetTriple)),)
 
-# Configurations which just include all the runtime functions.
+# Define configs only if arch in triple is i386 or x86_64
+CompilerTargetArch := $(firstword $(subst -, ,$(CompilerTargetTriple)))
 ifeq ($(call contains,i386 x86_64,$(CompilerTargetArch)),true)
-Configs += full-i386 full-x86_64
-Arch.full-i386 := i386
-Arch.full-x86_64 := x86_64
-endif
 
-# Configuration for profile runtime.
-ifeq ($(call contains,i386 x86_64,$(CompilerTargetArch)),true)
-Configs += profile-i386 profile-x86_64
-Arch.profile-i386 := i386
-Arch.profile-x86_64 := x86_64
-endif
+# TryCompile compiler source flags
+# Returns exit code of running a compiler invocation.
+TryCompile = \
+  $(shell \
+    cflags=""; \
+    for flag in $(3); do \
+      cflags="$$cflags $$flag"; \
+    done; \
+    $(1) $$cflags $(2) -o /dev/null > /dev/null 2> /dev/null ; \
+    echo $$?)
 
-# Configuration for ASAN runtime.
+test_source = $(ProjSrcRoot)/make/platform/clang_linux_test_input.c
 ifeq ($(CompilerTargetArch),i386)
-Configs += asan-i386
-Arch.asan-i386 := i386
-endif
-ifeq ($(CompilerTargetArch),x86_64)
-Configs += asan-i386 asan-x86_64
-Arch.asan-i386 := i386
-Arch.asan-x86_64 := x86_64
+  SupportedArches := i386
+  ifeq ($(call TryCompile,$(CC),$(test_source),-m64),0)
+    SupportedArches += x86_64
+  endif
+else
+  SupportedArches := x86_64
+  ifeq ($(call TryCompile,$(CC),$(test_source),-m32),0)
+    SupportedArches += i386
+  endif
 endif
 
-# Configuration for TSAN runtime.
-ifeq ($(CompilerTargetArch),x86_64)
-Configs += tsan-x86_64
+# Build runtime libraries for i386.
+ifeq ($(call contains,$(SupportedArches),i386),true)
+Configs += full-i386 profile-i386 asan-i386
+Arch.full-i386 := i386
+Arch.profile-i386 := i386
+Arch.asan-i386 := i386
+endif
+
+# Build runtime libraries for x86_64.
+ifeq ($(call contains,$(SupportedArches),x86_64),true)
+Configs += full-x86_64 profile-x86_64 asan-x86_64 tsan-x86_64
+Arch.full-x86_64 := x86_64
+Arch.profile-x86_64 := x86_64
+Arch.asan-x86_64 := x86_64
 Arch.tsan-x86_64 := x86_64
 endif
 
+endif
 endif
 
 ###
