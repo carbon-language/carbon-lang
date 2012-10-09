@@ -206,11 +206,6 @@ public:
     return AttributeList.getParamAttributes(Idx);
   }
 
-  /// @brief Determine whether the function has the given attribute.
-  bool paramHasAttr(unsigned i, Attributes attr) const {
-    return AttributeList.paramHasAttr(i, attr);
-  }
-
   /// addAttribute - adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attributes attr);
   

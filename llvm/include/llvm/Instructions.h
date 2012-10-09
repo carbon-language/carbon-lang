@@ -1276,11 +1276,6 @@ public:
   bool fnHasReadOnlyAttr() const;
   bool fnHasReturnsTwiceAttr() const;
 
-  /// \brief Return true if this call has the given attribute.
-  bool hasFnAttr(Attributes N) const {
-    return paramHasAttr(~0, N);
-  }
-
   /// @brief Determine whether the call or the callee has the given attributes.
   bool paramHasByValAttr(unsigned i) const;
   bool paramHasInRegAttr(unsigned i) const;
@@ -1290,9 +1285,6 @@ public:
   bool paramHasSExtAttr(unsigned i) const;
   bool paramHasStructRetAttr(unsigned i) const;
   bool paramHasZExtAttr(unsigned i) const;
-
-  /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(unsigned i, Attributes attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
@@ -3060,11 +3052,6 @@ public:
   bool fnHasReadOnlyAttr() const;
   bool fnHasReturnsTwiceAttr() const;
 
-  /// \brief Return true if this call has the given attribute.
-  bool hasFnAttr(Attributes N) const {
-    return paramHasAttr(~0, N);
-  }
-
   /// @brief Determine whether the call or the callee has the given attributes.
   bool paramHasSExtAttr(unsigned i) const;
   bool paramHasZExtAttr(unsigned i) const;
@@ -3074,9 +3061,6 @@ public:
   bool paramHasByValAttr(unsigned i) const;
   bool paramHasNoAliasAttr(unsigned i) const;
   bool paramHasNoCaptureAttr(unsigned i) const;
-
-  /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(unsigned i, Attributes attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {

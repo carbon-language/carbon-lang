@@ -456,14 +456,6 @@ bool CallInst::paramHasNoCaptureAttr(unsigned i) const {
   return false;
 }
 
-bool CallInst::paramHasAttr(unsigned i, Attributes attr) const {
-  if (AttributeList.paramHasAttr(i, attr))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->paramHasAttr(i, attr);
-  return false;
-}
-
 /// IsConstantOne - Return true only if val is constant int 1
 static bool IsConstantOne(Value *val) {
   assert(val && "IsConstantOne does not work with NULL val");
@@ -787,14 +779,6 @@ bool InvokeInst::paramHasNoCaptureAttr(unsigned i) const {
     return true;
   if (const Function *F = getCalledFunction())
     return F->getParamAttributes(i).hasNoCaptureAttr();
-  return false;
-}
-
-bool InvokeInst::paramHasAttr(unsigned i, Attributes attr) const {
-  if (AttributeList.paramHasAttr(i, attr))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->paramHasAttr(i, attr);
   return false;
 }
 
