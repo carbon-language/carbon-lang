@@ -1268,13 +1268,7 @@ public:
   void removeAttribute(unsigned i, Attributes attr);
 
   /// @brief Determine whether this call has the given attribute.
-  bool fnHasNoAliasAttr() const;
-  bool fnHasNoInlineAttr() const;
-  bool fnHasNoReturnAttr() const;
-  bool fnHasNoUnwindAttr() const;
-  bool fnHasReadNoneAttr() const;
-  bool fnHasReadOnlyAttr() const;
-  bool fnHasReturnsTwiceAttr() const;
+  bool hasFnAttr(Attributes::AttrVal A) const;
 
   /// @brief Determine whether the call or the callee has the given attributes.
   bool paramHasAttr(unsigned i, Attributes::AttrVal A) const;
@@ -1285,7 +1279,7 @@ public:
   }
 
   /// @brief Return true if the call should not be inlined.
-  bool isNoInline() const { return fnHasNoInlineAttr(); }
+  bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
   void setIsNoInline(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::NoInline);
     else removeAttribute(~0, Attribute::NoInline);
@@ -1293,7 +1287,7 @@ public:
 
   /// @brief Return true if the call can return twice
   bool canReturnTwice() const {
-    return fnHasReturnsTwiceAttr();
+    return hasFnAttr(Attributes::ReturnsTwice);
   }
   void setCanReturnTwice(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::ReturnsTwice);
@@ -1302,7 +1296,7 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return fnHasReadNoneAttr();
+    return hasFnAttr(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
     if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
@@ -1311,7 +1305,7 @@ public:
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || fnHasReadOnlyAttr();
+    return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
     if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
@@ -1319,14 +1313,14 @@ public:
   }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const { return fnHasNoReturnAttr(); }
+  bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
     else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const { return fnHasNoUnwindAttr(); }
+  bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
     else removeAttribute(~0, Attribute::NoUnwind);
@@ -3037,13 +3031,7 @@ public:
   void removeAttribute(unsigned i, Attributes attr);
 
   /// @brief Determine whether this call has the NoAlias attribute.
-  bool fnHasNoAliasAttr() const;
-  bool fnHasNoInlineAttr() const;
-  bool fnHasNoReturnAttr() const;
-  bool fnHasNoUnwindAttr() const;
-  bool fnHasReadNoneAttr() const;
-  bool fnHasReadOnlyAttr() const;
-  bool fnHasReturnsTwiceAttr() const;
+  bool hasFnAttr(Attributes::AttrVal A) const;
 
   /// @brief Determine whether the call or the callee has the given attributes.
   bool paramHasAttr(unsigned i, Attributes::AttrVal A) const;
@@ -3054,7 +3042,7 @@ public:
   }
 
   /// @brief Return true if the call should not be inlined.
-  bool isNoInline() const { return fnHasNoInlineAttr(); }
+  bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
   void setIsNoInline(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::NoInline);
     else removeAttribute(~0, Attribute::NoInline);
@@ -3062,7 +3050,7 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return fnHasReadNoneAttr();
+    return hasFnAttr(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
     if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
@@ -3071,7 +3059,7 @@ public:
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || fnHasReadOnlyAttr();
+    return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
     if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
@@ -3079,14 +3067,14 @@ public:
   }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const { return fnHasNoReturnAttr(); }
+  bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
     else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const { return fnHasNoUnwindAttr(); }
+  bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
     else removeAttribute(~0, Attribute::NoUnwind);

@@ -342,54 +342,11 @@ void CallInst::removeAttribute(unsigned i, Attributes attr) {
   setAttributes(PAL);
 }
 
-bool CallInst::fnHasNoAliasAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoAlias))
+bool CallInst::hasFnAttr(Attributes::AttrVal A) const {
+  if (AttributeList.getParamAttributes(~0U).hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoAlias);
-  return false;
-}
-bool CallInst::fnHasNoInlineAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoInline))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoInline);
-  return false;
-}
-bool CallInst::fnHasNoReturnAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoReturn))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoReturn);
-  return false;
-}
-bool CallInst::fnHasNoUnwindAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoUnwind))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoUnwind);
-  return false;
-}
-bool CallInst::fnHasReadNoneAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::ReadNone))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::ReadNone);
-  return false;
-}
-bool CallInst::fnHasReadOnlyAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::ReadOnly))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::ReadOnly);
-  return false;
-}
-bool CallInst::fnHasReturnsTwiceAttr() const {
-  if (AttributeList.getParamAttributes(~0U).
-        hasAttribute(Attributes::ReturnsTwice))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::ReturnsTwice);
+    return F->getParamAttributes(~0U).hasAttribute(A);
   return false;
 }
 
@@ -613,54 +570,11 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
 }
 
-bool InvokeInst::fnHasNoAliasAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoAlias))
+bool InvokeInst::hasFnAttr(Attributes::AttrVal A) const {
+  if (AttributeList.getParamAttributes(~0U).hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoAlias);
-  return false;
-}
-bool InvokeInst::fnHasNoInlineAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoInline))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoInline);
-  return false;
-}
-bool InvokeInst::fnHasNoReturnAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoReturn))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoReturn);
-  return false;
-}
-bool InvokeInst::fnHasNoUnwindAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::NoUnwind))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::NoUnwind);
-  return false;
-}
-bool InvokeInst::fnHasReadNoneAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::ReadNone))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::ReadNone);
-  return false;
-}
-bool InvokeInst::fnHasReadOnlyAttr() const {
-  if (AttributeList.getParamAttributes(~0U).hasAttribute(Attributes::ReadOnly))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::ReadOnly);
-  return false;
-}
-bool InvokeInst::fnHasReturnsTwiceAttr() const {
-  if (AttributeList.getParamAttributes(~0U).
-        hasAttribute(Attributes::ReturnsTwice))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(~0U).hasAttribute(Attributes::ReturnsTwice);
+    return F->getParamAttributes(~0U).hasAttribute(A);
   return false;
 }
 

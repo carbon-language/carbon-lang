@@ -185,29 +185,8 @@ public:
   }
 
   /// \brief Return true if this function has the given attribute.
-  bool fnHasNoAliasAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasNoAliasAttr());
-  }
-  bool fnHasNoInlineAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasNoInlineAttr());
-  }
-  bool fnHasNoReturnAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasNoReturnAttr());
-  }
-  bool fnHasNoUnwindAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasNoUnwindAttr());
-  }
-  bool fnHasReadNoneAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasReadNoneAttr());
-  }
-  bool fnHasReadOnlyAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasReadOnlyAttr());
-  }
-  bool fnHasReturnsTwiceAttr() const {
-    CALLSITE_DELEGATE_GETTER(fnHasReturnsTwiceAttr());
-  }
-  bool hasFnAttr(Attributes N) const {
-    CALLSITE_DELEGATE_GETTER(hasFnAttr(N));
+  bool hasFnAttr(Attributes::AttrVal A) const {
+    CALLSITE_DELEGATE_GETTER(hasFnAttr(A));
   }
 
   /// \brief Return true if the call or the callee has the given attribute.
