@@ -65,7 +65,7 @@ typedef double T2;
 int func0(int);
 int func1(int);
 int func1(int);
-int func1(int);
+int func1(int x) { return x; }
 int func1(int);
 static int func2(int);
 

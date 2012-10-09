@@ -174,8 +174,7 @@ private:
   SourceLocation DeclEndLoc; // the location of the ';' or '{'.
 
   // The following are only used for method definitions, null otherwise.
-  // FIXME: space savings opportunity, consider a sub-class.
-  Stmt *Body;
+  LazyDeclStmtPtr Body;
 
   /// SelfDecl - Decl for the implicit self parameter. This is lazily
   /// constructed by createImplicitParams.
@@ -242,7 +241,7 @@ private:
     SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0),
     MethodDeclType(T), ResultTInfo(ResultTInfo),
     ParamsAndSelLocs(0), NumParams(0),
-    DeclEndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {
+    DeclEndLoc(endLoc), Body(), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -427,10 +426,15 @@ public:
     return ImplementationControl(DeclImplementation);
   }
 
-  virtual Stmt *getBody() const {
-    return (Stmt*) Body;
-  }
-  CompoundStmt *getCompoundBody() { return (CompoundStmt*)Body; }
+  /// \brief Determine whether this method has a body.
+  virtual bool hasBody() const { return Body; }
+
+  /// \brief Retrieve the body of this method, if it has one.
+  virtual Stmt *getBody() const;
+
+  void setLazyBody(uint64_t Offset) { Body = Offset; }
+
+  CompoundStmt *getCompoundBody() { return (CompoundStmt*)getBody(); }
   void setBody(Stmt *B) { Body = B; }
 
   /// \brief Returns whether this specific method is a definition.

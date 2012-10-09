@@ -14,3 +14,5 @@
 struct S1;
 struct S2;
 struct S2;
+
+int func1(int);

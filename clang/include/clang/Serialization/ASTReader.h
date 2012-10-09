@@ -341,7 +341,10 @@ private:
   /// \brief The set of C++ or Objective-C classes that have forward 
   /// declarations that have not yet been linked to their definitions.
   llvm::SmallPtrSet<Decl *, 4> PendingDefinitions;
-  
+
+  /// \brief Functions or methods that have bodies that will be attached.
+  llvm::SmallDenseMap<Decl *, uint64_t, 4> PendingBodies;
+
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(ModuleFile &M,
                               llvm::BitstreamCursor &Cursor,

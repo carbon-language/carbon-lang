@@ -6477,9 +6477,29 @@ void ASTReader::finishPendingActions() {
     for (RedeclarableTemplateDecl::redecl_iterator R = RTD->redecls_begin(),
                                                 REnd = RTD->redecls_end();
          R != REnd; ++R)
-      R->Common = RTD->Common;    
+      R->Common = RTD->Common;
   }
   PendingDefinitions.clear();
+
+  // Load the bodies of any functions or methods we've encountered. We do
+  // this now (delayed) so that we can be sure that the declaration chains
+  // have been fully wired up.
+  for (llvm::SmallDenseMap<Decl *, uint64_t, 4>::iterator
+         PB = PendingBodies.begin(), PBEnd = PendingBodies.end();
+       PB != PBEnd; ++PB) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(PB->first)) {
+      // FIXME: Check for =delete/=default?
+      // FIXME: Complain about ODR violations here?
+      if (!getContext().getLangOpts().Modules || !FD->hasBody())
+        FD->setLazyBody(PB->second);
+      continue;
+    }
+
+    ObjCMethodDecl *MD = cast<ObjCMethodDecl>(PB->first);
+    if (!getContext().getLangOpts().Modules || !MD->hasBody())
+      MD->setLazyBody(PB->second);
+  }
+  PendingBodies.clear();
 }
 
 void ASTReader::FinishedDeserializing() {

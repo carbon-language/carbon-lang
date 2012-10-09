@@ -445,6 +445,10 @@ ObjCMethodDecl *ObjCMethodDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
                                   Selector(), QualType(), 0, 0);
 }
 
+Stmt *ObjCMethodDecl::getBody() const {
+  return Body.get(getASTContext().getExternalSource());
+}
+
 void ObjCMethodDecl::setAsRedeclaration(const ObjCMethodDecl *PrevMethod) {
   assert(PrevMethod);
   getASTContext().setObjCMethodRedeclaration(PrevMethod, this);
