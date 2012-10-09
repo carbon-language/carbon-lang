@@ -110,7 +110,6 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
     // Convert the incoming value to a bits type of the appropriate size...
     Init *BI = V->convertInitializerTo(BitsRecTy::get(BitList.size()));
     if (BI == 0) {
-      V->convertInitializerTo(BitsRecTy::get(BitList.size()));
       return Error(Loc, "Initializer is not compatible with bit range");
     }
 
