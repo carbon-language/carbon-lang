@@ -464,7 +464,7 @@ static void ParseCStringVector(std::vector<char *> &OutputVector,
 /// an environment variable (whose name is given in ENVVAR).
 ///
 void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
-                                 const char *Overview, bool ReadResponseFiles) {
+                                 const char *Overview) {
   // Check args.
   assert(progName && "Program name not specified");
   assert(envVar && "Environment variable name missing");
@@ -483,7 +483,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // and hand it off to ParseCommandLineOptions().
   ParseCStringVector(newArgv, envValue);
   int newArgc = static_cast<int>(newArgv.size());
-  ParseCommandLineOptions(newArgc, &newArgv[0], Overview, ReadResponseFiles);
+  ParseCommandLineOptions(newArgc, &newArgv[0], Overview);
 
   // Free all the strdup()ed strings.
   for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
@@ -529,7 +529,7 @@ static void ExpandResponseFiles(unsigned argc, const char*const* argv,
 }
 
 void cl::ParseCommandLineOptions(int argc, const char * const *argv,
-                                 const char *Overview, bool ReadResponseFiles) {
+                                 const char *Overview) {
   // Process all registered options.
   SmallVector<Option*, 4> PositionalOpts;
   SmallVector<Option*, 4> SinkOpts;
@@ -541,12 +541,10 @@ void cl::ParseCommandLineOptions(int argc, const char * const *argv,
 
   // Expand response files.
   std::vector<char*> newArgv;
-  if (ReadResponseFiles) {
-    newArgv.push_back(strdup(argv[0]));
-    ExpandResponseFiles(argc, argv, newArgv);
-    argv = &newArgv[0];
-    argc = static_cast<int>(newArgv.size());
-  }
+  newArgv.push_back(strdup(argv[0]));
+  ExpandResponseFiles(argc, argv, newArgv);
+  argv = &newArgv[0];
+  argc = static_cast<int>(newArgv.size());
 
   // Copy the program name into ProgName, making sure not to overflow it.
   std::string ProgName = sys::path::filename(argv[0]);
@@ -839,12 +837,10 @@ void cl::ParseCommandLineOptions(int argc, const char * const *argv,
   MoreHelp->clear();
 
   // Free the memory allocated by ExpandResponseFiles.
-  if (ReadResponseFiles) {
-    // Free all the strdup()ed strings.
-    for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
-         i != e; ++i)
-      free(*i);
-  }
+  // Free all the strdup()ed strings.
+  for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
+       i != e; ++i)
+    free(*i);
 
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
