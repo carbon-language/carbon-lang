@@ -28,7 +28,7 @@ namespace llvm {
 /// mapping is done with DenseMap from Keys to indexes in that vector.
 template<typename KeyT, typename ValueT,
          typename MapType = llvm::DenseMap<KeyT, unsigned>,
-         typename VectorType = std::vector<std::pair<KeyT, ValueT> >>
+         typename VectorType = std::vector<std::pair<KeyT, ValueT> > >
 class MapVector {
   typedef typename VectorType::size_type SizeType;
 
