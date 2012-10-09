@@ -390,16 +390,6 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 //===--------------------------------------------------------------------===//
 
 MCSymbol *ARMAsmPrinter::
-GetARMSetPICJumpTableLabel2(unsigned uid, unsigned uid2,
-                            const MachineBasicBlock *MBB) const {
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << '_' << uid2
-    << "_set_" << MBB->getNumber();
-  return OutContext.GetOrCreateSymbol(Name.str());
-}
-
-MCSymbol *ARMAsmPrinter::
 GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
@@ -1105,16 +1095,6 @@ static void populateADROperands(MCInst &Inst, unsigned Dest,
   // Add predicate operands.
   Inst.addOperand(MCOperand::CreateImm(pred));
   Inst.addOperand(MCOperand::CreateReg(ccreg));
-}
-
-void ARMAsmPrinter::EmitPatchedInstruction(const MachineInstr *MI,
-                                           unsigned Opcode) {
-  MCInst TmpInst;
-
-  // Emit the instruction as usual, just patch the opcode.
-  LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
-  TmpInst.setOpcode(Opcode);
-  OutStreamer.EmitInstruction(TmpInst);
 }
 
 void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
