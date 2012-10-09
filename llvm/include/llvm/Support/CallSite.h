@@ -211,32 +211,32 @@ public:
   bool doesNotAccessMemory() const {
     CALLSITE_DELEGATE_GETTER(doesNotAccessMemory());
   }
-  void setDoesNotAccessMemory(bool doesNotAccessMemory = true) {
-    CALLSITE_DELEGATE_SETTER(setDoesNotAccessMemory(doesNotAccessMemory));
+  void setDoesNotAccessMemory() {
+    CALLSITE_DELEGATE_SETTER(setDoesNotAccessMemory());
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
     CALLSITE_DELEGATE_GETTER(onlyReadsMemory());
   }
-  void setOnlyReadsMemory(bool onlyReadsMemory = true) {
-    CALLSITE_DELEGATE_SETTER(setOnlyReadsMemory(onlyReadsMemory));
+  void setOnlyReadsMemory() {
+    CALLSITE_DELEGATE_SETTER(setOnlyReadsMemory());
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const {
     CALLSITE_DELEGATE_GETTER(doesNotReturn());
   }
-  void setDoesNotReturn(bool doesNotReturn = true) {
-    CALLSITE_DELEGATE_SETTER(setDoesNotReturn(doesNotReturn));
+  void setDoesNotReturn() {
+    CALLSITE_DELEGATE_SETTER(setDoesNotReturn());
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const {
     CALLSITE_DELEGATE_GETTER(doesNotThrow());
   }
-  void setDoesNotThrow(bool doesNotThrow = true) {
-    CALLSITE_DELEGATE_SETTER(setDoesNotThrow(doesNotThrow));
+  void setDoesNotThrow() {
+    CALLSITE_DELEGATE_SETTER(setDoesNotThrow());
   }
 
 #undef CALLSITE_DELEGATE_GETTER

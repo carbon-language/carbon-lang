@@ -1280,50 +1280,56 @@ public:
 
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
-  void setIsNoInline(bool Value = true) {
-    if (Value) addAttribute(~0, Attribute::NoInline);
-    else removeAttribute(~0, Attribute::NoInline);
+  void setIsNoInline() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoInline);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Return true if the call can return twice
   bool canReturnTwice() const {
     return hasFnAttr(Attributes::ReturnsTwice);
   }
-  void setCanReturnTwice(bool Value = true) {
-    if (Value) addAttribute(~0, Attribute::ReturnsTwice);
-    else removeAttribute(~0, Attribute::ReturnsTwice);
+  void setCanReturnTwice() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::ReturnsTwice);
+    addAttribute(~0U, Attributes::get(B));
   }
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
     return hasFnAttr(Attributes::ReadNone);
   }
-  void setDoesNotAccessMemory(bool NotAccessMemory = true) {
-    if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
-    else removeAttribute(~0, Attribute::ReadNone);
+  void setDoesNotAccessMemory() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::ReadNone);
+    addAttribute(~0U, Attributes::get(B));
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
-  void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
-    else removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
+  void setOnlyReadsMemory() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::ReadOnly);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
-  void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
-    else removeAttribute(~0, Attribute::NoReturn);
+  void setDoesNotReturn() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoReturn);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
-    else removeAttribute(~0, Attribute::NoUnwind);
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoUnwind);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call returns a structure through first
@@ -3043,41 +3049,46 @@ public:
 
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
-  void setIsNoInline(bool Value = true) {
-    if (Value) addAttribute(~0, Attribute::NoInline);
-    else removeAttribute(~0, Attribute::NoInline);
+  void setIsNoInline() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoInline);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
     return hasFnAttr(Attributes::ReadNone);
   }
-  void setDoesNotAccessMemory(bool NotAccessMemory = true) {
-    if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
-    else removeAttribute(~0, Attribute::ReadNone);
+  void setDoesNotAccessMemory() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::ReadNone);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
-  void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
-    else removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
+  void setOnlyReadsMemory() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::ReadOnly);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
-  void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
-    else removeAttribute(~0, Attribute::NoReturn);
+  void setDoesNotReturn() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoReturn);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
-  void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
-    else removeAttribute(~0, Attribute::NoUnwind);
+  void setDoesNotThrow() {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoUnwind);
+    addAttribute(~0, Attributes::get(B));
   }
 
   /// @brief Determine if the call returns a structure through first
