@@ -866,6 +866,7 @@ public:
 
   void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setNameLoc(Loc);
+    setNameEndLoc(Loc);
   }
 };
 
