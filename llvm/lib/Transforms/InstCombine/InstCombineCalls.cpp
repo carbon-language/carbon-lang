@@ -1036,8 +1036,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
-      Attributes RAttrs = CallerPAL.getRetAttributes();
-      if (RAttrs & Attributes::typeIncompatible(NewRetTy))
+      Attributes::Builder RAttrs = CallerPAL.getRetAttributes();
+      if (RAttrs.hasAttributes(Attributes::typeIncompatible(NewRetTy)))
         return false;   // Attribute not compatible with transformed value.
     }
 
@@ -1072,7 +1072,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     // If the parameter is passed as a byval argument, then we have to have a
     // sized type and the sized type has to have the same size as the old type.
-    if (ParamTy != ActTy && (Attrs & Attribute::ByVal)) {
+    if (ParamTy != ActTy && Attrs.hasByValAttr()) {
       PointerType *ParamPTy = dyn_cast<PointerType>(ParamTy);
       if (ParamPTy == 0 || !ParamPTy->getElementType()->isSized() || TD == 0)
         return false;
@@ -1124,7 +1124,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       if (CallerPAL.getSlot(i - 1).Index <= FT->getNumParams())
         break;
       Attributes PAttrs = CallerPAL.getSlot(i - 1).Attrs;
-      if (PAttrs & Attribute::VarArgsIncompatible)
+      if (PAttrs.hasIncompatibleWithVarArgsAttrs())
         return false;
     }
 
@@ -1137,15 +1137,15 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   attrVec.reserve(NumCommonArgs);
 
   // Get any return attributes.
-  Attributes RAttrs = CallerPAL.getRetAttributes();
+  Attributes::Builder RAttrs = CallerPAL.getRetAttributes();
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
-  RAttrs &= ~Attributes::typeIncompatible(NewRetTy);
+  RAttrs.removeAttributes(Attributes::typeIncompatible(NewRetTy));
 
   // Add the new return attributes.
-  if (RAttrs)
-    attrVec.push_back(AttributeWithIndex::get(0, RAttrs));
+  if (RAttrs.hasAttributes())
+    attrVec.push_back(AttributeWithIndex::get(0, Attributes::get(RAttrs)));
 
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
@@ -1263,8 +1263,9 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
 
   // If the call already has the 'nest' attribute somewhere then give up -
   // otherwise 'nest' would occur twice after splicing in the chain.
-  if (Attrs.hasAttrSomewhere(Attribute::Nest))
-    return 0;
+  for (unsigned I = 0, E = Attrs.getNumAttrs(); I != E; ++I)
+    if (Attrs.getAttributesAtIndex(I).hasNestAttr())
+      return 0;
 
   assert(Tramp &&
          "transformCallThroughTrampoline called with incorrect CallSite.");
@@ -1277,12 +1278,12 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
   if (!NestAttrs.isEmpty()) {
     unsigned NestIdx = 1;
     Type *NestTy = 0;
-    Attributes NestAttr = Attribute::None;
+    Attributes NestAttr;
 
     // Look for a parameter marked with the 'nest' attribute.
     for (FunctionType::param_iterator I = NestFTy->param_begin(),
          E = NestFTy->param_end(); I != E; ++NestIdx, ++I)
-      if (NestAttrs.paramHasAttr(NestIdx, Attribute::Nest)) {
+      if (NestAttrs.getParamAttributes(NestIdx).hasNestAttr()) {
         // Record the parameter type and any other attributes.
         NestTy = *I;
         NestAttr = NestAttrs.getParamAttributes(NestIdx);

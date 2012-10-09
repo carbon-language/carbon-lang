@@ -682,7 +682,9 @@ void GCOVProfiler::insertCounterWriteout(
                                  "__llvm_gcov_init", M);
   F->setUnnamedAddr(true);
   F->setLinkage(GlobalValue::InternalLinkage);
-  F->addFnAttr(Attribute::NoInline);
+  Attributes::Builder B;
+  B.addNoInlineAttr();
+  F->addFnAttr(Attributes::get(B));
 
   BB = BasicBlock::Create(*Ctx, "entry", F);
   Builder.SetInsertPoint(BB);
@@ -701,7 +703,9 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
     cast<Function>(GCOVProfiler::getIncrementIndirectCounterFunc());
   Fn->setUnnamedAddr(true);
   Fn->setLinkage(GlobalValue::InternalLinkage);
-  Fn->addFnAttr(Attribute::NoInline);
+  Attributes::Builder B;
+  B.addNoInlineAttr();
+  Fn->addFnAttr(Attributes::get(B));
 
   Type *Int32Ty = Type::getInt32Ty(*Ctx);
   Type *Int64Ty = Type::getInt64Ty(*Ctx);

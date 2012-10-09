@@ -199,6 +199,7 @@ public:
     void clear() { Bits = 0; }
 
     bool hasAttributes() const;
+    bool hasAttributes(const Attributes &A) const;
     bool hasAlignmentAttr() const;
 
     uint64_t getAlignment() const;
@@ -231,6 +232,8 @@ public:
 
     void addAlignmentAttr(unsigned Align);
     void addStackAlignmentAttr(unsigned Align);
+
+    void removeAttributes(const Attributes &A);
 
     void removeAddressSafetyAttr();
     void removeAlwaysInlineAttr();
@@ -266,6 +269,11 @@ public:
   /// value from the Builder and wraps it in the Attributes class.
   static Attributes get(Builder &B);
   static Attributes get(LLVMContext &Context, Builder &B);
+
+  /// @brief Parameter attributes that do not apply to vararg call arguments.
+  bool hasIncompatibleWithVarArgsAttrs() const {
+    return hasStructRetAttr();
+  }
 
   // Attribute query methods.
   // FIXME: StackAlignment & Alignment attributes have no predicate methods.
@@ -494,6 +502,9 @@ public:
   /// least one parameter or for the return value.
   bool hasAttrSomewhere(Attributes Attr) const;
 
+  unsigned getNumAttrs() const;
+  Attributes &getAttributesAtIndex(unsigned i) const;
+
   /// operator==/!= - Provide equality predicates.
   bool operator==(const AttrListPtr &RHS) const
   { return AttrList == RHS.AttrList; }
@@ -537,7 +548,6 @@ private:
   /// getAttributes - The attributes for the specified index are
   /// returned.  Attributes for the result are denoted with Idx = 0.
   Attributes getAttributes(unsigned Idx) const;
-
 };
 
 } // End llvm namespace

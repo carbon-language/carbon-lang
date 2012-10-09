@@ -377,6 +377,10 @@ void Attributes::Builder::addStackAlignmentAttr(unsigned Align) {
   Bits |= (Log2_32(Align) + 1) << 26;
 }
 
+void Attributes::Builder::removeAttributes(const Attributes &A) {
+  Bits &= ~A.Raw();
+}
+
 void Attributes::Builder::removeAddressSafetyAttr() {
   Bits &= ~Attribute::AddressSafety_i;
 }
@@ -462,6 +466,9 @@ void Attributes::Builder::removeStackAlignmentAttr() {
 
 bool Attributes::Builder::hasAttributes() const {
   return Bits != 0;
+}
+bool Attributes::Builder::hasAttributes(const Attributes &A) const {
+  return Bits & A.Raw();
 }
 bool Attributes::Builder::hasAlignmentAttr() const {
   return Bits & Attribute::Alignment_i;
@@ -662,6 +669,15 @@ bool AttrListPtr::hasAttrSomewhere(Attributes Attr) const {
   return false;
 }
 
+unsigned AttrListPtr::getNumAttrs() const {
+  return AttrList ? AttrList->Attrs.size() : 0;
+}
+
+Attributes &AttrListPtr::getAttributesAtIndex(unsigned i) const {
+  assert(AttrList && "Trying to get an attribute from an empty list!");
+  assert(i < AttrList->Attrs.size() && "Index out of range!");
+  return AttrList->Attrs[i].Attrs;
+}
 
 AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
   Attributes OldAttrs = getAttributes(Idx);
