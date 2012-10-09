@@ -493,7 +493,7 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
     //   storage of suitable size and alignment to contain an object of the
     //   reference's type, the behavior is undefined.
     QualType Ty = E->getType();
-    EmitTypeCheck(TCK_ReferenceBinding, Value, Ty);
+    EmitTypeCheck(TCK_ReferenceBinding, E->getExprLoc(), Value, Ty);
   }
   if (!ReferenceTemporaryDtor && ObjCARCReferenceLifetimeType.isNull())
     return RValue::get(Value);
@@ -558,7 +558,8 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
       ->getZExtValue();
 }
 
-void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, llvm::Value *Address,
+void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
+                                    llvm::Value *Address,
                                     QualType Ty, CharUnits Alignment) {
   if (!CatchUndefined)
     return;
@@ -573,9 +574,10 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, llvm::Value *Address,
         Address, llvm::Constant::getNullValue(Address->getType()));
   }
 
+  uint64_t AlignVal = Alignment.getQuantity();
+
   if (!Ty->isIncompleteType()) {
     uint64_t Size = getContext().getTypeSizeInChars(Ty).getQuantity();
-    uint64_t AlignVal = Alignment.getQuantity();
     if (!AlignVal)
       AlignVal = getContext().getTypeAlignInChars(Ty).getQuantity();
 
@@ -591,7 +593,9 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, llvm::Value *Address,
         Builder.CreateICmpUGE(Builder.CreateCall2(F, Address, Min),
                               llvm::ConstantInt::get(IntPtrTy, Size));
     Cond = Cond ? Builder.CreateAnd(Cond, LargeEnough) : LargeEnough;
+  }
 
+  if (AlignVal) {
     // The glvalue must be suitably aligned.
     llvm::Value *Align =
         Builder.CreateAnd(Builder.CreatePtrToInt(Address, IntPtrTy),
@@ -600,8 +604,15 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, llvm::Value *Address,
         Builder.CreateICmpEQ(Align, llvm::ConstantInt::get(IntPtrTy, 0)));
   }
 
-  if (Cond)
-    EmitCheck(Cond);
+  if (Cond) {
+    llvm::Constant *StaticData[] = {
+      EmitCheckSourceLocation(Loc),
+      EmitCheckTypeDescriptor(Ty),
+      llvm::ConstantInt::get(SizeTy, AlignVal),
+      llvm::ConstantInt::get(Int8Ty, TCK)
+    };
+    EmitCheck(Cond, "type_mismatch", StaticData, Address);
+  }
 }
 
 
@@ -681,7 +692,8 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
 LValue CodeGenFunction::EmitCheckedLValue(const Expr *E, TypeCheckKind TCK) {
   LValue LV = EmitLValue(E);
   if (!isa<DeclRefExpr>(E) && !LV.isBitField() && LV.isSimple())
-    EmitTypeCheck(TCK, LV.getAddress(), E->getType(), LV.getAlignment());
+    EmitTypeCheck(TCK, E->getExprLoc(), LV.getAddress(),
+                  E->getType(), LV.getAlignment());
   return LV;
 }
 
@@ -1925,31 +1937,157 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   }
 }
 
-void CodeGenFunction::EmitCheck(llvm::Value *Checked) {
-  const CodeGenOptions &GCO = CGM.getCodeGenOpts();
+/// Emit a type description suitable for use by a runtime sanitizer library. The
+/// format of a type descriptor is
+///
+/// \code
+///   { i8* Name, i16 TypeKind, i16 TypeInfo }
+/// \endcode
+///
+/// where TypeKind is 0 for an integer, 1 for a floating point value, and -1 for
+/// anything else.
+llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
+  // FIXME: Only emit each type's descriptor once.
+  uint16_t TypeKind = -1;
+  uint16_t TypeInfo = 0;
 
+  if (T->isIntegerType()) {
+    TypeKind = 0;
+    TypeInfo = (llvm::Log2_32(getContext().getTypeSize(T)) << 1) |
+               T->isSignedIntegerType();
+  } else if (T->isFloatingType()) {
+    TypeKind = 1;
+    TypeInfo = getContext().getTypeSize(T);
+  }
+
+  // Format the type name as if for a diagnostic, including quotes and
+  // optionally an 'aka'.
+  llvm::SmallString<32> Buffer;
+  CGM.getDiags().ConvertArgToString(DiagnosticsEngine::ak_qualtype,
+                                    (intptr_t)T.getAsOpaquePtr(),
+                                    0, 0, 0, 0, 0, 0, Buffer,
+                                    ArrayRef<intptr_t>());
+
+  llvm::Constant *Components[] = {
+    cast<llvm::Constant>(Builder.CreateGlobalStringPtr(Buffer)),
+    Builder.getInt16(TypeKind), Builder.getInt16(TypeInfo)
+  };
+  llvm::Constant *Descriptor = llvm::ConstantStruct::getAnon(Components);
+
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(CGM.getModule(), Descriptor->getType(),
+                             /*isConstant=*/true,
+                             llvm::GlobalVariable::PrivateLinkage,
+                             Descriptor);
+  GV->setUnnamedAddr(true);
+  return GV;
+}
+
+llvm::Value *CodeGenFunction::EmitCheckValue(llvm::Value *V) {
+  llvm::Type *TargetTy = IntPtrTy;
+
+  // Integers which fit in intptr_t are zero-extended and passed directly.
+  if (V->getType()->isIntegerTy() &&
+      V->getType()->getIntegerBitWidth() <= TargetTy->getIntegerBitWidth())
+    return Builder.CreateZExt(V, TargetTy);
+
+  // Pointers are passed directly, everything else is passed by address.
+  if (!V->getType()->isPointerTy()) {
+    llvm::Value *Ptr = Builder.CreateAlloca(V->getType());
+    Builder.CreateStore(V, Ptr);
+    V = Ptr;
+  }
+  return Builder.CreatePtrToInt(V, TargetTy);
+}
+
+/// \brief Emit a representation of a SourceLocation for passing to a handler
+/// in a sanitizer runtime library. The format for this data is:
+/// \code
+///   struct SourceLocation {
+///     const char *Filename;
+///     int32_t Line, Column;
+///   };
+/// \endcode
+/// For an invalid SourceLocation, the Filename pointer is null.
+llvm::Constant *CodeGenFunction::EmitCheckSourceLocation(SourceLocation Loc) {
+  PresumedLoc PLoc = getContext().getSourceManager().getPresumedLoc(Loc);
+
+  llvm::Constant *Data[] = {
+    // FIXME: Only emit each file name once.
+    PLoc.isValid() ? cast<llvm::Constant>(
+                       Builder.CreateGlobalStringPtr(PLoc.getFilename()))
+                   : llvm::Constant::getNullValue(Int8PtrTy),
+    Builder.getInt32(PLoc.getLine()),
+    Builder.getInt32(PLoc.getColumn())
+  };
+
+  return llvm::ConstantStruct::getAnon(Data);
+}
+
+void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
+                                llvm::ArrayRef<llvm::Constant *> StaticArgs,
+                                llvm::ArrayRef<llvm::Value *> DynamicArgs) {
   llvm::BasicBlock *Cont = createBasicBlock("cont");
 
-  // If we are not optimzing, don't collapse all calls to trap in the function
-  // to the same call, that way, in the debugger they can see which operation
-  // did in fact fail.  If we are optimizing, we collapse all calls to trap down
-  // to just one per function to save on codesize.
-  bool NeedNewTrapBB = !GCO.OptimizationLevel || !TrapBB;
+  // If -fcatch-undefined-behavior is not enabled, just emit a trap. This
+  // happens when using -ftrapv.
+  // FIXME: Should -ftrapv require the ubsan runtime library?
+  if (!CatchUndefined) {
+    // If we're optimizing, collapse all calls to trap down to just one per
+    // function to save on code size.
+    if (!CGM.getCodeGenOpts().OptimizationLevel || !TrapBB) {
+      TrapBB = createBasicBlock("trap");
+      Builder.CreateCondBr(Checked, Cont, TrapBB);
+      EmitBlock(TrapBB);
+      llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
+      llvm::CallInst *TrapCall = Builder.CreateCall(F);
+      TrapCall->setDoesNotReturn();
+      TrapCall->setDoesNotThrow();
+      Builder.CreateUnreachable();
+    } else {
+      Builder.CreateCondBr(Checked, Cont, TrapBB);
+    }
 
-  if (NeedNewTrapBB)
-    TrapBB = createBasicBlock("trap");
-
-  Builder.CreateCondBr(Checked, Cont, TrapBB);
-
-  if (NeedNewTrapBB) {
-    EmitBlock(TrapBB);
-
-    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
-    llvm::CallInst *TrapCall = Builder.CreateCall(F);
-    TrapCall->setDoesNotReturn();
-    TrapCall->setDoesNotThrow();
-    Builder.CreateUnreachable();
+    EmitBlock(Cont);
+    return;
   }
+
+  llvm::BasicBlock *Handler = createBasicBlock("handler." + CheckName);
+  Builder.CreateCondBr(Checked, Cont, Handler);
+  EmitBlock(Handler);
+
+  llvm::Constant *Info = llvm::ConstantStruct::getAnon(StaticArgs);
+  llvm::GlobalValue *InfoPtr =
+      new llvm::GlobalVariable(CGM.getModule(), Info->getType(), true,
+                               llvm::GlobalVariable::PrivateLinkage, Info);
+  InfoPtr->setUnnamedAddr(true);
+
+  llvm::SmallVector<llvm::Value *, 4> Args;
+  llvm::SmallVector<llvm::Type *, 4> ArgTypes;
+  Args.reserve(DynamicArgs.size() + 1);
+  ArgTypes.reserve(DynamicArgs.size() + 1);
+
+  // Handler functions take an i8* pointing to the (handler-specific) static
+  // information block, followed by a sequence of intptr_t arguments
+  // representing operand values.
+  Args.push_back(Builder.CreateBitCast(InfoPtr, Int8PtrTy));
+  ArgTypes.push_back(Int8PtrTy);
+  for (size_t i = 0, n = DynamicArgs.size(); i != n; ++i) {
+    Args.push_back(EmitCheckValue(DynamicArgs[i]));
+    ArgTypes.push_back(IntPtrTy);
+  }
+
+  llvm::FunctionType *FnType =
+    llvm::FunctionType::get(CGM.VoidTy, ArgTypes, false);
+  llvm::Value *Fn = CGM.CreateRuntimeFunction(FnType,
+                                          ("__ubsan_handle_" + CheckName).str(),
+                                              llvm::Attribute::NoReturn |
+                                              llvm::Attribute::NoUnwind |
+                                              llvm::Attribute::UWTable);
+  llvm::CallInst *HandlerCall = Builder.CreateCall(Fn, Args);
+  HandlerCall->setDoesNotReturn();
+  HandlerCall->setDoesNotThrow();
+  Builder.CreateUnreachable();
 
   EmitBlock(Cont);
 }
@@ -2154,7 +2292,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (E->isArrow()) {
     llvm::Value *Ptr = EmitScalarExpr(BaseExpr);
     QualType PtrTy = BaseExpr->getType()->getPointeeType();
-    EmitTypeCheck(TCK_MemberAccess, Ptr, PtrTy);
+    EmitTypeCheck(TCK_MemberAccess, E->getExprLoc(), Ptr, PtrTy);
     BaseLV = MakeNaturalAlignAddrLValue(Ptr, PtrTy);
   } else
     BaseLV = EmitCheckedLValue(BaseExpr, TCK_MemberAccess);
@@ -2677,7 +2815,7 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
     }
 
     RValue RV = EmitAnyExpr(E->getRHS());
-    LValue LV = EmitLValue(E->getLHS());
+    LValue LV = EmitCheckedLValue(E->getLHS(), TCK_Store);
     EmitStoreThroughLValue(RV, LV);
     return LV;
   }

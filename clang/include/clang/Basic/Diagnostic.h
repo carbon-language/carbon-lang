@@ -587,7 +587,7 @@ public:
                           const char *Argument, unsigned ArgLen,
                           const ArgumentValue *PrevArgs, unsigned NumPrevArgs,
                           SmallVectorImpl<char> &Output,
-                          SmallVectorImpl<intptr_t> &QualTypeVals) const {
+                          ArrayRef<intptr_t> QualTypeVals) const {
     ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen,
                   PrevArgs, NumPrevArgs, Output, ArgToStringCookie,
                   QualTypeVals);

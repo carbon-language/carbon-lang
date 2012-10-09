@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -ftrapv %s -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fcatch-undefined-behavior %s -emit-llvm -o - | FileCheck %s
 
 unsigned int ui, uj, uk;
 int i, j, k;

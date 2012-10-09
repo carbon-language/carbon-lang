@@ -1268,7 +1268,9 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(D, Type), ForVirtualBase);
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
-  EmitCXXMemberCall(D, Callee, ReturnValueSlot(), This, VTT, ArgBeg, ArgEnd);
+  // FIXME: Provide a source location here.
+  EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
+                    VTT, ArgBeg, ArgEnd);
 }
 
 void
@@ -1420,7 +1422,9 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   if (!Callee)
     Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
   
-  EmitCXXMemberCall(DD, Callee, ReturnValueSlot(), This, VTT, 0, 0);
+  // FIXME: Provide a source location here.
+  EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
+                    VTT, 0, 0);
 }
 
 namespace {

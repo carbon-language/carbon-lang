@@ -85,6 +85,8 @@ public:
     return CGF.EmitCheckedLValue(E, TCK);
   }
 
+  void EmitBinOpCheck(Value *Check, const BinOpInfo &Info);
+
   Value *EmitLoadOfLValue(LValue LV) {
     return CGF.EmitLoadOfLValue(LV).getScalarVal();
   }
@@ -683,6 +685,54 @@ Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
     return CGF.CGM.getCXXABI().EmitNullMemberPointer(MPT);
 
   return llvm::Constant::getNullValue(ConvertType(Ty));
+}
+
+/// \brief Emit a sanitization check for the given "binary" operation (which
+/// might actually be a unary increment which has been lowered to a binary
+/// operation). The check passes if \p Check, which is an \c i1, is \c true.
+void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
+  StringRef CheckName;
+  llvm::SmallVector<llvm::Constant *, 4> StaticData;
+  llvm::SmallVector<llvm::Value *, 2> DynamicData;
+
+  BinaryOperatorKind Opcode = Info.Opcode;
+  if (BinaryOperator::isCompoundAssignmentOp(Opcode))
+    Opcode = BinaryOperator::getOpForCompoundAssignment(Opcode);
+
+  StaticData.push_back(CGF.EmitCheckSourceLocation(Info.E->getExprLoc()));
+  const UnaryOperator *UO = dyn_cast<UnaryOperator>(Info.E);
+  if (UO && UO->getOpcode() == UO_Minus) {
+    CheckName = "negate_overflow";
+    StaticData.push_back(CGF.EmitCheckTypeDescriptor(UO->getType()));
+    DynamicData.push_back(Info.RHS);
+  } else {
+    if (BinaryOperator::isShiftOp(Opcode)) {
+      // Shift LHS negative or too large, or RHS out of bounds.
+      CheckName = "shift_out_of_bounds";
+      const BinaryOperator *BO = cast<BinaryOperator>(Info.E);
+      StaticData.push_back(
+        CGF.EmitCheckTypeDescriptor(BO->getLHS()->getType()));
+      StaticData.push_back(
+        CGF.EmitCheckTypeDescriptor(BO->getRHS()->getType()));
+    } else if (Opcode == BO_Div || Opcode == BO_Rem) {
+      // Divide or modulo by zero, or signed overflow (eg INT_MAX / -1).
+      CheckName = "divrem_overflow";
+      StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.E->getType()));
+    } else {
+      // Signed arithmetic overflow (+, -, *).
+      switch (Opcode) {
+      case BO_Add: CheckName = "add_overflow"; break;
+      case BO_Sub: CheckName = "sub_overflow"; break;
+      case BO_Mul: CheckName = "mul_overflow"; break;
+      default: llvm_unreachable("unexpected opcode for bin op check");
+      }
+      StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.E->getType()));
+    }
+    DynamicData.push_back(Info.LHS);
+    DynamicData.push_back(Info.RHS);
+  }
+
+  CGF.EmitCheck(Check, CheckName, StaticData, DynamicData);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1770,9 +1820,9 @@ void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
     llvm::Value *LHSCmp = Builder.CreateICmpNE(Ops.LHS, IntMin);
     llvm::Value *RHSCmp = Builder.CreateICmpNE(Ops.RHS, NegOne);
     llvm::Value *Cond2 = Builder.CreateOr(LHSCmp, RHSCmp, "or");
-    CGF.EmitCheck(Builder.CreateAnd(Cond1, Cond2, "and"));
+    EmitBinOpCheck(Builder.CreateAnd(Cond1, Cond2, "and"), Ops);
   } else {
-    CGF.EmitCheck(Builder.CreateICmpNE(Ops.RHS, Zero));
+    EmitBinOpCheck(Builder.CreateICmpNE(Ops.RHS, Zero), Ops);
   }
 }
 
@@ -1783,7 +1833,7 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
     if (Ops.Ty->isIntegerType())
       EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
     else if (Ops.Ty->isRealFloatingType())
-      CGF.EmitCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero));
+      EmitBinOpCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero), Ops);
   }
   if (Ops.LHS->getType()->isFPOrFPVectorTy()) {
     llvm::Value *Val = Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
@@ -1856,7 +1906,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   const std::string *handlerName =
     &CGF.getContext().getLangOpts().OverflowHandler;
   if (handlerName->empty()) {
-    CGF.EmitCheck(Builder.CreateNot(overflow));
+    EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
     return result;
   }
 
@@ -2185,7 +2235,9 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
     unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
     llvm::Value *WidthMinusOne =
       llvm::ConstantInt::get(RHS->getType(), Width - 1);
-    CGF.EmitCheck(Builder.CreateICmpULE(RHS, WidthMinusOne));
+    // FIXME: Emit the branching explicitly rather than emitting the check
+    // twice.
+    EmitBinOpCheck(Builder.CreateICmpULE(RHS, WidthMinusOne), Ops);
 
     if (Ops.Ty->hasSignedIntegerRepresentation()) {
       // Check whether we are shifting any non-zero bits off the top of the
@@ -2204,7 +2256,7 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
         BitsShiftedOff = Builder.CreateLShr(BitsShiftedOff, One);
       }
       llvm::Value *Zero = llvm::ConstantInt::get(BitsShiftedOff->getType(), 0);
-      CGF.EmitCheck(Builder.CreateICmpEQ(BitsShiftedOff, Zero));
+      EmitBinOpCheck(Builder.CreateICmpEQ(BitsShiftedOff, Zero), Ops);
     }
   }
 
@@ -2221,7 +2273,7 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
   if (CGF.CatchUndefined && isa<llvm::IntegerType>(Ops.LHS->getType())) {
     unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
     llvm::Value *WidthVal = llvm::ConstantInt::get(RHS->getType(), Width);
-    CGF.EmitCheck(Builder.CreateICmpULT(RHS, WidthVal));
+    EmitBinOpCheck(Builder.CreateICmpULT(RHS, WidthVal), Ops);
   }
 
   if (Ops.Ty->hasUnsignedIntegerRepresentation())

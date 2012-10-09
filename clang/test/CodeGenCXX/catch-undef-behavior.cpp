@@ -89,6 +89,6 @@ int lsh_overflow(int a, int b) {
 
 // CHECK: @_Z9no_return
 int no_return() {
-  // CHECK: call void @llvm.trap
-  // CHECK: unreachable
+  // CHECK:      call void @__ubsan_handle_missing_return(i8* bitcast ({{.*}}* @{{.*}} to i8*)) noreturn nounwind
+  // CHECK-NEXT: unreachable
 }
