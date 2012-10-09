@@ -23,6 +23,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/RecyclingAllocator.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
 #include <deque>
@@ -90,35 +91,56 @@ template<> struct DenseMapInfo<SimpleValue> {
 
 unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
   Instruction *Inst = Val.Inst;
-
   // Hash in all of the operands as pointers.
-  unsigned Res = 0;
-  for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
-    Res ^= getHash(Inst->getOperand(i)) << (i & 0xF);
+  if (BinaryOperator* BinOp = dyn_cast<BinaryOperator>(Inst)) {
+    Value *LHS = BinOp->getOperand(0);
+    Value *RHS = BinOp->getOperand(1);
+    if (BinOp->isCommutative() && BinOp->getOperand(0) > BinOp->getOperand(1))
+      std::swap(LHS, RHS);
 
-  if (CastInst *CI = dyn_cast<CastInst>(Inst))
-    Res ^= getHash(CI->getType());
-  else if (CmpInst *CI = dyn_cast<CmpInst>(Inst))
-    Res ^= CI->getPredicate();
-  else if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(Inst)) {
-    for (ExtractValueInst::idx_iterator I = EVI->idx_begin(),
-         E = EVI->idx_end(); I != E; ++I)
-      Res ^= *I;
-  } else if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(Inst)) {
-    for (InsertValueInst::idx_iterator I = IVI->idx_begin(),
-         E = IVI->idx_end(); I != E; ++I)
-      Res ^= *I;
-  } else {
-    // nothing extra to hash in.
-    assert((isa<CallInst>(Inst) ||
-            isa<BinaryOperator>(Inst) || isa<GetElementPtrInst>(Inst) ||
-            isa<SelectInst>(Inst) || isa<ExtractElementInst>(Inst) ||
-            isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst)) &&
-           "Invalid/unknown instruction");
+    if (isa<OverflowingBinaryOperator>(BinOp)) {
+      // Hash the overflow behavior
+      unsigned Overflow =
+        BinOp->hasNoSignedWrap()   * OverflowingBinaryOperator::NoSignedWrap |
+        BinOp->hasNoUnsignedWrap() * OverflowingBinaryOperator::NoUnsignedWrap;
+      return hash_combine(BinOp->getOpcode(), Overflow, LHS, RHS);
+    }
+
+    return hash_combine(BinOp->getOpcode(), LHS, RHS);
   }
 
+  if (CmpInst *CI = dyn_cast<CmpInst>(Inst)) {
+    Value *LHS = CI->getOperand(0);
+    Value *RHS = CI->getOperand(1);
+    CmpInst::Predicate Pred = CI->getPredicate();
+    if (Inst->getOperand(0) > Inst->getOperand(1)) {
+      std::swap(LHS, RHS);
+      Pred = CI->getSwappedPredicate();
+    }
+    return hash_combine(Inst->getOpcode(), Pred, LHS, RHS);
+  }
+
+  if (CastInst *CI = dyn_cast<CastInst>(Inst))
+    return hash_combine(CI->getOpcode(), CI->getType(), CI->getOperand(0));
+
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(Inst))
+    return hash_combine(EVI->getOpcode(), EVI->getOperand(0),
+                        hash_combine_range(EVI->idx_begin(), EVI->idx_end()));
+
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(Inst))
+    return hash_combine(IVI->getOpcode(), IVI->getOperand(0),
+                        IVI->getOperand(1),
+                        hash_combine_range(IVI->idx_begin(), IVI->idx_end()));
+
+  assert((isa<CallInst>(Inst) || isa<BinaryOperator>(Inst) ||
+          isa<GetElementPtrInst>(Inst) || isa<SelectInst>(Inst) ||
+          isa<ExtractElementInst>(Inst) || isa<InsertElementInst>(Inst) ||
+          isa<ShuffleVectorInst>(Inst)) && "Invalid/unknown instruction");
+
   // Mix in the opcode.
-  return (Res << 1) ^ Inst->getOpcode();
+  return hash_combine(Inst->getOpcode(),
+                      hash_combine_range(Inst->value_op_begin(),
+                                         Inst->value_op_end()));
 }
 
 bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
@@ -128,7 +150,41 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
     return LHSI == RHSI;
 
   if (LHSI->getOpcode() != RHSI->getOpcode()) return false;
-  return LHSI->isIdenticalTo(RHSI);
+  if (LHSI->isIdenticalTo(RHSI)) return true;
+
+  // If we're not strictly identical, we still might be a commutable instruction
+  if (BinaryOperator *LHSBinOp = dyn_cast<BinaryOperator>(LHSI)) {
+    if (!LHSBinOp->isCommutative())
+      return false;
+
+    assert(isa<BinaryOperator>(RHSI)
+           && "same opcode, but different instruction type?");
+    BinaryOperator *RHSBinOp = cast<BinaryOperator>(RHSI);
+
+    // Check overflow attributes
+    if (isa<OverflowingBinaryOperator>(LHSBinOp)) {
+      assert(isa<OverflowingBinaryOperator>(RHSBinOp)
+             && "same opcode, but different operator type?");
+      if (LHSBinOp->hasNoUnsignedWrap() != RHSBinOp->hasNoUnsignedWrap() ||
+          LHSBinOp->hasNoSignedWrap() != RHSBinOp->hasNoSignedWrap())
+        return false;
+    }
+
+    // Commuted equality
+    return LHSBinOp->getOperand(0) == RHSBinOp->getOperand(1) &&
+      LHSBinOp->getOperand(1) == RHSBinOp->getOperand(0);
+  }
+  if (CmpInst *LHSCmp = dyn_cast<CmpInst>(LHSI)) {
+    assert(isa<CmpInst>(RHSI)
+           && "same opcode, but different instruction type?");
+    CmpInst *RHSCmp = cast<CmpInst>(RHSI);
+    // Commuted equality
+    return LHSCmp->getOperand(0) == RHSCmp->getOperand(1) &&
+      LHSCmp->getOperand(1) == RHSCmp->getOperand(0) &&
+      LHSCmp->getSwappedPredicate() == RHSCmp->getPredicate();
+  }
+
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
