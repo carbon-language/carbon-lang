@@ -37,7 +37,7 @@ Symbols::FindSymbolFileInBundle (const FileSpec& symfile_bundle,
 }
 
 bool
-Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec)
+Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup)
 {
     // Fill in the module_spec.GetFileSpec() for the object file and/or the
     // module_spec.GetSymbolFileSpec() for the debug symbols file.
