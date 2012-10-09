@@ -205,31 +205,8 @@ public:
 
     uint64_t getAlignment() const;
 
-    void addAddressSafetyAttr();
-    void addAlwaysInlineAttr();
-    void addByValAttr();
-    void addInlineHintAttr();
-    void addInRegAttr();
-    void addNakedAttr();
-    void addNestAttr();
-    void addNoAliasAttr();
-    void addNoCaptureAttr();
-    void addNoImplicitFloatAttr();
-    void addNoInlineAttr();
-    void addNonLazyBindAttr();
-    void addNoRedZoneAttr();
-    void addNoReturnAttr();
-    void addNoUnwindAttr();
-    void addOptimizeForSizeAttr();
-    void addReadNoneAttr();
-    void addReadOnlyAttr();
-    void addReturnsTwiceAttr();
-    void addSExtAttr();
-    void addStackProtectAttr();
-    void addStackProtectReqAttr();
-    void addStructRetAttr();
-    void addUWTableAttr();
-    void addZExtAttr();
+    void addAttribute(Attributes::AttrVal Val);
+    void removeAttribute(Attributes::AttrVal Val);
 
     void addAlignmentAttr(unsigned Align);
     void addStackAlignmentAttr(unsigned Align);
@@ -276,13 +253,16 @@ public:
     return hasAttribute(Attributes::StructRet);
   }
 
-  // Attribute query methods.
-  // FIXME: StackAlignment & Alignment attributes have no predicate methods.
+  /// @brief Return true if the attribute is present.
+  bool hasAttribute(AttrVal Val) const;
+
+  /// @brief Return true if attributes exist
   bool hasAttributes() const {
     return Attrs.hasAttributes();
   }
+
+  /// @brief Return true if the attributes are a non-null intersection.
   bool hasAttributes(const Attributes &A) const;
-  bool hasAttribute(AttrVal Val) const;
 
   /// This returns the alignment field of an attribute as a byte alignment
   /// value.

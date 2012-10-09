@@ -25,7 +25,6 @@ class AttributesImpl : public FoldingSetNode {
   friend class Attributes;
   uint64_t Bits;                // FIXME: We will be expanding this.
 
-  uint64_t getAttrMask(uint64_t Val) const;
 public:
   AttributesImpl(uint64_t bits) : Bits(bits) {}
 
@@ -38,6 +37,8 @@ public:
   uint64_t getStackAlignment() const;
 
   bool isEmptyOrSingleton() const;
+
+  static uint64_t getAttrMask(uint64_t Val);
 
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Bits);

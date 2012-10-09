@@ -927,32 +927,32 @@ bool LLParser::ParseOptionalAttrs(Attributes::Builder &B, unsigned AttrKind) {
     switch (Token) {
     default:  // End of attributes.
       return HaveError;
-    case lltok::kw_zeroext:         B.addZExtAttr(); break;
-    case lltok::kw_signext:         B.addSExtAttr(); break;
-    case lltok::kw_inreg:           B.addInRegAttr(); break;
-    case lltok::kw_sret:            B.addStructRetAttr(); break;
-    case lltok::kw_noalias:         B.addNoAliasAttr(); break;
-    case lltok::kw_nocapture:       B.addNoCaptureAttr(); break;
-    case lltok::kw_byval:           B.addByValAttr(); break;
-    case lltok::kw_nest:            B.addNestAttr(); break;
+    case lltok::kw_zeroext:         B.addAttribute(Attributes::ZExt); break;
+    case lltok::kw_signext:         B.addAttribute(Attributes::SExt); break;
+    case lltok::kw_inreg:           B.addAttribute(Attributes::InReg); break;
+    case lltok::kw_sret:            B.addAttribute(Attributes::StructRet); break;
+    case lltok::kw_noalias:         B.addAttribute(Attributes::NoAlias); break;
+    case lltok::kw_nocapture:       B.addAttribute(Attributes::NoCapture); break;
+    case lltok::kw_byval:           B.addAttribute(Attributes::ByVal); break;
+    case lltok::kw_nest:            B.addAttribute(Attributes::Nest); break;
 
-    case lltok::kw_noreturn:        B.addNoReturnAttr(); break;
-    case lltok::kw_nounwind:        B.addNoUnwindAttr(); break;
-    case lltok::kw_uwtable:         B.addUWTableAttr(); break;
-    case lltok::kw_returns_twice:   B.addReturnsTwiceAttr(); break;
-    case lltok::kw_noinline:        B.addNoInlineAttr(); break;
-    case lltok::kw_readnone:        B.addReadNoneAttr(); break;
-    case lltok::kw_readonly:        B.addReadOnlyAttr(); break;
-    case lltok::kw_inlinehint:      B.addInlineHintAttr(); break;
-    case lltok::kw_alwaysinline:    B.addAlwaysInlineAttr(); break;
-    case lltok::kw_optsize:         B.addOptimizeForSizeAttr(); break;
-    case lltok::kw_ssp:             B.addStackProtectAttr(); break;
-    case lltok::kw_sspreq:          B.addStackProtectReqAttr(); break;
-    case lltok::kw_noredzone:       B.addNoRedZoneAttr(); break;
-    case lltok::kw_noimplicitfloat: B.addNoImplicitFloatAttr(); break;
-    case lltok::kw_naked:           B.addNakedAttr(); break;
-    case lltok::kw_nonlazybind:     B.addNonLazyBindAttr(); break;
-    case lltok::kw_address_safety:  B.addAddressSafetyAttr(); break;
+    case lltok::kw_noreturn:        B.addAttribute(Attributes::NoReturn); break;
+    case lltok::kw_nounwind:        B.addAttribute(Attributes::NoUnwind); break;
+    case lltok::kw_uwtable:         B.addAttribute(Attributes::UWTable); break;
+    case lltok::kw_returns_twice:   B.addAttribute(Attributes::ReturnsTwice); break;
+    case lltok::kw_noinline:        B.addAttribute(Attributes::NoInline); break;
+    case lltok::kw_readnone:        B.addAttribute(Attributes::ReadNone); break;
+    case lltok::kw_readonly:        B.addAttribute(Attributes::ReadOnly); break;
+    case lltok::kw_inlinehint:      B.addAttribute(Attributes::InlineHint); break;
+    case lltok::kw_alwaysinline:    B.addAttribute(Attributes::AlwaysInline); break;
+    case lltok::kw_optsize:         B.addAttribute(Attributes::OptimizeForSize); break;
+    case lltok::kw_ssp:             B.addAttribute(Attributes::StackProtect); break;
+    case lltok::kw_sspreq:          B.addAttribute(Attributes::StackProtectReq); break;
+    case lltok::kw_noredzone:       B.addAttribute(Attributes::NoRedZone); break;
+    case lltok::kw_noimplicitfloat: B.addAttribute(Attributes::NoImplicitFloat); break;
+    case lltok::kw_naked:           B.addAttribute(Attributes::Naked); break;
+    case lltok::kw_nonlazybind:     B.addAttribute(Attributes::NonLazyBind); break;
+    case lltok::kw_address_safety:  B.addAttribute(Attributes::AddressSafety); break;
 
     case lltok::kw_alignstack: {
       unsigned Alignment;

@@ -140,9 +140,9 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
       Attributes::Builder NewAttributes;
 
       if (!SCCMightUnwind)
-        NewAttributes.addNoUnwindAttr();
+        NewAttributes.addAttribute(Attributes::NoUnwind);
       if (!SCCMightReturn)
-        NewAttributes.addNoReturnAttr();
+        NewAttributes.addAttribute(Attributes::NoReturn);
 
       Function *F = (*I)->getFunction();
       const AttrListPtr &PAL = F->getAttributes();

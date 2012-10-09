@@ -65,12 +65,12 @@ Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
   return Attributes(PA);
 }
 
-bool Attributes::hasAttributes(const Attributes &A) const {
-  return Attrs.hasAttributes(A);
-}
-
 bool Attributes::hasAttribute(AttrVal Val) const {
   return Attrs.hasAttribute(Val);
+}
+
+bool Attributes::hasAttributes(const Attributes &A) const {
+  return Attrs.hasAttributes(A);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
@@ -122,17 +122,17 @@ Attributes Attributes::typeIncompatible(Type *Ty) {
   
   if (!Ty->isIntegerTy()) {
     // Attributes that only apply to integers.
-    Incompatible.addSExtAttr();
-    Incompatible.addZExtAttr();
+    Incompatible.addAttribute(Attributes::SExt);
+    Incompatible.addAttribute(Attributes::ZExt);
   }
   
   if (!Ty->isPointerTy()) {
     // Attributes that only apply to pointers.
-    Incompatible.addByValAttr();
-    Incompatible.addNestAttr();
-    Incompatible.addNoAliasAttr();
-    Incompatible.addNoCaptureAttr();
-    Incompatible.addStructRetAttr();
+    Incompatible.addAttribute(Attributes::ByVal);
+    Incompatible.addAttribute(Attributes::Nest);
+    Incompatible.addAttribute(Attributes::NoAlias);
+    Incompatible.addAttribute(Attributes::NoCapture);
+    Incompatible.addAttribute(Attributes::StructRet);
   }
   
   return Attributes(Incompatible.Bits); // FIXME: Use Attributes::get().
@@ -210,80 +210,8 @@ std::string Attributes::getAsString() const {
 // Attributes::Builder Implementation
 //===----------------------------------------------------------------------===//
 
-void Attributes::Builder::addAddressSafetyAttr() {
-  Bits |= Attribute::AddressSafety_i;
-}
-void Attributes::Builder::addAlwaysInlineAttr() {
-  Bits |= Attribute::AlwaysInline_i;
-}
-void Attributes::Builder::addByValAttr() {
-  Bits |= Attribute::ByVal_i;
-}
-void Attributes::Builder::addInlineHintAttr() {
-  Bits |= Attribute::InlineHint_i;
-}
-void Attributes::Builder::addInRegAttr() {
-  Bits |= Attribute::InReg_i;
-}
-void Attributes::Builder::addNakedAttr() {
-  Bits |= Attribute::Naked_i;
-}
-void Attributes::Builder::addNestAttr() {
-  Bits |= Attribute::Nest_i;
-}
-void Attributes::Builder::addNoAliasAttr() {
-  Bits |= Attribute::NoAlias_i;
-}
-void Attributes::Builder::addNoCaptureAttr() {
-  Bits |= Attribute::NoCapture_i;
-}
-void Attributes::Builder::addNoImplicitFloatAttr() {
-  Bits |= Attribute::NoImplicitFloat_i;
-}
-void Attributes::Builder::addNoInlineAttr() {
-  Bits |= Attribute::NoInline_i;
-}
-void Attributes::Builder::addNonLazyBindAttr() {
-  Bits |= Attribute::NonLazyBind_i;
-}
-void Attributes::Builder::addNoRedZoneAttr() {
-  Bits |= Attribute::NoRedZone_i;
-}
-void Attributes::Builder::addNoReturnAttr() {
-  Bits |= Attribute::NoReturn_i;
-}
-void Attributes::Builder::addNoUnwindAttr() {
-  Bits |= Attribute::NoUnwind_i;
-}
-void Attributes::Builder::addOptimizeForSizeAttr() {
-  Bits |= Attribute::OptimizeForSize_i;
-}
-void Attributes::Builder::addReadNoneAttr() {
-  Bits |= Attribute::ReadNone_i;
-}
-void Attributes::Builder::addReadOnlyAttr() {
-  Bits |= Attribute::ReadOnly_i;
-}
-void Attributes::Builder::addReturnsTwiceAttr() {
-  Bits |= Attribute::ReturnsTwice_i;
-}
-void Attributes::Builder::addSExtAttr() {
-  Bits |= Attribute::SExt_i;
-}
-void Attributes::Builder::addStackProtectAttr() {
-  Bits |= Attribute::StackProtect_i;
-}
-void Attributes::Builder::addStackProtectReqAttr() {
-  Bits |= Attribute::StackProtectReq_i;
-}
-void Attributes::Builder::addStructRetAttr() {
-  Bits |= Attribute::StructRet_i;
-}
-void Attributes::Builder::addUWTableAttr() {
-  Bits |= Attribute::UWTable_i;
-}
-void Attributes::Builder::addZExtAttr() {
-  Bits |= Attribute::ZExt_i;
+void Attributes::Builder::addAttribute(Attributes::AttrVal Val) {
+  Bits |= AttributesImpl::getAttrMask(Val);
 }
 
 void Attributes::Builder::addAlignmentAttr(unsigned Align) {
@@ -298,6 +226,10 @@ void Attributes::Builder::addStackAlignmentAttr(unsigned Align) {
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x100 && "Alignment too large.");
   Bits |= (Log2_32(Align) + 1) << 26;
+}
+
+void Attributes::Builder::removeAttribute(Attributes::AttrVal Val) {
+  Bits &= ~AttributesImpl::getAttrMask(Val);
 }
 
 void Attributes::Builder::removeAttributes(const Attributes &A) {
@@ -407,7 +339,7 @@ uint64_t Attributes::Builder::getAlignment() const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-uint64_t AttributesImpl::getAttrMask(uint64_t Val) const {
+uint64_t AttributesImpl::getAttrMask(uint64_t Val) {
   switch (Val) {
   case Attributes::None:            return 0;
   case Attributes::ZExt:            return 1 << 0;

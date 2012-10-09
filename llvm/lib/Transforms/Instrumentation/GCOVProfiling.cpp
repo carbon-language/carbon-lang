@@ -683,7 +683,7 @@ void GCOVProfiler::insertCounterWriteout(
   F->setUnnamedAddr(true);
   F->setLinkage(GlobalValue::InternalLinkage);
   Attributes::Builder B;
-  B.addNoInlineAttr();
+  B.addAttribute(Attributes::NoInline);
   F->addFnAttr(Attributes::get(B));
 
   BB = BasicBlock::Create(*Ctx, "entry", F);
@@ -704,7 +704,7 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Fn->setUnnamedAddr(true);
   Fn->setLinkage(GlobalValue::InternalLinkage);
   Attributes::Builder B;
-  B.addNoInlineAttr();
+  B.addAttribute(Attributes::NoInline);
   Fn->addFnAttr(Attributes::get(B));
 
   Type *Int32Ty = Type::getInt32Ty(*Ctx);
