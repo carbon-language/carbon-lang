@@ -269,7 +269,7 @@ ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,
                                                       uint32_t ptr_size,
                                                       bool allow_NULLs,
                                                       bool allow_tagged,
-                                                      bool check_version_specific)
+                                                      bool check_version_specific) const
 {
     if (!value)
         return allow_NULLs;
@@ -308,35 +308,14 @@ ObjCLanguageRuntime::GetISA(const ConstString &name)
 ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
 {
-    if (!IsValidISA(isa))
-        return 0;
-    
-    ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-    if (found != end && found->second)
+    ClassDescriptorSP objc_class_sp (GetClassDescriptor(isa));
+    if (objc_class_sp)
     {
-        ClassDescriptorSP superclass = found->second->GetSuperclass();
-        if (!superclass || !superclass->IsValid())
-            return 0;
-        else
-        {
-            ObjCISA parent_isa = superclass->GetISA();
-            m_isa_to_descriptor_cache[parent_isa] = superclass;
-            return parent_isa;
-        }
+        ClassDescriptorSP objc_super_class_sp (objc_class_sp->GetSuperclass());
+        if (objc_super_class_sp)
+            return objc_super_class_sp->GetISA();
     }
-    
-    ClassDescriptorSP descriptor(GetClassDescriptor(isa));
-    if (!descriptor.get() || !descriptor->IsValid())
-        return 0;
-    m_isa_to_descriptor_cache[isa] = descriptor;
-    ClassDescriptorSP superclass(descriptor->GetSuperclass());
-    if (!superclass.get() || !superclass->IsValid())
-        return 0;
-    ObjCISA parent_isa = superclass->GetISA();
-    m_isa_to_descriptor_cache[parent_isa] = superclass;
-    return parent_isa;
+    return 0;
 }
 
 // TODO: should we have a transparent_kvo parameter here to say if we
@@ -344,28 +323,60 @@ ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
 ConstString
 ObjCLanguageRuntime::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 {
-    static const ConstString g_unknown ("unknown");
-    
-    if (!IsValidISA(isa))
-        return ConstString();
-    
-    ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-    if (found != end && found->second)
-        return found->second->GetClassName();
-    
-    ClassDescriptorSP descriptor(GetClassDescriptor(isa));
-    if (!descriptor.get() || !descriptor->IsValid())
-        return ConstString();
-    ConstString class_name = descriptor->GetClassName();
-    if (descriptor->IsKVO())
-    {
-        ClassDescriptorSP superclass(descriptor->GetSuperclass());
-        if (!superclass.get() || !superclass->IsValid())
-            return ConstString();
-        descriptor = superclass;
-    }
-    m_isa_to_descriptor_cache[isa] = descriptor;
-    return descriptor->GetClassName();
+    ClassDescriptorSP objc_class_sp (GetNonKVOClassDescriptor(isa));
+    if (objc_class_sp)
+        return objc_class_sp->GetClassName();
+    return ConstString();
 }
+
+ObjCLanguageRuntime::ClassDescriptorSP
+ObjCLanguageRuntime::GetClassDescriptor (ValueObject& in_value)
+{
+    ObjCISA isa = GetISA(in_value);
+    if (isa)
+        return GetClassDescriptor (isa);
+    return ClassDescriptorSP();
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+ObjCLanguageRuntime::GetClassDescriptor (ObjCISA isa)
+{
+    ClassDescriptorSP objc_class_sp;
+    if (isa)
+    {
+        ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
+        ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
+    
+        if (found != end && found->second)
+            return found->second;
+    
+        objc_class_sp = CreateClassDescriptor(isa);
+        if (objc_class_sp && objc_class_sp->IsValid())
+            m_isa_to_descriptor_cache[isa] = objc_class_sp;
+    }
+    return objc_class_sp;
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+ObjCLanguageRuntime::GetNonKVOClassDescriptor (ObjCISA isa)
+{
+    if (isa)
+    {
+        ClassDescriptorSP objc_class_sp = GetClassDescriptor (isa);
+        if (objc_class_sp && objc_class_sp->IsValid())
+        {
+            if (objc_class_sp->IsKVO())
+            {
+                ClassDescriptorSP non_kvo_objc_class_sp(objc_class_sp->GetSuperclass());
+                if (non_kvo_objc_class_sp && non_kvo_objc_class_sp->IsValid())
+                    return non_kvo_objc_class_sp;
+            }
+            else
+                return objc_class_sp;
+        }
+    }
+    return ClassDescriptorSP();
+}
+
+
+

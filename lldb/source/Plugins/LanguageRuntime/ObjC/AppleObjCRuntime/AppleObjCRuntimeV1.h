@@ -133,11 +133,8 @@ public:
     GetISA(ValueObject& valobj);
     
     virtual ClassDescriptorSP
-    GetClassDescriptor (ValueObject& in_value);
+    CreateClassDescriptor (ObjCISA isa);
     
-    virtual ClassDescriptorSP
-    GetClassDescriptor (ObjCISA isa);
-
 protected:
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);

@@ -105,7 +105,7 @@ public:
     GetClassDescriptor (ValueObject& in_value);
     
     virtual ClassDescriptorSP
-    GetClassDescriptor (ObjCISA isa);
+    CreateClassDescriptor (ObjCISA isa);
     
     virtual TypeVendor *
     GetTypeVendor();

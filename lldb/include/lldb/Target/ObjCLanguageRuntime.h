@@ -108,7 +108,7 @@ public:
         // use to implement version-specific additional constraints on pointers
         virtual bool
         CheckPointer (lldb::addr_t value,
-                      uint32_t ptr_size)
+                      uint32_t ptr_size) const
         {
             return true;
         }
@@ -135,7 +135,7 @@ public:
                         uint32_t ptr_size,
                         bool allow_NULLs = false,
                         bool allow_tagged = false,
-                        bool check_version_specific = false);
+                        bool check_version_specific = false) const;
         
     private:
         LazyBool m_is_kvo;
@@ -167,8 +167,10 @@ public:
         GetISA () { return 0; }
         
         virtual bool
-        CheckPointer (lldb::addr_t value,
-                      uint32_t ptr_size) { return false; }
+        CheckPointer (lldb::addr_t value, uint32_t ptr_size) const
+        {
+            return false;
+        }
         
         virtual
         ~ClassDescriptor_Invalid ()
@@ -177,17 +179,14 @@ public:
     };
     
     virtual ClassDescriptorSP
-    GetClassDescriptor (ValueObject& in_value)
-    {
-        return ClassDescriptorSP();
-    }
+    GetClassDescriptor (ValueObject& in_value);
     
     virtual ClassDescriptorSP
-    GetClassDescriptor (ObjCISA isa)
-    {
-        return ClassDescriptorSP();
-    }
-    
+    GetClassDescriptor (ObjCISA isa);
+
+    ClassDescriptorSP
+    GetNonKVOClassDescriptor (ObjCISA isa);
+
     virtual
     ~ObjCLanguageRuntime();
     
@@ -208,6 +207,9 @@ public:
     
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan (Thread &thread, bool stop_others) = 0;
+    
+    virtual ClassDescriptorSP
+    CreateClassDescriptor (ObjCISA isa) = 0;
     
     lldb::addr_t
     LookupInMethodCache (lldb::addr_t class_addr, lldb::addr_t sel);

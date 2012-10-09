@@ -158,8 +158,8 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV1::GetISA(ValueObject& valobj)
 {
-    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
-        return 0;
+//    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
+//        return 0;
     
     // if we get an invalid VO (which might still happen when playing around
     // with pointers returned by the expression parser, don't consider this
@@ -288,33 +288,10 @@ AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
 }
 
 ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV1::GetClassDescriptor (ValueObject& in_value)
+AppleObjCRuntimeV1::CreateClassDescriptor (ObjCISA isa)
 {
-    ObjCISA isa = GetISA(in_value);
-    
-    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-    if (found != end && found->second)
-        return found->second;
-    
-    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV1(in_value));
-    if (descriptor && descriptor->IsValid())
-        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
-    return descriptor;
-}
-
-ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV1::GetClassDescriptor (ObjCISA isa)
-{
-    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-    if (found != end && found->second)
-        return found->second;
-    
-    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV1(isa,m_process->CalculateProcess()));
-    if (descriptor && descriptor->IsValid())
-        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
-    return descriptor;
+    ClassDescriptorSP objc_class_sp;
+    if (isa != 0)
+        objc_class_sp.reset (new ClassDescriptorV1(isa,m_process->CalculateProcess()));
+    return objc_class_sp;
 }

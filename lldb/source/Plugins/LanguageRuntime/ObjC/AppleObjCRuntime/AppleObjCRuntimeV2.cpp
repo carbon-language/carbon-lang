@@ -603,7 +603,7 @@ public:
         Error err;
         
         // const struct +NXMapTablePrototype *prototype;
-        m_prototype_la = m_process_sp->ReadPointerFromMemory(cursor, err);
+        m_prototype_ptr = m_process_sp->ReadPointerFromMemory(cursor, err);
         cursor += m_process_sp->GetAddressByteSize();
                 
         // unsigned count;
@@ -615,7 +615,7 @@ public:
         cursor += sizeof(unsigned);
         
         // void *buckets;
-        m_buckets_la = m_process_sp->ReadPointerFromMemory(cursor, err);
+        m_buckets_ptr = m_process_sp->ReadPointerFromMemory(cursor, err);
     }
     
     // const_iterator mimics NXMapState and its code comes from NXInitMapState and NXNextMapState.
@@ -672,16 +672,16 @@ public:
                 return element();
             }
          
-            lldb::addr_t    pairs_la        = m_parent.m_buckets_la;
+            lldb::addr_t    pairs_ptr        = m_parent.m_buckets_ptr;
             size_t          map_pair_size   = m_parent.m_map_pair_size;
-            lldb::addr_t    pair_la         = pairs_la + (m_index * map_pair_size);
+            lldb::addr_t    pair_ptr         = pairs_ptr + (m_index * map_pair_size);
             
             Error           err;
             
-            lldb::addr_t    key     = m_parent.m_process_sp->ReadPointerFromMemory(pair_la, err);
+            lldb::addr_t    key     = m_parent.m_process_sp->ReadPointerFromMemory(pair_ptr, err);
             if (!err.Success())
                 return element();
-            lldb::addr_t    value   = m_parent.m_process_sp->ReadPointerFromMemory(pair_la + m_parent.m_process_sp->GetAddressByteSize(), err);
+            lldb::addr_t    value   = m_parent.m_process_sp->ReadPointerFromMemory(pair_ptr + m_parent.m_process_sp->GetAddressByteSize(), err);
             if (!err.Success())
                 return element();
             
@@ -699,15 +699,15 @@ public:
             if (m_index == -1)
                 return;
             
-            lldb::addr_t    pairs_la        = m_parent.m_buckets_la;
+            lldb::addr_t    pairs_ptr        = m_parent.m_buckets_ptr;
             size_t          map_pair_size   = m_parent.m_map_pair_size;
             lldb::addr_t    NXMAPNOTAKEY    = m_parent.m_NXMAPNOTAKEY;
             Error           err;
 
             while (m_index--)
             {
-                lldb::addr_t pair_la = pairs_la + (m_index * map_pair_size);
-                lldb::addr_t key = m_parent.m_process_sp->ReadPointerFromMemory(pair_la, err);
+                lldb::addr_t pair_ptr = pairs_ptr + (m_index * map_pair_size);
+                lldb::addr_t key = m_parent.m_process_sp->ReadPointerFromMemory(pair_ptr, err);
                 
                 if (!err.Success())
                 {
@@ -735,10 +735,10 @@ public:
     
 private:
     // contents of _NXMapTable struct
-    lldb::addr_t                        m_prototype_la;
+    lldb::addr_t                        m_prototype_ptr;
     uint32_t                            m_count;
     uint32_t                            m_nbBucketsMinusOne;
-    lldb::addr_t                        m_buckets_la;
+    lldb::addr_t                        m_buckets_ptr;
     
     lldb::ProcessSP                     m_process_sp;
     const_iterator                      m_end_iterator;
@@ -781,9 +781,9 @@ public:
         if (m_version != 12)
             return;
         
-        m_clsopt_la = load_addr + m_clsopt_offset;
+        m_clsopt_ptr = load_addr + m_clsopt_offset;
         
-        cursor = m_clsopt_la;
+        cursor = m_clsopt_ptr;
         
         // uint32_t capacity;
         m_capacity = m_process_sp->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
@@ -800,7 +800,7 @@ public:
         cursor += sizeof(uint32_t);
 
         // uint32_t zero;
-        m_zero_offset = cursor - m_clsopt_la;
+        m_zero_offset = cursor - m_clsopt_ptr;
         cursor += sizeof(uint32_t);
         
         // uint32_t unused;
@@ -822,7 +822,7 @@ public:
         cursor += sizeof(int32_t) * m_capacity;
         
         // objc_classheader_t clsOffsets[capacity];
-        m_clsOffsets_la = cursor;
+        m_clsOffsets_ptr = cursor;
         cursor += (m_classheader_size * m_capacity);
         
         // uint32_t duplicateCount;
@@ -830,7 +830,7 @@ public:
         cursor += sizeof(uint32_t);
         
         // objc_classheader_t duplicateOffsets[duplicateCount];
-        m_duplicateOffsets_la = cursor;
+        m_duplicateOffsets_ptr = cursor;
     }
     
     friend class const_iterator;
@@ -888,23 +888,23 @@ public:
             if (m_index >= m_parent.m_capacity + m_parent.m_duplicateCount)
                 return 0; // index out of range
             
-            lldb::addr_t classheader_la;
+            lldb::addr_t classheader_ptr;
             
             if (m_index >= m_parent.m_capacity)
             {
                 // index in the duplicate offsets
                 uint32_t index = (uint32_t)((uint64_t)m_index - (uint64_t)m_parent.m_capacity);
-                classheader_la = m_parent.m_duplicateOffsets_la + (index * m_parent.m_classheader_size);
+                classheader_ptr = m_parent.m_duplicateOffsets_ptr + (index * m_parent.m_classheader_size);
             }
             else
             {
                 // index in the offsets
                 uint32_t index = (uint32_t)m_index;
-                classheader_la = m_parent.m_clsOffsets_la + (index * m_parent.m_classheader_size);
+                classheader_ptr = m_parent.m_clsOffsets_ptr + (index * m_parent.m_classheader_size);
             }
             
             Scalar clsOffset;
-            m_parent.m_process_sp->ReadScalarIntegerFromMemory(classheader_la, sizeof(int32_t), /*is_signed*/ true, clsOffset, err);
+            m_parent.m_process_sp->ReadScalarIntegerFromMemory(classheader_ptr, sizeof(int32_t), /*is_signed*/ true, clsOffset, err);
             if (!err.Success())
                 return 0;
             
@@ -915,7 +915,7 @@ public:
             if (clsOffset_int == m_parent.m_zero_offset)
                 return 0; // == offsetof(objc_clsopt_t, zero)
             
-            return m_parent.m_clsopt_la + (int64_t)clsOffset_int;
+            return m_parent.m_clsopt_ptr + (int64_t)clsOffset_int;
         }
         
         void AdvanceToValidIndex ()
@@ -954,14 +954,14 @@ private:
     uint32_t                            m_version;
     int32_t                             m_clsopt_offset;
     
-    lldb::addr_t                        m_clsopt_la;
+    lldb::addr_t                        m_clsopt_ptr;
     
     // contents of objc_clsopt struct
     uint32_t                            m_capacity;
     uint32_t                            m_mask;
     uint32_t                            m_duplicateCount;
-    lldb::addr_t                        m_clsOffsets_la;
-    lldb::addr_t                        m_duplicateOffsets_la;
+    lldb::addr_t                        m_clsOffsets_ptr;
+    lldb::addr_t                        m_duplicateOffsets_ptr;
     int32_t                             m_zero_offset;
     
     lldb::ProcessSP                     m_process_sp;
@@ -974,23 +974,35 @@ class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor
 {
 public:
     ClassDescriptorV2 (ObjCLanguageRuntime &runtime, ValueObject &ptr_to_object) :
-        m_runtime(runtime)
+        m_runtime (runtime),
+        m_valid (false),
+        m_objc_class_ptr (0),
+        m_objc_class (),
+        m_name (),
+        m_instance_size (0),
+        m_realized (eLazyBoolCalculate),
+        m_process_wp ()
     {
-        lldb::addr_t object_la = ptr_to_object.GetValueAsUnsigned(0);
+        lldb::addr_t object_ptr = ptr_to_object.GetValueAsUnsigned(0);
         lldb::ProcessSP process_sp = ptr_to_object.GetProcessSP();
         
         Error error;
-        ObjCLanguageRuntime::ObjCISA isa = process_sp->ReadPointerFromMemory(object_la,
+        ObjCLanguageRuntime::ObjCISA isa = process_sp->ReadPointerFromMemory(object_ptr,
                                                                              error);
         
-        if (isa == LLDB_INVALID_ADDRESS)
-            m_valid = false;
-        else
+        if (isa != LLDB_INVALID_ADDRESS)
             Initialize (isa, process_sp);
     }
     
     ClassDescriptorV2 (ObjCLanguageRuntime &runtime, ObjCLanguageRuntime::ObjCISA isa, lldb::ProcessSP process_sp) :
-        m_runtime(runtime)
+        m_runtime (runtime),
+        m_valid (false),
+        m_objc_class_ptr (0),
+        m_objc_class (),
+        m_name (),
+        m_instance_size (0),
+        m_realized (eLazyBoolCalculate),
+        m_process_wp ()
     {
         Initialize (isa, process_sp);
     }
@@ -998,9 +1010,49 @@ public:
     virtual ConstString
     GetClassName ()
     {
-        if (!m_valid)
-            return ConstString();
-        
+        if (m_valid && !m_name)
+        {
+            const lldb::addr_t class_ro_t_ptr = get_class_ro_t_ptr ();
+            
+            ProcessSP process_sp = m_process_wp.lock();
+            
+            if (process_sp)
+            {
+                const size_t ptr_size = process_sp->GetAddressByteSize();
+                
+                Error error;
+                lldb::addr_t name_ptr = process_sp->ReadPointerFromMemory (class_ro_t_ptr
+                                                                           + sizeof(uint32_t)                        // uint32_t flags
+                                                                           + sizeof(uint32_t)                        // uint32_t instanceStart
+                                                                           + sizeof(uint32_t)                        // uint32_t instanceSize
+                                                                           + (ptr_size == 8 ? sizeof(uint32_t) : 0)  // uint32_t reserved (__LP64__ only)
+                                                                           + ptr_size,                               // const uint8_t *ivarLayout
+                                                                           error);
+                
+                if (error.Success())
+                {
+                    char class_name_cstr[1024];
+                    
+                    size_t count = process_sp->ReadCStringFromMemory(name_ptr, class_name_cstr, sizeof(class_name_cstr), error);
+                    
+                    if (error.Fail())
+                    {
+                        m_valid = false;
+                    }
+                    else
+                    {
+                        if (count)
+                            m_name.SetCString(class_name_cstr);
+                        else
+                            m_valid = false;
+                    }
+                }
+                else
+                    m_valid = false;
+            }
+            else
+                m_valid = false;
+        }
         return m_name;
     }
     
@@ -1031,6 +1083,27 @@ public:
         if (!m_valid)
             return 0;
         
+        if (m_instance_size == 0)
+        {
+            const lldb::addr_t class_ro_t_ptr = get_class_ro_t_ptr ();
+            
+            ProcessSP process_sp = m_process_wp.lock();
+            
+            if (process_sp)
+            {
+                Error error;
+                m_instance_size = process_sp->ReadUnsignedIntegerFromMemory(class_ro_t_ptr
+                                                                            + sizeof(uint32_t)                        // uint32_t flags
+                                                                            + sizeof(uint32_t),                       // uint32_t instanceStart
+                                                                            sizeof(uint32_t),
+                                                                            0,
+                                                                            error);
+                if (error.Fail())
+                    m_valid = false;
+            }
+            else
+                m_valid = false;
+        }
         return m_instance_size;
     }
     
@@ -1040,7 +1113,7 @@ public:
         if (!m_valid)
             return 0;
         
-        return m_objc_class_la;
+        return m_objc_class_ptr;
     }
     
     virtual bool
@@ -1062,17 +1135,17 @@ public:
         if (IsRealized())
         {
             rw.reset(new class_rw_t);
-            if (!rw->Read(process_sp, m_objc_class.m_data_la))
+            if (!rw->Read(process_sp, m_objc_class.m_data_ptr))
                 return false;
             
             ro.reset(new class_ro_t);
-            if (!ro->Read(process_sp, rw->m_ro_la))
+            if (!ro->Read(process_sp, rw->m_ro_ptr))
                 return false;
         }
         else
         {
             ro.reset(new class_ro_t);
-            if (!ro->Read(process_sp, m_objc_class.m_data_la))
+            if (!ro->Read(process_sp, m_objc_class.m_data_ptr))
                 return false;
         }
     
@@ -1086,7 +1159,7 @@ public:
             std::auto_ptr <method_list_t> base_method_list;
             
             base_method_list.reset(new method_list_t);
-            if (!base_method_list->Read(process_sp, ro->m_baseMethods_la))
+            if (!base_method_list->Read(process_sp, ro->m_baseMethods_ptr))
                 return false;
             
             if (base_method_list->m_entsize != method_t::GetSize(process_sp))
@@ -1097,7 +1170,7 @@ public:
             
             for (uint32_t i = 0, e = base_method_list->m_count; i < e; ++i)
             {
-                method->Read(process_sp, base_method_list->m_first_la + (i * base_method_list->m_entsize));
+                method->Read(process_sp, base_method_list->m_first_ptr + (i * base_method_list->m_entsize));
                 
                 instance_method_func(method->m_name.c_str(), method->m_types.c_str());
             }
@@ -1125,7 +1198,14 @@ public:
         if (!m_valid)
             return false;
         
-        return m_realized;
+        if (m_realized == eLazyBoolCalculate)
+        {
+            if (class_row_t_flags() & RW_REALIZED)
+                m_realized = eLazyBoolYes;
+            else
+                m_realized = eLazyBoolNo;
+        }
+        return m_realized == eLazyBoolYes;
     }
     
     virtual
@@ -1135,26 +1215,78 @@ public:
     
 protected:
     virtual bool
-    CheckPointer (lldb::addr_t value,
-                  uint32_t ptr_size)
+    CheckPointer (lldb::addr_t value, uint32_t ptr_size) const
     {
         if (ptr_size != 8)
             return true;
         return ((value & 0xFFFF800000000000) == 0);
     }
     
-    void
-    Initialize (ObjCLanguageRuntime::ObjCISA objc_class_la, lldb::ProcessSP process_sp)
+    uint32_t
+    class_row_t_flags ()
     {
-        m_valid = true;
+        if (m_valid && m_objc_class.m_data_ptr)
+        {
+            ProcessSP process_sp (m_process_wp.lock());
+            if (process_sp)
+            {
+                Error error;
+                uint32_t class_row_t_flags = process_sp->ReadUnsignedIntegerFromMemory(m_objc_class.m_data_ptr, sizeof(uint32_t), 0, error);
+                if (error.Success())
+                    return class_row_t_flags;
+                else
+                    m_valid = false;
+            }
+        }
+        return 0;
+    }
+    
+    lldb::addr_t
+    get_class_ro_t_ptr ()
+    {
+        if (m_valid && m_objc_class.m_data_ptr)
+        {
+            if (IsRealized())
+            {
+                ProcessSP process_sp (m_process_wp.lock());
+                if (process_sp)
+                {
+                    lldb::addr_t class_rw_t_ptr = m_objc_class.m_data_ptr;
+                    
+                    Error error;
+                    const lldb::addr_t class_ro_t_ptr = process_sp->ReadPointerFromMemory (class_rw_t_ptr
+                                                                                           + sizeof(uint32_t)    // uint32_t flags
+                                                                                           + sizeof(uint32_t),   // uint32_t version
+                                                                                           error);
+                    
+                    if (error.Success() && IsPointerValid(class_ro_t_ptr, process_sp->GetAddressByteSize()))
+                        return class_ro_t_ptr;
+                    else
+                        m_valid = false;
+                }
+                else
+                    m_valid = false;
+            }
+            else
+            {
+                return m_objc_class.m_data_ptr;
+            }
+        }
+        return 0;
+    }
 
-        if (!objc_class_la || !process_sp)
+    void
+    Initialize (ObjCLanguageRuntime::ObjCISA objc_class_ptr, lldb::ProcessSP process_sp)
+    {
+        if (!objc_class_ptr || !process_sp)
         {
             m_valid = false;
             return;
         }
+        m_valid = true;
         
-        m_objc_class_la = objc_class_la;
+        
+        m_objc_class_ptr = objc_class_ptr;
 
         size_t ptr_size = process_sp->GetAddressByteSize();
         Error error;
@@ -1163,13 +1295,13 @@ protected:
         const bool allow_tagged = false;
         const bool check_version_specific = true;
 
-        if (!IsPointerValid(m_objc_class_la, ptr_size, allow_NULLs, allow_tagged, check_version_specific))
+        if (!IsPointerValid(m_objc_class_ptr, ptr_size, allow_NULLs, allow_tagged, check_version_specific))
         {
             m_valid = false;
             return;
         }
         
-        if (!m_objc_class.Read(process_sp, m_objc_class_la))
+        if (!m_objc_class.Read(process_sp, m_objc_class_ptr))
         {
             m_valid = false;
             return;
@@ -1179,121 +1311,56 @@ protected:
         // Since we find out whether the class is realized on the way, we'll remember that too.
     
         // The flags for class_r[ow]_t always are the first uint32_t.  So just read that.
-        if (!IsPointerValid(m_objc_class.m_data_la, ptr_size, allow_NULLs, allow_tagged, check_version_specific))
+        if (!IsPointerValid(m_objc_class.m_data_ptr, ptr_size, allow_NULLs, allow_tagged, check_version_specific))
         {
             m_valid = false;
             return;
         }
         
-        uint32_t class_row_t_flags = process_sp->ReadUnsignedIntegerFromMemory(m_objc_class.m_data_la, sizeof(uint32_t), 0, error);
-        if (error.Fail())
-        {
-            m_valid = false;
-            return;
-        }
-        
-        m_realized = class_row_t_flags & RW_REALIZED;
-        
-        lldb::addr_t class_ro_t_la = 0;
-        
-        if (m_realized)
-        {
-            lldb::addr_t class_rw_t_la = m_objc_class.m_data_la;
-            
-            class_ro_t_la = process_sp->ReadPointerFromMemory(class_rw_t_la
-                                                              + sizeof(uint32_t)    // uint32_t flags
-                                                              + sizeof(uint32_t),   // uint32_t version
-                                                              error);
-            
-            if (error.Fail())
-            {
-                m_valid = false;
-                return;
-            }
-        }
-        else
-        {
-            class_ro_t_la = m_objc_class.m_data_la;
-        }
-        
-        if (!IsPointerValid(class_ro_t_la, ptr_size))
-        {
-            m_valid = false;
-            return;
-        }
-        
-        // Now that we have a handle on class_ro_t_la, read the desired data out
-        
-        m_instance_size = process_sp->ReadUnsignedIntegerFromMemory(class_ro_t_la
-                                                                    + sizeof(uint32_t)                        // uint32_t flags
-                                                                    + sizeof(uint32_t),                       // uint32_t instanceStart
-                                                                    sizeof(uint32_t),
-                                                                    0,
-                                                                    error);
-        
-        if (error.Fail())
-        {
-            m_valid = false;
-            return;
-        }
-        
-        lldb::addr_t name_ptr = process_sp->ReadPointerFromMemory(class_ro_t_la
-                                                                  + sizeof(uint32_t)                        // uint32_t flags
-                                                                  + sizeof(uint32_t)                        // uint32_t instanceStart
-                                                                  + sizeof(uint32_t)                        // uint32_t instanceSize
-                                                                  + (ptr_size == 8 ? sizeof(uint32_t) : 0)  // uint32_t reserved (__LP64__ only)
-                                                                  + ptr_size,                               // const uint8_t *ivarLayout
-                                                                  error);
-        
-        if (error.Fail())
-        {
-            m_valid = false;
-            return;
-        }
-        
-        const size_t buffer_size = 1024;
-        
-        DataBufferHeap buffer(buffer_size, 0);
-        size_t count = process_sp->ReadCStringFromMemory(name_ptr, (char*)buffer.GetBytes(), buffer_size, error);
-        
-        if (error.Fail())
-        {
-            m_valid = false;
-            return;
-        }
-        
-        if (count)
-            m_name = ConstString((char*)buffer.GetBytes());
-        else
-            m_name = ConstString();
-                
-        m_process_wp = lldb::ProcessWP(process_sp);
+        m_process_wp = process_sp;
     }
         
 private:
     static const uint32_t RW_REALIZED = (1 << 31);
     
-    ObjCLanguageRuntime                &m_runtime;          // The runtime, so we can read our metaclass.
-    bool                                m_valid;            // Gates whether we trust anything here at all.
-    lldb::addr_t                        m_objc_class_la;    // The address of the objc_class_t.
-    
     struct objc_class_t {
         ObjCLanguageRuntime::ObjCISA    m_isa;              // The class's metaclass.
         ObjCLanguageRuntime::ObjCISA    m_superclass;
-        lldb::addr_t                    m_cache_la;
-        lldb::addr_t                    m_vtable_la;
-        lldb::addr_t                    m_data_la;
+        lldb::addr_t                    m_cache_ptr;
+        lldb::addr_t                    m_vtable_ptr;
+        lldb::addr_t                    m_data_ptr;
         uint8_t                         m_flags;
         
+        objc_class_t () :
+            m_isa (0),
+            m_superclass (0),
+            m_cache_ptr (0),
+            m_vtable_ptr (0),
+            m_data_ptr (0),
+            m_flags (0)
+        {
+        }
+        
+        void
+        Clear()
+        {
+            m_isa = 0;
+            m_superclass = 0;
+            m_cache_ptr = 0;
+            m_vtable_ptr = 0;
+            m_data_ptr = 0;
+            m_flags = 0;
+        }
+
         bool Read(ProcessSP &process_sp, lldb::addr_t addr)
         {
             size_t ptr_size = process_sp->GetAddressByteSize();
             
             size_t objc_class_size = ptr_size   // uintptr_t isa;
-                                   + ptr_size   // Class superclass;
-                                   + ptr_size   // void *cache;
-                                   + ptr_size   // IMP *vtable;
-                                   + ptr_size;  // uintptr_t data_NEVER_USE;
+            + ptr_size   // Class superclass;
+            + ptr_size   // void *cache;
+            + ptr_size   // IMP *vtable;
+            + ptr_size;  // uintptr_t data_NEVER_USE;
             
             DataBufferHeap objc_class_buf (objc_class_size, '\0');
             Error error;
@@ -1308,25 +1375,18 @@ private:
             
             uint32_t cursor = 0;
             
-            m_isa                       = extractor.GetAddress_unchecked(&cursor);   // uintptr_t isa;
-            m_superclass                = extractor.GetAddress_unchecked(&cursor);   // Class superclass;
-            m_cache_la                  = extractor.GetAddress_unchecked(&cursor);   // void *cache;
-            m_vtable_la                 = extractor.GetAddress_unchecked(&cursor);   // IMP *vtable;
+            m_isa           = extractor.GetAddress_unchecked(&cursor);   // uintptr_t isa;
+            m_superclass    = extractor.GetAddress_unchecked(&cursor);   // Class superclass;
+            m_cache_ptr     = extractor.GetAddress_unchecked(&cursor);   // void *cache;
+            m_vtable_ptr    = extractor.GetAddress_unchecked(&cursor);   // IMP *vtable;
             lldb::addr_t data_NEVER_USE = extractor.GetAddress_unchecked(&cursor);   // uintptr_t data_NEVER_USE;
             
-            m_flags     = (uint8_t)(data_NEVER_USE & (lldb::addr_t)3);
-            m_data_la   = data_NEVER_USE & ~(lldb::addr_t)3;
+            m_flags         = (uint8_t)(data_NEVER_USE & (lldb::addr_t)3);
+            m_data_ptr      = data_NEVER_USE & ~(lldb::addr_t)3;
             
             return true;
         }
     };
-    
-    objc_class_t                        m_objc_class;
-    
-    // cached information from the class_r[ow]_t
-    ConstString                         m_name;
-    uint32_t                            m_instance_size;
-    bool                                m_realized;
     
     struct class_ro_t {
         uint32_t                        m_flags;
@@ -1334,30 +1394,30 @@ private:
         uint32_t                        m_instanceSize;
         uint32_t                        m_reserved;
         
-        lldb::addr_t                    m_ivarLayout_la;
-        lldb::addr_t                    m_name_la;
-        lldb::addr_t                    m_baseMethods_la;
-        lldb::addr_t                    m_baseProtocols_la;
-        lldb::addr_t                    m_ivars_la;
+        lldb::addr_t                    m_ivarLayout_ptr;
+        lldb::addr_t                    m_name_ptr;
+        lldb::addr_t                    m_baseMethods_ptr;
+        lldb::addr_t                    m_baseProtocols_ptr;
+        lldb::addr_t                    m_ivars_ptr;
         
-        lldb::addr_t                    m_weakIvarLayout_la;
-        lldb::addr_t                    m_baseProperties_la;
+        lldb::addr_t                    m_weakIvarLayout_ptr;
+        lldb::addr_t                    m_baseProperties_ptr;
         
         bool Read(ProcessSP &process_sp, lldb::addr_t addr)
         {
             size_t ptr_size = process_sp->GetAddressByteSize();
             
-            size_t size = sizeof(uint32_t)                         // uint32_t flags;
-                        + sizeof(uint32_t)                         // uint32_t instanceStart;
-                        + sizeof(uint32_t)                         // uint32_t instanceSize;
-                        + (ptr_size == 8 ? sizeof(uint32_t) : 0)   // uint32_t reserved; // __LP64__ only
-                        + ptr_size                                 // const uint8_t *ivarLayout;
-                        + ptr_size                                 // const char *name;
-                        + ptr_size                                 // const method_list_t *baseMethods;
-                        + ptr_size                                 // const protocol_list_t *baseProtocols;
-                        + ptr_size                                 // const ivar_list_t *ivars;
-                        + ptr_size                                 // const uint8_t *weakIvarLayout;
-                        + ptr_size;                                // const property_list_t *baseProperties;
+            size_t size = sizeof(uint32_t)             // uint32_t flags;
+            + sizeof(uint32_t)                         // uint32_t instanceStart;
+            + sizeof(uint32_t)                         // uint32_t instanceSize;
+            + (ptr_size == 8 ? sizeof(uint32_t) : 0)   // uint32_t reserved; // __LP64__ only
+            + ptr_size                                 // const uint8_t *ivarLayout;
+            + ptr_size                                 // const char *name;
+            + ptr_size                                 // const method_list_t *baseMethods;
+            + ptr_size                                 // const protocol_list_t *baseProtocols;
+            + ptr_size                                 // const ivar_list_t *ivars;
+            + ptr_size                                 // const uint8_t *weakIvarLayout;
+            + ptr_size;                                // const property_list_t *baseProperties;
             
             DataBufferHeap buffer (size, '\0');
             Error error;
@@ -1379,13 +1439,13 @@ private:
                 m_reserved      = extractor.GetU32_unchecked(&cursor);
             else
                 m_reserved      = 0;
-            m_ivarLayout_la     = extractor.GetAddress_unchecked(&cursor);
-            m_name_la           = extractor.GetAddress_unchecked(&cursor);
-            m_baseMethods_la    = extractor.GetAddress_unchecked(&cursor);
-            m_baseProtocols_la  = extractor.GetAddress_unchecked(&cursor);
-            m_ivars_la          = extractor.GetAddress_unchecked(&cursor);
-            m_weakIvarLayout_la = extractor.GetAddress_unchecked(&cursor);
-            m_baseProperties_la = extractor.GetAddress_unchecked(&cursor);
+            m_ivarLayout_ptr     = extractor.GetAddress_unchecked(&cursor);
+            m_name_ptr           = extractor.GetAddress_unchecked(&cursor);
+            m_baseMethods_ptr    = extractor.GetAddress_unchecked(&cursor);
+            m_baseProtocols_ptr  = extractor.GetAddress_unchecked(&cursor);
+            m_ivars_ptr          = extractor.GetAddress_unchecked(&cursor);
+            m_weakIvarLayout_ptr = extractor.GetAddress_unchecked(&cursor);
+            m_baseProperties_ptr = extractor.GetAddress_unchecked(&cursor);
             
             return true;
         }
@@ -1395,13 +1455,13 @@ private:
         uint32_t                        m_flags;
         uint32_t                        m_version;
         
-        lldb::addr_t                    m_ro_la;
+        lldb::addr_t                    m_ro_ptr;
         union {
-            lldb::addr_t                m_method_list_la;
-            lldb::addr_t                m_method_lists_la;
+            lldb::addr_t                m_method_list_ptr;
+            lldb::addr_t                m_method_lists_ptr;
         };
-        lldb::addr_t                    m_properties_la;
-        lldb::addr_t                    m_protocols_la;
+        lldb::addr_t                    m_properties_ptr;
+        lldb::addr_t                    m_protocols_ptr;
         
         ObjCLanguageRuntime::ObjCISA    m_firstSubclass;
         ObjCLanguageRuntime::ObjCISA    m_nextSiblingClass;
@@ -1411,13 +1471,13 @@ private:
             size_t ptr_size = process_sp->GetAddressByteSize();
             
             size_t size = sizeof(uint32_t)  // uint32_t flags;
-                        + sizeof(uint32_t)  // uint32_t version;
-                        + ptr_size          // const class_ro_t *ro;
-                        + ptr_size          // union { method_list_t **method_lists; method_list_t *method_list; };
-                        + ptr_size          // struct chained_property_list *properties;
-                        + ptr_size          // const protocol_list_t **protocols;
-                        + ptr_size          // Class firstSubclass;
-                        + ptr_size;         // Class nextSiblingClass;
+            + sizeof(uint32_t)  // uint32_t version;
+            + ptr_size          // const class_ro_t *ro;
+            + ptr_size          // union { method_list_t **method_lists; method_list_t *method_list; };
+            + ptr_size          // struct chained_property_list *properties;
+            + ptr_size          // const protocol_list_t **protocols;
+            + ptr_size          // Class firstSubclass;
+            + ptr_size;         // Class nextSiblingClass;
             
             DataBufferHeap buffer (size, '\0');
             Error error;
@@ -1434,9 +1494,9 @@ private:
             
             m_flags             = extractor.GetU32_unchecked(&cursor);
             m_version           = extractor.GetU32_unchecked(&cursor);
-            m_ro_la             = extractor.GetAddress_unchecked(&cursor);
-            m_method_list_la    = extractor.GetAddress_unchecked(&cursor);
-            m_properties_la     = extractor.GetAddress_unchecked(&cursor);
+            m_ro_ptr             = extractor.GetAddress_unchecked(&cursor);
+            m_method_list_ptr    = extractor.GetAddress_unchecked(&cursor);
+            m_properties_ptr     = extractor.GetAddress_unchecked(&cursor);
             m_firstSubclass     = extractor.GetAddress_unchecked(&cursor);
             m_nextSiblingClass  = extractor.GetAddress_unchecked(&cursor);
             
@@ -1448,12 +1508,12 @@ private:
     {
         uint32_t        m_entsize;
         uint32_t        m_count;
-        lldb::addr_t    m_first_la;
+        lldb::addr_t    m_first_ptr;
         
         bool Read(ProcessSP &process_sp, lldb::addr_t addr)
-        {            
+        {
             size_t size = sizeof(uint32_t)  // uint32_t entsize_NEVER_USE;
-                        + sizeof(uint32_t); // uint32_t count;
+            + sizeof(uint32_t); // uint32_t count;
             
             DataBufferHeap buffer (size, '\0');
             Error error;
@@ -1470,7 +1530,7 @@ private:
             
             m_entsize   = extractor.GetU32_unchecked(&cursor) & ~(uint32_t)3;
             m_count     = extractor.GetU32_unchecked(&cursor);
-            m_first_la  = addr + cursor;
+            m_first_ptr  = addr + cursor;
             
             return true;
         }
@@ -1478,9 +1538,9 @@ private:
     
     struct method_t
     {
-        lldb::addr_t    m_name_la;
-        lldb::addr_t    m_types_la;
-        lldb::addr_t    m_imp_la;
+        lldb::addr_t    m_name_ptr;
+        lldb::addr_t    m_types_ptr;
+        lldb::addr_t    m_imp_ptr;
         
         std::string     m_name;
         std::string     m_types;
@@ -1488,10 +1548,10 @@ private:
         static size_t GetSize(ProcessSP &process_sp)
         {
             size_t ptr_size = process_sp->GetAddressByteSize();
-
+            
             return ptr_size     // SEL name;
-                   + ptr_size   // const char *types;
-                   + ptr_size;  // IMP imp;
+            + ptr_size   // const char *types;
+            + ptr_size;  // IMP imp;
         }
         
         bool Read(ProcessSP &process_sp, lldb::addr_t addr)
@@ -1511,26 +1571,35 @@ private:
             
             uint32_t cursor = 0;
             
-            m_name_la   = extractor.GetAddress_unchecked(&cursor);
-            m_types_la  = extractor.GetAddress_unchecked(&cursor);
-            m_imp_la    = extractor.GetAddress_unchecked(&cursor);
+            m_name_ptr   = extractor.GetAddress_unchecked(&cursor);
+            m_types_ptr  = extractor.GetAddress_unchecked(&cursor);
+            m_imp_ptr    = extractor.GetAddress_unchecked(&cursor);
             
             const size_t buffer_size = 1024;
             size_t count;
             
             DataBufferHeap string_buf(buffer_size, 0);
             
-            count = process_sp->ReadCStringFromMemory(m_name_la, (char*)string_buf.GetBytes(), buffer_size, error);
+            count = process_sp->ReadCStringFromMemory(m_name_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
             m_name.assign((char*)string_buf.GetBytes(), count);
             
-            count = process_sp->ReadCStringFromMemory(m_types_la, (char*)string_buf.GetBytes(), buffer_size, error);
+            count = process_sp->ReadCStringFromMemory(m_types_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
             m_types.assign((char*)string_buf.GetBytes(), count);
             
             return true;
         }
     };
-    
-    lldb::ProcessWP m_process_wp;
+
+    ObjCLanguageRuntime &m_runtime;         // The runtime, so we can read our metaclass.
+    bool                m_valid;            // Gates whether we trust anything here at all.
+    lldb::addr_t        m_objc_class_ptr;   // The address of the objc_class_t.
+    objc_class_t        m_objc_class;
+
+    // cached information from the class_r[ow]_t
+    ConstString         m_name;
+    uint32_t            m_instance_size;
+    LazyBool            m_realized;
+    lldb::ProcessWP     m_process_wp;
 };
 
 class ClassDescriptorV2Tagged : public ObjCLanguageRuntime::ClassDescriptor
@@ -1727,44 +1796,27 @@ private:
 };
 
 ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV2::GetClassDescriptor (ObjCISA isa)
+AppleObjCRuntimeV2::CreateClassDescriptor (ObjCISA isa)
 {
-    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-    if (found != end && found->second)
-        return found->second;
-    
-    ClassDescriptorSP descriptor = ClassDescriptorSP(new ClassDescriptorV2(*this, isa, m_process->CalculateProcess()));
-    if (descriptor && descriptor->IsValid())
-        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
-    return descriptor;
+    ClassDescriptorSP objc_class_sp;
+    if (isa != 0)
+        objc_class_sp.reset (new ClassDescriptorV2(*this, isa, m_process->CalculateProcess()));
+    return objc_class_sp;
 }
 
 ObjCLanguageRuntime::ClassDescriptorSP
 AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& in_value)
 {
+    ClassDescriptorSP objc_class_sp;
     uint64_t ptr_value = in_value.GetValueAsUnsigned(0);
-    if (ptr_value == 0)
-        return ObjCLanguageRuntime::ClassDescriptorSP();
-    
-    ObjCISA isa = GetISA(in_value);
-    
-    ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-    if (found != end && found->second)
-        return found->second;
-    
-    ClassDescriptorSP descriptor;
-    
-    if (ptr_value & 1)
-        return ClassDescriptorSP(new ClassDescriptorV2Tagged(in_value)); // do not save tagged pointers
-    descriptor = ClassDescriptorSP(new ClassDescriptorV2(*this, in_value));
-    
-    if (descriptor && descriptor->IsValid())
-        m_isa_to_descriptor_cache[descriptor->GetISA()] = descriptor;
-    return descriptor;
+    if (ptr_value)
+    {
+        if (ptr_value & 1)
+            objc_class_sp = ClassDescriptorSP(new ClassDescriptorV2Tagged(in_value));
+        else
+            objc_class_sp = ObjCLanguageRuntime::GetClassDescriptor (in_value);
+    }
+    return objc_class_sp;
 }
 
 ModuleSP FindLibobjc (Target &target)
@@ -1829,23 +1881,23 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
                                                           gdb_objc_realized_classes_addr_range))
             break;
         
-        lldb::addr_t gdb_objc_realized_classes_la = gdb_objc_realized_classes_addr_range.GetBaseAddress().GetLoadAddress(&target);
+        lldb::addr_t gdb_objc_realized_classes_ptr = gdb_objc_realized_classes_addr_range.GetBaseAddress().GetLoadAddress(&target);
         
-        if (gdb_objc_realized_classes_la == LLDB_INVALID_ADDRESS)
+        if (gdb_objc_realized_classes_ptr == LLDB_INVALID_ADDRESS)
             break;
     
         // <rdar://problem/10763513>
         
-        lldb::addr_t gdb_objc_realized_classes_nxmaptable_la;
+        lldb::addr_t gdb_objc_realized_classes_nxmaptable_ptr;
         
         {
             Error err;
-            gdb_objc_realized_classes_nxmaptable_la = process_sp->ReadPointerFromMemory(gdb_objc_realized_classes_la, err);
+            gdb_objc_realized_classes_nxmaptable_ptr = process_sp->ReadPointerFromMemory(gdb_objc_realized_classes_ptr, err);
             if (!err.Success())
                 break;
         }
         
-        RemoteNXMapTable gdb_objc_realized_classes(process_sp, gdb_objc_realized_classes_nxmaptable_la);
+        RemoteNXMapTable gdb_objc_realized_classes(process_sp, gdb_objc_realized_classes_nxmaptable_ptr);
     
         for (RemoteNXMapTable::element elt : gdb_objc_realized_classes)
         {
@@ -1886,12 +1938,12 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
         if (!objc_opt_section_sp)
             break;
         
-        lldb::addr_t objc_opt_la = objc_opt_section_sp->GetLoadBaseAddress(&target);
+        lldb::addr_t objc_opt_ptr = objc_opt_section_sp->GetLoadBaseAddress(&target);
         
-        if (objc_opt_la == LLDB_INVALID_ADDRESS)
+        if (objc_opt_ptr == LLDB_INVALID_ADDRESS)
             break;
         
-        RemoteObjCOpt objc_opt(process_sp, objc_opt_la);
+        RemoteObjCOpt objc_opt(process_sp, objc_opt_ptr);
         
         for (ObjCLanguageRuntime::ObjCISA objc_isa : objc_opt)
         {
@@ -1915,9 +1967,9 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
 ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 {
-    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
-        return 0;
-    
+//    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
+//        return 0;
+//    
     // if we get an invalid VO (which might still happen when playing around
     // with pointers returned by the expression parser, don't consider this
     // a valid ObjC object)
@@ -1961,24 +2013,19 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     Process *process = exe_ctx.GetProcessPtr();
     if (process)
     {
-        uint8_t pointer_size = process->GetAddressByteSize();
-    
         Error error;
-        return process->ReadUnsignedIntegerFromMemory (isa_pointer,
-                                                       pointer_size,
-                                                       0,
-                                                       error);
+        ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
+        if (isa != LLDB_INVALID_ADDRESS)
+            return isa;
     }
-    return 0;
+    return 0; // For some reason zero is being used to indicate invalid ISA instead of LLDB_INVALID_ADDRESS
 }
 
-// TODO: should we have a transparent_kvo parameter here to say if we 
+// TODO: should we have a transparent_kvo parameter here to say if we
 // want to replace the KVO swizzled class with the actual user-level type?
 ConstString
 AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 {
-    static const ConstString g_unknown ("unknown");
-
     if (!IsValidISA(isa))
         return ConstString();
      
@@ -2012,26 +2059,8 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
         static const ConstString g_objc_tagged_isa_nsdate_name ("NSDate");
         return g_objc_tagged_isa_nsdate_name;
     }
-
-    ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-    ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
     
-    if (found != end && found->second)
-        return found->second->GetClassName();
-    
-    ClassDescriptorSP descriptor(GetClassDescriptor(isa));
-    if (!descriptor.get() || !descriptor->IsValid())
-        return ConstString();
-    ConstString class_name = descriptor->GetClassName();
-    if (descriptor->IsKVO())
-    {
-        ClassDescriptorSP superclass(descriptor->GetSuperclass());
-        if (!superclass.get() || !superclass->IsValid())
-            return ConstString();
-        descriptor = superclass;
-    }
-    m_isa_to_descriptor_cache[isa] = descriptor;
-    return descriptor->GetClassName();
+    return ObjCLanguageRuntime::GetActualTypeName(isa);
 }
 
 TypeVendor *
