@@ -956,7 +956,12 @@ public:
   const MachinePointerInfo &getPointerInfo() const {
     return MMO->getPointerInfo();
   }
-  
+
+  /// getAddressSpace - Return the address space for the associated pointer
+  unsigned getAddressSpace() const {
+    return getPointerInfo().getAddrSpace();
+  }
+
   /// refineAlignment - Update this MemSDNode's MachineMemOperand information
   /// to reflect the alignment of NewMMO, if it has a greater alignment.
   /// This must only be used when the new alignment applies to all users of

@@ -778,7 +778,7 @@ public:
   static Type *getIndexedType(Type *Ptr, ArrayRef<Constant *> IdxList);
   static Type *getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList);
 
-  /// getIndexedType - Returns the address space used by the GEP pointer.
+  /// getAddressSpace - Returns the address space used by the GEP pointer.
   ///
   static unsigned getAddressSpace(Value *Ptr);
 
@@ -798,7 +798,7 @@ public:
   }
 
   unsigned getPointerAddressSpace() const {
-    return cast<PointerType>(getType())->getAddressSpace();
+    return cast<PointerType>(getPointerOperandType())->getAddressSpace();
   }
 
   /// getPointerOperandType - Method to return the pointer operand as a
@@ -3640,6 +3640,11 @@ public:
   /// @brief Clone an identical IntToPtrInst
   virtual IntToPtrInst *clone_impl() const;
 
+  /// @brief return the address space of the pointer.
+  unsigned getAddressSpace() const {
+    return cast<PointerType>(getType())->getAddressSpace();
+  }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const IntToPtrInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -3676,6 +3681,11 @@ public:
     const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
+
+  /// @brief return the address space of the pointer.
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getOperand(0)->getType())->getAddressSpace();
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PtrToIntInst *) { return true; }

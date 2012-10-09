@@ -16,6 +16,7 @@
 #define LLVM_OPERATOR_H
 
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 
@@ -288,6 +289,12 @@ public:
   /// PointerType.
   Type *getPointerOperandType() const {
     return getPointerOperand()->getType();
+  }
+
+  /// getPointerAddressSpace - Method to return the address space of the
+  /// pointer operand.
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getPointerOperandType())->getAddressSpace();
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative
