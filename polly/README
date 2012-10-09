@@ -1,4 +1,6 @@
 Polly - Polyhedral optimizations for LLVM
+-----------------------------------------
+http://polly.llvm.org/
 
 Polly uses a mathematical representation, the polyhedral model, to represent and
 transform loops and other control flow structures. Using an abstract
