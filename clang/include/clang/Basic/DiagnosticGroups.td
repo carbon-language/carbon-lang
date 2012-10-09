@@ -195,7 +195,7 @@ def Sentinel : DiagGroup<"sentinel">;
 def MissingMethodReturnType : DiagGroup<"missing-method-return-type">;
 def : DiagGroup<"sequence-point">;
 def Shadow : DiagGroup<"shadow">;
-def : DiagGroup<"shorten-64-to-32">;
+def Shorten64To32 : DiagGroup<"shorten-64-to-32">;
 def : DiagGroup<"sign-promo">;
 def SignCompare : DiagGroup<"sign-compare">;
 def : DiagGroup<"stack-protector">;
@@ -331,7 +331,7 @@ def Conversion : DiagGroup<"conversion",
                            [BoolConversion,
                             ConstantConversion,
                             EnumConversion,
-                            DiagGroup<"shorten-64-to-32">,
+                            Shorten64To32,
                             IntConversion,
                             LiteralConversion,
                             NonLiteralNullConversion, // (1-1)->pointer (etc)

@@ -1955,7 +1955,7 @@ def warn_impcast_integer_precision : Warning<
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_64_32 : Warning<
   "implicit conversion loses integer precision: %0 to %1">,
-  InGroup<DiagGroup<"shorten-64-to-32">>, DefaultIgnore;
+  InGroup<Shorten64To32>, DefaultIgnore;
 def warn_impcast_integer_precision_constant : Warning<
   "implicit conversion from %2 to %3 changes value from %0 to %1">,
   InGroup<ConstantConversion>;
