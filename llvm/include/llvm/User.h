@@ -118,6 +118,8 @@ public:
   inline op_iterator       op_end()         { return OperandList+NumOperands; }
   inline const_op_iterator op_end()   const { return OperandList+NumOperands; }
 
+  /// Convenience iterator for directly iterating over the Values in the
+  /// OperandList
   class value_op_iterator : public std::iterator<std::forward_iterator_tag,
                                                  Value*> {
     op_iterator OI;
@@ -131,7 +133,7 @@ public:
       return !operator==(x);
     }
 
-    // Iterator traversal: forward iteration only
+    /// Iterator traversal: forward iteration only
     value_op_iterator &operator++() {          // Preincrement
       ++OI;
       return *this;
@@ -140,7 +142,7 @@ public:
       value_op_iterator tmp = *this; ++*this; return tmp;
     }
 
-    // Retrieve a pointer to the current User.
+    /// Retrieve a pointer to the current Value.
     Value *operator*() const {
       return *OI;
     }
