@@ -334,8 +334,7 @@ public:
     // bits.
     uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
     if (Attrs.hasAttribute(Attributes::Alignment))
-      EncodedAttrs |= (1ULL << 16) <<
-        (((Attrs.Raw() & Attribute::Alignment_i) - 1) >> 16);
+      EncodedAttrs |= Attrs.getAlignment() << 16;
     EncodedAttrs |= (Attrs.Raw() & (0xfffULL << 21)) << 11;
     return EncodedAttrs;
   }

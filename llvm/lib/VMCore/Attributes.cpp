@@ -245,13 +245,14 @@ bool Attributes::Builder::hasAttributes(const Attributes &A) const {
   return Bits & A.Raw();
 }
 bool Attributes::Builder::hasAlignmentAttr() const {
-  return Bits & Attribute::Alignment_i;
+  return Bits & AttributesImpl::getAttrMask(Attributes::Alignment);
 }
 
 uint64_t Attributes::Builder::getAlignment() const {
   if (!hasAlignmentAttr())
     return 0;
-  return 1U << (((Bits & Attribute::Alignment_i) >> 16) - 1);
+  return 1U <<
+    (((Bits & AttributesImpl::getAttrMask(Attributes::Alignment)) >> 16) - 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -305,11 +306,11 @@ bool AttributesImpl::hasAttributes(const Attributes &A) const {
 }
 
 uint64_t AttributesImpl::getAlignment() const {
-  return Bits & Attribute::Alignment_i;
+  return Bits & getAttrMask(Attributes::Alignment);
 }
 
 uint64_t AttributesImpl::getStackAlignment() const {
-  return Bits & Attribute::StackAlignment_i;
+  return Bits & getAttrMask(Attributes::StackAlignment);
 }
 
 bool AttributesImpl::isEmptyOrSingleton() const {
