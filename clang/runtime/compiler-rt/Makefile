@@ -84,18 +84,34 @@ ifeq ($(OS),Linux)
 RuntimeDirs += linux
 RuntimeLibrary.linux.Configs :=
 
+# TryCompile compiler source flags
+# Returns exit code of running a compiler invocation.
+TryCompile = \
+  $(shell \
+    cflags=""; \
+    for flag in $(3); do \
+      cflags="$$cflags $$flag"; \
+    done; \
+    $(1) $$cflags $(2) -o /dev/null > /dev/null 2> /dev/null ; \
+    echo $$?)
+
 # We currently only try to generate runtime libraries on x86.
 ifeq ($(ARCH),x86)
 RuntimeLibrary.linux.Configs += \
 	full-i386.a profile-i386.a asan-i386.a
 endif
+
 ifeq ($(ARCH),x86_64)
 RuntimeLibrary.linux.Configs += \
 	full-x86_64.a profile-x86_64.a asan-x86_64.a tsan-x86_64.a
-# We assume that 32-bit ASan library can be built by Clang on 64-bit platform,
-# and add it to the list of runtime libraries so that
-# "clang -faddress-sanitizer -m32" would work.
+# We need to build 32-bit ASan library on 64-bit platform, and add it to the
+# list of runtime libraries to make "clang -faddress-sanitizer -m32" work.
+# We check that Clang can produce working 32-bit binaries by compiling a simple
+# executable.
+test_source = $(LLVM_SRC_ROOT)/tools/clang/runtime/compiler-rt/clang_linux_test_input.c
+ifeq ($(call TryCompile,$(ToolDir)/clang,$(test_source),-m32),0)
 RuntimeLibrary.linux.Configs += asan-i386.a
+endif
 endif
 
 endif
