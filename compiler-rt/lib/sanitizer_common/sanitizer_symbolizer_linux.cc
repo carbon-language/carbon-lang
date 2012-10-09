@@ -105,7 +105,6 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
 #if defined(__ANDROID__) || defined(ANDROID)
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
-  return 0;
 }
 #else  // ANDROID
 typedef ElfW(Phdr) Elf_Phdr;

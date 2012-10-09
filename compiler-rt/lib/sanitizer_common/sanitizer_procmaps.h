@@ -25,7 +25,6 @@ class MemoryMappingLayout {
   bool GetObjectNameAndOffset(uptr addr, uptr *offset,
                               char filename[], uptr filename_size) {
     UNIMPLEMENTED();
-    return false;
   }
 };
 

@@ -20,12 +20,10 @@ namespace __sanitizer {
 bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
                                int *input_fd, int *output_fd) {
   UNIMPLEMENTED();
-  return false;
 }
 
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 }  // namespace __sanitizer

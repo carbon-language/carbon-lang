@@ -293,12 +293,10 @@ size_t mi_good_size(malloc_zone_t *zone, size_t size) {
 
 boolean_t mi_check(malloc_zone_t *zone) {
   UNIMPLEMENTED();
-  return true;
 }
 
 void mi_print(malloc_zone_t *zone, boolean_t verbose) {
   UNIMPLEMENTED();
-  return;
 }
 
 void mi_log(malloc_zone_t *zone, void *address) {

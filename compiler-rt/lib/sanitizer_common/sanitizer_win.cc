@@ -77,7 +77,6 @@ bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
 
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 const char *GetEnv(const char *name) {
@@ -98,7 +97,6 @@ const char *GetEnv(const char *name) {
 
 const char *GetPwd() {
   UNIMPLEMENTED();
-  return 0;
 }
 
 void DumpProcessMap() {
@@ -115,7 +113,6 @@ void ReExec() {
 
 bool StackSizeIsUnlimited() {
   UNIMPLEMENTED();
-  return false;
 }
 
 void SetStackSizeLimitInBytes(uptr limit) {
@@ -147,27 +144,22 @@ int Atexit(void (*function)(void)) {
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 int internal_munmap(void *addr, uptr length) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 int internal_close(fd_t fd) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 fd_t internal_open(const char *filename, bool write) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
@@ -184,22 +176,18 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
 
 uptr internal_filesize(fd_t fd) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 int internal_dup2(int oldfd, int newfd) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
   UNIMPLEMENTED();
-  return 0;
 }
 
 int internal_sched_yield() {
   UNIMPLEMENTED();
-  return 0;
 }
 
 }  // namespace __sanitizer
