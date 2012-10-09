@@ -993,7 +993,7 @@ bool ASTContext::BitfieldFollowsNonBitfield(const FieldDecl *FD,
 ASTContext::overridden_cxx_method_iterator
 ASTContext::overridden_methods_begin(const CXXMethodDecl *Method) const {
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
-    = OverriddenMethods.find(Method);
+    = OverriddenMethods.find(Method->getCanonicalDecl());
   if (Pos == OverriddenMethods.end())
     return 0;
 
@@ -1003,7 +1003,7 @@ ASTContext::overridden_methods_begin(const CXXMethodDecl *Method) const {
 ASTContext::overridden_cxx_method_iterator
 ASTContext::overridden_methods_end(const CXXMethodDecl *Method) const {
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
-    = OverriddenMethods.find(Method);
+    = OverriddenMethods.find(Method->getCanonicalDecl());
   if (Pos == OverriddenMethods.end())
     return 0;
 
@@ -1013,7 +1013,7 @@ ASTContext::overridden_methods_end(const CXXMethodDecl *Method) const {
 unsigned
 ASTContext::overridden_methods_size(const CXXMethodDecl *Method) const {
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
-    = OverriddenMethods.find(Method);
+    = OverriddenMethods.find(Method->getCanonicalDecl());
   if (Pos == OverriddenMethods.end())
     return 0;
 
@@ -1022,6 +1022,7 @@ ASTContext::overridden_methods_size(const CXXMethodDecl *Method) const {
 
 void ASTContext::addOverriddenMethod(const CXXMethodDecl *Method, 
                                      const CXXMethodDecl *Overridden) {
+  assert(Method->isCanonicalDecl() && Overridden->isCanonicalDecl());
   OverriddenMethods[Method].push_back(Overridden);
 }
 
