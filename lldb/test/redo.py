@@ -169,12 +169,14 @@ def main():
         usage()
 
     filters = " -f ".join(redo_specs)
-    compilers = (" -C %s" % "^".join(comp_specs)) if comp_specs else None
-    archs = (" -A %s" % "^".join(arch_specs)) if arch_specs else None
+    compilers = ''
+    for comp in comp_specs:
+        compilers += " -C %s" % (comp)
+    archs = ''
+    for arch in arch_specs:
+        archs += "--arch %s " % (arch)
 
-    command = "./dotest.py %s %s -v %s -f " % (compilers if compilers else "",
-                                               archs if archs else "",
-                                               "" if no_trace else "-t")
+    command = "./dotest.py %s %s -v %s -f " % (compilers, archs, "" if no_trace else "-t")
 
 
     print "Running %s" % (command + filters)
