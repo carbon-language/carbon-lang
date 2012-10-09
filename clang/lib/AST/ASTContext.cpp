@@ -1031,11 +1031,8 @@ void ASTContext::getOverriddenMethods(const NamedDecl *D,
   assert(D);
 
   if (const CXXMethodDecl *CXXMethod = dyn_cast<CXXMethodDecl>(D)) {
-    for (CXXMethodDecl::method_iterator
-              M = CXXMethod->begin_overridden_methods(),
-           MEnd = CXXMethod->end_overridden_methods();
-         M != MEnd; ++M)
-      Overridden.push_back(*M);
+    Overridden.append(CXXMethod->begin_overridden_methods(),
+                      CXXMethod->end_overridden_methods());
     return;
   }
 
@@ -1045,11 +1042,7 @@ void ASTContext::getOverriddenMethods(const NamedDecl *D,
 
   SmallVector<const ObjCMethodDecl *, 8> OverDecls;
   Method->getOverriddenMethods(OverDecls);
-  for (SmallVector<const ObjCMethodDecl *, 8>::iterator
-            M = OverDecls.begin(),
-         MEnd = OverDecls.end();
-       M != MEnd; ++M)
-    Overridden.push_back(*M);
+  Overridden.append(OverDecls.begin(), OverDecls.end());
 }
 
 void ASTContext::addedLocalImportDecl(ImportDecl *Import) {
