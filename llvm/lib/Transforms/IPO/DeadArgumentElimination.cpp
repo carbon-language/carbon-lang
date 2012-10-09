@@ -32,6 +32,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -129,7 +130,7 @@ namespace {
     // As the code generation for module is finished (and DIBuilder is
     // finalized) we assume that subprogram descriptors won't be changed, and
     // they are stored in map for short duration anyway.
-    typedef std::map<Function*, DISubprogram> FunctionDIMap;
+    typedef DenseMap<Function*, DISubprogram> FunctionDIMap;
     FunctionDIMap FunctionDIs;
 
   protected:
@@ -200,18 +201,20 @@ void DAE::CollectFunctionDIs(Module &M) {
   for (Module::named_metadata_iterator I = M.named_metadata_begin(),
        E = M.named_metadata_end(); I != E; ++I) {
     NamedMDNode &NMD = *I;
-    for (unsigned i = 0, n = NMD.getNumOperands(); i < n; ++i) {
-      MDNode *Node = NMD.getOperand(i);
-      if (DIDescriptor(Node).isCompileUnit()) {
-        DICompileUnit CU(Node);
-        const DIArray &SPs = CU.getSubprograms();
-        for (unsigned i = 0, n = SPs.getNumElements(); i < n; ++i) {
-          DISubprogram SP(SPs.getElement(i));
-          if (SP.Verify()) {
-            if (Function *F = SP.getFunction())
-              FunctionDIs[F] = SP;
-          }
-        }
+    for (unsigned MDIndex = 0, MDNum = NMD.getNumOperands();
+         MDIndex < MDNum; ++MDIndex) {
+      MDNode *Node = NMD.getOperand(MDIndex);
+      if (!DIDescriptor(Node).isCompileUnit())
+        continue;
+      DICompileUnit CU(Node);
+      const DIArray &SPs = CU.getSubprograms();
+      for (unsigned SPIndex = 0, SPNum = SPs.getNumElements();
+           SPIndex < SPNum; ++SPIndex) {
+        DISubprogram SP(SPs.getElement(SPIndex));
+        if (!SP.Verify())
+          continue;
+        if (Function *F = SP.getFunction())
+          FunctionDIs[F] = SP;
       }
     }
   }
