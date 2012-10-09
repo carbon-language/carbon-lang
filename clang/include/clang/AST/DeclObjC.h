@@ -417,6 +417,16 @@ public:
   /// method in the interface or its categories.
   bool isOverriding() const { return IsOverriding; }
   void setOverriding(bool isOverriding) { IsOverriding = isOverriding; }
+
+  /// \brief Return overridden methods for the given \p Method.
+  ///
+  /// An ObjC method is considered to override any method in the class's
+  /// base classes, its protocols, or its categories' protocols, that has
+  /// the same selector and is of the same kind (class or instance).
+  /// A method in an implementation is not considered as overriding the same
+  /// method in the interface or its categories.
+  void getOverriddenMethods(
+                     SmallVectorImpl<const ObjCMethodDecl *> &Overridden) const;
   
   // Related to protocols declared in  \@protocol
   void setDeclImplementation(ImplementationControl ic) {

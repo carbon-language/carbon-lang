@@ -722,6 +722,180 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   llvm_unreachable("unknown method context");
 }
 
+static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
+                                            const ObjCMethodDecl *Method,
+                               SmallVectorImpl<const ObjCMethodDecl *> &Methods,
+                                            bool MovedToSuper) {
+  if (!Container)
+    return;
+
+  // In categories look for overriden methods from protocols. A method from
+  // category is not "overriden" since it is considered as the "same" method
+  // (same USR) as the one from the interface.
+  if (const ObjCCategoryDecl *
+        Category = dyn_cast<ObjCCategoryDecl>(Container)) {
+    // Check whether we have a matching method at this category but only if we
+    // are at the super class level.
+    if (MovedToSuper)
+      if (ObjCMethodDecl *
+            Overridden = Container->getMethod(Method->getSelector(),
+                                              Method->isInstanceMethod()))
+        if (Method != Overridden) {
+          // We found an override at this category; there is no need to look
+          // into its protocols.
+          Methods.push_back(Overridden);
+          return;
+        }
+
+    for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
+                                          PEnd = Category->protocol_end();
+         P != PEnd; ++P)
+      CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
+    return;
+  }
+
+  // Check whether we have a matching method at this level.
+  if (const ObjCMethodDecl *
+        Overridden = Container->getMethod(Method->getSelector(),
+                                                    Method->isInstanceMethod()))
+    if (Method != Overridden) {
+      // We found an override at this level; there is no need to look
+      // into other protocols or categories.
+      Methods.push_back(Overridden);
+      return;
+    }
+
+  if (const ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)){
+    for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
+                                          PEnd = Protocol->protocol_end();
+         P != PEnd; ++P)
+      CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
+  }
+
+  if (const ObjCInterfaceDecl *
+        Interface = dyn_cast<ObjCInterfaceDecl>(Container)) {
+    for (ObjCInterfaceDecl::protocol_iterator P = Interface->protocol_begin(),
+                                           PEnd = Interface->protocol_end();
+         P != PEnd; ++P)
+      CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
+
+    for (const ObjCCategoryDecl *Category = Interface->getCategoryList();
+         Category; Category = Category->getNextClassCategory())
+      CollectOverriddenMethodsRecurse(Category, Method, Methods,
+                                      MovedToSuper);
+
+    if (const ObjCInterfaceDecl *Super = Interface->getSuperClass())
+      return CollectOverriddenMethodsRecurse(Super, Method, Methods,
+                                             /*MovedToSuper=*/true);
+  }
+}
+
+static inline void CollectOverriddenMethods(const ObjCContainerDecl *Container,
+                                            const ObjCMethodDecl *Method,
+                             SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
+  CollectOverriddenMethodsRecurse(Container, Method, Methods,
+                                  /*MovedToSuper=*/false);
+}
+
+static void collectOverriddenMethodsSlow(const ObjCMethodDecl *Method,
+                          SmallVectorImpl<const ObjCMethodDecl *> &overridden) {
+  assert(Method->isOverriding());
+
+  if (const ObjCProtocolDecl *
+        ProtD = dyn_cast<ObjCProtocolDecl>(Method->getDeclContext())) {
+    CollectOverriddenMethods(ProtD, Method, overridden);
+
+  } else if (const ObjCImplDecl *
+               IMD = dyn_cast<ObjCImplDecl>(Method->getDeclContext())) {
+    const ObjCInterfaceDecl *ID = IMD->getClassInterface();
+    if (!ID)
+      return;
+    // Start searching for overridden methods using the method from the
+    // interface as starting point.
+    if (const ObjCMethodDecl *IFaceMeth = ID->getMethod(Method->getSelector(),
+                                                  Method->isInstanceMethod()))
+      Method = IFaceMeth;
+    CollectOverriddenMethods(ID, Method, overridden);
+
+  } else if (const ObjCCategoryDecl *
+               CatD = dyn_cast<ObjCCategoryDecl>(Method->getDeclContext())) {
+    const ObjCInterfaceDecl *ID = CatD->getClassInterface();
+    if (!ID)
+      return;
+    // Start searching for overridden methods using the method from the
+    // interface as starting point.
+    if (const ObjCMethodDecl *IFaceMeth = ID->getMethod(Method->getSelector(),
+                                                  Method->isInstanceMethod()))
+      Method = IFaceMeth;
+    CollectOverriddenMethods(ID, Method, overridden);
+
+  } else {
+    CollectOverriddenMethods(
+                  dyn_cast_or_null<ObjCContainerDecl>(Method->getDeclContext()),
+                  Method, overridden);
+  }
+}
+
+static void collectOnCategoriesAfterLocation(SourceLocation Loc,
+                                             const ObjCInterfaceDecl *Class,
+                                             SourceManager &SM,
+                                             const ObjCMethodDecl *Method,
+                             SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
+  if (!Class)
+    return;
+
+  for (const ObjCCategoryDecl *Category = Class->getCategoryList();
+       Category; Category = Category->getNextClassCategory())
+    if (SM.isBeforeInTranslationUnit(Loc, Category->getLocation()))
+      CollectOverriddenMethodsRecurse(Category, Method, Methods, true);
+
+  collectOnCategoriesAfterLocation(Loc, Class->getSuperClass(), SM,
+                                   Method, Methods);
+}
+
+/// \brief Faster collection that is enabled when ObjCMethodDecl::isOverriding()
+/// returns false.
+/// You'd think that in that case there are no overrides but categories can
+/// "introduce" new overridden methods that are missed by Sema because the
+/// overrides lookup that it does for methods, inside implementations, will
+/// stop at the interface level (if there is a method there) and not look
+/// further in super classes.
+static void collectOverriddenMethodsFast(SourceManager &SM,
+                                         const ObjCMethodDecl *Method,
+                             SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
+  assert(!Method->isOverriding());
+
+  const ObjCContainerDecl *
+    ContD = cast<ObjCContainerDecl>(Method->getDeclContext());
+  if (isa<ObjCInterfaceDecl>(ContD) || isa<ObjCProtocolDecl>(ContD))
+    return;
+  const ObjCInterfaceDecl *Class = Method->getClassInterface();
+  if (!Class)
+    return;
+
+  collectOnCategoriesAfterLocation(Class->getLocation(), Class->getSuperClass(),
+                                   SM, Method, Methods);
+}
+
+void ObjCMethodDecl::getOverriddenMethods(
+                    SmallVectorImpl<const ObjCMethodDecl *> &Overridden) const {
+  const ObjCMethodDecl *Method = this;
+
+  if (Method->isRedeclaration()) {
+    Method = cast<ObjCContainerDecl>(Method->getDeclContext())->
+                   getMethod(Method->getSelector(), Method->isInstanceMethod());
+  }
+
+  if (!Method->isOverriding()) {
+    collectOverriddenMethodsFast(getASTContext().getSourceManager(),
+                                 Method, Overridden);
+  } else {
+    collectOverriddenMethodsSlow(Method, Overridden);
+    assert(!Overridden.empty() &&
+           "ObjCMethodDecl's overriding bit is not as expected");
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCInterfaceDecl
 //===----------------------------------------------------------------------===//
