@@ -104,7 +104,7 @@ public:
     assert(i < NumOperands && "getOperandUse() out of range!");
     return OperandList[i];
   }
-  
+
   unsigned getNumOperands() const { return NumOperands; }
 
   // ---------------------------------------------------------------------------
@@ -117,6 +117,43 @@ public:
   inline const_op_iterator op_begin() const { return OperandList; }
   inline op_iterator       op_end()         { return OperandList+NumOperands; }
   inline const_op_iterator op_end()   const { return OperandList+NumOperands; }
+
+  class value_op_iterator : public std::iterator<std::forward_iterator_tag,
+                                                 Value*> {
+    op_iterator OI;
+  public:
+    explicit value_op_iterator(Use *U) : OI(U) {}
+
+    bool operator==(const value_op_iterator &x) const {
+      return OI == x.OI;
+    }
+    bool operator!=(const value_op_iterator &x) const {
+      return !operator==(x);
+    }
+
+    // Iterator traversal: forward iteration only
+    value_op_iterator &operator++() {          // Preincrement
+      ++OI;
+      return *this;
+    }
+    value_op_iterator operator++(int) {        // Postincrement
+      value_op_iterator tmp = *this; ++*this; return tmp;
+    }
+
+    // Retrieve a pointer to the current User.
+    Value *operator*() const {
+      return *OI;
+    }
+
+    Value *operator->() const { return operator*(); }
+  };
+
+  inline value_op_iterator value_op_begin() {
+    return value_op_iterator(op_begin());
+  }
+  inline value_op_iterator value_op_end() {
+    return value_op_iterator(op_end());
+  }
 
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this User refers to.  This allows one to
