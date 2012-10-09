@@ -149,7 +149,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
-  OptSize = F.getFnAttributes().hasOptimizeForSizeAttr();
+  OptSize = F.getFnAttributes().hasAttribute(Attributes::OptimizeForSize);
 
   /// This optimization identifies DIV instructions that can be
   /// profitably bypassed and carried out with a shorter, faster divide.
@@ -715,7 +715,8 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   // See llvm::isInTailCallPosition().
   const Function *F = BB->getParent();
   Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
-  if (CallerRetAttr.hasZExtAttr() || CallerRetAttr.hasSExtAttr())
+  if (CallerRetAttr.hasAttribute(Attributes::ZExt) ||
+      CallerRetAttr.hasAttribute(Attributes::SExt))
     return false;
 
   // Make sure there are no instructions between the PHI and return, or that the

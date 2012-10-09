@@ -571,7 +571,8 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
   // instructions that would be deleted in the merge.
   MachineFunction *MF = MBB1->getParent();
   if (EffectiveTailLen >= 2 &&
-      MF->getFunction()->getFnAttributes().hasOptimizeForSizeAttr() &&
+      MF->getFunction()->getFnAttributes().
+        hasAttribute(Attributes::OptimizeForSize) &&
       (I1 == MBB1->begin() || I2 == MBB2->begin()))
     return true;
 

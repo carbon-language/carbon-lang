@@ -3302,7 +3302,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     // instructions).
     if (Latency > 0 && Subtarget.isThumb2()) {
       const MachineFunction *MF = DefMI->getParent()->getParent();
-      if (MF->getFunction()->getFnAttributes().hasOptimizeForSizeAttr())
+      if (MF->getFunction()->getFnAttributes().
+            hasAttribute(Attributes::OptimizeForSize))
         --Latency;
     }
     return Latency;

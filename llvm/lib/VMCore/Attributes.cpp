@@ -68,91 +68,14 @@ Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
 bool Attributes::hasAttributes(const Attributes &A) const {
   return Attrs.hasAttributes(A);
 }
-bool Attributes::hasAddressSafetyAttr() const {
-  return Attrs.hasAttribute(Attribute::AddressSafety_i);
-}
-bool Attributes::hasAlignmentAttr() const {
-  return Attrs.hasAttribute(Attribute::Alignment_i);
-}
-bool Attributes::hasAlwaysInlineAttr() const {
-  return Attrs.hasAttribute(Attribute::AlwaysInline_i);
-}
-bool Attributes::hasByValAttr() const {
-  return Attrs.hasAttribute(Attribute::ByVal_i);
-}
-bool Attributes::hasInlineHintAttr() const {
-  return Attrs.hasAttribute(Attribute::InlineHint_i);
-}
-bool Attributes::hasInRegAttr() const {
-  return Attrs.hasAttribute(Attribute::InReg_i);
-}
-bool Attributes::hasNakedAttr() const {
-  return Attrs.hasAttribute(Attribute::Naked_i);
-}
-bool Attributes::hasNestAttr() const {
-  return Attrs.hasAttribute(Attribute::Nest_i);
-}
-bool Attributes::hasNoAliasAttr() const {
-  return Attrs.hasAttribute(Attribute::NoAlias_i);
-}
-bool Attributes::hasNoCaptureAttr() const {
-  return Attrs.hasAttribute(Attribute::NoCapture_i);
-}
-bool Attributes::hasNoImplicitFloatAttr() const {
-  return Attrs.hasAttribute(Attribute::NoImplicitFloat_i);
-}
-bool Attributes::hasNoInlineAttr() const {
-  return Attrs.hasAttribute(Attribute::NoInline_i);
-}
-bool Attributes::hasNonLazyBindAttr() const {
-  return Attrs.hasAttribute(Attribute::NonLazyBind_i);
-}
-bool Attributes::hasNoRedZoneAttr() const {
-  return Attrs.hasAttribute(Attribute::NoRedZone_i);
-}
-bool Attributes::hasNoReturnAttr() const {
-  return Attrs.hasAttribute(Attribute::NoReturn_i);
-}
-bool Attributes::hasNoUnwindAttr() const {
-  return Attrs.hasAttribute(Attribute::NoUnwind_i);
-}
-bool Attributes::hasOptimizeForSizeAttr() const {
-  return Attrs.hasAttribute(Attribute::OptimizeForSize_i);
-}
-bool Attributes::hasReadNoneAttr() const {
-  return Attrs.hasAttribute(Attribute::ReadNone_i);
-}
-bool Attributes::hasReadOnlyAttr() const {
-  return Attrs.hasAttribute(Attribute::ReadOnly_i);
-}
-bool Attributes::hasReturnsTwiceAttr() const {
-  return Attrs.hasAttribute(Attribute::ReturnsTwice_i);
-}
-bool Attributes::hasSExtAttr() const {
-  return Attrs.hasAttribute(Attribute::SExt_i);
-}
-bool Attributes::hasStackAlignmentAttr() const {
-  return Attrs.hasAttribute(Attribute::StackAlignment_i);
-}
-bool Attributes::hasStackProtectAttr() const {
-  return Attrs.hasAttribute(Attribute::StackProtect_i);
-}
-bool Attributes::hasStackProtectReqAttr() const {
-  return Attrs.hasAttribute(Attribute::StackProtectReq_i);
-}
-bool Attributes::hasStructRetAttr() const {
-  return Attrs.hasAttribute(Attribute::StructRet_i);
-}
-bool Attributes::hasUWTableAttr() const {
-  return Attrs.hasAttribute(Attribute::UWTable_i);
-}
-bool Attributes::hasZExtAttr() const {
-  return Attrs.hasAttribute(Attribute::ZExt_i);
+
+bool Attributes::hasAttribute(AttrVal Val) const {
+  return Attrs.hasAttribute(Val);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attributes::getAlignment() const {
-  if (!hasAlignmentAttr())
+  if (!hasAttribute(Attributes::Alignment))
     return 0;
   return 1U << ((Attrs.getAlignment() >> 16) - 1);
 }
@@ -160,7 +83,7 @@ unsigned Attributes::getAlignment() const {
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 unsigned Attributes::getStackAlignment() const {
-  if (!hasStackAlignmentAttr())
+  if (!hasAttribute(Attributes::StackAlignment))
     return 0;
   return 1U << ((Attrs.getStackAlignment() >> 26) - 1);
 }
@@ -217,62 +140,62 @@ Attributes Attributes::typeIncompatible(Type *Ty) {
 
 std::string Attributes::getAsString() const {
   std::string Result;
-  if (hasZExtAttr())
+  if (hasAttribute(Attributes::ZExt))
     Result += "zeroext ";
-  if (hasSExtAttr())
+  if (hasAttribute(Attributes::SExt))
     Result += "signext ";
-  if (hasNoReturnAttr())
+  if (hasAttribute(Attributes::NoReturn))
     Result += "noreturn ";
-  if (hasNoUnwindAttr())
+  if (hasAttribute(Attributes::NoUnwind))
     Result += "nounwind ";
-  if (hasUWTableAttr())
+  if (hasAttribute(Attributes::UWTable))
     Result += "uwtable ";
-  if (hasReturnsTwiceAttr())
+  if (hasAttribute(Attributes::ReturnsTwice))
     Result += "returns_twice ";
-  if (hasInRegAttr())
+  if (hasAttribute(Attributes::InReg))
     Result += "inreg ";
-  if (hasNoAliasAttr())
+  if (hasAttribute(Attributes::NoAlias))
     Result += "noalias ";
-  if (hasNoCaptureAttr())
+  if (hasAttribute(Attributes::NoCapture))
     Result += "nocapture ";
-  if (hasStructRetAttr())
+  if (hasAttribute(Attributes::StructRet))
     Result += "sret ";
-  if (hasByValAttr())
+  if (hasAttribute(Attributes::ByVal))
     Result += "byval ";
-  if (hasNestAttr())
+  if (hasAttribute(Attributes::Nest))
     Result += "nest ";
-  if (hasReadNoneAttr())
+  if (hasAttribute(Attributes::ReadNone))
     Result += "readnone ";
-  if (hasReadOnlyAttr())
+  if (hasAttribute(Attributes::ReadOnly))
     Result += "readonly ";
-  if (hasOptimizeForSizeAttr())
+  if (hasAttribute(Attributes::OptimizeForSize))
     Result += "optsize ";
-  if (hasNoInlineAttr())
+  if (hasAttribute(Attributes::NoInline))
     Result += "noinline ";
-  if (hasInlineHintAttr())
+  if (hasAttribute(Attributes::InlineHint))
     Result += "inlinehint ";
-  if (hasAlwaysInlineAttr())
+  if (hasAttribute(Attributes::AlwaysInline))
     Result += "alwaysinline ";
-  if (hasStackProtectAttr())
+  if (hasAttribute(Attributes::StackProtect))
     Result += "ssp ";
-  if (hasStackProtectReqAttr())
+  if (hasAttribute(Attributes::StackProtectReq))
     Result += "sspreq ";
-  if (hasNoRedZoneAttr())
+  if (hasAttribute(Attributes::NoRedZone))
     Result += "noredzone ";
-  if (hasNoImplicitFloatAttr())
+  if (hasAttribute(Attributes::NoImplicitFloat))
     Result += "noimplicitfloat ";
-  if (hasNakedAttr())
+  if (hasAttribute(Attributes::Naked))
     Result += "naked ";
-  if (hasNonLazyBindAttr())
+  if (hasAttribute(Attributes::NonLazyBind))
     Result += "nonlazybind ";
-  if (hasAddressSafetyAttr())
+  if (hasAttribute(Attributes::AddressSafety))
     Result += "address_safety ";
-  if (hasStackAlignmentAttr()) {
+  if (hasAttribute(Attributes::StackAlignment)) {
     Result += "alignstack(";
     Result += utostr(getStackAlignment());
     Result += ") ";
   }
-  if (hasAlignmentAttr()) {
+  if (hasAttribute(Attributes::Alignment)) {
     Result += "align ";
     Result += utostr(getAlignment());
     Result += " ";
@@ -484,8 +407,42 @@ uint64_t Attributes::Builder::getAlignment() const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
+uint64_t AttributesImpl::getAttrMask(uint64_t Val) const {
+  switch (Val) {
+  case Attributes::None:            return 0;
+  case Attributes::ZExt:            return 1 << 0;
+  case Attributes::SExt:            return 1 << 1;
+  case Attributes::NoReturn:        return 1 << 2;
+  case Attributes::InReg:           return 1 << 3;
+  case Attributes::StructRet:       return 1 << 4;
+  case Attributes::NoUnwind:        return 1 << 5;
+  case Attributes::NoAlias:         return 1 << 6;
+  case Attributes::ByVal:           return 1 << 7;
+  case Attributes::Nest:            return 1 << 8;
+  case Attributes::ReadNone:        return 1 << 9;
+  case Attributes::ReadOnly:        return 1 << 10;
+  case Attributes::NoInline:        return 1 << 11;
+  case Attributes::AlwaysInline:    return 1 << 12;
+  case Attributes::OptimizeForSize: return 1 << 13;
+  case Attributes::StackProtect:    return 1 << 14;
+  case Attributes::StackProtectReq: return 1 << 15;
+  case Attributes::Alignment:       return 31 << 16;
+  case Attributes::NoCapture:       return 1 << 21;
+  case Attributes::NoRedZone:       return 1 << 22;
+  case Attributes::NoImplicitFloat: return 1 << 23;
+  case Attributes::Naked:           return 1 << 24;
+  case Attributes::InlineHint:      return 1 << 25;
+  case Attributes::StackAlignment:  return 7 << 26;
+  case Attributes::ReturnsTwice:    return 1 << 29;
+  case Attributes::UWTable:         return 1 << 30;
+  case Attributes::NonLazyBind:     return 1U << 31;
+  case Attributes::AddressSafety:   return 1ULL << 32;
+  }
+  llvm_unreachable("Unsupported attribute type");
+}
+
 bool AttributesImpl::hasAttribute(uint64_t A) const {
-  return (Bits & A) != 0;
+  return (Bits & getAttrMask(A)) != 0;
 }
 
 bool AttributesImpl::hasAttributes() const {
@@ -724,7 +681,8 @@ AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
-  assert(!Attrs.hasAlignmentAttr() && "Attempt to exclude alignment!");
+  assert(!Attrs.hasAttribute(Attributes::Alignment) &&
+         "Attempt to exclude alignment!");
 #endif
   if (AttrList == 0) return AttrListPtr();
   

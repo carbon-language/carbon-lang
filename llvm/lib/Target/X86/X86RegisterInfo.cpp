@@ -382,8 +382,9 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *F = MF.getFunction();
   unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
-  bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
-                               F->getFnAttributes().hasStackAlignmentAttr());
+  bool requiresRealignment =
+    ((MFI->getMaxAlignment() > StackAlign) ||
+     F->getFnAttributes().hasAttribute(Attributes::StackAlignment));
 
   // If we've requested that we force align the stack do so now.
   if (ForceStackAlign)

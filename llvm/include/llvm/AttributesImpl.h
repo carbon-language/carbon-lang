@@ -23,12 +23,14 @@ class Attributes;
 
 class AttributesImpl : public FoldingSetNode {
   friend class Attributes;
-
   uint64_t Bits;                // FIXME: We will be expanding this.
+
+  uint64_t getAttrMask(uint64_t Val) const;
 public:
   AttributesImpl(uint64_t bits) : Bits(bits) {}
 
   bool hasAttribute(uint64_t A) const;
+
   bool hasAttributes() const;
   bool hasAttributes(const Attributes &A) const;
 

@@ -219,7 +219,7 @@ public:
 
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
-    return getFnAttributes().hasReadNoneAttr();
+    return getFnAttributes().hasAttribute(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory(bool DoesNotAccessMemory = true) {
     if (DoesNotAccessMemory) addFnAttr(Attribute::ReadNone);
@@ -228,7 +228,8 @@ public:
 
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || getFnAttributes().hasReadOnlyAttr();
+    return doesNotAccessMemory() ||
+      getFnAttributes().hasAttribute(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
     if (OnlyReadsMemory) addFnAttr(Attribute::ReadOnly);
@@ -237,7 +238,7 @@ public:
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
-    return getFnAttributes().hasNoReturnAttr();
+    return getFnAttributes().hasAttribute(Attributes::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addFnAttr(Attribute::NoReturn);
@@ -246,7 +247,7 @@ public:
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
-    return getFnAttributes().hasNoUnwindAttr();
+    return getFnAttributes().hasAttribute(Attributes::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addFnAttr(Attribute::NoUnwind);
@@ -256,7 +257,7 @@ public:
   /// @brief True if the ABI mandates (or the user requested) that this
   /// function be in a unwind table.
   bool hasUWTable() const {
-    return getFnAttributes().hasUWTableAttr();
+    return getFnAttributes().hasAttribute(Attributes::UWTable);
   }
   void setHasUWTable(bool HasUWTable = true) {
     if (HasUWTable)
@@ -273,14 +274,13 @@ public:
   /// @brief Determine if the function returns a structure through first 
   /// pointer argument.
   bool hasStructRetAttr() const {
-    return getParamAttributes(1).hasStructRetAttr();
+    return getParamAttributes(1).hasAttribute(Attributes::StructRet);
   }
 
   /// @brief Determine if the parameter does not alias other parameters.
   /// @param n The parameter to check. 1 is the first parameter, 0 is the return
   bool doesNotAlias(unsigned n) const {
-    return n != 0 ? getParamAttributes(n).hasNoAliasAttr() :
-      AttributeList.getRetAttributes().hasNoAliasAttr();
+    return getParamAttributes(n).hasAttribute(Attributes::NoAlias);
   }
   void setDoesNotAlias(unsigned n, bool DoesNotAlias = true) {
     if (DoesNotAlias) addAttribute(n, Attribute::NoAlias);
@@ -290,7 +290,7 @@ public:
   /// @brief Determine if the parameter can be captured.
   /// @param n The parameter to check. 1 is the first parameter, 0 is the return
   bool doesNotCapture(unsigned n) const {
-    return getParamAttributes(n).hasNoCaptureAttr();
+    return getParamAttributes(n).hasAttribute(Attributes::NoCapture);
   }
   void setDoesNotCapture(unsigned n, bool DoesNotCapture = true) {
     if (DoesNotCapture) addAttribute(n, Attribute::NoCapture);

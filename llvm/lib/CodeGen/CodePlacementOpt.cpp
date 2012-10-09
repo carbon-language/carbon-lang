@@ -373,7 +373,7 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges(MachineFunction &MF) {
 ///
 bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  if (F->getFnAttributes().hasOptimizeForSizeAttr())
+  if (F->getFnAttributes().hasAttribute(Attributes::OptimizeForSize))
     return false;
 
   unsigned Align = TLI->getPrefLoopAlignment();

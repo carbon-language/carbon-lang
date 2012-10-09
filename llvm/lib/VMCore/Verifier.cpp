@@ -585,12 +585,12 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
 
     VerifyParameterAttrs(Attr.Attrs, Ty, Attr.Index == 0, V);
 
-    if (Attr.Attrs.hasNestAttr()) {
+    if (Attr.Attrs.hasAttribute(Attributes::Nest)) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
       SawNest = true;
     }
 
-    if (Attr.Attrs.hasStructRetAttr())
+    if (Attr.Attrs.hasAttribute(Attributes::StructRet))
       Assert1(Attr.Index == 1, "Attribute sret not on first parameter!", V);
   }
 

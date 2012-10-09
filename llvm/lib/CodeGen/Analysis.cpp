@@ -318,7 +318,8 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
     return false;
 
   // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerRetAttr.hasZExtAttr() || CallerRetAttr.hasSExtAttr())
+  if (CallerRetAttr.hasAttribute(Attributes::ZExt) ||
+      CallerRetAttr.hasAttribute(Attributes::SExt))
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
@@ -358,7 +359,8 @@ bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
     return false;
 
   // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerRetAttr.hasZExtAttr() || CallerRetAttr.hasSExtAttr())
+  if (CallerRetAttr.hasAttribute(Attributes::ZExt) ||
+      CallerRetAttr.hasAttribute(Attributes::SExt))
     return false;
 
   // Check if the only use is a function return node.

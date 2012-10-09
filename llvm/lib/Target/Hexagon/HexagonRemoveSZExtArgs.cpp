@@ -50,7 +50,7 @@ bool HexagonRemoveExtendArgs::runOnFunction(Function &F) {
   unsigned Idx = 1;
   for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end(); AI != AE;
        ++AI, ++Idx) {
-    if (F.getParamAttributes(Idx).hasSExtAttr()) {
+    if (F.getParamAttributes(Idx).hasAttribute(Attributes::SExt)) {
       Argument* Arg = AI;
       if (!isa<PointerType>(Arg->getType())) {
         for (Instruction::use_iterator UI = Arg->use_begin();

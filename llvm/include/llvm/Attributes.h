@@ -142,8 +142,47 @@ class AttributesImpl;
 
 /// Attributes - A bitset of attributes.
 class Attributes {
+public:
+  enum AttrVal {
+    None            = 0,   ///< No attributes have been set
+    ZExt            = 1,   ///< Zero extended before/after call
+    SExt            = 2,   ///< Sign extended before/after call
+    NoReturn        = 3,   ///< Mark the function as not returning
+    InReg           = 4,   ///< Force argument to be passed in register
+    StructRet       = 5,   ///< Hidden pointer to structure to return
+    NoUnwind        = 6,   ///< Function doesn't unwind stack
+    NoAlias         = 7,   ///< Considered to not alias after call
+    ByVal           = 8,   ///< Pass structure by value
+    Nest            = 9,   ///< Nested function static chain
+    ReadNone        = 10,  ///< Function does not access memory
+    ReadOnly        = 11,  ///< Function only reads from memory
+    NoInline        = 12,  ///< inline=never
+    AlwaysInline    = 13,  ///< inline=always
+    OptimizeForSize = 14,  ///< opt_size
+    StackProtect    = 15,  ///< Stack protection.
+    StackProtectReq = 16,  ///< Stack protection required.
+    Alignment       = 17,  ///< Alignment of parameter (5 bits)
+                           ///< stored as log2 of alignment with +1 bias
+                           ///< 0 means unaligned different from align 1
+    NoCapture       = 18,  ///< Function creates no aliases of pointer
+    NoRedZone       = 19,  ///< Disable redzone
+    NoImplicitFloat = 20,  ///< Disable implicit floating point insts
+    Naked           = 21,  ///< Naked function
+    InlineHint      = 22,  ///< Source said inlining was desirable
+    StackAlignment  = 23,  ///< Alignment of stack for function (3 bits)
+                           ///< stored as log2 of alignment with +1 bias 0
+                           ///< means unaligned (different from
+                           ///< alignstack={1))
+    ReturnsTwice    = 24,  ///< Function can return twice
+    UWTable         = 25,  ///< Function must be in a unwind table
+    NonLazyBind     = 26,  ///< Function is called early and/or
+                           ///< often, so lazy binding isn't worthwhile
+    AddressSafety   = 27   ///< Address safety checking is on.
+  };
+private:
   // Currently, we need less than 64 bits.
   AttributesImpl Attrs;
+
   explicit Attributes(AttributesImpl *A);
 public:
   Attributes() : Attrs(0) {}
@@ -234,7 +273,7 @@ public:
 
   /// @brief Parameter attributes that do not apply to vararg call arguments.
   bool hasIncompatibleWithVarArgsAttrs() const {
-    return hasStructRetAttr();
+    return hasAttribute(Attributes::StructRet);
   }
 
   // Attribute query methods.
@@ -243,33 +282,7 @@ public:
     return Attrs.hasAttributes();
   }
   bool hasAttributes(const Attributes &A) const;
-  bool hasAddressSafetyAttr() const;
-  bool hasAlignmentAttr() const;
-  bool hasAlwaysInlineAttr() const;
-  bool hasByValAttr() const;
-  bool hasInRegAttr() const;
-  bool hasInlineHintAttr() const;
-  bool hasNakedAttr() const;
-  bool hasNestAttr() const;
-  bool hasNoAliasAttr() const;
-  bool hasNoCaptureAttr() const;
-  bool hasNoImplicitFloatAttr() const;
-  bool hasNoInlineAttr() const;
-  bool hasNonLazyBindAttr() const;
-  bool hasNoRedZoneAttr() const;
-  bool hasNoReturnAttr() const;
-  bool hasNoUnwindAttr() const;
-  bool hasOptimizeForSizeAttr() const;
-  bool hasReadNoneAttr() const;
-  bool hasReadOnlyAttr() const;
-  bool hasReturnsTwiceAttr() const;
-  bool hasSExtAttr() const;
-  bool hasStackAlignmentAttr() const;
-  bool hasStackProtectAttr() const;
-  bool hasStackProtectReqAttr() const;
-  bool hasStructRetAttr() const;
-  bool hasUWTableAttr() const;
-  bool hasZExtAttr() const;
+  bool hasAttribute(AttrVal Val) const;
 
   /// This returns the alignment field of an attribute as a byte alignment
   /// value.
@@ -341,7 +354,7 @@ public:
     // 5-bit log2 encoded value. Shift the bits above the alignment up by 11
     // bits.
     uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
-    if (Attrs.hasAlignmentAttr())
+    if (Attrs.hasAttribute(Attributes::Alignment))
       EncodedAttrs |= (1ULL << 16) <<
         (((Attrs.Raw() & Attribute::Alignment_i) - 1) >> 16);
     EncodedAttrs |= (Attrs.Raw() & (0xfffULL << 21)) << 11;

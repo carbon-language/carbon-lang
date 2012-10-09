@@ -2779,7 +2779,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   AttrListPtr PAL = AttrListPtr::get(Attrs);
 
-  if (PAL.getParamAttributes(1).hasStructRetAttr() && !RetType->isVoidTy())
+  if (PAL.getParamAttributes(1).hasAttribute(Attributes::StructRet) &&
+      !RetType->isVoidTy())
     return Error(RetTypeLoc, "functions with 'sret' argument must return void");
 
   FunctionType *FT =

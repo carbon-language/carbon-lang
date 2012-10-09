@@ -59,13 +59,13 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
     RegInfo = 0;
   MFInfo = 0;
   FrameInfo = new (Allocator) MachineFrameInfo(*TM.getFrameLowering());
-  if (Fn->getFnAttributes().hasStackAlignmentAttr())
+  if (Fn->getFnAttributes().hasAttribute(Attributes::StackAlignment))
     FrameInfo->ensureMaxAlignment(Fn->getAttributes().
                                   getFnAttributes().getStackAlignment());
   ConstantPool = new (Allocator) MachineConstantPool(TM.getDataLayout());
   Alignment = TM.getTargetLowering()->getMinFunctionAlignment();
   // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
-  if (!Fn->getFnAttributes().hasOptimizeForSizeAttr())
+  if (!Fn->getFnAttributes().hasAttribute(Attributes::OptimizeForSize))
     Alignment = std::max(Alignment,
                          TM.getTargetLowering()->getPrefFunctionAlignment());
   FunctionNumber = FunctionNum;

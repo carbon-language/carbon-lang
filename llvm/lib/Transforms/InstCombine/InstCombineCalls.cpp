@@ -1072,7 +1072,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     // If the parameter is passed as a byval argument, then we have to have a
     // sized type and the sized type has to have the same size as the old type.
-    if (ParamTy != ActTy && Attrs.hasByValAttr()) {
+    if (ParamTy != ActTy && Attrs.hasAttribute(Attributes::ByVal)) {
       PointerType *ParamPTy = dyn_cast<PointerType>(ParamTy);
       if (ParamPTy == 0 || !ParamPTy->getElementType()->isSized() || TD == 0)
         return false;
@@ -1264,7 +1264,7 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
   // If the call already has the 'nest' attribute somewhere then give up -
   // otherwise 'nest' would occur twice after splicing in the chain.
   for (unsigned I = 0, E = Attrs.getNumAttrs(); I != E; ++I)
-    if (Attrs.getAttributesAtIndex(I).hasNestAttr())
+    if (Attrs.getAttributesAtIndex(I).hasAttribute(Attributes::Nest))
       return 0;
 
   assert(Tramp &&
@@ -1283,7 +1283,7 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
     // Look for a parameter marked with the 'nest' attribute.
     for (FunctionType::param_iterator I = NestFTy->param_begin(),
          E = NestFTy->param_end(); I != E; ++NestIdx, ++I)
-      if (NestAttrs.getParamAttributes(NestIdx).hasNestAttr()) {
+      if (NestAttrs.getParamAttributes(NestIdx).hasAttribute(Attributes::Nest)){
         // Record the parameter type and any other attributes.
         NestTy = *I;
         NestAttr = NestAttrs.getParamAttributes(NestIdx);

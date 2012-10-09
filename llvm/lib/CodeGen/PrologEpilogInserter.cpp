@@ -96,7 +96,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   placeCSRSpillsAndRestores(Fn);
 
   // Add the code to save and restore the callee saved registers
-  if (!F->getFnAttributes().hasNakedAttr())
+  if (!F->getFnAttributes().hasAttribute(Attributes::Naked))
     insertCSRSpillsAndRestores(Fn);
 
   // Allow the target machine to make final modifications to the function
@@ -111,7 +111,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   // called functions.  Because of this, calculateCalleeSavedRegisters()
   // must be called before this function in order to set the AdjustsStack
   // and MaxCallFrameSize variables.
-  if (!F->getFnAttributes().hasNakedAttr())
+  if (!F->getFnAttributes().hasAttribute(Attributes::Naked))
     insertPrologEpilogCode(Fn);
 
   // Replace all MO_FrameIndex operands with physical register references
@@ -221,7 +221,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     return;
 
   // In Naked functions we aren't going to save any registers.
-  if (Fn.getFunction()->getFnAttributes().hasNakedAttr())
+  if (Fn.getFunction()->getFnAttributes().hasAttribute(Attributes::Naked))
     return;
 
   std::vector<CalleeSavedInfo> CSI;

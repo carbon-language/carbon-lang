@@ -854,12 +854,14 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   // If needed, insert __asan_init before checking for AddressSafety attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
-  if (!F.getFnAttributes().hasAddressSafetyAttr()) return false;
+  if (!F.getFnAttributes().hasAttribute(Attributes::AddressSafety))
+    return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())
     return false;
-  // We want to instrument every address only once per basic block
-  // (unless there are calls between uses).
+
+  // We want to instrument every address only once per basic block (unless there
+  // are calls between uses).
   SmallSet<Value*, 16> TempsToInstrument;
   SmallVector<Instruction*, 16> ToInstrument;
   SmallVector<Instruction*, 8> NoReturnCalls;

@@ -1456,7 +1456,8 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F,
       continue;
     }
 
-    if (PAL.getParamAttributes(paramIndex+1).hasByValAttr() == false) {
+    if (PAL.getParamAttributes(paramIndex+1).
+          hasAttribute(Attributes::ByVal) == false) {
       // Just a scalar
       const PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (isKernelFunc) {
