@@ -1170,9 +1170,8 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
       VerifyParameterAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
-      Attributes VArgI = Attr & Attribute::VarArgsIncompatible;
-      Assert1(!VArgI, "Attribute " + VArgI.getAsString() +
-              " cannot be used for vararg call arguments!", I);
+      Assert1(!Attr.hasIncompatibleWithVarArgsAttrs(),
+              "Attribute 'sret' cannot be used for vararg call arguments!", I);
     }
 
   // Verify that there's no metadata unless it's a direct call to an intrinsic.

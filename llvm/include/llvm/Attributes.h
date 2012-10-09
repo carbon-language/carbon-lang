@@ -122,9 +122,6 @@ const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
   Naked_i | InlineHint_i | StackAlignment_i |
   UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i};
 
-/// @brief Parameter attributes that do not apply to vararg call arguments.
-const AttrConst VarArgsIncompatible = {StructRet_i};
-
 /// @brief Attributes that are mutually incompatible.
 const AttrConst MutuallyIncompatible[5] = {
   {ByVal_i | Nest_i | StructRet_i},
@@ -180,7 +177,6 @@ public:
     AddressSafety   = 27   ///< Address safety checking is on.
   };
 private:
-  // Currently, we need less than 64 bits.
   AttributesImpl Attrs;
 
   explicit Attributes(AttributesImpl *A);
