@@ -2320,16 +2320,16 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 
     ISD::ArgFlagsTy Flags;
     unsigned AttrInd = i - CS.arg_begin() + 1;
-    if (CS.paramHasSExtAttr(AttrInd))
+    if (CS.paramHasAttr(AttrInd, Attributes::SExt))
       Flags.setSExt();
-    if (CS.paramHasZExtAttr(AttrInd))
+    if (CS.paramHasAttr(AttrInd, Attributes::ZExt))
       Flags.setZExt();
 
     // FIXME: Only handle *easy* calls for now.
-    if (CS.paramHasInRegAttr(AttrInd) ||
-        CS.paramHasStructRetAttr(AttrInd) ||
-        CS.paramHasNestAttr(AttrInd) ||
-        CS.paramHasByValAttr(AttrInd))
+    if (CS.paramHasAttr(AttrInd, Attributes::InReg) ||
+        CS.paramHasAttr(AttrInd, Attributes::StructRet) ||
+        CS.paramHasAttr(AttrInd, Attributes::Nest) ||
+        CS.paramHasAttr(AttrInd, Attributes::ByVal))
       return false;
 
     Type *ArgTy = (*i)->getType();

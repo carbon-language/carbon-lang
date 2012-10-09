@@ -295,7 +295,7 @@ public:
   static Attributes constructAlignmentFromInt(unsigned i) {
     // Default alignment, allow the target to define how to align it.
     if (i == 0)
-      return Attribute::None;
+      return Attributes();
 
     assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
     assert(i <= 0x40000000 && "Alignment too large.");
@@ -307,7 +307,7 @@ public:
   static Attributes constructStackAlignmentFromInt(unsigned i) {
     // Default alignment, allow the target to define how to align it.
     if (i == 0)
-      return Attribute::None;
+      return Attributes();
 
     assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
     assert(i <= 0x100 && "Alignment too large.");

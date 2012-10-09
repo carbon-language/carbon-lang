@@ -5342,12 +5342,12 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     Entry.Node = ArgNode; Entry.Ty = V->getType();
 
     unsigned attrInd = i - CS.arg_begin() + 1;
-    Entry.isSExt  = CS.paramHasSExtAttr(attrInd);
-    Entry.isZExt  = CS.paramHasZExtAttr(attrInd);
-    Entry.isInReg = CS.paramHasInRegAttr(attrInd);
-    Entry.isSRet  = CS.paramHasStructRetAttr(attrInd);
-    Entry.isNest  = CS.paramHasNestAttr(attrInd);
-    Entry.isByVal = CS.paramHasByValAttr(attrInd);
+    Entry.isSExt  = CS.paramHasAttr(attrInd, Attributes::SExt);
+    Entry.isZExt  = CS.paramHasAttr(attrInd, Attributes::ZExt);
+    Entry.isInReg = CS.paramHasAttr(attrInd, Attributes::InReg);
+    Entry.isSRet  = CS.paramHasAttr(attrInd, Attributes::StructRet);
+    Entry.isNest  = CS.paramHasAttr(attrInd, Attributes::Nest);
+    Entry.isByVal = CS.paramHasAttr(attrInd, Attributes::ByVal);
     Entry.Alignment = CS.getParamAlignment(attrInd);
     Args.push_back(Entry);
   }

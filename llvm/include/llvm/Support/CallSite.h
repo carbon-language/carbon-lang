@@ -210,35 +210,9 @@ public:
     CALLSITE_DELEGATE_GETTER(hasFnAttr(N));
   }
 
-  /// paramHas*Attr - whether the call or the callee has the given attribute.
-  bool paramHasSExtAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasSExtAttr(i));
-  }
-  bool paramHasZExtAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasZExtAttr(i));
-  }
-  bool paramHasInRegAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasInRegAttr(i));
-  }
-  bool paramHasStructRetAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasStructRetAttr(i));
-  }
-  bool paramHasNestAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasNestAttr(i));
-  }
-  bool paramHasByValAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasByValAttr(i));
-  }
-  bool paramHasNoAliasAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasNoAliasAttr(i));
-  }
-  bool paramHasNoCaptureAttr(unsigned i) const {
-    CALLSITE_DELEGATE_GETTER(paramHasNoCaptureAttr(i));
-  }
-
-  /// paramHasAttr - whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, Attributes attr) const {
-    CALLSITE_DELEGATE_GETTER(paramHasAttr(i, attr));
+  /// \brief Return true if the call or the callee has the given attribute.
+  bool paramHasAttr(unsigned i, Attributes::AttrVal A) const {
+    CALLSITE_DELEGATE_GETTER(paramHasAttr(i, A));
   }
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
@@ -291,12 +265,12 @@ public:
 
   /// @brief Determine whether this argument is not captured.
   bool doesNotCapture(unsigned ArgNo) const {
-    return paramHasNoCaptureAttr(ArgNo + 1);
+    return paramHasAttr(ArgNo + 1, Attributes::NoCapture);
   }
 
   /// @brief Determine whether this argument is passed by value.
   bool isByValArgument(unsigned ArgNo) const {
-    return paramHasByValAttr(ArgNo + 1);
+    return paramHasAttr(ArgNo + 1, Attributes::ByVal);
   }
 
   /// hasArgument - Returns true if this CallSite passes the given Value* as an

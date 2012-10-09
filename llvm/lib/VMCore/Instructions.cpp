@@ -393,67 +393,11 @@ bool CallInst::fnHasReturnsTwiceAttr() const {
   return false;
 }
 
-bool CallInst::paramHasSExtAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::SExt))
+bool CallInst::paramHasAttr(unsigned i, Attributes::AttrVal A) const {
+  if (AttributeList.getParamAttributes(i).hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::SExt);
-  return false;
-}
-
-bool CallInst::paramHasZExtAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::ZExt))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::ZExt);
-  return false;
-}
-
-bool CallInst::paramHasInRegAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::InReg))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::InReg);
-  return false;
-}
-
-bool CallInst::paramHasStructRetAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::StructRet))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::StructRet);
-  return false;
-}
-
-bool CallInst::paramHasNestAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::Nest))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::Nest);
-  return false;
-}
-
-bool CallInst::paramHasByValAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::ByVal))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::ByVal);
-  return false;
-}
-
-bool CallInst::paramHasNoAliasAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::NoAlias))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::NoAlias);
-  return false;
-}
-
-bool CallInst::paramHasNoCaptureAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::NoCapture))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::NoCapture);
+    return F->getParamAttributes(i).hasAttribute(A);
   return false;
 }
 
@@ -720,67 +664,11 @@ bool InvokeInst::fnHasReturnsTwiceAttr() const {
   return false;
 }
 
-bool InvokeInst::paramHasSExtAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::SExt))
+bool InvokeInst::paramHasAttr(unsigned i, Attributes::AttrVal A) const {
+  if (AttributeList.getParamAttributes(i).hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::SExt);
-  return false;
-}
-
-bool InvokeInst::paramHasZExtAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::ZExt))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::ZExt);
-  return false;
-}
-
-bool InvokeInst::paramHasInRegAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::InReg))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::InReg);
-  return false;
-}
-
-bool InvokeInst::paramHasStructRetAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::StructRet))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::StructRet);
-  return false;
-}
-
-bool InvokeInst::paramHasNestAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::Nest))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::Nest);
-  return false;
-}
-
-bool InvokeInst::paramHasByValAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::ByVal))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::ByVal);
-  return false;
-}
-
-bool InvokeInst::paramHasNoAliasAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::NoAlias))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::NoAlias);
-  return false;
-}
-
-bool InvokeInst::paramHasNoCaptureAttr(unsigned i) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(Attributes::NoCapture))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(Attributes::NoCapture);
+    return F->getParamAttributes(i).hasAttribute(A);
   return false;
 }
 
