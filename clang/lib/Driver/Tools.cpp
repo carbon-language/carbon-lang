@@ -3606,6 +3606,7 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
         .Case("duplicate-method-arg", true)
         .Case("dynamic-class-memaccess", true)
         .Case("enum-compare", true)
+        .Case("enum-conversion", true)
         .Case("exit-time-destructors", true)
         .Case("gnu", true)
         .Case("gnu-designator", true)
