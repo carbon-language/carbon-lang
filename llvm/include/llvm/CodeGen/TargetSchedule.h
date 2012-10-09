@@ -45,11 +45,11 @@ public:
   /// Return true if this machine model includes an instruction-level scheduling
   /// model. This is more detailed than the course grain IssueWidth and default
   /// latency properties, but separate from the per-cycle itinerary data.
-  bool hasInstrSchedModel() const { return SchedModel.hasInstrSchedModel(); }
+  bool hasInstrSchedModel() const;
 
   /// Return true if this machine model includes cycle-to-cycle itinerary
   /// data. This models scheduling at each stage in the processor pipeline.
-  bool hasInstrItineraries() const { return !InstrItins.isEmpty(); }
+  bool hasInstrItineraries() const;
 
   /// computeOperandLatency - Compute and return the latency of the given data
   /// dependent def and use when the operand indices are already known. UseMI

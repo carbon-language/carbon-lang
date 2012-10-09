@@ -27,6 +27,14 @@ static cl::opt<bool> EnableSchedModel("schedmodel", cl::Hidden, cl::init(true),
 static cl::opt<bool> EnableSchedItins("scheditins", cl::Hidden, cl::init(true),
   cl::desc("Use InstrItineraryData for latency lookup"));
 
+bool TargetSchedModel::hasInstrSchedModel() const {
+  return EnableSchedModel && SchedModel.hasInstrSchedModel();
+}
+
+bool TargetSchedModel::hasInstrItineraries() const {
+  return EnableSchedItins && !InstrItins.isEmpty();
+}
+
 void TargetSchedModel::init(const MCSchedModel &sm,
                             const TargetSubtargetInfo *sti,
                             const TargetInstrInfo *tii) {
@@ -47,14 +55,12 @@ int TargetSchedModel::getDefLatency(const MachineInstr *DefMI,
   if (FindMin) {
     // If MinLatency is invalid, then use the itinerary for MinLatency. If no
     // itinerary exists either, then use single cycle latency.
-    if (SchedModel.MinLatency < 0
-        && !(EnableSchedItins && hasInstrItineraries())) {
+    if (SchedModel.MinLatency < 0 && !hasInstrItineraries()) {
       return 1;
     }
     return SchedModel.MinLatency;
   }
-  else if (!(EnableSchedModel && hasInstrSchedModel())
-           && !(EnableSchedItins && hasInstrItineraries())) {
+  else if (!hasInstrSchedModel() && !hasInstrItineraries()) {
     return TII->defaultDefLatency(&SchedModel, DefMI);
   }
   // ...operand lookup required
@@ -123,7 +129,7 @@ unsigned TargetSchedModel::computeOperandLatency(
   if (DefLatency >= 0)
     return DefLatency;
 
-  if (EnableSchedItins && hasInstrItineraries()) {
+  if (hasInstrItineraries()) {
     int OperLatency = 0;
     if (UseMI) {
       OperLatency =
@@ -145,7 +151,7 @@ unsigned TargetSchedModel::computeOperandLatency(
                               TII->defaultDefLatency(&SchedModel, DefMI));
     return InstrLatency;
   }
-  assert(!FindMin && EnableSchedModel && hasInstrSchedModel() &&
+  assert(!FindMin && hasInstrSchedModel() &&
          "Expected a SchedModel for this cpu");
   const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
   unsigned DefIdx = findDefIdx(DefMI, DefOperIdx);
