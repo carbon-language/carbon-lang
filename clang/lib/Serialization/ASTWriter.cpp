@@ -1698,14 +1698,13 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     IdentifierInfo *Name
       = const_cast<IdentifierInfo *>(DeserializedMacroNames[I]);
     if (Name->hadMacroDefinition() && MacroDefinitionsSeen.insert(Name))
-      MacrosToEmit.push_back(std::make_pair(Name, PP.getMacroInfo(Name)));
+      MacrosToEmit.push_back(std::make_pair(Name,
+                                            PP.getMacroInfoHistory(Name)));
   }
 
   for (unsigned I = 0, N = MacrosToEmit.size(); I != N; ++I) {
     const IdentifierInfo *Name = MacrosToEmit[I].first;
     MacroInfo *MI = MacrosToEmit[I].second;
-    if (!MI)
-      continue;
 
     // History of macro definitions for this identifier in chronological order.
     SmallVector<MacroInfo*, 8> MacroHistory;

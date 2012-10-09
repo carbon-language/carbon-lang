@@ -1,8 +1,8 @@
 // Note: the run lines follow their respective tests, since line/column
 // matter in this test.
-
 #define FOO(Arg1,Arg2) foobar
 #define nil 0
+#undef FOO
 void f() {
 
 }
@@ -25,7 +25,8 @@ void test_variadic() {
   
 }
 
-// RUN: c-index-test -code-completion-at=%s:7:1 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: c-index-test -code-completion-at=%s:7:1 %s | FileCheck -check-prefix=CHECK-CC0 %s
+// CHECK-CC0-NOT: FOO
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:1 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: macro definition:{TypedText FOO}{LeftParen (}{Placeholder Arg1}{Comma , }{Placeholder Arg2}{RightParen )}
 // RUN: c-index-test -code-completion-at=%s:13:13 %s | FileCheck -check-prefix=CHECK-CC2 %s

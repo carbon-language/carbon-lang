@@ -1460,6 +1460,8 @@ void ASTReader::setIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
   if (Visible) {
     // Note that this identifier has a macro definition.
     II->setHasMacroDefinition(true);
+  } else {
+    II->setHadMacroDefinition(true);
   }
   
   // Adjust the offset to a global offset.
