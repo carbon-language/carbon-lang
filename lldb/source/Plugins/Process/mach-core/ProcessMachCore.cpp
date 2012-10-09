@@ -231,6 +231,8 @@ ProcessMachCore::DoLoadCore ()
         return error;
     }
     
+    SetCanJIT(false);
+
     llvm::MachO::mach_header header;
     DataExtractor data (&header, 
                         sizeof(header), 

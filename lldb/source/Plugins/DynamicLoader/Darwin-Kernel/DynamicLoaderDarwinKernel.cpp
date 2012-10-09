@@ -14,7 +14,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
-#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
@@ -222,90 +221,107 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
         {
             ModuleList &target_images = target.GetImages();
             module_sp = target_images.FindModule(uuid);
-            
-            // Ask the Target to find this file on the local system, if possible.
-            // This will search in the list of currently-loaded files, look in the 
-            // standard search paths on the system, and on a Mac it will try calling
-            // the DebugSymbols framework with the UUID to find the binary via its
-            // search methods.
 
             if (!module_sp)
             {
                 ModuleSpec module_spec;
                 module_spec.GetUUID() = uuid;
                 module_spec.GetArchitecture() = target.GetArchitecture();
-                module_sp = target.GetSharedModule (module_spec);
+
+                // For the kernel, we really do need an on-disk file copy of the
+                // binary.
+                bool force_symbols_search = false;
+                if (memory_module_is_kernel)
+                {
+                    force_symbols_search = true;
+                }
+
+                if (Symbols::DownloadObjectAndSymbolFile (module_spec, force_symbols_search))
+                {
+                    if (module_spec.GetFileSpec().Exists())
+                    {
+                        module_sp.reset(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
+                        if (module_sp.get() && module_sp->MatchesModuleSpec (module_spec))
+                        {
+                            ModuleList loaded_module_list;
+                            loaded_module_list.Append (module_sp);
+                            target.ModulesDidLoad (loaded_module_list);
+                        }
+                    }
+                }
+            
+                // Ask the Target to find this file on the local system, if possible.
+                // This will search in the list of currently-loaded files, look in the 
+                // standard search paths on the system, and on a Mac it will try calling
+                // the DebugSymbols framework with the UUID to find the binary via its
+                // search methods.
+                if (!module_sp)
+                {
+                    module_sp = target.GetSharedModule (module_spec);
+                }
             }
         }
     }
     
 
-    if (memory_module_sp)
+    if (memory_module_sp && module_sp)
     {
-        if (module_sp)
+        if (module_sp->GetUUID() == memory_module_sp->GetUUID())
         {
-            if (module_sp->GetUUID() == memory_module_sp->GetUUID())
+            target.GetImages().Append(module_sp);
+            if (memory_module_is_kernel && target.GetExecutableModulePointer() != module_sp.get())
             {
-                ObjectFile *ondisk_object_file = module_sp->GetObjectFile();
-                ObjectFile *memory_object_file = memory_module_sp->GetObjectFile();
-                if (memory_object_file && ondisk_object_file)
-                {
-                    SectionList *ondisk_section_list = ondisk_object_file->GetSectionList ();
-                    SectionList *memory_section_list = memory_object_file->GetSectionList ();
-                    if (memory_section_list && ondisk_section_list)
-                    {
-                        const uint32_t num_ondisk_sections = ondisk_section_list->GetSize();
-                        // There may be CTF sections in the memory image so we can't
-                        // always just compare the number of sections (which are actually
-                        // segments in mach-o parlance)
-                        uint32_t sect_idx = 0;
-                        
-                        // Use the memory_module's addresses for each section to set the 
-                        // file module's load address as appropriate.  We don't want to use
-                        // a single slide value for the entire kext - different segments may
-                        // be slid different amounts by the kext loader.
+                target.SetExecutableModule (module_sp, false);
+            }
 
-                        uint32_t num_sections_loaded = 0;
-                        for (sect_idx=0; sect_idx<num_ondisk_sections; ++sect_idx)
+            ObjectFile *ondisk_object_file = module_sp->GetObjectFile();
+            ObjectFile *memory_object_file = memory_module_sp->GetObjectFile();
+            if (memory_object_file && ondisk_object_file)
+            {
+                SectionList *ondisk_section_list = ondisk_object_file->GetSectionList ();
+                SectionList *memory_section_list = memory_object_file->GetSectionList ();
+                if (memory_section_list && ondisk_section_list)
+                {
+                    const uint32_t num_ondisk_sections = ondisk_section_list->GetSize();
+                    // There may be CTF sections in the memory image so we can't
+                    // always just compare the number of sections (which are actually
+                    // segments in mach-o parlance)
+                    uint32_t sect_idx = 0;
+                    
+                    // Use the memory_module's addresses for each section to set the 
+                    // file module's load address as appropriate.  We don't want to use
+                    // a single slide value for the entire kext - different segments may
+                    // be slid different amounts by the kext loader.
+
+                    uint32_t num_sections_loaded = 0;
+                    for (sect_idx=0; sect_idx<num_ondisk_sections; ++sect_idx)
+                    {
+                        SectionSP ondisk_section_sp(ondisk_section_list->GetSectionAtIndex(sect_idx));
+                        if (ondisk_section_sp)
                         {
-                            SectionSP ondisk_section_sp(ondisk_section_list->GetSectionAtIndex(sect_idx));
-                            if (ondisk_section_sp)
+                            const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section_sp->GetName()).get();
+                            if (memory_section)
                             {
-                                const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section_sp->GetName()).get();
-                                if (memory_section)
-                                {
-                                    target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section_sp, memory_section->GetFileAddress());
-                                    ++num_sections_loaded;
-                                }
+                                target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section_sp, memory_section->GetFileAddress());
+                                ++num_sections_loaded;
                             }
                         }
-                        if (num_sections_loaded > 0)
-                            load_process_stop_id = process->GetStopID();
-                        else
-                            module_sp.reset(); // No sections were loaded
                     }
+                    if (num_sections_loaded > 0)
+                        load_process_stop_id = process->GetStopID();
                     else
-                        module_sp.reset(); // One or both section lists
+                        module_sp.reset(); // No sections were loaded
                 }
                 else
-                    module_sp.reset(); // One or both object files missing
+                    module_sp.reset(); // One or both section lists
             }
             else
-                module_sp.reset(); // UUID mismatch
+                module_sp.reset(); // One or both object files missing
         }
-        
-        // Use the memory module as the module if we didn't find an on-disk file 
-        // here on the debug system.
-        if (!module_sp)
-        {
-            module_sp = memory_module_sp;
-            // Load the memory image in the target as all addresses are already correct
-            bool changed = false;
-            target.GetImages().Append (memory_module_sp);
-            if (module_sp->SetLoadAddress (target, 0, changed))
-                load_process_stop_id = process->GetStopID();
-        }
+        else
+            module_sp.reset(); // UUID mismatch
     }
+
     bool is_loaded = IsLoaded();
     
     if (so_address.IsValid())

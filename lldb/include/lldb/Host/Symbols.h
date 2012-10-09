@@ -52,10 +52,14 @@ public:
     //
     // Locating the file can try to download the file from a corporate build
     // respository, or using any other means necessary to locate both the
-    // unstripped object file and the debug symbols.
+    // unstripped object file and the debug symbols.  
+    // The force_lookup argument controls whether the external program is called
+    // unconditionally to find the symbol file, or if the user's settings are
+    // checked to see if they've enabled the external program before calling.
+    // 
     //----------------------------------------------------------------------
     static bool
-    DownloadObjectAndSymbolFile (ModuleSpec &module_spec);
+    DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup = true);
                                  
 };
 
