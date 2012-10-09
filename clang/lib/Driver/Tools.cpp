@@ -3615,6 +3615,7 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
         .Case("implicit-atomic-properties", true)
         .Case("incompatible-pointer-types", true)
         .Case("incomplete-implementation", true)
+        .Case("int-conversion", true)
         .Case("initializer-overrides", true)
         .Case("invalid-noreturn", true)
         .Case("invalid-token-paste", true)
