@@ -533,11 +533,10 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
   Assert1(!FnCheckAttr, "Attribute " + FnCheckAttr.getAsString() +
           " only applies to the function!", V);
 
-  if (isReturnValue) {
-    Attributes RetI = Attrs & Attribute::ParameterOnly;
-    Assert1(!RetI, "Attribute " + RetI.getAsString() +
-            " does not apply to return values!", V);
-  }
+  if (isReturnValue)
+    Assert1(!Attrs.hasParameterOnlyAttrs(),
+            "Attributes 'byval', 'nest', 'sret', and 'nocapture' "
+            "do not apply to return values!", V);
 
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
@@ -550,16 +549,14 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
   Assert1(!TypeI, "Wrong type for attribute " +
           TypeI.getAsString(), V);
 
-  Attributes ByValI = Attrs & Attribute::ByVal;
-  if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    Assert1(!ByValI || PTy->getElementType()->isSized(),
-            "Attribute " + ByValI.getAsString() +
-            " does not support unsized types!", V);
-  } else {
-    Assert1(!ByValI,
-            "Attribute " + ByValI.getAsString() +
-            " only applies to parameters with pointer type!", V);
-  }
+  if (PointerType *PTy = dyn_cast<PointerType>(Ty))
+    Assert1(!Attrs.hasAttribute(Attributes::ByVal) ||
+            PTy->getElementType()->isSized(),
+            "Attribute 'byval' does not support unsized types!", V);
+  else
+    Assert1(!Attrs.hasAttribute(Attributes::ByVal),
+            "Attribute 'byval' only applies to parameters with pointer type!",
+            V);
 }
 
 // VerifyFunctionAttrs - Check parameter attributes against a function type.

@@ -110,10 +110,6 @@ DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is o
 ///                      an exception might pass by.
 /// uwtable + nounwind = Needs an entry because the ABI says so.
 
-/// @brief Attributes that only apply to function parameters.
-const AttrConst ParameterOnly = {ByVal_i | Nest_i |
-    StructRet_i | NoCapture_i};
-
 /// @brief Attributes that may be applied to the function itself.  These cannot
 /// be used on return values or function parameters.
 const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
@@ -215,11 +211,6 @@ public:
   static Attributes get(Builder &B);
   static Attributes get(LLVMContext &Context, Builder &B);
 
-  /// @brief Parameter attributes that do not apply to vararg call arguments.
-  bool hasIncompatibleWithVarArgsAttrs() const {
-    return hasAttribute(Attributes::StructRet);
-  }
-
   /// @brief Return true if the attribute is present.
   bool hasAttribute(AttrVal Val) const;
 
@@ -231,13 +222,26 @@ public:
   /// @brief Return true if the attributes are a non-null intersection.
   bool hasAttributes(const Attributes &A) const;
 
-  /// This returns the alignment field of an attribute as a byte alignment
+  /// @brief Returns the alignment field of an attribute as a byte alignment
   /// value.
   unsigned getAlignment() const;
 
-  /// This returns the stack alignment field of an attribute as a byte alignment
-  /// value.
+  /// @brief Returns the stack alignment field of an attribute as a byte
+  /// alignment value.
   unsigned getStackAlignment() const;
+
+  /// @brief Parameter attributes that do not apply to vararg call arguments.
+  bool hasIncompatibleWithVarArgsAttrs() const {
+    return hasAttribute(Attributes::StructRet);
+  }
+
+  /// @brief Attributes that only apply to function parameters.
+  bool hasParameterOnlyAttrs() const {
+    return hasAttribute(Attributes::ByVal) ||
+      hasAttribute(Attributes::Nest) ||
+      hasAttribute(Attributes::StructRet) ||
+      hasAttribute(Attributes::NoCapture);
+  }
 
   bool isEmptyOrSingleton() const;
 
