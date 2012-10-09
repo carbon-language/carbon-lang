@@ -75,13 +75,17 @@ bool Attributes::hasAttributes(const Attributes &A) const {
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attributes::getAlignment() const {
-  return Attrs.getAlignment();
+  if (!hasAttribute(Attributes::Alignment))
+    return 0;
+  return 1U << ((Attrs.getAlignment() >> 16) - 1);
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 unsigned Attributes::getStackAlignment() const {
-  return Attrs.getStackAlignment();
+  if (!hasAttribute(Attributes::StackAlignment))
+    return 0;
+  return 1U << ((Attrs.getStackAlignment() >> 26) - 1);
 }
 
 bool Attributes::isEmptyOrSingleton() const {
@@ -245,6 +249,8 @@ bool Attributes::Builder::hasAlignmentAttr() const {
 }
 
 uint64_t Attributes::Builder::getAlignment() const {
+  if (!hasAlignmentAttr())
+    return 0;
   return 1U <<
     (((Bits & AttributesImpl::getAttrMask(Attributes::Alignment)) >> 16) - 1);
 }
@@ -300,11 +306,11 @@ bool AttributesImpl::hasAttributes(const Attributes &A) const {
 }
 
 uint64_t AttributesImpl::getAlignment() const {
-  return 1U << (((Bits & getAttrMask(Attributes::Alignment)) >> 16) - 1);
+  return Bits & getAttrMask(Attributes::Alignment);
 }
 
 uint64_t AttributesImpl::getStackAlignment() const {
-  return 1U << (((Bits & getAttrMask(Attributes::StackAlignment)) >> 26) - 1);
+  return Bits & getAttrMask(Attributes::StackAlignment);
 }
 
 bool AttributesImpl::isEmptyOrSingleton() const {
