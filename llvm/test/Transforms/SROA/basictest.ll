@@ -948,3 +948,23 @@ entry:
   ret double %ret
 ; CHECK: ret double %x
 }
+
+%PR14034.struct = type { { {} }, i32, %PR14034.list }
+%PR14034.list = type { %PR14034.list*, %PR14034.list* }
+
+define void @PR14034() {
+; This test case tries to form GEPs into the empty leading struct members, and
+; subsequently crashed (under valgrind) before we fixed the PR. The important
+; thing is to handle empty structs gracefully.
+; CHECK: @PR14034
+
+entry:
+  %a = alloca %PR14034.struct
+  %list = getelementptr %PR14034.struct* %a, i32 0, i32 2
+  %prev = getelementptr %PR14034.list* %list, i32 0, i32 1
+  store %PR14034.list* undef, %PR14034.list** %prev
+  %cast0 = bitcast %PR14034.struct* undef to i8*
+  %cast1 = bitcast %PR14034.struct* %a to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast0, i8* %cast1, i32 12, i32 0, i1 false)
+  ret void
+}
