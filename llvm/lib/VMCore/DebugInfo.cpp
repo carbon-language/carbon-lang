@@ -111,6 +111,16 @@ Function *DIDescriptor::getFunctionField(unsigned Elt) const {
   return 0;
 }
 
+void DIDescriptor::replaceFunctionField(unsigned Elt, Function *F) {
+  if (DbgNode == 0)
+    return;
+
+  if (Elt < DbgNode->getNumOperands()) {
+    MDNode *Node = const_cast<MDNode*>(DbgNode);
+    Node->replaceOperandWith(Elt, F);
+  }
+}
+
 unsigned DIVariable::getNumAddrElements() const {
   if (getVersion() <= LLVMDebugVersion8)
     return DbgNode->getNumOperands()-6;

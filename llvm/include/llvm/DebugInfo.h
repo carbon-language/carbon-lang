@@ -81,6 +81,7 @@ namespace llvm {
     GlobalVariable *getGlobalVariableField(unsigned Elt) const;
     Constant *getConstantField(unsigned Elt) const;
     Function *getFunctionField(unsigned Elt) const;
+    void replaceFunctionField(unsigned Elt, Function *F);
 
   public:
     explicit DIDescriptor() : DbgNode(0) {}
@@ -562,6 +563,7 @@ namespace llvm {
     bool describes(const Function *F);
 
     Function *getFunction() const { return getFunctionField(16); }
+    void replaceFunction(Function *F) { replaceFunctionField(16, F); }
     DIArray getTemplateParams() const { return getFieldAs<DIArray>(17); }
     DISubprogram getFunctionDeclaration() const {
       return getFieldAs<DISubprogram>(18);

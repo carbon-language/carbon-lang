@@ -21,7 +21,9 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constant.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/DIBuilder.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
@@ -121,6 +123,15 @@ namespace {
 
     typedef SmallVector<RetOrArg, 5> UseVector;
 
+    // Map each LLVM function to corresponding metadata with debug info. If
+    // the function is replaced with another one, we should patch the pointer
+    // to LLVM function in metadata.
+    // As the code generation for module is finished (and DIBuilder is
+    // finalized) we assume that subprogram descriptors won't be changed, and
+    // they are stored in map for short duration anyway.
+    typedef std::map<Function*, DISubprogram> FunctionDIMap;
+    FunctionDIMap FunctionDIs;
+
   protected:
     // DAH uses this to specify a different ID.
     explicit DAE(char &ID) : ModulePass(ID) {}
@@ -141,6 +152,7 @@ namespace {
                        unsigned RetValNum = 0);
     Liveness SurveyUses(const Value *V, UseVector &MaybeLiveUses);
 
+    void CollectFunctionDIs(Module &M);
     void SurveyFunction(const Function &F);
     void MarkValue(const RetOrArg &RA, Liveness L,
                    const UseVector &MaybeLiveUses);
@@ -179,6 +191,31 @@ INITIALIZE_PASS(DAH, "deadarghaX0r",
 ///
 ModulePass *llvm::createDeadArgEliminationPass() { return new DAE(); }
 ModulePass *llvm::createDeadArgHackingPass() { return new DAH(); }
+
+/// CollectFunctionDIs - Map each function in the module to its debug info
+/// descriptor.
+void DAE::CollectFunctionDIs(Module &M) {
+  FunctionDIs.clear();
+
+  for (Module::named_metadata_iterator I = M.named_metadata_begin(),
+       E = M.named_metadata_end(); I != E; ++I) {
+    NamedMDNode &NMD = *I;
+    for (unsigned i = 0, n = NMD.getNumOperands(); i < n; ++i) {
+      MDNode *Node = NMD.getOperand(i);
+      if (DIDescriptor(Node).isCompileUnit()) {
+        DICompileUnit CU(Node);
+        const DIArray &SPs = CU.getSubprograms();
+        for (unsigned i = 0, n = SPs.getNumElements(); i < n; ++i) {
+          DISubprogram SP(SPs.getElement(i));
+          if (SP.Verify()) {
+            if (Function *F = SP.getFunction())
+              FunctionDIs[F] = SP;
+          }
+        }
+      }
+    }
+  }
+}
 
 /// DeleteDeadVarargs - If this is an function that takes a ... list, and if
 /// llvm.vastart is never called, the varargs list is dead for the function.
@@ -283,6 +320,11 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     I->replaceAllUsesWith(I2);
     I2->takeName(I);
   }
+
+  // Patch the pointer to LLVM function in debug info descriptor.
+  FunctionDIMap::iterator DI = FunctionDIs.find(&Fn);
+  if (DI != FunctionDIs.end())
+    DI->second.replaceFunction(NF);
 
   // Finally, nuke the old function.
   Fn.eraseFromParent();
@@ -952,6 +994,11 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         BB->getInstList().erase(RI);
       }
 
+  // Patch the pointer to LLVM function in debug info descriptor.
+  FunctionDIMap::iterator DI = FunctionDIs.find(F);
+  if (DI != FunctionDIs.end())
+    DI->second.replaceFunction(NF);
+
   // Now that the old function is dead, delete it.
   F->eraseFromParent();
 
@@ -960,6 +1007,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
 bool DAE::runOnModule(Module &M) {
   bool Changed = false;
+
+  // Collect debug info descriptors for functions.
+  CollectFunctionDIs(M);
 
   // First pass: Do a simple check to see if any functions can have their "..."
   // removed.  We can do this if they never call va_start.  This loop cannot be
