@@ -18,6 +18,7 @@
 // RUN: %clang -target i386-apple-darwin10 \
 // RUN:   -Wno-self-assign -Wc++11-extensions -Wno-microsoft -Wmicrosoft -Wvla \
 // RUN:   -faltivec -mthumb -mcpu=G4 -mlongcall -mno-longcall -msoft-float \
+// RUN:   -Wno-int-conversion -Wconstant-conversion -Wenum-conversion \
 // RUN:   -fapple-kext -### -fsyntax-only %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-UNSUPPORTED < %t %s
 
@@ -32,6 +33,9 @@
 // CHECK-UNSUPPORTED-NOT: "-mlongcall"
 // CHECK-UNSUPPORTED: "-mno-longcall"
 // CHECK-UNSUPPORTED: "-msoft-float"
+// CHECK-UNSUPPORTED-NOT: "-Wno-int-conversion"
+// CHECK-UNSUPPORTED-NOT: "-Wconstant-conversion"
+// CHECK-UNSUPPORTED-NOT: "-Wenum-conversion"
 
 // RUN: %clang -target i386-apple-darwin10 \
 // RUN:   -Wconstant-logical-operand -save-temps \
