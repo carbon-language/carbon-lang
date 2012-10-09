@@ -1,5 +1,5 @@
 // REQUIRES: ppc32-registered-target,ppc64-registered-target,mips-registered-target
-// RUN: %clang -ccc-clang-archs powerpc -no-canonical-prefixes \
+// RUN: %clang -no-canonical-prefixes \
 // RUN:   -target powerpc-pc-freebsd8 %s    \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd_tree -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PPC %s
@@ -7,7 +7,7 @@
 // CHECK-PPC: ld{{.*}}" "--sysroot=[[SYSROOT:[^"]+]]"
 // CHECK-PPC: "--eh-frame-hdr" "-dynamic-linker" "{{.*}}ld-elf{{.*}}" "-o" "a.out" "{{.*}}crt1.o" "{{.*}}crti.o" "{{.*}}crtbegin.o" "-L[[SYSROOT]]/usr/lib" "{{.*}}.o" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "{{.*}}crtend.o" "{{.*}}crtn.o"
 //
-// RUN: %clang  -ccc-clang-archs powerpc64 -no-canonical-prefixes \
+// RUN: %clang -no-canonical-prefixes \
 // RUN:   -target powerpc64-pc-freebsd8 %s                              \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd64_tree -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PPC64 %s
@@ -48,25 +48,25 @@
 // and provide correct path to the dynamic linker for MIPS platforms.
 // Also verify that we tell the assembler to target the right ISA and ABI.
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-unknown-freebsd10.0 -ccc-clang-archs mips \
+// RUN:     -target mips-unknown-freebsd10.0 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS %s
 // CHECK-MIPS: "{{[^" ]*}}ld{{[^" ]*}}"
 // CHECK-MIPS: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
 // CHECK-MIPS-NOT: "--hash-style={{gnu|both}}"
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-unknown-freebsd10.0 -ccc-clang-archs mipsel \
+// RUN:     -target mipsel-unknown-freebsd10.0 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPSEL %s
 // CHECK-MIPSEL: "{{[^" ]*}}ld{{[^" ]*}}"
 // CHECK-MIPSEL: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
 // CHECK-MIPSEL-NOT: "--hash-style={{gnu|both}}"
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64-unknown-freebsd10.0 -ccc-clang-archs mips64 \
+// RUN:     -target mips64-unknown-freebsd10.0 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64 %s
 // CHECK-MIPS64: "{{[^" ]*}}ld{{[^" ]*}}"
 // CHECK-MIPS64: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
 // CHECK-MIPS64-NOT: "--hash-style={{gnu|both}}"
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64el-unknown-freebsd10.0 -ccc-clang-archs mips64el \
+// RUN:     -target mips64el-unknown-freebsd10.0 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL %s
 // CHECK-MIPS64EL: "{{[^" ]*}}ld{{[^" ]*}}"
 // CHECK-MIPS64EL: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"

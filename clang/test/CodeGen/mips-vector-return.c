@@ -1,5 +1,5 @@
-// RUN: %clang -target mipsel-unknown-linux -ccc-clang-archs mipsel -O3 -S -o - -emit-llvm %s | FileCheck %s -check-prefix=O32
-// RUN: %clang -target mips64el-unknown-linux -ccc-clang-archs mips64el -O3 -S -mabi=n64 -o - -emit-llvm %s | FileCheck %s -check-prefix=N64
+// RUN: %clang -target mipsel-unknown-linux -O3 -S -o - -emit-llvm %s | FileCheck %s -check-prefix=O32
+// RUN: %clang -target mips64el-unknown-linux -O3 -S -mabi=n64 -o - -emit-llvm %s | FileCheck %s -check-prefix=N64
 
 // vectors larger than 16-bytes are returned via the hidden pointer argument. 
 // N64/N32 returns vectors whose size is equal to or smaller than 16-bytes in

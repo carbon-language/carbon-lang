@@ -164,10 +164,6 @@ public:
   unsigned CCCUsePCH : 1;
 
 private:
-  /// Only use clang for the given architectures (only used when
-  /// non-empty).
-  std::set<llvm::Triple::ArchType> CCCClangArchs;
-
   /// Certain options suppress the 'no input files' warning.
   bool SuppressMissingInputWarning : 1;
 

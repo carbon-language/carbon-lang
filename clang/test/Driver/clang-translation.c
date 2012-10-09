@@ -54,31 +54,31 @@
 // ARMV5E: "-cc1"
 // ARMV5E: "-target-cpu" "arm1022e"
 
-// RUN: %clang -ccc-clang-archs powerpc64 -target powerpc64-unknown-linux-gnu \
+// RUN: %clang -target powerpc64-unknown-linux-gnu \
 // RUN: -### -S %s -mcpu=G5 2>&1 | FileCheck -check-prefix=PPCG5 %s
 // PPCG5: clang
 // PPCG5: "-cc1"
 // PPCG5: "-target-cpu" "g5"
 
-// RUN: %clang -ccc-clang-archs powerpc64 -target powerpc64-unknown-linux-gnu \
+// RUN: %clang -target powerpc64-unknown-linux-gnu \
 // RUN: -### -S %s -mcpu=power7 2>&1 | FileCheck -check-prefix=PPCPWR7 %s
 // PPCPWR7: clang
 // PPCPWR7: "-cc1"
 // PPCPWR7: "-target-cpu" "pwr7"
 
-// RUN: %clang -ccc-clang-archs powerpc64 -target powerpc64-unknown-linux-gnu \
+// RUN: %clang -target powerpc64-unknown-linux-gnu \
 // RUN: -### -S %s 2>&1 | FileCheck -check-prefix=PPC64NS %s
 // PPC64NS: clang
 // PPC64NS: "-cc1"
 // PPC64NS: "-target-cpu" "ppc64"
 
-// RUN: %clang -ccc-clang-archs powerpc -target powerpc-fsl-linux -### -S %s \
+// RUN: %clang -target powerpc-fsl-linux -### -S %s \
 // RUN: -mcpu=e500mc 2>&1 | FileCheck -check-prefix=PPCE500MC %s
 // PPCE500MC: clang
 // PPCE500MC: "-cc1"
 // PPCE500MC: "-target-cpu" "e500mc"
 
-// RUN: %clang -ccc-clang-archs powerpc64 -target powerpc64-fsl-linux -### -S \
+// RUN: %clang -target powerpc64-fsl-linux -### -S \
 // RUN: %s -mcpu=e5500 2>&1 | FileCheck -check-prefix=PPCE5500 %s
 // PPCE5500: clang
 // PPCE5500: "-cc1"

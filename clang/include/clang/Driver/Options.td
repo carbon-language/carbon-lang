@@ -99,9 +99,6 @@ def ccc_no_clang : Flag<"-ccc-no-clang">, CCCDriverOpt,
   HelpText<"Disable the clang compiler">;
 def ccc_no_clang_cpp : Flag<"-ccc-no-clang-cpp">, CCCDriverOpt,
   HelpText<"Disable the clang preprocessor">;
-def ccc_clang_archs : Separate<"-ccc-clang-archs">, CCCDriverOpt,
-  HelpText<"Comma separate list of architectures to use the clang compiler for">,
-  MetaVarName<"<arch-list>">;
 def ccc_pch_is_pch : Flag<"-ccc-pch-is-pch">, CCCDriverOpt,
   HelpText<"Use lazy PCH for precompiled headers">;
 def ccc_pch_is_pth : Flag<"-ccc-pch-is-pth">, CCCDriverOpt,

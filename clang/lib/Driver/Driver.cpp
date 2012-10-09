@@ -60,17 +60,6 @@ Driver::Driver(StringRef ClangExecutable,
     CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
     CCCUseClang(true), CCCUseClangCXX(true), CCCUseClangCPP(true),
     ForcedClangUse(false), CCCUsePCH(true), SuppressMissingInputWarning(false) {
-  if (IsProduction) {
-    // In a "production" build, only use clang on architectures we expect to
-    // work.
-    //
-    // During development its more convenient to always have the driver use
-    // clang, but we don't want users to be confused when things don't work, or
-    // to file bugs for things we don't support.
-    CCCClangArchs.insert(llvm::Triple::x86);
-    CCCClangArchs.insert(llvm::Triple::x86_64);
-    CCCClangArchs.insert(llvm::Triple::arm);
-  }
 
   Name = llvm::sys::path::stem(ClangExecutable);
   Dir  = llvm::sys::path::parent_path(ClangExecutable);
@@ -293,26 +282,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
                             options::OPT_ccc_pch_is_pth);
   CCCUseClang = !Args->hasArg(options::OPT_ccc_no_clang);
   CCCUseClangCPP = !Args->hasArg(options::OPT_ccc_no_clang_cpp);
-  if (const Arg *A = Args->getLastArg(options::OPT_ccc_clang_archs)) {
-    StringRef Cur = A->getValue(*Args);
-
-    CCCClangArchs.clear();
-    while (!Cur.empty()) {
-      std::pair<StringRef, StringRef> Split = Cur.split(',');
-
-      if (!Split.first.empty()) {
-        llvm::Triple::ArchType Arch =
-          llvm::Triple(Split.first, "", "").getArch();
-
-        if (Arch == llvm::Triple::UnknownArch)
-          Diag(clang::diag::err_drv_invalid_arch_name) << Split.first;
-
-        CCCClangArchs.insert(Arch);
-      }
-
-      Cur = Split.second;
-    }
-  }
   // FIXME: DefaultTargetTriple is used by the target-prefixed calls to as/ld
   // and getToolChain is const.
   if (const Arg *A = Args->getLastArg(options::OPT_target))
@@ -1839,13 +1808,6 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
   if (isa<PrecompileJobAction>(JA) ||
       types::isOnlyAcceptedByClang(JA.getType()))
     return true;
-
-  // Finally, don't use clang if this isn't one of the user specified archs to
-  // build.
-  if (!CCCClangArchs.empty() && !CCCClangArchs.count(Triple.getArch())) {
-    Diag(clang::diag::warn_drv_not_using_clang_arch) << Triple.getArchName();
-    return false;
-  }
 
   return true;
 }

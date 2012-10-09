@@ -36,17 +36,11 @@
 // CHECK09: "gcc::Preprocess", inputs: ["{{.*}}bindings.c"], output: "{{.*}}.i"
 // CHECK09: "clang", inputs: ["{{.*}}.i"], output: (nothing)
 
-// RUN: %clang -target i386-apple-darwin9 -ccc-print-bindings -ccc-clang-archs i386 %s -S -arch ppc 2>&1 | FileCheck %s --check-prefix=CHECK10
-// CHECK10: "gcc::Compile", inputs: ["{{.*}}bindings.c"], output: "bindings.s"
-
-// RUN: %clang -target i386-apple-darwin9 -ccc-print-bindings -ccc-clang-archs powerpc %s -S -arch ppc 2>&1 | FileCheck %s --check-prefix=CHECK11
+// RUN: %clang -target i386-apple-darwin9 -ccc-print-bindings %s -S -arch ppc 2>&1 | FileCheck %s --check-prefix=CHECK11
 // CHECK11: "clang", inputs: ["{{.*}}bindings.c"], output: "bindings.s"
 
-// RUN: %clang -target powerpc-unknown-unknown -ccc-print-bindings -ccc-clang-archs "" %s -S 2>&1 | FileCheck %s --check-prefix=CHECK12
+// RUN: %clang -target powerpc-unknown-unknown -ccc-print-bindings %s -S 2>&1 | FileCheck %s --check-prefix=CHECK12
 // CHECK12: "clang", inputs: ["{{.*}}bindings.c"], output: "bindings.s"
-
-// RUN: %clang -target powerpc-unknown-unknown -ccc-print-bindings -ccc-clang-archs "i386" %s -S 2>&1 | FileCheck %s --check-prefix=CHECK13
-// CHECK13: "gcc::Compile", inputs: ["{{.*}}bindings.c"], output: "bindings.s"
 
 // Darwin bindings
 // RUN: %clang -target i386-apple-darwin9 -no-integrated-as -ccc-print-bindings %s 2>&1 | FileCheck %s --check-prefix=CHECK14

@@ -45,7 +45,7 @@
 // CHECK-DEBIAN-X86-64: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/x86_64-linux-gnu"
 // CHECK-DEBIAN-X86-64: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-DEBIAN-X86-64: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
-// RUN: %clang -ccc-clang-archs powerpc -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target powerpc-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC %s
@@ -59,7 +59,7 @@
 // CHECK-DEBIAN-PPC: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/powerpc-linux-gnu"
 // CHECK-DEBIAN-PPC: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-DEBIAN-PPC: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
-// RUN: %clang -ccc-clang-archs powerpc64 -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target powerpc64-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC64 %s

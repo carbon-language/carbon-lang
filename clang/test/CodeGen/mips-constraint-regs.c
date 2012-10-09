@@ -1,4 +1,4 @@
-// RUN: %clang -target mipsel-unknown-linux -ccc-clang-archs mipsel -S -o - -emit-llvm %s \
+// RUN: %clang -target mipsel-unknown-linux -S -o - -emit-llvm %s \
 // RUN: | FileCheck %s
 
 // This checks that the frontend will accept inline asm constraints
