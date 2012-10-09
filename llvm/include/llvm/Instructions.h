@@ -1356,7 +1356,10 @@ public:
 
   /// @brief Determine if any call argument is an aggregate passed by value.
   bool hasByValArgument() const {
-    return AttributeList.hasAttrSomewhere(Attribute::ByVal);
+    for (unsigned I = 0, E = AttributeList.getNumAttrs(); I != E; ++I)
+      if (AttributeList.getAttributesAtIndex(I).hasByValAttr())
+        return true;
+    return false;
   }
 
   /// getCalledFunction - Return the function called, or null if this is an
@@ -3128,7 +3131,10 @@ public:
 
   /// @brief Determine if any call argument is an aggregate passed by value.
   bool hasByValArgument() const {
-    return AttributeList.hasAttrSomewhere(Attribute::ByVal);
+    for (unsigned I = 0, E = AttributeList.getNumAttrs(); I != E; ++I)
+      if (AttributeList.getAttributesAtIndex(I).hasByValAttr())
+        return true;
+    return false;
   }
 
   /// getCalledFunction - Return the function called, or null if this is an
