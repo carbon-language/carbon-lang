@@ -25,6 +25,7 @@
 #include "lld/ReaderWriter/WriterYAML.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -117,7 +118,8 @@ readerSelected("reader",
 enum ArchChoice {
   i386 = llvm::ELF::EM_386,
   x86_64 = llvm::ELF::EM_X86_64,
-  hexagon = llvm::ELF::EM_HEXAGON
+  hexagon = llvm::ELF::EM_HEXAGON,
+  ppc = llvm::ELF::EM_PPC
 };
 llvm::cl::opt<ArchChoice> 
 archSelected("arch",
@@ -129,6 +131,22 @@ archSelected("arch",
                "x86_64", "output x86_64, EM_X86_64 file"),
     clEnumValN(hexagon, 
                "hexagon", "output Hexagon, EM_HEXAGON file"),
+    clEnumValN(ppc, 
+               "ppc", "output PowerPC, EM_PPC file"),
+    clEnumValEnd));
+
+
+enum endianChoice {
+  little, big
+};
+llvm::cl::opt<endianChoice>
+endianSelected("endian",
+  llvm::cl::desc("Select endianness of ELF output"),
+  llvm::cl::values(
+    clEnumValN(big, "big", 
+               "output big endian format"),
+    clEnumValN(little, "little", 
+               "output little endian format"),
     clEnumValEnd));
     
 
@@ -163,7 +181,10 @@ int main(int argc, char *argv[]) {
     cmdLineOutputFilePath.assign("-");
 
   // create writer for final output, default to i386 if none selected
-  WriterOptionsELF writerOptionsELF(false, llvm::support::little,
+  WriterOptionsELF writerOptionsELF(false,
+                                    endianSelected == big
+                                    ? llvm::support::big
+                                    : llvm::support::little,
                                     llvm::ELF::ET_EXEC,
                                     archSelected.getValue() == 0
                                     ? i386

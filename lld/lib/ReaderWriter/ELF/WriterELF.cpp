@@ -855,7 +855,8 @@ template<support::endianness target_endianness, bool is64Bits>
 ELFWriter<target_endianness, is64Bits>
          ::ELFWriter(const WriterOptionsELF &options)
   : _options(options)
-  , _referenceKindHandler(KindHandler::makeHandler(_options.machine()))
+  , _referenceKindHandler(KindHandler::makeHandler(_options.machine(),
+                                                   target_endianness))
 {}
 
 template<support::endianness target_endianness, bool is64Bits>

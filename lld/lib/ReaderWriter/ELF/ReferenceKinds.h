@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/DenseMap.h"
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/WriterELF.h"
 
+#include <map>
 #include <memory>
 
 #ifndef LLD_READER_WRITER_ELF_REFERENCE_KINDS_H_
@@ -31,7 +33,8 @@ class KindHandler {
 public:
   typedef Reference::Kind Kind;
   
-  static std::unique_ptr<KindHandler> makeHandler(uint16_t arch);
+  static std::unique_ptr<KindHandler> makeHandler(uint16_t arch,
+                                      llvm::support::endianness endian);
   virtual             ~KindHandler();
   virtual Kind        stringToKind(StringRef str) = 0;
   virtual StringRef   kindToString(Kind) = 0;
@@ -39,8 +42,10 @@ public:
   virtual bool        isPointer(Kind) = 0; 
   virtual bool        isLazyImmediate(Kind) = 0; 
   virtual bool        isLazyTarget(Kind) = 0; 
-  virtual void        applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
-                           uint64_t fixupAddress, uint64_t targetAddress) = 0;
+  virtual void        applyFixup(int32_t reloc, uint64_t addend,
+                                 uint8_t *location,
+                                 uint64_t fixupAddress,
+                                 uint64_t targetAddress) = 0;
   
 protected:
   KindHandler();
@@ -49,20 +54,38 @@ protected:
 
 class KindHandler_hexagon : public KindHandler {
 public:
+
+// Note: Reference::Kinds are a another representation of
+// relocation types, using negative values to represent architecture
+// independent reference type.
+// The positive values are the same ones defined in ELF.h and that
+// is what we are using.
   enum Kinds {
-    invalid,         // used to denote an error creating a Reference
-    none,
+    none            = llvm::ELF::R_HEX_NONE,
+    invalid=255,         // used to denote an error creating a Reference
+  };
+
+  enum RelocationError {
+    NoError,
+    Overflow
   };
 
   virtual ~KindHandler_hexagon();
+  KindHandler_hexagon();
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
   virtual bool isPointer(Kind); 
   virtual bool isLazyImmediate(Kind); 
   virtual bool isLazyTarget(Kind); 
-  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
-                  uint64_t fixupAddress, uint64_t targetAddress);
+  virtual void applyFixup(int32_t reloc, uint64_t addend,
+                          uint8_t *location,
+                          uint64_t fixupAddress, uint64_t targetAddress);
+
+private:
+  std::map<int32_t,
+           int (*)(uint8_t *location, uint64_t fixupAddress,
+                   uint64_t targetAddress, uint64_t addend)> _fixupHandler;
 
 };
 
@@ -81,8 +104,45 @@ public:
   virtual bool isPointer(Kind); 
   virtual bool isLazyImmediate(Kind); 
   virtual bool isLazyTarget(Kind); 
-  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
-                  uint64_t fixupAddress, uint64_t targetAddress);
+  virtual void applyFixup(int32_t reloc, uint64_t addend, uint8_t *location,
+                          uint64_t fixupAddress, uint64_t targetAddress);
+
+};
+
+class KindHandler_ppc : public KindHandler {
+public:
+
+// Note: Reference::Kinds are a another representation of
+// relocation types, using negative values to represent architecture
+// independent reference type.
+// The positive values are the same ones defined in ELF.h and that
+// is what we are using.
+  enum Kinds {
+    none            = llvm::ELF::R_PPC_NONE,
+    invalid=255,         // used to denote an error creating a Reference
+  };
+
+  enum RelocationError {
+    NoError,
+    Overflow
+  };
+
+  virtual ~KindHandler_ppc();
+  KindHandler_ppc(llvm::support::endianness endian);
+  virtual Kind stringToKind(StringRef str);
+  virtual StringRef kindToString(Kind);
+  virtual bool isCallSite(Kind);
+  virtual bool isPointer(Kind); 
+  virtual bool isLazyImmediate(Kind); 
+  virtual bool isLazyTarget(Kind); 
+  virtual void applyFixup(int32_t reloc, uint64_t addend,
+                          uint8_t *location,
+                          uint64_t fixupAddress, uint64_t targetAddress);
+
+private:
+  std::map<int32_t,
+           int (*)(uint8_t *location, uint64_t fixupAddress,
+                   uint64_t targetAddress, uint64_t addend)> _fixupHandler;
 
 };
 

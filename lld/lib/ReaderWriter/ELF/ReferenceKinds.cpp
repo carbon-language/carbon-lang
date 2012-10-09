@@ -28,12 +28,15 @@ KindHandler::KindHandler() {
 KindHandler::~KindHandler() {
 }
 
-std::unique_ptr<KindHandler> KindHandler::makeHandler(uint16_t arch) {
+std::unique_ptr<KindHandler> KindHandler::makeHandler(uint16_t arch,
+                                          llvm::support::endianness endian) {
   switch(arch) {
   case llvm::ELF::EM_HEXAGON:
     return std::unique_ptr<KindHandler>(new KindHandler_hexagon());
   case llvm::ELF::EM_386:
     return std::unique_ptr<KindHandler>(new KindHandler_x86());
+  case llvm::ELF::EM_PPC:
+    return std::unique_ptr<KindHandler>(new KindHandler_ppc(endian));
   default:
     llvm_unreachable("arch not supported");
   }
@@ -55,9 +58,9 @@ Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
 StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
   switch ( (Kinds)kind ) {
     case invalid:
-      return StringRef("invalid");
+      return "invalid";
     case none:
-      return StringRef("none");
+      return "none";
   }
   llvm_unreachable("invalid x86 Reference kind");
 }
@@ -82,81 +85,12 @@ bool KindHandler_x86::isLazyTarget(Kind kind) {
   return false;
 }
 
- 
-void KindHandler_x86::applyFixup(Kind kind, uint64_t addend,  
-                                    uint8_t *location, uint64_t fixupAddress, 
+void KindHandler_x86::applyFixup(int32_t reloc, uint64_t addend,
+                                    uint8_t *location, uint64_t fixupAddress,
                                     uint64_t targetAddress) {
-  switch ((Kinds)kind) {
-  case none:
-    // do nothing
-    break;
-  case invalid:
-    assert(0 && "invalid Reference Kind");
-    break;
-  }
+// TODO: Add reloc funcs for X86
+  return;
 }
-
-//===----------------------------------------------------------------------===//
-//  KindHandler_hexagon
-//  TODO: more to do here
-//===----------------------------------------------------------------------===//
-
-KindHandler_hexagon::~KindHandler_hexagon() {
-}
-
-Reference::Kind KindHandler_hexagon::stringToKind(StringRef str) {
-  return llvm::StringSwitch<Reference::Kind>(str)
-    .Case("none",                  none)
-    .Default(invalid);
-
-  llvm_unreachable("invalid hexagon Reference kind");
-}
-
-StringRef KindHandler_hexagon::kindToString(Reference::Kind kind) {
-  switch ( (Kinds)kind ) {
-    case invalid:
-      return StringRef("invalid");
-    case none:
-      return StringRef("none");
-  }
-  llvm_unreachable("invalid hexagon Reference kind");
-}
-
-bool KindHandler_hexagon::isCallSite(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isCallSite");
-  return false;
-}
-
-bool KindHandler_hexagon::isPointer(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isPointer");
-  return false;
-}
- 
-bool KindHandler_hexagon::isLazyImmediate(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isLazyImmediate");
-  return false;
-}
- 
-bool KindHandler_hexagon::isLazyTarget(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isLazyTarget");
-  return false;
-}
-
- 
-void KindHandler_hexagon::applyFixup(Kind kind, uint64_t addend,  
-                                    uint8_t *location, uint64_t fixupAddress, 
-                                    uint64_t targetAddress) {
-  switch ((Kinds)kind) {
-  case none:
-    // do nothing
-    break;
-  case invalid:
-    llvm_unreachable("invalid Reference Kind");
-    break;
-  }
-}
-
-
 
 } // namespace elf
 } // namespace lld
