@@ -1267,20 +1267,29 @@ public:
   /// removeAttribute - removes the attribute from the list of attributes.
   void removeAttribute(unsigned i, Attributes attr);
 
+  /// @brief Determine whether this call has the given attribute.
+  bool fnHasNoAliasAttr() const;
+  bool fnHasNoInlineAttr() const;
+  bool fnHasNoReturnAttr() const;
+  bool fnHasNoUnwindAttr() const;
+  bool fnHasReadNoneAttr() const;
+  bool fnHasReadOnlyAttr() const;
+  bool fnHasReturnsTwiceAttr() const;
+
   /// \brief Return true if this call has the given attribute.
   bool hasFnAttr(Attributes N) const {
     return paramHasAttr(~0, N);
   }
 
   /// @brief Determine whether the call or the callee has the given attributes.
-  bool paramHasSExtAttr(unsigned i) const;
-  bool paramHasZExtAttr(unsigned i) const;
-  bool paramHasInRegAttr(unsigned i) const;
-  bool paramHasStructRetAttr(unsigned i) const;
-  bool paramHasNestAttr(unsigned i) const;
   bool paramHasByValAttr(unsigned i) const;
+  bool paramHasInRegAttr(unsigned i) const;
+  bool paramHasNestAttr(unsigned i) const;
   bool paramHasNoAliasAttr(unsigned i) const;
   bool paramHasNoCaptureAttr(unsigned i) const;
+  bool paramHasSExtAttr(unsigned i) const;
+  bool paramHasStructRetAttr(unsigned i) const;
+  bool paramHasZExtAttr(unsigned i) const;
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const;
@@ -1291,7 +1300,7 @@ public:
   }
 
   /// @brief Return true if the call should not be inlined.
-  bool isNoInline() const { return hasFnAttr(Attribute::NoInline); }
+  bool isNoInline() const { return fnHasNoInlineAttr(); }
   void setIsNoInline(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::NoInline);
     else removeAttribute(~0, Attribute::NoInline);
@@ -1299,7 +1308,7 @@ public:
 
   /// @brief Return true if the call can return twice
   bool canReturnTwice() const {
-    return hasFnAttr(Attribute::ReturnsTwice);
+    return fnHasReturnsTwiceAttr();
   }
   void setCanReturnTwice(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::ReturnsTwice);
@@ -1308,7 +1317,7 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return hasFnAttr(Attribute::ReadNone);
+    return fnHasReadNoneAttr();
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
     if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
@@ -1317,7 +1326,7 @@ public:
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || hasFnAttr(Attribute::ReadOnly);
+    return doesNotAccessMemory() || fnHasReadOnlyAttr();
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
     if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
@@ -1325,14 +1334,14 @@ public:
   }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const { return hasFnAttr(Attribute::NoReturn); }
+  bool doesNotReturn() const { return fnHasNoReturnAttr(); }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
     else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const { return hasFnAttr(Attribute::NoUnwind); }
+  bool doesNotThrow() const { return fnHasNoUnwindAttr(); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
     else removeAttribute(~0, Attribute::NoUnwind);
@@ -1342,7 +1351,7 @@ public:
   /// pointer argument.
   bool hasStructRetAttr() const {
     // Be friendly and also check the callee.
-    return paramHasAttr(1, Attribute::StructRet);
+    return paramHasStructRetAttr(1);
   }
 
   /// @brief Determine if any call argument is an aggregate passed by value.
@@ -3039,6 +3048,15 @@ public:
   /// removeAttribute - removes the attribute from the list of attributes.
   void removeAttribute(unsigned i, Attributes attr);
 
+  /// @brief Determine whether this call has the NoAlias attribute.
+  bool fnHasNoAliasAttr() const;
+  bool fnHasNoInlineAttr() const;
+  bool fnHasNoReturnAttr() const;
+  bool fnHasNoUnwindAttr() const;
+  bool fnHasReadNoneAttr() const;
+  bool fnHasReadOnlyAttr() const;
+  bool fnHasReturnsTwiceAttr() const;
+
   /// \brief Return true if this call has the given attribute.
   bool hasFnAttr(Attributes N) const {
     return paramHasAttr(~0, N);
@@ -3063,7 +3081,7 @@ public:
   }
 
   /// @brief Return true if the call should not be inlined.
-  bool isNoInline() const { return hasFnAttr(Attribute::NoInline); }
+  bool isNoInline() const { return fnHasNoInlineAttr(); }
   void setIsNoInline(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::NoInline);
     else removeAttribute(~0, Attribute::NoInline);
@@ -3071,7 +3089,7 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return hasFnAttr(Attribute::ReadNone);
+    return fnHasReadNoneAttr();
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
     if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
@@ -3080,7 +3098,7 @@ public:
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || hasFnAttr(Attribute::ReadOnly);
+    return doesNotAccessMemory() || fnHasReadOnlyAttr();
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
     if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
@@ -3088,14 +3106,14 @@ public:
   }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const { return hasFnAttr(Attribute::NoReturn); }
+  bool doesNotReturn() const { return fnHasNoReturnAttr(); }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
     else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const { return hasFnAttr(Attribute::NoUnwind); }
+  bool doesNotThrow() const { return fnHasNoUnwindAttr(); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
     else removeAttribute(~0, Attribute::NoUnwind);
@@ -3105,7 +3123,7 @@ public:
   /// pointer argument.
   bool hasStructRetAttr() const {
     // Be friendly and also check the callee.
-    return paramHasAttr(1, Attribute::StructRet);
+    return paramHasStructRetAttr(1);
   }
 
   /// @brief Determine if any call argument is an aggregate passed by value.
