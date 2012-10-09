@@ -120,20 +120,18 @@ uint64_t Attributes::Raw() const {
 Attributes Attributes::typeIncompatible(Type *Ty) {
   Attributes::Builder Incompatible;
   
-  if (!Ty->isIntegerTy()) {
+  if (!Ty->isIntegerTy())
     // Attributes that only apply to integers.
-    Incompatible.addAttribute(Attributes::SExt);
-    Incompatible.addAttribute(Attributes::ZExt);
-  }
+    Incompatible.addAttribute(Attributes::SExt)
+      .addAttribute(Attributes::ZExt);
   
-  if (!Ty->isPointerTy()) {
+  if (!Ty->isPointerTy())
     // Attributes that only apply to pointers.
-    Incompatible.addAttribute(Attributes::ByVal);
-    Incompatible.addAttribute(Attributes::Nest);
-    Incompatible.addAttribute(Attributes::NoAlias);
-    Incompatible.addAttribute(Attributes::NoCapture);
-    Incompatible.addAttribute(Attributes::StructRet);
-  }
+    Incompatible.addAttribute(Attributes::ByVal)
+      .addAttribute(Attributes::Nest)
+      .addAttribute(Attributes::NoAlias)
+      .addAttribute(Attributes::NoCapture)
+      .addAttribute(Attributes::StructRet);
   
   return Attributes(Incompatible.Bits); // FIXME: Use Attributes::get().
 }
@@ -210,8 +208,10 @@ std::string Attributes::getAsString() const {
 // Attributes::Builder Implementation
 //===----------------------------------------------------------------------===//
 
-void Attributes::Builder::addAttribute(Attributes::AttrVal Val) {
+Attributes::Builder &Attributes::Builder::
+addAttribute(Attributes::AttrVal Val) {
   Bits |= AttributesImpl::getAttrMask(Val);
+  return *this;
 }
 
 void Attributes::Builder::addAlignmentAttr(unsigned Align) {
@@ -228,8 +228,10 @@ void Attributes::Builder::addStackAlignmentAttr(unsigned Align) {
   Bits |= (Log2_32(Align) + 1) << 26;
 }
 
-void Attributes::Builder::removeAttribute(Attributes::AttrVal Val) {
+Attributes::Builder &Attributes::Builder::
+removeAttribute(Attributes::AttrVal Val) {
   Bits &= ~AttributesImpl::getAttrMask(Val);
+  return *this;
 }
 
 void Attributes::Builder::removeAttributes(const Attributes &A) {

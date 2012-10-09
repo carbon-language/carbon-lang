@@ -110,14 +110,6 @@ DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is o
 ///                      an exception might pass by.
 /// uwtable + nounwind = Needs an entry because the ABI says so.
 
-/// @brief Attributes that may be applied to the function itself.  These cannot
-/// be used on return values or function parameters.
-const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
-  ReadOnly_i | NoInline_i | AlwaysInline_i | OptimizeForSize_i |
-  StackProtect_i | StackProtectReq_i | NoRedZone_i | NoImplicitFloat_i |
-  Naked_i | InlineHint_i | StackAlignment_i |
-  UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i};
-
 /// @brief Attributes that are mutually incompatible.
 const AttrConst MutuallyIncompatible[5] = {
   {ByVal_i | Nest_i | StructRet_i},
@@ -138,39 +130,39 @@ class Attributes {
 public:
   enum AttrVal {
     None            = 0,   ///< No attributes have been set
-    ZExt            = 1,   ///< Zero extended before/after call
-    SExt            = 2,   ///< Sign extended before/after call
-    NoReturn        = 3,   ///< Mark the function as not returning
-    InReg           = 4,   ///< Force argument to be passed in register
-    StructRet       = 5,   ///< Hidden pointer to structure to return
-    NoUnwind        = 6,   ///< Function doesn't unwind stack
-    NoAlias         = 7,   ///< Considered to not alias after call
-    ByVal           = 8,   ///< Pass structure by value
-    Nest            = 9,   ///< Nested function static chain
-    ReadNone        = 10,  ///< Function does not access memory
-    ReadOnly        = 11,  ///< Function only reads from memory
-    NoInline        = 12,  ///< inline=never
-    AlwaysInline    = 13,  ///< inline=always
-    OptimizeForSize = 14,  ///< opt_size
-    StackProtect    = 15,  ///< Stack protection.
-    StackProtectReq = 16,  ///< Stack protection required.
-    Alignment       = 17,  ///< Alignment of parameter (5 bits)
+    AddressSafety   = 1,   ///< Address safety checking is on.
+    Alignment       = 2,   ///< Alignment of parameter (5 bits)
                            ///< stored as log2 of alignment with +1 bias
                            ///< 0 means unaligned different from align 1
-    NoCapture       = 18,  ///< Function creates no aliases of pointer
-    NoRedZone       = 19,  ///< Disable redzone
-    NoImplicitFloat = 20,  ///< Disable implicit floating point insts
-    Naked           = 21,  ///< Naked function
-    InlineHint      = 22,  ///< Source said inlining was desirable
-    StackAlignment  = 23,  ///< Alignment of stack for function (3 bits)
+    AlwaysInline    = 3,   ///< inline=always
+    ByVal           = 4,   ///< Pass structure by value
+    InlineHint      = 5,   ///< Source said inlining was desirable
+    InReg           = 6,   ///< Force argument to be passed in register
+    Naked           = 7,   ///< Naked function
+    Nest            = 8,   ///< Nested function static chain
+    NoAlias         = 9,   ///< Considered to not alias after call
+    NoCapture       = 10,  ///< Function creates no aliases of pointer
+    NoImplicitFloat = 11,  ///< Disable implicit floating point insts
+    NoInline        = 12,  ///< inline=never
+    NonLazyBind     = 13,  ///< Function is called early and/or
+                           ///< often, so lazy binding isn't worthwhile
+    NoRedZone       = 14,  ///< Disable redzone
+    NoReturn        = 15,  ///< Mark the function as not returning
+    NoUnwind        = 16,  ///< Function doesn't unwind stack
+    OptimizeForSize = 17,  ///< opt_size
+    ReadNone        = 18,  ///< Function does not access memory
+    ReadOnly        = 19,  ///< Function only reads from memory
+    ReturnsTwice    = 20,  ///< Function can return twice
+    SExt            = 21,  ///< Sign extended before/after call
+    StackAlignment  = 22,  ///< Alignment of stack for function (3 bits)
                            ///< stored as log2 of alignment with +1 bias 0
                            ///< means unaligned (different from
                            ///< alignstack={1))
-    ReturnsTwice    = 24,  ///< Function can return twice
-    UWTable         = 25,  ///< Function must be in a unwind table
-    NonLazyBind     = 26,  ///< Function is called early and/or
-                           ///< often, so lazy binding isn't worthwhile
-    AddressSafety   = 27   ///< Address safety checking is on.
+    StackProtect    = 23,  ///< Stack protection.
+    StackProtectReq = 24,  ///< Stack protection required.
+    StructRet       = 25,  ///< Hidden pointer to structure to return
+    UWTable         = 26,  ///< Function must be in a unwind table
+    ZExt            = 27   ///< Zero extended before/after call
   };
 private:
   AttributesImpl Attrs;
@@ -197,13 +189,35 @@ public:
 
     uint64_t getAlignment() const;
 
-    void addAttribute(Attributes::AttrVal Val);
-    void removeAttribute(Attributes::AttrVal Val);
+    Builder &addAttribute(Attributes::AttrVal Val);
+    Builder &removeAttribute(Attributes::AttrVal Val);
 
     void addAlignmentAttr(unsigned Align);
     void addStackAlignmentAttr(unsigned Align);
 
     void removeAttributes(const Attributes &A);
+
+    /// @brief Remove attributes that are used on functions only.
+    void removeFunctionOnlyAttrs() {
+      removeAttribute(Attributes::NoReturn)
+        .removeAttribute(Attributes::NoUnwind)
+        .removeAttribute(Attributes::ReadNone)
+        .removeAttribute(Attributes::ReadOnly)
+        .removeAttribute(Attributes::NoInline)
+        .removeAttribute(Attributes::AlwaysInline)
+        .removeAttribute(Attributes::OptimizeForSize)
+        .removeAttribute(Attributes::StackProtect)
+        .removeAttribute(Attributes::StackProtectReq)
+        .removeAttribute(Attributes::NoRedZone)
+        .removeAttribute(Attributes::NoImplicitFloat)
+        .removeAttribute(Attributes::Naked)
+        .removeAttribute(Attributes::InlineHint)
+        .removeAttribute(Attributes::StackAlignment)
+        .removeAttribute(Attributes::UWTable)
+        .removeAttribute(Attributes::NonLazyBind)
+        .removeAttribute(Attributes::ReturnsTwice)
+        .removeAttribute(Attributes::AddressSafety);
+    }
   };
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
@@ -241,6 +255,29 @@ public:
       hasAttribute(Attributes::Nest) ||
       hasAttribute(Attributes::StructRet) ||
       hasAttribute(Attributes::NoCapture);
+  }
+
+  /// @brief Attributes that may be applied to the function itself.  These cannot
+  /// be used on return values or function parameters.
+  bool hasFunctionOnlyAttrs() const {
+    return hasAttribute(Attributes::NoReturn) ||
+      hasAttribute(Attributes::NoUnwind) ||
+      hasAttribute(Attributes::ReadNone) ||
+      hasAttribute(Attributes::ReadOnly) ||
+      hasAttribute(Attributes::NoInline) ||
+      hasAttribute(Attributes::AlwaysInline) ||
+      hasAttribute(Attributes::OptimizeForSize) ||
+      hasAttribute(Attributes::StackProtect) ||
+      hasAttribute(Attributes::StackProtectReq) ||
+      hasAttribute(Attributes::NoRedZone) ||
+      hasAttribute(Attributes::NoImplicitFloat) ||
+      hasAttribute(Attributes::Naked) ||
+      hasAttribute(Attributes::InlineHint) ||
+      hasAttribute(Attributes::StackAlignment) ||
+      hasAttribute(Attributes::UWTable) ||
+      hasAttribute(Attributes::NonLazyBind) ||
+      hasAttribute(Attributes::ReturnsTwice) ||
+      hasAttribute(Attributes::AddressSafety);
   }
 
   bool isEmptyOrSingleton() const;

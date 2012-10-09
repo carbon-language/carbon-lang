@@ -529,9 +529,9 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
   if (!Attrs.hasAttributes())
     return;
 
-  Attributes FnCheckAttr = Attrs & Attribute::FunctionOnly;
-  Assert1(!FnCheckAttr, "Attribute " + FnCheckAttr.getAsString() +
-          " only applies to the function!", V);
+  Assert1(!Attrs.hasFunctionOnlyAttrs(),
+          "Some attributes in '" + Attrs.getAsString() +
+          "' only apply to functions!", V);
 
   if (isReturnValue)
     Assert1(!Attrs.hasParameterOnlyAttrs(),
@@ -541,8 +541,8 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = Attrs & Attribute::MutuallyIncompatible[i];
-    Assert1(MutI.isEmptyOrSingleton(), "Attributes " +
-            MutI.getAsString() + " are incompatible!", V);
+    Assert1(MutI.isEmptyOrSingleton(), "Attributes '" +
+            MutI.getAsString() + "' are incompatible!", V);
   }
 
   Attributes TypeI = Attrs & Attributes::typeIncompatible(Ty);
@@ -592,9 +592,11 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
   }
 
   Attributes FAttrs = Attrs.getFnAttributes();
-  Attributes NotFn = FAttrs & (~Attribute::FunctionOnly);
-  Assert1(!NotFn, "Attribute " + NotFn.getAsString() +
-          " does not apply to the function!", V);
+  Attributes::Builder NotFn(FAttrs);
+  NotFn.removeFunctionOnlyAttrs();
+  Assert1(!NotFn.hasAttributes(), "Attributes '" +
+          Attributes::get(NotFn).getAsString() +
+          "' do not apply to the function!", V);
 
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
