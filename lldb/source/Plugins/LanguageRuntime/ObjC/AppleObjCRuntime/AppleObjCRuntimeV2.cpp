@@ -981,63 +981,32 @@ private:
     // or populates them.  A ClassDescriptorV2 should only ever exist in a cache.
     ClassDescriptorV2 (AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa) :
         m_runtime (runtime),
-        m_valid (false),
-        m_objc_class_ptr (0),
-        m_objc_class (),
-        m_name (),
-        m_instance_size (0),
-        m_realized (eLazyBoolCalculate),
-        m_process_wp ()
+        m_objc_class_ptr (isa),
+        m_name ()
     {
-        Initialize (isa, m_runtime.GetProcessSP());
     }
     
 public:
     virtual ConstString
     GetClassName ()
     {
-        if (m_valid && !m_name)
+        if (!m_name)
         {
-            const lldb::addr_t class_ro_t_ptr = get_class_ro_t_ptr ();
-            
-            ProcessSP process_sp = m_process_wp.lock();
-            
+            lldb::ProcessSP process_sp = m_runtime.GetProcessSP();
+
             if (process_sp)
             {
-                const size_t ptr_size = process_sp->GetAddressByteSize();
+                std::auto_ptr<objc_class_t> objc_class;
+                std::auto_ptr<class_ro_t> class_ro;
+                std::auto_ptr<class_rw_t> class_rw;
                 
-                Error error;
-                lldb::addr_t name_ptr = process_sp->ReadPointerFromMemory (class_ro_t_ptr
-                                                                           + sizeof(uint32_t)                        // uint32_t flags
-                                                                           + sizeof(uint32_t)                        // uint32_t instanceStart
-                                                                           + sizeof(uint32_t)                        // uint32_t instanceSize
-                                                                           + (ptr_size == 8 ? sizeof(uint32_t) : 0)  // uint32_t reserved (__LP64__ only)
-                                                                           + ptr_size,                               // const uint8_t *ivarLayout
-                                                                           error);
+                if (!Read_objc_class(process_sp, objc_class))
+                    return m_name;
+                if (!Read_class_row(process_sp, *objc_class, class_ro, class_rw))
+                    return m_name;
                 
-                if (error.Success())
-                {
-                    char class_name_cstr[1024];
-                    
-                    size_t count = process_sp->ReadCStringFromMemory(name_ptr, class_name_cstr, sizeof(class_name_cstr), error);
-                    
-                    if (error.Fail())
-                    {
-                        m_valid = false;
-                    }
-                    else
-                    {
-                        if (count)
-                            m_name.SetCString(class_name_cstr);
-                        else
-                            m_valid = false;
-                    }
-                }
-                else
-                    m_valid = false;
+                m_name = ConstString(class_ro->m_name.c_str());
             }
-            else
-                m_valid = false;
         }
         return m_name;
     }
@@ -1045,16 +1014,23 @@ public:
     virtual ObjCLanguageRuntime::ClassDescriptorSP
     GetSuperclass ()
     {
-        if (!m_valid)
+        lldb::ProcessSP process_sp = m_runtime.GetProcessSP();
+
+        if (!process_sp)
             return ObjCLanguageRuntime::ClassDescriptorSP();
         
-        return m_runtime.ObjCLanguageRuntime::GetClassDescriptor(m_objc_class.m_superclass);
+        std::auto_ptr<objc_class_t> objc_class;
+
+        if (!Read_objc_class(process_sp, objc_class))
+            return ObjCLanguageRuntime::ClassDescriptorSP();
+
+        return m_runtime.ObjCLanguageRuntime::GetClassDescriptor(objc_class->m_superclass);
     }
     
     virtual bool
     IsValid ()
     {
-        return m_valid;
+        return true;    // any Objective-C v2 runtime class descriptor we vend is valid
     }
     
     virtual bool
@@ -1066,39 +1042,28 @@ public:
     virtual uint64_t
     GetInstanceSize ()
     {
-        if (!m_valid)
-            return 0;
+        lldb::ProcessSP process_sp = m_runtime.GetProcessSP();
         
-        if (m_instance_size == 0)
+        if (process_sp)
         {
-            const lldb::addr_t class_ro_t_ptr = get_class_ro_t_ptr ();
+            std::auto_ptr<objc_class_t> objc_class;
+            std::auto_ptr<class_ro_t> class_ro;
+            std::auto_ptr<class_rw_t> class_rw;
             
-            ProcessSP process_sp = m_process_wp.lock();
+            if (!Read_objc_class(process_sp, objc_class))
+                return 0;
+            if (!Read_class_row(process_sp, *objc_class, class_ro, class_rw))
+                return 0;
             
-            if (process_sp)
-            {
-                Error error;
-                m_instance_size = process_sp->ReadUnsignedIntegerFromMemory(class_ro_t_ptr
-                                                                            + sizeof(uint32_t)                        // uint32_t flags
-                                                                            + sizeof(uint32_t),                       // uint32_t instanceStart
-                                                                            sizeof(uint32_t),
-                                                                            0,
-                                                                            error);
-                if (error.Fail())
-                    m_valid = false;
-            }
-            else
-                m_valid = false;
+            return class_ro->m_instanceSize;
         }
-        return m_instance_size;
+        
+        return 0;
     }
     
     virtual ObjCLanguageRuntime::ObjCISA
     GetISA ()
-    {
-        if (!m_valid)
-            return 0;
-        
+    {        
         return m_objc_class_ptr;
     }
     
@@ -1107,45 +1072,28 @@ public:
               std::function <void (const char *, const char *)> const &instance_method_func,
               std::function <void (const char *, const char *)> const &class_method_func)
     {
-        if (!m_valid)
-            return false;
+        lldb::ProcessSP process_sp = m_runtime.GetProcessSP();
+
+        std::auto_ptr<objc_class_t> objc_class;
+        std::auto_ptr<class_ro_t> class_ro;
+        std::auto_ptr<class_rw_t> class_rw;
         
-        std::auto_ptr <class_ro_t> ro;
-        std::auto_ptr <class_rw_t> rw;
-        
-        ProcessSP process_sp = m_process_wp.lock();
-        
-        if (!process_sp)
-            return false;
-        
-        if (IsRealized())
-        {
-            rw.reset(new class_rw_t);
-            if (!rw->Read(process_sp, m_objc_class.m_data_ptr))
-                return false;
-            
-            ro.reset(new class_ro_t);
-            if (!ro->Read(process_sp, rw->m_ro_ptr))
-                return false;
-        }
-        else
-        {
-            ro.reset(new class_ro_t);
-            if (!ro->Read(process_sp, m_objc_class.m_data_ptr))
-                return false;
-        }
+        if (!Read_objc_class(process_sp, objc_class))
+            return 0;
+        if (!Read_class_row(process_sp, *objc_class, class_ro, class_rw))
+            return 0;
     
         static ConstString NSObject_name("NSObject");
         
         if (m_name != NSObject_name && superclass_func)
-            superclass_func(m_objc_class.m_superclass);
+            superclass_func(objc_class->m_superclass);
         
         if (instance_method_func)
         {
             std::auto_ptr <method_list_t> base_method_list;
             
             base_method_list.reset(new method_list_t);
-            if (!base_method_list->Read(process_sp, ro->m_baseMethods_ptr))
+            if (!base_method_list->Read(process_sp, class_ro->m_baseMethods_ptr))
                 return false;
             
             if (base_method_list->m_entsize != method_t::GetSize(process_sp))
@@ -1164,7 +1112,7 @@ public:
         
         if (class_method_func)
         {
-            ObjCLanguageRuntime::ClassDescriptorSP metaclass = m_runtime.ObjCLanguageRuntime::GetClassDescriptor(m_objc_class.m_isa);
+            ObjCLanguageRuntime::ClassDescriptorSP metaclass = m_runtime.ObjCLanguageRuntime::GetClassDescriptor(objc_class->m_isa);
             
             // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
             // our class methods.
@@ -1178,132 +1126,9 @@ public:
         return true;
     }
     
-    virtual bool
-    IsRealized ()
-    {
-        if (!m_valid)
-            return false;
-        
-        if (m_realized == eLazyBoolCalculate)
-        {
-            if (class_row_t_flags() & RW_REALIZED)
-                m_realized = eLazyBoolYes;
-            else
-                m_realized = eLazyBoolNo;
-        }
-        return m_realized == eLazyBoolYes;
-    }
-    
     virtual
     ~ClassDescriptorV2 ()
     {
-    }
-    
-protected:
-    virtual bool
-    CheckPointer (lldb::addr_t value, uint32_t ptr_size) const
-    {
-        if (ptr_size != 8)
-            return true;
-        return ((value & 0xFFFF800000000000) == 0);
-    }
-    
-    uint32_t
-    class_row_t_flags ()
-    {
-        if (m_valid && m_objc_class.m_data_ptr)
-        {
-            ProcessSP process_sp (m_process_wp.lock());
-            if (process_sp)
-            {
-                Error error;
-                uint32_t class_row_t_flags = process_sp->ReadUnsignedIntegerFromMemory(m_objc_class.m_data_ptr, sizeof(uint32_t), 0, error);
-                if (error.Success())
-                    return class_row_t_flags;
-                else
-                    m_valid = false;
-            }
-        }
-        return 0;
-    }
-    
-    lldb::addr_t
-    get_class_ro_t_ptr ()
-    {
-        if (m_valid && m_objc_class.m_data_ptr)
-        {
-            if (IsRealized())
-            {
-                ProcessSP process_sp (m_process_wp.lock());
-                if (process_sp)
-                {
-                    lldb::addr_t class_rw_t_ptr = m_objc_class.m_data_ptr;
-                    
-                    Error error;
-                    const lldb::addr_t class_ro_t_ptr = process_sp->ReadPointerFromMemory (class_rw_t_ptr
-                                                                                           + sizeof(uint32_t)    // uint32_t flags
-                                                                                           + sizeof(uint32_t),   // uint32_t version
-                                                                                           error);
-                    
-                    if (error.Success() && IsPointerValid(class_ro_t_ptr, process_sp->GetAddressByteSize()))
-                        return class_ro_t_ptr;
-                    else
-                        m_valid = false;
-                }
-                else
-                    m_valid = false;
-            }
-            else
-            {
-                return m_objc_class.m_data_ptr;
-            }
-        }
-        return 0;
-    }
-
-    void
-    Initialize (ObjCLanguageRuntime::ObjCISA objc_class_ptr, lldb::ProcessSP process_sp)
-    {
-        if (!objc_class_ptr || !process_sp)
-        {
-            m_valid = false;
-            return;
-        }
-        m_valid = true;
-        
-        
-        m_objc_class_ptr = objc_class_ptr;
-
-        size_t ptr_size = process_sp->GetAddressByteSize();
-        Error error;
-                
-        const bool allow_NULLs = false;
-        const bool allow_tagged = false;
-        const bool check_version_specific = true;
-
-        if (!IsPointerValid(m_objc_class_ptr, ptr_size, allow_NULLs, allow_tagged, check_version_specific))
-        {
-            m_valid = false;
-            return;
-        }
-        
-        if (!m_objc_class.Read(process_sp, m_objc_class_ptr))
-        {
-            m_valid = false;
-            return;
-        }
-                    
-        // Now we just want to grab the instance size and the name.
-        // Since we find out whether the class is realized on the way, we'll remember that too.
-    
-        // The flags for class_r[ow]_t always are the first uint32_t.  So just read that.
-        if (!IsPointerValid(m_objc_class.m_data_ptr, ptr_size, allow_NULLs, allow_tagged, check_version_specific))
-        {
-            m_valid = false;
-            return;
-        }
-        
-        m_process_wp = process_sp;
     }
         
 private:
@@ -1389,6 +1214,8 @@ private:
         lldb::addr_t                    m_weakIvarLayout_ptr;
         lldb::addr_t                    m_baseProperties_ptr;
         
+        std::string                     m_name;
+        
         bool Read(ProcessSP &process_sp, lldb::addr_t addr)
         {
             size_t ptr_size = process_sp->GetAddressByteSize();
@@ -1433,6 +1260,17 @@ private:
             m_weakIvarLayout_ptr = extractor.GetAddress_unchecked(&cursor);
             m_baseProperties_ptr = extractor.GetAddress_unchecked(&cursor);
             
+            DataBufferHeap name_buf(1024, '\0');
+            
+            process_sp->ReadCStringFromMemory(m_name_ptr, (char*)name_buf.GetBytes(), name_buf.GetByteSize(), error);
+            
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            m_name.assign((char*)name_buf.GetBytes());
+                
             return true;
         }
     };
@@ -1575,17 +1413,65 @@ private:
             return true;
         }
     };
+    
+    bool Read_objc_class (lldb::ProcessSP process_sp, std::auto_ptr<objc_class_t> &objc_class)
+    {
+        objc_class.reset(new objc_class_t);
+        
+        bool ret = objc_class->Read (process_sp, m_objc_class_ptr);
+        
+        if (!ret)
+            objc_class.reset();
+        
+        return ret;
+    }
+    
+    bool Read_class_row (lldb::ProcessSP process_sp, const objc_class_t &objc_class, std::auto_ptr<class_ro_t> &class_ro, std::auto_ptr<class_rw_t> &class_rw)
+    {
+        class_ro.reset();
+        class_rw.reset();
+        
+        Error error;
+        uint32_t class_row_t_flags = process_sp->ReadUnsignedIntegerFromMemory(objc_class.m_data_ptr, sizeof(uint32_t), 0, error);
+        if (!error.Success())
+            return false;
 
-    AppleObjCRuntimeV2 &m_runtime;          // The runtime, so we can read our metaclass.
-    bool                m_valid;            // Gates whether we trust anything here at all.
-    lldb::addr_t        m_objc_class_ptr;   // The address of the objc_class_t.
-    objc_class_t        m_objc_class;
+        if (class_row_t_flags & RW_REALIZED)
+        {
+            class_rw.reset(new class_rw_t);
+            
+            if (!class_rw->Read(process_sp, objc_class.m_data_ptr))
+            {
+                class_rw.reset();
+                return false;
+            }
+            
+            class_ro.reset(new class_ro_t);
+            
+            if (!class_ro->Read(process_sp, class_rw->m_ro_ptr))
+            {
+                class_rw.reset();
+                class_ro.reset();
+                return false;
+            }
+        }
+        else
+        {
+            class_ro.reset(new class_ro_t);
+            
+            if (!class_ro->Read(process_sp, objc_class.m_data_ptr))
+            {
+                class_ro.reset();
+                return false;
+            }
+        }
+        
+        return true;
+    }
 
-    // cached information from the class_r[ow]_t
-    ConstString         m_name;
-    uint32_t            m_instance_size;
-    LazyBool            m_realized;
-    lldb::ProcessWP     m_process_wp;
+    AppleObjCRuntimeV2 &m_runtime;          // The runtime, so we can read information lazily.
+    lldb::addr_t        m_objc_class_ptr;   // The address of the objc_class_t.  (I.e., objects of this class type have this as their ISA)
+    ConstString         m_name;             // May be NULL
 };
 
 class ClassDescriptorV2Tagged : public ObjCLanguageRuntime::ClassDescriptor

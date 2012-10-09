@@ -98,13 +98,6 @@ public:
         virtual uint64_t
         GetInstanceSize () = 0;
         
-        virtual bool
-        IsRealized ()
-        {
-            // anything other than some instances of v2 classes are always realized
-            return true;
-        }
-        
         // use to implement version-specific additional constraints on pointers
         virtual bool
         CheckPointer (lldb::addr_t value,
