@@ -130,7 +130,12 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 #define DCHECK_GE(a, b)
 #endif
 
-#define UNIMPLEMENTED() CHECK("unimplemented" && 0)
+#define UNREACHABLE(msg) do { \
+  CHECK(0 && msg); \
+  Die(); \
+} while(0)
+
+#define UNIMPLEMENTED() UNREACHABLE("unimplemented")
 
 #define COMPILER_CHECK(pred) IMPL_COMPILER_ASSERT(pred, __LINE__)
 
