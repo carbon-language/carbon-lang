@@ -26,10 +26,10 @@ namespace llvm {
 /// This class implements a map that also provides access to all stored values
 /// in a deterministic order. The values are kept in a std::vector and the
 /// mapping is done with DenseMap from Keys to indexes in that vector.
-template<typename KeyT, typename ValueT>
+template<typename KeyT, typename ValueT,
+         typename MapType = llvm::DenseMap<KeyT, unsigned>,
+         typename VectorType = std::vector<std::pair<KeyT, ValueT> >>
 class MapVector {
-  typedef llvm::DenseMap<KeyT, unsigned> MapType;
-  typedef std::vector<std::pair<KeyT, ValueT> > VectorType;
   typedef typename VectorType::size_type SizeType;
 
   MapType Map;
@@ -61,6 +61,11 @@ public:
 
   bool empty() const {
     return Vector.empty();
+  }
+
+  void clear() {
+    Map.clear();
+    Vector.clear();
   }
 
   ValueT &operator[](const KeyT &Key) {
