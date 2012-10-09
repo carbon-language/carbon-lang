@@ -3372,7 +3372,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  if (!Tok.is(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
   StringRef Mask = Tok.getString();
 
   if (isMClass()) {
