@@ -74,6 +74,14 @@ public:
                                  const MachineInstr *UseMI, unsigned UseOperIdx,
                                  bool FindMin) const;
 
+  /// \brief Compute the instruction latency based on the available machine
+  /// model.
+  ///
+  /// Compute and return the expected latency of this instruction independent of
+  /// a particular use. computeOperandLatency is the prefered API, but this is
+  /// occasionally useful to help estimate instruction cost.
+  unsigned computeInstrLatency(const MachineInstr *MI) const;
+
   /// \brief Identify the processor corresponding to the current subtarget.
   unsigned getProcessorID() const { return SchedModel.getProcessorID(); }
 

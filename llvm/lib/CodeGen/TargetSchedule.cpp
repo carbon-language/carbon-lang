@@ -146,6 +146,10 @@ unsigned TargetSchedModel::computeOperandLatency(
     unsigned InstrLatency = TII->getInstrLatency(&InstrItins, DefMI);
 
     // Expected latency is the max of the stage latency and itinerary props.
+    // Rather than directly querying InstrItins stage latency, we call a TII
+    // hook to allow subtargets to specialize latency. This hook is only
+    // applicable to the InstrItins model. InstrSchedModel should model all
+    // special cases without TII hooks.
     if (!FindMin)
       InstrLatency = std::max(InstrLatency,
                               TII->defaultDefLatency(&SchedModel, DefMI));
@@ -184,4 +188,24 @@ unsigned TargetSchedModel::computeOperandLatency(
   }
 #endif
   return 1;
+}
+
+unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
+  if (hasInstrItineraries()) {
+    // For the itinerary model, fall back to the old subtarget hook.
+    return TII->getInstrLatency(&InstrItins, MI);
+  }
+  if (hasInstrSchedModel()) {
+    unsigned Latency = 0;
+    const MCSchedClassDesc *SCDesc = resolveSchedClass(MI);
+    for (unsigned DefIdx = 0, DefEnd = SCDesc->NumWriteLatencyEntries;
+         DefIdx != DefEnd; ++DefIdx) {
+      // Lookup the definition's write latency in SubtargetInfo.
+      const MCWriteLatencyEntry *WLEntry =
+        STI->getWriteLatencyEntry(SCDesc, DefIdx);
+      Latency = std::max(Latency, WLEntry->Cycles);
+    }
+    return Latency;
+  }
+  return TII->defaultDefLatency(&SchedModel, MI);
 }
