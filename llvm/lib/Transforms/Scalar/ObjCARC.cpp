@@ -3840,10 +3840,13 @@ Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
     Type *I8XX = PointerType::getUnqual(I8X);
     Type *Params[] = { I8XX, I8X };
 
-    Attributes::Builder B;
-    B.addNoUnwindAttr();
-    B.addNoCaptureAttr();
-    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attributes::get(B));
+    Attributes::Builder BNoUnwind;
+    BNoUnwind.addNoUnwindAttr();
+    Attributes::Builder BNoCapture;
+    BNoCapture.addNoCaptureAttr();
+    AttrListPtr Attributes = AttrListPtr()
+      .addAttr(~0u, Attributes::get(BNoUnwind))
+      .addAttr(1, Attributes::get(BNoCapture));
 
     StoreStrongCallee =
       M->getOrInsertFunction(
