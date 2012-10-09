@@ -51,7 +51,7 @@ namespace {
 ///
 /// This functionality is really only for the benefit of the build system.
 /// It is similar to GCC's `-M*` family of options.
-static int handleDependencies(const TGParser &Parser, const char *argv0) {
+static int createDependencyFile(const TGParser &Parser, const char *argv0) {
   if (OutputFilename == "-") {
     errs() << argv0 << ": the option -d must be used together with -o\n";
     return 1;
@@ -111,7 +111,7 @@ int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
       return 1;
     }
     if (!DependFilename.empty())
-      if (int Ret = handleDependencies(Parser, argv0))
+      if (int Ret = createDependencyFile(Parser, argv0))
         return Ret;
 
     if (MainFn(Out.os(), Records))
