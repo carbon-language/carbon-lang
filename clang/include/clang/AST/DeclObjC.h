@@ -427,7 +427,14 @@ public:
   /// method in the interface or its categories.
   void getOverriddenMethods(
                      SmallVectorImpl<const ObjCMethodDecl *> &Overridden) const;
-  
+
+  /// \brief Returns the property associated with this method's selector.
+  ///
+  /// Note that even if this particular method is not marked as a property
+  /// accessor, it is still possible for it to match a property declared in a
+  /// superclass. Pass \c false if you only want to check the current class.
+  const ObjCPropertyDecl *findPropertyDecl(bool CheckOverrides = true) const;
+
   // Related to protocols declared in  \@protocol
   void setDeclImplementation(ImplementationControl ic) {
     DeclImplementation = ic;

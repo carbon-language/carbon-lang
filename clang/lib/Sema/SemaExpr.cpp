@@ -87,13 +87,17 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
       if (const EnumDecl *TheEnumDecl = dyn_cast<EnumDecl>(DC))
         Result = TheEnumDecl->getAvailability(&Message);
     }
+
   const ObjCPropertyDecl *ObjCPDecl = 0;
-  if (Result == AR_Deprecated || Result == AR_Unavailable)
-    if (ObjCPropertyDecl *ND = S.PropertyIfSetterOrGetter(D)) {
-      AvailabilityResult PDeclResult = ND->getAvailability(0);
-      if (PDeclResult == Result)
-        ObjCPDecl = ND;
+  if (Result == AR_Deprecated || Result == AR_Unavailable) {
+    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+      if (const ObjCPropertyDecl *PD = MD->findPropertyDecl()) {
+        AvailabilityResult PDeclResult = PD->getAvailability(0);
+        if (PDeclResult == Result)
+          ObjCPDecl = PD;
+      }
     }
+  }
   
   switch (Result) {
     case AR_Available:

@@ -2308,18 +2308,7 @@ public:
   void CollectImmediateProperties(ObjCContainerDecl *CDecl,
             llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap,
             llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& SuperPropMap);
-
-
-  /// LookupPropertyDecl - Looks up a property in the current class and all
-  /// its protocols.
-  ObjCPropertyDecl *LookupPropertyDecl(const ObjCContainerDecl *CDecl,
-                                       IdentifierInfo *II);
   
-  /// PropertyIfSetterOrGetter - Looks up the property if named declaration
-  /// is a setter or getter method backing a property.
-  ObjCPropertyDecl *PropertyIfSetterOrGetter(const NamedDecl *D,
-                                             bool CheckOverrides = true);
-
   /// Called by ActOnProperty to handle \@property declarations in
   /// class extensions.
   Decl *HandlePropertyInClassExtension(Scope *S,

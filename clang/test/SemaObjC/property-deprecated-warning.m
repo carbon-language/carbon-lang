@@ -5,7 +5,7 @@
 typedef signed char BOOL;
 
 @protocol P
-@property(nonatomic,assign) id ptarget __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{property 'ptarget' is declared deprecated here}}
+@property(nonatomic,assign) id ptarget __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note 2 {{property 'ptarget' is declared deprecated here}}
 @end
 
 @protocol P1<P>
@@ -49,4 +49,16 @@ typedef signed char BOOL;
 void testCustomAccessorNames(CustomAccessorNames *obj) {
   if ([obj isEnabled]) // expected-warning {{'isEnabled' is deprecated: first deprecated in iOS 3.0}}
     [obj setNewDelegate:0]; // expected-warning {{'setNewDelegate:' is deprecated: first deprecated in iOS 3.0}}
+}
+
+
+@interface ProtocolInCategory
+@end
+
+@interface ProtocolInCategory (TheCategory) <P1>
+- (id)ptarget; // expected-note {{method 'ptarget' declared here}}
+@end
+
+id useDeprecatedProperty(ProtocolInCategory *obj) {
+  return [obj ptarget]; // expected-warning {{'ptarget' is deprecated: first deprecated in iOS 3.0}}
 }

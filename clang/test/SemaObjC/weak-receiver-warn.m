@@ -52,7 +52,7 @@ void test0(Test0 *x) {
 @interface MyClass {
     __weak MyClass *_parent;
 }
-@property (weak) MyClass *parent; // expected-note 2 {{property declared here}}
+@property (weak) MyClass *parent; // expected-note 4 {{property declared here}}
 @end
 
 @implementation MyClass
@@ -77,4 +77,24 @@ void testProtocol(id <MyProtocol> input) {
   [[input object] Meth]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
   [input.object Meth]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
 }
+
+
+@interface Subclass : MyClass
+// Unnecessarily redeclare -parent.
+- (id)parent;
+@end
+
+@implementation Subclass
+
+- (id)parent {
+  return [super parent];
+}
+
+- (void)doSomethingElse {
+  [[self parent] doSomething]; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+
+  (void)self.parent.doSomething; // expected-warning {{weak property may be unpredictably set to nil}} expected-note {{assign the value to a strong variable to keep the object alive during use}}
+}
+
+@end
 
