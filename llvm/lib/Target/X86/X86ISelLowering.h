@@ -233,6 +233,9 @@ namespace llvm {
       // VFPEXT - Vector FP extend.
       VFPEXT,
 
+      // VFPROUND - Vector FP round.
+      VFPROUND,
+
       // VSHL, VSRL - 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
 
