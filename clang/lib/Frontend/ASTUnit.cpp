@@ -512,8 +512,9 @@ public:
       Predefines(Predefines), Counter(Counter), NumHeaderInfos(0),
       InitializedLanguage(false) {}
 
-  virtual bool ReadLanguageOptions(const LangOptions &LangOpts) {
-    if (InitializedLanguage)
+  virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
+                                   const LangOptions &LangOpts) {
+    if (InitializedLanguage || M.Kind != serialization::MK_MainFile)
       return false;
     
     LangOpt = LangOpts;
@@ -530,9 +531,10 @@ public:
     return false;
   }
 
-  virtual bool ReadTargetTriple(StringRef Triple) {
+  virtual bool ReadTargetTriple(const serialization::ModuleFile &M,
+                                StringRef Triple) {
     // If we've already initialized the target, don't do it again.
-    if (Target)
+    if (Target || M.Kind != serialization::MK_MainFile)
       return false;
     
     // FIXME: This is broken, we should store the TargetOptions in the AST file.
@@ -563,7 +565,7 @@ public:
     HSI.setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
   }
 
-  virtual void ReadCounter(unsigned Value) {
+  virtual void ReadCounter(const serialization::ModuleFile &M, unsigned Value) {
     Counter = Value;
   }
 
@@ -2850,6 +2852,10 @@ const FileEntry *ASTUnit::getPCHFile() {
     return Info.Mod->File;
 
   return 0;
+}
+
+bool ASTUnit::isModuleFile() {
+  return isMainFileAST() && !ASTFileLangOpts.CurrentModule.empty();
 }
 
 void ASTUnit::PreambleData::countLines() const {

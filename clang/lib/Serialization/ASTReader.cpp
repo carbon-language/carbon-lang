@@ -63,7 +63,8 @@ using namespace clang::serialization::reader;
 ASTReaderListener::~ASTReaderListener() {}
 
 bool
-PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
+PCHValidator::ReadLanguageOptions(const ModuleFile &M,
+                                  const LangOptions &LangOpts) {
   const LangOptions &PPLangOpts = PP.getLangOpts();
   
 #define LANGOPT(Name, Bits, Default, Description)         \
@@ -100,7 +101,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   return false;
 }
 
-bool PCHValidator::ReadTargetTriple(StringRef Triple) {
+bool PCHValidator::ReadTargetTriple(const ModuleFile &M, StringRef Triple) {
   if (Triple == PP.getTargetInfo().getTriple().str())
     return false;
 
@@ -408,7 +409,7 @@ void PCHValidator::ReadHeaderFileInfo(const HeaderFileInfo &HFI,
   ++NumHeaderInfos;
 }
 
-void PCHValidator::ReadCounter(unsigned Value) {
+void PCHValidator::ReadCounter(const ModuleFile &M, unsigned Value) {
   PP.setCounterValue(Value);
 }
 
@@ -1828,7 +1829,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       RelocatablePCH = Record[4];
       if (Listener) {
         std::string TargetTriple(BlobStart, BlobLen);
-        if (Listener->ReadTargetTriple(TargetTriple))
+        if (Listener->ReadTargetTriple(F, TargetTriple))
           return IgnorePCH;
       }
       break;
@@ -1938,7 +1939,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     }
 
     case LANGUAGE_OPTIONS:
-      if (ParseLanguageOptions(Record) && !DisableValidation)
+      if (ParseLanguageOptions(F, Record) && !DisableValidation)
         return IgnorePCH;
       break;
 
@@ -2083,7 +2084,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
 
     case PP_COUNTER_VALUE:
       if (!Record.empty() && Listener)
-        Listener->ReadCounter(Record[0]);
+        Listener->ReadCounter(F, Record[0]);
       break;
       
     case FILE_SORTED_DECLS:
@@ -3430,7 +3431,8 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
 /// them to the AST listener if one is set.
 ///
 /// \returns true if the listener deems the file unacceptable, false otherwise.
-bool ASTReader::ParseLanguageOptions(const RecordData &Record) {
+bool ASTReader::ParseLanguageOptions(const ModuleFile &M,
+                                     const RecordData &Record) {
   if (Listener) {
     LangOptions LangOpts;
     unsigned Idx = 0;
@@ -3447,7 +3449,7 @@ bool ASTReader::ParseLanguageOptions(const RecordData &Record) {
     unsigned Length = Record[Idx++];
     LangOpts.CurrentModule.assign(Record.begin() + Idx, 
                                   Record.begin() + Idx + Length);
-    return Listener->ReadLanguageOptions(LangOpts);
+    return Listener->ReadLanguageOptions(M, LangOpts);
   }
 
   return false;

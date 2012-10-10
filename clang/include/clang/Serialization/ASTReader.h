@@ -105,14 +105,16 @@ public:
   /// \brief Receives the language options.
   ///
   /// \returns true to indicate the options are invalid or false otherwise.
-  virtual bool ReadLanguageOptions(const LangOptions &LangOpts) {
+  virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
+                                   const LangOptions &LangOpts) {
     return false;
   }
 
   /// \brief Receives the target triple.
   ///
   /// \returns true to indicate the target triple is invalid or false otherwise.
-  virtual bool ReadTargetTriple(StringRef Triple) {
+  virtual bool ReadTargetTriple(const serialization::ModuleFile &M,
+                                StringRef Triple) {
     return false;
   }
 
@@ -138,7 +140,8 @@ public:
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID) {}
 
   /// \brief Receives __COUNTER__ value.
-  virtual void ReadCounter(unsigned Value) {}
+  virtual void ReadCounter(const serialization::ModuleFile &M,
+                           unsigned Value) {}
 };
 
 /// \brief ASTReaderListener implementation to validate the information of
@@ -153,14 +156,16 @@ public:
   PCHValidator(Preprocessor &PP, ASTReader &Reader)
     : PP(PP), Reader(Reader), NumHeaderInfos(0) {}
 
-  virtual bool ReadLanguageOptions(const LangOptions &LangOpts);
-  virtual bool ReadTargetTriple(StringRef Triple);
+  virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
+                                   const LangOptions &LangOpts);
+  virtual bool ReadTargetTriple(const serialization::ModuleFile &M,
+                                StringRef Triple);
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     StringRef OriginalFileName,
                                     std::string &SuggestedPredefines,
                                     FileManager &FileMgr);
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID);
-  virtual void ReadCounter(unsigned Value);
+  virtual void ReadCounter(const serialization::ModuleFile &M, unsigned Value);
 
 private:
   void Error(const char *Msg);
@@ -834,7 +839,7 @@ private:
   llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(ModuleFile *F);
   ASTReadResult ReadSubmoduleBlock(ModuleFile &F);
-  bool ParseLanguageOptions(const RecordData &Record);
+  bool ParseLanguageOptions(const ModuleFile &M, const RecordData &Record);
   
   struct RecordLocation {
     RecordLocation(ModuleFile *M, uint64_t O)

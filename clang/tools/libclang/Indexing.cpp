@@ -450,14 +450,21 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
   PreprocessingRecord::iterator I, E;
   llvm::tie(I, E) = Unit.getLocalPreprocessingEntities();
 
+  bool isModuleFile = Unit.isModuleFile();
   for (; I != E; ++I) {
     PreprocessedEntity *PPE = *I;
 
     if (InclusionDirective *ID = dyn_cast<InclusionDirective>(PPE)) {
-      if (!ID->importedModule())
-        IdxCtx.ppIncludedFile(ID->getSourceRange().getBegin(),ID->getFileName(),
+      if (!ID->importedModule()) {
+        SourceLocation Loc = ID->getSourceRange().getBegin();
+        // Modules have synthetic main files as input, give an invalid location
+        // if the location points to such a file.
+        if (isModuleFile && Unit.isInMainFileID(Loc))
+          Loc = SourceLocation();
+        IdxCtx.ppIncludedFile(Loc, ID->getFileName(),
                      ID->getFile(), ID->getKind() == InclusionDirective::Import,
                      !ID->wasInQuotes());
+      }
     }
   }
 }

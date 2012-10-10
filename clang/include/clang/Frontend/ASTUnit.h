@@ -626,6 +626,10 @@ public:
   /// \brief Get the PCH file if one was included.
   const FileEntry *getPCHFile();
 
+  /// \brief Returns true if the ASTUnit was constructed from a serialized
+  /// module file.
+  bool isModuleFile();
+
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 
