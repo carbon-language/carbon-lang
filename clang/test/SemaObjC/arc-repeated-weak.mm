@@ -147,6 +147,17 @@ void testBlock(Test *a) {
   });
 }
 
+void assignToStrongWithCasts(Test *a) {
+  if (condition()) {
+    Test *val = (Test *)a.weakProp; // no-warning
+    (void)val;
+  } else {
+    id val;
+    val = (Test *)a.weakProp; // no-warning
+    (void)val;
+  }
+}
+
 
 @interface Test (Methods)
 @end

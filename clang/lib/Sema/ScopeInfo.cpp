@@ -115,7 +115,7 @@ FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
 }
 
 void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
-  E = E->IgnoreParenImpCasts();
+  E = E->IgnoreParenCasts();
 
   if (const PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E)) {
     markSafeWeakUse(POE->getSyntacticForm());
