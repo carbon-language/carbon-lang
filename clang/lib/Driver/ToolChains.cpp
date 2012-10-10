@@ -485,7 +485,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
         }
         // When using the define to indicate the simulator, we force
         // 10.6 macosx target.
-        const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+        const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
         OSXVersion = Args.MakeJoinedArg(0, O, "10.6");
         Args.append(OSXVersion);
         break;
@@ -559,21 +559,21 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     }
 
     if (!OSXTarget.empty()) {
-      const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+      const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = Args.MakeJoinedArg(0, O, OSXTarget);
       Args.append(OSXVersion);
     } else if (!iOSTarget.empty()) {
-      const Option O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
+      const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
       iOSVersion = Args.MakeJoinedArg(0, O, iOSTarget);
       Args.append(iOSVersion);
     } else if (!iOSSimTarget.empty()) {
-      const Option O = Opts.getOption(
+      const Option *O = Opts.getOption(
         options::OPT_mios_simulator_version_min_EQ);
       iOSSimVersion = Args.MakeJoinedArg(0, O, iOSSimTarget);
       Args.append(iOSSimVersion);
     } else {
       // Otherwise, assume we are targeting OS X.
-      const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+      const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = Args.MakeJoinedArg(0, O, MacosxVersionMin);
       Args.append(OSXVersion);
     }
@@ -835,8 +835,8 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // how the driver driver works.
   if (BoundArch) {
     StringRef Name = BoundArch;
-    const Option MCpu = Opts.getOption(options::OPT_mcpu_EQ);
-    const Option MArch = Opts.getOption(options::OPT_march_EQ);
+    const Option *MCpu = Opts.getOption(options::OPT_mcpu_EQ);
+    const Option *MArch = Opts.getOption(options::OPT_march_EQ);
 
     // This code must be kept in sync with LLVM's getArchTypeForDarwinArch,
     // which defines the list of which architectures we accept.

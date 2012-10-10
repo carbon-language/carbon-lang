@@ -76,15 +76,11 @@ namespace options {
     Option(const OptTable::Info *Info, const OptTable *Owner);
     ~Option();
 
-    bool isValid() const {
-      return Info != 0;
-    }
-
     unsigned getID() const { return Info->ID; }
     OptionClass getKind() const { return OptionClass(Info->Kind); }
     StringRef getName() const { return Info->Name; }
-    const Option getGroup() const { return Owner->getOption(Info->GroupID); }
-    const Option getAlias() const { return Owner->getOption(Info->AliasID); }
+    const Option *getGroup() const { return Owner->getOption(Info->GroupID); }
+    const Option *getAlias() const { return Owner->getOption(Info->AliasID); }
 
     unsigned getNumArgs() const { return Info->Param; }
 
@@ -134,16 +130,16 @@ namespace options {
 
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).
-    const Option getUnaliasedOption() const {
-      const Option Alias = getAlias();
-      if (Alias.isValid()) return Alias.getUnaliasedOption();
-      return *this;
+    const Option *getUnaliasedOption() const {
+      const Option *Alias = getAlias();
+      if (Alias) return Alias->getUnaliasedOption();
+      return this;
     }
 
     /// getRenderName - Return the name to use when rendering this
     /// option.
     StringRef getRenderName() const {
-      return getUnaliasedOption().getName();
+      return getUnaliasedOption()->getName();
     }
 
     /// matches - Predicate for whether this option is part of the

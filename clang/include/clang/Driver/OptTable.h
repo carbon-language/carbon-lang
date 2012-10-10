@@ -47,6 +47,15 @@ namespace driver {
     const Info *OptionInfos;
     unsigned NumOptionInfos;
 
+    /// \brief The lazily constructed options table, indexed by option::ID - 1.
+    mutable Option **Options;
+
+    /// \brief Prebound input option instance.
+    const Option *TheInputOption;
+
+    /// \brief Prebound unknown option instance.
+    const Option *TheUnknownOption;
+
     /// The index of the first option which can be parsed (i.e., is not a
     /// special option like 'input' or 'unknown', and is not an option group).
     unsigned FirstSearchableIndex;
@@ -57,6 +66,8 @@ namespace driver {
       assert(id > 0 && id - 1 < getNumOptions() && "Invalid Option ID.");
       return OptionInfos[id - 1];
     }
+
+    Option *CreateOption(unsigned id) const;
 
   protected:
     OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos);
@@ -70,7 +81,17 @@ namespace driver {
     /// if necessary.
     ///
     /// \return The option, or null for the INVALID option id.
-    const Option getOption(OptSpecifier Opt) const;
+    const Option *getOption(OptSpecifier Opt) const {
+      unsigned id = Opt.getID();
+      if (id == 0)
+        return 0;
+
+      assert((unsigned) (id - 1) < getNumOptions() && "Invalid ID.");
+      Option *&Entry = Options[id - 1];
+      if (!Entry)
+        Entry = CreateOption(id);
+      return Entry;
+    }
 
     /// \brief Lookup the name of the given option.
     const char *getOptionName(OptSpecifier id) const {
