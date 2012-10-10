@@ -40,7 +40,6 @@ class MipsTargetMachine : public LLVMTargetMachine {
   MipsJITInfo JITInfo;
   MipsELFWriterInfo   ELFWriterInfo;
   ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT,
