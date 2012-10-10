@@ -398,6 +398,9 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     PPOpts.DetailedRecord = true;
   }
 
+  if (!requestedToGetTU && !CInvok->getLangOpts()->Modules)
+    PPOpts.DetailedRecord = false;
+
   DiagnosticErrorTrap DiagTrap(*Diags);
   bool Success = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
                                                        IndexAction.get(),
