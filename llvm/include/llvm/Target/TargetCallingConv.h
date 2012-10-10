@@ -113,9 +113,18 @@ namespace ISD {
     MVT VT;
     bool Used;
 
+    /// Index original Function's argument.
+    unsigned OrigArgIndex;
+
+    /// Offset in bytes of current input value relative to the beginning of
+    /// original argument. E.g. if argument was splitted into four 32 bit
+    /// registers, we got 4 InputArgs with PartOffsets 0, 4, 8 and 12.
+    unsigned PartOffset;
+
     InputArg() : VT(MVT::Other), Used(false) {}
-    InputArg(ArgFlagsTy flags, EVT vt, bool used)
-      : Flags(flags), Used(used) {
+    InputArg(ArgFlagsTy flags, EVT vt, bool used,
+             unsigned origIdx, unsigned partOffs)
+      : Flags(flags), Used(used), OrigArgIndex(origIdx), PartOffset(partOffs) {
       VT = vt.getSimpleVT();
     }
   };

@@ -2534,6 +2534,8 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
 void
 ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                                         DebugLoc dl, SDValue &Chain,
+                                        const Value *OrigArg,
+                                        unsigned OffsetFromOrigArg,
                                         unsigned ArgOffset) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -2561,7 +2563,7 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                                     getPointerTy());
 
     SmallVector<SDValue, 4> MemOps;
-    for (; firstRegToSaveIndex < 4; ++firstRegToSaveIndex) {
+    for (unsigned i = 0; firstRegToSaveIndex < 4; ++firstRegToSaveIndex, ++i) {
       const TargetRegisterClass *RC;
       if (AFI->isThumb1OnlyFunction())
         RC = &ARM::tGPRRegClass;
@@ -2572,7 +2574,7 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
       SDValue Store =
         DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                 MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
+                     MachinePointerInfo(OrigArg, OffsetFromOrigArg + 4*i),
                      false, false, 0);
       MemOps.push_back(Store);
       FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
@@ -2606,14 +2608,16 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   CCInfo.AnalyzeFormalArguments(Ins,
                                 CCAssignFnForNode(CallConv, /* Return*/ false,
                                                   isVarArg));
-
+  
   SmallVector<SDValue, 16> ArgValues;
   int lastInsIndex = -1;
-
   SDValue ArgValue;
+  Function::const_arg_iterator CurOrigArg = MF.getFunction()->arg_begin();
+  unsigned CurArgIdx = 0;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-
+    std::advance(CurOrigArg, Ins[VA.getValNo()].OrigArgIndex - CurArgIdx);
+    CurArgIdx = Ins[VA.getValNo()].OrigArgIndex;
     // Arguments stored in registers.
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
@@ -2709,7 +2713,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           if (Flags.isByVal()) {
             unsigned VARegSize, VARegSaveSize;
             computeRegArea(CCInfo, MF, VARegSize, VARegSaveSize);
-            VarArgStyleRegisters(CCInfo, DAG, dl, Chain, 0);
+            VarArgStyleRegisters(CCInfo, DAG,
+                                 dl, Chain, CurOrigArg, Ins[VA.getValNo()].PartOffset, 0);
             unsigned Bytes = Flags.getByValSize() - VARegSize;
             if (Bytes == 0) Bytes = 1; // Don't create zero-sized stack objects.
             int FI = MFI->CreateFixedObject(Bytes,
@@ -2732,7 +2737,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // varargs
   if (isVarArg)
-    VarArgStyleRegisters(CCInfo, DAG, dl, Chain, CCInfo.getNextStackOffset());
+    VarArgStyleRegisters(CCInfo, DAG, dl, Chain, 0, 0,
+                         CCInfo.getNextStackOffset());
 
   return Chain;
 }

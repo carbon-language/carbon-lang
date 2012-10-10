@@ -466,7 +466,10 @@ namespace llvm {
                            SmallVectorImpl<SDValue> &InVals) const;
 
     void VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
-                              DebugLoc dl, SDValue &Chain, unsigned ArgOffset)
+                              DebugLoc dl, SDValue &Chain,
+                              const Value *OrigArg,
+                              unsigned OffsetFromOrigArg,
+                              unsigned ArgOffset)
       const;
 
     void computeRegArea(CCState &CCInfo, MachineFunction &MF,
