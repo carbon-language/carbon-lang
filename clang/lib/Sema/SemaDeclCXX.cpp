@@ -8154,7 +8154,7 @@ hasMoveOrIsTriviallyCopyable(Sema &S, QualType Type, bool IsConstructor) {
   // reference types, are supposed to return false here, but that appears
   // to be a standard defect.
   CXXRecordDecl *ClassDecl = Type->getAsCXXRecordDecl();
-  if (!ClassDecl || !ClassDecl->getDefinition())
+  if (!ClassDecl || !ClassDecl->getDefinition() || ClassDecl->isInvalidDecl())
     return true;
 
   if (Type.isTriviallyCopyableType(S.Context))
