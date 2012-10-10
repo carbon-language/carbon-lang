@@ -16,19 +16,19 @@
 
 using namespace clang::driver;
 
-Arg::Arg(const Option *_Opt, unsigned _Index, const Arg *_BaseArg)
+Arg::Arg(const Option _Opt, unsigned _Index, const Arg *_BaseArg)
   : Opt(_Opt), BaseArg(_BaseArg), Index(_Index),
     Claimed(false), OwnsValues(false) {
 }
 
-Arg::Arg(const Option *_Opt, unsigned _Index, 
+Arg::Arg(const Option _Opt, unsigned _Index,
          const char *Value0, const Arg *_BaseArg)
   : Opt(_Opt), BaseArg(_BaseArg), Index(_Index),
     Claimed(false), OwnsValues(false) {
   Values.push_back(Value0);
 }
 
-Arg::Arg(const Option *_Opt, unsigned _Index, 
+Arg::Arg(const Option _Opt, unsigned _Index,
          const char *Value0, const char *Value1, const Arg *_BaseArg)
   : Opt(_Opt), BaseArg(_BaseArg), Index(_Index),
     Claimed(false), OwnsValues(false) {
@@ -47,7 +47,7 @@ void Arg::dump() const {
   llvm::errs() << "<";
 
   llvm::errs() << " Opt:";
-  Opt->dump();
+  Opt.dump();
 
   llvm::errs() << " Index:" << Index;
 
@@ -104,7 +104,7 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
     Output.push_back(Args.MakeArgString(OS.str()));
     break;
   }
- 
+
  case Option::RenderJoinedStyle:
     Output.push_back(Args.GetOrMakeJoinedArgString(
                        getIndex(), getOption().getName(), getValue(Args, 0)));
