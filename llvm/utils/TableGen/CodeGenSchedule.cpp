@@ -59,7 +59,7 @@ struct InstRegexOp : public SetTheory::Operator {
     SmallVector<Regex*, 4> RegexList;
     for (DagInit::const_arg_iterator
            AI = Expr->arg_begin(), AE = Expr->arg_end(); AI != AE; ++AI) {
-      StringInit *SI = dynamic_cast<StringInit*>(*AI);
+      StringInit *SI = dyn_cast<StringInit>(*AI);
       if (!SI)
         throw "instregex requires pattern string: " + Expr->getAsString();
       std::string pat = SI->getValue();

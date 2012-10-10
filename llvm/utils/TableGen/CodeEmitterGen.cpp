@@ -91,11 +91,11 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
 // return the variable bit position.  Otherwise return -1.
 int CodeEmitterGen::getVariableBit(const std::string &VarName,
                                    BitsInit *BI, int bit) {
-  if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
-    if (VarInit *VI = dynamic_cast<VarInit*>(VBI->getBitVar()))
+  if (VarBitInit *VBI = dyn_cast<VarBitInit>(BI->getBit(bit))) {
+    if (VarInit *VI = dyn_cast<VarInit>(VBI->getBitVar()))
       if (VI->getName() == VarName)
         return VBI->getBitNum();
-  } else if (VarInit *VI = dynamic_cast<VarInit*>(BI->getBit(bit))) {
+  } else if (VarInit *VI = dyn_cast<VarInit>(BI->getBit(bit))) {
     if (VI->getName() == VarName)
       return 0;
   }
@@ -269,7 +269,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
     // Start by filling in fixed values.
     uint64_t Value = 0;
     for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) {
-      if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(e-i-1)))
+      if (BitInit *B = dyn_cast<BitInit>(BI->getBit(e-i-1)))
         Value |= (uint64_t)B->getValue() << (e-i-1);
     }
     o << "    UINT64_C(" << Value << ")," << '\t' << "// " << R->getName() << "\n";

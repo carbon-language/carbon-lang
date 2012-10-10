@@ -32,7 +32,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
 
   DagInit *OutDI = R->getValueAsDag("OutOperandList");
 
-  if (DefInit *Init = dynamic_cast<DefInit*>(OutDI->getOperator())) {
+  if (DefInit *Init = dyn_cast<DefInit>(OutDI->getOperator())) {
     if (Init->getDef()->getName() != "outs")
       throw R->getName() + ": invalid def name for output list: use 'outs'";
   } else
@@ -41,7 +41,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
   NumDefs = OutDI->getNumArgs();
 
   DagInit *InDI = R->getValueAsDag("InOperandList");
-  if (DefInit *Init = dynamic_cast<DefInit*>(InDI->getOperator())) {
+  if (DefInit *Init = dyn_cast<DefInit>(InDI->getOperator())) {
     if (Init->getDef()->getName() != "ins")
       throw R->getName() + ": invalid def name for input list: use 'ins'";
   } else
@@ -60,7 +60,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
       ArgName = InDI->getArgName(i-NumDefs);
     }
 
-    DefInit *Arg = dynamic_cast<DefInit*>(ArgInit);
+    DefInit *Arg = dyn_cast<DefInit>(ArgInit);
     if (!Arg)
       throw "Illegal operand for the '" + R->getName() + "' instruction!";
 
@@ -80,8 +80,8 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
 
       // Verify that MIOpInfo has an 'ops' root value.
-      if (!dynamic_cast<DefInit*>(MIOpInfo->getOperator()) ||
-          dynamic_cast<DefInit*>(MIOpInfo->getOperator())
+      if (!dyn_cast<DefInit>(MIOpInfo->getOperator()) ||
+          dyn_cast<DefInit>(MIOpInfo->getOperator())
           ->getDef()->getName() != "ops")
         throw "Bad value for MIOperandInfo in operand '" + Rec->getName() +
         "'\n";
@@ -416,7 +416,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
                                        ArrayRef<SMLoc> Loc, CodeGenTarget &T,
                                        ResultOperand &ResOp) {
   Init *Arg = Result->getArg(AliasOpNo);
-  DefInit *ADI = dynamic_cast<DefInit*>(Arg);
+  DefInit *ADI = dyn_cast<DefInit>(Arg);
 
   if (ADI && ADI->getDef() == InstOpRec) {
     // If the operand is a record, it must have a name, and the record type
@@ -446,7 +446,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
       DagInit *DI = InstOpRec->getValueAsDag("MIOperandInfo");
       // The operand info should only have a single (register) entry. We
       // want the register class of it.
-      InstOpRec = dynamic_cast<DefInit*>(DI->getArg(0))->getDef();
+      InstOpRec = dyn_cast<DefInit>(DI->getArg(0))->getDef();
     }
 
     if (InstOpRec->isSubClassOf("RegisterOperand"))
@@ -486,7 +486,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
   }
 
   // Literal integers.
-  if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
+  if (IntInit *II = dyn_cast<IntInit>(Arg)) {
     if (hasSubOps || !InstOpRec->isSubClassOf("Operand"))
       return false;
     // Integer arguments can't have names.
@@ -518,7 +518,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   Result = R->getValueAsDag("ResultInst");
 
   // Verify that the root of the result is an instruction.
-  DefInit *DI = dynamic_cast<DefInit*>(Result->getOperator());
+  DefInit *DI = dyn_cast<DefInit>(Result->getOperator());
   if (DI == 0 || !DI->getDef()->isSubClassOf("Instruction"))
     throw TGError(R->getLoc(), "result of inst alias should be an instruction");
 
@@ -528,7 +528,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   // the same class.
   StringMap<Record*> NameClass;
   for (unsigned i = 0, e = Result->getNumArgs(); i != e; ++i) {
-    DefInit *ADI = dynamic_cast<DefInit*>(Result->getArg(i));
+    DefInit *ADI = dyn_cast<DefInit>(Result->getArg(i));
     if (!ADI || Result->getArgName(i).empty())
       continue;
     // Verify we don't have something like: (someinst GR16:$foo, GR32:$foo)
@@ -575,7 +575,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
       } else {
          DagInit *MIOI = ResultInst->Operands[i].MIOperandInfo;
          for (unsigned SubOp = 0; SubOp != NumSubOps; ++SubOp) {
-          Record *SubRec = dynamic_cast<DefInit*>(MIOI->getArg(SubOp))->getDef();
+          Record *SubRec = dyn_cast<DefInit>(MIOI->getArg(SubOp))->getDef();
 
           // Take care to instantiate each of the suboperands with the correct
           // nomenclature: $foo.bar
@@ -596,7 +596,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
       for (unsigned SubOp = 0; SubOp != NumSubOps; ++SubOp) {
         if (AliasOpNo >= Result->getNumArgs())
           throw TGError(R->getLoc(), "not enough arguments for instruction!");
-        Record *SubRec = dynamic_cast<DefInit*>(MIOI->getArg(SubOp))->getDef();
+        Record *SubRec = dyn_cast<DefInit>(MIOI->getArg(SubOp))->getDef();
         if (tryAliasOpMatch(Result, AliasOpNo, SubRec, false,
                             R->getLoc(), T, ResOp)) {
           ResultOperands.push_back(ResOp);

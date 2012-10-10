@@ -142,7 +142,7 @@ static int Value(bit_value_t V) {
   return ValueNotSet(V) ? -1 : (V == BIT_FALSE ? 0 : 1);
 }
 static bit_value_t bitFromBits(const BitsInit &bits, unsigned index) {
-  if (BitInit *bit = dynamic_cast<BitInit*>(bits.getBit(index)))
+  if (BitInit *bit = dyn_cast<BitInit>(bits.getBit(index)))
     return bit->getValue() ? BIT_TRUE : BIT_FALSE;
 
   // The bit is uninitialized.
@@ -1757,7 +1757,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
     // for decoding register classes.
     // FIXME: This need to be extended to handle instructions with custom
     // decoder methods, and operands with (simple) MIOperandInfo's.
-    TypedInit *TI = dynamic_cast<TypedInit*>(NI->first);
+    TypedInit *TI = dyn_cast<TypedInit>(NI->first);
     RecordRecTy *Type = dyn_cast<RecordRecTy>(TI->getType());
     Record *TypeRecord = Type->getRecord();
     bool isReg = false;
@@ -1770,7 +1770,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
 
     RecordVal *DecoderString = TypeRecord->getValue("DecoderMethod");
     StringInit *String = DecoderString ?
-      dynamic_cast<StringInit*>(DecoderString->getValue()) : 0;
+      dyn_cast<StringInit>(DecoderString->getValue()) : 0;
     if (!isReg && String && String->getValue() != "")
       Decoder = String->getValue();
 
@@ -1781,11 +1781,11 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
 
     for (unsigned bi = 0; bi < Bits.getNumBits(); ++bi) {
       VarInit *Var = 0;
-      VarBitInit *BI = dynamic_cast<VarBitInit*>(Bits.getBit(bi));
+      VarBitInit *BI = dyn_cast<VarBitInit>(Bits.getBit(bi));
       if (BI)
-        Var = dynamic_cast<VarInit*>(BI->getBitVar());
+        Var = dyn_cast<VarInit>(BI->getBitVar());
       else
-        Var = dynamic_cast<VarInit*>(Bits.getBit(bi));
+        Var = dyn_cast<VarInit>(Bits.getBit(bi));
 
       if (!Var) {
         if (Base != ~0U) {

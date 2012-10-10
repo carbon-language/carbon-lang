@@ -245,7 +245,7 @@ struct OperandsSignature {
       if (Op->getType(0) != VT)
         return false;
 
-      DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
+      DefInit *OpDI = dyn_cast<DefInit>(Op->getLeafValue());
       if (!OpDI)
         return false;
       Record *OpLeafRec = OpDI->getDef();
@@ -406,7 +406,7 @@ static std::string PhyRegForNode(TreePatternNode *Op,
   if (!Op->isLeaf())
     return PhysReg;
 
-  DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
+  DefInit *OpDI = dyn_cast<DefInit>(Op->getLeafValue());
   Record *OpLeafRec = OpDI->getDef();
   if (!OpLeafRec->isSubClassOf("Register"))
     return PhysReg;
@@ -473,7 +473,7 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
       // a bit too complicated for now.
       if (!Dst->getChild(1)->isLeaf()) continue;
 
-      DefInit *SR = dynamic_cast<DefInit*>(Dst->getChild(1)->getLeafValue());
+      DefInit *SR = dyn_cast<DefInit>(Dst->getChild(1)->getLeafValue());
       if (SR)
         SubRegNo = getQualifiedName(SR->getDef());
       else

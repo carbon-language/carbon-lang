@@ -325,7 +325,7 @@ RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
     if (!V || !V->getValue())
       continue;
 
-    DefInit *DI = dynamic_cast<DefInit*>(V->getValue());
+    DefInit *DI = dyn_cast<DefInit>(V->getValue());
     Record *Alias = DI->getDef();
     DwarfRegNums[Reg] = DwarfRegNums[Alias];
   }
@@ -751,7 +751,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     BitsInit *BI = Reg->getValueAsBitsInit("HWEncoding");
     uint64_t Value = 0;
     for (unsigned b = 0, be = BI->getNumBits(); b != be; ++b) {
-      if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(b)))
+      if (BitInit *B = dyn_cast<BitInit>(BI->getBit(b)))
       Value |= (uint64_t)B->getValue() << b;
     }
     OS << "  " << Value << ",\n";

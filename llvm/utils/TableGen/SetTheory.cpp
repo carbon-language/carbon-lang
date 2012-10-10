@@ -72,7 +72,7 @@ struct SetIntBinOp : public SetTheory::Operator {
       throw "Operator requires (Op Set, Int) arguments: " + Expr->getAsString();
     RecSet Set;
     ST.evaluate(Expr->arg_begin()[0], Set);
-    IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[1]);
+    IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[1]);
     if (!II)
       throw "Second argument must be an integer: " + Expr->getAsString();
     apply2(ST, Expr, Set, II->getValue(), Elts);
@@ -165,27 +165,27 @@ struct SequenceOp : public SetTheory::Operator {
       throw "Bad args to (sequence \"Format\", From, To): " +
         Expr->getAsString();
     else if (Expr->arg_size() == 4) {
-      if (IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[3])) {
+      if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[3])) {
         Step = II->getValue();
       } else
         throw "Stride must be an integer: " + Expr->getAsString();
     }
 
     std::string Format;
-    if (StringInit *SI = dynamic_cast<StringInit*>(Expr->arg_begin()[0]))
+    if (StringInit *SI = dyn_cast<StringInit>(Expr->arg_begin()[0]))
       Format = SI->getValue();
     else
       throw "Format must be a string: " + Expr->getAsString();
 
     int64_t From, To;
-    if (IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[1]))
+    if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[1]))
       From = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
     if (From < 0 || From >= (1 << 30))
       throw "From out of range";
 
-    if (IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[2]))
+    if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[2]))
       To = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
@@ -193,7 +193,7 @@ struct SequenceOp : public SetTheory::Operator {
       throw "To out of range";
 
     RecordKeeper &Records =
-      dynamic_cast<DefInit&>(*Expr->getOperator()).getDef()->getRecords();
+      dyn_cast<DefInit>(Expr->getOperator())->getDef()->getRecords();
 
     Step *= From <= To ? 1 : -1;
     while (true) {
@@ -261,7 +261,7 @@ void SetTheory::addFieldExpander(StringRef ClassName, StringRef FieldName) {
 
 void SetTheory::evaluate(Init *Expr, RecSet &Elts) {
   // A def in a list can be a just an element, or it may expand.
-  if (DefInit *Def = dynamic_cast<DefInit*>(Expr)) {
+  if (DefInit *Def = dyn_cast<DefInit>(Expr)) {
     if (const RecVec *Result = expand(Def->getDef()))
       return Elts.insert(Result->begin(), Result->end());
     Elts.insert(Def->getDef());
@@ -269,14 +269,14 @@ void SetTheory::evaluate(Init *Expr, RecSet &Elts) {
   }
 
   // Lists simply expand.
-  if (ListInit *LI = dynamic_cast<ListInit*>(Expr))
+  if (ListInit *LI = dyn_cast<ListInit>(Expr))
     return evaluate(LI->begin(), LI->end(), Elts);
 
   // Anything else must be a DAG.
-  DagInit *DagExpr = dynamic_cast<DagInit*>(Expr);
+  DagInit *DagExpr = dyn_cast<DagInit>(Expr);
   if (!DagExpr)
     throw "Invalid set element: " + Expr->getAsString();
-  DefInit *OpInit = dynamic_cast<DefInit*>(DagExpr->getOperator());
+  DefInit *OpInit = dyn_cast<DefInit>(DagExpr->getOperator());
   if (!OpInit)
     throw "Bad set expression: " + Expr->getAsString();
   Operator *Op = Operators.lookup(OpInit->getDef()->getName());
@@ -296,7 +296,7 @@ const RecVec *SetTheory::expand(Record *Set) {
     const std::vector<Record*> &SC = Set->getSuperClasses();
     for (unsigned i = 0, e = SC.size(); i != e; ++i) {
       // Skip unnamed superclasses.
-      if (!dynamic_cast<const StringInit *>(SC[i]->getNameInit()))
+      if (!dyn_cast<StringInit>(SC[i]->getNameInit()))
         continue;
       if (Expander *Exp = Expanders.lookup(SC[i]->getName())) {
         // This breaks recursive definitions.
