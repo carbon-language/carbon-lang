@@ -9,7 +9,7 @@
 
 #include "UnwindAssembly-x86.h"
 
-#include "llvm-c/EnhancedDisassembly.h"
+#include "llvm-c/Disassembler.h"
 #include "llvm/Support/TargetSelect.h"
 
 #include "lldb/Core/Address.h"
@@ -117,7 +117,9 @@ static int x86_64_register_map_initialized = 0;
 class AssemblyParse_x86 {
 public:
 
-    AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, AddressRange func);
+    AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, ArchSpec &arch, AddressRange func);
+
+    ~AssemblyParse_x86 ();
 
     bool get_non_call_site_unwind_plan (UnwindPlan &unwind_plan);
 
@@ -157,11 +159,13 @@ private:
 
     int m_wordsize;
     int m_cpu;
+    ArchSpec m_arch;
+    ::LLVMDisasmContextRef m_disasm_context;
 
     DISALLOW_COPY_AND_ASSIGN (AssemblyParse_x86);
 };
 
-AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, AddressRange func) :
+AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, ArchSpec &arch, AddressRange func) :
     m_exe_ctx (exe_ctx), 
     m_func_bounds(func), 
     m_cur_insn (),
@@ -172,7 +176,8 @@ AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, 
     m_lldb_sp_regnum (LLDB_INVALID_REGNUM),
     m_lldb_fp_regnum (LLDB_INVALID_REGNUM),
     m_wordsize (-1), 
-    m_cpu(cpu)
+    m_cpu(cpu),
+    m_arch(arch)
 {
     int *initialized_flag = NULL;
     if (cpu == k_i386)
@@ -236,8 +241,18 @@ AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, 
        if (machine_regno_to_lldb_regno (m_machine_ip_regnum, lldb_regno))
            m_lldb_ip_regnum = lldb_regno;
    }
+
+   m_disasm_context = ::LLVMCreateDisasm(m_arch.GetTriple().getTriple().c_str(), 
+                                          (void*)this, 
+                                          /*TagType=*/1,
+                                          NULL,
+                                          NULL);
 }
 
+AssemblyParse_x86::~AssemblyParse_x86 ()
+{
+    ::LLVMDisasmDispose(m_disasm_context);
+}
 
 // This function expects an x86 native register number (i.e. the bits stripped out of the 
 // actual instruction), not an lldb register number.
@@ -451,79 +466,39 @@ AssemblyParse_x86::machine_regno_to_lldb_regno (int machine_regno, uint32_t &lld
     return false;
 }
 
-struct edis_byte_read_token 
-{
-    Address *address;
-    Target *target;
-};
-
-
-static int
-read_byte_for_edis (uint8_t *buf, uint64_t offset_address, void *arg)
-{
-    if (arg == 0)
-        return -1;
-    struct edis_byte_read_token *tok = (edis_byte_read_token *) arg;
-    Address *base_address = tok->address;
-    Target *target = tok->target;
-
-    Address read_addr = *base_address;
-    read_addr.SetOffset (offset_address);
-
-    uint8_t onebyte_buf[1];
-    Error error;
-    const bool prefer_file_cache = true;
-    if (target->ReadMemory (read_addr, prefer_file_cache, onebyte_buf, 1, error) != -1)
-    {
-        *buf = onebyte_buf[0];
-        return 0;
-    }
-    return -1;
-}
-
-
 bool
 AssemblyParse_x86::instruction_length (Address addr, int &length)
 {
-    const char *triple;
+    const uint32_t max_op_byte_size = m_arch.GetMaximumOpcodeByteSize();
 
     if (!addr.IsValid())
         return false;
 
-    // FIXME should probably pass down the ArchSpec and work from that to make a portable triple
-    if (m_cpu == k_i386)
-        triple = "i386-unknown-unknown";
-    else
-        triple = "x86_64-unknown-unknown";
-
-    // Initialize the LLVM objects needed to use the disassembler.
-    static struct InitializeLLVM {
-        InitializeLLVM() {
-            llvm::InitializeAllTargetInfos();
-            llvm::InitializeAllTargetMCs();
-            llvm::InitializeAllAsmParsers();
-            llvm::InitializeAllDisassemblers();
-        }
-    } InitializeLLVM;
-
-    EDDisassemblerRef disasm;
-    EDInstRef cur_insn;
-
-    if (EDGetDisassembler (&disasm, triple, kEDAssemblySyntaxX86ATT) != 0)
+    uint8_t *opcode_data = (uint8_t *) malloc (max_op_byte_size);
+    if (opcode_data == NULL)
     {
         return false;
     }
 
-    uint64_t addr_offset = addr.GetOffset();
-    struct edis_byte_read_token arg;
-    arg.address = &addr;
-    arg.target = m_exe_ctx.GetTargetPtr();
-    if (EDCreateInsts (&cur_insn, 1, disasm, read_byte_for_edis, addr_offset, &arg) != 1)
+    const bool prefer_file_cache = true;
+    Error error;
+    Target *target = m_exe_ctx.GetTargetPtr();
+    if (target->ReadMemory (addr, prefer_file_cache, opcode_data, max_op_byte_size, error) == -1)
     {
         return false;
     }
-    length = EDInstByteSize (cur_insn);
-    EDReleaseInst (cur_insn);
+   
+    char out_string[512];
+    const addr_t pc = addr.GetFileAddress();
+    const size_t inst_size = ::LLVMDisasmInstruction (m_disasm_context,
+                                                      opcode_data,
+                                                      max_op_byte_size,
+                                                      pc, // PC value
+                                                      out_string,
+                                                      sizeof(out_string));
+
+    length = inst_size;
+
     return true;
 }
 
@@ -907,7 +882,8 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
 
 UnwindAssembly_x86::UnwindAssembly_x86 (const ArchSpec &arch, int cpu) : 
     lldb_private::UnwindAssembly(arch), 
-    m_cpu(cpu)
+    m_cpu(cpu),
+    m_arch(arch)
 {
 }
 
@@ -920,7 +896,7 @@ bool
 UnwindAssembly_x86::GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, Thread& thread, UnwindPlan& unwind_plan)
 {
     ExecutionContext exe_ctx (thread.shared_from_this());
-    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, func);
+    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
     return asm_parse.get_non_call_site_unwind_plan (unwind_plan);
 }
 
@@ -928,14 +904,14 @@ bool
 UnwindAssembly_x86::GetFastUnwindPlan (AddressRange& func, Thread& thread, UnwindPlan &unwind_plan)
 {
     ExecutionContext exe_ctx (thread.shared_from_this());
-    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, func);
+    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
     return asm_parse.get_fast_unwind_plan (func, unwind_plan);
 }
 
 bool
 UnwindAssembly_x86::FirstNonPrologueInsn (AddressRange& func, const ExecutionContext &exe_ctx, Address& first_non_prologue_insn)
 {
-    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, func);
+    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
     return asm_parse.find_first_non_prologue_insn (first_non_prologue_insn);
 }
 

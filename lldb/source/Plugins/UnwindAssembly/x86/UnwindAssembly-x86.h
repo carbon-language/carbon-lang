@@ -10,6 +10,8 @@
 #ifndef liblldb_UnwindAssembly_x86_h_
 #define liblldb_UnwindAssembly_x86_h_
 
+#include "llvm-c/Disassembler.h"
+
 #include "lldb/lldb-private.h"
 #include "lldb/Target/UnwindAssembly.h"
 
@@ -67,6 +69,7 @@ private:
     UnwindAssembly_x86 (const lldb_private::ArchSpec &arch, int cpu);
 
     int m_cpu;
+    lldb_private::ArchSpec m_arch;
 };
 
 
