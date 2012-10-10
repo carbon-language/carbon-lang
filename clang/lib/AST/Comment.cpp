@@ -151,13 +151,13 @@ void DeclInfo::fill() {
   ParamVars = ArrayRef<const ParmVarDecl *>();
   TemplateParameters = NULL;
 
-  if (!ThisDecl) {
+  if (!CommentDecl) {
     // If there is no declaration, the defaults is our only guess.
     IsFilled = true;
     return;
   }
 
-  Decl::Kind K = ThisDecl->getKind();
+  Decl::Kind K = CommentDecl->getKind();
   switch (K) {
   default:
     // Defaults are should be good for declarations we don't handle explicitly.
@@ -167,7 +167,7 @@ void DeclInfo::fill() {
   case Decl::CXXConstructor:
   case Decl::CXXDestructor:
   case Decl::CXXConversion: {
-    const FunctionDecl *FD = cast<FunctionDecl>(ThisDecl);
+    const FunctionDecl *FD = cast<FunctionDecl>(CommentDecl);
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
@@ -181,14 +181,14 @@ void DeclInfo::fill() {
 
     if (K == Decl::CXXMethod || K == Decl::CXXConstructor ||
         K == Decl::CXXDestructor || K == Decl::CXXConversion) {
-      const CXXMethodDecl *MD = cast<CXXMethodDecl>(ThisDecl);
+      const CXXMethodDecl *MD = cast<CXXMethodDecl>(CommentDecl);
       IsInstanceMethod = MD->isInstance();
       IsClassMethod = !IsInstanceMethod;
     }
     break;
   }
   case Decl::ObjCMethod: {
-    const ObjCMethodDecl *MD = cast<ObjCMethodDecl>(ThisDecl);
+    const ObjCMethodDecl *MD = cast<ObjCMethodDecl>(CommentDecl);
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
                                               MD->param_size());
@@ -199,7 +199,7 @@ void DeclInfo::fill() {
     break;
   }
   case Decl::FunctionTemplate: {
-    const FunctionTemplateDecl *FTD = cast<FunctionTemplateDecl>(ThisDecl);
+    const FunctionTemplateDecl *FTD = cast<FunctionTemplateDecl>(CommentDecl);
     Kind = FunctionKind;
     TemplateKind = Template;
     const FunctionDecl *FD = FTD->getTemplatedDecl();
@@ -210,7 +210,7 @@ void DeclInfo::fill() {
     break;
   }
   case Decl::ClassTemplate: {
-    const ClassTemplateDecl *CTD = cast<ClassTemplateDecl>(ThisDecl);
+    const ClassTemplateDecl *CTD = cast<ClassTemplateDecl>(CommentDecl);
     Kind = ClassKind;
     TemplateKind = Template;
     TemplateParameters = CTD->getTemplateParameters();
@@ -218,7 +218,7 @@ void DeclInfo::fill() {
   }
   case Decl::ClassTemplatePartialSpecialization: {
     const ClassTemplatePartialSpecializationDecl *CTPSD =
-        cast<ClassTemplatePartialSpecializationDecl>(ThisDecl);
+        cast<ClassTemplatePartialSpecializationDecl>(CommentDecl);
     Kind = ClassKind;
     TemplateKind = TemplatePartialSpecialization;
     TemplateParameters = CTPSD->getTemplateParameters();
@@ -246,7 +246,7 @@ void DeclInfo::fill() {
     Kind = TypedefKind;
     // If this is a typedef to something we consider a function, extract
     // arguments and return type.
-    const TypedefDecl *TD = cast<TypedefDecl>(ThisDecl);
+    const TypedefDecl *TD = cast<TypedefDecl>(CommentDecl);
     const TypeSourceInfo *TSI = TD->getTypeSourceInfo();
     if (!TSI)
       break;
@@ -290,7 +290,7 @@ void DeclInfo::fill() {
     Kind = TypedefKind;
     break;
   case Decl::TypeAliasTemplate: {
-    const TypeAliasTemplateDecl *TAT = cast<TypeAliasTemplateDecl>(ThisDecl);
+    const TypeAliasTemplateDecl *TAT = cast<TypeAliasTemplateDecl>(CommentDecl);
     Kind = TypedefKind;
     TemplateKind = Template;
     TemplateParameters = TAT->getTemplateParameters();

@@ -17,6 +17,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -727,7 +728,17 @@ public:
     return getNumArgs() > 0;
   }
 
-  StringRef getParamName() const {
+  StringRef getParamName(const Decl *OverridingDecl) const {
+    if (OverridingDecl && isParamIndexValid()) {
+      if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(OverridingDecl)) {
+        const ParmVarDecl *ParamDecl = OMD->param_begin()[getParamIndex()];
+        return ParamDecl->getName();
+      }
+      else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(OverridingDecl)) {
+        const ParmVarDecl *ParamDecl = FD->param_begin()[getParamIndex()];
+        return ParamDecl->getName();
+      }
+    }
     return Args[0].Text;
   }
 
@@ -936,22 +947,22 @@ public:
 /// Information about the declaration, useful to clients of FullComment.
 struct DeclInfo {
   /// Declaration the comment is attached to.  Should not be NULL.
-  const Decl *ThisDecl;
-
-  /// Parameters that can be referenced by \\param if \c ThisDecl is something
+  const Decl *CommentDecl;
+  
+  /// Parameters that can be referenced by \\param if \c CommentDecl is something
   /// that we consider a "function".
   ArrayRef<const ParmVarDecl *> ParamVars;
 
-  /// Function result type if \c ThisDecl is something that we consider
+  /// Function result type if \c CommentDecl is something that we consider
   /// a "function".
   QualType ResultType;
 
-  /// Template parameters that can be referenced by \\tparam if \c ThisDecl is
+  /// Template parameters that can be referenced by \\tparam if \c CommentDecl is
   /// a template (\c IsTemplateDecl or \c IsTemplatePartialSpecialization is
   /// true).
   const TemplateParameterList *TemplateParameters;
 
-  /// A simplified description of \c ThisDecl kind that should be good enough
+  /// A simplified description of \c CommentDecl kind that should be good enough
   /// for documentation rendering purposes.
   enum DeclKind {
     /// Everything else not explicitly mentioned below.
@@ -992,7 +1003,7 @@ struct DeclInfo {
     EnumKind
   };
 
-  /// What kind of template specialization \c ThisDecl is.
+  /// What kind of template specialization \c CommentDecl is.
   enum TemplateDeclKind {
     NotTemplate,
     Template,
@@ -1000,16 +1011,16 @@ struct DeclInfo {
     TemplatePartialSpecialization
   };
 
-  /// If false, only \c ThisDecl is valid.
+  /// If false, only \c CommentDecl is valid.
   unsigned IsFilled : 1;
 
-  /// Simplified kind of \c ThisDecl, see\c DeclKind enum.
+  /// Simplified kind of \c CommentDecl, see\c DeclKind enum.
   unsigned Kind : 3;
 
-  /// Is \c ThisDecl a template declaration.
+  /// Is \c CommentDecl a template declaration.
   unsigned TemplateKind : 2;
 
-  /// Is \c ThisDecl an ObjCMethodDecl.
+  /// Is \c CommentDecl an ObjCMethodDecl.
   unsigned IsObjCMethod : 1;
 
   /// Is \c ThisDecl a non-static member function of C++ class or
@@ -1017,7 +1028,7 @@ struct DeclInfo {
   /// Can be true only if \c IsFunctionDecl is true.
   unsigned IsInstanceMethod : 1;
 
-  /// Is \c ThisDecl a static member function of C++ class or
+  /// Is \c CommentDecl a static member function of C++ class or
   /// class method of ObjC class.
   /// Can be true only if \c IsFunctionDecl is true.
   unsigned IsClassMethod : 1;
@@ -1038,11 +1049,16 @@ class FullComment : public Comment {
   llvm::ArrayRef<BlockContentComment *> Blocks;
 
   DeclInfo *ThisDeclInfo;
+  /// Declaration that a comment is being looked for. This declaration and
+  /// CommentDecl in ThisDeclInfo are generally the same. But they could be
+  /// different when ThisDecl does not have comment and uses CommentDecl's comment.
+  const Decl *ThisDecl;
 
 public:
-  FullComment(llvm::ArrayRef<BlockContentComment *> Blocks, DeclInfo *D) :
+  FullComment(llvm::ArrayRef<BlockContentComment *> Blocks, DeclInfo *D,
+              Decl *TD) :
       Comment(FullCommentKind, SourceLocation(), SourceLocation()),
-      Blocks(Blocks), ThisDeclInfo(D) {
+      Blocks(Blocks), ThisDeclInfo(D), ThisDecl(TD) {
     if (Blocks.empty())
       return;
 
@@ -1066,16 +1082,27 @@ public:
   }
 
   const Decl *getDecl() const LLVM_READONLY {
-    return ThisDeclInfo->ThisDecl;
+    return ThisDeclInfo->CommentDecl;
   }
 
+  const Decl *getDeclForCommentLookup() const LLVM_READONLY {
+    return ThisDecl;
+  }
+  
   const DeclInfo *getDeclInfo() const LLVM_READONLY {
     if (!ThisDeclInfo->IsFilled)
       ThisDeclInfo->fill();
     return ThisDeclInfo;
   }
+  
+  DeclInfo *getThisDeclInfo() const LLVM_READONLY {
+    return ThisDeclInfo;
+  }
+  
+  llvm::ArrayRef<BlockContentComment *> getBlocks() const { return Blocks; }
+  
 };
-
+  
 } // end namespace comments
 } // end namespace clang
 

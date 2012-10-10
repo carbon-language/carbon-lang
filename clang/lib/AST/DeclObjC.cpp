@@ -859,6 +859,8 @@ static void collectOnCategoriesAfterLocation(SourceLocation Loc,
 /// overrides lookup that it does for methods, inside implementations, will
 /// stop at the interface level (if there is a method there) and not look
 /// further in super classes.
+/// Methods in an implementation can overide methods in super class's category
+/// but not in current class's category. But, such methods
 static void collectOverriddenMethodsFast(SourceManager &SM,
                                          const ObjCMethodDecl *Method,
                              SmallVectorImpl<const ObjCMethodDecl *> &Methods) {

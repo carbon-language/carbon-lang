@@ -183,7 +183,7 @@ void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
     OS << " implicitly";
 
   if (C->hasParamName())
-    OS << " Param=\"" << C->getParamName() << "\"";
+    OS << " Param=\"" << C->getParamName(0) << "\"";
 
   if (C->isParamIndexValid())
     OS << " ParamIndex=" << C->getParamIndex();
