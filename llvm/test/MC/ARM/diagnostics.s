@@ -361,3 +361,13 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         cps f,#1
 @ CHECK-ERRORS:               ^
+
+        @ Bad operands for msr
+        msr #0, #0
+        msr foo, #0
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         msr #0, #0
+@ CHECK-ERRORS:             ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         msr foo, #0
+@ CHECK-ERRORS:             ^
