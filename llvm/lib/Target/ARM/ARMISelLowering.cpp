@@ -6418,7 +6418,8 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
       } else {
         AddDefaultPred(BuildMI(*BB, MI, dl,
           TII->get(ldrOpc),scratch)
-          .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(1));
+          .addReg(srcOut, RegState::Define).addReg(srcIn)
+          .addReg(0).addImm(1));
 
         AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
           .addReg(scratch).addReg(destIn)
