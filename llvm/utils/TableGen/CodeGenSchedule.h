@@ -394,6 +394,9 @@ private:
 
   void collectItinProcResources(Record *ItinClassDef);
 
+  void collectRWResources(unsigned RWIdx, bool IsRead,
+                          const IdxVec &ProcIndices);
+
   void collectRWResources(const IdxVec &Writes, const IdxVec &Reads,
                           const IdxVec &ProcIndices);
 

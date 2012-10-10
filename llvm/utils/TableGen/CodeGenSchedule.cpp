@@ -1449,49 +1449,56 @@ void CodeGenSchedModels::collectItinProcResources(Record *ItinClassDef) {
   }
 }
 
+void CodeGenSchedModels::collectRWResources(unsigned RWIdx, bool IsRead,
+                                            const IdxVec &ProcIndices) {
+  const CodeGenSchedRW &SchedRW = getSchedRW(RWIdx, IsRead);
+  if (SchedRW.TheDef) {
+    if (!IsRead && SchedRW.TheDef->isSubClassOf("SchedWriteRes")) {
+      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
+           PI != PE; ++PI) {
+        addWriteRes(SchedRW.TheDef, *PI);
+      }
+    }
+    else if (IsRead && SchedRW.TheDef->isSubClassOf("SchedReadAdvance")) {
+      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
+           PI != PE; ++PI) {
+        addReadAdvance(SchedRW.TheDef, *PI);
+      }
+    }
+  }
+  for (RecIter AI = SchedRW.Aliases.begin(), AE = SchedRW.Aliases.end();
+       AI != AE; ++AI) {
+    IdxVec AliasProcIndices;
+    if ((*AI)->getValueInit("SchedModel")->isComplete()) {
+      AliasProcIndices.push_back(
+        getProcModel((*AI)->getValueAsDef("SchedModel")).Index);
+    }
+    else
+      AliasProcIndices = ProcIndices;
+    const CodeGenSchedRW &AliasRW = getSchedRW((*AI)->getValueAsDef("AliasRW"));
+    assert(AliasRW.IsRead == IsRead && "cannot alias reads to writes");
+
+    IdxVec ExpandedRWs;
+    expandRWSequence(AliasRW.Index, ExpandedRWs, IsRead);
+    for (IdxIter SI = ExpandedRWs.begin(), SE = ExpandedRWs.end();
+         SI != SE; ++SI) {
+      collectRWResources(*SI, IsRead, AliasProcIndices);
+    }
+  }
+}
 
 // Collect resources for a set of read/write types and processor indices.
 void CodeGenSchedModels::collectRWResources(const IdxVec &Writes,
                                             const IdxVec &Reads,
                                             const IdxVec &ProcIndices) {
 
-  for (IdxIter WI = Writes.begin(), WE = Writes.end(); WI != WE; ++WI) {
-    const CodeGenSchedRW &SchedRW = getSchedRW(*WI, /*IsRead=*/false);
-    if (SchedRW.TheDef && SchedRW.TheDef->isSubClassOf("SchedWriteRes")) {
-      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
-           PI != PE; ++PI) {
-        addWriteRes(SchedRW.TheDef, *PI);
-      }
-    }
-    for (RecIter AI = SchedRW.Aliases.begin(), AE = SchedRW.Aliases.end();
-         AI != AE; ++AI) {
-      const CodeGenSchedRW &AliasRW =
-        getSchedRW((*AI)->getValueAsDef("AliasRW"));
-      if (AliasRW.TheDef && AliasRW.TheDef->isSubClassOf("SchedWriteRes")) {
-        Record *ModelDef = AliasRW.TheDef->getValueAsDef("SchedModel");
-        addWriteRes(AliasRW.TheDef, getProcModel(ModelDef).Index);
-      }
-    }
-  }
-  for (IdxIter RI = Reads.begin(), RE = Reads.end(); RI != RE; ++RI) {
-    const CodeGenSchedRW &SchedRW = getSchedRW(*RI, /*IsRead=*/true);
-    if (SchedRW.TheDef && SchedRW.TheDef->isSubClassOf("SchedReadAdvance")) {
-      for (IdxIter PI = ProcIndices.begin(), PE = ProcIndices.end();
-           PI != PE; ++PI) {
-        addReadAdvance(SchedRW.TheDef, *PI);
-      }
-    }
-    for (RecIter AI = SchedRW.Aliases.begin(), AE = SchedRW.Aliases.end();
-         AI != AE; ++AI) {
-      const CodeGenSchedRW &AliasRW =
-        getSchedRW((*AI)->getValueAsDef("AliasRW"));
-      if (AliasRW.TheDef && AliasRW.TheDef->isSubClassOf("SchedReadAdvance")) {
-        Record *ModelDef = AliasRW.TheDef->getValueAsDef("SchedModel");
-        addReadAdvance(AliasRW.TheDef, getProcModel(ModelDef).Index);
-      }
-    }
-  }
+  for (IdxIter WI = Writes.begin(), WE = Writes.end(); WI != WE; ++WI)
+    collectRWResources(*WI, /*IsRead=*/false, ProcIndices);
+
+  for (IdxIter RI = Reads.begin(), RE = Reads.end(); RI != RE; ++RI)
+    collectRWResources(*RI, /*IsRead=*/true, ProcIndices);
 }
+
 
 // Find the processor's resource units for this kind of resource.
 Record *CodeGenSchedModels::findProcResUnits(Record *ProcResKind,
