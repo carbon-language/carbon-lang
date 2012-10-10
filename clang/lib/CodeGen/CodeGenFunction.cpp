@@ -1139,8 +1139,7 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
 
           // Always zexting here would be wrong if it weren't
           // undefined behavior to have a negative bound.
-          entry = Builder.CreateIntCast(Size, SizeTy,
-                                        /*signed*/ false);
+          entry = Builder.CreateIntCast(Size, SizeTy, /*signed*/ false);
         }
       }
       type = vat->getElementType();
