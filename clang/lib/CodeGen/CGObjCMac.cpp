@@ -6083,16 +6083,9 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 
   // If this is a class message the metaclass is passed as the target.
   llvm::Value *Target;
-  if (IsClassMessage) {
-    if (isCategoryImpl) {
-      // Message sent to "super' in a class method defined in
-      // a category implementation.
-      Target = EmitClassRef(CGF.Builder, Class);
-      Target = CGF.Builder.CreateStructGEP(Target, 0);
-      Target = CGF.Builder.CreateLoad(Target);
-    } else
+  if (IsClassMessage)
       Target = EmitMetaClassRef(CGF.Builder, Class);
-  } else
+  else
     Target = EmitSuperClassRef(CGF.Builder, Class);
 
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
