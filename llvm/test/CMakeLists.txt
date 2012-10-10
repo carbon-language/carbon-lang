@@ -7,6 +7,11 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   )
 
+# Don't include check-llvm into check-all without LLVM_BUILD_TOOLS.
+if(NOT LLVM_BUILD_TOOLS)
+  set(EXCLUDE_FROM_ALL ON)
+endif()
+
 add_lit_testsuite(check-llvm "Running the LLVM regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
