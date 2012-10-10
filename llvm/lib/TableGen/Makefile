@@ -11,8 +11,6 @@ LEVEL = ../..
 LIBRARYNAME = LLVMTableGen
 BUILD_ARCHIVE = 1
 
-## FIXME: This only requires RTTI because tblgen uses it.  Fix that.
-REQUIRES_RTTI = 1
 REQUIRES_EH = 1
 
 include $(LEVEL)/Makefile.common
