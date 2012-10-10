@@ -243,6 +243,10 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
         AddAlias ("undisplay", cmd_obj_sp);
 
+    cmd_obj_sp = GetCommandSPExact ("_regexp-bt", false);
+    if (cmd_obj_sp)
+        AddAlias ("bt", cmd_obj_sp);
+
     cmd_obj_sp = GetCommandSPExact ("target create", false);
     if (cmd_obj_sp)
         AddAlias ("file", cmd_obj_sp);
@@ -542,7 +546,7 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     bt_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                     "bt",
+                                                     "_regexp-bt",
                                                      "Show a backtrace.  An optional argument is accepted; if that argument is a number, it specifies the number of frames to display.  If that argument is 'all', full backtraces of all threads are displayed.",
                                                      "bt [<digit>|all]", 2));
     if (bt_regex_cmd_ap.get())
