@@ -15,6 +15,7 @@
 
 // CHECK: @[[LINE_700:.*]] = {{.*}}, i32 700, i32 14 {{.*}} @[[STRUCT_S]], i64 4, i8 3 }
 // CHECK: @[[LINE_800:.*]] = {{.*}}, i32 800, i32 12 {{.*}} @{{.*}} }
+// CHECK: @[[LINE_900:.*]] = {{.*}}, i32 900, i32 11 {{.*}} @{{.*}} }
 
 // PR6805
 // CHECK: @foo
@@ -129,4 +130,14 @@ int no_return() {
   // CHECK-NOT: call
   // CHECK-NOT: unreachable
   // CHECK: ret i32
+}
+
+// CHECK: @vla_bound
+void vla_bound(int n) {
+  // CHECK:      icmp sgt i32 %[[PARAM:.*]], 0
+  //
+  // CHECK:      %[[ARG:.*]] = zext i32 %[[PARAM]] to i64
+  // CHECK-NEXT: call void @__ubsan_handle_vla_bound_not_positive(i8* bitcast ({{.*}} @[[LINE_900]] to i8*), i64 %[[ARG]]) noreturn nounwind
+#line 900
+  int arr[n * 3];
 }

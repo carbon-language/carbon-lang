@@ -1043,6 +1043,7 @@ CodeGenFunction::getVLASize(const VariableArrayType *type) {
       numElements = vlaSize;
     } else {
       // It's undefined behavior if this wraps around, so mark it that way.
+      // FIXME: Teach -fcatch-undefined-behavior to trap this.
       numElements = Builder.CreateNUWMul(numElements, vlaSize);
     }
   } while ((type = getContext().getAsVariableArrayType(elementType)));
@@ -1120,9 +1121,25 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
         // e.g. with a typedef and a pointer to it.
         llvm::Value *&entry = VLASizeMap[size];
         if (!entry) {
+          llvm::Value *Size = EmitScalarExpr(size);
+
+          // C11 6.7.6.2p5:
+          //   If the size is an expression that is not an integer constant
+          //   expression [...] each time it is evaluated it shall have a value
+          //   greater than zero.
+          if (CatchUndefined && size->getType()->isSignedIntegerType()) {
+            llvm::Value *Zero = llvm::Constant::getNullValue(Size->getType());
+            llvm::Constant *StaticArgs[] = {
+              EmitCheckSourceLocation(size->getLocStart()),
+              EmitCheckTypeDescriptor(size->getType())
+            };
+            EmitCheck(Builder.CreateICmpSGT(Size, Zero),
+                      "vla_bound_not_positive", StaticArgs, Size);
+          }
+
           // Always zexting here would be wrong if it weren't
           // undefined behavior to have a negative bound.
-          entry = Builder.CreateIntCast(EmitScalarExpr(size), SizeTy,
+          entry = Builder.CreateIntCast(Size, SizeTy,
                                         /*signed*/ false);
         }
       }
