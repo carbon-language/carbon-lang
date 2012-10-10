@@ -1168,8 +1168,12 @@ RegionOffset MemRegion::getAsOffset() const {
       R = FR->getSuperRegion();
 
       const RecordDecl *RD = FR->getDecl()->getParent();
-      if (!RD->isCompleteDefinition()) {
+      if (/*RD->isUnion() || */!RD->isCompleteDefinition()) {
         // We cannot compute offset for incomplete type.
+        // For unions, we could treat everything as offset 0, but we'd rather
+        // treat each field as a symbolic offset so they aren't stored on top
+        // of each other, since we depend on things in typed regions actually
+        // matching their types.
         SymbolicOffsetBase = R;
       }
 
