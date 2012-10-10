@@ -485,6 +485,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
     Target *target = m_exe_ctx.GetTargetPtr();
     if (target->ReadMemory (addr, prefer_file_cache, opcode_data, max_op_byte_size, error) == -1)
     {
+        free (opcode_data);
         return false;
     }
    
@@ -498,7 +499,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
                                                       sizeof(out_string));
 
     length = inst_size;
-
+    free (opcode_data);
     return true;
 }
 
