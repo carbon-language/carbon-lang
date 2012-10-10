@@ -120,11 +120,12 @@ namespace {
 
 class AnalysisConsumer : public ASTConsumer,
                          public RecursiveASTVisitor<AnalysisConsumer> {
-  enum AnalysisMode {
-    ANALYSIS_SYNTAX,
-    ANALYSIS_PATH,
-    ANALYSIS_ALL
+  enum {
+    AM_None = 0,
+    AM_Syntax = 0x1,
+    AM_Path = 0x2
   };
+  typedef unsigned AnalysisMode;
 
   /// Mode of the analyzes while recursively visiting Decls.
   AnalysisMode RecVisitorMode;
@@ -165,7 +166,7 @@ public:
                    const std::string& outdir,
                    AnalyzerOptionsRef opts,
                    ArrayRef<std::string> plugins)
-    : RecVisitorMode(ANALYSIS_ALL), RecVisitorBR(0),
+    : RecVisitorMode(0), RecVisitorBR(0),
       Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins) {
     DigestAnalyzerOptions();
     if (Opts->PrintStats) {
@@ -222,11 +223,14 @@ public:
     PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
     if (Loc.isValid()) {
       llvm::errs() << "ANALYZE";
-      switch (Mode) {
-        case ANALYSIS_SYNTAX: llvm::errs() << "(Syntax)"; break;
-        case ANALYSIS_PATH: llvm::errs() << "(Path Sensitive)"; break;
-        case ANALYSIS_ALL: break;
-      };
+
+      if (Mode == AM_Syntax)
+        llvm::errs() << " (Syntax)";
+      else if (Mode == AM_Path)
+        llvm::errs() << " (Path)";
+      else
+        assert(Mode == (AM_Syntax | AM_Path) && "Unexpected mode!");
+
       llvm::errs() << ": " << Loc.getFilename();
       if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
         const NamedDecl *ND = cast<NamedDecl>(D);
@@ -286,7 +290,9 @@ public:
 
   /// Handle callbacks for arbitrary Decls.
   bool VisitDecl(Decl *D) {
-    checkerMgr->runCheckersOnASTDecl(D, *Mgr, *RecVisitorBR);
+    AnalysisMode Mode = getModeForDecl(D, RecVisitorMode);
+    if (Mode & AM_Syntax)
+      checkerMgr->runCheckersOnASTDecl(D, *Mgr, *RecVisitorBR);
     return true;
   }
 
@@ -314,7 +320,7 @@ private:
   void storeTopLevelDecls(DeclGroupRef DG);
 
   /// \brief Check if we should skip (not analyze) the given function.
-  bool skipFunction(Decl *D);
+  AnalysisMode getModeForDecl(Decl *D, AnalysisMode Mode);
 
 };
 } // end anonymous namespace
@@ -424,7 +430,7 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
     SetOfConstDecls VisitedCallees;
     Decl *D = N->getDecl();
     assert(D);
-    HandleCode(D, ANALYSIS_PATH,
+    HandleCode(D, AM_Path,
                (Mgr->options.InliningMode == All ? 0 : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
@@ -455,7 +461,9 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     // Run the AST-only checks using the order in which functions are defined.
     // If inlining is not turned on, use the simplest function order for path
     // sensitive analyzes as well.
-    RecVisitorMode = (Mgr->shouldInlineCall() ? ANALYSIS_SYNTAX : ANALYSIS_ALL);
+    RecVisitorMode = AM_Syntax;
+    if (!Mgr->shouldInlineCall())
+      RecVisitorMode |= AM_Path;
     RecVisitorBR = &BR;
 
     // Process all the top level declarations.
@@ -517,24 +525,32 @@ static std::string getFunctionName(const Decl *D) {
   return "";
 }
 
-bool AnalysisConsumer::skipFunction(Decl *D) {
+AnalysisConsumer::AnalysisMode
+AnalysisConsumer::getModeForDecl(Decl *D, AnalysisMode Mode) {
   if (!Opts->AnalyzeSpecificFunction.empty() &&
       getFunctionName(D) != Opts->AnalyzeSpecificFunction)
-    return true;
+    return AM_None;
 
-  // Don't run the actions on declarations in header files unless
-  // otherwise specified.
+  // Unless -analyze-all is specified, treat decls differently depending on
+  // where they came from:
+  // - Main source file: run both path-sensitive and non-path-sensitive checks.
+  // - Header files: run non-path-sensitive checks only.
+  // - System headers: don't run any checks.
   SourceManager &SM = Ctx->getSourceManager();
   SourceLocation SL = SM.getExpansionLoc(D->getLocation());
-  if (!Opts->AnalyzeAll && !SM.isFromMainFile(SL))
-    return true;
+  if (!Opts->AnalyzeAll && !SM.isFromMainFile(SL)) {
+    if (SL.isInvalid() || SM.isInSystemHeader(SL))
+      return AM_None;
+    return Mode & ~AM_Path;
+  }
 
-  return false;
+  return Mode;
 }
 
 void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
                                   SetOfConstDecls *VisitedCallees) {
-  if (skipFunction(D))
+  Mode = getModeForDecl(D, Mode);
+  if (Mode == AM_None)
     return;
 
   DisplayFunction(D, Mode);
@@ -559,9 +575,9 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
   for (SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
        WI != WE; ++WI)
     if ((*WI)->hasBody()) {
-      if (Mode != ANALYSIS_PATH)
+      if (Mode & AM_Syntax)
         checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
-      if (Mode != ANALYSIS_SYNTAX && checkerMgr->hasPathSensitiveCheckers()) {
+      if ((Mode & AM_Path) && checkerMgr->hasPathSensitiveCheckers()) {
         RunPathSensitiveChecks(*WI, VisitedCallees);
         NumFunctionsAnalyzed++;
       }

@@ -51,3 +51,9 @@ int main() {
   B *b;
   C *c;
 }
+
+#include "virtualcall.h"
+
+#define AS_SYSTEM
+#include "virtualcall.h"
+#undef AS_SYSTEM
