@@ -76,13 +76,13 @@ public:
   }
 };
 
-inline bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
+inline bool operator==(const DataRefImpl &a, const DataRefImpl &b) {
   // Check bitwise identical. This is the only legal way to compare a union w/o
   // knowing which member is in use.
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
-inline bool operator <(const DataRefImpl &a, const DataRefImpl &b) {
+inline bool operator<(const DataRefImpl &a, const DataRefImpl &b) {
   // Check bitwise identical. This is the only legal way to compare a union w/o
   // knowing which member is in use.
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) < 0;
@@ -144,7 +144,7 @@ public:
   SectionRef(DataRefImpl SectionP, const ObjectFile *Owner);
 
   bool operator==(const SectionRef &Other) const;
-  bool operator <(const SectionRef &Other) const;
+  bool operator<(const SectionRef &Other) const;
 
   error_code getNext(SectionRef &Result) const;
 
@@ -208,7 +208,7 @@ public:
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
 
   bool operator==(const SymbolRef &Other) const;
-  bool operator <(const SymbolRef &Other) const;
+  bool operator<(const SymbolRef &Other) const;
 
   error_code getNext(SymbolRef &Result) const;
 
@@ -251,7 +251,7 @@ public:
   LibraryRef(DataRefImpl LibraryP, const ObjectFile *Owner);
 
   bool operator==(const LibraryRef &Other) const;
-  bool operator <(const LibraryRef &Other) const;
+  bool operator<(const LibraryRef &Other) const;
 
   error_code getNext(LibraryRef &Result) const;
 
@@ -290,8 +290,8 @@ protected:
   friend class SymbolRef;
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const = 0;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
-  virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const =0;
-  virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const =0;
+  virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const = 0;
+  virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res)const=0;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const = 0;
@@ -317,7 +317,7 @@ protected:
   // A section is 'virtual' if its contents aren't present in the object image.
   virtual error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const = 0;
-  virtual error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const = 0;
+  virtual error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const =0;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const = 0;
   virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const = 0;
@@ -405,7 +405,7 @@ inline bool SymbolRef::operator==(const SymbolRef &Other) const {
   return SymbolPimpl == Other.SymbolPimpl;
 }
 
-inline bool SymbolRef::operator <(const SymbolRef &Other) const {
+inline bool SymbolRef::operator<(const SymbolRef &Other) const {
   return SymbolPimpl < Other.SymbolPimpl;
 }
 
@@ -460,7 +460,7 @@ inline bool SectionRef::operator==(const SectionRef &Other) const {
   return SectionPimpl == Other.SectionPimpl;
 }
 
-inline bool SectionRef::operator <(const SectionRef &Other) const {
+inline bool SectionRef::operator<(const SectionRef &Other) const {
   return SectionPimpl < Other.SectionPimpl;
 }
 
@@ -594,7 +594,7 @@ inline bool LibraryRef::operator==(const LibraryRef &Other) const {
   return LibraryPimpl == Other.LibraryPimpl;
 }
 
-inline bool LibraryRef::operator <(const LibraryRef &Other) const {
+inline bool LibraryRef::operator<(const LibraryRef &Other) const {
   return LibraryPimpl < Other.LibraryPimpl;
 }
 
