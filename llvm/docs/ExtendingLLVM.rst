@@ -270,7 +270,7 @@ Adding a derived type
 
    add support for derived type to:
 
-   .. code:: c++
+   .. code-block:: c++
 
      std::string getTypeDescription(const Type &Ty,
                                     std::vector<const Type*> &TypeStack)
@@ -296,7 +296,7 @@ Adding a derived type
 
    modify
 
-   .. code:: c++
+   .. code-block:: c++
 
      void calcTypeName(const Type *Ty,
                        std::vector<const Type*> &TypeStack,
