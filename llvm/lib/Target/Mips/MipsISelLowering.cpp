@@ -2597,7 +2597,11 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
     llvm_unreachable("Cannot handle this ValVT.");
 
   unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
-  unsigned Offset = State.AllocateStack(SizeInBytes, OrigAlign);
+  unsigned Offset;
+  if (!ArgFlags.isSRet())
+    Offset = State.AllocateStack(SizeInBytes, OrigAlign);
+  else
+    Offset = State.AllocateStack(SizeInBytes, SizeInBytes);
 
   if (!Reg)
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
@@ -3439,6 +3443,17 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 //===----------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
+
+bool
+MipsTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
+                                   MachineFunction &MF, bool isVarArg,
+                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                   LLVMContext &Context) const {
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(),
+                 RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, RetCC_Mips);
+}
 
 SDValue
 MipsTargetLowering::LowerReturn(SDValue Chain,
