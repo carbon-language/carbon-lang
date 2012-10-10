@@ -623,10 +623,10 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
                                               raw_ostream &OS) {
   char Sep = ProcModel.ProcResourceDefs.empty() ? ' ' : ',';
 
-  OS << "\n// {Name, NumUnits, SuperIdx}\n";
+  OS << "\n// {Name, NumUnits, SuperIdx, IsBuffered}\n";
   OS << "static const llvm::MCProcResourceDesc "
      << ProcModel.ModelName << "ProcResources" << "[] = {\n"
-     << "  {DBGFIELD(\"InvalidUnit\")     0, 0}" << Sep << "\n";
+     << "  {DBGFIELD(\"InvalidUnit\")     0, 0, 0}" << Sep << "\n";
 
   for (unsigned i = 0, e = ProcModel.ProcResourceDefs.size(); i < e; ++i) {
     Record *PRDef = ProcModel.ProcResourceDefs[i];
@@ -645,8 +645,8 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
     OS << "  {DBGFIELD(\"" << PRDef->getName() << "\") ";
     if (PRDef->getName().size() < 15)
       OS.indent(15 - PRDef->getName().size());
-    OS << PRDef->getValueAsInt("NumUnits") << ", " << SuperIdx
-       << "}" << Sep << " // #" << i+1;
+    OS << PRDef->getValueAsInt("NumUnits") << ", " << SuperIdx << ", "
+       << PRDef->getValueAsBit("Buffered") << "}" << Sep << " // #" << i+1;
     if (SuperDef)
       OS << ", Super=" << SuperDef->getName();
     OS << "\n";

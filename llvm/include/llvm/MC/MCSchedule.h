@@ -27,11 +27,18 @@ struct MCProcResourceDesc {
 #ifndef NDEBUG
   const char *Name;
 #endif
-  unsigned Count; // Number of resource of this kind
+  unsigned NumUnits; // Number of resource of this kind
   unsigned SuperIdx; // Index of the resources kind that contains this kind.
 
+  // Buffered resources may be consumed at some indeterminate cycle after
+  // dispatch (e.g. for instructions that may issue out-of-order). Unbuffered
+  // resources always consume their resource some fixed number of cycles after
+  // dispatch (e.g. for instruction interlocking that may stall the pipeline).
+  bool IsBuffered;
+
   bool operator==(const MCProcResourceDesc &Other) const {
-    return Count == Other.Count && SuperIdx == Other.SuperIdx;
+    return NumUnits == Other.NumUnits && SuperIdx == Other.SuperIdx
+      && IsBuffered == Other.IsBuffered;
   }
 };
 
