@@ -284,11 +284,14 @@ endfunction()
 function(add_lit_testsuite target comment)
   parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
 
-  # Register the testsuites, params and depends for the global check rule.
-  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_TESTSUITES ${ARG_DEFAULT_ARGS})
-  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_PARAMS ${ARG_PARAMS})
-  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS ${ARG_DEPENDS})
-  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_EXTRA_ARGS ${ARG_ARGS})
+  # EXCLUDE_FROM_ALL excludes the test ${target} out of check-all.
+  if(NOT EXCLUDE_FROM_ALL)
+    # Register the testsuites, params and depends for the global check rule.
+    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_TESTSUITES ${ARG_DEFAULT_ARGS})
+    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_PARAMS ${ARG_PARAMS})
+    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS ${ARG_DEPENDS})
+    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_EXTRA_ARGS ${ARG_ARGS})
+  endif()
 
   # Produce a specific suffixed check rule.
   add_lit_target(${target} ${comment}
