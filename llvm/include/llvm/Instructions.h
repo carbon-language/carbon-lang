@@ -1326,7 +1326,7 @@ public:
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
-  void setDoesNotThrow(bool DoesNotThrow = true) {
+  void setDoesNotThrow() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     addAttribute(~0, Attributes::get(B));
