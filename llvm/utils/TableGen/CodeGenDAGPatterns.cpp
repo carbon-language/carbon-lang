@@ -582,7 +582,7 @@ typedef DepVarMap::const_iterator DepVarMap_citer;
 
 static void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
   if (N->isLeaf()) {
-    if (dyn_cast<DefInit>(N->getLeafValue()) != NULL)
+    if (isa<DefInit>(N->getLeafValue()))
       DepMap[N->getName()]++;
   } else {
     for (size_t i = 0, e = N->getNumChildren(); i != e; ++i)
@@ -691,7 +691,7 @@ static unsigned getPatternSize(const TreePatternNode *P,
   unsigned Size = 3;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
   // e.g. (set R32:$dst, 0).
-  if (P->isLeaf() && dyn_cast<IntInit>(P->getLeafValue()))
+  if (P->isLeaf() && isa<IntInit>(P->getLeafValue()))
     Size += 2;
 
   // FIXME: This is a hack to statically increase the priority of patterns
@@ -715,7 +715,7 @@ static unsigned getPatternSize(const TreePatternNode *P,
         Child->getType(0) != MVT::Other)
       Size += getPatternSize(Child, CGP);
     else if (Child->isLeaf()) {
-      if (dyn_cast<IntInit>(Child->getLeafValue()))
+      if (isa<IntInit>(Child->getLeafValue()))
         Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
       else if (Child->getComplexPatternInfo(CGP))
         Size += getPatternSize(Child, CGP);
@@ -864,7 +864,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     // The NodeToApply must be a leaf node that is a VT.  OtherOperandNum must
     // have an integer type that is smaller than the VT.
     if (!NodeToApply->isLeaf() ||
-        !dyn_cast<DefInit>(NodeToApply->getLeafValue()) ||
+        !isa<DefInit>(NodeToApply->getLeafValue()) ||
         !static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef()
                ->isSubClassOf("ValueType"))
       TP.error(N->getOperator()->getName() + " expects a VT operand!");
@@ -1021,8 +1021,9 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
     // Get the result tree.
     DagInit *Tree = Operator->getValueAsDag("Fragment");
     Record *Op = 0;
-    if (Tree && dyn_cast<DefInit>(Tree->getOperator()))
-      Op = dyn_cast<DefInit>(Tree->getOperator())->getDef();
+    if (Tree)
+      if (DefInit *DI = dyn_cast<DefInit>(Tree->getOperator()))
+        Op = DI->getDef();
     assert(Op && "Invalid Fragment");
     return GetNumNodeResults(Op, CDP);
   }
@@ -1154,8 +1155,8 @@ SubstituteFormalArguments(std::map<std::string, TreePatternNode*> &ArgMap) {
     TreePatternNode *Child = getChild(i);
     if (Child->isLeaf()) {
       Init *Val = Child->getLeafValue();
-      if (dyn_cast<DefInit>(Val) &&
-          static_cast<DefInit*>(Val)->getDef()->getName() == "node") {
+      if (isa<DefInit>(Val) &&
+          cast<DefInit>(Val)->getDef()->getName() == "node") {
         // We found a use of a formal argument, replace it with its value.
         TreePatternNode *NewChild = ArgMap[Child->getName()];
         assert(NewChild && "Couldn't find formal argument!");
@@ -1316,8 +1317,7 @@ getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const {
       getOperator() != CDP.get_intrinsic_wo_chain_sdnode())
     return 0;
 
-  unsigned IID =
-    dyn_cast<IntInit>(getChild(0)->getLeafValue())->getValue();
+  unsigned IID = cast<IntInit>(getChild(0)->getLeafValue())->getValue();
   return &CDP.getIntrinsicInfo(IID);
 }
 
@@ -1641,7 +1641,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 static bool OnlyOnRHSOfCommutative(TreePatternNode *N) {
   if (!N->isLeaf() && N->getOperator()->getName() == "imm")
     return true;
-  if (N->isLeaf() && dyn_cast<IntInit>(N->getLeafValue()))
+  if (N->isLeaf() && isa<IntInit>(N->getLeafValue()))
     return true;
   return false;
 }
@@ -1763,7 +1763,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
   if (BitsInit *BI = dyn_cast<BitsInit>(TheInit)) {
     // Turn this into an IntInit.
     Init *II = BI->convertInitializerTo(IntRecTy::get());
-    if (II == 0 || !dyn_cast<IntInit>(II))
+    if (II == 0 || !isa<IntInit>(II))
       error("Bits value must be constants!");
     return ParseTreePattern(II, OpName);
   }
@@ -2115,9 +2115,8 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
     // Copy over the arguments.
     Args.clear();
     for (unsigned j = 0, e = OpsList->getNumArgs(); j != e; ++j) {
-      if (!dyn_cast<DefInit>(OpsList->getArg(j)) ||
-          static_cast<DefInit*>(OpsList->getArg(j))->
-          getDef()->getName() != "node")
+      if (!isa<DefInit>(OpsList->getArg(j)) ||
+          cast<DefInit>(OpsList->getArg(j))->getDef()->getName() != "node")
         P->error("Operands list should all be 'node' values.");
       if (OpsList->getArgName(j).empty())
         P->error("Operands list should have names for each operand!");
@@ -2246,7 +2245,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
   }
   Record *SlotRec;
   if (Slot->isLeaf()) {
-    SlotRec = dyn_cast<DefInit>(Slot->getLeafValue())->getDef();
+    SlotRec = cast<DefInit>(Slot->getLeafValue())->getDef();
   } else {
     assert(Slot->getNumChildren() == 0 && "can't be a use with children!");
     SlotRec = Slot->getOperator();
@@ -2381,7 +2380,7 @@ private:
       return false;
 
     const TreePatternNode *N0 = N->getChild(0);
-    if (!N0->isLeaf() || !dyn_cast<DefInit>(N0->getLeafValue()))
+    if (!N0->isLeaf() || !isa<DefInit>(N0->getLeafValue()))
       return false;
 
     const TreePatternNode *N1 = N->getChild(1);
@@ -2552,7 +2551,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
   for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
     ListInit *LI = 0;
 
-    if (dyn_cast<ListInit>(Instrs[i]->getValueInit("Pattern")))
+    if (isa<ListInit>(Instrs[i]->getValueInit("Pattern")))
       LI = Instrs[i]->getValueAsListInit("Pattern");
 
     // If there is no pattern, only collect minimal information about the
@@ -2647,7 +2646,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
       if (i == 0)
         Res0Node = RNode;
-      Record *R = dyn_cast<DefInit>(RNode->getLeafValue())->getDef();
+      Record *R = cast<DefInit>(RNode->getLeafValue())->getDef();
       if (R == 0)
         I->error("Operand $" + OpName + " should be a set destination: all "
                  "outputs must occur before inputs in operand list!");
@@ -2689,8 +2688,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
       TreePatternNode *InVal = InstInputsCheck[OpName];
       InstInputsCheck.erase(OpName);   // It occurred, remove from map.
 
-      if (InVal->isLeaf() &&
-          dyn_cast<DefInit>(InVal->getLeafValue())) {
+      if (InVal->isLeaf() && isa<DefInit>(InVal->getLeafValue())) {
         Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
         if (Op.Rec != InRec && !InRec->isSubClassOf("ComplexPattern"))
           I->error("Operand $" + OpName + "'s register class disagrees"

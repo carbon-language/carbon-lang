@@ -1757,8 +1757,8 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
     // for decoding register classes.
     // FIXME: This need to be extended to handle instructions with custom
     // decoder methods, and operands with (simple) MIOperandInfo's.
-    TypedInit *TI = dyn_cast<TypedInit>(NI->first);
-    RecordRecTy *Type = dyn_cast<RecordRecTy>(TI->getType());
+    TypedInit *TI = cast<TypedInit>(NI->first);
+    RecordRecTy *Type = cast<RecordRecTy>(TI->getType());
     Record *TypeRecord = Type->getRecord();
     bool isReg = false;
     if (TypeRecord->isSubClassOf("RegisterOperand"))

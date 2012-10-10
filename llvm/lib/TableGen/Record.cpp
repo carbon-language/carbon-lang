@@ -650,7 +650,7 @@ Init *ListInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   // If the element is set to some value, or if we are resolving a reference
   // to a specific variable and that variable is explicitly unset, then
   // replace the VarListElementInit with it.
-  if (IRV || !dyn_cast<UnsetInit>(E))
+  if (IRV || !isa<UnsetInit>(E))
     return E;
   return 0;
 }
@@ -709,23 +709,16 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   switch (getOpcode()) {
   case CAST: {
     if (getType()->getAsString() == "string") {
-      StringInit *LHSs = dyn_cast<StringInit>(LHS);
-      if (LHSs) {
+      if (StringInit *LHSs = dyn_cast<StringInit>(LHS))
         return LHSs;
-      }
 
-      DefInit *LHSd = dyn_cast<DefInit>(LHS);
-      if (LHSd) {
+      if (DefInit *LHSd = dyn_cast<DefInit>(LHS))
         return StringInit::get(LHSd->getDef()->getName());
-      }
 
-      IntInit *LHSi = dyn_cast<IntInit>(LHS);
-      if (LHSi) {
+      if (IntInit *LHSi = dyn_cast<IntInit>(LHS))
         return StringInit::get(LHSi->getAsString());
-      }
     } else {
-      StringInit *LHSs = dyn_cast<StringInit>(LHS);
-      if (LHSs) {
+      if (StringInit *LHSs = dyn_cast<StringInit>(LHS)) {
         std::string Name = LHSs->getValue();
 
         // From TGParser::ParseIDValue
@@ -773,8 +766,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     break;
   }
   case HEAD: {
-    ListInit *LHSl = dyn_cast<ListInit>(LHS);
-    if (LHSl) {
+    if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
       if (LHSl->getSize() == 0) {
         assert(0 && "Empty list in car");
         return 0;
@@ -784,8 +776,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     break;
   }
   case TAIL: {
-    ListInit *LHSl = dyn_cast<ListInit>(LHS);
-    if (LHSl) {
+    if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
       if (LHSl->getSize() == 0) {
         assert(0 && "Empty list in cdr");
         return 0;
@@ -802,16 +793,14 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     break;
   }
   case EMPTY: {
-    ListInit *LHSl = dyn_cast<ListInit>(LHS);
-    if (LHSl) {
+    if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
       if (LHSl->getSize() == 0) {
         return IntInit::get(1);
       } else {
         return IntInit::get(0);
       }
     }
-    StringInit *LHSs = dyn_cast<StringInit>(LHS);
-    if (LHSs) {
+    if (StringInit *LHSs = dyn_cast<StringInit>(LHS)) {
       if (LHSs->getValue().empty()) {
         return IntInit::get(1);
       } else {
@@ -1285,8 +1274,7 @@ VarInit *VarInit::get(Init *VN, RecTy *T) {
 }
 
 const std::string &VarInit::getName() const {
-  StringInit *NameString =
-    dyn_cast<StringInit>(getNameInit());
+  StringInit *NameString = dyn_cast<StringInit>(getNameInit());
   assert(NameString && "VarInit name is not a string!");
   return NameString->getValue();
 }
@@ -1318,7 +1306,7 @@ Init *VarInit::resolveListElementReference(Record &R,
   // If the element is set to some value, or if we are resolving a reference
   // to a specific variable and that variable is explicitly unset, then
   // replace the VarListElementInit with it.
-  if (IRV || !dyn_cast<UnsetInit>(E))
+  if (IRV || !isa<UnsetInit>(E))
     return E;
   return 0;
 }
@@ -1335,7 +1323,7 @@ Init *VarInit::getFieldInit(Record &R, const RecordVal *RV,
                             const std::string &FieldName) const {
   if (isa<RecordRecTy>(getType()))
     if (const RecordVal *Val = R.getValue(VarName)) {
-      if (RV != Val && (RV || dyn_cast<UnsetInit>(Val->getValue())))
+      if (RV != Val && (RV || isa<UnsetInit>(Val->getValue())))
         return 0;
       Init *TheInit = Val->getValue();
       assert(TheInit != this && "Infinite loop detected!");
@@ -1354,7 +1342,7 @@ Init *VarInit::getFieldInit(Record &R, const RecordVal *RV,
 ///
 Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) const {
   if (RecordVal *Val = R.getValue(VarName))
-    if (RV == Val || (RV == 0 && !dyn_cast<UnsetInit>(Val->getValue())))
+    if (RV == Val || (RV == 0 && !isa<UnsetInit>(Val->getValue())))
       return Val->getValue();
   return const_cast<VarInit *>(this);
 }
@@ -1422,8 +1410,7 @@ Init *VarListElementInit:: resolveListElementReference(Record &R,
   Init *Result = TI->resolveListElementReference(R, RV, Element);
   
   if (Result) {
-    TypedInit *TInit = dyn_cast<TypedInit>(Result);
-    if (TInit) {
+    if (TypedInit *TInit = dyn_cast<TypedInit>(Result)) {
       Init *Result2 = TInit->resolveListElementReference(R, RV, Elt);
       if (Result2) return Result2;
       return new VarListElementInit(TInit, Elt);
@@ -1482,7 +1469,7 @@ Init *FieldInit::resolveListElementReference(Record &R, const RecordVal *RV,
       // If the element is set to some value, or if we are resolving a
       // reference to a specific variable and that variable is explicitly
       // unset, then replace the VarListElementInit with it.
-      if (RV || !dyn_cast<UnsetInit>(E))
+      if (RV || !isa<UnsetInit>(E))
         return E;
     }
   return 0;
@@ -1655,8 +1642,7 @@ DefInit *Record::getDefInit() {
 }
 
 const std::string &Record::getName() const {
-  const StringInit *NameString =
-    dyn_cast<const StringInit>(Name);
+  const StringInit *NameString = dyn_cast<StringInit>(Name);
   assert(NameString && "Record name is not a string!");
   return NameString->getValue();
 }

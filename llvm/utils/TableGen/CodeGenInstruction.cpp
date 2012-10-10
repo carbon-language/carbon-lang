@@ -80,9 +80,8 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
 
       // Verify that MIOpInfo has an 'ops' root value.
-      if (!dyn_cast<DefInit>(MIOpInfo->getOperator()) ||
-          dyn_cast<DefInit>(MIOpInfo->getOperator())
-          ->getDef()->getName() != "ops")
+      if (!isa<DefInit>(MIOpInfo->getOperator()) ||
+          cast<DefInit>(MIOpInfo->getOperator())->getDef()->getName() != "ops")
         throw "Bad value for MIOperandInfo in operand '" + Rec->getName() +
         "'\n";
 
@@ -446,7 +445,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
       DagInit *DI = InstOpRec->getValueAsDag("MIOperandInfo");
       // The operand info should only have a single (register) entry. We
       // want the register class of it.
-      InstOpRec = dyn_cast<DefInit>(DI->getArg(0))->getDef();
+      InstOpRec = cast<DefInit>(DI->getArg(0))->getDef();
     }
 
     if (InstOpRec->isSubClassOf("RegisterOperand"))
@@ -575,7 +574,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
       } else {
          DagInit *MIOI = ResultInst->Operands[i].MIOperandInfo;
          for (unsigned SubOp = 0; SubOp != NumSubOps; ++SubOp) {
-          Record *SubRec = dyn_cast<DefInit>(MIOI->getArg(SubOp))->getDef();
+          Record *SubRec = cast<DefInit>(MIOI->getArg(SubOp))->getDef();
 
           // Take care to instantiate each of the suboperands with the correct
           // nomenclature: $foo.bar
@@ -596,7 +595,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
       for (unsigned SubOp = 0; SubOp != NumSubOps; ++SubOp) {
         if (AliasOpNo >= Result->getNumArgs())
           throw TGError(R->getLoc(), "not enough arguments for instruction!");
-        Record *SubRec = dyn_cast<DefInit>(MIOI->getArg(SubOp))->getDef();
+        Record *SubRec = cast<DefInit>(MIOI->getArg(SubOp))->getDef();
         if (tryAliasOpMatch(Result, AliasOpNo, SubRec, false,
                             R->getLoc(), T, ResOp)) {
           ResultOperands.push_back(ResOp);

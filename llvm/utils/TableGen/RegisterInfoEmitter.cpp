@@ -325,7 +325,7 @@ RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
     if (!V || !V->getValue())
       continue;
 
-    DefInit *DI = dyn_cast<DefInit>(V->getValue());
+    DefInit *DI = cast<DefInit>(V->getValue());
     Record *Alias = DI->getDef();
     DwarfRegNums[Reg] = DwarfRegNums[Alias];
   }

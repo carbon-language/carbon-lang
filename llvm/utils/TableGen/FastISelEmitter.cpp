@@ -406,13 +406,12 @@ static std::string PhyRegForNode(TreePatternNode *Op,
   if (!Op->isLeaf())
     return PhysReg;
 
-  DefInit *OpDI = dyn_cast<DefInit>(Op->getLeafValue());
-  Record *OpLeafRec = OpDI->getDef();
+  Record *OpLeafRec = cast<DefInit>(Op->getLeafValue())->getDef();
   if (!OpLeafRec->isSubClassOf("Register"))
     return PhysReg;
 
-  PhysReg += static_cast<StringInit*>(OpLeafRec->getValue( \
-             "Namespace")->getValue())->getValue();
+  PhysReg += cast<StringInit>(OpLeafRec->getValue("Namespace")->getValue())
+               ->getValue();
   PhysReg += "::";
   PhysReg += Target.getRegBank().getReg(OpLeafRec)->getName();
   return PhysReg;

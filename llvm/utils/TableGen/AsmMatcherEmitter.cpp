@@ -993,7 +993,7 @@ AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
                                 int SubOpIdx) {
   Record *Rec = OI.Rec;
   if (SubOpIdx != -1)
-    Rec = dyn_cast<DefInit>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
+    Rec = cast<DefInit>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
   return getOperandClass(Rec, SubOpIdx);
 }
 
@@ -1206,8 +1206,7 @@ void AsmMatcherInfo::buildOperandClasses() {
     if (StringInit *SI = dyn_cast<StringInit>(PMName)) {
       CI->PredicateMethod = SI->getValue();
     } else {
-      assert(dyn_cast<UnsetInit>(PMName) &&
-             "Unexpected PredicateMethod field!");
+      assert(isa<UnsetInit>(PMName) && "Unexpected PredicateMethod field!");
       CI->PredicateMethod = "is" + CI->ClassName;
     }
 
@@ -1216,8 +1215,7 @@ void AsmMatcherInfo::buildOperandClasses() {
     if (StringInit *SI = dyn_cast<StringInit>(RMName)) {
       CI->RenderMethod = SI->getValue();
     } else {
-      assert(dyn_cast<UnsetInit>(RMName) &&
-             "Unexpected RenderMethod field!");
+      assert(isa<UnsetInit>(RMName) && "Unexpected RenderMethod field!");
       CI->RenderMethod = "add" + CI->ClassName + "Operands";
     }
 

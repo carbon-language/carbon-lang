@@ -792,7 +792,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     if (!R->getValueAsBit("EmitAlias"))
       continue; // We were told not to emit the alias, but to emit the aliasee.
     const DagInit *DI = R->getValueAsDag("ResultInst");
-    const DefInit *Op = dyn_cast<DefInit>(DI->getOperator());
+    const DefInit *Op = cast<DefInit>(DI->getOperator());
     AliasMap[getQualifiedName(Op->getDef())].push_back(Alias);
   }
 

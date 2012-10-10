@@ -89,7 +89,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       for (unsigned j = 0, e = Inst.Operands[i].MINumOperands; j != e; ++j) {
         OperandList.push_back(Inst.Operands[i]);
 
-        Record *OpR = dyn_cast<DefInit>(MIOI->getArg(j))->getDef();
+        Record *OpR = cast<DefInit>(MIOI->getArg(j))->getDef();
         OperandList.back().Rec = OpR;
       }
     }

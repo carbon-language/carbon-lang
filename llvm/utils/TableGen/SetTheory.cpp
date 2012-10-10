@@ -193,7 +193,7 @@ struct SequenceOp : public SetTheory::Operator {
       throw "To out of range";
 
     RecordKeeper &Records =
-      dyn_cast<DefInit>(Expr->getOperator())->getDef()->getRecords();
+      cast<DefInit>(Expr->getOperator())->getDef()->getRecords();
 
     Step *= From <= To ? 1 : -1;
     while (true) {

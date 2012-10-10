@@ -406,8 +406,7 @@ Init *TGParser::ParseObjectName(MultiClass *CurMultiClass) {
 
   RecTy *Type = 0;
   if (CurRec) {
-    const TypedInit *CurRecName =
-      dyn_cast<TypedInit>(CurRec->getNameInit());
+    const TypedInit *CurRecName = dyn_cast<TypedInit>(CurRec->getNameInit());
     if (!CurRecName) {
       TokError("Record name is not typed!");
       return 0;
@@ -1050,20 +1049,20 @@ Init *TGParser::ParseOperation(Record *CurRec) {
         MHSTy = MHSt->getType();
       if (BitsInit *MHSbits = dyn_cast<BitsInit>(MHS))
         MHSTy = BitsRecTy::get(MHSbits->getNumBits());
-      if (dyn_cast<BitInit>(MHS))
+      if (isa<BitInit>(MHS))
         MHSTy = BitRecTy::get();
 
       if (TypedInit *RHSt = dyn_cast<TypedInit>(RHS))
         RHSTy = RHSt->getType();
       if (BitsInit *RHSbits = dyn_cast<BitsInit>(RHS))
         RHSTy = BitsRecTy::get(RHSbits->getNumBits());
-      if (dyn_cast<BitInit>(RHS))
+      if (isa<BitInit>(RHS))
         RHSTy = BitRecTy::get();
 
       // For UnsetInit, it's typed from the other hand.
-      if (dyn_cast<UnsetInit>(MHS))
+      if (isa<UnsetInit>(MHS))
         MHSTy = RHSTy;
-      if (dyn_cast<UnsetInit>(RHS))
+      if (isa<UnsetInit>(RHS))
         RHSTy = MHSTy;
 
       if (!MHSTy || !RHSTy) {
