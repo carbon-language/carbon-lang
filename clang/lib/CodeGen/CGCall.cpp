@@ -2073,8 +2073,25 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // and the optimizer generally likes scalar values better than FCAs.
       if (llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgInfo.getCoerceToType())) {
-        SrcPtr = Builder.CreateBitCast(SrcPtr,
-                                       llvm::PointerType::getUnqual(STy));
+        llvm::Type *SrcTy =
+          cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
+        uint64_t SrcSize = CGM.getDataLayout().getTypeAllocSize(SrcTy);
+        uint64_t DstSize = CGM.getDataLayout().getTypeAllocSize(STy);
+
+        // If the source type is smaller than the destination type of the
+        // coerce-to logic, copy the source value into a temp alloca the size
+        // of the destination type to allow loading all of it. The bits past
+        // the source value are left undef.
+        if (SrcSize < DstSize) {
+          llvm::AllocaInst *TempAlloca
+            = CreateTempAlloca(STy, SrcPtr->getName() + ".coerce");
+          Builder.CreateMemCpy(TempAlloca, SrcPtr, SrcSize, 0);
+          SrcPtr = TempAlloca;
+        } else {
+          SrcPtr = Builder.CreateBitCast(SrcPtr,
+                                         llvm::PointerType::getUnqual(STy));
+        }
+
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           llvm::Value *EltPtr = Builder.CreateConstGEP2_32(SrcPtr, 0, i);
           llvm::LoadInst *LI = Builder.CreateLoad(EltPtr);
