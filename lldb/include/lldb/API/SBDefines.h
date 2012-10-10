@@ -37,6 +37,7 @@ class SBCommunication;
 class SBCompileUnit;
 class SBData;
 class SBDebugger;
+class SBDeclaration;
 class SBError;
 class SBEvent;
 class SBEventList;

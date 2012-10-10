@@ -58,6 +58,7 @@ private:
     friend class SBAttachInfo;
     friend class SBBlock;
     friend class SBCompileUnit;
+    friend class SBDeclaration;
     friend class SBFileSpecList;
     friend class SBHostOS;
     friend class SBLaunchInfo;

@@ -117,6 +117,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBCompileUnit.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBData.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBDebugger.i"\
+" ${SRC_ROOT}/scripts/Python/interface/SBDeclaration.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBError.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBEvent.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBFileSpec.i"\

@@ -515,6 +515,7 @@
 		941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568914E355F2003A195C /* SBTypeSynthetic.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
 		9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9456F2211616644B00656F91 /* DynamicLibrary.cpp */; };
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9461569A14E358A6003A195C /* SBTypeFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568A14E35621003A195C /* SBTypeFilter.cpp */; };
@@ -1507,6 +1508,9 @@
 		9415F61713B2C0EF00A52B36 /* FormatManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = FormatManager.cpp; path = source/Core/FormatManager.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
 		9443B121140C18C10013457C /* SBData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBData.cpp; path = source/API/SBData.cpp; sourceTree = "<group>"; };
+		9452573616262CD000325455 /* SBDeclaration.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBDeclaration.i; sourceTree = "<group>"; };
+		9452573816262CEF00325455 /* SBDeclaration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBDeclaration.h; path = include/lldb/API/SBDeclaration.h; sourceTree = "<group>"; };
+		9452573916262D0200325455 /* SBDeclaration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBDeclaration.cpp; path = source/API/SBDeclaration.cpp; sourceTree = "<group>"; };
 		9456F2211616644B00656F91 /* DynamicLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLibrary.cpp; sourceTree = "<group>"; };
 		9456F2231616645A00656F91 /* DynamicLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DynamicLibrary.h; path = include/lldb/Host/DynamicLibrary.h; sourceTree = "<group>"; };
 		94611EAF13CCA363003A22AF /* RefCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RefCounter.h; path = include/lldb/Utility/RefCounter.h; sourceTree = "<group>"; };
@@ -2017,6 +2021,7 @@
 				2611FEF7142D83060017FEA3 /* SBCompileUnit.i */,
 				2611FEF8142D83060017FEA3 /* SBData.i */,
 				2611FEF9142D83060017FEA3 /* SBDebugger.i */,
+				9452573616262CD000325455 /* SBDeclaration.i */,
 				2611FEFA142D83060017FEA3 /* SBError.i */,
 				2611FEFB142D83060017FEA3 /* SBEvent.i */,
 				2611FEFC142D83060017FEA3 /* SBFileSpec.i */,
@@ -2106,6 +2111,8 @@
 				9443B121140C18C10013457C /* SBData.cpp */,
 				9A9830FB1125FC5800A56CB0 /* SBDebugger.h */,
 				9A9830FA1125FC5800A56CB0 /* SBDebugger.cpp */,
+				9452573816262CEF00325455 /* SBDeclaration.h */,
+				9452573916262D0200325455 /* SBDeclaration.cpp */,
 				2682F286115EF3BD00CCFF99 /* SBError.h */,
 				2682F284115EF3A700CCFF99 /* SBError.cpp */,
 				9A9830FE1125FC5800A56CB0 /* SBEvent.h */,
@@ -3763,6 +3770,7 @@
 				2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */,
 				9475C18814E5E9FA001BFC6D /* SBTypeCategory.cpp in Sources */,
 				9475C18E14E5F834001BFC6D /* SBTypeNameSpecifier.cpp in Sources */,
+				9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

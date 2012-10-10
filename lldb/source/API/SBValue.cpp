@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBValue.h"
 
+#include "lldb/API/SBDeclaration.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBTypeFilter.h"
 #include "lldb/API/SBTypeFormat.h"
@@ -28,6 +29,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/Declaration.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/Variable.h"
@@ -1692,6 +1694,20 @@ SBValue::GetData ()
                      sb_data.get());
     
     return sb_data;
+}
+
+lldb::SBDeclaration
+SBValue::GetDeclaration ()
+{
+    lldb::ValueObjectSP value_sp(GetSP());
+    SBDeclaration decl_sb;
+    if (value_sp)
+    {
+        Declaration decl;
+        if (value_sp->GetDeclaration(decl))
+            decl_sb.SetDeclaration(decl);
+    }
+    return decl_sb;
 }
 
 lldb::SBWatchpoint

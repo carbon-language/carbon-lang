@@ -65,6 +65,7 @@ protected:
     friend class SBCompileUnit;
     friend class SBData;
     friend class SBDebugger;
+    friend class SBDeclaration;
     friend class SBEvent;
     friend class SBFileSpec;
     friend class SBFileSpecList;

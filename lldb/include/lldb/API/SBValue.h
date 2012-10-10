@@ -269,6 +269,9 @@ public:
     lldb::SBData
     GetData ();
     
+    lldb::SBDeclaration
+    GetDeclaration ();
+    
     uint32_t
     GetNumChildren ();
 

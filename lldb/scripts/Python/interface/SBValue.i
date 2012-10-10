@@ -281,6 +281,9 @@ public:
     lldb::SBValue
     GetValueForExpressionPath(const char* expr_path);
 
+    lldb::SBDeclaration
+    GetDeclaration ();
+    
     uint32_t
     GetNumChildren ();
 

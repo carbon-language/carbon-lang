@@ -26,6 +26,7 @@
 #include "lldb/API/SBCompileUnit.h"
 #include "lldb/API/SBData.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBDeclaration.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBFileSpec.h"
