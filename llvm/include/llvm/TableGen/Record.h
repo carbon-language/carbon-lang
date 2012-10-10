@@ -485,12 +485,53 @@ RecTy *resolveTypes(RecTy *T1, RecTy *T2);
 //===----------------------------------------------------------------------===//
 
 class Init {
+protected:
+  /// \brief Discriminator enum (for isa<>, dyn_cast<>, et al.)
+  ///
+  /// This enum is laid out by a preorder traversal of the inheritance
+  /// hierarchy, and does not contain an entry for abstract classes, as per
+  /// the recommendation in docs/HowToSetUpLLVMStyleRTTI.rst.
+  ///
+  /// We also explicitly include "first" and "last" values for each
+  /// interior node of the inheritance tree, to make it easier to read the
+  /// corresponding classof().
+  ///
+  /// We could pack these a bit tighter by not having the IK_FirstXXXInit
+  /// and IK_LastXXXInit be their own values, but that would degrade
+  /// readability for really no benefit.
+  enum InitKind {
+    IK_BitInit,
+    IK_BitsInit,
+    IK_FirstTypedInit,
+    IK_DagInit,
+    IK_DefInit,
+    IK_FieldInit,
+    IK_IntInit,
+    IK_ListInit,
+    IK_FirstOpInit,
+    IK_BinOpInit,
+    IK_TernOpInit,
+    IK_UnOpInit,
+    IK_LastOpInit,
+    IK_StringInit,
+    IK_VarInit,
+    IK_VarListElementInit,
+    IK_LastTypedInit,
+    IK_UnsetInit,
+    IK_VarBitInit
+  };
+
+private:
+  const InitKind Kind;
   Init(const Init &) LLVM_DELETED_FUNCTION;
   Init &operator=(const Init &) LLVM_DELETED_FUNCTION;
   virtual void anchor();
 
+public:
+  InitKind getKind() const { return Kind; }
+
 protected:
-  Init(void) {}
+  explicit Init(InitKind K) : Kind(K) {}
 
 public:
   virtual ~Init() {}
@@ -591,9 +632,13 @@ class TypedInit : public Init {
   TypedInit &operator=(const TypedInit &Other) LLVM_DELETED_FUNCTION;
 
 protected:
-  explicit TypedInit(RecTy *T) : Ty(T) {}
+  explicit TypedInit(InitKind K, RecTy *T) : Init(K), Ty(T) {}
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() >= IK_FirstTypedInit &&
+           I->getKind() <= IK_LastTypedInit;
+  }
   RecTy *getType() const { return Ty; }
 
   virtual Init *
@@ -618,12 +663,15 @@ public:
 /// UnsetInit - ? - Represents an uninitialized value
 ///
 class UnsetInit : public Init {
-  UnsetInit() : Init() {}
+  UnsetInit() : Init(IK_UnsetInit) {}
   UnsetInit(const UnsetInit &) LLVM_DELETED_FUNCTION;
   UnsetInit &operator=(const UnsetInit &Other) LLVM_DELETED_FUNCTION;
   virtual void anchor();
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_UnsetInit;
+  }
   static UnsetInit *get();
 
   virtual Init *convertInitializerTo(RecTy *Ty) const {
@@ -644,12 +692,15 @@ public:
 class BitInit : public Init {
   bool Value;
 
-  explicit BitInit(bool V) : Value(V) {}
+  explicit BitInit(bool V) : Init(IK_BitInit), Value(V) {}
   BitInit(const BitInit &Other) LLVM_DELETED_FUNCTION;
   BitInit &operator=(BitInit &Other) LLVM_DELETED_FUNCTION;
   virtual void anchor();
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_BitInit;
+  }
   static BitInit *get(bool V);
 
   bool getValue() const { return Value; }
@@ -672,12 +723,16 @@ public:
 class BitsInit : public Init, public FoldingSetNode {
   std::vector<Init*> Bits;
 
-  BitsInit(ArrayRef<Init *> Range) : Bits(Range.begin(), Range.end()) {}
+  BitsInit(ArrayRef<Init *> Range)
+    : Init(IK_BitsInit), Bits(Range.begin(), Range.end()) {}
 
   BitsInit(const BitsInit &Other) LLVM_DELETED_FUNCTION;
   BitsInit &operator=(const BitsInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_BitsInit;
+  }
   static BitsInit *get(ArrayRef<Init *> Range);
 
   void Profile(FoldingSetNodeID &ID) const;
@@ -716,12 +771,16 @@ public:
 class IntInit : public TypedInit {
   int64_t Value;
 
-  explicit IntInit(int64_t V) : TypedInit(IntRecTy::get()), Value(V) {}
+  explicit IntInit(int64_t V)
+    : TypedInit(IK_IntInit, IntRecTy::get()), Value(V) {}
 
   IntInit(const IntInit &Other) LLVM_DELETED_FUNCTION;
   IntInit &operator=(const IntInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_IntInit;
+  }
   static IntInit *get(int64_t V);
 
   int64_t getValue() const { return Value; }
@@ -754,13 +813,16 @@ class StringInit : public TypedInit {
   std::string Value;
 
   explicit StringInit(const std::string &V)
-    : TypedInit(StringRecTy::get()), Value(V) {}
+    : TypedInit(IK_StringInit, StringRecTy::get()), Value(V) {}
 
   StringInit(const StringInit &Other) LLVM_DELETED_FUNCTION;
   StringInit &operator=(const StringInit &Other) LLVM_DELETED_FUNCTION;
   virtual void anchor();
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_StringInit;
+  }
   static StringInit *get(StringRef);
 
   const std::string &getValue() const { return Value; }
@@ -794,12 +856,16 @@ public:
 
 private:
   explicit ListInit(ArrayRef<Init *> Range, RecTy *EltTy)
-      : TypedInit(ListRecTy::get(EltTy)), Values(Range.begin(), Range.end()) {}
+    : TypedInit(IK_ListInit, ListRecTy::get(EltTy)),
+      Values(Range.begin(), Range.end()) {}
 
   ListInit(const ListInit &Other) LLVM_DELETED_FUNCTION;
   ListInit &operator=(const ListInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_ListInit;
+  }
   static ListInit *get(ArrayRef<Init *> Range, RecTy *EltTy);
 
   void Profile(FoldingSetNodeID &ID) const;
@@ -855,9 +921,13 @@ class OpInit : public TypedInit {
   OpInit &operator=(OpInit &Other) LLVM_DELETED_FUNCTION;
 
 protected:
-  explicit OpInit(RecTy *Type) : TypedInit(Type) {}
+  explicit OpInit(InitKind K, RecTy *Type) : TypedInit(K, Type) {}
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() >= IK_FirstOpInit &&
+           I->getKind() <= IK_LastOpInit;
+  }
   // Clone - Clone this operator, replacing arguments with the new list
   virtual OpInit *clone(std::vector<Init *> &Operands) const = 0;
 
@@ -889,12 +959,15 @@ private:
   Init *LHS;
 
   UnOpInit(UnaryOp opc, Init *lhs, RecTy *Type)
-      : OpInit(Type), Opc(opc), LHS(lhs) {}
+    : OpInit(IK_UnOpInit, Type), Opc(opc), LHS(lhs) {}
 
   UnOpInit(const UnOpInit &Other) LLVM_DELETED_FUNCTION;
   UnOpInit &operator=(const UnOpInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_UnOpInit;
+  }
   static UnOpInit *get(UnaryOp opc, Init *lhs, RecTy *Type);
 
   // Clone - Clone this operator, replacing arguments with the new list
@@ -932,12 +1005,15 @@ private:
   Init *LHS, *RHS;
 
   BinOpInit(BinaryOp opc, Init *lhs, Init *rhs, RecTy *Type) :
-      OpInit(Type), Opc(opc), LHS(lhs), RHS(rhs) {}
+      OpInit(IK_BinOpInit, Type), Opc(opc), LHS(lhs), RHS(rhs) {}
 
   BinOpInit(const BinOpInit &Other) LLVM_DELETED_FUNCTION;
   BinOpInit &operator=(const BinOpInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_BinOpInit;
+  }
   static BinOpInit *get(BinaryOp opc, Init *lhs, Init *rhs,
                         RecTy *Type);
 
@@ -982,12 +1058,15 @@ private:
 
   TernOpInit(TernaryOp opc, Init *lhs, Init *mhs, Init *rhs,
              RecTy *Type) :
-      OpInit(Type), Opc(opc), LHS(lhs), MHS(mhs), RHS(rhs) {}
+      OpInit(IK_TernOpInit, Type), Opc(opc), LHS(lhs), MHS(mhs), RHS(rhs) {}
 
   TernOpInit(const TernOpInit &Other) LLVM_DELETED_FUNCTION;
   TernOpInit &operator=(const TernOpInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_TernOpInit;
+  }
   static TernOpInit *get(TernaryOp opc, Init *lhs,
                          Init *mhs, Init *rhs,
                          RecTy *Type);
@@ -1036,14 +1115,17 @@ class VarInit : public TypedInit {
   Init *VarName;
 
   explicit VarInit(const std::string &VN, RecTy *T)
-      : TypedInit(T), VarName(StringInit::get(VN)) {}
+      : TypedInit(IK_VarInit, T), VarName(StringInit::get(VN)) {}
   explicit VarInit(Init *VN, RecTy *T)
-      : TypedInit(T), VarName(VN) {}
+      : TypedInit(IK_VarInit, T), VarName(VN) {}
 
   VarInit(const VarInit &Other) LLVM_DELETED_FUNCTION;
   VarInit &operator=(const VarInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_VarInit;
+  }
   static VarInit *get(const std::string &VN, RecTy *T);
   static VarInit *get(Init *VN, RecTy *T);
 
@@ -1083,7 +1165,7 @@ class VarBitInit : public Init {
   TypedInit *TI;
   unsigned Bit;
 
-  VarBitInit(TypedInit *T, unsigned B) : TI(T), Bit(B) {
+  VarBitInit(TypedInit *T, unsigned B) : Init(IK_VarBitInit), TI(T), Bit(B) {
     assert(T->getType() &&
            (isa<IntRecTy>(T->getType()) ||
             (isa<BitsRecTy>(T->getType()) &&
@@ -1095,6 +1177,9 @@ class VarBitInit : public Init {
   VarBitInit &operator=(const VarBitInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_VarBitInit;
+  }
   static VarBitInit *get(TypedInit *T, unsigned B);
 
   virtual Init *convertInitializerTo(RecTy *Ty) const {
@@ -1120,8 +1205,9 @@ class VarListElementInit : public TypedInit {
   unsigned Element;
 
   VarListElementInit(TypedInit *T, unsigned E)
-      : TypedInit(cast<ListRecTy>(T->getType())->getElementType()),
-          TI(T), Element(E) {
+      : TypedInit(IK_VarListElementInit,
+                  cast<ListRecTy>(T->getType())->getElementType()),
+        TI(T), Element(E) {
     assert(T->getType() && isa<ListRecTy>(T->getType()) &&
            "Illegal VarBitInit expression!");
   }
@@ -1130,6 +1216,9 @@ class VarListElementInit : public TypedInit {
   void operator=(const VarListElementInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_VarListElementInit;
+  }
   static VarListElementInit *get(TypedInit *T, unsigned E);
 
   virtual Init *convertInitializerTo(RecTy *Ty) const {
@@ -1157,13 +1246,16 @@ public:
 class DefInit : public TypedInit {
   Record *Def;
 
-  DefInit(Record *D, RecordRecTy *T) : TypedInit(T), Def(D) {}
+  DefInit(Record *D, RecordRecTy *T) : TypedInit(IK_DefInit, T), Def(D) {}
   friend class Record;
 
   DefInit(const DefInit &Other) LLVM_DELETED_FUNCTION;
   DefInit &operator=(const DefInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_DefInit;
+  }
   static DefInit *get(Record*);
 
   virtual Init *convertInitializerTo(RecTy *Ty) const {
@@ -1201,7 +1293,7 @@ class FieldInit : public TypedInit {
   std::string FieldName;    // Field we are accessing
 
   FieldInit(Init *R, const std::string &FN)
-      : TypedInit(R->getFieldType(FN)), Rec(R), FieldName(FN) {
+      : TypedInit(IK_FieldInit, R->getFieldType(FN)), Rec(R), FieldName(FN) {
     assert(getType() && "FieldInit with non-record type!");
   }
 
@@ -1209,6 +1301,9 @@ class FieldInit : public TypedInit {
   FieldInit &operator=(const FieldInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_FieldInit;
+  }
   static FieldInit *get(Init *R, const std::string &FN);
   static FieldInit *get(Init *R, const Init *FN);
 
@@ -1242,7 +1337,7 @@ class DagInit : public TypedInit, public FoldingSetNode {
   DagInit(Init *V, const std::string &VN,
           ArrayRef<Init *> ArgRange,
           ArrayRef<std::string> NameRange)
-      : TypedInit(DagRecTy::get()), Val(V), ValName(VN),
+      : TypedInit(IK_DagInit, DagRecTy::get()), Val(V), ValName(VN),
           Args(ArgRange.begin(), ArgRange.end()),
           ArgNames(NameRange.begin(), NameRange.end()) {}
 
@@ -1250,6 +1345,9 @@ class DagInit : public TypedInit, public FoldingSetNode {
   DagInit &operator=(const DagInit &Other) LLVM_DELETED_FUNCTION;
 
 public:
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_DagInit;
+  }
   static DagInit *get(Init *V, const std::string &VN,
                       ArrayRef<Init *> ArgRange,
                       ArrayRef<std::string> NameRange);
