@@ -266,7 +266,7 @@ public:
 
   /// \brief Build the call graph for all the top level decls of this TU and
   /// use it to define the order in which the functions should be visited.
-  void HandleDeclsGallGraph(const unsigned LocalTUDeclsSize);
+  void HandleDeclsCallGraph(const unsigned LocalTUDeclsSize);
 
   /// \brief Run analyzes(syntax or path sensitive) on the given function.
   /// \param Mode - determines if we are requesting syntax only or path
@@ -362,7 +362,7 @@ static bool shouldSkipFunction(CallGraphNode *N,
   return Visited.count(N);
 }
 
-void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
+void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
   // Otherwise, use the Callgraph to derive the order.
   // Build the Call Graph.
   CallGraph CG;
@@ -470,7 +470,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     }
 
     if (Mgr->shouldInlineCall())
-      HandleDeclsGallGraph(LocalTUDeclsSize);
+      HandleDeclsCallGraph(LocalTUDeclsSize);
 
     // After all decls handled, run checkers on the entire TranslationUnit.
     checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);
