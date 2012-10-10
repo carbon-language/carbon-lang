@@ -290,6 +290,10 @@ public:
   submodule_iterator submodule_end()   { return SubModules.end(); }
   submodule_const_iterator submodule_end() const { return SubModules.end(); }
   
+  static StringRef getModuleInputBufferName() {
+    return "<module-includes>";
+  }
+
   /// \brief Print the module map for this module to the given stream. 
   ///
   void print(llvm::raw_ostream &OS, unsigned Indent = 0) const;

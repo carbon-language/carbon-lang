@@ -1111,7 +1111,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
       return Failure;
     }
 
-    if (!DisableValidation &&
+    if (!DisableValidation && !OverriddenBuffer &&
         ((off_t)Record[4] != File->getSize()
 #if !defined(LLVM_ON_WIN32)
         // In our regression testing, the Windows file system seems to
