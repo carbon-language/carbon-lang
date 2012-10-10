@@ -52,8 +52,8 @@ ifeq ($(HOST_OS),Darwin)
 
     # If we're doing an Apple-style build, add the LTO object path.
     ifeq ($(RC_BUILDIT),YES)
-       TempFile            = $(shell mktemp ${OBJROOT}/llvm-lto.XXXXXX)
-       LLVMLibsOptions    := $(LLVMLibsOptions) \
-                             -Wl,-object_path_lto -Wl,$(TempFile)
+       TempFile        := $(shell mkdir -p ${OBJROOT}/dSYMs ; mktemp ${OBJROOT}/dSYMs/llvm-lto.XXXXXX)
+       LLVMLibsOptions := $(LLVMLibsOptions) \
+                          -Wl,-object_path_lto -Wl,$(TempFile)
     endif
 endif
