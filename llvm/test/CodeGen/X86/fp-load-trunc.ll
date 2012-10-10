@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2,-avx | FileCheck %s
-; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s --check-prefix=AVX
+; RUN: llc < %s -march=x86 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=core-avx-i | FileCheck %s --check-prefix=AVX
 
 define <1 x float> @test1(<1 x double>* %p) nounwind {
 ; CHECK: test1
