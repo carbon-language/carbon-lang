@@ -2,6 +2,8 @@
 // RUN: %clang_cc1 -x objective-c++ -fsyntax-only -triple thumbv6-apple-ios3.0 -verify -Wno-objc-root-class %s
 // rdar://12324295
 
+typedef signed char BOOL;
+
 @protocol P
 @property(nonatomic,assign) id ptarget __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{property 'ptarget' is declared deprecated here}}
 @end
@@ -36,3 +38,15 @@
   [self setPtarget: (id)0]; // expected-warning {{setPtarget:' is deprecated: first deprecated in iOS 3.0}}
 }
 @end
+
+
+@interface CustomAccessorNames
+@property(getter=isEnabled,assign) BOOL enabled __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{method 'isEnabled' declared here}} expected-note {{property 'enabled' is declared deprecated here}}
+
+@property(setter=setNewDelegate:,assign) id delegate __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{method 'setNewDelegate:' declared here}} expected-note {{property 'delegate' is declared deprecated here}}
+@end
+
+void testCustomAccessorNames(CustomAccessorNames *obj) {
+  if ([obj isEnabled]) // expected-warning {{'isEnabled' is deprecated: first deprecated in iOS 3.0}}
+    [obj setNewDelegate:0]; // expected-warning {{'setNewDelegate:' is deprecated: first deprecated in iOS 3.0}}
+}

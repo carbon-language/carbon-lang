@@ -1576,44 +1576,43 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
 
 /// PropertyIfSetterOrGetter - Looks up the property if named declaration
 /// is a setter or getter method backing a property.
-ObjCPropertyDecl *Sema::PropertyIfSetterOrGetter(NamedDecl *D) {
-  if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D)) {
+ObjCPropertyDecl *Sema::PropertyIfSetterOrGetter(const NamedDecl *D,
+                                                 bool CheckOverrides) {
+  const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D);
+  if (!Method)
+    return 0;
+
+  if (Method->isPropertyAccessor()) {
+    const ObjCContainerDecl *Container =
+      cast<ObjCContainerDecl>(Method->getParent());
+
     Selector Sel = Method->getSelector();
-    IdentifierInfo *Id = 0;
-    if (Sel.getNumArgs() == 0)
-      Id = Sel.getIdentifierInfoForSlot(0);
-    else if (Sel.getNumArgs() == 1) {
-      StringRef str = Sel.getNameForSlot(0);
-      if (str.startswith("set")) {
-        str = str.substr(3);
-        char front = str.front();
-        front = islower(front) ? toupper(front) : tolower(front);
-        SmallString<100> PropertyName = str;
-        PropertyName[0] = front;
-        Id = &PP.getIdentifierTable().get(PropertyName);
-      }
+    bool IsGetter = (Sel.isUnarySelector());
+
+    for (ObjCContainerDecl::prop_iterator I = Container->prop_begin(),
+                                          E = Container->prop_end();
+         I != E; ++I) {
+      Selector NextSel = IsGetter ? (*I)->getGetterName()
+                                  : (*I)->getSetterName();
+      if (NextSel == Sel)
+        return *I;
     }
-    if (Id) {
-      if (isa<ObjCInterfaceDecl>(Method->getDeclContext())) {
-        const ObjCInterfaceDecl *IDecl = Method->getClassInterface();
-        while (IDecl) {
-          ObjCPropertyDecl  *PDecl =
-            LookupPropertyDecl(cast<ObjCContainerDecl>(IDecl), Id);
-          if (PDecl)
-            return PDecl;
-          for (ObjCCategoryDecl *Category = IDecl->getCategoryList();
-             Category; Category = Category->getNextClassCategory())
-            if ((PDecl =
-                 LookupPropertyDecl(cast<ObjCContainerDecl>(Category), Id)))
-              return PDecl;
-          IDecl = IDecl->getSuperClass();
-        }
-      } else if (ObjCPropertyDecl  *PDecl =
-                  LookupPropertyDecl(
-                    cast<ObjCContainerDecl>(Method->getDeclContext()), Id))
-               return PDecl;
-    }
+
+    return 0;
   }
+
+  if (!CheckOverrides)
+    return 0;
+
+  typedef SmallVector<const ObjCMethodDecl *, 8> OverridesTy;
+  OverridesTy Overrides;
+  Method->getOverriddenMethods(Overrides);
+  for (OverridesTy::const_iterator I = Overrides.begin(), E = Overrides.end();
+       I != E; ++I) {
+    if (ObjCPropertyDecl *Prop = PropertyIfSetterOrGetter(*I, false))
+      return Prop;
+  }
+
   return 0;
 }
 

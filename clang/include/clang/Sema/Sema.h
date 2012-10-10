@@ -2317,7 +2317,8 @@ public:
   
   /// PropertyIfSetterOrGetter - Looks up the property if named declaration
   /// is a setter or getter method backing a property.
-  ObjCPropertyDecl *PropertyIfSetterOrGetter(NamedDecl *D);
+  ObjCPropertyDecl *PropertyIfSetterOrGetter(const NamedDecl *D,
+                                             bool CheckOverrides = true);
 
   /// Called by ActOnProperty to handle \@property declarations in
   /// class extensions.
