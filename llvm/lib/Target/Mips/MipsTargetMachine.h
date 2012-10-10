@@ -40,6 +40,7 @@ class MipsTargetMachine : public LLVMTargetMachine {
   MipsJITInfo JITInfo;
   MipsELFWriterInfo   ELFWriterInfo;
   ScalarTargetTransformImpl STTI;
+  VectorTargetTransformInfo VTTI; 
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT,
@@ -75,6 +76,12 @@ public:
 
   virtual const MipsELFWriterInfo *getELFWriterInfo() const {
     return &ELFWriterInfo;
+  }
+  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
+    return &STTI;
+  }
+  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
+    return &VTTI;
   }
 
   // Pass Pipeline Configuration
