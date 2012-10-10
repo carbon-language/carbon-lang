@@ -56,7 +56,7 @@ static int CompareOptionRecords(const void *Av, const void *Bv) {
 
 static const std::string getOptionName(const Record &R) {
   // Use the record name unless EnumName is defined.
-  if (dynamic_cast<UnsetInit*>(R.getValueInit("EnumName")))
+  if (isa<UnsetInit>(R.getValueInit("EnumName")))
     return R.getName();
 
   return R.getValueAsString("EnumName");
@@ -109,7 +109,7 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS, bool GenDefs) {
 
       // The containing option group (if any).
       OS << ", ";
-      if (const DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group")))
+      if (const DefInit *DI = dyn_cast<DefInit>(R.getValueInit("Group")))
         OS << getOptionName(*DI->getDef());
       else
         OS << "INVALID";
@@ -118,7 +118,7 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS, bool GenDefs) {
       OS << ", INVALID, 0, 0";
 
       // The option help text.
-      if (!dynamic_cast<UnsetInit*>(R.getValueInit("HelpText"))) {
+      if (!isa<UnsetInit>(R.getValueInit("HelpText"))) {
         OS << ",\n";
         OS << "       ";
         write_cstring(OS, R.getValueAsString("HelpText"));
@@ -149,14 +149,14 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS, bool GenDefs) {
 
       // The containing option group (if any).
       OS << ", ";
-      if (const DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group")))
+      if (const DefInit *DI = dyn_cast<DefInit>(R.getValueInit("Group")))
         OS << getOptionName(*DI->getDef());
       else
         OS << "INVALID";
 
       // The option alias (if any).
       OS << ", ";
-      if (const DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Alias")))
+      if (const DefInit *DI = dyn_cast<DefInit>(R.getValueInit("Alias")))
         OS << getOptionName(*DI->getDef());
       else
         OS << "INVALID";
@@ -170,7 +170,7 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS, bool GenDefs) {
         for (unsigned i = 0, e = LI->size(); i != e; ++i) {
           if (i)
             OS << " | ";
-          OS << dynamic_cast<DefInit*>(LI->getElement(i))->getDef()->getName();
+          OS << cast<DefInit>(LI->getElement(i))->getDef()->getName();
         }
       }
 
@@ -178,7 +178,7 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS, bool GenDefs) {
       OS << ", " << R.getValueAsInt("NumArgs");
 
       // The option help text.
-      if (!dynamic_cast<UnsetInit*>(R.getValueInit("HelpText"))) {
+      if (!isa<UnsetInit>(R.getValueInit("HelpText"))) {
         OS << ",\n";
         OS << "       ";
         write_cstring(OS, R.getValueAsString("HelpText"));
@@ -187,7 +187,7 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS, bool GenDefs) {
 
       // The option meta-variable name.
       OS << ", ";
-      if (!dynamic_cast<UnsetInit*>(R.getValueInit("MetaVarName")))
+      if (!isa<UnsetInit>(R.getValueInit("MetaVarName")))
         write_cstring(OS, R.getValueAsString("MetaVarName"));
       else
         OS << "0";

@@ -75,7 +75,7 @@ getCategoryFromDiagGroup(const Record *Group,
 static std::string getDiagnosticCategory(const Record *R,
                                          DiagGroupParentMap &DiagGroupParents) {
   // If the diagnostic is in a group, and that group has a category, use it.
-  if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"))) {
+  if (DefInit *Group = dyn_cast<DefInit>(R->getValueInit("Group"))) {
     // Check the diagnostic's diag group for a category.
     std::string CatName = getCategoryFromDiagGroup(Group->getDef(),
                                                    DiagGroupParents);
@@ -136,7 +136,7 @@ static void groupDiagnostics(const std::vector<Record*> &Diags,
                              std::map<std::string, GroupInfo> &DiagsInGroup) {
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record *R = Diags[i];
-    DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group"));
+    DefInit *DI = dyn_cast<DefInit>(R->getValueInit("Group"));
     if (DI == 0) continue;
     assert(R->getValueAsDef("Class")->getName() != "CLASS_NOTE" &&
            "Note can't be in a DiagGroup");
@@ -280,7 +280,7 @@ void InferPedantic::compute(VecOrSet DiagsInPedantic,
     Record *R = Diags[i];
     if (isExtension(R) && isOffByDefault(R)) {
       DiagsSet.insert(R);
-      if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"))) {
+      if (DefInit *Group = dyn_cast<DefInit>(R->getValueInit("Group"))) {
         const Record *GroupRec = Group->getDef();
         if (!isSubGroupOfGroup(GroupRec, "pedantic")) {
           markGroup(GroupRec);
@@ -299,7 +299,7 @@ void InferPedantic::compute(VecOrSet DiagsInPedantic,
     // Check if the group is implicitly in -Wpedantic.  If so,
     // the diagnostic should not be directly included in the -Wpedantic
     // diagnostic group.
-    if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group")))
+    if (DefInit *Group = dyn_cast<DefInit>(R->getValueInit("Group")))
       if (groupInPedantic(Group->getDef()))
         continue;
 
@@ -391,7 +391,7 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
     // Check if this is an error that is accidentally in a warning
     // group.
     if (isError(R)) {
-      if (DefInit *Group = dynamic_cast<DefInit*>(R.getValueInit("Group"))) {
+      if (DefInit *Group = dyn_cast<DefInit>(R.getValueInit("Group"))) {
         const Record *GroupRec = Group->getDef();
         const std::string &GroupName = GroupRec->getValueAsString("GroupName");
         throw "Error " + R.getName() + " cannot be in a warning group [" +
@@ -413,7 +413,7 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
     
     // Warning associated with the diagnostic. This is stored as an index into
     // the alphabetically sorted warning table.
-    if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group"))) {
+    if (DefInit *DI = dyn_cast<DefInit>(R.getValueInit("Group"))) {
       std::map<std::string, GroupInfo>::iterator I =
           DiagsInGroup.find(DI->getDef()->getValueAsString("GroupName"));
       assert(I != DiagsInGroup.end());

@@ -33,7 +33,7 @@ getValueAsListOfStrings(Record &R, StringRef FieldName) {
        i != e;
        ++i) {
     assert(*i && "Got a null element in a ListInit");
-    if (StringInit *S = dynamic_cast<StringInit *>(*i))
+    if (StringInit *S = dyn_cast<StringInit>(*i))
       Strings.push_back(S->getValue());
     else
       assert(false && "Got a non-string, non-code element in a ListInit");
