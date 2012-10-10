@@ -968,7 +968,8 @@ void X86_32TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       llvm::Function *Fn = cast<llvm::Function>(GV);
 
       // Now add the 'alignstack' attribute with a value of 16.
-      Fn->addFnAttr(llvm::Attributes::constructStackAlignmentFromInt(16));
+      Fn->addAttribute(~0U,
+                       llvm::Attributes::constructStackAlignmentFromInt(16));
     }
   }
 }
@@ -3252,7 +3253,7 @@ SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
       // OpenCL __kernel functions get a kernel calling convention
       F->setCallingConv(llvm::CallingConv::PTX_Kernel);
       // And kernel functions are not subject to inlining
-      F->addFnAttr(llvm::Attribute::NoInline);
+      F->addFnAttr(llvm::Attributes::NoInline);
     }
   }
 
@@ -3368,7 +3369,7 @@ void MBlazeTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       F->setCallingConv(CC);
 
       // Step 2: Add attributes goodness.
-      F->addFnAttr(llvm::Attribute::NoInline);
+      F->addFnAttr(llvm::Attributes::NoInline);
   }
 
   // Step 3: Emit _interrupt_handler alias.
@@ -3406,7 +3407,7 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       F->setCallingConv(llvm::CallingConv::MSP430_INTR);
 
       // Step 2: Add attributes goodness.
-      F->addFnAttr(llvm::Attribute::NoInline);
+      F->addFnAttr(llvm::Attributes::NoInline);
 
       // Step 3: Emit ISR vector alias.
       unsigned Num = attr->getNumber() + 0xffe0;
@@ -3763,7 +3764,7 @@ void TCETargetCodeGenInfo::SetTargetAttributes(const Decl *D,
   if (M.getLangOpts().OpenCL) {
     if (FD->hasAttr<OpenCLKernelAttr>()) {
       // OpenCL C Kernel functions are not subject to inlining
-      F->addFnAttr(llvm::Attribute::NoInline);
+      F->addFnAttr(llvm::Attributes::NoInline);
           
       if (FD->hasAttr<ReqdWorkGroupSizeAttr>()) {
 

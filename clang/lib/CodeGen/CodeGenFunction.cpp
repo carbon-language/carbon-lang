@@ -348,7 +348,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
       for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
              RE = FD->redecls_end(); RI != RE; ++RI)
         if (RI->isInlineSpecified()) {
-          Fn->addFnAttr(llvm::Attribute::InlineHint);
+          Fn->addFnAttr(llvm::Attributes::InlineHint);
           break;
         }
 
@@ -485,7 +485,7 @@ static void TryMarkNoThrow(llvm::Function *F) {
       } else if (isa<llvm::ResumeInst>(&*BI)) {
         return;
       }
-  F->setDoesNotThrow(true);
+  F->setDoesNotThrow();
 }
 
 void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,

@@ -565,25 +565,25 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     F->setHasUWTable();
 
   if (!hasUnwindExceptions(LangOpts))
-    F->addFnAttr(llvm::Attribute::NoUnwind);
+    F->addFnAttr(llvm::Attributes::NoUnwind);
 
   if (D->hasAttr<NakedAttr>()) {
     // Naked implies noinline: we should not be inlining such functions.
-    F->addFnAttr(llvm::Attribute::Naked);
-    F->addFnAttr(llvm::Attribute::NoInline);
+    F->addFnAttr(llvm::Attributes::Naked);
+    F->addFnAttr(llvm::Attributes::NoInline);
   }
 
   if (D->hasAttr<NoInlineAttr>())
-    F->addFnAttr(llvm::Attribute::NoInline);
+    F->addFnAttr(llvm::Attributes::NoInline);
 
   // (noinline wins over always_inline, and we can't specify both in IR)
   if ((D->hasAttr<AlwaysInlineAttr>() || D->hasAttr<ForceInlineAttr>()) &&
       !F->getFnAttributes().hasAttribute(llvm::Attributes::NoInline))
-    F->addFnAttr(llvm::Attribute::AlwaysInline);
+    F->addFnAttr(llvm::Attributes::AlwaysInline);
 
   // FIXME: Communicate hot and cold attributes to LLVM more directly.
   if (D->hasAttr<ColdAttr>())
-    F->addFnAttr(llvm::Attribute::OptimizeForSize);
+    F->addFnAttr(llvm::Attributes::OptimizeForSize);
 
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
@@ -593,15 +593,15 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
       F->setUnnamedAddr(true);
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
-    F->addFnAttr(llvm::Attribute::StackProtect);
+    F->addFnAttr(llvm::Attributes::StackProtect);
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
-    F->addFnAttr(llvm::Attribute::StackProtectReq);
+    F->addFnAttr(llvm::Attributes::StackProtectReq);
   
   if (LangOpts.AddressSanitizer) {
     // When AddressSanitizer is enabled, set AddressSafety attribute
     // unless __attribute__((no_address_safety_analysis)) is used.
     if (!D->hasAttr<NoAddressSafetyAnalysisAttr>())
-      F->addFnAttr(llvm::Attribute::AddressSafety);
+      F->addFnAttr(llvm::Attributes::AddressSafety);
   }
 
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();
@@ -1094,8 +1094,8 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   assert(F->getName() == MangledName && "name was uniqued!");
   if (D.getDecl())
     SetFunctionAttributes(D, F, IsIncompleteFunction);
-  if (ExtraAttrs != llvm::Attribute::None)
-    F->addFnAttr(ExtraAttrs);
+  if (ExtraAttrs.hasAttributes())
+    F->addAttribute(~0, ExtraAttrs);
 
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end

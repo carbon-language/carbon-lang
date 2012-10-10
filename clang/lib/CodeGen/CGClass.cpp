@@ -953,7 +953,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     // -fapple-kext must inline any call to this dtor into
     // the caller's body.
     if (getContext().getLangOpts().AppleKext)
-      CurFn->addFnAttr(llvm::Attribute::AlwaysInline);
+      CurFn->addFnAttr(llvm::Attributes::AlwaysInline);
     break;
   }
 
