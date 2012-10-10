@@ -123,8 +123,8 @@ private:
   unsigned IsInstance : 1;
   unsigned IsVariadic : 1;
 
-  // Synthesized declaration method for a property setter/getter
-  unsigned IsSynthesized : 1;
+  /// True if this method is the getter or setter for an explicit property.
+  unsigned IsPropertyAccessor : 1;
 
   // Method has a definition.
   unsigned IsDefined : 1;
@@ -226,7 +226,7 @@ private:
                  DeclContext *contextDecl,
                  bool isInstance = true,
                  bool isVariadic = false,
-                 bool isSynthesized = false,
+                 bool isPropertyAccessor = false,
                  bool isImplicitlyDeclared = false,
                  bool isDefined = false,
                  ImplementationControl impControl = None,
@@ -234,7 +234,7 @@ private:
   : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
     DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
     IsInstance(isInstance), IsVariadic(isVariadic),
-    IsSynthesized(isSynthesized),
+    IsPropertyAccessor(isPropertyAccessor),
     IsDefined(isDefined), IsRedeclaration(0), HasRedeclaration(0),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
@@ -260,7 +260,7 @@ public:
                                 DeclContext *contextDecl,
                                 bool isInstance = true,
                                 bool isVariadic = false,
-                                bool isSynthesized = false,
+                                bool isPropertyAccessor = false,
                                 bool isImplicitlyDeclared = false,
                                 bool isDefined = false,
                                 ImplementationControl impControl = None,
@@ -402,8 +402,8 @@ public:
 
   bool isClassMethod() const { return !IsInstance; }
 
-  bool isSynthesized() const { return IsSynthesized; }
-  void setSynthesized(bool isSynth) { IsSynthesized = isSynth; }
+  bool isPropertyAccessor() const { return IsPropertyAccessor; }
+  void setPropertyAccessor(bool isAccessor) { IsPropertyAccessor = isAccessor; }
 
   bool isDefined() const { return IsDefined; }
   void setDefined(bool isDefined) { IsDefined = isDefined; }

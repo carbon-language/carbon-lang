@@ -416,7 +416,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   }
   Record.push_back(D->isInstanceMethod());
   Record.push_back(D->isVariadic());
-  Record.push_back(D->isSynthesized());
+  Record.push_back(D->isPropertyAccessor());
   Record.push_back(D->isDefined());
   Record.push_back(D->IsOverriding);
 

@@ -229,7 +229,7 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
                                     S.NSNumberPointer, ResultTInfo,
                                     S.NSNumberDecl,
                                     /*isInstance=*/false, /*isVariadic=*/false,
-                                    /*isSynthesized=*/false,
+                                    /*isPropertyAccessor=*/false,
                                     /*isImplicitlyDeclared=*/true,
                                     /*isDefined=*/false,
                                     ObjCMethodDecl::Required,
@@ -477,7 +477,7 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
                                    stringWithUTF8String, NSStringPointer,
                                    ResultTInfo, NSStringDecl,
                                    /*isInstance=*/false, /*isVariadic=*/false,
-                                   /*isSynthesized=*/false,
+                                   /*isPropertyAccessor=*/false,
                                    /*isImplicitlyDeclared=*/true,
                                    /*isDefined=*/false,
                                    ObjCMethodDecl::Required,
@@ -646,7 +646,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                            ResultTInfo,
                            Context.getTranslationUnitDecl(),
                            false /*Instance*/, false/*isVariadic*/,
-                           /*isSynthesized=*/false,
+                           /*isPropertyAccessor=*/false,
                            /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
                            ObjCMethodDecl::Required,
                            false);
@@ -764,7 +764,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                            0 /*TypeSourceInfo */,
                            Context.getTranslationUnitDecl(),
                            false /*Instance*/, false/*isVariadic*/,
-                           /*isSynthesized=*/false,
+                           /*isPropertyAccessor=*/false,
                            /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
                            ObjCMethodDecl::Required,
                            false);
@@ -1328,7 +1328,7 @@ static void DiagnoseARCUseOfWeakReceiver(Sema &S, Expr *Receiver) {
     // See if receiver is a method which envokes a synthesized getter
     // backing a 'weak' property.
     ObjCMethodDecl *Method = ME->getMethodDecl();
-    if (Method && Method->isSynthesized()) {
+    if (Method && Method->isPropertyAccessor()) {
       Selector Sel = Method->getSelector();
       if (Sel.getNumArgs() == 0) {
         const DeclContext *Container = Method->getDeclContext();

@@ -841,7 +841,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 
     setFlag("instance", D->isInstanceMethod());
     setFlag("variadic", D->isVariadic());
-    setFlag("synthesized", D->isSynthesized());
+    setFlag("property_accessor", D->isPropertyAccessor());
     setFlag("defined", D->isDefined());
     setFlag("related_result_type", D->hasRelatedResultType());
   }

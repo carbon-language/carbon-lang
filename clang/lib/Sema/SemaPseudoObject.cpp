@@ -552,7 +552,7 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
   // Do a normal method lookup first.
   if (ObjCMethodDecl *setter =
         LookupMethodInReceiverType(S, SetterSelector, RefExpr)) {
-    if (setter->isSynthesized() && warn)
+    if (setter->isPropertyAccessor() && warn)
       if (const ObjCInterfaceDecl *IFace =
           dyn_cast<ObjCInterfaceDecl>(setter->getDeclContext())) {
         const StringRef thisPropertyName(prop->getName());
@@ -1068,7 +1068,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
                            0 /*TypeSourceInfo */,
                            S.Context.getTranslationUnitDecl(),
                            true /*Instance*/, false/*isVariadic*/,
-                           /*isSynthesized=*/false,
+                           /*isPropertyAccessor=*/false,
                            /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
                            ObjCMethodDecl::Required,
                            false);
@@ -1184,7 +1184,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                            ResultTInfo,
                            S.Context.getTranslationUnitDecl(),
                            true /*Instance*/, false/*isVariadic*/,
-                           /*isSynthesized=*/false,
+                           /*isPropertyAccessor=*/false,
                            /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
                            ObjCMethodDecl::Required,
                            false); 

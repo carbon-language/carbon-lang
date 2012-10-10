@@ -1929,7 +1929,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     GetterMethod = ObjCMethodDecl::Create(Context, Loc, Loc,
                              property->getGetterName(),
                              property->getType(), 0, CD, /*isInstance=*/true,
-                             /*isVariadic=*/false, /*isSynthesized=*/true,
+                             /*isVariadic=*/false, /*isPropertyAccessor=*/true,
                              /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
                              (property->getPropertyImplementation() ==
                               ObjCPropertyDecl::Optional) ?
@@ -1949,7 +1949,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   } else
     // A user declared getter will be synthesize when @synthesize of
     // the property with the same name is seen in the @implementation
-    GetterMethod->setSynthesized(true);
+    GetterMethod->setPropertyAccessor(true);
   property->setGetterMethodDecl(GetterMethod);
 
   // Skip setter if property is read-only.
@@ -1967,7 +1967,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
         ObjCMethodDecl::Create(Context, Loc, Loc,
                                property->getSetterName(), Context.VoidTy, 0,
                                CD, /*isInstance=*/true, /*isVariadic=*/false,
-                               /*isSynthesized=*/true,
+                               /*isPropertyAccessor=*/true,
                                /*isImplicitlyDeclared=*/true,
                                /*isDefined=*/false,
                                (property->getPropertyImplementation() ==
@@ -1998,7 +1998,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     } else
       // A user declared setter will be synthesize when @synthesize of
       // the property with the same name is seen in the @implementation
-      SetterMethod->setSynthesized(true);
+      SetterMethod->setPropertyAccessor(true);
     property->setSetterMethodDecl(SetterMethod);
   }
   // Add any synthesized methods to the global pool. This allows us to

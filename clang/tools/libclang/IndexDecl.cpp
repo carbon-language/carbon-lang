@@ -194,7 +194,7 @@ public:
   bool VisitObjCMethodDecl(ObjCMethodDecl *D) {
     // Methods associated with a property, even user-declared ones, are
     // handled when we handle the property.
-    if (D->isSynthesized())
+    if (D->isPropertyAccessor())
       return true;
 
     handleObjCMethod(D);
@@ -228,12 +228,12 @@ public:
     }
 
     if (ObjCMethodDecl *MD = PD->getGetterMethodDecl()) {
-      if (MD->isSynthesized())
+      if (MD->isPropertyAccessor())
         IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation(),
                                              D->getLexicalDeclContext());
     }
     if (ObjCMethodDecl *MD = PD->getSetterMethodDecl()) {
-      if (MD->isSynthesized())
+      if (MD->isPropertyAccessor())
         IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation(),
                                              D->getLexicalDeclContext());
     }
