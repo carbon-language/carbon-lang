@@ -188,7 +188,7 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
                 
                 ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
                 if (!thread_sp)
-                    thread_sp.reset (new ThreadMemory (m_process->shared_from_this(),
+                    thread_sp.reset (new ThreadMemory (*m_process,
                                                        tid,
                                                        name,
                                                        queue));

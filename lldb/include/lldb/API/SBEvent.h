@@ -74,6 +74,7 @@ protected:
     friend class SBBreakpoint;
     friend class SBDebugger;
     friend class SBProcess;
+    friend class SBThread;
 
     SBEvent (lldb::EventSP &event_sp);
 

@@ -20,7 +20,7 @@ class ProcessKDP;
 class ThreadKDP : public lldb_private::Thread
 {
 public:
-    ThreadKDP (const lldb::ProcessSP &process_sp, 
+    ThreadKDP (lldb_private::Process &process,
                lldb::tid_t tid);
 
     virtual

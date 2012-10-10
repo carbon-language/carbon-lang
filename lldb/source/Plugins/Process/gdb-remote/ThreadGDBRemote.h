@@ -21,7 +21,7 @@ class ProcessGDBRemote;
 class ThreadGDBRemote : public lldb_private::Thread
 {
 public:
-    ThreadGDBRemote (const lldb::ProcessSP &process_sp, lldb::tid_t tid);
+    ThreadGDBRemote (lldb_private::Process &process, lldb::tid_t tid);
 
     virtual
     ~ThreadGDBRemote ();

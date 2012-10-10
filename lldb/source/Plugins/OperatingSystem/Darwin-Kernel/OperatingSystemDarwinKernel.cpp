@@ -249,7 +249,7 @@ OperatingSystemDarwinKernel::UpdateThreadList (ThreadList &old_thread_list, Thre
 
         ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
         if (!thread_sp)
-            thread_sp.reset (new ThreadMemory (m_process->shared_from_this(), tid, valobj_sp));
+            thread_sp.reset (new ThreadMemory (*m_process, tid, valobj_sp));
 
         new_thread_list.AddThread(thread_sp);
 

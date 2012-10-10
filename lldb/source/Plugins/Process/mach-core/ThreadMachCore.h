@@ -19,7 +19,7 @@ class ProcessMachCore;
 class ThreadMachCore : public lldb_private::Thread
 {
 public:
-    ThreadMachCore (const lldb::ProcessSP &process_sp,
+    ThreadMachCore (lldb_private::Process &process,
                     lldb::tid_t tid);
 
     virtual

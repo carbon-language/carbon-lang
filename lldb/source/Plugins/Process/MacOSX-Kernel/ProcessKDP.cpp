@@ -419,7 +419,7 @@ ProcessKDP::GetKernelThread(ThreadList &old_thread_list, ThreadList &new_thread_
     ThreadSP thread_sp (old_thread_list.FindThreadByID (kernel_tid, false));
     if (!thread_sp)
     {
-        thread_sp.reset(new ThreadKDP (shared_from_this(), kernel_tid));
+        thread_sp.reset(new ThreadKDP (*this, kernel_tid));
         new_thread_list.AddThread(thread_sp);
     }
     return thread_sp;

@@ -58,7 +58,7 @@ Target::GetStaticBroadcasterClass ()
 //----------------------------------------------------------------------
 Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp) :
     TargetProperties (this),
-    Broadcaster (&debugger, "lldb.target"),
+    Broadcaster (&debugger, Target::GetStaticBroadcasterClass().AsCString()),
     ExecutionContextScope (),
     m_debugger (debugger),
     m_platform_sp (platform_sp),

@@ -265,8 +265,9 @@ protected:
                     m_options.GenerateOptionUsage (result.GetErrorStream(), this);
                 }
             }
-                
-            bool success = thread->SetSelectedFrameByIndex (frame_idx);
+
+            const bool broadcast = true;
+            bool success = thread->SetSelectedFrameByIndex (frame_idx, broadcast);
             if (success)
             {
                 exe_ctx.SetFrameSP(thread->GetSelectedFrame ());

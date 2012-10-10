@@ -17,11 +17,11 @@ class ThreadMemory :
 {
 public:
 
-    ThreadMemory (const lldb::ProcessSP &process_sp, 
+    ThreadMemory (lldb_private::Process &process,
                   lldb::tid_t tid,
                   const lldb::ValueObjectSP &thread_info_valobj_sp);
 
-    ThreadMemory (const lldb::ProcessSP &process_sp,
+    ThreadMemory (lldb_private::Process &process,
                   lldb::tid_t tid,
                   const char *name,
                   const char *queue);

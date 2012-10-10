@@ -430,6 +430,10 @@ public:
     void
     RestoreBroadcaster ();
     
+    // This needs to be filled in if you are going to register the broadcaster with the broadcaster
+    // manager and do broadcaster class matching.
+    // FIXME: Probably should make a ManagedBroadcaster subclass with all the bits needed to work
+    // with the BroadcasterManager, so that it is clearer how to add one.
     virtual ConstString &GetBroadcasterClass() const;
     
     BroadcasterManager *GetManager();

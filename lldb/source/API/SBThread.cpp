@@ -32,12 +32,19 @@
 
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBEvent.h"
 #include "lldb/API/SBFrame.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBValue.h"
 
 using namespace lldb;
 using namespace lldb_private;
+
+const char *
+SBThread::GetBroadcasterClassName ()
+{
+    return Thread::GetStaticBroadcasterClass().AsCString();
+}
 
 //----------------------------------------------------------------------
 // Constructors
@@ -1123,6 +1130,24 @@ SBThread::SetSelectedFrame (uint32_t idx)
     return sb_frame;
 }
 
+bool
+SBThread::EventIsThreadEvent (const SBEvent &event)
+{
+    return Thread::ThreadEventData::GetEventDataFromEvent(event.get()) != NULL;
+}
+
+SBFrame
+SBThread::GetStackFrameFromEvent (const SBEvent &event)
+{
+    return Thread::ThreadEventData::GetStackFrameFromEvent (event.get());
+
+}
+
+SBThread
+SBThread::GetThreadFromEvent (const SBEvent &event)
+{
+    return Thread::ThreadEventData::GetThreadFromEvent (event.get());
+}
 
 bool
 SBThread::operator == (const SBThread &rhs) const
@@ -1134,6 +1159,22 @@ bool
 SBThread::operator != (const SBThread &rhs) const
 {
     return m_opaque_sp->GetThreadSP().get() != rhs.m_opaque_sp->GetThreadSP().get();
+}
+
+bool
+SBThread::GetStatus (SBStream &status) const
+{
+    Stream &strm = status.ref();
+
+    ExecutionContext exe_ctx (m_opaque_sp.get());
+    if (exe_ctx.HasThreadScope())
+    {
+        exe_ctx.GetThreadPtr()->GetStatus(strm, 0, 1, 1);
+    }
+    else
+        strm.PutCString ("No status");
+    
+    return true;
 }
 
 bool

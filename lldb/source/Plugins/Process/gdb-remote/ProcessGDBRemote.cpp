@@ -1338,7 +1338,7 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
             tid_t tid = m_thread_ids[i];
             ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
             if (!thread_sp)
-                thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
+                thread_sp.reset (new ThreadGDBRemote (*this, tid));
             new_thread_list.AddThread(thread_sp);
         }
     }
@@ -1405,7 +1405,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     if (!thread_sp)
                     {
                         // Create the thread if we need to
-                        thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
+                        thread_sp.reset (new ThreadGDBRemote (*this, tid));
                         m_thread_list.AddThread(thread_sp);
                     }
                 }

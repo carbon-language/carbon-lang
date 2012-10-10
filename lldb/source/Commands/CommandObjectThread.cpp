@@ -1338,7 +1338,8 @@ protected:
                 
         Error error;
         ThreadSP thread_sp = exe_ctx.GetThreadSP();
-        error = thread_sp->ReturnFromFrame (frame_sp, return_valobj_sp);
+        const bool broadcast = true;
+        error = thread_sp->ReturnFromFrame (frame_sp, return_valobj_sp, broadcast);
         if (!error.Success())
         {
             result.AppendErrorWithFormat("Error returning from frame %d of thread %d: %s.", frame_idx, thread_sp->GetIndexID(), error.AsCString());
@@ -1346,7 +1347,6 @@ protected:
             return false;
         }
 
-        thread_sp->GetStatus(result.GetOutputStream(), 0, 1, 1);
         result.SetStatus (eReturnStatusSuccessFinishResult);
         return true;
     }

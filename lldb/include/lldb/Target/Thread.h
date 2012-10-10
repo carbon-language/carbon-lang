@@ -12,6 +12,8 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Event.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -47,15 +49,89 @@ public:
 
 typedef STD_SHARED_PTR(ThreadProperties) ThreadPropertiesSP;
 
-
 class Thread :
     public STD_ENABLE_SHARED_FROM_THIS(Thread),
     public ThreadProperties,
     public UserID,
-    public ExecutionContextScope
+    public ExecutionContextScope,
+    public Broadcaster
 {
+friend class ThreadEventData;
+
 public:
-    // TODO: You shouldn't just checkpoint the register state alone, so this should get 
+    //------------------------------------------------------------------
+    /// Broadcaster event bits definitions.
+    //------------------------------------------------------------------
+    enum
+    {
+        eBroadcastBitStackChanged           = (1 << 0),
+        eBroadcastBitThreadSuspended        = (1 << 1),
+        eBroadcastBitThreadResumed          = (1 << 2),
+        eBroadcastBitSelectedFrameChanged  = (1 << 3)
+    };
+
+    static ConstString &GetStaticBroadcasterClass ();
+    
+    virtual ConstString &GetBroadcasterClass() const
+    {
+        return GetStaticBroadcasterClass();
+    }
+    
+    class ThreadEventData :
+        public EventData
+    {
+    public:
+        ThreadEventData (const lldb::ThreadSP thread_sp);
+        
+        ThreadEventData (const lldb::ThreadSP thread_sp, const StackID &stack_id);
+        
+        ThreadEventData();
+        
+        virtual ~ThreadEventData();
+        
+        static const ConstString &
+        GetFlavorString ();
+
+        virtual const ConstString &
+        GetFlavor () const
+        {
+            return ThreadEventData::GetFlavorString ();
+        }
+        
+        virtual void
+        Dump (Stream *s) const;
+    
+        static const ThreadEventData *
+        GetEventDataFromEvent (const Event *event_ptr);
+        
+        static lldb::ThreadSP
+        GetThreadFromEvent (const Event *event_ptr);
+        
+        static StackID
+        GetStackIDFromEvent (const Event *event_ptr);
+        
+        static lldb::StackFrameSP
+        GetStackFrameFromEvent (const Event *event_ptr);
+        
+        lldb::ThreadSP
+        GetThread () const
+        {
+            return m_thread_sp;
+        }
+        
+        StackID
+        GetStackID () const
+        {
+            return m_stack_id;
+        }
+    
+    private:
+        lldb::ThreadSP m_thread_sp;
+        StackID        m_stack_id;
+    DISALLOW_COPY_AND_ASSIGN (ThreadEventData);
+    };
+    
+    // TODO: You shouldn't just checkpoint the register state alone, so this should get
     // moved to protected.  To do that ThreadStateCheckpoint needs to be returned as a token...
     class RegisterCheckpoint
     {
@@ -141,7 +217,7 @@ public:
     static const ThreadPropertiesSP &
     GetGlobalProperties();
 
-    Thread (const lldb::ProcessSP &process_sp, lldb::tid_t tid);
+    Thread (Process &process, lldb::tid_t tid);
     virtual ~Thread();
 
     lldb::ProcessSP
@@ -289,10 +365,10 @@ public:
     }
     
     Error
-    ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp);
+    ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
     
     Error
-    ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp);
+    ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
     
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)
@@ -314,16 +390,10 @@ public:
     }
 
     uint32_t
-    SetSelectedFrame (lldb_private::StackFrame *frame)
-    {
-        return GetStackFrameList()->SetSelectedFrame(frame);
-    }
+    SetSelectedFrame (lldb_private::StackFrame *frame, bool broadcast = false);
 
     bool
-    SetSelectedFrameByIndex (uint32_t frame_idx)
-    {
-        return GetStackFrameList()->SetSelectedFrameByIndex(frame_idx);
-    }
+    SetSelectedFrameByIndex (uint32_t frame_idx, bool broadcast = false);
 
     void
     SetDefaultFileAndLineToSelectedFrame()
@@ -556,6 +626,9 @@ public:
 private:
     bool
     PlanIsBasePlan (ThreadPlan *plan_ptr);
+    
+    void
+    BroadcastSelectedFrameChange(StackID &new_frame_id);
     
 public:
 

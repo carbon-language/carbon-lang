@@ -344,7 +344,7 @@ ProcessMachCore::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_
             const uint32_t num_threads = core_objfile->GetNumThreadContexts ();
             for (lldb::tid_t tid = 0; tid < num_threads; ++tid)
             {
-                ThreadSP thread_sp(new ThreadMachCore (shared_from_this(), tid));
+                ThreadSP thread_sp(new ThreadMachCore (*this, tid));
                 new_thread_list.AddThread (thread_sp);
             }
         }

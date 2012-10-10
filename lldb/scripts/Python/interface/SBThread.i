@@ -46,6 +46,15 @@ public:
     SBThread (const lldb::SBThread &thread);
 
    ~SBThread();
+    
+    static bool
+    EventIsThreadEvent (const SBEvent &event);
+    
+    static SBFrame
+    GetStackFrameFromEvent (const SBEvent &event);
+    
+    static SBThread
+    GetThreadFromEvent (const SBEvent &event);
 
     bool
     IsValid() const;
@@ -182,6 +191,9 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description) const;
+    
+    bool
+    GetStatus (lldb::SBStream &status) const;
     
     %pythoncode %{
         class frames_access(object):
