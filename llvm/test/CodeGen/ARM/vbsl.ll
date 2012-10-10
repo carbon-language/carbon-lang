@@ -1,5 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
+; rdar://12471808
+
 define <8 x i8> @v_bsli8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 ;CHECK: v_bsli8:
 ;CHECK: vbsl
@@ -125,6 +127,13 @@ define <2 x i32> @f3(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c) nounwind readnone
   ret <2 x i32> %vbsl3.i
 }
 
+define <2 x float> @f4(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone optsize ssp {
+; CHECK: f4:
+; CHECK: vbsl
+  %vbsl4.i = tail call <2 x float> @llvm.arm.neon.vbsl.v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind
+  ret <2 x float> %vbsl4.i
+}
+
 define <16 x i8> @g1(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c) nounwind readnone optsize ssp {
 ; CHECK: g1:
 ; CHECK: vbsl
@@ -146,9 +155,18 @@ define <4 x i32> @g3(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) nounwind readnone
   ret <4 x i32> %vbsl3.i
 }
 
+define <4 x float> @g4(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind readnone optsize ssp {
+; CHECK: g4:
+; CHECK: vbsl
+  %vbsl4.i = tail call <4 x float> @llvm.arm.neon.vbsl.v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind
+  ret <4 x float> %vbsl4.i
+}
+
 declare <4 x i32> @llvm.arm.neon.vbsl.v4i32(<4 x i32>, <4 x i32>, <4 x i32>) nounwind readnone
 declare <8 x i16> @llvm.arm.neon.vbsl.v8i16(<8 x i16>, <8 x i16>, <8 x i16>) nounwind readnone
 declare <16 x i8> @llvm.arm.neon.vbsl.v16i8(<16 x i8>, <16 x i8>, <16 x i8>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vbsl.v2i32(<2 x i32>, <2 x i32>, <2 x i32>) nounwind readnone
 declare <4 x i16> @llvm.arm.neon.vbsl.v4i16(<4 x i16>, <4 x i16>, <4 x i16>) nounwind readnone
 declare <8 x i8> @llvm.arm.neon.vbsl.v8i8(<8 x i8>, <8 x i8>, <8 x i8>) nounwind readnone
+declare <2 x float> @llvm.arm.neon.vbsl.v2f32(<2 x float>, <2 x float>, <2 x float>) nounwind readnone
+declare <4 x float> @llvm.arm.neon.vbsl.v4f32(<4 x float>, <4 x float>, <4 x float>) nounwind readnone

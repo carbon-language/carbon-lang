@@ -4500,6 +4500,10 @@ def : Pat<(v2i32 (int_arm_neon_vbsl (v2i32 DPR:$src1),
                                     (v2i32 DPR:$Vn), (v2i32 DPR:$Vm))),
           (VBSLd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
         Requires<[HasNEON]>;
+def : Pat<(v2f32 (int_arm_neon_vbsl (v2f32 DPR:$src1),
+                                    (v2f32 DPR:$Vn), (v2f32 DPR:$Vm))),
+          (VBSLd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
+        Requires<[HasNEON]>;
 
 def : Pat<(v2i32 (or (and DPR:$Vn, DPR:$Vd),
                      (and DPR:$Vm, (vnotd DPR:$Vd)))),
@@ -4523,6 +4527,10 @@ def : Pat<(v8i16 (int_arm_neon_vbsl (v8i16 QPR:$src1),
         Requires<[HasNEON]>;
 def : Pat<(v4i32 (int_arm_neon_vbsl (v4i32 QPR:$src1),
                                     (v4i32 QPR:$Vn), (v4i32 QPR:$Vm))),
+          (VBSLq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
+        Requires<[HasNEON]>;
+def : Pat<(v4f32 (int_arm_neon_vbsl (v4f32 QPR:$src1),
+                                    (v4f32 QPR:$Vn), (v4f32 QPR:$Vm))),
           (VBSLq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
         Requires<[HasNEON]>;
 
