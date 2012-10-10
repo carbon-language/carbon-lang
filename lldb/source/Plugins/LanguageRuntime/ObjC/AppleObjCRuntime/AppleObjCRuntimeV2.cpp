@@ -1112,14 +1112,14 @@ public:
         
         if (class_method_func)
         {
-            ObjCLanguageRuntime::ClassDescriptorSP metaclass = m_runtime.ObjCLanguageRuntime::GetClassDescriptor(objc_class->m_isa);
+            ClassDescriptorV2 metaclass(m_runtime, :q!objc_class->m_isa); // The metaclass is not in the cache
             
             // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
             // our class methods.
             
-            metaclass->Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> (nullptr),
-                                class_method_func,
-                                std::function <void (const char *, const char *)> (nullptr));
+            metaclass.Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> (nullptr),
+                               class_method_func,
+                               std::function <void (const char *, const char *)> (nullptr));
         }
         while (0);
             
@@ -1670,10 +1670,14 @@ private:
 ObjCLanguageRuntime::ClassDescriptorSP
 AppleObjCRuntimeV2::CreateClassDescriptor (ObjCISA isa)
 {
-    ClassDescriptorSP objc_class_sp;
-    if (isa != 0)
-        objc_class_sp.reset (new ClassDescriptorV2(*this, isa));
-    return objc_class_sp;
+    UpdateISAToDescriptorMap();
+    
+    ISAToDescriptorMap::const_iterator di = m_isa_to_descriptor_cache.find(isa);
+    
+    if (di == m_isa_to_descriptor_cache.end())
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    else
+        return di->second;
 }
 
 ObjCLanguageRuntime::ClassDescriptorSP
