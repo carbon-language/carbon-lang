@@ -277,9 +277,10 @@ public:
   bool doesNotAlias(unsigned n) const {
     return getParamAttributes(n).hasAttribute(Attributes::NoAlias);
   }
-  void setDoesNotAlias(unsigned n, bool DoesNotAlias = true) {
-    if (DoesNotAlias) addAttribute(n, Attribute::NoAlias);
-    else removeAttribute(n, Attribute::NoAlias);
+  void setDoesNotAlias(unsigned n) {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoAlias);
+    addAttribute(n, Attributes::get(B));
   }
 
   /// @brief Determine if the parameter can be captured.
@@ -287,9 +288,10 @@ public:
   bool doesNotCapture(unsigned n) const {
     return getParamAttributes(n).hasAttribute(Attributes::NoCapture);
   }
-  void setDoesNotCapture(unsigned n, bool DoesNotCapture = true) {
-    if (DoesNotCapture) addAttribute(n, Attribute::NoCapture);
-    else removeAttribute(n, Attribute::NoCapture);
+  void setDoesNotCapture(unsigned n) {
+    Attributes::Builder B;
+    B.addAttribute(Attributes::NoCapture);
+    addAttribute(n, Attributes::get(B));
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to

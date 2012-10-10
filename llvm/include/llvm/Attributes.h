@@ -97,18 +97,6 @@ DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is o
 
 #undef DECLARE_LLVM_ATTRIBUTE
 
-/// Note that uwtable is about the ABI or the user mandating an entry in the
-/// unwind table. The nounwind attribute is about an exception passing by the
-/// function.
-/// In a theoretical system that uses tables for profiling and sjlj for
-/// exceptions, they would be fully independent. In a normal system that
-/// uses tables for both, the semantics are:
-/// nil                = Needs an entry because an exception might pass by.
-/// nounwind           = No need for an entry
-/// uwtable            = Needs an entry because the ABI says so and because
-///                      an exception might pass by.
-/// uwtable + nounwind = Needs an entry because the ABI says so.
-
 }  // namespace Attribute
 
 /// AttributeImpl - The internal representation of the Attributes class. This is
@@ -118,6 +106,20 @@ class AttributesImpl;
 /// Attributes - A bitset of attributes.
 class Attributes {
 public:
+  /// Note that uwtable is about the ABI or the user mandating an entry in the
+  /// unwind table. The nounwind attribute is about an exception passing by the
+  /// function.
+  /// 
+  /// In a theoretical system that uses tables for profiling and sjlj for
+  /// exceptions, they would be fully independent. In a normal system that uses
+  /// tables for both, the semantics are:
+  /// 
+  /// nil                = Needs an entry because an exception might pass by.
+  /// nounwind           = No need for an entry
+  /// uwtable            = Needs an entry because the ABI says so and because
+  ///                      an exception might pass by.
+  /// uwtable + nounwind = Needs an entry because the ABI says so.
+
   enum AttrVal {
     None            = 0,   ///< No attributes have been set
     AddressSafety   = 1,   ///< Address safety checking is on.
@@ -375,6 +377,19 @@ struct AttributeWithIndex {
                      ///< Index 0 is used for return value attributes.
                      ///< Index ~0U is used for function attributes.
 
+  static AttributeWithIndex get(unsigned Idx,
+                                ArrayRef<Attributes::AttrVal> Attrs) {
+    Attributes::Builder B;
+
+    for (ArrayRef<Attributes::AttrVal>::iterator I = Attrs.begin(),
+           E = Attrs.end(); I != E; ++I)
+      B.addAttribute(*I);
+
+    AttributeWithIndex P;
+    P.Index = Idx;
+    P.Attrs = Attributes::get(B);
+    return P;
+  }
   static AttributeWithIndex get(unsigned Idx, Attributes Attrs) {
     AttributeWithIndex P;
     P.Index = Idx;

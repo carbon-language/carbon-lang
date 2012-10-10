@@ -547,6 +547,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   OS << "  AttributeWithIndex AWI[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
   OS << "  if (id != 0) {\n";
+  OS << "    SmallVector<Attributes::AttrVal, 8> AttrVec;\n";
   OS << "    switch(IntrinsicsToAttributesMap[id - ";
   if (TargetOnly)
     OS << "Intrinsic::num_intrinsics";
@@ -564,58 +565,49 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
     unsigned numAttrs = 0;
 
     // The argument attributes are alreadys sorted by argument index.
-    for (unsigned ai = 0, ae = intrinsic.ArgumentAttributes.size(); ai != ae;) {
-      unsigned argNo = intrinsic.ArgumentAttributes[ai].first;
+    unsigned ai = 0, ae = intrinsic.ArgumentAttributes.size();
+    if (ae) {
+      while (ai != ae) {
+        unsigned argNo = intrinsic.ArgumentAttributes[ai].first;
 
-      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get("
-         << argNo+1 << ", ";
+        OS << "      AttrVec.clear();\n";
 
-      bool moreThanOne = false;
+        do {
+          switch (intrinsic.ArgumentAttributes[ai].second) {
+          case CodeGenIntrinsic::NoCapture:
+            OS << "      AttrVec.push_back(Attributes::NoCapture);\n";
+            break;
+          }
 
-      do {
-        if (moreThanOne) OS << '|';
+          ++ai;
+        } while (ai != ae && intrinsic.ArgumentAttributes[ai].first == argNo);
 
-        switch (intrinsic.ArgumentAttributes[ai].second) {
-        case CodeGenIntrinsic::NoCapture:
-          OS << "Attribute::NoCapture";
-          break;
-        }
-
-        ++ai;
-        moreThanOne = true;
-      } while (ai != ae && intrinsic.ArgumentAttributes[ai].first == argNo);
-
-      OS << ");\n";
+        OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get("
+           << argNo+1 << ", AttrVec);\n";
+      }
     }
 
     ModRefKind modRef = getModRefKind(intrinsic);
 
     if (!intrinsic.canThrow || modRef || intrinsic.isNoReturn) {
-      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(~0, ";
-      bool Emitted = false;
-      if (!intrinsic.canThrow) {
-        OS << "Attribute::NoUnwind";
-        Emitted = true;
-      }
-      
-      if (intrinsic.isNoReturn) {
-        if (Emitted) OS << '|';
-        OS << "Attribute::NoReturn";
-        Emitted = true;
-      }
+      OS << "      AttrVec.clear();\n";
+
+      if (!intrinsic.canThrow)
+        OS << "      AttrVec.push_back(Attributes::NoUnwind);\n";
+      if (intrinsic.isNoReturn)
+        OS << "      AttrVec.push_back(Attributes::NoReturn);\n";
 
       switch (modRef) {
       case MRK_none: break;
       case MRK_readonly:
-        if (Emitted) OS << '|';
-        OS << "Attribute::ReadOnly";
+        OS << "      AttrVec.push_back(Attributes::ReadOnly);\n";
         break;
       case MRK_readnone:
-        if (Emitted) OS << '|';
-        OS << "Attribute::ReadNone"; 
+        OS << "      AttrVec.push_back(Attributes::ReadNone);\n"; 
         break;
       }
-      OS << ");\n";
+      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(~0, "
+         << "AttrVec);\n";
     }
 
     if (numAttrs) {
