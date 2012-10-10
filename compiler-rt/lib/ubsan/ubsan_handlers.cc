@@ -126,3 +126,11 @@ void __ubsan::__ubsan_handle_missing_return(UnreachableData *Data) {
                   "without returning a value");
   Die();
 }
+
+void __ubsan::__ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
+                                                    ValueHandle Bound) {
+  Diag(Data->Loc, "variable length array bound evaluates to "
+                  "non-positive value %0")
+    << Value(Data->Type, Bound);
+  Die();
+}

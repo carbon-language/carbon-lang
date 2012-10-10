@@ -76,6 +76,15 @@ extern "C" void __ubsan_handle_builtin_unreachable(UnreachableData *Data);
 /// \brief Handle reaching the end of a value-returning function.
 extern "C" void __ubsan_handle_missing_return(UnreachableData *Data);
 
+struct VLABoundData {
+  SourceLocation Loc;
+  const TypeDescriptor &Type;
+};
+
+/// \brief Handle a VLA with a non-positive bound.
+extern "C" void __ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
+                                                      ValueHandle Bound);
+
 }
 
 #endif // UBSAN_HANDLERS_H
