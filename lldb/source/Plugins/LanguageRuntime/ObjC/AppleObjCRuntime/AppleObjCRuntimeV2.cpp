@@ -1112,7 +1112,7 @@ public:
         
         if (class_method_func)
         {
-            ClassDescriptorV2 metaclass(m_runtime, :q!objc_class->m_isa); // The metaclass is not in the cache
+            ClassDescriptorV2 metaclass(m_runtime, objc_class->m_isa); // The metaclass is not in the cache
             
             // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
             // our class methods.
