@@ -612,6 +612,17 @@ error_code MachOObjectFile::isSectionZeroInit(DataRefImpl DRI,
   return object_error::success;
 }
 
+error_code MachOObjectFile::isSectionReadOnlyData(DataRefImpl Sec,
+                                                  bool &Result) const {
+  // Consider using the code from isSectionText to look for __const sections.
+  // Alternately, emit S_ATTR_PURE_INSTRUCTIONS and/or S_ATTR_SOME_INSTRUCTIONS
+  // to use section attributes to distinguish code from data.
+
+  // FIXME: Unimplemented.
+  Result = false;
+  return object_error::success;
+}
+
 error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                   DataRefImpl Symb,
                                                   bool &Result) const {

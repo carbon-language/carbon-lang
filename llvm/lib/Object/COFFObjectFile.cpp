@@ -377,6 +377,13 @@ error_code COFFObjectFile::isSectionZeroInit(DataRefImpl Sec,
   return object_error::success;
 }
 
+error_code COFFObjectFile::isSectionReadOnlyData(DataRefImpl Sec,
+                                                bool &Result) const {
+  // FIXME: Unimplemented.
+  Result = false;
+  return object_error::success;
+}
+
 error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                  DataRefImpl Symb,
                                                  bool &Result) const {

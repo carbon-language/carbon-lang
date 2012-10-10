@@ -76,6 +76,7 @@ protected:
                                                    bool &Res) const;
   virtual error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl DRI, DataRefImpl S,
                                            bool &Result) const;
   virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;

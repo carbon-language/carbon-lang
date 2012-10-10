@@ -163,6 +163,7 @@ public:
   error_code isRequiredForExecution(bool &Result) const;
   error_code isVirtual(bool &Result) const;
   error_code isZeroInit(bool &Result) const;
+  error_code isReadOnlyData(bool &Result) const;
 
   error_code containsSymbol(SymbolRef S, bool &Result) const;
 
@@ -316,6 +317,7 @@ protected:
   // A section is 'virtual' if its contents aren't present in the object image.
   virtual error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const = 0;
+  virtual error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const = 0;
   virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const = 0;
@@ -508,6 +510,10 @@ inline error_code SectionRef::isVirtual(bool &Result) const {
 
 inline error_code SectionRef::isZeroInit(bool &Result) const {
   return OwningObject->isSectionZeroInit(SectionPimpl, Result);
+}
+
+inline error_code SectionRef::isReadOnlyData(bool &Result) const {
+  return OwningObject->isSectionReadOnlyData(SectionPimpl, Result);
 }
 
 inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
