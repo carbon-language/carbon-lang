@@ -1,5 +1,3 @@
-## FIXME: This only requires RTTI because tblgen uses it.  Fix that.
-set(LLVM_REQUIRES_RTTI 1)
 if( MINGW )
   set(LLVM_REQUIRES_EH 1)
 endif()
