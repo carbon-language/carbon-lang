@@ -939,6 +939,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FP_TO_SINT,         MVT::v4i32, Legal);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v4i32, Legal);
 
+    setOperationAction(ISD::FP_EXTEND,          MVT::v2f32, Custom);
+
     setLoadExtAction(ISD::EXTLOAD,              MVT::v2f32, Legal);
   }
 
@@ -5161,86 +5163,6 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-// LowerVectorFpExtend - Recognize the scalarized FP_EXTEND from v2f32 to v2f64
-// and convert it into X86ISD::VFPEXT due to the current ISD::FP_EXTEND has the
-// constraint of matching input/output vector elements.
-SDValue
-X86TargetLowering::LowerVectorFpExtend(SDValue &Op, SelectionDAG &DAG) const {
-  DebugLoc DL = Op.getDebugLoc();
-  SDNode *N = Op.getNode();
-  EVT VT = Op.getValueType();
-  unsigned NumElts = Op.getNumOperands();
-
-  // Check supported types and sub-targets.
-  //
-  // Only v2f32 -> v2f64 needs special handling.
-  if (VT != MVT::v2f64 || !Subtarget->hasSSE2())
-    return SDValue();
-
-  SDValue VecIn;
-  EVT VecInVT;
-  SmallVector<int, 8> Mask;
-  EVT SrcVT = MVT::Other;
-
-  // Check the patterns could be translated into X86vfpext.
-  for (unsigned i = 0; i < NumElts; ++i) {
-    SDValue In = N->getOperand(i);
-    unsigned Opcode = In.getOpcode();
-
-    // Skip if the element is undefined.
-    if (Opcode == ISD::UNDEF) {
-      Mask.push_back(-1);
-      continue;
-    }
-
-    // Quit if one of the elements is not defined from 'fpext'.
-    if (Opcode != ISD::FP_EXTEND)
-      return SDValue();
-
-    // Check how the source of 'fpext' is defined.
-    SDValue L2In = In.getOperand(0);
-    EVT L2InVT = L2In.getValueType();
-
-    // Check the original type
-    if (SrcVT == MVT::Other)
-      SrcVT = L2InVT;
-    else if (SrcVT != L2InVT) // Quit if non-homogenous typed.
-      return SDValue();
-
-    // Check whether the value being 'fpext'ed is extracted from the same
-    // source.
-    Opcode = L2In.getOpcode();
-
-    // Quit if it's not extracted with a constant index.
-    if (Opcode != ISD::EXTRACT_VECTOR_ELT ||
-        !isa<ConstantSDNode>(L2In.getOperand(1)))
-      return SDValue();
-
-    SDValue ExtractedFromVec = L2In.getOperand(0);
-
-    if (VecIn.getNode() == 0) {
-      VecIn = ExtractedFromVec;
-      VecInVT = ExtractedFromVec.getValueType();
-    } else if (VecIn != ExtractedFromVec) // Quit if built from more than 1 vec.
-      return SDValue();
-
-    Mask.push_back(cast<ConstantSDNode>(L2In.getOperand(1))->getZExtValue());
-  }
-
-  // Quit if all operands of BUILD_VECTOR are undefined.
-  if (!VecIn.getNode())
-    return SDValue();
-
-  // Fill the remaining mask as undef.
-  for (unsigned i = NumElts; i < VecInVT.getVectorNumElements(); ++i)
-    Mask.push_back(-1);
-
-  return DAG.getNode(X86ISD::VFPEXT, DL, VT,
-                     DAG.getVectorShuffle(VecInVT, DL,
-                                          VecIn, DAG.getUNDEF(VecInVT),
-                                          &Mask[0]));
-}
-
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
@@ -5272,10 +5194,6 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   SDValue Broadcast = LowerVectorBroadcast(Op, DAG);
   if (Broadcast.getNode())
     return Broadcast;
-
-  SDValue FpExt = LowerVectorFpExtend(Op, DAG);
-  if (FpExt.getNode())
-    return FpExt;
 
   unsigned EVTBits = ExtVT.getSizeInBits();
 
@@ -8213,6 +8131,20 @@ SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
 
   // The node is the result.
   return FIST;
+}
+
+SDValue X86TargetLowering::lowerFP_EXTEND(SDValue Op,
+                                          SelectionDAG &DAG) const {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+  SDValue In = Op.getOperand(0);
+  EVT SVT = In.getValueType();
+
+  assert(SVT == MVT::v2f32 && "Only customize MVT::v2f32 type legalization!");
+
+  return DAG.getNode(X86ISD::VFPEXT, DL, VT,
+                     DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v4f32,
+                                 In, DAG.getUNDEF(SVT)));
 }
 
 SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) const {
@@ -11407,6 +11339,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG);
+  case ISD::FP_EXTEND:          return lowerFP_EXTEND(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);

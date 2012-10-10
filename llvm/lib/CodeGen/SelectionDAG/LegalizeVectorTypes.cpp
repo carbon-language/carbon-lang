@@ -2082,16 +2082,20 @@ SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {
 //===----------------------------------------------------------------------===//
 // Widen Vector Operand
 //===----------------------------------------------------------------------===//
-bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
-  DEBUG(dbgs() << "Widen node operand " << ResNo << ": ";
+bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
+  DEBUG(dbgs() << "Widen node operand " << OpNo << ": ";
         N->dump(&DAG);
         dbgs() << "\n");
   SDValue Res = SDValue();
 
+  // See if the target wants to custom widen this node.
+  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
+    return false;
+
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    dbgs() << "WidenVectorOperand op #" << ResNo << ": ";
+    dbgs() << "WidenVectorOperand op #" << OpNo << ": ";
     N->dump(&DAG);
     dbgs() << "\n";
 #endif
