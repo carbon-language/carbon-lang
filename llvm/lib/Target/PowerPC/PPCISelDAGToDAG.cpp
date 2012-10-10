@@ -53,7 +53,9 @@ namespace {
       GlobalBaseReg = 0;
       SelectionDAGISel::runOnMachineFunction(MF);
 
-      InsertVRSaveCode(MF);
+      if (!PPCSubTarget.isSVR4ABI())
+        InsertVRSaveCode(MF);
+
       return true;
     }
 

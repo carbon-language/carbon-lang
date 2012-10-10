@@ -50,6 +50,11 @@ static const uint16_t VRRegNo[] = {
 /// to manipulate the VRSAVE register, even though it uses vector registers.
 /// This can happen when the only registers used are known to be live in or out
 /// of the function.  Remove all of the VRSAVE related code from the function.
+/// FIXME: The removal of the code results in a compile failure at -O0 when the
+/// function contains a function call, as the GPR containing original VRSAVE
+/// contents is spilled and reloaded around the call.  Without the prolog code,
+/// the spill instruction refers to an undefined register.  This code needs
+/// to account for all uses of that GPR.
 static void RemoveVRSaveCode(MachineInstr *MI) {
   MachineBasicBlock *Entry = MI->getParent();
   MachineFunction *MF = Entry->getParent();
@@ -283,12 +288,13 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
-  for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
-    if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
-      HandleVRSaveUpdate(MBBI, TII);
-      break;
+  if (!Subtarget.isSVR4ABI())
+    for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
+      if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
+        HandleVRSaveUpdate(MBBI, TII);
+        break;
+      }
     }
-  }
 
   // Move MBBI back to the beginning of the function.
   MBBI = MBB.begin();
