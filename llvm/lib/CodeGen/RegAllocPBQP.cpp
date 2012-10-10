@@ -218,7 +218,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
     LiveInterval *vregLI = &LIS->getInterval(vreg);
 
     // Record any overlaps with regmask operands.
-    BitVector regMaskOverlaps(tri->getNumRegs());
+    BitVector regMaskOverlaps;
     LIS->checkRegMaskInterference(*vregLI, regMaskOverlaps);
 
     // Compute an initial allowed set for the current vreg.
@@ -231,7 +231,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
         continue;
 
       // vregLI crosses a regmask operand that clobbers preg.
-      if (!regMaskOverlaps.empty() && regMaskOverlaps.test(preg))
+      if (!regMaskOverlaps.empty() && !regMaskOverlaps.test(preg))
         continue;
 
       // vregLI overlaps fixed regunit interference.
