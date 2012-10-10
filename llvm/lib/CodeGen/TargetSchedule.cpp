@@ -203,10 +203,11 @@ unsigned TargetSchedModel::computeOperandLatency(
 }
 
 unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
-  if (hasInstrItineraries()) {
-    // For the itinerary model, fall back to the old subtarget hook.
+  // For the itinerary model, fall back to the old subtarget hook.
+  // Allow subtargets to compute Bundle latencies outside the machine model.
+  if (hasInstrItineraries() || MI->isBundle())
     return TII->getInstrLatency(&InstrItins, MI);
-  }
+
   if (hasInstrSchedModel()) {
     unsigned Latency = 0;
     const MCSchedClassDesc *SCDesc = resolveSchedClass(MI);
