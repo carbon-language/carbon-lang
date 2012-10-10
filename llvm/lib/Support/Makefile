@@ -11,6 +11,9 @@ LEVEL = ../..
 LIBRARYNAME = LLVMSupport
 BUILD_ARCHIVE = 1
 
+## FIXME: This only requires RTTI because tblgen uses it.  Fix that.
+REQUIRES_RTTI = 1
+
 EXTRA_DIST = Unix Win32 README.txt
 
 include $(LEVEL)/Makefile.common
