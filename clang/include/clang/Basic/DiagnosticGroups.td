@@ -317,6 +317,7 @@ def ParenthesesOnEquality : DiagGroup<"parentheses-equality">;
 def Parentheses : DiagGroup<"parentheses",
                             [LogicalOpParentheses,
                              BitwiseOpParentheses,
+                             ShiftOpParentheses,
                              ParenthesesOnEquality,
                              DanglingElse]>;
 
