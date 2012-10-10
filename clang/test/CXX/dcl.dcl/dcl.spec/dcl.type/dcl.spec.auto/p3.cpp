@@ -86,3 +86,6 @@ namespace PR13293 {
   template void h<double>();
 }
 #endif
+
+auto fail((unknown)); // expected-error{{use of undeclared identifier 'unknown'}}
+int& crash = fail;
