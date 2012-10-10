@@ -505,7 +505,7 @@ directory:
 If you would like to get the LLVM test suite (a separate package as of 1.4), you
 get it from the Subversion repository:
 
-.. code:: bash
+.. code-block:: bash
 
   % cd llvm/projects
   % svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
@@ -523,13 +523,13 @@ marks (so, you can recreate git-svn metadata locally). Note that right now
 mirrors reflect only ``trunk`` for each project. You can do the read-only GIT
 clone of LLVM via:
 
-.. code:: bash
+.. code-block:: bash
 
   % git clone http://llvm.org/git/llvm.git
 
 If you want to check out clang too, run:
 
-.. code:: bash
+.. code-block:: bash
 
   % git clone http://llvm.org/git/llvm.git
   % cd llvm/tools
@@ -540,7 +540,7 @@ pull --rebase`` instead of ``git pull`` to avoid generating a non-linear history
 in your clone.  To configure ``git pull`` to pass ``--rebase`` by default on the
 master branch, run the following command:
 
-.. code:: bash
+.. code-block:: bash
 
   % git config branch.master.rebase true
 
@@ -553,13 +553,13 @@ Assume ``master`` points the upstream and ``mybranch`` points your working
 branch, and ``mybranch`` is rebased onto ``master``.  At first you may check
 sanity of whitespaces:
 
-.. code:: bash
+.. code-block:: bash
 
   % git diff --check master..mybranch
 
 The easiest way to generate a patch is as below:
 
-.. code:: bash
+.. code-block:: bash
 
   % git diff master..mybranch > /path/to/mybranch.diff
 
@@ -570,20 +570,20 @@ could be accepted with ``patch -p1 -N``.
 But you may generate patchset with git-format-patch. It generates by-each-commit
 patchset. To generate patch files to attach to your article:
 
-.. code:: bash
+.. code-block:: bash
 
   % git format-patch --no-attach master..mybranch -o /path/to/your/patchset
 
 If you would like to send patches directly, you may use git-send-email or
 git-imap-send. Here is an example to generate the patchset in Gmail's [Drafts].
 
-.. code:: bash
+.. code-block:: bash
 
   % git format-patch --attach master..mybranch --stdout | git imap-send
 
 Then, your .git/config should have [imap] sections.
 
-.. code:: bash
+.. code-block:: bash
 
   [imap]
         host = imaps://imap.gmail.com
@@ -603,7 +603,7 @@ For developers to work with git-svn
 
 To set up clone from which you can submit code using ``git-svn``, run:
 
-.. code:: bash
+.. code-block:: bash
 
   % git clone http://llvm.org/git/llvm.git
   % cd llvm
@@ -622,7 +622,7 @@ To set up clone from which you can submit code using ``git-svn``, run:
 To update this clone without generating git-svn tags that conflict with the
 upstream git repo, run:
 
-.. code:: bash
+.. code-block:: bash
 
   % git fetch && (cd tools/clang && git fetch)  # Get matching revisions of both trees.
   % git checkout master
@@ -640,7 +640,7 @@ The git-svn metadata can get out of sync after you mess around with branches and
 ``dcommit``. When that happens, ``git svn dcommit`` stops working, complaining
 about files with uncommitted changes. The fix is to rebuild the metadata:
 
-.. code:: bash
+.. code-block:: bash
 
   % rm -rf .git/svn
   % git svn rebase -l
@@ -722,13 +722,13 @@ To configure LLVM, follow these steps:
 
 #. Change directory into the object root directory:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % cd OBJ_ROOT
 
 #. Run the ``configure`` script located in the LLVM source tree:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % SRC_ROOT/configure --prefix=/install/path [other options]
 
@@ -764,7 +764,7 @@ Profile Builds
 Once you have LLVM configured, you can build it by entering the *OBJ_ROOT*
 directory and issuing the following command:
 
-.. code:: bash
+.. code-block:: bash
 
   % gmake
 
@@ -775,7 +775,7 @@ If you have multiple processors in your machine, you may wish to use some of the
 parallel build options provided by GNU Make.  For example, you could use the
 command:
 
-.. code:: bash
+.. code-block:: bash
 
   % gmake -j2
 
@@ -866,13 +866,13 @@ This is accomplished in the typical autoconf manner:
 
 * Change directory to where the LLVM object files should live:
 
-  .. code:: bash
+  .. code-block:: bash
 
     % cd OBJ_ROOT
 
 * Run the ``configure`` script found in the LLVM source directory:
 
-  .. code:: bash
+  .. code-block:: bash
 
     % SRC_ROOT/configure
 
@@ -918,7 +918,7 @@ module, and you have root access on the system, you can set your system up to
 execute LLVM bitcode files directly. To do this, use commands like this (the
 first command may not be required if you are already using the module):
 
-.. code:: bash
+.. code-block:: bash
 
   % mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
   % echo ':llvm:M::BC::/path/to/lli:' > /proc/sys/fs/binfmt_misc/register
@@ -928,7 +928,7 @@ first command may not be required if you are already using the module):
 This allows you to execute LLVM bitcode files directly.  On Debian, you can also
 use this command instead of the 'echo' command above:
 
-.. code:: bash
+.. code-block:: bash
 
   % sudo update-binfmts --install llvm /path/to/lli --magic 'BC'
 
@@ -1208,7 +1208,7 @@ Example with clang
 
 #. First, create a simple C file, name it 'hello.c':
 
-   .. code:: c
+   .. code-block:: c
 
      #include <stdio.h>
 
@@ -1219,7 +1219,7 @@ Example with clang
 
 #. Next, compile the C file into a native executable:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % clang hello.c -o hello
 
@@ -1230,7 +1230,7 @@ Example with clang
 
 #. Next, compile the C file into a LLVM bitcode file:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % clang -O3 -emit-llvm hello.c -c -o hello.bc
 
@@ -1240,13 +1240,13 @@ Example with clang
 
 #. Run the program in both forms. To run the program, use:
 
-   .. code:: bash
+   .. code-block:: bash
 
       % ./hello
  
    and
 
-   .. code:: bash
+   .. code-block:: bash
 
      % lli hello.bc
 
@@ -1255,19 +1255,19 @@ Example with clang
 
 #. Use the ``llvm-dis`` utility to take a look at the LLVM assembly code:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % llvm-dis < hello.bc | less
 
 #. Compile the program to native assembly using the LLC code generator:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % llc hello.bc -o hello.s
 
 #. Assemble the native assembly language file into a program:
 
-   .. code:: bash
+   .. code-block:: bash
 
      **Solaris:** % /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.native
 
@@ -1275,7 +1275,7 @@ Example with clang
 
 #. Execute the native code program:
 
-   .. code:: bash
+   .. code-block:: bash
 
      % ./hello.native
 
