@@ -26,6 +26,7 @@ using namespace llvm;
 void llvm::initializeTarget(PassRegistry &Registry) {
   initializeDataLayoutPass(Registry);
   initializeTargetLibraryInfoPass(Registry);
+  initializeTargetTransformInfoPass(Registry);
 }
 
 void LLVMInitializeTarget(LLVMPassRegistryRef R) {

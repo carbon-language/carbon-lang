@@ -74,7 +74,8 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     Subtarget(TT, CPU, FS), InstrInfo(Subtarget), TLInfo(*this),
     TSInfo(*this),
     FrameLowering(Subtarget),
-    InstrItins(&Subtarget.getInstrItineraryData()) {
+    InstrItins(&Subtarget.getInstrItineraryData()),
+    STTI(&TLInfo) {
   setMCUseCFI(false);
 }
 
@@ -87,7 +88,7 @@ bool HexagonTargetMachine::addPassesForOptimizations(PassManagerBase &PM) {
   PM.add(createDeadCodeEliminationPass());
   PM.add(createConstantPropagationPass());
   PM.add(createLoopUnrollPass());
-  PM.add(createLoopStrengthReducePass(getTargetLowering()));
+  PM.add(createLoopStrengthReducePass());
   return true;
 }
 

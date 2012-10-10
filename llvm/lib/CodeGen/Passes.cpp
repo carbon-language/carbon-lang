@@ -359,7 +359,7 @@ void TargetPassConfig::addIRPasses() {
 
   // Run loop strength reduction before anything else.
   if (getOptLevel() != CodeGenOpt::None && !DisableLSR) {
-    addPass(createLoopStrengthReducePass(getTargetLowering()));
+    addPass(createLoopStrengthReducePass());
     if (PrintLSR)
       addPass(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
   }
@@ -389,7 +389,7 @@ void TargetPassConfig::addPassesToHandleExceptions() {
     addPass(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::None:
-    addPass(createLowerInvokePass(TM->getTargetLowering()));
+    addPass(createLowerInvokePass());
 
     // The lower invoke pass may create unreachable code. Remove it.
     addPass(createUnreachableBlockEliminationPass());

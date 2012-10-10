@@ -45,10 +45,10 @@
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Target/TargetLowering.h"
 #include <csetjmp>
 #include <set>
 using namespace llvm;
@@ -70,15 +70,14 @@ namespace {
     Constant *SetJmpFn, *LongJmpFn, *StackSaveFn, *StackRestoreFn;
     bool useExpensiveEHSupport;
 
-    // We peek in TLI to grab the target's jmp_buf size and alignment
-    const TargetLowering *TLI;
+    // We peek in STTI to grab the target's jmp_buf size and alignment
+    const ScalarTargetTransformInfo *STTI;
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit LowerInvoke(const TargetLowering *tli = NULL,
-                         bool useExpensiveEHSupport = ExpensiveEHSupport)
+    explicit LowerInvoke(bool useExpensiveEHSupport = ExpensiveEHSupport)
       : FunctionPass(ID), useExpensiveEHSupport(useExpensiveEHSupport),
-        TLI(tli) {
+        STTI(0) {
       initializeLowerInvokePass(*PassRegistry::getPassRegistry());
     }
     bool doInitialization(Module &M);
@@ -108,21 +107,24 @@ INITIALIZE_PASS(LowerInvoke, "lowerinvoke",
 char &llvm::LowerInvokePassID = LowerInvoke::ID;
 
 // Public Interface To the LowerInvoke pass.
-FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
-  return new LowerInvoke(TLI, ExpensiveEHSupport);
+FunctionPass *llvm::createLowerInvokePass() {
+  return new LowerInvoke(ExpensiveEHSupport);
 }
-FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI,
-                                          bool useExpensiveEHSupport) {
-  return new LowerInvoke(TLI, useExpensiveEHSupport);
+FunctionPass *llvm::createLowerInvokePass(bool useExpensiveEHSupport) {
+  return new LowerInvoke(useExpensiveEHSupport);
 }
 
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
+  TargetTransformInfo *TTI = getAnalysisIfAvailable<TargetTransformInfo>();
+  if (TTI)
+    STTI = TTI->getScalarTargetTransformInfo();
+
   Type *VoidPtrTy = Type::getInt8PtrTy(M.getContext());
   if (useExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
-    unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
+    unsigned JBSize = STTI ? STTI->getJumpBufSize() : 0;
     JBSize = JBSize ? JBSize : 200;
     Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
 
@@ -430,7 +432,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Create an alloca for the incoming jump buffer ptr and the new jump buffer
     // that needs to be restored on all exits from the function.  This is an
     // alloca because the value needs to be live across invokes.
-    unsigned Align = TLI ? TLI->getJumpBufAlignment() : 0;
+    unsigned Align = STTI ? STTI->getJumpBufAlignment() : 0;
     AllocaInst *JmpBuf =
       new AllocaInst(JBLinkTy, 0, Align,
                      "jblink", F.begin()->begin());
@@ -575,6 +577,10 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 }
 
 bool LowerInvoke::runOnFunction(Function &F) {
+  TargetTransformInfo *TTI = getAnalysisIfAvailable<TargetTransformInfo>();
+  if (TTI)
+    STTI = TTI->getScalarTargetTransformInfo();
+
   if (useExpensiveEHSupport)
     return insertExpensiveEHSupport(F);
   else

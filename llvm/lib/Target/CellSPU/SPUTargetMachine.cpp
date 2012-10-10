@@ -43,7 +43,8 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, StringRef TT,
     FrameLowering(Subtarget),
     TLInfo(*this),
     TSInfo(*this),
-    InstrItins(Subtarget.getInstrItineraryData()) {
+    InstrItins(Subtarget.getInstrItineraryData()),
+    STTI(&TLInfo){
 }
 
 //===----------------------------------------------------------------------===//

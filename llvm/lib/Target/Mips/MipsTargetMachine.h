@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
 class formatted_raw_ostream;
@@ -38,6 +39,8 @@ class MipsTargetMachine : public LLVMTargetMachine {
   MipsSelectionDAGInfo TSInfo;
   MipsJITInfo JITInfo;
   MipsELFWriterInfo   ELFWriterInfo;
+  ScalarTargetTransformImpl STTI;
+  VectorTargetTransformImpl VTTI;
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT,

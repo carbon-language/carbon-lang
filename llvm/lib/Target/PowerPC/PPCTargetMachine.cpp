@@ -43,7 +43,8 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
     DL(Subtarget.getDataLayoutString()), InstrInfo(*this),
     FrameLowering(Subtarget), JITInfo(*this, is64Bit),
     TLInfo(*this), TSInfo(*this),
-    InstrItins(Subtarget.getInstrItineraryData()) {
+    InstrItins(Subtarget.getInstrItineraryData()),
+    STTI(&TLInfo){
 
   // The binutils for the BG/P are too old for CFI.
   if (Subtarget.isBGP())

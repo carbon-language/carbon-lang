@@ -119,7 +119,7 @@ Pass *createLICMPass();
 // optional parameter used to consult the target machine whether certain
 // transformations are profitable.
 //
-Pass *createLoopStrengthReducePass(const TargetLowering *TLI = 0);
+Pass *createLoopStrengthReducePass();
 
 Pass *createGlobalMergePass(const TargetLowering *TLI = 0);
 
@@ -249,9 +249,8 @@ extern char &LowerSwitchID;
 // purpose "my LLVM-to-LLVM pass doesn't support the invoke instruction yet"
 // lowering pass.
 //
-FunctionPass *createLowerInvokePass(const TargetLowering *TLI = 0);
-FunctionPass *createLowerInvokePass(const TargetLowering *TLI,
-                                    bool useExpensiveEHSupport);
+FunctionPass *createLowerInvokePass();
+FunctionPass *createLowerInvokePass(bool useExpensiveEHSupport);
 extern char &LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//

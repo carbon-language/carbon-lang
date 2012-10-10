@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
 
@@ -85,6 +86,8 @@ class X86_32TargetMachine : public X86TargetMachine {
   X86SelectionDAGInfo TSInfo;
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
+  ScalarTargetTransformImpl STTI;
+  VectorTargetTransformImpl VTTI;
 public:
   X86_32TargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -103,6 +106,12 @@ public:
   virtual       X86JITInfo       *getJITInfo()         {
     return &JITInfo;
   }
+  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
+    return &STTI;
+  }
+  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
+    return &VTTI;
+  }
 };
 
 /// X86_64TargetMachine - X86 64-bit target machine.
@@ -114,6 +123,8 @@ class X86_64TargetMachine : public X86TargetMachine {
   X86SelectionDAGInfo TSInfo;
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
+  ScalarTargetTransformImpl STTI;
+  VectorTargetTransformImpl VTTI;
 public:
   X86_64TargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -131,6 +142,12 @@ public:
   }
   virtual       X86JITInfo       *getJITInfo()         {
     return &JITInfo;
+  }
+  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
+    return &STTI;
+  }
+  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
+    return &VTTI;
   }
 };
 
