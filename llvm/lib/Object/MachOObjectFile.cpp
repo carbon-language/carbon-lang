@@ -581,14 +581,14 @@ error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
 
 error_code MachOObjectFile::isSectionRequiredForExecution(DataRefImpl Sec,
                                                           bool &Result) const {
-  // FIXME: Unimplemented
+  // FIXME: Unimplemented.
   Result = true;
   return object_error::success;
 }
 
 error_code MachOObjectFile::isSectionVirtual(DataRefImpl Sec,
-                                            bool &Result) const {
-  // FIXME: Unimplemented
+                                             bool &Result) const {
+  // FIXME: Unimplemented.
   Result = false;
   return object_error::success;
 }

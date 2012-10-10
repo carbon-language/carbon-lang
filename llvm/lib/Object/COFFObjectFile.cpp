@@ -372,7 +372,7 @@ error_code COFFObjectFile::isSectionVirtual(DataRefImpl Sec,
 
 error_code COFFObjectFile::isSectionZeroInit(DataRefImpl Sec,
                                              bool &Result) const {
-  // FIXME: Unimplemented
+  // FIXME: Unimplemented.
   Result = false;
   return object_error::success;
 }
