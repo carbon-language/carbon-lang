@@ -1,5 +1,6 @@
-; RUN: llc -O0 -mtriple=powerpc-unknown-linux-gnu -verify-machineinstrs  < %s | FileCheck %s
-; RUN: llc -O0 -mtriple=powerpc64-unknown-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=powerpc-unknown-linux-gnu -maltivec -verify-machineinstrs  < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=powerpc64-unknown-linux-gnu -maltivec -verify-machineinstrs < %s | FileCheck %s
+; XFAIL: *
 
 ; This verifies that we generate correct spill/reload code for vector regs.
 
