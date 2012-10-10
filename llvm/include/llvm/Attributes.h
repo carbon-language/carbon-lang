@@ -26,39 +26,6 @@ namespace llvm {
 class LLVMContext;
 class Type;
 
-namespace Attribute {
-
-/// AttrConst - We use this proxy POD type to allow constructing Attributes
-/// constants using initializer lists. Do not use this class directly.
-struct AttrConst {
-  uint64_t v;
-  AttrConst operator | (const AttrConst Attrs) const {
-    AttrConst Res = {v | Attrs.v};
-    return Res;
-  }
-  AttrConst operator ~ () const {
-    AttrConst Res = {~v};
-    return Res;
-  }
-};
-
-/// Function parameters and results can have attributes to indicate how they
-/// should be treated by optimizations and code generation. This enumeration
-/// lists the attributes that can be associated with parameters, function
-/// results or the function itself.
-/// @brief Function attributes.
-
-/// We declare AttrConst objects that will be used throughout the code and also
-/// raw uint64_t objects with _i suffix to be used below for other constant
-/// declarations. This is done to avoid static CTORs and at the same time to
-/// keep type-safety of Attributes.
-#define DECLARE_LLVM_ATTRIBUTE(name, value) \
-  const AttrConst name = {value};
-
-#undef DECLARE_LLVM_ATTRIBUTE
-
-}  // namespace Attribute
-
 /// AttributeImpl - The internal representation of the Attributes class. This is
 /// uniquified.
 class AttributesImpl;
@@ -66,6 +33,11 @@ class AttributesImpl;
 /// Attributes - A bitset of attributes.
 class Attributes {
 public:
+  /// Function parameters and results can have attributes to indicate how they
+  /// should be treated by optimizations and code generation. This enumeration
+  /// lists the attributes that can be associated with parameters, function
+  /// results or the function itself.
+  /// 
   /// Note that uwtable is about the ABI or the user mandating an entry in the
   /// unwind table. The nounwind attribute is about an exception passing by the
   /// function.
@@ -123,7 +95,6 @@ private:
 public:
   Attributes() : Attrs(0) {}
   explicit Attributes(uint64_t Val);
-  /*implicit*/ Attributes(Attribute::AttrConst Val);
   Attributes(const Attributes &A);
 
   class Builder {
