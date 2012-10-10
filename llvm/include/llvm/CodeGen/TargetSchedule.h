@@ -55,11 +55,28 @@ public:
   /// latency properties, but separate from the per-cycle itinerary data.
   bool hasInstrSchedModel() const;
 
+  const MCSchedModel *getMCSchedModel() const { return &SchedModel; }
+
   /// \brief Return true if this machine model includes cycle-to-cycle itinerary
   /// data.
   ///
   /// This models scheduling at each stage in the processor pipeline.
   bool hasInstrItineraries() const;
+
+  const InstrItineraryData *getInstrItineraries() const {
+    if (hasInstrItineraries())
+      return &InstrItins;
+    return 0;
+  }
+
+  /// \brief Identify the processor corresponding to the current subtarget.
+  unsigned getProcessorID() const { return SchedModel.getProcessorID(); }
+
+  /// \brief Maximum number of micro-ops that may be scheduled per cycle.
+  unsigned getIssueWidth() const { return SchedModel.IssueWidth; }
+
+  /// \brief Return the number of issue slots required for this MI.
+  unsigned getNumMicroOps(MachineInstr *MI) const;
 
   /// \brief Compute operand latency based on the available machine model.
   ///
@@ -82,11 +99,12 @@ public:
   /// occasionally useful to help estimate instruction cost.
   unsigned computeInstrLatency(const MachineInstr *MI) const;
 
-  /// \brief Identify the processor corresponding to the current subtarget.
-  unsigned getProcessorID() const { return SchedModel.getProcessorID(); }
+  /// \brief Output dependency latency of a pair of defs of the same register.
+  ///
+  /// This is typically one cycle.
+  unsigned computeOutputLatency(const MachineInstr *DefMI, unsigned DefIdx,
+                                const MachineInstr *DepMI) const;
 
-  /// \brief Maximum number of micro-ops that may be scheduled per cycle.
-  unsigned getIssueWidth() const { return SchedModel.IssueWidth; }
 
 private:
   /// getDefLatency is a helper for computeOperandLatency. Return the

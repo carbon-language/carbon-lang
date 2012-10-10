@@ -111,7 +111,6 @@ namespace llvm {
     const MachineLoopInfo &MLI;
     const MachineDominatorTree &MDT;
     const MachineFrameInfo *MFI;
-    const InstrItineraryData *InstrItins;
 
     /// Live Intervals provides reaching defs in preRA scheduling.
     LiveIntervals *LIS;
@@ -187,6 +186,9 @@ namespace llvm {
 
     virtual ~ScheduleDAGInstrs() {}
 
+    /// \brief Get the machine model for instruction scheduling.
+    const TargetSchedModel *getSchedModel() const { return &SchedModel; }
+
     /// begin - Return an iterator to the top of the current scheduling region.
     MachineBasicBlock::iterator begin() const { return RegionBegin; }
 
@@ -226,10 +228,6 @@ namespace llvm {
     /// are too high to be hidden by the branch or when the liveout registers
     /// used by instructions in the fallthrough block.
     void addSchedBarrierDeps();
-
-    /// computeLatency - Compute node latency.
-    ///
-    virtual void computeLatency(SUnit *SU);
 
     /// schedule - Order nodes according to selected style, filling
     /// in the Sequence member.

@@ -44,8 +44,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineDominatorTree &mdt,
                                      bool IsPostRAFlag,
                                      LiveIntervals *lis)
-  : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
-    InstrItins(mf.getTarget().getInstrItineraryData()), LIS(lis),
+  : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()), LIS(lis),
     IsPostRA(IsPostRAFlag), CanHandleTerminators(false), FirstDbgValue(0) {
   assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
   DbgValues.clear();
@@ -292,8 +291,8 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
         if (Kind == SDep::Anti)
           DefSU->addPred(SDep(SU, Kind, 0, /*Reg=*/*Alias));
         else {
-          unsigned AOLat = TII->getOutputLatency(InstrItins, MI, OperIdx,
-                                                 DefSU->getInstr());
+          unsigned AOLat =
+            SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr());
           DefSU->addPred(SDep(SU, Kind, AOLat, /*Reg=*/*Alias));
         }
       }
@@ -363,8 +362,8 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   else {
     SUnit *DefSU = DefI->SU;
     if (DefSU != SU && DefSU != &ExitSU) {
-      unsigned OutLatency = TII->getOutputLatency(InstrItins, MI, OperIdx,
-                                                  DefSU->getInstr());
+      unsigned OutLatency =
+        SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr());
       DefSU->addPred(SDep(SU, SDep::Output, OutLatency, Reg));
     }
     DefI->SU = SU;
@@ -650,7 +649,7 @@ void ScheduleDAGInstrs::initSUnits() {
     SU->isCommutable = MI->isCommutable();
 
     // Assign the Latency field of SU using target-provided information.
-    computeLatency(SU);
+    SU->Latency = SchedModel.computeInstrLatency(SU->getInstr());
   }
 }
 
@@ -909,21 +908,6 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   Uses.clear();
   VRegDefs.clear();
   PendingLoads.clear();
-}
-
-void ScheduleDAGInstrs::computeLatency(SUnit *SU) {
-  // Compute the latency for the node. We only provide a default for missing
-  // itineraries. Empty itineraries still have latency properties.
-  if (!InstrItins) {
-    SU->Latency = 1;
-
-    // Simplistic target-independent heuristic: assume that loads take
-    // extra time.
-    if (SU->getInstr()->mayLoad())
-      SU->Latency += 2;
-  } else {
-    SU->Latency = TII->getInstrLatency(InstrItins, SU->getInstr());
-  }
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {

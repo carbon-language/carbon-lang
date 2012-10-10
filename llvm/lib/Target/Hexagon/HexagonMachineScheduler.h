@@ -45,7 +45,7 @@ class VLIWResourceModel {
   /// definition of DFA by a target.
   DFAPacketizer *ResourcesModel;
 
-  const InstrItineraryData *InstrItins;
+  const TargetSchedModel *SchedModel;
 
   /// Local packet/bundle model. Purely
   /// internal to the MI schedulre at the time.
@@ -55,29 +55,15 @@ class VLIWResourceModel {
   unsigned TotalPackets;
 
 public:
-  VLIWResourceModel(MachineSchedContext *C, const InstrItineraryData *IID) :
-    InstrItins(IID), TotalPackets(0) {
-    const TargetMachine &TM = C->MF->getTarget();
+VLIWResourceModel(const TargetMachine &TM, const TargetSchedModel *SM) :
+    SchedModel(SM), TotalPackets(0) {
     ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM,NULL);
 
     // This hard requirement could be relaxed,
     // but for now do not let it proceed.
     assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
 
-    Packet.resize(InstrItins->SchedModel->IssueWidth);
-    Packet.clear();
-    ResourcesModel->clearResources();
-  }
-
-  VLIWResourceModel(const TargetMachine &TM) :
-    InstrItins(TM.getInstrItineraryData()), TotalPackets(0) {
-    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM,NULL);
-
-    // This hard requirement could be relaxed,
-    // but for now do not let it proceed.
-    assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
-
-    Packet.resize(InstrItins->SchedModel->IssueWidth);
+    Packet.resize(SchedModel->getIssueWidth());
     Packet.clear();
     ResourcesModel->clearResources();
   }
@@ -146,6 +132,7 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
   /// of "hazards" and other interlocks at the current cycle.
   struct SchedBoundary {
     VLIWMachineScheduler *DAG;
+    const TargetSchedModel *SchedModel;
 
     ReadyQueue Available;
     ReadyQueue Pending;
@@ -166,7 +153,7 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
     /// Pending queues extend the ready queues with the same ID and the
     /// PendingFlag set.
     SchedBoundary(unsigned ID, const Twine &Name):
-      DAG(0), Available(ID, Name+".A"),
+      DAG(0), SchedModel(0), Available(ID, Name+".A"),
       Pending(ID << ConvergingVLIWScheduler::LogMaxQID, Name+".P"),
       CheckPending(false), HazardRec(0), ResourceModel(0),
       CurrCycle(0), IssueCount(0),
@@ -175,6 +162,11 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
     ~SchedBoundary() {
       delete ResourceModel;
       delete HazardRec;
+    }
+
+    void init(VLIWMachineScheduler *dag, const TargetSchedModel *smodel) {
+      DAG = dag;
+      SchedModel = smodel;
     }
 
     bool isTop() const {
@@ -197,6 +189,7 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
   };
 
   VLIWMachineScheduler *DAG;
+  const TargetSchedModel *SchedModel;
   const TargetRegisterInfo *TRI;
 
   // State of the top and bottom scheduled instruction boundaries.
@@ -212,7 +205,7 @@ public:
   };
 
   ConvergingVLIWScheduler():
-    DAG(0), TRI(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
+    DAG(0), SchedModel(0), TRI(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
 
   virtual void initialize(ScheduleDAGMI *dag);
 

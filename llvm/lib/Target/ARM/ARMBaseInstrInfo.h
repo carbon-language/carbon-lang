@@ -229,10 +229,6 @@ public:
                         SDNode *DefNode, unsigned DefIdx,
                         SDNode *UseNode, unsigned UseIdx) const;
 
-  virtual unsigned getOutputLatency(const InstrItineraryData *ItinData,
-                                    const MachineInstr *DefMI, unsigned DefIdx,
-                                    const MachineInstr *DepMI) const;
-
   /// VFP/NEON execution domains.
   std::pair<uint16_t, uint16_t>
   getExecutionDomain(const MachineInstr *MI) const;

@@ -14,6 +14,7 @@
 
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -42,6 +43,17 @@ void TargetSchedModel::init(const MCSchedModel &sm,
   STI = sti;
   TII = tii;
   STI->initInstrItins(InstrItins);
+}
+
+unsigned TargetSchedModel::getNumMicroOps(MachineInstr *MI) const {
+  if (hasInstrItineraries()) {
+    int UOps = InstrItins.getNumMicroOps(MI->getDesc().getSchedClass());
+    return (UOps >= 0) ? UOps : TII->getNumMicroOps(&InstrItins, MI);
+  }
+  if (hasInstrSchedModel())
+    return resolveSchedClass(MI)->NumMicroOps;
+
+  return 1;
 }
 
 /// If we can determine the operand latency from the def only, without machine
@@ -208,4 +220,41 @@ unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
     return Latency;
   }
   return TII->defaultDefLatency(&SchedModel, MI);
+}
+
+unsigned TargetSchedModel::
+computeOutputLatency(const MachineInstr *DefMI, unsigned DefOperIdx,
+                     const MachineInstr *DepMI) const {
+  // MinLatency == -1 is for in-order processors that always have unit
+  // MinLatency. MinLatency > 0 is for in-order processors with varying min
+  // latencies, but since this is not a RAW dep, we always use unit latency.
+  if (SchedModel.MinLatency != 0)
+    return 1;
+
+  // MinLatency == 0 indicates an out-of-order processor that can dispatch
+  // WAW dependencies in the same cycle.
+
+  // Treat predication as a data dependency for out-of-order cpus. In-order
+  // cpus do not need to treat predicated writes specially.
+  //
+  // TODO: The following hack exists because predication passes do not
+  // correctly append imp-use operands, and readsReg() strangely returns false
+  // for predicated defs.
+  unsigned Reg = DefMI->getOperand(DefOperIdx).getReg();
+  const MachineFunction &MF = *DefMI->getParent()->getParent();
+  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+  if (!DepMI->readsRegister(Reg, TRI) && TII->isPredicated(DepMI))
+    return computeInstrLatency(DefMI);
+
+  // If we have a per operand scheduling model, check if this def is writing
+  // an unbuffered resource. If so, it treated like an in-order cpu.
+  if (hasInstrSchedModel()) {
+    const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
+    for (const MCWriteProcResEntry *PRI = STI->getWriteProcResBegin(SCDesc),
+           *PRE = STI->getWriteProcResEnd(SCDesc); PRI != PRE; ++PRI) {
+      if (!SchedModel.getProcResource(PRI->ProcResourceIdx)->IsBuffered)
+        return 1;
+    }
+  }
+  return 0;
 }

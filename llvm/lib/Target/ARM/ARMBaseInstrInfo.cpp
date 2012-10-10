@@ -3550,18 +3550,6 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   return Latency;
 }
 
-unsigned
-ARMBaseInstrInfo::getOutputLatency(const InstrItineraryData *ItinData,
-                                   const MachineInstr *DefMI, unsigned DefIdx,
-                                   const MachineInstr *DepMI) const {
-  unsigned Reg = DefMI->getOperand(DefIdx).getReg();
-  if (DepMI->readsRegister(Reg, &getRegisterInfo()) || !isPredicated(DepMI))
-    return 1;
-
-  // If the second MI is predicated, then there is an implicit use dependency.
-  return getInstrLatency(ItinData, DefMI);
-}
-
 unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
                                            const MachineInstr *MI,
                                            unsigned *PredCost) const {

@@ -31,7 +31,6 @@
 #include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/MC/MCInstrItineraries.h"
 
 namespace llvm {
 
@@ -276,19 +275,6 @@ public:
 
   const std::vector<PressureElement> &getRegionCriticalPSets() const {
     return RegionCriticalPSets;
-  }
-
-  /// getIssueWidth - Return the max instructions per scheduling group.
-  unsigned getIssueWidth() const {
-    return (InstrItins && InstrItins->SchedModel)
-      ? InstrItins->SchedModel->IssueWidth : 1;
-  }
-
-  /// getNumMicroOps - Return the number of issue slots required for this MI.
-  unsigned getNumMicroOps(MachineInstr *MI) const {
-    if (!InstrItins) return 1;
-    int UOps = InstrItins->getNumMicroOps(MI->getDesc().getSchedClass());
-    return (UOps >= 0) ? UOps : TII->getNumMicroOps(InstrItins, MI);
   }
 
 protected:

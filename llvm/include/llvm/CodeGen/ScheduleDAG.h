@@ -570,11 +570,6 @@ namespace llvm {
     unsigned VerifyScheduledDAG(bool isBottomUp);
 #endif
 
-  protected:
-    /// ComputeLatency - Compute node latency.
-    ///
-    virtual void computeLatency(SUnit *SU) = 0;
-
   private:
     // Return the MCInstrDesc of this SDNode or NULL.
     const MCInstrDesc *getNodeDesc(const SDNode *Node) const;
