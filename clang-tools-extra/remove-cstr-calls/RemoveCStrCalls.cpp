@@ -234,4 +234,3 @@ int main(int argc, const char **argv) {
       &Callback);
   return Tool.run(newFrontendActionFactory(&Finder));
 }
-
