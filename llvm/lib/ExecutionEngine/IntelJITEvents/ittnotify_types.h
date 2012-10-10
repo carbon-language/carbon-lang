@@ -1,11 +1,18 @@
-//===-- ittnotify_types.h -  Intel(R) Performance Analyzer JIT (Just-In-Time) Profiling API internal types.  ---------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
+/*===-- ittnotify_types.h - JIT Profiling API internal types--------*- C -*-===*
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ *===----------------------------------------------------------------------===*
+ *
+ * NOTE: This file comes in a style different from the rest of LLVM
+ * source base since  this is a piece of code shared from Intel(R)
+ * products.  Please do not reformat / re-style this code to make
+ * subsequent merges and contributions from the original source base eaiser.
+ *
+ *===----------------------------------------------------------------------===*/
 #ifndef _ITTNOTIFY_TYPES_H_
 #define _ITTNOTIFY_TYPES_H_
 
