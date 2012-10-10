@@ -346,7 +346,7 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
                                            header->getName(), M);
   // If the old function is no-throw, so is the new one.
   if (oldFunction->doesNotThrow())
-    newFunction->setDoesNotThrow(true);
+    newFunction->setDoesNotThrow();
   
   newFunction->getBasicBlockList().push_back(newRootNode);
 

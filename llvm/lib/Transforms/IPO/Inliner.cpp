@@ -94,10 +94,10 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
   // If the inlined function had a higher stack protection level than the
   // calling function, then bump up the caller's stack protection level.
   if (Callee->getFnAttributes().hasAttribute(Attributes::StackProtectReq))
-    Caller->addFnAttr(Attribute::StackProtectReq);
+    Caller->addFnAttr(Attributes::StackProtectReq);
   else if (Callee->getFnAttributes().hasAttribute(Attributes::StackProtect) &&
            !Caller->getFnAttributes().hasAttribute(Attributes::StackProtectReq))
-    Caller->addFnAttr(Attribute::StackProtect);
+    Caller->addFnAttr(Attributes::StackProtect);
 
   // Look at all of the allocas that we inlined through this call site.  If we
   // have already inlined other allocas through other calls into this function,

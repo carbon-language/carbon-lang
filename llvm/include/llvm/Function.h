@@ -176,9 +176,11 @@ public:
 
   /// addFnAttr - Add function attributes to this function.
   ///
-  void addFnAttr(Attributes N) { 
+  void addFnAttr(Attributes::AttrVal N) { 
     // Function Attributes are stored at ~0 index 
-    addAttribute(~0U, N);
+    Attributes::Builder B;
+    B.addAttribute(N);
+    addAttribute(~0U, Attributes::get(B));
   }
 
   /// removeFnAttr - Remove function attributes from this function.
@@ -221,9 +223,8 @@ public:
   bool doesNotAccessMemory() const {
     return getFnAttributes().hasAttribute(Attributes::ReadNone);
   }
-  void setDoesNotAccessMemory(bool DoesNotAccessMemory = true) {
-    if (DoesNotAccessMemory) addFnAttr(Attribute::ReadNone);
-    else removeFnAttr(Attribute::ReadNone);
+  void setDoesNotAccessMemory() {
+    addFnAttr(Attributes::ReadNone);
   }
 
   /// @brief Determine if the function does not access or only reads memory.
@@ -231,27 +232,24 @@ public:
     return doesNotAccessMemory() ||
       getFnAttributes().hasAttribute(Attributes::ReadOnly);
   }
-  void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addFnAttr(Attribute::ReadOnly);
-    else removeFnAttr(Attribute::ReadOnly | Attribute::ReadNone);
+  void setOnlyReadsMemory() {
+    addFnAttr(Attributes::ReadOnly);
   }
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
     return getFnAttributes().hasAttribute(Attributes::NoReturn);
   }
-  void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addFnAttr(Attribute::NoReturn);
-    else removeFnAttr(Attribute::NoReturn);
+  void setDoesNotReturn() {
+    addFnAttr(Attributes::NoReturn);
   }
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
     return getFnAttributes().hasAttribute(Attributes::NoUnwind);
   }
-  void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addFnAttr(Attribute::NoUnwind);
-    else removeFnAttr(Attribute::NoUnwind);
+  void setDoesNotThrow() {
+    addFnAttr(Attributes::NoUnwind);
   }
 
   /// @brief True if the ABI mandates (or the user requested) that this
@@ -259,11 +257,8 @@ public:
   bool hasUWTable() const {
     return getFnAttributes().hasAttribute(Attributes::UWTable);
   }
-  void setHasUWTable(bool HasUWTable = true) {
-    if (HasUWTable)
-      addFnAttr(Attribute::UWTable);
-    else
-      removeFnAttr(Attribute::UWTable);
+  void setHasUWTable() {
+    addFnAttr(Attributes::UWTable);
   }
 
   /// @brief True if this function needs an unwind table.
