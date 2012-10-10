@@ -2079,11 +2079,13 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
 
   llvm::FunctionType *FnType =
     llvm::FunctionType::get(CGM.VoidTy, ArgTypes, false);
+  llvm::Attributes::Builder B;
+  B.addAttribute(llvm::Attributes::NoReturn)
+    .addAttribute(llvm::Attributes::NoUnwind)
+    .addAttribute(llvm::Attributes::UWTable);
   llvm::Value *Fn = CGM.CreateRuntimeFunction(FnType,
                                           ("__ubsan_handle_" + CheckName).str(),
-                                              llvm::Attribute::NoReturn |
-                                              llvm::Attribute::NoUnwind |
-                                              llvm::Attribute::UWTable);
+                                              llvm::Attributes::get(B));
   llvm::CallInst *HandlerCall = Builder.CreateCall(Fn, Args);
   HandlerCall->setDoesNotReturn();
   HandlerCall->setDoesNotThrow();
