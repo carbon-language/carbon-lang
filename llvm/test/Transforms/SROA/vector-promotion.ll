@@ -189,3 +189,19 @@ entry:
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
+
+define i64 @test6(<4 x i64> %x, <4 x i64> %y, i64 %n) {
+; CHECK: @test6
+; The old scalarrepl pass would wrongly drop the store to the second alloca.
+; PR13254
+  %tmp = alloca { <4 x i64>, <4 x i64> }
+  %p0 = getelementptr inbounds { <4 x i64>, <4 x i64> }* %tmp, i32 0, i32 0
+  store <4 x i64> %x, <4 x i64>* %p0
+; CHECK: store <4 x i64> %x,
+  %p1 = getelementptr inbounds { <4 x i64>, <4 x i64> }* %tmp, i32 0, i32 1
+  store <4 x i64> %y, <4 x i64>* %p1
+; CHECK: store <4 x i64> %y,
+  %addr = getelementptr inbounds { <4 x i64>, <4 x i64> }* %tmp, i32 0, i32 0, i64 %n
+  %res = load i64* %addr, align 4
+  ret i64 %res
+}
