@@ -109,6 +109,9 @@ public:
 
   int getReadAdvanceCycles(const MCSchedClassDesc *SC, unsigned UseIdx,
                            unsigned WriteResID) const {
+    // TODO: The number of read advance entries in a class can be significant
+    // (~50). Consider compressing the WriteID into a dense ID of those that are
+    // used by ReadAdvance and representing them as a bitset.
     for (const MCReadAdvanceEntry *I = &ReadAdvanceTable[SC->ReadAdvanceIdx],
            *E = I + SC->NumReadAdvanceEntries; I != E; ++I) {
       if (I->UseIdx < UseIdx)
