@@ -3759,7 +3759,7 @@ static unsigned getCorrespondingDRegAndLane(const TargetRegisterInfo *TRI,
   return DReg;
 }
 
-/// getImplicitSPRUseForDPRUse - Given a use of a DPR register and lane, 
+/// getImplicitSPRUseForDPRUse - Given a use of a DPR register and lane,
 /// set ImplicitSReg to a register number that must be marked as implicit-use or
 /// zero if no register needs to be defined as implicit-use.
 ///
@@ -3767,13 +3767,13 @@ static unsigned getCorrespondingDRegAndLane(const TargetRegisterInfo *TRI,
 /// not, it returns false.
 ///
 /// This function handles cases where an instruction is being modified from taking
-/// an SPR to a DPR[Lane]. A use of the DPR is being added, which may conflict 
+/// an SPR to a DPR[Lane]. A use of the DPR is being added, which may conflict
 /// with an earlier def of an SPR corresponding to DPR[Lane^1] (i.e. the other
 /// lane of the DPR).
 ///
 /// If the other SPR is defined, an implicit-use of it should be added. Else,
 /// (including the case where the DPR itself is defined), it should not.
-/// 
+///
 static bool getImplicitSPRUseForDPRUse(const TargetRegisterInfo *TRI,
                                        MachineInstr *MI,
                                        unsigned DReg, unsigned Lane,
