@@ -2864,6 +2864,7 @@ class ARMTargetInfo : public TargetInfo {
 
   unsigned FPU : 4;
 
+  unsigned IsAAPCS : 1;
   unsigned IsThumb : 1;
 
   // Initialized via features.
@@ -2874,7 +2875,7 @@ class ARMTargetInfo : public TargetInfo {
 
 public:
   ARMTargetInfo(const std::string &TripleStr)
-    : TargetInfo(TripleStr), ABI("aapcs-linux"), CPU("arm1136j-s")
+    : TargetInfo(TripleStr), ABI("aapcs-linux"), CPU("arm1136j-s"), IsAAPCS(true)
   {
     BigEndian = false;
     SizeType = UnsignedInt;
@@ -2937,6 +2938,8 @@ public:
       /// gcc.
       ZeroLengthBitfieldBoundary = 32;
 
+      IsAAPCS = false;
+
       if (IsThumb) {
         // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
         // so set preferred for small types to 32.
@@ -2951,9 +2954,10 @@ public:
 
       // FIXME: Override "preferred align" for double and long long.
     } else if (Name == "aapcs") {
+      IsAAPCS = true;
       // FIXME: Enumerated types are variable width in straight AAPCS.
     } else if (Name == "aapcs-linux") {
-      ;
+      IsAAPCS = true;
     } else
       return false;
 
@@ -3133,7 +3137,7 @@ public:
   }
   virtual bool isCLZForZeroUndef() const { return false; }
   virtual BuiltinVaListKind getBuiltinVaListKind() const {
-    return TargetInfo::VoidPtrBuiltinVaList;
+    return IsAAPCS ? AAPCSABIBuiltinVaList : TargetInfo::VoidPtrBuiltinVaList;
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;

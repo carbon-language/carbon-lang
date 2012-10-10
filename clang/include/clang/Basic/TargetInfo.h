@@ -151,7 +151,12 @@ public:
 
     /// __builtin_va_list as defined by the x86-64 ABI:
     /// http://www.x86-64.org/documentation/abi.pdf
-    X86_64ABIBuiltinVaList
+    X86_64ABIBuiltinVaList,
+
+    /// __builtin_va_list as defined by ARM AAPCS ABI
+    /// http://infocenter.arm.com
+    //        /help/topic/com.arm.doc.ihi0042d/IHI0042D_aapcs.pdf
+    AAPCSABIBuiltinVaList
   };
 
 protected:

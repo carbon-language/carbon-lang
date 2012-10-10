@@ -5521,6 +5521,65 @@ static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
   return VaListTypedefDecl;
 }
 
+static TypedefDecl *
+CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
+  RecordDecl *VaListDecl;
+  if (Context->getLangOpts().CPlusPlus) {
+    // namespace std { struct __va_list {
+    NamespaceDecl *NS;
+    NS = NamespaceDecl::Create(const_cast<ASTContext &>(*Context),
+                               Context->getTranslationUnitDecl(),
+                               /*Inline*/false, SourceLocation(),
+                               SourceLocation(), &Context->Idents.get("std"),
+                               /*PrevDecl*/0);
+
+    VaListDecl = CXXRecordDecl::Create(*Context, TTK_Struct,
+                                       Context->getTranslationUnitDecl(),
+                                       SourceLocation(), SourceLocation(),
+                                       &Context->Idents.get("__va_list"));
+
+    VaListDecl->setDeclContext(NS);
+
+  } else {
+    // struct __va_list {
+    VaListDecl = CreateRecordDecl(*Context, TTK_Struct,
+                                  Context->getTranslationUnitDecl(),
+                                  &Context->Idents.get("__va_list"));
+  }
+
+  VaListDecl->startDefinition();
+
+  // void * __ap;
+  FieldDecl *Field = FieldDecl::Create(const_cast<ASTContext &>(*Context),
+                                       VaListDecl,
+                                       SourceLocation(),
+                                       SourceLocation(),
+                                       &Context->Idents.get("__ap"),
+                                       Context->getPointerType(Context->VoidTy),
+                                       /*TInfo=*/0,
+                                       /*BitWidth=*/0,
+                                       /*Mutable=*/false,
+                                       ICIS_NoInit);
+  Field->setAccess(AS_public);
+  VaListDecl->addDecl(Field);
+
+  // };
+  VaListDecl->completeDefinition();
+
+  // typedef struct __va_list __builtin_va_list;
+  TypeSourceInfo *TInfo
+    = Context->getTrivialTypeSourceInfo(Context->getRecordType(VaListDecl));
+
+  TypedefDecl *VaListTypeDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__builtin_va_list"),
+                          TInfo);
+
+  return VaListTypeDecl;
+}
+
 static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
                                      TargetInfo::BuiltinVaListKind Kind) {
   switch (Kind) {
@@ -5534,6 +5593,8 @@ static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
     return CreateX86_64ABIBuiltinVaListDecl(Context);
   case TargetInfo::PNaClABIBuiltinVaList:
     return CreatePNaClABIBuiltinVaListDecl(Context);
+  case TargetInfo::AAPCSABIBuiltinVaList:
+    return CreateAAPCSABIBuiltinVaListDecl(Context);
   }
 
   llvm_unreachable("Unhandled __builtin_va_list type kind");
