@@ -55,46 +55,6 @@ struct AttrConst {
 #define DECLARE_LLVM_ATTRIBUTE(name, value) \
   const AttrConst name = {value};
 
-DECLARE_LLVM_ATTRIBUTE(None,0)    ///< No attributes have been set
-DECLARE_LLVM_ATTRIBUTE(ZExt,1<<0) ///< Zero extended before/after call
-DECLARE_LLVM_ATTRIBUTE(SExt,1<<1) ///< Sign extended before/after call
-DECLARE_LLVM_ATTRIBUTE(NoReturn,1<<2) ///< Mark the function as not returning
-DECLARE_LLVM_ATTRIBUTE(InReg,1<<3) ///< Force argument to be passed in register
-DECLARE_LLVM_ATTRIBUTE(StructRet,1<<4) ///< Hidden pointer to structure to return
-DECLARE_LLVM_ATTRIBUTE(NoUnwind,1<<5) ///< Function doesn't unwind stack
-DECLARE_LLVM_ATTRIBUTE(NoAlias,1<<6) ///< Considered to not alias after call
-DECLARE_LLVM_ATTRIBUTE(ByVal,1<<7) ///< Pass structure by value
-DECLARE_LLVM_ATTRIBUTE(Nest,1<<8) ///< Nested function static chain
-DECLARE_LLVM_ATTRIBUTE(ReadNone,1<<9) ///< Function does not access memory
-DECLARE_LLVM_ATTRIBUTE(ReadOnly,1<<10) ///< Function only reads from memory
-DECLARE_LLVM_ATTRIBUTE(NoInline,1<<11) ///< inline=never
-DECLARE_LLVM_ATTRIBUTE(AlwaysInline,1<<12) ///< inline=always
-DECLARE_LLVM_ATTRIBUTE(OptimizeForSize,1<<13) ///< opt_size
-DECLARE_LLVM_ATTRIBUTE(StackProtect,1<<14) ///< Stack protection.
-DECLARE_LLVM_ATTRIBUTE(StackProtectReq,1<<15) ///< Stack protection required.
-DECLARE_LLVM_ATTRIBUTE(Alignment,31<<16) ///< Alignment of parameter (5 bits)
-                                     // stored as log2 of alignment with +1 bias
-                                     // 0 means unaligned different from align 1
-DECLARE_LLVM_ATTRIBUTE(NoCapture,1<<21) ///< Function creates no aliases of pointer
-DECLARE_LLVM_ATTRIBUTE(NoRedZone,1<<22) /// disable redzone
-DECLARE_LLVM_ATTRIBUTE(NoImplicitFloat,1<<23) /// disable implicit floating point
-                                           /// instructions.
-DECLARE_LLVM_ATTRIBUTE(Naked,1<<24) ///< Naked function
-DECLARE_LLVM_ATTRIBUTE(InlineHint,1<<25) ///< source said inlining was
-                                           ///desirable
-DECLARE_LLVM_ATTRIBUTE(StackAlignment,7<<26) ///< Alignment of stack for
-                                           ///function (3 bits) stored as log2
-                                           ///of alignment with +1 bias
-                                           ///0 means unaligned (different from
-                                           ///alignstack= {1))
-DECLARE_LLVM_ATTRIBUTE(ReturnsTwice,1<<29) ///< Function can return twice
-DECLARE_LLVM_ATTRIBUTE(UWTable,1<<30) ///< Function must be in a unwind
-                                           ///table
-DECLARE_LLVM_ATTRIBUTE(NonLazyBind,1U<<31) ///< Function is called early and/or
-                                            /// often, so lazy binding isn't
-                                            /// worthwhile.
-DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is on.
-
 #undef DECLARE_LLVM_ATTRIBUTE
 
 }  // namespace Attribute
@@ -175,11 +135,13 @@ public:
 
     void clear() { Bits = 0; }
 
+    bool hasAttribute(Attributes::AttrVal A) const;
     bool hasAttributes() const;
     bool hasAttributes(const Attributes &A) const;
     bool hasAlignmentAttr() const;
 
     uint64_t getAlignment() const;
+    uint64_t getStackAlignment() const;
 
     Builder &addAttribute(Attributes::AttrVal Val);
     Builder &removeAttribute(Attributes::AttrVal Val);
@@ -467,7 +429,7 @@ public:
 
   /// hasAttrSomewhere - Return true if the specified attribute is set for at
   /// least one parameter or for the return value.
-  bool hasAttrSomewhere(Attributes Attr) const;
+  bool hasAttrSomewhere(Attributes::AttrVal Attr) const;
 
   unsigned getNumAttrs() const;
   Attributes &getAttributesAtIndex(unsigned i) const;

@@ -474,13 +474,15 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
     Out << "AttributeWithIndex PAWI;"; nl(Out);
     for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
       unsigned index = PAL.getSlot(i).Index;
-      Attributes attrs = PAL.getSlot(i).Attrs;
-      Out << "PAWI.Index = " << index << "U; PAWI.Attrs = Attribute::None ";
-#define HANDLE_ATTR(X)                 \
-      if (attrs & Attribute::X)      \
-        Out << " | Attribute::" #X;  \
-      attrs &= ~Attribute::X;
-      
+      Attributes::Builder attrs(PAL.getSlot(i).Attrs);
+      Out << "PAWI.Index = " << index << "U;\n";
+      Out << "   Attributes::Builder B;\n";
+
+#define HANDLE_ATTR(X)                                     \
+      if (attrs.hasAttribute(Attributes::X))               \
+        Out << "   B.addAttribute(Attributes::" #X ");\n"; \
+      attrs.removeAttribute(Attributes::X);
+
       HANDLE_ATTR(SExt);
       HANDLE_ATTR(ZExt);
       HANDLE_ATTR(NoReturn);
@@ -506,13 +508,14 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       HANDLE_ATTR(UWTable);
       HANDLE_ATTR(NonLazyBind);
 #undef HANDLE_ATTR
-      if (attrs & Attribute::StackAlignment)
-        Out << " | Attribute::constructStackAlignmentFromInt("
+      if (attrs.hasAttribute(Attributes::StackAlignment))
+        Out << "B.addStackAlignmentAttr(Attribute::constructStackAlignmentFromInt("
             << attrs.getStackAlignment()
-            << ")"; 
-      attrs &= ~Attribute::StackAlignment;
-      assert(attrs == 0 && "Unhandled attribute!");
-      Out << ";";
+            << "))";
+      nl(Out);
+      attrs.removeAttribute(Attributes::StackAlignment);
+      assert(!attrs.hasAttributes() && "Unhandled attribute!");
+      Out << "PAWI.Attrs = Attributes::get(B);";
       nl(Out);
       Out << "Attrs.push_back(PAWI);";
       nl(Out);

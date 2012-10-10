@@ -238,6 +238,10 @@ void Attributes::Builder::removeAttributes(const Attributes &A) {
   Bits &= ~A.Raw();
 }
 
+bool Attributes::Builder::hasAttribute(Attributes::AttrVal A) const {
+  return Bits & AttributesImpl::getAttrMask(A);
+}
+
 bool Attributes::Builder::hasAttributes() const {
   return Bits != 0;
 }
@@ -253,6 +257,13 @@ uint64_t Attributes::Builder::getAlignment() const {
     return 0;
   return 1U <<
     (((Bits & AttributesImpl::getAttrMask(Attributes::Alignment)) >> 16) - 1);
+}
+
+uint64_t Attributes::Builder::getStackAlignment() const {
+  if (!hasAlignmentAttr())
+    return 0;
+  return 1U <<
+    (((Bits & AttributesImpl::getAttrMask(Attributes::StackAlignment))>>26)-1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -468,12 +479,12 @@ Attributes AttrListPtr::getAttributes(unsigned Idx) const {
 
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
 /// least one parameter or for the return value.
-bool AttrListPtr::hasAttrSomewhere(Attributes Attr) const {
+bool AttrListPtr::hasAttrSomewhere(Attributes::AttrVal Attr) const {
   if (AttrList == 0) return false;
-  
+
   const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
-    if (Attrs[i].Attrs.hasAttributes(Attr))
+    if (Attrs[i].Attrs.hasAttribute(Attr))
       return true;
   return false;
 }

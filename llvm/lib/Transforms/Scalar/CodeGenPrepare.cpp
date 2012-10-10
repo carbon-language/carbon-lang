@@ -774,7 +774,8 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
     // Conservatively require the attributes of the call to match those of the
     // return. Ignore noalias because it doesn't affect the call sequence.
     Attributes CalleeRetAttr = CS.getAttributes().getRetAttributes();
-    if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
+    if (Attributes::Builder(CalleeRetAttr ^ CallerRetAttr)
+        .removeAttribute(Attributes::NoAlias).hasAttributes())
       continue;
 
     // Make sure the call instruction is followed by an unconditional branch to
