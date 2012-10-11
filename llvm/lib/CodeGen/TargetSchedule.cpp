@@ -50,10 +50,12 @@ unsigned TargetSchedModel::getNumMicroOps(MachineInstr *MI) const {
     int UOps = InstrItins.getNumMicroOps(MI->getDesc().getSchedClass());
     return (UOps >= 0) ? UOps : TII->getNumMicroOps(&InstrItins, MI);
   }
-  if (hasInstrSchedModel())
-    return resolveSchedClass(MI)->NumMicroOps;
-
-  return 1;
+  if (hasInstrSchedModel()) {
+    const MCSchedClassDesc *SCDesc = resolveSchedClass(MI);
+    if (SCDesc->isValid())
+      return SCDesc->NumMicroOps;
+  }
+  return MI->isTransient() ? 0 : 1;
 }
 
 /// If we can determine the operand latency from the def only, without machine
@@ -199,7 +201,7 @@ unsigned TargetSchedModel::computeOperandLatency(
     report_fatal_error(ss.str());
   }
 #endif
-  return 1;
+  return DefMI->isTransient() ? 0 : 1;
 }
 
 unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
@@ -209,16 +211,18 @@ unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
     return TII->getInstrLatency(&InstrItins, MI);
 
   if (hasInstrSchedModel()) {
-    unsigned Latency = 0;
     const MCSchedClassDesc *SCDesc = resolveSchedClass(MI);
-    for (unsigned DefIdx = 0, DefEnd = SCDesc->NumWriteLatencyEntries;
-         DefIdx != DefEnd; ++DefIdx) {
-      // Lookup the definition's write latency in SubtargetInfo.
-      const MCWriteLatencyEntry *WLEntry =
-        STI->getWriteLatencyEntry(SCDesc, DefIdx);
-      Latency = std::max(Latency, WLEntry->Cycles);
+    if (SCDesc->isValid()) {
+      unsigned Latency = 0;
+      for (unsigned DefIdx = 0, DefEnd = SCDesc->NumWriteLatencyEntries;
+           DefIdx != DefEnd; ++DefIdx) {
+        // Lookup the definition's write latency in SubtargetInfo.
+        const MCWriteLatencyEntry *WLEntry =
+          STI->getWriteLatencyEntry(SCDesc, DefIdx);
+        Latency = std::max(Latency, WLEntry->Cycles);
+      }
+      return Latency;
     }
-    return Latency;
   }
   return TII->defaultDefLatency(&SchedModel, MI);
 }
@@ -251,10 +255,12 @@ computeOutputLatency(const MachineInstr *DefMI, unsigned DefOperIdx,
   // an unbuffered resource. If so, it treated like an in-order cpu.
   if (hasInstrSchedModel()) {
     const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
-    for (const MCWriteProcResEntry *PRI = STI->getWriteProcResBegin(SCDesc),
-           *PRE = STI->getWriteProcResEnd(SCDesc); PRI != PRE; ++PRI) {
-      if (!SchedModel.getProcResource(PRI->ProcResourceIdx)->IsBuffered)
-        return 1;
+    if (SCDesc->isValid()) {
+      for (const MCWriteProcResEntry *PRI = STI->getWriteProcResBegin(SCDesc),
+             *PRE = STI->getWriteProcResEnd(SCDesc); PRI != PRE; ++PRI) {
+        if (!SchedModel.getProcResource(PRI->ProcResourceIdx)->IsBuffered)
+          return 1;
+      }
     }
   }
   return 0;
