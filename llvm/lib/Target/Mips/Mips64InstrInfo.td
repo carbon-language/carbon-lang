@@ -315,3 +315,33 @@ def : MipsPat<(bswap CPU64Regs:$rt), (DSHD (DSBH CPU64Regs:$rt))>;
 // Instruction aliases
 //===----------------------------------------------------------------------===//
 def : InstAlias<"move $dst,$src", (DADD CPU64Regs:$dst,CPU64Regs:$src,ZERO_64)>;
+
+/// Move between CPU and coprocessor registers
+let DecoderNamespace = "Mips64" in {
+def MFC0_3OP64  : MFC3OP<0x10, 0, (outs CPU64Regs:$rt), 
+                       (ins CPU64Regs:$rd, uimm16:$sel),"mfc0\t$rt, $rd, $sel">;
+def MTC0_3OP64  : MFC3OP<0x10, 4, (outs CPU64Regs:$rd, uimm16:$sel),
+                       (ins CPU64Regs:$rt),"mtc0\t$rt, $rd, $sel">;
+def MFC2_3OP64  : MFC3OP<0x12, 0, (outs CPU64Regs:$rt),
+                       (ins CPU64Regs:$rd, uimm16:$sel),"mfc2\t$rt, $rd, $sel">;
+def MTC2_3OP64  : MFC3OP<0x12, 4, (outs CPU64Regs:$rd, uimm16:$sel),
+                       (ins CPU64Regs:$rt),"mtc2\t$rt, $rd, $sel">;
+def DMFC0_3OP64  : MFC3OP<0x10, 1, (outs CPU64Regs:$rt), 
+                       (ins CPU64Regs:$rd, uimm16:$sel),"dmfc0\t$rt, $rd, $sel">;
+def DMTC0_3OP64  : MFC3OP<0x10, 5, (outs CPU64Regs:$rd, uimm16:$sel),
+                       (ins CPU64Regs:$rt),"dmtc0\t$rt, $rd, $sel">;
+def DMFC2_3OP64  : MFC3OP<0x12, 1, (outs CPU64Regs:$rt),
+                       (ins CPU64Regs:$rd, uimm16:$sel),"dmfc2\t$rt, $rd, $sel">;
+def DMTC2_3OP64  : MFC3OP<0x12, 5, (outs CPU64Regs:$rd, uimm16:$sel),
+                       (ins CPU64Regs:$rt),"dmtc2\t$rt, $rd, $sel">;
+}
+// Two operand (implicit 0 selector) versions:
+def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
+def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
+def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
+def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
+def : InstAlias<"dmfc0 $rt, $rd", (DMFC0_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
+def : InstAlias<"dmtc0 $rt, $rd", (DMTC0_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
+def : InstAlias<"dmfc2 $rt, $rd", (DMFC2_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
+def : InstAlias<"dmtc2 $rt, $rd", (DMTC2_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
+
