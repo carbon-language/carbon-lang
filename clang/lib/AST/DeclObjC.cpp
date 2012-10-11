@@ -904,7 +904,7 @@ ObjCMethodDecl::findPropertyDecl(bool CheckOverrides) const {
   if (NumArgs > 1)
     return 0;
 
-  if (getMethodFamily() != OMF_None)
+  if (!isInstanceMethod() || getMethodFamily() != OMF_None)
     return 0;
   
   if (isPropertyAccessor()) {
