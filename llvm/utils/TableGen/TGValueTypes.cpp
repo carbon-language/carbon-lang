@@ -47,7 +47,7 @@ public:
     : Type(TK_ExtendedIntegerType), BitWidth(bits) {}
   static bool classof(const Type *T) {
     return T->getKind() == TK_ExtendedIntegerType;
-  };
+  }
   unsigned getSizeInBits() const {
     return getBitWidth();
   }
@@ -64,7 +64,7 @@ public:
     : Type(TK_ExtendedVectorType), ElementType(elty), NumElements(num) {}
   static bool classof(const Type *T) {
     return T->getKind() == TK_ExtendedVectorType;
-  };
+  }
   unsigned getSizeInBits() const {
     return getNumElements() * getElementType().getSizeInBits();
   }
