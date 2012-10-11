@@ -15,6 +15,7 @@
 #ifndef LLVM_SUPPORT_CASTING_H
 #define LLVM_SUPPORT_CASTING_H
 
+#include "llvm/Support/type_traits.h"
 #include <cassert>
 
 namespace llvm {
@@ -44,11 +45,21 @@ template<typename From> struct simplify_type<const From> {
 // The core of the implementation of isa<X> is here; To and From should be
 // the names of classes.  This template can be specialized to customize the
 // implementation of isa<> without rewriting it from scratch.
-template <typename To, typename From>
+template <typename To, typename From, typename Enabler = void>
 struct isa_impl {
   static inline bool doit(const From &Val) {
     return To::classof(&Val);
   }
+};
+
+/// \brief Always allow upcasts, and perform no dynamic check for them.
+template <typename To, typename From>
+struct isa_impl<To, From,
+                typename llvm::enable_if_c<
+                  llvm::is_base_of<To, From>::value
+                >::type
+               > {
+  static inline bool doit(const From &) { return true; }
 };
 
 template <typename To, typename From> struct isa_impl_cl {

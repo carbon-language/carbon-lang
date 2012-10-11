@@ -153,3 +153,54 @@ const bar *B2 = &B;
 }  // anonymous namespace
 
 bar *llvm::fub() { return 0; }
+
+namespace {
+namespace inferred_upcasting {
+// This test case verifies correct behavior of inferred upcasts when the
+// types are statically known to be OK to upcast. This is the case when,
+// for example, Derived inherits from Base, and we do `isa<Base>(Derived)`.
+
+// Note: This test will actually fail to compile without inferred
+// upcasting.
+
+class Base {
+public:
+  // No classof. We are testing that the upcast is inferred.
+  Base() {}
+};
+
+class Derived : public Base {
+public:
+  Derived() {}
+};
+
+// Even with no explicit classof() in Base, we should still be able to cast
+// Derived to its base class.
+TEST(CastingTest, UpcastIsInferred) {
+  Derived D;
+  EXPECT_TRUE(isa<Base>(D));
+  Base *BP = dyn_cast<Base>(&D);
+  EXPECT_TRUE(BP != NULL);
+}
+
+
+// This test verifies that the inferred upcast takes precedence over an
+// explicitly written one. This is important because it verifies that the
+// dynamic check gets optimized away.
+class UseInferredUpcast {
+public:
+  int Dummy;
+  static bool classof(const UseInferredUpcast *) {
+    return false;
+  }
+};
+
+TEST(CastingTest, InferredUpcastTakesPrecedence) {
+  UseInferredUpcast UIU;
+  // Since the explicit classof() returns false, this will fail if the
+  // explicit one is used.
+  EXPECT_TRUE(isa<UseInferredUpcast>(&UIU));
+}
+
+} // end namespace inferred_upcasting
+} // end anonymous namespace
