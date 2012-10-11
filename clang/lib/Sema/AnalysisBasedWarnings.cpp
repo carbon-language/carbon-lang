@@ -27,6 +27,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Analysis/AnalysisContext.h"
@@ -903,10 +904,30 @@ public:
 };
 }
 
+static bool isInLoop(const ParentMap &PM, const Stmt *S) {
+  assert(S);
+
+  do {
+    switch (S->getStmtClass()) {
+    case Stmt::DoStmtClass:
+    case Stmt::ForStmtClass:
+    case Stmt::WhileStmtClass:
+    case Stmt::CXXForRangeStmtClass:
+    case Stmt::ObjCForCollectionStmtClass:
+      return true;
+    default:
+      break;
+    }
+  } while ((S = PM.getParent(S)));
+
+  return false;
+}
+
 
 static void diagnoseRepeatedUseOfWeak(Sema &S,
                                       const sema::FunctionScopeInfo *CurFn,
-                                      const Decl *D) {
+                                      const Decl *D,
+                                      const ParentMap &PM) {
   typedef sema::FunctionScopeInfo::WeakObjectProfileTy WeakObjectProfileTy;
   typedef sema::FunctionScopeInfo::WeakObjectUseMap WeakObjectUseMap;
   typedef sema::FunctionScopeInfo::WeakUseVector WeakUseVector;
@@ -918,8 +939,6 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
   for (WeakObjectUseMap::const_iterator I = WeakMap.begin(), E = WeakMap.end();
        I != E; ++I) {
     const WeakUseVector &Uses = I->second;
-    if (Uses.size() <= 1)
-      continue;
 
     // Find the first read of the weak object.
     WeakUseVector::const_iterator UI = Uses.begin(), UE = Uses.end();
@@ -931,6 +950,19 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
     // If there were only writes to this object, don't warn.
     if (UI == UE)
       continue;
+
+    // If there was only one read, followed by any number of writes, and the
+    // read is not within a loop, don't warn.
+    if (UI == Uses.begin()) {
+      WeakUseVector::const_iterator UI2 = UI;
+      for (++UI2; UI2 != UE; ++UI2)
+        if (UI2->isUnsafe())
+          break;
+
+      if (UI2 == UE)
+        if (!isInLoop(PM, UI->getUseExpr()))
+          continue;
+    }
 
     UsesByStmt.push_back(StmtUsesPair(UI->getUseExpr(), I));
   }
@@ -1519,7 +1551,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (S.getLangOpts().ObjCARCWeak &&
       Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
                                D->getLocStart()) != DiagnosticsEngine::Ignored)
-    diagnoseRepeatedUseOfWeak(S, fscope, D);
+    diagnoseRepeatedUseOfWeak(S, fscope, D, AC.getParentMap());
 
   // Collect statistics about the CFG if it was built.
   if (S.CollectStats && AC.isCFGBuilt()) {

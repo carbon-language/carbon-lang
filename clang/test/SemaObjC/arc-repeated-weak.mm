@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-runtime-has-weak -fobjc-arc -fblocks -Wno-objc-root-class -Warc-repeated-use-of-weak -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-runtime-has-weak -fobjc-arc -fblocks -Wno-objc-root-class -std=c++11 -Warc-repeated-use-of-weak -verify %s
 
 @interface Test {
 @public
@@ -181,6 +181,70 @@ void assignToStrongWithCasts(Test *a) {
   }
 }
 
+void assignAfterRead(Test *a) {
+  // Special exception for a single read before any writes.
+  if (!a.weakProp) // no-warning
+    a.weakProp = get(); // no-warning
+}
+
+void readOnceWriteMany(Test *a) {
+  if (!a.weakProp) { // no-warning
+    a.weakProp = get(); // no-warning
+    a.weakProp = get(); // no-warning
+  }
+}
+
+void readOnceAfterWrite(Test *a) {
+  a.weakProp = get(); // expected-note{{also accessed here}}
+  if (!a.weakProp) { // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+    a.weakProp = get(); // expected-note{{also accessed here}}
+  }
+}
+
+void readOnceWriteManyLoops(Test *a, Test *b, Test *c, Test *d, Test *e) {
+  while (condition()) {
+    if (!a.weakProp) { // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+      a.weakProp = get(); // expected-note{{also accessed here}}
+      a.weakProp = get(); // expected-note{{also accessed here}}
+    }
+  }
+
+  do {
+    if (!b.weakProp) { // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+      b.weakProp = get(); // expected-note{{also accessed here}}
+      b.weakProp = get(); // expected-note{{also accessed here}}
+    }
+  } while (condition());
+
+  for (id x = get(); x; x = get()) {
+    if (!c.weakProp) { // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+      c.weakProp = get(); // expected-note{{also accessed here}}
+      c.weakProp = get(); // expected-note{{also accessed here}}
+    }
+  }
+
+  for (id x in get()) {
+    if (!d.weakProp) { // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+      d.weakProp = get(); // expected-note{{also accessed here}}
+      d.weakProp = get(); // expected-note{{also accessed here}}
+    }
+  }
+
+  int array[] = { 1, 2, 3 };
+  for (int i : array) {
+    if (!e.weakProp) { // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+      e.weakProp = get(); // expected-note{{also accessed here}}
+      e.weakProp = get(); // expected-note{{also accessed here}}
+    }
+  }
+}
+
+void readOnlyLoop(Test *a) {
+  while (condition()) {
+    use(a.weakProp); // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+  }
+}
+
 
 @interface Test (Methods)
 @end
@@ -247,11 +311,6 @@ public:
 // -----------------------
 
 // Most of these would require flow-sensitive analysis to silence correctly.
-
-void assignAfterRead(Test *a) {
-  if (!a.weakProp) // expected-warning{{weak property 'weakProp' is accessed multiple times}}
-    a.weakProp = get(); // expected-note{{also accessed here}}
-}
 
 void assignNil(Test *a) {
   if (condition())
