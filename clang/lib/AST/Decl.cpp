@@ -193,7 +193,7 @@ static bool useInlineVisibilityHidden(const NamedDecl *D) {
   // anyway.
   return TSK != TSK_ExplicitInstantiationDeclaration &&
     TSK != TSK_ExplicitInstantiationDefinition &&
-    FD->hasBody(Def) && Def->isInlined();
+    FD->hasBody(Def) && Def->isInlined() && !Def->hasAttr<GNUInlineAttr>();
 }
 
 static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,

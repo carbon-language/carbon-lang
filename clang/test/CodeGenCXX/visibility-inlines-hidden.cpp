@@ -126,3 +126,12 @@ namespace test3 {
   // CHECK: define linkonce_odr hidden void @_ZN5test33fooEv
   // CHECK: define linkonce_odr hidden void @_ZN5test33zedIiEEvv
 }
+
+namespace test4 {
+  extern inline __attribute__ ((__gnu_inline__))
+  void foo() {}
+  void bar() {
+    foo();
+  }
+  // CHECK: define available_externally void @_ZN5test43fooE
+}
