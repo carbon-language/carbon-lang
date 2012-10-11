@@ -111,10 +111,13 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
         // get the TBAA tag describing our copy.
         if (MDNode *M = MI->getMetadata(LLVMContext::MD_tbaa_struct)) {
           if (M->getNumOperands() == 3 &&
+              M->getOperand(0) &&
               isa<ConstantInt>(M->getOperand(0)) &&
               cast<ConstantInt>(M->getOperand(0))->isNullValue() &&
+              M->getOperand(1) &&
               isa<ConstantInt>(M->getOperand(1)) &&
               cast<ConstantInt>(M->getOperand(1))->getValue() == Size &&
+              M->getOperand(2) &&
               isa<MDNode>(M->getOperand(2)))
             CopyMD = cast<MDNode>(M->getOperand(2));
         }
