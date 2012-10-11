@@ -39,16 +39,16 @@ void fun() {
   // CHECK: %s1_2 = alloca %struct._GUID, align 4
   // CHECK: %s1_3 = alloca %struct._GUID, align 4
 
-  // CHECK: %0 = bitcast %struct._GUID* %s1_1 to i8*
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* bitcast (%struct._GUID* @__uuid_12345678-1234-1234-1234-1234567890ab to i8*), i32 16, i32 4, i1 false)
+  // CHECK: [[U1:%.+]] = bitcast %struct._GUID* %s1_1 to i8*
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* [[U1]], i8* bitcast (%struct._GUID* @__uuid_12345678-1234-1234-1234-1234567890ab to i8*), i32 16, i32 4, i1 false)
   GUID s1_1 = __uuidof(S1);
 
-  // CHECK: %1 = bitcast %struct._GUID* %s1_2 to i8*
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %1, i8* bitcast (%struct._GUID* @__uuid_12345678-1234-1234-1234-1234567890ab to i8*), i32 16, i32 4, i1 false)
+  // CHECK: [[U2:%.+]] = bitcast %struct._GUID* %s1_2 to i8*
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* [[U2]], i8* bitcast (%struct._GUID* @__uuid_12345678-1234-1234-1234-1234567890ab to i8*), i32 16, i32 4, i1 false)
   GUID s1_2 = __uuidof(S1);
 
-  // CHECK: %2 = bitcast %struct._GUID* %s1_3 to i8*
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %2, i8* bitcast (%struct._GUID* @__uuid_12345678-1234-1234-1234-1234567890ab to i8*), i32 16, i32 4, i1 false)
+  // CHECK: [[U3:%.+]] = bitcast %struct._GUID* %s1_3 to i8*
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* [[U3]], i8* bitcast (%struct._GUID* @__uuid_12345678-1234-1234-1234-1234567890ab to i8*), i32 16, i32 4, i1 false)
   GUID s1_3 = __uuidof(s1);
 }
 
