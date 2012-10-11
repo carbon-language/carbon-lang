@@ -308,8 +308,6 @@ public:
   /// \brief Clear out the information in this function scope, making it
   /// suitable for reuse.
   void Clear();
-
-  static bool classof(const FunctionScopeInfo *FSI) { return true; }
 };
 
 class CapturingScopeInfo : public FunctionScopeInfo {
@@ -463,7 +461,6 @@ public:
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Block || FSI->Kind == SK_Lambda; 
   }
-  static bool classof(const CapturingScopeInfo *BSI) { return true; }
 };
 
 /// \brief Retains information about a block that is currently being parsed.
@@ -491,7 +488,6 @@ public:
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Block; 
   }
-  static bool classof(const BlockScopeInfo *BSI) { return true; }
 };
 
 class LambdaScopeInfo : public CapturingScopeInfo {
@@ -547,8 +543,6 @@ public:
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Lambda; 
   }
-  static bool classof(const LambdaScopeInfo *BSI) { return true; }
-
 };
 
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy()

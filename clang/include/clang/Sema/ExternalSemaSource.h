@@ -175,7 +175,6 @@ public:
   static bool classof(const ExternalASTSource *Source) {
     return Source->SemaSource;
   }
-  static bool classof(const ExternalSemaSource *) { return true; }
 }; 
 
 } // end namespace clang

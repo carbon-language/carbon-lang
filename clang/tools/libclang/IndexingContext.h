@@ -100,8 +100,6 @@ struct DeclInfo : public CXIdxDeclInfo {
     numAttributes = 0;
     declAsContainer = semanticContainer = lexicalContainer = 0;
   }
-
-  static bool classof(const DeclInfo *) { return true; }
 };
 
 struct ObjCContainerDeclInfo : public DeclInfo {
@@ -126,7 +124,6 @@ struct ObjCContainerDeclInfo : public DeclInfo {
   static bool classof(const DeclInfo *D) {
     return Info_ObjCContainer <= D->Kind && D->Kind <= Info_ObjCCategory;
   }
-  static bool classof(const ObjCContainerDeclInfo *D) { return true; }
 
 private:
   void init(bool isForwardRef, bool isImplementation) {
@@ -152,7 +149,6 @@ struct ObjCInterfaceDeclInfo : public ObjCContainerDeclInfo {
   static bool classof(const DeclInfo *D) {
     return D->Kind == Info_ObjCInterface;
   }
-  static bool classof(const ObjCInterfaceDeclInfo *D) { return true; }
 };
 
 struct ObjCProtocolDeclInfo : public ObjCContainerDeclInfo {
@@ -167,7 +163,6 @@ struct ObjCProtocolDeclInfo : public ObjCContainerDeclInfo {
   static bool classof(const DeclInfo *D) {
     return D->Kind == Info_ObjCProtocol;
   }
-  static bool classof(const ObjCProtocolDeclInfo *D) { return true; }
 };
 
 struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
@@ -183,7 +178,6 @@ struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
   static bool classof(const DeclInfo *D) {
     return D->Kind == Info_ObjCCategory;
   }
-  static bool classof(const ObjCCategoryDeclInfo *D) { return true; }
 };
 
 struct ObjCPropertyDeclInfo : public DeclInfo {
@@ -197,7 +191,6 @@ struct ObjCPropertyDeclInfo : public DeclInfo {
   static bool classof(const DeclInfo *D) {
     return D->Kind == Info_ObjCProperty;
   }
-  static bool classof(const ObjCPropertyDeclInfo *D) { return true; }
 };
 
 struct CXXClassDeclInfo : public DeclInfo {
@@ -209,7 +202,6 @@ struct CXXClassDeclInfo : public DeclInfo {
   static bool classof(const DeclInfo *D) {
     return D->Kind == Info_CXXClass;
   }
-  static bool classof(const CXXClassDeclInfo *D) { return true; }
 };
 
 struct AttrInfo : public CXIdxAttrInfo {
@@ -221,8 +213,6 @@ struct AttrInfo : public CXIdxAttrInfo {
     loc = Loc;
     this->A = A;
   }
-
-  static bool classof(const AttrInfo *) { return true; }
 };
 
 struct IBOutletCollectionInfo : public AttrInfo {
@@ -240,7 +230,6 @@ struct IBOutletCollectionInfo : public AttrInfo {
   static bool classof(const AttrInfo *A) {
     return A->kind == CXIdxAttr_IBOutletCollection;
   }
-  static bool classof(const IBOutletCollectionInfo *D) { return true; }
 };
 
 class AttrListInfo {

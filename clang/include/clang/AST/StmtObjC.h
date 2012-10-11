@@ -61,7 +61,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCForCollectionStmtClass;
   }
-  static bool classof(const ObjCForCollectionStmt *) { return true; }
 
   // Iterators
   child_range children() {
@@ -112,7 +111,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtCatchStmtClass;
   }
-  static bool classof(const ObjCAtCatchStmt *) { return true; }
 
   child_range children() { return child_range(&Body, &Body + 1); }
 };
@@ -143,7 +141,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtFinallyStmtClass;
   }
-  static bool classof(const ObjCAtFinallyStmt *) { return true; }
 
   child_range children() {
     return child_range(&AtFinallyStmt, &AtFinallyStmt+1);
@@ -244,7 +241,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtTryStmtClass;
   }
-  static bool classof(const ObjCAtTryStmt *) { return true; }
 
   child_range children() {
     return child_range(getStmts(),
@@ -303,7 +299,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtSynchronizedStmtClass;
   }
-  static bool classof(const ObjCAtSynchronizedStmt *) { return true; }
 
   child_range children() {
     return child_range(&SubStmts[0], &SubStmts[0]+END_EXPR);
@@ -339,7 +334,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtThrowStmtClass;
   }
-  static bool classof(const ObjCAtThrowStmt *) { return true; }
 
   child_range children() { return child_range(&Throw, &Throw+1); }
 };
@@ -371,7 +365,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAutoreleasePoolStmtClass;
   }
-  static bool classof(const ObjCAutoreleasePoolStmt *) { return true; }
 
   child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
 };

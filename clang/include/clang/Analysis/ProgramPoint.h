@@ -140,8 +140,6 @@ public:
     return ID.ComputeHash();
   }
 
-  static bool classof(const ProgramPoint*) { return true; }
-
   bool operator==(const ProgramPoint & RHS) const {
     return Data1 == RHS.Data1 &&
            Data2 == RHS.Data2 &&

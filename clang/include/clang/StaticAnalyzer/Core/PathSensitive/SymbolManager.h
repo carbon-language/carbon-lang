@@ -68,9 +68,6 @@ public:
   virtual QualType getType() const = 0;
   virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
 
-  // Implement isa<T> support.
-  static inline bool classof(const SymExpr*) { return true; }
-
   /// \brief Iterator over symbols that the current symbol depends on.
   ///
   /// For SymbolData, it's the symbol itself; for expressions, it's the

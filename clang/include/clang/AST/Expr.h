@@ -699,7 +699,6 @@ public:
     return T->getStmtClass() >= firstExprConstant &&
            T->getStmtClass() <= lastExprConstant;
   }
-  static bool classof(const Expr *) { return true; }
 };
 
 
@@ -765,7 +764,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OpaqueValueExprClass;
   }
-  static bool classof(const OpaqueValueExpr *) { return true; }
 };
 
 /// \brief A reference to a declared variable, function, enum, etc.
@@ -1062,7 +1060,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DeclRefExprClass;
   }
-  static bool classof(const DeclRefExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -1112,7 +1109,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == PredefinedExprClass;
   }
-  static bool classof(const PredefinedExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -1199,7 +1195,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == IntegerLiteralClass;
   }
-  static bool classof(const IntegerLiteral *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -1246,7 +1241,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CharacterLiteralClass;
   }
-  static bool classof(const CharacterLiteral *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -1289,7 +1283,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == FloatingLiteralClass;
   }
-  static bool classof(const FloatingLiteral *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -1320,7 +1313,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImaginaryLiteralClass;
   }
-  static bool classof(const ImaginaryLiteral *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Val, &Val+1); }
@@ -1482,7 +1474,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == StringLiteralClass;
   }
-  static bool classof(const StringLiteral *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -1523,7 +1514,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ParenExprClass;
   }
-  static bool classof(const ParenExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Val, &Val+1); }
@@ -1634,7 +1624,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryOperatorClass;
   }
-  static bool classof(const UnaryOperator *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Val, &Val+1); }
@@ -1833,8 +1822,6 @@ public:
     return T->getStmtClass() == OffsetOfExprClass;
   }
 
-  static bool classof(const OffsetOfExpr *) { return true; }
-
   // Iterators
   child_range children() {
     Stmt **begin =
@@ -1938,7 +1925,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryExprOrTypeTraitExprClass;
   }
-  static bool classof(const UnaryExprOrTypeTraitExpr *) { return true; }
 
   // Iterators
   child_range children();
@@ -2018,7 +2004,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ArraySubscriptExprClass;
   }
-  static bool classof(const ArraySubscriptExpr *) { return true; }
 
   // Iterators
   child_range children() {
@@ -2154,7 +2139,6 @@ public:
     return T->getStmtClass() >= firstCallExprConstant &&
            T->getStmtClass() <= lastCallExprConstant;
   }
-  static bool classof(const CallExpr *) { return true; }
 
   // Iterators
   child_range children() {
@@ -2441,7 +2425,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == MemberExprClass;
   }
-  static bool classof(const MemberExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Base, &Base+1); }
@@ -2507,7 +2490,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CompoundLiteralExprClass;
   }
-  static bool classof(const CompoundLiteralExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Init, &Init+1); }
@@ -2598,7 +2580,6 @@ public:
     return T->getStmtClass() >= firstCastExprConstant &&
            T->getStmtClass() <= lastCastExprConstant;
   }
-  static bool classof(const CastExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Op, &Op+1); }
@@ -2662,7 +2643,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImplicitCastExprClass;
   }
-  static bool classof(const ImplicitCastExpr *) { return true; }
 };
 
 inline Expr *Expr::IgnoreImpCasts() {
@@ -2717,7 +2697,6 @@ public:
      return T->getStmtClass() >= firstExplicitCastExprConstant &&
             T->getStmtClass() <= lastExplicitCastExprConstant;
   }
-  static bool classof(const ExplicitCastExpr *) { return true; }
 };
 
 /// CStyleCastExpr - An explicit cast in C (C99 6.5.4) or a C-style
@@ -2758,7 +2737,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CStyleCastExprClass;
   }
-  static bool classof(const CStyleCastExpr *) { return true; }
 };
 
 /// \brief A builtin binary operation expression such as "x + y" or "x <= y".
@@ -2901,7 +2879,6 @@ public:
     return S->getStmtClass() >= firstBinaryOperatorConstant &&
            S->getStmtClass() <= lastBinaryOperatorConstant;
   }
-  static bool classof(const BinaryOperator *) { return true; }
 
   // Iterators
   child_range children() {
@@ -2971,7 +2948,6 @@ public:
   QualType getComputationResultType() const { return ComputationResultType; }
   void setComputationResultType(QualType T) { ComputationResultType = T; }
 
-  static bool classof(const CompoundAssignOperator *) { return true; }
   static bool classof(const Stmt *S) {
     return S->getStmtClass() == CompoundAssignOperatorClass;
   }
@@ -3017,7 +2993,6 @@ public:
     return T->getStmtClass() == ConditionalOperatorClass ||
            T->getStmtClass() == BinaryConditionalOperatorClass;
   }
-  static bool classof(const AbstractConditionalOperator *) { return true; }
 };
 
 /// ConditionalOperator - The ?: ternary operator.  The GNU "missing
@@ -3076,7 +3051,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ConditionalOperatorClass;
   }
-  static bool classof(const ConditionalOperator *) { return true; }
 
   // Iterators
   child_range children() {
@@ -3158,7 +3132,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BinaryConditionalOperatorClass;
   }
-  static bool classof(const BinaryConditionalOperator *) { return true; }
 
   // Iterators
   child_range children() {
@@ -3214,7 +3187,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AddrLabelExprClass;
   }
-  static bool classof(const AddrLabelExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -3258,7 +3230,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == StmtExprClass;
   }
-  static bool classof(const StmtExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&SubStmt, &SubStmt+1); }
@@ -3301,7 +3272,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ShuffleVectorExprClass;
   }
-  static bool classof(const ShuffleVectorExpr *) { return true; }
 
   /// getNumSubExprs - Return the size of the SubExprs array.  This includes the
   /// constant expression, the actual arguments passed in, and the function
@@ -3396,7 +3366,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ChooseExprClass;
   }
-  static bool classof(const ChooseExpr *) { return true; }
 
   // Iterators
   child_range children() {
@@ -3433,7 +3402,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GNUNullExprClass;
   }
-  static bool classof(const GNUNullExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -3479,7 +3447,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == VAArgExprClass;
   }
-  static bool classof(const VAArgExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Val, &Val+1); }
@@ -3661,7 +3628,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == InitListExprClass;
   }
-  static bool classof(const InitListExpr *) { return true; }
 
   // Iterators
   child_range children() {
@@ -3998,7 +3964,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DesignatedInitExprClass;
   }
-  static bool classof(const DesignatedInitExpr *) { return true; }
 
   // Iterators
   child_range children() {
@@ -4028,7 +3993,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImplicitValueInitExprClass;
   }
-  static bool classof(const ImplicitValueInitExpr *) { return true; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange();
@@ -4074,7 +4038,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ParenListExprClass;
   }
-  static bool classof(const ParenListExpr *) { return true; }
 
   // Iterators
   child_range children() {
@@ -4189,7 +4152,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GenericSelectionExprClass;
   }
-  static bool classof(const GenericSelectionExpr *) { return true; }
 
   child_range children() {
     return child_range(SubExprs, SubExprs+END_EXPR+NumAssocs);
@@ -4260,7 +4222,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ExtVectorElementExprClass;
   }
-  static bool classof(const ExtVectorElementExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&Base, &Base+1); }
@@ -4302,7 +4263,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BlockExprClass;
   }
-  static bool classof(const BlockExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }
@@ -4349,7 +4309,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AsTypeExprClass;
   }
-  static bool classof(const AsTypeExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(&SrcExpr, &SrcExpr+1); }
@@ -4486,7 +4445,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == PseudoObjectExprClass;
   }
-  static bool classof(const PseudoObjectExpr *) { return true; }
 };
 
 /// AtomicExpr - Variadic atomic builtins: __atomic_exchange, __atomic_fetch_*,
@@ -4576,7 +4534,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AtomicExprClass;
   }
-  static bool classof(const AtomicExpr *) { return true; }
 
   // Iterators
   child_range children() {

@@ -145,7 +145,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const AccessSpecDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == AccessSpec; }
 };
 
@@ -1514,10 +1513,6 @@ public:
   static bool classofKind(Kind K) {
     return K >= firstCXXRecord && K <= lastCXXRecord;
   }
-  static bool classof(const CXXRecordDecl *D) { return true; }
-  static bool classof(const ClassTemplateSpecializationDecl *D) {
-    return true;
-  }
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
@@ -1672,7 +1667,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const CXXMethodDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstCXXMethod && K <= lastCXXMethod;
   }
@@ -2152,7 +2146,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const CXXConstructorDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXConstructor; }
 
   friend class ASTDeclReader;
@@ -2224,7 +2217,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const CXXDestructorDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXDestructor; }
 
   friend class ASTDeclReader;
@@ -2291,7 +2283,6 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const CXXConversionDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXConversion; }
 
   friend class ASTDeclReader;
@@ -2361,7 +2352,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const LinkageSpecDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == LinkageSpec; }
   static DeclContext *castToDeclContext(const LinkageSpecDecl *D) {
     return static_cast<DeclContext *>(const_cast<LinkageSpecDecl*>(D));
@@ -2465,7 +2455,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const UsingDirectiveDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UsingDirective; }
 
   // Friend for getUsingDirectiveName.
@@ -2559,7 +2548,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const NamespaceAliasDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == NamespaceAlias; }
 };
 
@@ -2630,7 +2618,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const UsingShadowDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Decl::UsingShadow; }
 
   friend class ASTDeclReader;
@@ -2762,7 +2749,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const UsingDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Using; }
 
   friend class ASTDeclReader;
@@ -2836,7 +2822,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const UnresolvedUsingValueDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingValue; }
 
   friend class ASTDeclReader;
@@ -2902,7 +2887,6 @@ public:
   CreateDeserialized(ASTContext &C, unsigned ID);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingTypename; }
 };
 
@@ -2942,7 +2926,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(StaticAssertDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == StaticAssert; }
 
   friend class ASTDeclReader;

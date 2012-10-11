@@ -88,8 +88,6 @@ public:
       return static_cast<const ElemTy*>(this);
     return 0;
   }
-
-  static bool classof(const CFGElement *E) { return true; }
 };
 
 class CFGStmt : public CFGElement {

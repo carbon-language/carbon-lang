@@ -460,7 +460,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCMethod; }
   static DeclContext *castToDeclContext(const ObjCMethodDecl *D) {
     return static_cast<DeclContext *>(const_cast<ObjCMethodDecl*>(D));
@@ -559,7 +558,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCContainerDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstObjCContainer &&
            K <= lastObjCContainer;
@@ -1014,7 +1012,6 @@ public:
   void setTypeForDecl(const Type *TD) const { TypeForDecl = TD; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCInterfaceDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCInterface; }
 
   friend class ASTReader;
@@ -1087,7 +1084,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCIvarDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCIvar; }
 private:
   /// NextIvar - Next Ivar in the list of ivars declared in class; class's
@@ -1120,7 +1116,6 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCAtDefsFieldDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCAtDefsField; }
 };
 
@@ -1300,7 +1295,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCProtocolDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCProtocol; }
 
   friend class ASTReader;
@@ -1424,7 +1418,6 @@ public:
   SourceLocation getIvarRBraceLoc() const { return IvarRBraceLoc; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCCategoryDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCCategory; }
 
   friend class ASTDeclReader;
@@ -1477,7 +1470,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCImplDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstObjCImpl && K <= lastObjCImpl;
   }
@@ -1554,7 +1546,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCCategoryImplDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCCategoryImpl;}
 
   friend class ASTDeclReader;
@@ -1698,7 +1689,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCImplementationDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCImplementation; }
 
   friend class ASTDeclReader;
@@ -1730,7 +1720,6 @@ public:
   void setClassInterface(ObjCInterfaceDecl *D) { AliasedClass = D; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCCompatibleAliasDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCCompatibleAlias; }
 
 };
@@ -1913,7 +1902,6 @@ public:
                                             IdentifierInfo *propertyID);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCPropertyDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCProperty; }
 };
 
@@ -2024,7 +2012,6 @@ public:
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCPropertyImplDecl *D) { return true; }
   static bool classofKind(Decl::Kind K) { return K == ObjCPropertyImpl; }
 
   friend class ASTDeclReader;

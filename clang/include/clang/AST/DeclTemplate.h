@@ -243,12 +243,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const TemplateDecl *D) { return true; }
-  static bool classof(const RedeclarableTemplateDecl *D) { return true; }
-  static bool classof(const FunctionTemplateDecl *D) { return true; }
-  static bool classof(const ClassTemplateDecl *D) { return true; }
-  static bool classof(const TemplateTemplateParmDecl *D) { return true; }
-  static bool classof(const TypeAliasTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstTemplate && K <= lastTemplate;
   }
@@ -688,10 +682,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const RedeclarableTemplateDecl *D) { return true; }
-  static bool classof(const FunctionTemplateDecl *D) { return true; }
-  static bool classof(const ClassTemplateDecl *D) { return true; }
-  static bool classof(const TypeAliasTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstRedeclarableTemplate && K <= lastRedeclarableTemplate;
   }
@@ -837,7 +827,6 @@ public:
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const FunctionTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == FunctionTemplate; }
 
   friend class ASTDeclReader;
@@ -979,7 +968,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const TemplateTypeParmDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == TemplateTypeParm; }
 };
 
@@ -1160,7 +1148,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const NonTypeTemplateParmDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == NonTypeTemplateParm; }
 };
 
@@ -1324,7 +1311,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const TemplateTemplateParmDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == TemplateTemplateParm; }
 
   friend class ASTDeclReader;
@@ -1591,14 +1577,6 @@ public:
            K <= lastClassTemplateSpecialization;
   }
 
-  static bool classof(const ClassTemplateSpecializationDecl *) {
-    return true;
-  }
-
-  static bool classof(const ClassTemplatePartialSpecializationDecl *) {
-    return true;
-  }
-
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
@@ -1765,10 +1743,6 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {
     return K == ClassTemplatePartialSpecialization;
-  }
-
-  static bool classof(const ClassTemplatePartialSpecializationDecl *) {
-    return true;
   }
 
   friend class ASTDeclReader;
@@ -1972,7 +1946,6 @@ public:
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ClassTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ClassTemplate; }
 
   friend class ASTDeclReader;
@@ -2070,7 +2043,6 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Decl::FriendTemplate; }
-  static bool classof(const FriendTemplateDecl *D) { return true; }
 
   friend class ASTDeclReader;
 };
@@ -2145,7 +2117,6 @@ public:
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const TypeAliasTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == TypeAliasTemplate; }
 
   friend class ASTDeclReader;
@@ -2208,9 +2179,6 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {
     return K == Decl::ClassScopeFunctionSpecialization;
-  }
-  static bool classof(const ClassScopeFunctionSpecializationDecl *D) {
-    return true;
   }
 
   friend class ASTDeclReader;

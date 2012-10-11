@@ -94,9 +94,6 @@ namespace clang {
     /// entity.
     bool isInvalid() const { return Kind == InvalidKind; }
 
-    // Implement isa/cast/dyncast/etc.
-    static bool classof(const PreprocessedEntity *) { return true; }
-
     // Only allow allocation of preprocessed entities using the allocator 
     // in PreprocessingRecord or by doing a placement new.
     void* operator new(size_t bytes, PreprocessingRecord& PR,
@@ -133,7 +130,6 @@ namespace clang {
       return PD->getKind() >= FirstPreprocessingDirective &&
              PD->getKind() <= LastPreprocessingDirective;
     }
-    static bool classof(const PreprocessingDirective *) { return true; }    
   };
   
   /// \brief Record the location of a macro definition.
@@ -155,7 +151,6 @@ namespace clang {
     static bool classof(const PreprocessedEntity *PE) {
       return PE->getKind() == MacroDefinitionKind;
     }
-    static bool classof(const MacroDefinition *) { return true; }
   };
   
   /// \brief Records the location of a macro expansion.
@@ -193,7 +188,6 @@ namespace clang {
     static bool classof(const PreprocessedEntity *PE) {
       return PE->getKind() == MacroExpansionKind;
     }
-    static bool classof(const MacroExpansion *) { return true; }
   };
 
   /// \brief Record the location of an inclusion directive, such as an
@@ -262,7 +256,6 @@ namespace clang {
     static bool classof(const PreprocessedEntity *PE) {
       return PE->getKind() == InclusionDirectiveKind;
     }
-    static bool classof(const InclusionDirective *) { return true; }
   };
   
   /// \brief An abstract class that should be subclassed by any external source

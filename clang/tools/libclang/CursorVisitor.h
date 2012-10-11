@@ -46,7 +46,6 @@ protected:
 public:
   Kind getKind() const { return K; }
   const CXCursor &getParent() const { return parent; }
-  static bool classof(VisitorJob *VJ) { return true; }
 };
   
 typedef SmallVector<VisitorJob, 10> VisitorWorkList;

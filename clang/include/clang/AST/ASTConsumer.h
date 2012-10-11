@@ -130,9 +130,6 @@ public:
 
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {}
-
-  // Support isa/cast/dyn_cast
-  static bool classof(const ASTConsumer *) { return true; }
 };
 
 } // end namespace clang.

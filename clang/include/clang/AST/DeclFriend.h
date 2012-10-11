@@ -130,7 +130,6 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const FriendDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Decl::Friend; }
 
   friend class ASTDeclReader;

@@ -113,8 +113,6 @@ namespace {
     void RecomputeFullDeltaLocally();
 
     void Destroy();
-
-    //static inline bool classof(const DeltaTreeNode *) { return true; }
   };
 } // end anonymous namespace
 
@@ -149,7 +147,6 @@ namespace {
       return Children[i];
     }
 
-  //static inline bool classof(const DeltaTreeInteriorNode *) { return true; }
     static inline bool classof(const DeltaTreeNode *N) { return !N->isLeaf(); }
   };
 }

@@ -50,7 +50,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXCatchStmtClass;
   }
-  static bool classof(const CXXCatchStmt *) { return true; }
 
   child_range children() { return child_range(&HandlerBlock, &HandlerBlock+1); }
 
@@ -111,7 +110,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXTryStmtClass;
   }
-  static bool classof(const CXXTryStmt *) { return true; }
 
   child_range children() {
     return child_range(getStmts(), getStmts() + getNumHandlers() + 1);
@@ -196,7 +194,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXForRangeStmtClass;
   }
-  static bool classof(const CXXForRangeStmt *) { return true; }
 
   // Iterators
   child_range children() {
@@ -286,8 +283,6 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == MSDependentExistsStmtClass;
   }
-
-  static bool classof(MSDependentExistsStmt *) { return true; }
 };
 
 }  // end namespace clang

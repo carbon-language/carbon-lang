@@ -107,9 +107,6 @@ public:
   // Pretty print this attribute.
   virtual void printPretty(llvm::raw_ostream &OS,
                            const PrintingPolicy &Policy) const = 0;
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *) { return true; }
 };
 
 class InheritableAttr : public Attr {
@@ -125,7 +122,6 @@ public:
   static bool classof(const Attr *A) {
     return A->getKind() <= attr::LAST_INHERITABLE;
   }
-  static bool classof(const InheritableAttr *) { return true; }
 };
 
 class InheritableParamAttr : public InheritableAttr {
@@ -139,7 +135,6 @@ public:
   static bool classof(const Attr *A) {
     return A->getKind() <= attr::LAST_INHERITABLE_PARAM;
   }
-  static bool classof(const InheritableParamAttr *) { return true; }
 };
 
 #include "clang/AST/Attrs.inc"

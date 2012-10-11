@@ -154,9 +154,6 @@ public:
   SymExpr::symbol_iterator symbol_end() const { 
     return SymExpr::symbol_end();
   }
-
-  // Implement isa<T> support.
-  static inline bool classof(const SVal*) { return true; }
 };
 
 

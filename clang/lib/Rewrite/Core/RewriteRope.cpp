@@ -117,8 +117,6 @@ namespace {
     /// guaranteed that there is a split at Offset.
     void erase(unsigned Offset, unsigned NumBytes);
 
-    //static inline bool classof(const RopePieceBTreeNode *) { return true; }
-
   };
 } // end anonymous namespace
 
@@ -221,7 +219,6 @@ namespace {
     /// guaranteed that there is a split at Offset.
     void erase(unsigned Offset, unsigned NumBytes);
 
-    //static inline bool classof(const RopePieceBTreeLeaf *) { return true; }
     static inline bool classof(const RopePieceBTreeNode *N) {
       return N->isLeaf();
     }
@@ -458,7 +455,6 @@ namespace {
     /// guaranteed that there is a split at Offset.
     void erase(unsigned Offset, unsigned NumBytes);
 
-    //static inline bool classof(const RopePieceBTreeInterior *) { return true; }
     static inline bool classof(const RopePieceBTreeNode *N) {
       return !N->isLeaf();
     }

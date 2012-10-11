@@ -1789,8 +1789,6 @@ public:
   CanQualType getCanonicalTypeUnqualified() const; // in CanonicalType.h
   LLVM_ATTRIBUTE_USED void dump() const;
 
-  static bool classof(const Type *) { return true; }
-
   friend class ASTReader;
   friend class ASTWriter;
 };
@@ -1890,7 +1888,6 @@ public:
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
-  static bool classof(const BuiltinType *) { return true; }
 };
 
 /// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
@@ -1921,7 +1918,6 @@ public:
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
-  static bool classof(const ComplexType *) { return true; }
 };
 
 /// ParenType - Sugar for parentheses used when specifying types.
@@ -1953,7 +1949,6 @@ public:
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Paren; }
-  static bool classof(const ParenType *) { return true; }
 };
 
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
@@ -1985,7 +1980,6 @@ public:
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
-  static bool classof(const PointerType *) { return true; }
 };
 
 /// BlockPointerType - pointer to a block type.
@@ -2021,7 +2015,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == BlockPointer;
   }
-  static bool classof(const BlockPointerType *) { return true; }
 };
 
 /// ReferenceType - Base for LValueReferenceType and RValueReferenceType
@@ -2069,7 +2062,6 @@ public:
     return T->getTypeClass() == LValueReference ||
            T->getTypeClass() == RValueReference;
   }
-  static bool classof(const ReferenceType *) { return true; }
 };
 
 /// LValueReferenceType - C++ [dcl.ref] - Lvalue reference
@@ -2087,7 +2079,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == LValueReference;
   }
-  static bool classof(const LValueReferenceType *) { return true; }
 };
 
 /// RValueReferenceType - C++0x [dcl.ref] - Rvalue reference
@@ -2104,7 +2095,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == RValueReference;
   }
-  static bool classof(const RValueReferenceType *) { return true; }
 };
 
 /// MemberPointerType - C++ 8.3.3 - Pointers to members
@@ -2159,7 +2149,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == MemberPointer;
   }
-  static bool classof(const MemberPointerType *) { return true; }
 };
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
@@ -2215,7 +2204,6 @@ public:
            T->getTypeClass() == IncompleteArray ||
            T->getTypeClass() == DependentSizedArray;
   }
-  static bool classof(const ArrayType *) { return true; }
 };
 
 /// ConstantArrayType - This class represents the canonical version of
@@ -2267,7 +2255,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray;
   }
-  static bool classof(const ConstantArrayType *) { return true; }
 };
 
 /// IncompleteArrayType - This class represents C arrays with an unspecified
@@ -2287,7 +2274,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == IncompleteArray;
   }
-  static bool classof(const IncompleteArrayType *) { return true; }
 
   friend class StmtIteratorBase;
 
@@ -2350,7 +2336,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == VariableArray;
   }
-  static bool classof(const VariableArrayType *) { return true; }
 
   friend class StmtIteratorBase;
 
@@ -2407,7 +2392,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == DependentSizedArray;
   }
-  static bool classof(const DependentSizedArrayType *) { return true; }
 
   friend class StmtIteratorBase;
 
@@ -2453,7 +2437,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == DependentSizedExtVector;
   }
-  static bool classof(const DependentSizedExtVectorType *) { return true; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Context, getElementType(), getSizeExpr());
@@ -2519,7 +2502,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == Vector || T->getTypeClass() == ExtVector;
   }
-  static bool classof(const VectorType *) { return true; }
 };
 
 /// ExtVectorType - Extended vector type. This type is created using
@@ -2585,7 +2567,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == ExtVector;
   }
-  static bool classof(const ExtVectorType *) { return true; }
 };
 
 /// FunctionType - C99 6.7.5.3 - Function Declarators.  This is the common base
@@ -2748,7 +2729,6 @@ public:
     return T->getTypeClass() == FunctionNoProto ||
            T->getTypeClass() == FunctionProto;
   }
-  static bool classof(const FunctionType *) { return true; }
 };
 
 /// FunctionNoProtoType - Represents a K&R-style 'int foo()' function, which has
@@ -2780,7 +2760,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto;
   }
-  static bool classof(const FunctionNoProtoType *) { return true; }
 };
 
 /// FunctionProtoType - Represents a prototype with argument type info, e.g.
@@ -3035,7 +3014,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
   }
-  static bool classof(const FunctionProtoType *) { return true; }
 
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
@@ -3066,7 +3044,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == UnresolvedUsing;
   }
-  static bool classof(const UnresolvedUsingType *) { return true; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     return Profile(ID, Decl);
@@ -3098,7 +3075,6 @@ public:
   QualType desugar() const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
-  static bool classof(const TypedefType *) { return true; }
 };
 
 /// TypeOfExprType (GCC extension).
@@ -3118,7 +3094,6 @@ public:
   bool isSugared() const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExpr; }
-  static bool classof(const TypeOfExprType *) { return true; }
 };
 
 /// \brief Internal representation of canonical, dependent
@@ -3165,7 +3140,6 @@ public:
   bool isSugared() const { return true; }
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOf; }
-  static bool classof(const TypeOfType *) { return true; }
 };
 
 /// DecltypeType (C++0x)
@@ -3187,7 +3161,6 @@ public:
   bool isSugared() const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Decltype; }
-  static bool classof(const DecltypeType *) { return true; }
 };
 
 /// \brief Internal representation of canonical, dependent
@@ -3240,7 +3213,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == UnaryTransform;
   }
-  static bool classof(const UnaryTransformType *) { return true; }
 };
 
 class TagType : public Type {
@@ -3263,7 +3235,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
   }
-  static bool classof(const TagType *) { return true; }
 };
 
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
@@ -3290,7 +3261,6 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Record; }
-  static bool classof(const RecordType *) { return true; }
 };
 
 /// EnumType - This is a helper class that allows the use of isa/cast/dyncast
@@ -3309,7 +3279,6 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Enum; }
-  static bool classof(const EnumType *) { return true; }
 };
 
 /// AttributedType - An attributed type is a type to which a type
@@ -3397,7 +3366,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == Attributed;
   }
-  static bool classof(const AttributedType *T) { return true; }
 };
 
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
@@ -3471,7 +3439,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == TemplateTypeParm;
   }
-  static bool classof(const TemplateTypeParmType *T) { return true; }
 };
 
 /// \brief Represents the result of substituting a type for a template
@@ -3522,7 +3489,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == SubstTemplateTypeParm;
   }
-  static bool classof(const SubstTemplateTypeParmType *T) { return true; }
 };
 
 /// \brief Represents the result of substituting a set of types for a template
@@ -3575,7 +3541,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == SubstTemplateTypeParmPack;
   }
-  static bool classof(const SubstTemplateTypeParmPackType *T) { return true; }
 };
 
 /// \brief Represents a C++0x auto type.
@@ -3618,7 +3583,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == Auto;
   }
-  static bool classof(const AutoType *T) { return true; }
 };
 
 /// \brief Represents a type template specialization; the template
@@ -3782,7 +3746,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == TemplateSpecialization;
   }
-  static bool classof(const TemplateSpecializationType *T) { return true; }
 };
 
 /// \brief The injected class name of a C++ class template or class
@@ -3845,7 +3808,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == InjectedClassName;
   }
-  static bool classof(const InjectedClassNameType *T) { return true; }
 };
 
 /// \brief The kind of a tag type.
@@ -3992,7 +3954,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == Elaborated;
   }
-  static bool classof(const ElaboratedType *T) { return true; }
 };
 
 /// \brief Represents a qualified type name for which the type name is
@@ -4056,7 +4017,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == DependentName;
   }
-  static bool classof(const DependentNameType *T) { return true; }
 };
 
 /// DependentTemplateSpecializationType - Represents a template
@@ -4126,9 +4086,6 @@ public:
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == DependentTemplateSpecialization;
-  }
-  static bool classof(const DependentTemplateSpecializationType *T) {
-    return true;
   }
 };
 
@@ -4209,9 +4166,6 @@ public:
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == PackExpansion;
-  }
-  static bool classof(const PackExpansionType *T) {
-    return true;
   }
 };
 
@@ -4323,7 +4277,6 @@ public:
     return T->getTypeClass() == ObjCObject ||
            T->getTypeClass() == ObjCInterface;
   }
-  static bool classof(const ObjCObjectType *) { return true; }
 };
 
 /// ObjCObjectTypeImpl - A class providing a concrete implementation
@@ -4387,7 +4340,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCInterface;
   }
-  static bool classof(const ObjCInterfaceType *) { return true; }
 
   // Nonsense to "hide" certain members of ObjCObjectType within this
   // class.  People asking for protocols on an ObjCInterfaceType are
@@ -4537,7 +4489,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCObjectPointer;
   }
-  static bool classof(const ObjCObjectPointerType *) { return true; }
 };
 
 class AtomicType : public Type, public llvm::FoldingSetNode {
@@ -4568,7 +4519,6 @@ class AtomicType : public Type, public llvm::FoldingSetNode {
   static bool classof(const Type *T) {
     return T->getTypeClass() == Atomic;
   }
-  static bool classof(const AtomicType *) { return true; }
 };
 
 /// A qualifier set is used to build a set of qualifiers.

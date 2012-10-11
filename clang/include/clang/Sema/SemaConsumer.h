@@ -42,7 +42,6 @@ namespace clang {
     static bool classof(const ASTConsumer *Consumer) {
       return Consumer->SemaConsumer;
     }
-    static bool classof(const SemaConsumer *) { return true; }
   };
 }
 

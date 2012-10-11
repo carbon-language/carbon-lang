@@ -360,10 +360,6 @@ public:
   /// Return the SourceRanges associated with this PathDiagnosticPiece.
   ArrayRef<SourceRange> getRanges() const { return ranges; }
 
-  static inline bool classof(const PathDiagnosticPiece *P) {
-    return true;
-  }
-  
   virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 };
   

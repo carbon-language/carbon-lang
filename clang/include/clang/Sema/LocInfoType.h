@@ -55,7 +55,6 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == (TypeClass)LocInfo;
   }
-  static bool classof(const LocInfoType *) { return true; }
 };
 
 } // end namespace clang

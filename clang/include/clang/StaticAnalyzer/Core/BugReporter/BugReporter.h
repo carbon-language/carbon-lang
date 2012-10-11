@@ -470,8 +470,6 @@ public:
     EmitBasicReport(DeclWithIssue, BugName, Category, BugStr, Loc, &R, 1);
   }
 
-  static bool classof(const BugReporter* R) { return true; }
-
   void addCallPieceLocationContextPair(const PathDiagnosticCallPiece *C,
                                        const LocationContext *LC) {
     LocationContextMap[C] = LC;

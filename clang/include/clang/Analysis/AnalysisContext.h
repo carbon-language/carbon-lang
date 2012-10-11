@@ -239,8 +239,6 @@ public:
 
   virtual void Profile(llvm::FoldingSetNodeID &ID) = 0;
 
-  static bool classof(const LocationContext*) { return true; }
-
 public:
   static void ProfileCommon(llvm::FoldingSetNodeID &ID,
                             ContextKind ck,
