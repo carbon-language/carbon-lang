@@ -49,7 +49,6 @@ public:
   static inline bool classof(const Binary *v) {
     return v->isMachO();
   }
-  static inline bool classof(const MachOObjectFile *v) { return true; }
 
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;

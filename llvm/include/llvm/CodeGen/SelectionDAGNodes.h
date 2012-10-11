@@ -662,9 +662,6 @@ public:
   ///
   void dumprWithDepth(const SelectionDAG *G = 0, unsigned depth = 100) const;
 
-
-  static bool classof(const SDNode *) { return true; }
-
   /// Profile - Gather unique data for the node.
   ///
   void Profile(FoldingSetNodeID &ID) const;
@@ -976,7 +973,6 @@ public:
   }
 
   // Methods to support isa and dyn_cast
-  static bool classof(const MemSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     // For some targets, we lower some target intrinsics to a MemIntrinsicNode
     // with either an intrinsic or a target opcode.
@@ -1061,7 +1057,6 @@ public:
   }
 
   // Methods to support isa and dyn_cast
-  static bool classof(const AtomicSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::ATOMIC_CMP_SWAP     ||
            N->getOpcode() == ISD::ATOMIC_SWAP         ||
@@ -1093,7 +1088,6 @@ public:
   }
 
   // Methods to support isa and dyn_cast
-  static bool classof(const MemIntrinsicSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     // We lower some target intrinsics to their target opcode
     // early a node with a target opcode can be of this class
@@ -1148,7 +1142,6 @@ public:
   }
   static bool isSplatMask(const int *Mask, EVT VT);
 
-  static bool classof(const ShuffleVectorSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::VECTOR_SHUFFLE;
   }
@@ -1172,7 +1165,6 @@ public:
   bool isNullValue() const { return Value->isNullValue(); }
   bool isAllOnesValue() const { return Value->isAllOnesValue(); }
 
-  static bool classof(const ConstantSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::Constant ||
            N->getOpcode() == ISD::TargetConstant;
@@ -1219,7 +1211,6 @@ public:
 
   static bool isValueValidForType(EVT VT, const APFloat& Val);
 
-  static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::ConstantFP ||
            N->getOpcode() == ISD::TargetConstantFP;
@@ -1241,7 +1232,6 @@ public:
   // Return the address space this GlobalAddress belongs to.
   unsigned getAddressSpace() const;
 
-  static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::GlobalAddress ||
            N->getOpcode() == ISD::TargetGlobalAddress ||
@@ -1261,7 +1251,6 @@ public:
 
   int getIndex() const { return FI; }
 
-  static bool classof(const FrameIndexSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::FrameIndex ||
            N->getOpcode() == ISD::TargetFrameIndex;
@@ -1281,7 +1270,6 @@ public:
   int getIndex() const { return JTI; }
   unsigned char getTargetFlags() const { return TargetFlags; }
 
-  static bool classof(const JumpTableSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::JumpTable ||
            N->getOpcode() == ISD::TargetJumpTable;
@@ -1342,7 +1330,6 @@ public:
 
   Type *getType() const;
 
-  static bool classof(const ConstantPoolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::ConstantPool ||
            N->getOpcode() == ISD::TargetConstantPool;
@@ -1366,7 +1353,6 @@ public:
   int getIndex() const { return Index; }
   int64_t getOffset() const { return Offset; }
 
-  static bool classof(const TargetIndexSDNode*) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::TargetIndex;
   }
@@ -1385,7 +1371,6 @@ public:
 
   MachineBasicBlock *getBasicBlock() const { return MBB; }
 
-  static bool classof(const BasicBlockSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::BasicBlock;
   }
@@ -1410,7 +1395,6 @@ public:
                        unsigned &SplatBitSize, bool &HasAnyUndefs,
                        unsigned MinSplatBits = 0, bool isBigEndian = false);
 
-  static inline bool classof(const BuildVectorSDNode *) { return true; }
   static inline bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::BUILD_VECTOR;
   }
@@ -1431,7 +1415,6 @@ public:
   /// getValue - return the contained Value.
   const Value *getValue() const { return V; }
 
-  static bool classof(const SrcValueSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::SRCVALUE;
   }
@@ -1446,7 +1429,6 @@ public:
   
   const MDNode *getMD() const { return MD; }
   
-  static bool classof(const MDNodeSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::MDNODE_SDNODE;
   }
@@ -1463,7 +1445,6 @@ public:
 
   unsigned getReg() const { return Reg; }
 
-  static bool classof(const RegisterSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::Register;
   }
@@ -1480,7 +1461,6 @@ public:
 
   const uint32_t *getRegMask() const { return RegMask; }
 
-  static bool classof(const RegisterMaskSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::RegisterMask;
   }
@@ -1501,7 +1481,6 @@ public:
   int64_t getOffset() const { return Offset; }
   unsigned char getTargetFlags() const { return TargetFlags; }
 
-  static bool classof(const BlockAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::BlockAddress ||
            N->getOpcode() == ISD::TargetBlockAddress;
@@ -1519,7 +1498,6 @@ class EHLabelSDNode : public SDNode {
 public:
   MCSymbol *getLabel() const { return Label; }
 
-  static bool classof(const EHLabelSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::EH_LABEL;
   }
@@ -1539,7 +1517,6 @@ public:
   const char *getSymbol() const { return Symbol; }
   unsigned char getTargetFlags() const { return TargetFlags; }
 
-  static bool classof(const ExternalSymbolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::ExternalSymbol ||
            N->getOpcode() == ISD::TargetExternalSymbol;
@@ -1557,7 +1534,6 @@ public:
 
   ISD::CondCode get() const { return Condition; }
 
-  static bool classof(const CondCodeSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::CONDCODE;
   }
@@ -1577,7 +1553,6 @@ class CvtRndSatSDNode : public SDNode {
 public:
   ISD::CvtCode getCvtCode() const { return CvtCode; }
 
-  static bool classof(const CvtRndSatSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::CONVERT_RNDSAT;
   }
@@ -1596,7 +1571,6 @@ public:
 
   EVT getVT() const { return ValueType; }
 
-  static bool classof(const VTSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::VALUETYPE;
   }
@@ -1640,7 +1614,6 @@ public:
   /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
   bool isUnindexed() const { return getAddressingMode() == ISD::UNINDEXED; }
 
-  static bool classof(const LSBaseSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD ||
            N->getOpcode() == ISD::STORE;
@@ -1672,7 +1645,6 @@ public:
   const SDValue &getBasePtr() const { return getOperand(1); }
   const SDValue &getOffset() const { return getOperand(2); }
 
-  static bool classof(const LoadSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD;
   }
@@ -1703,7 +1675,6 @@ public:
   const SDValue &getBasePtr() const { return getOperand(2); }
   const SDValue &getOffset() const { return getOperand(3); }
 
-  static bool classof(const StoreSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::STORE;
   }
@@ -1744,7 +1715,6 @@ public:
     MemRefsEnd = NewMemRefsEnd;
   }
 
-  static bool classof(const MachineSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->isMachineOpcode();
   }

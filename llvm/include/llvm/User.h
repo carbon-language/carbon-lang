@@ -176,7 +176,6 @@ public:
   void replaceUsesOfWith(Value *From, Value *To);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const User *) { return true; }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) || isa<Constant>(V);
   }

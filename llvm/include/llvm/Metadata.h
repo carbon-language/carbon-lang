@@ -59,7 +59,6 @@ public:
   iterator end() const { return getName().end(); }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MDString *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueID() == MDStringVal;
   }
@@ -161,7 +160,6 @@ public:
   void Profile(FoldingSetNodeID &ID) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MDNode *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueID() == MDNodeVal;
   }

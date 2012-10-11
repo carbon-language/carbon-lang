@@ -174,7 +174,6 @@ public:
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const GlobalVariable *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::GlobalVariableVal;
   }

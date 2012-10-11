@@ -64,8 +64,6 @@ namespace llvm {
     /// isVirtualSection - Check whether this section is "virtual", that is
     /// has no actual object file contents.
     virtual bool isVirtualSection() const = 0;
-
-    static bool classof(const MCSection *) { return true; }
   };
 
 } // end namespace llvm

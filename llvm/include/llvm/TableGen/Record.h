@@ -85,7 +85,6 @@ private:
   virtual void anchor();
 
 public:
-  static bool classof(const RecTy *) { return true; }
   RecTyKind getRecTyKind() const { return Kind; }
 
   RecTy(RecTyKind K) : Kind(K), ListTy(0) {}
@@ -153,7 +152,6 @@ class BitRecTy : public RecTy {
   static BitRecTy Shared;
   BitRecTy() : RecTy(BitRecTyKind) {}
 public:
-  static bool classof(const BitRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == BitRecTyKind;
   }
@@ -199,7 +197,6 @@ class BitsRecTy : public RecTy {
   unsigned Size;
   explicit BitsRecTy(unsigned Sz) : RecTy(BitsRecTyKind), Size(Sz) {}
 public:
-  static bool classof(const BitsRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == BitsRecTyKind;
   }
@@ -248,7 +245,6 @@ class IntRecTy : public RecTy {
   static IntRecTy Shared;
   IntRecTy() : RecTy(IntRecTyKind) {}
 public:
-  static bool classof(const IntRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == IntRecTyKind;
   }
@@ -293,7 +289,6 @@ class StringRecTy : public RecTy {
   static StringRecTy Shared;
   StringRecTy() : RecTy(StringRecTyKind) {}
 public:
-  static bool classof(const StringRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == StringRecTyKind;
   }
@@ -342,7 +337,6 @@ class ListRecTy : public RecTy {
   explicit ListRecTy(RecTy *T) : RecTy(ListRecTyKind), Ty(T) {}
   friend ListRecTy *RecTy::getListTy();
 public:
-  static bool classof(const ListRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == ListRecTyKind;
   }
@@ -389,7 +383,6 @@ class DagRecTy : public RecTy {
   static DagRecTy Shared;
   DagRecTy() : RecTy(DagRecTyKind) {}
 public:
-  static bool classof(const DagRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == DagRecTyKind;
   }
@@ -436,7 +429,6 @@ class RecordRecTy : public RecTy {
   explicit RecordRecTy(Record *R) : RecTy(RecordRecTyKind), Rec(R) {}
   friend class Record;
 public:
-  static bool classof(const RecordRecTy *) { return true; }
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == RecordRecTyKind;
   }

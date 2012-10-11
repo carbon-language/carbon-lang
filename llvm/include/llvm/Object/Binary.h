@@ -64,7 +64,6 @@ public:
 
   // Cast methods.
   unsigned int getType() const { return TypeID; }
-  static inline bool classof(const Binary *v) { return true; }
 
   // Convenience methods
   bool isObject() const {

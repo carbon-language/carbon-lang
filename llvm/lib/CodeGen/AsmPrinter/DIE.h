@@ -214,9 +214,6 @@ namespace llvm {
     ///
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const = 0;
 
-    // Implement isa/cast/dyncast.
-    static bool classof(const DIEValue *) { return true; }
-
 #ifndef NDEBUG
     virtual void print(raw_ostream &O) = 0;
     void dump();
@@ -257,7 +254,6 @@ namespace llvm {
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIEInteger *) { return true; }
     static bool classof(const DIEValue *I) { return I->getType() == isInteger; }
 
 #ifndef NDEBUG
@@ -286,7 +282,6 @@ namespace llvm {
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIELabel *)  { return true; }
     static bool classof(const DIEValue *L) { return L->getType() == isLabel; }
 
 #ifndef NDEBUG
@@ -313,7 +308,6 @@ namespace llvm {
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIEDelta *)  { return true; }
     static bool classof(const DIEValue *D) { return D->getType() == isDelta; }
 
 #ifndef NDEBUG
@@ -343,7 +337,6 @@ namespace llvm {
     }
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIEEntry *)  { return true; }
     static bool classof(const DIEValue *E) { return E->getType() == isEntry; }
 
 #ifndef NDEBUG
@@ -383,7 +376,6 @@ namespace llvm {
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIEBlock *)  { return true; }
     static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
 
 #ifndef NDEBUG

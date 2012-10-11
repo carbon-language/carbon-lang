@@ -389,9 +389,6 @@ public:
   static PointerType *getInt32PtrTy(LLVMContext &C, unsigned AS = 0);
   static PointerType *getInt64PtrTy(LLVMContext &C, unsigned AS = 0);
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Type *) { return true; }
-
   /// getPointerTo - Return a pointer to the current type.  This is equivalent
   /// to PointerType::get(Foo, AddrSpace).
   PointerType *getPointerTo(unsigned AddrSpace = 0);

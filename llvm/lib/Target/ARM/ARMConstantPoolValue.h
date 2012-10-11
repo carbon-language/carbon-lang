@@ -102,8 +102,6 @@ public:
   virtual void print(raw_ostream &O) const;
   void print(raw_ostream *O) const { if (O) print(*O); }
   void dump() const;
-
-  static bool classof(const ARMConstantPoolValue *) { return true; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &O, const ARMConstantPoolValue &V) {
@@ -158,7 +156,6 @@ public:
   static bool classof(const ARMConstantPoolValue *APV) {
     return APV->isGlobalValue() || APV->isBlockAddress() || APV->isLSDA();
   }
-  static bool classof(const ARMConstantPoolConstant *) { return true; }
 };
 
 /// ARMConstantPoolSymbol - ARM-specific constantpool values for external
@@ -192,7 +189,6 @@ public:
   static bool classof(const ARMConstantPoolValue *ACPV) {
     return ACPV->isExtSymbol();
   }
-  static bool classof(const ARMConstantPoolSymbol *) { return true; }
 };
 
 /// ARMConstantPoolMBB - ARM-specific constantpool value of a machine basic
@@ -225,7 +221,6 @@ public:
   static bool classof(const ARMConstantPoolValue *ACPV) {
     return ACPV->isMachineBasicBlock();
   }
-  static bool classof(const ARMConstantPoolMBB *) { return true; }
 };
 
 } // End llvm namespace

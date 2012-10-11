@@ -198,7 +198,6 @@ public:
   static inline bool classof(const Binary *v) {
     return v->isCOFF();
   }
-  static inline bool classof(const COFFObjectFile *v) { return true; }
 };
 
 }

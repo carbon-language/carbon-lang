@@ -73,7 +73,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const TerminatorInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->isTerminator();
   }
@@ -113,7 +112,6 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UnaryInstruction *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Alloca ||
            I->getOpcode() == Instruction::Load ||
@@ -361,7 +359,6 @@ public:
   bool isExact() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const BinaryOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->isBinaryOp();
   }
@@ -611,7 +608,6 @@ public:
   static bool castIsValid(Instruction::CastOps op, Value *S, Type *DstTy);
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const CastInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->isCast();
   }
@@ -816,7 +812,6 @@ public:
   static bool isFalseWhenEqual(unsigned short predicate);
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const CmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ICmp ||
            I->getOpcode() == Instruction::FCmp;

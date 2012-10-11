@@ -723,7 +723,6 @@ public:
     return v->getType() == getELFType(target_endianness == support::little,
                                       is64Bits);
   }
-  static inline bool classof(const ELFObjectFile *v) { return true; }
 };
 
 // Iterate through the version definitions, and place each Elf_Verdef

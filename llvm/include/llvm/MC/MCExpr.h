@@ -99,8 +99,6 @@ public:
   const MCSection *FindAssociatedSection() const;
 
   /// @}
-
-  static bool classof(const MCExpr *) { return true; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MCExpr &E) {
@@ -132,7 +130,6 @@ public:
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Constant;
   }
-  static bool classof(const MCConstantExpr *) { return true; }
 };
 
 /// MCSymbolRefExpr - Represent a reference to a symbol from inside an
@@ -248,7 +245,6 @@ public:
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::SymbolRef;
   }
-  static bool classof(const MCSymbolRefExpr *) { return true; }
 };
 
 /// MCUnaryExpr - Unary assembler expressions.
@@ -302,7 +298,6 @@ public:
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Unary;
   }
-  static bool classof(const MCUnaryExpr *) { return true; }
 };
 
 /// MCBinaryExpr - Binary assembler expressions.
@@ -437,7 +432,6 @@ public:
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Binary;
   }
-  static bool classof(const MCBinaryExpr *) { return true; }
 };
 
 /// MCTargetExpr - This is an extension point for target-specific MCExpr
@@ -461,7 +455,6 @@ public:
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;
   }
-  static bool classof(const MCTargetExpr *) { return true; }
 };
 
 } // end namespace llvm

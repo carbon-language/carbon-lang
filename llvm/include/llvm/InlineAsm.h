@@ -189,7 +189,6 @@ public:
   }
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const InlineAsm *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::InlineAsmVal;
   }

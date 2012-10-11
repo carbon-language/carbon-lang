@@ -45,7 +45,6 @@ namespace llvm {
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const IntrinsicInst *) { return true; }
     static inline bool classof(const CallInst *I) {
       if (const Function *CF = I->getCalledFunction())
         return CF->getIntrinsicID() != 0;
@@ -62,7 +61,6 @@ namespace llvm {
   public:
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const DbgInfoIntrinsic *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
       case Intrinsic::dbg_declare:
@@ -86,7 +84,6 @@ namespace llvm {
     MDNode *getVariable() const { return cast<MDNode>(getArgOperand(1)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const DbgDeclareInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::dbg_declare;
     }
@@ -108,7 +105,6 @@ namespace llvm {
     MDNode *getVariable() const { return cast<MDNode>(getArgOperand(2)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const DbgValueInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::dbg_value;
     }
@@ -175,7 +171,6 @@ namespace llvm {
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemIntrinsic *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
       case Intrinsic::memcpy:
@@ -205,7 +200,6 @@ namespace llvm {
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemSetInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memset;
     }
@@ -238,7 +232,6 @@ namespace llvm {
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemTransferInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memcpy ||
              I->getIntrinsicID() == Intrinsic::memmove;
@@ -254,7 +247,6 @@ namespace llvm {
   class MemCpyInst : public MemTransferInst {
   public:
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemCpyInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memcpy;
     }
@@ -268,7 +260,6 @@ namespace llvm {
   class MemMoveInst : public MemTransferInst {
   public:
     // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemMoveInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memmove;
     }

@@ -60,7 +60,6 @@ public:
     return Instruction::UserOp1;
   }
 
-  static inline bool classof(const Operator *) { return true; }
   static inline bool classof(const Instruction *) { return true; }
   static inline bool classof(const ConstantExpr *) { return true; }
   static inline bool classof(const Value *V) {
@@ -106,7 +105,6 @@ public:
     return (SubclassOptionalData & NoSignedWrap) != 0;
   }
 
-  static inline bool classof(const OverflowingBinaryOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Add ||
            I->getOpcode() == Instruction::Sub ||
@@ -180,7 +178,6 @@ public:
   /// default precision.
   float getFPAccuracy() const;
 
-  static inline bool classof(const FPMathOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getType()->isFPOrFPVectorTy();
   }
@@ -196,9 +193,6 @@ template<typename SuperClass, unsigned Opc>
 class ConcreteOperator : public SuperClass {
   ~ConcreteOperator() LLVM_DELETED_FUNCTION;
 public:
-  static inline bool classof(const ConcreteOperator<SuperClass, Opc> *) {
-    return true;
-  }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Opc;
   }

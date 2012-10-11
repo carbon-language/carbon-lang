@@ -388,7 +388,6 @@ public:
   static inline bool classof(const Binary *v) {
     return v->isObject();
   }
-  static inline bool classof(const ObjectFile *v) { return true; }
 
 public:
   static ObjectFile *createCOFFObjectFile(MemoryBuffer *Object);

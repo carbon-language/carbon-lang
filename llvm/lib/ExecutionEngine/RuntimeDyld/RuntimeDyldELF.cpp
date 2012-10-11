@@ -59,9 +59,6 @@ public:
       const ELFObjectFile<target_endianness, is64Bits> *v) {
     return v->isDyldType();
   }
-  static inline bool classof(const DyldELFObject *v) {
-    return true;
-  }
 };
 
 template<support::endianness target_endianness, bool is64Bits>

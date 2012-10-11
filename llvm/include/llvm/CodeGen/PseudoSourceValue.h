@@ -50,7 +50,6 @@ namespace llvm {
     /// classof - Methods for support type inquiry through isa, cast, and
     /// dyn_cast:
     ///
-    static inline bool classof(const PseudoSourceValue *) { return true; }
     static inline bool classof(const Value *V) {
       return V->getValueID() == PseudoSourceValueVal ||
              V->getValueID() == FixedStackPseudoSourceValueVal;
@@ -90,9 +89,6 @@ namespace llvm {
     /// classof - Methods for support type inquiry through isa, cast, and
     /// dyn_cast:
     ///
-    static inline bool classof(const FixedStackPseudoSourceValue *) {
-      return true;
-    }
     static inline bool classof(const Value *V) {
       return V->getValueID() == FixedStackPseudoSourceValueVal;
     }

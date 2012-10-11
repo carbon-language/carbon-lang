@@ -162,7 +162,6 @@ namespace llvm {
     SCEVCouldNotCompute();
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const SCEVCouldNotCompute *S) { return true; }
     static bool classof(const SCEV *S);
   };
 

@@ -112,7 +112,6 @@ public:
   bool isStaticAlloca() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const AllocaInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Alloca);
   }
@@ -232,7 +231,6 @@ public:
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const LoadInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Load;
   }
@@ -354,7 +352,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const StoreInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Store;
   }
@@ -426,7 +423,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FenceInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Fence;
   }
@@ -526,7 +522,6 @@ public:
   }
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const AtomicCmpXchgInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::AtomicCmpXchg;
   }
@@ -670,7 +665,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const AtomicRMWInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::AtomicRMW;
   }
@@ -849,7 +843,6 @@ public:
   bool isInBounds() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const GetElementPtrInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::GetElementPtr);
   }
@@ -1031,7 +1024,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ICmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ICmp;
   }
@@ -1141,7 +1133,6 @@ public:
   }
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FCmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::FCmp;
   }
@@ -1370,7 +1361,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const CallInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Call;
   }
@@ -1476,7 +1466,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const SelectInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Select;
   }
@@ -1519,7 +1508,6 @@ public:
   static unsigned getPointerOperandIndex() { return 0U; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const VAArgInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == VAArg;
   }
@@ -1573,7 +1561,6 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ExtractElementInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ExtractElement;
   }
@@ -1632,7 +1619,6 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const InsertElementInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::InsertElement;
   }
@@ -1713,7 +1699,6 @@ public:
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ShuffleVectorInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ShuffleVector;
   }
@@ -1809,7 +1794,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ExtractValueInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ExtractValue;
   }
@@ -1931,7 +1915,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const InsertValueInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::InsertValue;
   }
@@ -2148,7 +2131,6 @@ public:
   Value *hasConstantValue() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const PHINode *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::PHI;
   }
@@ -2256,7 +2238,6 @@ public:
   void reserveClauses(unsigned Size) { growOperands(Size); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const LandingPadInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::LandingPad;
   }
@@ -2325,7 +2306,6 @@ public:
   unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ReturnInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Ret);
   }
@@ -2425,7 +2405,6 @@ public:
   void swapSuccessors();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const BranchInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Br);
   }
@@ -2836,7 +2815,6 @@ public:
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
 
-  static inline bool classof(const SwitchInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Switch;
   }
@@ -2935,7 +2913,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const IndirectBrInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::IndirectBr;
   }
@@ -3154,7 +3131,6 @@ public:
   unsigned getNumSuccessors() const { return 2; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const InvokeInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Invoke);
   }
@@ -3234,7 +3210,6 @@ public:
   unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ResumeInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Resume;
   }
@@ -3279,7 +3254,6 @@ public:
   unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UnreachableInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Unreachable;
   }
@@ -3320,7 +3294,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const TruncInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Trunc;
   }
@@ -3357,7 +3330,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ZExtInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == ZExt;
   }
@@ -3394,7 +3366,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const SExtInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == SExt;
   }
@@ -3431,7 +3402,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FPTruncInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == FPTrunc;
   }
@@ -3468,7 +3438,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FPExtInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == FPExt;
   }
@@ -3505,7 +3474,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UIToFPInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == UIToFP;
   }
@@ -3542,7 +3510,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const SIToFPInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == SIToFP;
   }
@@ -3579,7 +3546,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FPToUIInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == FPToUI;
   }
@@ -3616,7 +3582,6 @@ public:
   );
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FPToSIInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == FPToSI;
   }
@@ -3657,7 +3622,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const IntToPtrInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == IntToPtr;
   }
@@ -3699,7 +3663,6 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const PtrToIntInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == PtrToInt;
   }
@@ -3736,7 +3699,6 @@ public:
   );
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const BitCastInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == BitCast;
   }

@@ -61,7 +61,6 @@ namespace llvm {
     static bool classof(const MCSection *S) {
       return S->getVariant() == SV_COFF;
     }
-    static bool classof(const MCSectionCOFF *) { return true; }
   };
 
 } // end namespace llvm

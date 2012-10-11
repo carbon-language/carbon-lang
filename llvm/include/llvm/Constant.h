@@ -108,8 +108,6 @@ public:
   virtual void destroyConstant() { llvm_unreachable("Not reached!"); }
 
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Constant *) { return true; }
-  static inline bool classof(const GlobalValue *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueID() >= ConstantFirstVal &&
            V->getValueID() <= ConstantLastVal;

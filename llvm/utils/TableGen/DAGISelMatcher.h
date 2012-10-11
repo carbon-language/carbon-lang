@@ -99,8 +99,6 @@ public:
 
   OwningPtr<Matcher> &getNextPtr() { return Next; }
 
-  static inline bool classof(const Matcher *) { return true; }
-
   bool isEqual(const Matcher *M) const {
     if (getKind() != M->getKind()) return false;
     return isEqualImpl(M);

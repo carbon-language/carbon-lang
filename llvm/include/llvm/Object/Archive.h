@@ -129,7 +129,6 @@ public:
   symbol_iterator end_symbols() const;
 
   // Cast methods.
-  static inline bool classof(Archive const *v) { return true; }
   static inline bool classof(Binary const *v) {
     return v->isArchive();
   }
