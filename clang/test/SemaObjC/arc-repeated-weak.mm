@@ -181,6 +181,18 @@ void assignToStrongWithCasts(Test *a) {
   }
 }
 
+void assignToStrongWithMessages(Test *a) {
+  if (condition()) {
+    id val = [a weakProp]; // no-warning
+    (void)val;
+  } else {
+    id val;
+    val = [a weakProp]; // no-warning
+    (void)val;
+  }
+}
+
+
 void assignAfterRead(Test *a) {
   // Special exception for a single read before any writes.
   if (!a.weakProp) // no-warning

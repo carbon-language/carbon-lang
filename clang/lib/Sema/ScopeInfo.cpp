@@ -159,7 +159,7 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
     Uses = WeakObjectUses.find(WeakObjectProfileTy(IvarE));
   else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
     Uses = WeakObjectUses.find(WeakObjectProfileTy(DRE));
-  else if (const ObjCMessageExpr *MsgE = dyn_cast<ObjCMessageExpr>(MsgE)) {
+  else if (const ObjCMessageExpr *MsgE = dyn_cast<ObjCMessageExpr>(E)) {
     Uses = WeakObjectUses.end();
     if (const ObjCMethodDecl *MD = MsgE->getMethodDecl()) {
       if (const ObjCPropertyDecl *Prop = MD->findPropertyDecl()) {
