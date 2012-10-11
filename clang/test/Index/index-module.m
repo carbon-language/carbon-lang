@@ -1,4 +1,3 @@
-// XFAIL: mingw32,win32
 
 #include <DependsOnModule/DependsOnModule.h>
 @__experimental_modules_import DependsOnModule;
@@ -51,3 +50,5 @@ int glob;
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Buried_Treasure | {{.*}} | loc: {{.*}}/Modules/Inputs/Module.framework/Headers/Buried/Treasure.h:1:11
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: module_subframework | {{.*}} | loc: {{.*}}/Modules/Inputs/Module.framework/Frameworks/SubFramework.framework/Headers/SubFramework.h:4:7
 // CHECK-TMOD-NOT: [indexDeclaration]
+
+// XFAIL: mingw32,win32
