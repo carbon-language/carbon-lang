@@ -399,6 +399,10 @@ public:
   virtual void flattenLocations() { Pos.flatten(); }
   
   virtual void Profile(llvm::FoldingSetNodeID &ID) const;
+
+  static bool classof(const PathDiagnosticPiece *P) {
+    return P->getKind() == Event || P->getKind() == Macro;
+  }
 };
 
 /// \brief Interface for classes constructing Stack hints.
