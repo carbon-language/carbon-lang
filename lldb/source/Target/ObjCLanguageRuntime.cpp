@@ -31,6 +31,7 @@ ObjCLanguageRuntime::~ObjCLanguageRuntime()
 ObjCLanguageRuntime::ObjCLanguageRuntime (Process *process) :
     LanguageRuntime (process),
     m_has_new_literals_and_indexing (eLazyBoolCalculate),
+    m_isa_to_descriptor_cache(),
     m_isa_to_descriptor_cache_is_up_to_date (false)
 {
 
@@ -284,24 +285,10 @@ ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,
 ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetISA(const ConstString &name)
 {
-    // Try once regardless of whether the map has been brought up to date.  We
-    // might have encountered the relevant isa directly.
-    for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
-        if (val.second && val.second->GetClassName() == name)
-            return val.first;
- 
-    // If the map is up to date and we didn't find the isa, give up.
-    if (m_isa_to_descriptor_cache_is_up_to_date)
-        return 0;
-    
-    // Try again after bringing the map up to date.
     UpdateISAToDescriptorMap();
-
     for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
         if (val.second && val.second->GetClassName() == name)
             return val.first;
-    
-    // Now we know for sure that the class isn't there.  Give up.
     return 0;
 }
 
@@ -318,8 +305,6 @@ ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
     return 0;
 }
 
-// TODO: should we have a transparent_kvo parameter here to say if we
-// want to replace the KVO swizzled class with the actual user-level type?
 ConstString
 ObjCLanguageRuntime::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 {
@@ -330,31 +315,71 @@ ObjCLanguageRuntime::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 }
 
 ObjCLanguageRuntime::ClassDescriptorSP
-ObjCLanguageRuntime::GetClassDescriptor (ValueObject& in_value)
+ObjCLanguageRuntime::GetClassDescriptor (const ConstString &class_name)
 {
-    ObjCISA isa = GetISA(in_value);
-    if (isa)
-        return GetClassDescriptor (isa);
+    UpdateISAToDescriptorMap();
+    for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
+        if (val.second && val.second->GetClassName() == class_name)
+            return val.second;
+    return ClassDescriptorSP();
+
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+ObjCLanguageRuntime::GetClassDescriptor (ValueObject& valobj)
+{
+    ClassDescriptorSP objc_class_sp;
+    // if we get an invalid VO (which might still happen when playing around
+    // with pointers returned by the expression parser, don't consider this
+    // a valid ObjC object)
+    if (valobj.GetValue().GetContextType() != Value::eContextTypeInvalid)
+    {
+        addr_t isa_pointer = valobj.GetPointerValue();
+        if (isa_pointer != LLDB_INVALID_ADDRESS)
+        {
+            ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+            
+            Process *process = exe_ctx.GetProcessPtr();
+            if (process)
+            {
+                Error error;
+                ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
+                if (isa != LLDB_INVALID_ADDRESS)
+                    objc_class_sp = GetClassDescriptor (isa);
+            }
+        }
+    }
+    return objc_class_sp;
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+ObjCLanguageRuntime::GetNonKVOClassDescriptor (ValueObject& valobj)
+{
+    ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (GetClassDescriptor (valobj));
+    if (objc_class_sp)
+    {
+        if (!objc_class_sp->IsKVO())
+            return objc_class_sp;
+        
+        ClassDescriptorSP non_kvo_objc_class_sp(objc_class_sp->GetSuperclass());
+        if (non_kvo_objc_class_sp && non_kvo_objc_class_sp->IsValid())
+            return non_kvo_objc_class_sp;
+    }
     return ClassDescriptorSP();
 }
+
 
 ObjCLanguageRuntime::ClassDescriptorSP
 ObjCLanguageRuntime::GetClassDescriptor (ObjCISA isa)
 {
-    ClassDescriptorSP objc_class_sp;
     if (isa)
     {
-        ObjCLanguageRuntime::ISAToDescriptorIterator found = m_isa_to_descriptor_cache.find(isa);
-        ObjCLanguageRuntime::ISAToDescriptorIterator end = m_isa_to_descriptor_cache.end();
-    
-        if (found != end && found->second)
-            return found->second;
-    
-        objc_class_sp = CreateClassDescriptor(isa);
-        if (objc_class_sp && objc_class_sp->IsValid())
-            m_isa_to_descriptor_cache[isa] = objc_class_sp;
+        UpdateISAToDescriptorMap();
+        ObjCLanguageRuntime::ISAToDescriptorIterator pos = m_isa_to_descriptor_cache.find(isa);    
+        if (pos != m_isa_to_descriptor_cache.end())
+            return pos->second;
     }
-    return objc_class_sp;
+    return ClassDescriptorSP();
 }
 
 ObjCLanguageRuntime::ClassDescriptorSP
@@ -365,14 +390,12 @@ ObjCLanguageRuntime::GetNonKVOClassDescriptor (ObjCISA isa)
         ClassDescriptorSP objc_class_sp = GetClassDescriptor (isa);
         if (objc_class_sp && objc_class_sp->IsValid())
         {
-            if (objc_class_sp->IsKVO())
-            {
-                ClassDescriptorSP non_kvo_objc_class_sp(objc_class_sp->GetSuperclass());
-                if (non_kvo_objc_class_sp && non_kvo_objc_class_sp->IsValid())
-                    return non_kvo_objc_class_sp;
-            }
-            else
+            if (!objc_class_sp->IsKVO())
                 return objc_class_sp;
+
+            ClassDescriptorSP non_kvo_objc_class_sp(objc_class_sp->GetSuperclass());
+            if (non_kvo_objc_class_sp && non_kvo_objc_class_sp->IsValid())
+                return non_kvo_objc_class_sp;
         }
     }
     return ClassDescriptorSP();

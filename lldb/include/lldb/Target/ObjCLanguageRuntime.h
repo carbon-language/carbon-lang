@@ -174,12 +174,18 @@ public:
     virtual ClassDescriptorSP
     GetClassDescriptor (ValueObject& in_value);
     
+    ClassDescriptorSP
+    GetNonKVOClassDescriptor (ValueObject& in_value);
+
+    virtual ClassDescriptorSP
+    GetClassDescriptor (const ConstString &class_name);
+
     virtual ClassDescriptorSP
     GetClassDescriptor (ObjCISA isa);
 
     ClassDescriptorSP
     GetNonKVOClassDescriptor (ObjCISA isa);
-
+    
     virtual
     ~ObjCLanguageRuntime();
     
@@ -200,10 +206,7 @@ public:
     
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan (Thread &thread, bool stop_others) = 0;
-    
-    virtual ClassDescriptorSP
-    CreateClassDescriptor (ObjCISA isa) = 0;
-    
+
     lldb::addr_t
     LookupInMethodCache (lldb::addr_t class_addr, lldb::addr_t sel);
 
@@ -231,17 +234,15 @@ public:
         return eObjC_VersionUnknown;
     }
         
-    virtual bool
-    IsValidISA(ObjCISA isa) = 0;
-    
-    virtual ObjCISA
-    GetISA(ValueObject& valobj) = 0;
-    
-    virtual void
-    UpdateISAToDescriptorMap_Impl()
+    bool
+    IsValidISA(ObjCISA isa)
     {
-        // to be implemented by runtimes if they support doing this
+        UpdateISAToDescriptorMap();
+        return m_isa_to_descriptor_cache.count(isa) > 0;
     }
+
+    virtual bool
+    UpdateISAToDescriptorMap_Impl() = 0;
     
     void
     UpdateISAToDescriptorMap()
@@ -249,9 +250,7 @@ public:
         if (m_isa_to_descriptor_cache_is_up_to_date)
             return;
         
-        m_isa_to_descriptor_cache_is_up_to_date = true;
-
-        UpdateISAToDescriptorMap_Impl();
+        m_isa_to_descriptor_cache_is_up_to_date = UpdateISAToDescriptorMap_Impl();
     }
     
     virtual ObjCISA

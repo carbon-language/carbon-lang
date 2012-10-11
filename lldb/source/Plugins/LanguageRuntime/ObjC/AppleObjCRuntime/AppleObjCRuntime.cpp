@@ -168,6 +168,30 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     return cstr_len > 0;
 }
 
+lldb::ModuleSP
+AppleObjCRuntime::GetObjCModule ()
+{
+    ModuleSP module_sp (m_objc_module_wp.lock());
+    if (module_sp)
+        return module_sp;
+
+    Process *process = GetProcess();
+    if (process)
+    {
+        ModuleList& modules = process->GetTarget().GetImages();
+        for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
+        {
+            module_sp = modules.GetModuleAtIndex(idx);
+            if (AppleObjCRuntime::AppleIsModuleObjCLibrary(module_sp))
+            {
+                m_objc_module_wp = module_sp;
+                return module_sp;
+            }
+        }
+    }
+    return ModuleSP();
+}
+
 Address *
 AppleObjCRuntime::GetPrintForDebuggerAddr()
 {
@@ -211,15 +235,17 @@ AppleObjCRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
 bool
 AppleObjCRuntime::AppleIsModuleObjCLibrary (const ModuleSP &module_sp)
 {
-    const FileSpec &module_file_spec = module_sp->GetFileSpec();
-    static ConstString ObjCName ("libobjc.A.dylib");
-    
-    if (module_file_spec)
+    if (module_sp)
     {
-        if (module_file_spec.GetFilename() == ObjCName)
-            return true;
+        const FileSpec &module_file_spec = module_sp->GetFileSpec();
+        static ConstString ObjCName ("libobjc.A.dylib");
+        
+        if (module_file_spec)
+        {
+            if (module_file_spec.GetFilename() == ObjCName)
+                return true;
+        }
     }
-    
     return false;
 }
 

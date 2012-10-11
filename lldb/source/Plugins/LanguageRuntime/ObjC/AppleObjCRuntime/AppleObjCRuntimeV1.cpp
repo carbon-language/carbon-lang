@@ -24,6 +24,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -155,35 +156,35 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 
 // this code relies on the assumption that an Objective-C object always starts
 // with an ISA at offset 0.
-ObjCLanguageRuntime::ObjCISA
-AppleObjCRuntimeV1::GetISA(ValueObject& valobj)
-{
-//    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
+//ObjCLanguageRuntime::ObjCISA
+//AppleObjCRuntimeV1::GetISA(ValueObject& valobj)
+//{
+////    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
+////        return 0;
+//    
+//    // if we get an invalid VO (which might still happen when playing around
+//    // with pointers returned by the expression parser, don't consider this
+//    // a valid ObjC object)
+//    if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
 //        return 0;
-    
-    // if we get an invalid VO (which might still happen when playing around
-    // with pointers returned by the expression parser, don't consider this
-    // a valid ObjC object)
-    if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
-        return 0;
-    
-    addr_t isa_pointer = valobj.GetPointerValue();
-    
-    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
-    
-    Process *process = exe_ctx.GetProcessPtr();
-    if (process)
-    {
-        uint8_t pointer_size = process->GetAddressByteSize();
-        
-        Error error;
-        return process->ReadUnsignedIntegerFromMemory (isa_pointer,
-                                                       pointer_size,
-                                                       0,
-                                                       error);
-    }
-    return 0;
-}
+//    
+//    addr_t isa_pointer = valobj.GetPointerValue();
+//    
+//    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+//    
+//    Process *process = exe_ctx.GetProcessPtr();
+//    if (process)
+//    {
+//        uint8_t pointer_size = process->GetAddressByteSize();
+//        
+//        Error error;
+//        return process->ReadUnsignedIntegerFromMemory (isa_pointer,
+//                                                       pointer_size,
+//                                                       0,
+//                                                       error);
+//    }
+//    return 0;
+//}
 
 AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ValueObject &isa_pointer)
 {
@@ -287,11 +288,124 @@ AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
     return ObjCLanguageRuntime::ClassDescriptorSP(new AppleObjCRuntimeV1::ClassDescriptorV1(m_parent_isa,process_sp));
 }
 
-ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV1::CreateClassDescriptor (ObjCISA isa)
+bool
+AppleObjCRuntimeV1::UpdateISAToDescriptorMap_Impl()
 {
-    ClassDescriptorSP objc_class_sp;
-    if (isa != 0)
-        objc_class_sp.reset (new ClassDescriptorV1(isa,m_process->CalculateProcess()));
-    return objc_class_sp;
+    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    
+    Process *process_ptr = GetProcess();
+    
+    if (!process_ptr)
+        return false;
+    
+    ProcessSP process_sp = process_ptr->shared_from_this();
+    
+    ModuleSP objc_module_sp(GetObjCModule());
+    
+    if (!objc_module_sp)
+        return false;
+    
+    uint32_t isa_count = 0;
+    
+    static ConstString g_objc_debug_class_hash("_objc_debug_class_hash");
+    
+    const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_objc_debug_class_hash, lldb::eSymbolTypeData);
+    if (symbol)
+    {
+        lldb::addr_t objc_debug_class_hash_addr = symbol->GetAddress().GetLoadAddress(&process_sp->GetTarget());
+        
+        if (objc_debug_class_hash_addr != LLDB_INVALID_ADDRESS)
+        {
+            Error error;
+            lldb::addr_t objc_debug_class_hash_ptr = process_sp->ReadPointerFromMemory(objc_debug_class_hash_addr, error);
+            if (error.Success() && objc_debug_class_hash_ptr != 0 && objc_debug_class_hash_ptr != LLDB_INVALID_ADDRESS)
+            {
+                // Read the NXHashTable struct:
+                //
+                // typedef struct {
+                //     const NXHashTablePrototype *prototype;
+                //     unsigned   count;
+                //     unsigned   nbBuckets;
+                //     void       *buckets;
+                //     const void *info;
+                // } NXHashTable;
+
+                DataBufferHeap buffer(1024, 0);
+                if (process_sp->ReadMemory(objc_debug_class_hash_ptr, buffer.GetBytes(), 20, error) == 20)
+                {
+                    const uint32_t addr_size = m_process->GetAddressByteSize();
+                    const ByteOrder byte_order = m_process->GetByteOrder();
+                    DataExtractor data (buffer.GetBytes(), buffer.GetByteSize(), byte_order, addr_size);
+                    uint32_t offset = addr_size + 4; // Skip prototype
+                    const uint32_t num_buckets = data.GetU32(&offset);
+                    const addr_t buckets_ptr = data.GetPointer(&offset);
+                
+                    const uint32_t data_size = num_buckets * 2 * sizeof(uint32_t);
+                    buffer.SetByteSize(data_size);
+                    
+                    if (process_sp->ReadMemory(buckets_ptr, buffer.GetBytes(), data_size, error) == data_size)
+                    {
+                        data.SetData(buffer.GetBytes(), buffer.GetByteSize(), byte_order);
+                        offset = 0;
+                        for (uint32_t bucket_idx = 0; bucket_idx < num_buckets; ++bucket_idx)
+                        {
+                            const uint32_t bucket_isa_count = data.GetU32 (&offset);
+                            const lldb::addr_t bucket_data = data.GetU32 (&offset);
+                            
+
+                            if (bucket_isa_count == 0)
+                                continue;
+                            
+                            isa_count += bucket_isa_count;
+
+                            ObjCISA isa;
+                            if (bucket_isa_count == 1)
+                            {
+                                // When we only have one entry in the bucket, the bucket data is the "isa"
+                                isa = bucket_data;
+                                if (isa)
+                                {
+                                    if (m_isa_to_descriptor_cache.count(isa) == 0)
+                                    {
+                                        ClassDescriptorSP descriptor_sp (new ClassDescriptorV1(isa, process_sp));
+                                        
+                                        if (log && log->GetVerbose())
+                                            log->Printf("AppleObjCRuntimeV1 added (ObjCISA)0x%llx from _objc_debug_class_hash to isa->descriptor cache", isa);
+                                        
+                                        m_isa_to_descriptor_cache[isa] = descriptor_sp;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // When we have more than one entry in the bucket, the bucket data is a pointer
+                                // to an array of "isa" values
+                                addr_t isa_addr = bucket_data;
+                                for (uint32_t isa_idx = 0; isa_idx < bucket_isa_count; ++isa_idx, isa_addr += addr_size)
+                                {
+                                    isa = m_process->ReadPointerFromMemory(isa_addr, error);
+
+                                    if (isa && isa != LLDB_INVALID_ADDRESS)
+                                    {
+                                        if (m_isa_to_descriptor_cache.count(isa) == 0)
+                                        {
+                                            ClassDescriptorSP descriptor_sp (new ClassDescriptorV1(isa, process_sp));
+                                            
+                                            if (log && log->GetVerbose())
+                                                log->Printf("AppleObjCRuntimeV1 added (ObjCISA)0x%llx from _objc_debug_class_hash to isa->descriptor cache", isa);
+                                            
+                                            m_isa_to_descriptor_cache[isa] = descriptor_sp;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return isa_count > 0;
 }
+

@@ -63,17 +63,10 @@ public:
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan (Thread &thread, bool stop_others);
     
-    virtual bool
-    IsValidISA(ObjCISA isa)
-    {
-        return false;
-    }
-    
-    virtual ObjCISA
-    GetISA(ValueObject& valobj)
-    {
-        return 0;
-    }
+    // Get the "libobjc.A.dylib" module from the current target if we can find
+    // it, also cache it once it is found to ensure quick lookups.
+    lldb::ModuleSP
+    GetObjCModule ();
     
     //------------------------------------------------------------------
     // Static Functions
@@ -111,8 +104,9 @@ protected:
     bool m_read_objc_library;
     std::auto_ptr<lldb_private::AppleObjCTrampolineHandler> m_objc_trampoline_handler_ap;
     lldb::BreakpointSP m_objc_exception_bp_sp;
+    lldb::ModuleWP m_objc_module_wp;
 
-    AppleObjCRuntime(Process *process) : 
+    AppleObjCRuntime(Process *process) :
         lldb_private::ObjCLanguageRuntime(process),
         m_read_objc_library (false),
         m_objc_trampoline_handler_ap(NULL)

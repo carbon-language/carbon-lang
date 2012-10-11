@@ -73,14 +73,8 @@ public:
     virtual size_t
     GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
     
-    virtual void
-    UpdateISAToDescriptorMap_Impl();
-    
     virtual bool
-    IsValidISA (ObjCLanguageRuntime::ObjCISA isa)
-    {
-        return (isa != 0);
-    }
+    UpdateISAToDescriptorMap_Impl();
     
     // none of these are valid ISAs - we use them to infer the type
     // of tagged pointers - if we have something meaningful to say
@@ -94,18 +88,11 @@ public:
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSManagedObject = 5;
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSDate = 6;
 
-    
-    virtual ObjCLanguageRuntime::ObjCISA
-    GetISA(ValueObject& valobj);
-    
     virtual ConstString
     GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa);
     
     virtual ClassDescriptorSP
     GetClassDescriptor (ValueObject& in_value);
-    
-    virtual ClassDescriptorSP
-    CreateClassDescriptor (ObjCISA isa);
     
     virtual TypeVendor *
     GetTypeVendor();

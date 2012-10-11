@@ -585,7 +585,7 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
 bool
 AppleObjCRuntimeV2::IsTaggedPointer(addr_t ptr)
 {
-    return (ptr & 0x01);
+    return (ptr & 1);
 }
 
 class RemoteNXMapTable
@@ -597,7 +597,7 @@ public:
         m_end_iterator(*this, -1),
         m_load_addr(load_addr),
         m_map_pair_size(m_process_sp->GetAddressByteSize() * 2),
-        m_NXMAPNOTAKEY(m_process_sp->GetAddressByteSize() == 8 ? 0xffffffffffffffffull : 0xffffffffull)
+        m_NXMAPNOTAKEY(m_process_sp->GetAddressByteSize() == 8 ? UINT64_MAX : UINT32_MAX)
     {
         lldb::addr_t cursor = load_addr;
      
@@ -1668,49 +1668,45 @@ private:
 };
 
 ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV2::CreateClassDescriptor (ObjCISA isa)
-{
-    UpdateISAToDescriptorMap();
-    
-    ISAToDescriptorMap::const_iterator di = m_isa_to_descriptor_cache.find(isa);
-    
-    if (di == m_isa_to_descriptor_cache.end())
-        return ObjCLanguageRuntime::ClassDescriptorSP();
-    else
-        return di->second;
-}
-
-ObjCLanguageRuntime::ClassDescriptorSP
-AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& in_value)
+AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
 {
     ClassDescriptorSP objc_class_sp;
-    uint64_t ptr_value = in_value.GetValueAsUnsigned(0);
-    if (ptr_value)
+    // if we get an invalid VO (which might still happen when playing around
+    // with pointers returned by the expression parser, don't consider this
+    // a valid ObjC object)
+    if (valobj.GetValue().GetContextType() != Value::eContextTypeInvalid)
     {
-        if (ptr_value & 1)
-            objc_class_sp = ClassDescriptorSP(new ClassDescriptorV2Tagged(in_value));
+        addr_t isa_pointer = valobj.GetPointerValue();
+        
+        // tagged pointer
+        if (IsTaggedPointer(isa_pointer))
+        {
+            objc_class_sp.reset (new ClassDescriptorV2Tagged(valobj));
+            
+            // probably an invalid tagged pointer - say it's wrong
+            if (objc_class_sp->IsValid())
+                return objc_class_sp;
+            else
+                objc_class_sp.reset();
+        }
         else
-            objc_class_sp = ObjCLanguageRuntime::GetClassDescriptor (in_value);
+        {
+            ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+            
+            Process *process = exe_ctx.GetProcessPtr();
+            if (process)
+            {
+                Error error;
+                ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
+                if (isa != LLDB_INVALID_ADDRESS)
+                    objc_class_sp = ObjCLanguageRuntime::GetClassDescriptor (isa);
+            }
+        }
     }
     return objc_class_sp;
 }
 
-ModuleSP FindLibobjc (Target &target)
-{
-    ModuleList& modules = target.GetImages();
-    for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
-    {
-        lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);
-        if (!module_sp)
-            continue;
-        if (strncmp(module_sp->GetFileSpec().GetFilename().AsCString(""), "libobjc.", sizeof("libobjc.") - 1) == 0)
-            return module_sp;
-    }
-    
-    return ModuleSP();
-}
-
-void
+bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
 {
     lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -1718,193 +1714,105 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMap_Impl()
     Process *process_ptr = GetProcess();
     
     if (!process_ptr)
-        return;
+        return false;
     
-    ProcessSP process_sp = process_ptr->shared_from_this();
+    ProcessSP process_sp (process_ptr->shared_from_this());
     
-    Target &target(process_sp->GetTarget());
-    
-    ModuleSP objc_module_sp(FindLibobjc(target));
+    ModuleSP objc_module_sp(GetObjCModule());
     
     if (!objc_module_sp)
-        return;
-    
-    do
-    {
-        SymbolContextList sc_list;
-    
-        size_t num_symbols = objc_module_sp->FindSymbolsWithNameAndType(ConstString("gdb_objc_realized_classes"),
-                                                                        lldb::eSymbolTypeData,
-                                                                        sc_list);
-    
-        if (!num_symbols)
-            break;
-        
-        SymbolContext gdb_objc_realized_classes_sc;
-        
-        if (!sc_list.GetContextAtIndex(0, gdb_objc_realized_classes_sc))
-             break;
-        
-        AddressRange gdb_objc_realized_classes_addr_range;
-        
-        const uint32_t scope = eSymbolContextSymbol;
-        const uint32_t range_idx = 0;
-        bool use_inline_block_range = false;
+        return false;
 
-        if (!gdb_objc_realized_classes_sc.GetAddressRange(scope,
-                                                          range_idx,
-                                                          use_inline_block_range,
-                                                          gdb_objc_realized_classes_addr_range))
-            break;
+    uint32_t num_map_table_isas = 0;
+    uint32_t num_objc_opt_ro_isas = 0;
+
+    static ConstString g_gdb_objc_realized_classes("gdb_objc_realized_classes");
+
+    const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_objc_realized_classes, lldb::eSymbolTypeData);
+    if (symbol)
+    {
+        lldb::addr_t gdb_objc_realized_classes_ptr = symbol->GetAddress().GetLoadAddress(&process_sp->GetTarget());
         
-        lldb::addr_t gdb_objc_realized_classes_ptr = gdb_objc_realized_classes_addr_range.GetBaseAddress().GetLoadAddress(&target);
-        
-        if (gdb_objc_realized_classes_ptr == LLDB_INVALID_ADDRESS)
-            break;
-    
-        // <rdar://problem/10763513>
-        
-        lldb::addr_t gdb_objc_realized_classes_nxmaptable_ptr;
-        
+        if (gdb_objc_realized_classes_ptr != LLDB_INVALID_ADDRESS)
         {
+            // <rdar://problem/10763513>
+
+            lldb::addr_t gdb_objc_realized_classes_nxmaptable_ptr;
+            
             Error err;
             gdb_objc_realized_classes_nxmaptable_ptr = process_sp->ReadPointerFromMemory(gdb_objc_realized_classes_ptr, err);
-            if (!err.Success())
-                break;
-        }
-        
-        RemoteNXMapTable gdb_objc_realized_classes(process_sp, gdb_objc_realized_classes_nxmaptable_ptr);
-    
-        for (RemoteNXMapTable::element elt : gdb_objc_realized_classes)
-        {
-            if (m_isa_to_descriptor_cache.count(elt.second))
-                continue;
+            if (err.Success())
+            {
+                RemoteNXMapTable gdb_objc_realized_classes(process_sp, gdb_objc_realized_classes_nxmaptable_ptr);
             
-            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second));
-            
-            if (log && log->GetVerbose())
-                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
-            
-            m_isa_to_descriptor_cache[elt.second] = descriptor_sp;
+                for (RemoteNXMapTable::element elt : gdb_objc_realized_classes)
+                {
+                    ++num_map_table_isas;
+                    
+                    if (m_isa_to_descriptor_cache.count(elt.second))
+                        continue;
+                    
+                    ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second));
+                    
+                    if (log && log->GetVerbose())
+                        log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
+                    
+                    m_isa_to_descriptor_cache[elt.second] = descriptor_sp;
+                }
+            }
         }
     }
-    while(0);
     
-    do
+    ObjectFile *objc_object = objc_module_sp->GetObjectFile();
+    
+    if (objc_object)
     {
-        ObjectFile *objc_object = objc_module_sp->GetObjectFile();
-        
-        if (!objc_object)
-            break;
-        
         SectionList *section_list = objc_object->GetSectionList();
-        
-        if (!section_list)
-            break;
-        
-        SectionSP TEXT_section_sp = section_list->FindSectionByName(ConstString("__TEXT"));
-        
-        if (!TEXT_section_sp)
-            break;
-        
-        SectionList &TEXT_children = TEXT_section_sp->GetChildren();
-        
-        SectionSP objc_opt_section_sp = TEXT_children.FindSectionByName(ConstString("__objc_opt_ro"));
-        
-        if (!objc_opt_section_sp)
-            break;
-        
-        lldb::addr_t objc_opt_ptr = objc_opt_section_sp->GetLoadBaseAddress(&target);
-        
-        if (objc_opt_ptr == LLDB_INVALID_ADDRESS)
-            break;
-        
-        RemoteObjCOpt objc_opt(process_sp, objc_opt_ptr);
-        
-        for (ObjCLanguageRuntime::ObjCISA objc_isa : objc_opt)
+    
+        if (section_list)
         {
-            if (m_isa_to_descriptor_cache.count(objc_isa))
-                continue;
+            SectionSP text_segment_sp (section_list->FindSectionByName(ConstString("__TEXT")));
             
-            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
-            
-            if (log && log->GetVerbose())
-                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
-            
-            m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
+            if (text_segment_sp)
+            {
+                SectionSP objc_opt_section_sp (text_segment_sp->GetChildren().FindSectionByName(ConstString("__objc_opt_ro")));
+                
+                if (objc_opt_section_sp)
+                {
+                    lldb::addr_t objc_opt_ptr = objc_opt_section_sp->GetLoadBaseAddress(&process_sp->GetTarget());
+                    
+                    if (objc_opt_ptr != LLDB_INVALID_ADDRESS)
+                    {
+                        RemoteObjCOpt objc_opt(process_sp, objc_opt_ptr);
+                        
+                        for (ObjCLanguageRuntime::ObjCISA objc_isa : objc_opt)
+                        {
+                            ++num_objc_opt_ro_isas;
+                            if (m_isa_to_descriptor_cache.count(objc_isa))
+                                continue;
+                            
+                            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
+                            
+                            if (log && log->GetVerbose())
+                                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
+                            
+                            m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
+                        }
+                    }
+                }
+            }
         }
     }
-    while (0);
+    
+    return num_objc_opt_ro_isas > 0 && num_map_table_isas > 0;
 }
 
-// this code relies on the assumption that an Objective-C object always starts
-// with an ISA at offset 0. an ISA is effectively a pointer to an instance of
-// struct class_t in the ObjCv2 runtime
-ObjCLanguageRuntime::ObjCISA
-AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
-{
-//    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
-//        return 0;
-//    
-    // if we get an invalid VO (which might still happen when playing around
-    // with pointers returned by the expression parser, don't consider this
-    // a valid ObjC object)
-    if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
-        return 0;
-    
-    addr_t isa_pointer = valobj.GetPointerValue();
-    
-    // tagged pointer
-    if (IsTaggedPointer(isa_pointer))
-    {
-        ClassDescriptorV2Tagged descriptor(valobj);
-        
-        // probably an invalid tagged pointer - say it's wrong
-        if (!descriptor.IsValid())
-            return 0;
-        
-        static const ConstString g_objc_tagged_isa_nsatom_name ("NSAtom");
-        static const ConstString g_objc_tagged_isa_nsnumber_name ("NSNumber");
-        static const ConstString g_objc_tagged_isa_nsdatets_name ("NSDateTS");
-        static const ConstString g_objc_tagged_isa_nsmanagedobject_name ("NSManagedObject");
-        static const ConstString g_objc_tagged_isa_nsdate_name ("NSDate");
-        
-        ConstString class_name_const_string = descriptor.GetClassName();
-
-        if (class_name_const_string == g_objc_tagged_isa_nsatom_name)
-            return g_objc_Tagged_ISA_NSAtom;
-        if (class_name_const_string == g_objc_tagged_isa_nsnumber_name)
-            return g_objc_Tagged_ISA_NSNumber;
-        if (class_name_const_string == g_objc_tagged_isa_nsdatets_name)
-            return g_objc_Tagged_ISA_NSDateTS;
-        if (class_name_const_string == g_objc_tagged_isa_nsmanagedobject_name)
-            return g_objc_Tagged_ISA_NSManagedObject;
-        if (class_name_const_string == g_objc_tagged_isa_nsdate_name)
-            return g_objc_Tagged_ISA_NSDate;
-        return g_objc_Tagged_ISA;
-    }
-
-    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
-
-    Process *process = exe_ctx.GetProcessPtr();
-    if (process)
-    {
-        Error error;
-        ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
-        if (isa != LLDB_INVALID_ADDRESS)
-            return isa;
-    }
-    return 0; // For some reason zero is being used to indicate invalid ISA instead of LLDB_INVALID_ADDRESS
-}
 
 // TODO: should we have a transparent_kvo parameter here to say if we
 // want to replace the KVO swizzled class with the actual user-level type?
 ConstString
 AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 {
-    if (!IsValidISA(isa))
-        return ConstString();
-     
     if (isa == g_objc_Tagged_ISA)
     {
         static const ConstString g_objc_tagged_isa_name ("_lldb_Tagged_ObjC_ISA");
@@ -1935,7 +1843,6 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
         static const ConstString g_objc_tagged_isa_nsdate_name ("NSDate");
         return g_objc_tagged_isa_nsdate_name;
     }
-    
     return ObjCLanguageRuntime::GetActualTypeName(isa);
 }
 

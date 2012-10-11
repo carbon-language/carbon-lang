@@ -504,14 +504,14 @@ protected:
                 log->Printf("no valid ObjC runtime, skipping dynamic");
             return false;
         }
-        ObjCLanguageRuntime::ObjCISA isa = runtime->GetISA(valobj);
-        if (runtime->IsValidISA(isa) == false)
+        ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetClassDescriptor(valobj));
+        if (!objc_class_sp)
         {
             if (log)
                 log->Printf("invalid ISA, skipping dynamic");
             return false;
         }
-        ConstString name = runtime->GetActualTypeName(isa);
+        ConstString name (objc_class_sp->GetClassName());
         if (log)
             log->Printf("dynamic type inferred is %s - looking for direct dynamic match", name.GetCString());
         if (Get(name, entry))

@@ -3223,12 +3223,11 @@ DumpValueObject_Impl (Stream &s,
                             s.Printf(", dynamic type: unknown) ");
                         else
                         {
-                            ObjCLanguageRuntime::ObjCISA isa = runtime->GetISA(*valobj);
-                            if (!runtime->IsValidISA(isa))
-                                s.Printf(", dynamic type: unknown) ");
+                            ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetNonKVOClassDescriptor(*valobj));
+                            if (objc_class_sp)
+                                s.Printf(", dynamic type: %s) ", objc_class_sp->GetClassName().GetCString());
                             else
-                                s.Printf(", dynamic type: %s) ",
-                                         runtime->GetActualTypeName(isa).GetCString());
+                                s.Printf(", dynamic type: unknown) ");
                         }
                     }
                 }
