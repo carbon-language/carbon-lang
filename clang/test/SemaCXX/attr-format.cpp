@@ -14,6 +14,8 @@ struct S {
       expected-error{{out of bounds}}
   const char* h3(const char*) __attribute__((format_arg(1))); // \
       expected-error{{invalid for the implicit this argument}}
+
+  void operator() (const char*, ...) __attribute__((format(printf, 2, 3)));
 };
 
 // PR5521
@@ -32,4 +34,10 @@ namespace PR8625 {
   void test(S s, const char* str) {
     s.f(str, "%s", str);
   }
+}
+
+// Make sure we interpret member operator calls as having an implicit
+// this argument.
+void test_operator_call(S s, const char* str) {
+  s("%s", str);
 }

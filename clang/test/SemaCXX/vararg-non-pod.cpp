@@ -123,3 +123,21 @@ int t9(int n) {
   // Make sure the error works in potentially-evaluated sizeof
   return (int)sizeof(*(Helper(Foo()), (int (*)[n])0)); // expected-warning{{cannot pass object of non-POD type}}
 }
+
+// PR14057
+namespace t10 {
+  struct F {
+    F();
+  };
+
+  struct S {
+    void operator()(F, ...);
+  };
+
+  void foo() {
+    S s;
+    F f;
+    s.operator()(f);
+    s(f);
+  }
+}

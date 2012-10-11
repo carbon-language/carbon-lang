@@ -542,11 +542,23 @@ void Sema::CheckConstructorCall(FunctionDecl *FDecl, Expr **Args,
 /// and safety properties not strictly enforced by the C type system.
 bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
                              const FunctionProtoType *Proto) {
-  bool IsMemberFunction = isa<CXXMemberCallExpr>(TheCall);
+  bool IsMemberOperatorCall = isa<CXXOperatorCallExpr>(TheCall) &&
+                              isa<CXXMethodDecl>(FDecl);
+  bool IsMemberFunction = isa<CXXMemberCallExpr>(TheCall) ||
+                          IsMemberOperatorCall;
   VariadicCallType CallType = getVariadicCallType(FDecl, Proto,
                                                   TheCall->getCallee());
   unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
-  checkCall(FDecl, TheCall->getArgs(), TheCall->getNumArgs(), NumProtoArgs,
+  Expr** Args = TheCall->getArgs();
+  unsigned NumArgs = TheCall->getNumArgs();
+  if (isa<CXXOperatorCallExpr>(TheCall) && isa<CXXMethodDecl>(FDecl)) {
+    // If this is a call to a member operator, hide the first argument
+    // from checkCall.
+    // FIXME: Our choice of AST representation here is less than ideal.
+    ++Args;
+    --NumArgs;
+  }
+  checkCall(FDecl, Args, NumArgs, NumProtoArgs,
             IsMemberFunction, TheCall->getRParenLoc(),
             TheCall->getCallee()->getSourceRange(), CallType);
 
