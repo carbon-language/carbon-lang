@@ -180,7 +180,7 @@ class BitcodeReader : public GVMaterializer {
   DenseMap<Function*, std::vector<BlockAddrRefTy> > BlockAddrFwdRefs;
 
   /// UseRelativeIDs - Indicates that we are using a new encoding for
-  /// instrunction operands where most operands in the current
+  /// instruction operands where most operands in the current
   /// FUNCTION_BLOCK are encoded relative to the instruction number,
   /// for a more compact encoding.  Some instruction operands are not
   /// relative to the instruction ID: basic block numbers, and types.

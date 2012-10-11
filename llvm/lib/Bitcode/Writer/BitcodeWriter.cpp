@@ -1552,7 +1552,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
 static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   // We only want to emit block info records for blocks that have multiple
   // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.
-  // Other blocks can defined their abbrevs inline.
+  // Other blocks can define their abbrevs inline.
   Stream.EnterBlockInfoBlock(2);
 
   { // 8-bit fixed-width VST_ENTRY/VST_BBENTRY strings.
