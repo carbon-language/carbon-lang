@@ -161,7 +161,6 @@ private:
     int m_cpu;
     ArchSpec m_arch;
     ::LLVMDisasmContextRef m_disasm_context;
-    uint8_t *m_opcode_data;
 
     DISALLOW_COPY_AND_ASSIGN (AssemblyParse_x86);
 };
@@ -178,8 +177,7 @@ AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, 
     m_lldb_fp_regnum (LLDB_INVALID_REGNUM),
     m_wordsize (-1), 
     m_cpu(cpu),
-    m_arch(arch),
-    m_opcode_data(NULL)
+    m_arch(arch)
 {
     int *initialized_flag = NULL;
     if (cpu == k_i386)
@@ -249,13 +247,10 @@ AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, 
                                           /*TagType=*/1,
                                           NULL,
                                           NULL);
-   m_opcode_data = (uint8_t *) malloc (m_arch.GetMaximumOpcodeByteSize());
 }
 
 AssemblyParse_x86::~AssemblyParse_x86 ()
 {
-    if (m_opcode_data)
-        free (m_opcode_data);
     ::LLVMDisasmDispose(m_disasm_context);
 }
 
@@ -475,19 +470,16 @@ bool
 AssemblyParse_x86::instruction_length (Address addr, int &length)
 {
     const uint32_t max_op_byte_size = m_arch.GetMaximumOpcodeByteSize();
+    llvm::SmallVector <uint8_t, 32> opcode_data;
+    opcode_data.resize (max_op_byte_size);
 
     if (!addr.IsValid())
         return false;
 
-    if (m_opcode_data == NULL)
-    {
-        return false;
-    }
-
     const bool prefer_file_cache = true;
     Error error;
     Target *target = m_exe_ctx.GetTargetPtr();
-    if (target->ReadMemory (addr, prefer_file_cache, m_opcode_data, max_op_byte_size, error) == -1)
+    if (target->ReadMemory (addr, prefer_file_cache, opcode_data.data(), max_op_byte_size, error) == -1)
     {
         return false;
     }
@@ -495,7 +487,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
     char out_string[512];
     const addr_t pc = addr.GetFileAddress();
     const size_t inst_size = ::LLVMDisasmInstruction (m_disasm_context,
-                                                      m_opcode_data,
+                                                      opcode_data.data(),
                                                       max_op_byte_size,
                                                       pc, // PC value
                                                       out_string,
