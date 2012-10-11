@@ -540,8 +540,6 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   Bits >>= 1;
   bool hadMacroDefinition = Bits & 0x01;
   Bits >>= 1;
-  bool hasMacroDefinition = Bits & 0x01;
-  Bits >>= 1;
 
   assert(Bits == 0 && "Extra bits in the identifier?");
   DataLen -= 8;

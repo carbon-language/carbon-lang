@@ -97,7 +97,7 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
              PrevPrev->isDefined());
 
     // FIXME: Actually use the ambiguity information for something.
-    
+
     // Wire this macro information into the chain.
     MI->setPreviousDefinition(Prev->getPreviousDefinition());
     Prev->setPreviousDefinition(MI);

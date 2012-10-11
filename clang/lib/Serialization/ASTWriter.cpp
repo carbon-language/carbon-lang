@@ -2632,8 +2632,6 @@ public:
     clang::io::Emit16(Out, Bits);
     Bits = 0;
     bool HadMacroDefinition = hadMacroDefinition(II, Macro);
-    bool HasMacroDefinition = HadMacroDefinition && II->hasMacroDefinition();
-    Bits = (Bits << 1) | unsigned(HasMacroDefinition);
     Bits = (Bits << 1) | unsigned(HadMacroDefinition);
     Bits = (Bits << 1) | unsigned(II->isExtensionToken());
     Bits = (Bits << 1) | unsigned(II->isPoisoned());
