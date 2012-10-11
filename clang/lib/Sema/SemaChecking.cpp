@@ -551,7 +551,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
   unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
   Expr** Args = TheCall->getArgs();
   unsigned NumArgs = TheCall->getNumArgs();
-  if (isa<CXXOperatorCallExpr>(TheCall) && isa<CXXMethodDecl>(FDecl)) {
+  if (IsMemberOperatorCall) {
     // If this is a call to a member operator, hide the first argument
     // from checkCall.
     // FIXME: Our choice of AST representation here is less than ideal.
