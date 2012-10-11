@@ -384,11 +384,6 @@ namespace {
       delete MemMgr;
     }
 
-    /// classof - Methods for support type inquiry through isa, cast, and
-    /// dyn_cast:
-    ///
-    static inline bool classof(const MachineCodeEmitter*) { return true; }
-
     JITResolver &getJITResolver() { return Resolver; }
 
     virtual void startFunction(MachineFunction &F);
@@ -1265,15 +1260,13 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
     return Addr;
 
   // Get a stub if the target supports it.
-  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
-  JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
+  JITEmitter *JE = static_cast<JITEmitter*>(getCodeEmitter());
   return JE->getJITResolver().getLazyFunctionStub(F);
 }
 
 void JIT::updateFunctionStub(Function *F) {
   // Get the empty stub we generated earlier.
-  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
-  JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
+  JITEmitter *JE = static_cast<JITEmitter*>(getCodeEmitter());
   void *Stub = JE->getJITResolver().getLazyFunctionStub(F);
   void *Addr = getPointerToGlobalIfAvailable(F);
   assert(Addr != Stub && "Function must have non-stub address to be updated.");
@@ -1294,6 +1287,5 @@ void JIT::freeMachineCodeForFunction(Function *F) {
   updateGlobalMapping(F, 0);
 
   // Free the actual memory for the function body and related stuff.
-  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
-  cast<JITEmitter>(JCE)->deallocateMemForFunction(F);
+  static_cast<JITEmitter*>(JCE)->deallocateMemForFunction(F);
 }
