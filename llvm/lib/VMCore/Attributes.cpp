@@ -29,7 +29,7 @@ using namespace llvm;
 
 Attributes::Attributes(uint64_t Val) : Attrs(Val) {}
 
-Attributes::Attributes(AttrVal Val)
+Attributes::Attributes(LLVMContext &C, AttrVal Val)
   : Attrs(Attributes::get(Attributes::Builder().addAttribute(Val)).Attrs) {}
 
 Attributes::Attributes(AttributesImpl *A) : Attrs(A->Bits) {}

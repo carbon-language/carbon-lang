@@ -95,7 +95,7 @@ private:
 public:
   Attributes() : Attrs(0) {}
   explicit Attributes(uint64_t Val);
-  explicit Attributes(AttrVal Val);
+  explicit Attributes(LLVMContext &C, AttrVal Val);
   Attributes(const Attributes &A);
 
   class Builder {
