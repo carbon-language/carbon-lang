@@ -594,9 +594,9 @@ Then, your .git/config should have [imap] sections.
   ; in English
         folder = "[Gmail]/Drafts"
   ; example for Japanese, "Modified UTF-7" encoded.
-        folder = "[Gmail]/&amp;Tgtm+DBN-"
+        folder = "[Gmail]/&Tgtm+DBN-"
   ; example for Traditional Chinese
-        folder = "[Gmail]/&amp;g0l6Pw-"
+        folder = "[Gmail]/&g0l6Pw-"
 
 For developers to work with git-svn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
