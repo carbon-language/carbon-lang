@@ -262,9 +262,6 @@ private:
   /// table, indexed by the Selector ID (-1).
   std::vector<uint32_t> SelectorOffsets;
 
-  /// \brief The set of identifiers that had macro definitions at some point.
-  std::vector<const IdentifierInfo *> DeserializedMacroNames;
-
   typedef llvm::MapVector<MacroInfo *, MacroUpdate> MacroUpdatesMap;
 
   /// \brief Updates to macro definitions that were loaded from an AST file.
@@ -700,7 +697,6 @@ public:
   void SelectorRead(serialization::SelectorID ID, Selector Sel);
   void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
                            MacroDefinition *MD);
-  void MacroVisible(IdentifierInfo *II);
   void ModuleRead(serialization::SubmoduleID ID, Module *Mod);
 
   // PPMutationListener implementation.

@@ -1694,16 +1694,6 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   llvm::array_pod_sort(MacrosToEmit.begin(), MacrosToEmit.end(),
                        &compareMacroDefinitions);
 
-  // Resolve any identifiers that defined macros at the time they were
-  // deserialized, adding them to the list of macros to emit (if appropriate).
-  for (unsigned I = 0, N = DeserializedMacroNames.size(); I != N; ++I) {
-    IdentifierInfo *Name
-      = const_cast<IdentifierInfo *>(DeserializedMacroNames[I]);
-    if (Name->hadMacroDefinition() && MacroDefinitionsSeen.insert(Name))
-      MacrosToEmit.push_back(std::make_pair(Name,
-                                            PP.getMacroInfoHistory(Name)));
-  }
-
   /// \brief Offsets of each of the macros into the bitstream, indexed by
   /// the local macro ID
   ///
@@ -4557,8 +4547,6 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
   IdentifierIDs[II] = ID;
-  if (II->hadMacroDefinition())
-    DeserializedMacroNames.push_back(II);
 }
 
 void ASTWriter::MacroRead(serialization::MacroID ID, MacroInfo *MI) {
@@ -4584,10 +4572,6 @@ void ASTWriter::MacroDefinitionRead(serialization::PreprocessedEntityID ID,
                                     MacroDefinition *MD) {
   assert(MacroDefinitions.find(MD) == MacroDefinitions.end());
   MacroDefinitions[MD] = ID;
-}
-
-void ASTWriter::MacroVisible(IdentifierInfo *II) {
-  DeserializedMacroNames.push_back(II);
 }
 
 void ASTWriter::ModuleRead(serialization::SubmoduleID ID, Module *Mod) {

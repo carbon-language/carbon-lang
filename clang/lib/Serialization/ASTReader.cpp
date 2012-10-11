@@ -2616,8 +2616,6 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
     Macro.second->setHidden(!Macro.second->isPublic());
     if (Macro.second->isDefined()) {
       PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
-      if (DeserializationListener)
-        DeserializationListener->MacroVisible(Macro.first);
     }
   }
 }
