@@ -89,15 +89,25 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
     // Find the end of the definition chain.
     MacroInfo *Prev = StoredMI;
     MacroInfo *PrevPrev;
-    bool Ambiguous = false;
+    bool Ambiguous = StoredMI->isAmbiguous();
+    bool MatchedOther = false;
     do {
       // If the macros are not identical, we have an ambiguity.
-      if (!Prev->isIdenticalTo(*MI, *this))
-        Ambiguous = true;
+      if (!Prev->isIdenticalTo(*MI, *this)) {
+        if (!Ambiguous) {
+          Ambiguous = true;
+          StoredMI->setAmbiguous(true);
+        }
+      } else {
+        MatchedOther = true;
+      }
     } while ((PrevPrev = Prev->getPreviousDefinition()) &&
              PrevPrev->isDefined());
 
-    // FIXME: Actually use the ambiguity information for something.
+    // If there are ambiguous definitions, and we didn't match any other
+    // definition, then mark us as ambiguous.
+    if (Ambiguous && !MatchedOther)
+      MI->setAmbiguous(true);
 
     // Wire this macro information into the chain.
     MI->setPreviousDefinition(Prev->getPreviousDefinition());
@@ -360,7 +370,23 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       }
     }
   }
-  
+
+  // If the macro definition is ambiguous, complain.
+  if (MI->isAmbiguous()) {
+    Diag(Identifier, diag::warn_pp_ambiguous_macro)
+      << Identifier.getIdentifierInfo();
+    Diag(MI->getDefinitionLoc(), diag::note_pp_ambiguous_macro_chosen)
+      << Identifier.getIdentifierInfo();
+    for (MacroInfo *PrevMI = MI->getPreviousDefinition();
+         PrevMI && PrevMI->isDefined();
+         PrevMI = PrevMI->getPreviousDefinition()) {
+      if (PrevMI->isAmbiguous()) {
+        Diag(PrevMI->getDefinitionLoc(), diag::note_pp_ambiguous_macro_other)
+          << Identifier.getIdentifierInfo();
+      }
+    }
+  }
+
   // If we started lexing a macro, enter the macro expansion body.
 
   // If this macro expands to no tokens, don't bother to push it onto the

@@ -111,6 +111,10 @@ private:
   /// file.
   bool IsHidden : 1;
 
+  /// \brief Whether the definition of this macro is ambiguous, due to
+  /// multiple definitions coming in from multiple modules.
+  bool IsAmbiguous : 1;
+
    ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
@@ -340,6 +344,13 @@ public:
   /// \brief Set whether this macro definition is hidden.
   void setHidden(bool Val) { IsHidden = Val; }
 
+  /// \brief Determine whether this macro definition is ambiguous with
+  /// other macro definitions.
+  bool isAmbiguous() const { return IsAmbiguous; }
+
+  /// \brief Set whether this macro definition is ambiguous.
+  void setAmbiguous(bool Val) { IsAmbiguous = Val; }
+  
 private:
   unsigned getDefinitionLengthSlow(SourceManager &SM) const;
 };

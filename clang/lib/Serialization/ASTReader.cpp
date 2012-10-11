@@ -1254,6 +1254,24 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
   SmallVector<IdentifierInfo*, 16> MacroArgs;
   MacroInfo *Macro = 0;
 
+  // RAII object to add the loaded macro information once we're done
+  // adding tokens.
+  struct AddLoadedMacroInfoRAII {
+    Preprocessor &PP;
+    MacroInfo *Hint;
+    MacroInfo *MI;
+    IdentifierInfo *II;
+
+    AddLoadedMacroInfoRAII(Preprocessor &PP, MacroInfo *Hint)
+      : PP(PP), Hint(Hint), MI(), II() { }
+    ~AddLoadedMacroInfoRAII( ) {
+      if (MI) {
+        // Finally, install the macro.
+        PP.addLoadedMacroInfo(II, MI, Hint);
+      }
+    }
+  } AddLoadedMacroInfo(PP, Hint);
+
   while (true) {
     unsigned Code = Stream.ReadCode();
     switch (Code) {
@@ -1370,8 +1388,9 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
       }
       MI->setHidden(Hidden);
 
-      // Finally, install the macro.
-      PP.addLoadedMacroInfo(II, MI, Hint);
+      // Make sure we install the macro once we're done.
+      AddLoadedMacroInfo.MI = MI;
+      AddLoadedMacroInfo.II = II;
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.

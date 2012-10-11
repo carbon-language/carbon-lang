@@ -228,6 +228,12 @@ def pp_macro_not_used : Warning<"macro is not used">, DefaultIgnore,
 def warn_pp_undef_identifier : Warning<
   "%0 is not defined, evaluates to 0">,
   InGroup<DiagGroup<"undef">>, DefaultIgnore;
+def warn_pp_ambiguous_macro : Warning<
+  "ambiguous expansion of macro %0">, InGroup<AmbiguousMacro>;
+def note_pp_ambiguous_macro_chosen : Note<
+  "expanding this definition of %0">;
+def note_pp_ambiguous_macro_other : Note<
+  "other definition of %0">;
 
 def pp_invalid_string_literal : Warning<
   "invalid string literal, ignoring final '\\'">;

@@ -212,6 +212,7 @@ def DuplicateDeclSpecifier : DiagGroup<"duplicate-decl-specifier">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
+def AmbiguousMacro : DiagGroup<"ambiguous-macro">;
 
 // Just silence warnings about -Wstrict-aliasing for now.
 def : DiagGroup<"strict-aliasing=0">;

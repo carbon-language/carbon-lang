@@ -7,6 +7,8 @@
 
 
 #define LEFT_RIGHT_IDENTICAL int
-#define LEFT_RIGHT_DIFFERENT float
+
 #define LEFT_RIGHT_DIFFERENT2 float
 #define LEFT_RIGHT_DIFFERENT3 float
+
+#define LEFT_RIGHT_DIFFERENT float

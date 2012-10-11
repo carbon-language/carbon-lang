@@ -7,8 +7,14 @@
 // RUN: %clang_cc1 -E -fmodules -x objective-c -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
 // FIXME: When we have a syntax for modules in C, use that.
 // These notes come from headers in modules, and are bogus.
+
 // FIXME: expected-note{{previous definition is here}}
-// FIXME: expected-note{{previous definition is here}}
+// expected-note{{other definition of 'LEFT_RIGHT_DIFFERENT'}}
+// expected-note{{expanding this definition of 'TOP_RIGHT_REDEF'}}
+// FIXME: expected-note{{previous definition is here}} \
+// expected-note{{expanding this definition of 'LEFT_RIGHT_DIFFERENT'}}
+
+// expected-note{{other definition of 'TOP_RIGHT_REDEF'}}
 
 @__experimental_modules_import macros;
 
@@ -109,11 +115,11 @@ void test2() {
   int i;
   float f;
   double d;
-  TOP_RIGHT_REDEF *ip = &i; // FIXME: warning
+  TOP_RIGHT_REDEF *ip = &i; // expected-warning{{ambiguous expansion of macro 'TOP_RIGHT_REDEF'}}
   
   LEFT_RIGHT_IDENTICAL *ip2 = &i;
-  LEFT_RIGHT_DIFFERENT *fp = &f; // FIXME: warning
-  LEFT_RIGHT_DIFFERENT2 *dp = &d; // okay
+  LEFT_RIGHT_DIFFERENT *fp = &f; // expected-warning{{ambiguous expansion of macro 'LEFT_RIGHT_DIFFERENT'}}
+  LEFT_RIGHT_DIFFERENT2 *dp = &d;
   int LEFT_RIGHT_DIFFERENT3;
 }
 
