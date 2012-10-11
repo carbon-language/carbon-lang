@@ -304,7 +304,7 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
             addr = linked_section_sp->GetFileAddress() + m_linked_offset;
         }
 
-        int indent = 26 + s->GetIndentLevel();
+        int indent = 28 + s->GetIndentLevel();
         s->Printf("%*.*s", indent, indent, "");
         VMRange linked_range(addr, addr + m_byte_size);
         linked_range.Dump (s, 0);
