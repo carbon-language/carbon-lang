@@ -12329,12 +12329,9 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   // Hi
   MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), X86::EDX);
   for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
-    if (i == X86::AddrDisp) {
+    if (i == X86::AddrDisp)
       MIB.addDisp(MI->getOperand(MemOpndSlot + i), 4); // 4 == sizeof(i32)
-      // Don't forget to transfer the target flag.
-      MachineOperand &MO = MIB->getOperand(MIB->getNumOperands()-1);
-      MO.setTargetFlags(MI->getOperand(MemOpndSlot + i).getTargetFlags());
-    } else
+    else
       MIB.addOperand(MI->getOperand(MemOpndSlot + i));
   }
   MIB.setMemRefs(MMOBegin, MMOEnd);
