@@ -510,8 +510,11 @@ void Sema::checkCall(NamedDecl *FDecl, Expr **Args,
   // Refuse POD arguments that weren't caught by the format string
   // checks above.
   if (!HandledFormatString && CallType != VariadicDoesNotApply)
-    for (unsigned ArgIdx = NumProtoArgs; ArgIdx < NumArgs; ++ArgIdx)
-      variadicArgumentPODCheck(Args[ArgIdx], CallType);
+    for (unsigned ArgIdx = NumProtoArgs; ArgIdx < NumArgs; ++ArgIdx) {
+      // Args[ArgIdx] can be null in malformed code.
+      if (Expr *Arg = Args[ArgIdx])
+        variadicArgumentPODCheck(Arg, CallType);
+    }
 
   for (specific_attr_iterator<NonNullAttr>
          I = FDecl->specific_attr_begin<NonNullAttr>(),
