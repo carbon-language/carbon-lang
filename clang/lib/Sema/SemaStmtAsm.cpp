@@ -331,28 +331,6 @@ static bool isMSAsmKeyword(StringRef Name) {
   return Ret;
 }
 
-// Check to see if the expression is a substring of the asm operand.
-static StringRef getMSInlineAsmExprName(StringRef Name) {
-  // Strip off the size directives.
-  // E.g., DWORD PTR [V] -> V
-  if (Name.startswith("BYTE") || Name.startswith("byte") ||
-      Name.startswith("WORD") || Name.startswith("word") ||
-      Name.startswith("DWORD") || Name.startswith("dword") ||
-      Name.startswith("QWORD") || Name.startswith("qword") ||
-      Name.startswith("XWORD") || Name.startswith("xword") ||
-      Name.startswith("XMMWORD") || Name.startswith("xmmword") ||
-      Name.startswith("YMMWORD") || Name.startswith("ymmword")) {
-    std::pair< StringRef, StringRef > SplitName = Name.split(' ');
-    assert((SplitName.second.startswith("PTR") ||
-            SplitName.second.startswith("ptr")) &&
-           "Expected PTR/ptr!");
-    SplitName = SplitName.second.split('[');
-    SplitName = SplitName.second.split(']');
-    return SplitName.first;
-  }
-  return Name;
-}
-
 // getSpelling - Get the spelling of the AsmTok token.
 static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   StringRef Asm;
@@ -387,8 +365,7 @@ static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
       return false;
 
   for (unsigned i = 1, e = Pieces.size(); i != e; ++i) {
-    StringRef Op = getMSInlineAsmExprName(Pieces[i]);
-    if (!TI.isValidGCCRegisterName(Op))
+    if (!TI.isValidGCCRegisterName(Pieces[i]))
       return false;
   }
   return true;
@@ -604,13 +581,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       }
 
       // Expr/Input or Output.
-      StringRef Name = getMSInlineAsmExprName(Pieces[StrIdx][i]);
-
-      // The expr may be a register.
-      // E.g., DWORD PTR [eax]
-      if (Context.getTargetInfo().isValidGCCRegisterName(Name))
-        continue;
-
+      StringRef Name = Pieces[StrIdx][i];
       if (IdentifierInfo *II = &Context.Idents.get(Name)) {
         CXXScopeSpec SS;
         UnqualifiedId Id;
@@ -669,26 +640,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
         Pieces[StrIdx][j] = OutputExprNames[i];
         break;
       }
-      // Check to see if the expression is a substring of the asm piece.
-      std::pair< StringRef, StringRef > Split =	Pieces[StrIdx][j].split(' ');
-      bool isKeyword = llvm::StringSwitch<bool>(Split.first)
-        .Cases("BYTE", "byte", "WORD", "word", "DWORD", true)
-        .Cases("dword", "QWORD", "qword", "XWORD", "xword", true)
-        .Cases("XMMWORD", "xmmword", "YMMWORD", "ymmword", true)
-        .Default(false);
-      if (isKeyword &&
-          Split.second.find_first_of(OutputExprNames[i]) != StringRef::npos) {
-        // Is is a substring, do the replacement.
-        SmallString<32> Res;
-        llvm::raw_svector_ostream OS(Res);
-        OS << '$' << OpNum;
-        std::string piece = Pieces[StrIdx][j].str();
-        size_t found = piece.find(InputExprNames[i]);
-        piece.replace(found, InputExprNames[i].size(), OS.str());
-        OutputExprNames[i] = piece;
-        Pieces[StrIdx][j] = OutputExprNames[i];
-        break;
-      }
     }
   }
   for (unsigned i = 0, e = InputExprNames.size(); i != e; ++i, ++OpNum) {
@@ -701,26 +652,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
         llvm::raw_svector_ostream OS(Res);
         OS << '$' << OpNum;
         InputExprNames[i] = OS.str();
-        Pieces[StrIdx][j] = InputExprNames[i];
-        break;
-      }
-      // Check to see if the expression is a substring of the asm piece.
-      std::pair< StringRef, StringRef > Split =	Pieces[StrIdx][j].split(' ');
-      bool isKeyword = llvm::StringSwitch<bool>(Split.first)
-        .Cases("BYTE", "byte", "WORD", "word", "DWORD", true)
-        .Cases("dword", "QWORD", "qword", "XWORD", "xword", true)
-        .Cases("XMMWORD", "xmmword", "YMMWORD", "ymmword", true)
-        .Default(false);
-      if (isKeyword &&
-          Split.second.find_first_of(InputExprNames[i]) != StringRef::npos) {
-        // It is a substring, do the replacement.
-        SmallString<32> Res;
-        llvm::raw_svector_ostream OS(Res);
-        OS << '$' << OpNum;
-        std::string piece = Pieces[StrIdx][j].str();
-        size_t found = piece.find(InputExprNames[i]);
-        piece.replace(found, InputExprNames[i].size(), OS.str());
-        InputExprNames[i] = piece;
         Pieces[StrIdx][j] = InputExprNames[i];
         break;
       }
