@@ -174,8 +174,6 @@ steps:
 
          Shape(ShapeKind K) : Kind(K) {}
          virtual double computeArea() = 0;
-      +
-      +  static bool classof(const Shape *) { return true; }
        };
 
        class Square : public Shape {
@@ -184,7 +182,6 @@ steps:
          Square(double S) : Shape(SquareKind), SideLength(S) {}
          double computeArea() /* override */;
       +
-      +  static bool classof(const Square *) { return true; }
       +  static bool classof(const Shape *S) {
       +    return S->getKind() == SquareKind;
       +  }
@@ -196,31 +193,43 @@ steps:
          Circle(double R) : Shape(CircleKind), Radius(R) {}
          double computeArea() /* override */;
       +
-      +  static bool classof(const Circle *) { return true; }
       +  static bool classof(const Shape *S) {
       +    return S->getKind() == CircleKind;
       +  }
        };
 
-   Basically, the job of ``classof`` is to return ``true`` if its argument
-   is of the enclosing class's type. As you can see, there are two general
-   overloads of ``classof`` in use here.
+   The job of ``classof`` is to dynamically determine whether an object of
+   a base class is in fact of a particular derived class. The argument to
+   ``classof`` should always be an *ancestor* class because the
+   implementation has logic to allow and optimize away
+   upcasts/up-``isa<>``'s automatically. It is as though every class
+   ``Foo`` automatically has a ``classof`` like:
 
-   #. The first, which just returns ``true``, means that if we know that the
-      argument of the cast is of the enclosing type *at compile time*, then
-      we don't need to bother to check anything since we already know that
-      the type is convertible. This is an optimization for the case that we
-      statically know the conversion is OK.
+   .. code-block:: c++
 
-   #. The other overload takes a pointer to an object of the base of the
-      class hierarchy: this is the "general case" of the cast. We need to
-      check the ``Kind`` to dynamically decide if the argument is of (or
-      derived from) the enclosing type.
+      class Foo {
+        [...]
+        static bool classof(const Foo *) { return true; }
+        [...]
+      };
 
-   To be more precise, let ``classof`` be inside a class ``C``.  Then the
-   contract for ``classof`` is "return ``true`` if the argument is-a
-   ``C``". As long as your implementation fulfills this contract, you can
-   tweak and optimize it as much as you want.
+   In order to downcast a type ``Base`` to a type ``Derived``, there needs
+   to be a ``classof`` in ``Derived`` which will accept an object of type
+   ``Base``.
+
+   To be concrete, in the following code:
+
+   .. code-block:: c++
+
+      Shape *S = ...;
+      if (isa<Circle>(S)) {
+        /* do something ... */
+      }
+
+   The code of ``isa<>`` will eventually boil down---after template
+   instantiation and some other machinery---to a check roughly like
+   ``Circle::classof(S)``. For more information, see
+   :ref:`classof-contract`.
 
 Although for this small example setting up LLVM-style RTTI seems like a lot
 of "boilerplate", if your classes are doing anything interesting then this
@@ -247,7 +256,6 @@ Then in ``Square``, we would need to modify the ``classof`` like so:
 
 .. code-block:: c++
 
-      static bool classof(const Square *) { return true; }
    -  static bool classof(const Shape *S) {
    -    return S->getKind() == SquareKind;
    -  }
@@ -272,6 +280,16 @@ ordering right::
        | SpecialSquare
        | OtherSpecialSquare
      | Circle
+
+.. _classof-contract:
+
+The Contract of ``classof``
+---------------------------
+
+To be more precise, let ``classof`` be inside a class ``C``.  Then the
+contract for ``classof`` is "return ``true`` if the dynamic type of the
+argument is-a ``C``".  As long as your implementation fulfills this
+contract, you can tweak and optimize it as much as you want.
 
 .. TODO::
 
