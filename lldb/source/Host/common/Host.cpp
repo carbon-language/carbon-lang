@@ -332,6 +332,11 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         g_host_arch_32.Clear();
         g_host_arch_64.Clear();
 
+        // If the OS is Linux, "unknown" in the vendor slot isn't what we want
+        // for the default triple.  It's probably an artifact of config.guess.
+        if (triple.getOS() == llvm::Triple::Linux && triple.getVendor() == llvm::Triple::UnknownVendor)
+            triple.setVendorName("");
+
         switch (triple.getArch())
         {
         default:
