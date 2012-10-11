@@ -29,6 +29,9 @@ using namespace llvm;
 
 Attributes::Attributes(uint64_t Val) : Attrs(Val) {}
 
+Attributes::Attributes(AttrVal Val)
+  : Attrs(Attributes::get(Attributes::Builder().addAttribute(Val)).Attrs) {}
+
 Attributes::Attributes(AttributesImpl *A) : Attrs(A->Bits) {}
 
 Attributes::Attributes(const Attributes &A) : Attrs(A.Attrs) {}
