@@ -425,7 +425,7 @@ public:
         m_decl_map (decl_map)
     {
         m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);
-        m_addr_byte_size = (target_data.getPointerSize());
+        m_addr_byte_size = (target_data.getPointerSize(0));
     }
     
     void Jump (const BasicBlock *bb)
@@ -1042,7 +1042,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
     }
     
     DataLayout target_data(&llvm_module);
-    if (target_data.getPointerSize() != target_info.address_byte_size)
+    if (target_data.getPointerSize(0) != target_info.address_byte_size)
     {
         err.SetErrorToGenericError();
         err.SetErrorString(interpreter_initialization_error);
