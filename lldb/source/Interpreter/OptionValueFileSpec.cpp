@@ -93,7 +93,7 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
         if (value_cstr && value_cstr[0])
         {
             m_value_was_set = true;
-            m_current_value.SetFile(value_cstr, false);
+            m_current_value.SetFile(value_cstr, value_cstr[0] == '~');
         }
         else
         {
