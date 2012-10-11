@@ -41,8 +41,6 @@ EnablePreserveUseListOrdering("enable-bc-uselist-preserve",
 /// These are manifest constants used by the bitcode writer. They do not need to
 /// be kept in sync with the reader, but need to be consistent within this file.
 enum {
-  CurVersion = 0,
-
   // VALUE_SYMTAB_BLOCK abbrev id's.
   VST_ENTRY_8_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
   VST_ENTRY_7_ABBREV,
@@ -722,16 +720,20 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
+static void emitSignedInt64(SmallVectorImpl<uint64_t> &Vals, uint64_t V) {
+  if ((int64_t)V >= 0)
+    Vals.push_back(V << 1);
+  else
+    Vals.push_back((-V << 1) | 1);
+}
+
 static void EmitAPInt(SmallVectorImpl<uint64_t> &Vals,
                       unsigned &Code, unsigned &AbbrevToUse, const APInt &Val,
                       bool EmitSizeForWideNumbers = false
                       ) {
   if (Val.getBitWidth() <= 64) {
     uint64_t V = Val.getSExtValue();
-    if ((int64_t)V >= 0)
-      Vals.push_back(V << 1);
-    else
-      Vals.push_back((-V << 1) | 1);
+    emitSignedInt64(Vals, V);
     Code = bitc::CST_CODE_INTEGER;
     AbbrevToUse = CONSTANTS_INTEGER_ABBREV;
   } else {
@@ -747,11 +749,7 @@ static void EmitAPInt(SmallVectorImpl<uint64_t> &Vals,
     
     const uint64_t *RawWords = Val.getRawData();
     for (unsigned i = 0; i != NWords; ++i) {
-      int64_t V = RawWords[i];
-      if (V >= 0)
-        Vals.push_back(V << 1);
-      else
-        Vals.push_back((-V << 1) | 1);
+      emitSignedInt64(Vals, RawWords[i]);
     }
     Code = bitc::CST_CODE_WIDE_INTEGER;
   }
@@ -1025,17 +1023,42 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
 ///
 /// This function adds V's value ID to Vals.  If the value ID is higher than the
 /// instruction ID, then it is a forward reference, and it also includes the
-/// type ID.
+/// type ID.  The value ID that is written is encoded relative to the InstID.
 static bool PushValueAndType(const Value *V, unsigned InstID,
                              SmallVector<unsigned, 64> &Vals,
                              ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
-  Vals.push_back(ValID);
+  // Make encoding relative to the InstID.
+  Vals.push_back(InstID - ValID);
   if (ValID >= InstID) {
     Vals.push_back(VE.getTypeID(V->getType()));
     return true;
   }
   return false;
+}
+
+/// pushValue - Like PushValueAndType, but where the type of the value is
+/// omitted (perhaps it was already encoded in an earlier operand).
+static void pushValue(const Value *V, unsigned InstID,
+                      SmallVector<unsigned, 64> &Vals,
+                      ValueEnumerator &VE) {
+  unsigned ValID = VE.getValueID(V);
+  Vals.push_back(InstID - ValID);
+}
+
+static void pushValue64(const Value *V, unsigned InstID,
+                        SmallVector<uint64_t, 128> &Vals,
+                        ValueEnumerator &VE) {
+  uint64_t ValID = VE.getValueID(V);
+  Vals.push_back(InstID - ValID);
+}
+
+static void pushValueSigned(const Value *V, unsigned InstID,
+                            SmallVector<uint64_t, 128> &Vals,
+                            ValueEnumerator &VE) {
+  unsigned ValID = VE.getValueID(V);
+  int64_t diff = ((int32_t)InstID - (int32_t)ValID);
+  emitSignedInt64(Vals, diff);
 }
 
 /// WriteInstruction - Emit an instruction to the specified stream.
@@ -1058,7 +1081,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Code = bitc::FUNC_CODE_INST_BINOP;
       if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))
         AbbrevToUse = FUNCTION_INST_BINOP_ABBREV;
-      Vals.push_back(VE.getValueID(I.getOperand(1)));
+      pushValue(I.getOperand(1), InstID, Vals, VE);
       Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
       uint64_t Flags = GetOptimizationFlags(&I);
       if (Flags != 0) {
@@ -1096,32 +1119,32 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Select:
     Code = bitc::FUNC_CODE_INST_VSELECT;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);
-    Vals.push_back(VE.getValueID(I.getOperand(2)));
+    pushValue(I.getOperand(2), InstID, Vals, VE);
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     break;
   case Instruction::ExtractElement:
     Code = bitc::FUNC_CODE_INST_EXTRACTELT;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    pushValue(I.getOperand(1), InstID, Vals, VE);
     break;
   case Instruction::InsertElement:
     Code = bitc::FUNC_CODE_INST_INSERTELT;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    Vals.push_back(VE.getValueID(I.getOperand(1)));
-    Vals.push_back(VE.getValueID(I.getOperand(2)));
+    pushValue(I.getOperand(1), InstID, Vals, VE);
+    pushValue(I.getOperand(2), InstID, Vals, VE);
     break;
   case Instruction::ShuffleVector:
     Code = bitc::FUNC_CODE_INST_SHUFFLEVEC;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    Vals.push_back(VE.getValueID(I.getOperand(1)));
-    Vals.push_back(VE.getValueID(I.getOperand(2)));
+    pushValue(I.getOperand(1), InstID, Vals, VE);
+    pushValue(I.getOperand(2), InstID, Vals, VE);
     break;
   case Instruction::ICmp:
   case Instruction::FCmp:
     // compare returning Int1Ty or vector of Int1Ty
     Code = bitc::FUNC_CODE_INST_CMP2;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    pushValue(I.getOperand(1), InstID, Vals, VE);
     Vals.push_back(cast<CmpInst>(I).getPredicate());
     break;
 
@@ -1147,7 +1170,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals.push_back(VE.getValueID(II.getSuccessor(0)));
       if (II.isConditional()) {
         Vals.push_back(VE.getValueID(II.getSuccessor(1)));
-        Vals.push_back(VE.getValueID(II.getCondition()));
+        pushValue(II.getCondition(), InstID, Vals, VE);
       }
     }
     break;
@@ -1164,7 +1187,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals64.push_back(SwitchRecordHeader);      
       
       Vals64.push_back(VE.getTypeID(SI.getCondition()->getType()));
-      Vals64.push_back(VE.getValueID(SI.getCondition()));
+      pushValue64(SI.getCondition(), InstID, Vals64, VE);
       Vals64.push_back(VE.getValueID(SI.getDefaultDest()));
       Vals64.push_back(SI.getNumCases());
       for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
@@ -1215,7 +1238,9 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::IndirectBr:
     Code = bitc::FUNC_CODE_INST_INDIRECTBR;
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+    // Encode the address operand as relative, but not the basic blocks.
+    pushValue(I.getOperand(0), InstID, Vals, VE);
+    for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
       
@@ -1234,7 +1259,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
     // Emit value #'s for the fixed parameters.
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-      Vals.push_back(VE.getValueID(I.getOperand(i)));  // fixed param.
+      pushValue(I.getOperand(i), InstID, Vals, VE);  // fixed param.
 
     // Emit type/value pairs for varargs params.
     if (FTy->isVarArg()) {
@@ -1256,12 +1281,19 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::PHI: {
     const PHINode &PN = cast<PHINode>(I);
     Code = bitc::FUNC_CODE_INST_PHI;
-    Vals.push_back(VE.getTypeID(PN.getType()));
+    // With the newer instruction encoding, forward references could give
+    // negative valued IDs.  This is most common for PHIs, so we use
+    // signed VBRs.
+    SmallVector<uint64_t, 128> Vals64;
+    Vals64.push_back(VE.getTypeID(PN.getType()));
     for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-      Vals.push_back(VE.getValueID(PN.getIncomingValue(i)));
-      Vals.push_back(VE.getValueID(PN.getIncomingBlock(i)));
+      pushValueSigned(PN.getIncomingValue(i), InstID, Vals64, VE);
+      Vals64.push_back(VE.getValueID(PN.getIncomingBlock(i)));
     }
-    break;
+    // Emit a Vals64 vector and exit.
+    Stream.EmitRecord(Code, Vals64, AbbrevToUse);
+    Vals64.clear();
+    return;
   }
 
   case Instruction::LandingPad: {
@@ -1311,7 +1343,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     else
       Code = bitc::FUNC_CODE_INST_STORE;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);  // ptrty + ptr
-    Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
+    pushValue(I.getOperand(0), InstID, Vals, VE);         // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
     if (cast<StoreInst>(I).isAtomic()) {
@@ -1322,8 +1354,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::AtomicCmpXchg:
     Code = bitc::FUNC_CODE_INST_CMPXCHG;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // ptrty + ptr
-    Vals.push_back(VE.getValueID(I.getOperand(1)));       // cmp.
-    Vals.push_back(VE.getValueID(I.getOperand(2)));       // newval.
+    pushValue(I.getOperand(1), InstID, Vals, VE);         // cmp.
+    pushValue(I.getOperand(2), InstID, Vals, VE);         // newval.
     Vals.push_back(cast<AtomicCmpXchgInst>(I).isVolatile());
     Vals.push_back(GetEncodedOrdering(
                      cast<AtomicCmpXchgInst>(I).getOrdering()));
@@ -1333,7 +1365,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::AtomicRMW:
     Code = bitc::FUNC_CODE_INST_ATOMICRMW;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // ptrty + ptr
-    Vals.push_back(VE.getValueID(I.getOperand(1)));       // val.
+    pushValue(I.getOperand(1), InstID, Vals, VE);         // val.
     Vals.push_back(GetEncodedRMWOperation(
                      cast<AtomicRMWInst>(I).getOperation()));
     Vals.push_back(cast<AtomicRMWInst>(I).isVolatile());
@@ -1358,8 +1390,13 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     PushValueAndType(CI.getCalledValue(), InstID, Vals, VE);  // Callee
 
     // Emit value #'s for the fixed parameters.
-    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-      Vals.push_back(VE.getValueID(CI.getArgOperand(i)));  // fixed param.
+    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
+      // Check for labels (can happen with asm labels).
+      if (FTy->getParamType(i)->isLabelTy())
+        Vals.push_back(VE.getValueID(CI.getArgOperand(i)));
+      else
+        pushValue(CI.getArgOperand(i), InstID, Vals, VE);  // fixed param.
+    }
 
     // Emit type/value pairs for varargs params.
     if (FTy->isVarArg()) {
@@ -1372,7 +1409,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::VAArg:
     Code = bitc::FUNC_CODE_INST_VAARG;
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));   // valistty
-    Vals.push_back(VE.getValueID(I.getOperand(0))); // valist.
+    pushValue(I.getOperand(0), InstID, Vals, VE); // valist.
     Vals.push_back(VE.getTypeID(I.getType())); // restype.
     break;
   }
@@ -1514,8 +1551,8 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
 // Emit blockinfo, which defines the standard abbreviations etc.
 static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   // We only want to emit block info records for blocks that have multiple
-  // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.  Other
-  // blocks can defined their abbrevs inline.
+  // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.
+  // Other blocks can defined their abbrevs inline.
   Stream.EnterBlockInfoBlock(2);
 
   { // 8-bit fixed-width VST_ENTRY/VST_BBENTRY strings.
@@ -1773,12 +1810,10 @@ static void WriteModuleUseLists(const Module *M, ValueEnumerator &VE,
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
 
-  // Emit the version number if it is non-zero.
-  if (CurVersion) {
-    SmallVector<unsigned, 1> Vals;
-    Vals.push_back(CurVersion);
-    Stream.EmitRecord(bitc::MODULE_CODE_VERSION, Vals);
-  }
+  SmallVector<unsigned, 1> Vals;
+  unsigned CurVersion = 1;
+  Vals.push_back(CurVersion);
+  Stream.EmitRecord(bitc::MODULE_CODE_VERSION, Vals);
 
   // Analyze the module, enumerating globals, functions, etc.
   ValueEnumerator VE(M);
