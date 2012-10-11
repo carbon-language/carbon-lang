@@ -180,10 +180,10 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createLoopDependenceAnalysisPass - This creates an instance of the
-  // LoopDependenceAnalysis pass.
+  // createDependenceAnalysisPass - This creates an instance of the
+  // DependenceAnalysis pass.
   //
-  LoopPass *createDependenceAnalysisPass();
+  FunctionPass *createDependenceAnalysisPass();
 
   //===--------------------------------------------------------------------===//
   //
