@@ -91,16 +91,14 @@ bool llvm::isInstructionFree(const Instruction *I, const DataLayout *TD) {
     // which doesn't contain values outside the range of a pointer.
     if (isa<IntToPtrInst>(CI) && TD &&
         TD->isLegalInteger(Op->getType()->getScalarSizeInBits()) &&
-        Op->getType()->getScalarSizeInBits() <= TD->getPointerSizeInBits(
-          cast<IntToPtrInst>(CI)->getAddressSpace()))
+        Op->getType()->getScalarSizeInBits() <= TD->getPointerSizeInBits())
       return true;
 
     // A ptrtoint cast is free so long as the result is large enough to store
     // the pointer, and a legal integer type.
     if (isa<PtrToIntInst>(CI) && TD &&
         TD->isLegalInteger(Op->getType()->getScalarSizeInBits()) &&
-        Op->getType()->getScalarSizeInBits() >= TD->getPointerSizeInBits(
-          cast<PtrToIntInst>(CI)->getPointerAddressSpace()))
+        Op->getType()->getScalarSizeInBits() >= TD->getPointerSizeInBits())
       return true;
 
     // trunc to a native type is free (assuming the target has compare and

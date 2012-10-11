@@ -56,19 +56,11 @@ LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef TD) {
 }
 
 unsigned LLVMPointerSize(LLVMTargetDataRef TD) {
-  return unwrap(TD)->getPointerSize(0);
-}
-
-unsigned LLVMPointerSizeForAS(LLVMTargetDataRef TD, unsigned AS) {
-  return unwrap(TD)->getPointerSize(AS);
+  return unwrap(TD)->getPointerSize();
 }
 
 LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef TD) {
   return wrap(unwrap(TD)->getIntPtrType(getGlobalContext()));
-}
-
-LLVMTypeRef LLVMIntPtrTypeForAS(LLVMTargetDataRef TD, unsigned AS) {
-  return wrap(unwrap(TD)->getIntPtrType(getGlobalContext(), AS));
 }
 
 unsigned long long LLVMSizeOfTypeInBits(LLVMTargetDataRef TD, LLVMTypeRef Ty) {

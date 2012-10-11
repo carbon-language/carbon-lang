@@ -26,7 +26,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 MBlazeELFWriterInfo::MBlazeELFWriterInfo(TargetMachine &TM)
-  : TargetELFWriterInfo(TM.getDataLayout()->getPointerSizeInBits(0) == 64,
+  : TargetELFWriterInfo(TM.getDataLayout()->getPointerSizeInBits() == 64,
                         TM.getDataLayout()->isLittleEndian()) {
 }
 

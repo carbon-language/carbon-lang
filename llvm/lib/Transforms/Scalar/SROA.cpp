@@ -447,7 +447,6 @@ protected:
 
   bool computeConstantGEPOffset(GetElementPtrInst &GEPI, int64_t &GEPOffset) {
     GEPOffset = Offset;
-    unsigned int AS = GEPI.getPointerAddressSpace();
     for (gep_type_iterator GTI = gep_type_begin(GEPI), GTE = gep_type_end(GEPI);
          GTI != GTE; ++GTI) {
       ConstantInt *OpC = dyn_cast<ConstantInt>(GTI.getOperand());
@@ -477,7 +476,7 @@ protected:
         continue;
       }
 
-      APInt Index = OpC->getValue().sextOrTrunc(TD.getPointerSizeInBits(AS));
+      APInt Index = OpC->getValue().sextOrTrunc(TD.getPointerSizeInBits());
       Index *= APInt(Index.getBitWidth(),
                      TD.getTypeAllocSize(GTI.getIndexedType()));
       Index += APInt(Index.getBitWidth(), (uint64_t)GEPOffset,
@@ -1785,9 +1784,7 @@ static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const DataLayout &TD,
       break;
     if (SequentialType *SeqTy = dyn_cast<SequentialType>(ElementTy)) {
       ElementTy = SeqTy->getElementType();
-      Indices.push_back(IRB.getInt(APInt(TD.getPointerSizeInBits(
-                ElementTy->isPointerTy() ? 
-                cast<PointerType>(ElementTy)->getAddressSpace(): 0), 0)));
+      Indices.push_back(IRB.getInt(APInt(TD.getPointerSizeInBits(), 0)));
     } else if (StructType *STy = dyn_cast<StructType>(ElementTy)) {
       if (STy->element_begin() == STy->element_end())
         break; // Nothing left to descend into.
@@ -2242,8 +2239,7 @@ private:
 
   Value *getAdjustedAllocaPtr(IRBuilder<> &IRB, Type *PointerTy) {
     assert(BeginOffset >= NewAllocaBeginOffset);
-    unsigned AS = cast<PointerType>(PointerTy)->getAddressSpace();
-    APInt Offset(TD.getPointerSizeInBits(AS), BeginOffset - NewAllocaBeginOffset);
+    APInt Offset(TD.getPointerSizeInBits(), BeginOffset - NewAllocaBeginOffset);
     return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy, getName(""));
   }
 
@@ -2582,10 +2578,8 @@ private:
     const AllocaPartitioning::MemTransferOffsets &MTO
       = P.getMemTransferOffsets(II);
 
-    assert(OldPtr->getType()->isPointerTy() && "Must be a pointer type!");
-    unsigned AS = cast<PointerType>(OldPtr->getType())->getAddressSpace();
     // Compute the relative offset within the transfer.
-    unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+    unsigned IntPtrWidth = TD.getPointerSizeInBits();
     APInt RelOffset(IntPtrWidth, BeginOffset - (IsDest ? MTO.DestBegin
                                                        : MTO.SourceBegin));
 

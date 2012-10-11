@@ -916,11 +916,10 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
       if (TD && CE->getOpcode() == Instruction::IntToPtr) {
         Constant *Input = CE->getOperand(0);
         unsigned InWidth = Input->getType()->getScalarSizeInBits();
-        unsigned AS = cast<PointerType>(CE->getType())->getAddressSpace();
-        if (TD->getPointerSizeInBits(AS) < InWidth) {
+        if (TD->getPointerSizeInBits() < InWidth) {
           Constant *Mask = 
             ConstantInt::get(CE->getContext(), APInt::getLowBitsSet(InWidth,
-                                                  TD->getPointerSizeInBits(AS)));
+                                                  TD->getPointerSizeInBits()));
           Input = ConstantExpr::getAnd(Input, Mask);
         }
         // Do a zext or trunc to get to the dest size.
@@ -933,10 +932,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
     // the int size is >= the ptr size.  This requires knowing the width of a
     // pointer, so it can't be done in ConstantExpr::getCast.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
-      if (TD && CE->getOpcode() == Instruction::PtrToInt &&
-          TD->getPointerSizeInBits(
-            cast<PointerType>(CE->getOperand(0)->getType())->getAddressSpace())
-          <= CE->getType()->getScalarSizeInBits())
+      if (TD &&
+          TD->getPointerSizeInBits() <= CE->getType()->getScalarSizeInBits() &&
+          CE->getOpcode() == Instruction::PtrToInt)
         return FoldBitCast(CE->getOperand(0), DestTy, *TD);
 
     return ConstantExpr::getCast(Opcode, Ops[0], DestTy);

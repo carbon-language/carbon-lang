@@ -666,8 +666,7 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// 'Offset' APInt must be the bitwidth of the target's pointer size.
 static bool accumulateGEPOffset(const DataLayout &TD, GEPOperator *GEP,
                                 APInt &Offset) {
-  unsigned AS = GEP->getPointerAddressSpace();
-  unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
   assert(IntPtrWidth == Offset.getBitWidth());
 
   gep_type_iterator GTI = gep_type_begin(GEP);
@@ -697,14 +696,12 @@ static bool accumulateGEPOffset(const DataLayout &TD, GEPOperator *GEP,
 /// accumulates the total constant offset applied in the returned constant. It
 /// returns 0 if V is not a pointer, and returns the constant '0' if there are
 /// no constant offsets applied.
-/// FIXME: This function also exists in InlineCost.cpp.
 static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
                                                 Value *&V) {
   if (!V->getType()->isPointerTy())
     return 0;
 
-  unsigned AS = cast<PointerType>(V->getType())->getAddressSpace();;
-  unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
   APInt Offset = APInt::getNullValue(IntPtrWidth);
 
   // Even though we don't look through PHI nodes, we could be called on an
@@ -1880,9 +1877,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     // Turn icmp (ptrtoint x), (ptrtoint/constant) into a compare of the input
     // if the integer type is the same size as the pointer type.
     if (MaxRecurse && Q.TD && isa<PtrToIntInst>(LI) &&
-        Q.TD->getPointerSizeInBits(
-          cast<PtrToIntInst>(LI)->getPointerAddressSpace()) ==
-        DstTy->getPrimitiveSizeInBits()) {
+        Q.TD->getPointerSizeInBits() == DstTy->getPrimitiveSizeInBits()) {
       if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
         // Transfer the cast to the constant.
         if (Value *V = SimplifyICmpInst(Pred, SrcOp,

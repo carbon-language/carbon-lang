@@ -317,7 +317,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
   bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
-  int stackGrowth = -TD->getPointerSize(0);
+  int stackGrowth = -TD->getPointerSize();
 
   // FIXME: This is dirty hack. The code itself is pretty mess right now.
   // It should be rewritten from scratch and generalized sometimes.
@@ -717,7 +717,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   const DataLayout *TD = MF.getTarget().getDataLayout();
   uint64_t NumBytes = 0;
-  int stackGrowth = -TD->getPointerSize(0);
+  int stackGrowth = -TD->getPointerSize();
 
   if (HasFP) {
     // Calculate required stack adjustment.

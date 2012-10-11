@@ -126,9 +126,8 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
       return Base;
 
     // Truncate/sext the offset to the pointer size.
-    unsigned AS = cast<GetElementPtrInst>(CE)->getPointerAddressSpace();
-    if (TD.getPointerSizeInBits(AS) != 64) {
-      int SExtAmount = 64-TD.getPointerSizeInBits(AS);
+    if (TD.getPointerSizeInBits() != 64) {
+      int SExtAmount = 64-TD.getPointerSizeInBits();
       Offset = (Offset << SExtAmount) >> SExtAmount;
     }
 
@@ -1379,7 +1378,7 @@ getOpenCLAlignment(const DataLayout *TD,
 
   const FunctionType *FTy = dyn_cast<FunctionType>(Ty);
   if (FTy)
-    return TD->getPointerPrefAlignment(0);
+    return TD->getPointerPrefAlignment();
   return TD->getPrefTypeAlignment(Ty);
 }
 

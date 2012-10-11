@@ -365,12 +365,11 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // order the state machines in complexity of the generated code.
   Value *Idx = GEP->getOperand(2);
 
-  unsigned AS = GEP->getPointerAddressSpace();
   // If the index is larger than the pointer size of the target, truncate the
   // index down like the GEP would do implicitly.  We don't have to do this for
   // an inbounds GEP because the index can't be out of range.
   if (!GEP->isInBounds() &&
-      Idx->getType()->getPrimitiveSizeInBits() > TD->getPointerSizeInBits(AS))
+      Idx->getType()->getPrimitiveSizeInBits() > TD->getPointerSizeInBits())
     Idx = Builder->CreateTrunc(Idx, TD->getIntPtrType(Idx->getContext()));
 
   // If the comparison is only true for one or two elements, emit direct
@@ -529,11 +528,10 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
     }
   }
 
-  unsigned AS = cast<GetElementPtrInst>(GEP)->getPointerAddressSpace();
   // Okay, we know we have a single variable index, which must be a
   // pointer/array/vector index.  If there is no offset, life is simple, return
   // the index.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
   if (Offset == 0) {
     // Cast to intptrty in case a truncation occurs.  If an extension is needed,
     // we don't need to bother extending: the extension won't affect where the
@@ -1554,8 +1552,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   // Turn icmp (ptrtoint x), (ptrtoint/c) into a compare of the input if the
   // integer type is the same size as the pointer type.
   if (TD && LHSCI->getOpcode() == Instruction::PtrToInt &&
-      TD->getPointerSizeInBits(
-        cast<PtrToIntInst>(LHSCI)->getPointerAddressSpace()) ==
+      TD->getPointerSizeInBits() ==
          cast<IntegerType>(DestTy)->getBitWidth()) {
     Value *RHSOp = 0;
     if (Constant *RHSC = dyn_cast<Constant>(ICI.getOperand(1))) {
