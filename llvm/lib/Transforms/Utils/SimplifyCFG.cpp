@@ -695,7 +695,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         SI->removeCase(i);
       }
     }
-    if (HasWeight)
+    if (HasWeight && Weights.size() >= 2)
       SI->setMetadata(LLVMContext::MD_prof,
                       MDBuilder(SI->getParent()->getContext()).
                       createBranchWeights(Weights));
