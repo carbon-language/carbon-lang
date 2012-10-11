@@ -1,3 +1,4 @@
+// XFAIL: mingw32,win32
 
 #include <DependsOnModule/DependsOnModule.h>
 @__experimental_modules_import DependsOnModule;
