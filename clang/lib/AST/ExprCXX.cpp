@@ -51,6 +51,26 @@ QualType CXXUuidofExpr::getTypeOperand() const {
                                                         .getUnqualifiedType();
 }
 
+// static
+UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT) {
+  // Optionally remove one level of pointer, reference or array indirection.
+  const Type *Ty = QT.getTypePtr();
+  if (QT->isPointerType() || QT->isReferenceType())
+    Ty = QT->getPointeeType().getTypePtr();
+  else if (QT->isArrayType())
+    Ty = cast<ArrayType>(QT)->getElementType().getTypePtr();
+
+  // Loop all record redeclaration looking for an uuid attribute.
+  CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
+  for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
+       E = RD->redecls_end(); I != E; ++I) {
+    if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
+      return Uuid;
+  }
+
+  return 0;
+}
+
 // CXXScalarValueInitExpr
 SourceRange CXXScalarValueInitExpr::getSourceRange() const {
   SourceLocation Start = RParenLoc;

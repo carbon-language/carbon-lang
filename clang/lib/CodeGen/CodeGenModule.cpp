@@ -832,6 +832,49 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   return !getContext().DeclMustBeEmitted(Global);
 }
 
+llvm::Constant *CodeGenModule::GetAddrOfUuidDescriptor(
+    const CXXUuidofExpr* E) {
+  // Sema has verified that IIDSource has a __declspec(uuid()), and that its
+  // well-formed.
+  StringRef Uuid;
+  if (E->isTypeOperand())
+    Uuid = CXXUuidofExpr::GetUuidAttrOfType(E->getTypeOperand())->getGuid();
+  else {
+    // Special case: __uuidof(0) means an all-zero GUID.
+    Expr *Op = E->getExprOperand();
+    if (!Op->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+      Uuid = CXXUuidofExpr::GetUuidAttrOfType(Op->getType())->getGuid();
+    else
+      Uuid = "00000000-0000-0000-0000-000000000000";
+  }
+  std::string Name = "__uuid_" + Uuid.str();
+
+  // Look for an existing global.
+  if (llvm::GlobalVariable *GV = getModule().getNamedGlobal(Name))
+    return GV;
+
+  llvm::Constant *Init = EmitUuidofInitializer(Uuid, E->getType());
+  assert(Init && "failed to initialize as constant");
+
+  // GUIDs are assumed to be 16 bytes, spread over 4-2-2-8 bytes. However, the
+  // first field is declared as "long", which for many targets is 8 bytes.
+  // Those architectures are not supported. (With the MS abi, long is always 4
+  // bytes.)
+  llvm::Type *GuidType = getTypes().ConvertType(E->getType());
+  if (Init->getType() != GuidType) {
+    DiagnosticsEngine &Diags = getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
+        "__uuidof codegen is not supported on this architecture");
+    Diags.Report(E->getExprLoc(), DiagID) << E->getSourceRange();
+    Init = llvm::UndefValue::get(GuidType);
+  }
+
+  llvm::GlobalVariable *GV = new llvm::GlobalVariable(getModule(), GuidType,
+      /*isConstant=*/true, llvm::GlobalValue::PrivateLinkage, Init, Name);
+  GV->setUnnamedAddr(true);
+  return GV;
+}
+
 llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
   const AliasAttr *AA = VD->getAttr<AliasAttr>();
   assert(AA && "No alias?");
@@ -1286,7 +1329,7 @@ CodeGenModule::CreateOrReplaceCXXRuntimeVariable(StringRef Name,
 
     // Because C++ name mangling, the only way we can end up with an already
     // existing global with the same name is if it has been declared extern "C".
-      assert(GV->isDeclaration() && "Declaration has wrong type!");
+    assert(GV->isDeclaration() && "Declaration has wrong type!");
     OldGV = GV;
   }
   
@@ -2755,4 +2798,41 @@ void CodeGenModule::EmitCoverageFile() {
       }
     }
   }
+}
+
+llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
+                                                     QualType GuidType) {
+  // Sema has checked that all uuid strings are of the form
+  // "12345678-1234-1234-1234-1234567890ab".
+  assert(Uuid.size() == 36);
+  const char *Uuidstr = Uuid.data();
+  for (int i = 0; i < 36; ++i) {
+    if (i == 8 || i == 13 || i == 18 || i == 23) assert(Uuidstr[i] == '-');
+    else                                         assert(isxdigit(Uuidstr[i]));
+  }
+  
+  llvm::APInt Field0(32, StringRef(Uuidstr     , 8), 16);
+  llvm::APInt Field1(16, StringRef(Uuidstr +  9, 4), 16);
+  llvm::APInt Field2(16, StringRef(Uuidstr + 14, 4), 16);
+  llvm::APInt Field3Values[] = {
+    llvm::APInt(8, StringRef(Uuidstr + 19, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 21, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 24, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 26, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 28, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 30, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 32, 2), 16),
+    llvm::APInt(8, StringRef(Uuidstr + 34, 2), 16),
+  };
+
+  APValue InitStruct(APValue::UninitStruct(), /*NumBases=*/0, /*NumFields=*/4);
+  InitStruct.getStructField(0) = APValue(llvm::APSInt(Field0));
+  InitStruct.getStructField(1) = APValue(llvm::APSInt(Field1));
+  InitStruct.getStructField(2) = APValue(llvm::APSInt(Field2));
+  APValue& Arr = InitStruct.getStructField(3);
+  Arr = APValue(APValue::UninitArray(), 8, 8);
+  for (int t = 0; t < 8; ++t)
+    Arr.getArrayInitializedElt(t) = APValue(llvm::APSInt(Field3Values[t]));
+
+  return EmitConstantValue(InitStruct, GuidType);
 }

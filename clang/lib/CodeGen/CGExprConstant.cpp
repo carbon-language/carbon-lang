@@ -995,6 +995,9 @@ public:
         T = Typeid->getExprOperand()->getType();
       return CGM.GetAddrOfRTTIDescriptor(T);
     }
+    case Expr::CXXUuidofExprClass: {
+      return CGM.GetAddrOfUuidDescriptor(cast<CXXUuidofExpr>(E));
+    }
     }
 
     return 0;

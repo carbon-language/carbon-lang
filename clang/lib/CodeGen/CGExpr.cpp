@@ -720,7 +720,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     llvm_unreachable("cannot emit a property reference directly");
 
   case Expr::ObjCSelectorExprClass:
-  return EmitObjCSelectorLValue(cast<ObjCSelectorExpr>(E));
+    return EmitObjCSelectorLValue(cast<ObjCSelectorExpr>(E));
   case Expr::ObjCIsaExprClass:
     return EmitObjCIsaExpr(cast<ObjCIsaExpr>(E));
   case Expr::BinaryOperatorClass:
@@ -757,6 +757,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
   case Expr::CXXBindTemporaryExprClass:
     return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
+  case Expr::CXXUuidofExprClass:
+    return EmitCXXUuidofLValue(cast<CXXUuidofExpr>(E));
   case Expr::LambdaExprClass:
     return EmitLambdaLValue(cast<LambdaExpr>(E));
 
@@ -2857,6 +2859,14 @@ LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
 LValue
 CodeGenFunction::EmitCXXTypeidLValue(const CXXTypeidExpr *E) {
   return MakeAddrLValue(EmitCXXTypeidExpr(E), E->getType());
+}
+
+llvm::Value *CodeGenFunction::EmitCXXUuidofExpr(const CXXUuidofExpr *E) {
+  return CGM.GetAddrOfUuidDescriptor(E);
+}
+
+LValue CodeGenFunction::EmitCXXUuidofLValue(const CXXUuidofExpr *E) {
+  return MakeAddrLValue(EmitCXXUuidofExpr(E), E->getType());
 }
 
 LValue

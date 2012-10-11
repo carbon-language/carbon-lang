@@ -625,6 +625,9 @@ public:
   }
   static bool classof(const CXXUuidofExpr *) { return true; }
 
+  /// Grabs __declspec(uuid()) off a type, or returns 0 if there is none.
+  static UuidAttr *GetUuidAttrOfType(QualType QT);
+
   // Iterators
   child_range children() {
     if (isTypeOperand()) return child_range();

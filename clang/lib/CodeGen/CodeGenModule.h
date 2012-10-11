@@ -549,6 +549,9 @@ public:
   /// for the given type.
   llvm::Constant *GetAddrOfRTTIDescriptor(QualType Ty, bool ForEH = false);
 
+  /// GetAddrOfUuidDescriptor - Get the address of a uuid descriptor .
+  llvm::Constant *GetAddrOfUuidDescriptor(const CXXUuidofExpr* E);
+
   /// GetAddrOfThunk - Get the address of the thunk for the given global decl.
   llvm::Constant *GetAddrOfThunk(GlobalDecl GD, const ThunkInfo &Thunk);
 
@@ -984,6 +987,9 @@ private:
   /// EmitCoverageFile - Emit the llvm.gcov metadata used to tell LLVM where
   /// to emit the .gcno and .gcda files in a way that persists in .bc files.
   void EmitCoverageFile();
+
+  /// Emits the initializer for a uuidof string.
+  llvm::Constant *EmitUuidofInitializer(StringRef uuidstr, QualType IIDType);
 
   /// MayDeferGeneration - Determine if the given decl can be emitted
   /// lazily; this is only relevant for definitions. The given decl
