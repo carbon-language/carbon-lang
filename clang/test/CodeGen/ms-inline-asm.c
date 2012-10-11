@@ -167,12 +167,3 @@ unsigned t19(void) {
 // CHECK: t19
 // CHECK: call void asm sideeffect inteldialect "mov eax, $2\0A\09mov $0, eax\0A\09mov eax, $3\0A\09mov $1, eax", "=*m,=*m,*m,*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}, i32* %{{.*}}, i32* %{{.*}}, i32* %{{.*}}) nounwind
 }
-
-void t20(void) {
-   __asm {
-     mov eax, fs:[0x10]
-     mov eax, [eax]
-   }
-// CHECK: t20
-// call void asm sideeffect inteldialect "mov eax, fs:[0x10]\0A\09mov eax, [eax]", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
-}

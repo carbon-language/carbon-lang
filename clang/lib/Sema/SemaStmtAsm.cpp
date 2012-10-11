@@ -353,19 +353,6 @@ static StringRef getMSInlineAsmExprName(StringRef Name) {
   return Name;
 }
 
-// getIdentifierInfo - Given a Name and a range of tokens, find the associated
-// IdentifierInfo*.
-static IdentifierInfo *getIdentifierInfo(StringRef Name,
-                                         ArrayRef<Token> AsmToks,
-                                         unsigned Begin, unsigned End) {
-  for (unsigned i = Begin; i <= End; ++i) {
-    IdentifierInfo *II = AsmToks[i].getIdentifierInfo();
-    if (II && II->getName() == Name)
-      return II;
-  }
-  return 0;
-}
-
 // getSpelling - Get the spelling of the AsmTok token.
 static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   StringRef Asm;
@@ -624,10 +611,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       if (Context.getTargetInfo().isValidGCCRegisterName(Name))
         continue;
 
-      IdentifierInfo *II = getIdentifierInfo(Name, AsmToks,
-                                             AsmTokRanges[StrIdx].first,
-                                             AsmTokRanges[StrIdx].second);
-      if (II) {
+      if (IdentifierInfo *II = &Context.Idents.get(Name)) {
         CXXScopeSpec SS;
         UnqualifiedId Id;
         SourceLocation Loc;
