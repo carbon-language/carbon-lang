@@ -1433,7 +1433,7 @@ public:
                                                     unsigned LocalID);
 
   /// \brief Retrieve the macro with the given ID.
-  MacroInfo *getMacro(serialization::MacroID ID);
+  MacroInfo *getMacro(serialization::MacroID ID, MacroInfo *Hint = 0);
 
   /// \brief Retrieve the global macro ID corresponding to the given local
   /// ID within the given module file.
@@ -1582,7 +1582,7 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  void ReadMacroRecord(ModuleFile &F, uint64_t Offset);
+  void ReadMacroRecord(ModuleFile &F, uint64_t Offset, MacroInfo *Hint = 0);
 
   /// \brief Determine the global preprocessed entity ID that corresponds to
   /// the given local ID within the given module.

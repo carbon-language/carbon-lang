@@ -55,7 +55,8 @@ void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
     II->setChangedSinceDeserialization();
 }
 
-void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
+void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
+                                      MacroInfo *Hint) {
   assert(MI && "Missing macro?");
   assert(MI->isFromAST() && "Macro is not from an AST?");
   assert(!MI->getPreviousDefinition() && "Macro already in chain?");
@@ -105,8 +106,7 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
   }
 
   // The macro is not a definition; put it at the end of the list.
-  // FIXME: Adding macro history is quadratic, but a hint could fix this.
-  MacroInfo *Prev = StoredMI;
+  MacroInfo *Prev = Hint? Hint : StoredMI;
   while (Prev->getPreviousDefinition())
     Prev = Prev->getPreviousDefinition();
   Prev->setPreviousDefinition(MI);

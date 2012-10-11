@@ -519,7 +519,8 @@ public:
   /// \brief Specify a macro for this identifier.
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   /// \brief Add a MacroInfo that was loaded from an AST file.
-  void addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI);
+  void addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
+                          MacroInfo *Hint = 0);
   /// \brief Make the given MacroInfo, that was loaded from an AST file and
   /// previously hidden, visible.
   void makeLoadedMacroInfoVisible(IdentifierInfo *II, MacroInfo *MI);

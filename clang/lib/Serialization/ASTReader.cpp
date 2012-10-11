@@ -1241,7 +1241,8 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 }
 
-void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
+void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
+                                MacroInfo *Hint) {
   llvm::BitstreamCursor &Stream = F.MacroCursor;
 
   // Keep track of where we are in the stream, then jump back there
@@ -1370,7 +1371,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
       MI->setHidden(Hidden);
 
       // Finally, install the macro.
-      PP.addLoadedMacroInfo(II, MI);
+      PP.addLoadedMacroInfo(II, MI, Hint);
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
@@ -5795,7 +5796,7 @@ IdentifierID ASTReader::getGlobalIdentifierID(ModuleFile &M, unsigned LocalID) {
   return LocalID + I->second;
 }
 
-MacroInfo *ASTReader::getMacro(MacroID ID) {
+MacroInfo *ASTReader::getMacro(MacroID ID, MacroInfo *Hint) {
   if (ID == 0)
     return 0;
 
@@ -5811,7 +5812,7 @@ MacroInfo *ASTReader::getMacro(MacroID ID) {
     assert(I != GlobalMacroMap.end() && "Corrupted global macro map");
     ModuleFile *M = I->second;
     unsigned Index = ID - M->BaseMacroID;
-    ReadMacroRecord(*M, M->MacroOffsets[Index]);
+    ReadMacroRecord(*M, M->MacroOffsets[Index], Hint);
   }
 
   return MacrosLoaded[ID];
@@ -6512,9 +6513,10 @@ void ASTReader::finishPendingActions() {
     for (unsigned I = 0; I != PendingMacroIDs.size(); ++I) {
       // FIXME: std::move here
       SmallVector<MacroID, 2> GlobalIDs = PendingMacroIDs.begin()[I].second;
+      MacroInfo *Hint = 0;
       for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
            ++IDIdx) {
-        getMacro(GlobalIDs[IDIdx]);
+        Hint = getMacro(GlobalIDs[IDIdx], Hint);
       }
     }
     PendingMacroIDs.clear();
