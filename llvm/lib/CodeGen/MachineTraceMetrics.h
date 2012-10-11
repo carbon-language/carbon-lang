@@ -279,7 +279,7 @@ public:
     unsigned computeCrossBlockCriticalPath(const TraceBlockInfo&);
     void computeInstrDepths(const MachineBasicBlock*);
     void computeInstrHeights(const MachineBasicBlock*);
-    void addLiveIns(const MachineInstr *DefMI,
+    void addLiveIns(const MachineInstr *DefMI, unsigned DefOp,
                     ArrayRef<const MachineBasicBlock*> Trace);
 
   protected:
