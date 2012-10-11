@@ -537,6 +537,9 @@ public:
   /// preprocessor is not available.
   comments::FullComment *getCommentForDecl(const Decl *D,
                                            const Preprocessor *PP) const;
+  
+  comments::FullComment *cloneFullComment(comments::FullComment *FC,
+                                         const Decl *D) const;
 
 private:
   mutable comments::CommandTraits CommentCommandTraits;

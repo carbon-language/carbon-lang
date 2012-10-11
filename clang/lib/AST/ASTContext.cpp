@@ -374,6 +374,20 @@ static void addRedeclaredMethods(const ObjCMethodDecl *ObjCMethod,
   }
 }
 
+comments::FullComment *ASTContext::cloneFullComment(comments::FullComment *FC,
+                                                    const Decl *D) const {
+  comments::DeclInfo *ThisDeclInfo = new (*this) comments::DeclInfo;
+  ThisDeclInfo->CommentDecl = D;
+  ThisDeclInfo->IsFilled = false;
+  ThisDeclInfo->fill();
+  ThisDeclInfo->CommentDecl = FC->getDecl();
+  comments::FullComment *CFC =
+    new (*this) comments::FullComment(FC->getBlocks(),
+                                      ThisDeclInfo);
+  return CFC;
+  
+}
+
 comments::FullComment *ASTContext::getCommentForDecl(
                                               const Decl *D,
                                               const Preprocessor *PP) const {
@@ -384,16 +398,9 @@ comments::FullComment *ASTContext::getCommentForDecl(
       ParsedComments.find(Canonical);
   
   if (Pos != ParsedComments.end()) {
-    if (Canonical != D &&
-        (isa<ObjCMethodDecl>(D) || isa<FunctionDecl>(D))) {
-      // case of method being redeclaration of the canonical, not
-      // overriding it; i.e. method in implementation, canonical in
-      // interface. Or, out-of-line cxx-method definition. 
+    if (Canonical != D) {
       comments::FullComment *FC = Pos->second;
-      comments::FullComment *CFC =
-        new (*this) comments::FullComment(FC->getBlocks(),
-                                          FC->getThisDeclInfo(),
-                                          const_cast<Decl *>(D));
+      comments::FullComment *CFC = cloneFullComment(FC, D);
       return CFC;
     }
     return Pos->second;
@@ -411,10 +418,7 @@ comments::FullComment *ASTContext::getCommentForDecl(
                                                            overridden);
       for (unsigned i = 0, e = overridden.size(); i < e; i++) {
         if (comments::FullComment *FC = getCommentForDecl(overridden[i], PP)) {
-          comments::FullComment *CFC =
-            new (*this) comments::FullComment(FC->getBlocks(),
-                                              FC->getThisDeclInfo(),
-                                              const_cast<Decl *>(D));
+          comments::FullComment *CFC = cloneFullComment(FC, D);
           return CFC;
         }
       }

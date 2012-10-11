@@ -413,7 +413,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
 
 FullComment *Sema::actOnFullComment(
                               ArrayRef<BlockContentComment *> Blocks) {
-  FullComment *FC = new (Allocator) FullComment(Blocks, ThisDeclInfo, 0);
+  FullComment *FC = new (Allocator) FullComment(Blocks, ThisDeclInfo);
   resolveParamCommandIndexes(FC);
   return FC;
 }

@@ -671,7 +671,7 @@ void CommentASTToHTMLConverter::visitParamCommandComment(
   } else
     Result << "<dt class=\"param-name-index-invalid\">";
 
-  appendToResultWithHTMLEscaping(C->getParamName(FC->getDeclForCommentLookup()));
+  appendToResultWithHTMLEscaping(C->getParamName(FC));
   Result << "</dt>";
 
   if (C->isParamIndexValid()) {
@@ -960,7 +960,7 @@ void CommentASTToXMLConverter::visitBlockCommandComment(const BlockCommandCommen
 
 void CommentASTToXMLConverter::visitParamCommandComment(const ParamCommandComment *C) {
   Result << "<Parameter><Name>";
-  appendToResultWithXMLEscaping(C->getParamName(FC->getDeclForCommentLookup()));
+  appendToResultWithXMLEscaping(C->getParamName(FC));
   Result << "</Name>";
 
   if (C->isParamIndexValid())

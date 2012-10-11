@@ -27,7 +27,7 @@ class ParmVarDecl;
 class TemplateParameterList;
 
 namespace comments {
-
+class FullComment;
 /// Any part of the comment.
 /// Abstract class.
 class Comment {
@@ -706,19 +706,7 @@ public:
     return getNumArgs() > 0;
   }
 
-  StringRef getParamName(const Decl *OverridingDecl) const {
-    if (OverridingDecl && isParamIndexValid()) {
-      if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(OverridingDecl)) {
-        const ParmVarDecl *ParamDecl = OMD->param_begin()[getParamIndex()];
-        return ParamDecl->getName();
-      }
-      else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(OverridingDecl)) {
-        const ParmVarDecl *ParamDecl = FD->param_begin()[getParamIndex()];
-        return ParamDecl->getName();
-      }
-    }
-    return Args[0].Text;
-  }
+  StringRef getParamName(comments::FullComment *FC) const;
 
   SourceRange getParamNameRange() const {
     return Args[0].Range;
@@ -1017,18 +1005,12 @@ struct DeclInfo {
 /// A full comment attached to a declaration, contains block content.
 class FullComment : public Comment {
   llvm::ArrayRef<BlockContentComment *> Blocks;
-
   DeclInfo *ThisDeclInfo;
-  /// Declaration that a comment is being looked for. This declaration and
-  /// CommentDecl in ThisDeclInfo are generally the same. But they could be
-  /// different when ThisDecl does not have comment and uses CommentDecl's comment.
-  const Decl *ThisDecl;
 
 public:
-  FullComment(llvm::ArrayRef<BlockContentComment *> Blocks, DeclInfo *D,
-              Decl *TD) :
+  FullComment(llvm::ArrayRef<BlockContentComment *> Blocks, DeclInfo *D) :
       Comment(FullCommentKind, SourceLocation(), SourceLocation()),
-      Blocks(Blocks), ThisDeclInfo(D), ThisDecl(TD) {
+      Blocks(Blocks), ThisDeclInfo(D) {
     if (Blocks.empty())
       return;
 
@@ -1046,15 +1028,11 @@ public:
   }
 
   child_iterator child_end() const {
-    return reinterpret_cast<child_iterator>(Blocks.end());
+    return reinterpret_cast<child_iterator>(Blocks.end()); 
   }
 
   const Decl *getDecl() const LLVM_READONLY {
     return ThisDeclInfo->CommentDecl;
-  }
-
-  const Decl *getDeclForCommentLookup() const LLVM_READONLY {
-    return ThisDecl;
   }
   
   const DeclInfo *getDeclInfo() const LLVM_READONLY {
@@ -1070,7 +1048,6 @@ public:
   llvm::ArrayRef<BlockContentComment *> getBlocks() const { return Blocks; }
   
 };
-  
 } // end namespace comments
 } // end namespace clang
 

@@ -304,6 +304,12 @@ void DeclInfo::fill() {
   IsFilled = true;
 }
 
+StringRef ParamCommandComment::getParamName(comments::FullComment *FC) const {
+  if (FC && isParamIndexValid())
+    return FC->getThisDeclInfo()->ParamVars[getParamIndex()]->getName();
+  return Args[0].Text;
+}
+
 } // end namespace comments
 } // end namespace clang
 
