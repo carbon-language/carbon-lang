@@ -2142,6 +2142,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
         ++FPR_idx;
       } else {
         needsLoad = true;
+        ArgSize = PtrByteSize;
       }
 
       ArgOffset += 8;
@@ -3786,6 +3787,13 @@ PPCTargetLowering::LowerCall_Darwin_Or_64SVR4(SDValue Chain, SDValue Callee,
             ++GPR_idx;
         }
       } else {
+        // Single-precision floating-point values are mapped to the
+        // second (rightmost) word of the stack doubleword.
+        if (Arg.getValueType() == MVT::f32 && isPPC64 && isSVR4ABI) {
+          SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
+          PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
+        }
+
         LowerMemOpCallTo(DAG, MF, Chain, Arg, PtrOff, SPDiff, ArgOffset,
                          isPPC64, isTailCall, false, MemOpChains,
                          TailCallArguments, dl);
