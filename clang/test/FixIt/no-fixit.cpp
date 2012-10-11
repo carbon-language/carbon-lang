@@ -5,3 +5,9 @@
 // CHECK-NOT: fix-it:
 
 template<template<typename> +> void func();
+
+struct {
+  void i() {
+    (void)&i;
+  }
+} x;

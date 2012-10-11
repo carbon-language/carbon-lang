@@ -8056,8 +8056,16 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
 
     // The method was named without a qualifier.
     } else if (!DRE->getQualifier()) {
-      S.Diag(OpLoc, diag::err_unqualified_pointer_member_function)
-        << op->getSourceRange();
+      if (MD->getParent()->getName().empty())
+        S.Diag(OpLoc, diag::err_unqualified_pointer_member_function)
+          << op->getSourceRange();
+      else {
+        SmallString<32> Str;
+        StringRef Qual = (MD->getParent()->getName() + "::").toStringRef(Str);
+        S.Diag(OpLoc, diag::err_unqualified_pointer_member_function)
+          << op->getSourceRange()
+          << FixItHint::CreateInsertion(op->getSourceRange().getBegin(), Qual);
+      }
     }
 
     return S.Context.getMemberPointerType(op->getType(),

@@ -292,3 +292,10 @@ namespace greatergreater {
     //(void)(&t<S<int>>==p);
   }
 }
+
+class foo {
+  static void test() {
+    (void)&i; // expected-error{{must explicitly qualify name of member function when taking its address}}
+  }
+  int i();
+};
