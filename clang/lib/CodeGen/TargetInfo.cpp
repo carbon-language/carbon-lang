@@ -1122,7 +1122,7 @@ class X86_64ABIInfo : public ABIInfo {
 public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT, bool hasavx) :
       ABIInfo(CGT), HasAVX(hasavx),
-      Has64BitPointers(CGT.getDataLayout().getPointerSize() == 8) {
+      Has64BitPointers(CGT.getDataLayout().getPointerSize(0) == 8) {
   }
 
   bool isPassedUsingAVXType(QualType type) const {
