@@ -65,10 +65,9 @@ steps:
 
       #include "llvm/Support/Casting.h"
 
-
 #. In the base class, introduce an enum which discriminates all of the
-   different classes in the hierarchy, and stash the enum value somewhere in
-   the base class.
+   different concrete classes in the hierarchy, and stash the enum value
+   somewhere in the base class.
 
    Here is the code after introducing this change:
 
@@ -103,7 +102,7 @@ steps:
    You might wonder why the ``Kind`` enum doesn't have an entry for
    ``Shape``. The reason for this is that since ``Shape`` is abstract
    (``computeArea() = 0;``), you will never actually have non-derived
-   instances of exactly that class (only subclasses).  See `Concrete Bases
+   instances of exactly that class (only subclasses). See `Concrete Bases
    and Deeper Hierarchies`_ for information on how to deal with
    non-abstract bases. It's worth mentioning here that unlike
    ``dynamic_cast<>``, LLVM-style RTTI can be used (and is often used) for
@@ -199,25 +198,11 @@ steps:
        };
 
    The job of ``classof`` is to dynamically determine whether an object of
-   a base class is in fact of a particular derived class. The argument to
-   ``classof`` should always be an *ancestor* class because the
-   implementation has logic to allow and optimize away
-   upcasts/up-``isa<>``'s automatically. It is as though every class
-   ``Foo`` automatically has a ``classof`` like:
+   a base class is in fact of a particular derived class.  In order to
+   downcast a type ``Base`` to a type ``Derived``, there needs to be a
+   ``classof`` in ``Derived`` which will accept an object of type ``Base``.
 
-   .. code-block:: c++
-
-      class Foo {
-        [...]
-        static bool classof(const Foo *) { return true; }
-        [...]
-      };
-
-   In order to downcast a type ``Base`` to a type ``Derived``, there needs
-   to be a ``classof`` in ``Derived`` which will accept an object of type
-   ``Base``.
-
-   To be concrete, in the following code:
+   To be concrete, consider the following code:
 
    .. code-block:: c++
 
@@ -226,10 +211,34 @@ steps:
         /* do something ... */
       }
 
-   The code of ``isa<>`` will eventually boil down---after template
-   instantiation and some other machinery---to a check roughly like
-   ``Circle::classof(S)``. For more information, see
+   The code of the ``isa<>`` test in this code will eventually boil
+   down---after template instantiation and some other machinery---to a
+   check roughly like ``Circle::classof(S)``. For more information, see
    :ref:`classof-contract`.
+
+   The argument to ``classof`` should always be an *ancestor* class because
+   the implementation has logic to allow and optimize away
+   upcasts/up-``isa<>``'s automatically. It is as though every class
+   ``Foo`` automatically has a ``classof`` like:
+
+   .. code-block:: c++
+
+      class Foo {
+        [...]
+        template <class T>
+        static bool classof(const T *,
+                            ::llvm::enable_if_c<
+                              ::llvm::is_base_of<Foo, T>::value
+                            >::type* = 0) { return true; }
+        [...]
+      };
+
+   Note that this is the reason that we did not need to introduce a
+   ``classof`` into ``Shape``: all relevant classes derive from ``Shape``,
+   and ``Shape`` itself is abstract (has no entry in the ``Kind`` enum),
+   so this notional inferred ``classof`` is all we need. See `Concrete
+   Bases and Deeper Hierarchies`_ for more information about how to extend
+   this example to more general hierarchies.
 
 Although for this small example setting up LLVM-style RTTI seems like a lot
 of "boilerplate", if your classes are doing anything interesting then this
@@ -240,7 +249,16 @@ Concrete Bases and Deeper Hierarchies
 
 For concrete bases (i.e. non-abstract interior nodes of the inheritance
 tree), the ``Kind`` check inside ``classof`` needs to be a bit more
-complicated. Say that ``SpecialSquare`` and ``OtherSpecialSquare`` derive
+complicated. The situation differs from the example above in that
+
+* Since the class is concrete, it must itself have an entry in the ``Kind``
+  enum because it is possible to have objects with this class as a dynamic
+  type.
+
+* Since the class has children, the check inside ``classof`` must take them
+  into account.
+
+Say that ``SpecialSquare`` and ``OtherSpecialSquare`` derive
 from ``Square``, and so ``ShapeKind`` becomes:
 
 .. code-block:: c++
@@ -297,3 +315,18 @@ contract, you can tweak and optimize it as much as you want.
    ``simplify_type``. However, those two need reference documentation in
    the form of doxygen comments as well. We need the doxygen so that we can
    say "for full details, see http://llvm.org/doxygen/..."
+
+Rules of Thumb
+==============
+
+#. The ``Kind`` enum should have one entry per concrete class, ordered
+   according to a preorder traversal of the inheritance tree.
+#. The argument to ``classof`` should be a ``const Base *``, where ``Base``
+   is some ancestor in the inheritance hierarchy. The argument should
+   *never* be a derived class or the class itself: the template machinery
+   for ``isa<>`` already handles this case and optimizes it.
+#. For each class in the hierarchy that has no children, implement a
+   ``classof`` that checks only against its ``Kind``.
+#. For each class in the hierarchy that has children, implement a
+   ``classof`` that checks a range of the first child's ``Kind`` and the
+   last child's ``Kind``.
