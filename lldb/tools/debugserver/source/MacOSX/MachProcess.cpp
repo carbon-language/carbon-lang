@@ -1533,11 +1533,13 @@ MachProcess::LaunchForDebug
     case eLaunchFlavorSpringBoard:
         {
             const char *app_ext = strstr(path, ".app");
-            if (app_ext != NULL)
+            if (app_ext && (app_ext[4] == '\0' || app_ext[4] == '/'))
             {
                 std::string app_bundle_path(path, app_ext + strlen(".app"));
                 if (SBLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, launch_err) != 0)
                     return m_pid; // A successful SBLaunchForDebug() returns and assigns a non-zero m_pid.
+                else
+                    break; // We tried a springboard launch, but didn't succeed lets get out
             }
         }
         // In case the executable name has a ".app" fragment which confuses our debugserver,
