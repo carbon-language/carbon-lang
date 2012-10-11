@@ -3223,7 +3223,7 @@ DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
             return 0;
         ::memcpy (buf, &m_state.context, size);
     }
-    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::GetRegisterContext (buf = %p, len = %llu) => %llu", buf, buf_len, (uint64_t)size);
+    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::GetRegisterContext (buf = %p, len = %llu) => %llu", buf, (uint64_t)buf_len, (uint64_t)size);
     // Return the size of the register context even if NULL was passed in
     return size;
 }
@@ -3245,7 +3245,7 @@ DNBArchMachARM::SetRegisterContext (const void *buf, nub_size_t buf_len)
         SetVFPState();
         SetEXCState();
     }
-    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SetRegisterContext (buf = %p, len = %llu) => %llu", buf, buf_len, (uint64_t)size);
+    DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM::SetRegisterContext (buf = %p, len = %llu) => %llu", buf, (uint64_t)buf_len, (uint64_t)size);
     return size;
 }
 
