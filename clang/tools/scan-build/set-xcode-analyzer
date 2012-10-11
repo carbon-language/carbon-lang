@@ -20,10 +20,19 @@ def FindClangSpecs(path):
       if f.endswith(".xcspec") and f.startswith("Clang LLVM"):
         yield os.path.join(root, f)
 
-def ModifySpec(path, pathToChecker):
+def ModifySpec(path, isBuiltinAnalyzer, pathToChecker):
   t = tempfile.NamedTemporaryFile(delete=False)
   foundAnalyzer = False
   with open(path) as f:
+    if isBuiltinAnalyzer:
+      # First search for CLANG_ANALYZER_EXEC.  Newer
+      # versions of Xcode set EXEC_PATH to be CLANG_ANALYZER_EXEC.
+      with open(path) as f2:
+        for line in f2:
+          if line.find("CLANG_ANALYZER_EXEC") >= 0:
+            pathToChecker = "$(CLANG_ANALYZER_EXEC)"
+            break
+    # Now create a new file.
     for line in f:
       if not foundAnalyzer:
         if line.find("Static Analyzer") >= 0:
@@ -63,6 +72,7 @@ def main():
       print "(-) You must quit Xcode first before modifying its configuration files."
       return
 
+  isBuiltinAnalyzer = False
   if options.path:
     # Expand tildes.
     path = os.path.expanduser(options.path)
@@ -74,6 +84,7 @@ def main():
   else:
     print "(+) Using the Clang bundled with Xcode"
     path = options.default
+    isBuiltinAnalyzer = True
   
   try:
     xcode_path = subprocess.check_output(["xcode-select", "-print-path"])
@@ -88,7 +99,7 @@ def main():
   foundSpec = False
   for x in FindClangSpecs(xcode_path):
     foundSpec = True
-    ModifySpec(x, path)
+    ModifySpec(x, isBuiltinAnalyzer, path)
     
   if foundSpec == False:
       print "(-) No compiler configuration file was found.  Xcode's analyzer has not been updated."
