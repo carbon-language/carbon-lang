@@ -547,7 +547,7 @@ master branch, run the following command:
 Sending patches with Git
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Please read `Developer Policy <DeveloperPolicy.html#patches>`_, too.
+Please read `Developer Policy <DeveloperPolicy.html#one-off-patches>`_, too.
 
 Assume ``master`` points the upstream and ``mybranch`` points your working
 branch, and ``mybranch`` is rebased onto ``master``.  At first you may check
