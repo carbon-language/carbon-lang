@@ -1,4 +1,4 @@
-/*===---- x86intrin.h - X86 intrinsics -------------------------------------===
+/*===---- f16cintrin.h - F16C intrinsics ---------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +21,38 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __X86INTRIN_H
-#define __X86INTRIN_H
-
-#include <immintrin.h>
-
-#ifdef __3dNOW__
-#include <mm3dnow.h>
+#if !defined __X86INTRIN_H && !defined __IMMINTRIN_H
+#error "Never use <f16cintrin.h> directly; include <x86intrin.h> instead."
 #endif
 
-#ifdef __BMI__
-#include <bmiintrin.h>
-#endif
+#ifndef __F16C__
+# error "F16C instruction is not enabled"
+#endif /* __F16C__ */
 
-#ifdef __BMI2__
-#include <bmi2intrin.h>
-#endif
+#ifndef __F16CINTRIN_H
+#define __F16CINTRIN_H
 
-#ifdef __LZCNT__
-#include <lzcntintrin.h>
-#endif
+typedef float __v8sf __attribute__ ((__vector_size__ (32)));
+typedef float __m256 __attribute__ ((__vector_size__ (32)));
 
-#ifdef __POPCNT__
-#include <popcntintrin.h>
-#endif
+#define _mm_cvtps_ph(a, imm) __extension__ ({ \
+  __m128 __a = (a); \
+ (__m128i)__builtin_ia32_vcvtps2ph((__v4sf)__a, (imm)); })
 
-#ifdef __SSE4A__
-#include <ammintrin.h>
-#endif
+#define _mm256_cvtps_ph(a, imm) __extension__ ({ \
+  __m256 __a = (a); \
+ (__m128i)__builtin_ia32_vcvtps2ph256((__v8sf)__a, (imm)); })
 
-#ifdef __FMA4__
-#include <fma4intrin.h>
-#endif
+static __inline __m128 __attribute__((__always_inline__, __nodebug__))
+_mm_cvtph_ps(__m128i a)
+{
+  return (__m128)__builtin_ia32_vcvtph2ps((__v8hi)a);
+}
 
-#ifdef __XOP__
-#include <xopintrin.h>
-#endif
+static __inline __m256 __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtph_ps(__m128i a)
+{
+  return (__m256)__builtin_ia32_vcvtph2ps256((__v8hi)a);
+}
 
-#ifdef __F16C__
-#include <f16cintrin.h>
-#endif
-
-// FIXME: LWP
-
-#endif /* __X86INTRIN_H */
+#endif /* __F16CINTRIN_H */
