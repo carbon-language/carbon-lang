@@ -25,6 +25,7 @@ namespace clang {
 class Decl;
 class BlockDecl;
 class CXXMethodDecl;
+class ObjCPropertyDecl;
 class IdentifierInfo;
 class LabelDecl;
 class ReturnStmt;
@@ -34,6 +35,7 @@ class VarDecl;
 class DeclRefExpr;
 class ObjCIvarRefExpr;
 class ObjCPropertyRefExpr;
+class ObjCMessageExpr;
 
 namespace sema {
 
@@ -166,6 +168,7 @@ public:
 
   public:
     WeakObjectProfileTy(const ObjCPropertyRefExpr *RE);
+    WeakObjectProfileTy(const Expr *Base, const ObjCPropertyDecl *Property);
     WeakObjectProfileTy(const DeclRefExpr *RE);
     WeakObjectProfileTy(const ObjCIvarRefExpr *RE);
 
@@ -260,6 +263,9 @@ public:
   /// Part of the implementation of -Wrepeated-use-of-weak.
   template <typename ExprT>
   inline void recordUseOfWeak(const ExprT *E, bool IsRead = true);
+
+  void recordUseOfWeak(const ObjCMessageExpr *Msg,
+                       const ObjCPropertyDecl *Prop);
 
   /// Record that a given expression is a "safe" access of a weak object (e.g.
   /// assigning it to a strong variable.)

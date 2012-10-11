@@ -2434,6 +2434,24 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     // In ARC, check for message sends which are likely to introduce
     // retain cycles.
     checkRetainCycles(Result);
+
+    if (!isImplicit && Method) {
+      if (const ObjCPropertyDecl *Prop = Method->findPropertyDecl()) {
+        bool IsWeak =
+          Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak;
+        if (!IsWeak && Sel.isUnarySelector())
+          IsWeak = ReturnType.getObjCLifetime() & Qualifiers::OCL_Weak;
+
+        if (IsWeak) {
+          DiagnosticsEngine::Level Level =
+            Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
+                                     LBracLoc);
+          if (Level != DiagnosticsEngine::Ignored)
+            getCurFunction()->recordUseOfWeak(Result, Prop);
+
+        }
+      }
+    }
   }
       
   return MaybeBindToTemporary(Result);

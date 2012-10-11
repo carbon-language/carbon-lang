@@ -103,6 +103,14 @@ FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
   }
 }
 
+FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(const Expr *BaseE,
+                                                const ObjCPropertyDecl *Prop)
+    : Base(0, true), Property(Prop) {
+  if (BaseE)
+    Base = getBaseInfo(BaseE);
+  // else, this is a message accessing a property on super.
+}
+
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
                                                       const DeclRefExpr *DRE)
   : Base(0, true), Property(DRE->getDecl()) {
@@ -112,6 +120,14 @@ FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
                                                   const ObjCIvarRefExpr *IvarE)
   : Base(getBaseInfo(IvarE->getBase())), Property(IvarE->getDecl()) {
+}
+
+void FunctionScopeInfo::recordUseOfWeak(const ObjCMessageExpr *Msg,
+                                        const ObjCPropertyDecl *Prop) {
+  assert(Msg && Prop);
+  WeakUseVector &Uses =
+    WeakObjectUses[WeakObjectProfileTy(Msg->getInstanceReceiver(), Prop)];
+  Uses.push_back(WeakUseTy(Msg, Msg->getNumArgs() == 0));
 }
 
 void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
@@ -138,11 +154,21 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
   // Has this weak object been seen before?
   FunctionScopeInfo::WeakObjectUseMap::iterator Uses;
   if (const ObjCPropertyRefExpr *RefExpr = dyn_cast<ObjCPropertyRefExpr>(E))
-    Uses = WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(RefExpr));
+    Uses = WeakObjectUses.find(WeakObjectProfileTy(RefExpr));
   else if (const ObjCIvarRefExpr *IvarE = dyn_cast<ObjCIvarRefExpr>(E))
-    Uses = WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(IvarE));
+    Uses = WeakObjectUses.find(WeakObjectProfileTy(IvarE));
   else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    Uses = WeakObjectUses.find(FunctionScopeInfo::WeakObjectProfileTy(DRE));
+    Uses = WeakObjectUses.find(WeakObjectProfileTy(DRE));
+  else if (const ObjCMessageExpr *MsgE = dyn_cast<ObjCMessageExpr>(MsgE)) {
+    Uses = WeakObjectUses.end();
+    if (const ObjCMethodDecl *MD = MsgE->getMethodDecl()) {
+      if (const ObjCPropertyDecl *Prop = MD->findPropertyDecl()) {
+        Uses =
+          WeakObjectUses.find(WeakObjectProfileTy(MsgE->getInstanceReceiver(),
+                                                  Prop));
+      }
+    }
+  }
   else
     return;
 

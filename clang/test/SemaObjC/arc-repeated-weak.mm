@@ -99,6 +99,29 @@ void globals() {
   use(a); // expected-note{{also accessed here}}
 }
 
+void messageGetter(Test *a) {
+  use([a weakProp]); // expected-warning{{weak property 'weakProp' is accessed multiple times}}
+  use([a weakProp]); // expected-note{{also accessed here}}
+}
+
+void messageSetter(Test *a) {
+  [a setWeakProp:get()]; // no-warning
+  [a setWeakProp:get()]; // no-warning
+}
+
+void messageSetterAndGetter(Test *a) {
+  [a setWeakProp:get()]; // expected-note{{also accessed here}}
+  use([a weakProp]); // expected-warning{{weak property 'weakProp' is accessed multiple times}}
+}
+
+void mixDotAndMessageSend(Test *a, Test *b) {
+  use(a.weakProp); // expected-warning{{weak property 'weakProp' is accessed multiple times}}
+  use([a weakProp]); // expected-note{{also accessed here}}
+
+  use([b weakProp]); // expected-warning{{weak property 'weakProp' is accessed multiple times}}
+  use(b.weakProp); // expected-note{{also accessed here}}
+}
+
 
 void assignToStrongWrongInit(Test *a) {
   id val = a.weakProp; // expected-note{{also accessed here}}
