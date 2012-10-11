@@ -590,6 +590,43 @@ public:
     : OSTargetInfo<Target>(triple) {}
 };
 
+template <typename Target>
+class NaClTargetInfo : public OSTargetInfo<Target> {
+ protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                            MacroBuilder &Builder) const {
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_REENTRANT");
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
+
+    DefineStd(Builder, "unix", Opts);
+    Builder.defineMacro("__ELF__");
+    Builder.defineMacro("__native_client__");
+  }
+ public:
+  NaClTargetInfo(const std::string &triple)
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+    this->LongAlign = 32;
+    this->LongWidth = 32;
+    this->PointerAlign = 32;
+    this->PointerWidth = 32;
+    this->IntMaxType = TargetInfo::SignedLongLong;
+    this->UIntMaxType = TargetInfo::UnsignedLongLong;
+    this->Int64Type = TargetInfo::SignedLongLong;
+    this->DoubleAlign = 64;
+    this->LongDoubleWidth = 64;
+    this->LongDoubleAlign = 64;
+    this->SizeType = TargetInfo::UnsignedInt;
+    this->PtrDiffType = TargetInfo::SignedInt;
+    this->IntPtrType = TargetInfo::SignedInt;
+    this->RegParmMax = 2;
+    this->LongDoubleFormat = &llvm::APFloat::IEEEdouble;
+    this->DescriptionString = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+                              "f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
+  }
+};
 } // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
@@ -4197,15 +4234,7 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
-    DefineStd(Builder, "unix", Opts);
-    Builder.defineMacro("__ELF__");
-    if (Opts.POSIXThreads)
-      Builder.defineMacro("_REENTRANT");
-    if (Opts.CPlusPlus)
-      Builder.defineMacro("_GNU_SOURCE");
-
     Builder.defineMacro("__LITTLE_ENDIAN__");
-    Builder.defineMacro("__native_client__");
     getArchDefines(Opts, Builder);
   }
   virtual bool hasFeature(StringRef Feature) const {
@@ -4278,6 +4307,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new BitrigTargetInfo<ARMTargetInfo>(T);
     case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<ARMTargetInfo>(T);
+    case llvm::Triple::NativeClient:
+      return new NaClTargetInfo<ARMTargetInfo>(T);
     default:
       return new ARMTargetInfo(T);
     }
@@ -4348,7 +4379,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
   case llvm::Triple::le32:
     switch (os) {
       case llvm::Triple::NativeClient:
-        return new PNaClTargetInfo(T);
+        return new NaClTargetInfo<PNaClTargetInfo>(T);
       default:
         return NULL;
     }
@@ -4453,6 +4484,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new HaikuX86_32TargetInfo(T);
     case llvm::Triple::RTEMS:
       return new RTEMSX86_32TargetInfo(T);
+    case llvm::Triple::NativeClient:
+      return new NaClTargetInfo<X86_32TargetInfo>(T);
     default:
       return new X86_32TargetInfo(T);
     }
@@ -4482,6 +4515,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new MinGWX86_64TargetInfo(T);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
       return new VisualStudioWindowsX86_64TargetInfo(T);
+    case llvm::Triple::NativeClient:
+      return new NaClTargetInfo<X86_64TargetInfo>(T);
     default:
       return new X86_64TargetInfo(T);
     }

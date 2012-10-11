@@ -1333,7 +1333,10 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       Hi = Integer;
     } else if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
       Current = Integer;
-    } else if (k == BuiltinType::Float || k == BuiltinType::Double) {
+    } else if ((k == BuiltinType::Float || k == BuiltinType::Double) ||
+               (k == BuiltinType::LongDouble &&
+                getContext().getTargetInfo().getTriple().getOS() ==
+                llvm::Triple::NativeClient)) {
       Current = SSE;
     } else if (k == BuiltinType::LongDouble) {
       Lo = X87;
@@ -1419,7 +1422,10 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
         Lo = Hi = Integer;
     } else if (ET == getContext().FloatTy)
       Current = SSE;
-    else if (ET == getContext().DoubleTy)
+    else if (ET == getContext().DoubleTy ||
+             (ET == getContext().LongDoubleTy &&
+              getContext().getTargetInfo().getTriple().getOS() ==
+              llvm::Triple::NativeClient))
       Lo = Hi = SSE;
     else if (ET == getContext().LongDoubleTy)
       Current = ComplexX87;
