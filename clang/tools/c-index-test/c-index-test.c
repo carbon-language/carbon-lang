@@ -2137,7 +2137,7 @@ static void printCXIndexLoc(CXIdxLoc loc, CXClientData client_data) {
   index_data = (IndexData *)client_data;
   clang_indexLoc_getFileLocation(loc, &file, 0, &line, &column, 0);
   if (line == 0) {
-    printf("<null loc>");
+    printf("<invalid>");
     return;
   }
   if (!file) {
