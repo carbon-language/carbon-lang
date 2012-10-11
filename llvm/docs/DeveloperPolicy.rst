@@ -137,6 +137,10 @@ reviewees. If someone is kind enough to review your code, you should return the
 favor for someone else.  Note that anyone is welcome to review and give feedback
 on a patch, but only people with Subversion write access can approve it.
 
+There is a web based code review tool that can optionally be used
+for code reviews. See the documentation on `Code Reviews with
+Phabricator <Phabricator.html>`_.
+
 Code Owners
 -----------
 
