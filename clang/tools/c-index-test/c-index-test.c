@@ -2571,6 +2571,7 @@ static int index_file(int argc, const char **argv) {
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
   index_data.abort = 0;
+  index_data.main_filename = "";
 
   index_opts = getIndexOptions();
   idxAction = clang_IndexAction_create(Idx);
@@ -2624,6 +2625,7 @@ static int index_tu(int argc, const char **argv) {
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
   index_data.abort = 0;
+  index_data.main_filename = "";
 
   index_opts = getIndexOptions();
   idxAction = clang_IndexAction_create(Idx);
