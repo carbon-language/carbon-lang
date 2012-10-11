@@ -495,8 +495,8 @@ private:
   /// global method pool for this selector.
   llvm::DenseMap<Selector, unsigned> SelectorGeneration;
 
-  typedef llvm::DenseMap<IdentifierInfo *,
-                         llvm::SmallVector<serialization::MacroID, 2> >
+  typedef llvm::MapVector<IdentifierInfo *,
+                          llvm::SmallVector<serialization::MacroID, 2> >
     PendingMacroIDsMap;
 
   /// \brief Mapping from identifiers that have a macro history to the global
@@ -1605,10 +1605,6 @@ public:
 
   /// \brief Note that this identifier is up-to-date.
   void markIdentifierUpToDate(IdentifierInfo *II);
-
-  /// \brief Read the macro definition corresponding to this iterator
-  /// into the unread macro record offsets table.
-  void LoadMacroDefinition(PendingMacroIDsMap::iterator Pos);
 
   /// \brief Load all external visible decls in the given DeclContext.
   void completeVisibleDeclsMap(const DeclContext *DC);

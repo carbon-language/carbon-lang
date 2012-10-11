@@ -1542,14 +1542,6 @@ void ASTReader::ReadDefinedMacros() {
   }
 }
 
-void ASTReader::LoadMacroDefinition(PendingMacroIDsMap::iterator Pos) {
-  assert(Pos != PendingMacroIDs.end() && "Unknown macro definition");
-  SmallVector<MacroID, 2> GlobalIDs = Pos->second;
-  PendingMacroIDs.erase(Pos);
-  for (unsigned I = 0, N = GlobalIDs.size(); I != N; ++I)
-    getMacro(GlobalIDs[I]);
-}
-
 namespace {
   /// \brief Visitor class used to look up identifirs in an AST file.
   class IdentifierLookupVisitor {
@@ -6517,9 +6509,15 @@ void ASTReader::finishPendingActions() {
     PendingDeclChains.clear();
 
     // Load any pending macro definitions.
-    // FIXME: Non-determinism here.
-    while (!PendingMacroIDs.empty())
-      LoadMacroDefinition(PendingMacroIDs.begin());
+    for (unsigned I = 0; I != PendingMacroIDs.size(); ++I) {
+      // FIXME: std::move here
+      SmallVector<MacroID, 2> GlobalIDs = PendingMacroIDs.begin()[I].second;
+      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
+           ++IDIdx) {
+        getMacro(GlobalIDs[IDIdx]);
+      }
+    }
+    PendingMacroIDs.clear();
   }
   
   // If we deserialized any C++ or Objective-C class definitions, any
