@@ -1,8 +1,14 @@
 // RUN: rm -rf %t
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros_top %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros_left %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros_right %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -verify -fmodule-cache-path %t %s
 // RUN: %clang_cc1 -E -fmodules -x objective-c -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
 // FIXME: When we have a syntax for modules in C, use that.
+// These notes come from headers in modules, and are bogus.
+// FIXME: expected-note{{previous definition is here}}
+// FIXME: expected-note{{previous definition is here}}
 
 @__experimental_modules_import macros;
 
@@ -37,3 +43,83 @@ void f() {
 #if __building_module(macros)
 # error Not building a module
 #endif
+
+// None of the modules we depend on have been imported, and therefore
+// their macros should not be visible.
+#ifdef LEFT
+#  error LEFT should not be visible
+#endif
+
+#ifdef RIGHT
+#  error RIGHT should not be visible
+#endif
+
+#ifdef TOP
+#  error TOP should not be visible
+#endif
+
+// Import left module (which also imports top)
+@__experimental_modules_import macros_left;
+
+#ifndef LEFT
+#  error LEFT should be visible
+#endif
+
+#ifdef RIGHT
+#  error RIGHT should not be visible
+#endif
+
+#ifndef TOP
+#  error TOP should be visible
+#endif
+
+#ifdef TOP_LEFT_UNDEF
+#  error TOP_LEFT_UNDEF should not be visible
+#endif
+
+void test1() {
+  int i;
+  TOP_RIGHT_REDEF *ip = &i;
+}
+
+#define LEFT_RIGHT_DIFFERENT2 double // FIXME: expected-warning{{'LEFT_RIGHT_DIFFERENT2' macro redefined}}
+
+// Import right module (which also imports top)
+@__experimental_modules_import macros_right;
+
+#undef LEFT_RIGHT_DIFFERENT3
+
+#ifndef LEFT
+#  error LEFT should be visible
+#endif
+
+#ifndef RIGHT
+#  error RIGHT should be visible
+#endif
+
+#ifndef TOP
+#  error TOP should be visible
+#endif
+
+#ifndef TOP_LEFT_UNDEF
+#  error TOP_LEFT_UNDEF should be visible
+#endif
+
+void test2() {
+  int i;
+  float f;
+  double d;
+  TOP_RIGHT_REDEF *ip = &i; // FIXME: warning
+  
+  LEFT_RIGHT_IDENTICAL *ip2 = &i;
+  LEFT_RIGHT_DIFFERENT *fp = &f; // FIXME: warning
+  LEFT_RIGHT_DIFFERENT2 *dp = &d; // okay
+  int LEFT_RIGHT_DIFFERENT3;
+}
+
+#define LEFT_RIGHT_DIFFERENT double // FIXME: expected-warning{{'LEFT_RIGHT_DIFFERENT' macro redefined}}
+
+void test3() {
+  double d;
+  LEFT_RIGHT_DIFFERENT *dp = &d; // okay
+}

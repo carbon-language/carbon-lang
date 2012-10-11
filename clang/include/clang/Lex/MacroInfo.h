@@ -105,7 +105,12 @@ private:
    
   /// \brief Whether the macro has public (when described in a module).
   bool IsPublic : 1;
-  
+
+  /// \brief Whether the macro definition is currently "hidden".
+  /// Note that this is transient state that is never serialized to the AST
+  /// file.
+  bool IsHidden : 1;
+
    ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
@@ -149,10 +154,8 @@ public:
   /// \brief Get the location where macro was undefined.
   SourceLocation getUndefLoc() const { return UndefLocation; }
 
-  /// \brief Set previous definition of the macro with the same name. Can only
-  /// be set once.
+  /// \brief Set previous definition of the macro with the same name.
   void setPreviousDefinition(MacroInfo *PreviousDef) {
-    assert(!PreviousDefinition && "PreviousDefiniton is already set!");
     PreviousDefinition = PreviousDef;
   }
 
@@ -326,7 +329,17 @@ public:
   /// \brief Determine the location where this macro was explicitly made
   /// public or private within its module.
   SourceLocation getVisibilityLocation() { return VisibilityLocation; }
-  
+
+  /// \brief Determine whether this macro is currently defined (and has not
+  /// been #undef'd) or has been hidden.
+  bool isDefined() const { return UndefLocation.isInvalid() && !IsHidden; }
+
+  /// \brief Determine whether this macro definition is hidden.
+  bool isHidden() const { return IsHidden; }
+
+  /// \brief Set whether this macro definition is hidden.
+  void setHidden(bool Val) { IsHidden = Val; }
+
 private:
   unsigned getDefinitionLengthSlow(SourceManager &SM) const;
 };

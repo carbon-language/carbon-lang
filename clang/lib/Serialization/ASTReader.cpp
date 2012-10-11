@@ -573,31 +573,13 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   // If this identifier is a macro, deserialize the macro
   // definition.
   if (hadMacroDefinition) {
-    // FIXME: Check for conflicts?
-    uint32_t LocalID = ReadUnalignedLE32(d);
-    unsigned LocalSubmoduleID = ReadUnalignedLE32(d);
-    
-    // Determine whether this macro definition should be visible now, or
-    // whether it is in a hidden submodule.
-    bool Visible = true;
-    if (SubmoduleID GlobalSubmoduleID
-          = Reader.getGlobalSubmoduleID(F, LocalSubmoduleID)) {
-      if (Module *Owner = Reader.getSubmodule(GlobalSubmoduleID)) {
-        if (Owner->NameVisibility == Module::Hidden) {
-          // The owning module is not visible, and this macro definition should
-          // not be, either.
-          Visible = false;
-          
-          // Note that this macro definition was hidden because its owning 
-          // module is not yet visible.
-          Reader.HiddenNamesMap[Owner].push_back(II);
-        }
-      }
+    SmallVector<MacroID, 4> MacroIDs;
+    while (uint32_t LocalID = ReadUnalignedLE32(d)) {
+      MacroIDs.push_back(Reader.getGlobalMacroID(F, LocalID));
+      DataLen -= 4;
     }
-
-    Reader.setIdentifierIsMacro(II, Reader.getGlobalMacroID(F, LocalID),
-                                Visible && hasMacroDefinition);
-    DataLen -= 8;
+    DataLen -= 4;
+    Reader.setIdentifierIsMacro(II, MacroIDs);
   }
 
   Reader.SetIdentifierInfo(ID, II);
@@ -1322,7 +1304,8 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
       if (MacrosLoaded[GlobalID - NUM_PREDEF_MACRO_IDS])
         return;
 
-      unsigned NextIndex = 2;
+      SubmoduleID GlobalSubmoduleID = getGlobalSubmoduleID(F, Record[2]);
+      unsigned NextIndex = 3;
       SourceLocation Loc = ReadSourceLocation(F, Record, NextIndex);
       MacroInfo *MI = PP.AllocateMacroInfo(Loc);
 
@@ -1360,6 +1343,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
         DeserializationListener->MacroRead(GlobalID, MI);
 
       // If an update record marked this as undefined, do so now.
+      // FIXME: Only if the submodule this update came from is visible?
       MacroUpdatesMap::iterator Update = MacroUpdates.find(GlobalID);
       if (Update != MacroUpdates.end()) {
         if (MI->getUndefLoc().isInvalid()) {
@@ -1370,8 +1354,25 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
         MacroUpdates.erase(Update);
       }
 
+      // Determine whether this macro definition is visible.
+      bool Hidden = !MI->isPublic();
+      if (!Hidden && GlobalSubmoduleID) {
+        if (Module *Owner = getSubmodule(GlobalSubmoduleID)) {
+          if (Owner->NameVisibility == Module::Hidden) {
+            // The owning module is not visible, and this macro definition
+            // should not be, either.
+            Hidden = true;
+
+            // Note that this macro definition was hidden because its owning
+            // module is not yet visible.
+            HiddenNamesMap[Owner].push_back(HiddenName(II, MI));
+          }
+        }
+      }
+      MI->setHidden(Hidden);
+
       // Finally, install the macro.
-      PP.setMacroInfo(II, MI, /*LoadedFromAST=*/true);
+      PP.addLoadedMacroInfo(II, MI);
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
@@ -1480,21 +1481,16 @@ HeaderFileInfoTrait::ReadData(const internal_key_type, const unsigned char *d,
   return HFI;
 }
 
-void ASTReader::setIdentifierIsMacro(IdentifierInfo *II, MacroID ID,
-                                     bool Visible) {
-  if (Visible) {
-    // Note that this identifier has a macro definition.
-    II->setHasMacroDefinition(true);
-  } else {
-    II->setHadMacroDefinition(true);
-  }
-
-  // FIXME: This could end up overwriting a previously recording macro
-  // definition here, which is not cool at all.
-  UnreadMacroIDs[II] = ID;
+void ASTReader::setIdentifierIsMacro(IdentifierInfo *II, ArrayRef<MacroID> IDs){
+  II->setHadMacroDefinition(true);
+  assert(NumCurrentElementsDeserializing > 0 &&"Missing deserialization guard");
+  PendingMacroIDs[II].append(IDs.begin(), IDs.end());
 }
 
 void ASTReader::ReadDefinedMacros() {
+  // Note that we are loading defined macros.
+  Deserializing Macros(this);
+
   for (ModuleReverseIterator I = ModuleMgr.rbegin(),
       E = ModuleMgr.rend(); I != E; ++I) {
     llvm::BitstreamCursor &MacroCursor = (*I)->MacroCursor;
@@ -1546,24 +1542,14 @@ void ASTReader::ReadDefinedMacros() {
       }
     }
   }
-  
-  // Drain the unread macro-record offsets map.
-  while (!UnreadMacroIDs.empty())
-    LoadMacroDefinition(UnreadMacroIDs.begin());
 }
 
-void ASTReader::LoadMacroDefinition(
-                    llvm::DenseMap<IdentifierInfo *, MacroID>::iterator Pos) {
-  assert(Pos != UnreadMacroIDs.end() && "Unknown macro definition");
-  uint64_t GlobalID = Pos->second;
-  UnreadMacroIDs.erase(Pos);
-  getMacro(GlobalID);
-}
-
-void ASTReader::LoadMacroDefinition(IdentifierInfo *II) {
-  llvm::DenseMap<IdentifierInfo *, MacroID>::iterator Pos
-    = UnreadMacroIDs.find(II);
-  LoadMacroDefinition(Pos);
+void ASTReader::LoadMacroDefinition(PendingMacroIDsMap::iterator Pos) {
+  assert(Pos != PendingMacroIDs.end() && "Unknown macro definition");
+  SmallVector<MacroID, 2> GlobalIDs = Pos->second;
+  PendingMacroIDs.erase(Pos);
+  for (unsigned I = 0, N = GlobalIDs.size(); I != N; ++I)
+    getMacro(GlobalIDs[I]);
 }
 
 namespace {
@@ -1612,6 +1598,9 @@ namespace {
 }
 
 void ASTReader::updateOutOfDateIdentifier(IdentifierInfo &II) {
+  // Note that we are loading an identifier.
+  Deserializing AnIdentifier(this);
+
   unsigned PriorGeneration = 0;
   if (getContext().getLangOpts().Modules)
     PriorGeneration = IdentifierGeneration[&II];
@@ -2620,22 +2609,17 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
 
 void ASTReader::makeNamesVisible(const HiddenNames &Names) {
   for (unsigned I = 0, N = Names.size(); I != N; ++I) {
-    if (Decl *D = Names[I].dyn_cast<Decl *>())
-      D->Hidden = false;
-    else {
-      IdentifierInfo *II = Names[I].get<IdentifierInfo *>();
-      // FIXME: Check if this works correctly with macro history.
-      if (!II->hasMacroDefinition()) {
-        // Make sure that this macro hasn't been #undef'd in the mean-time.
-        llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator Known
-          = PP.Macros.find(II);
-        if (Known == PP.Macros.end() ||
-            Known->second->getUndefLoc().isInvalid()) {
-          II->setHasMacroDefinition(true);
-          if (DeserializationListener)
-            DeserializationListener->MacroVisible(II);
-        }
-      }
+    if (Names[I].isDecl()) {
+      Names[I].getDecl()->Hidden = false;
+      continue;
+    }
+
+    std::pair<IdentifierInfo *, MacroInfo *> Macro = Names[I].getMacro();
+    Macro.second->setHidden(!Macro.second->isPublic());
+    if (Macro.second->isDefined()) {
+      PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
+      if (DeserializationListener)
+        DeserializationListener->MacroVisible(Macro.first);
     }
   }
 }
@@ -5418,6 +5402,9 @@ void ASTReader::InitializeSema(Sema &S) {
 }
 
 IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
+  // Note that we are loading an identifier.
+  Deserializing AnIdentifier(this);
+  
   IdentifierLookupVisitor Visitor(StringRef(NameStart, NameEnd - NameStart),
                                   /*PriorGeneration=*/0);
   ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
@@ -6516,7 +6503,8 @@ void ASTReader::ReadComments() {
 }
 
 void ASTReader::finishPendingActions() {
-  while (!PendingIdentifierInfos.empty() || !PendingDeclChains.empty()) {
+  while (!PendingIdentifierInfos.empty() || !PendingDeclChains.empty() ||
+         !PendingMacroIDs.empty()) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
     while (!PendingIdentifierInfos.empty()) {
@@ -6531,6 +6519,11 @@ void ASTReader::finishPendingActions() {
       PendingDeclChainsKnown.erase(PendingDeclChains[I]);
     }
     PendingDeclChains.clear();
+
+    // Load any pending macro definitions.
+    // FIXME: Non-determinism here.
+    while (!PendingMacroIDs.empty())
+      LoadMacroDefinition(PendingMacroIDs.begin());
   }
   
   // If we deserialized any C++ or Objective-C class definitions, any

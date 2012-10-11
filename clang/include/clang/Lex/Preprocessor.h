@@ -517,8 +517,12 @@ public:
   MacroInfo *getMacroInfoHistory(IdentifierInfo *II) const;
 
   /// \brief Specify a macro for this identifier.
-  void setMacroInfo(IdentifierInfo *II, MacroInfo *MI,
-                    bool LoadedFromAST = false);
+  void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
+  /// \brief Add a MacroInfo that was loaded from an AST file.
+  void addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI);
+  /// \brief Make the given MacroInfo, that was loaded from an AST file and
+  /// previously hidden, visible.
+  void makeLoadedMacroInfoVisible(IdentifierInfo *II, MacroInfo *MI);
   /// \brief Undefine a macro for this identifier.
   void clearMacroInfo(IdentifierInfo *II);
 

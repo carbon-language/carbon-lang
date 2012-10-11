@@ -28,9 +28,6 @@ public:
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros() = 0;
   
-  /// \brief Read the definition for the given macro.
-  virtual void LoadMacroDefinition(IdentifierInfo *II) = 0;
-  
   /// \brief Update an out-of-date identifier.
   virtual void updateOutOfDateIdentifier(IdentifierInfo &II) = 0;
 };

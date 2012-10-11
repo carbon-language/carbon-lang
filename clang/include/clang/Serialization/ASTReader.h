@@ -415,8 +415,35 @@ private:
   /// global submodule ID to produce a local ID.
   GlobalSubmoduleMapType GlobalSubmoduleMap;
 
+  /// \brief An entity that has been hidden.
+  class HiddenName {
+    /// \brief The hidden declaration or macro.
+    llvm::PointerUnion<Decl *, MacroInfo *> DeclOrMacro;
+
+    /// \brief The name being defined to a macro, for the macro case.
+    IdentifierInfo *Identifier;
+
+  public:
+    HiddenName(Decl *D) : DeclOrMacro(D), Identifier() { }
+    HiddenName(IdentifierInfo *II, MacroInfo *MI)
+      : DeclOrMacro(MI), Identifier(II) { }
+
+    bool isDecl() const { return DeclOrMacro.is<Decl*>(); }
+    bool isMacro() const { return !isDecl(); }
+
+    Decl *getDecl() const {
+      assert(isDecl() && "Hidden name is not a declaration");
+      return DeclOrMacro.get<Decl *>();
+    }
+
+    std::pair<IdentifierInfo *, MacroInfo *> getMacro() const {
+      assert(isMacro() && "Hidden name is not a macro!");
+      return std::make_pair(Identifier, DeclOrMacro.get<MacroInfo *>());
+    }
+  };
+
   /// \brief A set of hidden declarations.
-  typedef llvm::SmallVector<llvm::PointerUnion<Decl *, IdentifierInfo *>, 2>
+  typedef llvm::SmallVector<HiddenName, 2>
     HiddenNames;
   
   typedef llvm::DenseMap<Module *, HiddenNames> HiddenNamesMapType;
@@ -468,9 +495,13 @@ private:
   /// global method pool for this selector.
   llvm::DenseMap<Selector, unsigned> SelectorGeneration;
 
-  /// \brief Mapping from identifiers that represent macros whose definitions
-  /// have not yet been deserialized to the global ID of the macro.
-  llvm::DenseMap<IdentifierInfo *, serialization::MacroID> UnreadMacroIDs;
+  typedef llvm::DenseMap<IdentifierInfo *,
+                         llvm::SmallVector<serialization::MacroID, 2> >
+    PendingMacroIDsMap;
+
+  /// \brief Mapping from identifiers that have a macro history to the global
+  /// IDs have not yet been deserialized to the global IDs of those macros.
+  PendingMacroIDsMap PendingMacroIDs;
 
   typedef ContinuousRangeMap<unsigned, ModuleFile *, 4>
     GlobalPreprocessedEntityMapType;
@@ -1390,6 +1421,9 @@ public:
   }
 
   virtual IdentifierInfo *GetIdentifier(serialization::IdentifierID ID) {
+    // Note that we are loading an identifier.
+    Deserializing AnIdentifier(this);
+
     return DecodeIdentifierInfo(ID);
   }
 
@@ -1555,22 +1589,16 @@ public:
   serialization::PreprocessedEntityID
   getGlobalPreprocessedEntityID(ModuleFile &M, unsigned LocalID) const;
 
-  /// \brief Note that the identifier is a macro whose record will be loaded
-  /// from the given AST file at the given (file-local) offset.
+  /// \brief Note that the identifier has a macro history.
   ///
   /// \param II The name of the macro.
   ///
-  /// \param ID The global macro ID.
-  ///
-  /// \param Visible Whether the macro should be made visible.
-  void setIdentifierIsMacro(IdentifierInfo *II, serialization::MacroID ID,
-                            bool Visible);
+  /// \param IDs The global macro IDs that are associated with this identifier.
+  void setIdentifierIsMacro(IdentifierInfo *II,
+                            ArrayRef<serialization::MacroID> IDs);
 
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
-
-  /// \brief Read the macro definition for this identifier.
-  virtual void LoadMacroDefinition(IdentifierInfo *II);
 
   /// \brief Update an out-of-date identifier.
   virtual void updateOutOfDateIdentifier(IdentifierInfo &II);
@@ -1580,8 +1608,7 @@ public:
 
   /// \brief Read the macro definition corresponding to this iterator
   /// into the unread macro record offsets table.
-  void LoadMacroDefinition(
-         llvm::DenseMap<IdentifierInfo *,serialization::MacroID>::iterator Pos);
+  void LoadMacroDefinition(PendingMacroIDsMap::iterator Pos);
 
   /// \brief Load all external visible decls in the given DeclContext.
   void completeVisibleDeclsMap(const DeclContext *DC);

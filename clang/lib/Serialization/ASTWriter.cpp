@@ -1744,6 +1744,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
       AddIdentifierRef(Name, Record);
       addMacroRef(MI, Record);
+      Record.push_back(inferSubmoduleIDFromLocation(MI->getDefinitionLoc()));
       AddSourceLocation(MI->getDefinitionLoc(), Record);
       AddSourceLocation(MI->getUndefLoc(), Record);
       Record.push_back(MI->isUsed());
@@ -2587,8 +2588,14 @@ public:
     if (isInterestingIdentifier(II, Macro)) {
       DataLen += 2; // 2 bytes for builtin ID
       DataLen += 2; // 2 bytes for flags
-      if (hadMacroDefinition(II, Macro))
-        DataLen += 8;
+      if (hadMacroDefinition(II, Macro)) {
+        for (MacroInfo *M = Macro; M; M = M->getPreviousDefinition()) {
+          if (Writer.getMacroRef(M) != 0)
+            DataLen += 4;
+        }
+
+        DataLen += 4;
+      }
 
       for (IdentifierResolver::iterator D = IdResolver.begin(II),
                                      DEnd = IdResolver.end();
@@ -2635,9 +2642,13 @@ public:
     clang::io::Emit16(Out, Bits);
 
     if (HadMacroDefinition) {
-      clang::io::Emit32(Out, Writer.getMacroRef(Macro));
-      clang::io::Emit32(Out,
-        Writer.inferSubmoduleIDFromLocation(Macro->getDefinitionLoc()));
+      // Write all of the macro IDs associated with this identifier.
+      for (MacroInfo *M = Macro; M; M = M->getPreviousDefinition()) {
+        if (MacroID ID = Writer.getMacroRef(M))
+          clang::io::Emit32(Out, ID);
+      }
+
+      clang::io::Emit32(Out, 0);
     }
 
     // Emit the declaration IDs in reverse order, because the

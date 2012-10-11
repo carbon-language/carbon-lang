@@ -31,7 +31,8 @@ MacroInfo::MacroInfo(SourceLocation DefLoc)
     IsUsed(false),
     IsAllowRedefinitionsWithoutWarning(false),
     IsWarnIfUnused(false),
-    IsPublic(true) {
+    IsPublic(true),
+    IsHidden(false) {
 }
 
 MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator)
@@ -54,7 +55,8 @@ MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator)
     IsUsed(MI.IsUsed),
     IsAllowRedefinitionsWithoutWarning(MI.IsAllowRedefinitionsWithoutWarning),
     IsWarnIfUnused(MI.IsWarnIfUnused),
-    IsPublic(MI.IsPublic) {
+    IsPublic(MI.IsPublic),
+    IsHidden(MI.IsHidden) {
   setArgumentList(MI.ArgumentList, MI.NumArguments, PPAllocator);
 }
 
