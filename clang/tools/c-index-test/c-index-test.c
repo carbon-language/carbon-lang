@@ -2383,6 +2383,9 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
     printf(" | name: \"%s\"", clang_getCString(name));
     printf(" | isImplicit: %d\n", info->isImplicit);
     clang_disposeString(name);
+  } else {
+    // PCH file, the rest are not relevant.
+    printf("\n");
   }
 
   return (CXIdxClientFile)info->file;
@@ -3055,7 +3058,8 @@ int write_pch_file(const char *filename, int argc, const char *argv[]) {
                                   argc - num_unsaved_files,
                                   unsaved_files,
                                   num_unsaved_files,
-                                  CXTranslationUnit_Incomplete);
+                                  CXTranslationUnit_Incomplete |
+                                    CXTranslationUnit_ForSerialization);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     free_remapped_files(unsaved_files, num_unsaved_files);

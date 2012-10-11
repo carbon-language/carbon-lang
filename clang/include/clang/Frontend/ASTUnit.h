@@ -56,6 +56,7 @@ class Preprocessor;
 class SourceManager;
 class TargetInfo;
 class ASTFrontendAction;
+class ASTDeserializationListener;
 
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
@@ -70,6 +71,9 @@ private:
   IntrusiveRefCntPtr<Preprocessor>      PP;
   IntrusiveRefCntPtr<ASTContext>        Ctx;
   ASTReader *Reader;
+
+  struct ASTWriterData;
+  OwningPtr<ASTWriterData> WriterData;
 
   FileSystemOptions FileSystemOpts;
 
@@ -468,6 +472,8 @@ public:
 
   const std::string &getOriginalSourceFileName();
 
+  ASTDeserializationListener *getDeserializationListener();
+
   /// \brief Add a temporary file that the ASTUnit depends on.
   ///
   /// This file will be erased when the ASTUnit is destroyed.
@@ -773,6 +779,7 @@ public:
                                       bool AllowPCHWithCompilerErrors = false,
                                       bool SkipFunctionBodies = false,
                                       bool UserFilesAreVolatile = false,
+                                      bool ForSerialization = false,
                                       OwningPtr<ASTUnit> *ErrAST = 0);
   
   /// \brief Reparse the source files using the same command-line options that
