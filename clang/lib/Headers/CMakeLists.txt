@@ -6,6 +6,7 @@ set(files
   bmiintrin.h
   bmi2intrin.h
   emmintrin.h
+  f16cintrin.h
   float.h
   fma4intrin.h
   fmaintrin.h
