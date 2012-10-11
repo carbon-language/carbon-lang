@@ -1245,32 +1245,30 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
   DEBUG(dbgs() << "Expand float operand: "; N->dump(&DAG); dbgs() << "\n");
   SDValue Res = SDValue();
 
-  if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
-      == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDValue(N, 0), DAG);
+  // See if the target wants to custom expand this node.
+  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
+    return false;
 
-  if (Res.getNode() == 0) {
-    switch (N->getOpcode()) {
-    default:
-  #ifndef NDEBUG
-      dbgs() << "ExpandFloatOperand Op #" << OpNo << ": ";
-      N->dump(&DAG); dbgs() << "\n";
-  #endif
-      llvm_unreachable("Do not know how to expand this operator's operand!");
+  switch (N->getOpcode()) {
+  default:
+#ifndef NDEBUG
+    dbgs() << "ExpandFloatOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); dbgs() << "\n";
+#endif
+    llvm_unreachable("Do not know how to expand this operator's operand!");
 
-    case ISD::BITCAST:         Res = ExpandOp_BITCAST(N); break;
-    case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
-    case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
+  case ISD::BITCAST:         Res = ExpandOp_BITCAST(N); break;
+  case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
+  case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
 
-    case ISD::BR_CC:      Res = ExpandFloatOp_BR_CC(N); break;
-    case ISD::FP_ROUND:   Res = ExpandFloatOp_FP_ROUND(N); break;
-    case ISD::FP_TO_SINT: Res = ExpandFloatOp_FP_TO_SINT(N); break;
-    case ISD::FP_TO_UINT: Res = ExpandFloatOp_FP_TO_UINT(N); break;
-    case ISD::SELECT_CC:  Res = ExpandFloatOp_SELECT_CC(N); break;
-    case ISD::SETCC:      Res = ExpandFloatOp_SETCC(N); break;
-    case ISD::STORE:      Res = ExpandFloatOp_STORE(cast<StoreSDNode>(N),
-                                                    OpNo); break;
-    }
+  case ISD::BR_CC:      Res = ExpandFloatOp_BR_CC(N); break;
+  case ISD::FP_ROUND:   Res = ExpandFloatOp_FP_ROUND(N); break;
+  case ISD::FP_TO_SINT: Res = ExpandFloatOp_FP_TO_SINT(N); break;
+  case ISD::FP_TO_UINT: Res = ExpandFloatOp_FP_TO_UINT(N); break;
+  case ISD::SELECT_CC:  Res = ExpandFloatOp_SELECT_CC(N); break;
+  case ISD::SETCC:      Res = ExpandFloatOp_SETCC(N); break;
+  case ISD::STORE:      Res = ExpandFloatOp_STORE(cast<StoreSDNode>(N),
+                                                  OpNo); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
