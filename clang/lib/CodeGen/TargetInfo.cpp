@@ -1115,10 +1115,15 @@ class X86_64ABIInfo : public ABIInfo {
   }
 
   bool HasAVX;
+  // Some ABIs (e.g. X32 ABI and Native Client OS) use 32 bit pointers on
+  // 64-bit hardware.
+  bool Has64BitPointers;
 
 public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT, bool hasavx) :
-      ABIInfo(CGT), HasAVX(hasavx) {}
+      ABIInfo(CGT), HasAVX(hasavx),
+      Has64BitPointers(CGT.getDataLayout().getPointerSize() == 8) {
+  }
 
   bool isPassedUsingAVXType(QualType type) const {
     unsigned neededInt, neededSSE;
@@ -1155,7 +1160,7 @@ public:
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
-    : TargetCodeGenInfo(new X86_64ABIInfo(CGT, HasAVX)) {}
+      : TargetCodeGenInfo(new X86_64ABIInfo(CGT, HasAVX)) {}
 
   const X86_64ABIInfo &getABIInfo() const {
     return static_cast<const X86_64ABIInfo&>(TargetCodeGenInfo::getABIInfo());
@@ -1351,7 +1356,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
   }
 
   if (Ty->isMemberPointerType()) {
-    if (Ty->isMemberFunctionPointerType())
+    if (Ty->isMemberFunctionPointerType() && Has64BitPointers)
       Lo = Hi = Integer;
     else
       Current = Integer;
@@ -1862,7 +1867,8 @@ GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
   // returning an 8-byte unit starting with it.  See if we can safely use it.
   if (IROffset == 0) {
     // Pointers and int64's always fill the 8-byte unit.
-    if (isa<llvm::PointerType>(IRType) || IRType->isIntegerTy(64))
+    if ((isa<llvm::PointerType>(IRType) && Has64BitPointers) ||
+        IRType->isIntegerTy(64))
       return IRType;
 
     // If we have a 1/2/4-byte integer, we can use it only if the rest of the
@@ -1872,8 +1878,10 @@ GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
     // have to do this analysis on the source type because we can't depend on
     // unions being lowered a specific way etc.
     if (IRType->isIntegerTy(8) || IRType->isIntegerTy(16) ||
-        IRType->isIntegerTy(32)) {
-      unsigned BitWidth = cast<llvm::IntegerType>(IRType)->getBitWidth();
+        IRType->isIntegerTy(32) ||
+        (isa<llvm::PointerType>(IRType) && !Has64BitPointers)) {
+      unsigned BitWidth = isa<llvm::PointerType>(IRType) ? 32 :
+          cast<llvm::IntegerType>(IRType)->getBitWidth();
 
       if (BitsContainNoUserData(SourceTy, SourceOffset*8+BitWidth,
                                 SourceOffset*8+64, getContext()))

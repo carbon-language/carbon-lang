@@ -1551,9 +1551,10 @@ public:
   virtual bool hasFeature(StringRef Feature) const;
   virtual void HandleTargetFeatures(std::vector<std::string> &Features);
   virtual const char* getABI() const {
-    if (PointerWidth == 64 && SSELevel >= AVX)
+    if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
       return "avx";
-    else if (PointerWidth == 32 && MMX3DNowLevel == NoMMX3DNow)
+    else if (getTriple().getArch() == llvm::Triple::x86 &&
+             MMX3DNowLevel == NoMMX3DNow)
       return "no-mmx";
     return "";
   }
@@ -1647,7 +1648,7 @@ public:
     case CK_AthlonMP:
     case CK_Geode:
       // Only accept certain architectures when compiling in 32-bit mode.
-      if (PointerWidth != 32)
+      if (getTriple().getArch() != llvm::Triple::x86)
         return false;
 
       // Fallthrough
@@ -1719,7 +1720,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   // FIXME: This *really* should not be here.
 
   // X86_64 always has SSE2.
-  if (PointerWidth == 64)
+  if (getTriple().getArch() == llvm::Triple::x86_64)
     Features["sse2"] = Features["sse"] = Features["mmx"] = true;
 
   switch (CPU) {
@@ -2101,7 +2102,7 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
                                      MacroBuilder &Builder) const {
   // Target identification.
-  if (PointerWidth == 64) {
+  if (getTriple().getArch() == llvm::Triple::x86_64) {
     Builder.defineMacro("__amd64__");
     Builder.defineMacro("__amd64");
     Builder.defineMacro("__x86_64");
@@ -2300,7 +2301,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   }
 
-  if (Opts.MicrosoftExt && PointerWidth == 32) {
+  if (Opts.MicrosoftExt && getTriple().getArch() == llvm::Triple::x86) {
     switch (SSELevel) {
     case AVX2:
     case AVX:
@@ -2356,8 +2357,8 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("sse42", SSELevel >= SSE42)
       .Case("sse4a", HasSSE4a)
       .Case("x86", true)
-      .Case("x86_32", PointerWidth == 32)
-      .Case("x86_64", PointerWidth == 64)
+      .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
+      .Case("x86_64", getTriple().getArch() == llvm::Triple::x86_64)
       .Case("xop", HasXOP)
       .Case("f16c", HasF16C)
       .Default(false);
