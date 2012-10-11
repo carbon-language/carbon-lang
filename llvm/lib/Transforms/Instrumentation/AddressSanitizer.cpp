@@ -742,7 +742,7 @@ bool AddressSanitizer::runOnModule(Module &M) {
   BL.reset(new BlackList(ClBlackListFile));
 
   C = &(M.getContext());
-  LongSize = TD->getPointerSizeInBits();
+  LongSize = TD->getPointerSizeInBits(0);
   IntptrTy = Type::getIntNTy(*C, LongSize);
   IntptrPtrTy = PointerType::get(IntptrTy, 0);
 

@@ -40,7 +40,8 @@ static unsigned getBitWidth(Type *Ty, const DataLayout *TD) {
   if (unsigned BitWidth = Ty->getScalarSizeInBits())
     return BitWidth;
   assert(isa<PointerType>(Ty) && "Expected a pointer type!");
-  return TD ? TD->getPointerSizeInBits() : 0;
+  return TD ?
+    TD->getPointerSizeInBits(cast<PointerType>(Ty)->getAddressSpace()) : 0;
 }
 
 static void ComputeMaskedBitsAddSub(bool Add, Value *Op0, Value *Op1, bool NSW,
@@ -1621,7 +1622,8 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
   
   // Re-sign extend from the pointer size if needed to get overflow edge cases
   // right.
-  unsigned PtrSize = TD.getPointerSizeInBits();
+  unsigned AS = GEP->getPointerAddressSpace();
+  unsigned PtrSize = TD.getPointerSizeInBits(AS);
   if (PtrSize < 64)
     Offset = SignExtend64(Offset, PtrSize);
   

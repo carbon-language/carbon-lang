@@ -91,7 +91,7 @@ void OcamlGCMetadataPrinter::beginAssembly(AsmPrinter &AP) {
 /// either condition is detected in a function which uses the GC.
 ///
 void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
-  unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize();
+  unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize(0);
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), AP, "code_end");

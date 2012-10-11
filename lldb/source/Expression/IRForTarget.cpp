@@ -300,8 +300,9 @@ llvm::Constant *
 IRForTarget::BuildFunctionPointer (llvm::Type *type,
                                    uint64_t ptr)
 {
+    unsigned AS = type->isPointerTy() ? cast<PointerType>(type)->getAddressSpace: 0;
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                             (m_module->getPointerSize(AS) == Module::Pointer64) ? 64 : 32);
     PointerType *fun_ptr_ty = PointerType::getUnqual(type);
     Constant *fun_addr_int = ConstantInt::get(intptr_ty, ptr, false);
     return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
@@ -840,7 +841,8 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
     
     Type *i8_ptr_ty = Type::getInt8PtrTy(m_module->getContext());
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                   (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                                   (m_module->getPointerSize(ns_str->getType()->getAddressSpace())
+                                                    == Module::Pointer64) ? 64 : 32);
     Type *i32_ty = Type::getInt32Ty(m_module->getContext());
     Type *i8_ty = Type::getInt8Ty(m_module->getContext());
     
@@ -1271,10 +1273,11 @@ IRForTarget::RewriteObjCSelector (Instruction* selector_load)
         ArrayRef<Type *> srN_arg_types(type_array, 1);
         
         llvm::Type *srN_type = FunctionType::get(sel_ptr_type, srN_arg_types, false);
+        unsigned AS = srN_type->isPointerTy() ? cast<PointerType>(srN_type)->getAddressSpace() : 0;
         
         // Build the constant containing the pointer to the function
         IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                 (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                                 (m_module->getPointerSize(AS) == Module::Pointer64) ? 64 : 32);
         PointerType *srN_ptr_ty = PointerType::getUnqual(srN_type);
         Constant *srN_addr_int = ConstantInt::get(intptr_ty, sel_registerName_addr, false);
         m_sel_registerName = ConstantExpr::getIntToPtr(srN_addr_int, srN_ptr_ty);
@@ -1724,9 +1727,9 @@ IRForTarget::HandleSymbol (Value *symbol)
         log->Printf("Found \"%s\" at 0x%llx", name.GetCString(), symbol_addr);
     
     Type *symbol_type = symbol->getType();
-    
+    unsigned AS = symbol_type->isPointerTy() ? cast<PointerType>(symbol_type)->getAddressSpace() : 0;
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                             (m_module->getPointerSize(AS) == Module::Pointer64) ? 64 : 32);
     
     Constant *symbol_addr_int = ConstantInt::get(intptr_ty, symbol_addr, false);
     
@@ -1807,7 +1810,8 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
         return false;
     
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                             (m_module->getPointerSize(global_variable->getAddressSpace())
+                                              == Module::Pointer64) ? 64 : 32);
     
     Constant *class_addr = ConstantInt::get(intptr_ty, (uint64_t)class_ptr);
     Constant *class_bitcast = ConstantExpr::getIntToPtr(class_addr, load_instruction->getType());
@@ -2577,8 +2581,9 @@ IRForTarget::BuildRelocation(llvm::Type *type,
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
+    unsigned AS = type->isPointerTy() ? cast<PointerType>(type)->getAddressSpace() : 0;
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                             (m_module->getPointerSize(AS) == Module::Pointer64) ? 64 : 32);
     
     llvm::Constant *offset_int = ConstantInt::get(intptr_ty, offset);
     
@@ -2618,8 +2623,9 @@ IRForTarget::CompleteDataAllocation ()
     if (!allocation)
         return false;
     
+    unsigned AS = 0;
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+                                             (m_module->getPointerSize(AS) == Module::Pointer64) ? 64 : 32);
     
     Constant *relocated_addr = ConstantInt::get(intptr_ty, (uint64_t)allocation);
     Constant *relocated_bitcast = ConstantExpr::getIntToPtr(relocated_addr, llvm::Type::getInt8PtrTy(m_module->getContext()));

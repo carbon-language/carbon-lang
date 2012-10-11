@@ -205,7 +205,7 @@ public:
         m_decl_map(decl_map)
     {
         m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);
-        m_addr_byte_size = (target_data.getPointerSize());
+        m_addr_byte_size = (target_data.getPointerSize(0));
     }
     
     Region Malloc (size_t size, size_t align)

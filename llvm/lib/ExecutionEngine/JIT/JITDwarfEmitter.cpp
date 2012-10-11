@@ -14,7 +14,9 @@
 
 #include "JIT.h"
 #include "JITDwarfEmitter.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -66,7 +68,7 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
 void
 JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
                                 const std::vector<MachineMove> &Moves) const {
-  unsigned PointerSize = TD->getPointerSize();
+  unsigned PointerSize = TD->getPointerSize(0);
   int stackGrowth = stackGrowthDirection == TargetFrameLowering::StackGrowsUp ?
           PointerSize : -PointerSize;
   MCSymbol *BaseLabel = 0;
@@ -378,7 +380,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
     SizeSites += MCAsmInfo::getULEB128Size(CallSites[i].Action);
 
-  unsigned SizeTypes = TypeInfos.size() * TD->getPointerSize();
+  unsigned SizeTypes = TypeInfos.size() * TD->getPointerSize(0);
 
   unsigned TypeOffset = sizeof(int8_t) + // Call site format
                         // Call-site table length
@@ -454,12 +456,12 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
     const GlobalVariable *GV = TypeInfos[M - 1];
 
     if (GV) {
-      if (TD->getPointerSize() == sizeof(int32_t))
+      if (TD->getPointerSize(GV->getType()->getAddressSpace()) == sizeof(int32_t))
         JCE->emitInt32((intptr_t)Jit.getOrEmitGlobalVariable(GV));
       else
         JCE->emitInt64((intptr_t)Jit.getOrEmitGlobalVariable(GV));
     } else {
-      if (TD->getPointerSize() == sizeof(int32_t))
+      if (TD->getPointerSize(0) == sizeof(int32_t))
         JCE->emitInt32(0);
       else
         JCE->emitInt64(0);
@@ -481,7 +483,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
 
 unsigned char*
 JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
-  unsigned PointerSize = TD->getPointerSize();
+  unsigned PointerSize = TD->getPointerSize(0);
   int stackGrowth = stackGrowthDirection == TargetFrameLowering::StackGrowsUp ?
           PointerSize : -PointerSize;
 
@@ -541,7 +543,7 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
                              unsigned char* StartFunction,
                              unsigned char* EndFunction,
                              unsigned char* ExceptionTable) const {
-  unsigned PointerSize = TD->getPointerSize();
+  unsigned PointerSize = TD->getPointerSize(0);
 
   // EH frame header.
   unsigned char* StartEHPtr = (unsigned char*)JCE->getCurrentPCValue();

@@ -417,7 +417,7 @@ void DwarfException::EmitExceptionTable() {
     // that we're omitting that bit.
     TTypeEncoding = dwarf::DW_EH_PE_omit;
     // dwarf::DW_EH_PE_absptr
-    TypeFormatSize = Asm->getDataLayout().getPointerSize();
+    TypeFormatSize = Asm->getDataLayout().getPointerSize(0);
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to

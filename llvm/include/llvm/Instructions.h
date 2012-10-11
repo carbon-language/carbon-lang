@@ -350,7 +350,16 @@ public:
   static unsigned getPointerOperandIndex() { return 1U; }
 
   unsigned getPointerAddressSpace() const {
-    return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
+    if (getPointerOperand()->getType()->isPointerTy())
+      return cast<PointerType>(getPointerOperand()->getType())
+        ->getAddressSpace();
+    if (getPointerOperand()->getType()->isVectorTy()
+        && cast<VectorType>(getPointerOperand()->getType())->isPointerTy())
+      return cast<PointerType>(cast<VectorType>(
+            getPointerOperand()->getType())->getElementType())
+        ->getAddressSpace();
+    llvm_unreachable("Only a vector of pointers or pointers can be used!");
+    return 0;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -3653,7 +3662,15 @@ public:
 
   /// @brief return the address space of the pointer.
   unsigned getAddressSpace() const {
-    return cast<PointerType>(getType())->getAddressSpace();
+    if (getType()->isPointerTy()) 
+      return cast<PointerType>(getType())->getAddressSpace();
+    if (getType()->isVectorTy() &&
+        cast<VectorType>(getType())->getElementType()->isPointerTy())
+      return cast<PointerType>(
+          cast<VectorType>(getType())->getElementType())
+        ->getAddressSpace();
+    llvm_unreachable("Must be a pointer or a vector of pointers.");
+    return 0;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -3695,7 +3712,16 @@ public:
 
   /// @brief return the address space of the pointer.
   unsigned getPointerAddressSpace() const {
-    return cast<PointerType>(getOperand(0)->getType())->getAddressSpace();
+    Type *Ty = getOperand(0)->getType();
+    if (Ty->isPointerTy())
+      return cast<PointerType>(Ty)->getAddressSpace();
+    if (Ty->isVectorTy()
+        && cast<VectorType>(Ty)->getElementType()->isPointerTy())
+      return cast<PointerType>(
+          cast<VectorType>(Ty)->getElementType())
+        ->getAddressSpace();
+    llvm_unreachable("Must be a pointer or a vector of pointers.");
+    return 0;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
