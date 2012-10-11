@@ -105,6 +105,8 @@ static QualType GetBaseType(QualType T) {
       break;
     else if (const PointerType* PTy = BaseType->getAs<PointerType>())
       BaseType = PTy->getPointeeType();
+    else if (const BlockPointerType *BPy = BaseType->getAs<BlockPointerType>())
+      BaseType = BPy->getPointeeType();
     else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
       BaseType = ATy->getElementType();
     else if (const FunctionType* FTy = BaseType->getAs<FunctionType>())
