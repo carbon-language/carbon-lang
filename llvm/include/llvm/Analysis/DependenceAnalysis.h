@@ -874,7 +874,7 @@ namespace llvm {
     static char ID; // Class identification, replacement for typeinfo
     DependenceAnalysis() : FunctionPass(ID) {
       initializeDependenceAnalysisPass(*PassRegistry::getPassRegistry());
-    };
+    }
 
     bool runOnFunction(Function &F);
     void releaseMemory();
