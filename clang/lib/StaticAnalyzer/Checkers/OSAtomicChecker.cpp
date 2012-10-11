@@ -212,5 +212,5 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
 }
 
 void ento::registerOSAtomicChecker(CheckerManager &mgr) {
-  mgr.registerChecker<OSAtomicChecker>();
+  //  mgr.registerChecker<OSAtomicChecker>();
 }

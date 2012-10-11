@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/ExprObjC.h"
 #include "BodyFarm.h"
 
 using namespace clang;
@@ -49,6 +50,13 @@ public:
   /// Create a new BinaryOperator representing a simple assignment.
   BinaryOperator *makeAssignment(const Expr *LHS, const Expr *RHS, QualType Ty);
   
+  /// Create a new BinaryOperator representing a comparison.
+  BinaryOperator *makeComparison(const Expr *LHS, const Expr *RHS,
+                                 BinaryOperator::Opcode Op);
+  
+  /// Create a new compound stmt using the provided statements.
+  CompoundStmt *makeCompound(ArrayRef<Stmt*>);
+  
   /// Create a new DeclRefExpr for the referenced variable.
   DeclRefExpr *makeDeclRefExpr(const VarDecl *D);
   
@@ -58,8 +66,17 @@ public:
   /// Create an implicit cast for an integer conversion.
   ImplicitCastExpr *makeIntegralCast(const Expr *Arg, QualType Ty);
   
+  /// Create an implicit cast to a builtin boolean type.
+  ImplicitCastExpr *makeIntegralCastToBoolean(const Expr *Arg);
+  
   // Create an implicit cast for lvalue-to-rvaluate conversions.
   ImplicitCastExpr *makeLvalueToRvalue(const Expr *Arg, QualType Ty);
+  
+  /// Create an Objective-C bool literal.
+  ObjCBoolLiteralExpr *makeObjCBool(bool Val);
+  
+  /// Create a Return statement.
+  ReturnStmt *makeReturn(const Expr *RetVal);
   
 private:
   ASTContext &C;
@@ -71,6 +88,24 @@ BinaryOperator *ASTMaker::makeAssignment(const Expr *LHS, const Expr *RHS,
  return new (C) BinaryOperator(const_cast<Expr*>(LHS), const_cast<Expr*>(RHS),
                                BO_Assign, Ty, VK_RValue,
                                OK_Ordinary, SourceLocation(), false);
+}
+
+BinaryOperator *ASTMaker::makeComparison(const Expr *LHS, const Expr *RHS,
+                                         BinaryOperator::Opcode Op) {
+  assert(BinaryOperator::isLogicalOp(Op) ||
+         BinaryOperator::isComparisonOp(Op));
+  return new (C) BinaryOperator(const_cast<Expr*>(LHS),
+                                const_cast<Expr*>(RHS),
+                                Op,
+                                C.getLogicalOperationType(),
+                                VK_RValue,
+                                OK_Ordinary, SourceLocation(), false);
+}
+
+CompoundStmt *ASTMaker::makeCompound(ArrayRef<Stmt *> Stmts) {
+  return new (C) CompoundStmt(C, const_cast<Stmt**>(Stmts.data()),
+                              Stmts.size(),
+                              SourceLocation(), SourceLocation());
 }
 
 DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
@@ -99,6 +134,20 @@ ImplicitCastExpr *ASTMaker::makeLvalueToRvalue(const Expr *Arg, QualType Ty) {
 ImplicitCastExpr *ASTMaker::makeIntegralCast(const Expr *Arg, QualType Ty) {
   return ImplicitCastExpr::Create(C, Ty, CK_IntegralCast,
                                   const_cast<Expr*>(Arg), 0, VK_RValue);
+}
+
+ImplicitCastExpr *ASTMaker::makeIntegralCastToBoolean(const Expr *Arg) {
+  return ImplicitCastExpr::Create(C, C.BoolTy, CK_IntegralToBoolean,
+                                  const_cast<Expr*>(Arg), 0, VK_RValue);
+}
+
+ObjCBoolLiteralExpr *ASTMaker::makeObjCBool(bool Val) {
+  QualType Ty = C.getBOOLDecl() ? C.getBOOLType() : C.ObjCBuiltinBoolTy;
+  return new (C) ObjCBoolLiteralExpr(Val, Ty, SourceLocation());
+}
+
+ReturnStmt *ASTMaker::makeReturn(const Expr *RetVal) {
+  return new (C) ReturnStmt(SourceLocation(), const_cast<Expr*>(RetVal), 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -163,9 +212,8 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   // (3) Create the compound statement.
   Stmt *Stmts[2];
   Stmts[0] = B;
-  Stmts[1] = CE;  
-  CompoundStmt *CS = new (C) CompoundStmt(C, Stmts, 2, SourceLocation(),
-                                          SourceLocation());
+  Stmts[1] = CE;
+  CompoundStmt *CS = M.makeCompound(ArrayRef<Stmt*>(Stmts, 2));
   
   // (4) Create the 'if' condition.
   ImplicitCastExpr *LValToRval =
@@ -213,6 +261,71 @@ static Stmt *create_dispatch_sync(ASTContext &C, const FunctionDecl *D) {
   return CE;
 }
 
+static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
+{
+  // There are exactly 3 arguments.
+  if (D->param_size() != 3)
+    return 0;
+  
+  // Body for:
+  //   if (oldValue == *theValue) {
+  //    *theValue = newValue;
+  //    return YES;
+  //   }
+  //   else return NO;
+  
+  const ParmVarDecl *OldValue = D->getParamDecl(0);
+  QualType OldValueTy = OldValue->getType();
+
+  const ParmVarDecl *NewValue = D->getParamDecl(1);
+  QualType NewValueTy = NewValue->getType();
+  
+  assert(OldValueTy == NewValueTy);
+  
+  const ParmVarDecl *TheValue = D->getParamDecl(2);
+  QualType TheValueTy = TheValue->getType();
+  const PointerType *PT = TheValueTy->getAs<PointerType>();
+  if (!PT)
+    return 0;
+  QualType PointeeTy = PT->getPointeeType();
+  
+  ASTMaker M(C);
+  // Construct the comparison.
+  Expr *Comparison =
+    M.makeComparison(
+      M.makeLvalueToRvalue(M.makeDeclRefExpr(OldValue), OldValueTy),
+      M.makeLvalueToRvalue(
+        M.makeDereference(
+          M.makeLvalueToRvalue(M.makeDeclRefExpr(TheValue), TheValueTy),
+          PointeeTy),
+        PointeeTy),
+      BO_EQ);
+
+  // Construct the body of the IfStmt.
+  Stmt *Stmts[2];
+  Stmts[0] =
+    M.makeAssignment(
+      M.makeDereference(
+        M.makeLvalueToRvalue(M.makeDeclRefExpr(TheValue), TheValueTy),
+        PointeeTy),
+      M.makeLvalueToRvalue(M.makeDeclRefExpr(NewValue), NewValueTy),
+      NewValueTy);
+  Stmts[1] =
+    M.makeReturn(M.makeIntegralCastToBoolean(M.makeObjCBool(true)));
+  CompoundStmt *Body = M.makeCompound(ArrayRef<Stmt*>(Stmts, 2));
+  
+  // Construct the else clause.
+  Stmt *Else =
+    M.makeReturn(M.makeIntegralCastToBoolean(M.makeObjCBool(false)));
+  
+  /// Construct the If.
+  Stmt *If =
+    new (C) IfStmt(C, SourceLocation(), 0, Comparison, Body,
+                   SourceLocation(), Else);
+  
+  return If;  
+}
+
 Stmt *BodyFarm::getBody(const FunctionDecl *D) {
   D = D->getCanonicalDecl();
   
@@ -228,17 +341,21 @@ Stmt *BodyFarm::getBody(const FunctionDecl *D) {
   StringRef Name = D->getName();
   if (Name.empty())
     return 0;
-  
-  FunctionFarmer FF =
-    llvm::StringSwitch<FunctionFarmer>(Name)
-      .Case("dispatch_sync", create_dispatch_sync)
-      .Case("dispatch_once", create_dispatch_once)
-      .Default(NULL);
-  
-  if (FF) {
-    Val = FF(C, D);
+
+  FunctionFarmer FF;
+
+  if (Name.startswith("OSAtomicCompareAndSwap") ||
+      Name.startswith("objc_atomicCompareAndSwap")) {
+    FF = create_OSAtomicCompareAndSwap;
+  }
+  else {
+    FF = llvm::StringSwitch<FunctionFarmer>(Name)
+          .Case("dispatch_sync", create_dispatch_sync)
+          .Case("dispatch_once", create_dispatch_once)
+        .Default(NULL);
   }
   
+  if (FF) { Val = FF(C, D); }
   return Val.getValue();
 }
 
