@@ -3153,6 +3153,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Tmp3 = Node->getOperand(1);
     if (TLI.isOperationLegalOrCustom(DivRemOpc, VT) ||
         (isDivRemLibcallAvailable(Node, isSigned, TLI) &&
+         // If div is legal, it's better to do the normal expansion
+         !TLI.isOperationLegalOrCustom(DivOpc, Node->getValueType(0)) &&
          useDivRem(Node, isSigned, false))) {
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
     } else if (TLI.isOperationLegalOrCustom(DivOpc, VT)) {
