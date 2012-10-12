@@ -378,17 +378,17 @@ void RuntimeDyldImpl::reassignSectionAddress(unsigned SectionID,
 
 void RuntimeDyldImpl::resolveRelocationEntry(const RelocationEntry &RE,
                                              uint64_t Value) {
-    // Ignore relocations for sections that were not loaded
-    if (Sections[RE.SectionID].Address != 0) {
-      uint8_t *Target = Sections[RE.SectionID].Address + RE.Offset;
-      DEBUG(dbgs() << "\tSectionID: " << RE.SectionID
-            << " + " << RE.Offset << " (" << format("%p", Target) << ")"
-            << " RelType: " << RE.RelType
-            << " Addend: " << RE.Addend
-            << "\n");
+  // Ignore relocations for sections that were not loaded
+  if (Sections[RE.SectionID].Address != 0) {
+    uint8_t *Target = Sections[RE.SectionID].Address + RE.Offset;
+    DEBUG(dbgs() << "\tSectionID: " << RE.SectionID
+          << " + " << RE.Offset << " (" << format("%p", Target) << ")"
+          << " RelType: " << RE.RelType
+          << " Addend: " << RE.Addend
+          << "\n");
 
-      resolveRelocation(Target, Sections[RE.SectionID].LoadAddress + RE.Offset,
-                        Value, RE.RelType, RE.Addend);
+    resolveRelocation(Target, Sections[RE.SectionID].LoadAddress + RE.Offset,
+                      Value, RE.RelType, RE.Addend);
   }
 }
 
