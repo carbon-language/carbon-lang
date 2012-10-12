@@ -501,13 +501,10 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
     // Match the MCInstr.
-    unsigned Kind;
     unsigned Opcode;
     unsigned ErrorInfo;
-    SmallVector<std::pair< unsigned, std::string >, 4> MapAndConstraints;
-    HadError = TargetParser->MatchInstruction(IDLoc, Operands, *Str.get(), Kind,
-                                              Opcode, MapAndConstraints,
-                                              ErrorInfo,
+    HadError = TargetParser->MatchInstruction(IDLoc, Operands, *Str.get(),
+                                              Opcode, ErrorInfo,
                                               /*matchingInlineAsm*/ true);
     // If we had an error parsing the operands, fail gracefully.
     if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
@@ -528,7 +525,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       // Register.
       if (Operands[i]->isReg()) {
         // Clobber.
-        if (NumDefs && (MapAndConstraints[i-1].first < NumDefs)) {
+        if (NumDefs && (Operands[i]->getMCOperandNum() < NumDefs)) {
           std::string Reg;
           llvm::raw_string_ostream OS(Reg);
           IP->printRegName(OS, Operands[i]->getReg());
@@ -551,7 +548,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
         ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
                                               false, false);
         if (!Result.isInvalid()) {
-          // FIXME: Determine the proper constraints.
           bool isMemDef = (i == 1) && Desc.mayStore();
           if (isMemDef) {
             Outputs.push_back(II);
@@ -559,14 +555,14 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
             OutputExprNames.push_back(Name.str());
             OutputExprStrIdx.push_back(StrIdx);
 
-            std::string Constraint = "=" + MapAndConstraints[i-1].second;
+            std::string Constraint = "=" + Operands[i]->getConstraint().str();
             OutputConstraints.push_back(Constraint);
           } else {
             Inputs.push_back(II);
             InputExprs.push_back(Result.take());
             InputExprNames.push_back(Name.str());
             InputExprStrIdx.push_back(StrIdx);
-            InputConstraints.push_back(MapAndConstraints[i-1].second);
+            InputConstraints.push_back(Operands[i]->getConstraint());
           }
         }
       }
