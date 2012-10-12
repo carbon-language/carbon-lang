@@ -1577,6 +1577,7 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
     }      
   }
   
+  (void) SourceFile;
   return FirstFID;
 }
 
