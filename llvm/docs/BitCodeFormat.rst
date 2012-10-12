@@ -489,6 +489,8 @@ The magic number for LLVM IR files is:
 When combined with the bitcode magic number and viewed as bytes, this is
 ``"BC 0xC0DE"``.
 
+.. _Signed VBRs:
+
 Signed VBRs
 ^^^^^^^^^^^
 
@@ -507,6 +509,7 @@ As such, signed VBR values of a specific width are emitted as follows:
 With this encoding, small positive and small negative values can both be emitted
 efficiently. Signed VBR encoding is used in ``CST_CODE_INTEGER`` and
 ``CST_CODE_WIDE_INTEGER`` records within ``CONSTANTS_BLOCK`` blocks.
+It is also used for phi instruction operands in `MODULE_CODE_VERSION`_ 1.
 
 LLVM IR Blocks
 ^^^^^^^^^^^^^^
@@ -553,13 +556,57 @@ block may contain the following sub-blocks:
 * `FUNCTION_BLOCK`_
 * `METADATA_BLOCK`_
 
+.. _MODULE_CODE_VERSION:
+
 MODULE_CODE_VERSION Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``[VERSION, version#]``
 
 The ``VERSION`` record (code 1) contains a single value indicating the format
-version. Only version 0 is supported at this time.
+version. Version 0 and 1 are supported at this time. The difference between
+version 0 and 1 is in the encoding of instruction operands in
+each `FUNCTION_BLOCK`_.
+
+In version 0, each value defined by an instruction is assigned an ID
+unique to the function. Function-level value IDs are assigned starting from
+``NumModuleValues`` since they share the same namespace as module-level
+values. The value enumerator resets after each function. When a value is
+an operand of an instruction, the value ID is used to represent the operand.
+For large functions or large modules, these operand values can be large.
+
+The encoding in version 1 attempts to avoid large operand values
+in common cases. Instead of using the value ID directly, operands are
+encoded as relative to the current instruction. Thus, if an operand
+is the value defined by the previous instruction, the operand
+will be encoded as 1.
+
+For example, instead of
+
+.. code-block:: llvm
+
+  #n = load #n-1
+  #n+1 = icmp eq #n, #const0
+  br #n+1, label #(bb1), label #(bb2)
+
+version 1 will encode the instructions as
+
+.. code-block:: llvm
+
+  #n = load #1
+  #n+1 = icmp eq #1, (#n+1)-#const0
+  br #1, label #(bb1), label #(bb2)
+
+Note in the example that operands which are constants also use
+the relative encoding, while operands like basic block labels
+do not use the relative encoding.
+
+Forward references will result in a negative value.
+This can be inefficient, as operands are normally encoded
+as unsigned VBRs. However, forward references are rare, except in the
+case of phi instructions. For phi instructions, operands are encoded as
+`Signed VBRs`_ to deal with forward references.
+
 
 MODULE_CODE_TRIPLE Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^
