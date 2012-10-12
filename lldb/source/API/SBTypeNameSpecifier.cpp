@@ -116,6 +116,8 @@ SBTypeNameSpecifier::IsEqualTo (lldb::SBTypeNameSpecifier &rhs)
     
     if (IsRegex() != rhs.IsRegex())
         return false;
+    if (GetName() == NULL || rhs.GetName() == NULL)
+        return false;
     
     return (strcmp(GetName(), rhs.GetName()) == 0);
 }

@@ -386,7 +386,9 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
     // down.
     const bool clear_dies = ExtractDIEsIfNeeded (false) > 1;
     
-    DIE()->BuildAddressRangeTable(dwarf2Data, this, debug_aranges);
+    const DWARFDebugInfoEntry* die = DIE();
+    if (die)
+        die->BuildAddressRangeTable(dwarf2Data, this, debug_aranges);
     
     // Keep memory down by clearing DIEs if this generate function
     // caused them to be parsed
@@ -410,7 +412,9 @@ DWARFCompileUnit::GetFunctionAranges ()
                                                                     "DWARFCompileUnit::GetFunctionAranges() for compile unit at .debug_info[0x%8.8x]",
                                                                     GetOffset());
         }
-        DIE()->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
+        const DWARFDebugInfoEntry* die = DIE();
+        if (die)
+            die->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
         const bool minimize = false;
         m_func_aranges_ap->Sort(minimize);
     }

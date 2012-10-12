@@ -72,9 +72,12 @@ ThreadPlanTracer::Log()
     bool show_fullpaths = false;
     
     Stream *stream = GetLogStream();
-    m_thread.GetStackFrameAtIndex(0)->Dump (stream, show_frame_index, show_fullpaths);
-    stream->Printf("\n");
-    stream->Flush();
+    if (stream)
+    {
+        m_thread.GetStackFrameAtIndex(0)->Dump (stream, show_frame_index, show_fullpaths);
+        stream->Printf("\n");
+        stream->Flush();
+    }
     
 }
 

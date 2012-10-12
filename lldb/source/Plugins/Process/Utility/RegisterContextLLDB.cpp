@@ -779,7 +779,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // right thing.  It'd be nice if there was a way to ask the eh_frame directly if it is asynchronous
     // (can be trusted at every instruction point) or synchronous (the normal case - only at call sites).
     // But there is not.
-    if (process->GetDynamicLoader() && process->GetDynamicLoader()->AlwaysRelyOnEHUnwindInfo (m_sym_ctx))
+    if (process && process->GetDynamicLoader() && process->GetDynamicLoader()->AlwaysRelyOnEHUnwindInfo (m_sym_ctx))
     {
         unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))

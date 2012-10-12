@@ -921,9 +921,12 @@ SymbolFileDWARF::ParseCompileUnitLanguage (const SymbolContext& sc)
     if (dwarf_cu)
     {
         const DWARFDebugInfoEntry *die = dwarf_cu->GetCompileUnitDIEOnly();
-        const uint32_t language = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
-        if (language)
-            return (lldb::LanguageType)language;
+        if (die)
+        {
+            const uint32_t language = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
+            if (language)
+                return (lldb::LanguageType)language;
+        }
     }
     return eLanguageTypeUnknown;
 }

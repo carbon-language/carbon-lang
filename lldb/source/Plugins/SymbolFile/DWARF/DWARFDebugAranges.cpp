@@ -117,10 +117,11 @@ DWARFDebugAranges::Dump (Log *log) const
     for (size_t i=0; i<num_entries; ++i)
     {
         const RangeToDIE::Entry *entry = m_aranges.GetEntryAtIndex(i);
-        log->Printf ("0x%8.8x: [0x%llx - 0x%llx)", 
-                     entry->data,
-                     entry->GetRangeBase(),
-                     entry->GetRangeEnd());
+        if (entry)
+            log->Printf ("0x%8.8x: [0x%llx - 0x%llx)", 
+                         entry->data,
+                         entry->GetRangeBase(),
+                         entry->GetRangeEnd());
     }
 }
 

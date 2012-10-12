@@ -175,7 +175,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         {
             if (m_frames.back()->cfa == cursor_sp->cfa)
                 goto unwind_done; // Infinite loop where the current cursor is the same as the previous one...
-            else if (abi->StackUsesFrames())
+            else if (abi && abi->StackUsesFrames())
             {
                 // We might have a CFA that is not using the frame pointer and
                 // we want to validate that the frame pointer is valid.

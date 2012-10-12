@@ -34,11 +34,12 @@ DWARFLocationList::Dump(Stream &s, const DWARFCompileUnit* cu, const DataExtract
 
         s.PutCString("\n            ");
         s.Indent();
-        s.AddressRange (start_addr + base_addr, 
-                        end_addr + base_addr, 
-                        cu->GetAddressByteSize(), 
-                        NULL,
-                        ": ");
+        if (cu)
+            s.AddressRange (start_addr + base_addr, 
+                            end_addr + base_addr, 
+                            cu->GetAddressByteSize(), 
+                            NULL,
+                            ": ");
         uint32_t loc_length = debug_loc_data.GetU16(&offset);
 
         DataExtractor locationData(debug_loc_data, offset, loc_length);

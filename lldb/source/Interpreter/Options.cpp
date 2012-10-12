@@ -439,7 +439,8 @@ Options::GenerateOptionUsage
 
         // Different option sets may require different args.
         StreamString args_str;
-        cmd->GetFormattedCommandArguments(args_str, opt_set_mask);
+        if (cmd)
+            cmd->GetFormattedCommandArguments(args_str, opt_set_mask);
 
         // First go through and print all options that take no arguments as
         // a single string. If a command has "-a" "-b" and "-c", this will show
@@ -569,7 +570,8 @@ Options::GenerateOptionUsage
         }
     }
     
-    if (cmd->WantsRawCommandString() &&
+    if (cmd &&
+        cmd->WantsRawCommandString() &&
         arguments_str.GetSize() > 0)
     {        
         strm.PutChar('\n');

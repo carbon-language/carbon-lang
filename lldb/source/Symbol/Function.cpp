@@ -343,7 +343,9 @@ void
 Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *target)
 {
     Type* func_type = GetType();
-    *s << "id = " << (const UserID&)*this << ", name = \"" << func_type->GetName() << "\", range = ";
+    const char *name = func_type ? func_type->GetName().AsCString() : "<unknown>";
+    
+    *s << "id = " << (const UserID&)*this << ", name = \"" << name << "\", range = ";
     
     Address::DumpStyle fallback_style;
     if (level == eDescriptionLevelVerbose)
@@ -493,10 +495,14 @@ Function::GetType() const
 clang_type_t
 Function::GetReturnClangType ()
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
-    const clang::FunctionType *function_type = llvm::dyn_cast<clang::FunctionType> (clang_type);
-    if (function_type)
-        return function_type->getResultType().getAsOpaquePtr();
+    Type *type = GetType();
+    if (type)
+    {
+        clang::QualType clang_type (clang::QualType::getFromOpaquePtr(type->GetClangFullType()));
+        const clang::FunctionType *function_type = llvm::dyn_cast<clang::FunctionType> (clang_type);
+        if (function_type)
+            return function_type->getResultType().getAsOpaquePtr();
+    }
     return NULL;
 }
 

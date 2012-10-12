@@ -618,9 +618,8 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
                 unsigned char buffer[16];
                 ByteOrder byte_order = data.GetByteOrder();
-                uint32_t return_bytes;
                 
-                return_bytes = data.CopyByteOrderedData (0, num_bytes, buffer, 16, byte_order);
+                data.CopyByteOrderedData (0, num_bytes, buffer, 16, byte_order);
                 xmm0_value.SetBytes(buffer, 16, byte_order);
                 reg_ctx->WriteRegister(xmm0_info, xmm0_value);
                 set_it_simple = true;

@@ -3570,24 +3570,27 @@ ObjectFileMachO::GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &th
             GetNumThreadContexts ();
 
         const FileRangeArray::Entry *thread_context_file_range = m_thread_context_offsets.GetEntryAtIndex (idx);
-        
-        DataExtractor data (m_data, 
-                            thread_context_file_range->GetRangeBase(), 
-                            thread_context_file_range->GetByteSize());
-
-        switch (m_header.cputype)
+        if (thread_context_file_range)
         {
-            case llvm::MachO::CPUTypeARM:
-                reg_ctx_sp.reset (new RegisterContextDarwin_arm_Mach (thread, data));
-                break;
-                
-            case llvm::MachO::CPUTypeI386:
-                reg_ctx_sp.reset (new RegisterContextDarwin_i386_Mach (thread, data));
-                break;
-                
-            case llvm::MachO::CPUTypeX86_64:
-                reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
-                break;
+        
+            DataExtractor data (m_data, 
+                                thread_context_file_range->GetRangeBase(), 
+                                thread_context_file_range->GetByteSize());
+
+            switch (m_header.cputype)
+            {
+                case llvm::MachO::CPUTypeARM:
+                    reg_ctx_sp.reset (new RegisterContextDarwin_arm_Mach (thread, data));
+                    break;
+                    
+                case llvm::MachO::CPUTypeI386:
+                    reg_ctx_sp.reset (new RegisterContextDarwin_i386_Mach (thread, data));
+                    break;
+                    
+                case llvm::MachO::CPUTypeX86_64:
+                    reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
+                    break;
+            }
         }
     }
     return reg_ctx_sp;

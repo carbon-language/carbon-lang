@@ -233,7 +233,7 @@ SBTypeSummary::IsEqualTo (lldb::SBTypeSummary &rhs)
     if (IsFunctionName() != rhs.IsFunctionName())
         return false;
     
-    if ( strcmp(GetData(), rhs.GetData()) )
+    if ( GetData() == NULL || rhs.GetData() == NULL || strcmp(GetData(), rhs.GetData()) )
         return false;
     
     return GetOptions() == rhs.GetOptions();

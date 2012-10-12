@@ -1451,6 +1451,7 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
         if (!abi)
         {
             return_error.SetErrorString("Could not find ABI to set return value.");
+            return return_error;
         }
         SymbolContext sc = frame_sp->GetSymbolContext(eSymbolContextFunction);
         

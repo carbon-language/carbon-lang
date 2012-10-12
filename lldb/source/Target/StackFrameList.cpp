@@ -274,8 +274,6 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 if (end_idx > 0)
                     end_idx += inlined_depth;
             }
-            else
-                inlined_depth = 0;
         }
         
         StackFrameSP unwind_frame_sp;

@@ -50,11 +50,6 @@ public:
     lldb::VariableSP
     FindVariable (const ConstString& name);
 
-    // Find the argument variable that represents the language specific
-    // object pointer ("this" in C++, or "self" in Objective C).
-    lldb::VariableSP
-    FindArtificialObjectVariable (lldb::LanguageType language) const;
-
     uint32_t
     FindVariableIndex (const lldb::VariableSP &var_sp);
 

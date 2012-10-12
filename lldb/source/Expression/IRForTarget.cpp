@@ -78,11 +78,14 @@ static std::string
 PrintValue(const Value *value, bool truncate = false)
 {
     std::string s;
-    raw_string_ostream rso(s);
-    value->print(rso);
-    rso.flush();
-    if (truncate)
-        s.resize(s.length() - 1);
+    if (value)
+    {
+        raw_string_ostream rso(s);
+        value->print(rso);
+        rso.flush();
+        if (truncate)
+            s.resize(s.length() - 1);
+    }
     return s;
 }
 
@@ -238,7 +241,7 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                 // Check for an alternate mangling for "std::basic_string<char>"
                 // that is part of the itanium C++ name mangling scheme
                 const char *name_cstr = name.GetCString();
-                if (strncmp(name_cstr, "_ZNKSbIcE", strlen("_ZNKSbIcE")) == 0)
+                if (name_cstr && strncmp(name_cstr, "_ZNKSbIcE", strlen("_ZNKSbIcE")) == 0)
                 {
                     std::string alternate_mangling("_ZNKSs");
                     alternate_mangling.append (name_cstr + strlen("_ZNKSbIcE"));
@@ -491,6 +494,9 @@ IRForTarget::MaybeSetCastResult (lldb_private::TypeFromParser type)
             return;
         }
     }
+    
+    if (!original_load)
+        return;
     
     Value *loaded_value = original_load->getPointerOperand();
     GlobalVariable *loaded_global = dyn_cast<GlobalVariable>(loaded_value);

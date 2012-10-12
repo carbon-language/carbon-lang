@@ -55,6 +55,7 @@ CommandObjectScript::DoExecute
     {
         result.AppendError("no script interpreter");
         result.SetStatus (eReturnStatusFailed);
+        return false;
     }
 
     DataVisualization::ForceUpdate(); // script might change Python code we use for formatting.. make sure we keep up to date with it

@@ -755,6 +755,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     {
         ret.SetErrorToGenericError();
         ret.SetErrorString("Couldn't find the target");
+        return ret;
     }
     
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second, 0));

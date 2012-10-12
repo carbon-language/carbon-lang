@@ -552,7 +552,7 @@ ClangUserExpression::Execute (Stream &error_stream,
 
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
-        lldb::addr_t struct_address;
+        lldb::addr_t struct_address = LLDB_INVALID_ADDRESS;
                 
         lldb::addr_t object_ptr = 0;
         lldb::addr_t cmd_ptr = 0;

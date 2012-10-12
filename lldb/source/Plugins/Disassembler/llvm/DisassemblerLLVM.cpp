@@ -178,11 +178,15 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (const ExecutionContext* ex
         uint32_t addr_nibble_size = 8;
         addr_t base_addr = LLDB_INVALID_ADDRESS;
         Target *target = exe_ctx ? exe_ctx->GetTargetPtr() : NULL;
-        if (target && !target->GetSectionLoadList().IsEmpty())
-            base_addr = GetAddress().GetLoadAddress (target);
+        if (target)
+        {
+            addr_nibble_size = target->GetArchitecture().GetAddressByteSize() * 2;
+            if (!target->GetSectionLoadList().IsEmpty())
+                base_addr = GetAddress().GetLoadAddress (target);
+        }
+        
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = GetAddress().GetFileAddress ();
-        addr_nibble_size = target->GetArchitecture().GetAddressByteSize() * 2;
 
         lldb::addr_t PC = base_addr + EDInstByteSize(m_inst);
         

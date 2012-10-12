@@ -117,12 +117,14 @@ ClangExpressionDeclMap::DidParse()
              ++entity_index)
         {
             ClangExpressionVariableSP var_sp(m_found_entities.GetVariableAtIndex(entity_index));
-            if (var_sp && 
-                var_sp->m_parser_vars.get() && 
-                var_sp->m_parser_vars->m_lldb_value)
+            if (var_sp)
+            {
+                if (var_sp->m_parser_vars.get() &&
+                    var_sp->m_parser_vars->m_lldb_value)
                 delete var_sp->m_parser_vars->m_lldb_value;
             
-            var_sp->DisableParserVars();
+                var_sp->DisableParserVars();
+            }
         }
         
         for (size_t pvar_index = 0, num_pvars = m_parser_vars->m_persistent_vars->GetSize();
@@ -2706,7 +2708,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                                          append,
                                          sc_list);
             }
-            else if (!namespace_decl)
+            else if (target && !namespace_decl)
             {
                 const bool include_symbols = true;
                 

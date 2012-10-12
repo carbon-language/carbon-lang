@@ -316,6 +316,7 @@ ClangASTImporter::GetNamespaceMap(const clang::NamespaceDecl *decl)
 void 
 ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
 {
+    assert (decl);
     ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
 
     const DeclContext *parent_context = decl->getDeclContext();

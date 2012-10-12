@@ -446,7 +446,7 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
             }
         }
 
-        if (m_kernel.IsLoaded())
+        if (m_kernel.IsLoaded() && m_kernel.module_sp)
         {
             static ConstString kext_summary_symbol ("gLoadedKextSummaries");
             const Symbol *symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (kext_summary_symbol, eSymbolTypeData);
