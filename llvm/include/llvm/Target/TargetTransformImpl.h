@@ -32,8 +32,6 @@ public:
   /// Ctor
   explicit ScalarTargetTransformImpl(const TargetLowering *TL) : TLI(TL) {}
 
-  virtual ~ScalarTargetTransformImpl() {}
-
   virtual bool isLegalAddImmediate(int64_t imm) const;
 
   virtual bool isLegalICmpImmediate(int64_t imm) const;

@@ -75,6 +75,8 @@ public:
 /// LSR, and LowerInvoke use this interface.
 class ScalarTargetTransformInfo {
 public:
+  virtual ~ScalarTargetTransformInfo() {}
+
   /// isLegalAddImmediate - Return true if the specified immediate is legal
   /// add immediate, that is the target has add instructions which can add
   /// a register with the immediate without having to materialize the
