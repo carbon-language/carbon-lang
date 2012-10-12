@@ -19,12 +19,16 @@ class CommentDumper: public comments::ConstCommentVisitor<CommentDumper> {
   const CommandTraits *Traits;
   const SourceManager *SM;
   unsigned IndentLevel;
-
+  const FullComment *FC;
+  
 public:
   CommentDumper(raw_ostream &OS,
                 const CommandTraits *Traits,
-                const SourceManager *SM) :
-      OS(OS), Traits(Traits), SM(SM), IndentLevel(0)
+                const SourceManager *SM,
+                const FullComment * FC) :
+      OS(OS), Traits(Traits), SM(SM), IndentLevel(0),
+      FC(FC)
+  
   { }
 
   void dumpIndent() const {
@@ -183,7 +187,7 @@ void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
     OS << " implicitly";
 
   if (C->hasParamName())
-    OS << " Param=\"" << C->getParamName(0) << "\"";
+    OS << " Param=\"" << C->getParamName(const_cast<FullComment*>(FC)) << "\"";
 
   if (C->isParamIndexValid())
     OS << " ParamIndex=" << C->getParamIndex();
@@ -234,7 +238,8 @@ void CommentDumper::visitFullComment(const FullComment *C) {
 
 void Comment::dump(llvm::raw_ostream &OS, const CommandTraits *Traits,
                    const SourceManager *SM) const {
-  CommentDumper D(llvm::errs(), Traits, SM);
+  const FullComment *FC = dyn_cast<FullComment>(this);
+  CommentDumper D(llvm::errs(), Traits, SM, FC);
   D.dumpSubtree(this);
   llvm::errs() << '\n';
 }
