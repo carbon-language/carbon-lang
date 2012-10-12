@@ -1724,6 +1724,23 @@ DeclHasAttr(const Decl *D, const Attr *A) {
   if (AA)
     return false;
 
+  // The following thread safety attributes can also be duplicated.
+  switch (A->getKind()) {
+    case attr::ExclusiveLocksRequired:
+    case attr::SharedLocksRequired:
+    case attr::LocksExcluded:
+    case attr::ExclusiveLockFunction:
+    case attr::SharedLockFunction:
+    case attr::UnlockFunction:
+    case attr::ExclusiveTrylockFunction:
+    case attr::SharedTrylockFunction:
+    case attr::GuardedBy:
+    case attr::PtGuardedBy:
+    case attr::AcquiredBefore:
+    case attr::AcquiredAfter:
+      return false;
+  }
+
   const OwnershipAttr *OA = dyn_cast<OwnershipAttr>(A);
   const AnnotateAttr *Ann = dyn_cast<AnnotateAttr>(A);
   for (Decl::attr_iterator i = D->attr_begin(), e = D->attr_end(); i != e; ++i)
