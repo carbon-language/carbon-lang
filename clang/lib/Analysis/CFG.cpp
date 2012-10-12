@@ -3865,8 +3865,8 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
 
     if (Helper) Helper->setBlockID(-1);
 
-    CFGBlockTerminatorPrint TPrinter(OS, Helper,
-                                     PrintingPolicy(Helper->getLangOpts()));
+    PrintingPolicy PP(Helper ? Helper->getLangOpts() : LangOptions());
+    CFGBlockTerminatorPrint TPrinter(OS, Helper, PP);
     TPrinter.Visit(const_cast<Stmt*>(B.getTerminator().getStmt()));
     OS << '\n';
     
