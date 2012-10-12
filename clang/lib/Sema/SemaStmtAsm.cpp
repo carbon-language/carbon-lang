@@ -411,7 +411,6 @@ static bool buildMSAsmStrings(Sema &SemaRef,
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
   SmallString<512> Asm;
-  unsigned startTok = 0;
   for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
     bool isNewAsm = ((i == 0) ||
                      AsmToks[i].isAtStartOfLine() ||
@@ -420,7 +419,6 @@ static bool buildMSAsmStrings(Sema &SemaRef,
     if (isNewAsm) {
       if (i) {
         AsmStrings.push_back(Asm.str());
-        startTok = i;
         Asm.clear();
       }
       if (AsmToks[i].is(tok::kw_asm)) {
