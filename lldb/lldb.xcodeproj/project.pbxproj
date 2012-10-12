@@ -151,6 +151,7 @@
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
 		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
 		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
+		267E18F61628B5E40089D208 /* SBDeclaration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9452573816262CEF00325455 /* SBDeclaration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536B1370ACB200D186A3 /* OptionGroupBoolean.cpp */; };
 		268653701370AE7200D186A3 /* OptionGroupUInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536F1370AE7200D186A3 /* OptionGroupUInt64.cpp */; };
 		2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5310FE555900271C65 /* BreakpointResolverAddress.cpp */; };
@@ -3379,6 +3380,7 @@
 				4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */,
 				26B8283D142D01E9002DBC64 /* SBSection.h in Headers */,
 				B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */,
+				267E18F61628B5E40089D208 /* SBDeclaration.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
