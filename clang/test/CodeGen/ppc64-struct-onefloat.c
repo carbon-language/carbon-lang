@@ -1,6 +1,5 @@
 // REQUIRES: ppc64-registered-target
 // RUN: %clang_cc1 -O0 -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
-// XFAIL: *
 
 typedef struct s1 { float f; } Sf;
 typedef struct s2 { double d; } Sd;
@@ -41,7 +40,7 @@ void foo(void)
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s2* %p2, i32 0, i32 0
 // CHECK:  %{{[0-9]+}} = load double* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s4* %p4, i32 0, i32 0
-// CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s1* {{[a-zA-Z0-9.]+}}, i32 0, i32 0
+// CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s1* %{{[a-zA-Z0-9.]+}}, i32 0, i32 0
 // CHECK:  %{{[0-9]+}} = load float* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s5* %p5, i32 0, i32 0
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s2* %{{[a-zA-Z0-9.]+}}, i32 0, i32 0
