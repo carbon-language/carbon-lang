@@ -1846,7 +1846,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
                          true,
                          false);
 
-  funct->addFnAttr(llvm::Attribute::NoReturn);
+  funct->setDoesNotReturn();
 
   // _Unwind_Resume
 
@@ -1866,7 +1866,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
                          true,
                          false);
 
-  funct->addFnAttr(llvm::Attribute::NoReturn);
+  funct->setDoesNotReturn();
 
   // ourPersonality
 
