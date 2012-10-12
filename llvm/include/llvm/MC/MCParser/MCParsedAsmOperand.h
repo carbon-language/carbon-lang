@@ -19,9 +19,33 @@ class raw_ostream;
 /// base class is used by target-independent clients and is the interface
 /// between parsing an asm instruction and recognizing it.
 class MCParsedAsmOperand {
+  /// MCOperandNum - The corresponding MCInst operand number.  Only valid when
+  /// parsing MS-style inline assembly.
+  unsigned MCOperandNum;
+
+  /// Constraint - The constraint on this operand.  Only valid when parsing
+  /// MS-style inline assembly.
+  std::string Constraint;
+
 public:
   MCParsedAsmOperand() {}
   virtual ~MCParsedAsmOperand() {}
+
+  void setConstraint(StringRef C) { Constraint = C.str(); }
+  StringRef getConstraint() { return Constraint; }
+
+  void setMCOperandNum (unsigned OpNum) { MCOperandNum = OpNum; }
+  unsigned getMCOperandNum() { return MCOperandNum; }
+
+  unsigned getNameLen() {
+    assert (getStartLoc().isValid() && "Invalid StartLoc!");
+    assert (getEndLoc().isValid() && "Invalid EndLoc!");
+    return getEndLoc().getPointer() - getStartLoc().getPointer();
+  }
+
+  StringRef getName() {
+    return StringRef(getStartLoc().getPointer(), getNameLen());
+  }
 
   /// isToken - Is this a token operand?
   virtual bool isToken() const = 0;
