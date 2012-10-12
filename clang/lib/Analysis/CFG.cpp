@@ -2286,7 +2286,7 @@ CFGBlock *CFGBuilder::VisitWhileStmt(WhileStmt *W) {
       }
 
     // The default case when not handling logical operators.
-    EntryConditionBlock = ExitConditionBlock = createBlock(false);
+    ExitConditionBlock = createBlock(false);
     ExitConditionBlock->setTerminator(W);
 
     // Now add the actual condition to the condition block.
