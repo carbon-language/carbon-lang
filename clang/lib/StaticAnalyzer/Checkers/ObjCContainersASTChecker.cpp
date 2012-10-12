@@ -105,6 +105,8 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   unsigned ArgNum = InvalidArgIndex;
 
   if (Name.equals("CFArrayCreate") || Name.equals("CFSetCreate")) {
+    if (CE->getNumArgs() != 4)
+      return;
     ArgNum = 1;
     Arg = CE->getArg(ArgNum)->IgnoreParenCasts();
     if (hasPointerToPointerSizedType(Arg))
@@ -112,6 +114,8 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   }
 
   if (Arg == 0 && Name.equals("CFDictionaryCreate")) {
+    if (CE->getNumArgs() != 6)
+      return;
     // Check first argument.
     ArgNum = 1;
     Arg = CE->getArg(ArgNum)->IgnoreParenCasts();
@@ -127,6 +131,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
 
   if (ArgNum != InvalidArgIndex) {
     assert(ArgNum == 1 || ArgNum == 2);
+    assert(Arg);
 
     SmallString<256> BufName;
     llvm::raw_svector_ostream OsName(BufName);
