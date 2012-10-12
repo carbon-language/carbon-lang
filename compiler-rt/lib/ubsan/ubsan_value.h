@@ -39,6 +39,9 @@ typedef s64 SIntMax;
 typedef u64 UIntMax;
 #endif
 
+/// \brief Largest floating-point type we support.
+typedef long double FloatMax;
+
 
 /// \brief A description of a source location. This corresponds to Clang's
 /// \c PresumedLoc type.
@@ -48,6 +51,7 @@ class SourceLocation {
   u32 Column;
 
 public:
+  SourceLocation() : Filename(), Line(), Column() {}
   SourceLocation(const char *Filename, unsigned Line, unsigned Column)
     : Filename(Filename), Line(Line), Column(Column) {}
 
@@ -164,7 +168,7 @@ public:
   }
 
   /// \brief Get this value as a floating-point quantity.
-  long double getFloatValue() const;
+  FloatMax getFloatValue() const;
 };
 
 } // namespace __ubsan

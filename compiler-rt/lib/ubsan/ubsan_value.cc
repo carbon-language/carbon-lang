@@ -58,7 +58,7 @@ UIntMax Value::getPositiveIntValue() const {
 /// Get the floating-point value of this object, extended to a long double.
 /// These are always passed by address (our calling convention doesn't allow
 /// them to be passed in floating-point registers, so this has little cost).
-long double Value::getFloatValue() const {
+FloatMax Value::getFloatValue() const {
   CHECK(getType().isFloatTy());
   switch (getType().getFloatBitWidth()) {
 #if 0

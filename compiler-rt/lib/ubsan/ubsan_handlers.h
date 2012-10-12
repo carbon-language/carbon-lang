@@ -85,6 +85,16 @@ struct VLABoundData {
 extern "C" void __ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
                                                       ValueHandle Bound);
 
+struct FloatCastOverflowData {
+  // FIXME: SourceLocation Loc;
+  const TypeDescriptor &FromType;
+  const TypeDescriptor &ToType;
+};
+
+/// \brief Handle overflow in a conversion to or from a floating-point type.
+extern "C" void __ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
+                                                   ValueHandle From);
+
 }
 
 #endif // UBSAN_HANDLERS_H

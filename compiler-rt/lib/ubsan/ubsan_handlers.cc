@@ -134,3 +134,11 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
     << Value(Data->Type, Bound);
   Die();
 }
+
+void __ubsan::__ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
+                                                 ValueHandle From) {
+  Diag(SourceLocation(), "value %0 is outside the range of representable "
+                         "values of type %2")
+    << Value(Data->FromType, From) << Data->FromType << Data->ToType;
+  Die();
+}

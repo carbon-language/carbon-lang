@@ -35,6 +35,7 @@ class Diag {
     AK_String, ///< A string argument, displayed as-is.
     AK_UInt,   ///< An unsigned integer argument.
     AK_SInt,   ///< A signed integer argument.
+    AK_Float,  ///< A floating-point argument.
     AK_Pointer ///< A pointer argument, displayed in hexadecimal.
   };
 
@@ -44,6 +45,7 @@ class Diag {
     Arg(const char *String) : Kind(AK_String), String(String) {}
     Arg(UIntMax UInt) : Kind(AK_UInt), UInt(UInt) {}
     Arg(SIntMax SInt) : Kind(AK_SInt), SInt(SInt) {}
+    Arg(FloatMax Float) : Kind(AK_Float), Float(Float) {}
     Arg(const void *Pointer) : Kind(AK_Pointer), Pointer(Pointer) {}
 
     ArgKind Kind;
@@ -51,6 +53,7 @@ class Diag {
       const char *String;
       UIntMax UInt;
       SIntMax SInt;
+      FloatMax Float;
       const void *Pointer;
     };
   };

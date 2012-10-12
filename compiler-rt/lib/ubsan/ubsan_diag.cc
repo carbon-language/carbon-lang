@@ -27,6 +27,8 @@ Diag &Diag::operator<<(const Value &V) {
     AddArg(V.getSIntValue());
   else if (V.getType().isUnsignedIntegerTy())
     AddArg(V.getUIntValue());
+  else if (V.getType().isFloatTy())
+    AddArg(V.getFloatValue());
   else
     AddArg("<unknown>");
   return *this;
@@ -83,6 +85,9 @@ Diag::~Diag() {
           fprintf(stderr, "%llu", (unsigned long long)A.UInt);
         else
           PrintHex(A.UInt);
+        break;
+      case AK_Float:
+        fprintf(stderr, "%Lg", (long double)A.Float);
         break;
       case AK_Pointer:
         fprintf(stderr, "0x%zx", (uptr)A.Pointer);
