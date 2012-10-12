@@ -707,6 +707,11 @@ File Bug</h3>
         return None
 
     def send_path(self, path):
+        # If the requested path is outside the root directory, do not open it
+        rel = os.path.relpath(path, self.server.root)
+        if rel.startswith(os.pardir + os.sep):
+          return self.send_404()
+        
         ctype = self.guess_type(path)
         if ctype.startswith('text/'):
             # Patch file instead
