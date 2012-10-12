@@ -76,7 +76,8 @@ public:
     SCEI,
     BGP,
     BGQ,
-    Freescale
+    Freescale,
+    IBM
   };
   enum OSType {
     UnknownOS,
@@ -101,7 +102,8 @@ public:
     RTEMS,
     NativeClient,
     CNK,         // BG/P Compute-Node Kernel
-    Bitrig
+    Bitrig,
+    AIX
   };
   enum EnvironmentType {
     UnknownEnvironment,
