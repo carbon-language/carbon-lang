@@ -407,8 +407,7 @@ static void buildMSAsmPieces(std::vector<std::string> &AsmStrings,
 static bool buildMSAsmStrings(Sema &SemaRef,
                               SourceLocation AsmLoc,
                               ArrayRef<Token> AsmToks,
-                              std::vector<std::string> &AsmStrings,
-                     std::vector<std::pair<unsigned,unsigned> > &AsmTokRanges) {
+                              std::vector<std::string> &AsmStrings) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
   SmallString<512> Asm;
@@ -421,7 +420,6 @@ static bool buildMSAsmStrings(Sema &SemaRef,
     if (isNewAsm) {
       if (i) {
         AsmStrings.push_back(Asm.str());
-        AsmTokRanges.push_back(std::make_pair(startTok, i-1));
         startTok = i;
         Asm.clear();
       }
@@ -441,7 +439,6 @@ static bool buildMSAsmStrings(Sema &SemaRef,
     Asm += Spelling;
   }
   AsmStrings.push_back(Asm.str());
-  AsmTokRanges.push_back(std::make_pair(startTok, AsmToks.size()-1));
 
   return false;
 }
@@ -476,8 +473,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   if (AsmToks.empty()) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
   std::vector<std::string> AsmStrings;
-  std::vector<std::pair<unsigned,unsigned> > AsmTokRanges;
-  if (buildMSAsmStrings(*this, AsmLoc, AsmToks, AsmStrings, AsmTokRanges))
+  if (buildMSAsmStrings(*this, AsmLoc, AsmToks, AsmStrings))
     return StmtError();
 
   std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
