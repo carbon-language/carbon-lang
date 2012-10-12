@@ -2857,7 +2857,6 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
 
   // Consult the summary for the return value.
   RetEffect RE = Summ.getRetEffect();
-  assert(CallOrMsg.getOriginExpr());
 
   if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
     if (ReceiverIsTracked)
@@ -2900,7 +2899,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
       SymbolRef Sym = state->getSVal(Ex, C.getLocationContext()).getAsSymbol();
       if (!Sym)
         break;
-
+      assert(Ex);
       // Use GetReturnType in order to give [NSFoo alloc] the type NSFoo *.
       QualType ResultTy = GetReturnType(Ex, C.getASTContext());
       state = setRefBinding(state, Sym, RefVal::makeNotOwned(RE.getObjKind(),
