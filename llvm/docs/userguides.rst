@@ -19,6 +19,7 @@ User Guides
    yaml2obj
    HowToSubmitABug
    SphinxQuickstartTemplate
+   Phabricator
 
 * :ref:`getting_started`
     

@@ -1,10 +1,3 @@
-.. _Phabricator:
-.. _LLVM's Phabricator: http://llvm-reviews.chandlerc.com
-.. _Code Repository Browser: http://llvm-reviews.chandlerc.com/diffusion/
-.. _Arcanist Quick Start: http://www.phabricator.com/docs/phabricator/article/Arcanist_Quick_Start.html
-.. _Arcanist User Guide: http://www.phabricator.com/docs/phabricator/article/Arcanist_User_Guide.html
-
-
 =============================
 Code Reviews with Phabricator
 =============================
@@ -94,3 +87,8 @@ Status
 
 Currently, we're testing Phabricator for use with Clang/LLVM. Please let us
 know whether you like it and what could be improved!
+
+.. _LLVM's Phabricator: http://llvm-reviews.chandlerc.com
+.. _Code Repository Browser: http://llvm-reviews.chandlerc.com/diffusion/
+.. _Arcanist Quick Start: http://www.phabricator.com/docs/phabricator/article/Arcanist_Quick_Start.html
+.. _Arcanist User Guide: http://www.phabricator.com/docs/phabricator/article/Arcanist_User_Guide.html
