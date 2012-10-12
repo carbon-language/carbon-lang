@@ -633,7 +633,7 @@ TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
 // This function is intentionally defined differently in the statically-compiled
 // program from the IR input to the JIT to assert that the JIT doesn't use its
 // definition.
-extern "C" int32_t JITTest_AvailableExternallyFunction() {
+extern "C" int32_t JITTest_AvailableExternallyFunction() __attribute__((used)) {
   return 42;
 }
 namespace {
