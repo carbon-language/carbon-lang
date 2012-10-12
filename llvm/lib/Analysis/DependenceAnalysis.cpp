@@ -1160,8 +1160,8 @@ bool DependenceAnalysis::weakCrossingSIVtest(const SCEV *Coeff,
   DEBUG(dbgs() << "\t    Delta = " << *Delta << "\n");
   NewConstraint.setLine(Coeff, Coeff, Delta, CurLoop);
   if (Delta->isZero()) {
-    Result.DV[Level].Direction &= ~Dependence::DVEntry::LT;
-    Result.DV[Level].Direction &= ~Dependence::DVEntry::GT;
+    Result.DV[Level].Direction &= unsigned(~Dependence::DVEntry::LT);
+    Result.DV[Level].Direction &= unsigned(~Dependence::DVEntry::GT);
     ++WeakCrossingSIVsuccesses;
     if (!Result.DV[Level].Direction) {
       ++WeakCrossingSIVindependence;
@@ -1222,8 +1222,8 @@ bool DependenceAnalysis::weakCrossingSIVtest(const SCEV *Coeff,
     }
     if (isKnownPredicate(CmpInst::ICMP_EQ, Delta, ML)) {
       // i = i' = UB
-      Result.DV[Level].Direction &= ~Dependence::DVEntry::LT;
-      Result.DV[Level].Direction &= ~Dependence::DVEntry::GT;
+      Result.DV[Level].Direction &= unsigned(~Dependence::DVEntry::LT);
+      Result.DV[Level].Direction &= unsigned(~Dependence::DVEntry::GT);
       ++WeakCrossingSIVsuccesses;
       if (!Result.DV[Level].Direction) {
         ++WeakCrossingSIVindependence;
@@ -1256,7 +1256,7 @@ bool DependenceAnalysis::weakCrossingSIVtest(const SCEV *Coeff,
   DEBUG(dbgs() << "\t    Remainder = " << Remainder << "\n");
   if (Remainder != 0) {
     // Equal direction isn't possible
-    Result.DV[Level].Direction &= ~Dependence::DVEntry::EQ;
+    Result.DV[Level].Direction &= unsigned(~Dependence::DVEntry::EQ);
     ++WeakCrossingSIVsuccesses;
   }
   return false;
@@ -2380,7 +2380,7 @@ bool DependenceAnalysis::gcdMIVtest(const SCEV *Src,
       DEBUG(dbgs() << "\tRemainder = " << Remainder << "\n");
       if (Remainder != 0) {
         unsigned Level = mapSrcLoop(CurLoop);
-        Result.DV[Level - 1].Direction &= ~Dependence::DVEntry::EQ;
+        Result.DV[Level - 1].Direction &= unsigned(~Dependence::DVEntry::EQ);
         Improved = true;
       }
     }
