@@ -92,7 +92,7 @@ public:
   MatchInstruction(SMLoc IDLoc, 
                    SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                    MCStreamer &Out, unsigned &Opcode, unsigned &OrigErrorInfo,
-                   bool matchingInlineAsm = false) {
+                   bool MatchingInlineAsm = false) {
     OrigErrorInfo = ~0x0;
     return true;
   }

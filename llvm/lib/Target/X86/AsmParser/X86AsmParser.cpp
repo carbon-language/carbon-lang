@@ -40,8 +40,8 @@ private:
 
   bool Error(SMLoc L, const Twine &Msg,
              ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
-             bool matchingInlineAsm = false) {
-    if (matchingInlineAsm) return true;
+             bool MatchingInlineAsm = false) {
+    if (MatchingInlineAsm) return true;
     return Parser.Error(L, Msg, Ranges);
   }
 
@@ -69,7 +69,7 @@ private:
   bool MatchInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out, unsigned &Opcode,
-                        unsigned &OrigErrorInfo, bool matchingInlineAsm = false);
+                        unsigned &OrigErrorInfo, bool MatchingInlineAsm = false);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
@@ -1532,7 +1532,7 @@ bool X86AsmParser::
 MatchInstruction(SMLoc IDLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                  MCStreamer &Out, unsigned &Opcode, unsigned &OrigErrorInfo,
-                 bool matchingInlineAsm) {
+                 bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
@@ -1549,7 +1549,7 @@ MatchInstruction(SMLoc IDLoc,
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Inst.setLoc(IDLoc);
-    if (!matchingInlineAsm)
+    if (!MatchingInlineAsm)
       Out.EmitInstruction(Inst);
 
     const char *Repl =
@@ -1573,25 +1573,25 @@ MatchInstruction(SMLoc IDLoc,
 
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst,
-                               OrigErrorInfo, matchingInlineAsm,
+                               OrigErrorInfo, MatchingInlineAsm,
                                isParsingIntelSyntax())) {
   default: break;
   case Match_Success:
     // Some instructions need post-processing to, for example, tweak which
     // encoding is selected. Loop on it while changes happen so the
     // individual transformations can chain off each other.
-    if (!matchingInlineAsm)
+    if (!MatchingInlineAsm)
       while (processInstruction(Inst, Operands))
         ;
 
     Inst.setLoc(IDLoc);
-    if (!matchingInlineAsm)
+    if (!MatchingInlineAsm)
       Out.EmitInstruction(Inst);
     Opcode = Inst.getOpcode();
     return false;
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled",
-          EmptyRanges, matchingInlineAsm);
+          EmptyRanges, MatchingInlineAsm);
     return true;
   case Match_InvalidOperand:
     WasOriginallyInvalidOperand = true;
@@ -1648,7 +1648,7 @@ MatchInstruction(SMLoc IDLoc,
     (Match3 == Match_Success) + (Match4 == Match_Success);
   if (NumSuccessfulMatches == 1) {
     Inst.setLoc(IDLoc);
-    if (!matchingInlineAsm)
+    if (!MatchingInlineAsm)
       Out.EmitInstruction(Inst);
     Opcode = Inst.getOpcode();
     // FIXME: Handle the map and constraints.
@@ -1678,7 +1678,7 @@ MatchInstruction(SMLoc IDLoc,
       OS << "'" << Base << MatchChars[i] << "'";
     }
     OS << ")";
-    Error(IDLoc, OS.str(), EmptyRanges, matchingInlineAsm);
+    Error(IDLoc, OS.str(), EmptyRanges, MatchingInlineAsm);
     return true;
   }
 
@@ -1689,28 +1689,28 @@ MatchInstruction(SMLoc IDLoc,
   if ((Match1 == Match_MnemonicFail) && (Match2 == Match_MnemonicFail) &&
       (Match3 == Match_MnemonicFail) && (Match4 == Match_MnemonicFail)) {
     if (!WasOriginallyInvalidOperand) {
-      ArrayRef<SMRange> Ranges = matchingInlineAsm ? EmptyRanges :
+      ArrayRef<SMRange> Ranges = MatchingInlineAsm ? EmptyRanges :
         Op->getLocRange();
       return Error(IDLoc, "invalid instruction mnemonic '" + Base + "'",
-                   Ranges, matchingInlineAsm);
+                   Ranges, MatchingInlineAsm);
     }
 
     // Recover location info for the operand if we know which was the problem.
     if (OrigErrorInfo != ~0U) {
       if (OrigErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction",
-                     EmptyRanges, matchingInlineAsm);
+                     EmptyRanges, MatchingInlineAsm);
 
       X86Operand *Operand = (X86Operand*)Operands[OrigErrorInfo];
       if (Operand->getStartLoc().isValid()) {
         SMRange OperandRange = Operand->getLocRange();
         return Error(Operand->getStartLoc(), "invalid operand for instruction",
-                     OperandRange, matchingInlineAsm);
+                     OperandRange, MatchingInlineAsm);
       }
     }
 
     return Error(IDLoc, "invalid operand for instruction", EmptyRanges,
-                 matchingInlineAsm);
+                 MatchingInlineAsm);
   }
 
   // If one instruction matched with a missing feature, report this as a
@@ -1718,7 +1718,7 @@ MatchInstruction(SMLoc IDLoc,
   if ((Match1 == Match_MissingFeature) + (Match2 == Match_MissingFeature) +
       (Match3 == Match_MissingFeature) + (Match4 == Match_MissingFeature) == 1){
     Error(IDLoc, "instruction requires a CPU feature not currently enabled",
-          EmptyRanges, matchingInlineAsm);
+          EmptyRanges, MatchingInlineAsm);
     return true;
   }
 
@@ -1727,13 +1727,13 @@ MatchInstruction(SMLoc IDLoc,
   if ((Match1 == Match_InvalidOperand) + (Match2 == Match_InvalidOperand) +
       (Match3 == Match_InvalidOperand) + (Match4 == Match_InvalidOperand) == 1){
     Error(IDLoc, "invalid operand for instruction", EmptyRanges,
-          matchingInlineAsm);
+          MatchingInlineAsm);
     return true;
   }
 
   // If all of these were an outright failure, report it in a useless way.
   Error(IDLoc, "unknown use of instruction mnemonic without a size suffix",
-        EmptyRanges, matchingInlineAsm);
+        EmptyRanges, MatchingInlineAsm);
   return true;
 }
 
