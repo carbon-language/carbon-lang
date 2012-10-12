@@ -1241,6 +1241,9 @@ class JoinVals {
     // Value in the other live range that overlaps this def, if any.
     VNInfo *OtherVNI;
 
+    // Is this value an IMPLICIT_DEF?
+    bool IsImplicitDef;
+
     // True when the live range of this value will be pruned because of an
     // overlapping CR_Replace value in the other live range.
     bool Pruned;
@@ -1249,7 +1252,8 @@ class JoinVals {
     bool PrunedComputed;
 
     Val() : Resolution(CR_Keep), WriteLanes(0), ValidLanes(0),
-            RedefVNI(0), OtherVNI(0), Pruned(false), PrunedComputed(false) {}
+            RedefVNI(0), OtherVNI(0), IsImplicitDef(false), Pruned(false),
+            PrunedComputed(false) {}
 
     bool isAnalyzed() const { return WriteLanes != 0; }
   };
@@ -1385,8 +1389,10 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
     }
 
     // An IMPLICIT_DEF writes undef values.
-    if (DefMI->isImplicitDef())
+    if (DefMI->isImplicitDef()) {
+      V.IsImplicitDef = true;
       V.ValidLanes &= ~V.WriteLanes;
+    }
   }
 
   // Find the value in Other that overlaps VNI->def, if any.
@@ -1724,22 +1730,29 @@ void JoinVals::pruneValues(JoinVals &Other,
     switch (Vals[i].Resolution) {
     case CR_Keep:
       break;
-    case CR_Replace:
+    case CR_Replace: {
       // This value takes precedence over the value in Other.LI.
       LIS->pruneValue(&Other.LI, Def, &EndPoints);
-      // Remove <def,read-undef> flags. This def is now a partial redef.
-      if (!Def.isBlock()) {
+      // Check if we're replacing an IMPLICIT_DEF value. The IMPLICIT_DEF
+      // instructions are only inserted to provide a live-out value for PHI
+      // predecessors, so the instruction should simply go away once its value
+      // has been replaced.
+      Val &OtherV = Other.Vals[Vals[i].OtherVNI->id];
+      bool EraseImpDef = OtherV.IsImplicitDef && OtherV.Resolution == CR_Keep;
+      if (!EraseImpDef && !Def.isBlock()) {
+        // Remove <def,read-undef> flags. This def is now a partial redef.
         for (MIOperands MO(Indexes->getInstructionFromIndex(Def));
              MO.isValid(); ++MO)
           if (MO->isReg() && MO->isDef() && MO->getReg() == LI.reg)
             MO->setIsUndef(false);
-	// This value will reach instructions below, but we need to make sure
-	// the live range also reaches the instruction at Def.
-	EndPoints.push_back(Def);
+        // This value will reach instructions below, but we need to make sure
+        // the live range also reaches the instruction at Def.
+        EndPoints.push_back(Def);
       }
       DEBUG(dbgs() << "\t\tpruned " << PrintReg(Other.LI.reg) << " at " << Def
                    << ": " << Other.LI << '\n');
       break;
+    }
     case CR_Erase:
     case CR_Merge:
       if (isPrunedValue(i, Other)) {
@@ -1762,21 +1775,41 @@ void JoinVals::pruneValues(JoinVals &Other,
 void JoinVals::eraseInstrs(SmallPtrSet<MachineInstr*, 8> &ErasedInstrs,
                            SmallVectorImpl<unsigned> &ShrinkRegs) {
   for (unsigned i = 0, e = LI.getNumValNums(); i != e; ++i) {
-    if (Vals[i].Resolution != CR_Erase)
-      continue;
+    // Get the def location before markUnused() below invalidates it.
     SlotIndex Def = LI.getValNumInfo(i)->def;
-    MachineInstr *MI = Indexes->getInstructionFromIndex(Def);
-    assert(MI && "No instruction to erase");
-    if (MI->isCopy()) {
-      unsigned Reg = MI->getOperand(1).getReg();
-      if (TargetRegisterInfo::isVirtualRegister(Reg) &&
-          Reg != CP.getSrcReg() && Reg != CP.getDstReg())
-        ShrinkRegs.push_back(Reg);
+    switch (Vals[i].Resolution) {
+    case CR_Keep:
+      // If an IMPLICIT_DEF value is pruned, it doesn't serve a purpose any
+      // longer. The IMPLICIT_DEF instructions are only inserted by
+      // PHIElimination to guarantee that all PHI predecessors have a value.
+      if (!Vals[i].IsImplicitDef || !Vals[i].Pruned)
+        break;
+      // Remove value number i from LI. Note that this VNInfo is still present
+      // in NewVNInfo, so it will appear as an unused value number in the final
+      // joined interval.
+      LI.getValNumInfo(i)->markUnused();
+      LI.removeValNo(LI.getValNumInfo(i));
+      DEBUG(dbgs() << "\t\tremoved " << i << '@' << Def << ": " << LI << '\n');
+      // FALL THROUGH.
+
+    case CR_Erase: {
+      MachineInstr *MI = Indexes->getInstructionFromIndex(Def);
+      assert(MI && "No instruction to erase");
+      if (MI->isCopy()) {
+        unsigned Reg = MI->getOperand(1).getReg();
+        if (TargetRegisterInfo::isVirtualRegister(Reg) &&
+            Reg != CP.getSrcReg() && Reg != CP.getDstReg())
+          ShrinkRegs.push_back(Reg);
+      }
+      ErasedInstrs.insert(MI);
+      DEBUG(dbgs() << "\t\terased:\t" << Def << '\t' << *MI);
+      LIS->RemoveMachineInstrFromMaps(MI);
+      MI->eraseFromParent();
+      break;
     }
-    ErasedInstrs.insert(MI);
-    DEBUG(dbgs() << "\t\terased:\t" << Def << '\t' << *MI);
-    LIS->RemoveMachineInstrFromMaps(MI);
-    MI->eraseFromParent();
+    default:
+      break;
+    }
   }
 }
 
