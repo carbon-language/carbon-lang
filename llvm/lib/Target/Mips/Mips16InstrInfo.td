@@ -118,6 +118,14 @@ class FRR16_ins<bits<5> f, string asmstr, InstrItinClass itin> :
   FRR16<f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry),
         !strconcat(asmstr, "\t$rx, $ry"), [], itin> {
 }
+
+//
+// maybe refactor but need a $zero as a dummy first parameter
+//
+class FRR16_div_ins<bits<5> f, string asmstr, InstrItinClass itin> :
+  FRR16<f, (outs ), (ins CPU16Regs:$rx, CPU16Regs:$ry),
+        !strconcat(asmstr, "\t$$zero, $rx, $ry"), [], itin> ;
+
 class FRR16_M_ins<bits<5> f, string asmstr,
                   InstrItinClass itin> :
   FRR16<f, (outs CPU16Regs:$rx), (ins),
@@ -196,6 +204,24 @@ def AdduRxRyRz16: FRRR16_ins<01, "addu", IIAlu>, ArithLogic16Defs<1>;
 // To do a bitwise logical AND.
 
 def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIAlu>, ArithLogic16Defs<1>;
+//
+// Format: DIV rx, ry MIPS16e
+// Purpose: Divide Word
+// To divide 32-bit signed integers.
+//
+def DivRxRy16: FRR16_div_ins<0b11010, "div", IIAlu> {
+  let Defs = [HI, LO];
+}
+
+//
+// Format: DIVU rx, ry MIPS16e
+// Purpose: Divide Unsigned Word
+// To divide 32-bit unsigned integers.
+//
+def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
+  let Defs = [HI, LO];
+}
+
 
 //
 // Format: JR ra MIPS16e
@@ -550,6 +576,21 @@ def RetRA16 : MipsPseudo16<(outs), (ins), "", [(MipsRet)]>;
 
 // Small immediates
 def: Mips16Pat<(i32 immZExt16:$in), (LiRxImmX16 immZExt16:$in)>;
+
+//
+// MipsDivRem
+//
+def: Mips16Pat
+  <(MipsDivRem CPU16Regs:$rx, CPU16Regs:$ry),
+   (DivRxRy16 CPU16Regs:$rx, CPU16Regs:$ry)>;
+
+//
+// MipsDivRemU
+//
+def: Mips16Pat
+  <(MipsDivRemU CPU16Regs:$rx, CPU16Regs:$ry),
+   (DivuRxRy16 CPU16Regs:$rx, CPU16Regs:$ry)>;
+
 
 def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
                (AddiuRxRxImmX16 CPU16Regs:$hi, tglobaladdr:$lo)>;

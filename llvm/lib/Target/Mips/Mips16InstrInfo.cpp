@@ -58,12 +58,22 @@ void Mips16InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I, DebugLoc DL,
                                   unsigned DestReg, unsigned SrcReg,
                                   bool KillSrc) const {
-  unsigned Opc = 0, ZeroReg = 0;
+  unsigned Opc = 0;
 
-  if (Mips::CPURegsRegClass.contains(DestReg)) { // Copy to CPU Reg.
-    if (Mips::CPURegsRegClass.contains(SrcReg))
-      Opc = Mips::Move32R16;
-  }
+  if (Mips::CPU16RegsRegClass.contains(DestReg) &&
+      Mips::CPURegsRegClass.contains(SrcReg))
+    Opc = Mips::MoveR3216;
+  else if (Mips::CPURegsRegClass.contains(DestReg) &&
+           Mips::CPU16RegsRegClass.contains(SrcReg))
+    Opc = Mips::Move32R16;
+  else if ((SrcReg == Mips::HI) &&
+           (Mips::CPU16RegsRegClass.contains(DestReg)))
+    Opc = Mips::Mfhi16, SrcReg = 0;
+
+  else if ((SrcReg == Mips::LO) &&
+           (Mips::CPU16RegsRegClass.contains(DestReg)))
+    Opc = Mips::Mflo16, SrcReg = 0;
+
 
   assert(Opc && "Cannot copy registers");
 
@@ -71,9 +81,6 @@ void Mips16InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (DestReg)
     MIB.addReg(DestReg, RegState::Define);
-
-  if (ZeroReg)
-    MIB.addReg(ZeroReg);
 
   if (SrcReg)
     MIB.addReg(SrcReg, getKillRegState(KillSrc));
