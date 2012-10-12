@@ -1739,6 +1739,8 @@ DeclHasAttr(const Decl *D, const Attr *A) {
     case attr::AcquiredBefore:
     case attr::AcquiredAfter:
       return false;
+    default:
+      ;
   }
 
   const OwnershipAttr *OA = dyn_cast<OwnershipAttr>(A);
