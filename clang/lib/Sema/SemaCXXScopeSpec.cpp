@@ -520,7 +520,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       if (LookupCtx)
         Diag(Found.getNameLoc(), diag::err_no_member_suggest)
           << Name << LookupCtx << CorrectedQuotedStr << SS.getRange()
-          << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
+          << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                          CorrectedStr);
       else
         Diag(Found.getNameLoc(), diag::err_undeclared_var_use_suggest)
           << Name << CorrectedQuotedStr

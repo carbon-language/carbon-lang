@@ -5,7 +5,8 @@
 // RUN: grep test_string %t
 
 namespace std {
-  template<typename T> class basic_string { // expected-note 2{{'basic_string' declared here}}
+  template<typename T> class basic_string { // expected-note 2{{'basic_string' declared here}} \
+                                            // expected-note {{'otherstd::basic_string' declared here}}
   public:
     int find(const char *substr); // expected-note{{'find' declared here}}
     static const int npos = -1; // expected-note{{'npos' declared here}}
@@ -76,13 +77,50 @@ int foo() {
 }
 
 namespace nonstd {
-  typedef std::basic_string<char> yarn; // expected-note{{'nonstd::yarn' declared here}}
+  typedef std::basic_string<char> yarn; // expected-note 2 {{'nonstd::yarn' declared here}}
+  int narf; // expected-note{{'nonstd::narf' declared here}}
 }
 
 yarn str4; // expected-error{{unknown type name 'yarn'; did you mean 'nonstd::yarn'?}}
+wibble::yarn str5; // expected-error{{no type named 'yarn' in namespace 'otherstd'; did you mean 'nonstd::yarn'?}}
+
+int poit() {
+  nonstd::basic_string<char> str; // expected-error{{no template named 'basic_string' in namespace 'nonstd'; did you mean 'otherstd::basic_string'?}}
+  return wibble::narf; // expected-error{{no member named 'narf' in namespace 'otherstd'; did you mean 'nonstd::narf'?}}
+}
 
 namespace check_bool {
   void f() {
     Bool b; // expected-error{{use of undeclared identifier 'Bool'; did you mean 'bool'?}}
   }
+}
+
+namespace outr {
+}
+namespace outer {
+  namespace inner { // expected-note{{'outer::inner' declared here}} \
+                    // expected-note{{namespace 'outer::inner' defined here}} \
+                    // expected-note{{'inner' declared here}}
+    int i;
+  }
+}
+
+using namespace outr::inner; // expected-error{{no namespace named 'inner' in namespace 'outr'; did you mean 'outer::inner'?}}
+
+void func() {
+  outr::inner::i = 3; // expected-error{{no member named 'inner' in namespace 'outr'; did you mean 'outer::inner'?}}
+  outer::innr::i = 4; // expected-error{{no member named 'innr' in namespace 'outer'; did you mean 'inner'?}}
+}
+
+struct base {
+};
+struct derived : base {
+  int i;
+};
+
+void func2() {
+  derived d;
+  // FIXME: we should offer a fix here. We do if the 'i' is misspelled, but we don't do name qualification changes
+  //        to replace base::i with derived::i as we would for other qualified name misspellings.
+  // d.base::i = 3;
 }

@@ -606,7 +606,8 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     R.addDecl(ND);
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
       << Name << DC << CorrectedQuotedStr << SS.getRange()
-      << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
+      << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                      CorrectedStr);
     SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
       << ND->getDeclName();
   }

@@ -435,7 +435,8 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
       else if (DeclContext *DC = computeDeclContext(*SS, false))
         Diag(IILoc, diag::err_unknown_nested_typename_suggest)
           << II << DC << CorrectedQuotedStr << SS->getRange()
-          << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
+          << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                          CorrectedStr);
       else
         llvm_unreachable("could not have corrected a typo here");
 
@@ -684,11 +685,12 @@ Corrected:
           Diag(NameLoc, UnqualifiedDiag)
             << Name << CorrectedQuotedStr
             << FixItHint::CreateReplacement(NameLoc, CorrectedStr);
-        else
+        else // FIXME: is this even reachable? Test it.
           Diag(NameLoc, QualifiedDiag)
             << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
             << SS.getRange()
-            << FixItHint::CreateReplacement(NameLoc, CorrectedStr);
+            << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                            CorrectedStr);
 
         // Update the name, so that the caller has the new name.
         Name = Corrected.getCorrectionAsIdentifierInfo();
@@ -4894,6 +4896,10 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   }
 
   if (Correction) {
+    // FIXME: use Correction.getCorrectionRange() instead of computing the range
+    // here. This requires passing in the CXXScopeSpec to CorrectTypo which in
+    // turn causes the correction to fully qualify the name. If we fix
+    // CorrectTypo to minimally qualify then this change should be good.
     SourceRange FixItLoc(NewFD->getLocation());
     CXXScopeSpec &SS = ExtraArgs.D.getCXXScopeSpec();
     if (Correction.getCorrectionSpecifier() && SS.isValid())

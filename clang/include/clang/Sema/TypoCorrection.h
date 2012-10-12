@@ -170,6 +170,17 @@ public:
     return CorrectionDecls.size() > 1;
   }
 
+  void setCorrectionRange(CXXScopeSpec* SS,
+                          const DeclarationNameInfo &TypoName) {
+    CorrectionRange.setBegin(CorrectionNameSpec && SS ? SS->getBeginLoc()
+                                                      : TypoName.getLoc());
+    CorrectionRange.setEnd(TypoName.getLoc());
+  }
+
+  SourceRange getCorrectionRange() const {
+    return CorrectionRange;
+  }
+
   typedef llvm::SmallVector<NamedDecl*, 1>::iterator decl_iterator;
   decl_iterator begin() {
     return isKeyword() ? CorrectionDecls.end() : CorrectionDecls.begin();
@@ -193,6 +204,7 @@ private:
   unsigned CharDistance;
   unsigned QualifierDistance;
   unsigned CallbackDistance;
+  SourceRange CorrectionRange;
 };
 
 /// @brief Base class for callback objects used by Sema::CorrectTypo to check
