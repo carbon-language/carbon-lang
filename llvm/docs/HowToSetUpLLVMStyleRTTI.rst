@@ -77,8 +77,8 @@ steps:
        public:
       +  /// Discriminator for LLVM-style RTTI (dyn_cast<> et al.)
       +  enum ShapeKind {
-      +    SquareKind,
-      +    CircleKind
+      +    SK_Square,
+      +    SK_Circle
       +  };
       +private:
       +  const ShapeKind Kind;
@@ -121,8 +121,8 @@ steps:
        public:
          /// Discriminator for LLVM-style RTTI (dyn_cast<> et al.)
          enum ShapeKind {
-           SquareKind,
-           CircleKind
+           SK_Square,
+           SK_Circle
          };
        private:
          const ShapeKind Kind;
@@ -138,7 +138,7 @@ steps:
          double SideLength;
        public:
       -  Square(double S) : SideLength(S) {}
-      +  Square(double S) : Shape(SquareKind), SideLength(S) {}
+      +  Square(double S) : Shape(SK_Square), SideLength(S) {}
          double computeArea() /* override */;
        };
 
@@ -146,7 +146,7 @@ steps:
          double Radius;
        public:
       -  Circle(double R) : Radius(R) {}
-      +  Circle(double R) : Shape(CircleKind), Radius(R) {}
+      +  Circle(double R) : Shape(SK_Circle), Radius(R) {}
          double computeArea() /* override */;
        };
 
@@ -163,8 +163,8 @@ steps:
        public:
          /// Discriminator for LLVM-style RTTI (dyn_cast<> et al.)
          enum ShapeKind {
-           SquareKind,
-           CircleKind
+           SK_Square,
+           SK_Circle
          };
        private:
          const ShapeKind Kind;
@@ -178,22 +178,22 @@ steps:
        class Square : public Shape {
          double SideLength;
        public:
-         Square(double S) : Shape(SquareKind), SideLength(S) {}
+         Square(double S) : Shape(SK_Square), SideLength(S) {}
          double computeArea() /* override */;
       +
       +  static bool classof(const Shape *S) {
-      +    return S->getKind() == SquareKind;
+      +    return S->getKind() == SK_Square;
       +  }
        };
 
        class Circle : public Shape {
          double Radius;
        public:
-         Circle(double R) : Shape(CircleKind), Radius(R) {}
+         Circle(double R) : Shape(SK_Circle), Radius(R) {}
          double computeArea() /* override */;
       +
       +  static bool classof(const Shape *S) {
-      +    return S->getKind() == CircleKind;
+      +    return S->getKind() == SK_Circle;
       +  }
        };
 
@@ -264,10 +264,10 @@ from ``Square``, and so ``ShapeKind`` becomes:
 .. code-block:: c++
 
     enum ShapeKind {
-      SquareKind,
-   +  SpecialSquareKind,
-   +  OtherSpecialSquareKind,
-      CircleKind
+      SK_Square,
+   +  SK_SpecialSquare,
+   +  SK_OtherSpecialSquare,
+      SK_Circle
     }
 
 Then in ``Square``, we would need to modify the ``classof`` like so:
@@ -275,11 +275,11 @@ Then in ``Square``, we would need to modify the ``classof`` like so:
 .. code-block:: c++
 
    -  static bool classof(const Shape *S) {
-   -    return S->getKind() == SquareKind;
+   -    return S->getKind() == SK_Square;
    -  }
    +  static bool classof(const Shape *S) {
-   +    return S->getKind() >= SquareKind &&
-   +           S->getKind() <= OtherSpecialSquareKind;
+   +    return S->getKind() >= SK_Square &&
+   +           S->getKind() <= SK_OtherSpecialSquare;
    +  }
 
 The reason that we need to test a range like this instead of just equality
