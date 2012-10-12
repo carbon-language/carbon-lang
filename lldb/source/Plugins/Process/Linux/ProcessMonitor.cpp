@@ -1193,6 +1193,8 @@ ProcessMonitor::Attach(AttachArgs *args)
         goto FINISH;
     }
 
+    monitor->m_pid = pid;
+
     // Update the process thread list with the attached thread.
     inferior.reset(new POSIXThread(processSP, pid));
     if (log)

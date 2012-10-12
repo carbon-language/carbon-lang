@@ -2750,10 +2750,19 @@ Process::Attach (ProcessAttachInfo &attach_info)
                 error = WillAttachToProcessWithName(process_name, wait_for_launch);
                 if (error.Success())
                 {
-                    m_should_detach = true;
+                    if (m_run_lock.WriteTryLock())
+                    {
+                        m_should_detach = true;
+                        SetPublicState (eStateAttaching);
+                        // Now attach using these arguments.
+                        error = DoAttachToProcessWithName (process_name, wait_for_launch, attach_info);
+                    }
+                    else
+                    {
+                        // This shouldn't happen
+                        error.SetErrorString("failed to acquire process run lock");
+                    }
 
-                    SetPublicState (eStateAttaching);
-                    error = DoAttachToProcessWithName (process_name, wait_for_launch, attach_info);
                     if (error.Fail())
                     {
                         if (GetID() != LLDB_INVALID_PROCESS_ID)
@@ -2817,10 +2826,20 @@ Process::Attach (ProcessAttachInfo &attach_info)
         error = WillAttachToProcessWithID(attach_pid);
         if (error.Success())
         {
-            m_should_detach = true;
-            SetPublicState (eStateAttaching);
 
-            error = DoAttachToProcessWithID (attach_pid, attach_info);
+            if (m_run_lock.WriteTryLock())
+            {
+                // Now attach using these arguments.
+                m_should_detach = true;
+                SetPublicState (eStateAttaching);
+                error = DoAttachToProcessWithID (attach_pid, attach_info);
+            }
+            else
+            {
+                // This shouldn't happen
+                error.SetErrorString("failed to acquire process run lock");
+            }
+
             if (error.Success())
             {
                 
