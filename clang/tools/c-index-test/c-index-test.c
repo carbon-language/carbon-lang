@@ -2384,7 +2384,7 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
     printf(" | isImplicit: %d\n", info->isImplicit);
     clang_disposeString(name);
   } else {
-    // PCH file, the rest are not relevant.
+    /* PCH file, the rest are not relevant. */
     printf("\n");
   }
 
