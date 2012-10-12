@@ -382,15 +382,9 @@ Host::GetVendorString()
     static ConstString g_vendor;
     if (!g_vendor)
     {
-#if defined (__APPLE__)
         const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
         const llvm::StringRef &str_ref = host_arch.GetTriple().getVendorName();
         g_vendor.SetCStringWithLength(str_ref.data(), str_ref.size());
-#elif defined (__linux__)
-        g_vendor.SetCString("gnu");
-#elif defined (__FreeBSD__)
-        g_vendor.SetCString("freebsd");
-#endif
     }
     return g_vendor;
 }
@@ -401,15 +395,9 @@ Host::GetOSString()
     static ConstString g_os_string;
     if (!g_os_string)
     {
-#if defined (__APPLE__)
         const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
         const llvm::StringRef &str_ref = host_arch.GetTriple().getOSName();
         g_os_string.SetCStringWithLength(str_ref.data(), str_ref.size());
-#elif defined (__linux__)
-        g_os_string.SetCString("linux");
-#elif defined (__FreeBSD__)
-        g_os_string.SetCString("freebsd");
-#endif
     }
     return g_os_string;
 }
