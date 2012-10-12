@@ -2203,6 +2203,7 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
 
   // If allocation happened in a function different from the leak node context,
   // do not report the binding.
+  assert(N && "Could not find allocation node");
   if (N->getLocationContext() != LeakContext) {
     FirstBinding = 0;
   }
@@ -2258,6 +2259,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
 
   // Get the retain count.
   const RefVal* RV = getRefBinding(EndN->getState(), Sym);
+  assert(RV);
 
   if (RV->getKind() == RefVal::ErrorLeakReturned) {
     // FIXME: Per comments in rdar://6320065, "create" only applies to CF
@@ -2855,6 +2857,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
 
   // Consult the summary for the return value.
   RetEffect RE = Summ.getRetEffect();
+  assert(CallOrMsg.getOriginExpr());
 
   if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
     if (ReceiverIsTracked)
