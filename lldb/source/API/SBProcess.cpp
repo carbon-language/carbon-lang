@@ -398,6 +398,12 @@ SBProcess::SetSelectedThread (const SBThread &thread)
 bool
 SBProcess::SetSelectedThreadByID (uint32_t tid)
 {
+    return SetSelectedThreadByID ((lldb::tid_t)tid);
+}
+
+bool
+SBProcess::SetSelectedThreadByID (lldb::tid_t tid)
+{
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool ret_val = false;
@@ -409,7 +415,7 @@ SBProcess::SetSelectedThreadByID (uint32_t tid)
     }
 
     if (log)
-        log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%4.4x) => %s", 
+        log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%4.4llx) => %s", 
                      process_sp.get(), tid, (ret_val ? "true" : "false"));
 
     return ret_val;

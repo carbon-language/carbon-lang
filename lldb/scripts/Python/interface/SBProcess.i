@@ -158,7 +158,7 @@ public:
     SetSelectedThread (const lldb::SBThread &thread);
 
     bool
-    SetSelectedThreadByID (uint32_t tid);
+    SetSelectedThreadByID (lldb::tid_t tid);
 
     bool
     SetSelectedThreadByIndexID (uint32_t index_id);
