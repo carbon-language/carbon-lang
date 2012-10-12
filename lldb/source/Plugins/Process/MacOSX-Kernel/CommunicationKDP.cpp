@@ -671,7 +671,7 @@ CommunicationKDP::SendRequestWriteMemory (lldb::addr_t addr,
     uint32_t command_addr_byte_size = use_64 ? 8 : 4;
     const CommandType command = use_64 ? KDP_WRITEMEM64 : KDP_WRITEMEM;
     // Size is header + address size + uint32_t length
-    const uint32_t command_length = 8 + command_addr_byte_size + 4;
+    const uint32_t command_length = 8 + command_addr_byte_size + 4 + src_len;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
     request_packet.PutMaxHex64 (addr, command_addr_byte_size);
