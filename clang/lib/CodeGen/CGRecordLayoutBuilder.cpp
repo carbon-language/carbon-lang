@@ -206,7 +206,7 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   Alignment = Types.getContext().getASTRecordLayout(D).getAlignment();
   Packed = D->hasAttr<PackedAttr>();
   
-  IsMsStruct = D->hasAttr<MsStructAttr>();
+  IsMsStruct = D->isMsStruct(Types.getContext());
 
   if (D->isUnion()) {
     LayoutUnion(D);
@@ -1061,7 +1061,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
   const ASTRecordLayout &AST_RL = getContext().getASTRecordLayout(D);
   RecordDecl::field_iterator it = D->field_begin();
   const FieldDecl *LastFD = 0;
-  bool IsMsStruct = D->hasAttr<MsStructAttr>();
+  bool IsMsStruct = D->isMsStruct(getContext());
   for (unsigned i = 0, e = AST_RL.getFieldCount(); i != e; ++i, ++it) {
     const FieldDecl *FD = *it;
 

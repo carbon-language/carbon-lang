@@ -974,8 +974,8 @@ static void handlePackedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleMsStructAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (TagDecl *TD = dyn_cast<TagDecl>(D))
-    TD->addAttr(::new (S.Context) MsStructAttr(Attr.getRange(), S.Context));
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(D))
+    RD->addAttr(::new (S.Context) MsStructAttr(Attr.getRange(), S.Context));
   else
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }

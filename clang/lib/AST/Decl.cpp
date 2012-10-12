@@ -2517,7 +2517,7 @@ unsigned FieldDecl::getFieldIndex() const {
   unsigned Index = 0;
   const RecordDecl *RD = getParent();
   const FieldDecl *LastFD = 0;
-  bool IsMsStruct = RD->hasAttr<MsStructAttr>();
+  bool IsMsStruct = RD->isMsStruct(getASTContext());
 
   for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++Index) {
@@ -2763,6 +2763,13 @@ RecordDecl::field_iterator RecordDecl::field_begin() const {
 void RecordDecl::completeDefinition() {
   assert(!isCompleteDefinition() && "Cannot redefine record!");
   TagDecl::completeDefinition();
+}
+
+/// isMsStruct - Get whether or not this record uses ms_struct layout.
+/// This which can be turned on with an attribute, pragma, or the
+/// -mms-bitfields command-line option.
+bool RecordDecl::isMsStruct(const ASTContext &C) const {
+  return hasAttr<MsStructAttr>() || C.getLangOpts().MSBitfields == 1;
 }
 
 static bool isFieldOrIndirectField(Decl::Kind K) {

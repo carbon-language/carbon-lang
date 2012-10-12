@@ -379,7 +379,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   unsigned FieldNo = 0;
   unsigned ElementNo = 0;
   const FieldDecl *LastFD = 0;
-  bool IsMsStruct = RD->hasAttr<MsStructAttr>();
+  bool IsMsStruct = RD->isMsStruct(CGM.getContext());
   
   for (RecordDecl::field_iterator Field = RD->field_begin(),
        FieldEnd = RD->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
@@ -478,7 +478,7 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 
   unsigned FieldNo = 0;
   const FieldDecl *LastFD = 0;
-  bool IsMsStruct = RD->hasAttr<MsStructAttr>();
+  bool IsMsStruct = RD->isMsStruct(CGM.getContext());
   uint64_t OffsetBits = CGM.getContext().toBits(Offset);
 
   for (RecordDecl::field_iterator Field = RD->field_begin(),

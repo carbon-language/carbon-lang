@@ -824,7 +824,7 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
       }
     }
   } else {
-    bool IsMsStruct = record->hasAttr<MsStructAttr>();
+    bool IsMsStruct = record->isMsStruct(CGM.getContext());
     const FieldDecl *LastFD = 0;
     for (RecordDecl::field_iterator I = record->field_begin(),
            E = record->field_end();

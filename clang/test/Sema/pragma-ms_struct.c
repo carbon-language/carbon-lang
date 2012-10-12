@@ -31,6 +31,12 @@ struct S {
                    unsigned long bf_2 : 12;
 } __attribute__((ms_struct)) t2;
 
+enum
+{
+  A = 0,
+  B,
+  C
+} __attribute__((ms_struct)) e1; // expected-warning {{'ms_struct' attribute ignored}}
 
 // rdar://10513599
 #pragma ms_struct on

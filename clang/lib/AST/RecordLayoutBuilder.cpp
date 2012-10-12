@@ -1574,12 +1574,12 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 }
 
 void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
-  if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
     IsUnion = RD->isUnion();
+    IsMsStruct = RD->isMsStruct(Context);
+  }
 
-  Packed = D->hasAttr<PackedAttr>();
-  
-  IsMsStruct = D->hasAttr<MsStructAttr>();
+  Packed = D->hasAttr<PackedAttr>();  
 
   // Honor the default struct packing maximum alignment flag.
   if (unsigned DefaultMaxFieldAlignment = Context.getLangOpts().PackStruct) {
@@ -2085,7 +2085,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       ZeroLengthBitfield = 0;
     }
 
-    if (Context.getLangOpts().MSBitfields || IsMsStruct) {
+    if (IsMsStruct) {
       // If MS bitfield layout is required, figure out what type is being
       // laid out and align the field to the width of that type.
       
