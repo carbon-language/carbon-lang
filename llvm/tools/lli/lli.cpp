@@ -171,6 +171,23 @@ namespace {
     cl::init(false));
 
   cl::opt<bool>
+  GenerateSoftFloatCalls("soft-float",
+    cl::desc("Generate software floating point library calls"),
+    cl::init(false));
+
+  cl::opt<llvm::FloatABI::ABIType>
+  FloatABIForCalls("float-abi",
+                   cl::desc("Choose float ABI type"),
+                   cl::init(FloatABI::Default),
+                   cl::values(
+                     clEnumValN(FloatABI::Default, "default",
+                                "Target default float ABI type"),
+                     clEnumValN(FloatABI::Soft, "soft",
+                                "Soft float ABI (implied by -soft-float)"),
+                     clEnumValN(FloatABI::Hard, "hard",
+                                "Hard float ABI (uses FP registers)"),
+                     clEnumValEnd));
+  cl::opt<bool>
 // In debug builds, make this default to true.
 #ifdef NDEBUG
 #define EMIT_DEBUG false
@@ -555,14 +572,21 @@ int main(int argc, char **argv, char * const *envp) {
   }
   builder.setOptLevel(OLvl);
 
+  TargetOptions Options;
+  Options.UseSoftFloat = GenerateSoftFloatCalls;
+  if (FloatABIForCalls != FloatABI::Default)
+    Options.FloatABIType = FloatABIForCalls;
+  if (GenerateSoftFloatCalls)
+    FloatABIForCalls = FloatABI::Soft;
+
   // Remote target execution doesn't handle EH or debug registration.
   if (!RemoteMCJIT) {
-    TargetOptions Options;
     Options.JITExceptionHandling = EnableJITExceptionHandling;
     Options.JITEmitDebugInfo = EmitJitDebugInfo;
     Options.JITEmitDebugInfoToDisk = EmitJitDebugInfoToDisk;
-    builder.setTargetOptions(Options);
   }
+
+  builder.setTargetOptions(Options);
 
   EE = builder.create();
   if (!EE) {
