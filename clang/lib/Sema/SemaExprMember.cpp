@@ -1022,7 +1022,7 @@ static bool ShouldTryAgainWithRedefinitionType(Sema &S, ExprResult &base) {
   // Do the substitution as long as the redefinition type isn't just a
   // possibly-qualified pointer to builtin-id or builtin-Class again.
   opty = redef->getAs<ObjCObjectPointerType>();
-  if (opty && !opty->getObjectType()->getInterface() != 0)
+  if (opty && !opty->getObjectType()->getInterface())
     return false;
 
   base = S.ImpCastExprToType(base.take(), redef, CK_BitCast);
