@@ -571,7 +571,11 @@ endif
 #--------------------------------------------------------------------
 
 ifeq ($(HOST_OS),Darwin)
+ ifdef MACOSX_DEPLOYMENT_TARGET
+  DARWIN_VERSION := $(MACOSX_DEPLOYMENT_TARGET)
+ else
   DARWIN_VERSION := `sw_vers -productVersion`
+ endif
   # Strip a number like 10.4.7 to 10.4
   DARWIN_VERSION := $(shell echo $(DARWIN_VERSION)| sed -E 's/(10.[0-9]).*/\1/')
   # Get "4" out of 10.4 for later pieces in the makefile.
