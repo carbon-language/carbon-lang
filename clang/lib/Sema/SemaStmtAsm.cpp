@@ -331,25 +331,6 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   return Asm;
 }
 
-// Determine if this is a simple MSAsm instruction.
-static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
-                          const TargetInfo &TI) {
-  for (unsigned i = 1, e = Pieces.size(); i != e; ++i) {
-    if (!TI.isValidGCCRegisterName(Pieces[i]))
-      return false;
-  }
-  return true;
-}
-
-// Determine if this is a simple MSAsm block.
-static bool isSimpleMSAsm(std::vector<std::vector<StringRef> > Pieces,
-                          const TargetInfo &TI) {
-  for (unsigned i = 0, e = Pieces.size(); i != e; ++i)
-    if (!isSimpleMSAsm(Pieces[i], TI))
-      return false;
-  return true;
-}
-
 // Break the AsmString into pieces (i.e., mnemonic and operands).
 static void buildMSAsmPieces(StringRef Asm, std::vector<StringRef> &Pieces) {
   std::pair<StringRef,StringRef> Split = Asm.split(' ');
@@ -446,8 +427,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
 
   std::vector<std::vector<StringRef> > Pieces(AsmStrings.size());
   buildMSAsmPieces(AsmStrings, Pieces);
-
-  bool IsSimple = isSimpleMSAsm(Pieces, Context.getTargetInfo());
 
   // Get the target specific parser.
   std::string Error;
@@ -640,6 +619,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     }
   }
 
+  bool IsSimple = Inputs.size() != 0 || Outputs.size() != 0; 
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
                             /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
