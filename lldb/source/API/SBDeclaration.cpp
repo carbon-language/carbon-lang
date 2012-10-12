@@ -13,6 +13,8 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/Declaration.h"
 
+#include <limits.h>
+
 using namespace lldb;
 using namespace lldb_private;
 

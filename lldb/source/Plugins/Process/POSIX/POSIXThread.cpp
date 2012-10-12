@@ -33,7 +33,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-POSIXThread::POSIXThread(ProcessSP &process, lldb::tid_t tid)
+POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap(0)
 {

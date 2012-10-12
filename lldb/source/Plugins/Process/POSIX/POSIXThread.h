@@ -29,7 +29,7 @@ class POSIXThread
     : public lldb_private::Thread
 {
 public:
-    POSIXThread(lldb::ProcessSP &process, lldb::tid_t tid);
+    POSIXThread(lldb_private::Process &process, lldb::tid_t tid);
 
     virtual ~POSIXThread();
 

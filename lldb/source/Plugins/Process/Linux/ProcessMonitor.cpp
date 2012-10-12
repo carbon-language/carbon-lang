@@ -967,7 +967,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
 {
     ProcessMonitor *monitor = args->m_monitor;
     ProcessLinux &process = monitor->GetProcess();
-    lldb::ProcessSP processSP = process.shared_from_this();
     const char **argv = args->m_argv;
     const char **envp = args->m_envp;
     const char *stdin_path = args->m_stdin_path;
@@ -1106,7 +1105,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     // Update the process thread list with this new thread.
     // FIXME: should we be letting UpdateThreadList handle this?
     // FIXME: by using pids instead of tids, we can only support one thread.
-    inferior.reset(new POSIXThread(processSP, pid));
+    inferior.reset(new POSIXThread(process, pid));
     if (log)
         log->Printf ("ProcessMonitor::%s() adding pid = %i", __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
@@ -1168,7 +1167,6 @@ ProcessMonitor::Attach(AttachArgs *args)
 
     ProcessMonitor *monitor = args->m_monitor;
     ProcessLinux &process = monitor->GetProcess();
-    lldb::ProcessSP processSP = process.shared_from_this();
     lldb::ThreadSP inferior;
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
@@ -1196,7 +1194,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     monitor->m_pid = pid;
 
     // Update the process thread list with the attached thread.
-    inferior.reset(new POSIXThread(processSP, pid));
+    inferior.reset(new POSIXThread(process, pid));
     if (log)
         log->Printf ("ProcessMonitor::%s() adding tid = %i", __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);

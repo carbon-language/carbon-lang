@@ -106,8 +106,7 @@ ProcessLinux::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thre
     assert(m_monitor);
     ThreadSP thread_sp (old_thread_list.FindThreadByID (GetID(), false));
     if (!thread_sp) {
-        ProcessSP me = this->shared_from_this();
-        thread_sp.reset(new POSIXThread(me, GetID()));
+        thread_sp.reset(new POSIXThread(*this, GetID()));
     }
 
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
