@@ -64,7 +64,7 @@ public:
   UnaryOperator *makeDereference(const Expr *Arg, QualType Ty);
   
   /// Create an implicit cast for an integer conversion.
-  ImplicitCastExpr *makeIntegralCast(const Expr *Arg, QualType Ty);
+  Expr *makeIntegralCast(const Expr *Arg, QualType Ty);
   
   /// Create an implicit cast to a builtin boolean type.
   ImplicitCastExpr *makeIntegralCastToBoolean(const Expr *Arg);
@@ -131,7 +131,10 @@ ImplicitCastExpr *ASTMaker::makeLvalueToRvalue(const Expr *Arg, QualType Ty) {
                                   const_cast<Expr*>(Arg), 0, VK_RValue);
 }
 
-ImplicitCastExpr *ASTMaker::makeIntegralCast(const Expr *Arg, QualType Ty) {
+Expr *ASTMaker::makeIntegralCast(const Expr *Arg, QualType Ty) {
+  if (Arg->getType() == Ty)
+    return const_cast<Expr*>(Arg);
+  
   return ImplicitCastExpr::Create(C, Ty, CK_IntegralCast,
                                   const_cast<Expr*>(Arg), 0, VK_RValue);
 }
@@ -274,6 +277,11 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
   //   }
   //   else return NO;
   
+  QualType ResultTy = D->getResultType();
+  bool isBoolean = ResultTy->isBooleanType();
+  if (!isBoolean && !ResultTy->isIntegralType(C))
+    return 0;
+  
   const ParmVarDecl *OldValue = D->getParamDecl(0);
   QualType OldValueTy = OldValue->getType();
 
@@ -310,13 +318,18 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
         PointeeTy),
       M.makeLvalueToRvalue(M.makeDeclRefExpr(NewValue), NewValueTy),
       NewValueTy);
-  Stmts[1] =
-    M.makeReturn(M.makeIntegralCastToBoolean(M.makeObjCBool(true)));
+  
+  Expr *BoolVal = M.makeObjCBool(true);
+  Expr *RetVal = isBoolean ? M.makeIntegralCastToBoolean(BoolVal)
+                           : M.makeIntegralCast(BoolVal, ResultTy);
+  Stmts[1] = M.makeReturn(RetVal);
   CompoundStmt *Body = M.makeCompound(ArrayRef<Stmt*>(Stmts, 2));
   
   // Construct the else clause.
-  Stmt *Else =
-    M.makeReturn(M.makeIntegralCastToBoolean(M.makeObjCBool(false)));
+  BoolVal = M.makeObjCBool(false);
+  RetVal = isBoolean ? M.makeIntegralCastToBoolean(BoolVal)
+                     : M.makeIntegralCast(BoolVal, ResultTy);
+  Stmt *Else = M.makeReturn(RetVal);
   
   /// Construct the If.
   Stmt *If =
