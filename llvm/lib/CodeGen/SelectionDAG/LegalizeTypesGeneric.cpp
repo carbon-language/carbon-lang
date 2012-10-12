@@ -124,6 +124,10 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
         // there are only two nodes left, i.e. Lo and Hi.
         SDValue LHS = Vals[Slot];
         SDValue RHS = Vals[Slot + 1];
+
+        if (TLI.isBigEndian())
+          std::swap(LHS, RHS);
+
         Vals.push_back(DAG.getNode(ISD::BUILD_PAIR, dl,
                                    EVT::getIntegerVT(
                                      *DAG.getContext(),
