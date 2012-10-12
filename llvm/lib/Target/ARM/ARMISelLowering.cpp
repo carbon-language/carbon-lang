@@ -122,6 +122,7 @@ void ARMTargetLowering::addTypeForNEON(MVT VT, MVT PromotedLdStVT,
   setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Legal);
   setOperationAction(ISD::SELECT,            VT, Expand);
   setOperationAction(ISD::SELECT_CC,         VT, Expand);
+  setOperationAction(ISD::VSELECT,           VT, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
   if (VT.isInteger()) {
     setOperationAction(ISD::SHL, VT, Custom);
