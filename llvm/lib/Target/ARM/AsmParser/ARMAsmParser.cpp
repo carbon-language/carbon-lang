@@ -7478,12 +7478,9 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
   MCInst Inst;
-  unsigned Kind;
   unsigned ErrorInfo;
   unsigned MatchResult;
-  MatchInstMapAndConstraints MapAndConstraints;
-  MatchResult = MatchInstructionImpl(Operands, Kind, Inst,
-                                     MapAndConstraints, ErrorInfo,
+  MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                      /*matchingInlineAsm*/ false);
   switch (MatchResult) {
   default: break;

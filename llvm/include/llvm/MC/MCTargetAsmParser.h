@@ -50,12 +50,6 @@ public:
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
                              SMLoc &EndLoc) = 0;
 
-  /// MapAndConstraints - Map inline assembly operands to MCInst operands
-  /// and an associated constraint.
-  typedef std::pair< unsigned, std::string > MapAndConstraint;
-  typedef SmallVector<MapAndConstraint, 4> MatchInstMapAndConstraints;
-  typedef SmallVectorImpl<MapAndConstraint> MatchInstMapAndConstraintsImpl;
-
   /// ParseInstruction - Parse one assembly instruction.
   ///
   /// The parser is positioned following the instruction name. The target
@@ -97,9 +91,8 @@ public:
   virtual bool
   MatchInstruction(SMLoc IDLoc, 
                    SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                   MCStreamer &Out, unsigned &Kind, unsigned &Opcode,
-                   MatchInstMapAndConstraintsImpl &MapAndConstraints,
-                   unsigned &OrigErrorInfo, bool matchingInlineAsm = false) {
+                   MCStreamer &Out, unsigned &Opcode, unsigned &OrigErrorInfo,
+                   bool matchingInlineAsm = false) {
     OrigErrorInfo = ~0x0;
     return true;
   }
@@ -122,8 +115,7 @@ public:
   }
 
   virtual void convertToMapAndConstraints(unsigned Kind,
-                           const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                         MatchInstMapAndConstraintsImpl &MapAndConstraints) = 0;
+                       const SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
 };
 
 } // End llvm namespace

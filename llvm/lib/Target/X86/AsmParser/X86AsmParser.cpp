@@ -68,9 +68,8 @@ private:
                                MCStreamer &Out);
   bool MatchInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out, unsigned &Kind, unsigned &Opcode,
-                        MatchInstMapAndConstraintsImpl &MapAndConstraints,
-                       unsigned &OrigErrorInfo, bool matchingInlineAsm = false);
+                        MCStreamer &Out, unsigned &Opcode,
+                        unsigned &OrigErrorInfo, bool matchingInlineAsm = false);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
@@ -1523,21 +1522,17 @@ bool X86AsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
-  unsigned Kind;
   unsigned Opcode;
   unsigned ErrorInfo;
-  MatchInstMapAndConstraints MapAndConstraints;
-  bool Error = MatchInstruction(IDLoc, Operands, Out, Kind, Opcode,
-                                MapAndConstraints, ErrorInfo);
+  bool Error = MatchInstruction(IDLoc, Operands, Out, Opcode, ErrorInfo);
   return Error;
 }
 
 bool X86AsmParser::
 MatchInstruction(SMLoc IDLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                 MCStreamer &Out, unsigned &Kind, unsigned &Opcode,
-  SmallVectorImpl<std::pair< unsigned, std::string > > &MapAndConstraints,
-                 unsigned &OrigErrorInfo, bool matchingInlineAsm) {
+                 MCStreamer &Out, unsigned &Opcode, unsigned &OrigErrorInfo,
+                 bool matchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
@@ -1577,7 +1572,7 @@ MatchInstruction(SMLoc IDLoc,
   MCInst Inst;
 
   // First, try a direct match.
-  switch (MatchInstructionImpl(Operands, Kind, Inst, MapAndConstraints,
+  switch (MatchInstructionImpl(Operands, Inst,
                                OrigErrorInfo, matchingInlineAsm,
                                isParsingIntelSyntax())) {
   default: break;
@@ -1629,24 +1624,18 @@ MatchInstruction(SMLoc IDLoc,
   Tmp[Base.size()] = Suffixes[0];
   unsigned ErrorInfoIgnore;
   unsigned Match1, Match2, Match3, Match4;
-  unsigned tKind;
 
-  MatchInstMapAndConstraints tMapAndConstraints[4];
-  Match1 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[0],
-                                ErrorInfoIgnore, isParsingIntelSyntax());
-  if (Match1 == Match_Success) Kind = tKind;
+  Match1 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   Tmp[Base.size()] = Suffixes[1];
-  Match2 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[1],
-                                ErrorInfoIgnore, isParsingIntelSyntax());
-  if (Match2 == Match_Success) Kind = tKind;
+  Match2 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   Tmp[Base.size()] = Suffixes[2];
-  Match3 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[2],
-                                ErrorInfoIgnore, isParsingIntelSyntax());
-  if (Match3 == Match_Success) Kind = tKind;
+  Match3 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
   Tmp[Base.size()] = Suffixes[3];
-  Match4 = MatchInstructionImpl(Operands, tKind, Inst, tMapAndConstraints[3],
-                                ErrorInfoIgnore, isParsingIntelSyntax());
-  if (Match4 == Match_Success) Kind = tKind;
+  Match4 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                                isParsingIntelSyntax());
 
   // Restore the old token.
   Op->setTokenValue(Base);
