@@ -33,3 +33,13 @@ int testNestedUmbrellaBFail() {
 int testNestedUmbrellaB() {
   return nested_umbrella_b;
 }
+
+@__experimental_modules_import nested_umbrella.a_extras;
+
+@__experimental_modules_import nested_umbrella._1;
+
+@__experimental_modules_import nested_umbrella.decltype_;
+
+int testSanitizedName() {
+  return extra_a + one + decltype_val;
+}

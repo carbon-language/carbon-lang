@@ -97,6 +97,54 @@ void ModuleMap::setTarget(const TargetInfo &Target) {
   this->Target = &Target;
 }
 
+/// \brief "Sanitize" a filename so that it can be used as an identifier.
+static StringRef sanitizeFilenameAsIdentifier(StringRef Name,
+                                              SmallVectorImpl<char> &Buffer) {
+  if (Name.empty())
+    return Name;
+
+  // Check whether the filename is already an identifier; this is the common
+  // case.
+  bool isIdentifier = true;
+  for (unsigned I = 0, N = Name.size(); I != N; ++I) {
+    if (isalpha(Name[I]) || Name[I] == '_' || (isdigit(Name[I]) && I > 0))
+      continue;
+
+    isIdentifier = false;
+    break;
+  }
+
+  if (!isIdentifier) {
+    // If we don't already have something with the form of an identifier,
+    // create a buffer with the sanitized name.
+    Buffer.clear();
+    if (isdigit(Name[0]))
+      Buffer.push_back('_');
+    Buffer.reserve(Buffer.size() + Name.size());
+    for (unsigned I = 0, N = Name.size(); I != N; ++I) {
+      if (isalnum(Name[I]) || isspace(Name[I]))
+        Buffer.push_back(Name[I]);
+      else
+        Buffer.push_back('_');
+    }
+
+    Name = StringRef(Buffer.data(), Buffer.size());
+  }
+
+  while (llvm::StringSwitch<bool>(Name)
+#define KEYWORD(Keyword,Conditions) .Case(#Keyword, true)
+#define ALIAS(Keyword, AliasOf, Conditions) .Case(Keyword, true)
+#include "clang/Basic/TokenKinds.def"
+           .Default(false)) {
+    if (Name.data() != Buffer.data())
+      Buffer.append(Name.begin(), Name.end());
+    Buffer.push_back('_');
+    Name = StringRef(Buffer.data(), Buffer.size());
+  }
+
+  return Name;
+}
+
 Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   llvm::DenseMap<const FileEntry *, Module *>::iterator Known
     = Headers.find(File);
@@ -135,7 +183,10 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
         
         for (unsigned I = SkippedDirs.size(); I != 0; --I) {
           // Find or create the module that corresponds to this directory name.
-          StringRef Name = llvm::sys::path::stem(SkippedDirs[I-1]->getName());
+          SmallString<32> NameBuf;
+          StringRef Name = sanitizeFilenameAsIdentifier(
+                             llvm::sys::path::stem(SkippedDirs[I-1]->getName()),
+                             NameBuf);
           Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
                                       Explicit).first;
           
@@ -149,7 +200,9 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
         }
         
         // Infer a submodule with the same name as this header file.
-        StringRef Name = llvm::sys::path::stem(File->getName());
+        SmallString<32> NameBuf;
+        StringRef Name = sanitizeFilenameAsIdentifier(
+                           llvm::sys::path::stem(File->getName()), NameBuf);
         Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
                                     Explicit).first;
         Result->TopHeaders.insert(File);
@@ -218,7 +271,10 @@ bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) {
       if (UmbrellaModule->InferSubmodules) {
         for (unsigned I = SkippedDirs.size(); I != 0; --I) {
           // Find or create the module that corresponds to this directory name.
-          StringRef Name = llvm::sys::path::stem(SkippedDirs[I-1]->getName());
+          SmallString<32> NameBuf;
+          StringRef Name = sanitizeFilenameAsIdentifier(
+                             llvm::sys::path::stem(SkippedDirs[I-1]->getName()),
+                             NameBuf);
           Found = lookupModuleQualified(Name, Found);
           if (!Found)
             return false;
@@ -227,7 +283,10 @@ bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) {
         }
         
         // Infer a submodule with the same name as this header file.
-        StringRef Name = llvm::sys::path::stem(Header->getName());
+        SmallString<32> NameBuf;
+        StringRef Name = sanitizeFilenameAsIdentifier(
+                           llvm::sys::path::stem(Header->getName()),
+                           NameBuf);
         Found = lookupModuleQualified(Name, Found);
         if (!Found)
           return false;
@@ -377,8 +436,10 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
 #endif
 
       // FIXME: Do we want to warn about subframeworks without umbrella headers?
-      inferFrameworkModule(llvm::sys::path::stem(Dir->path()), SubframeworkDir,
-                           IsSystem, Result);
+      SmallString<32> NameBuf;
+      inferFrameworkModule(sanitizeFilenameAsIdentifier(
+                             llvm::sys::path::stem(Dir->path()), NameBuf),
+                           SubframeworkDir, IsSystem, Result);
     }
   }
 
