@@ -107,10 +107,6 @@ void test1() {
 #  error TOP should be visible
 #endif
 
-#ifndef TOP_LEFT_UNDEF
-#  error TOP_LEFT_UNDEF should be visible
-#endif
-
 void test2() {
   int i;
   float f;
@@ -129,3 +125,13 @@ void test3() {
   double d;
   LEFT_RIGHT_DIFFERENT *dp = &d; // okay
 }
+
+#ifndef TOP_RIGHT_UNDEF
+#  error TOP_RIGHT_UNDEF should still be defined
+#endif
+
+@__experimental_modules_import macros_right.undef;
+
+#ifdef TOP_RIGHT_UNDEF
+# error TOP_RIGHT_UNDEF should not be defined
+#endif

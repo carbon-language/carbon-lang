@@ -3686,6 +3686,7 @@ void ASTWriter::WriteMacroUpdates() {
        I != E; ++I) {
     addMacroRef(I->first, Record);
     AddSourceLocation(I->second.UndefLoc, Record);
+    Record.push_back(inferSubmoduleIDFromLocation(I->second.UndefLoc));
   }
   Stream.EmitRecord(MACRO_UPDATES, Record);
 }

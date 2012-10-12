@@ -395,7 +395,10 @@ private:
   /// global macro ID to produce a local ID.
   GlobalMacroMapType GlobalMacroMap;
 
-  typedef llvm::DenseMap<serialization::MacroID, MacroUpdate> MacroUpdatesMap;
+  typedef llvm::DenseMap<serialization::MacroID,
+            llvm::SmallVector<std::pair<serialization::SubmoduleID,
+                                        MacroUpdate>, 1> >
+    MacroUpdatesMap;
 
   /// \brief Mapping from (global) macro IDs to the set of updates to be
   /// performed to the corresponding macro.
@@ -417,30 +420,50 @@ private:
 
   /// \brief An entity that has been hidden.
   class HiddenName {
-    /// \brief The hidden declaration or macro.
-    llvm::PointerUnion<Decl *, MacroInfo *> DeclOrMacro;
+  public:
+    enum NameKind {
+      Declaration,
+      MacroVisibility,
+      MacroUndef
+    } Kind;
 
-    /// \brief The name being defined to a macro, for the macro case.
-    IdentifierInfo *Identifier;
+  private:
+    unsigned Loc;
+
+    union {
+      Decl *D;
+      MacroInfo *MI;
+    };
+
+    IdentifierInfo *Id;
 
   public:
-    HiddenName(Decl *D) : DeclOrMacro(D), Identifier() { }
-    HiddenName(IdentifierInfo *II, MacroInfo *MI)
-      : DeclOrMacro(MI), Identifier(II) { }
+    HiddenName(Decl *D) : Kind(Declaration), Loc(), D(D), Id() { }
 
-    bool isDecl() const { return DeclOrMacro.is<Decl*>(); }
-    bool isMacro() const { return !isDecl(); }
+    HiddenName(IdentifierInfo *II, MacroInfo *MI)
+      : Kind(MacroVisibility), Loc(), MI(MI), Id(II) { }
+
+    HiddenName(IdentifierInfo *II, MacroInfo *MI, SourceLocation Loc)
+      : Kind(MacroUndef), Loc(Loc.getRawEncoding()), MI(MI), Id(II) { }
+
+    NameKind getKind() const { return Kind; }
 
     Decl *getDecl() const {
-      assert(isDecl() && "Hidden name is not a declaration");
-      return DeclOrMacro.get<Decl *>();
+      assert(getKind() == Declaration && "Hidden name is not a declaration");
+      return D;
     }
 
     std::pair<IdentifierInfo *, MacroInfo *> getMacro() const {
-      assert(isMacro() && "Hidden name is not a macro!");
-      return std::make_pair(Identifier, DeclOrMacro.get<MacroInfo *>());
+      assert((getKind() == MacroUndef || getKind() == MacroVisibility)
+             && "Hidden name is not a macro!");
+      return std::make_pair(Id, MI);
     }
-  };
+
+    SourceLocation getMacroUndefLoc() const {
+      assert(getKind() == MacroUndef && "Hidden name is not an undef!");
+      return SourceLocation::getFromRawEncoding(Loc);
+    }
+};
 
   /// \brief A set of hidden declarations.
   typedef llvm::SmallVector<HiddenName, 2>

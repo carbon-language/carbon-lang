@@ -11,3 +11,6 @@
 
 
 #define TOP_RIGHT_REDEF int
+
+#define TOP_RIGHT_UNDEF int
+

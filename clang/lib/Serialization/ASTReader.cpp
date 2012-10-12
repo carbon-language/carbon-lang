@@ -1364,9 +1364,28 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
       MacroUpdatesMap::iterator Update = MacroUpdates.find(GlobalID);
       if (Update != MacroUpdates.end()) {
         if (MI->getUndefLoc().isInvalid()) {
-          MI->setUndefLoc(Update->second.UndefLoc);
-          if (PPMutationListener *Listener = PP.getPPMutationListener())
-            Listener->UndefinedMacro(MI);
+          for (unsigned I = 0, N = Update->second.size(); I != N; ++I) {
+            bool Hidden = false;
+            if (unsigned SubmoduleID = Update->second[I].first) {
+              if (Module *Owner = getSubmodule(SubmoduleID)) {
+                if (Owner->NameVisibility == Module::Hidden) {
+                  // Note that this #undef is hidden.
+                  Hidden = true;
+
+                  // Record this hiding for later.
+                  HiddenNamesMap[Owner].push_back(
+                    HiddenName(II, MI, Update->second[I].second.UndefLoc));
+                }
+              }
+            }
+
+            if (!Hidden) {
+              MI->setUndefLoc(Update->second[I].second.UndefLoc);
+              if (PPMutationListener *Listener = PP.getPPMutationListener())
+                Listener->UndefinedMacro(MI);
+              break;
+            }
+          }
         }
         MacroUpdates.erase(Update);
       }
@@ -2517,7 +2536,11 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         if (I == N)
           break;
 
-        MacroUpdates[ID].UndefLoc = ReadSourceLocation(F, Record, I);
+        SourceLocation UndefLoc = ReadSourceLocation(F, Record, I);
+        SubmoduleID SubmoduleID = getGlobalSubmoduleID(F, Record[I++]);;
+        MacroUpdate Update;
+        Update.UndefLoc = UndefLoc;
+        MacroUpdates[ID].push_back(std::make_pair(SubmoduleID, Update));
       }
       break;
     }
@@ -2619,15 +2642,30 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
 
 void ASTReader::makeNamesVisible(const HiddenNames &Names) {
   for (unsigned I = 0, N = Names.size(); I != N; ++I) {
-    if (Names[I].isDecl()) {
+    switch (Names[I].getKind()) {
+    case HiddenName::Declaration:
       Names[I].getDecl()->Hidden = false;
-      continue;
+      break;
+
+    case HiddenName::MacroVisibility: {
+      std::pair<IdentifierInfo *, MacroInfo *> Macro = Names[I].getMacro();
+      Macro.second->setHidden(!Macro.second->isPublic());
+      if (Macro.second->isDefined()) {
+        PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
+      }
+      break;
     }
 
-    std::pair<IdentifierInfo *, MacroInfo *> Macro = Names[I].getMacro();
-    Macro.second->setHidden(!Macro.second->isPublic());
-    if (Macro.second->isDefined()) {
-      PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
+    case HiddenName::MacroUndef: {
+      std::pair<IdentifierInfo *, MacroInfo *> Macro = Names[I].getMacro();
+      if (Macro.second->isDefined()) {
+        Macro.second->setUndefLoc(Names[I].getMacroUndefLoc());
+        if (PPMutationListener *Listener = PP.getPPMutationListener())
+          Listener->UndefinedMacro(Macro.second);
+        PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
+      }
+      break;
+    }
     }
   }
 }

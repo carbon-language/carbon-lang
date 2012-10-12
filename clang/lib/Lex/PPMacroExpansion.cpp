@@ -87,11 +87,13 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
     }
 
     // Find the end of the definition chain.
-    MacroInfo *Prev = StoredMI;
-    MacroInfo *PrevPrev;
+    MacroInfo *Prev;
+    MacroInfo *PrevPrev = StoredMI;
     bool Ambiguous = StoredMI->isAmbiguous();
     bool MatchedOther = false;
     do {
+      Prev = PrevPrev;
+
       // If the macros are not identical, we have an ambiguity.
       if (!Prev->isIdenticalTo(*MI, *this)) {
         if (!Ambiguous) {
@@ -125,25 +127,29 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
 void Preprocessor::makeLoadedMacroInfoVisible(IdentifierInfo *II,
                                               MacroInfo *MI) {
   assert(MI->isFromAST() && "Macro must be from the AST");
-  assert(MI->isDefined() && "Macro is not visible");
 
   MacroInfo *&StoredMI = Macros[II];
   if (StoredMI == MI) {
     // Easy case: this is the first macro anyway.
-    II->setHasMacroDefinition(true);
+    II->setHasMacroDefinition(MI->isDefined());
     return;
   }
 
   // Go find the macro and pull it out of the list.
-  // FIXME: Yes, this is O(N), and making a pile of macros visible would be
-  // quadratic.
+  // FIXME: Yes, this is O(N), and making a pile of macros visible or hidden
+  // would be quadratic, but it's extremely rare.
   MacroInfo *Prev = StoredMI;
   while (Prev->getPreviousDefinition() != MI)
     Prev = Prev->getPreviousDefinition();
   Prev->setPreviousDefinition(MI->getPreviousDefinition());
+  MI->setPreviousDefinition(0);
 
   // Add the macro back to the list.
   addLoadedMacroInfo(II, MI);
+
+  II->setHasMacroDefinition(StoredMI->isDefined());
+  if (II->isFromAST())
+    II->setChangedSinceDeserialization();
 }
 
 /// \brief Undefine a macro for this identifier.

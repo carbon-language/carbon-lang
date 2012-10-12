@@ -28,6 +28,9 @@ module macros_left {
 module macros_right { 
   header "macros_right.h" 
   export *
+  explicit module undef {
+    header "macros_right_undef.h"
+  }
 }
 module macros { header "macros.h" }
 module category_top { header "category_top.h" }

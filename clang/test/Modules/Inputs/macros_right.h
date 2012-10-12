@@ -1,4 +1,4 @@
-#include "macros_top.h"
+@__experimental_modules_import macros_top;
 #define RIGHT unsigned short
 
 
