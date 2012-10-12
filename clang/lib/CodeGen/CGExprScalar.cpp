@@ -102,6 +102,12 @@ public:
   /// boolean (i1) truth value.  This is equivalent to "Val != 0".
   Value *EmitConversionToBool(Value *Src, QualType DstTy);
 
+  /// \brief Emit a check that a conversion to or from a floating-point type
+  /// does not overflow.
+  void EmitFloatConversionCheck(Value *OrigSrc, QualType OrigSrcType,
+                                Value *Src, QualType SrcType,
+                                QualType DstType, llvm::Type *DstTy);
+
   /// EmitScalarConversion - Emit a conversion from the specified type to the
   /// specified destination type, both of which are LLVM scalar types.
   Value *EmitScalarConversion(Value *Src, QualType SrcTy, QualType DstTy);
@@ -538,6 +544,110 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   return EmitPointerToBoolConversion(Src);
 }
 
+void ScalarExprEmitter::EmitFloatConversionCheck(Value *OrigSrc,
+                                                 QualType OrigSrcType,
+                                                 Value *Src, QualType SrcType,
+                                                 QualType DstType,
+                                                 llvm::Type *DstTy) {
+  using llvm::APFloat;
+  using llvm::APSInt;
+
+  llvm::Type *SrcTy = Src->getType();
+
+  llvm::Value *Check = 0;
+  if (llvm::IntegerType *IntTy = dyn_cast<llvm::IntegerType>(SrcTy)) {
+    // Integer to floating-point. This can fail for unsigned short -> __half
+    // or unsigned __int128 -> float.
+    assert(DstType->isFloatingType());
+    bool SrcIsUnsigned = OrigSrcType->isUnsignedIntegerOrEnumerationType();
+
+    APFloat LargestFloat =
+      APFloat::getLargest(CGF.getContext().getFloatTypeSemantics(DstType));
+    APSInt LargestInt(IntTy->getBitWidth(), SrcIsUnsigned);
+
+    bool IsExact;
+    if (LargestFloat.convertToInteger(LargestInt, APFloat::rmTowardZero,
+                                      &IsExact) != APFloat::opOK)
+      // The range of representable values of this floating point type includes
+      // all values of this integer type. Don't need an overflow check.
+      return;
+
+    llvm::Value *Max = llvm::ConstantInt::get(VMContext, LargestInt);
+    if (SrcIsUnsigned)
+      Check = Builder.CreateICmpULE(Src, Max);
+    else {
+      llvm::Value *Min = llvm::ConstantInt::get(VMContext, -LargestInt);
+      llvm::Value *GE = Builder.CreateICmpSGE(Src, Min);
+      llvm::Value *LE = Builder.CreateICmpSLE(Src, Max);
+      Check = Builder.CreateAnd(GE, LE);
+    }
+  } else {
+    // Floating-point to integer or floating-point to floating-point. This has
+    // undefined behavior if the source is +-Inf, NaN, or doesn't fit into the
+    // destination type.
+    const llvm::fltSemantics &SrcSema =
+      CGF.getContext().getFloatTypeSemantics(OrigSrcType);
+    APFloat MaxSrc(SrcSema, APFloat::uninitialized);
+    APFloat MinSrc(SrcSema, APFloat::uninitialized);
+
+    if (isa<llvm::IntegerType>(DstTy)) {
+      unsigned Width = CGF.getContext().getIntWidth(DstType);
+      bool Unsigned = DstType->isUnsignedIntegerOrEnumerationType();
+
+      APSInt Min = APSInt::getMinValue(Width, Unsigned);
+      if (MinSrc.convertFromAPInt(Min, !Unsigned, APFloat::rmTowardZero) &
+          APFloat::opOverflow)
+        // Don't need an overflow check for lower bound. Just check for
+        // -Inf/NaN.
+        MinSrc = APFloat::getLargest(SrcSema, true);
+
+      APSInt Max = APSInt::getMaxValue(Width, Unsigned);
+      if (MaxSrc.convertFromAPInt(Max, !Unsigned, APFloat::rmTowardZero) &
+          APFloat::opOverflow)
+        // Don't need an overflow check for upper bound. Just check for
+        // +Inf/NaN.
+        MaxSrc = APFloat::getLargest(SrcSema, false);
+    } else {
+      const llvm::fltSemantics &DstSema =
+        CGF.getContext().getFloatTypeSemantics(DstType);
+      bool IsInexact;
+
+      MinSrc = APFloat::getLargest(DstSema, true);
+      if (MinSrc.convert(SrcSema, APFloat::rmTowardZero, &IsInexact) &
+          APFloat::opOverflow)
+        MinSrc = APFloat::getLargest(SrcSema, true);
+
+      MaxSrc = APFloat::getLargest(DstSema, false);
+      if (MaxSrc.convert(SrcSema, APFloat::rmTowardZero, &IsInexact) &
+          APFloat::opOverflow)
+        MaxSrc = APFloat::getLargest(SrcSema, false);
+    }
+
+    // If we're converting from __half, convert the range to float to match
+    // the type of src.
+    if (OrigSrcType->isHalfType()) {
+      const llvm::fltSemantics &Sema =
+        CGF.getContext().getFloatTypeSemantics(SrcType);
+      bool IsInexact;
+      MinSrc.convert(Sema, APFloat::rmTowardZero, &IsInexact);
+      MaxSrc.convert(Sema, APFloat::rmTowardZero, &IsInexact);
+    }
+
+    llvm::Value *GE =
+      Builder.CreateFCmpOGE(Src, llvm::ConstantFP::get(VMContext, MinSrc));
+    llvm::Value *LE =
+      Builder.CreateFCmpOLE(Src, llvm::ConstantFP::get(VMContext, MaxSrc));
+    Check = Builder.CreateAnd(GE, LE);
+  }
+
+  // FIXME: Provide a SourceLocation.
+  llvm::Constant *StaticArgs[] = {
+    CGF.EmitCheckTypeDescriptor(OrigSrcType),
+    CGF.EmitCheckTypeDescriptor(DstType)
+  };
+  CGF.EmitCheck(Check, "float_cast_overflow", StaticArgs, OrigSrc);
+}
+
 /// EmitScalarConversion - Emit a conversion from the specified type to the
 /// specified destination type, both of which are LLVM scalar types.
 Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
@@ -548,6 +658,8 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   if (DstType->isVoidType()) return 0;
 
+  llvm::Value *OrigSrc = Src;
+  QualType OrigSrcType = SrcType;
   llvm::Type *SrcTy = Src->getType();
 
   // Floating casts might be a bit special: if we're doing casts to / from half
@@ -620,6 +732,12 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // Finally, we have the arithmetic types: real int/float.
   Value *Res = NULL;
   llvm::Type *ResTy = DstTy;
+
+  // An overflowing conversion has undefined behavior if either the source type
+  // or the destination type is a floating-point type.
+  if (CGF.CatchUndefined &&
+      (OrigSrcType->isFloatingType() || DstType->isFloatingType()))
+    EmitFloatConversionCheck(OrigSrc, OrigSrcType, Src, SrcType, DstType, DstTy);
 
   // Cast to half via float
   if (DstType->isHalfType())

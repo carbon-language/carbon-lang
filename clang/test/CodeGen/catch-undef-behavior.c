@@ -141,3 +141,62 @@ void vla_bound(int n) {
 #line 900
   int arr[n * 3];
 }
+
+// CHECK: @int_float_no_overflow
+float int_float_no_overflow(__int128 n) {
+  // CHECK-NOT: call void @__ubsan_handle
+  return n;
+}
+
+// CHECK: @int_float_overflow
+float int_float_overflow(unsigned __int128 n) {
+  // This is 2**104. FLT_MAX is 2**128 - 2**104.
+  // CHECK: icmp ule i128 %{{.*}}, -20282409603651670423947251286016
+  // CHECK: call void @__ubsan_handle_float_cast_overflow(
+  return n;
+}
+
+// CHECK: @int_fp16_overflow
+void int_fp16_overflow(int n, __fp16 *p) {
+  // CHECK: %[[GE:.*]] = icmp sge i32 %{{.*}}, -65504
+  // CHECK: %[[LE:.*]] = icmp sle i32 %{{.*}}, 65504
+  // CHECK: and i1 %[[GE]], %[[LE]]
+  // CHECK: call void @__ubsan_handle_float_cast_overflow(
+  *p = n;
+}
+
+// CHECK: @float_int_overflow
+int float_int_overflow(float f) {
+  // CHECK: %[[GE:.*]] = fcmp oge float %[[F:.*]], 0xC1E0000000000000
+  // CHECK: %[[LE:.*]] = fcmp ole float %[[F]], 0x41DFFFFFE0000000
+  // CHECK: and i1 %[[GE]], %[[LE]]
+  // CHECK: call void @__ubsan_handle_float_cast_overflow(
+  return f;
+}
+
+// CHECK: @float_uint_overflow
+unsigned float_uint_overflow(float f) {
+  // CHECK: %[[GE:.*]] = fcmp oge float %[[F:.*]], 0.{{0*}}e+00
+  // CHECK: %[[LE:.*]] = fcmp ole float %[[F]], 0x41EFFFFFE0000000
+  // CHECK: and i1 %[[GE]], %[[LE]]
+  // CHECK: call void @__ubsan_handle_float_cast_overflow(
+  return f;
+}
+
+// CHECK: @fp16_char_overflow
+signed char fp16_char_overflow(__fp16 *p) {
+  // CHECK: %[[GE:.*]] = fcmp oge float %[[F:.*]], -1.28{{0*}}e+02
+  // CHECK: %[[LE:.*]] = fcmp ole float %[[F]], 1.27{{0*}}e+02
+  // CHECK: and i1 %[[GE]], %[[LE]]
+  // CHECK: call void @__ubsan_handle_float_cast_overflow(
+  return *p;
+}
+
+// CHECK: @float_float_overflow
+float float_float_overflow(double f) {
+  // CHECK: %[[GE:.*]] = fcmp oge double %[[F:.*]], 0xC7EFFFFFE0000000
+  // CHECK: %[[LE:.*]] = fcmp ole double %[[F]], 0x47EFFFFFE0000000
+  // CHECK: and i1 %[[GE]], %[[LE]]
+  // CHECK: call void @__ubsan_handle_float_cast_overflow(
+  return f;
+}
