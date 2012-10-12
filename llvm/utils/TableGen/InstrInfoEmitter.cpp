@@ -299,7 +299,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   const OperandInfoMapTy &OpInfo,
                                   raw_ostream &OS) {
   int MinOperands = 0;
-  if (!Inst.Operands.size() == 0)
+  if (!Inst.Operands.empty())
     // Each logical operand can be multiple MI operands.
     MinOperands = Inst.Operands.back().MIOperandNo +
                   Inst.Operands.back().MINumOperands;
