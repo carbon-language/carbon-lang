@@ -320,17 +320,6 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   return Owned(NS);
 }
 
-// isMSAsmKeyword - Return true if this is an MS-style inline asm keyword. These
-// require special handling.
-static bool isMSAsmKeyword(StringRef Name) {
-  bool Ret = llvm::StringSwitch<bool>(Name)
-    .Cases("EVEN", "ALIGN", true) // Alignment directives.
-    .Cases("LENGTH", "SIZE", "TYPE", true) // Type and variable sizes.
-    .Case("_emit", true) // _emit Pseudoinstruction.
-    .Default(false);
-  return Ret;
-}
-
 // getSpelling - Get the spelling of the AsmTok token.
 static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   StringRef Asm;
@@ -342,28 +331,9 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
   return Asm;
 }
 
-// Determine if we should bail on this MSAsm instruction.
-static bool bailOnMSAsm(std::vector<StringRef> Piece) {
-  for (unsigned i = 0, e = Piece.size(); i != e; ++i)
-    if (isMSAsmKeyword(Piece[i]))
-      return true;
-  return false;
-}
-
-// Determine if we should bail on this MSAsm block.
-static bool bailOnMSAsm(std::vector<std::vector<StringRef> > Pieces) {
-  for (unsigned i = 0, e = Pieces.size(); i != e; ++i)
-    if (bailOnMSAsm(Pieces[i]))
-      return true;
-  return false;
-}
-
 // Determine if this is a simple MSAsm instruction.
 static bool isSimpleMSAsm(std::vector<StringRef> &Pieces,
                           const TargetInfo &TI) {
-  if (isMSAsmKeyword(Pieces[0]))
-      return false;
-
   for (unsigned i = 1, e = Pieces.size(); i != e; ++i) {
     if (!TI.isValidGCCRegisterName(Pieces[i]))
       return false;
@@ -478,9 +448,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   buildMSAsmPieces(AsmStrings, Pieces);
 
   bool IsSimple = isSimpleMSAsm(Pieces, Context.getTargetInfo());
-
-  // AsmParser doesn't fully support these asm statements.
-  if (bailOnMSAsm(Pieces)) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
   // Get the target specific parser.
   std::string Error;
