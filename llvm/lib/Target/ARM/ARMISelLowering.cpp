@@ -1804,6 +1804,14 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     }
   }
 
+  // If Caller's vararg or byval argument has been split between registers and
+  // stack, do not perform tail call, since part of the argument is in caller's
+  // local frame.
+  const ARMFunctionInfo *AFI_Caller = DAG.getMachineFunction().
+                                      getInfo<ARMFunctionInfo>();
+  if (AFI_Caller->getVarArgsRegSaveSize())
+    return false;
+
   // If the callee takes no arguments then go on to check the results of the
   // call.
   if (!Outs.empty()) {
