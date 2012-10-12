@@ -2602,13 +2602,31 @@ class PPC64_SVR4_ABIInfo : public DefaultABIInfo {
 public:
   PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT) : DefaultABIInfo(CGT) {}
 
-  // TODO: Could override computeInfo to model the ABI more completely if
-  // it would be helpful.  Example: We might remove the byVal flag from
-  // aggregate arguments that fit in a register to avoid pushing them to
-  // memory on function entry.  Note that this is a performance optimization,
-  // not a compliance issue.  In general we prefer to keep ABI details in
-  // the back end where possible, but modifying an argument flag seems like
-  // a good thing to do before invoking the back end.
+  // TODO: We can add more logic to computeInfo to improve performance.
+  // Example: For aggregate arguments that fit in a register, we could
+  // use getDirectInReg (as is done below for structs containing a single
+  // floating-point value) to avoid pushing them to memory on function
+  // entry.  This would require changing the logic in PPCISelLowering
+  // when lowering the parameters in the caller and args in the callee.
+  virtual void computeInfo(CGFunctionInfo &FI) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it) {
+      // We rely on the default argument classification for the most part.
+      // One exception:  An aggregate containing a single floating-point
+      // item must be passed in a register if one is available.
+      const Type *T = isSingleElementStruct(it->type, getContext());
+      if (T) {
+        const BuiltinType *BT = T->getAs<BuiltinType>();
+        if (BT && BT->isFloatingPoint()) {
+          QualType QT(T, 0);
+          it->info = ABIArgInfo::getDirectInReg(CGT.ConvertType(QT));
+          continue;
+        }
+      }
+      it->info = classifyArgumentType(it->type);
+    }
+  }
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, 
                                  QualType Ty,
