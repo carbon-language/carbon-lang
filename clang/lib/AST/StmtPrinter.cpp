@@ -1130,6 +1130,8 @@ void StmtPrinter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
       PrintExpr(Node->getArg(0));
       OS << ' ' << OpStrings[Kind];
     }
+  } else if (Kind == OO_Arrow) {
+    PrintExpr(Node->getArg(0));
   } else if (Kind == OO_Call) {
     PrintExpr(Node->getArg(0));
     OS << '(';
