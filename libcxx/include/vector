@@ -2700,6 +2700,7 @@ vector<bool, _Allocator>::operator=(vector&& __v)
 {
     __move_assign(__v, integral_constant<bool,
           __storage_traits::propagate_on_container_move_assignment::value>());
+    return *this;
 }
 
 template <class _Allocator>

@@ -1872,6 +1872,7 @@ __packaged_task_function<_Rp(_ArgTypes...)>::operator=(__packaged_task_function&
         __f_ = __f.__f_;
         __f.__f_ = nullptr;
     }
+    return *this;
 }
 
 template<class _Rp, class ..._ArgTypes>

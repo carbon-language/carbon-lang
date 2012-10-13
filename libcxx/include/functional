@@ -1351,6 +1351,7 @@ function<_Rp(_ArgTypes...)>::operator=(function&& __f) _NOEXCEPT
         __f_ = __f.__f_;
         __f.__f_ = 0;
     }
+    return *this;
 }
 
 template<class _Rp, class ..._ArgTypes>
@@ -1362,6 +1363,7 @@ function<_Rp(_ArgTypes...)>::operator=(nullptr_t) _NOEXCEPT
     else if (__f_)
         __f_->destroy_deallocate();
     __f_ = 0;
+    return *this;
 }
 
 template<class _Rp, class ..._ArgTypes>

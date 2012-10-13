@@ -728,8 +728,8 @@ public:
 
     // arithmetic
 
-    _LIBCPP_INLINE_VISIBILITY time_point& operator+=(const duration& __d) {__d_ += __d;}
-    _LIBCPP_INLINE_VISIBILITY time_point& operator-=(const duration& __d) {__d_ -= __d;}
+	_LIBCPP_INLINE_VISIBILITY time_point& operator+=(const duration& __d) {__d_ += __d; return *this;}
+	_LIBCPP_INLINE_VISIBILITY time_point& operator-=(const duration& __d) {__d_ -= __d; return *this;}
 
     // special values
 

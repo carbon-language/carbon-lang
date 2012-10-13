@@ -344,6 +344,7 @@ basic_filebuf<_CharT, _Traits>::operator=(basic_filebuf&& __rhs)
 {
     close();
     swap(__rhs);
+    return *this;
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

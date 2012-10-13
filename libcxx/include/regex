@@ -2562,6 +2562,7 @@ public:
         {
             __member_init(__f);
             __parse(__first, __last);
+            return *this;
         }
 
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
