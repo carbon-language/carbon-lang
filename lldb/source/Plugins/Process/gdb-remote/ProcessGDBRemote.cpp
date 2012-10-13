@@ -196,7 +196,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_waiting_for_attach (false),
     m_destroy_tried_resuming (false),
     m_dyld_plugin_name(),
-    m_kernel_load_addr (LLDB_INVALID_ADDRESS)
+    m_kernel_load_addr (LLDB_INVALID_ADDRESS),
+    m_command_sp ()
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -3013,3 +3014,58 @@ ProcessGDBRemote::GetDynamicLoader ()
     return m_dyld_ap.get();
 }
 
+#include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
+
+class CommandObjectProcessGDBRemotePacket : public CommandObjectParsed
+{
+private:
+    
+public:
+    CommandObjectProcessGDBRemotePacket(CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "process plugin packet",
+                         "Send a custom packet through the GDB remote protocol and print the answer.",
+                         NULL)
+    {
+    }
+    
+    ~CommandObjectProcessGDBRemotePacket ()
+    {
+    }
+    
+    bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        printf ("CommandObjectProcessGDBRemotePacket::DoExecute() called!!!\n");
+        return true;
+    }
+};
+
+
+class CommandObjectMultiwordProcessGDBRemote : public CommandObjectMultiword
+{
+public:
+    CommandObjectMultiwordProcessGDBRemote (CommandInterpreter &interpreter) :
+        CommandObjectMultiword (interpreter,
+                                "process plugin",
+                                "A set of commands for operating on a ProcessGDBRemote process.",
+                                "process plugin <subcommand> [<subcommand-options>]")
+    {
+        LoadSubCommand ("packet", CommandObjectSP (new CommandObjectProcessGDBRemotePacket    (interpreter)));
+    }
+
+    ~CommandObjectMultiwordProcessGDBRemote ()
+    {
+    }
+};
+
+
+
+CommandObject *
+ProcessGDBRemote::GetPluginCommandObject()
+{
+    if (!m_command_sp)
+        m_command_sp.reset (new CommandObjectMultiwordProcessGDBRemote (GetTarget().GetDebugger().GetCommandInterpreter()));
+    return m_command_sp.get();
+}

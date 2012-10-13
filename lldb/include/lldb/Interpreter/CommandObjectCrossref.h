@@ -34,7 +34,7 @@ public:
     virtual
     ~CommandObjectCrossref ();
 
-    void
+    virtual void
     GenerateHelpText (CommandReturnObject &result);
 
     virtual bool

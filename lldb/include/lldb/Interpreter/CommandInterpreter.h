@@ -412,13 +412,6 @@ public:
     FindCommandsForApropos (const char *word, 
                             StringList &commands_found, 
                             StringList &commands_help);
-
-    void
-    AproposAllSubCommands (CommandObject *cmd_obj, 
-                           const char *prefix, 
-                           const char *search_word, 
-                           StringList &commands_found, 
-                           StringList &commands_help);
                            
     bool
     GetBatchCommandMode () { return m_batch_command_mode; }

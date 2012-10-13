@@ -1579,6 +1579,26 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Return a multi-word command object that can be used to expose
+    /// plug-in specific commands.
+    ///
+    /// This object will be used to resolve plug-in commands and can be
+    /// triggered by a call to:
+    ///
+    ///     (lldb) process commmand <args>
+    ///
+    /// @return
+    ///     A CommandObject which can be one of the concrete subclasses
+    ///     of CommandObject like CommandObjectRaw, CommandObjectParsed,
+    ///     or CommandObjectMultiword.
+    //------------------------------------------------------------------
+    virtual CommandObject *
+    GetPluginCommandObject()
+    {
+        return NULL;
+    }
+
+    //------------------------------------------------------------------
     /// Launch a new process.
     ///
     /// Launch a new process by spawning a new process using the

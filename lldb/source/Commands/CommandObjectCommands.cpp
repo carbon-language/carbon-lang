@@ -599,8 +599,7 @@ protected:
                      {
                          const std::string sub_command = args.GetArgumentAtIndex(0);
                          assert (sub_command.length() != 0);
-                         subcommand_obj_sp =
-                                           (((CommandObjectMultiword *) cmd_obj)->GetSubcommandSP (sub_command.c_str()));
+                         subcommand_obj_sp = cmd_obj->GetSubcommandSP (sub_command.c_str());
                          if (subcommand_obj_sp.get())
                          {
                              sub_cmd_obj = subcommand_obj_sp.get();

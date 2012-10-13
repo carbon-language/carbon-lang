@@ -1071,13 +1071,45 @@ protected:
     CommandOptions m_options;
 };
 
-
 OptionDefinition
 CommandObjectProcessConnect::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "plugin", 'p', required_argument, NULL, 0, eArgTypePlugin, "Name of the process plugin you want to use."},
     { 0,                false, NULL,      0 , 0,                 NULL, 0, eArgTypeNone,   NULL }
 };
+
+//-------------------------------------------------------------------------
+// CommandObjectProcessPlugin
+//-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessPlugin
+
+class CommandObjectProcessPlugin : public CommandObjectProxy
+{
+public:
+    
+    CommandObjectProcessPlugin (CommandInterpreter &interpreter) :
+        CommandObjectProxy (interpreter,
+                            "process plugin",
+                            "Send a custom command to the current process plug-in.",
+                            "process plugin <args>",
+                            0)
+    {
+    }
+    
+    ~CommandObjectProcessPlugin ()
+    {
+    }
+
+    virtual CommandObject *
+    GetProxyCommandObject()
+    {
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
+        if (process)
+            return process->GetPluginCommandObject();
+        return NULL;
+    }
+};
+
 
 //-------------------------------------------------------------------------
 // CommandObjectProcessLoad
@@ -1794,6 +1826,7 @@ CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter
     LoadSubCommand ("status",      CommandObjectSP (new CommandObjectProcessStatus    (interpreter)));
     LoadSubCommand ("interrupt",   CommandObjectSP (new CommandObjectProcessInterrupt (interpreter)));
     LoadSubCommand ("kill",        CommandObjectSP (new CommandObjectProcessKill      (interpreter)));
+    LoadSubCommand ("plugin",      CommandObjectSP (new CommandObjectProcessPlugin    (interpreter)));
 }
 
 CommandObjectMultiwordProcess::~CommandObjectMultiwordProcess ()

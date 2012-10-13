@@ -763,8 +763,7 @@ CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliase
             {
                 if (cmd_obj_sp->IsMultiwordObject())
                 {
-                    cmd_obj_sp = ((CommandObjectMultiword *) cmd_obj_sp.get())->GetSubcommandSP 
-                    (cmd_words.GetArgumentAtIndex (j));
+                    cmd_obj_sp = cmd_obj_sp->GetSubcommandSP (cmd_words.GetArgumentAtIndex (j));
                     if (cmd_obj_sp.get() == NULL)
                         // The sub-command name was invalid.  Fail and return the empty 'ret_val'.
                         return ret_val;
@@ -1049,8 +1048,7 @@ CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
             else if (cmd_obj->IsMultiwordObject ())
             {
                 // Our current object is a multi-word object; see if the cmd_word is a valid sub-command for our object.
-                CommandObject *sub_cmd_obj = 
-                                         ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (cmd_word.c_str());
+                CommandObject *sub_cmd_obj = cmd_obj->GetSubcommandObject (cmd_word.c_str());
                 if (sub_cmd_obj)
                     cmd_obj = sub_cmd_obj;
                 else // cmd_word was not a valid sub-command word, so we are donee
@@ -1547,7 +1545,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
         {
             if (cmd_obj->IsMultiwordObject ())
             {
-                CommandObject *sub_cmd_obj = ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (next_word.c_str());
+                CommandObject *sub_cmd_obj = cmd_obj->GetSubcommandObject (next_word.c_str());
                 if (sub_cmd_obj)
                 {
                     actual_cmd_name_len += next_word.length() + 1;
@@ -2722,35 +2720,6 @@ CommandInterpreter::OutputHelpText (Stream &strm,
 }
 
 void
-CommandInterpreter::AproposAllSubCommands (CommandObject *cmd_obj, const char *prefix, const char *search_word,
-                                           StringList &commands_found, StringList &commands_help)
-{
-    CommandObject::CommandMap::const_iterator pos;
-    CommandObject::CommandMap sub_cmd_dict = ((CommandObjectMultiword *) cmd_obj)->m_subcommand_dict;
-    CommandObject *sub_cmd_obj;
-
-    for (pos = sub_cmd_dict.begin(); pos != sub_cmd_dict.end(); ++pos)
-    {
-          const char * command_name = pos->first.c_str();
-          sub_cmd_obj = pos->second.get();
-          StreamString complete_command_name;
-          
-          complete_command_name.Printf ("%s %s", prefix, command_name);
-
-          if (sub_cmd_obj->HelpTextContainsWord (search_word))
-          {
-              commands_found.AppendString (complete_command_name.GetData());
-              commands_help.AppendString (sub_cmd_obj->GetHelp());
-          }
-
-          if (sub_cmd_obj->IsMultiwordObject())
-              AproposAllSubCommands (sub_cmd_obj, complete_command_name.GetData(), search_word, commands_found,
-                                     commands_help);
-    }
-
-}
-
-void
 CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList &commands_found,
                                             StringList &commands_help)
 {
@@ -2768,7 +2737,10 @@ CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList 
         }
 
         if (cmd_obj->IsMultiwordObject())
-          AproposAllSubCommands (cmd_obj, command_name, search_word, commands_found, commands_help);
+            cmd_obj->AproposAllSubCommands (command_name,
+                                            search_word,
+                                            commands_found,
+                                            commands_help);
       
     }
 }

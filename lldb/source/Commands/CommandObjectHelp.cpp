@@ -103,8 +103,7 @@ CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
                 else
                 {
                     CommandObject *found_cmd;
-                    found_cmd = ((CommandObjectMultiword *) sub_cmd_obj)->GetSubcommandObject(sub_command.c_str(), 
-                                                                                              &matches);
+                    found_cmd = sub_cmd_obj->GetSubcommandObject(sub_command.c_str(), &matches);
                     if (found_cmd == NULL)
                         all_okay = false;
                     else if (matches.GetSize() > 1)
@@ -189,7 +188,7 @@ CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
                     }
                     else
                         m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
-                    ((CommandObjectMultiword *) sub_cmd_obj)->GenerateHelpText (result);
+                    sub_cmd_obj->GenerateHelpText (result);
                 }
                 else
                 {

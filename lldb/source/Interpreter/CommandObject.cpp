@@ -377,23 +377,19 @@ CommandObject::HandleCompletion
 bool
 CommandObject::HelpTextContainsWord (const char *search_word)
 {
-    const char *short_help;
-    const char *long_help;
-    const char *syntax_help;
     std::string options_usage_help;
-
 
     bool found_word = false;
 
-    short_help = GetHelp();
-    long_help = GetHelpLong();
-    syntax_help = GetSyntax();
+    const char *short_help = GetHelp();
+    const char *long_help = GetHelpLong();
+    const char *syntax_help = GetSyntax();
     
-    if (strcasestr (short_help, search_word))
+    if (short_help && strcasestr (short_help, search_word))
         found_word = true;
-    else if (strcasestr (long_help, search_word))
+    else if (long_help && strcasestr (long_help, search_word))
         found_word = true;
-    else if (strcasestr (syntax_help, search_word))
+    else if (syntax_help && strcasestr (syntax_help, search_word))
         found_word = true;
 
     if (!found_word

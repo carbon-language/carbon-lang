@@ -307,3 +307,232 @@ CommandObjectMultiword::GetRepeatCommand (Args &current_command_args, uint32_t i
     return sub_command_object->GetRepeatCommand(current_command_args, index);
 }
 
+
+void
+CommandObjectMultiword::AproposAllSubCommands (const char *prefix,
+                                               const char *search_word,
+                                               StringList &commands_found,
+                                               StringList &commands_help)
+{
+    CommandObject::CommandMap::const_iterator pos;
+
+    for (pos = m_subcommand_dict.begin(); pos != m_subcommand_dict.end(); ++pos)
+    {
+        const char * command_name = pos->first.c_str();
+        CommandObject *sub_cmd_obj = pos->second.get();
+        StreamString complete_command_name;
+        
+        complete_command_name.Printf ("%s %s", prefix, command_name);
+        
+        if (sub_cmd_obj->HelpTextContainsWord (search_word))
+        {
+            commands_found.AppendString (complete_command_name.GetData());
+            commands_help.AppendString (sub_cmd_obj->GetHelp());
+        }
+        
+        if (sub_cmd_obj->IsMultiwordObject())
+            sub_cmd_obj->AproposAllSubCommands (complete_command_name.GetData(),
+                                                search_word,
+                                                commands_found,
+                                                commands_help);
+    }
+}
+
+
+
+CommandObjectProxy::CommandObjectProxy (CommandInterpreter &interpreter,
+                                        const char *name,
+                                        const char *help,
+                                        const char *syntax,
+                                        uint32_t flags) :
+    CommandObject (interpreter, name, help, syntax, flags)
+{
+}
+
+CommandObjectProxy::~CommandObjectProxy ()
+{
+}
+
+const char *
+CommandObjectProxy::GetHelpLong ()
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->GetHelpLong();
+    return NULL;
+}
+
+void
+CommandObjectProxy::AddObject (const char *obj_name)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->AddObject (obj_name);
+}
+
+bool
+CommandObjectProxy::IsCrossRefObject ()
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->IsCrossRefObject();
+    return false;
+}
+
+bool
+CommandObjectProxy::IsRemovable() const
+{
+    const CommandObject *proxy_command = const_cast<CommandObjectProxy *>(this)->GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->IsRemovable();
+    return false;
+}
+
+bool
+CommandObjectProxy::IsMultiwordObject ()
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->IsMultiwordObject();
+    return false;
+}
+
+lldb::CommandObjectSP
+CommandObjectProxy::GetSubcommandSP (const char *sub_cmd, StringList *matches)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->GetSubcommandSP(sub_cmd, matches);
+    return lldb::CommandObjectSP();
+}
+
+CommandObject *
+CommandObjectProxy::GetSubcommandObject (const char *sub_cmd, StringList *matches)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->GetSubcommandObject(sub_cmd, matches);
+    return NULL;
+}
+
+void
+CommandObjectProxy::AproposAllSubCommands (const char *prefix,
+                                           const char *search_word,
+                                           StringList &commands_found,
+                                           StringList &commands_help)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->AproposAllSubCommands (prefix,
+                                                     search_word,
+                                                     commands_found,
+                                                     commands_help);
+}
+
+bool
+CommandObjectProxy::LoadSubCommand (const char *cmd_name,
+                                    const lldb::CommandObjectSP& command_sp)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->LoadSubCommand (cmd_name, command_sp);
+    return false;
+}
+
+bool
+CommandObjectProxy::WantsRawCommandString()
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->WantsRawCommandString();
+    return false;
+}
+
+bool
+CommandObjectProxy::WantsCompletion()
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->WantsCompletion();
+    return false;
+}
+
+
+Options *
+CommandObjectProxy::GetOptions ()
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->GetOptions ();
+    return NULL;
+}
+
+
+int
+CommandObjectProxy::HandleCompletion (Args &input,
+                                      int &cursor_index,
+                                      int &cursor_char_position,
+                                      int match_start_point,
+                                      int max_return_elements,
+                                      bool &word_complete,
+                                      StringList &matches)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->HandleCompletion (input,
+                                                cursor_index,
+                                                cursor_char_position,
+                                                match_start_point,
+                                                max_return_elements,
+                                                word_complete,
+                                                matches);
+    matches.Clear();
+    return 0;
+}
+int
+CommandObjectProxy::HandleArgumentCompletion (Args &input,
+                                              int &cursor_index,
+                                              int &cursor_char_position,
+                                              OptionElementVector &opt_element_vector,
+                                              int match_start_point,
+                                              int max_return_elements,
+                                              bool &word_complete,
+                                              StringList &matches)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->HandleArgumentCompletion (input,
+                                                        cursor_index,
+                                                        cursor_char_position,
+                                                        opt_element_vector,
+                                                        match_start_point,
+                                                        max_return_elements,
+                                                        word_complete,
+                                                        matches);
+    matches.Clear();
+    return 0;
+}
+
+const char *
+CommandObjectProxy::GetRepeatCommand (Args &current_command_args,
+                                      uint32_t index)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->GetRepeatCommand (current_command_args, index);
+    return NULL;
+}
+
+bool
+CommandObjectProxy::Execute (const char *args_string,
+                             CommandReturnObject &result)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->Execute (args_string, result);
+    result.AppendError ("command is not implemented");
+    result.SetStatus (eReturnStatusFailed);
+    return false;
+}
+
+
