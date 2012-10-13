@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=cortex-a9 -verify-coalescing | FileCheck %s
+; RUN: llc < %s -mcpu=cortex-a9 -verify-coalescing -verify-machineinstrs | FileCheck %s
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32-S32"
 target triple = "thumbv7-apple-ios0.0.0"
 
@@ -263,3 +263,29 @@ bb31:                                             ; preds = %bb12, %bb
 declare <2 x float> @baz(<2 x float>, <2 x float>, <2 x float>) nounwind readnone
 
 declare <2 x float> @baz67(<2 x float>, <2 x float>) nounwind readnone
+
+%struct.wombat.5 = type { %struct.quux, %struct.quux, %struct.quux, %struct.quux }
+%struct.quux = type { <4 x float> }
+
+; CHECK: pr14079
+define linkonce_odr arm_aapcs_vfpcc %struct.wombat.5 @pr14079(i8* nocapture %arg, i8* nocapture %arg1, i8* nocapture %arg2) nounwind uwtable inlinehint {
+bb:
+  %tmp = shufflevector <2 x i64> zeroinitializer, <2 x i64> undef, <1 x i32> zeroinitializer
+  %tmp3 = bitcast <1 x i64> %tmp to <2 x float>
+  %tmp4 = shufflevector <2 x float> %tmp3, <2 x float> zeroinitializer, <2 x i32> <i32 1, i32 3>
+  %tmp5 = shufflevector <2 x float> %tmp4, <2 x float> undef, <2 x i32> <i32 1, i32 3>
+  %tmp6 = bitcast <2 x float> %tmp5 to <1 x i64>
+  %tmp7 = shufflevector <1 x i64> undef, <1 x i64> %tmp6, <2 x i32> <i32 0, i32 1>
+  %tmp8 = bitcast <2 x i64> %tmp7 to <4 x float>
+  %tmp9 = shufflevector <2 x i64> zeroinitializer, <2 x i64> undef, <1 x i32> <i32 1>
+  %tmp10 = bitcast <1 x i64> %tmp9 to <2 x float>
+  %tmp11 = shufflevector <2 x float> %tmp10, <2 x float> undef, <2 x i32> <i32 0, i32 2>
+  %tmp12 = shufflevector <2 x float> %tmp11, <2 x float> undef, <2 x i32> <i32 0, i32 2>
+  %tmp13 = bitcast <2 x float> %tmp12 to <1 x i64>
+  %tmp14 = shufflevector <1 x i64> %tmp13, <1 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %tmp15 = bitcast <2 x i64> %tmp14 to <4 x float>
+  %tmp16 = insertvalue %struct.wombat.5 undef, <4 x float> %tmp8, 1, 0
+  %tmp17 = insertvalue %struct.wombat.5 %tmp16, <4 x float> %tmp15, 2, 0
+  %tmp18 = insertvalue %struct.wombat.5 %tmp17, <4 x float> undef, 3, 0
+  ret %struct.wombat.5 %tmp18
+}

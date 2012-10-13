@@ -1739,15 +1739,20 @@ void JoinVals::pruneValues(JoinVals &Other,
       // has been replaced.
       Val &OtherV = Other.Vals[Vals[i].OtherVNI->id];
       bool EraseImpDef = OtherV.IsImplicitDef && OtherV.Resolution == CR_Keep;
-      if (!EraseImpDef && !Def.isBlock()) {
+      if (!Def.isBlock()) {
         // Remove <def,read-undef> flags. This def is now a partial redef.
+        // Also remove <def,dead> flags since the joined live range will
+        // continue past this instruction.
         for (MIOperands MO(Indexes->getInstructionFromIndex(Def));
              MO.isValid(); ++MO)
-          if (MO->isReg() && MO->isDef() && MO->getReg() == LI.reg)
-            MO->setIsUndef(false);
+          if (MO->isReg() && MO->isDef() && MO->getReg() == LI.reg) {
+            MO->setIsUndef(EraseImpDef);
+            MO->setIsDead(false);
+          }
         // This value will reach instructions below, but we need to make sure
         // the live range also reaches the instruction at Def.
-        EndPoints.push_back(Def);
+        if (!EraseImpDef)
+          EndPoints.push_back(Def);
       }
       DEBUG(dbgs() << "\t\tpruned " << PrintReg(Other.LI.reg) << " at " << Def
                    << ": " << Other.LI << '\n');
