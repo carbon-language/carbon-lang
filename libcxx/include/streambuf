@@ -540,7 +540,7 @@ basic_streambuf<_CharT, _Traits>::xsputn(const char_type* __s, streamsize __n)
     {
         if (__nout_ < __eout_)
             *__nout_++ = *__s;
-        else if (overflow(*__s) == __eof)
+        else if (overflow(traits_type::to_int_type(*__s)) == __eof)
             break;
     }
     return __i;
