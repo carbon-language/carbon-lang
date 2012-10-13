@@ -36,7 +36,7 @@ Diag &Diag::operator<<(const Value &V) {
 
 /// Hexadecimal printing for numbers too large for fprintf to handle directly.
 static void PrintHex(UIntMax Val) {
-#ifdef HAVE_INT128_T
+#if HAVE_INT128_T
   fprintf(stderr, "0x%08x%08x%08x%08x",
           (unsigned int)(Val >> 96),
           (unsigned int)(Val >> 64),

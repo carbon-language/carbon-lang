@@ -27,7 +27,7 @@ SIntMax Value::getSIntValue() const {
   }
   if (getType().getIntegerBitWidth() == 64)
     return *reinterpret_cast<s64*>(Val);
-#ifdef HAVE_INT128_T
+#if HAVE_INT128_T
   if (getType().getIntegerBitWidth() == 128)
     return *reinterpret_cast<s128*>(Val);
 #endif
@@ -40,7 +40,7 @@ UIntMax Value::getUIntValue() const {
     return Val;
   if (getType().getIntegerBitWidth() == 64)
     return *reinterpret_cast<u64*>(Val);
-#ifdef HAVE_INT128_T
+#if HAVE_INT128_T
   if (getType().getIntegerBitWidth() == 128)
     return *reinterpret_cast<u128*>(Val);
 #endif
