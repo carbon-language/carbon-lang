@@ -350,10 +350,10 @@ define i8 @test18(i32 %x, i8 zeroext %a, i8 zeroext %b) nounwind {
   %sel = select i1 %cmp, i8 %a, i8 %b
   ret i8 %sel
 ; CHECK: test18:
-; CHECK: cmpl $15
-; CHECK: cmovll
+; CHECK: cmpl $15, %edi
+; CHECK: cmovgel %edx
 
 ; ATOM: test18:
-; ATOM: cmpl $15
-; ATOM: cmovll
+; ATOM: cmpl $15, %edi
+; ATOM: cmovgel %edx
 }

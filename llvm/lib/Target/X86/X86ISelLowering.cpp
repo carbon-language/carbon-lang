@@ -9158,7 +9158,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
         // Blacklist CopyFromReg to avoid partial register stalls.
         T1.getOpcode() != ISD::CopyFromReg && T2.getOpcode()!=ISD::CopyFromReg){
       SDVTList VTs = DAG.getVTList(T1.getValueType(), MVT::Glue);
-      SDValue Cmov = DAG.getNode(X86ISD::CMOV, DL, VTs, T1, T2, CC, Cond);
+      SDValue Cmov = DAG.getNode(X86ISD::CMOV, DL, VTs, T2, T1, CC, Cond);
       return DAG.getNode(ISD::TRUNCATE, DL, Op.getValueType(), Cmov);
     }
   }
