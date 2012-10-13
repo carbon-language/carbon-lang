@@ -407,7 +407,6 @@ struct StrRChrOpt : public LibCallOptimization {
 namespace llvm {
 
 class LibCallSimplifierImpl {
-  LibCallSimplifier *Simplifier;
   const DataLayout *TD;
   const TargetLibraryInfo *TLI;
   StringMap<LibCallOptimization*> Optimizations;
