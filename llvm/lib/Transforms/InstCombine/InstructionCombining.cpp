@@ -2130,6 +2130,9 @@ bool InstCombiner::runOnFunction(Function &F) {
                InstCombineIRInserter(Worklist));
   Builder = &TheBuilder;
 
+  LibCallSimplifier TheSimplifier(TD, TLI);
+  Simplifier = &TheSimplifier;
+
   bool EverMadeChange = false;
 
   // Lower dbg.declare intrinsics otherwise their value may be clobbered

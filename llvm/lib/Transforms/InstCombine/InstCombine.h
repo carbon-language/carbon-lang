@@ -18,6 +18,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/TargetFolder.h"
+#include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 
 namespace llvm {
   class CallSite;
@@ -74,6 +75,7 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
   DataLayout *TD;
   TargetLibraryInfo *TLI;
   bool MadeIRChange;
+  LibCallSimplifier *Simplifier;
 public:
   /// Worklist - All of the instructions that need to be simplified.
   InstCombineWorklist Worklist;
