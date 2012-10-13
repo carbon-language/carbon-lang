@@ -74,6 +74,9 @@ int mbtowc(wchar_t* restrict pwc, const char* restrict s, size_t n);
 int wctomb(char* s, wchar_t wchar);
 size_t mbstowcs(wchar_t* restrict pwcs, const char* restrict s, size_t n);
 size_t wcstombs(char* restrict s, const wchar_t* restrict pwcs, size_t n);
+int at_quick_exit(void (*func)(void))                                     // C++11
+void quick_exit(int status);                                              // C++11
+void *aligned_alloc(size_t alignment, size_t size);                       // C11
 
 }  // std
 
@@ -134,6 +137,9 @@ using ::wcstombs;
 #ifdef _LIBCPP_HAS_QUICK_EXIT
 using ::at_quick_exit;
 using ::quick_exit;
+#endif
+#ifdef _LIBCPP_HAS_C11_FEATURES
+using ::aligned_alloc;
 #endif
 
 // MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
