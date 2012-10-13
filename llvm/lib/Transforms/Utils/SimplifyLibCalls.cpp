@@ -320,6 +320,88 @@ struct StrNCatOpt : public StrCatOpt {
   }
 };
 
+struct StrChrOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strchr" function prototype.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getReturnType() != B.getInt8PtrTy() ||
+        FT->getParamType(0) != FT->getReturnType() ||
+        !FT->getParamType(1)->isIntegerTy(32))
+      return 0;
+
+    Value *SrcStr = CI->getArgOperand(0);
+
+    // If the second operand is non-constant, see if we can compute the length
+    // of the input string and turn this into memchr.
+    ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
+    if (CharC == 0) {
+      // These optimizations require DataLayout.
+      if (!TD) return 0;
+
+      uint64_t Len = GetStringLength(SrcStr);
+      if (Len == 0 || !FT->getParamType(1)->isIntegerTy(32))// memchr needs i32.
+        return 0;
+
+      return EmitMemChr(SrcStr, CI->getArgOperand(1), // include nul.
+                        ConstantInt::get(TD->getIntPtrType(*Context), Len),
+                        B, TD, TLI);
+    }
+
+    // Otherwise, the character is a constant, see if the first argument is
+    // a string literal.  If so, we can constant fold.
+    StringRef Str;
+    if (!getConstantStringInfo(SrcStr, Str))
+      return 0;
+
+    // Compute the offset, make sure to handle the case when we're searching for
+    // zero (a weird way to spell strlen).
+    size_t I = CharC->getSExtValue() == 0 ?
+        Str.size() : Str.find(CharC->getSExtValue());
+    if (I == StringRef::npos) // Didn't find the char.  strchr returns null.
+      return Constant::getNullValue(CI->getType());
+
+    // strchr(s+n,c)  -> gep(s+n+i,c)
+    return B.CreateGEP(SrcStr, B.getInt64(I), "strchr");
+  }
+};
+
+struct StrRChrOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strrchr" function prototype.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getReturnType() != B.getInt8PtrTy() ||
+        FT->getParamType(0) != FT->getReturnType() ||
+        !FT->getParamType(1)->isIntegerTy(32))
+      return 0;
+
+    Value *SrcStr = CI->getArgOperand(0);
+    ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
+
+    // Cannot fold anything if we're not looking for a constant.
+    if (!CharC)
+      return 0;
+
+    StringRef Str;
+    if (!getConstantStringInfo(SrcStr, Str)) {
+      // strrchr(s, 0) -> strchr(s, 0)
+      if (TD && CharC->isZero())
+        return EmitStrChr(SrcStr, '\0', B, TD, TLI);
+      return 0;
+    }
+
+    // Compute the offset.
+    size_t I = CharC->getSExtValue() == 0 ?
+        Str.size() : Str.rfind(CharC->getSExtValue());
+    if (I == StringRef::npos) // Didn't find the char. Return null.
+      return Constant::getNullValue(CI->getType());
+
+    // strrchr(s+n,c) -> gep(s+n+i,c)
+    return B.CreateGEP(SrcStr, B.getInt64(I), "strrchr");
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -340,6 +422,8 @@ class LibCallSimplifierImpl {
   // String and memory library call optimizations.
   StrCatOpt StrCat;
   StrNCatOpt StrNCat;
+  StrChrOpt StrChr;
+  StrRChrOpt StrRChr;
 
   void initOptimizations();
 public:
@@ -364,6 +448,8 @@ void LibCallSimplifierImpl::initOptimizations() {
   // String and memory library call optimizations.
   Optimizations["strcat"] = &StrCat;
   Optimizations["strncat"] = &StrNCat;
+  Optimizations["strchr"] = &StrChr;
+  Optimizations["strrchr"] = &StrRChr;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
