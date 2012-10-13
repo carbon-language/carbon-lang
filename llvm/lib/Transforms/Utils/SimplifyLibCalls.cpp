@@ -222,6 +222,104 @@ struct StrNCpyChkOpt : public InstFortifiedLibCallOptimization {
   }
 };
 
+//===----------------------------------------------------------------------===//
+// String and Memory Library Call Optimizations
+//===----------------------------------------------------------------------===//
+
+struct StrCatOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strcat" function prototype.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getReturnType() != B.getInt8PtrTy() ||
+        FT->getParamType(0) != FT->getReturnType() ||
+        FT->getParamType(1) != FT->getReturnType())
+      return 0;
+
+    // Extract some information from the instruction
+    Value *Dst = CI->getArgOperand(0);
+    Value *Src = CI->getArgOperand(1);
+
+    // See if we can get the length of the input string.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0) return 0;
+    --Len;  // Unbias length.
+
+    // Handle the simple, do-nothing case: strcat(x, "") -> x
+    if (Len == 0)
+      return Dst;
+
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    return emitStrLenMemCpy(Src, Dst, Len, B);
+  }
+
+  Value *emitStrLenMemCpy(Value *Src, Value *Dst, uint64_t Len,
+                          IRBuilder<> &B) {
+    // We need to find the end of the destination string.  That's where the
+    // memory is to be moved to. We just generate a call to strlen.
+    Value *DstLen = EmitStrLen(Dst, B, TD, TLI);
+    if (!DstLen)
+      return 0;
+
+    // Now that we have the destination's length, we must index into the
+    // destination's pointer to get the actual memcpy destination (end of
+    // the string .. we're concatenating).
+    Value *CpyDst = B.CreateGEP(Dst, DstLen, "endptr");
+
+    // We have enough information to now generate the memcpy call to do the
+    // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
+    B.CreateMemCpy(CpyDst, Src,
+                   ConstantInt::get(TD->getIntPtrType(*Context), Len + 1), 1);
+    return Dst;
+  }
+};
+
+struct StrNCatOpt : public StrCatOpt {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strncat" function prototype.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 ||
+        FT->getReturnType() != B.getInt8PtrTy() ||
+        FT->getParamType(0) != FT->getReturnType() ||
+        FT->getParamType(1) != FT->getReturnType() ||
+        !FT->getParamType(2)->isIntegerTy())
+      return 0;
+
+    // Extract some information from the instruction
+    Value *Dst = CI->getArgOperand(0);
+    Value *Src = CI->getArgOperand(1);
+    uint64_t Len;
+
+    // We don't do anything if length is not constant
+    if (ConstantInt *LengthArg = dyn_cast<ConstantInt>(CI->getArgOperand(2)))
+      Len = LengthArg->getZExtValue();
+    else
+      return 0;
+
+    // See if we can get the length of the input string.
+    uint64_t SrcLen = GetStringLength(Src);
+    if (SrcLen == 0) return 0;
+    --SrcLen;  // Unbias length.
+
+    // Handle the simple, do-nothing cases:
+    // strncat(x, "", c) -> x
+    // strncat(x,  c, 0) -> x
+    if (SrcLen == 0 || Len == 0) return Dst;
+
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    // We don't optimize this case
+    if (Len < SrcLen) return 0;
+
+    // strncat(x, s, c) -> strcat(x, s)
+    // s is constant so the strcat can be optimized further
+    return emitStrLenMemCpy(Src, Dst, SrcLen, B);
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -238,6 +336,10 @@ class LibCallSimplifierImpl {
   MemSetChkOpt MemSetChk;
   StrCpyChkOpt StrCpyChk;
   StrNCpyChkOpt StrNCpyChk;
+
+  // String and memory library call optimizations.
+  StrCatOpt StrCat;
+  StrNCatOpt StrNCat;
 
   void initOptimizations();
 public:
@@ -258,6 +360,10 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["__stpcpy_chk"] = &StrCpyChk;
   Optimizations["__strncpy_chk"] = &StrNCpyChk;
   Optimizations["__stpncpy_chk"] = &StrNCpyChk;
+
+  // String and memory library call optimizations.
+  Optimizations["strcat"] = &StrCat;
+  Optimizations["strncat"] = &StrNCat;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
