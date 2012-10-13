@@ -189,7 +189,9 @@ RNBSocket::ConnectToService()
     // Disconnect from any previous connections
     Disconnect(false);
 
-    if (::lockdown_secure_checkin (&m_fd, NULL, NULL, NULL) != kLDESuccess)
+    SSLContextRef ssl_ctx;
+    bzero(&ssl_ctx, sizeof(ssl_ctx));
+    if (::lockdown_secure_checkin (&m_fd, &ssl_ctx, NULL, NULL) != kLDESuccess)
     {
         DNBLogThreadedIf(LOG_RNB_COMM, "::lockdown_secure_checkin(&m_fd, NULL, NULL, NULL) failed");
         m_fd = -1;
