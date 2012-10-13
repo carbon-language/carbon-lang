@@ -7,7 +7,7 @@
 # RUN: llvm-mc -filetype=obj -arch=x86 -mcpu=geode %s | llvm-objdump -d - | FileCheck %s
 # RUN: llvm-mc -filetype=obj -arch=x86 -mcpu=i686 %s | llvm-objdump -d - | not FileCheck %s
 
-# CHECK-NOT: nopw
+# CHECK-NOT: nop{{[lw]}}
 inc %eax
 .align 8
 inc %eax
