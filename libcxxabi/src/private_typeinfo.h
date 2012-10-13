@@ -18,15 +18,15 @@ namespace __cxxabiv1
 
 #pragma GCC visibility push(hidden)
 
-class __attribute__ ((__visibility__("hidden"))) __shim_type_info
+class __attribute__ ((__visibility__("default"))) __shim_type_info
     : public std::type_info
 {
 public:
-    virtual ~__shim_type_info();
+     __attribute__ ((__visibility__("hidden"))) virtual ~__shim_type_info();
 
-    virtual void noop1() const;
-    virtual void noop2() const;
-    virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const = 0;
+     __attribute__ ((__visibility__("hidden"))) virtual void noop1() const;
+     __attribute__ ((__visibility__("hidden"))) virtual void noop2() const;
+     __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const = 0;
 };
 
 class __attribute__ ((__visibility__("default"))) __fundamental_type_info
