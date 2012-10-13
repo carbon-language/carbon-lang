@@ -307,7 +307,9 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   };
 
   // This CPU doesnt support long nops. If needed add more.
-  if (CPU == "geode") {
+  // FIXME: Can we get this from the subtarget somehow?
+  if (CPU == "generic" || CPU == "i386" || CPU == "i486" || CPU == "i586" ||
+      CPU == "pentium" || CPU == "pentium-mmx" || CPU == "geode") {
     for (uint64_t i = 0; i < Count; ++i)
       OW->Write8(0x90);
     return true;
