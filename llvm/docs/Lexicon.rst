@@ -20,8 +20,10 @@ A
 B
 -
 
-**BURS**
+**BB Vectorization**
+    Basic Block Vectorization
 
+**BURS**
     Bottom Up Rewriting System --- A method of instruction selection for code
     generation.  An example is the `BURG
     <http://www.program-transformation.org/Transform/BURG>`_ tool.
@@ -156,7 +158,7 @@ R
     In garbage collection, a pointer variable lying outside of the `heap`_ from
     which the collector begins its reachability analysis. In the context of code
     generation, "root" almost always refers to a "stack root" --- a local or
-    temporary variable within an executing function.</dd>
+    temporary variable within an executing function.
 
 **RPO**
     Reverse postorder
@@ -192,3 +194,10 @@ S
 **Stack Map**
     In garbage collection, metadata emitted by the code generator which
     identifies `roots`_ within the stack frame of an executing function.
+
+T
+-
+
+**TBAA**
+    Type-Based Alias Analysis
+
