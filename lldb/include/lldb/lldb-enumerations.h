@@ -537,7 +537,10 @@ namespace lldb {
         eBasicTypeVoid = 1,
         eBasicTypeChar,
         eBasicTypeSignedChar,
+        eBasicTypeUnsignedChar,
         eBasicTypeWChar,
+        eBasicTypeSignedWChar,
+        eBasicTypeUnsignedWChar,
         eBasicTypeChar16,
         eBasicTypeChar32,
         eBasicTypeShort,
@@ -551,6 +554,7 @@ namespace lldb {
         eBasicTypeInt128,
         eBasicTypeUnsignedInt128,
         eBasicTypeBool,
+        eBasicTypeHalf,
         eBasicTypeFloat,
         eBasicTypeDouble,
         eBasicTypeLongDouble,
@@ -559,7 +563,9 @@ namespace lldb {
         eBasicTypeLongDoubleComplex,
         eBasicTypeObjCID,
         eBasicTypeObjCClass,
-        eBasicTypeObjCSel
+        eBasicTypeObjCSel,
+        eBasicTypeNullPtr,
+        eBasicTypeOther
     } BasicType;
 
     typedef enum TypeClass

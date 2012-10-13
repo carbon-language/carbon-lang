@@ -274,6 +274,9 @@ public:
     lldb::clang_type_t
     GetTypeForDecl (clang::ObjCInterfaceDecl *objc_decl);
 
+    static lldb::BasicType
+    GetLLDBBasicTypeEnumeration (lldb::clang_type_t clang_type);
+
     //------------------------------------------------------------------
     // CVR modifiers
     //------------------------------------------------------------------

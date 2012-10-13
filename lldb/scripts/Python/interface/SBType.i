@@ -177,6 +177,9 @@ public:
     lldb::SBType
     GetUnqualifiedType();
     
+    lldb::BasicType
+    GetBasicType();
+
     lldb::SBType
     GetBasicType (lldb::BasicType type);
 

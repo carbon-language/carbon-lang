@@ -3644,6 +3644,63 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
     return NULL;
 }
 
+lldb::BasicType
+ClangASTContext::GetLLDBBasicTypeEnumeration (clang_type_t clang_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
+        {
+        case clang::Type::Builtin:                  
+            switch (cast<clang::BuiltinType>(qual_type)->getKind())
+
+            case clang::BuiltinType::Void:      return eBasicTypeVoid;
+            case clang::BuiltinType::Bool:      return eBasicTypeBool;
+            case clang::BuiltinType::Char_S:    return eBasicTypeSignedChar;
+            case clang::BuiltinType::Char_U:    return eBasicTypeUnsignedChar;
+            case clang::BuiltinType::Char16:    return eBasicTypeChar16;
+            case clang::BuiltinType::Char32:    return eBasicTypeChar32;
+            case clang::BuiltinType::UChar:     return eBasicTypeUnsignedChar;
+            case clang::BuiltinType::SChar:     return eBasicTypeSignedChar;
+            case clang::BuiltinType::WChar_S:   return eBasicTypeSignedWChar;
+            case clang::BuiltinType::WChar_U:   return eBasicTypeUnsignedWChar;
+            case clang::BuiltinType::Short:     return eBasicTypeShort;
+            case clang::BuiltinType::UShort:    return eBasicTypeUnsignedShort;
+            case clang::BuiltinType::Int:       return eBasicTypeInt;
+            case clang::BuiltinType::UInt:      return eBasicTypeUnsignedInt;
+            case clang::BuiltinType::Long:      return eBasicTypeLong;
+            case clang::BuiltinType::ULong:     return eBasicTypeUnsignedLong;
+            case clang::BuiltinType::LongLong:  return eBasicTypeLongLong;
+            case clang::BuiltinType::ULongLong: return eBasicTypeUnsignedLongLong;
+            case clang::BuiltinType::Int128:    return eBasicTypeInt128;
+            case clang::BuiltinType::UInt128:   return eBasicTypeUnsignedInt128;
+
+            case clang::BuiltinType::Half:      return eBasicTypeHalf;
+            case clang::BuiltinType::Float:     return eBasicTypeFloat;
+            case clang::BuiltinType::Double:    return eBasicTypeDouble;
+            case clang::BuiltinType::LongDouble:return eBasicTypeLongDouble;
+
+            case clang::BuiltinType::NullPtr:   return eBasicTypeNullPtr;
+            case clang::BuiltinType::ObjCId:    return eBasicTypeObjCID;
+            case clang::BuiltinType::ObjCClass: return eBasicTypeObjCClass;
+            case clang::BuiltinType::ObjCSel:   return eBasicTypeObjCSel;
+            case clang::BuiltinType::Dependent:
+            case clang::BuiltinType::Overload:
+            case clang::BuiltinType::BoundMember:
+            case clang::BuiltinType::PseudoObject:
+            case clang::BuiltinType::UnknownAny:
+            case clang::BuiltinType::BuiltinFn:
+            case clang::BuiltinType::ARCUnbridgedCast:
+                return eBasicTypeOther;
+        }
+    }
+    
+    return eBasicTypeInvalid;
+}
+
+
 
 // If a pointer to a pointee type (the clang_type arg) says that it has no 
 // children, then we either need to trust it, or override it and return a 

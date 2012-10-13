@@ -229,23 +229,50 @@ SBType::GetUnqualifiedType()
     return SBType(ClangASTType(m_opaque_sp->GetASTContext(),qt.getUnqualifiedType().getAsOpaquePtr()));
 }
 
+lldb::BasicType
+SBType::GetBasicType()
+{
+    if (IsValid())
+        return ClangASTContext::GetLLDBBasicTypeEnumeration (m_opaque_sp->GetOpaqueQualType());
+    return eBasicTypeInvalid;
+}
 
 SBType
 SBType::GetBasicType(lldb::BasicType type)
 {
-    
     if (!IsValid())
         return SBType();
     
-    clang::CanQualType base_type_qual;
+    clang::QualType base_type_qual;
     
     switch (type)
     {
+        case eBasicTypeVoid:
+            base_type_qual = m_opaque_sp->GetASTContext()->VoidTy;
+            break;
         case eBasicTypeChar:
             base_type_qual = m_opaque_sp->GetASTContext()->CharTy;
             break;
         case eBasicTypeSignedChar:
             base_type_qual = m_opaque_sp->GetASTContext()->SignedCharTy;
+            break;
+        case eBasicTypeUnsignedChar:
+            base_type_qual = m_opaque_sp->GetASTContext()->UnsignedCharTy;
+            break;
+        case eBasicTypeWChar:
+            base_type_qual = m_opaque_sp->GetASTContext()->getWCharType();
+            break;
+        case eBasicTypeSignedWChar:
+            base_type_qual = m_opaque_sp->GetASTContext()->getSignedWCharType();
+            break;
+        case eBasicTypeUnsignedWChar:
+            base_type_qual = m_opaque_sp->GetASTContext()->getUnsignedWCharType();
+            break;
+        case eBasicTypeChar16:
+            base_type_qual = m_opaque_sp->GetASTContext()->Char16Ty;
+            break;
+        case eBasicTypeChar32:
+            base_type_qual = m_opaque_sp->GetASTContext()->Char32Ty;
             break;
         case eBasicTypeShort:
             base_type_qual = m_opaque_sp->GetASTContext()->ShortTy;
@@ -265,30 +292,6 @@ SBType::GetBasicType(lldb::BasicType type)
         case eBasicTypeUnsignedLong:
             base_type_qual = m_opaque_sp->GetASTContext()->UnsignedLongTy;
             break;
-        case eBasicTypeBool:
-            base_type_qual = m_opaque_sp->GetASTContext()->BoolTy;
-            break;
-        case eBasicTypeFloat:
-            base_type_qual = m_opaque_sp->GetASTContext()->FloatTy;
-            break;
-        case eBasicTypeDouble:
-            base_type_qual = m_opaque_sp->GetASTContext()->DoubleTy;
-            break;
-        case eBasicTypeObjCID:
-            base_type_qual = m_opaque_sp->GetASTContext()->ObjCBuiltinIdTy;
-            break;
-        case eBasicTypeVoid:
-            base_type_qual = m_opaque_sp->GetASTContext()->VoidTy;
-            break;
-        case eBasicTypeWChar:
-            base_type_qual = m_opaque_sp->GetASTContext()->WCharTy;
-            break;
-        case eBasicTypeChar16:
-            base_type_qual = m_opaque_sp->GetASTContext()->Char16Ty;
-            break;
-        case eBasicTypeChar32:
-            base_type_qual = m_opaque_sp->GetASTContext()->Char32Ty;
-            break;
         case eBasicTypeLongLong:
             base_type_qual = m_opaque_sp->GetASTContext()->LongLongTy;
             break;
@@ -300,6 +303,18 @@ SBType::GetBasicType(lldb::BasicType type)
             break;
         case eBasicTypeUnsignedInt128:
             base_type_qual = m_opaque_sp->GetASTContext()->UnsignedInt128Ty;
+            break;
+        case eBasicTypeBool:
+            base_type_qual = m_opaque_sp->GetASTContext()->BoolTy;
+            break;
+        case eBasicTypeHalf:
+            base_type_qual = m_opaque_sp->GetASTContext()->HalfTy;
+            break;
+        case eBasicTypeFloat:
+            base_type_qual = m_opaque_sp->GetASTContext()->FloatTy;
+            break;
+        case eBasicTypeDouble:
+            base_type_qual = m_opaque_sp->GetASTContext()->DoubleTy;
             break;
         case eBasicTypeLongDouble:
             base_type_qual = m_opaque_sp->GetASTContext()->LongDoubleTy;
@@ -313,11 +328,17 @@ SBType::GetBasicType(lldb::BasicType type)
         case eBasicTypeLongDoubleComplex:
             base_type_qual = m_opaque_sp->GetASTContext()->LongDoubleComplexTy;
             break;
+        case eBasicTypeObjCID:
+            base_type_qual = m_opaque_sp->GetASTContext()->ObjCBuiltinIdTy;
+            break;
         case eBasicTypeObjCClass:
             base_type_qual = m_opaque_sp->GetASTContext()->ObjCBuiltinClassTy;
             break;
         case eBasicTypeObjCSel:
             base_type_qual = m_opaque_sp->GetASTContext()->ObjCBuiltinSelTy;
+            break;
+        case eBasicTypeNullPtr:
+            base_type_qual = m_opaque_sp->GetASTContext()->NullPtrTy;
             break;
         default:
             return SBType();
