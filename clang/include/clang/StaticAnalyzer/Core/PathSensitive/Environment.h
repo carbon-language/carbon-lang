@@ -76,9 +76,7 @@ public:
 
   /// Fetches the current binding of the expression in the
   /// Environment.
-  SVal getSVal(const EnvironmentEntry &E,
-               SValBuilder &svalBuilder,
-               bool useOnlyDirectBindings = false) const;
+  SVal getSVal(const EnvironmentEntry &E, SValBuilder &svalBuilder) const;
 
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.

@@ -30,17 +30,7 @@ SVal Environment::lookupExpr(const EnvironmentEntry &E) const {
 }
 
 SVal Environment::getSVal(const EnvironmentEntry &Entry,
-                          SValBuilder& svalBuilder,
-                          bool useOnlyDirectBindings) const {
-
-  if (useOnlyDirectBindings) {
-    // This branch is rarely taken, but can be exercised by
-    // checkers that explicitly bind values to arbitrary
-    // expressions.  It is crucial that we do not ignore any
-    // expression here, and do a direct lookup.
-    return lookupExpr(Entry);
-  }
-
+                          SValBuilder& svalBuilder) const {
   const Stmt *E = Entry.getStmt();
   const LocationContext *LCtx = Entry.getLocationContext();
   
