@@ -2814,16 +2814,7 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
   llvm::APInt Field0(32, StringRef(Uuidstr     , 8), 16);
   llvm::APInt Field1(16, StringRef(Uuidstr +  9, 4), 16);
   llvm::APInt Field2(16, StringRef(Uuidstr + 14, 4), 16);
-  llvm::APInt Field3Values[] = {
-    llvm::APInt(8, StringRef(Uuidstr + 19, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 21, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 24, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 26, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 28, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 30, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 32, 2), 16),
-    llvm::APInt(8, StringRef(Uuidstr + 34, 2), 16),
-  };
+  int Field3ValueOffsets[] = { 19, 21, 24, 26, 28, 30, 32, 34 };
 
   APValue InitStruct(APValue::UninitStruct(), /*NumBases=*/0, /*NumFields=*/4);
   InitStruct.getStructField(0) = APValue(llvm::APSInt(Field0));
@@ -2832,7 +2823,8 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
   APValue& Arr = InitStruct.getStructField(3);
   Arr = APValue(APValue::UninitArray(), 8, 8);
   for (int t = 0; t < 8; ++t)
-    Arr.getArrayInitializedElt(t) = APValue(llvm::APSInt(Field3Values[t]));
+    Arr.getArrayInitializedElt(t) = APValue(llvm::APSInt(
+          llvm::APInt(8, StringRef(Uuidstr + Field3ValueOffsets[t], 2), 16)));
 
   return EmitConstantValue(InitStruct, GuidType);
 }
