@@ -2490,6 +2490,7 @@ private:
       Value *NewV = convertValue(IRB, SI.getValueOperand(), NewAllocaTy);
       StoreInst *NewSI = IRB.CreateAlignedStore(NewV, &NewAI, NewAI.getAlignment(),
                                                 SI.isVolatile());
+      (void)NewSI;
       Pass.DeadInsts.push_back(&SI);
 
       DEBUG(dbgs() << "          to: " << *NewSI << "\n");
