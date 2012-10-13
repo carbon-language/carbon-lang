@@ -366,23 +366,6 @@ public:
   }
 };
 
-class InlineCall {
-  template <typename CHECKER>
-  static bool _inlineCall(void *checker, const CallExpr *CE,
-                                         ExprEngine &Eng,
-                                         ExplodedNode *Pred,
-                                         ExplodedNodeSet &Dst) {
-    return ((const CHECKER *)checker)->inlineCall(CE, Eng, Pred, Dst);
-  }
-
-public:
-  template <typename CHECKER>
-  static void _register(CHECKER *checker, CheckerManager &mgr) {
-    mgr._registerForInlineCall(
-                 CheckerManager::InlineCallFunc(checker, _inlineCall<CHECKER>));
-  }
-};
-
 } // end eval namespace
 
 class CheckerBase : public ProgramPointTag {
