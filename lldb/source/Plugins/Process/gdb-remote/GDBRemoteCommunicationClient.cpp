@@ -1942,12 +1942,12 @@ GDBRemoteCommunicationClient::GetStopReply (StringExtractorGDBRemote &response)
 }
 
 bool
-GDBRemoteCommunicationClient::GetThreadStopInfo (uint32_t tid, StringExtractorGDBRemote &response)
+GDBRemoteCommunicationClient::GetThreadStopInfo (lldb::tid_t tid, StringExtractorGDBRemote &response)
 {
     if (m_supports_qThreadStopInfo)
     {
         char packet[256];
-        int packet_len = ::snprintf(packet, sizeof(packet), "qThreadStopInfo%x", tid);
+        int packet_len = ::snprintf(packet, sizeof(packet), "qThreadStopInfo%llx", tid);
         assert (packet_len < sizeof(packet));
         if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
         {

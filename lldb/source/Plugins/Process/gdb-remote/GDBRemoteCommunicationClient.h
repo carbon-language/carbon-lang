@@ -294,7 +294,7 @@ public:
     GetStopReply (StringExtractorGDBRemote &response);
 
     bool
-    GetThreadStopInfo (uint32_t tid, 
+    GetThreadStopInfo (lldb::tid_t tid, 
                        StringExtractorGDBRemote &response);
 
     bool
