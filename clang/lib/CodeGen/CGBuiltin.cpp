@@ -1321,6 +1321,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     llvm::StringRef Str = cast<StringLiteral>(AnnotationStrExpr)->getString();
     return RValue::get(EmitAnnotationCall(F, AnnVal, Str, E->getExprLoc()));
   }
+  case Builtin::BI__noop:
+    return RValue::get(0);
   }
 
   // If this is an alias for a lib function (e.g. __builtin_sin), emit
