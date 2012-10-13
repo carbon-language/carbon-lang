@@ -32,7 +32,7 @@ If you don't have one yet you will need to:
 
 The next steps are necessary on SnowLeopard, but are probably because of a bug
 how Keychain Access makes certificates.
-[Note: These also apply for Lion.]
+[Note: These also apply for Lion and Mountain Lion.]
 
 - Option-drag the new lldb_codesign certificate from the login keychain to
   the System keychain in the Keychains pane of the main Keychain Access window
