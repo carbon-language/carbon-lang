@@ -2149,6 +2149,7 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
   SROA &Pass;
   AllocaInst &OldAI, &NewAI;
   const uint64_t NewAllocaBeginOffset, NewAllocaEndOffset;
+  Type *NewAllocaTy;
 
   // If we are rewriting an alloca partition which can be written as pure
   // vector operations, we stash extra information here. When VecTy is
@@ -2186,6 +2187,7 @@ public:
       OldAI(OldAI), NewAI(NewAI),
       NewAllocaBeginOffset(NewBeginOffset),
       NewAllocaEndOffset(NewEndOffset),
+      NewAllocaTy(NewAI.getAllocatedType()),
       VecTy(), ElementTy(), ElementSize(), IntPromotionTy(),
       BeginOffset(), EndOffset() {
   }
@@ -2343,7 +2345,24 @@ private:
       Pass.DeadInsts.push_back(I);
   }
 
-  Value *getValueCast(IRBuilder<> &IRB, Value *V, Type *Ty) {
+  /// \brief Test whether we can convert a value from the old to the new type.
+  ///
+  /// This predicate should be used to guard calls to convertValue in order to
+  /// ensure that we only try to convert viable values. The strategy is that we
+  /// will peel off single element struct and array wrappings to get to an
+  /// underlying value, and convert that value.
+  bool canConvertValue(Type *OldTy, Type *NewTy) {
+    if (OldTy == NewTy)
+      return true;
+    if (TD.getTypeSizeInBits(NewTy) != TD.getTypeSizeInBits(OldTy))
+      return false;
+    if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
+      return false;
+    return true;
+  }
+
+  Value *convertValue(IRBuilder<> &IRB, Value *V, Type *Ty) {
+    assert(canConvertValue(V->getType(), Ty) && "Value not convertable to type");
     if (V->getType()->isIntegerTy() && Ty->isPointerTy())
       return IRB.CreateIntToPtr(V, Ty);
     if (V->getType()->isPointerTy() && Ty->isIntegerTy())
@@ -2364,7 +2383,7 @@ private:
                                      getName(".load"));
     }
     if (Result->getType() != LI.getType())
-      Result = getValueCast(IRB, Result, LI.getType());
+      Result = convertValue(IRB, Result, LI.getType());
     LI.replaceAllUsesWith(Result);
     Pass.DeadInsts.push_back(&LI);
 
@@ -2393,6 +2412,18 @@ private:
     if (IntPromotionTy)
       return rewriteIntegerLoad(IRB, LI);
 
+    if (BeginOffset == NewAllocaBeginOffset &&
+        canConvertValue(NewAllocaTy, LI.getType())) {
+      Value *NewLI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                           LI.isVolatile(), getName(".load"));
+      Value *NewV = convertValue(IRB, NewLI, LI.getType());
+      LI.replaceAllUsesWith(NewV);
+      Pass.DeadInsts.push_back(&LI);
+
+      DEBUG(dbgs() << "          to: " << *NewLI << "\n");
+      return !LI.isVolatile();
+    }
+
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          LI.getPointerOperand()->getType());
     LI.setOperand(0, NewPtr);
@@ -2409,13 +2440,13 @@ private:
     if (V->getType() == ElementTy ||
         BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
       if (V->getType() != ElementTy)
-        V = getValueCast(IRB, V, ElementTy);
+        V = convertValue(IRB, V, ElementTy);
       LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                            getName(".load"));
       V = IRB.CreateInsertElement(LI, V, getIndex(IRB, BeginOffset),
                                   getName(".insert"));
     } else if (V->getType() != VecTy) {
-      V = getValueCast(IRB, V, VecTy);
+      V = convertValue(IRB, V, VecTy);
     }
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.push_back(&SI);
@@ -2445,12 +2476,25 @@ private:
     if (IntPromotionTy)
       return rewriteIntegerStore(IRB, SI);
 
+    Type *ValueTy = SI.getValueOperand()->getType();
+
     // Strip all inbounds GEPs and pointer casts to try to dig out any root
     // alloca that should be re-examined after promoting this alloca.
-    if (SI.getValueOperand()->getType()->isPointerTy())
+    if (ValueTy->isPointerTy())
       if (AllocaInst *AI = dyn_cast<AllocaInst>(SI.getValueOperand()
                                                   ->stripInBoundsOffsets()))
         Pass.PostPromotionWorklist.insert(AI);
+
+    if (BeginOffset == NewAllocaBeginOffset &&
+        canConvertValue(ValueTy, NewAllocaTy)) {
+      Value *NewV = convertValue(IRB, SI.getValueOperand(), NewAllocaTy);
+      StoreInst *NewSI = IRB.CreateAlignedStore(NewV, &NewAI, NewAI.getAlignment(),
+                                                SI.isVolatile());
+      Pass.DeadInsts.push_back(&SI);
+
+      DEBUG(dbgs() << "          to: " << *NewSI << "\n");
+      return !SI.isVolatile();
+    }
 
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());
