@@ -456,6 +456,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     // Change to the Intel dialect.
     Parser->setAssemblerDialect(1);
     Parser->setTargetParser(*TargetParser.get());
+    Parser->setParsingInlineAsm(true);
 
     // Prime the lexer.
     Parser->Lex();
@@ -482,9 +483,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     // Match the MCInstr.
     unsigned Opcode;
     unsigned ErrorInfo;
-    HadError = TargetParser->MatchInstruction(IDLoc, Operands, *Str.get(),
-                                              Opcode, ErrorInfo,
-                                              /*matchingInlineAsm*/ true);
+    HadError = TargetParser->MatchAndEmitInstruction(IDLoc, Opcode, Operands,
+                                                     *Str.get(), ErrorInfo,
+                                                     /*MatchingInlineAsm*/ true);
     // If we had an error parsing the operands, fail gracefully.
     if (HadError) { DEF_SIMPLE_MSASM(EmptyAsmStr); return Owned(NS); }
 
