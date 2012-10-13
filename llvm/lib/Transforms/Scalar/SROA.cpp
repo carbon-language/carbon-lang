@@ -2358,11 +2358,22 @@ private:
       return false;
     if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
       return false;
+
+    if (NewTy->isPointerTy() || OldTy->isPointerTy()) {
+      if (NewTy->isPointerTy() && OldTy->isPointerTy())
+        return true;
+      if (NewTy->isIntegerTy() || OldTy->isIntegerTy())
+        return true;
+      return false;
+    }
+
     return true;
   }
 
   Value *convertValue(IRBuilder<> &IRB, Value *V, Type *Ty) {
     assert(canConvertValue(V->getType(), Ty) && "Value not convertable to type");
+    if (V->getType() == Ty)
+      return V;
     if (V->getType()->isIntegerTy() && Ty->isPointerTy())
       return IRB.CreateIntToPtr(V, Ty);
     if (V->getType()->isPointerTy() && Ty->isIntegerTy())
