@@ -761,38 +761,41 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
   LI->removeRange(Kill, MBBEnd);
   if (EndPoints) EndPoints->push_back(MBBEnd);
 
-  // Find all blocks that are reachable from MBB without leaving VNI's live
-  // range.
-  for (df_iterator<MachineBasicBlock*>
-       I = df_begin(KillMBB), E = df_end(KillMBB); I != E;) {
-    MachineBasicBlock *MBB = *I;
-    // KillMBB itself was already handled.
-    if (MBB == KillMBB) {
+  // Find all blocks that are reachable from KillMBB without leaving VNI's live
+  // range. It is possible that KillMBB itself is reachable, so start a DFS
+  // from each successor.
+  typedef SmallPtrSet<MachineBasicBlock*, 9> VisitedTy;
+  VisitedTy Visited;
+  for (MachineBasicBlock::succ_iterator
+       SuccI = KillMBB->succ_begin(), SuccE = KillMBB->succ_end();
+       SuccI != SuccE; ++SuccI) {
+    for (df_ext_iterator<MachineBasicBlock*, VisitedTy>
+         I = df_ext_begin(*SuccI, Visited), E = df_ext_end(*SuccI, Visited);
+         I != E;) {
+      MachineBasicBlock *MBB = *I;
+
+      // Check if VNI is live in to MBB.
+      tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
+      LiveRangeQuery LRQ(*LI, MBBStart);
+      if (LRQ.valueIn() != VNI) {
+        // This block isn't part of the VNI live range. Prune the search.
+        I.skipChildren();
+        continue;
+      }
+
+      // Prune the search if VNI is killed in MBB.
+      if (LRQ.endPoint() < MBBEnd) {
+        LI->removeRange(MBBStart, LRQ.endPoint());
+        if (EndPoints) EndPoints->push_back(LRQ.endPoint());
+        I.skipChildren();
+        continue;
+      }
+
+      // VNI is live through MBB.
+      LI->removeRange(MBBStart, MBBEnd);
+      if (EndPoints) EndPoints->push_back(MBBEnd);
       ++I;
-      continue;
     }
-
-    // Check if VNI is live in to MBB.
-    tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
-    LiveRangeQuery LRQ(*LI, MBBStart);
-    if (LRQ.valueIn() != VNI) {
-      // This block isn't part of the VNI live range. Prune the search.
-      I.skipChildren();
-      continue;
-    }
-
-    // Prune the search if VNI is killed in MBB.
-    if (LRQ.endPoint() < MBBEnd) {
-      LI->removeRange(MBBStart, LRQ.endPoint());
-      if (EndPoints) EndPoints->push_back(LRQ.endPoint());
-      I.skipChildren();
-      continue;
-    }
-
-    // VNI is live through MBB.
-    LI->removeRange(MBBStart, MBBEnd);
-    if (EndPoints) EndPoints->push_back(MBBEnd);
-    ++I;
   }
 }
 

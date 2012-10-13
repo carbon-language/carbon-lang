@@ -214,3 +214,52 @@ loop.end:
  %d.end = phi double [ 0.0, %entry ], [ %add, %after_inner_loop ]
  ret void
 }
+
+; CHECK: pr14078
+define arm_aapcs_vfpcc i32 @pr14078(i8* nocapture %arg, i8* nocapture %arg1, i32 %arg2) nounwind uwtable readonly {
+bb:
+  br i1 undef, label %bb31, label %bb3
+
+bb3:                                              ; preds = %bb12, %bb
+  %tmp = shufflevector <2 x i64> undef, <2 x i64> undef, <1 x i32> zeroinitializer
+  %tmp4 = bitcast <1 x i64> %tmp to <2 x float>
+  %tmp5 = shufflevector <2 x float> %tmp4, <2 x float> undef, <4 x i32> zeroinitializer
+  %tmp6 = bitcast <4 x float> %tmp5 to <2 x i64>
+  %tmp7 = shufflevector <2 x i64> %tmp6, <2 x i64> undef, <1 x i32> zeroinitializer
+  %tmp8 = bitcast <1 x i64> %tmp7 to <2 x float>
+  %tmp9 = tail call <2 x float> @baz(<2 x float> <float 0xFFFFFFFFE0000000, float 0.000000e+00>, <2 x float> %tmp8, <2 x float> zeroinitializer) nounwind
+  br i1 undef, label %bb10, label %bb12
+
+bb10:                                             ; preds = %bb3
+  %tmp11 = load <4 x float>* undef, align 8
+  br label %bb12
+
+bb12:                                             ; preds = %bb10, %bb3
+  %tmp13 = shufflevector <2 x float> %tmp9, <2 x float> zeroinitializer, <2 x i32> <i32 0, i32 2>
+  %tmp14 = bitcast <2 x float> %tmp13 to <1 x i64>
+  %tmp15 = shufflevector <1 x i64> %tmp14, <1 x i64> zeroinitializer, <2 x i32> <i32 0, i32 1>
+  %tmp16 = bitcast <2 x i64> %tmp15 to <4 x float>
+  %tmp17 = fmul <4 x float> zeroinitializer, %tmp16
+  %tmp18 = bitcast <4 x float> %tmp17 to <2 x i64>
+  %tmp19 = shufflevector <2 x i64> %tmp18, <2 x i64> undef, <1 x i32> zeroinitializer
+  %tmp20 = bitcast <1 x i64> %tmp19 to <2 x float>
+  %tmp21 = tail call <2 x float> @baz67(<2 x float> %tmp20, <2 x float> undef) nounwind
+  %tmp22 = tail call <2 x float> @baz67(<2 x float> %tmp21, <2 x float> %tmp21) nounwind
+  %tmp23 = shufflevector <2 x float> %tmp22, <2 x float> undef, <4 x i32> zeroinitializer
+  %tmp24 = bitcast <4 x float> %tmp23 to <2 x i64>
+  %tmp25 = shufflevector <2 x i64> %tmp24, <2 x i64> undef, <1 x i32> zeroinitializer
+  %tmp26 = bitcast <1 x i64> %tmp25 to <2 x float>
+  %tmp27 = extractelement <2 x float> %tmp26, i32 0
+  %tmp28 = fcmp olt float %tmp27, 0.000000e+00
+  %tmp29 = select i1 %tmp28, i32 0, i32 undef
+  %tmp30 = icmp ult i32 undef, %arg2
+  br i1 %tmp30, label %bb3, label %bb31
+
+bb31:                                             ; preds = %bb12, %bb
+  %tmp32 = phi i32 [ 1, %bb ], [ %tmp29, %bb12 ]
+  ret i32 %tmp32
+}
+
+declare <2 x float> @baz(<2 x float>, <2 x float>, <2 x float>) nounwind readnone
+
+declare <2 x float> @baz67(<2 x float>, <2 x float>) nounwind readnone
