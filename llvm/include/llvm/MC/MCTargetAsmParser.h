@@ -82,21 +82,6 @@ public:
   /// otherwise.
   virtual bool mnemonicIsValid(StringRef Mnemonic) = 0;
 
-  /// MatchInstruction - Recognize a series of operands of a parsed instruction
-  /// as an actual MCInst.  This returns false on success and returns true on
-  /// failure to match.
-  ///
-  /// On failure, the target parser is responsible for emitting a diagnostic
-  /// explaining the match failure.
-  virtual bool
-  MatchInstruction(SMLoc IDLoc, 
-                   SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                   MCStreamer &Out, unsigned &Opcode, unsigned &OrigErrorInfo,
-                   bool MatchingInlineAsm = false) {
-    OrigErrorInfo = ~0x0;
-    return true;
-  }
-
   /// MatchAndEmitInstruction - Recognize a series of operands of a parsed
   /// instruction as an actual MCInst and emit it to the specified MCStreamer.
   /// This returns false on success and returns true on failure to match.
@@ -104,9 +89,10 @@ public:
   /// On failure, the target parser is responsible for emitting a diagnostic
   /// explaining the match failure.
   virtual bool
-  MatchAndEmitInstruction(SMLoc IDLoc,
+  MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                           SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                          MCStreamer &Out) = 0;
+                          MCStreamer &Out, unsigned &ErrorInfo,
+                          bool MatchingInlineAsm) = 0;
 
   /// checkTargetMatchPredicate - Validate the instruction match against
   /// any complex target predicates not expressible via match classes.
@@ -115,7 +101,7 @@ public:
   }
 
   virtual void convertToMapAndConstraints(unsigned Kind,
-                       const SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
+                      const SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
 };
 
 } // End llvm namespace

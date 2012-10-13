@@ -133,6 +133,9 @@ private:
   /// IsDarwin - is Darwin compatibility enabled?
   bool IsDarwin;
 
+  /// ParsingInlineAsm - are we parsing ms-style inline assembly?
+  bool ParsingInlineAsm;
+
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -170,6 +173,8 @@ public:
                      ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
 
   virtual const AsmToken &Lex();
+
+  void setParsingInlineAsm(bool V) { ParsingInlineAsm = V; }
 
   bool ParseExpression(const MCExpr *&Res);
   virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc);
@@ -412,7 +417,7 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
     CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0),
-    AssemblerDialect(~0U), IsDarwin(false) {
+    AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
@@ -604,7 +609,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 }
 
 void AsmParser::CheckForValidSection() {
-  if (!getStreamer().getCurrentSection()) {
+  if (!ParsingInlineAsm && !getStreamer().getCurrentSection()) {
     TokError("expected section directive before assembly directive");
     Out.SwitchSection(Ctx.getMachOSection(
                         "__TEXT", "__text",
@@ -1346,9 +1351,14 @@ bool AsmParser::ParseStatement() {
   }
 
   // If parsing succeeded, match the instruction.
-  if (!HadError)
-    HadError = getTargetParser().MatchAndEmitInstruction(IDLoc, ParsedOperands,
-                                                         Out);
+  if (!HadError) {
+    unsigned Opcode;
+    unsigned ErrorInfo;
+    HadError = getTargetParser().MatchAndEmitInstruction(IDLoc, Opcode,
+                                                         ParsedOperands,
+                                                         Out, ErrorInfo,
+                                                         ParsingInlineAsm);
+  }
 
   // Free any parsed operands.
   for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)

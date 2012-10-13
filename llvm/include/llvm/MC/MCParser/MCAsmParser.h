@@ -73,6 +73,8 @@ public:
   /// Run - Run the parser on the input source buffer.
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false) = 0;
 
+  virtual void setParsingInlineAsm(bool V) = 0;
+
   /// Warning - Emit a warning at the location \p L, with the message \p Msg.
   ///
   /// \return The return value is true, if warnings are fatal.

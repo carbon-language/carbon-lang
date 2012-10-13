@@ -67,9 +67,10 @@ class MipsAsmParser : public MCTargetAsmParser {
 #define GET_ASSEMBLER_HEADER
 #include "MipsGenAsmMatcher.inc"
 
-  bool MatchAndEmitInstruction(SMLoc IDLoc,
+  bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               MCStreamer &Out);
+                               MCStreamer &Out, unsigned &ErrorInfo,
+                               bool MatchingInlineAsm);
 
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 
@@ -452,13 +453,13 @@ void MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
 }
 
 bool MipsAsmParser::
-MatchAndEmitInstruction(SMLoc IDLoc,
+MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out) {
+                        MCStreamer &Out, unsigned &ErrorInfo,
+                        bool MatchingInlineAsm) {
   MCInst Inst;
-  unsigned ErrorInfo;
   unsigned MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
-                                              /*matchingInlineAsm*/ false);
+                                              MatchingInlineAsm);
 
   switch (MatchResult) {
   default: break;

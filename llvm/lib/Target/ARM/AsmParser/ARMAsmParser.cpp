@@ -259,9 +259,10 @@ public:
 
   unsigned checkTargetMatchPredicate(MCInst &Inst);
 
-  bool MatchAndEmitInstruction(SMLoc IDLoc,
+  bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               MCStreamer &Out);
+                               MCStreamer &Out, unsigned &ErrorInfo,
+                               bool MatchingInlineAsm);
 };
 } // end anonymous namespace
 
@@ -7474,14 +7475,14 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
 
 static const char *getSubtargetFeatureName(unsigned Val);
 bool ARMAsmParser::
-MatchAndEmitInstruction(SMLoc IDLoc,
+MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out) {
+                        MCStreamer &Out, unsigned &ErrorInfo,
+                        bool MatchingInlineAsm) {
   MCInst Inst;
-  unsigned ErrorInfo;
   unsigned MatchResult;
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
-                                     /*matchingInlineAsm*/ false);
+                                     MatchingInlineAsm);
   switch (MatchResult) {
   default: break;
   case Match_Success:

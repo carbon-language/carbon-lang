@@ -63,13 +63,10 @@ private:
   bool processInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
 
-  bool MatchAndEmitInstruction(SMLoc IDLoc,
+  bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               MCStreamer &Out);
-  bool MatchInstruction(SMLoc IDLoc,
-                        SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out, unsigned &Opcode,
-                        unsigned &OrigErrorInfo, bool MatchingInlineAsm = false);
+                               MCStreamer &Out, unsigned &ErrorInfo,
+                               bool MatchingInlineAsm);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
@@ -1519,20 +1516,10 @@ processInstruction(MCInst &Inst,
 }
 
 bool X86AsmParser::
-MatchAndEmitInstruction(SMLoc IDLoc,
+MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out) {
-  unsigned Opcode;
-  unsigned ErrorInfo;
-  bool Error = MatchInstruction(IDLoc, Operands, Out, Opcode, ErrorInfo);
-  return Error;
-}
-
-bool X86AsmParser::
-MatchInstruction(SMLoc IDLoc,
-                 SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                 MCStreamer &Out, unsigned &Opcode, unsigned &OrigErrorInfo,
-                 bool MatchingInlineAsm) {
+                        MCStreamer &Out, unsigned &ErrorInfo,
+                        bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
@@ -1573,7 +1560,7 @@ MatchInstruction(SMLoc IDLoc,
 
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst,
-                               OrigErrorInfo, MatchingInlineAsm,
+                               ErrorInfo, MatchingInlineAsm,
                                isParsingIntelSyntax())) {
   default: break;
   case Match_Success:
@@ -1651,7 +1638,6 @@ MatchInstruction(SMLoc IDLoc,
     if (!MatchingInlineAsm)
       Out.EmitInstruction(Inst);
     Opcode = Inst.getOpcode();
-    // FIXME: Handle the map and constraints.
     return false;
   }
 
@@ -1696,12 +1682,12 @@ MatchInstruction(SMLoc IDLoc,
     }
 
     // Recover location info for the operand if we know which was the problem.
-    if (OrigErrorInfo != ~0U) {
-      if (OrigErrorInfo >= Operands.size())
+    if (ErrorInfo != ~0U) {
+      if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction",
                      EmptyRanges, MatchingInlineAsm);
 
-      X86Operand *Operand = (X86Operand*)Operands[OrigErrorInfo];
+      X86Operand *Operand = (X86Operand*)Operands[ErrorInfo];
       if (Operand->getStartLoc().isValid()) {
         SMRange OperandRange = Operand->getLocRange();
         return Error(Operand->getStartLoc(), "invalid operand for instruction",
