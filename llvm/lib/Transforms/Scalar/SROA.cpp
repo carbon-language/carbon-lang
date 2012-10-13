@@ -3049,6 +3049,36 @@ private:
 };
 }
 
+/// \brief Strip aggregate type wrapping.
+///
+/// This removes no-op aggregate types wrapping an underlying type. It will
+/// strip as many layers of types as it can without changing either the type
+/// size or the allocated size.
+static Type *stripAggregateTypeWrapping(const DataLayout &DL, Type *Ty) {
+  if (Ty->isSingleValueType())
+    return Ty;
+
+  uint64_t AllocSize = DL.getTypeAllocSize(Ty);
+  uint64_t TypeSize = DL.getTypeSizeInBits(Ty);
+
+  Type *InnerTy;
+  if (ArrayType *ArrTy = dyn_cast<ArrayType>(Ty)) {
+    InnerTy = ArrTy->getElementType();
+  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+    const StructLayout *SL = DL.getStructLayout(STy);
+    unsigned Index = SL->getElementContainingOffset(0);
+    InnerTy = STy->getElementType(Index);
+  } else {
+    return Ty;
+  }
+
+  if (AllocSize > DL.getTypeAllocSize(InnerTy) ||
+      TypeSize > DL.getTypeSizeInBits(InnerTy))
+    return Ty;
+
+  return stripAggregateTypeWrapping(DL, InnerTy);
+}
+
 /// \brief Try to find a partition of the aggregate type passed in for a given
 /// offset and size.
 ///
@@ -3065,7 +3095,7 @@ private:
 static Type *getTypePartition(const DataLayout &TD, Type *Ty,
                               uint64_t Offset, uint64_t Size) {
   if (Offset == 0 && TD.getTypeAllocSize(Ty) == Size)
-    return Ty;
+    return stripAggregateTypeWrapping(TD, Ty);
 
   if (SequentialType *SeqTy = dyn_cast<SequentialType>(Ty)) {
     // We can't partition pointers...
@@ -3094,7 +3124,7 @@ static Type *getTypePartition(const DataLayout &TD, Type *Ty,
     assert(Offset == 0);
 
     if (Size == ElementSize)
-      return ElementTy;
+      return stripAggregateTypeWrapping(TD, ElementTy);
     assert(Size > ElementSize);
     uint64_t NumElements = Size / ElementSize;
     if (NumElements * ElementSize != Size)
@@ -3130,7 +3160,7 @@ static Type *getTypePartition(const DataLayout &TD, Type *Ty,
   assert(Offset == 0);
 
   if (Size == ElementSize)
-    return ElementTy;
+    return stripAggregateTypeWrapping(TD, ElementTy);
 
   StructType::element_iterator EI = STy->element_begin() + Index,
                                EE = STy->element_end();

@@ -84,37 +84,6 @@ entry:
   ret void
 }
 
-%struct.S = type { i8, { i64 } }
-
-define void @test4() {
-; This test case triggered very strange alignment behavior with memcpy due to
-; strange splitting. Reported by Duncan.
-; CHECK: @test4
-
-entry:
-  %D.2113 = alloca %struct.S
-  %Op = alloca %struct.S
-  %D.2114 = alloca %struct.S
-  %gep1 = getelementptr inbounds %struct.S* %Op, i32 0, i32 0
-  store i8 0, i8* %gep1, align 8
-  %gep2 = getelementptr inbounds %struct.S* %Op, i32 0, i32 1, i32 0
-  %cast = bitcast i64* %gep2 to double*
-  store double 0.000000e+00, double* %cast, align 8
-  store i64 0, i64* %gep2, align 8
-  %dst1 = bitcast %struct.S* %D.2114 to i8*
-  %src1 = bitcast %struct.S* %Op to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dst1, i8* %src1, i32 16, i32 8, i1 false)
-  %dst2 = bitcast %struct.S* %D.2113 to i8*
-  %src2 = bitcast %struct.S* %D.2114 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dst2, i8* %src2, i32 16, i32 8, i1 false)
-; We get 3 memcpy calls with various reasons to shrink their alignment to 1.
-; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 3, i32 1, i1 false)
-; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 8, i32 1, i1 false)
-; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* %{{.*}}, i32 11, i32 1, i1 false)
-
-  ret void
-}
-
 define void @test5() {
 ; Test that we preserve underaligned loads and stores when splitting.
 ; CHECK: @test5

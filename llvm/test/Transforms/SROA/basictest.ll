@@ -968,3 +968,47 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast0, i8* %cast1, i32 12, i32 0, i1 false)
   ret void
 }
+
+define i32 @test22(i32 %x) {
+; Test that SROA and promotion is not confused by a grab bax mixture of pointer
+; types involving wrapper aggregates and zero-length aggregate members.
+; CHECK: @test22
+
+entry:
+  %a1 = alloca { { [1 x { i32 }] } }
+  %a2 = alloca { {}, { float }, [0 x i8] }
+  %a3 = alloca { [0 x i8], { [0 x double], [1 x [1 x <4 x i8>]], {} }, { { {} } } }
+; CHECK-NOT: alloca
+
+  %wrap1 = insertvalue [1 x { i32 }] undef, i32 %x, 0, 0
+  %gep1 = getelementptr { { [1 x { i32 }] } }* %a1, i32 0, i32 0, i32 0
+  store [1 x { i32 }] %wrap1, [1 x { i32 }]* %gep1
+
+  %gep2 = getelementptr { { [1 x { i32 }] } }* %a1, i32 0, i32 0
+  %ptrcast1 = bitcast { [1 x { i32 }] }* %gep2 to { [1 x { float }] }*
+  %load1 = load { [1 x { float }] }* %ptrcast1
+  %unwrap1 = extractvalue { [1 x { float }] } %load1, 0, 0
+
+  %wrap2 = insertvalue { {}, { float }, [0 x i8] } undef, { float } %unwrap1, 1
+  store { {}, { float }, [0 x i8] } %wrap2, { {}, { float }, [0 x i8] }* %a2
+
+  %gep3 = getelementptr { {}, { float }, [0 x i8] }* %a2, i32 0, i32 1, i32 0
+  %ptrcast2 = bitcast float* %gep3 to <4 x i8>*
+  %load3 = load <4 x i8>* %ptrcast2
+  %valcast1 = bitcast <4 x i8> %load3 to i32
+
+  %wrap3 = insertvalue [1 x [1 x i32]] undef, i32 %valcast1, 0, 0
+  %wrap4 = insertvalue { [1 x [1 x i32]], {} } undef, [1 x [1 x i32]] %wrap3, 0
+  %gep4 = getelementptr { [0 x i8], { [0 x double], [1 x [1 x <4 x i8>]], {} }, { { {} } } }* %a3, i32 0, i32 1
+  %ptrcast3 = bitcast { [0 x double], [1 x [1 x <4 x i8>]], {} }* %gep4 to { [1 x [1 x i32]], {} }*
+  store { [1 x [1 x i32]], {} } %wrap4, { [1 x [1 x i32]], {} }* %ptrcast3
+
+  %gep5 = getelementptr { [0 x i8], { [0 x double], [1 x [1 x <4 x i8>]], {} }, { { {} } } }* %a3, i32 0, i32 1, i32 1, i32 0
+  %ptrcast4 = bitcast [1 x <4 x i8>]* %gep5 to { {}, float, {} }*
+  %load4 = load { {}, float, {} }* %ptrcast4
+  %unwrap2 = extractvalue { {}, float, {} } %load4, 1
+  %valcast2 = bitcast float %unwrap2 to i32
+
+  ret i32 %valcast2
+; CHECK: ret i32
+}
