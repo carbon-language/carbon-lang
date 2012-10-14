@@ -509,9 +509,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       HANDLE_ATTR(NonLazyBind);
 #undef HANDLE_ATTR
       if (attrs.hasAttribute(Attributes::StackAlignment))
-        Out << "B.addStackAlignmentAttr(Attribute::constructStackAlignmentFromInt("
-            << attrs.getStackAlignment()
-            << "))";
+        Out << "B.addStackAlignmentAttr(" << attrs.getStackAlignment() << ")";
       nl(Out);
       attrs.removeAttribute(Attributes::StackAlignment);
       assert(!attrs.hasAttributes() && "Unhandled attribute!");
