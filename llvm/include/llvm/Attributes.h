@@ -236,7 +236,6 @@ public:
 
   Attributes operator | (const Attributes &A) const;
   Attributes operator & (const Attributes &A) const;
-  Attributes operator ^ (const Attributes &A) const;
   Attributes &operator |= (const Attributes &A);
   Attributes &operator &= (const Attributes &A);
 
