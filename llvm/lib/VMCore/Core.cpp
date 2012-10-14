@@ -1381,7 +1381,8 @@ void LLVMSetGC(LLVMValueRef Fn, const char *GC) {
 void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
   const AttrListPtr PAL = Func->getAttributes();
-  const AttrListPtr PALnew = PAL.addAttr(~0U, Attributes(PA));
+  const AttrListPtr PALnew = PAL.addAttr(Func->getContext(), ~0U,
+                                         Attributes(PA));
   Func->setAttributes(PALnew);
 }
 
@@ -1667,7 +1668,7 @@ void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index,
                            LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   Call.setAttributes(
-    Call.getAttributes().addAttr(index, Attributes(PA)));
+    Call.getAttributes().addAttr(Call->getContext(), index, Attributes(PA)));
 }
 
 void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
@@ -1682,7 +1683,8 @@ void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   Attributes::Builder B;
   B.addAlignmentAttr(align);
-  Call.setAttributes(Call.getAttributes().addAttr(index, Attributes::get(B)));
+  Call.setAttributes(Call.getAttributes().addAttr(Call->getContext(), index,
+                                                  Attributes::get(B)));
 }
 
 /*--.. Operations on call instructions (only) ..............................--*/

@@ -332,7 +332,7 @@ CallInst::CallInst(const CallInst &CI)
 
 void CallInst::addAttribute(unsigned i, Attributes attr) {
   AttrListPtr PAL = getAttributes();
-  PAL = PAL.addAttr(i, attr);
+  PAL = PAL.addAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 
@@ -588,7 +588,7 @@ bool InvokeInst::paramHasAttr(unsigned i, Attributes::AttrVal A) const {
 
 void InvokeInst::addAttribute(unsigned i, Attributes attr) {
   AttrListPtr PAL = getAttributes();
-  PAL = PAL.addAttr(i, attr);
+  PAL = PAL.addAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 

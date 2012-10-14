@@ -96,10 +96,6 @@ bool Attributes::isEmptyOrSingleton() const {
 Attributes Attributes::operator & (const Attributes &A) const {
   return Attributes(Raw() & A.Raw());
 }
-Attributes &Attributes::operator |= (const Attributes &A) {
-  Attrs.Bits |= A.Raw();
-  return *this;
-}
 Attributes &Attributes::operator &= (const Attributes &A) {
   Attrs.Bits &= A.Raw();
   return *this;
@@ -504,7 +500,8 @@ Attributes &AttrListPtr::getAttributesAtIndex(unsigned i) const {
   return AttrList->Attrs[i].Attrs;
 }
 
-AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
+AttrListPtr AttrListPtr::addAttr(LLVMContext &C, unsigned Idx,
+                                 Attributes Attrs) const {
   Attributes OldAttrs = getAttributes(Idx);
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
@@ -532,7 +529,9 @@ AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
 
     // If there are attributes already at this index, merge them in.
     if (i != e && OldAttrList[i].Index == Idx) {
-      Attrs |= OldAttrList[i].Attrs;
+      Attrs =
+        Attributes::get(C, Attributes::Builder(Attrs).
+                        addAttributes(OldAttrList[i].Attrs));
       ++i;
     }
     

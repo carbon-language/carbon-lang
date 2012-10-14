@@ -236,7 +236,6 @@ public:
   }
 
   Attributes operator & (const Attributes &A) const;
-  Attributes &operator |= (const Attributes &A);
   Attributes &operator &= (const Attributes &A);
 
   uint64_t Raw() const;
@@ -351,7 +350,7 @@ public:
   /// addAttr - Add the specified attribute at the specified index to this
   /// attribute list.  Since attribute lists are immutable, this
   /// returns the new list.
-  AttrListPtr addAttr(unsigned Idx, Attributes Attrs) const;
+  AttrListPtr addAttr(LLVMContext &C, unsigned Idx, Attributes Attrs) const;
 
   /// removeAttr - Remove the specified attribute at the specified index from
   /// this attribute list.  Since attribute lists are immutable, this
