@@ -89,7 +89,7 @@ public:
   ImutAVLTree* getMaxElement() {
     ImutAVLTree *T = this;
     ImutAVLTree *Right = T->getRight();
-    while (Right) { T = right; right = T->getRight(); }
+    while (Right) { T = Right; Right = T->getRight(); }
     return T;
   }
 
