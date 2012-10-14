@@ -97,9 +97,11 @@ LLVMContextImpl::~LLVMContextImpl() {
 
   // Destroy attributes.
   for (FoldingSetIterator<AttributesImpl> I = AttrsSet.begin(),
-         E = AttrsSet.end(); I != E; ++I)
-    delete &*I;
-  
+         E = AttrsSet.end(); I != E;) {
+    FoldingSetIterator<AttributesImpl> Elem = I++;
+    delete &*Elem;
+  }
+
   // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
   // and the NonUniquedMDNodes sets, so copy the values out first.
   SmallVector<MDNode*, 8> MDNodes;
