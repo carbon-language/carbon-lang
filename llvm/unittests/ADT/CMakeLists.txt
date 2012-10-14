@@ -13,6 +13,7 @@ set(ADTSources
   FoldingSet.cpp
   HashingTest.cpp
   ilistTest.cpp
+  ImmutableMapTest.cpp
   ImmutableSetTest.cpp
   IntEqClassesTest.cpp
   IntervalMapTest.cpp
