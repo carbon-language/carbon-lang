@@ -119,6 +119,9 @@ public:
     Builder &removeAttribute(Attributes::AttrVal Val);
 
     void addAlignmentAttr(unsigned Align);
+
+    /// addStackAlignmentAttr - This turns an int stack alignment (which must be
+    /// a power of 2) into the form used internally in Attributes.
     void addStackAlignmentAttr(unsigned Align);
 
     void removeAttributes(const Attributes &A);
@@ -236,18 +239,6 @@ public:
     assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
     assert(i <= 0x40000000 && "Alignment too large.");
     return Attributes((Log2_32(i)+1) << 16);
-  }
-
-  /// constructStackAlignmentFromInt - This turns an int stack alignment (which
-  /// must be a power of 2) into the form used internally in Attributes.
-  static Attributes constructStackAlignmentFromInt(unsigned i) {
-    // Default alignment, allow the target to define how to align it.
-    if (i == 0)
-      return Attributes();
-
-    assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-    assert(i <= 0x100 && "Alignment too large.");
-    return Attributes((Log2_32(i)+1) << 26);
   }
 
   /// @brief Which attributes cannot be applied to a type.
