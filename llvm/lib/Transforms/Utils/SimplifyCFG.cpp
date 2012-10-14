@@ -76,6 +76,8 @@ namespace {
       // Comparing pointers is ok as we only rely on the order for uniquing.
       return Value < RHS.Value;
     }
+
+    bool operator==(BasicBlock *RHSDest) const { return Dest == RHSDest; }
   };
 
 class SimplifyCFGOpt {
@@ -564,11 +566,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 /// in the list that match the specified block.
 static void EliminateBlockCases(BasicBlock *BB,
                               std::vector<ValueEqualityComparisonCase> &Cases) {
-  for (unsigned i = 0, e = Cases.size(); i != e; ++i)
-    if (Cases[i].Dest == BB) {
-      Cases.erase(Cases.begin()+i);
-      --i; --e;
-    }
+  Cases.erase(std::remove(Cases.begin(), Cases.end(), BB), Cases.end());
 }
 
 /// ValuesOverlap - Return true if there are any keys in C1 that exist in C2 as
