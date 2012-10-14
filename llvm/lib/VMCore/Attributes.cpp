@@ -110,9 +110,6 @@ Attributes &Attributes::operator &= (const Attributes &A) {
   Attrs.Bits &= A.Raw();
   return *this;
 }
-Attributes Attributes::operator ~ () const {
-  return Attributes(~Raw());
-}
 
 uint64_t Attributes::Raw() const {
   return Attrs.Bits;
@@ -242,8 +239,10 @@ removeAttribute(Attributes::AttrVal Val) {
   return *this;
 }
 
-void Attributes::Builder::removeAttributes(const Attributes &A) {
+Attributes::Builder &Attributes::Builder::
+removeAttributes(const Attributes &A) {
   Bits &= ~A.Raw();
+  return *this;
 }
 
 bool Attributes::Builder::hasAttribute(Attributes::AttrVal A) const {
@@ -548,7 +547,8 @@ AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
   return get(NewAttrList);
 }
 
-AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
+AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
+                                    Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
@@ -558,8 +558,9 @@ AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   if (AttrList == 0) return AttrListPtr();
   
   Attributes OldAttrs = getAttributes(Idx);
-  Attributes NewAttrs = OldAttrs & ~Attrs;
-  if (NewAttrs == OldAttrs)
+  Attributes::Builder NewAttrs =
+    Attributes::Builder(OldAttrs).removeAttributes(Attrs);
+  if (NewAttrs == Attributes::Builder(OldAttrs))
     return *this;
 
   SmallVector<AttributeWithIndex, 8> NewAttrList;
@@ -572,7 +573,8 @@ AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   
   // If there are attributes already at this index, merge them in.
   assert(OldAttrList[i].Index == Idx && "Attribute isn't set?");
-  Attrs = OldAttrList[i].Attrs & ~Attrs;
+  Attrs = Attributes::get(C, Attributes::Builder(OldAttrList[i].Attrs).
+                          removeAttributes(Attrs));
   ++i;
   if (Attrs)  // If any attributes left for this parameter, add them.
     NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));

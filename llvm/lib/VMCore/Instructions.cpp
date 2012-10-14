@@ -338,7 +338,7 @@ void CallInst::addAttribute(unsigned i, Attributes attr) {
 
 void CallInst::removeAttribute(unsigned i, Attributes attr) {
   AttrListPtr PAL = getAttributes();
-  PAL = PAL.removeAttr(i, attr);
+  PAL = PAL.removeAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 
@@ -594,7 +594,7 @@ void InvokeInst::addAttribute(unsigned i, Attributes attr) {
 
 void InvokeInst::removeAttribute(unsigned i, Attributes attr) {
   AttrListPtr PAL = getAttributes();
-  PAL = PAL.removeAttr(i, attr);
+  PAL = PAL.removeAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 

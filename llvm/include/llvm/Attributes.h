@@ -131,7 +131,7 @@ public:
     /// a power of 2) into the form used internally in Attributes.
     Builder &addStackAlignmentAttr(unsigned Align);
 
-    void removeAttributes(const Attributes &A);
+    Builder &removeAttributes(const Attributes &A);
 
     /// @brief Remove attributes that are used on functions only.
     void removeFunctionOnlyAttrs() {
@@ -153,6 +153,13 @@ public:
         .removeAttribute(Attributes::NonLazyBind)
         .removeAttribute(Attributes::ReturnsTwice)
         .removeAttribute(Attributes::AddressSafety);
+    }
+
+    bool operator==(const Builder &B) {
+      return Bits == B.Bits;
+    }
+    bool operator!=(const Builder &B) {
+      return Bits != B.Bits;
     }
   };
 
@@ -232,7 +239,6 @@ public:
   Attributes operator ^ (const Attributes &A) const;
   Attributes &operator |= (const Attributes &A);
   Attributes &operator &= (const Attributes &A);
-  Attributes operator ~ () const;
 
   uint64_t Raw() const;
 
@@ -351,7 +357,7 @@ public:
   /// removeAttr - Remove the specified attribute at the specified index from
   /// this attribute list.  Since attribute lists are immutable, this
   /// returns the new list.
-  AttrListPtr removeAttr(unsigned Idx, Attributes Attrs) const;
+  AttrListPtr removeAttr(LLVMContext &C, unsigned Idx, Attributes Attrs) const;
 
   //===--------------------------------------------------------------------===//
   // Attribute List Accessors

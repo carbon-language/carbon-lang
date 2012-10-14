@@ -762,7 +762,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // here. Currently, this should not be possible, but special handling might be
   // required when new return value attributes are added.
   if (NRetTy->isVoidTy())
-    RAttrs &= ~Attributes::typeIncompatible(NRetTy);
+    RAttrs =
+      Attributes::get(Attributes::Builder(RAttrs).
+                      removeAttributes(Attributes::typeIncompatible(NRetTy)));
   else
     assert((RAttrs & Attributes::typeIncompatible(NRetTy)) == 0
            && "Return attributes no longer compatible?");
@@ -831,7 +833,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     Attributes RAttrs = CallPAL.getRetAttributes();
     Attributes FnAttrs = CallPAL.getFnAttributes();
     // Adjust in case the function was changed to return void.
-    RAttrs &= ~Attributes::typeIncompatible(NF->getReturnType());
+    RAttrs =
+      Attributes::get(Attributes::Builder(RAttrs).
+           removeAttributes(Attributes::typeIncompatible(NF->getReturnType())));
     if (RAttrs)
       AttributesVec.push_back(AttributeWithIndex::get(0, RAttrs));
 

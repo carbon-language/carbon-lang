@@ -255,7 +255,7 @@ void Function::addAttribute(unsigned i, Attributes attr) {
 
 void Function::removeAttribute(unsigned i, Attributes attr) {
   AttrListPtr PAL = getAttributes();
-  PAL = PAL.removeAttr(i, attr);
+  PAL = PAL.removeAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 
