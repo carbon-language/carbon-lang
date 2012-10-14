@@ -215,18 +215,20 @@ addAttribute(Attributes::AttrVal Val) {
   return *this;
 }
 
-void Attributes::Builder::addAlignmentAttr(unsigned Align) {
-  if (Align == 0) return;
+Attributes::Builder &Attributes::Builder::addAlignmentAttr(unsigned Align) {
+  if (Align == 0) return *this;
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x40000000 && "Alignment too large.");
   Bits |= (Log2_32(Align) + 1) << 16;
+  return *this;
 }
-void Attributes::Builder::addStackAlignmentAttr(unsigned Align) {
+Attributes::Builder &Attributes::Builder::addStackAlignmentAttr(unsigned Align){
   // Default alignment, allow the target to define how to align it.
-  if (Align == 0) return;
+  if (Align == 0) return *this;
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x100 && "Alignment too large.");
   Bits |= (Log2_32(Align) + 1) << 26;
+  return *this;
 }
 
 Attributes::Builder &Attributes::Builder::

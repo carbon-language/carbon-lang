@@ -118,11 +118,13 @@ public:
     Builder &addAttribute(Attributes::AttrVal Val);
     Builder &removeAttribute(Attributes::AttrVal Val);
 
-    void addAlignmentAttr(unsigned Align);
+    /// addAlignmentAttr - This turns an int alignment (which must be a power of
+    /// 2) into the form used internally in Attributes.
+    Builder &addAlignmentAttr(unsigned Align);
 
     /// addStackAlignmentAttr - This turns an int stack alignment (which must be
     /// a power of 2) into the form used internally in Attributes.
-    void addStackAlignmentAttr(unsigned Align);
+    Builder &addStackAlignmentAttr(unsigned Align);
 
     void removeAttributes(const Attributes &A);
 
@@ -229,18 +231,6 @@ public:
 
   uint64_t Raw() const;
 
-  /// constructAlignmentFromInt - This turns an int alignment (a power of 2,
-  /// normally) into the form used internally in Attributes.
-  static Attributes constructAlignmentFromInt(unsigned i) {
-    // Default alignment, allow the target to define how to align it.
-    if (i == 0)
-      return Attributes();
-
-    assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-    assert(i <= 0x40000000 && "Alignment too large.");
-    return Attributes((Log2_32(i)+1) << 16);
-  }
-
   /// @brief Which attributes cannot be applied to a type.
   static Attributes typeIncompatible(Type *Ty);
 
@@ -277,8 +267,11 @@ public:
            "Alignment must be a power of two.");
 
     Attributes Attrs(EncodedAttrs & 0xffff);
-    if (Alignment)
-      Attrs |= Attributes::constructAlignmentFromInt(Alignment);
+    if (Alignment) {
+      Attributes::Builder B;
+      B.addAlignmentAttr(Alignment);
+      Attrs |= Attributes::get(B);
+    }
     Attrs |= Attributes((EncodedAttrs & (0xfffULL << 32)) >> 11);
     return Attrs;
   }

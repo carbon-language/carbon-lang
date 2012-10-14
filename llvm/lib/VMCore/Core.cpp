@@ -1474,8 +1474,9 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
-  unwrap<Argument>(Arg)->addAttr(
-          Attributes::constructAlignmentFromInt(align));
+  Attributes::Builder B;
+  B.addAlignmentAttr(align);
+  unwrap<Argument>(Arg)->addAttr(Attributes::get(B));
 }
 
 /*--.. Operations on basic blocks ..........................................--*/
@@ -1678,9 +1679,9 @@ void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
                                 unsigned align) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Call.setAttributes(
-    Call.getAttributes().addAttr(index, 
-        Attributes::constructAlignmentFromInt(align)));
+  Attributes::Builder B;
+  B.addAlignmentAttr(align);
+  Call.setAttributes(Call.getAttributes().addAttr(index, Attributes::get(B)));
 }
 
 /*--.. Operations on call instructions (only) ..............................--*/
