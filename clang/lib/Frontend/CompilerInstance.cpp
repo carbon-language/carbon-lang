@@ -52,6 +52,7 @@ CompilerInstance::CompilerInstance()
 }
 
 CompilerInstance::~CompilerInstance() {
+  assert(OutputFiles.empty() && "Still output files in flight?");
 }
 
 void CompilerInstance::setInvocation(CompilerInvocation *Value) {

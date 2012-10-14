@@ -316,6 +316,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
   if (HasBegunSourceFile)
     CI.getDiagnosticClient().EndSourceFile();
+  CI.clearOutputFiles(/*EraseFiles=*/true);
   setCurrentInput(FrontendInputFile());
   setCompilerInstance(0);
   return false;
