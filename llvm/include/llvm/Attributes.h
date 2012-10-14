@@ -131,6 +131,7 @@ public:
     /// a power of 2) into the form used internally in Attributes.
     Builder &addStackAlignmentAttr(unsigned Align);
 
+    Builder &addAttributes(const Attributes &A);
     Builder &removeAttributes(const Attributes &A);
 
     /// @brief Remove attributes that are used on functions only.
@@ -234,7 +235,6 @@ public:
     return Attrs.Bits != A.Attrs.Bits;
   }
 
-  Attributes operator | (const Attributes &A) const;
   Attributes operator & (const Attributes &A) const;
   Attributes &operator |= (const Attributes &A);
   Attributes &operator &= (const Attributes &A);

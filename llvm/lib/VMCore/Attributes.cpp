@@ -93,9 +93,6 @@ bool Attributes::isEmptyOrSingleton() const {
   return Attrs.isEmptyOrSingleton();
 }
 
-Attributes Attributes::operator | (const Attributes &A) const {
-  return Attributes(Raw() | A.Raw());
-}
 Attributes Attributes::operator & (const Attributes &A) const {
   return Attributes(Raw() & A.Raw());
 }
@@ -236,8 +233,12 @@ removeAttribute(Attributes::AttrVal Val) {
   return *this;
 }
 
-Attributes::Builder &Attributes::Builder::
-removeAttributes(const Attributes &A) {
+Attributes::Builder &Attributes::Builder::addAttributes(const Attributes &A) {
+  Bits |= A.Raw();
+  return *this;
+}
+
+Attributes::Builder &Attributes::Builder::removeAttributes(const Attributes &A){
   Bits &= ~A.Raw();
   return *this;
 }
@@ -514,8 +515,9 @@ AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
          "Attempt to change alignment!");
 #endif
   
-  Attributes NewAttrs = OldAttrs | Attrs;
-  if (NewAttrs == OldAttrs)
+  Attributes::Builder NewAttrs =
+    Attributes::Builder(OldAttrs).addAttributes(Attrs);
+  if (NewAttrs == Attributes::Builder(OldAttrs))
     return *this;
   
   SmallVector<AttributeWithIndex, 8> NewAttrList;
