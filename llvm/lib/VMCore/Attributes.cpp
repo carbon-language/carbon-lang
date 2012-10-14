@@ -215,6 +215,11 @@ addAttribute(Attributes::AttrVal Val) {
   return *this;
 }
 
+Attributes::Builder &Attributes::Builder::addRawValue(uint64_t Val) {
+  Bits |= Val;
+  return *this;
+}
+
 Attributes::Builder &Attributes::Builder::addAlignmentAttr(unsigned Align) {
   if (Align == 0) return *this;
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");

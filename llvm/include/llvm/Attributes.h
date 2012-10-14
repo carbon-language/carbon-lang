@@ -103,6 +103,7 @@ public:
     uint64_t Bits;
   public:
     Builder() : Bits(0) {}
+    explicit Builder(uint64_t B) : Bits(B) {}
     Builder(const Attributes &A) : Bits(A.Raw()) {}
 
     void clear() { Bits = 0; }
@@ -117,6 +118,10 @@ public:
 
     Builder &addAttribute(Attributes::AttrVal Val);
     Builder &removeAttribute(Attributes::AttrVal Val);
+
+    /// addRawValue - Add the raw value to the internal representation. This
+    /// should be used ONLY for decoding bitcode!
+    Builder &addRawValue(uint64_t Val);
 
     /// addAlignmentAttr - This turns an int alignment (which must be a power of
     /// 2) into the form used internally in Attributes.
@@ -266,14 +271,11 @@ public:
     assert((!Alignment || isPowerOf2_32(Alignment)) &&
            "Alignment must be a power of two.");
 
-    Attributes Attrs(EncodedAttrs & 0xffff);
-    if (Alignment) {
-      Attributes::Builder B;
+    Attributes::Builder B(EncodedAttrs & 0xffff);
+    if (Alignment)
       B.addAlignmentAttr(Alignment);
-      Attrs |= Attributes::get(B);
-    }
-    Attrs |= Attributes((EncodedAttrs & (0xfffULL << 32)) >> 11);
-    return Attrs;
+    B.addRawValue((EncodedAttrs & (0xfffULL << 32)) >> 11);
+    return Attributes::get(B);
   }
 
   /// getAsString - The set of Attributes set in Attributes is converted to a
