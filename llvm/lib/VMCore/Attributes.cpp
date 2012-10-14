@@ -93,14 +93,6 @@ bool Attributes::isEmptyOrSingleton() const {
   return Attrs.isEmptyOrSingleton();
 }
 
-Attributes Attributes::operator & (const Attributes &A) const {
-  return Attributes(Raw() & A.Raw());
-}
-Attributes &Attributes::operator &= (const Attributes &A) {
-  Attrs.Bits &= A.Raw();
-  return *this;
-}
-
 uint64_t Attributes::Raw() const {
   return Attrs.Bits;
 }

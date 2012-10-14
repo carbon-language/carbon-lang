@@ -235,9 +235,6 @@ public:
     return Attrs.Bits != A.Attrs.Bits;
   }
 
-  Attributes operator & (const Attributes &A) const;
-  Attributes &operator &= (const Attributes &A);
-
   uint64_t Raw() const;
 
   /// @brief Which attributes cannot be applied to a type.

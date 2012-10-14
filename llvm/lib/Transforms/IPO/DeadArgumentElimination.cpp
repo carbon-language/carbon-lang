@@ -766,8 +766,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       Attributes::get(Attributes::Builder(RAttrs).
                       removeAttributes(Attributes::typeIncompatible(NRetTy)));
   else
-    assert((RAttrs & Attributes::typeIncompatible(NRetTy)) == 0
-           && "Return attributes no longer compatible?");
+    assert(!Attributes::Builder(RAttrs).
+             hasAttributes(Attributes::typeIncompatible(NRetTy)) &&
+           "Return attributes no longer compatible?");
 
   if (RAttrs)
     AttributesVec.push_back(AttributeWithIndex::get(0, RAttrs));
