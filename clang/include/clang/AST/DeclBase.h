@@ -430,16 +430,10 @@ public:
   void dropAttr() {
     if (!HasAttrs) return;
 
-    AttrVec &Attrs = getAttrs();
-    for (unsigned i = 0, e = Attrs.size(); i != e; /* in loop */) {
-      if (isa<T>(Attrs[i])) {
-        Attrs.erase(Attrs.begin() + i);
-        --e;
-      }
-      else
-        ++i;
-    }
-    if (Attrs.empty())
+    AttrVec &Vec = getAttrs();
+    Vec.erase(std::remove_if(Vec.begin(), Vec.end(), isa<T, Attr*>), Vec.end());
+
+    if (Vec.empty())
       HasAttrs = false;
   }
 
