@@ -30,6 +30,9 @@ SIntMax Value::getSIntValue() const {
 #if HAVE_INT128_T
   if (getType().getIntegerBitWidth() == 128)
     return *reinterpret_cast<s128*>(Val);
+#else
+  if (getType().getIntegerBitWidth() == 128)
+    UNREACHABLE("libclang_rt.ubsan was built without __int128 support");
 #endif
   UNREACHABLE("unexpected bit width");
 }
@@ -43,6 +46,9 @@ UIntMax Value::getUIntValue() const {
 #if HAVE_INT128_T
   if (getType().getIntegerBitWidth() == 128)
     return *reinterpret_cast<u128*>(Val);
+#else
+  if (getType().getIntegerBitWidth() == 128)
+    UNREACHABLE("libclang_rt.ubsan was built without __int128 support");
 #endif
   UNREACHABLE("unexpected bit width");
 }
