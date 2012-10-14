@@ -522,7 +522,7 @@ AttrListPtr AttrListPtr::addAttr(LLVMContext &C, unsigned Idx,
     // If there are attributes already at this index, merge them in.
     if (i != e && OldAttrList[i].Index == Idx) {
       Attrs =
-        Attributes::get(C, Attributes::Builder(Attrs).
+        Attributes::get(Attributes::Builder(Attrs).
                         addAttributes(OldAttrList[i].Attrs));
       ++i;
     }
@@ -563,7 +563,7 @@ AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
   
   // If there are attributes already at this index, merge them in.
   assert(OldAttrList[i].Index == Idx && "Attribute isn't set?");
-  Attrs = Attributes::get(C, Attributes::Builder(OldAttrList[i].Attrs).
+  Attrs = Attributes::get(Attributes::Builder(OldAttrList[i].Attrs).
                           removeAttributes(Attrs));
   ++i;
   if (Attrs)  // If any attributes left for this parameter, add them.
