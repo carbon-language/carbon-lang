@@ -36,8 +36,6 @@ public:
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
 
-  bool isEmptyOrSingleton() const;
-
   static uint64_t getAttrMask(uint64_t Val);
 
   void Profile(FoldingSetNodeID &ID) const {

@@ -224,9 +224,6 @@ public:
       hasAttribute(Attributes::AddressSafety);
   }
 
-  bool isEmptyOrSingleton() const;
-
-  // This is a "safe bool() operator".
   bool operator == (const Attributes &A) const {
     return Attrs.Bits == A.Attrs.Bits;
   }

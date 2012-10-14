@@ -89,10 +89,6 @@ unsigned Attributes::getStackAlignment() const {
   return 1U << ((Attrs.getStackAlignment() >> 26) - 1);
 }
 
-bool Attributes::isEmptyOrSingleton() const {
-  return Attrs.isEmptyOrSingleton();
-}
-
 uint64_t Attributes::Raw() const {
   return Attrs.Bits;
 }
@@ -315,10 +311,6 @@ uint64_t AttributesImpl::getAlignment() const {
 
 uint64_t AttributesImpl::getStackAlignment() const {
   return Bits & getAttrMask(Attributes::StackAlignment);
-}
-
-bool AttributesImpl::isEmptyOrSingleton() const {
-  return (Bits & (Bits - 1)) == 0;
 }
 
 //===----------------------------------------------------------------------===//
