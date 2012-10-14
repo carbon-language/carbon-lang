@@ -566,7 +566,7 @@ AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
   Attrs = Attributes::get(Attributes::Builder(OldAttrList[i].Attrs).
                           removeAttributes(Attrs));
   ++i;
-  if (Attrs)  // If any attributes left for this parameter, add them.
+  if (Attrs.hasAttributes()) // If any attributes left for this param, add them.
     NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
   
   // Copy attributes for arguments after this one.
@@ -580,7 +580,7 @@ void AttrListPtr::dump() const {
   dbgs() << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
     const AttributeWithIndex &PAWI = getSlot(i);
-    dbgs() << "{" << PAWI.Index << "," << PAWI.Attrs << "} ";
+    dbgs() << "{" << PAWI.Index << "," << PAWI.Attrs.getAsString() << "} ";
   }
   
   dbgs() << "]\n";

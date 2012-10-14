@@ -227,7 +227,6 @@ public:
   bool isEmptyOrSingleton() const;
 
   // This is a "safe bool() operator".
-  operator const void *() const { return Attrs.Bits ? this : 0; }
   bool operator == (const Attributes &A) const {
     return Attrs.Bits == A.Attrs.Bits;
   }

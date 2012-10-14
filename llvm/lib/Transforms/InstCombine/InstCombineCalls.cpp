@@ -1131,7 +1131,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
 
     // Add any parameter attributes.
-    if (Attributes PAttrs = CallerPAL.getParamAttributes(i + 1))
+    Attributes PAttrs = CallerPAL.getParamAttributes(i + 1);
+    if (PAttrs.hasAttributes())
       attrVec.push_back(AttributeWithIndex::get(i + 1, PAttrs));
   }
 
@@ -1159,13 +1160,15 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         }
 
         // Add any parameter attributes.
-        if (Attributes PAttrs = CallerPAL.getParamAttributes(i + 1))
+        Attributes PAttrs = CallerPAL.getParamAttributes(i + 1);
+        if (PAttrs.hasAttributes())
           attrVec.push_back(AttributeWithIndex::get(i + 1, PAttrs));
       }
     }
   }
 
-  if (Attributes FnAttrs =  CallerPAL.getFnAttributes())
+  Attributes FnAttrs = CallerPAL.getFnAttributes();
+  if (FnAttrs.hasAttributes())
     attrVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
   if (NewRetTy->isVoidTy())
@@ -1274,7 +1277,8 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
       // mean appending it.  Likewise for attributes.
 
       // Add any result attributes.
-      if (Attributes Attr = Attrs.getRetAttributes())
+      Attributes Attr = Attrs.getRetAttributes();
+      if (Attr.hasAttributes())
         NewAttrs.push_back(AttributeWithIndex::get(0, Attr));
 
       {
@@ -1295,7 +1299,8 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
 
           // Add the original argument and attributes.
           NewArgs.push_back(*I);
-          if (Attributes Attr = Attrs.getParamAttributes(Idx))
+          Attr = Attrs.getParamAttributes(Idx);
+          if (Attr.hasAttributes())
             NewAttrs.push_back
               (AttributeWithIndex::get(Idx + (Idx >= NestIdx), Attr));
 
@@ -1304,7 +1309,8 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
       }
 
       // Add any function attributes.
-      if (Attributes Attr = Attrs.getFnAttributes())
+      Attr = Attrs.getFnAttributes();
+      if (Attr.hasAttributes())
         NewAttrs.push_back(AttributeWithIndex::get(~0, Attr));
 
       // The trampoline may have been bitcast to a bogus type (FTy).
