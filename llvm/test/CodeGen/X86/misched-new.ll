@@ -1,4 +1,5 @@
-; RUN: llc -march=x86-64 -mcpu=core2 -enable-misched -misched=shuffle -misched-bottomup < %s
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -enable-misched \
+; RUN:          -misched=shuffle -misched-bottomup | FileCheck %s
 ; REQUIRES: asserts
 ;
 ; Interesting MachineScheduler cases.
