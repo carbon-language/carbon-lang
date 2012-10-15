@@ -95,9 +95,6 @@ class MachineRegisterInfo {
   /// started.
   BitVector ReservedRegs;
 
-  /// AllocatableRegs - From TRI->getAllocatableSet.
-  mutable BitVector AllocatableRegs;
-
   /// LiveIns/LiveOuts - Keep track of the physical registers that are
   /// livein/liveout of the function.  Live in values are typically arguments in
   /// registers, live out values are typically return values in registers.
@@ -427,6 +424,34 @@ public:
     return !reservedRegsFrozen() || ReservedRegs.test(PhysReg);
   }
 
+  /// getReservedRegs - Returns a reference to the frozen set of reserved
+  /// registers. This method should always be preferred to calling
+  /// TRI::getReservedRegs() when possible.
+  const BitVector &getReservedRegs() const {
+    assert(reservedRegsFrozen() &&
+           "Reserved registers haven't been frozen yet. "
+           "Use TRI::getReservedRegs().");
+    return ReservedRegs;
+  }
+
+  /// isReserved - Returns true when PhysReg is a reserved register.
+  ///
+  /// Reserved registers may belong to an allocatable register class, but the
+  /// target has explicitly requested that they are not used.
+  ///
+  bool isReserved(unsigned PhysReg) const {
+    return getReservedRegs().test(PhysReg);
+  }
+
+  /// isAllocatable - Returns true when PhysReg belongs to an allocatable
+  /// register class and it hasn't been reserved.
+  ///
+  /// Allocatable registers may show up in the allocation order of some virtual
+  /// register, so a register allocator needs to track its liveness and
+  /// availability.
+  bool isAllocatable(unsigned PhysReg) const {
+    return TRI->isInAllocatableClass(PhysReg) && !isReserved(PhysReg);
+  }
 
   //===--------------------------------------------------------------------===//
   // LiveIn/LiveOut Management

@@ -474,6 +474,11 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
     MRI.replaceRegWith(From, To);
   }
 
+  // Freeze the set of reserved registers now that MachineFrameInfo has been
+  // set up. All the information required by getReservedRegs() should be
+  // available now.
+  MRI.freezeReservedRegs(*MF);
+
   // Release function-specific state. SDB and CurDAG are already cleared
   // at this point.
   FuncInfo->clear();
