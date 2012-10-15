@@ -924,8 +924,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                            const Decl *TargetDecl,
                                            AttributeListType &PAL,
                                            unsigned &CallingConv) {
-  llvm::Attributes::Builder FuncAttrs;
-  llvm::Attributes::Builder RetAttrs;
+  llvm::AttrBuilder FuncAttrs;
+  llvm::AttrBuilder RetAttrs;
 
   CallingConv = FI.getEffectiveCallingConvention();
 
@@ -984,7 +984,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     break;
 
   case ABIArgInfo::Indirect: {
-    llvm::Attributes::Builder SRETAttrs;
+    llvm::AttrBuilder SRETAttrs;
     SRETAttrs.addAttribute(llvm::Attributes::StructRet);
     if (RetAI.getInReg())
       SRETAttrs.addAttribute(llvm::Attributes::InReg);
@@ -1014,7 +1014,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
          ie = FI.arg_end(); it != ie; ++it) {
     QualType ParamType = it->type;
     const ABIArgInfo &AI = it->info;
-    llvm::Attributes::Builder Attrs;
+    llvm::AttrBuilder Attrs;
 
     // 'restrict' -> 'noalias' is done in EmitFunctionProlog when we
     // have the corresponding parameter variable.  It doesn't make
@@ -1131,7 +1131,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // Name the struct return argument.
   if (CGM.ReturnTypeUsesSRet(FI)) {
     AI->setName("agg.result");
-    llvm::Attributes::Builder B;
+    llvm::AttrBuilder B;
     B.addAttribute(llvm::Attributes::NoAlias);
     AI->addAttr(llvm::Attributes::get(getLLVMContext(), B));
     ++AI;
@@ -1203,7 +1203,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         llvm::Value *V = AI;
 
         if (Arg->getType().isRestrictQualified()) {
-          llvm::Attributes::Builder B;
+          llvm::AttrBuilder B;
           B.addAttribute(llvm::Attributes::NoAlias);
           AI->addAttr(llvm::Attributes::get(getLLVMContext(), B));
         }

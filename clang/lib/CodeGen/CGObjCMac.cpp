@@ -63,7 +63,7 @@ private:
     // Add the non-lazy-bind attribute, since objc_msgSend is likely to
     // be called a lot.
     llvm::Type *params[] = { ObjectPtrTy, SelectorPtrTy };
-    llvm::Attributes::Builder B;
+    llvm::AttrBuilder B;
     B.addAttribute(llvm::Attributes::NonLazyBind);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
                                                              params, true),
@@ -583,7 +583,7 @@ public:
   llvm::Constant *getSetJmpFn() {
     // This is specifically the prototype for x86.
     llvm::Type *params[] = { CGM.Int32Ty->getPointerTo() };
-    llvm::Attributes::Builder B;
+    llvm::AttrBuilder B;
     B.addAttribute(llvm::Attributes::NonLazyBind);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(CGM.Int32Ty,
                                                              params, false),

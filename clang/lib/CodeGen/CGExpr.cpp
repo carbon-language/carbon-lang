@@ -2081,7 +2081,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
 
   llvm::FunctionType *FnType =
     llvm::FunctionType::get(CGM.VoidTy, ArgTypes, false);
-  llvm::Attributes::Builder B;
+  llvm::AttrBuilder B;
   B.addAttribute(llvm::Attributes::NoReturn)
     .addAttribute(llvm::Attributes::NoUnwind)
     .addAttribute(llvm::Attributes::UWTable);
