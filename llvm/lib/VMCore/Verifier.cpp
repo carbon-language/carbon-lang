@@ -567,7 +567,7 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
             Attrs.hasAttribute(Attributes::AlwaysInline)), "Attributes "
           "'noinline and alwaysinline' are incompatible!", V);
 
-  Assert1(!Attributes::Builder(Attrs).
+  Assert1(!AttrBuilder(Attrs).
             hasAttributes(Attributes::typeIncompatible(Ty)),
           "Wrong types for attribute: " +
           Attributes::typeIncompatible(Ty).getAsString(), V);
@@ -615,7 +615,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
   }
 
   Attributes FAttrs = Attrs.getFnAttributes();
-  Attributes::Builder NotFn(FAttrs);
+  AttrBuilder NotFn(FAttrs);
   NotFn.removeFunctionOnlyAttrs();
   Assert1(!NotFn.hasAttributes(), "Attributes '" +
           Attributes::get(V->getContext(), NotFn).getAsString() +

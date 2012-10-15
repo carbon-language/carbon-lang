@@ -212,7 +212,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
     MadeChange = true;
 
     // Clear out any existing attributes.
-    Attributes::Builder B;
+    AttrBuilder B;
     B.addAttribute(Attributes::ReadOnly)
       .addAttribute(Attributes::ReadNone);
     F->removeAttribute(AttrListPtr::FunctionIndex,
@@ -357,7 +357,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
 
   ArgumentGraph AG;
 
-  Attributes::Builder B;
+  AttrBuilder B;
   B.addAttribute(Attributes::NoCapture);
 
   // Check each function in turn, determining which pointer arguments are not

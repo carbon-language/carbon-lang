@@ -137,7 +137,7 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
   // If the SCC doesn't unwind or doesn't throw, note this fact.
   if (!SCCMightUnwind || !SCCMightReturn)
     for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-      Attributes::Builder NewAttributes;
+      AttrBuilder NewAttributes;
 
       if (!SCCMightUnwind)
         NewAttributes.addAttribute(Attributes::NoUnwind);

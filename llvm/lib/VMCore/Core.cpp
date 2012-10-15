@@ -1381,7 +1381,7 @@ void LLVMSetGC(LLVMValueRef Fn, const char *GC) {
 void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
   const AttrListPtr PAL = Func->getAttributes();
-  Attributes::Builder B(PA);
+  AttrBuilder B(PA);
   const AttrListPtr PALnew =
     PAL.addAttr(Func->getContext(), AttrListPtr::FunctionIndex,
                 Attributes::get(Func->getContext(), B));
@@ -1391,7 +1391,7 @@ void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
 void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
   const AttrListPtr PAL = Func->getAttributes();
-  Attributes::Builder B(PA);
+  AttrBuilder B(PA);
   const AttrListPtr PALnew =
     PAL.removeAttr(Func->getContext(), AttrListPtr::FunctionIndex,
                    Attributes::get(Func->getContext(), B));
@@ -1465,13 +1465,13 @@ LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
 
 void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   Argument *A = unwrap<Argument>(Arg);
-  Attributes::Builder B(PA);
+  AttrBuilder B(PA);
   A->addAttr(Attributes::get(A->getContext(), B));
 }
 
 void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   Argument *A = unwrap<Argument>(Arg);
-  Attributes::Builder B(PA);
+  AttrBuilder B(PA);
   A->removeAttr(Attributes::get(A->getContext(), B));
 }
 
@@ -1484,7 +1484,7 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
-  Attributes::Builder B;
+  AttrBuilder B;
   B.addAlignmentAttr(align);
   unwrap<Argument>(Arg)->addAttr(Attributes::
                                  get(unwrap<Argument>(Arg)->getContext(), B));
@@ -1676,7 +1676,7 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
 void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, 
                            LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Attributes::Builder B(PA);
+  AttrBuilder B(PA);
   Call.setAttributes(
     Call.getAttributes().addAttr(Call->getContext(), index,
                                  Attributes::get(Call->getContext(), B)));
@@ -1685,7 +1685,7 @@ void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index,
 void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
                               LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Attributes::Builder B(PA);
+  AttrBuilder B(PA);
   Call.setAttributes(
     Call.getAttributes().removeAttr(Call->getContext(), index,
                                     Attributes::get(Call->getContext(), B)));
@@ -1694,7 +1694,7 @@ void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
                                 unsigned align) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Attributes::Builder B;
+  AttrBuilder B;
   B.addAlignmentAttr(align);
   Call.setAttributes(Call.getAttributes().addAttr(Call->getContext(), index,
                                        Attributes::get(Call->getContext(), B)));

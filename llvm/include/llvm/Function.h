@@ -178,7 +178,7 @@ public:
   ///
   void addFnAttr(Attributes::AttrVal N) { 
     // Function Attributes are stored at ~0 index 
-    Attributes::Builder B;
+    AttrBuilder B;
     B.addAttribute(N);
     addAttribute(~0U, Attributes::get(getContext(), B));
   }
@@ -278,7 +278,7 @@ public:
     return getParamAttributes(n).hasAttribute(Attributes::NoAlias);
   }
   void setDoesNotAlias(unsigned n) {
-    Attributes::Builder B;
+    AttrBuilder B;
     B.addAttribute(Attributes::NoAlias);
     addAttribute(n, Attributes::get(getContext(), B));
   }
@@ -289,7 +289,7 @@ public:
     return getParamAttributes(n).hasAttribute(Attributes::NoCapture);
   }
   void setDoesNotCapture(unsigned n) {
-    Attributes::Builder B;
+    AttrBuilder B;
     B.addAttribute(Attributes::NoCapture);
     addAttribute(n, Attributes::get(getContext(), B));
   }

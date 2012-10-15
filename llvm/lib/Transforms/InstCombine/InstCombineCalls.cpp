@@ -1007,7 +1007,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
-      Attributes::Builder RAttrs = CallerPAL.getRetAttributes();
+      AttrBuilder RAttrs = CallerPAL.getRetAttributes();
       if (RAttrs.hasAttributes(Attributes::typeIncompatible(NewRetTy)))
         return false;   // Attribute not compatible with transformed value.
     }
@@ -1038,7 +1038,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this parameter value.
 
     Attributes Attrs = CallerPAL.getParamAttributes(i + 1);
-    if (Attributes::Builder(Attrs).
+    if (AttrBuilder(Attrs).
           hasAttributes(Attributes::typeIncompatible(ParamTy)))
       return false;   // Attribute not compatible with transformed value.
 
@@ -1109,7 +1109,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   attrVec.reserve(NumCommonArgs);
 
   // Get any return attributes.
-  Attributes::Builder RAttrs = CallerPAL.getRetAttributes();
+  AttrBuilder RAttrs = CallerPAL.getRetAttributes();
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.

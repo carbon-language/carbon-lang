@@ -2062,7 +2062,7 @@ static void ChangeCalleesToFastCall(Function *F) {
 }
 
 static AttrListPtr StripNest(LLVMContext &C, const AttrListPtr &Attrs) {
-  Attributes::Builder B;
+  AttrBuilder B;
   B.addAttribute(Attributes::Nest);
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
