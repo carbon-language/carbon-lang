@@ -2717,9 +2717,9 @@ private:
     // If this doesn't map cleanly onto the alloca type, and that type isn't
     // a single value type, just emit a memcpy.
     bool EmitMemCpy
-      = !VecTy && (BeginOffset != NewAllocaBeginOffset ||
-                   EndOffset != NewAllocaEndOffset ||
-                   !NewAI.getAllocatedType()->isSingleValueType());
+      = !VecTy && !IntTy && (BeginOffset != NewAllocaBeginOffset ||
+                             EndOffset != NewAllocaEndOffset ||
+                             !NewAI.getAllocatedType()->isSingleValueType());
 
     // If we're just going to emit a memcpy, the alloca hasn't changed, and the
     // size hasn't been shrunk based on analysis of the viable range, this is
@@ -2741,14 +2741,23 @@ private:
     if (Pass.DeadSplitInsts.insert(&II))
       Pass.DeadInsts.push_back(&II);
 
-    bool IsVectorElement = VecTy && (BeginOffset > NewAllocaBeginOffset ||
-                                     EndOffset < NewAllocaEndOffset);
+    bool IsWholeAlloca = BeginOffset == NewAllocaBeginOffset &&
+                         EndOffset == NewAllocaEndOffset;
+    bool IsVectorElement = VecTy && !IsWholeAlloca;
+    uint64_t Size = EndOffset - BeginOffset;
+    IntegerType *SubIntTy
+      = IntTy ? Type::getIntNTy(IntTy->getContext(), Size*8) : 0;
 
     Type *OtherPtrTy = IsDest ? II.getRawSource()->getType()
                               : II.getRawDest()->getType();
-    if (!EmitMemCpy)
-      OtherPtrTy = IsVectorElement ? VecTy->getElementType()->getPointerTo()
-                                   : NewAI.getType();
+    if (!EmitMemCpy) {
+      if (IsVectorElement)
+        OtherPtrTy = VecTy->getElementType()->getPointerTo();
+      else if (IntTy && !IsWholeAlloca)
+        OtherPtrTy = SubIntTy->getPointerTo();
+      else
+        OtherPtrTy = NewAI.getType();
+    }
 
     // Compute the other pointer, folding as much as possible to produce
     // a single, simple GEP in most cases.
@@ -2795,9 +2804,18 @@ private:
         IRB.CreateAlignedLoad(SrcPtr, Align, getName(".copyload")),
         getIndex(IRB, BeginOffset),
         getName(".copyextract"));
+    } else if (IntTy && !IsWholeAlloca && !IsDest) {
+      Src = extractInteger(IRB, SubIntTy, BeginOffset);
     } else {
       Src = IRB.CreateAlignedLoad(SrcPtr, Align, II.isVolatile(),
                                   getName(".copyload"));
+    }
+
+    if (IntTy && !IsWholeAlloca && IsDest) {
+      StoreInst *Store = insertInteger(IRB, Src, BeginOffset);
+      (void)Store;
+      DEBUG(dbgs() << "          to: " << *Store << "\n");
+      return true;
     }
 
     if (IsVectorElement && IsDest) {

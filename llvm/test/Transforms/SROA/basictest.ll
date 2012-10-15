@@ -1046,8 +1046,12 @@ entry:
   ; Or a memset of the whole thing.
   call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 8, i32 1, i1 false)
 
-  ; Store to the high 32-bits...
+  ; Write to the high 32-bits with a memcpy.
   %X.sroa.0.4.raw_idx4.i = getelementptr inbounds i8* %0, i32 4
+  %d.raw = bitcast double* %d to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %X.sroa.0.4.raw_idx4.i, i8* %d.raw, i32 4, i32 1, i1 false)
+
+  ; Store to the high 32-bits...
   %X.sroa.0.4.cast5.i = bitcast i8* %X.sroa.0.4.raw_idx4.i to i32*
   store i32 1072693248, i32* %X.sroa.0.4.cast5.i, align 4
 
