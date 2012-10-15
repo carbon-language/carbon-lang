@@ -389,7 +389,7 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
         os << "Property "<< PD->getName() << " needs to be invalidated";
       } else {
         os << "Instance variable "<< IvarDecl->getName()
-             << " needs to be invalidated";
+             << " needs to be invalidated or set to nil";
       }
 
       BR.EmitBasicReport(D,
