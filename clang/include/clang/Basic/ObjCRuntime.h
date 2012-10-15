@@ -157,19 +157,6 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// \brief Does this runtime supports optimized setter entrypoints?
-  bool hasOptimizedSetter() const {
-    switch (getKind()) {
-      case MacOSX:
-        return getVersion() >= VersionTuple(10, 8);
-      case iOS:
-        return (getVersion() >= VersionTuple(6));
-    
-      default:
-      return false;
-    }
-  }
-
   /// Does this runtime allow the use of __weak?
   bool allowsWeak() const {
     return hasNativeWeak();
@@ -190,7 +177,7 @@ public:
     switch (getKind()) {
     case FragileMacOSX: return false;
     case MacOSX: return getVersion() >= VersionTuple(10, 8);
-    case iOS: return getVersion() >= VersionTuple(6);
+    case iOS: return false;
 
     // This is really a lie, because some implementations and versions
     // of the runtime do not support ARC.  Probably -fgnu-runtime
