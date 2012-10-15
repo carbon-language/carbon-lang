@@ -4230,9 +4230,26 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       // If we are VDUPing a value that comes directly from a vector, that will
       // cause an unnecessary move to and from a GPR, where instead we could
       // just use VDUPLANE.
-      if (Value->getOpcode() == ISD::EXTRACT_VECTOR_ELT)
-        N = DAG.getNode(ARMISD::VDUPLANE, dl, VT,
+      if (Value->getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+        // We need to create a new undef vector to use for the VDUPLANE if the
+        // size of the vector from which we get the value is different than the
+        // size of the vector that we need to create. We will insert the element
+        // such that the register coalescer will remove unnecessary copies.
+        if (VT != Value->getOperand(0).getValueType()) {
+          ConstantSDNode *constIndex;
+          constIndex = dyn_cast<ConstantSDNode>(Value->getOperand(1));
+          assert(constIndex && "The index is not a constant!");
+          unsigned index = constIndex->getAPIntValue().getLimitedValue() %
+                             VT.getVectorNumElements();
+          N =  DAG.getNode(ARMISD::VDUPLANE, dl, VT,
+                 DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, DAG.getUNDEF(VT),
+                        Value, DAG.getConstant(index, MVT::i32)),
+                           DAG.getConstant(index, MVT::i32));
+        } else {
+          N = DAG.getNode(ARMISD::VDUPLANE, dl, VT,
                         Value->getOperand(0), Value->getOperand(1));
+        }
+      }
       else
         N = DAG.getNode(ARMISD::VDUP, dl, VT, Value);
 
