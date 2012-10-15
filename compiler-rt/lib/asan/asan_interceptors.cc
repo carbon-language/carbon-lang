@@ -239,7 +239,13 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
+#if MAC_INTERPOSE_FUNCTIONS
+  // Interposing of resolver functions is broken on Mac OS 10.7 and 10.8.
+  // See also http://code.google.com/p/address-sanitizer/issues/detail?id=116.
+  return internal_memcpy(to, from, size);
+#else
   return REAL(memcpy)(to, from, size);
+#endif
 }
 
 INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
@@ -254,7 +260,13 @@ INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
+#if MAC_INTERPOSE_FUNCTIONS
+  // Interposing of resolver functions is broken on Mac OS 10.7 and 10.8.
+  // See also http://code.google.com/p/address-sanitizer/issues/detail?id=116.
+  return internal_memmove(to, from, size);
+#else
   return REAL(memmove)(to, from, size);
+#endif
 }
 
 INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
