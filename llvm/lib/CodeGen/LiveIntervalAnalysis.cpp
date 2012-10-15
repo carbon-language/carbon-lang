@@ -110,8 +110,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   DomTree = &getAnalysis<MachineDominatorTree>();
   if (!LRCalc)
     LRCalc = new LiveRangeCalc();
-  AllocatableRegs = TRI->getAllocatableSet(fn);
-  ReservedRegs = TRI->getReservedRegs(fn);
 
   // Allocate space for all virtual registers.
   VirtRegIntervals.resize(MRI->getNumVirtRegs());
@@ -542,11 +540,11 @@ void LiveIntervals::computeRegUnitInterval(LiveInterval *LI) {
   // Ignore uses of reserved registers. We only track defs of those.
   for (MCRegUnitRootIterator Roots(Unit, TRI); Roots.isValid(); ++Roots) {
     unsigned Root = *Roots;
-    if (!isReserved(Root) && !MRI->reg_empty(Root))
+    if (!MRI->isReserved(Root) && !MRI->reg_empty(Root))
       LRCalc->extendToUses(LI, Root);
     for (MCSuperRegIterator Supers(Root, TRI); Supers.isValid(); ++Supers) {
       unsigned Reg = *Supers;
-      if (!isReserved(Reg) && !MRI->reg_empty(Reg))
+      if (!MRI->isReserved(Reg) && !MRI->reg_empty(Reg))
         LRCalc->extendToUses(LI, Reg);
     }
   }

@@ -355,7 +355,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
                                                    loopInfo->getLoopDepth(mbb));
 
       if (cp.isPhys()) {
-        if (!lis->isAllocatable(dst)) {
+        if (!mf->getRegInfo().isAllocatable(dst)) {
           continue;
         }
 

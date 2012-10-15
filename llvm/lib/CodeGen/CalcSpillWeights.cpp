@@ -164,7 +164,7 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
       continue;
     float hweight = Hint[hint] += weight;
     if (TargetRegisterInfo::isPhysicalRegister(hint)) {
-      if (hweight > bestPhys && LIS.isAllocatable(hint))
+      if (hweight > bestPhys && mri.isAllocatable(hint))
         bestPhys = hweight, hintPhys = hint;
     } else {
       if (hweight > bestVirt)

@@ -249,7 +249,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         unsigned Reg = MOI->getReg();
         if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
           // Check if MI reads any unreserved physregs.
-          if (Reg && MOI->readsReg() && !LIS.isReserved(Reg))
+          if (Reg && MOI->readsReg() && !MRI.isReserved(Reg))
             ReadsPhysRegs = true;
           continue;
         }

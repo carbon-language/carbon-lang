@@ -65,12 +65,6 @@ namespace llvm {
     /// Live interval pointers for all the virtual registers.
     IndexedMap<LiveInterval*, VirtReg2IndexFunctor> VirtRegIntervals;
 
-    /// AllocatableRegs - A bit vector of allocatable registers.
-    BitVector AllocatableRegs;
-
-    /// ReservedRegs - A bit vector of reserved registers.
-    BitVector ReservedRegs;
-
     /// RegMaskSlots - Sorted list of instructions with register mask operands.
     /// Always use the 'r' slot, RegMasks are normal clobbers, not early
     /// clobbers.
@@ -121,18 +115,6 @@ namespace llvm {
 
     bool hasInterval(unsigned Reg) const {
       return VirtRegIntervals.inBounds(Reg) && VirtRegIntervals[Reg];
-    }
-
-    /// isAllocatable - is the physical register reg allocatable in the current
-    /// function?
-    bool isAllocatable(unsigned reg) const {
-      return AllocatableRegs.test(reg);
-    }
-
-    /// isReserved - is the physical register reg reserved in the current
-    /// function
-    bool isReserved(unsigned reg) const {
-      return ReservedRegs.test(reg);
     }
 
     // Interval creation.
