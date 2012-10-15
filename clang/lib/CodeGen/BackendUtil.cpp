@@ -175,7 +175,7 @@ void EmitAssemblyHelper::CreatePasses() {
   }
 
   if (LangOpts.AddressSanitizer) {
-    PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
+    PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addAddressSanitizerPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addAddressSanitizerPass);
