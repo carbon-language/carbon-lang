@@ -256,17 +256,17 @@ entry:
   ret i32 %loaded
 }
 
-define i32 @test10(i32 %b, i32* %ptr) {
+define float @test10(i32 %b, float* %ptr) {
 ; Don't try to promote allocas which are not elligible for it even after
 ; rewriting due to the necessity of inserting bitcasts when speculating a PHI
 ; node.
 ; CHECK: @test10
 ; CHECK: %[[alloca:.*]] = alloca
-; CHECK: %[[argvalue:.*]] = load i32* %ptr
-; CHECK: %[[cast:.*]] = bitcast double* %[[alloca]] to i32*
-; CHECK: %[[allocavalue:.*]] = load i32* %[[cast]]
-; CHECK: %[[result:.*]] = phi i32 [ %[[allocavalue]], %else ], [ %[[argvalue]], %then ]
-; CHECK-NEXT: ret i32 %[[result]]
+; CHECK: %[[argvalue:.*]] = load float* %ptr
+; CHECK: %[[cast:.*]] = bitcast double* %[[alloca]] to float*
+; CHECK: %[[allocavalue:.*]] = load float* %[[cast]]
+; CHECK: %[[result:.*]] = phi float [ %[[allocavalue]], %else ], [ %[[argvalue]], %then ]
+; CHECK-NEXT: ret float %[[result]]
 
 entry:
   %f = alloca double
@@ -278,34 +278,34 @@ then:
   br label %exit
 
 else:
-  %bitcast = bitcast double* %f to i32*
+  %bitcast = bitcast double* %f to float*
   br label %exit
 
 exit:
-  %phi = phi i32* [ %bitcast, %else ], [ %ptr, %then ]
-  %loaded = load i32* %phi, align 4
-  ret i32 %loaded
+  %phi = phi float* [ %bitcast, %else ], [ %ptr, %then ]
+  %loaded = load float* %phi, align 4
+  ret float %loaded
 }
 
-define i32 @test11(i32 %b, i32* %ptr) {
+define float @test11(i32 %b, float* %ptr) {
 ; Same as @test10 but for a select rather than a PHI node.
 ; CHECK: @test11
 ; CHECK: %[[alloca:.*]] = alloca
-; CHECK: %[[cast:.*]] = bitcast double* %[[alloca]] to i32*
-; CHECK: %[[allocavalue:.*]] = load i32* %[[cast]]
-; CHECK: %[[argvalue:.*]] = load i32* %ptr
-; CHECK: %[[result:.*]] = select i1 %{{.*}}, i32 %[[allocavalue]], i32 %[[argvalue]]
-; CHECK-NEXT: ret i32 %[[result]]
+; CHECK: %[[cast:.*]] = bitcast double* %[[alloca]] to float*
+; CHECK: %[[allocavalue:.*]] = load float* %[[cast]]
+; CHECK: %[[argvalue:.*]] = load float* %ptr
+; CHECK: %[[result:.*]] = select i1 %{{.*}}, float %[[allocavalue]], float %[[argvalue]]
+; CHECK-NEXT: ret float %[[result]]
 
 entry:
   %f = alloca double
   store double 0.0, double* %f
-  store i32 0, i32* %ptr
+  store float 0.0, float* %ptr
   %test = icmp ne i32 %b, 0
-  %bitcast = bitcast double* %f to i32*
-  %select = select i1 %test, i32* %bitcast, i32* %ptr
-  %loaded = load i32* %select, align 4
-  ret i32 %loaded
+  %bitcast = bitcast double* %f to float*
+  %select = select i1 %test, float* %bitcast, float* %ptr
+  %loaded = load float* %select, align 4
+  ret float %loaded
 }
 
 define i32 @test12(i32 %x, i32* %p) {

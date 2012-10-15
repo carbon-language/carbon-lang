@@ -2120,47 +2120,74 @@ static bool isVectorPromotionViable(const DataLayout &TD,
   return true;
 }
 
-/// \brief Test whether the given alloca partition can be promoted to an int.
+/// \brief Test whether the given alloca partition's integer operations can be
+/// widened to promotable ones.
 ///
-/// This is a quick test to check whether we can rewrite a particular alloca
-/// partition (and its newly formed alloca) into an integer alloca suitable for
-/// promotion to an SSA value. We only can ensure this for a limited set of
-/// operations, and we don't want to do the rewrites unless we are confident
-/// that the result will be promotable, so we have an early test here.
-static bool isIntegerPromotionViable(const DataLayout &TD,
-                                     Type *AllocaTy,
-                                     uint64_t AllocBeginOffset,
-                                     AllocaPartitioning &P,
-                                     AllocaPartitioning::const_use_iterator I,
-                                     AllocaPartitioning::const_use_iterator E) {
-  IntegerType *Ty = dyn_cast<IntegerType>(AllocaTy);
-  if (!Ty || 8*TD.getTypeStoreSize(Ty) != Ty->getBitWidth())
+/// This is a quick test to check whether we can rewrite the integer loads and
+/// stores to a particular alloca into wider loads and stores and be able to
+/// promote the resulting alloca.
+static bool isIntegerWideningViable(const DataLayout &TD,
+                                    Type *AllocaTy,
+                                    uint64_t AllocBeginOffset,
+                                    AllocaPartitioning &P,
+                                    AllocaPartitioning::const_use_iterator I,
+                                    AllocaPartitioning::const_use_iterator E) {
+  uint64_t SizeInBits = TD.getTypeSizeInBits(AllocaTy);
+
+  // Don't try to handle allocas with bit-padding.
+  if (SizeInBits != TD.getTypeStoreSizeInBits(AllocaTy))
     return false;
+
+  uint64_t Size = TD.getTypeStoreSize(AllocaTy);
 
   // Check the uses to ensure the uses are (likely) promoteable integer uses.
   // Also ensure that the alloca has a covering load or store. We don't want
-  // promote because of some other unsplittable entry (which we may make
-  // splittable later) and lose the ability to promote each element access.
+  // to widen the integer operotains only to fail to promote due to some other
+  // unsplittable entry (which we may make splittable later).
   bool WholeAllocaOp = false;
   for (; I != E; ++I) {
     if (!I->U)
       continue; // Skip dead use.
 
+    uint64_t RelBegin = I->BeginOffset - AllocBeginOffset;
+    uint64_t RelEnd = I->EndOffset - AllocBeginOffset;
+
     // We can't reasonably handle cases where the load or store extends past
     // the end of the aloca's type and into its padding.
-    if ((I->EndOffset - AllocBeginOffset) > TD.getTypeStoreSize(Ty))
+    if (RelEnd > Size)
       return false;
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I->U->getUser())) {
-      if (LI->isVolatile() || !LI->getType()->isIntegerTy())
+      if (LI->isVolatile())
         return false;
-      if (LI->getType() == Ty)
+      if (RelBegin == 0 && RelEnd == Size)
         WholeAllocaOp = true;
+      if (IntegerType *ITy = dyn_cast<IntegerType>(LI->getType())) {
+        if (ITy->getBitWidth() < TD.getTypeStoreSize(ITy))
+          return false;
+        continue;
+      }
+      // Non-integer loads need to be convertible from the alloca type so that
+      // they are promotable.
+      if (RelBegin != 0 || RelEnd != Size ||
+          !canConvertValue(TD, AllocaTy, LI->getType()))
+        return false;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I->U->getUser())) {
-      if (SI->isVolatile() || !SI->getValueOperand()->getType()->isIntegerTy())
+      Type *ValueTy = SI->getValueOperand()->getType();
+      if (SI->isVolatile())
         return false;
-      if (SI->getValueOperand()->getType() == Ty)
+      if (RelBegin == 0 && RelEnd == Size)
         WholeAllocaOp = true;
+      if (IntegerType *ITy = dyn_cast<IntegerType>(ValueTy)) {
+        if (ITy->getBitWidth() < TD.getTypeStoreSize(ITy))
+          return false;
+        continue;
+      }
+      // Non-integer stores need to be convertible to the alloca type so that
+      // they are promotable.
+      if (RelBegin != 0 || RelEnd != Size ||
+          !canConvertValue(TD, ValueTy, AllocaTy))
+        return false;
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I->U->getUser())) {
       if (MI->isVolatile())
         return false;
@@ -2170,6 +2197,10 @@ static bool isIntegerPromotionViable(const DataLayout &TD,
         if (!MTO.IsSplittable)
           return false;
       }
+    } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I->U->getUser())) {
+      if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
+          II->getIntrinsicID() != Intrinsic::lifetime_end)
+        return false;
     } else {
       return false;
     }
@@ -2210,10 +2241,10 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
   uint64_t ElementSize;
 
   // This is a convenience and flag variable that will be null unless the new
-  // alloca has a promotion-targeted integer type due to passing
-  // isIntegerPromotionViable above. If it is non-null does, the desired
+  // alloca's integer operations should be widened to this integer type due to
+  // passing isIntegerWideningViable above. If it is non-null, the desired
   // integer type will be stored here for easy access during rewriting.
-  IntegerType *IntPromotionTy;
+  IntegerType *IntTy;
 
   // The offset of the partition user currently being rewritten.
   uint64_t BeginOffset, EndOffset;
@@ -2233,7 +2264,7 @@ public:
       NewAllocaBeginOffset(NewBeginOffset),
       NewAllocaEndOffset(NewEndOffset),
       NewAllocaTy(NewAI.getAllocatedType()),
-      VecTy(), ElementTy(), ElementSize(), IntPromotionTy(),
+      VecTy(), ElementTy(), ElementSize(), IntTy(),
       BeginOffset(), EndOffset() {
   }
 
@@ -2249,9 +2280,10 @@ public:
       assert((VecTy->getScalarSizeInBits() % 8) == 0 &&
              "Only multiple-of-8 sized vector elements are viable");
       ElementSize = VecTy->getScalarSizeInBits() / 8;
-    } else if (isIntegerPromotionViable(TD, NewAI.getAllocatedType(),
-                                        NewAllocaBeginOffset, P, I, E)) {
-      IntPromotionTy = cast<IntegerType>(NewAI.getAllocatedType());
+    } else if (isIntegerWideningViable(TD, NewAI.getAllocatedType(),
+                                       NewAllocaBeginOffset, P, I, E)) {
+      IntTy = Type::getIntNTy(NewAI.getContext(),
+                              TD.getTypeSizeInBits(NewAI.getAllocatedType()));
     }
     bool CanSROA = true;
     for (; I != E; ++I) {
@@ -2269,6 +2301,10 @@ public:
       VecTy = 0;
       ElementTy = 0;
       ElementSize = 0;
+    }
+    if (IntTy) {
+      assert(CanSROA);
+      IntTy = 0;
     }
     return CanSROA;
   }
@@ -2333,55 +2369,56 @@ private:
 
   Value *extractInteger(IRBuilder<> &IRB, IntegerType *TargetTy,
                         uint64_t Offset) {
-    assert(IntPromotionTy && "Alloca is not an integer we can extract from");
+    assert(IntTy && "We cannot extract an integer from the alloca");
     Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                      getName(".load"));
+    V = convertValue(TD, IRB, V, IntTy);
     assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
     assert(TD.getTypeStoreSize(TargetTy) + RelOffset <=
-           TD.getTypeStoreSize(IntPromotionTy) &&
+           TD.getTypeStoreSize(IntTy) &&
            "Element load outside of alloca store");
     uint64_t ShAmt = 8*RelOffset;
     if (TD.isBigEndian())
-      ShAmt = 8*(TD.getTypeStoreSize(IntPromotionTy) -
+      ShAmt = 8*(TD.getTypeStoreSize(IntTy) -
                  TD.getTypeStoreSize(TargetTy) - RelOffset);
     if (ShAmt)
       V = IRB.CreateLShr(V, ShAmt, getName(".shift"));
-    if (TargetTy != IntPromotionTy) {
-      assert(TargetTy->getBitWidth() < IntPromotionTy->getBitWidth() &&
-             "Cannot extract to a larger integer!");
+    assert(TargetTy->getBitWidth() <= IntTy->getBitWidth() &&
+           "Cannot extract to a larger integer!");
+    if (TargetTy != IntTy)
       V = IRB.CreateTrunc(V, TargetTy, getName(".trunc"));
-    }
     return V;
   }
 
   StoreInst *insertInteger(IRBuilder<> &IRB, Value *V, uint64_t Offset) {
     IntegerType *Ty = cast<IntegerType>(V->getType());
-    if (Ty == IntPromotionTy)
-      return IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
-
-    assert(Ty->getBitWidth() < IntPromotionTy->getBitWidth() &&
+    assert(Ty->getBitWidth() <= IntTy->getBitWidth() &&
            "Cannot insert a larger integer!");
-    V = IRB.CreateZExt(V, IntPromotionTy, getName(".ext"));
+    if (Ty != IntTy)
+      V = IRB.CreateZExt(V, IntTy, getName(".ext"));
     assert(Offset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
     assert(TD.getTypeStoreSize(Ty) + RelOffset <=
-           TD.getTypeStoreSize(IntPromotionTy) &&
+           TD.getTypeStoreSize(IntTy) &&
            "Element store outside of alloca store");
     uint64_t ShAmt = 8*RelOffset;
     if (TD.isBigEndian())
-      ShAmt = 8*(TD.getTypeStoreSize(IntPromotionTy) - TD.getTypeStoreSize(Ty)
+      ShAmt = 8*(TD.getTypeStoreSize(IntTy) - TD.getTypeStoreSize(Ty)
                  - RelOffset);
     if (ShAmt)
       V = IRB.CreateShl(V, ShAmt, getName(".shift"));
 
-    APInt Mask = ~Ty->getMask().zext(IntPromotionTy->getBitWidth()).shl(ShAmt);
-    Value *Old = IRB.CreateAnd(IRB.CreateAlignedLoad(&NewAI,
-                                                     NewAI.getAlignment(),
-                                                     getName(".oldload")),
-                               Mask, getName(".mask"));
-    return IRB.CreateAlignedStore(IRB.CreateOr(Old, V, getName(".insert")),
-                                  &NewAI, NewAI.getAlignment());
+    if (ShAmt || Ty->getBitWidth() < IntTy->getBitWidth()) {
+      APInt Mask = ~Ty->getMask().zext(IntTy->getBitWidth()).shl(ShAmt);
+      Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                         getName(".oldload"));
+      Old = convertValue(TD, IRB, Old, IntTy);
+      Old = IRB.CreateAnd(Old, Mask, getName(".mask"));
+      V = IRB.CreateOr(Old, V, getName(".insert"));
+    }
+    V = convertValue(TD, IRB, V, NewAllocaTy);
+    return IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
   }
 
   void deleteIfTriviallyDead(Value *V) {
@@ -2428,7 +2465,7 @@ private:
 
     if (VecTy)
       return rewriteVectorizedLoadInst(IRB, LI, OldOp);
-    if (IntPromotionTy)
+    if (IntTy && LI.getType()->isIntegerTy())
       return rewriteIntegerLoad(IRB, LI);
 
     if (BeginOffset == NewAllocaBeginOffset &&
@@ -2442,6 +2479,8 @@ private:
       DEBUG(dbgs() << "          to: " << *NewLI << "\n");
       return !LI.isVolatile();
     }
+
+    assert(!IntTy && "Invalid load found with int-op widening enabled");
 
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          LI.getPointerOperand()->getType());
@@ -2492,10 +2531,9 @@ private:
 
     if (VecTy)
       return rewriteVectorizedStoreInst(IRB, SI, OldOp);
-    if (IntPromotionTy)
-      return rewriteIntegerStore(IRB, SI);
-
     Type *ValueTy = SI.getValueOperand()->getType();
+    if (IntTy && ValueTy->isIntegerTy())
+      return rewriteIntegerStore(IRB, SI);
 
     // Strip all inbounds GEPs and pointer casts to try to dig out any root
     // alloca that should be re-examined after promoting this alloca.
@@ -2515,6 +2553,8 @@ private:
       DEBUG(dbgs() << "          to: " << *NewSI << "\n");
       return !SI.isVolatile();
     }
+
+    assert(!IntTy && "Invalid store found with int-op widening enabled");
 
     Value *NewPtr = getAdjustedAllocaPtr(IRB,
                                          SI.getPointerOperand()->getType());

@@ -409,8 +409,11 @@ declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
 define i16 @test5() {
 ; CHECK: @test5
-; CHECK: alloca float
-; CHECK: ret i16 %
+; CHECK-NOT: alloca float
+; CHECK:      %[[cast:.*]] = bitcast float 0.0{{.*}} to i32
+; CHECK-NEXT: %[[shr:.*]] = lshr i32 %[[cast]], 16
+; CHECK-NEXT: %[[trunc:.*]] = trunc i32 %[[shr]] to i16
+; CHECK-NEXT: ret i16 %[[trunc]]
 
 entry:
   %a = alloca [4 x i8]
@@ -1011,4 +1014,35 @@ entry:
 
   ret i32 %valcast2
 ; CHECK: ret i32
+}
+
+define void @PR14059.1(double* %d) {
+; In PR14059 a peculiar construct was identified as something that is used
+; pervasively in ARM's ABI-calling-convention lowering: the passing of a struct
+; of doubles via an array of i32 in order to place the data into integer
+; registers. This in turn was missed as an optimization by SROA due to the
+; partial loads and stores of integers to the double alloca we were trying to
+; form and promote. The solution is to widen the integer operations to be
+; whole-alloca operations, and perform the appropriate bitcasting on the
+; *values* rather than the pointers. When this works, partial reads and writes
+; via integers can be promoted away.
+; CHECK: @PR14059.1
+; CHECK-NOT: alloca
+; CHECK: ret void
+
+entry:
+  %X.sroa.0.i = alloca double, align 8
+  %0 = bitcast double* %X.sroa.0.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %0)
+  %X.sroa.0.0.cast2.i = bitcast double* %X.sroa.0.i to i32*
+  store i32 0, i32* %X.sroa.0.0.cast2.i, align 8
+  %X.sroa.0.4.raw_idx4.i = getelementptr inbounds i8* %0, i32 4
+  %X.sroa.0.4.cast5.i = bitcast i8* %X.sroa.0.4.raw_idx4.i to i32*
+  store i32 1072693248, i32* %X.sroa.0.4.cast5.i, align 4
+  %X.sroa.0.0.load1.i = load double* %X.sroa.0.i, align 8
+  %accum.real.i = load double* %d, align 8
+  %add.r.i = fadd double %accum.real.i, %X.sroa.0.0.load1.i
+  store double %add.r.i, double* %d, align 8
+  call void @llvm.lifetime.end(i64 -1, i8* %0)
+  ret void
 }
