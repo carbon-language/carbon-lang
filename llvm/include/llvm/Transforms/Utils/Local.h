@@ -186,7 +186,8 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
   bool isInBounds = cast<GEPOperator>(GEP)->isInBounds() && !NoAssumptions;
 
   // Build a mask for high order bits.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  unsigned AS = cast<GEPOperator>(GEP)->getPointerAddressSpace();
+  unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
   uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
 
   for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;

@@ -1054,7 +1054,8 @@ GenericValue Interpreter::executeIntToPtrInst(Value *SrcVal, Type *DstTy,
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
   assert(DstTy->isPointerTy() && "Invalid PtrToInt instruction");
 
-  uint32_t PtrSize = TD.getPointerSizeInBits();
+  unsigned AS = cast<PointerType>(DstTy)->getAddressSpace();
+  uint32_t PtrSize = TD.getPointerSizeInBits(AS);
   if (PtrSize != Src.IntVal.getBitWidth())
     Src.IntVal = Src.IntVal.zextOrTrunc(PtrSize);
 

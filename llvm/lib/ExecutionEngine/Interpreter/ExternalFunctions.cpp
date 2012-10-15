@@ -376,7 +376,7 @@ GenericValue lle_X_sprintf(FunctionType *FT,
       case 'x': case 'X':
         if (HowLong >= 1) {
           if (HowLong == 1 &&
-              TheInterpreter->getDataLayout()->getPointerSizeInBits() == 64 &&
+              TheInterpreter->getDataLayout()->getPointerSizeInBits(0) == 64 &&
               sizeof(long) < sizeof(int64_t)) {
             // Make sure we use %lld with a 64 bit argument because we might be
             // compiling LLI on a 32 bit compiler.

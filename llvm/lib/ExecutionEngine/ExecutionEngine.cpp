@@ -17,6 +17,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ADT/SmallString.h"
@@ -267,7 +268,7 @@ public:
 void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
                        const std::vector<std::string> &InputArgv) {
   clear();  // Free the old contents.
-  unsigned PtrSize = EE->getDataLayout()->getPointerSize();
+  unsigned PtrSize = EE->getDataLayout()->getPointerSize(0);
   Array = new char[(InputArgv.size()+1)*PtrSize];
 
   DEBUG(dbgs() << "JIT: ARGV = " << (void*)Array << "\n");
@@ -342,7 +343,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
 #ifndef NDEBUG
 /// isTargetNullPtr - Return whether the target pointer stored at Loc is null.
 static bool isTargetNullPtr(ExecutionEngine *EE, void *Loc) {
-  unsigned PtrSize = EE->getDataLayout()->getPointerSize();
+  unsigned PtrSize = EE->getDataLayout()->getPointerSize(0);
   for (unsigned i = 0; i < PtrSize; ++i)
     if (*(i + (uint8_t*)Loc))
       return false;
@@ -644,13 +645,16 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::PtrToInt: {
       GenericValue GV = getConstantValue(Op0);
-      uint32_t PtrWidth = TD->getPointerSizeInBits();
+      unsigned AS = cast<PointerType>(CE->getOperand(1)->getType())
+        ->getAddressSpace();
+      uint32_t PtrWidth = TD->getPointerSizeInBits(AS);
       GV.IntVal = APInt(PtrWidth, uintptr_t(GV.PointerVal));
       return GV;
     }
     case Instruction::IntToPtr: {
       GenericValue GV = getConstantValue(Op0);
-      uint32_t PtrWidth = TD->getPointerSizeInBits();
+      unsigned AS = cast<PointerType>(CE->getType())->getAddressSpace();
+      uint32_t PtrWidth = TD->getPointerSizeInBits(AS);
       if (PtrWidth != GV.IntVal.getBitWidth())
         GV.IntVal = GV.IntVal.zextOrTrunc(PtrWidth);
       assert(GV.IntVal.getBitWidth() <= 64 && "Bad pointer width");

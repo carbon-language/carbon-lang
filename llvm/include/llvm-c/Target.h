@@ -172,9 +172,19 @@ enum LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef);
     See the method llvm::DataLayout::getPointerSize. */
 unsigned LLVMPointerSize(LLVMTargetDataRef);
 
+/** Returns the pointer size in bytes for a target for a specified
+    address space.
+    See the method llvm::DataLayout::getPointerSize. */
+unsigned LLVMPointerSizeForAS(LLVMTargetDataRef, unsigned AS);
+
 /** Returns the integer type that is the same size as a pointer on a target.
     See the method llvm::DataLayout::getIntPtrType. */
 LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef);
+
+/** Returns the integer type that is the same size as a pointer on a target.
+    This version allows the address space to be specified.
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrTypeForAS(LLVMTargetDataRef, unsigned AS);
 
 /** Computes the size of a type in bytes for a target.
     See the method llvm::DataLayout::getTypeSizeInBits. */
