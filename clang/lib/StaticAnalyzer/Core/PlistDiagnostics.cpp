@@ -13,8 +13,9 @@
 
 #include "clang/StaticAnalyzer/Core/PathDiagnosticConsumers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
@@ -409,10 +410,13 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
   "<plist version=\"1.0\">\n";
 
   // Write the root object: a <dict> containing...
+  //  - "clang_version", the string representation of clang version
   //  - "files", an <array> mapping from FIDs to file names
   //  - "diagnostics", an <array> containing the path diagnostics
-  o << "<dict>\n"
-       " <key>files</key>\n"
+  o << "<dict>\n" <<
+       " <key>clang_version</key>\n";
+  EmitString(o, getClangFullVersion()) << '\n';
+  o << " <key>files</key>\n"
        " <array>\n";
 
   for (SmallVectorImpl<FileID>::iterator I=Fids.begin(), E=Fids.end();
