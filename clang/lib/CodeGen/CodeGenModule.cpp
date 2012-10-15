@@ -646,7 +646,8 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   if (unsigned IID = F->getIntrinsicID()) {
     // If this is an intrinsic function, set the function's attributes
     // to the intrinsic's attributes.
-    F->setAttributes(llvm::Intrinsic::getAttributes((llvm::Intrinsic::ID)IID));
+    F->setAttributes(llvm::Intrinsic::getAttributes(getLLVMContext(),
+                                                    (llvm::Intrinsic::ID)IID));
     return;
   }
 

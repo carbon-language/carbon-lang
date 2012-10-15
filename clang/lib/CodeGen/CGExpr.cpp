@@ -2087,7 +2087,8 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
     .addAttribute(llvm::Attributes::UWTable);
   llvm::Value *Fn = CGM.CreateRuntimeFunction(FnType,
                                           ("__ubsan_handle_" + CheckName).str(),
-                                              llvm::Attributes::get(B));
+                                         llvm::Attributes::get(getLLVMContext(),
+                                                               B));
   llvm::CallInst *HandlerCall = Builder.CreateCall(Fn, Args);
   HandlerCall->setDoesNotReturn();
   HandlerCall->setDoesNotThrow();
