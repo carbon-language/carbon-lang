@@ -371,8 +371,10 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
   // Otherwise, things are good.  Fill in the declaration and return it.
   LabelStmt *LS = new (Context) LabelStmt(IdentLoc, TheDecl, SubStmt);
   TheDecl->setStmt(LS);
-  if (!TheDecl->isGnuLocal())
+  if (!TheDecl->isGnuLocal()) {
+    TheDecl->setLocStart(IdentLoc);
     TheDecl->setLocation(IdentLoc);
+  }
   return Owned(LS);
 }
 
