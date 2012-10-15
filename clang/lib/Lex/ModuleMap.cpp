@@ -585,6 +585,11 @@ namespace clang {
   class ModuleMapParser {
     Lexer &L;
     SourceManager &SourceMgr;
+
+    /// \brief Default target information, used only for string literal
+    /// parsing.
+    const TargetInfo *Target;
+
     DiagnosticsEngine &Diags;
     ModuleMap &Map;
     
@@ -596,11 +601,7 @@ namespace clang {
 
     /// \brief Whether an error occurred.
     bool HadError;
-    
-    /// \brief Default target information, used only for string literal
-    /// parsing.
-    OwningPtr<TargetInfo> Target;
-    
+        
     /// \brief Stores string data for the various string literals referenced
     /// during parsing.
     llvm::BumpPtrAllocator StringData;
@@ -632,18 +633,15 @@ namespace clang {
     
   public:
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
+                             const TargetInfo *Target,
                              DiagnosticsEngine &Diags,
                              ModuleMap &Map,
                              const DirectoryEntry *Directory,
                              const DirectoryEntry *BuiltinIncludeDir)
-      : L(L), SourceMgr(SourceMgr), Diags(Diags), Map(Map), 
+      : L(L), SourceMgr(SourceMgr), Target(Target), Diags(Diags), Map(Map), 
         Directory(Directory), BuiltinIncludeDir(BuiltinIncludeDir), 
         HadError(false), ActiveModule(0)
     {
-      TargetOptions TargetOpts;
-      TargetOpts.Triple = llvm::sys::getDefaultTargetTriple();
-      Target.reset(TargetInfo::CreateTargetInfo(Diags, TargetOpts));
-      
       Tok.clear();
       consumeToken();
     }
@@ -1535,7 +1533,7 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
   // Parse this module map file.
   Lexer L(ID, SourceMgr->getBuffer(ID), *SourceMgr, MMapLangOpts);
   Diags->getClient()->BeginSourceFile(MMapLangOpts);
-  ModuleMapParser Parser(L, *SourceMgr, *Diags, *this, File->getDir(),
+  ModuleMapParser Parser(L, *SourceMgr, Target, *Diags, *this, File->getDir(),
                          BuiltinIncludeDir);
   bool Result = Parser.parseModuleMapFile();
   Diags->getClient()->EndSourceFile();

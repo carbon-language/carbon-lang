@@ -4603,6 +4603,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
     Diags.Report(diag::err_target_unknown_triple) << Triple.str();
     return 0;
   }
+  Target->setTargetOpts(Opts);
 
   // Set the target CPU if specified.
   if (!Opts.CPU.empty() && !Target->setCPU(Opts.CPU)) {

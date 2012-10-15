@@ -62,6 +62,7 @@ enum TargetCXXABI {
 /// \brief Exposes information about the current target.
 ///
 class TargetInfo : public RefCountedBase<TargetInfo> {
+  TargetOptions *TargetOpts;
   llvm::Triple Triple;
 protected:
   // Target values set by the ctor of the actual target implementation.  Default
@@ -111,6 +112,16 @@ public:
                                       TargetOptions &Opts);
 
   virtual ~TargetInfo();
+
+  /// \brief Retrieve the target options.
+  TargetOptions &getTargetOpts() const { 
+    assert(TargetOpts && "Missing target options");
+    return *TargetOpts; 
+  }
+
+  void setTargetOpts(TargetOptions &TargetOpts) {
+    this->TargetOpts = &TargetOpts;
+  }
 
   ///===---- Target Data Type Query Methods -------------------------------===//
   enum IntType {

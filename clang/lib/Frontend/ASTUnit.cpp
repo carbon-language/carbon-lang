@@ -503,6 +503,7 @@ class ASTInfoCollector : public ASTReaderListener {
   ASTContext &Context;
   LangOptions &LangOpt;
   HeaderSearch &HSI;
+  TargetOptions &TargetOpts;
   IntrusiveRefCntPtr<TargetInfo> &Target;
   std::string &Predefines;
   unsigned &Counter;
@@ -512,11 +513,12 @@ class ASTInfoCollector : public ASTReaderListener {
   bool InitializedLanguage;
 public:
   ASTInfoCollector(Preprocessor &PP, ASTContext &Context, LangOptions &LangOpt, 
-                   HeaderSearch &HSI,
+                   HeaderSearch &HSI, TargetOptions &TargetOpts,
                    IntrusiveRefCntPtr<TargetInfo> &Target,
                    std::string &Predefines,
                    unsigned &Counter)
-    : PP(PP), Context(Context), LangOpt(LangOpt), HSI(HSI), Target(Target),
+    : PP(PP), Context(Context), LangOpt(LangOpt), HSI(HSI), 
+      TargetOpts(TargetOpts), Target(Target),
       Predefines(Predefines), Counter(Counter), NumHeaderInfos(0),
       InitializedLanguage(false) {}
 
@@ -543,7 +545,6 @@ public:
     assert(M.Kind == serialization::MK_MainFile);
 
     // FIXME: This is broken, we should store the TargetOptions in the AST file.
-    TargetOptions TargetOpts;
     TargetOpts.ABI = "";
     TargetOpts.CXXABI = "";
     TargetOpts.CPU = "";
@@ -807,7 +808,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
                                            AST->ASTFileLangOpts, HeaderInfo, 
-                                           AST->Target, Predefines, Counter));
+                                           AST->TargetOpts, AST->Target, 
+                                           Predefines, Counter));
 
   switch (Reader->ReadAST(Filename, serialization::MK_MainFile)) {
   case ASTReader::Success:

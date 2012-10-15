@@ -24,6 +24,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang-c/Index.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -71,6 +72,7 @@ private:
   IntrusiveRefCntPtr<Preprocessor>      PP;
   IntrusiveRefCntPtr<ASTContext>        Ctx;
   ASTReader *Reader;
+  TargetOptions TargetOpts;
 
   struct ASTWriterData;
   OwningPtr<ASTWriterData> WriterData;
