@@ -52,6 +52,7 @@ public:
   /// uwtable + nounwind = Needs an entry because the ABI says so.
 
   enum AttrVal {
+    // IR-Level Attributes
     None            = 0,   ///< No attributes have been set
     AddressSafety   = 1,   ///< Address safety checking is on.
     Alignment       = 2,   ///< Alignment of parameter (5 bits)
@@ -120,23 +121,38 @@ public:
 
     void clear() { Bits = 0; }
 
-    bool hasAttribute(Attributes::AttrVal A) const;
-    bool hasAttributes() const;
-    bool hasAttributes(const Attributes &A) const;
-    bool hasAlignmentAttr() const;
-
-    uint64_t getAlignment() const;
-    uint64_t getStackAlignment() const;
-
+    /// addAttribute - Add an attribute to the builder.
     Builder &addAttribute(Attributes::AttrVal Val);
+
+    /// removeAttribute - Remove an attribute from the builder.
     Builder &removeAttribute(Attributes::AttrVal Val);
 
+    /// addAttribute - Add the attributes from A to the builder.
     Builder &addAttributes(const Attributes &A);
+
+    /// removeAttribute - Remove the attributes from A from the builder.
     Builder &removeAttributes(const Attributes &A);
 
-    /// addRawValue - Add the raw value to the internal representation. This
-    /// should be used ONLY for decoding bitcode!
-    Builder &addRawValue(uint64_t Val);
+    /// hasAttribute - Return true if the builder has the specified attribute.
+    bool hasAttribute(Attributes::AttrVal A) const;
+
+    /// hasAttributes - Return true if the builder has IR-level attributes.
+    bool hasAttributes() const;
+
+    /// hasAttributes - Return true if the builder has any attribute that's in
+    /// the specified attribute.
+    bool hasAttributes(const Attributes &A) const;
+
+    /// hasAlignmentAttr - Return true if the builder has an alignment
+    /// attribute.
+    bool hasAlignmentAttr() const;
+
+    /// getAlignment - Retrieve the alignment attribute, if it exists.
+    uint64_t getAlignment() const;
+
+    /// getStackAlignment - Retrieve the stack alignment attribute, if it
+    /// exists.
+    uint64_t getStackAlignment() const;
 
     /// addAlignmentAttr - This turns an int alignment (which must be a power of
     /// 2) into the form used internally in Attributes.
@@ -145,6 +161,10 @@ public:
     /// addStackAlignmentAttr - This turns an int stack alignment (which must be
     /// a power of 2) into the form used internally in Attributes.
     Builder &addStackAlignmentAttr(unsigned Align);
+
+    /// addRawValue - Add the raw value to the internal representation.
+    /// N.B. This should be used ONLY for decoding LLVM bitcode!
+    Builder &addRawValue(uint64_t Val);
 
     /// @brief Remove attributes that are used on functions only.
     void removeFunctionOnlyAttrs() {
