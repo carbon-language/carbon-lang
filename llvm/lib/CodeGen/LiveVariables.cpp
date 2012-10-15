@@ -503,8 +503,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MRI = &mf.getRegInfo();
   TRI = MF->getTarget().getRegisterInfo();
 
-  ReservedRegisters = TRI->getReservedRegs(mf);
-
   unsigned NumRegs = TRI->getNumRegs();
   PhysRegDef  = new MachineInstr*[NumRegs];
   PhysRegUse  = new MachineInstr*[NumRegs];
@@ -588,7 +586,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         unsigned MOReg = UseRegs[i];
         if (TargetRegisterInfo::isVirtualRegister(MOReg))
           HandleVirtRegUse(MOReg, MBB, MI);
-        else if (!ReservedRegisters[MOReg])
+        else if (!MRI->isReserved(MOReg))
           HandlePhysRegUse(MOReg, MI);
       }
 
@@ -601,7 +599,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         unsigned MOReg = DefRegs[i];
         if (TargetRegisterInfo::isVirtualRegister(MOReg))
           HandleVirtRegDef(MOReg, MI);
-        else if (!ReservedRegisters[MOReg])
+        else if (!MRI->isReserved(MOReg))
           HandlePhysRegDef(MOReg, MI, Defs);
       }
       UpdatePhysRegDefs(MI, Defs);

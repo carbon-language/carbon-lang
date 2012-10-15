@@ -208,8 +208,6 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
     mri->setPhysRegUsed(Reg);
   }
 
-  BitVector reservedRegs = tri->getReservedRegs(*mf);
-
   // Iterate over vregs.
   for (RegSet::const_iterator vregItr = vregs.begin(), vregEnd = vregs.end();
        vregItr != vregEnd; ++vregItr) {
@@ -227,7 +225,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
     ArrayRef<uint16_t> rawOrder = trc->getRawAllocationOrder(*mf);
     for (unsigned i = 0; i != rawOrder.size(); ++i) {
       unsigned preg = rawOrder[i];
-      if (reservedRegs.test(preg))
+      if (mri->isReserved(preg))
         continue;
 
       // vregLI crosses a regmask operand that clobbers preg.

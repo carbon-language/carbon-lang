@@ -15,8 +15,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -57,10 +58,11 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
   CalleeSaved = CSR;
 
   // Different reserved registers?
-  BitVector RR = TRI->getReservedRegs(*MF);
-  if (RR != Reserved)
+  const BitVector &RR = MF->getRegInfo().getReservedRegs();
+  if (Reserved.size() != RR.size() || RR != Reserved) {
     Update = true;
-  Reserved = RR;
+    Reserved = RR;
+  }
 
   // Invalidate cached information from previous function.
   if (Update)

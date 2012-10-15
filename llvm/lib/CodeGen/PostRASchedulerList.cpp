@@ -490,7 +490,6 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
   DEBUG(dbgs() << "Fixup kills for BB#" << MBB->getNumber() << '\n');
 
   BitVector killedRegs(TRI->getNumRegs());
-  BitVector ReservedRegs = TRI->getReservedRegs(MF);
 
   StartBlockForKills(MBB);
 
@@ -531,7 +530,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg() || !MO.isUse()) continue;
       unsigned Reg = MO.getReg();
-      if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
+      if ((Reg == 0) || MRI.isReserved(Reg)) continue;
 
       bool kill = false;
       if (!killedRegs.test(Reg)) {
@@ -566,7 +565,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg() || !MO.isUse() || MO.isUndef()) continue;
       unsigned Reg = MO.getReg();
-      if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
+      if ((Reg == 0) || MRI.isReserved(Reg)) continue;
 
       LiveRegs.set(Reg);
 

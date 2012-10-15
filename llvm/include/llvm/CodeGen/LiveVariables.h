@@ -126,12 +126,6 @@ private:
   /// building live intervals.
   SparseBitVector<> PHIJoins;
 
-  /// ReservedRegisters - This vector keeps track of which registers
-  /// are reserved register which are not allocatable by the target machine.
-  /// We can not track liveness for values that are in this set.
-  ///
-  BitVector ReservedRegisters;
-
 private:   // Intermediate data structures
   MachineFunction *MF;
 

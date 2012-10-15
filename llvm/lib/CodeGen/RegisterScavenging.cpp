@@ -92,9 +92,6 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
     KillRegs.resize(NumPhysRegs);
     DefRegs.resize(NumPhysRegs);
 
-    // Create reserved registers bitvector.
-    ReservedRegs = TRI->getReservedRegs(MF);
-
     // Create callee-saved registers bitvector.
     CalleeSavedRegs.resize(NumPhysRegs);
     const uint16_t *CSRegs = TRI->getCalleeSavedRegs(&MF);
@@ -225,9 +222,9 @@ void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
   used = RegsAvailable;
   used.flip();
   if (includeReserved)
-    used |= ReservedRegs;
+    used |= MRI->getReservedRegs();
   else
-    used.reset(ReservedRegs);
+    used.reset(MRI->getReservedRegs());
 }
 
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {

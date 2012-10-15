@@ -16,6 +16,7 @@
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -32,7 +33,7 @@ STATISTIC(NumDeletes, "Number of dead copies deleted");
 namespace {
   class MachineCopyPropagation : public MachineFunctionPass {
     const TargetRegisterInfo *TRI;
-    BitVector ReservedRegs;
+    MachineRegisterInfo *MRI;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -146,8 +147,8 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
       DenseMap<unsigned, MachineInstr*>::iterator CI = AvailCopyMap.find(Src);
       if (CI != AvailCopyMap.end()) {
         MachineInstr *CopyMI = CI->second;
-        if (!ReservedRegs.test(Def) &&
-            (!ReservedRegs.test(Src) || NoInterveningSideEffect(CopyMI, MI)) &&
+        if (!MRI->isReserved(Def) &&
+            (!MRI->isReserved(Src) || NoInterveningSideEffect(CopyMI, MI)) &&
             isNopCopy(CopyMI, Def, Src, TRI)) {
           // The two copies cancel out and the source of the first copy
           // hasn't been overridden, eliminate the second one. e.g.
@@ -259,7 +260,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
            DI = MaybeDeadCopies.begin(), DE = MaybeDeadCopies.end();
            DI != DE; ++DI) {
         unsigned Reg = (*DI)->getOperand(0).getReg();
-        if (ReservedRegs.test(Reg) || !MaskMO.clobbersPhysReg(Reg))
+        if (MRI->isReserved(Reg) || !MaskMO.clobbersPhysReg(Reg))
           continue;
         (*DI)->eraseFromParent();
         Changed = true;
@@ -296,7 +297,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
     for (SmallSetVector<MachineInstr*, 8>::iterator
            DI = MaybeDeadCopies.begin(), DE = MaybeDeadCopies.end();
          DI != DE; ++DI) {
-      if (!ReservedRegs.test((*DI)->getOperand(0).getReg())) {
+      if (!MRI->isReserved((*DI)->getOperand(0).getReg())) {
         (*DI)->eraseFromParent();
         Changed = true;
         ++NumDeletes;
@@ -311,7 +312,7 @@ bool MachineCopyPropagation::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
 
   TRI = MF.getTarget().getRegisterInfo();
-  ReservedRegs = TRI->getReservedRegs(MF);
+  MRI = &MF.getRegInfo();
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     Changed |= CopyPropagateBlock(*I);
