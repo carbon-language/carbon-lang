@@ -237,6 +237,34 @@ public:
     return *this;
   }
 
+  /// set - Efficiently set a range of bits in [I, E)
+  BitVector &set(unsigned I, unsigned E) {
+    assert(I <= E && "Attempted to set backwards range!");
+    assert(E <= size() && "Attempted to set out-of-bounds range!");
+
+    if (I == E) return *this;
+
+    if (I / BITWORD_SIZE == (E-1) / BITWORD_SIZE) {
+      BitWord EMask = 1 << (E % BITWORD_SIZE);
+      BitWord IMask = 1 << (I % BITWORD_SIZE);
+      BitWord Mask = EMask - IMask;
+      Bits[I / BITWORD_SIZE] |= Mask;
+      return *this;
+    }
+
+    BitWord PrefixMask = ~0UL << (I % BITWORD_SIZE);
+    Bits[I / BITWORD_SIZE] |= PrefixMask;
+    I = RoundUpToAlignment(I, BITWORD_SIZE);
+
+    for (; I + BITWORD_SIZE <= E; I += BITWORD_SIZE)
+      Bits[I / BITWORD_SIZE] = ~0UL;
+
+    BitWord PostfixMask = (1UL << (E % BITWORD_SIZE)) - 1;
+    Bits[I / BITWORD_SIZE] |= PostfixMask;
+
+    return *this;
+  }
+
   BitVector &reset() {
     init_words(Bits, Capacity, false);
     return *this;
@@ -244,6 +272,34 @@ public:
 
   BitVector &reset(unsigned Idx) {
     Bits[Idx / BITWORD_SIZE] &= ~(1L << (Idx % BITWORD_SIZE));
+    return *this;
+  }
+
+  /// reset - Efficiently reset a range of bits in [I, E)
+  BitVector &reset(unsigned I, unsigned E) {
+    assert(I <= E && "Attempted to reset backwards range!");
+    assert(E <= size() && "Attempted to reset out-of-bounds range!");
+
+    if (I == E) return *this;
+
+    if (I / BITWORD_SIZE == (E-1) / BITWORD_SIZE) {
+      BitWord EMask = 1 << (E % BITWORD_SIZE);
+      BitWord IMask = 1 << (I % BITWORD_SIZE);
+      BitWord Mask = EMask - IMask;
+      Bits[I / BITWORD_SIZE] &= ~Mask;
+      return *this;
+    }
+
+    BitWord PrefixMask = ~0UL << (I % BITWORD_SIZE);
+    Bits[I / BITWORD_SIZE] &= ~PrefixMask;
+    I = RoundUpToAlignment(I, BITWORD_SIZE);
+
+    for (; I + BITWORD_SIZE <= E; I += BITWORD_SIZE)
+      Bits[I / BITWORD_SIZE] = 0UL;
+
+    BitWord PostfixMask = (1UL << (E % BITWORD_SIZE)) - 1;
+    Bits[I / BITWORD_SIZE] &= ~PostfixMask;
+
     return *this;
   }
 

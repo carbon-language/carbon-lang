@@ -281,5 +281,47 @@ TYPED_TEST(BitVectorTest, BinOps) {
   EXPECT_FALSE(A.anyCommon(B));
   EXPECT_FALSE(B.anyCommon(A));
 }
+
+TYPED_TEST(BitVectorTest, RangeOps) {
+  TypeParam A;
+  A.resize(256);
+  A.reset();
+  A.set(1, 255);
+
+  EXPECT_FALSE(A.test(0));
+  EXPECT_TRUE( A.test(1));
+  EXPECT_TRUE( A.test(23));
+  EXPECT_TRUE( A.test(254));
+  EXPECT_FALSE(A.test(255));
+
+  TypeParam B;
+  B.resize(256);
+  B.set();
+  B.reset(1, 255);
+
+  EXPECT_TRUE( B.test(0));
+  EXPECT_FALSE(B.test(1));
+  EXPECT_FALSE(B.test(23));
+  EXPECT_FALSE(B.test(254));
+  EXPECT_TRUE( B.test(255));
+
+  TypeParam C;
+  C.resize(3);
+  C.reset();
+  C.set(0, 1);
+
+  EXPECT_TRUE(C.test(0));
+  EXPECT_FALSE( C.test(1));
+  EXPECT_FALSE( C.test(2));
+
+  TypeParam D;
+  D.resize(3);
+  D.set();
+  D.reset(0, 1);
+
+  EXPECT_FALSE(D.test(0));
+  EXPECT_TRUE( D.test(1));
+  EXPECT_TRUE( D.test(2));
+}
 }
 #endif
