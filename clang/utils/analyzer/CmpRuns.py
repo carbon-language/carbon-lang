@@ -17,11 +17,8 @@ Usage:
     # Load the results of both runs, to obtain lists of the corresponding
     # AnalysisDiagnostic objects.
     #
-    # root - the name of the root directory, which will be disregarded when 
-    # determining the source file name
-    # 
-    resultsA = loadResults(dirA, opts, root, deleteEmpty)
-    resultsB = loadResults(dirB, opts, root, deleteEmpty)
+    resultsA = loadResultsFromSingleRun(singleRunInfoA, deleteEmpty)
+    resultsB = loadResultsFromSingleRun(singleRunInfoB, deleteEmpty)
     
     # Generate a relation from diagnostics in run A to diagnostics in run B 
     # to obtain a list of triples (a, b, confidence). 
@@ -31,8 +28,18 @@ Usage:
 
 import os
 import plistlib
+import CmpRuns
 
-#
+# Information about analysis run:
+# path - the analysis output directory
+# root - the name of the root directory, which will be disregarded when 
+# determining the source file name
+class SingleRunInfo:
+    def __init__(self, path, root="", verboseLog=None):
+        self.path = path
+        self.root = root
+        self.verboseLog = verboseLog
+
 class AnalysisDiagnostic:
     def __init__(self, data, report, htmlReport):
         self._data = data
@@ -42,6 +49,14 @@ class AnalysisDiagnostic:
 
     def getFileName(self):
         return self._report.run.getSourceName(self._report.files[self._loc['file']])
+
+    # TODO: This assumes single file! 
+    def getRelFileName(self):
+        root = self._report.run.root
+        fileName = self._report.run.getSourceName(self._report.files[self._loc['file']])
+        if fileName.startswith(root) :
+            return fileName[len(root):]  
+        return fileName
 
     def getLine(self):
         return self._loc['line']
@@ -56,12 +71,12 @@ class AnalysisDiagnostic:
         return self._data['description']
 
     def getIssueIdentifier(self) :
-        id = ''
+        id = self.getFileName() + "+"
         if 'issue_context' in self._data :
-          id += self._data['issue_context'] + ":"
+          id += self._data['issue_context'] + "+"
         if 'issue_hash' in self._data :
-          id += str(self._data['issue_hash']) + ":"
-        return id + ":" + self.getFileName()
+          id += str(self._data['issue_hash'])
+        return id
 
     def getReport(self):
         if self._htmlReport is None:
@@ -96,8 +111,6 @@ class multidict:
         return len(self.data)
     def get(self, key, default=None):
         return self.data.get(key, default)
-    
-#
 
 class CmpOptions:
     def __init__(self, verboseLog=None, rootA="", rootB=""):
@@ -111,24 +124,32 @@ class AnalysisReport:
         self.files = files
 
 class AnalysisRun:
-    def __init__(self, path, root, opts):
-        self.path = path
-        self.root = root
+    def __init__(self, info):
+        self.path = info.path
+        self.root = info.root
+        self.info = info
         self.reports = []
         self.diagnostics = []
-        self.opts = opts
 
     def getSourceName(self, path):
         if path.startswith(self.root):
             return path[len(self.root):]
         return path
 
+# Backward compatibility API. 
 def loadResults(path, opts, root = "", deleteEmpty=True):
-    run = AnalysisRun(path, root, opts)
+    return loadResultsFromSingleRun(SingleRunInfo(path, root, opts.verboseLog),
+                                    deleteEmpty)
+
+# Load results of the analyzes from a given output folder.
+# - info is the SingleRunInfo object
+# - deleteEmpty specifies if the empty plist files should be deleted
+def loadResultsFromSingleRun(info, deleteEmpty=True):
+    path = info.path
+    run = AnalysisRun(info)
     
     for f in os.listdir(path):
-        if (not f.startswith('report') or
-            not f.endswith('plist')):
+        if (not f.endswith('plist')):
             continue
 
         p = os.path.join(path, f)
