@@ -49,14 +49,19 @@ static CompilationDatabase *
 findCompilationDatabaseFromDirectory(StringRef Directory,
                                      std::string &ErrorMessage) {
   std::stringstream ErrorStream;
+  bool HasErrorMessage = false;
   while (!Directory.empty()) {
     std::string LoadErrorMessage;
 
     if (CompilationDatabase *DB =
            CompilationDatabase::loadFromDirectory(Directory, LoadErrorMessage))
       return DB;
-    ErrorStream << "No compilation database found in " << Directory.str()
-                << "\n" << LoadErrorMessage;
+
+    if (!HasErrorMessage) {
+      ErrorStream << "No compilation database found in " << Directory.str()
+                  << " or any parent directory\n" << LoadErrorMessage;
+      HasErrorMessage = true;
+    }
 
     Directory = llvm::sys::path::parent_path(Directory);
   }
