@@ -3651,11 +3651,10 @@ ClangASTContext::GetLLDBBasicTypeEnumeration (clang_type_t clang_type)
     {
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
         const clang::Type::TypeClass type_class = qual_type->getTypeClass();
-        switch (type_class)
+        if (type_class == clang::Type::Builtin)
         {
-        case clang::Type::Builtin:                  
             switch (cast<clang::BuiltinType>(qual_type)->getKind())
-
+            {
             case clang::BuiltinType::Void:      return eBasicTypeVoid;
             case clang::BuiltinType::Bool:      return eBasicTypeBool;
             case clang::BuiltinType::Char_S:    return eBasicTypeSignedChar;
@@ -3694,6 +3693,7 @@ ClangASTContext::GetLLDBBasicTypeEnumeration (clang_type_t clang_type)
             case clang::BuiltinType::BuiltinFn:
             case clang::BuiltinType::ARCUnbridgedCast:
                 return eBasicTypeOther;
+            }
         }
     }
     
