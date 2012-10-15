@@ -2591,10 +2591,11 @@ private:
 
     // If this doesn't map cleanly onto the alloca type, and that type isn't
     // a single value type, just emit a memset.
-    if (!VecTy && (BeginOffset != NewAllocaBeginOffset ||
-                   EndOffset != NewAllocaEndOffset ||
-                   !AllocaTy->isSingleValueType() ||
-                   !TD.isLegalInteger(TD.getTypeSizeInBits(ScalarTy)))) {
+    if (!VecTy && !IntTy &&
+        (BeginOffset != NewAllocaBeginOffset ||
+         EndOffset != NewAllocaEndOffset ||
+         !AllocaTy->isSingleValueType() ||
+         !TD.isLegalInteger(TD.getTypeSizeInBits(ScalarTy)))) {
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, EndOffset - BeginOffset);
       CallInst *New
@@ -2612,32 +2613,24 @@ private:
     // a sensible representation for the alloca type. This is essentially
     // splatting the byte to a sufficiently wide integer, bitcasting to the
     // desired scalar type, and splatting it across any desired vector type.
+    uint64_t Size = EndOffset - BeginOffset;
     Value *V = II.getValue();
     IntegerType *VTy = cast<IntegerType>(V->getType());
-    Type *IntTy = Type::getIntNTy(VTy->getContext(),
-                                  TD.getTypeSizeInBits(ScalarTy));
-    if (TD.getTypeSizeInBits(ScalarTy) > VTy->getBitWidth())
-      V = IRB.CreateMul(IRB.CreateZExt(V, IntTy, getName(".zext")),
+    Type *SplatIntTy = Type::getIntNTy(VTy->getContext(), Size*8);
+    if (Size*8 > VTy->getBitWidth())
+      V = IRB.CreateMul(IRB.CreateZExt(V, SplatIntTy, getName(".zext")),
                         ConstantExpr::getUDiv(
-                          Constant::getAllOnesValue(IntTy),
+                          Constant::getAllOnesValue(SplatIntTy),
                           ConstantExpr::getZExt(
                             Constant::getAllOnesValue(V->getType()),
-                            IntTy)),
+                            SplatIntTy)),
                         getName(".isplat"));
-    if (V->getType() != ScalarTy) {
-      if (ScalarTy->isPointerTy())
-        V = IRB.CreateIntToPtr(V, ScalarTy);
-      else if (ScalarTy->isPrimitiveType() || ScalarTy->isVectorTy())
-        V = IRB.CreateBitCast(V, ScalarTy);
-      else if (ScalarTy->isIntegerTy())
-        llvm_unreachable("Computed different integer types with equal widths");
-      else
-        llvm_unreachable("Invalid scalar type");
-    }
 
     // If this is an element-wide memset of a vectorizable alloca, insert it.
     if (VecTy && (BeginOffset > NewAllocaBeginOffset ||
                   EndOffset < NewAllocaEndOffset)) {
+      if (V->getType() != ScalarTy)
+        V = convertValue(TD, IRB, V, ScalarTy);
       StoreInst *Store = IRB.CreateAlignedStore(
         IRB.CreateInsertElement(IRB.CreateAlignedLoad(&NewAI,
                                                       NewAI.getAlignment(),
@@ -2650,17 +2643,19 @@ private:
       return true;
     }
 
-    // Splat to a vector if needed.
-    if (VectorType *VecTy = dyn_cast<VectorType>(AllocaTy)) {
-      VectorType *SplatSourceTy = VectorType::get(V->getType(), 1);
-      V = IRB.CreateShuffleVector(
-        IRB.CreateInsertElement(UndefValue::get(SplatSourceTy), V,
-                                IRB.getInt32(0), getName(".vsplat.insert")),
-        UndefValue::get(SplatSourceTy),
-        ConstantVector::getSplat(VecTy->getNumElements(), IRB.getInt32(0)),
-        getName(".vsplat.shuffle"));
-      assert(V->getType() == VecTy);
+    // If this is a memset on an alloca where we can widen stores, insert the
+    // set integer.
+    if (IntTy && (BeginOffset > NewAllocaBeginOffset ||
+                  EndOffset < NewAllocaEndOffset)) {
+      assert(!II.isVolatile());
+      StoreInst *Store = insertInteger(IRB, V, BeginOffset);
+      (void)Store;
+      DEBUG(dbgs() << "          to: " << *Store << "\n");
+      return true;
     }
+
+    if (V->getType() != AllocaTy)
+      V = convertValue(TD, IRB, V, AllocaTy);
 
     Value *New = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment(),
                                         II.isVolatile());

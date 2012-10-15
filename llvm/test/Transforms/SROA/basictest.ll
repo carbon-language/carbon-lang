@@ -1034,11 +1034,24 @@ entry:
   %X.sroa.0.i = alloca double, align 8
   %0 = bitcast double* %X.sroa.0.i to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %0)
+
+  ; Store to the low 32-bits...
   %X.sroa.0.0.cast2.i = bitcast double* %X.sroa.0.i to i32*
   store i32 0, i32* %X.sroa.0.0.cast2.i, align 8
+
+  ; Also use a memset to the middle 32-bits for fun.
+  %X.sroa.0.2.raw_idx2.i = getelementptr inbounds i8* %0, i32 2
+  call void @llvm.memset.p0i8.i64(i8* %X.sroa.0.2.raw_idx2.i, i8 0, i64 4, i32 1, i1 false)
+
+  ; Or a memset of the whole thing.
+  call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 8, i32 1, i1 false)
+
+  ; Store to the high 32-bits...
   %X.sroa.0.4.raw_idx4.i = getelementptr inbounds i8* %0, i32 4
   %X.sroa.0.4.cast5.i = bitcast i8* %X.sroa.0.4.raw_idx4.i to i32*
   store i32 1072693248, i32* %X.sroa.0.4.cast5.i, align 4
+
+  ; Do the actual math...
   %X.sroa.0.0.load1.i = load double* %X.sroa.0.i, align 8
   %accum.real.i = load double* %d, align 8
   %add.r.i = fadd double %accum.real.i, %X.sroa.0.0.load1.i
