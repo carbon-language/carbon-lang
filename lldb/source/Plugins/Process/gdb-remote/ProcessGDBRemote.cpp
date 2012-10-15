@@ -40,6 +40,8 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
@@ -3017,31 +3019,129 @@ ProcessGDBRemote::GetDynamicLoader ()
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 
-class CommandObjectProcessGDBRemotePacket : public CommandObjectParsed
+class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
 private:
     
 public:
-    CommandObjectProcessGDBRemotePacket(CommandInterpreter &interpreter) :
+    CommandObjectProcessGDBRemotePacketHistory(CommandInterpreter &interpreter) :
     CommandObjectParsed (interpreter,
-                         "process plugin packet",
-                         "Send a custom packet through the GDB remote protocol and print the answer.",
+                         "process plugin packet history",
+                         "Dumps the packet history buffer. ",
                          NULL)
     {
     }
     
-    ~CommandObjectProcessGDBRemotePacket ()
+    ~CommandObjectProcessGDBRemotePacketHistory ()
     {
     }
     
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        printf ("CommandObjectProcessGDBRemotePacket::DoExecute() called!!!\n");
+        const size_t argc = command.GetArgumentCount();
+        if (argc == 0)
+        {
+            ProcessGDBRemote *process = (ProcessGDBRemote *)m_interpreter.GetExecutionContext().GetProcessPtr();
+            if (process)
+            {
+                process->GetGDBRemote().DumpHistory(result.GetOutputStream());
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+                return true;
+            }
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("'%s' takes no arguments", m_cmd_name.c_str());
+        }
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+};
+
+class CommandObjectProcessGDBRemotePacketSend : public CommandObjectParsed
+{
+private:
+    
+public:
+    CommandObjectProcessGDBRemotePacketSend(CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "process plugin packet send",
+                             "Send a custom packet through the GDB remote protocol and print the answer. "
+                             "The packet header and footer will automatically be added to the packet prior to sending and stripped from the result.",
+                             NULL)
+    {
+    }
+    
+    ~CommandObjectProcessGDBRemotePacketSend ()
+    {
+    }
+    
+    bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc == 0)
+        {
+            result.AppendErrorWithFormat ("'%s' takes a one or more packet content arguments", m_cmd_name.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        ProcessGDBRemote *process = (ProcessGDBRemote *)m_interpreter.GetExecutionContext().GetProcessPtr();
+        if (process)
+        {
+            const StateType state = process->GetState();
+
+            if (StateIsStoppedState (state, true))
+            {
+                for (size_t i=0; i<argc; ++ i)
+                {
+                    const char *packet_cstr = command.GetArgumentAtIndex(0);
+                    bool send_async = false;
+                    StringExtractorGDBRemote response;
+                    process->GetGDBRemote().SendPacketAndWaitForResponse(packet_cstr, response, send_async);
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                    Stream &output_strm = result.GetOutputStream();
+                    output_strm.Printf ("  packet: %s\n", packet_cstr);
+                    const std::string &response_str = response.GetStringRef();
+                    if (response_str.empty())
+                        output_strm.PutCString ("response: \nerror: UNIMPLEMENTED\n");
+                    else
+                        output_strm.Printf ("response: %s\n", response.GetStringRef().c_str());
+                }
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("process must be stopped in order to send GDB remote packets, state is %s", StateAsCString (state));
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+
+        }
         return true;
     }
 };
 
+class CommandObjectProcessGDBRemotePacket : public CommandObjectMultiword
+{
+private:
+    
+public:
+    CommandObjectProcessGDBRemotePacket(CommandInterpreter &interpreter) :
+        CommandObjectMultiword (interpreter,
+                                "process plugin packet",
+                                "Commands that deal with GDB remote packets.",
+                                NULL)
+    {
+        LoadSubCommand ("history", CommandObjectSP (new CommandObjectProcessGDBRemotePacketHistory (interpreter)));
+        LoadSubCommand ("send", CommandObjectSP (new CommandObjectProcessGDBRemotePacketSend (interpreter)));
+    }
+    
+    ~CommandObjectProcessGDBRemotePacket ()
+    {
+    }    
+};
 
 class CommandObjectMultiwordProcessGDBRemote : public CommandObjectMultiword
 {
@@ -3059,8 +3159,6 @@ public:
     {
     }
 };
-
-
 
 CommandObject *
 ProcessGDBRemote::GetPluginCommandObject()
