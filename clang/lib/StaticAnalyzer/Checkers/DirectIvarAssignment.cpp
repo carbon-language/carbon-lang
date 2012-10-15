@@ -122,6 +122,8 @@ void DirectIvarAssignment::checkASTDecl(const ObjCImplementationDecl *D,
     // initialization based on their name.
     if (M->getMethodFamily() == OMF_init ||
         M->getMethodFamily() == OMF_dealloc ||
+        M->getMethodFamily() == OMF_copy ||
+        M->getMethodFamily() == OMF_mutableCopy ||
         M->getSelector().getNameForSlot(0).find("init") != StringRef::npos ||
         M->getSelector().getNameForSlot(0).find("Init") != StringRef::npos)
       continue;

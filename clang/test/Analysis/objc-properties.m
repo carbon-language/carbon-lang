@@ -1,8 +1,18 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.osx.cocoa.DirectIvarAssignment -fobjc-default-synthesize-properties -Wno-objc-root-class -verify -fblocks %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.osx.cocoa.DirectIvarAssignment -fobjc-default-synthesize-properties -verify -fblocks %s
+
+typedef signed char BOOL;
+@protocol NSObject  - (BOOL)isEqual:(id)object; @end
+@interface NSObject <NSObject> {}
++(id)alloc;
+-(id)init;
+-(id)autorelease;
+-(id)copy;
+-(id)retain;
+@end
 
 @interface MyClass;
 @end
-@interface TestProperty {
+@interface TestProperty :NSObject {
   MyClass *_Z;
   id _nonSynth;
 }
@@ -27,6 +37,12 @@
   - (id) initWithPtr: (MyClass*) value {
     _Y = value; // no-warning
     return self;
+  }
+
+  - (id) copyWithPtrY: (TestProperty*) value {
+    TestProperty *another = [[TestProperty alloc] init];
+    another->_Y = value->_Y; // no-warning
+    return another;
   }
 
   - (id) myInitWithPtr: (MyClass*) value {
