@@ -6,8 +6,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; If a global is present, __asan_[un]register_globals should be called from
 ; module ctor/dtor
 
-; CHECK: llvm.global_dtors
 ; CHECK: llvm.global_ctors
+; CHECK: llvm.global_dtors
 
 ; CHECK: define internal void @asan.module_ctor
 ; CHECK-NOT: ret
