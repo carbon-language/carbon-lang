@@ -527,6 +527,11 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         SeenMoveImm = true;
       } else {
         Changed |= optimizeExtInstr(MI, MBB, LocalMIs);
+        // optimizeExtInstr might have created new instructions after MI
+        // and before the already incremented MII. Adjust MII so that the
+        // next iteration sees the new instructions.
+        MII = MI;
+        ++MII;
         if (SeenMoveImm)
           Changed |= foldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
       }
