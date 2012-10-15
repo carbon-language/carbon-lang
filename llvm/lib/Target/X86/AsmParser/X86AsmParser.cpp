@@ -752,6 +752,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getParser().ParseExpression(Disp, End)) return 0;
+  End = Parser.getTok().getLoc();
   return X86Operand::CreateMem(Disp, Start, End, Size);
 }
 
