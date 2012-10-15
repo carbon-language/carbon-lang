@@ -103,6 +103,8 @@ public:
 
   virtual void EmitFileDirective(StringRef Filename);
 
+  virtual void EmitTCEntry(const MCSymbol &S);
+
   virtual void FinishImpl();
 
 private:
@@ -467,6 +469,12 @@ void MCELFStreamer::FinishImpl() {
   }
 
   this->MCObjectStreamer::FinishImpl();
+}
+
+void MCELFStreamer::EmitTCEntry(const MCSymbol &S)
+{
+  // Creates a R_PPC64_TOC relocation
+  MCObjectStreamer::EmitSymbolValue(&S, 8, 0);
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,

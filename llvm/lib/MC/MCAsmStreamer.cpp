@@ -251,6 +251,7 @@ public:
   virtual void EmitPad(int64_t Offset);
   virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool);
 
+  virtual void EmitTCEntry(const MCSymbol &S);
 
   virtual void EmitInstruction(const MCInst &Inst);
 
@@ -1296,6 +1297,14 @@ void MCAsmStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
   }
 
   OS << "}";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitTCEntry(const MCSymbol &S) {
+  OS << "\t.tc ";
+  OS << S.getName();
+  OS << "[TC],";
+  OS << S.getName();
   EmitEOL();
 }
 

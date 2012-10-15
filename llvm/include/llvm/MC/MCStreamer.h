@@ -554,6 +554,11 @@ namespace llvm {
     virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
                              bool isVector);
 
+    /// PPC-related methods.
+    /// FIXME: Eventually replace it with some "target MC streamer" and move
+    /// these methods there.
+    virtual void EmitTCEntry(const MCSymbol &S);
+
     /// FinishImpl - Streamer specific finalization.
     virtual void FinishImpl() = 0;
     /// Finish - Finish emission of machine code.

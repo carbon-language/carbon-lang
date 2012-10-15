@@ -561,6 +561,10 @@ void MCStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool) {
   abort();
 }
 
+void MCStreamer::EmitTCEntry(const MCSymbol &S) {
+  llvm_unreachable("Unsupported method");
+}
+
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps
 /// the specified string in the output .s file.  This capability is
 /// indicated by the hasRawTextSupport() predicate.

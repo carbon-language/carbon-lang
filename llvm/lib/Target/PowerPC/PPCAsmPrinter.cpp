@@ -451,8 +451,8 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
     for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = TOC.begin(),
          E = TOC.end(); I != E; ++I) {
       OutStreamer.EmitLabel(I->second);
-      OutStreamer.EmitRawText("\t.tc " + Twine(I->first->getName()) +
-                              "[TC]," + I->first->getName());
+      MCSymbol *S = OutContext.GetOrCreateSymbol(I->first->getName());
+      OutStreamer.EmitTCEntry(*S);
     }
   }
 
