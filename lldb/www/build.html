@@ -61,9 +61,11 @@
                     <li><a href="http://www.thrysoee.dk/editline">libedit</a></li>
                     <li><a href="http://www.python.org">Python</a></li>
                 </ul>
-                <p>So for example, on a Fedora system one might say:</p>
+                <p>So for example, on a Fedora system one might run:</p>
                 <code>&gt; yum install swig python-devel libedit-devel</code>
-                <p>If building using GCC instead of Clang, GCC 4.6.2 or newer is recommended.</p>
+                <p>On an Ubuntu system one might run:</p>
+                <code>&gt; sudo apt-get install swig python-dev libedit-dev </code>
+                <p>If building using GCC instead of Clang, GCC 4.6.2 or newer is required.</p>
                 <ul>
                     <li><a href="http://gcc.gnu.org">GCC</a></li>
                 </ul>
@@ -94,48 +96,35 @@
                 <br>&gt; svn co http://llvm.org/svn/llvm-project/lldb/trunk lldb
                 </code>
                 
-                <p>In general, LLDB requires specific revisions of both LLVM and Clang in order to
-                build.  This requirement insulates LLDB a bit from the constant development
-                happening in both of these projects.  The required revision can be discovered by
-                consulting the Perl script <tt>$lldb/scripts/build-llvm.pl</tt> and locating the
-                <tt>$llvm_revision</tt> variable.  At the time of this writing, the required revision
-                is <tt>r127682</tt>, so we might check and revert our LLVM and Clang trees to the
-                required state as follows:</p>
-                <code>&gt; grep -m 1 llvm_revision $lldb/scripts/build-llvm.pl
-                  <br>our $llvm_revision = "127682";
-                  <br>&gt; cd $clang
-                  <br>&gt; svn update -r 127682
-                  <br>&gt; cd $llvm
-                  <br>&gt; svn update -r 127682</code>
-                
+                <p>In general, building the LLDB trunk revision requires trunk revisions of both 
+                LLVM and Clang.
                 <p>It is highly recommended that you build the system out of tree.  Create a second
                 build directory and configure the LLVM project tree to your specifications as
-                outlined in LLVM&#8217;s <em>Getting Started Guide</em>.  For Linux development the x86
-                backend and JIT compiler should be enabled.  A typical build procedure might be:</p>
+                outlined in LLVM&#8217;s <em>Getting Started Guide</em>.  A typical build procedure
+                might be:</p>
                 <code>&gt; cd $llvm/..
                   <br>&gt; mkdir build
                   <br>&gt; cd build
-                  <br>&gt; $llvm/configure --enable-targets=x86 --enable-jit --enable-libcpp
-                  <br>&gt; make CXXFLAGS+=c++11</code>
-                
+                  <br>&gt; $llvm/configure --enable-libcpp
+                  <br>&gt; make CXXFLAGS=-std=c++11</code>
                 <p>Note that once both LLVM and Clang have been configured and built it is not
                 necessary to perform a top-level <tt>make</tt> to rebuild changes made only to LLDB.
-                You can build from the <tt>build/tools/lldb</tt> subdirectory as well. If your
-                compiler doesn't support c++11 or libc++, you may need to tweak or remove the last
-                parameter to the configure script and make command.</p>
+                You can run <tt>make</tt> from the <tt>build/tools/lldb</tt> subdirectory as well. If your
+                compiler doesn't support libc++, you may need to tweak or remove the last
+                parameter to the configure script.</p>
                 
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies it&#8217;s own Python module,
-                <tt>lldb.py</tt>, built alongside the <tt>lldb</tt> binary.  Python needs to know where to
-                look for this module when LLDB starts up.  There are two options available:</p>
-                <ol class="arabic">
-                <li>
-                    <p>Keep a copy of <tt>lldb.py</tt> in the current working directory when starting lldb.</p>
-                </li>
-                <li>
-                    <p>Set <tt>PYTHONPATH</tt> to point to the directory holding <tt>lldb.py</tt>.</p>
-                </li>
-                </ol>
+                <tt>lldb</tt>, built alongside the <tt>lldb</tt> binary.  Python needs to know where to
+                look for this module when LLDB starts up.  To tell python the location of LLDB, set
+                <tt>PYTHONPATH</tt> environment variable.
+                <p>In bash with a <tt>Debug+Asserts</tt> build (the default if configure is invoked
+                like in the example on this page) one might run:</p>
+                <code>&gt; export PYTHONPATH=$llvm/build/Debug+Asserts/lib/python2.7/site-packages</code>
+                <p>If you used different configure flags, or have a different version of python,
+                you may need to adjust the above to suit your needs. To test that the lldb python module
+                is built correctly and is available to Python, run:</p>
+                <code>&gt; python -c 'import lldb'</code></p>
                 </div>
               	<div class="postfooter"></div>
           	</div>
