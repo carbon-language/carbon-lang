@@ -1139,7 +1139,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   if (D.getDecl())
     SetFunctionAttributes(D, F, IsIncompleteFunction);
   if (ExtraAttrs.hasAttributes())
-    F->addAttribute(~0, ExtraAttrs);
+    F->addAttribute(llvm::AttrListPtr::FunctionIndex, ExtraAttrs);
 
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
@@ -1822,7 +1822,9 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
     // Add the return attributes.
     if (RAttrs.hasAttributes())
-      AttrVec.push_back(llvm::AttributeWithIndex::get(0, RAttrs));
+      AttrVec.push_back(llvm::
+                        AttributeWithIndex::get(llvm::AttrListPtr::ReturnIndex,
+                                                RAttrs));
 
     // If the function was passed too few arguments, don't transform.  If extra
     // arguments were passed, we silently drop them.  If any of the types
@@ -1847,7 +1849,9 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
     llvm::Attributes FnAttrs =  AttrList.getFnAttributes();
     if (FnAttrs.hasAttributes())
-      AttrVec.push_back(llvm::AttributeWithIndex::get(~0, FnAttrs));
+      AttrVec.push_back(llvm::
+                       AttributeWithIndex::get(llvm::AttrListPtr::FunctionIndex,
+                                               FnAttrs));
 
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
