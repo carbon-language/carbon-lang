@@ -15,7 +15,6 @@
 #ifndef LLVM_ATTRIBUTES_H
 #define LLVM_ATTRIBUTES_H
 
-#include "llvm/AttributesImpl.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <cassert>
@@ -172,9 +171,7 @@ public:
   bool hasAttribute(AttrVal Val) const;
 
   /// @brief Return true if attributes exist
-  bool hasAttributes() const {
-    return Attrs && Attrs->hasAttributes();
-  }
+  bool hasAttributes() const;
 
   /// @brief Return true if the attributes are a non-null intersection.
   bool hasAttributes(const Attributes &A) const;

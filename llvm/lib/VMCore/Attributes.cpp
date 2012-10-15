@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Attributes.h"
+#include "AttributesImpl.h"
 #include "LLVMContextImpl.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
@@ -65,6 +66,10 @@ Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
 
 bool Attributes::hasAttribute(AttrVal Val) const {
   return Attrs && Attrs->hasAttribute(Val);
+}
+
+bool Attributes::hasAttributes() const {
+  return Attrs && Attrs->hasAttributes();
 }
 
 bool Attributes::hasAttributes(const Attributes &A) const {
