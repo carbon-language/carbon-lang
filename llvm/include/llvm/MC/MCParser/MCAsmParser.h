@@ -20,6 +20,7 @@ class MCAsmLexer;
 class MCAsmParserExtension;
 class MCContext;
 class MCExpr;
+class MCParsedAsmOperand;
 class MCStreamer;
 class MCTargetAsmParser;
 class SMLoc;
@@ -74,6 +75,25 @@ public:
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false) = 0;
 
   virtual void setParsingInlineAsm(bool V) = 0;
+
+  /// ParseStatement - Parse the next statement.
+  virtual bool ParseStatement() = 0;
+
+  /// getNumParsedOperands - Returns the number of MCAsmParsedOperands from the
+  /// previously parsed statement.
+  virtual unsigned getNumParsedOperands() = 0;
+
+  /// getParsedOperand - Get a MCAsmParsedOperand.
+  virtual MCParsedAsmOperand &getParsedOperand(unsigned OpNum) = 0;
+
+  /// freeParsedOperands - Free the MCAsmParsedOperands.
+  virtual void freeParsedOperands() = 0;
+
+  /// isInstruction - Was the previously parsed statement an instruction?
+  virtual bool isInstruction() = 0;
+
+  /// getOpcode - Get the opcode from the previously parsed instruction.
+  virtual unsigned getOpcode() = 0;
 
   /// Warning - Emit a warning at the location \p L, with the message \p Msg.
   ///

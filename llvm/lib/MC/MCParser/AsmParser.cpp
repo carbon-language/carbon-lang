@@ -133,8 +133,17 @@ private:
   /// IsDarwin - is Darwin compatibility enabled?
   bool IsDarwin;
 
-  /// ParsingInlineAsm - are we parsing ms-style inline assembly?
+  /// ParsingInlineAsm - Are we parsing ms-style inline assembly?
   bool ParsingInlineAsm;
+
+  /// IsInstruction - Was the last parsed statement an instruction?
+  bool IsInstruction;
+
+  /// ParsedOperands - The parsed operands from the last parsed statement.
+  SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
+
+  /// Opcode - The opcode from the last parsed instruction.
+  unsigned Opcode;
 
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
@@ -174,7 +183,20 @@ public:
 
   virtual const AsmToken &Lex();
 
+  bool ParseStatement();
   void setParsingInlineAsm(bool V) { ParsingInlineAsm = V; }
+  unsigned getNumParsedOperands() { return ParsedOperands.size(); }
+  MCParsedAsmOperand &getParsedOperand(unsigned OpNum) {
+    assert (ParsedOperands.size() > OpNum);
+    return *ParsedOperands[OpNum];
+  }
+  void freeParsedOperands() {
+    for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)
+      delete ParsedOperands[i];
+    ParsedOperands.clear();
+  }
+  bool isInstruction() { return IsInstruction; }
+  unsigned getOpcode() { return Opcode; }
 
   bool ParseExpression(const MCExpr *&Res);
   virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc);
@@ -186,7 +208,6 @@ public:
 private:
   void CheckForValidSection();
 
-  bool ParseStatement();
   void EatToEndOfLine();
   bool ParseCppHashLineFilenameComment(const SMLoc &L);
 
@@ -417,7 +438,8 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
     CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0),
-    AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
+    AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false),
+    IsInstruction(false), Opcode(0) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
@@ -1315,12 +1337,11 @@ bool AsmParser::ParseStatement() {
   CheckForValidSection();
 
   // Canonicalize the opcode to lower case.
-  SmallString<128> Opcode;
+  SmallString<128> OpcodeStr;
   for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
-    Opcode.push_back(tolower(IDVal[i]));
+    OpcodeStr.push_back(tolower(IDVal[i]));
 
-  SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
-  bool HadError = getTargetParser().ParseInstruction(Opcode.str(), IDLoc,
+  bool HadError = getTargetParser().ParseInstruction(OpcodeStr.str(), IDLoc,
                                                      ParsedOperands);
 
   // Dump the parsed representation, if requested.
@@ -1352,17 +1373,17 @@ bool AsmParser::ParseStatement() {
 
   // If parsing succeeded, match the instruction.
   if (!HadError) {
-    unsigned Opcode;
     unsigned ErrorInfo;
     HadError = getTargetParser().MatchAndEmitInstruction(IDLoc, Opcode,
-                                                         ParsedOperands,
-                                                         Out, ErrorInfo,
+                                                         ParsedOperands, Out,
+                                                         ErrorInfo,
                                                          ParsingInlineAsm);
   }
 
-  // Free any parsed operands.
-  for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)
-    delete ParsedOperands[i];
+  // Free any parsed operands.  If parsing ms-style inline assembly it is the
+  // responsibility of the caller (i.e., clang) to free the parsed operands.
+  if (!ParsingInlineAsm)
+    freeParsedOperands();
 
   // Don't skip the rest of the line, the instruction parser is responsible for
   // that.
