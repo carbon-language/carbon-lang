@@ -95,6 +95,10 @@ public:
   Attributes() : Attrs(0) {}
   explicit Attributes(LLVMContext &C, ArrayRef<AttrVal> Vals);
   Attributes(const Attributes &A);
+  Attributes &operator=(const Attributes &A) {
+    Attrs = A.Attrs;
+    return *this;
+  }
 
   class Builder {
     friend class Attributes;
