@@ -764,7 +764,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // required when new return value attributes are added.
   if (NRetTy->isVoidTy())
     RAttrs =
-      Attributes::get(Attributes::Builder(RAttrs).
+      Attributes::get(NRetTy->getContext(), Attributes::Builder(RAttrs).
                       removeAttributes(Attributes::typeIncompatible(NRetTy)));
   else
     assert(!Attributes::Builder(RAttrs).
@@ -837,7 +837,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     Attributes FnAttrs = CallPAL.getFnAttributes();
     // Adjust in case the function was changed to return void.
     RAttrs =
-      Attributes::get(Attributes::Builder(RAttrs).
+      Attributes::get(NF->getContext(), Attributes::Builder(RAttrs).
            removeAttributes(Attributes::typeIncompatible(NF->getReturnType())));
     if (RAttrs.hasAttributes())
       AttributesVec.push_back(AttributeWithIndex::get(0, RAttrs));

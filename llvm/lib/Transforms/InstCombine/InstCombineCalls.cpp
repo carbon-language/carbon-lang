@@ -1117,7 +1117,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // Add the new return attributes.
   if (RAttrs.hasAttributes())
-    attrVec.push_back(AttributeWithIndex::get(0, Attributes::get(RAttrs)));
+    attrVec.push_back(
+      AttributeWithIndex::get(0, Attributes::get(FT->getContext(), RAttrs)));
 
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {

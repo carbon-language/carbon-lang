@@ -148,7 +148,8 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
   if (NewFn)
     F = NewFn;
   if (unsigned id = F->getIntrinsicID())
-    F->setAttributes(Intrinsic::getAttributes((Intrinsic::ID)id));
+    F->setAttributes(Intrinsic::getAttributes(F->getContext(),
+                                              (Intrinsic::ID)id));
   return Upgraded;
 }
 

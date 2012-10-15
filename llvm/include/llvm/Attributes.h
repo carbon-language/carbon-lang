@@ -89,13 +89,12 @@ public:
     ZExt            = 27   ///< Zero extended before/after call
   };
 private:
-  AttributesImpl Attrs;
+  AttributesImpl *Attrs;
 
   explicit Attributes(AttributesImpl *A);
 public:
   Attributes() : Attrs(0) {}
-  explicit Attributes(uint64_t Val);
-  explicit Attributes(LLVMContext &C, AttrVal Val);
+  explicit Attributes(LLVMContext &C, ArrayRef<AttrVal> Vals);
   Attributes(const Attributes &A);
 
   class Builder {
@@ -105,6 +104,7 @@ public:
     Builder() : Bits(0) {}
     explicit Builder(uint64_t B) : Bits(B) {}
     Builder(const Attributes &A) : Bits(A.Raw()) {}
+    Builder(const Builder &B) : Bits(B.Bits) {}
 
     void clear() { Bits = 0; }
 
@@ -166,7 +166,6 @@ public:
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
   /// value from the Builder and wraps it in the Attributes class.
-  static Attributes get(Builder &B);
   static Attributes get(LLVMContext &Context, Builder &B);
 
   /// @brief Return true if the attribute is present.
@@ -174,7 +173,7 @@ public:
 
   /// @brief Return true if attributes exist
   bool hasAttributes() const {
-    return Attrs.hasAttributes();
+    return Attrs && Attrs->hasAttributes();
   }
 
   /// @brief Return true if the attributes are a non-null intersection.
@@ -225,10 +224,10 @@ public:
   }
 
   bool operator == (const Attributes &A) const {
-    return Attrs.Bits == A.Attrs.Bits;
+    return Attrs == A.Attrs;
   }
   bool operator != (const Attributes &A) const {
-    return Attrs.Bits != A.Attrs.Bits;
+    return Attrs != A.Attrs;
   }
 
   uint64_t Raw() const;
@@ -261,7 +260,8 @@ public:
   /// containing the LLVM attributes that have been decoded from the given
   /// integer.  This function must stay in sync with
   /// 'encodeLLVMAttributesForBitcode'.
-  static Attributes decodeLLVMAttributesForBitcode(uint64_t EncodedAttrs) {
+  static Attributes decodeLLVMAttributesForBitcode(LLVMContext &C,
+                                                   uint64_t EncodedAttrs) {
     // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
     // the bits above 31 down by 11 bits.
     unsigned Alignment = (EncodedAttrs & (0xffffULL << 16)) >> 16;
@@ -272,7 +272,7 @@ public:
     if (Alignment)
       B.addAlignmentAttr(Alignment);
     B.addRawValue((EncodedAttrs & (0xfffULL << 32)) >> 11);
-    return Attributes::get(B);
+    return Attributes::get(C, B);
   }
 
   /// getAsString - The set of Attributes set in Attributes is converted to a
@@ -294,7 +294,7 @@ struct AttributeWithIndex {
                      ///< Index 0 is used for return value attributes.
                      ///< Index ~0U is used for function attributes.
 
-  static AttributeWithIndex get(unsigned Idx,
+  static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
                                 ArrayRef<Attributes::AttrVal> Attrs) {
     Attributes::Builder B;
 
@@ -304,7 +304,7 @@ struct AttributeWithIndex {
 
     AttributeWithIndex P;
     P.Index = Idx;
-    P.Attrs = Attributes::get(B);
+    P.Attrs = Attributes::get(C, B);
     return P;
   }
   static AttributeWithIndex get(unsigned Idx, Attributes Attrs) {

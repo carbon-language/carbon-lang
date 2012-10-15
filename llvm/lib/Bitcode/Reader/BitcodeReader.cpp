@@ -476,14 +476,15 @@ bool BitcodeReader::ParseAttributeBlock() {
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         Attributes ReconstitutedAttr =
-          Attributes::decodeLLVMAttributesForBitcode(Record[i+1]);
+          Attributes::decodeLLVMAttributesForBitcode(Context, Record[i+1]);
         Record[i+1] = ReconstitutedAttr.Raw();
       }
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        if (Attributes(Record[i+1]).hasAttributes())
+        Attributes::Builder B(Record[i+1]);
+        if (B.hasAttributes())
           Attrs.push_back(AttributeWithIndex::get(Record[i],
-                                                  Attributes(Record[i+1])));
+                                                  Attributes::get(Context, B)));
       }
 
       MAttributes.push_back(AttrListPtr::get(Attrs));

@@ -27,20 +27,17 @@ using namespace llvm;
 // Attributes Implementation
 //===----------------------------------------------------------------------===//
 
-Attributes::Attributes(uint64_t Val) : Attrs(Val) {}
+Attributes::Attributes(LLVMContext &C, ArrayRef<AttrVal> Vals) {
+  Attributes::Builder B;
+  for (ArrayRef<AttrVal>::iterator I = Vals.begin(), E = Vals.end();
+       I != E; ++I)
+    B.addAttribute(*I);
+  Attrs = Attributes::get(C, B).Attrs;
+}
 
-Attributes::Attributes(LLVMContext &C, AttrVal Val)
-  : Attrs(Attributes::get(Attributes::Builder().addAttribute(Val)).Attrs) {}
-
-Attributes::Attributes(AttributesImpl *A) : Attrs(A->Bits) {}
+Attributes::Attributes(AttributesImpl *A) : Attrs(A) {}
 
 Attributes::Attributes(const Attributes &A) : Attrs(A.Attrs) {}
-
-// FIXME: This is temporary until we have implemented the uniquified version of
-// AttributesImpl.
-Attributes Attributes::get(Attributes::Builder &B) {
-  return Attributes(B.Bits);
-}
 
 Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
   // If there are no attributes, return an empty Attributes class.
@@ -67,18 +64,18 @@ Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
 }
 
 bool Attributes::hasAttribute(AttrVal Val) const {
-  return Attrs.hasAttribute(Val);
+  return Attrs && Attrs->hasAttribute(Val);
 }
 
 bool Attributes::hasAttributes(const Attributes &A) const {
-  return Attrs.hasAttributes(A);
+  return Attrs && Attrs->hasAttributes(A);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attributes::getAlignment() const {
   if (!hasAttribute(Attributes::Alignment))
     return 0;
-  return 1U << ((Attrs.getAlignment() >> 16) - 1);
+  return 1U << ((Attrs->getAlignment() >> 16) - 1);
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
@@ -86,11 +83,11 @@ unsigned Attributes::getAlignment() const {
 unsigned Attributes::getStackAlignment() const {
   if (!hasAttribute(Attributes::StackAlignment))
     return 0;
-  return 1U << ((Attrs.getStackAlignment() >> 26) - 1);
+  return 1U << ((Attrs->getStackAlignment() >> 26) - 1);
 }
 
 uint64_t Attributes::Raw() const {
-  return Attrs.Bits;
+  return Attrs ? Attrs->Bits : 0; // FIXME: Don't access this directly!
 }
 
 Attributes Attributes::typeIncompatible(Type *Ty) {
@@ -109,7 +106,7 @@ Attributes Attributes::typeIncompatible(Type *Ty) {
       .addAttribute(Attributes::NoCapture)
       .addAttribute(Attributes::StructRet);
   
-  return Attributes(Incompatible.Bits); // FIXME: Use Attributes::get().
+  return Attributes::get(Ty->getContext(), Incompatible);
 }
 
 std::string Attributes::getAsString() const {
@@ -514,7 +511,7 @@ AttrListPtr AttrListPtr::addAttr(LLVMContext &C, unsigned Idx,
     // If there are attributes already at this index, merge them in.
     if (i != e && OldAttrList[i].Index == Idx) {
       Attrs =
-        Attributes::get(Attributes::Builder(Attrs).
+        Attributes::get(C, Attributes::Builder(Attrs).
                         addAttributes(OldAttrList[i].Attrs));
       ++i;
     }
@@ -555,7 +552,7 @@ AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
   
   // If there are attributes already at this index, merge them in.
   assert(OldAttrList[i].Index == Idx && "Attribute isn't set?");
-  Attrs = Attributes::get(Attributes::Builder(OldAttrList[i].Attrs).
+  Attrs = Attributes::get(C, Attributes::Builder(OldAttrList[i].Attrs).
                           removeAttributes(Attrs));
   ++i;
   if (Attrs.hasAttributes()) // If any attributes left for this param, add them.

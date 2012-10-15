@@ -2070,7 +2070,7 @@ static AttrListPtr StripNest(LLVMContext &C, const AttrListPtr &Attrs) {
       continue;
 
     // There can be only one.
-    return Attrs.removeAttr(C, Attrs.getSlot(i).Index, Attributes::get(B));
+    return Attrs.removeAttr(C, Attrs.getSlot(i).Index, Attributes::get(C, B));
   }
 
   return Attrs;

@@ -50,7 +50,7 @@ namespace Intrinsic {
   /// Intrinsic::getType(ID) - Return the function type for an intrinsic.
   ///
   FunctionType *getType(LLVMContext &Context, ID id,
-                              ArrayRef<Type*> Tys = ArrayRef<Type*>());
+                        ArrayRef<Type*> Tys = ArrayRef<Type*>());
 
   /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
   /// overloaded.
@@ -58,7 +58,7 @@ namespace Intrinsic {
 
   /// Intrinsic::getAttributes(ID) - Return the attributes for an intrinsic.
   ///
-  AttrListPtr getAttributes(ID id);
+  AttrListPtr getAttributes(LLVMContext &C, ID id);
 
   /// Intrinsic::getDeclaration(M, ID) - Create or insert an LLVM Function
   /// declaration for an intrinsic, and return it.

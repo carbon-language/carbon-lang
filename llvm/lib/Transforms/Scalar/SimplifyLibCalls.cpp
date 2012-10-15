@@ -350,7 +350,7 @@ struct StrToOpt : public LibCallOptimization {
       // It would be readonly too, except that it still may write to errno.
       Attributes::Builder B;
       B.addAttribute(Attributes::NoCapture);
-      CI->addAttribute(1, Attributes::get(B));
+      CI->addAttribute(1, Attributes::get(Callee->getContext(), B));
     }
 
     return 0;

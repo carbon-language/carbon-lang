@@ -1443,7 +1443,8 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     // Otherwise, handle normal operands.
     if (ParseOptionalAttrs(ArgAttrs, 0) || ParseValue(ArgTy, V, PFS))
       return true;
-    ArgList.push_back(ParamInfo(ArgLoc, V, Attributes::get(ArgAttrs)));
+    ArgList.push_back(ParamInfo(ArgLoc, V, Attributes::get(V->getContext(),
+                                                           ArgAttrs)));
   }
 
   Lex.Lex();  // Lex the ')'.
@@ -1492,7 +1493,9 @@ bool LLParser::ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList,
     if (!FunctionType::isValidArgumentType(ArgTy))
       return Error(TypeLoc, "invalid type for function argument");
 
-    ArgList.push_back(ArgInfo(TypeLoc, ArgTy, Attributes::get(Attrs), Name));
+    ArgList.push_back(ArgInfo(TypeLoc, ArgTy,
+                              Attributes::get(ArgTy->getContext(),
+                                              Attrs), Name));
 
     while (EatIfPresent(lltok::comma)) {
       // Handle ... at end of arg list.
@@ -1518,7 +1521,9 @@ bool LLParser::ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList,
       if (!ArgTy->isFirstClassType())
         return Error(TypeLoc, "invalid type for function argument");
 
-      ArgList.push_back(ArgInfo(TypeLoc, ArgTy, Attributes::get(Attrs), Name));
+      ArgList.push_back(ArgInfo(TypeLoc, ArgTy,
+                                Attributes::get(ArgTy->getContext(), Attrs),
+                                Name));
     }
   }
 
@@ -2766,7 +2771,9 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   SmallVector<AttributeWithIndex, 8> Attrs;
 
   if (RetAttrs.hasAttributes())
-    Attrs.push_back(AttributeWithIndex::get(0, Attributes::get(RetAttrs)));
+    Attrs.push_back(AttributeWithIndex::get(0,
+                                          Attributes::get(RetType->getContext(),
+                                                          RetAttrs)));
 
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
     ParamTypeList.push_back(ArgList[i].Ty);
@@ -2775,7 +2782,9 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   }
 
   if (FuncAttrs.hasAttributes())
-    Attrs.push_back(AttributeWithIndex::get(~0, Attributes::get(FuncAttrs)));
+    Attrs.push_back(AttributeWithIndex::get(~0,
+                                          Attributes::get(RetType->getContext(),
+                                                          FuncAttrs)));
 
   AttrListPtr PAL = AttrListPtr::get(Attrs);
 
@@ -3297,7 +3306,9 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   // Set up the Attributes for the function.
   SmallVector<AttributeWithIndex, 8> Attrs;
   if (RetAttrs.hasAttributes())
-    Attrs.push_back(AttributeWithIndex::get(0, Attributes::get(RetAttrs)));
+    Attrs.push_back(AttributeWithIndex::get(0,
+                                           Attributes::get(Callee->getContext(),
+                                                           RetAttrs)));
 
   SmallVector<Value*, 8> Args;
 
@@ -3325,7 +3336,9 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(CallLoc, "not enough parameters specified for call");
 
   if (FnAttrs.hasAttributes())
-    Attrs.push_back(AttributeWithIndex::get(~0, Attributes::get(FnAttrs)));
+    Attrs.push_back(AttributeWithIndex::get(~0,
+                                           Attributes::get(Callee->getContext(),
+                                                           FnAttrs)));
 
   // Finish off the Attributes and check them
   AttrListPtr PAL = AttrListPtr::get(Attrs);
@@ -3693,7 +3706,9 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   // Set up the Attributes for the function.
   SmallVector<AttributeWithIndex, 8> Attrs;
   if (RetAttrs.hasAttributes())
-    Attrs.push_back(AttributeWithIndex::get(0, Attributes::get(RetAttrs)));
+    Attrs.push_back(AttributeWithIndex::get(0,
+                                           Attributes::get(Callee->getContext(),
+                                                           RetAttrs)));
 
   SmallVector<Value*, 8> Args;
 
@@ -3721,7 +3736,9 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
     return Error(CallLoc, "not enough parameters specified for call");
 
   if (FnAttrs.hasAttributes())
-    Attrs.push_back(AttributeWithIndex::get(~0, Attributes::get(FnAttrs)));
+    Attrs.push_back(AttributeWithIndex::get(~0,
+                                           Attributes::get(Callee->getContext(),
+                                                           FnAttrs)));
 
   // Finish off the Attributes and check them
   AttrListPtr PAL = AttrListPtr::get(Attrs);

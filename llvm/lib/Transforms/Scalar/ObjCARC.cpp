@@ -1791,7 +1791,7 @@ Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                           Attributes::get(M->getContext(), B));
     RetainRVCallee =
       M->getOrInsertFunction("objc_retainAutoreleasedReturnValue", FTy,
                              Attributes);
@@ -1808,7 +1808,7 @@ Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                                   Attributes::get(C, B));
     AutoreleaseRVCallee =
       M->getOrInsertFunction("objc_autoreleaseReturnValue", FTy,
                              Attributes);
@@ -1823,7 +1823,7 @@ Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                                   Attributes::get(C, B));
     ReleaseCallee =
       M->getOrInsertFunction(
         "objc_release",
@@ -1840,7 +1840,7 @@ Constant *ObjCARCOpt::getRetainCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                                   Attributes::get(C, B));
     RetainCallee =
       M->getOrInsertFunction(
         "objc_retain",
@@ -1872,7 +1872,7 @@ Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                                   Attributes::get(C, B));
     AutoreleaseCallee =
       M->getOrInsertFunction(
         "objc_autorelease",
@@ -3850,8 +3850,8 @@ Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
     Attributes::Builder BNoCapture;
     BNoCapture.addAttribute(Attributes::NoCapture);
     AttrListPtr Attributes = AttrListPtr()
-      .addAttr(M->getContext(), ~0u, Attributes::get(BNoUnwind))
-      .addAttr(M->getContext(), 1, Attributes::get(BNoCapture));
+      .addAttr(M->getContext(), ~0u, Attributes::get(C, BNoUnwind))
+      .addAttr(M->getContext(), 1, Attributes::get(C, BNoCapture));
 
     StoreStrongCallee =
       M->getOrInsertFunction(
@@ -3871,7 +3871,7 @@ Constant *ObjCARCContract::getRetainAutoreleaseCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                                   Attributes::get(C, B));
     RetainAutoreleaseCallee =
       M->getOrInsertFunction("objc_retainAutorelease", FTy, Attributes);
   }
@@ -3887,7 +3887,7 @@ Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
     AttrListPtr Attributes = AttrListPtr().addAttr(M->getContext(), ~0u,
-                                                   Attributes::get(B));
+                                                   Attributes::get(C, B));
     RetainAutoreleaseRVCallee =
       M->getOrInsertFunction("objc_retainAutoreleaseReturnValue", FTy,
                              Attributes);

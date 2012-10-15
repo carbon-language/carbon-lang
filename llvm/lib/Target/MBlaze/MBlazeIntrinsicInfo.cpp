@@ -83,7 +83,7 @@ bool MBlazeIntrinsicInfo::isOverloaded(unsigned IntrID) const {
 #undef GET_INTRINSIC_OVERLOAD_TABLE
 }
 
-/// This defines the "getAttributes(ID id)" method.
+/// This defines the "getAttributes(LLVMContext &C, ID id)" method.
 #define GET_INTRINSIC_ATTRIBUTES
 #include "MBlazeGenIntrinsics.inc"
 #undef GET_INTRINSIC_ATTRIBUTES
@@ -104,7 +104,8 @@ Function *MBlazeIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
                                                 Type **Tys,
                                                 unsigned numTy) const {
   assert(!isOverloaded(IntrID) && "MBlaze intrinsics are not overloaded");
-  AttrListPtr AList = getAttributes((mblazeIntrinsic::ID) IntrID);
+  AttrListPtr AList = getAttributes(M->getContext(),
+                                    (mblazeIntrinsic::ID) IntrID);
   return cast<Function>(M->getOrInsertFunction(getName(IntrID),
                                                getType(M->getContext(), IntrID),
                                                AList));
