@@ -6929,9 +6929,6 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
   SourceLocation FakeLAngleLoc
     = SemaRef.PP.getLocForEndOfToken(E->getOperatorLoc());
   SourceLocation FakeRAngleLoc = E->getSubExpr()->getSourceRange().getBegin();
-  SourceLocation FakeRParenLoc
-    = SemaRef.PP.getLocForEndOfToken(
-                                  E->getSubExpr()->getSourceRange().getEnd());
   return getDerived().RebuildCXXNamedCastExpr(E->getOperatorLoc(),
                                               E->getStmtClass(),
                                               FakeLAngleLoc,
@@ -6939,7 +6936,7 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
                                               FakeRAngleLoc,
                                               FakeRAngleLoc,
                                               SubExpr.get(),
-                                              FakeRParenLoc);
+                                              E->getRParenLoc());
 }
 
 template<typename Derived>
