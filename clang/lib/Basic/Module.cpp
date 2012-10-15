@@ -219,6 +219,13 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
     OS.write_escaped(Headers[I]->getName());
     OS << "\"\n";
   }
+
+  for (unsigned I = 0, N = ExcludedHeaders.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "exclude header \"";
+    OS.write_escaped(ExcludedHeaders[I]->getName());
+    OS << "\"\n";
+  }
   
   for (submodule_const_iterator MI = submodule_begin(), MIEnd = submodule_end();
        MI != MIEnd; ++MI)

@@ -565,7 +565,10 @@ namespace clang {
       /// submodule.
       SUBMODULE_EXPORTS = 7,
       /// \brief Specifies a required feature.
-      SUBMODULE_REQUIRES = 8
+      SUBMODULE_REQUIRES = 8,
+      /// \brief Specifies a header that has been explicitly excluded
+      /// from this submodule.
+      SUBMODULE_EXCLUDED_HEADER = 9
     };
 
     /// \brief Record types used within a comments block.

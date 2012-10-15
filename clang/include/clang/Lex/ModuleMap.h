@@ -52,10 +52,37 @@ class ModuleMap {
 
   /// \brief The top-level modules that are known.
   llvm::StringMap<Module *> Modules;
-  
+
+  /// \brief A header that is known to reside within a given module,
+  /// whether it was included or excluded.
+  class KnownHeader {
+    llvm::PointerIntPair<Module *, 1, bool> Storage;
+
+  public:
+    KnownHeader() : Storage(0, false) { }
+    KnownHeader(Module *M, bool Excluded) : Storage(M, Excluded) { }
+
+    /// \brief Retrieve the module the header is stored in.
+    Module *getModule() const { return Storage.getPointer(); }
+
+    /// \brief Whether this header is explicitly excluded from the module.
+    bool isExcluded() const { return Storage.getInt(); }
+
+    /// \brief Whether this header is available in the module.
+    bool isAvailable() const { 
+      return !isExcluded() && getModule()->isAvailable(); 
+    }
+
+    // \brief Whether this known header is valid (i.e., it has an
+    // associated module).
+    operator bool() const { return Storage.getPointer() != 0; }
+  };
+
+  typedef llvm::DenseMap<const FileEntry *, KnownHeader> HeadersMap;
+
   /// \brief Mapping from each header to the module that owns the contents of the
   /// that header.
-  llvm::DenseMap<const FileEntry *, Module *> Headers;
+  HeadersMap Headers;
   
   /// \brief Mapping from directories with umbrella headers to the module
   /// that is generated from the umbrella header.
@@ -215,7 +242,9 @@ public:
   void setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir);
 
   /// \brief Adds this header to the given module.
-  void addHeader(Module *Mod, const FileEntry *Header);
+  /// \param Excluded Whether this header is explicitly excluded from the
+  /// module; otherwise, it's included in the module.
+  void addHeader(Module *Mod, const FileEntry *Header, bool Excluded);
 
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.

@@ -1983,6 +1983,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Feature
   unsigned RequiresAbbrev = Stream.EmitAbbrev(Abbrev);
 
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_EXCLUDED_HEADER));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
+  unsigned ExcludedHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
+
   // Write the submodule metadata block.
   RecordData Record;
   Record.push_back(getNumberOfModules(WritingModule));
@@ -2043,6 +2048,13 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Record.push_back(SUBMODULE_HEADER);
       Stream.EmitRecordWithBlob(HeaderAbbrev, Record, 
                                 Mod->Headers[I]->getName());
+    }
+    // Emit the excluded headers.
+    for (unsigned I = 0, N = Mod->ExcludedHeaders.size(); I != N; ++I) {
+      Record.clear();
+      Record.push_back(SUBMODULE_EXCLUDED_HEADER);
+      Stream.EmitRecordWithBlob(ExcludedHeaderAbbrev, Record, 
+                                Mod->ExcludedHeaders[I]->getName());
     }
     for (unsigned I = 0, N = Mod->TopHeaders.size(); I != N; ++I) {
       Record.clear();

@@ -73,6 +73,9 @@ public:
   /// \brief The headers that are part of this module.
   llvm::SmallVector<const FileEntry *, 2> Headers;
 
+  /// \brief The headers that are explicitly excluded from this module.
+  llvm::SmallVector<const FileEntry *, 2> ExcludedHeaders;
+
   /// \brief The top-level headers associated with this module.
   llvm::SmallSetVector<const FileEntry *, 2> TopHeaders;
 
