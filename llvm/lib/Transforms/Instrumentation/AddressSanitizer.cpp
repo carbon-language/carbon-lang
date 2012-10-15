@@ -148,38 +148,29 @@ static cl::opt<int> ClDebugMax("asan-debug-max", cl::desc("Debug man inst"),
                                cl::Hidden, cl::init(-1));
 
 namespace {
-
-/// An object of this type is created while instrumenting every function.
-struct AsanFunctionContext {
-  AsanFunctionContext(Function &Function) : F(Function) { }
-
-  Function &F;
-};
-
 /// AddressSanitizer: instrument the code in module to find memory bugs.
-struct AddressSanitizer : public ModulePass {
+struct AddressSanitizer : public FunctionPass {
   AddressSanitizer();
   virtual const char *getPassName() const;
-  void instrumentMop(AsanFunctionContext &AFC, Instruction *I);
-  void instrumentAddress(AsanFunctionContext &AFC,
-                         Instruction *OrigIns, IRBuilder<> &IRB,
+  void instrumentMop(Instruction *I);
+  void instrumentAddress(Instruction *OrigIns, IRBuilder<> &IRB,
                          Value *Addr, uint32_t TypeSize, bool IsWrite);
   Value *createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                            Value *ShadowValue, uint32_t TypeSize);
   Instruction *generateCrashCode(Instruction *InsertBefore, Value *Addr,
                                  bool IsWrite, size_t AccessSizeIndex);
-  bool instrumentMemIntrinsic(AsanFunctionContext &AFC, MemIntrinsic *MI);
-  void instrumentMemIntrinsicParam(AsanFunctionContext &AFC,
-                                   Instruction *OrigIns, Value *Addr,
+  bool instrumentMemIntrinsic(MemIntrinsic *MI);
+  void instrumentMemIntrinsicParam(Instruction *OrigIns, Value *Addr,
                                    Value *Size,
                                    Instruction *InsertBefore, bool IsWrite);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
-  bool handleFunction(Module &M, Function &F);
+  bool runOnFunction(Function &F);
   void createInitializerPoisonCalls(Module &M,
                                     Value *FirstAddr, Value *LastAddr);
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
-  bool poisonStackInFunction(Module &M, Function &F);
-  virtual bool runOnModule(Module &M);
+  bool poisonStackInFunction(Function &F);
+  virtual bool doInitialization(Module &M);
+  virtual bool doFinalization(Module &M);
   bool insertGlobalRedzones(Module &M);
   static char ID;  // Pass identification, replacement for typeid
 
@@ -216,6 +207,8 @@ struct AddressSanitizer : public ModulePass {
   Type *IntptrPtrTy;
   Function *AsanCtorFunction;
   Function *AsanInitFunction;
+  Function *AsanStackMallocFunc, *AsanStackFreeFunc;
+  Function *AsanHandleNoReturnFunc;
   Instruction *CtorInsertBefore;
   OwningPtr<BlackList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
@@ -230,8 +223,8 @@ char AddressSanitizer::ID = 0;
 INITIALIZE_PASS(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
-AddressSanitizer::AddressSanitizer() : ModulePass(ID) { }
-ModulePass *llvm::createAddressSanitizerPass() {
+AddressSanitizer::AddressSanitizer() : FunctionPass(ID) { }
+FunctionPass *llvm::createAddressSanitizerPass() {
   return new AddressSanitizer();
 }
 
@@ -295,12 +288,12 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
 }
 
 void AddressSanitizer::instrumentMemIntrinsicParam(
-    AsanFunctionContext &AFC, Instruction *OrigIns,
+    Instruction *OrigIns,
     Value *Addr, Value *Size, Instruction *InsertBefore, bool IsWrite) {
   // Check the first byte.
   {
     IRBuilder<> IRB(InsertBefore);
-    instrumentAddress(AFC, OrigIns, IRB, Addr, 8, IsWrite);
+    instrumentAddress(OrigIns, IRB, Addr, 8, IsWrite);
   }
   // Check the last byte.
   {
@@ -310,13 +303,12 @@ void AddressSanitizer::instrumentMemIntrinsicParam(
     SizeMinusOne = IRB.CreateIntCast(SizeMinusOne, IntptrTy, false);
     Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
     Value *AddrPlusSizeMinisOne = IRB.CreateAdd(AddrLong, SizeMinusOne);
-    instrumentAddress(AFC, OrigIns, IRB, AddrPlusSizeMinisOne, 8, IsWrite);
+    instrumentAddress(OrigIns, IRB, AddrPlusSizeMinisOne, 8, IsWrite);
   }
 }
 
 // Instrument memset/memmove/memcpy
-bool AddressSanitizer::instrumentMemIntrinsic(AsanFunctionContext &AFC,
-                                              MemIntrinsic *MI) {
+bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   Value *Dst = MI->getDest();
   MemTransferInst *MemTran = dyn_cast<MemTransferInst>(MI);
   Value *Src = MemTran ? MemTran->getSource() : 0;
@@ -335,9 +327,9 @@ bool AddressSanitizer::instrumentMemIntrinsic(AsanFunctionContext &AFC,
     InsertBefore = splitBlockAndInsertIfThen(Cmp, false);
   }
 
-  instrumentMemIntrinsicParam(AFC, MI, Dst, Length, InsertBefore, true);
+  instrumentMemIntrinsicParam(MI, Dst, Length, InsertBefore, true);
   if (Src)
-    instrumentMemIntrinsicParam(AFC, MI, Src, Length, InsertBefore, false);
+    instrumentMemIntrinsicParam(MI, Src, Length, InsertBefore, false);
   return true;
 }
 
@@ -391,7 +383,7 @@ bool AddressSanitizer::HasDynamicInitializer(GlobalVariable *G) {
   return DynamicallyInitializedGlobals.count(G);
 }
 
-void AddressSanitizer::instrumentMop(AsanFunctionContext &AFC, Instruction *I) {
+void AddressSanitizer::instrumentMop(Instruction *I) {
   bool IsWrite = false;
   Value *Addr = isInterestingMemoryAccess(I, &IsWrite);
   assert(Addr);
@@ -424,7 +416,7 @@ void AddressSanitizer::instrumentMop(AsanFunctionContext &AFC, Instruction *I) {
   }
 
   IRBuilder<> IRB(I);
-  instrumentAddress(AFC, I, IRB, Addr, TypeSize, IsWrite);
+  instrumentAddress(I, IRB, Addr, TypeSize, IsWrite);
 }
 
 // Validate the result of Module::getOrInsertFunction called for an interface
@@ -469,8 +461,7 @@ Value *AddressSanitizer::createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
   return IRB.CreateICmpSGE(LastAccessedByte, ShadowValue);
 }
 
-void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
-                                         Instruction *OrigIns,
+void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
                                          IRBuilder<> &IRB, Value *Addr,
                                          uint32_t TypeSize, bool IsWrite) {
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
@@ -494,7 +485,8 @@ void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
     BasicBlock *NextBB = CheckTerm->getSuccessor(0);
     IRB.SetInsertPoint(CheckTerm);
     Value *Cmp2 = createSlowPathCmp(IRB, AddrLong, ShadowValue, TypeSize);
-    BasicBlock *CrashBlock = BasicBlock::Create(*C, "", &AFC.F, NextBB);
+    BasicBlock *CrashBlock =
+        BasicBlock::Create(*C, "", NextBB->getParent(), NextBB);
     CrashTerm = new UnreachableInst(*C, CrashBlock);
     BranchInst *NewTerm = BranchInst::Create(CrashBlock, NextBB, Cmp2);
     ReplaceInstWithInst(CheckTerm, NewTerm);
@@ -734,9 +726,10 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
 }
 
 // virtual
-bool AddressSanitizer::runOnModule(Module &M) {
+bool AddressSanitizer::doInitialization(Module &M) {
   // Initialize the private fields. No one has accessed them before.
   TD = getAnalysisIfAvailable<DataLayout>();
+
   if (!TD)
     return false;
   BL.reset(new BlackList(ClBlackListFile));
@@ -771,6 +764,15 @@ bool AddressSanitizer::runOnModule(Module &M) {
           M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
     }
   }
+
+  AsanStackMallocFunc = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanStackMallocName, IntptrTy, IntptrTy, IntptrTy, NULL));
+  AsanStackFreeFunc = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanStackFreeName, IRB.getVoidTy(),
+      IntptrTy, IntptrTy, IntptrTy, NULL));
+  AsanHandleNoReturnFunc = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
+
   // We insert an empty inline asm after __asan_report* to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
@@ -797,10 +799,6 @@ bool AddressSanitizer::runOnModule(Module &M) {
   // For scales 6 and 7, the redzone has to be 64 and 128 bytes respectively.
   RedzoneSize = std::max(32, (int)(1 << MappingScale));
 
-  bool Res = false;
-
-  if (ClGlobals)
-    Res |= insertGlobalRedzones(M);
 
   if (ClMappingOffsetLog >= 0) {
     // Tell the run-time the current values of mapping offset and scale.
@@ -820,16 +818,19 @@ bool AddressSanitizer::runOnModule(Module &M) {
     IRB.CreateLoad(asan_mapping_scale, true);
   }
 
-
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    if (F->isDeclaration()) continue;
-    Res |= handleFunction(M, *F);
-  }
-
   appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndCtorPriority);
 
-  return Res;
+  return true;
 }
+
+bool AddressSanitizer::doFinalization(Module &M) {
+  // We transform the globals at the very end so that the optimization analysis
+  // works on the original globals.
+  if (ClGlobals)
+    return insertGlobalRedzones(M);
+  return false;
+}
+
 
 bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   // For each NSObject descendant having a +load method, this method is invoked
@@ -847,7 +848,7 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   return false;
 }
 
-bool AddressSanitizer::handleFunction(Module &M, Function &F) {
+bool AddressSanitizer::runOnFunction(Function &F) {
   if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
 
@@ -899,8 +900,6 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
     }
   }
 
-  AsanFunctionContext AFC(F);
-
   // Instrument.
   int NumInstrumented = 0;
   for (size_t i = 0, n = ToInstrument.size(); i != n; i++) {
@@ -908,24 +907,23 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
     if (ClDebugMin < 0 || ClDebugMax < 0 ||
         (NumInstrumented >= ClDebugMin && NumInstrumented <= ClDebugMax)) {
       if (isInterestingMemoryAccess(Inst, &IsWrite))
-        instrumentMop(AFC, Inst);
+        instrumentMop(Inst);
       else
-        instrumentMemIntrinsic(AFC, cast<MemIntrinsic>(Inst));
+        instrumentMemIntrinsic(cast<MemIntrinsic>(Inst));
     }
     NumInstrumented++;
   }
 
   DEBUG(dbgs() << F);
 
-  bool ChangedStack = poisonStackInFunction(M, F);
+  bool ChangedStack = poisonStackInFunction(F);
 
   // We must unpoison the stack before every NoReturn call (throw, _exit, etc).
   // See e.g. http://code.google.com/p/address-sanitizer/issues/detail?id=37
   for (size_t i = 0, n = NoReturnCalls.size(); i != n; i++) {
     Instruction *CI = NoReturnCalls[i];
     IRBuilder<> IRB(CI);
-    IRB.CreateCall(M.getOrInsertFunction(kAsanHandleNoReturnName,
-                                         IRB.getVoidTy(), NULL));
+    IRB.CreateCall(AsanHandleNoReturnFunc);
   }
 
   return NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();
@@ -1039,7 +1037,7 @@ bool AddressSanitizer::LooksLikeCodeInBug11395(Instruction *I) {
 // compiler hoists the load of the shadow value somewhere too high.
 // This causes asan to report a non-existing bug on 453.povray.
 // It sounds like an LLVM bug.
-bool AddressSanitizer::poisonStackInFunction(Module &M, Function &F) {
+bool AddressSanitizer::poisonStackInFunction(Function &F) {
   if (!ClStack) return false;
   SmallVector<AllocaInst*, 16> AllocaVec;
   SmallVector<Instruction*, 8> RetVec;
@@ -1089,8 +1087,6 @@ bool AddressSanitizer::poisonStackInFunction(Module &M, Function &F) {
   Value *LocalStackBase = OrigStackBase;
 
   if (DoStackMalloc) {
-    Value *AsanStackMallocFunc = M.getOrInsertFunction(
-        kAsanStackMallocName, IntptrTy, IntptrTy, IntptrTy, NULL);
     LocalStackBase = IRB.CreateCall2(AsanStackMallocFunc,
         ConstantInt::get(IntptrTy, LocalStackSize), OrigStackBase);
   }
@@ -1126,20 +1122,13 @@ bool AddressSanitizer::poisonStackInFunction(Module &M, Function &F) {
                                    ConstantInt::get(IntptrTy, LongSize/8));
   BasePlus1 = IRB.CreateIntToPtr(BasePlus1, IntptrPtrTy);
   Value *Description = IRB.CreatePointerCast(
-      createPrivateGlobalForString(M, StackDescription.str()),
+      createPrivateGlobalForString(*F.getParent(), StackDescription.str()),
       IntptrTy);
   IRB.CreateStore(Description, BasePlus1);
 
   // Poison the stack redzones at the entry.
   Value *ShadowBase = memToShadow(LocalStackBase, IRB);
   PoisonStack(ArrayRef<AllocaInst*>(AllocaVec), IRB, ShadowBase, true);
-
-  Value *AsanStackFreeFunc = NULL;
-  if (DoStackMalloc) {
-    AsanStackFreeFunc = M.getOrInsertFunction(
-        kAsanStackFreeName, IRB.getVoidTy(),
-        IntptrTy, IntptrTy, IntptrTy, NULL);
-  }
 
   // Unpoison the stack before all ret instructions.
   for (size_t i = 0, n = RetVec.size(); i < n; i++) {
