@@ -635,7 +635,7 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
     --R;
     const unsigned NewSuperReg = Order[R];
     // Don't consider non-allocatable registers
-    if (!RegClassInfo.isAllocatable(NewSuperReg)) continue;
+    if (!MRI.isAllocatable(NewSuperReg)) continue;
     // Don't replace a register with itself.
     if (NewSuperReg == SuperReg) continue;
 
@@ -818,7 +818,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
         DEBUG(dbgs() << "\tAntidep reg: " << TRI->getName(AntiDepReg));
         assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
 
-        if (!RegClassInfo.isAllocatable(AntiDepReg)) {
+        if (!MRI.isAllocatable(AntiDepReg)) {
           // Don't break anti-dependencies on non-allocatable registers.
           DEBUG(dbgs() << " (non-allocatable)\n");
           continue;

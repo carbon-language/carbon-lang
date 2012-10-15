@@ -895,7 +895,7 @@ bool RegisterCoalescer::canJoinPhys(CoalescerPair &CP) {
   /// Always join simple intervals that are defined by a single copy from a
   /// reserved register. This doesn't increase register pressure, so it is
   /// always beneficial.
-  if (!RegClassInfo.isReserved(CP.getDstReg())) {
+  if (!MRI->isReserved(CP.getDstReg())) {
     DEBUG(dbgs() << "\tCan only merge into reserved registers.\n");
     return false;
   }
@@ -1070,7 +1070,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 /// Attempt joining with a reserved physreg.
 bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   assert(CP.isPhys() && "Must be a physreg copy");
-  assert(RegClassInfo.isReserved(CP.getDstReg()) && "Not a reserved register");
+  assert(MRI->isReserved(CP.getDstReg()) && "Not a reserved register");
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG(dbgs() << "\t\tRHS = " << PrintReg(CP.getSrcReg()) << ' ' << RHS
                << '\n');

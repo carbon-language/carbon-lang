@@ -509,7 +509,7 @@ RAFast::LiveRegMap::iterator RAFast::allocVirtReg(MachineInstr *MI,
 
   // Ignore invalid hints.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || !RegClassInfo.isAllocatable(Hint)))
+               !RC->contains(Hint) || !MRI->isAllocatable(Hint)))
     Hint = 0;
 
   // Take hint when possible.
@@ -838,7 +838,7 @@ void RAFast::AllocateBasicBlock() {
   // Add live-in registers as live.
   for (MachineBasicBlock::livein_iterator I = MBB->livein_begin(),
          E = MBB->livein_end(); I != E; ++I)
-    if (RegClassInfo.isAllocatable(*I))
+    if (MRI->isAllocatable(*I))
       definePhysReg(MII, *I, regReserved);
 
   SmallVector<unsigned, 8> VirtDead;
@@ -970,7 +970,7 @@ void RAFast::AllocateBasicBlock() {
         }
         continue;
       }
-      if (!RegClassInfo.isAllocatable(Reg)) continue;
+      if (!MRI->isAllocatable(Reg)) continue;
       if (MO.isUse()) {
         usePhysReg(MO);
       } else if (MO.isEarlyClobber()) {
@@ -1058,7 +1058,7 @@ void RAFast::AllocateBasicBlock() {
       unsigned Reg = MO.getReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        if (!RegClassInfo.isAllocatable(Reg)) continue;
+        if (!MRI->isAllocatable(Reg)) continue;
         definePhysReg(MI, Reg, (MO.isImplicit() || MO.isDead()) ?
                                regFree : regReserved);
         continue;

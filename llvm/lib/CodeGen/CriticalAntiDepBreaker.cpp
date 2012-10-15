@@ -527,7 +527,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
         if (Edge->getKind() == SDep::Anti) {
           AntiDepReg = Edge->getReg();
           assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
-          if (!RegClassInfo.isAllocatable(AntiDepReg))
+          if (!MRI.isAllocatable(AntiDepReg))
             // Don't break anti-dependencies on non-allocatable registers.
             AntiDepReg = 0;
           else if (KeepRegs.test(AntiDepReg))
