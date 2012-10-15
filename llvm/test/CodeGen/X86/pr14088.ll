@@ -1,4 +1,4 @@
-; RUN: llc -mtriple x86_64-linux %s -o - | FileCheck %s
+; RUN: llc -mtriple x86_64-linux -mcpu core %s -o - | FileCheck %s
 define i32 @f(i1 %foo, i16* %tm_year2, i8* %bar, i16 %zed, i32 %zed2) {
 entry:
   br i1 %foo, label %return, label %if.end
