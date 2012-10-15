@@ -520,7 +520,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // Add any return attributes.
   Attributes attrs = PAL.getRetAttributes();
   if (attrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
+    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+                                                    attrs));
 
   // First, determine the new argument list
   unsigned ArgIndex = 1;
@@ -592,7 +593,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // Add any function attributes.
   attrs = PAL.getFnAttributes();
   if (attrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
+    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                                    attrs));
 
   Type *RetTy = FTy->getReturnType();
 
@@ -639,7 +641,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     // Add any return attributes.
     Attributes attrs = CallPAL.getRetAttributes();
     if (attrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
+      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+                                                      attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
@@ -720,7 +723,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     // Add any function attributes.
     attrs = CallPAL.getFnAttributes();
     if (attrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
+      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                                      attrs));
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {

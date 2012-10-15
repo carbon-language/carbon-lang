@@ -1274,7 +1274,7 @@ public:
   void setIsNoInline() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoInline);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Return true if the call can return twice
@@ -1284,7 +1284,7 @@ public:
   void setCanReturnTwice() {
     Attributes::Builder B;
     B.addAttribute(Attributes::ReturnsTwice);
-    addAttribute(~0U, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call does not access memory.
@@ -1294,7 +1294,7 @@ public:
   void setDoesNotAccessMemory() {
     Attributes::Builder B;
     B.addAttribute(Attributes::ReadNone);
-    addAttribute(~0U, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call does not access or only reads memory.
@@ -1304,7 +1304,7 @@ public:
   void setOnlyReadsMemory() {
     Attributes::Builder B;
     B.addAttribute(Attributes::ReadOnly);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call cannot return.
@@ -1312,7 +1312,7 @@ public:
   void setDoesNotReturn() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoReturn);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call cannot unwind.
@@ -1320,7 +1320,7 @@ public:
   void setDoesNotThrow() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call returns a structure through first
@@ -3029,7 +3029,7 @@ public:
   void setIsNoInline() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoInline);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call does not access memory.
@@ -3039,7 +3039,7 @@ public:
   void setDoesNotAccessMemory() {
     Attributes::Builder B;
     B.addAttribute(Attributes::ReadNone);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call does not access or only reads memory.
@@ -3049,7 +3049,7 @@ public:
   void setOnlyReadsMemory() {
     Attributes::Builder B;
     B.addAttribute(Attributes::ReadOnly);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call cannot return.
@@ -3057,7 +3057,7 @@ public:
   void setDoesNotReturn() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoReturn);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call cannot unwind.
@@ -3065,7 +3065,7 @@ public:
   void setDoesNotThrow() {
     Attributes::Builder B;
     B.addAttribute(Attributes::NoUnwind);
-    addAttribute(~0, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
   }
 
   /// @brief Determine if the call returns a structure through first

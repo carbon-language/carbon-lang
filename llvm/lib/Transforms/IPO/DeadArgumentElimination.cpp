@@ -278,7 +278,8 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
         AttributesVec.push_back(PAL.getSlot(i));
       Attributes FnAttrs = PAL.getFnAttributes();
       if (FnAttrs.hasAttributes())
-        AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
+        AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                                        FnAttrs));
       PAL = AttrListPtr::get(AttributesVec);
     }
 
@@ -772,7 +773,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
            "Return attributes no longer compatible?");
 
   if (RAttrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(0, RAttrs));
+    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+                                                    RAttrs));
 
   // Remember which arguments are still alive.
   SmallVector<bool, 10> ArgAlive(FTy->getNumParams(), false);
@@ -800,7 +802,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   }
 
   if (FnAttrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
+    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                                    FnAttrs));
 
   // Reconstruct the AttributesList based on the vector we constructed.
   AttrListPtr NewPAL = AttrListPtr::get(AttributesVec);
@@ -840,7 +843,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       Attributes::get(NF->getContext(), Attributes::Builder(RAttrs).
            removeAttributes(Attributes::typeIncompatible(NF->getReturnType())));
     if (RAttrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(0, RAttrs));
+      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+                                                      RAttrs));
 
     // Declare these outside of the loops, so we can reuse them for the second
     // loop, which loops the varargs.
@@ -866,7 +870,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     }
 
     if (FnAttrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
+      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                                      FnAttrs));
 
     // Reconstruct the AttributesList based on the vector we constructed.
     AttrListPtr NewCallPAL = AttrListPtr::get(AttributesVec);

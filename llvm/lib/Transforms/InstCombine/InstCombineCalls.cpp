@@ -1118,7 +1118,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // Add the new return attributes.
   if (RAttrs.hasAttributes())
     attrVec.push_back(
-      AttributeWithIndex::get(0, Attributes::get(FT->getContext(), RAttrs)));
+      AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+                              Attributes::get(FT->getContext(), RAttrs)));
 
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
@@ -1170,7 +1171,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   Attributes FnAttrs = CallerPAL.getFnAttributes();
   if (FnAttrs.hasAttributes())
-    attrVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
+    attrVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                              FnAttrs));
 
   if (NewRetTy->isVoidTy())
     Caller->setName("");   // Void type should not have a name.
@@ -1280,7 +1282,8 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
       // Add any result attributes.
       Attributes Attr = Attrs.getRetAttributes();
       if (Attr.hasAttributes())
-        NewAttrs.push_back(AttributeWithIndex::get(0, Attr));
+        NewAttrs.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+                                                   Attr));
 
       {
         unsigned Idx = 1;
@@ -1312,7 +1315,8 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
       // Add any function attributes.
       Attr = Attrs.getFnAttributes();
       if (Attr.hasAttributes())
-        NewAttrs.push_back(AttributeWithIndex::get(~0, Attr));
+        NewAttrs.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+                                                   Attr));
 
       // The trampoline may have been bitcast to a bogus type (FTy).
       // Handle this by synthesizing a new function type, equal to FTy

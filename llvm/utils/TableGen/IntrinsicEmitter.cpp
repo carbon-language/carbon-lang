@@ -606,8 +606,8 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         OS << "      AttrVec.push_back(Attributes::ReadNone);\n"; 
         break;
       }
-      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(C, ~0, "
-         << "AttrVec);\n";
+      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(C, "
+         << "AttrListPtr::FunctionIndex, AttrVec);\n";
     }
 
     if (numAttrs) {

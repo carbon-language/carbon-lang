@@ -330,6 +330,12 @@ class AttributeListImpl;
 /// AttrListPtr - This class manages the ref count for the opaque
 /// AttributeListImpl object and provides accessors for it.
 class AttrListPtr {
+public:
+  enum AttrIndex {
+    ReturnIndex = 0U,
+    FunctionIndex = ~0U
+  };
+private:
   /// AttrList - The attributes that we are managing.  This can be null
   /// to represent the empty attributes list.
   AttributeListImpl *AttrList;
@@ -368,12 +374,12 @@ public:
   /// getRetAttributes - The attributes for the ret value are
   /// returned.
   Attributes getRetAttributes() const {
-    return getAttributes(0);
+    return getAttributes(ReturnIndex);
   }
 
   /// getFnAttributes - The function attributes are returned.
   Attributes getFnAttributes() const {
-    return getAttributes(~0U);
+    return getAttributes(FunctionIndex);
   }
 
   /// paramHasAttr - Return true if the specified parameter index has the

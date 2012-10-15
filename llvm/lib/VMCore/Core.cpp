@@ -1383,7 +1383,7 @@ void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   const AttrListPtr PAL = Func->getAttributes();
   Attributes::Builder B(PA);
   const AttrListPtr PALnew =
-    PAL.addAttr(Func->getContext(), ~0U,
+    PAL.addAttr(Func->getContext(), AttrListPtr::FunctionIndex,
                 Attributes::get(Func->getContext(), B));
   Func->setAttributes(PALnew);
 }
@@ -1393,7 +1393,7 @@ void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   const AttrListPtr PAL = Func->getAttributes();
   Attributes::Builder B(PA);
   const AttrListPtr PALnew =
-    PAL.removeAttr(Func->getContext(), ~0U,
+    PAL.removeAttr(Func->getContext(), AttrListPtr::FunctionIndex,
                    Attributes::get(Func->getContext(), B));
   Func->setAttributes(PALnew);
 }
