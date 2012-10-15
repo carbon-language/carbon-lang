@@ -19,7 +19,7 @@ add_lit_testsuite(check-llvm "Running the LLVM regression tests"
   DEPENDS UnitTests
           BugpointPasses LLVMHello
           llc lli llvm-ar llvm-as
-          llvm-diff
+          llvm-bcanalyzer llvm-diff
           llvm-dis llvm-extract llvm-dwarfdump
           llvm-link llvm-mc llvm-nm llvm-objdump llvm-readobj
           macho-dump opt
