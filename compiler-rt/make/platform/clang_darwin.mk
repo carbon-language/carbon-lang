@@ -61,7 +61,7 @@ UniversalArchs.cc_kext := $(call CheckArches,armv7 i386 x86_64,cc_kext)
 # Configuration for use with kernel/kexts for iOS 5.0 and earlier (which used 
 # a different code generation strategy).
 Configs += cc_kext_ios5
-UniversalArchs.cc_kext_ios5 := $(call CheckArches,armv7)
+UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 armv7,cc_kext_ios5)
 
 # Configurations which define the profiling support functions.
 Configs += profile_osx
