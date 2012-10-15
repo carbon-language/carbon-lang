@@ -905,6 +905,10 @@ struct DeclInfo {
   /// Declaration the comment is attached to.  Should not be NULL.
   const Decl *CommentDecl;
   
+  /// Location of this declaration. Not necessarily same as location of
+  /// CommentDecl.
+  SourceLocation Loc;
+  
   /// Parameters that can be referenced by \\param if \c CommentDecl is something
   /// that we consider a "function".
   ArrayRef<const ParmVarDecl *> ParamVars;

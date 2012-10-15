@@ -156,7 +156,8 @@ void DeclInfo::fill() {
     IsFilled = true;
     return;
   }
-
+  Loc = CommentDecl->getLocation();
+  
   Decl::Kind K = CommentDecl->getKind();
   switch (K) {
   default:
