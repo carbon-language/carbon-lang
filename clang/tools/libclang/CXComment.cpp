@@ -305,7 +305,7 @@ CXString clang_TParamCommandComment_getParamName(CXComment CXC) {
   if (!TPCC || !TPCC->hasParamName())
     return createCXString((const char *) 0);
 
-  return createCXString(TPCC->getParamName(), /*DupString=*/ false);
+  return createCXString(TPCC->getParamName(0), /*DupString=*/ false);
 }
 
 unsigned clang_TParamCommandComment_isParamPositionValid(CXComment CXC) {
@@ -697,7 +697,7 @@ void CommentASTToHTMLConverter::visitTParamCommandComment(
   } else
     Result << "<dt class=\"tparam-name-index-invalid\">";
 
-  appendToResultWithHTMLEscaping(C->getParamName());
+  appendToResultWithHTMLEscaping(C->getParamName(FC));
   Result << "</dt>";
 
   if (C->isPositionValid()) {
@@ -986,7 +986,7 @@ void CommentASTToXMLConverter::visitParamCommandComment(const ParamCommandCommen
 void CommentASTToXMLConverter::visitTParamCommandComment(
                                   const TParamCommandComment *C) {
   Result << "<Parameter><Name>";
-  appendToResultWithXMLEscaping(C->getParamName());
+  appendToResultWithXMLEscaping(C->getParamName(FC));
   Result << "</Name>";
 
   if (C->isPositionValid() && C->getDepth() == 1) {

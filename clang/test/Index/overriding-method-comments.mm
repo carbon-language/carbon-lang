@@ -109,3 +109,16 @@ void foo1(int TTT);
 // CHECK: FullCommentAsHTML=[<p class="para-brief"> Does something. </p><dl><dt class="param-name-index-0">EEE</dt><dd class="param-descr-index-0"> argument to function decl. </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}overriding-method-comments.mm" line="89" column="6"><Name>foo1</Name><USR>c:@F@foo1#I#</USR><Abstract><Para> Does something. </Para></Abstract><Parameters><Parameter><Name>EEE</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> argument to function decl. </Para></Discussion></Parameter></Parameters></Function>
 
 // CHECK: FullCommentAsHTML=[<p class="para-brief"> Does something. </p><dl><dt class="param-name-index-0">TTT</dt><dd class="param-descr-index-0"> argument to function decl. </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}overriding-method-comments.mm" line="89" column="6"><Name>foo1</Name><USR>c:@F@foo1#I#</USR><Abstract><Para> Does something. </Para></Abstract><Parameters><Parameter><Name>TTT</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> argument to function decl. </Para></Discussion></Parameter></Parameters></Function>
+
+/// \brief Documentation
+/// \tparam BBB The type, silly.
+/// \tparam AAA The type, silly as well.
+template<typename AAA, typename BBB>
+void foo(AAA, BBB);
+
+template<typename PPP, typename QQQ>
+void foo(PPP, QQQ);
+
+// CHECK: FullCommentAsHTML=[<p class="para-brief"> Documentation </p><dl><dt class="tparam-name-index-0">AAA</dt><dd class="tparam-descr-index-0"> The type, silly as well.</dd><dt class="tparam-name-index-1">BBB</dt><dd class="tparam-descr-index-1"> The type, silly. </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}overriding-method-comments.mm" line="117" column="6"><Name>foo</Name><USR>c:@FT@&gt;2#T#Tfoo#t0.0#t0.1#</USR><Abstract><Para> Documentation </Para></Abstract><TemplateParameters><Parameter><Name>AAA</Name><Index>0</Index><Discussion><Para> The type, silly as well.</Para></Discussion></Parameter><Parameter><Name>BBB</Name><Index>1</Index><Discussion><Para> The type, silly. </Para></Discussion></Parameter></TemplateParameters></Function>
+
+// CHECK: FullCommentAsHTML=[<p class="para-brief"> Documentation </p><dl><dt class="tparam-name-index-0">PPP</dt><dd class="tparam-descr-index-0"> The type, silly as well.</dd><dt class="tparam-name-index-1">QQQ</dt><dd class="tparam-descr-index-1"> The type, silly. </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}overriding-method-comments.mm" line="117" column="6"><Name>foo</Name><USR>c:@FT@&gt;2#T#Tfoo#t0.0#t0.1#</USR><Abstract><Para> Documentation </Para></Abstract><TemplateParameters><Parameter><Name>PPP</Name><Index>0</Index><Discussion><Para> The type, silly as well.</Para></Discussion></Parameter><Parameter><Name>QQQ</Name><Index>1</Index><Discussion><Para> The type, silly. </Para></Discussion></Parameter></TemplateParameters></Function>

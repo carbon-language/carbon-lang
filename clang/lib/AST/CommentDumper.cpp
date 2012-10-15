@@ -197,7 +197,7 @@ void CommentDumper::visitTParamCommandComment(const TParamCommandComment *C) {
   dumpComment(C);
 
   if (C->hasParamName()) {
-    OS << " Param=\"" << C->getParamName() << "\"";
+    OS << " Param=\"" << C->getParamName(const_cast<FullComment*>(FC)) << "\"";
   }
 
   if (C->isPositionValid()) {

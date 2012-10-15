@@ -759,9 +759,7 @@ public:
     return getNumArgs() > 0;
   }
 
-  StringRef getParamName() const {
-    return Args[0].Text;
-  }
+  StringRef getParamName(comments::FullComment *FC) const;
 
   SourceRange getParamNameRange() const {
     return Args[0].Range;

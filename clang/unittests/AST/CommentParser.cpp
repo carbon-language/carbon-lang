@@ -247,7 +247,7 @@ template <typename T>
     return ::testing::AssertionFailure()
         << "TParamCommandComment has no parameter name";
 
-  StringRef ActualParamName = TPCC->hasParamName() ? TPCC->getParamName() : "";
+  StringRef ActualParamName = TPCC->hasParamName() ? TPCC->getParamName(0) : "";
   if (ActualParamName != ParamName)
     return ::testing::AssertionFailure()
         << "TParamCommandComment has parameter name \"" << ActualParamName.str()
