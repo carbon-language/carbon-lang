@@ -319,7 +319,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         bool MatchingInlineAsm) {
   MCInst Inst;
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo,
-                               /*matchingInlineAsm*/ false)) {
+                               MatchingInlineAsm)) {
   default: break;
   case Match_Success:
     Out.EmitInstruction(Inst);
