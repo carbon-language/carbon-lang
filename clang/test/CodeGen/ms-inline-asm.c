@@ -59,12 +59,12 @@ void t7() {
 }
 
 int t8() {
-  __asm int 3 ; } comments for single-line asm
+  __asm int 4 ; } comments for single-line asm
   __asm {}
   __asm int 4
   return 10;
 // CHECK: t8
-// CHECK: call void asm sideeffect inteldialect "int $$3", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "int $$4", "~{dirflag},~{fpsr},~{flags}"() nounwind
 // CHECK: call void asm sideeffect inteldialect "", "~{dirflag},~{fpsr},~{flags}"() nounwind
 // CHECK: call void asm sideeffect inteldialect "int $$4", "~{dirflag},~{fpsr},~{flags}"() nounwind
 // CHECK: ret i32 10
