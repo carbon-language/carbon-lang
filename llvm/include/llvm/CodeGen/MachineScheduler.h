@@ -110,6 +110,10 @@ public:
   /// Initialize the strategy after building the DAG for a new region.
   virtual void initialize(ScheduleDAGMI *DAG) = 0;
 
+  /// Notify this strategy that all roots have been released (including those
+  /// that depend on EntrySU or ExitSU).
+  virtual void registerRoots() {}
+
   /// Pick the next node to schedule, or return NULL. Set IsTopNode to true to
   /// schedule the node at the top of the unscheduled region. Otherwise it will
   /// be scheduled at the bottom.

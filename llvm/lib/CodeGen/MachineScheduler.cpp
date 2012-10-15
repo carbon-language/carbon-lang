@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
+#include "llvm/CodeGen/ScheduleDAGILP.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/CommandLine.h"
@@ -451,26 +452,6 @@ updateScheduledPressure(std::vector<unsigned> NewMaxPressure) {
   }
 }
 
-// Release all DAG roots for scheduling.
-void ScheduleDAGMI::releaseRoots() {
-  SmallVector<SUnit*, 16> BotRoots;
-
-  for (std::vector<SUnit>::iterator
-         I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
-    // A SUnit is ready to top schedule if it has no predecessors.
-    if (I->Preds.empty())
-      SchedImpl->releaseTopNode(&(*I));
-    // A SUnit is ready to bottom schedule if it has no successors.
-    if (I->Succs.empty())
-      BotRoots.push_back(&(*I));
-  }
-  // Release bottom roots in reverse order so the higher priority nodes appear
-  // first. This is more natural and slightly more efficient.
-  for (SmallVectorImpl<SUnit*>::const_reverse_iterator
-         I = BotRoots.rbegin(), E = BotRoots.rend(); I != E; ++I)
-    SchedImpl->releaseBottomNode(*I);
-}
-
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
 /// after setting up the current scheduling region. [RegionBegin, RegionEnd)
 /// only includes instructions that have DAG nodes, not scheduling boundaries.
@@ -532,8 +513,29 @@ void ScheduleDAGMI::postprocessDAG() {
   }
 }
 
+// Release all DAG roots for scheduling.
+void ScheduleDAGMI::releaseRoots() {
+  SmallVector<SUnit*, 16> BotRoots;
+
+  for (std::vector<SUnit>::iterator
+         I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
+    // A SUnit is ready to top schedule if it has no predecessors.
+    if (I->Preds.empty())
+      SchedImpl->releaseTopNode(&(*I));
+    // A SUnit is ready to bottom schedule if it has no successors.
+    if (I->Succs.empty())
+      BotRoots.push_back(&(*I));
+  }
+  // Release bottom roots in reverse order so the higher priority nodes appear
+  // first. This is more natural and slightly more efficient.
+  for (SmallVectorImpl<SUnit*>::const_reverse_iterator
+         I = BotRoots.rbegin(), E = BotRoots.rend(); I != E; ++I)
+    SchedImpl->releaseBottomNode(*I);
+}
+
 /// Identify DAG roots and setup scheduler queues.
 void ScheduleDAGMI::initQueues() {
+
   // Initialize the strategy before modifying the DAG.
   SchedImpl->initialize(this);
 
@@ -543,6 +545,8 @@ void ScheduleDAGMI::initQueues() {
 
   // Release all DAG roots for scheduling.
   releaseRoots();
+
+  SchedImpl->registerRoots();
 
   CurrentTop = nextIfDebug(RegionBegin, RegionEnd);
   CurrentBottom = RegionEnd;
@@ -1196,6 +1200,86 @@ static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
 static MachineSchedRegistry
 ConvergingSchedRegistry("converge", "Standard converging scheduler.",
                         createConvergingSched);
+
+//===----------------------------------------------------------------------===//
+// ILP Scheduler. Currently for experimental analysis of heuristics.
+//===----------------------------------------------------------------------===//
+
+namespace {
+/// \brief Order nodes by the ILP metric.
+struct ILPOrder {
+  ScheduleDAGILP *ILP;
+  bool MaximizeILP;
+
+  ILPOrder(ScheduleDAGILP *ilp, bool MaxILP): ILP(ilp), MaximizeILP(MaxILP) {}
+
+  /// \brief Apply a less-than relation on node priority.
+  bool operator()(const SUnit *A, const SUnit *B) const {
+    // Return true if A comes after B in the Q.
+    if (MaximizeILP)
+      return ILP->getILP(A) < ILP->getILP(B);
+    else
+      return ILP->getILP(A) > ILP->getILP(B);
+  }
+};
+
+/// \brief Schedule based on the ILP metric.
+class ILPScheduler : public MachineSchedStrategy {
+  ScheduleDAGILP ILP;
+  ILPOrder Cmp;
+
+  std::vector<SUnit*> ReadyQ;
+public:
+  ILPScheduler(bool MaximizeILP)
+  : ILP(/*BottomUp=*/true), Cmp(&ILP, MaximizeILP) {}
+
+  virtual void initialize(ScheduleDAGMI *DAG) {
+    ReadyQ.clear();
+    ILP.resize(DAG->SUnits.size());
+  }
+
+  virtual void registerRoots() {
+    for (std::vector<SUnit*>::const_iterator
+           I = ReadyQ.begin(), E = ReadyQ.end(); I != E; ++I) {
+      ILP.computeILP(*I);
+    }
+  }
+
+  /// Implement MachineSchedStrategy interface.
+  /// -----------------------------------------
+
+  virtual SUnit *pickNode(bool &IsTopNode) {
+    if (ReadyQ.empty()) return NULL;
+    pop_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
+    SUnit *SU = ReadyQ.back();
+    ReadyQ.pop_back();
+    IsTopNode = false;
+    DEBUG(dbgs() << "*** Scheduling " << *SU->getInstr()
+          << " ILP: " << ILP.getILP(SU) << '\n');
+    return SU;
+  }
+
+  virtual void schedNode(SUnit *, bool) {}
+
+  virtual void releaseTopNode(SUnit *) { /*only called for top roots*/ }
+
+  virtual void releaseBottomNode(SUnit *SU) {
+    ReadyQ.push_back(SU);
+    std::push_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
+  }
+};
+} // namespace
+
+static ScheduleDAGInstrs *createILPMaxScheduler(MachineSchedContext *C) {
+  return new ScheduleDAGMI(C, new ILPScheduler(true));
+}
+static ScheduleDAGInstrs *createILPMinScheduler(MachineSchedContext *C) {
+  return new ScheduleDAGMI(C, new ILPScheduler(false));
+}
+static MachineSchedRegistry ILPMaxRegistry(
+  "ilpmax", "Schedule bottom-up for max ILP", createILPMaxScheduler);
+static MachineSchedRegistry ILPMinRegistry(
+  "ilpmin", "Schedule bottom-up for min ILP", createILPMinScheduler);
 
 //===----------------------------------------------------------------------===//
 // Machine Instruction Shuffler for Correctness Testing

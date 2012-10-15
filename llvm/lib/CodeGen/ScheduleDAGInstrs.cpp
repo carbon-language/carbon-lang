@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/RegisterPressure.h"
+#include "llvm/CodeGen/ScheduleDAGILP.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
@@ -30,6 +31,7 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -933,3 +935,94 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
 std::string ScheduleDAGInstrs::getDAGName() const {
   return "dag." + BB->getFullName();
 }
+
+namespace {
+/// \brief Manage the stack used by a reverse depth-first search over the DAG.
+class SchedDAGReverseDFS {
+  std::vector<std::pair<const SUnit*, SUnit::const_pred_iterator> > DFSStack;
+public:
+  bool isComplete() const { return DFSStack.empty(); }
+
+  void follow(const SUnit *SU) {
+    DFSStack.push_back(std::make_pair(SU, SU->Preds.begin()));
+  }
+  void advance() { ++DFSStack.back().second; }
+
+  void backtrack() { DFSStack.pop_back(); }
+
+  const SUnit *getCurr() const { return DFSStack.back().first; }
+
+  SUnit::const_pred_iterator getPred() const { return DFSStack.back().second; }
+
+  SUnit::const_pred_iterator getPredEnd() const {
+    return getCurr()->Preds.end();
+  }
+};
+} // anonymous
+
+void ScheduleDAGILP::resize(unsigned NumSUnits) {
+  ILPValues.resize(NumSUnits);
+}
+
+ILPValue ScheduleDAGILP::getILP(const SUnit *SU) {
+  return ILPValues[SU->NodeNum];
+}
+
+// A leaf node has an ILP of 1/1.
+static ILPValue initILP(const SUnit *SU) {
+  unsigned Cnt = SU->getInstr()->isTransient() ? 0 : 1;
+  return ILPValue(Cnt, 1 + SU->getDepth());
+}
+
+/// Compute an ILP metric for all nodes in the subDAG reachable via depth-first
+/// search from this root.
+void ScheduleDAGILP::computeILP(const SUnit *Root) {
+  if (!IsBottomUp)
+    llvm_unreachable("Top-down ILP metric is unimplemnted");
+
+  SchedDAGReverseDFS DFS;
+  // Mark a node visited by validating it.
+  ILPValues[Root->NodeNum] = initILP(Root);
+  DFS.follow(Root);
+  for (;;) {
+    // Traverse the leftmost path as far as possible.
+    while (DFS.getPred() != DFS.getPredEnd()) {
+      const SUnit *PredSU = DFS.getPred()->getSUnit();
+      DFS.advance();
+      // If the pred is already valid, skip it.
+      if (ILPValues[PredSU->NodeNum].isValid())
+        continue;
+      ILPValues[PredSU->NodeNum] = initILP(PredSU);
+      DFS.follow(PredSU);
+    }
+    // Visit the top of the stack in postorder and backtrack.
+    unsigned PredCount = ILPValues[DFS.getCurr()->NodeNum].InstrCount;
+    DFS.backtrack();
+    if (DFS.isComplete())
+      break;
+    // Add the recently finished predecessor's bottom-up descendent count.
+    ILPValues[DFS.getCurr()->NodeNum].InstrCount += PredCount;
+  }
+}
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+void ILPValue::print(raw_ostream &OS) const {
+  if (!isValid())
+    OS << "BADILP";
+  OS << InstrCount << " / " << Cycles << " = "
+     << format("%g", ((double)InstrCount / Cycles));
+}
+
+void ILPValue::dump() const {
+  dbgs() << *this << '\n';
+}
+
+namespace llvm {
+
+raw_ostream &operator<<(raw_ostream &OS, const ILPValue &Val) {
+  Val.print(OS);
+  return OS;
+}
+
+} // namespace llvm
+#endif // !NDEBUG || LLVM_ENABLE_DUMP
