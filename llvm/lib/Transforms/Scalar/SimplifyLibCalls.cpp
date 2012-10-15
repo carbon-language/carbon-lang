@@ -135,108 +135,6 @@ static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
 
 namespace {
 //===---------------------------------------===//
-// 'strcmp' Optimizations
-
-struct StrCmpOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Verify the "strcmp" function prototype.
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 ||
-        !FT->getReturnType()->isIntegerTy(32) ||
-        FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != B.getInt8PtrTy())
-      return 0;
-
-    Value *Str1P = CI->getArgOperand(0), *Str2P = CI->getArgOperand(1);
-    if (Str1P == Str2P)      // strcmp(x,x)  -> 0
-      return ConstantInt::get(CI->getType(), 0);
-
-    StringRef Str1, Str2;
-    bool HasStr1 = getConstantStringInfo(Str1P, Str1);
-    bool HasStr2 = getConstantStringInfo(Str2P, Str2);
-
-    // strcmp(x, y)  -> cnst  (if both x and y are constant strings)
-    if (HasStr1 && HasStr2)
-      return ConstantInt::get(CI->getType(), Str1.compare(Str2));
-
-    if (HasStr1 && Str1.empty()) // strcmp("", x) -> -*x
-      return B.CreateNeg(B.CreateZExt(B.CreateLoad(Str2P, "strcmpload"),
-                                      CI->getType()));
-
-    if (HasStr2 && Str2.empty()) // strcmp(x,"") -> *x
-      return B.CreateZExt(B.CreateLoad(Str1P, "strcmpload"), CI->getType());
-
-    // strcmp(P, "x") -> memcmp(P, "x", 2)
-    uint64_t Len1 = GetStringLength(Str1P);
-    uint64_t Len2 = GetStringLength(Str2P);
-    if (Len1 && Len2) {
-      // These optimizations require DataLayout.
-      if (!TD) return 0;
-
-      return EmitMemCmp(Str1P, Str2P,
-                        ConstantInt::get(TD->getIntPtrType(*Context),
-                        std::min(Len1, Len2)), B, TD, TLI);
-    }
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
-// 'strncmp' Optimizations
-
-struct StrNCmpOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Verify the "strncmp" function prototype.
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 3 ||
-        !FT->getReturnType()->isIntegerTy(32) ||
-        FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != B.getInt8PtrTy() ||
-        !FT->getParamType(2)->isIntegerTy())
-      return 0;
-
-    Value *Str1P = CI->getArgOperand(0), *Str2P = CI->getArgOperand(1);
-    if (Str1P == Str2P)      // strncmp(x,x,n)  -> 0
-      return ConstantInt::get(CI->getType(), 0);
-
-    // Get the length argument if it is constant.
-    uint64_t Length;
-    if (ConstantInt *LengthArg = dyn_cast<ConstantInt>(CI->getArgOperand(2)))
-      Length = LengthArg->getZExtValue();
-    else
-      return 0;
-
-    if (Length == 0) // strncmp(x,y,0)   -> 0
-      return ConstantInt::get(CI->getType(), 0);
-
-    if (TD && Length == 1) // strncmp(x,y,1) -> memcmp(x,y,1)
-      return EmitMemCmp(Str1P, Str2P, CI->getArgOperand(2), B, TD, TLI);
-
-    StringRef Str1, Str2;
-    bool HasStr1 = getConstantStringInfo(Str1P, Str1);
-    bool HasStr2 = getConstantStringInfo(Str2P, Str2);
-
-    // strncmp(x, y)  -> cnst  (if both x and y are constant strings)
-    if (HasStr1 && HasStr2) {
-      StringRef SubStr1 = Str1.substr(0, Length);
-      StringRef SubStr2 = Str2.substr(0, Length);
-      return ConstantInt::get(CI->getType(), SubStr1.compare(SubStr2));
-    }
-
-    if (HasStr1 && Str1.empty())  // strncmp("", x, n) -> -*x
-      return B.CreateNeg(B.CreateZExt(B.CreateLoad(Str2P, "strcmpload"),
-                                      CI->getType()));
-
-    if (HasStr2 && Str2.empty())  // strncmp(x, "", n) -> *x
-      return B.CreateZExt(B.CreateLoad(Str1P, "strcmpload"), CI->getType());
-
-    return 0;
-  }
-};
-
-
-//===---------------------------------------===//
 // 'strcpy' Optimizations
 
 struct StrCpyOpt : public LibCallOptimization {
@@ -1378,7 +1276,6 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StrCmpOpt StrCmp; StrNCmpOpt StrNCmp;
     StrCpyOpt StrCpy; StrCpyOpt StrCpyChk;
     StpCpyOpt StpCpy; StpCpyOpt StpCpyChk;
     StrNCpyOpt StrNCpy;
@@ -1452,8 +1349,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // String and Memory LibCall Optimizations
-  Optimizations["strcmp"] = &StrCmp;
-  Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
   Optimizations["strncpy"] = &StrNCpy;
   Optimizations["stpcpy"] = &StpCpy;
