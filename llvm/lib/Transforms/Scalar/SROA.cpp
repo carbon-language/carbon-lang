@@ -2004,6 +2004,51 @@ static Value *getAdjustedPtr(IRBuilder<> &IRB, const DataLayout &TD,
   return Ptr;
 }
 
+/// \brief Test whether we can convert a value from the old to the new type.
+///
+/// This predicate should be used to guard calls to convertValue in order to
+/// ensure that we only try to convert viable values. The strategy is that we
+/// will peel off single element struct and array wrappings to get to an
+/// underlying value, and convert that value.
+static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
+  if (OldTy == NewTy)
+    return true;
+  if (DL.getTypeSizeInBits(NewTy) != DL.getTypeSizeInBits(OldTy))
+    return false;
+  if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
+    return false;
+
+  if (NewTy->isPointerTy() || OldTy->isPointerTy()) {
+    if (NewTy->isPointerTy() && OldTy->isPointerTy())
+      return true;
+    if (NewTy->isIntegerTy() || OldTy->isIntegerTy())
+      return true;
+    return false;
+  }
+
+  return true;
+}
+
+/// \brief Generic routine to convert an SSA value to a value of a different
+/// type.
+///
+/// This will try various different casting techniques, such as bitcasts,
+/// inttoptr, and ptrtoint casts. Use the \c canConvertValue predicate to test
+/// two types for viability with this routine.
+static Value *convertValue(const DataLayout &DL, IRBuilder<> &IRB, Value *V,
+                           Type *Ty) {
+  assert(canConvertValue(DL, V->getType(), Ty) &&
+         "Value not convertable to type");
+  if (V->getType() == Ty)
+    return V;
+  if (V->getType()->isIntegerTy() && Ty->isPointerTy())
+    return IRB.CreateIntToPtr(V, Ty);
+  if (V->getType()->isPointerTy() && Ty->isIntegerTy())
+    return IRB.CreatePtrToInt(V, Ty);
+
+  return IRB.CreateBitCast(V, Ty);
+}
+
 /// \brief Test whether the given alloca partition can be promoted to a vector.
 ///
 /// This is a quick test to check whether we can rewrite a particular alloca
@@ -2345,43 +2390,6 @@ private:
       Pass.DeadInsts.push_back(I);
   }
 
-  /// \brief Test whether we can convert a value from the old to the new type.
-  ///
-  /// This predicate should be used to guard calls to convertValue in order to
-  /// ensure that we only try to convert viable values. The strategy is that we
-  /// will peel off single element struct and array wrappings to get to an
-  /// underlying value, and convert that value.
-  bool canConvertValue(Type *OldTy, Type *NewTy) {
-    if (OldTy == NewTy)
-      return true;
-    if (TD.getTypeSizeInBits(NewTy) != TD.getTypeSizeInBits(OldTy))
-      return false;
-    if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
-      return false;
-
-    if (NewTy->isPointerTy() || OldTy->isPointerTy()) {
-      if (NewTy->isPointerTy() && OldTy->isPointerTy())
-        return true;
-      if (NewTy->isIntegerTy() || OldTy->isIntegerTy())
-        return true;
-      return false;
-    }
-
-    return true;
-  }
-
-  Value *convertValue(IRBuilder<> &IRB, Value *V, Type *Ty) {
-    assert(canConvertValue(V->getType(), Ty) && "Value not convertable to type");
-    if (V->getType() == Ty)
-      return V;
-    if (V->getType()->isIntegerTy() && Ty->isPointerTy())
-      return IRB.CreateIntToPtr(V, Ty);
-    if (V->getType()->isPointerTy() && Ty->isIntegerTy())
-      return IRB.CreatePtrToInt(V, Ty);
-
-    return IRB.CreateBitCast(V, Ty);
-  }
-
   bool rewriteVectorizedLoadInst(IRBuilder<> &IRB, LoadInst &LI, Value *OldOp) {
     Value *Result;
     if (LI.getType() == VecTy->getElementType() ||
@@ -2394,7 +2402,7 @@ private:
                                      getName(".load"));
     }
     if (Result->getType() != LI.getType())
-      Result = convertValue(IRB, Result, LI.getType());
+      Result = convertValue(TD, IRB, Result, LI.getType());
     LI.replaceAllUsesWith(Result);
     Pass.DeadInsts.push_back(&LI);
 
@@ -2424,10 +2432,10 @@ private:
       return rewriteIntegerLoad(IRB, LI);
 
     if (BeginOffset == NewAllocaBeginOffset &&
-        canConvertValue(NewAllocaTy, LI.getType())) {
+        canConvertValue(TD, NewAllocaTy, LI.getType())) {
       Value *NewLI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                            LI.isVolatile(), getName(".load"));
-      Value *NewV = convertValue(IRB, NewLI, LI.getType());
+      Value *NewV = convertValue(TD, IRB, NewLI, LI.getType());
       LI.replaceAllUsesWith(NewV);
       Pass.DeadInsts.push_back(&LI);
 
@@ -2451,13 +2459,13 @@ private:
     if (V->getType() == ElementTy ||
         BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
       if (V->getType() != ElementTy)
-        V = convertValue(IRB, V, ElementTy);
+        V = convertValue(TD, IRB, V, ElementTy);
       LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                            getName(".load"));
       V = IRB.CreateInsertElement(LI, V, getIndex(IRB, BeginOffset),
                                   getName(".insert"));
     } else if (V->getType() != VecTy) {
-      V = convertValue(IRB, V, VecTy);
+      V = convertValue(TD, IRB, V, VecTy);
     }
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.push_back(&SI);
@@ -2497,8 +2505,8 @@ private:
         Pass.PostPromotionWorklist.insert(AI);
 
     if (BeginOffset == NewAllocaBeginOffset &&
-        canConvertValue(ValueTy, NewAllocaTy)) {
-      Value *NewV = convertValue(IRB, SI.getValueOperand(), NewAllocaTy);
+        canConvertValue(TD, ValueTy, NewAllocaTy)) {
+      Value *NewV = convertValue(TD, IRB, SI.getValueOperand(), NewAllocaTy);
       StoreInst *NewSI = IRB.CreateAlignedStore(NewV, &NewAI, NewAI.getAlignment(),
                                                 SI.isVolatile());
       (void)NewSI;
