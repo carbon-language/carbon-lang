@@ -28,17 +28,17 @@ using namespace llvm;
 // Attributes Implementation
 //===----------------------------------------------------------------------===//
 
-Attributes::Attributes(LLVMContext &C, ArrayRef<AttrVal> Vals) {
+Attributes::Attributes(AttributesImpl *A) : Attrs(A) {}
+
+Attributes::Attributes(const Attributes &A) : Attrs(A.Attrs) {}
+
+Attributes Attributes::get(LLVMContext &Context, ArrayRef<AttrVal> Vals) {
   Attributes::Builder B;
   for (ArrayRef<AttrVal>::iterator I = Vals.begin(), E = Vals.end();
        I != E; ++I)
     B.addAttribute(*I);
-  Attrs = Attributes::get(C, B).Attrs;
+  return Attributes::get(Context, B);
 }
-
-Attributes::Attributes(AttributesImpl *A) : Attrs(A) {}
-
-Attributes::Attributes(const Attributes &A) : Attrs(A.Attrs) {}
 
 Attributes Attributes::get(LLVMContext &Context, Attributes::Builder &B) {
   // If there are no attributes, return an empty Attributes class.
@@ -186,8 +186,7 @@ std::string Attributes::getAsString() const {
 // Attributes::Builder Implementation
 //===----------------------------------------------------------------------===//
 
-Attributes::Builder &Attributes::Builder::
-addAttribute(Attributes::AttrVal Val) {
+Attributes::Builder &Attributes::Builder::addAttribute(Attributes::AttrVal Val){
   Bits |= AttributesImpl::getAttrMask(Val);
   return *this;
 }

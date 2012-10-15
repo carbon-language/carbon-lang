@@ -89,17 +89,26 @@ public:
   };
 private:
   AttributesImpl *Attrs;
-
-  explicit Attributes(AttributesImpl *A);
+  Attributes(AttributesImpl *A);
 public:
   Attributes() : Attrs(0) {}
-  explicit Attributes(LLVMContext &C, ArrayRef<AttrVal> Vals);
   Attributes(const Attributes &A);
   Attributes &operator=(const Attributes &A) {
     Attrs = A.Attrs;
     return *this;
   }
 
+  /// get - Return a uniquified Attributes object. This takes the uniquified
+  /// value from the Builder and wraps it in the Attributes class.
+  class Builder;
+  static Attributes get(LLVMContext &Context, ArrayRef<AttrVal> Vals);
+  static Attributes get(LLVMContext &Context, Builder &B);
+
+  //===--------------------------------------------------------------------===//
+  /// Attributes::Builder - This class is used in conjunction with the
+  /// Attributes::get method to create an Attributes object. The object itself
+  /// is uniquified. The Builder's value, however, is not. So this can be used
+  /// as a quick way to test for equality, presence of attributes, etc.
   class Builder {
     friend class Attributes;
     uint64_t Bits;
@@ -122,6 +131,9 @@ public:
     Builder &addAttribute(Attributes::AttrVal Val);
     Builder &removeAttribute(Attributes::AttrVal Val);
 
+    Builder &addAttributes(const Attributes &A);
+    Builder &removeAttributes(const Attributes &A);
+
     /// addRawValue - Add the raw value to the internal representation. This
     /// should be used ONLY for decoding bitcode!
     Builder &addRawValue(uint64_t Val);
@@ -133,9 +145,6 @@ public:
     /// addStackAlignmentAttr - This turns an int stack alignment (which must be
     /// a power of 2) into the form used internally in Attributes.
     Builder &addStackAlignmentAttr(unsigned Align);
-
-    Builder &addAttributes(const Attributes &A);
-    Builder &removeAttributes(const Attributes &A);
 
     /// @brief Remove attributes that are used on functions only.
     void removeFunctionOnlyAttrs() {
@@ -166,10 +175,6 @@ public:
       return Bits != B.Bits;
     }
   };
-
-  /// get - Return a uniquified Attributes object. This takes the uniquified
-  /// value from the Builder and wraps it in the Attributes class.
-  static Attributes get(LLVMContext &Context, Builder &B);
 
   /// @brief Return true if the attribute is present.
   bool hasAttribute(AttrVal Val) const;
@@ -224,10 +229,10 @@ public:
       hasAttribute(Attributes::AddressSafety);
   }
 
-  bool operator == (const Attributes &A) const {
+  bool operator==(const Attributes &A) const {
     return Attrs == A.Attrs;
   }
-  bool operator != (const Attributes &A) const {
+  bool operator!=(const Attributes &A) const {
     return Attrs != A.Attrs;
   }
 
