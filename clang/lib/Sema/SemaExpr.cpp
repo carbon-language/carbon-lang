@@ -9770,11 +9770,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
   switch (ConvTy) {
   case Compatible:
-    DiagnoseAssignmentEnum(DstType, SrcType, SrcExpr);
-
-    // XXX here with forced compatible cast
-
-    return false;
+      DiagnoseAssignmentEnum(DstType, SrcType, SrcExpr);
+      return false;
 
   case PointerToInt:
     DiagKind = diag::ext_typecheck_convert_pointer_int;
@@ -9857,7 +9854,6 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::err_arc_weak_unavailable_assign;
     break;
   case Incompatible:
-    // XXX here
     DiagKind = diag::err_typecheck_convert_incompatible;
     ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
     MayHaveConvFixit = true;
