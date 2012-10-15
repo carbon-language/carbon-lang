@@ -547,6 +547,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
       EmitCheck(Builder.getFalse(), "missing_return",
                 EmitCheckSourceLocation(FD->getLocation()),
                 llvm::ArrayRef<llvm::Value*>());
+    else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
+      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
     Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
   }
