@@ -564,7 +564,7 @@ MODULE_CODE_VERSION Record
 ``[VERSION, version#]``
 
 The ``VERSION`` record (code 1) contains a single value indicating the format
-version. Version 0 and 1 are supported at this time. The difference between
+version. Versions 0 and 1 are supported at this time. The difference between
 version 0 and 1 is in the encoding of instruction operands in
 each `FUNCTION_BLOCK`_.
 
