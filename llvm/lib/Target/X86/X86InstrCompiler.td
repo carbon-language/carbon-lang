@@ -165,6 +165,33 @@ def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
 
 }
 
+let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
+    usesCustomInserter = 1 in {
+  def EH_SjLj_SetJmp32  : I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$buf),
+                            "#EH_SJLJ_SETJMP32",
+                            [(set GR32:$dst, (X86eh_sjlj_setjmp addr:$buf))]>,
+                          Requires<[In32BitMode]>;
+  def EH_SjLj_SetJmp64  : I<0, Pseudo, (outs GR32:$dst), (ins i64mem:$buf),
+                            "#EH_SJLJ_SETJMP64",
+                            [(set GR32:$dst, (X86eh_sjlj_setjmp addr:$buf))]>,
+                          Requires<[In64BitMode]>;
+  let isTerminator = 1 in {
+  def EH_SjLj_LongJmp32 : I<0, Pseudo, (outs), (ins i32mem:$buf),
+                            "#EH_SJLJ_LONGJMP32",
+                            [(X86eh_sjlj_longjmp addr:$buf)]>,
+                          Requires<[In32BitMode]>;
+  def EH_SjLj_LongJmp64 : I<0, Pseudo, (outs), (ins i64mem:$buf),
+                            "#EH_SJLJ_LONGJMP64",
+                            [(X86eh_sjlj_longjmp addr:$buf)]>,
+                          Requires<[In64BitMode]>;
+  }
+}
+
+let isBranch = 1, isTerminator = 1, isCodeGenOnly = 1 in {
+  def EH_SjLj_Setup : I<0, Pseudo, (outs), (ins brtarget:$dst),
+                        "#EH_SjLj_Setup\t$dst", []>;
+}
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions used by segmented stacks.
 //

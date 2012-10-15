@@ -261,6 +261,11 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   return CSR_64_RegMask;
 }
 
+const uint32_t*
+X86RegisterInfo::getNoPreservedMask() const {
+  return CSR_NoRegs_RegMask;
+}
+
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();

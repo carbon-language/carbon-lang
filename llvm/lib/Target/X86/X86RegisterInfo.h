@@ -100,6 +100,7 @@ public:
   /// callee-save registers on this target.
   const uint16_t *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const;
+  const uint32_t *getNoPreservedMask() const;
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses and

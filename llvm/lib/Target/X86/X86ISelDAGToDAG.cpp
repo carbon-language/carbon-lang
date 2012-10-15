@@ -1302,7 +1302,9 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
       // that are not a MemSDNode, and thus don't have proper addrspace info.
       Parent->getOpcode() != ISD::INTRINSIC_W_CHAIN && // unaligned loads, fixme
       Parent->getOpcode() != ISD::INTRINSIC_VOID && // nontemporal stores
-      Parent->getOpcode() != X86ISD::TLSCALL) { // Fixme
+      Parent->getOpcode() != X86ISD::TLSCALL && // Fixme
+      Parent->getOpcode() != X86ISD::EH_SJLJ_SETJMP && // setjmp
+      Parent->getOpcode() != X86ISD::EH_SJLJ_LONGJMP) { // longjmp
     unsigned AddrSpace =
       cast<MemSDNode>(Parent)->getPointerInfo().getAddrSpace();
     // AddrSpace 256 -> GS, 257 -> FS.
