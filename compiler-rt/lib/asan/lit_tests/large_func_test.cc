@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   delete x;
 }
 
-// CHECK: {{.*ERROR: AddressSanitizer heap-buffer-overflow on address}}
+// CHECK: {{.*ERROR: AddressSanitizer: heap-buffer-overflow on address}}
 // CHECK:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
 // CHECK: {{READ of size 4 at 0x.* thread T0}}
 

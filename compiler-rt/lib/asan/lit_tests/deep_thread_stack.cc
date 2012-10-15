@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   return (x != 0);
 }
 
-// CHECK: AddressSanitizer heap-use-after-free
+// CHECK: AddressSanitizer: heap-use-after-free
 // CHECK: WRITE of size 4 at 0x{{.*}} thread T[[ACCESS_THREAD:[0-9]+]]
 // CHECK: freed by thread T[[FREE_THREAD:[0-9]+]] here:
 // CHECK: previously allocated by thread T[[ALLOC_THREAD:[0-9]+]] here:

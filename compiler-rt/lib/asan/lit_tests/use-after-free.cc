@@ -20,7 +20,7 @@ int main() {
   char *x = (char*)malloc(10 * sizeof(char));
   free(x);
   return x[5];
-  // CHECK: {{.*ERROR: AddressSanitizer heap-use-after-free on address}}
+  // CHECK: {{.*ERROR: AddressSanitizer: heap-use-after-free on address}}
   // CHECK:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
   // CHECK: {{    #0 0x.* in _?main .*use-after-free.cc:22}}

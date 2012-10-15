@@ -322,7 +322,7 @@ class ScopedInErrorReport {
 
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   ScopedInErrorReport in_report;
-  Report("ERROR: AddressSanitizer crashed on unknown address %p"
+  Report("ERROR: AddressSanitizer: SEGV on unknown address %p"
              " (pc %p sp %p bp %p T%d)\n",
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
              asanThreadRegistry().GetCurrentTidOrInvalid());
@@ -333,14 +333,14 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
 
 void ReportDoubleFree(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
-  Report("ERROR: AddressSanitizer attempting double-free on %p:\n", addr);
+  Report("ERROR: AddressSanitizer: attempting double-free on %p:\n", addr);
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
 }
 
 void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
-  Report("ERROR: AddressSanitizer attempting free on address "
+  Report("ERROR: AddressSanitizer: attempting free on address "
              "which was not malloc()-ed: %p\n", addr);
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
@@ -348,7 +348,7 @@ void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
 
 void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
-  Report("ERROR: AddressSanitizer attempting to call "
+  Report("ERROR: AddressSanitizer: attempting to call "
              "malloc_usable_size() for pointer which is "
              "not owned: %p\n", addr);
   PrintStack(stack);
@@ -357,7 +357,7 @@ void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
 
 void ReportAsanGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
-  Report("ERROR: AddressSanitizer attempting to call "
+  Report("ERROR: AddressSanitizer: attempting to call "
              "__asan_get_allocated_size() for pointer which is "
              "not owned: %p\n", addr);
   PrintStack(stack);
@@ -368,7 +368,7 @@ void ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
     const char *offset2, uptr length2, StackTrace *stack) {
   ScopedInErrorReport in_report;
-  Report("ERROR: AddressSanitizer %s-param-overlap: "
+  Report("ERROR: AddressSanitizer: %s-param-overlap: "
              "memory ranges [%p,%p) and [%p, %p) overlap\n", \
              function, offset1, offset1 + length1, offset2, offset2 + length2);
   PrintStack(stack);
@@ -461,7 +461,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
     }
   }
 
-  Report("ERROR: AddressSanitizer %s on address "
+  Report("ERROR: AddressSanitizer: %s on address "
              "%p at pc 0x%zx bp 0x%zx sp 0x%zx\n",
              bug_descr, (void*)addr, pc, bp, sp);
 

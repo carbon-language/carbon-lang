@@ -23,7 +23,7 @@ int main() {
   NullDeref((int*)0);
 }
 
-// CHECK: {{.*ERROR: AddressSanitizer crashed on unknown address}}
+// CHECK: ERROR: AddressSanitizer: SEGV on unknown address
 // CHECK:   {{0x0*00028 .*pc 0x.*}}
 // CHECK: {{AddressSanitizer can not provide additional info.}}
 

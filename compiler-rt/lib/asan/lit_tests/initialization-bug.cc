@@ -30,7 +30,7 @@ int z = initZ();
 extern int y;
 int __attribute__((noinline)) initX() {
   return y + 1;
-  // CHECK: {{AddressSanitizer initialization-order-fiasco}}
+  // CHECK: {{AddressSanitizer: initialization-order-fiasco}}
   // CHECK: {{READ of size .* at 0x.* thread T0}}
   // CHECK: {{0x.* is located 0 bytes inside of global variable .*(y|z).*}}
 }
