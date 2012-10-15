@@ -1526,6 +1526,9 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
   ArrayRef<SMRange> EmptyRanges = ArrayRef<SMRange>();
 
+  // Clear the opcode.
+  Opcode = ~0x0;
+
   // First, handle aliases that expand to multiple instructions.
   // FIXME: This should be replaced with a real .td file alias mechanism.
   // Also, MatchInstructionImpl should actually *do* the EmitInstruction
