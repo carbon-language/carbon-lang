@@ -4582,7 +4582,10 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
   Actions.ActOnStartFunctionDeclarator();
 
-  SourceLocation StartLoc, EndLoc;
+  /* LocalEndLoc is the end location for the local FunctionTypeLoc.
+     EndLoc is the end location for the function declarator.
+     They differ for trailing return types. */
+  SourceLocation StartLoc, LocalEndLoc, EndLoc;
   SourceLocation LParenLoc, RParenLoc;
   LParenLoc = Tracker.getOpenLocation();
   StartLoc = LParenLoc;
@@ -4595,6 +4598,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
     Tracker.consumeClose();
     RParenLoc = Tracker.getCloseLocation();
+    LocalEndLoc = RParenLoc;
     EndLoc = RParenLoc;
   } else {
     if (Tok.isNot(tok::r_paren))
@@ -4607,6 +4611,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
     // If we have the closing ')', eat it.
     Tracker.consumeClose();
     RParenLoc = Tracker.getCloseLocation();
+    LocalEndLoc = RParenLoc;
     EndLoc = RParenLoc;
 
     if (getLangOpts().CPlusPlus) {
@@ -4663,13 +4668,15 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       MaybeParseCXX0XAttributes(FnAttrs);
 
       // Parse trailing-return-type[opt].
+      LocalEndLoc = EndLoc;
       if (getLangOpts().CPlusPlus0x && Tok.is(tok::arrow)) {
         Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
         if (D.getDeclSpec().getTypeSpecType() == TST_auto)
           StartLoc = D.getDeclSpec().getTypeSpecTypeLoc();
-        EndLoc = Tok.getLocation();
+        LocalEndLoc = Tok.getLocation();
         SourceRange Range;
         TrailingReturnType = ParseTrailingReturnType(Range);
+        EndLoc = Range.getEnd();
       }
     }
   }
@@ -4691,7 +4698,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              DynamicExceptions.size(),
                                              NoexceptExpr.isUsable() ?
                                                NoexceptExpr.get() : 0,
-                                             StartLoc, EndLoc, D,
+                                             StartLoc, LocalEndLoc, D,
                                              TrailingReturnType),
                 FnAttrs, EndLoc);
 
