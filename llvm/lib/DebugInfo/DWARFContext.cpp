@@ -17,6 +17,8 @@
 using namespace llvm;
 using namespace dwarf;
 
+typedef DWARFDebugLine::LineTable DWARFLineTable;
+
 void DWARFContext::dump(raw_ostream &OS) {
   OS << ".debug_abbrev contents:\n";
   getDebugAbbrev()->dump(OS);
@@ -94,7 +96,7 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
   return Aranges.get();
 }
 
-const DWARFDebugLine::LineTable *
+const DWARFLineTable *
 DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
   if (!Line)
     Line.reset(new DWARFDebugLine());
@@ -106,7 +108,7 @@ DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
     return 0; // No line table for this compile unit.
 
   // See if the line table is cached.
-  if (const DWARFDebugLine::LineTable *lt = Line->getLineTable(stmtOffset))
+  if (const DWARFLineTable *lt = Line->getLineTable(stmtOffset))
     return lt;
 
   // We have to parse it first.
@@ -163,9 +165,11 @@ DWARFCompileUnit *DWARFContext::getCompileUnitForAddress(uint64_t Address) {
   return getCompileUnitForOffset(CUOffset);
 }
 
-static bool getFileNameForCompileUnit(
-    DWARFCompileUnit *CU, const DWARFDebugLine::LineTable *LineTable,
-    uint64_t FileIndex, bool NeedsAbsoluteFilePath, std::string &FileName) {
+static bool getFileNameForCompileUnit(DWARFCompileUnit *CU,
+                                      const DWARFLineTable *LineTable,
+                                      uint64_t FileIndex,
+                                      bool NeedsAbsoluteFilePath,
+                                      std::string &FileName) {
   if (CU == 0 ||
       LineTable == 0 ||
       !LineTable->getFileNameByIndex(FileIndex, NeedsAbsoluteFilePath,
@@ -183,10 +187,12 @@ static bool getFileNameForCompileUnit(
   return true;
 }
 
-static bool getFileLineInfoForCompileUnit(
-    DWARFCompileUnit *CU, const DWARFDebugLine::LineTable *LineTable,
-    uint64_t Address, bool NeedsAbsoluteFilePath, std::string &FileName,
-    uint32_t &Line, uint32_t &Column) {
+static bool getFileLineInfoForCompileUnit(DWARFCompileUnit *CU,
+                                          const DWARFLineTable *LineTable,
+                                          uint64_t Address,
+                                          bool NeedsAbsoluteFilePath,
+                                          std::string &FileName,
+                                          uint32_t &Line, uint32_t &Column) {
   if (CU == 0 || LineTable == 0)
     return false;
   // Get the index of row we're looking for in the line table.
@@ -225,8 +231,7 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t Address,
     }
   }
   if (Specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
-    const DWARFDebugLine::LineTable *LineTable =
-        getLineTableForCompileUnit(CU);
+    const DWARFLineTable *LineTable = getLineTableForCompileUnit(CU);
     const bool NeedsAbsoluteFilePath =
         Specifier.needs(DILineInfoSpecifier::AbsoluteFilePath);
     getFileLineInfoForCompileUnit(CU, LineTable, Address,
@@ -250,7 +255,7 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
 
   DIInliningInfo InliningInfo;
   uint32_t CallFile = 0, CallLine = 0, CallColumn = 0;
-  const DWARFDebugLine::LineTable *LineTable = 0;
+  const DWARFLineTable *LineTable = 0;
   for (uint32_t i = 0, n = InlinedChain.size(); i != n; i++) {
     const DWARFDebugInfoEntryMinimal &FunctionDIE = InlinedChain[i];
     std::string FileName = "<invalid>";
