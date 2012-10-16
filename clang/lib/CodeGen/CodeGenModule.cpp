@@ -884,6 +884,10 @@ llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
 
   // See if there is already something with the target's name in the module.
   llvm::GlobalValue *Entry = GetGlobalValue(AA->getAliasee());
+  if (Entry) {
+    unsigned AS = getContext().getTargetAddressSpace(VD->getType());
+    return llvm::ConstantExpr::getBitCast(Entry, DeclTy->getPointerTo(AS));
+  }
 
   llvm::Constant *Aliasee;
   if (isa<llvm::FunctionType>(DeclTy))
@@ -893,11 +897,10 @@ llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
   else
     Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy), 0);
-  if (!Entry) {
-    llvm::GlobalValue* F = cast<llvm::GlobalValue>(Aliasee);
-    F->setLinkage(llvm::Function::ExternalWeakLinkage);    
-    WeakRefReferences.insert(F);
-  }
+
+  llvm::GlobalValue* F = cast<llvm::GlobalValue>(Aliasee);
+  F->setLinkage(llvm::Function::ExternalWeakLinkage);
+  WeakRefReferences.insert(F);
 
   return Aliasee;
 }

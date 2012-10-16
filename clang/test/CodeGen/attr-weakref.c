@@ -53,6 +53,12 @@ void test6_foo(void) {
   test6_f();
 }
 
+// CHECK: declare extern_weak void @test8_f()
+static void test8_g(void) __attribute__((weakref("test8_f")));
+void test8_h(void) {
+  if (test8_g)
+    test8_g();
+}
 // CHECK: declare extern_weak void @test7_f()
 void test7_f(void);
 static void test7_g(void) __attribute__((weakref("test7_f")));
