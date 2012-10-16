@@ -63,7 +63,6 @@ namespace {
     virtual void releaseMemory() {
       ScopeMap.clear();
       Exps.clear();
-      AllocatableRegs.clear();
     }
 
   private:
@@ -77,7 +76,6 @@ namespace {
     ScopedHTType VNT;
     SmallVector<MachineInstr*, 64> Exps;
     unsigned CurrVN;
-    BitVector AllocatableRegs;
 
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isPhysDefTriviallyDead(unsigned Reg,
@@ -633,6 +631,5 @@ bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<MachineDominatorTree>();
-  AllocatableRegs = TRI->getAllocatableSet(MF);
   return PerformCSE(DT->getRootNode());
 }

@@ -49,7 +49,6 @@ namespace {
     MachineDominatorTree *DT;   // Machine dominator tree
     MachineLoopInfo *LI;
     AliasAnalysis *AA;
-    BitVector AllocatableSet;   // Which physregs are allocatable?
 
     // Remember which edges have been considered for breaking.
     SmallSet<std::pair<MachineBasicBlock*,MachineBasicBlock*>, 8>
@@ -229,7 +228,6 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
   DT = &getAnalysis<MachineDominatorTree>();
   LI = &getAnalysis<MachineLoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
-  AllocatableSet = TRI->getAllocatableSet(MF);
 
   bool EverMadeChange = false;
 
