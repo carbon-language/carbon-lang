@@ -131,7 +131,14 @@ bool AsanInterceptsSignal(int signum) {
 }
 
 void AsanPlatformThreadInit() {
-  ReplaceCFAllocator();
+  // For the first program thread, we can't replace the allocator before
+  // __CFInitialize() has been called. If it hasn't, we'll call
+  // ReplaceCFAllocator() later on this thread.
+  // For other threads __CFInitialize() has been called before their creation.
+  // See also asan_malloc_mac.cc.
+  if (((CFRuntimeBase*)kCFAllocatorSystemDefault)->_cfisa) {
+    ReplaceCFAllocator();
+  }
 }
 
 AsanLock::AsanLock(LinkerInitialized) {
