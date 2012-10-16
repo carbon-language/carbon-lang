@@ -290,15 +290,9 @@ struct AttributeWithIndex {
 
   static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
                                 ArrayRef<Attributes::AttrVal> Attrs) {
-    AttrBuilder B;
-
-    for (ArrayRef<Attributes::AttrVal>::iterator I = Attrs.begin(),
-           E = Attrs.end(); I != E; ++I)
-      B.addAttribute(*I);
-
     AttributeWithIndex P;
     P.Index = Idx;
-    P.Attrs = Attributes::get(C, B);
+    P.Attrs = Attributes::get(C, Attrs);
     return P;
   }
   static AttributeWithIndex get(unsigned Idx, Attributes Attrs) {
