@@ -36,14 +36,26 @@ public:
     GetError ();
 
     size_t
-    PutOutput (FILE *fh);
-
-    size_t
     GetOutputSize ();
 
     size_t
     GetErrorSize ();
 
+    const char *
+    GetOutput (bool only_if_no_immediate);
+    
+    const char *
+    GetError (bool if_no_immediate);
+    
+    size_t
+    GetErrorSize (bool only_if_no_immediate);
+    
+    size_t
+    GetOutputSize (bool only_if_no_immediate);
+    
+    size_t
+    PutOutput (FILE *fh);
+    
     size_t
     PutError (FILE *fh);
 

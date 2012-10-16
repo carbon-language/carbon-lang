@@ -18,10 +18,11 @@ def target_name_impl(debugger, args, result, dict):
         return None
 
 def print_wait_impl(debugger, args, result, dict):
-    print 'Trying to do long task..';
+    result.SetImmediateOutputFile(sys.stdout)
+    result.PutCString('Trying to do long task..')
     import time
     time.sleep(1)
-    print 'Still doing long task..';
+    result.PutCString('Still doing long task..')
     time.sleep(1)
     result.PutCString('Done; if you saw the delays I am doing OK')
     return None

@@ -528,7 +528,7 @@ IOChannel::RefreshPrompt ()
 void
 IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
 {
-    if (len == 0)
+    if (len == 0 || buffer == NULL)
         return;
 
     // We're in the process of exiting -- IOChannel::Run() has already completed
@@ -552,7 +552,7 @@ IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
 void
 IOChannel::ErrWrite (const char *buffer, size_t len, bool asynchronous)
 {
-    if (len == 0)
+    if (len == 0 || buffer == NULL)
         return;
 
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.

@@ -268,7 +268,7 @@ SBCommandReturnObject::SetImmediateOutputFile (FILE *fh)
     if (m_opaque_ap.get())
         m_opaque_ap->SetImmediateOutputFile (fh);
 }
-    
+
 void
 SBCommandReturnObject::SetImmediateErrorFile (FILE *fh)
 {
@@ -283,6 +283,46 @@ SBCommandReturnObject::PutCString(const char* string, int len)
     {
         m_opaque_ap->AppendMessage(string, len);
     }
+}
+
+const char *
+SBCommandReturnObject::GetOutput (bool only_if_no_immediate)
+{
+    if (!m_opaque_ap.get())
+        return NULL;
+    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateOutputStream().get() == NULL)
+        return GetOutput();
+    return NULL;
+}
+
+const char *
+SBCommandReturnObject::GetError (bool only_if_no_immediate)
+{
+    if (!m_opaque_ap.get())
+        return NULL;
+    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateErrorStream().get() == NULL)
+        return GetError();
+    return NULL;
+}
+
+size_t
+SBCommandReturnObject::GetErrorSize (bool only_if_no_immediate)
+{
+    if (!m_opaque_ap.get())
+        return NULL;
+    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateErrorStream().get() == NULL)
+        return GetErrorSize();
+    return NULL;
+}
+
+size_t
+SBCommandReturnObject::GetOutputSize (bool only_if_no_immediate)
+{
+    if (!m_opaque_ap.get())
+        return NULL;
+    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateOutputStream().get() == NULL)
+        return GetOutputSize();
+    return NULL;
 }
 
 size_t

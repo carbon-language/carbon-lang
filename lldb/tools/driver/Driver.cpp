@@ -1020,11 +1020,17 @@ Driver::HandleIOEvent (const SBEvent &event)
         // output orderings and problems with the prompt.
         m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true);
 
-        if (result.GetOutputSize() > 0)
-            m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), NO_ASYNC);
-            
-        if (result.GetErrorSize() > 0)
-            m_io_channel_ap->OutWrite (result.GetError(), result.GetErrorSize(), NO_ASYNC);
+        const bool only_if_no_immediate = true;
+
+        const size_t output_size = result.GetOutputSize(only_if_no_immediate);
+        
+        if (output_size > 0)
+            m_io_channel_ap->OutWrite (result.GetOutput(only_if_no_immediate), output_size, NO_ASYNC);
+
+        const size_t error_size = result.GetErrorSize(only_if_no_immediate);
+
+        if (error_size > 0)
+            m_io_channel_ap->OutWrite (result.GetError(only_if_no_immediate), error_size, NO_ASYNC);
 
         // We are done getting and running our command, we can now clear the
         // m_waiting_for_command so we can get another one.
