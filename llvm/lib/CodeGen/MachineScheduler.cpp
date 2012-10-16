@@ -360,7 +360,7 @@ void ScheduleDAGMI::moveInstruction(MachineInstr *MI,
   BB->splice(InsertPos, BB, MI);
 
   // Update LiveIntervals
-  LIS->handleMove(MI);
+  LIS->handleMove(MI, /*UpdateFlags=*/true);
 
   // Recede RegionBegin if an instruction moves above the first.
   if (RegionBegin == InsertPos)

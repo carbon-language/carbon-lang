@@ -1,5 +1,6 @@
-; RUN: llc < %s -march=x86-64 -mcpu=core2 -enable-misched \
-; RUN:          -misched=shuffle -misched-bottomup | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -x86-early-ifcvt -enable-misched \
+; RUN:          -misched=shuffle -misched-bottomup -verify-machineinstrs \
+; RUN:     | FileCheck %s
 ; REQUIRES: asserts
 ;
 ; Interesting MachineScheduler cases.
@@ -26,3 +27,27 @@ for.cond.preheader:                               ; preds = %entry
 if.end:                                           ; preds = %entry
   ret void
 }
+
+; The machine verifier checks that EFLAGS kill flags are updated when
+; the scheduler reorders cmovel instructions.
+;
+; CHECK: test
+; CHECK: cmovel
+; CHECK: cmovel
+; CHECK: call
+define void @foo(i32 %b) nounwind uwtable ssp {
+entry:
+  %tobool = icmp ne i32 %b, 0
+  br i1 %tobool, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+  %v1 = phi i32 [1, %entry], [2, %if.then]
+  %v2 = phi i32 [3, %entry], [4, %if.then]
+  call void @bar(i32 %v1, i32 %v2)
+  ret void
+}
+
+declare void @bar(i32,i32)

@@ -1011,12 +1011,24 @@ private:
   SlotIndex OldIdx;
   SlotIndex NewIdx;
   SmallPtrSet<LiveInterval*, 8> Updated;
+  bool UpdateFlags;
 
 public:
   HMEditor(LiveIntervals& LIS, const MachineRegisterInfo& MRI,
            const TargetRegisterInfo& TRI,
-           SlotIndex OldIdx, SlotIndex NewIdx)
-    : LIS(LIS), MRI(MRI), TRI(TRI), OldIdx(OldIdx), NewIdx(NewIdx) {}
+           SlotIndex OldIdx, SlotIndex NewIdx, bool UpdateFlags)
+    : LIS(LIS), MRI(MRI), TRI(TRI), OldIdx(OldIdx), NewIdx(NewIdx),
+      UpdateFlags(UpdateFlags) {}
+
+  // FIXME: UpdateFlags is a workaround that creates live intervals for all
+  // physregs, even those that aren't needed for regalloc, in order to update
+  // kill flags. This is wasteful. Eventually, LiveVariables will strip all kill
+  // flags, and postRA passes will use a live register utility instead.
+  LiveInterval *getRegUnitLI(unsigned Unit) {
+    if (UpdateFlags)
+      return &LIS.getRegUnit(Unit);
+    return LIS.getCachedRegUnit(Unit);
+  }
 
   /// Update all live ranges touched by MI, assuming a move from OldIdx to
   /// NewIdx.
@@ -1044,7 +1056,7 @@ public:
       // For physregs, only update the regunits that actually have a
       // precomputed live range.
       for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units)
-        if (LiveInterval *LI = LIS.getCachedRegUnit(*Units))
+        if (LiveInterval *LI = getRegUnitLI(*Units))
           updateRange(*LI);
     }
     if (hasRegMask)
@@ -1288,7 +1300,7 @@ private:
   }
 };
 
-void LiveIntervals::handleMove(MachineInstr* MI) {
+void LiveIntervals::handleMove(MachineInstr* MI, bool UpdateFlags) {
   assert(!MI->isBundled() && "Can't handle bundled instructions yet.");
   SlotIndex OldIndex = Indexes->getInstructionIndex(MI);
   Indexes->removeMachineInstrFromMaps(MI);
@@ -1297,14 +1309,15 @@ void LiveIntervals::handleMove(MachineInstr* MI) {
          OldIndex < getMBBEndIdx(MI->getParent()) &&
          "Cannot handle moves across basic block boundaries.");
 
-  HMEditor HME(*this, *MRI, *TRI, OldIndex, NewIndex);
+  HMEditor HME(*this, *MRI, *TRI, OldIndex, NewIndex, UpdateFlags);
   HME.updateAllRanges(MI);
 }
 
 void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI,
-                                         MachineInstr* BundleStart) {
+                                         MachineInstr* BundleStart,
+                                         bool UpdateFlags) {
   SlotIndex OldIndex = Indexes->getInstructionIndex(MI);
   SlotIndex NewIndex = Indexes->getInstructionIndex(BundleStart);
-  HMEditor HME(*this, *MRI, *TRI, OldIndex, NewIndex);
+  HMEditor HME(*this, *MRI, *TRI, OldIndex, NewIndex, UpdateFlags);
   HME.updateAllRanges(MI);
 }
