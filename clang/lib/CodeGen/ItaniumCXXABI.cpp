@@ -113,6 +113,7 @@ public:
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
   StringRef GetPureVirtualCallName() { return "__cxa_pure_virtual"; }
+  StringRef GetDeletedVirtualCallName() { return "__cxa_deleted_virtual"; }
 
   CharUnits getArrayCookieSizeImpl(QualType elementType);
   llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,

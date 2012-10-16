@@ -205,6 +205,9 @@ public:
   /// Gets the pure virtual member call function.
   virtual StringRef GetPureVirtualCallName() = 0;
 
+  /// Gets the deleted virtual member call name.
+  virtual StringRef GetDeletedVirtualCallName() = 0;
+
   /**************************** Array cookies ******************************/
 
   /// Returns the extra size required in order to store the array
