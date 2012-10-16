@@ -224,6 +224,25 @@ protected:
     llvm::ArrayType *ArrayTy = llvm::ArrayType::get(Ty, V.size());
     return MakeGlobal(ArrayTy, V, Name, linkage);
   }
+  /// Returns a property name and encoding string.
+  llvm::Constant *MakePropertyEncodingString(const ObjCPropertyDecl *PD,
+                                             const Decl *Container) {
+    ObjCRuntime R = CGM.getLangOpts().ObjCRuntime;
+    if ((R.getKind() == ObjCRuntime::GNUstep) &&
+        (R.getVersion() >= VersionTuple(1, 6))) {
+      std::string NameAndAttributes;
+      std::string TypeStr;
+      CGM.getContext().getObjCEncodingForPropertyDecl(PD, Container, TypeStr);
+      NameAndAttributes += '\0';
+      NameAndAttributes += TypeStr.length() + 3;
+      NameAndAttributes += TypeStr;
+      NameAndAttributes += '\0';
+      NameAndAttributes += PD->getNameAsString();
+      return llvm::ConstantExpr::getGetElementPtr(
+          CGM.GetAddrOfConstantString(NameAndAttributes), Zeros);
+    }
+    return MakeConstantString(PD->getNameAsString());
+  }
   /// Ensures that the value has the required type, by inserting a bitcast if
   /// required.  This function lets us avoid inserting bitcasts that are
   /// redundant.
@@ -1691,7 +1710,9 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::vector<llvm::Constant*> Fields;
     ObjCPropertyDecl *property = *iter;
 
-    Fields.push_back(MakeConstantString(property->getNameAsString()));
+
+    Fields.push_back(MakePropertyEncodingString(property, PD));
+
     Fields.push_back(llvm::ConstantInt::get(Int8Ty,
                 property->getPropertyAttributes()));
     Fields.push_back(llvm::ConstantInt::get(Int8Ty, 0));
@@ -1944,7 +1965,7 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
     bool isSynthesized = (propertyImpl->getPropertyImplementation() == 
         ObjCPropertyImplDecl::Synthesize);
 
-    Fields.push_back(MakeConstantString(property->getNameAsString()));
+    Fields.push_back(MakePropertyEncodingString(property, OID));
     Fields.push_back(llvm::ConstantInt::get(Int8Ty,
                 property->getPropertyAttributes()));
     Fields.push_back(llvm::ConstantInt::get(Int8Ty, isSynthesized));
