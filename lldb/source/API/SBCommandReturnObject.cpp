@@ -306,26 +306,6 @@ SBCommandReturnObject::GetError (bool only_if_no_immediate)
 }
 
 size_t
-SBCommandReturnObject::GetErrorSize (bool only_if_no_immediate)
-{
-    if (!m_opaque_ap.get())
-        return NULL;
-    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateErrorStream().get() == NULL)
-        return GetErrorSize();
-    return NULL;
-}
-
-size_t
-SBCommandReturnObject::GetOutputSize (bool only_if_no_immediate)
-{
-    if (!m_opaque_ap.get())
-        return NULL;
-    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateOutputStream().get() == NULL)
-        return GetOutputSize();
-    return NULL;
-}
-
-size_t
 SBCommandReturnObject::Printf(const char* format, ...)
 {
     if (m_opaque_ap.get())

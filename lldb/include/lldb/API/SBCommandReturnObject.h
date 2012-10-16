@@ -98,12 +98,6 @@ public:
     const char *
     GetError (bool only_if_no_immediate);
     
-    size_t
-    GetErrorSize (bool only_if_no_immediate);
-    
-    size_t
-    GetOutputSize (bool only_if_no_immediate);
-    
 protected:
     friend class SBCommandInterpreter;
     friend class SBOptions;

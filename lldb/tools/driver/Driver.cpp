@@ -1022,12 +1022,12 @@ Driver::HandleIOEvent (const SBEvent &event)
 
         const bool only_if_no_immediate = true;
 
-        const size_t output_size = result.GetOutputSize(only_if_no_immediate);
+        const size_t output_size = result.GetOutputSize();
         
         if (output_size > 0)
             m_io_channel_ap->OutWrite (result.GetOutput(only_if_no_immediate), output_size, NO_ASYNC);
 
-        const size_t error_size = result.GetErrorSize(only_if_no_immediate);
+        const size_t error_size = result.GetErrorSize();
 
         if (error_size > 0)
             m_io_channel_ap->OutWrite (result.GetError(only_if_no_immediate), error_size, NO_ASYNC);
