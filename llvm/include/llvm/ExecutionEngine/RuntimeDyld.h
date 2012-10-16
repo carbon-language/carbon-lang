@@ -63,7 +63,7 @@ protected:
   // Any relocations already associated with the symbol will be re-resolved.
   void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
 public:
-  RuntimeDyld(RTDyldMemoryManager*);
+  RuntimeDyld(RTDyldMemoryManager *);
   ~RuntimeDyld();
 
   /// loadObject - prepare the object contained in the input buffer for
