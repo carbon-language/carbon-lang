@@ -261,13 +261,13 @@ namespace llvm {
     /// the live intervals for all operands of mi. Moves between basic blocks
     /// are not supported.
     ///
-    /// \param updateFlags Update live intervals for nonallocatable physregs.
+    /// \param UpdateFlags Update live intervals for nonallocatable physregs.
     void handleMove(MachineInstr* MI, bool UpdateFlags = false);
 
     /// moveIntoBundle - Update intervals for operands of MI so that they
     /// begin/end on the SlotIndex for BundleStart.
     ///
-    /// \param updateFlags Update live intervals for nonallocatable physregs.
+    /// \param UpdateFlags Update live intervals for nonallocatable physregs.
     ///
     /// Requires MI and BundleStart to have SlotIndexes, and assumes
     /// existing liveness is accurate. BundleStart should be the first
