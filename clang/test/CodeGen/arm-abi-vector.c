@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -triple armv7-apple-darwin -target-abi aapcs -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple armv7-apple-darwin -target-abi apcs-gnu -emit-llvm -o - %s | FileCheck -check-prefix=APCS-GNU %s
-// XFAIL: *
 
 #include <stdarg.h>
 
@@ -15,18 +14,18 @@ typedef __attribute__(( ext_vector_type(5) ))  short __short5;
 // Passing legal vector types as varargs.
 double varargs_vec_2i(int fixed, ...) {
 // CHECK: varargs_vec_2i
-// CHECK: %c3 = alloca <2 x i32>, align 8
-// CHECK: %3 = and i32 %2, -8
-// CHECK: %ap.align = inttoptr i32 %3 to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i32 8
-// CHECK: bitcast i8* %ap.align to <2 x i32>*
+// CHECK: alloca <2 x i32>, align 8
+// CHECK: [[ALIGN:%.*]] = and i32 [[VAR:%.*]], -8
+// CHECK: [[AP_ALIGN:%.*]] = inttoptr i32 [[ALIGN]] to i8*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP_ALIGN]], i32 8
+// CHECK: bitcast i8* [[AP_ALIGN]] to <2 x i32>*
 // APCS-GNU: varargs_vec_2i
-// APCS-GNU: %c3 = alloca <2 x i32>, align 8
-// APCS-GNU: %var.align = alloca <2 x i32>
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 8
-// APCS-GNU: %1 = bitcast <2 x i32>* %var.align to i8*
+// APCS-GNU: alloca <2 x i32>, align 8
+// APCS-GNU: [[VAR_ALIGN:%.*]] = alloca <2 x i32>
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* {{%.*}}, i32 8
+// APCS-GNU: bitcast <2 x i32>* [[VAR_ALIGN]] to i8*
 // APCS-GNU: call void @llvm.memcpy
-// APCS-GNU: %2 = load <2 x i32>* %var.align
+// APCS-GNU: load <2 x i32>* [[VAR_ALIGN]]
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -38,21 +37,21 @@ double varargs_vec_2i(int fixed, ...) {
 
 double test_2i(__int2 *in) {
 // CHECK: test_2i
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_2i(i32 3, <2 x i32> %1)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_2i(i32 3, <2 x i32> {{%.*}})
 // APCS-GNU: test_2i
-// APCS-GNU: call double (i32, ...)* @varargs_vec_2i(i32 3, <2 x i32> %1)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_2i(i32 3, <2 x i32> {{%.*}})
   return varargs_vec_2i(3, *in);
 }
 
 double varargs_vec_3c(int fixed, ...) {
 // CHECK: varargs_vec_3c
-// CHECK: %c3 = alloca <3 x i8>, align 4
-// CHECK: %ap.next = getelementptr i8* %ap.cur, i32 4
-// CHECK: %1 = bitcast i8* %ap.cur to <3 x i8>*
+// CHECK: alloca <3 x i8>, align 4
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP:%.*]], i32 4
+// CHECK: bitcast i8* [[AP]] to <3 x i8>*
 // APCS-GNU: varargs_vec_3c
-// APCS-GNU: %c3 = alloca <3 x i8>, align 4
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 4
-// APCS-GNU: bitcast i8* %ap.cur to <3 x i8>*
+// APCS-GNU: alloca <3 x i8>, align 4
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* [[AP:%.*]], i32 4
+// APCS-GNU: bitcast i8* [[AP]] to <3 x i8>*
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -64,26 +63,26 @@ double varargs_vec_3c(int fixed, ...) {
 
 double test_3c(__char3 *in) {
 // CHECK: test_3c
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_3c(i32 3, i32 %2)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_3c(i32 3, i32 {{%.*}})
 // APCS-GNU: test_3c
-// APCS-GNU: call double (i32, ...)* @varargs_vec_3c(i32 3, i32 %2)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_3c(i32 3, i32 {{%.*}})
   return varargs_vec_3c(3, *in);
 }
 
 double varargs_vec_5c(int fixed, ...) {
 // CHECK: varargs_vec_5c
-// CHECK: %c5 = alloca <5 x i8>, align 8
-// CHECK: %3 = and i32 %2, -8
-// CHECK: %ap.align = inttoptr i32 %3 to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i32 8
-// CHECK: bitcast i8* %ap.align to <5 x i8>*
+// CHECK: alloca <5 x i8>, align 8
+// CHECK: [[ALIGN:%.*]] = and i32 {{%.*}}, -8
+// CHECK: [[AP_ALIGN:%.*]] = inttoptr i32 [[ALIGN]] to i8*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP_ALIGN]], i32 8
+// CHECK: bitcast i8* [[AP_ALIGN]] to <5 x i8>*
 // APCS-GNU: varargs_vec_5c
-// APCS-GNU: %c5 = alloca <5 x i8>, align 8
-// APCS-GNU: %var.align = alloca <5 x i8>
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 8
-// APCS-GNU: %1 = bitcast <5 x i8>* %var.align to i8*
+// APCS-GNU: alloca <5 x i8>, align 8
+// APCS-GNU: [[VAR_ALIGN:%.*]] = alloca <5 x i8>
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* {{%.*}}, i32 8
+// APCS-GNU: bitcast <5 x i8>* [[VAR_ALIGN]] to i8*
 // APCS-GNU: call void @llvm.memcpy
-// APCS-GNU: %2 = load <5 x i8>* %var.align
+// APCS-GNU: load <5 x i8>* [[VAR_ALIGN]]
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -95,29 +94,29 @@ double varargs_vec_5c(int fixed, ...) {
 
 double test_5c(__char5 *in) {
 // CHECK: test_5c
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_5c(i32 5, <2 x i32> %3)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_5c(i32 5, <2 x i32> {{%.*}})
 // APCS-GNU: test_5c
-// APCS-GNU: call double (i32, ...)* @varargs_vec_5c(i32 5, <2 x i32> %3)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_5c(i32 5, <2 x i32> {{%.*}})
   return varargs_vec_5c(5, *in);
 }
 
 double varargs_vec_9c(int fixed, ...) {
 // CHECK: varargs_vec_9c
-// CHECK: %c9 = alloca <9 x i8>, align 16
-// CHECK: %var.align = alloca <9 x i8>
-// CHECK: %3 = and i32 %2, -8
-// CHECK: %ap.align = inttoptr i32 %3 to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i32 16
-// CHECK: %4 = bitcast <9 x i8>* %var.align to i8*
+// CHECK: alloca <9 x i8>, align 16
+// CHECK: [[VAR_ALIGN:%.*]] = alloca <9 x i8>
+// CHECK: [[ALIGN:%.*]] = and i32 {{%.*}}, -8
+// CHECK: [[AP_ALIGN:%.*]] = inttoptr i32 [[ALIGN]] to i8*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP_ALIGN]], i32 16
+// CHECK: bitcast <9 x i8>* [[VAR_ALIGN]] to i8*
 // CHECK: call void @llvm.memcpy
-// CHECK: %5 = load <9 x i8>* %var.align
+// CHECK: load <9 x i8>* [[VAR_ALIGN]]
 // APCS-GNU: varargs_vec_9c
-// APCS-GNU: %c9 = alloca <9 x i8>, align 16
-// APCS-GNU: %var.align = alloca <9 x i8>
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 16
-// APCS-GNU: %1 = bitcast <9 x i8>* %var.align to i8*
+// APCS-GNU: alloca <9 x i8>, align 16
+// APCS-GNU: [[VAR_ALIGN:%.*]] = alloca <9 x i8>
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* {{%.*}}, i32 16
+// APCS-GNU: bitcast <9 x i8>* [[VAR_ALIGN]] to i8*
 // APCS-GNU: call void @llvm.memcpy
-// APCS-GNU: %2 = load <9 x i8>* %var.align
+// APCS-GNU: load <9 x i8>* [[VAR_ALIGN]]
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -129,23 +128,23 @@ double varargs_vec_9c(int fixed, ...) {
 
 double test_9c(__char9 *in) {
 // CHECK: test_9c
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_9c(i32 9, <4 x i32> %3)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_9c(i32 9, <4 x i32> {{%.*}})
 // APCS-GNU: test_9c
-// APCS-GNU: call double (i32, ...)* @varargs_vec_9c(i32 9, <4 x i32> %3)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_9c(i32 9, <4 x i32> {{%.*}})
   return varargs_vec_9c(9, *in);
 }
 
 double varargs_vec_19c(int fixed, ...) {
 // CHECK: varargs_vec_19c
-// CHECK: %ap.next = getelementptr i8* %ap.cur, i32 4
-// CHECK: %1 = bitcast i8* %ap.cur to i8**
-// CHECK: %2 = load i8** %1
-// CHECK: bitcast i8* %2 to <19 x i8>*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP:%.*]], i32 4
+// CHECK: [[VAR:%.*]] = bitcast i8* [[AP]] to i8**
+// CHECK: [[VAR2:%.*]] = load i8** [[VAR]]
+// CHECK: bitcast i8* [[VAR2]] to <19 x i8>*
 // APCS-GNU: varargs_vec_19c
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 4
-// APCS-GNU: %1 = bitcast i8* %ap.cur to i8**
-// APCS-GNU: %2 = load i8** %1
-// APCS-GNU: bitcast i8* %2 to <19 x i8>*
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* [[AP:%.*]], i32 4
+// APCS-GNU: [[VAR:%.*]] = bitcast i8* [[AP]] to i8**
+// APCS-GNU: [[VAR2:%.*]] = load i8** [[VAR]]
+// APCS-GNU: bitcast i8* [[VAR2]] to <19 x i8>*
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -157,26 +156,26 @@ double varargs_vec_19c(int fixed, ...) {
 
 double test_19c(__char19 *in) {
 // CHECK: test_19c
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_19c(i32 19, <19 x i8>* %tmp)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_19c(i32 19, <19 x i8>* {{%.*}})
 // APCS-GNU: test_19c
-// APCS-GNU: call double (i32, ...)* @varargs_vec_19c(i32 19, <19 x i8>* %tmp)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_19c(i32 19, <19 x i8>* {{%.*}})
   return varargs_vec_19c(19, *in);
 }
 
 double varargs_vec_3s(int fixed, ...) {
 // CHECK: varargs_vec_3s
-// CHECK: %c3 = alloca <3 x i16>, align 8
-// CHECK: %3 = and i32 %2, -8
-// CHECK: %ap.align = inttoptr i32 %3 to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i32 8
-// CHECK: bitcast i8* %ap.align to <3 x i16>*
+// CHECK: alloca <3 x i16>, align 8
+// CHECK: [[ALIGN:%.*]] = and i32 {{%.*}}, -8
+// CHECK: [[AP_ALIGN:%.*]] = inttoptr i32 [[ALIGN]] to i8*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP_ALIGN]], i32 8
+// CHECK: bitcast i8* [[AP_ALIGN]] to <3 x i16>*
 // APCS-GNU: varargs_vec_3s
-// APCS-GNU: %c3 = alloca <3 x i16>, align 8
-// APCS-GNU: %var.align = alloca <3 x i16>
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 8
-// APCS-GNU: %1 = bitcast <3 x i16>* %var.align to i8*
+// APCS-GNU: alloca <3 x i16>, align 8
+// APCS-GNU: [[VAR_ALIGN:%.*]] = alloca <3 x i16>
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* {{%.*}}, i32 8
+// APCS-GNU: bitcast <3 x i16>* [[VAR_ALIGN]] to i8*
 // APCS-GNU: call void @llvm.memcpy
-// APCS-GNU: %2 = load <3 x i16>* %var.align
+// APCS-GNU: load <3 x i16>* [[VAR_ALIGN]]
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -188,29 +187,29 @@ double varargs_vec_3s(int fixed, ...) {
 
 double test_3s(__short3 *in) {
 // CHECK: test_3s
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_3s(i32 3, <2 x i32> %2)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_3s(i32 3, <2 x i32> {{%.*}})
 // APCS-GNU: test_3s
-// APCS-GNU: call double (i32, ...)* @varargs_vec_3s(i32 3, <2 x i32> %2)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_3s(i32 3, <2 x i32> {{%.*}})
   return varargs_vec_3s(3, *in);
 }
 
 double varargs_vec_5s(int fixed, ...) {
 // CHECK: varargs_vec_5s
-// CHECK: %c5 = alloca <5 x i16>, align 16
-// CHECK: %var.align = alloca <5 x i16>
-// CHECK: %3 = and i32 %2, -8
-// CHECK: %ap.align = inttoptr i32 %3 to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i32 16
-// CHECK: %4 = bitcast <5 x i16>* %var.align to i8*
+// CHECK: alloca <5 x i16>, align 16
+// CHECK: [[VAR_ALIGN:%.*]] = alloca <5 x i16>
+// CHECK: [[ALIGN:%.*]] = and i32 {{%.*}}, -8
+// CHECK: [[AP_ALIGN:%.*]] = inttoptr i32 [[ALIGN]] to i8*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP_ALIGN]], i32 16
+// CHECK: bitcast <5 x i16>* [[VAR_ALIGN]] to i8*
 // CHECK: call void @llvm.memcpy
-// CHECK: %5 = load <5 x i16>* %var.align
+// CHECK: load <5 x i16>* [[VAR_ALIGN]]
 // APCS-GNU: varargs_vec_5s
-// APCS-GNU: %c5 = alloca <5 x i16>, align 16
-// APCS-GNU: %var.align = alloca <5 x i16>
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 16
-// APCS-GNU: %1 = bitcast <5 x i16>* %var.align to i8*
+// APCS-GNU: alloca <5 x i16>, align 16
+// APCS-GNU: [[VAR_ALIGN:%.*]] = alloca <5 x i16>
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* {{%.*}}, i32 16
+// APCS-GNU: bitcast <5 x i16>* [[VAR_ALIGN]] to i8*
 // APCS-GNU: call void @llvm.memcpy
-// APCS-GNU: %2 = load <5 x i16>* %var.align
+// APCS-GNU: load <5 x i16>* [[VAR_ALIGN]]
   va_list ap;
   double sum = fixed;
   va_start(ap, fixed);
@@ -222,9 +221,9 @@ double varargs_vec_5s(int fixed, ...) {
 
 double test_5s(__short5 *in) {
 // CHECK: test_5s
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_5s(i32 5, <4 x i32> %3)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_vec_5s(i32 5, <4 x i32> {{%.*}})
 // APCS-GNU: test_5s
-// APCS-GNU: call double (i32, ...)* @varargs_vec_5s(i32 5, <4 x i32> %3)
+// APCS-GNU: call double (i32, ...)* @varargs_vec_5s(i32 5, <4 x i32> {{%.*}})
   return varargs_vec_5s(5, *in);
 }
 
@@ -237,14 +236,14 @@ typedef struct
 
 double varargs_struct(int fixed, ...) {
 // CHECK: varargs_struct
-// CHECK: %3 = and i32 %2, -8
-// CHECK: %ap.align = inttoptr i32 %3 to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i32 16
-// CHECK: bitcast i8* %ap.align to %struct.StructWithVec*
+// CHECK: [[ALIGN:%.*]] = and i32 {{%.*}}, -8
+// CHECK: [[AP_ALIGN:%.*]] = inttoptr i32 [[ALIGN]] to i8*
+// CHECK: [[AP_NEXT:%.*]] = getelementptr i8* [[AP_ALIGN]], i32 16
+// CHECK: bitcast i8* [[AP_ALIGN]] to %struct.StructWithVec*
 // APCS-GNU: varargs_struct
-// APCS-GNU: %var.align = alloca %struct.StructWithVec
-// APCS-GNU: %ap.next = getelementptr i8* %ap.cur, i32 16
-// APCS-GNU: %1 = bitcast %struct.StructWithVec* %var.align to i8*
+// APCS-GNU: [[VAR_ALIGN:%.*]] = alloca %struct.StructWithVec
+// APCS-GNU: [[AP_NEXT:%.*]] = getelementptr i8* {{%.*}}, i32 16
+// APCS-GNU: bitcast %struct.StructWithVec* [[VAR_ALIGN]] to i8*
 // APCS-GNU: call void @llvm.memcpy
   va_list ap;
   double sum = fixed;
@@ -257,8 +256,8 @@ double varargs_struct(int fixed, ...) {
 
 double test_struct(StructWithVec* d) {
 // CHECK: test_struct
-// CHECK: call arm_aapcscc double (i32, ...)* @varargs_struct(i32 3, [2 x i64] %3)
+// CHECK: call arm_aapcscc double (i32, ...)* @varargs_struct(i32 3, [2 x i64] {{%.*}})
 // APCS-GNU: test_struct
-// APCS-GNU: call double (i32, ...)* @varargs_struct(i32 3, [2 x i64] %3)
+// APCS-GNU: call double (i32, ...)* @varargs_struct(i32 3, [2 x i64] {{%.*}})
   return varargs_struct(3, *d);
 }
