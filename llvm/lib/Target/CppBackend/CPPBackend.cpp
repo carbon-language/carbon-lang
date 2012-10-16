@@ -513,7 +513,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       nl(Out);
       attrs.removeAttribute(Attributes::StackAlignment);
       assert(!attrs.hasAttributes() && "Unhandled attribute!");
-      Out << "PAWI.Attrs = Attributes::get(B);";
+      Out << "PAWI.Attrs = Attributes::get(mod->getContext(), B);";
       nl(Out);
       Out << "Attrs.push_back(PAWI);";
       nl(Out);
