@@ -19,3 +19,14 @@ int main()
     (r->method());
 }
 
+// CHECK: if (int a = 1)
+// CHECK:  while (int a = 1)
+// CHECK:  switch (int a = 1)
+
+void f()
+{
+    if (int a = 1) { }
+    while (int a = 1) { }
+    switch (int a = 1) { }
+}
+

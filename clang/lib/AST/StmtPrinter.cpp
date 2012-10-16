@@ -61,7 +61,7 @@ namespace  {
 
     void PrintRawCompoundStmt(CompoundStmt *S);
     void PrintRawDecl(Decl *D);
-    void PrintRawDeclStmt(DeclStmt *S);
+    void PrintRawDeclStmt(const DeclStmt *S);
     void PrintRawIfStmt(IfStmt *If);
     void PrintRawCXXCatchStmt(CXXCatchStmt *Catch);
     void PrintCallArgs(CallExpr *E);
@@ -121,8 +121,8 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
   D->print(OS, Policy, IndentLevel);
 }
 
-void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
-  DeclStmt::decl_iterator Begin = S->decl_begin(), End = S->decl_end();
+void StmtPrinter::PrintRawDeclStmt(const DeclStmt *S) {
+  DeclStmt::const_decl_iterator Begin = S->decl_begin(), End = S->decl_end();
   SmallVector<Decl*, 2> Decls;
   for ( ; Begin != End; ++Begin)
     Decls.push_back(*Begin);
@@ -187,7 +187,10 @@ void StmtPrinter::VisitAttributedStmt(AttributedStmt *Node) {
 
 void StmtPrinter::PrintRawIfStmt(IfStmt *If) {
   OS << "if (";
-  PrintExpr(If->getCond());
+  if (const DeclStmt *DS = If->getConditionVariableDeclStmt())
+    PrintRawDeclStmt(DS);
+  else
+    PrintExpr(If->getCond());
   OS << ')';
 
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(If->getThen())) {
@@ -224,7 +227,10 @@ void StmtPrinter::VisitIfStmt(IfStmt *If) {
 
 void StmtPrinter::VisitSwitchStmt(SwitchStmt *Node) {
   Indent() << "switch (";
-  PrintExpr(Node->getCond());
+  if (const DeclStmt *DS = Node->getConditionVariableDeclStmt())
+    PrintRawDeclStmt(DS);
+  else
+    PrintExpr(Node->getCond());
   OS << ")";
 
   // Pretty print compoundstmt bodies (very common).
@@ -240,7 +246,10 @@ void StmtPrinter::VisitSwitchStmt(SwitchStmt *Node) {
 
 void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {
   Indent() << "while (";
-  PrintExpr(Node->getCond());
+  if (const DeclStmt *DS = Node->getConditionVariableDeclStmt())
+    PrintRawDeclStmt(DS);
+  else
+    PrintExpr(Node->getCond());
   OS << ")\n";
   PrintStmt(Node->getBody());
 }
