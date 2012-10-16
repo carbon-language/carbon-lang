@@ -35,6 +35,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/Version.h"
 #include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/APFloat.h"
@@ -984,27 +985,28 @@ void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
 
   // Metadata
   const TargetInfo &Target = Context.getTargetInfo();
-  BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
-  MetaAbbrev->Add(BitCodeAbbrevOp(METADATA));
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST major
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST minor
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Relocatable
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Has errors
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
-  unsigned MetaAbbrevCode = Stream.EmitAbbrev(MetaAbbrev);
-
+  const TargetOptions &TargetOpts = Target.getTargetOpts();
   RecordData Record;
-  Record.push_back(METADATA);
   Record.push_back(VERSION_MAJOR);
   Record.push_back(VERSION_MINOR);
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(!isysroot.empty());
   Record.push_back(ASTHasCompilerErrors);
-  const std::string &Triple = Target.getTriple().getTriple();
-  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, Triple);
+  AddString(TargetOpts.Triple, Record);
+  AddString(TargetOpts.CPU, Record);
+  AddString(TargetOpts.ABI, Record);
+  AddString(TargetOpts.CXXABI, Record);
+  AddString(TargetOpts.LinkerVersion, Record);
+  Record.push_back(TargetOpts.FeaturesAsWritten.size());
+  for (unsigned I = 0, N = TargetOpts.FeaturesAsWritten.size(); I != N; ++I) {
+    AddString(TargetOpts.FeaturesAsWritten[I], Record);
+  }
+  Record.push_back(TargetOpts.Features.size());
+  for (unsigned I = 0, N = TargetOpts.Features.size(); I != N; ++I) {
+    AddString(TargetOpts.Features[I], Record);
+  }
+  Stream.EmitRecord(METADATA, Record);
 
   if (Chain) {
     serialization::ModuleManager &Mgr = Chain->getModuleManager();

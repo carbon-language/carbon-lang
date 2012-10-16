@@ -35,11 +35,12 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 CompilerInvocationBase::CompilerInvocationBase()
-  : LangOpts(new LangOptions()) {}
+  : LangOpts(new LangOptions()), TargetOpts(new TargetOptions()) {}
 
 CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
   : RefCountedBase<CompilerInvocation>(),
-    LangOpts(new LangOptions(*X.getLangOpts())) {}
+    LangOpts(new LangOptions(*X.getLangOpts())), 
+    TargetOpts(new TargetOptions(X.getTargetOpts())) {}
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
@@ -927,8 +928,8 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
     Res.push_back("-target-linker-version", Opts.LinkerVersion);
   if (!Opts.CXXABI.empty())
     Res.push_back("-cxx-abi", Opts.CXXABI);
-  for (unsigned i = 0, e = Opts.Features.size(); i != e; ++i)
-    Res.push_back("-target-feature", Opts.Features[i]);
+  for (unsigned i = 0, e = Opts.FeaturesAsWritten.size(); i != e; ++i)
+    Res.push_back("-target-feature", Opts.FeaturesAsWritten[i]);
 }
 
 void CompilerInvocation::toArgs(std::vector<std::string> &Res) const {
@@ -2285,7 +2286,7 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   Opts.ABI = Args.getLastArgValue(OPT_target_abi);
   Opts.CXXABI = Args.getLastArgValue(OPT_cxx_abi);
   Opts.CPU = Args.getLastArgValue(OPT_target_cpu);
-  Opts.Features = Args.getAllArgValues(OPT_target_feature);
+  Opts.FeaturesAsWritten = Args.getAllArgValues(OPT_target_feature);
   Opts.LinkerVersion = Args.getLastArgValue(OPT_target_linker_version);
   Opts.Triple = llvm::Triple::normalize(Args.getLastArgValue(OPT_triple));
 
@@ -2431,7 +2432,8 @@ std::string CompilerInvocation::getModuleHash() const {
 #include "clang/Basic/LangOptions.def"
   
   // Extend the signature with the target triple
-  llvm::Triple T(TargetOpts.Triple);
+  // FIXME: Add target options.
+  llvm::Triple T(TargetOpts->Triple);
   Signature.add((unsigned)T.getArch(), 5);
   Signature.add((unsigned)T.getVendor(), 4);
   Signature.add((unsigned)T.getOS(), 5);

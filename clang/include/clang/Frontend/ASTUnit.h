@@ -71,8 +71,8 @@ private:
   IntrusiveRefCntPtr<TargetInfo>        Target;
   IntrusiveRefCntPtr<Preprocessor>      PP;
   IntrusiveRefCntPtr<ASTContext>        Ctx;
+  IntrusiveRefCntPtr<TargetOptions>     TargetOpts;
   ASTReader *Reader;
-  TargetOptions TargetOpts;
 
   struct ASTWriterData;
   OwningPtr<ASTWriterData> WriterData;
@@ -90,13 +90,6 @@ private:
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
   IntrusiveRefCntPtr<CompilerInvocation> Invocation;
-  
-  /// \brief The set of target features.
-  ///
-  /// FIXME: each time we reparse, we need to restore the set of target
-  /// features from this vector, because TargetInfo::CreateTargetInfo()
-  /// mangles the target options in place. Yuck!
-  std::vector<std::string> TargetFeatures;
   
   // OnlyLocalDecls - when true, walking this AST should only visit declarations
   // that come from the AST itself, not from included precompiled headers.

@@ -25,9 +25,13 @@ def err_fe_pch_file_modified : Error<
 def err_fe_pch_file_overridden : Error<
     "file '%0' from the precompiled header has been overridden">;
 
-def warn_pch_target_triple : Error<
-    "PCH file was compiled for the target '%0' but the current translation "
-    "unit is being compiled for target '%1'">;
+def err_pch_targetopt_mismatch : Error<
+    "PCH file was compiled for the %0 '%1' but the current translation "
+    "unit is being compiled for target '%2'">;
+def err_pch_targetopt_feature_mismatch : Error<
+    "%select{AST file|current translation unit}0 was compiled with the target "
+    "feature'%1' but the %select{current translation unit is|AST file was}0 "
+    "not">;
 def err_pch_langopt_mismatch : Error<"%0 was %select{disabled|enabled}1 in "
     "PCH file but is currently %select{disabled|enabled}2">;
 def err_pch_langopt_value_mismatch : Error<

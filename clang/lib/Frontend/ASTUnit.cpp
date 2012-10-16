@@ -503,7 +503,7 @@ class ASTInfoCollector : public ASTReaderListener {
   ASTContext &Context;
   LangOptions &LangOpt;
   HeaderSearch &HSI;
-  TargetOptions &TargetOpts;
+  IntrusiveRefCntPtr<TargetOptions> &TargetOpts;
   IntrusiveRefCntPtr<TargetInfo> &Target;
   std::string &Predefines;
   unsigned &Counter;
@@ -513,7 +513,8 @@ class ASTInfoCollector : public ASTReaderListener {
   bool InitializedLanguage;
 public:
   ASTInfoCollector(Preprocessor &PP, ASTContext &Context, LangOptions &LangOpt, 
-                   HeaderSearch &HSI, TargetOptions &TargetOpts,
+                   HeaderSearch &HSI, 
+                   IntrusiveRefCntPtr<TargetOptions> &TargetOpts,
                    IntrusiveRefCntPtr<TargetInfo> &Target,
                    std::string &Predefines,
                    unsigned &Counter)
@@ -536,21 +537,18 @@ public:
     return false;
   }
 
-  virtual bool ReadTargetTriple(const serialization::ModuleFile &M,
-                                StringRef Triple) {
+  virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
+                                 const TargetOptions &TargetOpts) {
     // If we've already initialized the target, don't do it again.
     if (Target)
       return false;
     
     assert(M.Kind == serialization::MK_MainFile);
 
-    // FIXME: This is broken, we should store the TargetOptions in the AST file.
-    TargetOpts.ABI = "";
-    TargetOpts.CXXABI = "";
-    TargetOpts.CPU = "";
-    TargetOpts.Features.clear();
-    TargetOpts.Triple = Triple;
-    Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(), TargetOpts);
+    
+    this->TargetOpts = new TargetOptions(TargetOpts);
+    Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(), 
+                                          *this->TargetOpts);
 
     updated();
     return false;
@@ -1098,7 +1096,6 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Clang->setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
-  Clang->getTargetOpts().Features = TargetFeatures;
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                    Clang->getTargetOpts()));
   if (!Clang->hasTarget()) {
@@ -1568,9 +1565,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Clang->setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
-  Clang->getTargetOpts().Features = TargetFeatures;
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                               Clang->getTargetOpts()));
+                                                Clang->getTargetOpts()));
   if (!Clang->hasTarget()) {
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
@@ -1777,9 +1773,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   CI->getFrontendOpts().DisableFree = false;
   ProcessWarningOptions(AST->getDiagnostics(), CI->getDiagnosticOpts());
 
-  // Save the target features.
-  AST->TargetFeatures = CI->getTargetOpts().Features;
-
   // Create the compiler instance to use for building the AST.
   OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
@@ -1795,7 +1788,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   Clang->setDiagnostics(&AST->getDiagnostics());
   
   // Create the target instance.
-  Clang->getTargetOpts().Features = AST->TargetFeatures;
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                    Clang->getTargetOpts()));
   if (!Clang->hasTarget())
@@ -1884,9 +1876,6 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   Invocation->getFrontendOpts().DisableFree = false;
   ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
 
-  // Save the target features.
-  TargetFeatures = Invocation->getTargetOpts().Features;
-  
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (PrecompilePreamble) {
     PreambleRebuildCounter = 2;
@@ -2396,7 +2385,6 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
                                     StoredDiagnostics);
   
   // Create the target instance.
-  Clang->getTargetOpts().Features = TargetFeatures;
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                                                Clang->getTargetOpts()));
   if (!Clang->hasTarget()) {

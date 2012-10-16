@@ -52,6 +52,9 @@ class CompilerInvocationBase : public RefCountedBase<CompilerInvocation> {
 protected:
   /// Options controlling the language variant.
   IntrusiveRefCntPtr<LangOptions> LangOpts;
+
+  /// Options controlling the target.
+  IntrusiveRefCntPtr<TargetOptions> TargetOpts;
 public:
   CompilerInvocationBase();
 
@@ -59,6 +62,11 @@ public:
   
   LangOptions *getLangOpts() { return LangOpts.getPtr(); }
   const LangOptions *getLangOpts() const { return LangOpts.getPtr(); }
+
+  TargetOptions &getTargetOpts() { return *TargetOpts.getPtr(); }
+  const TargetOptions &getTargetOpts() const {
+    return *TargetOpts.getPtr();
+  }
 };
   
 /// \brief Helper class for holding the data necessary to invoke the compiler.
@@ -95,9 +103,6 @@ class CompilerInvocation : public CompilerInvocationBase {
 
   /// Options controlling preprocessed output.
   PreprocessorOutputOptions PreprocessorOutputOpts;
-
-  /// Options controlling the target.
-  TargetOptions TargetOpts;
 
 public:
   CompilerInvocation() : AnalyzerOpts(new AnalyzerOptions()) {}
@@ -197,11 +202,6 @@ public:
   }
   const PreprocessorOutputOptions &getPreprocessorOutputOpts() const {
     return PreprocessorOutputOpts;
-  }
-
-  TargetOptions &getTargetOpts() { return TargetOpts; }
-  const TargetOptions &getTargetOpts() const {
-    return TargetOpts;
   }
 
   /// @}

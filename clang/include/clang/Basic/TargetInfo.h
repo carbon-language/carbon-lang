@@ -23,6 +23,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
 #include "clang/Basic/AddressSpaces.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/VersionTuple.h"
 #include "clang/Basic/Specifiers.h"
 #include <cassert>
@@ -39,7 +40,6 @@ class LangOptions;
 class MacroBuilder;
 class SourceLocation;
 class SourceManager;
-class TargetOptions;
 
 namespace Builtin { struct Info; }
 
@@ -62,7 +62,7 @@ enum TargetCXXABI {
 /// \brief Exposes information about the current target.
 ///
 class TargetInfo : public RefCountedBase<TargetInfo> {
-  TargetOptions *TargetOpts;
+  llvm::IntrusiveRefCntPtr<TargetOptions> TargetOpts;
   llvm::Triple Triple;
 protected:
   // Target values set by the ctor of the actual target implementation.  Default

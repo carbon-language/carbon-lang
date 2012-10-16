@@ -15,13 +15,14 @@
 #ifndef LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
 #define LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
 
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include <string>
 #include <vector>
 
 namespace clang {
 
 /// \brief Options for controlling the target.
-class TargetOptions {
+class TargetOptions : public RefCountedBase<TargetOptions> {
 public:
   /// If given, the name of the target triple to compile for. If not given the
   /// target will be selected to match the host.
@@ -39,6 +40,9 @@ public:
 
   /// If given, the version string of the linker in use.
   std::string LinkerVersion;
+
+  /// \brief The list of target specific features to enable or disable, as written on the command line.
+  std::vector<std::string> FeaturesAsWritten;
 
   /// The list of target specific features to enable or disable -- this should
   /// be a list of strings starting with by '+' or '-'.

@@ -37,6 +37,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemStatCache.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/Version.h"
 #include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/StringExtras.h"
@@ -101,13 +102,66 @@ PCHValidator::ReadLanguageOptions(const ModuleFile &M,
   return false;
 }
 
-bool PCHValidator::ReadTargetTriple(const ModuleFile &M, StringRef Triple) {
-  if (Triple == PP.getTargetInfo().getTriple().str())
-    return false;
+bool PCHValidator::ReadTargetOptions(const ModuleFile &M, 
+                                     const TargetOptions &TargetOpts) {
+  const TargetOptions &ExistingTargetOpts = PP.getTargetInfo().getTargetOpts();
 
-  Reader.Diag(diag::warn_pch_target_triple)
-    << Triple << PP.getTargetInfo().getTriple().str();
-  return true;
+#define CHECK_TARGET_OPT(Field, Name)                           \
+  if (TargetOpts.Field != ExistingTargetOpts.Field) {           \
+    Reader.Diag(diag::err_pch_targetopt_mismatch)               \
+      << Name << TargetOpts.Field << ExistingTargetOpts.Field;  \
+    return true;                                                \
+  }
+
+  CHECK_TARGET_OPT(Triple, "target");
+  CHECK_TARGET_OPT(CPU, "target CPU");
+  CHECK_TARGET_OPT(ABI, "target ABI");
+  CHECK_TARGET_OPT(CXXABI, "target C++ ABI");
+  CHECK_TARGET_OPT(LinkerVersion, "target linker version");
+#undef CHECK_TARGET_OPT
+
+  // Compare feature sets.
+  SmallVector<StringRef, 4> ExistingFeatures(
+                              ExistingTargetOpts.FeaturesAsWritten.begin(),
+                              ExistingTargetOpts.FeaturesAsWritten.end());
+  SmallVector<StringRef, 4> ReadFeatures(TargetOpts.FeaturesAsWritten.begin(),
+                                         TargetOpts.FeaturesAsWritten.end());
+  std::sort(ExistingFeatures.begin(), ExistingFeatures.end());
+  std::sort(ReadFeatures.begin(), ReadFeatures.end());
+
+  unsigned ExistingIdx = 0, ExistingN = ExistingFeatures.size();
+  unsigned ReadIdx = 0, ReadN = ReadFeatures.size();
+  while (ExistingIdx < ExistingN && ReadIdx < ReadN) {
+    if (ExistingFeatures[ExistingIdx] == ReadFeatures[ReadIdx]) {
+      ++ExistingIdx;
+      ++ReadIdx;
+      continue;
+    }
+
+    if (ReadFeatures[ReadIdx] < ExistingFeatures[ExistingIdx]) {
+      Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+        << false << ReadFeatures[ReadIdx];
+      return true;
+    }
+
+    Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+      << true << ExistingFeatures[ExistingIdx];
+    return true;
+  }
+
+  if (ExistingIdx < ExistingN) {
+    Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+      << true << ExistingFeatures[ExistingIdx];
+    return true;
+  }
+
+  if (ReadIdx < ReadN) {
+    Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+      << false << ReadFeatures[ReadIdx];
+    return true;
+  }
+
+  return false;
 }
 
 namespace {
@@ -1834,7 +1888,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case METADATA: {
       if (Record[0] != VERSION_MAJOR && !DisableValidation) {
         Diag(Record[0] < VERSION_MAJOR? diag::warn_pch_version_too_old
-                                           : diag::warn_pch_version_too_new);
+                                      : diag::warn_pch_version_too_new);
         return IgnorePCH;
       }
 
@@ -1846,8 +1900,21 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
 
       RelocatablePCH = Record[4];
       if (Listener) {
-        std::string TargetTriple(BlobStart, BlobLen);
-        if (Listener->ReadTargetTriple(F, TargetTriple))
+        unsigned Idx = 6;
+        TargetOptions TargetOpts;
+        TargetOpts.Triple = ReadString(Record, Idx);
+        TargetOpts.CPU = ReadString(Record, Idx);
+        TargetOpts.ABI = ReadString(Record, Idx);
+        TargetOpts.CXXABI = ReadString(Record, Idx);
+        TargetOpts.LinkerVersion = ReadString(Record, Idx);
+        for (unsigned N = Record[Idx++]; N; --N) {
+          TargetOpts.FeaturesAsWritten.push_back(ReadString(Record, Idx));
+        }
+        for (unsigned N = Record[Idx++]; N; --N) {
+          TargetOpts.Features.push_back(ReadString(Record, Idx));
+        }
+
+        if (Listener->ReadTargetOptions(F, TargetOpts))
           return IgnorePCH;
       }
       break;

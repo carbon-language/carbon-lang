@@ -82,6 +82,7 @@ class ASTStmtReader;
 class TypeLocReader;
 struct HeaderFileInfo;
 class VersionTuple;
+class TargetOptions;
 
 struct PCHPredefinesBlock {
   /// \brief The file ID for this predefines buffer in a PCH file.
@@ -110,11 +111,12 @@ public:
     return false;
   }
 
-  /// \brief Receives the target triple.
+  /// \brief Receives the target options.
   ///
-  /// \returns true to indicate the target triple is invalid or false otherwise.
-  virtual bool ReadTargetTriple(const serialization::ModuleFile &M,
-                                StringRef Triple) {
+  /// \returns true to indicate the target options are invalid, or false
+  /// otherwise.
+  virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
+                                 const TargetOptions &TargetOpts) {
     return false;
   }
 
@@ -158,8 +160,8 @@ public:
 
   virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
                                    const LangOptions &LangOpts);
-  virtual bool ReadTargetTriple(const serialization::ModuleFile &M,
-                                StringRef Triple);
+  virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
+                                 const TargetOptions &TargetOpts);
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     StringRef OriginalFileName,
                                     std::string &SuggestedPredefines,

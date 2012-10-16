@@ -4635,8 +4635,10 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
 
   // Apply the user specified deltas.
   // First the enables.
-  for (std::vector<std::string>::const_iterator it = Opts.Features.begin(),
-         ie = Opts.Features.end(); it != ie; ++it) {
+  for (std::vector<std::string>::const_iterator 
+         it = Opts.FeaturesAsWritten.begin(),
+         ie = Opts.FeaturesAsWritten.end(); 
+       it != ie; ++it) {
     const char *Name = it->c_str();
 
     if (Name[0] != '+')
@@ -4650,8 +4652,10 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   }
 
   // Then the disables.
-  for (std::vector<std::string>::const_iterator it = Opts.Features.begin(),
-         ie = Opts.Features.end(); it != ie; ++it) {
+  for (std::vector<std::string>::const_iterator 
+         it = Opts.FeaturesAsWritten.begin(),
+         ie = Opts.FeaturesAsWritten.end(); 
+       it != ie; ++it) {
     const char *Name = it->c_str();
 
     if (Name[0] == '+')
