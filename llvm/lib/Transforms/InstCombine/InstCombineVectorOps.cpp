@@ -636,8 +636,11 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
       // If LHS's width is changed, shift the mask value accordingly.
       // If newRHS == NULL, i.e. LHSOp0 == RHSOp0, we want to remap any
-      // references to RHSOp0 to LHSOp0, so we don't need to shift the mask.
-      if (eltMask >= 0 && newRHS != NULL)
+      // references from RHSOp0 to LHSOp0, so we don't need to shift the mask.
+      // If newRHS == newLHS, we want to remap any references from newRHS to
+      // newLHS so that we can properly identify splats that may occur due to
+      // obfuscation accross the two vectors.
+      if (eltMask >= 0 && newRHS != NULL && newLHS != newRHS)
         eltMask += newLHSWidth;
     }
 
