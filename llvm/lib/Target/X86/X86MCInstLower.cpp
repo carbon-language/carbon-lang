@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86MCInstLower.h"
 #include "X86AsmPrinter.h"
 #include "X86COFFMachineModuleInfo.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
@@ -28,6 +27,31 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
+
+namespace {
+
+/// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
+class X86MCInstLower {
+  MCContext &Ctx;
+  Mangler *Mang;
+  const MachineFunction &MF;
+  const TargetMachine &TM;
+  const MCAsmInfo &MAI;
+  X86AsmPrinter &AsmPrinter;
+public:
+  X86MCInstLower(Mangler *mang, const MachineFunction &MF,
+                 X86AsmPrinter &asmprinter);
+
+  void Lower(const MachineInstr *MI, MCInst &OutMI) const;
+
+  MCSymbol *GetSymbolFromOperand(const MachineOperand &MO) const;
+  MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
+
+private:
+  MachineModuleInfoMachO &getMachOMMI() const;
+};
+
+} // end anonymous namespace
 
 X86MCInstLower::X86MCInstLower(Mangler *mang, const MachineFunction &mf,
                                X86AsmPrinter &asmprinter)
