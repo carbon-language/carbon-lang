@@ -119,9 +119,10 @@ class CmpOptions:
         self.verboseLog = verboseLog
 
 class AnalysisReport:
-    def __init__(self, run, files):
+    def __init__(self, run, files, clang_vers):
         self.run = run
         self.files = files
+        self.clang_version = clang_vers
 
 class AnalysisRun:
     def __init__(self, info):
@@ -172,7 +173,7 @@ def loadResultsFromSingleRun(info, deleteEmpty=True):
         else:
             htmlFiles = [None] * len(data['diagnostics'])
             
-        report = AnalysisReport(run, data.pop('files'))
+        report = AnalysisReport(run, data.pop('files'), data.pop('clang_version'))
         diagnostics = [AnalysisDiagnostic(d, report, h) 
                        for d,h in zip(data.pop('diagnostics'),
                                       htmlFiles)]
