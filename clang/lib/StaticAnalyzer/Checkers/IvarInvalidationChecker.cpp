@@ -314,12 +314,12 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
   // Collect all ivars that need cleanup.
   IvarSet Ivars;
   const ObjCInterfaceDecl *InterfaceD = D->getClassInterface();
-  for (ObjCInterfaceDecl::ivar_iterator
-      II = InterfaceD->ivar_begin(),
-      IE = InterfaceD->ivar_end(); II != IE; ++II) {
-    const ObjCIvarDecl *Iv = *II;
+
+  // Collect ivars declared in this class, its extensions and its implementation
+  ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(InterfaceD);
+  for (const ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv;
+       Iv= Iv->getNextIvar())
     trackIvar(Iv, Ivars);
-  }
 
   // Construct Property/Property Accessor to Ivar maps to assist checking if an
   // ivar which is backing a property has been reset.

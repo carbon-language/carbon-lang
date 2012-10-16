@@ -93,7 +93,14 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 
 @end
 
-@implementation SomeSubclassInvalidatableObject
+@interface SomeSubclassInvalidatableObject()
+@property (assign) SomeInvalidationImplementingObject* Prop8;
+@end
+
+@implementation SomeSubclassInvalidatableObject{
+  @private
+  SomeInvalidationImplementingObject *Ivar5;
+}
 
 @synthesize Prop7 = _propIvar;
 @synthesize Prop3 = _Prop3;
@@ -139,4 +146,6 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
  // expected-warning@-4 {{Property SynthIvarProp needs to be invalidated}}
  // expected-warning@-5 {{Instance variable _Ivar3 needs to be invalidated}}
  // expected-warning@-6 {{Instance variable _Ivar4 needs to be invalidated}}
+ // expected-warning@-7 {{Instance variable Ivar5 needs to be invalidated or set to nil}}
+ // expected-warning@-8 {{Property Prop8 needs to be invalidated}}
 @end
