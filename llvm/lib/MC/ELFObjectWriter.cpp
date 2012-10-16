@@ -733,8 +733,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       Index = -1;
     }
     Addend = Value;
-    // Compensate for the addend on i386.
-    if (is64Bit())
+    if (hasRelocationAddend())
       Value = 0;
   }
 
