@@ -45,7 +45,7 @@ G::~G() {}
 
 struct H {
   B b;
-  ~H();
+  ~H() throw(int);
 };
 H::~H() throw(int) {}
 

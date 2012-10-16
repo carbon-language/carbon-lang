@@ -120,6 +120,23 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
   return SourceDecl->getType()->castAs<FunctionProtoType>();
 }
 
+/// Get the type that a function had prior to adjustment of the exception
+/// specification.
+static const FunctionProtoType *getUnadjustedFunctionType(FunctionDecl *Decl) {
+  if (isa<CXXDestructorDecl>(Decl) && Decl->getTypeSourceInfo()) {
+    const FunctionProtoType *Ty =
+      Decl->getTypeSourceInfo()->getType()->getAs<FunctionProtoType>();
+    if (!Ty->hasExceptionSpec())
+      // The type will be adjusted. Use the EST_None exception specification
+      // from the type as written.
+      return Ty;
+  }
+
+  // Use whatever type the function now has. The TypeSourceInfo does not contain
+  // an instantiated exception specification for a function template, 
+  return Decl->getType()->getAs<FunctionProtoType>();
+}
+
 bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   OverloadedOperatorKind OO = New->getDeclName().getCXXOverloadedOperator();
   bool IsOperatorNew = OO == OO_New || OO == OO_Array_New;
@@ -129,16 +146,14 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   if (getLangOpts().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
 
-  if (!CheckEquivalentExceptionSpec(PDiag(DiagID),
-                                    PDiag(diag::note_previous_declaration),
-                                    Old->getType()->getAs<FunctionProtoType>(),
-                                    Old->getLocation(),
-                                    New->getType()->getAs<FunctionProtoType>(),
-                                    New->getLocation(),
-                                    &MissingExceptionSpecification,
-                                    &MissingEmptyExceptionSpecification,
-                                    /*AllowNoexceptAllMatchWithNoSpec=*/true,
-                                    IsOperatorNew))
+  // Check the types as written: they must match before any exception
+  // specification adjustment is applied.
+  if (!CheckEquivalentExceptionSpec(
+        PDiag(DiagID), PDiag(diag::note_previous_declaration),
+        getUnadjustedFunctionType(Old), Old->getLocation(),
+        getUnadjustedFunctionType(New), New->getLocation(),
+        &MissingExceptionSpecification, &MissingEmptyExceptionSpecification,
+        /*AllowNoexceptAllMatchWithNoSpec=*/true, IsOperatorNew))
     return false;
 
   // The failure was something other than an empty exception
@@ -146,8 +161,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   if (!MissingExceptionSpecification && !MissingEmptyExceptionSpecification)
     return true;
 
-  const FunctionProtoType *NewProto 
-    = New->getType()->getAs<FunctionProtoType>();
+  const FunctionProtoType *NewProto = getUnadjustedFunctionType(New);
 
   // The new function declaration is only missing an empty exception
   // specification "throw()". If the throw() specification came from a
@@ -172,8 +186,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   }
 
   if (MissingExceptionSpecification && NewProto) {
-    const FunctionProtoType *OldProto
-      = Old->getType()->getAs<FunctionProtoType>();
+    const FunctionProtoType *OldProto = getUnadjustedFunctionType(Old);
 
     FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
     EPI.ExceptionSpecType = OldProto->getExceptionSpecType();
@@ -290,8 +303,7 @@ bool Sema::CheckEquivalentExceptionSpec(
   unsigned DiagID = diag::err_mismatched_exception_spec;
   if (getLangOpts().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
-  return CheckEquivalentExceptionSpec(
-                                      PDiag(DiagID),
+  return CheckEquivalentExceptionSpec(PDiag(DiagID),
                                       PDiag(diag::note_previous_declaration),
                                       Old, OldLoc, New, NewLoc);
 }
