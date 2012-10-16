@@ -34,15 +34,15 @@ public:
   /// should be treated by optimizations and code generation. This enumeration
   /// lists the attributes that can be associated with parameters, function
   /// results or the function itself.
-  /// 
+  ///
   /// Note that uwtable is about the ABI or the user mandating an entry in the
   /// unwind table. The nounwind attribute is about an exception passing by the
   /// function.
-  /// 
+  ///
   /// In a theoretical system that uses tables for profiling and sjlj for
   /// exceptions, they would be fully independent. In a normal system that uses
   /// tables for both, the semantics are:
-  /// 
+  ///
   /// nil                = Needs an entry because an exception might pass by.
   /// nounwind           = No need for an entry
   /// uwtable            = Needs an entry because the ABI says so and because
@@ -395,8 +395,6 @@ public:
   bool operator!=(const AttrListPtr &RHS) const
   { return AttrList != RHS.AttrList; }
 
-  void dump() const;
-
   //===--------------------------------------------------------------------===//
   // Attribute List Introspection
   //===--------------------------------------------------------------------===//
@@ -425,6 +423,8 @@ public:
   /// getSlot - Return the AttributeWithIndex at the specified slot.  This
   /// holds a index number plus a set of attributes.
   const AttributeWithIndex &getSlot(unsigned Slot) const;
+
+  void dump() const;
 
 private:
   explicit AttrListPtr(AttributeListImpl *L);

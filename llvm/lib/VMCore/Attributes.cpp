@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the AttributesList class and Attribute utilities.
+// This file implements the Attributes, AttributeImpl, AttrBuilder,
+// AttributeListImpl, and AttrListPtr classes.
 //
 //===----------------------------------------------------------------------===//
 
