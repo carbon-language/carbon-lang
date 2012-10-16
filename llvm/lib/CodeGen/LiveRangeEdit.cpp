@@ -96,6 +96,13 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
     const VNInfo *OVNI = li.getVNInfoAt(OrigIdx);
     if (!OVNI)
       continue;
+
+    // Don't allow rematerialization immediately after the original def.
+    // It would be incorrect if OrigMI redefines the register.
+    // See PR14098.
+    if (SlotIndex::isSameInstr(OrigIdx, UseIdx))
+      return false;
+
     if (OVNI != li.getVNInfoAt(UseIdx))
       return false;
   }
