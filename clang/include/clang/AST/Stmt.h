@@ -1660,9 +1660,9 @@ class MSAsmStmt : public AsmStmt {
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, SourceLocation lbraceloc,
             bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
-            ArrayRef<IdentifierInfo*> inputs, ArrayRef<IdentifierInfo*> outputs,
-            ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
-            StringRef asmstr, ArrayRef<StringRef> constraints, 
+            unsigned numoutputs, unsigned numinputs,
+            ArrayRef<IdentifierInfo*> names, ArrayRef<StringRef> constraints,
+            ArrayRef<Expr*> exprs, StringRef asmstr,
             ArrayRef<StringRef> clobbers, SourceLocation endloc);
 
   /// \brief Build an empty MS-style inline-assembly statement.

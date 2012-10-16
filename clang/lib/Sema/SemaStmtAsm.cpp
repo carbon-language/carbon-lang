@@ -390,12 +390,15 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
                                 ArrayRef<Token> AsmToks,SourceLocation EndLoc) {
   SmallVector<IdentifierInfo*, 4> Inputs;
   SmallVector<IdentifierInfo*, 4> Outputs;
-  SmallVector<Expr*, 4> InputExprs;
-  SmallVector<Expr*, 4> OutputExprs;
-  SmallVector<StringRef, 4> Constraints;
+  SmallVector<IdentifierInfo*, 4> Names;
   SmallVector<std::string, 4> InputConstraints;
   SmallVector<std::string, 4> OutputConstraints;
-
+  SmallVector<StringRef, 4> Constraints;
+  unsigned NumOutputs;
+  unsigned NumInputs;
+  SmallVector<Expr*, 4> InputExprs;
+  SmallVector<Expr*, 4> OutputExprs;
+  SmallVector<Expr*, 4> Exprs;
   SmallVector<StringRef, 4> Clobbers;
   std::set<std::string> ClobberRegs;
 
@@ -406,8 +409,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     StringRef EmptyAsmStr;
     MSAsmStmt *NS =
       new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
-                              /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
-                              InputExprs, OutputExprs, EmptyAsmStr, Constraints,
+                              /*IsVolatile*/ true, AsmToks, /*NumOutputs*/ 0,
+                              /*NumInputs*/ 0, Names, Constraints, Exprs, EmptyAsmStr,
                               Clobbers, EndLoc);
     return Owned(NS);
   }
@@ -534,19 +537,30 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
       Parser->freeParsedOperands();
     }
   }
+
+  // Set the number of Outputs and Inputs.
+  NumOutputs = Outputs.size();
+  NumInputs = Inputs.size();
+
+  // Set the unique clobbers.
   for (std::set<std::string>::iterator I = ClobberRegs.begin(),
          E = ClobberRegs.end(); I != E; ++I)
     Clobbers.push_back(*I);
 
-  // Merge the output and input constraints.  Output constraints are expected
-  // first.
-  for (SmallVectorImpl<std::string>::iterator I = OutputConstraints.begin(),
-         E = OutputConstraints.end(); I != E; ++I)
-    Constraints.push_back(*I);
-
-  for (SmallVectorImpl<std::string>::iterator I = InputConstraints.begin(),
-         E = InputConstraints.end(); I != E; ++I)
-    Constraints.push_back(*I);
+  // Merge the various outputs and inputs.  Output are expected first.
+  Names.resize(NumOutputs + NumInputs);
+  Constraints.resize(NumOutputs + NumInputs);
+  Exprs.resize(NumOutputs + NumInputs);
+  for (unsigned i = 0; i < NumOutputs; ++i) {
+    Names[i] = Outputs[i];
+    Constraints[i] = OutputConstraints[i];
+    Exprs[i] = OutputExprs[i];
+  }
+  for (unsigned i = 0, j = NumOutputs; i < NumInputs; ++i, ++j) {
+    Names[j] = Inputs[i];
+    Constraints[j] = InputConstraints[i];
+    Exprs[j] = InputExprs[i];
+  }
 
   // Build the IR assembly string.
   std::string AsmStringIR;
@@ -584,9 +598,9 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
 
   AsmString = OS.str();
   MSAsmStmt *NS =
-    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ false,
-                            /*IsVolatile*/ true, AsmToks, Inputs, Outputs,
-                            InputExprs, OutputExprs, AsmString, Constraints,
+    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
+                            /*IsVolatile*/ true, AsmToks, NumOutputs,
+                            NumInputs, Names, Constraints, Exprs, AsmString,
                             Clobbers, EndLoc);
   return Owned(NS);
 }

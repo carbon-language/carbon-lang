@@ -673,30 +673,24 @@ GCCAsmStmt::GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
 
 MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc,
                      SourceLocation lbraceloc, bool issimple, bool isvolatile,
-                     ArrayRef<Token> asmtoks, ArrayRef<IdentifierInfo*> inputs,
-                     ArrayRef<IdentifierInfo*> outputs,
-                     ArrayRef<Expr*> inputexprs, ArrayRef<Expr*> outputexprs,
-                     StringRef asmstr, ArrayRef<StringRef> constraints,
-                     ArrayRef<StringRef> clobbers, SourceLocation endloc)
-  : AsmStmt(MSAsmStmtClass, asmloc, issimple, isvolatile, outputs.size(),
-            inputs.size(), clobbers.size()), LBraceLoc(lbraceloc),
+                     ArrayRef<Token> asmtoks, unsigned numoutputs,
+                     unsigned numinputs, ArrayRef<IdentifierInfo*> names,
+                     ArrayRef<StringRef> constraints, ArrayRef<Expr*> exprs,
+                     StringRef asmstr, ArrayRef<StringRef> clobbers,
+                     SourceLocation endloc)
+  : AsmStmt(MSAsmStmtClass, asmloc, issimple, isvolatile, numoutputs,
+            numinputs, clobbers.size()), LBraceLoc(lbraceloc),
             EndLoc(endloc), AsmStr(asmstr.str()), NumAsmToks(asmtoks.size()) {
-  assert (inputs.size() == inputexprs.size() && "Input expr size mismatch!");
-  assert (outputs.size() == outputexprs.size() && "Input expr size mismatch!");
 
   unsigned NumExprs = NumOutputs + NumInputs;
 
   Names = new (C) IdentifierInfo*[NumExprs];
-  for (unsigned i = 0, e = NumOutputs; i != e; ++i)
-    Names[i] = outputs[i];
-  for (unsigned i = NumOutputs, j = 0, e = NumExprs; i != e; ++i, ++j)
-    Names[i] = inputs[j];
+  for (unsigned i = 0, e = NumExprs; i != e; ++i)
+    Names[i] = names[i];
 
   Exprs = new (C) Stmt*[NumExprs];
-  for (unsigned i = 0, e = NumOutputs; i != e; ++i)
-    Exprs[i] = outputexprs[i];
-  for (unsigned i = NumOutputs, j = 0, e = NumExprs; i != e; ++i, ++j)
-    Exprs[i] = inputexprs[j];
+  for (unsigned i = 0, e = NumExprs; i != e; ++i)
+    Exprs[i] = exprs[i];
 
   AsmToks = new (C) Token[NumAsmToks];
   for (unsigned i = 0, e = NumAsmToks; i != e; ++i)
