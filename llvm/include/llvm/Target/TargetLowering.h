@@ -1366,7 +1366,7 @@ public:
   }
 
   /// HandleByVal - Target-specific cleanup for formal ByVal parameters.
-  virtual void HandleByVal(CCState *, unsigned &) const {}
+  virtual void HandleByVal(CCState *, unsigned &, unsigned) const {}
 
   /// CanLowerReturn - This hook should be implemented to check whether the
   /// return values described by the Outs array can fit into the return

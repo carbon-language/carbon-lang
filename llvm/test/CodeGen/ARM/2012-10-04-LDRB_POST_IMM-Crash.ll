@@ -1,23 +1,16 @@
-; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-none-linux- | FileCheck %s
 ; Check that LDRB_POST_IMM instruction emitted properly.
 
-%my_struct_t = type { double, double, double }
-@main.val = private unnamed_addr constant %my_struct_t { double 1.0, double 2.0, double 3.0 }, align 8
+%my_struct_t = type { i8, i8, i8, i8, i8 }
+@main.val = private unnamed_addr constant %my_struct_t { i8 1, i8 2, i8 3, i8 4, i8 5 }
 
-declare void @f(i32 %n1, %my_struct_t* byval %val);
-
+declare void @f(i32 %n1, i32 %n2, i32 %n3, %my_struct_t* byval %val);
 
 ; CHECK: main:
 define i32 @main() nounwind {
 entry:
-  %val = alloca %my_struct_t, align 8
-  %0 = bitcast %my_struct_t* %val to i8*
-
 ; CHECK: ldrb	{{(r[0-9]+)}}, {{(\[r[0-9]+\])}}, #1
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* bitcast (%my_struct_t* @main.val to i8*), i32 24, i32 8, i1 false)
-
-  call void @f(i32 555, %my_struct_t* byval %val)
+  call void @f(i32 555, i32 555, i32 555, %my_struct_t* byval @main.val)
   ret i32 0
 }
 
-declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind

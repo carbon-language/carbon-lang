@@ -1656,22 +1656,31 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 /// and then confiscate the rest of the parameter registers to insure
 /// this.
 void
-ARMTargetLowering::HandleByVal(CCState *State, unsigned &size) const {
+ARMTargetLowering::HandleByVal(
+    CCState *State, unsigned &size, unsigned Align) const {
   unsigned reg = State->AllocateReg(GPRArgRegs, 4);
   assert((State->getCallOrPrologue() == Prologue ||
           State->getCallOrPrologue() == Call) &&
          "unhandled ParmContext");
   if ((!State->isFirstByValRegValid()) &&
       (ARM::R0 <= reg) && (reg <= ARM::R3)) {
-    State->setFirstByValReg(reg);
-    // At a call site, a byval parameter that is split between
-    // registers and memory needs its size truncated here.  In a
-    // function prologue, such byval parameters are reassembled in
-    // memory, and are not truncated.
-    if (State->getCallOrPrologue() == Call) {
-      unsigned excess = 4 * (ARM::R4 - reg);
-      assert(size >= excess && "expected larger existing stack allocation");
-      size -= excess;
+    if (Subtarget->isAAPCS_ABI() && Align > 4) {
+      unsigned AlignInRegs = Align / 4;
+      unsigned Waste = (ARM::R4 - reg) % AlignInRegs;
+      for (unsigned i = 0; i < Waste; ++i)
+        reg = State->AllocateReg(GPRArgRegs, 4);
+    }
+    if (reg != 0) {
+      State->setFirstByValReg(reg);
+      // At a call site, a byval parameter that is split between
+      // registers and memory needs its size truncated here.  In a
+      // function prologue, such byval parameters are reassembled in
+      // memory, and are not truncated.
+      if (State->getCallOrPrologue() == Call) {
+        unsigned excess = 4 * (ARM::R4 - reg);
+        assert(size >= excess && "expected larger existing stack allocation");
+        size -= excess;
+      }
     }
   }
   // Confiscate any remaining parameter registers to preclude their
