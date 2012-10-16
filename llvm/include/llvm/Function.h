@@ -178,9 +178,7 @@ public:
   ///
   void addFnAttr(Attributes::AttrVal N) { 
     // Function Attributes are stored at ~0 index 
-    AttrBuilder B;
-    B.addAttribute(N);
-    addAttribute(~0U, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), N));
   }
 
   /// removeFnAttr - Remove function attributes from this function.
@@ -278,9 +276,7 @@ public:
     return getParamAttributes(n).hasAttribute(Attributes::NoAlias);
   }
   void setDoesNotAlias(unsigned n) {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoAlias);
-    addAttribute(n, Attributes::get(getContext(), B));
+    addAttribute(n, Attributes::get(getContext(), Attributes::NoAlias));
   }
 
   /// @brief Determine if the parameter can be captured.
@@ -289,9 +285,7 @@ public:
     return getParamAttributes(n).hasAttribute(Attributes::NoCapture);
   }
   void setDoesNotCapture(unsigned n) {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoCapture);
-    addAttribute(n, Attributes::get(getContext(), B));
+    addAttribute(n, Attributes::get(getContext(), Attributes::NoCapture));
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to

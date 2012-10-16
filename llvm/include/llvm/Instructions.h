@@ -1281,9 +1281,8 @@ public:
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
   void setIsNoInline() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoInline);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::NoInline));
   }
 
   /// @brief Return true if the call can return twice
@@ -1291,9 +1290,8 @@ public:
     return hasFnAttr(Attributes::ReturnsTwice);
   }
   void setCanReturnTwice() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::ReturnsTwice);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::ReturnsTwice));
   }
 
   /// @brief Determine if the call does not access memory.
@@ -1301,9 +1299,8 @@ public:
     return hasFnAttr(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::ReadNone);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::ReadNone));
   }
 
   /// @brief Determine if the call does not access or only reads memory.
@@ -1311,25 +1308,22 @@ public:
     return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::ReadOnly);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::ReadOnly));
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
   void setDoesNotReturn() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoReturn);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::NoReturn));
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoUnwind);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::NoUnwind));
   }
 
   /// @brief Determine if the call returns a structure through first
@@ -3036,9 +3030,8 @@ public:
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
   void setIsNoInline() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoInline);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::NoInline));
   }
 
   /// @brief Determine if the call does not access memory.
@@ -3046,9 +3039,8 @@ public:
     return hasFnAttr(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::ReadNone);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::ReadNone));
   }
 
   /// @brief Determine if the call does not access or only reads memory.
@@ -3056,25 +3048,22 @@ public:
     return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::ReadOnly);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::ReadOnly));
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
   void setDoesNotReturn() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoReturn);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::NoReturn));
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow() {
-    AttrBuilder B;
-    B.addAttribute(Attributes::NoUnwind);
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), B));
+    addAttribute(AttrListPtr::FunctionIndex,
+                 Attributes::get(getContext(), Attributes::NoUnwind));
   }
 
   /// @brief Determine if the call returns a structure through first

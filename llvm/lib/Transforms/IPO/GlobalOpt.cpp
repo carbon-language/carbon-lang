@@ -2062,15 +2062,13 @@ static void ChangeCalleesToFastCall(Function *F) {
 }
 
 static AttrListPtr StripNest(LLVMContext &C, const AttrListPtr &Attrs) {
-  AttrBuilder B;
-  B.addAttribute(Attributes::Nest);
-
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
     if (!Attrs.getSlot(i).Attrs.hasAttribute(Attributes::Nest))
       continue;
 
     // There can be only one.
-    return Attrs.removeAttr(C, Attrs.getSlot(i).Index, Attributes::get(C, B));
+    return Attrs.removeAttr(C, Attrs.getSlot(i).Index,
+                            Attributes::get(C, Attributes::Nest));
   }
 
   return Attrs;
