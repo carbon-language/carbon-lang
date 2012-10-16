@@ -3213,13 +3213,11 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
   // The ABI alignment for 64-bit or 128-bit vectors is 8 for AAPCS and 4 for
   // APCS. For AAPCS, the ABI alignment is at least 4-byte and at most 8-byte.
-  if (Ty->getAs<VectorType>()) {
-    if (getABIKind() == ARMABIInfo::AAPCS_VFP ||
-        getABIKind() == ARMABIInfo::AAPCS)
-      TyAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
-    else
-      TyAlign = 4;
-  }
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP ||
+      getABIKind() == ARMABIInfo::AAPCS)
+    TyAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
+  else
+    TyAlign = 4;
   // Use indirect if size of the illegal vector is bigger than 16 bytes.
   if (isIllegalVectorType(Ty) && Size > 16) {
     IsIndirect = true;
@@ -3246,8 +3244,7 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
   if (IsIndirect)
     Addr = Builder.CreateLoad(Builder.CreateBitCast(Addr, BPP));
-  else if (Ty->getAs<VectorType>() &&
-           (TyAlign < CGF.getContext().getTypeAlign(Ty) / 8)) {
+  else if (TyAlign < CGF.getContext().getTypeAlign(Ty) / 8) {
     // We can't directly cast ap.cur to pointer to a vector type, since ap.cur
     // may not be correctly aligned for the vector type. We create an aligned
     // temporary space and copy the content over from ap.cur to the temporary
