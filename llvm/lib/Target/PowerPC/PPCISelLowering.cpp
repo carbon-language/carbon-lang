@@ -2035,9 +2035,8 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
       ObjSize = Flags.getByValSize();
       ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
       // All aggregates smaller than 8 bytes must be passed right-justified.
-      if (ObjSize==1 || ObjSize==2) {
-        CurArgOffset = CurArgOffset + (4 - ObjSize);
-      }
+      if (ObjSize < PtrByteSize)
+        CurArgOffset = CurArgOffset + (PtrByteSize - ObjSize);
       // The value of the object is its address.
       int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, true);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
@@ -2087,7 +2086,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
           ++GPR_idx;
           ArgOffset += PtrByteSize;
         } else {
-          ArgOffset += ArgSize - (ArgOffset-CurArgOffset);
+          ArgOffset += ArgSize - j;
           break;
         }
       }
@@ -3639,12 +3638,13 @@ PPCTargetLowering::LowerCall_Darwin_Or_64SVR4(SDValue Chain, SDValue Callee,
 
           ArgOffset += PtrByteSize;
         } else {
-          SDValue Const = DAG.getConstant(4 - Size, PtrOff.getValueType());
+          SDValue Const = DAG.getConstant(PtrByteSize - Size,
+                                          PtrOff.getValueType());
           SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
           SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
                                 CallSeqStart.getNode()->getOperand(0),
                                 Flags, DAG, dl);
-          // This must go outside the CALLSEQ_START..END.
+          // The MEMCPY must go outside the CALLSEQ_START..END.
           SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                                CallSeqStart.getNode()->getOperand(1));
           DAG.ReplaceAllUsesWith(CallSeqStart.getNode(),
@@ -3652,6 +3652,25 @@ PPCTargetLowering::LowerCall_Darwin_Or_64SVR4(SDValue Chain, SDValue Callee,
           Chain = CallSeqStart = NewCallSeqStart;
           ArgOffset += PtrByteSize;
         }
+        continue;
+      } else if (isSVR4ABI && GPR_idx == NumGPRs && Size < 8) {
+        // Case: Size is 3, 5, 6, or 7 for SVR4 and we're out of registers.
+        // This is the same case as 1, 2, and 4 for SVR4 with no registers.
+        // FIXME: Separate into 64-bit SVR4 and Darwin versions of this
+        // function, and combine the duplicated code chunks.
+        SDValue Const = DAG.getConstant(PtrByteSize - Size,
+                                        PtrOff.getValueType());
+        SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
+        SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
+                              CallSeqStart.getNode()->getOperand(0),
+                              Flags, DAG, dl);
+        // The MEMCPY must go outside the CALLSEQ_START..END.
+        SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
+                                    CallSeqStart.getNode()->getOperand(1));
+        DAG.ReplaceAllUsesWith(CallSeqStart.getNode(),
+                               NewCallSeqStart.getNode());
+        Chain = CallSeqStart = NewCallSeqStart;
+        ArgOffset += PtrByteSize;
         continue;
       }
       // Copy entire object into memory.  There are cases where gcc-generated

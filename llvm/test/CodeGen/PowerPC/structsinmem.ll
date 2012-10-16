@@ -60,22 +60,38 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %5, i8* bitcast ({ i32, i16, [2 x i8] }* @caller1.p6 to i8*), i64 8, i32 4, i1 false)
   %6 = bitcast %struct.s7* %p7 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %6, i8* bitcast ({ i32, i16, i8, i8 }* @caller1.p7 to i8*), i64 8, i32 4, i1 false)
-  %call = call i32 @callee1(%struct.s1* byval %p1, %struct.s2* byval %p2, %struct.s3* byval %p3, %struct.s4* byval %p4, %struct.s5* byval %p5, %struct.s6* byval %p6, %struct.s7* byval %p7)
+  %call = call i32 @callee1(i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, %struct.s1* byval %p1, %struct.s2* byval %p2, %struct.s3* byval %p3, %struct.s4* byval %p4, %struct.s5* byval %p5, %struct.s6* byval %p6, %struct.s7* byval %p7)
   ret i32 %call
 
-; CHECK: ld 9, 128(31)
-; CHECK: ld 8, 136(31)
-; CHECK: ld 7, 144(31)
-; CHECK: lwz 6, 152(31)
-; CHECK: lwz 5, 160(31)
-; CHECK: lhz 4, 168(31)
-; CHECK: lbz 3, 176(31)
+; CHECK: stb {{[0-9]+}}, 119(1)
+; CHECK: sth {{[0-9]+}}, 126(1)
+; CHECK: stw {{[0-9]+}}, 132(1)
+; CHECK: stw {{[0-9]+}}, 140(1)
+; CHECK: std {{[0-9]+}}, 144(1)
+; CHECK: std {{[0-9]+}}, 152(1)
+; CHECK: std {{[0-9]+}}, 160(1)
 }
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
-define internal i32 @callee1(%struct.s1* byval %v1, %struct.s2* byval %v2, %struct.s3* byval %v3, %struct.s4* byval %v4, %struct.s5* byval %v5, %struct.s6* byval %v6, %struct.s7* byval %v7) nounwind {
+define internal i32 @callee1(i32 %z1, i32 %z2, i32 %z3, i32 %z4, i32 %z5, i32 %z6, i32 %z7, i32 %z8, %struct.s1* byval %v1, %struct.s2* byval %v2, %struct.s3* byval %v3, %struct.s4* byval %v4, %struct.s5* byval %v5, %struct.s6* byval %v6, %struct.s7* byval %v7) nounwind {
 entry:
+  %z1.addr = alloca i32, align 4
+  %z2.addr = alloca i32, align 4
+  %z3.addr = alloca i32, align 4
+  %z4.addr = alloca i32, align 4
+  %z5.addr = alloca i32, align 4
+  %z6.addr = alloca i32, align 4
+  %z7.addr = alloca i32, align 4
+  %z8.addr = alloca i32, align 4
+  store i32 %z1, i32* %z1.addr, align 4
+  store i32 %z2, i32* %z2.addr, align 4
+  store i32 %z3, i32* %z3.addr, align 4
+  store i32 %z4, i32* %z4.addr, align 4
+  store i32 %z5, i32* %z5.addr, align 4
+  store i32 %z6, i32* %z6.addr, align 4
+  store i32 %z7, i32* %z7.addr, align 4
+  store i32 %z8, i32* %z8.addr, align 4
   %a = getelementptr inbounds %struct.s1* %v1, i32 0, i32 0
   %0 = load i8* %a, align 1
   %conv = zext i8 %0 to i32
@@ -101,20 +117,13 @@ entry:
   %add13 = add nsw i32 %add11, %6
   ret i32 %add13
 
-; CHECK: std 9, 96(1)
-; CHECK: std 8, 88(1)
-; CHECK: std 7, 80(1)
-; CHECK: stw 6, 76(1)
-; CHECK: stw 5, 68(1)
-; CHECK: sth 4, 62(1)
-; CHECK: stb 3, 55(1)
-; CHECK: lha {{[0-9]+}}, 62(1)
-; CHECK: lbz {{[0-9]+}}, 55(1)
-; CHECK: lha {{[0-9]+}}, 68(1)
-; CHECK: lwz {{[0-9]+}}, 76(1)
-; CHECK: lwz {{[0-9]+}}, 80(1)
-; CHECK: lwz {{[0-9]+}}, 88(1)
-; CHECK: lwz {{[0-9]+}}, 96(1)
+; CHECK: lha {{[0-9]+}}, 126(1)
+; CHECK: lbz {{[0-9]+}}, 119(1)
+; CHECK: lha {{[0-9]+}}, 132(1)
+; CHECK: lwz {{[0-9]+}}, 140(1)
+; CHECK: lwz {{[0-9]+}}, 144(1)
+; CHECK: lwz {{[0-9]+}}, 152(1)
+; CHECK: lwz {{[0-9]+}}, 160(1)
 }
 
 define i32 @caller2() nounwind {
@@ -140,29 +149,41 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %5, i8* bitcast (%struct.t6* @caller2.p6 to i8*), i64 6, i32 1, i1 false)
   %6 = bitcast %struct.t7* %p7 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %6, i8* bitcast (%struct.t7* @caller2.p7 to i8*), i64 7, i32 1, i1 false)
-  %call = call i32 @callee2(%struct.t1* byval %p1, %struct.t2* byval %p2, %struct.t3* byval %p3, %struct.t4* byval %p4, %struct.t5* byval %p5, %struct.t6* byval %p6, %struct.t7* byval %p7)
+  %call = call i32 @callee2(i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, %struct.t1* byval %p1, %struct.t2* byval %p2, %struct.t3* byval %p3, %struct.t4* byval %p4, %struct.t5* byval %p5, %struct.t6* byval %p6, %struct.t7* byval %p7)
   ret i32 %call
 
-; CHECK: stb {{[0-9]+}}, 71(1)
-; CHECK: sth {{[0-9]+}}, 69(1)
-; CHECK: stb {{[0-9]+}}, 87(1)
-; CHECK: stw {{[0-9]+}}, 83(1)
-; CHECK: sth {{[0-9]+}}, 94(1)
-; CHECK: stw {{[0-9]+}}, 90(1)
-; CHECK: stb {{[0-9]+}}, 103(1)
-; CHECK: sth {{[0-9]+}}, 101(1)
-; CHECK: stw {{[0-9]+}}, 97(1)
-; CHECK: ld 9, 96(1)
-; CHECK: ld 8, 88(1)
-; CHECK: ld 7, 80(1)
-; CHECK: lwz 6, 152(31)
-; CHECK: ld 5, 64(1)
-; CHECK: lhz 4, 168(31)
-; CHECK: lbz 3, 176(31)
+; CHECK: stb {{[0-9]+}}, 119(1)
+; CHECK: sth {{[0-9]+}}, 126(1)
+; CHECK: stb {{[0-9]+}}, 135(1)
+; CHECK: sth {{[0-9]+}}, 133(1)
+; CHECK: stw {{[0-9]+}}, 140(1)
+; CHECK: stb {{[0-9]+}}, 151(1)
+; CHECK: stw {{[0-9]+}}, 147(1)
+; CHECK: sth {{[0-9]+}}, 158(1)
+; CHECK: stw {{[0-9]+}}, 154(1)
+; CHECK: stb {{[0-9]+}}, 167(1)
+; CHECK: sth {{[0-9]+}}, 165(1)
+; CHECK: stw {{[0-9]+}}, 161(1)
 }
 
-define internal i32 @callee2(%struct.t1* byval %v1, %struct.t2* byval %v2, %struct.t3* byval %v3, %struct.t4* byval %v4, %struct.t5* byval %v5, %struct.t6* byval %v6, %struct.t7* byval %v7) nounwind {
+define internal i32 @callee2(i32 %z1, i32 %z2, i32 %z3, i32 %z4, i32 %z5, i32 %z6, i32 %z7, i32 %z8, %struct.t1* byval %v1, %struct.t2* byval %v2, %struct.t3* byval %v3, %struct.t4* byval %v4, %struct.t5* byval %v5, %struct.t6* byval %v6, %struct.t7* byval %v7) nounwind {
 entry:
+  %z1.addr = alloca i32, align 4
+  %z2.addr = alloca i32, align 4
+  %z3.addr = alloca i32, align 4
+  %z4.addr = alloca i32, align 4
+  %z5.addr = alloca i32, align 4
+  %z6.addr = alloca i32, align 4
+  %z7.addr = alloca i32, align 4
+  %z8.addr = alloca i32, align 4
+  store i32 %z1, i32* %z1.addr, align 4
+  store i32 %z2, i32* %z2.addr, align 4
+  store i32 %z3, i32* %z3.addr, align 4
+  store i32 %z4, i32* %z4.addr, align 4
+  store i32 %z5, i32* %z5.addr, align 4
+  store i32 %z6, i32* %z6.addr, align 4
+  store i32 %z7, i32* %z7.addr, align 4
+  store i32 %z8, i32* %z8.addr, align 4
   %a = getelementptr inbounds %struct.t1* %v1, i32 0, i32 0
   %0 = load i8* %a, align 1
   %conv = zext i8 %0 to i32
@@ -188,30 +209,19 @@ entry:
   %add13 = add nsw i32 %add11, %6
   ret i32 %add13
 
-; CHECK: sldi 9, 9, 8
-; CHECK: sldi 8, 8, 16
-; CHECK: sldi 7, 7, 24
-; CHECK: sldi 5, 5, 40
-; CHECK: stw 6, 76(1)
-; CHECK: sth 4, 62(1)
-; CHECK: stb 3, 55(1)
-; CHECK: std 9, 96(1)
-; CHECK: std 8, 88(1)
-; CHECK: std 7, 80(1)
-; CHECK: std 5, 64(1)
-; CHECK: lbz {{[0-9]+}}, 85(1)
-; CHECK: lbz {{[0-9]+}}, 86(1)
-; CHECK: lbz {{[0-9]+}}, 83(1)
-; CHECK: lbz {{[0-9]+}}, 84(1)
-; CHECK: lbz {{[0-9]+}}, 69(1)
-; CHECK: lbz {{[0-9]+}}, 70(1)
-; CHECK: lha {{[0-9]+}}, 62(1)
-; CHECK: lbz {{[0-9]+}}, 55(1)
-; CHECK: lwz {{[0-9]+}}, 76(1)
-; CHECK: lhz {{[0-9]+}}, 90(1)
-; CHECK: lhz {{[0-9]+}}, 92(1)
-; CHECK: lbz {{[0-9]+}}, 99(1)
-; CHECK: lbz {{[0-9]+}}, 100(1)
-; CHECK: lbz {{[0-9]+}}, 97(1)
-; CHECK: lbz {{[0-9]+}}, 98(1)
+; CHECK: lbz {{[0-9]+}}, 149(1)
+; CHECK: lbz {{[0-9]+}}, 150(1)
+; CHECK: lbz {{[0-9]+}}, 147(1)
+; CHECK: lbz {{[0-9]+}}, 148(1)
+; CHECK: lbz {{[0-9]+}}, 133(1)
+; CHECK: lbz {{[0-9]+}}, 134(1)
+; CHECK: lha {{[0-9]+}}, 126(1)
+; CHECK: lbz {{[0-9]+}}, 119(1)
+; CHECK: lwz {{[0-9]+}}, 140(1)
+; CHECK: lhz {{[0-9]+}}, 154(1)
+; CHECK: lhz {{[0-9]+}}, 156(1)
+; CHECK: lbz {{[0-9]+}}, 163(1)
+; CHECK: lbz {{[0-9]+}}, 164(1)
+; CHECK: lbz {{[0-9]+}}, 161(1)
+; CHECK: lbz {{[0-9]+}}, 162(1)
 }
