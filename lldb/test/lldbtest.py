@@ -801,7 +801,7 @@ class Base(unittest2.TestCase):
                              os.environ["LLDB_SESSION_DIRNAME"])
         if not os.path.isdir(dname):
             os.mkdir(dname)
-        fname = os.path.join(dname, "%s-%s-%s-%s.log" % (prefix, self.getArchitecture(), self.getCompiler(), self.id()))
+        fname = os.path.join(dname, "%s-%s-%s-%s.log" % (prefix, self.getArchitecture(), "_".join(self.getCompiler().split('/')), self.id()))
         with open(fname, "w") as f:
             import datetime
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
