@@ -4133,9 +4133,9 @@ ExecutionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         lldb::ThreadPlanSP &thread_plan_sp,
                         bool stop_others,
-                        bool try_all_threads,
+                        bool run_others,
                         bool discard_on_error,
-                        uint32_t single_thread_timeout_usec,
+                        uint32_t timeout_usec,
                         Stream &errors)
 {
     ExecutionResults return_value = eExecutionSetupError;
@@ -4260,6 +4260,8 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         
         bool first_timeout = true;
         bool do_resume = true;
+        const uint64_t default_one_thread_timeout_usec = 250000;
+        uint64_t computed_timeout = 0;
         
         while (1)
         {
@@ -4298,9 +4300,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (stop_state != eStateRunning)
                 {
                     if (log)
-                        log->Printf("Process::RunThreadPlan(): didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
+                        log->Printf("Process::RunThreadPlan(): didn't get running event after "
+                                    "initial resume, got %s instead.",
+                                    StateAsCString(stop_state));
 
-                    errors.Printf("Didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
+                    errors.Printf("Didn't get running event after initial resume, got %s instead.",
+                                  StateAsCString(stop_state));
                     return_value = eExecutionSetupError;
                     break;
                 }
@@ -4313,28 +4318,45 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 // We set the timeout AFTER the resume, since the resume takes some time and we
                 // don't want to charge that to the timeout.
                 
-                if (single_thread_timeout_usec != 0)
+                if (first_timeout)
+                {
+                    if (run_others)
+                    {
+                        // If we are running all threads then we take half the time to run all threads, bounded by
+                        // .25 sec.
+                        if (timeout_usec == 0)
+                            computed_timeout = default_one_thread_timeout_usec;
+                        else
+                        {
+                            computed_timeout = timeout_usec / 2;
+                            if (computed_timeout > default_one_thread_timeout_usec)
+                            {
+                                computed_timeout = default_one_thread_timeout_usec;
+                            }
+                            timeout_usec -= computed_timeout;
+                        }
+                    }
+                    else
+                    {
+                        computed_timeout = timeout_usec;
+                    }
+                }
+                else
+                {
+                    computed_timeout = timeout_usec;
+                }
+                
+                if (computed_timeout != 0)
                 {
                     // we have a > 0 timeout, let us set it so that we stop after the deadline
                     real_timeout = TimeValue::Now();
-                    real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
+                    real_timeout.OffsetWithMicroSeconds(computed_timeout);
                         
-                    timeout_ptr = &real_timeout;
-                }
-                else if (first_timeout)
-                {
-                    // if we are willing to wait "forever" we still need to have an initial timeout
-                    // this timeout is going to induce all threads to run when hit. we do this so that
-                    // we can avoid ending locked up because of multithreaded contention issues
-                    real_timeout = TimeValue::Now();
-                    real_timeout.OffsetWithNanoSeconds(500000000UL);
                     timeout_ptr = &real_timeout;
                 }
                 else
                 {
-                    timeout_ptr = NULL; // if we are in a no-timeout scenario, then we only need a fake timeout the first time through
-                    // at this point in the code, all threads will be running so we are willing to wait forever, and do not
-                    // need a timeout
+                    timeout_ptr = NULL;
                 }
             }
             else
@@ -4471,21 +4493,21 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 // Not really sure what to do if Halt fails here...
                 
                 if (log) {
-                    if (try_all_threads)
+                    if (run_others)
                     {
                         if (first_timeout)
-                            log->Printf ("Process::RunThreadPlan(): Running function with timeout: %d timed out, "
-                                         "trying with all threads enabled.",
-                                         single_thread_timeout_usec);
+                            log->Printf ("Process::RunThreadPlan(): Running function with timeout: %lld timed out, "
+                                         "trying  for %d usec with all threads enabled.",
+                                         computed_timeout, timeout_usec);
                         else
                             log->Printf ("Process::RunThreadPlan(): Restarting function with all threads enabled "
-                                         "and timeout: %d timed out.",
-                                         single_thread_timeout_usec);
+                                         "and timeout: %d timed out, abandoning execution.",
+                                         timeout_usec);
                     }
                     else
                         log->Printf ("Process::RunThreadPlan(): Running function with timeout: %d timed out, "
-                                     "halt and abandoning execution.", 
-                                     single_thread_timeout_usec);
+                                     "abandoning execution.", 
+                                     timeout_usec);
                 }
                 
                 Error halt_error = Halt();
@@ -4526,7 +4548,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                 break;
                             }
 
-                            if (!try_all_threads)
+                            if (!run_others)
                             {
                                 if (log)
                                     log->PutCString ("Process::RunThreadPlan(): try_all_threads was false, we stopped so now we're quitting.");

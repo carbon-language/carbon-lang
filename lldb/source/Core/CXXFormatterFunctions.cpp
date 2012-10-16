@@ -47,7 +47,7 @@ lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
     if (!target || !stack_frame)
         return false;
     
-    Target::EvaluateExpressionOptions options;
+    EvaluateExpressionOptions options;
     options.SetCoerceToId(false)
     .SetUnwindOnError(true)
     .SetKeepInMemory(true)
@@ -85,7 +85,7 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     if (!target || !stack_frame)
         return valobj_sp;
     
-    Target::EvaluateExpressionOptions options;
+    EvaluateExpressionOptions options;
     options.SetCoerceToId(false)
     .SetUnwindOnError(true)
     .SetKeepInMemory(true)
@@ -122,7 +122,7 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     if (!target || !stack_frame)
         return valobj_sp;
     
-    Target::EvaluateExpressionOptions options;
+    EvaluateExpressionOptions options;
     options.SetCoerceToId(false)
     .SetUnwindOnError(true)
     .SetKeepInMemory(true)
@@ -459,7 +459,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
         if (!target || !stack_frame)
             return false;
         
-        Target::EvaluateExpressionOptions options;
+        EvaluateExpressionOptions options;
         options.SetCoerceToId(false)
         .SetUnwindOnError(true)
         .SetKeepInMemory(true)
@@ -1055,7 +1055,7 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIn
     object_fetcher_expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = %s; _lldb_valgen_item.value = %s; _lldb_valgen_item;",key_fetcher_expr.GetData(),value_fetcher_expr.GetData());
     lldb::ValueObjectSP child_sp;
     m_backend.GetTargetSP()->EvaluateExpression(object_fetcher_expr.GetData(), m_backend.GetFrameSP().get(), child_sp,
-                                                Target::EvaluateExpressionOptions().SetKeepInMemory(true));
+                                                EvaluateExpressionOptions().SetKeepInMemory(true));
     if (child_sp)
         child_sp->SetName(ConstString(idx_name.GetData()));
     return child_sp;

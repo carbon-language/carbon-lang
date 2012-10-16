@@ -50,7 +50,9 @@ CommandObjectExpression::CommandOptions::~CommandOptions ()
 OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "all-threads",        'a', required_argument, NULL, 0, eArgTypeBoolean,    "Should we run all threads if the execution doesn't complete on one thread."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "dynamic-value",      'd', required_argument, NULL, 0, eArgTypeBoolean,    "Upcast the value resulting from the expression to its dynamic type if available."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', required_argument, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value for running the expression."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', required_argument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
     { LLDB_OPT_SET_2                 , false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone,       "Print the object description of the value resulting from the expression."},
 };
@@ -80,8 +82,16 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
       //}
       //break;
 
-    case 'o':
-        print_object = true;
+    case 'a':
+        {
+            bool success;
+            bool result;
+            result = Args::StringToBoolean(option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("invalid all-threads value setting: \"%s\"", option_arg);
+            else
+                try_all_threads = result;
+        }
         break;
         
     case 'd':
@@ -98,6 +108,22 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
                 else
                     use_dynamic = eLazyBoolNo;
             }
+        }
+        break;
+        
+    case 'o':
+        print_object = true;
+        break;
+        
+    case 't':
+        {
+            bool success;
+            uint32_t result;
+            result = Args::StringToUInt32(option_arg, 0, 0, &success);
+            if (success)
+                timeout = result;
+            else
+                error.SetErrorStringWithFormat ("invalid timeout setting \"%s\"", option_arg);
         }
         break;
         
@@ -125,6 +151,8 @@ CommandObjectExpression::CommandOptions::OptionParsingStarting (CommandInterpret
     unwind_on_error = true;
     show_types = true;
     show_summary = true;
+    try_all_threads = true;
+    timeout = 0;
 }
 
 const OptionDefinition*
@@ -146,7 +174,13 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
     m_expr_lines ()
 {
   SetHelpLong(
-"Examples: \n\
+"Timeouts:\n\
+    If the expression can be evaluated statically (without runnning code) then it will be.\n\
+    Otherwise, by default the expression will run on the current thread with a short timeout:\n\
+    currently .25 seconds.  If it doesn't return in that time, the evaluation will be interrupted\n\
+    and resumed with all threads running.  You can use the -a option to disable retrying on all\n\
+    threads.  You can use the -t option to set a shorter timeout.\n\
+Examples: \n\
 \n\
    expr my_struct->a = my_array[3] \n\
    expr -f bin -- (index * 8) + 5 \n\
@@ -298,12 +332,13 @@ CommandObjectExpression::EvaluateExpression
             break;
         }
         
-        Target::EvaluateExpressionOptions options;
+        EvaluateExpressionOptions options;
         options.SetCoerceToId(m_command_options.print_object)
         .SetUnwindOnError(m_command_options.unwind_on_error)
         .SetKeepInMemory(keep_in_memory)
         .SetUseDynamic(use_dynamic)
-        .SetSingleThreadTimeoutUsec(0);
+        .SetRunOthers(m_command_options.try_all_threads)
+        .SetTimeoutUsec(m_command_options.timeout);
         
         exe_results = target->EvaluateExpression (expr, 
                                                   m_interpreter.GetExecutionContext().GetFramePtr(),

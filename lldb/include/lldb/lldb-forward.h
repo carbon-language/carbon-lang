@@ -98,6 +98,7 @@ class   DynamicLibrary;
 class   DynamicLoader;
 class   EmulateInstruction;
 class   Error;
+class   EvaluateExpressionOptions;
 class   Event;
 class   EventData;
 class   ExecutionContext;

@@ -544,7 +544,8 @@ ClangUserExpression::Execute (Stream &error_stream,
                               bool discard_on_error,
                               ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               lldb::ClangExpressionVariableSP &result,
-                              uint32_t single_thread_timeout_usec)
+                              bool run_others,
+                              uint32_t timeout_usec)
 {
     // The expression log is quite verbose, and if you're just tracking the execution of the
     // expression, it's quite convenient to have these logs come out with the STEP log as well.
@@ -594,7 +595,7 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                                    stop_others, 
                                                                                    try_all_threads, 
                                                                                    discard_on_error,
-                                                                                   single_thread_timeout_usec, 
+                                                                                   timeout_usec, 
                                                                                    error_stream);
         
         if (exe_ctx.GetProcessPtr())
@@ -655,10 +656,21 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp,
-                               uint32_t single_thread_timeout_usec)
+                               bool run_others,
+                               uint32_t timeout_usec)
 {
     Error error;
-    return EvaluateWithError (exe_ctx, execution_policy, language, desired_type, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error, single_thread_timeout_usec);
+    return EvaluateWithError (exe_ctx,
+                              execution_policy,
+                              language,
+                              desired_type,
+                              discard_on_error,
+                              expr_cstr,
+                              expr_prefix,
+                              result_valobj_sp,
+                              error,
+                              run_others,
+                              timeout_usec);
 }
 
 ExecutionResults
@@ -671,7 +683,8 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                                         const char *expr_prefix,
                                         lldb::ValueObjectSP &result_valobj_sp,
                                         Error &error,
-                                        uint32_t single_thread_timeout_usec)
+                                        bool run_others,
+                                        uint32_t timeout_usec)
 {
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
@@ -747,7 +760,8 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                                                              discard_on_error,
                                                              user_expression_sp, 
                                                              expr_result,
-                                                             single_thread_timeout_usec);
+                                                             run_others,
+                                                             timeout_usec);
             
             if (execution_results != eExecutionCompleted)
             {

@@ -76,6 +76,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBDebugger.h"\
 " ${SRC_ROOT}/include/lldb/API/SBError.h"\
 " ${SRC_ROOT}/include/lldb/API/SBEvent.h"\
+" ${SRC_ROOT}/include/lldb/API/SBExpressionOptions.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFileSpec.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFrame.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFunction.h"\
@@ -120,6 +121,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBDeclaration.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBError.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBEvent.i"\
+" ${SRC_ROOT}/scripts/Python/interface/SBExpressionOptions.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBFileSpec.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBFrame.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBFunction.i"\

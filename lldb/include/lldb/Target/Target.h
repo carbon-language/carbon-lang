@@ -137,6 +137,121 @@ public:
 
 typedef STD_SHARED_PTR(TargetProperties) TargetPropertiesSP;
 
+class EvaluateExpressionOptions
+{
+public:
+    static const uint32_t default_timeout = 500000;
+    EvaluateExpressionOptions() :
+        m_execution_policy(eExecutionPolicyOnlyWhenNeeded),
+        m_coerce_to_id(false),
+        m_unwind_on_error(true),
+        m_keep_in_memory(false),
+        m_run_others(true),
+        m_use_dynamic(lldb::eNoDynamicValues),
+        m_timeout_usec(default_timeout)
+    {}
+    
+    ExecutionPolicy
+    GetExecutionPolicy () const
+    {
+        return m_execution_policy;
+    }
+    
+    EvaluateExpressionOptions&
+    SetExecutionPolicy (ExecutionPolicy policy = eExecutionPolicyAlways)
+    {
+        m_execution_policy = policy;
+        return *this;
+    }
+    
+    bool
+    DoesCoerceToId () const
+    {
+        return m_coerce_to_id;
+    }
+    
+    EvaluateExpressionOptions&
+    SetCoerceToId (bool coerce = true)
+    {
+        m_coerce_to_id = coerce;
+        return *this;
+    }
+    
+    bool
+    DoesUnwindOnError () const
+    {
+        return m_unwind_on_error;
+    }
+    
+    EvaluateExpressionOptions&
+    SetUnwindOnError (bool unwind = false)
+    {
+        m_unwind_on_error = unwind;
+        return *this;
+    }
+    
+    bool
+    DoesKeepInMemory () const
+    {
+        return m_keep_in_memory;
+    }
+    
+    EvaluateExpressionOptions&
+    SetKeepInMemory (bool keep = true)
+    {
+        m_keep_in_memory = keep;
+        return *this;
+    }
+    
+    lldb::DynamicValueType
+    GetUseDynamic () const
+    {
+        return m_use_dynamic;
+    }
+    
+    EvaluateExpressionOptions&
+    SetUseDynamic (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget)
+    {
+        m_use_dynamic = dynamic;
+        return *this;
+    }
+    
+    uint32_t
+    GetTimeoutUsec () const
+    {
+        return m_timeout_usec;
+    }
+    
+    EvaluateExpressionOptions&
+    SetTimeoutUsec (uint32_t timeout = 0)
+    {
+        m_timeout_usec = timeout;
+        return *this;
+    }
+    
+    bool
+    GetRunOthers () const
+    {
+        return m_run_others;
+    }
+    
+    EvaluateExpressionOptions&
+    SetRunOthers (bool run_others = true)
+    {
+        m_run_others = run_others;
+        return *this;
+    }
+    
+private:
+    ExecutionPolicy m_execution_policy;
+    bool m_coerce_to_id;
+    bool m_unwind_on_error;
+    bool m_keep_in_memory;
+    bool m_run_others;
+    lldb::DynamicValueType m_use_dynamic;
+    uint32_t m_timeout_usec;
+};
+
 //----------------------------------------------------------------------
 // Target
 //----------------------------------------------------------------------
@@ -760,104 +875,6 @@ public:
     ClangASTImporter *
     GetClangASTImporter();
     
-    class EvaluateExpressionOptions
-    {
-    public:
-        EvaluateExpressionOptions() :
-            m_execution_policy(eExecutionPolicyOnlyWhenNeeded),
-            m_coerce_to_id(false),
-            m_unwind_on_error(true),
-            m_keep_in_memory(false),
-            m_use_dynamic(lldb::eNoDynamicValues),
-            m_single_thread_timeout_usec(500000)
-        {}
-        
-        ExecutionPolicy
-        GetExecutionPolicy () const
-        {
-            return m_execution_policy;
-        }
-        
-        EvaluateExpressionOptions&
-        SetExecutionPolicy (ExecutionPolicy policy = eExecutionPolicyAlways)
-        {
-            m_execution_policy = policy;
-            return *this;
-        }
-        
-        bool
-        DoesCoerceToId () const
-        {
-            return m_coerce_to_id;
-        }
-        
-        EvaluateExpressionOptions&
-        SetCoerceToId (bool coerce = true)
-        {
-            m_coerce_to_id = coerce;
-            return *this;
-        }
-        
-        bool
-        DoesUnwindOnError () const
-        {
-            return m_unwind_on_error;
-        }
-        
-        EvaluateExpressionOptions&
-        SetUnwindOnError (bool unwind = false)
-        {
-            m_unwind_on_error = unwind;
-            return *this;
-        }
-        
-        bool
-        DoesKeepInMemory () const
-        {
-            return m_keep_in_memory;
-        }
-        
-        EvaluateExpressionOptions&
-        SetKeepInMemory (bool keep = true)
-        {
-            m_keep_in_memory = keep;
-            return *this;
-        }
-        
-        lldb::DynamicValueType
-        GetUseDynamic () const
-        {
-            return m_use_dynamic;
-        }
-        
-        EvaluateExpressionOptions&
-        SetUseDynamic (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget)
-        {
-            m_use_dynamic = dynamic;
-            return *this;
-        }
-        
-        uint32_t
-        GetSingleThreadTimeoutUsec () const
-        {
-            return m_single_thread_timeout_usec;
-        }
-        
-        EvaluateExpressionOptions&
-        SetSingleThreadTimeoutUsec (uint32_t timeout = 0)
-        {
-            m_single_thread_timeout_usec = timeout;
-            return *this;
-        }
-        
-    private:
-        ExecutionPolicy m_execution_policy;
-        bool m_coerce_to_id;
-        bool m_unwind_on_error;
-        bool m_keep_in_memory;
-        lldb::DynamicValueType m_use_dynamic;
-        uint32_t m_single_thread_timeout_usec;
-    };
     
     // Since expressions results can persist beyond the lifetime of a process,
     // and the const expression results are available after a process is gone,

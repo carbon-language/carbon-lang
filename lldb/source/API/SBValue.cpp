@@ -40,11 +40,12 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBExpressionOptions.h"
+#include "lldb/API/SBFrame.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
-#include "lldb/API/SBFrame.h"
-#include "lldb/API/SBDebugger.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -694,9 +695,12 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
     if (log)
     {
         if (new_value_sp)
-            log->Printf ("SBValue(%p)::CreateChildAtOffset => \"%s\"", value_sp.get(), new_value_sp->GetName().AsCString());
+            log->Printf ("SBValue(%p)::CreateChildAtOffset => \"%s\"",
+                         value_sp.get(),
+                         new_value_sp->GetName().AsCString());
         else
-            log->Printf ("SBValue(%p)::CreateChildAtOffset => NULL", value_sp.get());
+            log->Printf ("SBValue(%p)::CreateChildAtOffset => NULL",
+                         value_sp.get());
     }
     return sb_value;
 }
@@ -714,6 +718,14 @@ SBValue::Cast (SBType type)
 
 lldb::SBValue
 SBValue::CreateValueFromExpression (const char *name, const char* expression)
+{
+    SBExpressionOptions options;
+    options.SetKeepInMemory(true);
+    return CreateValueFromExpression (name, expression, options);
+}
+
+lldb::SBValue
+SBValue::CreateValueFromExpression (const char *name, const char *expression, SBExpressionOptions &options)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     lldb::SBValue sb_value;
@@ -734,12 +746,11 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
             Target* target = exe_ctx.GetTargetPtr();
             if (target)
             {
-                Target::EvaluateExpressionOptions options;
                 options.SetKeepInMemory(true);
                 target->EvaluateExpression (expression,
                                             exe_ctx.GetFramePtr(),
                                             new_value_sp,
-                                            options);
+                                            options.ref());
                 if (new_value_sp)
                 {
                     new_value_sp->SetName(ConstString(name));
@@ -1617,7 +1628,9 @@ SBValue::GetAddress()
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBValue(%p)::GetAddress () => (%s,%llu)", value_sp.get(), (addr.GetSection() ? addr.GetSection()->GetName().GetCString() : "NULL"), addr.GetOffset());
+        log->Printf ("SBValue(%p)::GetAddress () => (%s,%llu)", value_sp.get(),
+                     (addr.GetSection() ? addr.GetSection()->GetName().GetCString() : "NULL"),
+                     addr.GetOffset());
     return SBAddress(new Address(addr));
 }
 

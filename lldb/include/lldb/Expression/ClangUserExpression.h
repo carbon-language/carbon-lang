@@ -132,9 +132,16 @@ public:
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
     ///
-    /// @param[in] single_thread_timeout_usec
-    ///     The amount of time (in usec) that we are willing to wait for this
-    ///     expression to complete, before assuming that we are blocked and giving up
+    /// @param[in] try_all_threads
+    ///     If true, then we will try to run all threads if the function doesn't complete on
+    ///     one thread.  See timeout_usec for the interaction of this variable and
+    ///     the timeout.
+    ///
+    /// @param[in] timeout_usec
+    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
+    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
+    ///     then switch to running all threads, otherwise this will be the total timeout.
+    ///
     ///
     /// @return
     ///     A Process::Execution results value.
@@ -145,7 +152,8 @@ public:
              bool discard_on_error,
              ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result,
-             uint32_t single_thread_timeout_usec = 500000);
+             bool try_all_threads = true,
+             uint32_t timeout_usec = 500000);
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
@@ -314,9 +322,15 @@ public:
     /// @param[in/out] result_valobj_sp
     ///      If execution is successful, the result valobj is placed here.
     ///
-    /// @param[in] single_thread_timeout_usec
-    ///     The amount of time (in usec) that we are willing to wait for this
-    ///     expression to complete, before assuming that we are blocked and giving up
+    /// @param[in] try_all_threads
+    ///     If true, then we will try to run all threads if the function doesn't complete on
+    ///     one thread.  See timeout_usec for the interaction of this variable and
+    ///     the timeout.
+    ///
+    /// @param[in] timeout_usec
+    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
+    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
+    ///     then switch to running all threads, otherwise this will be the total timeout.
     ///
     /// @result
     ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
@@ -330,7 +344,8 @@ public:
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
-              uint32_t single_thread_timeout_usec = 500000);
+              bool try_all_threads = true,
+              uint32_t timeout_usec = 500000);
               
     static ExecutionResults
     EvaluateWithError (ExecutionContext &exe_ctx,
@@ -342,7 +357,8 @@ public:
                        const char *expr_prefix,
                        lldb::ValueObjectSP &result_valobj_sp,
                        Error &error,
-                       uint32_t single_thread_timeout_usec = 500000);
+                       bool try_all_threads = true,
+                       uint32_t timeout_usec = 500000);
     
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:

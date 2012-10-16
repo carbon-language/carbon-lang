@@ -222,6 +222,9 @@ public:
 
     lldb::SBValue
     CreateValueFromExpression (const char *name, const char* expression);
+    
+    lldb::SBValue
+    CreateValueFromExpression (const char *name, const char* expression, SBExpressionOptions &options);
 
     lldb::SBValue
     CreateValueFromAddress(const char* name, lldb::addr_t address, lldb::SBType type);

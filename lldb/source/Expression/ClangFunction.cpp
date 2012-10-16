@@ -485,13 +485,13 @@ ExecutionResults
 ClangFunction::ExecuteFunction(
         ExecutionContext &exe_ctx, 
         Stream &errors, 
-        uint32_t single_thread_timeout_usec, 
+        uint32_t timeout_usec, 
         bool try_all_threads, 
         Value &results)
 {
     const bool stop_others = true;
     const bool discard_on_error = true;
-    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, single_thread_timeout_usec, 
+    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, timeout_usec,
                             try_all_threads, discard_on_error, results);
 }
 
@@ -504,7 +504,7 @@ ClangFunction::ExecuteFunction (
         bool stop_others,
         bool try_all_threads,
         bool discard_on_error,
-        uint32_t single_thread_timeout_usec,
+        uint32_t timeout_usec,
         Stream &errors,
         lldb::addr_t *this_arg)
 {
@@ -529,7 +529,7 @@ ClangFunction::ExecuteFunction (
                                                                       stop_others, 
                                                                       try_all_threads, 
                                                                       discard_on_error,
-                                                                      single_thread_timeout_usec, 
+                                                                      timeout_usec,
                                                                       errors);
     
     if (exe_ctx.GetProcessPtr())
@@ -544,7 +544,7 @@ ClangFunction::ExecuteFunction(
         lldb::addr_t *args_addr_ptr, 
         Stream &errors, 
         bool stop_others, 
-        uint32_t single_thread_timeout_usec, 
+        uint32_t timeout_usec, 
         bool try_all_threads,
         bool discard_on_error, 
         Value &results)
@@ -574,7 +574,7 @@ ClangFunction::ExecuteFunction(
                                                    stop_others, 
                                                    try_all_threads, 
                                                    discard_on_error, 
-                                                   single_thread_timeout_usec, 
+                                                   timeout_usec, 
                                                    errors);
 
     if (args_addr_ptr != NULL)

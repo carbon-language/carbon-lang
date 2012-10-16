@@ -50,7 +50,7 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
             const bool stop_other_threads = true;
             const bool discard_on_error = true;
             const bool try_all_threads = true;
-            const uint32_t single_thread_timeout_usec = 500000;
+            const uint32_t timeout_usec = 500000;
 
             addr_t prot_arg, flags_arg = 0;
             if (prot == eMmapProtNone)
@@ -105,7 +105,7 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                                                                           stop_other_threads,
                                                                           try_all_threads,
                                                                           discard_on_error,
-                                                                          single_thread_timeout_usec,
+                                                                          timeout_usec,
                                                                           error_strm);
                         if (result == eExecutionCompleted)
                         {
@@ -154,7 +154,7 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
            const bool stop_other_threads = true;
            const bool discard_on_error = true;
            const bool try_all_threads = true;
-           const uint32_t single_thread_timeout_usec = 500000;
+           const uint32_t timeout_usec = 500000;
            
            AddressRange munmap_range;
            if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, munmap_range))
@@ -183,7 +183,7 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
                                                                          stop_other_threads,
                                                                          try_all_threads,
                                                                          discard_on_error,
-                                                                         single_thread_timeout_usec,
+                                                                         timeout_usec,
                                                                          error_strm);
                        if (result == eExecutionCompleted)
                        {

@@ -1314,7 +1314,7 @@ protected:
         if (command && command[0] != '\0')
         {
             Target *target = exe_ctx.GetTargetPtr();
-            Target::EvaluateExpressionOptions options;
+            EvaluateExpressionOptions options;
 
             options.SetUnwindOnError(true);
             options.SetUseDynamic(eNoDynamicValues);

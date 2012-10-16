@@ -1747,7 +1747,8 @@ Target::EvaluateExpression
                                                                expr_cstr, 
                                                                prefix, 
                                                                result_valobj_sp,
-                                                               options.GetSingleThreadTimeoutUsec());
+                                                               options.GetRunOthers(),
+                                                               options.GetTimeoutUsec());
         }
     }
     

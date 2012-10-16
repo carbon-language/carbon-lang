@@ -1234,11 +1234,12 @@ protected:
         }
 
         // Use expression evaluation to arrive at the address to watch.
-        Target::EvaluateExpressionOptions options;
+        EvaluateExpressionOptions options;
         options.SetCoerceToId(false)
         .SetUnwindOnError(true)
         .SetKeepInMemory(false)
-        .SetSingleThreadTimeoutUsec(0);
+        .SetRunOthers(true)
+        .SetTimeoutUsec(0);
         
         ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
                                                                    frame, 

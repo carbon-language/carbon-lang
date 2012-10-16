@@ -55,6 +55,8 @@ public:
         bool        unwind_on_error;
         bool        show_types;
         bool        show_summary;
+        uint32_t    timeout;
+        bool        try_all_threads;
     };
 
     CommandObjectExpression (CommandInterpreter &interpreter);

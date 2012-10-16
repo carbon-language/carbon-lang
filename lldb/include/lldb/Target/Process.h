@@ -2363,9 +2363,9 @@ public:
     RunThreadPlan (ExecutionContext &exe_ctx,    
                     lldb::ThreadPlanSP &thread_plan_sp,
                     bool stop_others,
-                    bool try_all_threads,
+                    bool run_others,
                     bool discard_on_error,
-                    uint32_t single_thread_timeout_usec,
+                    uint32_t timeout_usec,
                     Stream &errors);
 
     static const char *

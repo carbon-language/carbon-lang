@@ -40,6 +40,7 @@
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBAddress.h"
+#include "lldb/API/SBExpressionOptions.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBThread.h"
@@ -1040,8 +1041,11 @@ SBFrame::EvaluateExpression (const char *expr)
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
     {
-        lldb::DynamicValueType use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
-        result = EvaluateExpression (expr, use_dynamic);
+        SBExpressionOptions options;
+        lldb::DynamicValueType fetch_dynamic_value = frame->CalculateTarget()->GetPreferDynamicValue();
+        options.SetUseDynamic (fetch_dynamic_value);
+        options.SetUnwindOnError (true);
+        return EvaluateExpression (expr, options);
     }
     return result;
 }
@@ -1049,11 +1053,23 @@ SBFrame::EvaluateExpression (const char *expr)
 SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value)
 {
-    return EvaluateExpression (expr, fetch_dynamic_value, true);
+    SBExpressionOptions options;
+    options.SetUseDynamic (fetch_dynamic_value);
+    options.SetUnwindOnError (true);
+    return EvaluateExpression (expr, options);
 }
 
 SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value, bool unwind_on_error)
+{
+    SBExpressionOptions options;
+    options.SetUseDynamic (fetch_dynamic_value);
+    options.SetUnwindOnError (unwind_on_error);
+    return EvaluateExpression (expr, options);
+}
+
+lldb::SBValue
+SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &options)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
@@ -1080,16 +1096,12 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
             StreamString frame_description;
             frame->DumpUsingSettingsFormat (&frame_description);
             Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
-                                                 expr, fetch_dynamic_value, frame_description.GetString().c_str());
+                                                 expr, options.GetUseDynamic(), frame_description.GetString().c_str());
 #endif
-            Target::EvaluateExpressionOptions options;
-            options.SetUnwindOnError(unwind_on_error)
-            .SetUseDynamic(fetch_dynamic_value);
-            
             exe_results = target->EvaluateExpression (expr, 
                                                       frame,
                                                       expr_value_sp,
-                                                      options);
+                                                      options.ref());
             expr_result.SetSP(expr_value_sp);
 #ifdef LLDB_CONFIGURATION_DEBUG
             Host::SetCrashDescription (NULL);

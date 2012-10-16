@@ -251,9 +251,10 @@ public:
     ///     function call, and return the program state to what it was before the
     ///     execution.  If false, we leave the program in the stopped state.
     /// 
-    /// @param[in] single_thread_timeout_usec
-    ///     If stop_others is true, the length of time to wait before
-    ///     concluding that the system is deadlocked.
+    /// @param[in] timeout_usec
+    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
+    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
+    ///     then switch to running all threads, otherwise this will be the total timeout.
     ///
     /// @param[in] errors
     ///     The stream to write errors to.
@@ -272,7 +273,7 @@ public:
                      bool stop_others, 
                      bool try_all_threads,
                      bool discard_on_error,
-                     uint32_t single_thread_timeout_usec, 
+                     uint32_t timeout_usec,
                      Stream &errors,
                      lldb::addr_t* this_arg = 0);
     
@@ -329,7 +330,7 @@ public:
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
     ///
-    /// This simple version will run the function on one thread.  If \a single_thread_timeout_usec
+    /// This simple version will run the function on one thread.  If \a timeout_usec
     /// is not zero, we time out after that timeout.  If \a try_all_threads is true, then we will
     /// resume with all threads on, otherwise we halt the process, and eExecutionInterrupted will be returned.
     ///
@@ -339,8 +340,10 @@ public:
     /// @param[in] errors
     ///     Errors will be written here if there are any.
     ///
-    /// @param[in] single_thread_timeout_usec
-    ///     If \b true, run only this thread, if \b false let all threads run.
+    /// @param[in] timeout_usec
+    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
+    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
+    ///     then switch to running all threads, otherwise this will be the total timeout.
     ///
     /// @param[in] try_all_threads
     ///     If \b true, run only this thread, if \b false let all threads run.
@@ -379,8 +382,11 @@ public:
     /// @param[in] stop_others
     ///     If \b true, run only this thread, if \b false let all threads run.
     ///
-    /// @param[in] single_thread_timeout_usec
-    ///     If \b true, run only this thread, if \b false let all threads run.
+    /// @param[in] timeout_usec
+    ///     Timeout value (0 for no timeout). If try_all_threads is true, then we
+    ///     will try on one thread for the lesser of .25 sec and half the total timeout.
+    ///     then switch to running all threads, otherwise this will be the total timeout.
+    ///
     ///
     /// @param[in] try_all_threads
     ///     If \b true, run only this thread, if \b false let all threads run.
@@ -396,7 +402,7 @@ public:
                     lldb::addr_t *args_addr_ptr, 
                     Stream &errors, 
                     bool stop_others, 
-                    uint32_t single_thread_timeout_usec,
+                    uint32_t timeout_usec,
                     bool try_all_threads,
                     bool discard_on_error, 
                     Value &results);

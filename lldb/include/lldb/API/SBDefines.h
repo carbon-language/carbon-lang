@@ -41,6 +41,7 @@ class SBDeclaration;
 class SBError;
 class SBEvent;
 class SBEventList;
+class SBExpressionOptions;
 class SBFileSpec;
 class SBFileSpecList;
 class SBFrame;

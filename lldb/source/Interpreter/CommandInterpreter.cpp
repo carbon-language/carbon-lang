@@ -1308,11 +1308,12 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                 {
                     ValueObjectSP expr_result_valobj_sp;
                     
-                    Target::EvaluateExpressionOptions options;
+                    EvaluateExpressionOptions options;
                     options.SetCoerceToId(false)
                     .SetUnwindOnError(true)
                     .SetKeepInMemory(false)
-                    .SetSingleThreadTimeoutUsec(0);
+                    .SetRunOthers(true)
+                    .SetTimeoutUsec(0);
                     
                     ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
                                                                                exe_ctx.GetFramePtr(),
