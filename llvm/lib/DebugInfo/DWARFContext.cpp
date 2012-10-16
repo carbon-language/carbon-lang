@@ -117,11 +117,11 @@ DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
 
 void DWARFContext::parseCompileUnits() {
   uint32_t offset = 0;
-  const DataExtractor &debug_info_data = DataExtractor(getInfoSection(),
-                                                       isLittleEndian(), 0);
-  while (debug_info_data.isValidOffset(offset)) {
+  const DataExtractor &DIData = DataExtractor(getInfoSection(),
+                                              isLittleEndian(), 0);
+  while (DIData.isValidOffset(offset)) {
     CUs.push_back(DWARFCompileUnit(*this));
-    if (!CUs.back().extract(debug_info_data, &offset)) {
+    if (!CUs.back().extract(DIData, &offset)) {
       CUs.pop_back();
       break;
     }
