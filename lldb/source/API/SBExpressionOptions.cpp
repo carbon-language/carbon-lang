@@ -16,25 +16,9 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-SBExpressionOptions::SBExpressionOptions ()
+SBExpressionOptions::SBExpressionOptions () :
+    m_opaque_ap(new EvaluateExpressionOptions())
 {
-    m_opaque_ap.reset(new EvaluateExpressionOptions());
-}
-
-SBExpressionOptions::SBExpressionOptions (bool coerce_to_id,
-                         bool unwind_on_error,
-                         bool keep_in_memory,
-                         bool run_others,
-                         DynamicValueType use_dynamic,
-                         uint32_t timeout_usec)
-{
-    m_opaque_ap.reset(new EvaluateExpressionOptions());
-    m_opaque_ap->SetCoerceToId(coerce_to_id);
-    m_opaque_ap->SetUnwindOnError(unwind_on_error);
-    m_opaque_ap->SetKeepInMemory(keep_in_memory);
-    m_opaque_ap->SetRunOthers(run_others);
-    m_opaque_ap->SetUseDynamic (use_dynamic);
-    m_opaque_ap->SetTimeoutUsec (timeout_usec);
 }
 
 SBExpressionOptions::SBExpressionOptions (const SBExpressionOptions &rhs)
@@ -58,19 +42,19 @@ SBExpressionOptions::~SBExpressionOptions()
 }
 
 bool
-SBExpressionOptions::DoesCoerceToId () const
+SBExpressionOptions::GetCoerceResultToId () const
 {
     return m_opaque_ap->DoesCoerceToId ();
 }
 
 void
-SBExpressionOptions::SetCoerceToId (bool coerce)
+SBExpressionOptions::SetCoerceResultToId (bool coerce)
 {
     m_opaque_ap->SetCoerceToId (coerce);
 }
 
 bool
-SBExpressionOptions::DoesUnwindOnError () const
+SBExpressionOptions::GetUnwindOnError () const
 {
     return m_opaque_ap->DoesUnwindOnError ();
 }
@@ -81,50 +65,38 @@ SBExpressionOptions::SetUnwindOnError (bool unwind)
     m_opaque_ap->SetUnwindOnError (unwind);
 }
 
-bool
-SBExpressionOptions::DoesKeepInMemory () const
-{
-    return m_opaque_ap->DoesKeepInMemory ();
-}
-
-void
-SBExpressionOptions::SetKeepInMemory (bool keep)
-{
-    m_opaque_ap->SetKeepInMemory (keep);
-}
-
 lldb::DynamicValueType
-SBExpressionOptions::GetUseDynamic () const
+SBExpressionOptions::GetFetchDynamicValue () const
 {
     return m_opaque_ap->GetUseDynamic ();
 }
 
 void
-SBExpressionOptions::SetUseDynamic (lldb::DynamicValueType dynamic)
+SBExpressionOptions::SetFetchDynamicValue (lldb::DynamicValueType dynamic)
 {
     m_opaque_ap->SetUseDynamic (dynamic);
 }
 
 uint32_t
-SBExpressionOptions::GetTimeoutUsec () const
+SBExpressionOptions::GetTimeoutInMicroSeconds () const
 {
     return m_opaque_ap->GetTimeoutUsec ();
 }
 
 void
-SBExpressionOptions::SetTimeoutUsec (uint32_t timeout)
+SBExpressionOptions::SetTimeoutInMicroSeconds (uint32_t timeout)
 {
     m_opaque_ap->SetTimeoutUsec (timeout);
 }
 
 bool
-SBExpressionOptions::GetRunOthers () const
+SBExpressionOptions::GetTryAllThreads () const
 {
     return m_opaque_ap->GetRunOthers ();
 }
 
 void
-SBExpressionOptions::SetRunOthers (bool run_others)
+SBExpressionOptions::SetTryAllThreads (bool run_others)
 {
     m_opaque_ap->SetRunOthers (run_others);
 }

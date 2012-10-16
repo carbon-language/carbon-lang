@@ -57,7 +57,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         
         # First set the timeout too short, and make sure we fail.
         options = lldb.SBExpressionOptions()
-        options.SetTimeoutUsec(100)
+        options.SetTimeoutInMicroSeconds(100)
         options.SetUnwindOnError(True)
 
         frame = thread.GetFrameAtIndex(0)
@@ -75,7 +75,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
 
         # Okay, now do it again with long enough time outs:
 
-        options.SetTimeoutUsec(1000000)
+        options.SetTimeoutInMicroSeconds(1000000)
         value = frame.EvaluateExpression ("wait_a_while (1000)", options)
         self.assertTrue(value.IsValid())
         self.assertTrue (value.GetError().Success() == True)

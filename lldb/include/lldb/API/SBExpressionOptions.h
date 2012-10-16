@@ -28,53 +28,40 @@ public:
 
     SBExpressionOptions (const lldb::SBExpressionOptions &rhs);
     
-    SBExpressionOptions (bool coerce_to_id,
-                         bool unwind_on_error,
-                         bool keep_in_memory,
-                         bool run_others,
-                         DynamicValueType use_dynamic,
-                         uint32_t timeout_usec);
-
     ~SBExpressionOptions();
 
     const SBExpressionOptions &
     operator = (const lldb::SBExpressionOptions &rhs);
 
     bool
-    DoesCoerceToId () const;
+    GetCoerceResultToId () const;
     
     void
-    SetCoerceToId (bool coerce = true);
+    SetCoerceResultToId (bool coerce = true);
     
     bool
-    DoesUnwindOnError () const;
+    GetUnwindOnError () const;
     
     void
     SetUnwindOnError (bool unwind = false);
     
-    bool
-    DoesKeepInMemory () const;
-    
-    void
-    SetKeepInMemory (bool keep = true);
-
     lldb::DynamicValueType
-    GetUseDynamic () const;
+    GetFetchDynamicValue () const;
     
     void
-    SetUseDynamic (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget);
+    SetFetchDynamicValue (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget);
     
     uint32_t
-    GetTimeoutUsec () const;
+    GetTimeoutInMicroSeconds () const;
     
     void
-    SetTimeoutUsec (uint32_t timeout = 0);
+    SetTimeoutInMicroSeconds (uint32_t timeout = 0);
     
     bool
-    GetRunOthers () const;
+    GetTryAllThreads () const;
     
     void
-    SetRunOthers (bool run_others = true);
+    SetTryAllThreads (bool run_others = true);
 
 protected:
 

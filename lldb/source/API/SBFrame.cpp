@@ -1043,7 +1043,7 @@ SBFrame::EvaluateExpression (const char *expr)
     {
         SBExpressionOptions options;
         lldb::DynamicValueType fetch_dynamic_value = frame->CalculateTarget()->GetPreferDynamicValue();
-        options.SetUseDynamic (fetch_dynamic_value);
+        options.SetFetchDynamicValue (fetch_dynamic_value);
         options.SetUnwindOnError (true);
         return EvaluateExpression (expr, options);
     }
@@ -1054,7 +1054,7 @@ SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value)
 {
     SBExpressionOptions options;
-    options.SetUseDynamic (fetch_dynamic_value);
+    options.SetFetchDynamicValue (fetch_dynamic_value);
     options.SetUnwindOnError (true);
     return EvaluateExpression (expr, options);
 }
@@ -1063,7 +1063,7 @@ SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value, bool unwind_on_error)
 {
     SBExpressionOptions options;
-    options.SetUseDynamic (fetch_dynamic_value);
+    options.SetFetchDynamicValue (fetch_dynamic_value);
     options.SetUnwindOnError (unwind_on_error);
     return EvaluateExpression (expr, options);
 }
@@ -1096,7 +1096,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
             StreamString frame_description;
             frame->DumpUsingSettingsFormat (&frame_description);
             Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
-                                                 expr, options.GetUseDynamic(), frame_description.GetString().c_str());
+                                                 expr, options.GetFetchDynamicValue(), frame_description.GetString().c_str());
 #endif
             exe_results = target->EvaluateExpression (expr, 
                                                       frame,

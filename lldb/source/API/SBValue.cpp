@@ -720,7 +720,7 @@ lldb::SBValue
 SBValue::CreateValueFromExpression (const char *name, const char* expression)
 {
     SBExpressionOptions options;
-    options.SetKeepInMemory(true);
+    options.ref().SetKeepInMemory(true);
     return CreateValueFromExpression (name, expression, options);
 }
 
@@ -746,7 +746,7 @@ SBValue::CreateValueFromExpression (const char *name, const char *expression, SB
             Target* target = exe_ctx.GetTargetPtr();
             if (target)
             {
-                options.SetKeepInMemory(true);
+                options.ref().SetKeepInMemory(true);
                 target->EvaluateExpression (expression,
                                             exe_ctx.GetFramePtr(),
                                             new_value_sp,

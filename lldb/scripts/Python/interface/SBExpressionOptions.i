@@ -23,69 +23,46 @@ public:
 
     SBExpressionOptions (const lldb::SBExpressionOptions &rhs);
     
-    SBExpressionOptions (bool coerce_to_id,
-                         bool unwind_on_error,
-                         bool keep_in_memory,
-                         bool run_others,
-                         DynamicValueType use_dynamic,
-                         uint32_t timeout_usec);
-
     ~SBExpressionOptions();
 
     bool
-    DoesCoerceToId () const;
+    GetCoerceResultToId () const;
     
-    %feature("docstring",
-    "Sets whether to coerce the expression result to ObjC id type after evaluation."
-    ) SetCoerceToId;
+    %feature("docstring", "Sets whether to coerce the expression result to ObjC id type after evaluation.") SetCoerceResultToId;
+    
     void
-    SetCoerceToId (bool coerce = true);
+    SetCoerceResultToId (bool coerce = true);
     
     bool
-    DoesUnwindOnError () const;
+    GetUnwindOnError () const;
     
-    %feature("docstring",
-    "Sets whether to unwind the expression stack on error."
-    ) SetUnwindOnError;
+    %feature("docstring", "Sets whether to unwind the expression stack on error.") SetUnwindOnError;
+    
     void
     SetUnwindOnError (bool unwind = false);
     
-    bool
-    DoesKeepInMemory () const;
-    
-    %feature("docstring",
-    "Sets whether to keep the expression result in the target program's memory - forced to true when creating SBValues."
-    ) SetKeepInMemory;
-    void
-    SetKeepInMemory (bool keep = true);
-
     lldb::DynamicValueType
-    GetUseDynamic () const;
+    GetFetchDynamicValue () const;
     
-    %feature("docstring",
-    "Sets whether to cast the expression result to its dynamic type."
-    ) SetUseDynamic;
+    %feature("docstring", "Sets whether to cast the expression result to its dynamic type.") SetFetchDynamicValue;
+    
     void
-    SetUseDynamic (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget);
-    
+    SetFetchDynamicValue (lldb::DynamicValueType dynamic = lldb::eDynamicCanRunTarget);
+
     uint32_t
-    GetTimeoutUsec () const;
+    GetTimeoutInMicroSeconds () const;
     
-    %feature("docstring",
-    "Sets the duration we will wait before cancelling expression evaluation.  0 means wait forever."
-    ) SetTimeoutUsec;
+    %feature("docstring", "Sets the timeout in microseconds to run the expression for. If try all threads is set to true and the expression doesn't complete within the specified timeout, all threads will be resumed for the same timeout to see if the expresson will finish.") SetTimeoutInMicroSeconds;
     void
-    SetTimeoutUsec (uint32_t timeout = 0);
+    SetTimeoutInMicroSeconds (uint32_t timeout = 0);
     
     bool
-    GetRunOthers () const;
+    GetTryAllThreads () const;
     
-    %feature("docstring",
-    "Sets whether to run all threads if the expression does not complete on one thread."
-    ) SetRunOthers;
+    %feature("docstring", "Sets whether to run all threads if the expression does not complete on one thread.") SetTryAllThreads;
     void
-    SetRunOthers (bool run_others = true);
-
+    SetTryAllThreads (bool run_others = true);
+    
 protected:
 
     SBExpressionOptions (lldb_private::EvaluateExpressionOptions &expression_options);
