@@ -38,13 +38,13 @@ Attributes Attributes::get(LLVMContext &Context, ArrayRef<AttrVal> Vals) {
 
 Attributes Attributes::get(LLVMContext &Context, AttrBuilder &B) {
   // If there are no attributes, return an empty Attributes class.
-  if (B.Bits == 0)
+  if (!B.hasAttributes())
     return Attributes();
 
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  ID.AddInteger(B.Bits);
+  ID.AddInteger(B.Raw());
 
   void *InsertPoint;
   AttributesImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -52,7 +52,7 @@ Attributes Attributes::get(LLVMContext &Context, AttrBuilder &B) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributesImpl(B.Bits);
+    PA = new AttributesImpl(B.Raw());
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 

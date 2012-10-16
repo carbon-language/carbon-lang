@@ -192,7 +192,6 @@ public:
 /// Builder's value, however, is not. So this can be used as a quick way to test
 /// for equality, presence of attributes, etc.
 class AttrBuilder {
-  friend class Attributes;
   uint64_t Bits;
 public:
   AttrBuilder() : Bits(0) {}
@@ -266,6 +265,8 @@ public:
       .removeAttribute(Attributes::ReturnsTwice)
       .removeAttribute(Attributes::AddressSafety);
   }
+
+  uint64_t Raw() const { return Bits; }
 
   bool operator==(const AttrBuilder &B) {
     return Bits == B.Bits;
