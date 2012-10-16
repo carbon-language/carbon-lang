@@ -1058,6 +1058,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FNEG,               MVT::v4f64, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f64, Custom);
 
+    setOperationAction(ISD::TRUNCATE,           MVT::v8i16, Custom);
+
+    setOperationAction(ISD::FP_TO_SINT,         MVT::v8i16, Custom);
+
     setOperationAction(ISD::FP_TO_SINT,         MVT::v8i32, Legal);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
@@ -1255,7 +1259,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::UINT_TO_FP);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::SETCC);
-  setTargetDAGCombine(ISD::FP_TO_SINT);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::XOR);
@@ -8104,10 +8107,42 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned, bool IsReplace) co
   }
 }
 
+SDValue X86TargetLowering::lowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+  EVT SVT = Op.getOperand(0).getValueType();
+
+  if (!VT.is128BitVector() || !SVT.is256BitVector() ||
+      VT.getVectorNumElements() != SVT.getVectorNumElements())
+    return SDValue();
+
+  assert(Subtarget->hasAVX() && "256-bit vector is observed without AVX!");
+
+  unsigned NumElems = VT.getVectorNumElements();
+  EVT NVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
+                             NumElems * 2);
+
+  SDValue In = Op.getOperand(0);
+  SmallVector<int, 16> MaskVec(NumElems * 2, -1);
+  // Prepare truncation shuffle mask
+  for (unsigned i = 0; i != NumElems; ++i)
+    MaskVec[i] = i * 2;
+  SDValue V = DAG.getVectorShuffle(NVT, DL,
+                                   DAG.getNode(ISD::BITCAST, DL, NVT, In),
+                                   DAG.getUNDEF(NVT), &MaskVec[0]);
+  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, V,
+                     DAG.getIntPtrConstant(0));
+}
+
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
                                            SelectionDAG &DAG) const {
-  if (Op.getValueType().isVector())
+  if (Op.getValueType().isVector()) {
+    if (Op.getValueType() == MVT::v8i16)
+      return DAG.getNode(ISD::TRUNCATE, Op.getDebugLoc(), Op.getValueType(),
+                         DAG.getNode(ISD::FP_TO_SINT, Op.getDebugLoc(),
+                                     MVT::v8i32, Op.getOperand(0)));
     return SDValue();
+  }
 
   std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG,
     /*IsSigned=*/ true, /*IsReplace=*/ false);
@@ -11376,6 +11411,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SRL_PARTS:          return LowerShiftParts(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG);
+  case ISD::TRUNCATE:           return lowerTRUNCATE(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG);
   case ISD::FP_EXTEND:          return lowerFP_EXTEND(Op, DAG);
@@ -16269,20 +16305,6 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue PerformFP_TO_SINTCombine(SDNode *N, SelectionDAG &DAG) {
-  EVT VT = N->getValueType(0);
-
-  // v4i8 = FP_TO_SINT() -> v4i8 = TRUNCATE (V4i32 = FP_TO_SINT()
-  if (VT == MVT::v8i8 || VT == MVT::v4i8) {
-    DebugLoc dl = N->getDebugLoc();
-    MVT DstVT = VT == MVT::v4i8 ? MVT::v4i32 : MVT::v8i32;
-    SDValue I = DAG.getNode(ISD::FP_TO_SINT, dl, DstVT, N->getOperand(0));
-    return DAG.getNode(ISD::TRUNCATE, dl, VT, I);
-  }
-
-  return SDValue();
-}
-
 // Optimize RES, EFLAGS = X86ISD::ADC LHS, RHS, EFLAGS
 static SDValue PerformADCCombine(SDNode *N, SelectionDAG &DAG,
                                  X86TargetLowering::DAGCombinerInfo &DCI) {
@@ -16421,7 +16443,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case ISD::UINT_TO_FP:     return PerformUINT_TO_FPCombine(N, DAG);
   case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, this);
-  case ISD::FP_TO_SINT:     return PerformFP_TO_SINTCombine(N, DAG);
   case ISD::FADD:           return PerformFADDCombine(N, DAG, Subtarget);
   case ISD::FSUB:           return PerformFSUBCombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
