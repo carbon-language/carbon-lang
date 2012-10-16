@@ -493,8 +493,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
   
   // Check if we should generate debug info for this function.
-  if (CGM.getModuleDebugInfo() && !FD->hasAttr<NoDebugAttr>())
-    DebugInfo = CGM.getModuleDebugInfo();
+  if (!FD->hasAttr<NoDebugAttr>())
+    maybeInitializeDebugInfo();
 
   FunctionArgList Args;
   QualType ResTy = FD->getResultType();

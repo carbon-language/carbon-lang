@@ -1001,8 +1001,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   const BlockDecl *blockDecl = blockInfo.getBlockDecl();
 
   // Check if we should generate debug info for this block function.
-  if (CGM.getModuleDebugInfo())
-    DebugInfo = CGM.getModuleDebugInfo();
+  maybeInitializeDebugInfo();
   CurGD = GD;
   
   BlockInfo = &blockInfo;
@@ -1207,8 +1206,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
     = &CGM.getContext().Idents.get("__copy_helper_block_");
 
   // Check if we should generate debug info for this block helper function.
-  if (CGM.getModuleDebugInfo())
-    DebugInfo = CGM.getModuleDebugInfo();
+  maybeInitializeDebugInfo();
 
   FunctionDecl *FD = FunctionDecl::Create(C,
                                           C.getTranslationUnitDecl(),
@@ -1321,8 +1319,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                            "__destroy_helper_block_", &CGM.getModule());
 
   // Check if we should generate debug info for this block destroy function.
-  if (CGM.getModuleDebugInfo())
-    DebugInfo = CGM.getModuleDebugInfo();
+  maybeInitializeDebugInfo();
 
   IdentifierInfo *II
     = &CGM.getContext().Idents.get("__destroy_helper_block_");
