@@ -83,13 +83,21 @@ namespace {
 
   public:
     static char ID;
-    explicit IslScheduleOptimizer() : ScopPass(ID) {}
+    explicit IslScheduleOptimizer() : ScopPass(ID) {
+      LastSchedule = NULL;
+    }
+
+    ~IslScheduleOptimizer() {
+      isl_schedule_free(LastSchedule);
+    }
 
     virtual bool runOnScop(Scop &S);
     void printScop(llvm::raw_ostream &OS) const;
     void getAnalysisUsage(AnalysisUsage &AU) const;
 
   private:
+    isl_schedule *LastSchedule;
+
     static void extendScattering(Scop &S, unsigned NewDimensions);
 
     /// @brief Create a map that describes a n-dimensonal tiling.
@@ -179,6 +187,12 @@ namespace {
     static isl_union_map *getScheduleForBandList(isl_band_list *BandList);
 
     static isl_union_map *getScheduleMap(isl_schedule *Schedule);
+
+    bool doFinalization() {
+      isl_schedule_free(LastSchedule);
+      LastSchedule = NULL;
+      return true;
+    }
   };
 
 }
@@ -437,6 +451,9 @@ isl_union_map *IslScheduleOptimizer::getScheduleMap(isl_schedule *Schedule) {
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
+  isl_schedule_free(LastSchedule);
+  LastSchedule = NULL;
+
   // Build input data.
   int ValidityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
                       | Dependences::TYPE_WAW;
@@ -452,9 +469,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
         << " Falling back to optimizing all dependences.\n";
     ProximityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
                      | Dependences::TYPE_WAW;
-
   }
-
 
   isl_union_set *Domain = S.getDomains();
 
@@ -546,7 +561,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   }
 
   isl_union_map_free(ScheduleMap);
-  isl_schedule_free(Schedule);
+  LastSchedule = Schedule;
 
   unsigned MaxScatDims = 0;
 
@@ -558,6 +573,22 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 }
 
 void IslScheduleOptimizer::printScop(raw_ostream &OS) const {
+  isl_printer *p;
+  char *ScheduleStr;
+
+  OS << "Calculated schedule:\n";
+
+  if (!LastSchedule) {
+    OS << "n/a\n";
+    return;
+  }
+
+  p = isl_printer_to_str(isl_schedule_get_ctx(LastSchedule));
+  p = isl_printer_print_schedule(p, LastSchedule);
+  ScheduleStr = isl_printer_get_str(p);
+  isl_printer_free(p);
+
+  OS << ScheduleStr << "\n";
 }
 
 void IslScheduleOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
