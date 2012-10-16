@@ -133,7 +133,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 #define UNREACHABLE(msg) do { \
   CHECK(0 && msg); \
   Die(); \
-} while(0)
+} while (0)
 
 #define UNIMPLEMENTED() UNREACHABLE("unimplemented")
 

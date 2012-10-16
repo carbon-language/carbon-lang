@@ -54,7 +54,7 @@ void *internal_memmove(void *dest, const void *src, uptr n) {
   } else {
     if (d > s && n > 0)
       for (i = n - 1; i > 0 ; --i) {
-	d[i] = s[i];
+        d[i] = s[i];
       }
   }
   return dest;
