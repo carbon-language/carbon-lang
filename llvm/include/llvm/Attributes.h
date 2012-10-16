@@ -290,10 +290,7 @@ struct AttributeWithIndex {
 
   static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
                                 ArrayRef<Attributes::AttrVal> Attrs) {
-    AttributeWithIndex P;
-    P.Index = Idx;
-    P.Attrs = Attributes::get(C, Attrs);
-    return P;
+    return get(Idx, Attributes::get(C, Attrs));
   }
   static AttributeWithIndex get(unsigned Idx, Attributes Attrs) {
     AttributeWithIndex P;
@@ -318,8 +315,8 @@ public:
     FunctionIndex = ~0U
   };
 private:
-  /// AttrList - The attributes that we are managing.  This can be null
-  /// to represent the empty attributes list.
+  /// AttrList - The attributes that we are managing.  This can be null to
+  /// represent the empty attributes list.
   AttributeListImpl *AttrList;
 public:
   AttrListPtr() : AttrList(0) {}
