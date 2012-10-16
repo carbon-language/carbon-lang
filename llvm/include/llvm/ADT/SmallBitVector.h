@@ -306,8 +306,8 @@ public:
     assert(E <= size() && "Attempted to set out-of-bounds range!");
     if (I == E) return *this;
     if (isSmall()) {
-      uintptr_t EMask = 1 << E;
-      uintptr_t IMask = 1 << I;
+      uintptr_t EMask = ((uintptr_t)1) << E;
+      uintptr_t IMask = ((uintptr_t)1) << I;
       uintptr_t Mask = EMask - IMask;
       setSmallBits(getSmallBits() | Mask);
     } else
@@ -337,8 +337,8 @@ public:
     assert(E <= size() && "Attempted to reset out-of-bounds range!");
     if (I == E) return *this;
     if (isSmall()) {
-      uintptr_t EMask = 1 << E;
-      uintptr_t IMask = 1 << I;
+      uintptr_t EMask = ((uintptr_t)1) << E;
+      uintptr_t IMask = ((uintptr_t)1) << I;
       uintptr_t Mask = EMask - IMask;
       setSmallBits(getSmallBits() & ~Mask);
     } else
