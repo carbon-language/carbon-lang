@@ -5308,6 +5308,52 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     if (Reduced.getNode())
       return Reduced;
   }
+  // fold (trunc (fptoXi x)) -> (smaller fptoXi x)
+  if ((N0.getOpcode() == ISD::FP_TO_UINT ||
+       N0.getOpcode() == ISD::FP_TO_SINT) && !LegalTypes)
+    return DAG.getNode(N0.getOpcode(), N->getDebugLoc(), VT, N0.getOperand(0));
+  // fold (trunc (concat ... x ...)) -> (concat ..., (trunc x), ...)),
+  // where ... are all 'undef'.
+  if (N0.getOpcode() == ISD::CONCAT_VECTORS && !LegalTypes) {
+    SmallVector<EVT, 8> VTs;
+    SDValue V;
+    unsigned Idx = 0;
+    unsigned NumDefs = 0;
+
+    for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i) {
+      SDValue X = N0.getOperand(i);
+      if (X.getOpcode() != ISD::UNDEF) {
+        V = X;
+        Idx = i;
+        NumDefs++;
+      }
+      // Stop if more than one members are non-undef.
+      if (NumDefs > 1)
+        break;
+      VTs.push_back(EVT::getVectorVT(*DAG.getContext(),
+                                     VT.getVectorElementType(),
+                                     X.getValueType().getVectorNumElements()));
+    }
+
+    if (NumDefs == 0)
+      return DAG.getUNDEF(VT);
+
+    if (NumDefs == 1) {
+      assert(V.getNode() && "The single defined operand is empty!");
+      SmallVector<SDValue, 8> Opnds;
+      for (unsigned i = 0, e = VTs.size(); i != e; ++i) {
+        if (i != Idx) {
+          Opnds.push_back(DAG.getUNDEF(VTs[i]));
+          continue;
+        }
+        SDValue NV = DAG.getNode(ISD::TRUNCATE, V.getDebugLoc(), VTs[i], V);
+        AddToWorkList(NV.getNode());
+        Opnds.push_back(NV);
+      }
+      return DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT,
+                         &Opnds[0], Opnds.size());
+    }
+  }
 
   // Simplify the operands using demanded-bits information.
   if (!VT.isVector() &&
