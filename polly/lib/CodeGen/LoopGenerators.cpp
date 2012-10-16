@@ -25,7 +25,8 @@ using namespace polly;
 
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          IRBuilder<> &Builder, Pass *P,
-                         BasicBlock *&AfterBlock) {
+                         BasicBlock *&AfterBlock,
+                         ICmpInst::Predicate Predicate) {
   DominatorTree &DT = P->getAnalysis<DominatorTree>();
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
@@ -57,7 +58,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
 
   // Exit condition.
   Value *CMP;
-  CMP = Builder.CreateICmpSLE(IV, UB);
+  CMP = Builder.CreateICmp(Predicate, IV, UB);
 
   Builder.CreateCondBr(CMP, BodyBB, AfterBB);
   DT.addNewBlock(BodyBB, HeaderBB);
@@ -286,7 +287,8 @@ Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
 
   Builder.CreateBr(CheckNextBB);
   Builder.SetInsertPoint(--Builder.GetInsertPoint());
-  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB);
+  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB,
+                  ICmpInst::ICMP_SLE);
 
   BasicBlock::iterator LoopBody = Builder.GetInsertPoint();
   Builder.SetInsertPoint(AfterBB->begin());
