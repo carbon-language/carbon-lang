@@ -46,7 +46,6 @@ public:
     GetArgumentValues (Thread &thread,
                        ValueList &values) const = 0;
     
-public:
     lldb::ValueObjectSP
     GetReturnValueObject (Thread &thread,
                           ClangASTType &type,
@@ -72,12 +71,22 @@ public:
     virtual bool
     RegisterIsVolatile (const RegisterInfo *reg_info) = 0;
 
+    // Should return true if your ABI uses frames when doing stack backtraces. This
+    // means a frame pointer is used that points to the previous stack frame in some
+    // way or another.
     virtual bool
     StackUsesFrames () = 0;
 
+    // Should take a look at a call frame address (CFA) which is just the stack
+    // pointer value upon entry to a function. ABIs usually impose alignment
+    // restrictions (4, 8 or 16 byte aligned), and zero is usually not allowed.
+    // This function should return true if "cfa" is valid call frame address for
+    // the ABI, and false otherwise. This is used by the generic stack frame unwinding
+    // code to help determine when a stack ends.
     virtual bool
     CallFrameAddressIsValid (lldb::addr_t cfa) = 0;
 
+    // Validates a possible PC value and returns true if an opcode can be at "pc".
     virtual bool
     CodeAddressIsValid (lldb::addr_t pc) = 0;    
 
@@ -93,7 +102,15 @@ public:
     virtual const RegisterInfo *
     GetRegisterInfoArray (uint32_t &count) = 0;
 
-    
+    // Some architectures (e.g. x86) will push the return address on the stack and decrement
+    // the stack pointer when making a function call.  This means that every stack frame will
+    // have a unique CFA.
+    // Other architectures (e.g. arm) pass the return address in a register so it is possible
+    // to have a frame on a backtrace that does not push anything on the stack or change the 
+    // CFA.
+    virtual bool
+    FunctionCallsChangeCFA () = 0;
+
     
     bool
     GetRegisterInfoByName (const ConstString &name, RegisterInfo &info);

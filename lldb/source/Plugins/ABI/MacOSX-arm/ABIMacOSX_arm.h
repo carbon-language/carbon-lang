@@ -93,6 +93,12 @@ public:
         return pc & ~(lldb::addr_t)1;
     }
 
+    virtual bool
+    FunctionCallsChangeCFA ()
+    {
+        return false;
+    }
+
     virtual const lldb_private::RegisterInfo *
     GetRegisterInfoArray (uint32_t &count);
 

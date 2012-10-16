@@ -604,7 +604,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                 repeating_frames = true;
             }
         }
-        if (repeating_frames)
+        if (repeating_frames && abi->FunctionCallsChangeCFA())
         {
             if (log)
             {

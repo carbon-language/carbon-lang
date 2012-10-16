@@ -93,7 +93,13 @@ public:
         // Just make sure the address is a valid 32 bit address. 
         return pc <= UINT32_MAX;
     }
-    
+
+    virtual bool
+    FunctionCallsChangeCFA ()
+    {
+        return true;
+    }
+
     virtual const lldb_private::RegisterInfo *
     GetRegisterInfoArray (uint32_t &count);
 
