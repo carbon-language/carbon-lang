@@ -28,10 +28,6 @@ using namespace llvm;
 // Attributes Implementation
 //===----------------------------------------------------------------------===//
 
-Attributes::Attributes(AttributesImpl *A) : Attrs(A) {}
-
-Attributes::Attributes(const Attributes &A) : Attrs(A.Attrs) {}
-
 Attributes Attributes::get(LLVMContext &Context, ArrayRef<AttrVal> Vals) {
   AttrBuilder B;
   for (ArrayRef<AttrVal>::iterator I = Vals.begin(), E = Vals.end();
@@ -250,8 +246,7 @@ AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align){
   return *this;
 }
 
-AttrBuilder &AttrBuilder::
-removeAttribute(Attributes::AttrVal Val) {
+AttrBuilder &AttrBuilder::removeAttribute(Attributes::AttrVal Val) {
   Bits &= ~AttributesImpl::getAttrMask(Val);
   return *this;
 }

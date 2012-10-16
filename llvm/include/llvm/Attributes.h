@@ -88,10 +88,10 @@ public:
   };
 private:
   AttributesImpl *Attrs;
-  Attributes(AttributesImpl *A);
+  Attributes(AttributesImpl *A) : Attrs(A) {}
 public:
   Attributes() : Attrs(0) {}
-  Attributes(const Attributes &A);
+  Attributes(const Attributes &A) : Attrs(A.Attrs) {}
   Attributes &operator=(const Attributes &A) {
     Attrs = A.Attrs;
     return *this;
