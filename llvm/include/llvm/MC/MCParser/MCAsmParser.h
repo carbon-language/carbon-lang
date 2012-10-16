@@ -75,6 +75,7 @@ public:
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false) = 0;
 
   virtual void setParsingInlineAsm(bool V) = 0;
+  virtual bool isParsingInlineAsm() = 0;
 
   /// ParseStatement - Parse the next statement.
   virtual bool ParseStatement() = 0;

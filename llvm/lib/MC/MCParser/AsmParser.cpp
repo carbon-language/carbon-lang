@@ -182,6 +182,7 @@ public:
 
   bool ParseStatement();
   void setParsingInlineAsm(bool V) { ParsingInlineAsm = V; }
+  bool isParsingInlineAsm() { return ParsingInlineAsm; }
   unsigned getNumParsedOperands() { return ParsedOperands.size(); }
   MCParsedAsmOperand &getParsedOperand(unsigned OpNum) {
     assert (ParsedOperands.size() > OpNum);
