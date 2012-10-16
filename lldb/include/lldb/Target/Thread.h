@@ -858,6 +858,10 @@ protected:
     virtual lldb_private::Unwind *
     GetUnwinder ();
 
+    // Check to see whether the thread is still at the last breakpoint hit that stopped it.
+    virtual const bool
+    IsStillAtLastBreakpointHit();
+
     lldb::StackFrameListSP
     GetStackFrameList ();
     

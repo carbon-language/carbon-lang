@@ -1952,7 +1952,7 @@ Debugger::FormatPrompt
                                         else if (::strncmp (var_name_begin, "stop-reason}", strlen("stop-reason}")) == 0)
                                         {
                                             StopInfoSP stop_info_sp = thread->GetStopInfo ();
-                                            if (stop_info_sp)
+                                            if (stop_info_sp && stop_info_sp->IsValid())
                                             {
                                                 cstr = stop_info_sp->GetDescription();
                                                 if (cstr && cstr[0])
@@ -1965,7 +1965,7 @@ Debugger::FormatPrompt
                                         else if (::strncmp (var_name_begin, "return-value}", strlen("return-value}")) == 0)
                                         {
                                             StopInfoSP stop_info_sp = thread->GetStopInfo ();
-                                            if (stop_info_sp)
+                                            if (stop_info_sp && stop_info_sp->IsValid())
                                             {
                                                 ValueObjectSP return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
                                                 if (return_valobj_sp)

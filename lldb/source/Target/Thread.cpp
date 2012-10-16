@@ -440,9 +440,11 @@ Thread::SetupForResume ()
         // telling the current plan it will resume, since we might change what the current
         // plan is.
 
-        lldb::addr_t pc = GetRegisterContext()->GetPC();
-        BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-        if (bp_site_sp && bp_site_sp->IsEnabled())
+        StopReason stop_reason = lldb::eStopReasonInvalid;
+        StopInfoSP stop_info_sp = GetStopInfo();
+        if (stop_info_sp.get())
+            stop_reason = stop_info_sp->GetStopReason();
+        if (stop_reason == lldb::eStopReasonBreakpoint)
         {
             // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
             // special to step over a breakpoint.
@@ -506,7 +508,7 @@ Thread::WillResume (StateType resume_state)
     // If the WillResume for the plan says we are faking a resume, then it will have set an appropriate stop info.
     // In that case, don't reset it here.
     
-    if (need_to_resume)
+    if (need_to_resume && resume_state != eStateSuspended)
     {
         m_actual_stop_info_sp.reset();
     }
@@ -1712,4 +1714,23 @@ Thread::Flush ()
 {
     ClearStackFrames ();
     m_reg_context_sp.reset();
+}
+
+const bool
+Thread::IsStillAtLastBreakpointHit ()
+{
+    // If we are currently stopped at a breakpoint, always return that stopinfo and don't reset it.
+    // This allows threads to maintain their breakpoint stopinfo, such as when thread-stepping in
+    // multithreaded programs.
+    if (m_actual_stop_info_sp) {
+        StopReason stop_reason = m_actual_stop_info_sp->GetStopReason();
+        if (stop_reason == lldb::eStopReasonBreakpoint) {
+            uint64_t value = m_actual_stop_info_sp->GetValue();
+            lldb::addr_t pc = GetRegisterContext()->GetPC();
+            BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+            if (bp_site_sp && value == bp_site_sp->GetID())
+                return true;
+        }
+    }
+    return false;
 }

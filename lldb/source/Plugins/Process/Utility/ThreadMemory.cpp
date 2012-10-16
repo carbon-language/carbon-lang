@@ -107,6 +107,9 @@ ThreadMemory::GetPrivateStopReason ()
         if (m_thread_stop_reason_stop_id != process_stop_id ||
             (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
         {
+            if (IsStillAtLastBreakpointHit())
+                return m_actual_stop_info_sp;
+
             // If GetGDBProcess().SetThreadStopInfo() doesn't find a stop reason
             // for this thread, then m_actual_stop_info_sp will not ever contain
             // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"

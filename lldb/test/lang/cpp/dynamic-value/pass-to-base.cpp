@@ -23,7 +23,8 @@ public:
   doSomething (A &anotherA)
   {
     printf ("In A %p doing something with %d.\n", this, m_a_value);
-    printf ("Also have another A at %p: %d.\n", &anotherA, anotherA.Value()); // Break here in doSomething.
+    int tmp_value = anotherA.Value();
+    printf ("Also have another A at %p: %d.\n", &anotherA, tmp_value); // Break here in doSomething.
   }
 
   int 

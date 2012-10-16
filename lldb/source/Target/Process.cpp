@@ -3741,7 +3741,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             }
             
             StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
-            if (stop_info_sp)
+            if (stop_info_sp && stop_info_sp->IsValid())
             {
                 stop_info_sp->PerformAction(event_ptr);
                 // The stop action might restart the target.  If it does, then we want to mark that in the
@@ -4905,7 +4905,8 @@ Process::GetThreadStatus (Stream &strm,
         {
             if (only_threads_with_stop_reason)
             {
-                if (thread->GetStopInfo().get() == NULL)
+                StopInfoSP stop_info_sp = thread->GetStopInfo();
+                if (stop_info_sp.get() == NULL || !stop_info_sp->IsValid())
                     continue;
             }
             thread->GetStatus (strm, 
