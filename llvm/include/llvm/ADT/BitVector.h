@@ -244,9 +244,9 @@ public:
 
     if (I == E) return *this;
 
-    if (I / BITWORD_SIZE == (E-1) / BITWORD_SIZE) {
-      BitWord EMask = 1 << (E % BITWORD_SIZE);
-      BitWord IMask = 1 << (I % BITWORD_SIZE);
+    if (I / BITWORD_SIZE == E / BITWORD_SIZE) {
+      BitWord EMask = 1UL << (E % BITWORD_SIZE);
+      BitWord IMask = 1UL << (I % BITWORD_SIZE);
       BitWord Mask = EMask - IMask;
       Bits[I / BITWORD_SIZE] |= Mask;
       return *this;
@@ -282,9 +282,9 @@ public:
 
     if (I == E) return *this;
 
-    if (I / BITWORD_SIZE == (E-1) / BITWORD_SIZE) {
-      BitWord EMask = 1 << (E % BITWORD_SIZE);
-      BitWord IMask = 1 << (I % BITWORD_SIZE);
+    if (I / BITWORD_SIZE == E / BITWORD_SIZE) {
+      BitWord EMask = 1UL << (E % BITWORD_SIZE);
+      BitWord IMask = 1UL << (I % BITWORD_SIZE);
       BitWord Mask = EMask - IMask;
       Bits[I / BITWORD_SIZE] &= ~Mask;
       return *this;

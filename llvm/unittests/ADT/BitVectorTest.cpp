@@ -322,6 +322,16 @@ TYPED_TEST(BitVectorTest, RangeOps) {
   EXPECT_FALSE(D.test(0));
   EXPECT_TRUE( D.test(1));
   EXPECT_TRUE( D.test(2));
+
+  TypeParam E;
+  E.resize(128);
+  E.reset();
+  E.set(1, 33);
+
+  EXPECT_FALSE(E.test(0));
+  EXPECT_TRUE( E.test(1));
+  EXPECT_TRUE( E.test(32));
+  EXPECT_FALSE(E.test(33));
 }
 }
 #endif
