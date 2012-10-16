@@ -907,13 +907,9 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 /// specified.
 static void RemoveFromWorklist(Instruction *I,
                                std::vector<Instruction*> &Worklist) {
-  std::vector<Instruction*>::iterator WI = std::find(Worklist.begin(),
-                                                     Worklist.end(), I);
-  while (WI != Worklist.end()) {
-    unsigned Offset = WI-Worklist.begin();
-    Worklist.erase(WI);
-    WI = std::find(Worklist.begin()+Offset, Worklist.end(), I);
-  }
+
+  Worklist.erase(std::remove(Worklist.begin(), Worklist.end(), I),
+                 Worklist.end());
 }
 
 /// ReplaceUsesOfWith - When we find that I really equals V, remove I from the
