@@ -1995,6 +1995,10 @@ def warn_cast_align : Warning<
   "cast from %0 to %1 increases required alignment from %2 to %3">,
   InGroup<CastAlign>, DefaultIgnore;
 
+def warn_int_to_pointer_cast : Warning<
+  "cast to %1 from smaller integer type %0">,
+  InGroup<IntToPointerCast>;
+
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">,
   InGroup<IgnoredAttributes>;

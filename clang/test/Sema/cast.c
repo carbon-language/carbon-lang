@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s -verify
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown %s -verify
 
 typedef struct { unsigned long bits[(((1) + (64) - 1) / (64))]; } cpumask_t;
 cpumask_t x;
@@ -52,8 +52,8 @@ void testInt(Int v) {
   (void) (CLong) v;
   (void) (CFloat) v;
   (void) (CDouble) v;
-  (void) (VoidPtr) v;
-  (void) (CharPtr) v;
+  (void) (VoidPtr) v; // expected-warning{{cast to 'VoidPtr' (aka 'void *') from smaller integer type 'Int' (aka 'int')}}
+  (void) (CharPtr) v; // expected-warning{{cast to 'CharPtr' (aka 'char *') from smaller integer type 'Int' (aka 'int')}}
 }
 
 void testLong(Long v) {
@@ -156,4 +156,13 @@ void testCharPtr(CharPtr v) {
   (void) (Long) v;
   (void) (VoidPtr) v;
   (void) (CharPtr) v;
+}
+
+typedef enum { x_a, x_b } X;
+void *intToPointerCast2(X x) {
+  return (void*)x;
+}
+
+void *intToPointerCast3() {
+  return (void*)(1 + 3);
 }

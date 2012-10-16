@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -fcxx-exceptions %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -fcxx-exceptions -Wno-invalid-constexpr %s
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown -verify -std=c++11 -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown -std=c++11 -fcxx-exceptions -Wno-invalid-constexpr %s
 
 namespace StdExample {
 
@@ -80,7 +80,7 @@ constexpr int Conditional2(bool b, int n) { return b ? n * ng : n + ng; } // exp
 
 // __builtin_constant_p ? : is magical, and is always a potential constant.
 constexpr bool BcpCall(int n) {
-  return __builtin_constant_p((int*)n != &n) ? (int*)n != &n : (int*)n != &n;
+  return __builtin_constant_p((int*)n != &n) ? (int*)n != &n : (int*)n != &n; // expected-warning 3 {{cast to 'int *' from smaller integer type 'int'}}
 }
 static_assert(BcpCall(0), "");
 

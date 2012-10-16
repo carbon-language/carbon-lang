@@ -365,6 +365,8 @@ def Format2 : DiagGroup<"format=2",
 
 def TypeSafety : DiagGroup<"type-safety">;
 
+def IntToPointerCast : DiagGroup<"int-to-pointer-cast">;
+
 def Extra : DiagGroup<"extra", [
     MissingFieldInitializers,
     IgnoredQualifiers,
@@ -412,7 +414,7 @@ def ThreadSafety : DiagGroup<"thread-safety",
 // Note that putting warnings in -Wall will not disable them by default. If a
 // warning should be active _only_ when -Wall is passed in, mark it as
 // DefaultIgnore in addition to putting it here.
-def : DiagGroup<"all", [Most, Parentheses, Switch]>;
+def : DiagGroup<"all", [Most, Parentheses, Switch, IntToPointerCast]>;
 
 // Warnings enabled by -pedantic.  This is magically filled in by TableGen.
 def Pedantic : DiagGroup<"pedantic">;

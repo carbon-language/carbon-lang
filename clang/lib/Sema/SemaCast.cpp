@@ -1491,6 +1491,22 @@ static void DiagnoseCastOfObjCSEL(Sema &Self, const ExprResult &SrcExpr,
     }
 }
 
+static void checkIntToPointerCast(bool CStyle, SourceLocation Loc,
+                                  const Expr *SrcExpr, QualType DestType,
+                                  Sema &Self) {
+  QualType SrcType = SrcExpr->getType();
+
+  // Not warning on reinterpret_cast, boolean, constant expressions, etc
+  // are not explicit design choices, but consistent with GCC's behavior.
+  // Feel free to modify them if you've reason/evidence for an alternative.
+  if (CStyle && SrcType->isIntegralType(Self.Context)
+      && !SrcType->isBooleanType()
+      && !SrcType->isEnumeralType()
+      && !SrcExpr->isIntegerConstantExpr(Self.Context)
+      && Self.Context.getTypeSize(DestType) > Self.Context.getTypeSize(SrcType))
+    Self.Diag(Loc, diag::warn_int_to_pointer_cast) << SrcType << DestType;
+}
+
 static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
                                         QualType DestType, bool CStyle,
                                         const SourceRange &OpRange,
@@ -1689,6 +1705,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
 
   if (SrcType->isIntegralOrEnumerationType()) {
     assert(destIsPtr && "One type must be a pointer");
+    checkIntToPointerCast(CStyle, OpRange.getBegin(), SrcExpr.get(), DestType,
+                          Self);
     // C++ 5.2.10p5: A value of integral or enumeration type can be explicitly
     //   converted to a pointer.
     // C++ 5.2.10p9: [Note: ...a null pointer constant of integral type is not
@@ -2071,6 +2089,8 @@ void CastOperation::CheckCStyleCast() {
       SrcExpr = ExprError();
       return;
     }
+    checkIntToPointerCast(/* CStyle */ true, OpRange.getBegin(), SrcExpr.get(),
+                          DestType, Self);
   } else if (!SrcType->isArithmeticType()) {
     if (!DestType->isIntegralType(Self.Context) &&
         DestType->isArithmeticType()) {

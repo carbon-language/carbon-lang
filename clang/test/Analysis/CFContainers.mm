@@ -125,7 +125,7 @@ void CreateDict(int *elems) {
   const CFDictionaryKeyCallBacks keyCB = kCFCopyStringDictionaryKeyCallBacks;
   const CFDictionaryValueCallBacks valCB = kCFTypeDictionaryValueCallBacks;
   CFDictionaryRef dict1 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)values, numValues, &keyCB, &valCB); // no warning
-  CFDictionaryRef dict2 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)elems[0], (const void**)values, numValues, &keyCB, &valCB); //expected-warning {{The second argument to 'CFDictionaryCreate' must be a C array of}}
+  CFDictionaryRef dict2 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)elems[0], (const void**)values, numValues, &keyCB, &valCB); //expected-warning {{The second argument to 'CFDictionaryCreate' must be a C array of}} expected-warning {{cast to 'const void **' from smaller integer type 'int'}}
   CFDictionaryRef dict3 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)elems, numValues, &keyCB, &valCB); // expected-warning {{The third argument to 'CFDictionaryCreate' must be a C array of pointer-sized values}}
 }
 

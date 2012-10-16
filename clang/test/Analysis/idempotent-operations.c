@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-checker=alpha.deadcode.IdempotentOperations -verify %s
+// RUN: %clang_cc1 -Wno-int-to-pointer-cast -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-checker=alpha.deadcode.IdempotentOperations -verify %s
 
 // Basic tests
 

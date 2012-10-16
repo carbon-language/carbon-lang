@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown -verify %s -std=c++11
 
 struct R {
   R(int);
@@ -45,3 +45,23 @@ protected:
     static_cast<float*>(f0<0>()); // expected-error{{ambiguous}}
   }
 };
+
+void *intToPointer1(short s) {
+  return (void*)s; // expected-warning{{cast to 'void *' from smaller integer type 'short'}}
+}
+
+void *intToPointer2(short s) {
+  return reinterpret_cast<void*>(s);
+}
+
+void *intToPointer3(bool b) {
+  return (void*)b;
+}
+
+void *intToPointer4() {
+  return (void*)(3 + 7);
+}
+
+void *intToPointer5(long l) {
+  return (void*)l;
+}
