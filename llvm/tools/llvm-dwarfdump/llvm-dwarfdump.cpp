@@ -1,4 +1,4 @@
-//===-- llvm-dwarfdump.cpp - Debug info dumping utility for llvm -----------===//
+//===-- llvm-dwarfdump.cpp - Debug info dumping utility for llvm ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -118,8 +118,8 @@ static void DumpInput(const StringRef &Filename) {
     if (PrintFunctions)
       SpecFlags |= DILineInfoSpecifier::FunctionName;
     if (PrintInlining) {
-      DIInliningInfo InliningInfo = dictx->getInliningInfoForAddress(
-          Address, SpecFlags);
+      DIInliningInfo InliningInfo =
+        dictx->getInliningInfoForAddress(Address, SpecFlags);
       uint32_t n = InliningInfo.getNumberOfFrames();
       if (n == 0) {
         // Print one empty debug line info in any case.
