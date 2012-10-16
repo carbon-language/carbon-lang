@@ -314,6 +314,22 @@ Module::GetClangASTContext ()
         if (objfile && objfile->GetArchitecture(object_arch))
         {
             m_did_init_ast = true;
+
+            // LLVM wants this to be set to iOS or MacOSX; if we're working on
+            // a bare-boards type image, change the triple for llvm's benefit.
+            if (object_arch.GetTriple().getVendor() == llvm::Triple::Apple 
+                && object_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
+            {
+                if (object_arch.GetTriple().getArch() == llvm::Triple::arm || 
+                    object_arch.GetTriple().getArch() == llvm::Triple::thumb)
+                {
+                    object_arch.GetTriple().setOS(llvm::Triple::IOS);
+                }
+                else
+                {
+                    object_arch.GetTriple().setOS(llvm::Triple::MacOSX);
+                }
+            }
             m_ast.SetArchitecture (object_arch);
         }
     }
