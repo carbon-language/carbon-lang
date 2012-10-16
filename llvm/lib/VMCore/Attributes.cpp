@@ -88,7 +88,7 @@ unsigned Attributes::getStackAlignment() const {
 }
 
 uint64_t Attributes::Raw() const {
-  return Attrs ? Attrs->Bits : 0; // FIXME: Don't access this directly!
+  return Attrs ? Attrs->Raw() : 0;
 }
 
 Attributes Attributes::typeIncompatible(Type *Ty) {

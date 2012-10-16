@@ -22,9 +22,7 @@ namespace llvm {
 class Attributes;
 
 class AttributesImpl : public FoldingSetNode {
-  friend class Attributes;
   uint64_t Bits;                // FIXME: We will be expanding this.
-
 public:
   AttributesImpl(uint64_t bits) : Bits(bits) {}
 
@@ -35,6 +33,8 @@ public:
 
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
+
+  uint64_t Raw() const { return Bits; } // FIXME: Remove.
 
   static uint64_t getAttrMask(uint64_t Val);
 
