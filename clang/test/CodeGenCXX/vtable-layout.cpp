@@ -43,6 +43,7 @@
 // RUN: FileCheck --check-prefix=CHECK-42 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-43 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-44 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-45 %s < %t
 
 // For now, just verify this doesn't crash.
 namespace test0 {
@@ -1726,4 +1727,24 @@ namespace Test38 {
   };
 
   void *B::foo() { return 0; }
+}
+
+namespace Test39 {
+  struct A {
+    virtual void foo() = delete;
+  };
+
+  // CHECK-45:      Vtable for 'Test39::B' (4 entries).
+  // CHECK-45-NEXT:    0 | offset_to_top (0)
+  // CHECK-45-NEXT:    1 | Test39::B RTTI
+  // CHECK-45-NEXT:        -- (Test39::A, 0) vtable address --
+  // CHECK-45-NEXT:        -- (Test39::B, 0) vtable address --
+  // CHECK-45-NEXT:    2 | void Test39::A::foo() [deleted]
+  // CHECK-45-NEXT:    3 | void Test39::B::foo2()
+  struct B: A {
+    virtual void foo2();
+  };
+
+  void B::foo2() {
+  }
 }

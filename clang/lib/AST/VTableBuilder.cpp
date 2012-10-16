@@ -1891,6 +1891,9 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
       if (MD->isPure())
         Out << " [pure]";
 
+      if (MD->isDeleted())
+        Out << " [deleted]";
+
       ThunkInfo Thunk = VTableThunks.lookup(I);
       if (!Thunk.isEmpty()) {
         // If this function pointer has a return adjustment, dump it.
