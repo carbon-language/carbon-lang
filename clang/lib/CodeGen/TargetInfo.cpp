@@ -2799,6 +2799,7 @@ private:
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
+  bool isIllegalVectorType(QualType Ty) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const;
 
@@ -2945,6 +2946,27 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
 }
 
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
+  // Handle illegal vector types here.
+  if (isIllegalVectorType(Ty)) {
+    uint64_t Size = getContext().getTypeSize(Ty);
+    if (Size <= 32) {
+      llvm::Type *ResType =
+          llvm::Type::getInt32Ty(getVMContext());
+      return ABIArgInfo::getDirect(ResType);
+    }
+    if (Size == 64) {
+      llvm::Type *ResType = llvm::VectorType::get(
+          llvm::Type::getInt32Ty(getVMContext()), 2);
+      return ABIArgInfo::getDirect(ResType);
+    }
+    if (Size == 128) {
+      llvm::Type *ResType = llvm::VectorType::get(
+          llvm::Type::getInt32Ty(getVMContext()), 4);
+      return ABIArgInfo::getDirect(ResType);
+    }
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
+
   if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
@@ -3161,6 +3183,21 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
   return ABIArgInfo::getIndirect(0);
 }
 
+/// isIllegalVector - check whether Ty is an illegal vector type.
+bool ARMABIInfo::isIllegalVectorType(QualType Ty) const {
+  if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    // Check whether VT is legal.
+    unsigned NumElements = VT->getNumElements();
+    uint64_t Size = getContext().getTypeSize(VT);
+    // NumElements should be power of 2.
+    if ((NumElements & (NumElements - 1)) != 0)
+      return true;
+    // Size should be greater than 32 bits.
+    return Size <= 32;
+  }
+  return false;
+}
+
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                    CodeGenFunction &CGF) const {
   llvm::Type *BP = CGF.Int8PtrTy;
@@ -3172,6 +3209,7 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
   uint64_t Size = CGF.getContext().getTypeSize(Ty) / 8;
   uint64_t TyAlign = CGF.getContext().getTypeAlign(Ty) / 8;
+  bool IsIndirect = false;
 
   // The ABI alignment for 64-bit or 128-bit vectors is 8 for AAPCS and 4 for
   // APCS. For AAPCS, the ABI alignment is at least 4-byte and at most 8-byte.
@@ -3181,6 +3219,12 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
       TyAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
     else
       TyAlign = 4;
+  }
+  // Use indirect if size of the illegal vector is bigger than 16 bytes.
+  if (isIllegalVectorType(Ty) && Size > 16) {
+    IsIndirect = true;
+    Size = 4;
+    TyAlign = 4;
   }
 
   // Handle address alignment for ABI alignment > 4 bytes.
@@ -3200,8 +3244,10 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 
-  if (Ty->getAs<VectorType>() &&
-      (TyAlign < CGF.getContext().getTypeAlign(Ty) / 8)) {
+  if (IsIndirect)
+    Addr = Builder.CreateLoad(Builder.CreateBitCast(Addr, BPP));
+  else if (Ty->getAs<VectorType>() &&
+           (TyAlign < CGF.getContext().getTypeAlign(Ty) / 8)) {
     // We can't directly cast ap.cur to pointer to a vector type, since ap.cur
     // may not be correctly aligned for the vector type. We create an aligned
     // temporary space and copy the content over from ap.cur to the temporary
