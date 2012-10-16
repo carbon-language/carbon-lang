@@ -11917,7 +11917,7 @@ Sema::ActOnObjCBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   if (!Context.getBOOLDecl()) {
     LookupResult Result(*this, &Context.Idents.get("BOOL"), SourceLocation(),
                         Sema::LookupOrdinaryName);
-    if (LookupName(Result, getCurScope())) {
+    if (LookupName(Result, getCurScope()) && Result.isSingleResult()) {
       NamedDecl *ND = Result.getFoundDecl();
       if (TypedefDecl *TD = dyn_cast<TypedefDecl>(ND)) 
         Context.setBOOLDecl(TD);
