@@ -561,6 +561,10 @@ def Packed : InheritableAttr {
   let Spellings = [GNU<"packed">];
 }
 
+def PnaclCall : InheritableAttr {
+  let Spellings = [GNU<"pnaclcall">];
+}
+
 def Pcs : InheritableAttr {
   let Spellings = [GNU<"pcs">];
   let Args = [EnumArgument<"PCS", "PCSType",

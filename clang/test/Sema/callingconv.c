@@ -53,3 +53,4 @@ void __attribute__((cdecl)) ctest3() {}
 typedef __attribute__((stdcall)) void (*PROC)();
 PROC __attribute__((cdecl)) ctest4(const char *x) {}
 
+void __attribute__((pnaclcall)) pnaclfunc(float *a) {} // expected-warning {{calling convention 'pnaclcall' ignored for this target}}

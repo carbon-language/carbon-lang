@@ -2536,6 +2536,39 @@ llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
+class NaClX86_64ABIInfo : public ABIInfo {
+ public:
+  NaClX86_64ABIInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
+      : ABIInfo(CGT), PInfo(CGT), NInfo(CGT, HasAVX) {}
+  virtual void computeInfo(CGFunctionInfo &FI) const;
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+ private:
+  PNaClABIInfo PInfo;  // Used for generating calls with pnaclcall callingconv.
+  X86_64ABIInfo NInfo; // Used for everything else.
+};
+
+class NaClX86_64TargetCodeGenInfo : public TargetCodeGenInfo  {
+ public:
+  NaClX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
+      : TargetCodeGenInfo(new NaClX86_64ABIInfo(CGT, HasAVX)) {}
+};
+
+void NaClX86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  if (FI.getASTCallingConvention() == CC_PnaclCall)
+    PInfo.computeInfo(FI);
+  else
+    NInfo.computeInfo(FI);
+}
+
+llvm::Value *NaClX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                          CodeGenFunction &CGF) const {
+  // Always use the native convention; calling pnacl-style varargs functions
+  // is unuspported.
+  return NInfo.EmitVAArg(VAListAddr, Ty, CGF);
+}
+
+
 // PowerPC-32
 
 namespace {
@@ -3266,6 +3299,38 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
 
   return AddrTyped;
+}
+
+class NaClARMABIInfo : public ABIInfo {
+ public:
+  NaClARMABIInfo(CodeGen::CodeGenTypes &CGT, ARMABIInfo::ABIKind Kind)
+      : ABIInfo(CGT), PInfo(CGT), NInfo(CGT, Kind) {}
+  virtual void computeInfo(CGFunctionInfo &FI) const;
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+ private:
+  PNaClABIInfo PInfo; // Used for generating calls with pnaclcall callingconv.
+  ARMABIInfo NInfo; // Used for everything else.
+};
+
+class NaClARMTargetCodeGenInfo : public TargetCodeGenInfo  {
+ public:
+  NaClARMTargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, ARMABIInfo::ABIKind Kind)
+      : TargetCodeGenInfo(new NaClARMABIInfo(CGT, Kind)) {}
+};
+
+void NaClARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  if (FI.getASTCallingConvention() == CC_PnaclCall)
+    PInfo.computeInfo(FI);
+  else
+    static_cast<const ABIInfo&>(NInfo).computeInfo(FI);
+}
+
+llvm::Value *NaClARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  // Always use the native convention; calling pnacl-style varargs functions
+  // is unsupported.
+  return static_cast<const ABIInfo&>(NInfo).EmitVAArg(VAListAddr, Ty, CGF);
 }
 
 //===----------------------------------------------------------------------===//
@@ -4077,7 +4142,14 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
       else if (CodeGenOpts.FloatABI == "hard")
         Kind = ARMABIInfo::AAPCS_VFP;
 
-      return *(TheTargetCodeGenInfo = new ARMTargetCodeGenInfo(Types, Kind));
+      switch (Triple.getOS()) {
+        case llvm::Triple::NativeClient:
+          return *(TheTargetCodeGenInfo =
+                   new NaClARMTargetCodeGenInfo(Types, Kind));
+        default:
+          return *(TheTargetCodeGenInfo =
+                   new ARMTargetCodeGenInfo(Types, Kind));
+      }
     }
 
   case llvm::Triple::ppc:
@@ -4143,6 +4215,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::MinGW32:
     case llvm::Triple::Cygwin:
       return *(TheTargetCodeGenInfo = new WinX86_64TargetCodeGenInfo(Types));
+    case llvm::Triple::NativeClient:
+      return *(TheTargetCodeGenInfo = new NaClX86_64TargetCodeGenInfo(Types, HasAVX));
     default:
       return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types,
                                                                   HasAVX));

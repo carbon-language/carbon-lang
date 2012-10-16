@@ -3582,7 +3582,12 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     }
 
     D->addAttr(::new (S.Context) PcsAttr(Attr.getRange(), S.Context, PCS));
+    return;
   }
+  case AttributeList::AT_PnaclCall:
+    D->addAttr(::new (S.Context) PnaclCallAttr(Attr.getRange(), S.Context));
+    return;
+
   default:
     llvm_unreachable("unexpected attribute kind");
   }
@@ -3635,6 +3640,7 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
     Diag(attr.getLoc(), diag::err_invalid_pcs);
     return true;
   }
+  case AttributeList::AT_PnaclCall: CC = CC_PnaclCall; break;
   default: llvm_unreachable("unexpected attribute kind");
   }
 
@@ -4396,6 +4402,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_ThisCall:
   case AttributeList::AT_Pascal:
   case AttributeList::AT_Pcs:
+  case AttributeList::AT_PnaclCall:
     handleCallConvAttr(S, D, Attr);
     break;
   case AttributeList::AT_OpenCLKernel:

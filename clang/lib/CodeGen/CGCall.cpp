@@ -148,6 +148,9 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
   if (PcsAttr *PCS = D->getAttr<PcsAttr>())
     return (PCS->getPCS() == PcsAttr::AAPCS ? CC_AAPCS : CC_AAPCS_VFP);
 
+  if (D->hasAttr<PnaclCallAttr>())
+    return CC_PnaclCall;
+
   return CC_C;
 }
 

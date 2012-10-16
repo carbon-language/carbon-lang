@@ -1542,6 +1542,7 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   case CC_X86Pascal: return "pascal";
   case CC_AAPCS: return "aapcs";
   case CC_AAPCS_VFP: return "aapcs-vfp";
+  case CC_PnaclCall: return "pnaclcall";
   }
 
   llvm_unreachable("Invalid calling convention.");

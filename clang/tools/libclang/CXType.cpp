@@ -464,6 +464,7 @@ CXCallingConv clang_getFunctionTypeCallingConv(CXType X) {
       TCALLINGCONV(X86Pascal);
       TCALLINGCONV(AAPCS);
       TCALLINGCONV(AAPCS_VFP);
+      TCALLINGCONV(PnaclCall);
     }
 #undef TCALLINGCONV
   }
