@@ -302,9 +302,7 @@ ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_ar
 
 
 void
-ProcessInfo::SetArguments (char const **argv,
-                           bool first_arg_is_executable,
-                           bool first_arg_is_executable_and_argument)
+ProcessInfo::SetArguments (char const **argv, bool first_arg_is_executable)
 {
     m_arguments.SetArguments (argv);
         
@@ -319,18 +317,11 @@ ProcessInfo::SetArguments (char const **argv,
             // could be a remote platform path
             const bool resolve = false;
             m_executable.SetFile(first_arg, resolve); 
-            
-            // If argument zero is an executable and shouldn't be included
-            // in the arguments, remove it from the front of the arguments
-            if (first_arg_is_executable_and_argument == false)
-                m_arguments.DeleteArgumentAtIndex (0);
         }
     }
 }
 void
-ProcessInfo::SetArguments (const Args& args, 
-                           bool first_arg_is_executable,
-                           bool first_arg_is_executable_and_argument)
+ProcessInfo::SetArguments (const Args& args, bool first_arg_is_executable)
 {
     // Copy all arguments
     m_arguments = args;
@@ -346,11 +337,6 @@ ProcessInfo::SetArguments (const Args& args,
             // could be a remote platform path
             const bool resolve = false;
             m_executable.SetFile(first_arg, resolve); 
-    
-            // If argument zero is an executable and shouldn't be included
-            // in the arguments, remove it from the front of the arguments
-            if (first_arg_is_executable_and_argument == false)
-                m_arguments.DeleteArgumentAtIndex (0);
         }
     }
 }
@@ -443,19 +429,57 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                 shell_executable = shell_resolved_path;
             }
             
+            const char **argv = GetArguments().GetConstArgumentVector ();
+            if (argv == NULL || argv[0] == NULL)
+                return false;
             Args shell_arguments;
             std::string safe_arg;
             shell_arguments.AppendArgument (shell_executable);
             shell_arguments.AppendArgument ("-c");
-
             StreamString shell_command;
             if (will_debug)
             {
+                // Add a modified PATH environment variable in case argv[0]
+                // is a relative path
+                const char *argv0 = argv[0];
+                if (argv0 && (argv0[0] != '/' && argv0[0] != '~'))
+                {
+                    // We have a relative path to our executable which may not work if
+                    // we just try to run "a.out" (without it being converted to "./a.out")
+                    const char *working_dir = GetWorkingDirectory();
+                    std::string new_path("PATH=");
+                    const size_t empty_path_len = new_path.size();
+                    
+                    if (working_dir && working_dir[0])
+                    {
+                        new_path += working_dir;
+                    }
+                    else
+                    {
+                        char current_working_dir[PATH_MAX];
+                        const char *cwd = getcwd(current_working_dir, sizeof(current_working_dir));
+                        if (cwd && cwd[0])
+                            new_path += cwd;
+                    }
+                    const char *curr_path = getenv("PATH");
+                    if (curr_path)
+                    {
+                        if (new_path.size() > empty_path_len)
+                            new_path += ':';
+                        new_path += curr_path;
+                    }
+                    new_path += ' ';
+                    shell_command.PutCString(new_path.c_str());
+                }
+
                 shell_command.PutCString ("exec");
+
+#if defined(__APPLE__)
+                // Only Apple supports /usr/bin/arch being able to specify the architecture
                 if (GetArchitecture().IsValid())
                 {
                     shell_command.Printf(" /usr/bin/arch -arch %s", GetArchitecture().GetArchitectureName());
-                    // Set the resume count to 2: 
+                    // Set the resume count to 2:
                     // 1 - stop in shell
                     // 2 - stop in /usr/bin/arch
                     // 3 - then we will stop in our program
@@ -463,39 +487,36 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                 }
                 else
                 {
-                    // Set the resume count to 1: 
+                    // Set the resume count to 1:
                     // 1 - stop in shell
                     // 2 - then we will stop in our program
                     SetResumeCount(1);
                 }
+#else
+                // Set the resume count to 1:
+                // 1 - stop in shell
+                // 2 - then we will stop in our program
+                SetResumeCount(1);
+#endif
             }
-            
-            const char **argv = GetArguments().GetConstArgumentVector ();
-            if (argv)
+        
+            if (first_arg_is_full_shell_command)
             {
-                if (first_arg_is_full_shell_command)
-                {
-                    // There should only be one argument that is the shell command itself to be used as is
-                    if (argv[0] && !argv[1])
-                        shell_command.Printf("%s", argv[0]);
-                    else
-                        return false;
-                }
+                // There should only be one argument that is the shell command itself to be used as is
+                if (argv[0] && !argv[1])
+                    shell_command.Printf("%s", argv[0]);
                 else
-                {
-                    for (size_t i=0; argv[i] != NULL; ++i)
-                    {
-                        const char *arg = Args::GetShellSafeArgument (argv[i], safe_arg);
-                        shell_command.Printf(" %s", arg);
-                    }
-                }
-                shell_arguments.AppendArgument (shell_command.GetString().c_str());
+                    return false;
             }
             else
             {
-                return false;
+                for (size_t i=0; argv[i] != NULL; ++i)
+                {
+                    const char *arg = Args::GetShellSafeArgument (argv[i], safe_arg);
+                    shell_command.Printf(" %s", arg);
+                }
             }
-
+            shell_arguments.AppendArgument (shell_command.GetString().c_str());
             m_executable.SetFile(shell_executable, false);
             m_arguments = shell_arguments;
             return true;

@@ -71,8 +71,8 @@ class BasicExprCommandsTestCase(TestBase):
         # (const char *) $7 = ...
 
         self.expect("expression argv[0]",
-            substrs = ["(const char *)",
-                       os.path.join(self.mydir, "a.out")])
+            substrs = ["(const char *)", 
+                       "a.out"])
         # (const char *) $8 = 0x... "/Volumes/data/lldb/svn/trunk/test/expression_command/test/a.out"
 
     @python_api_test

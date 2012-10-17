@@ -416,9 +416,7 @@ protected:
                     // We don't have any file yet, so the first argument is our
                     // executable, and the rest are program arguments
                     const bool first_arg_is_executable = true;
-                    m_options.launch_info.SetArguments (args, 
-                                                        first_arg_is_executable, 
-                                                        first_arg_is_executable);
+                    m_options.launch_info.SetArguments (args, first_arg_is_executable);
                 }
             }
             

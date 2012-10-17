@@ -1328,8 +1328,7 @@ Host::RunShellCommand (const char *command,
         // No shell, just run it
         Args args (command);
         const bool first_arg_is_executable = true;
-        const bool first_arg_is_executable_and_argument = true;
-        launch_info.SetArguments(args, first_arg_is_executable, first_arg_is_executable_and_argument);
+        launch_info.SetArguments(args, first_arg_is_executable);
     }
     
     if (working_dir)

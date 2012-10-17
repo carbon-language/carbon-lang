@@ -83,6 +83,12 @@ public:
     InlineStrategy
     GetInlineStrategy () const;
 
+    const char *
+    GetArg0 () const;
+    
+    void
+    SetArg0 (const char *arg);
+
     bool
     GetRunArguments (Args &args) const;
     

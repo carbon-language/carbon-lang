@@ -127,11 +127,6 @@ protected:
             return false;
         }
         
-        exe_module->GetFileSpec().GetPath (filename, sizeof(filename));
-
-        const bool add_exe_file_as_first_arg = true;
-        m_options.launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), add_exe_file_as_first_arg);
-        
         StateType state = eStateInvalid;
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process)
@@ -167,18 +162,32 @@ protected:
             }
         }
         
+        const char *target_settings_argv0 = target->GetArg0();
+        
+        exe_module->GetFileSpec().GetPath (filename, sizeof(filename));
+        
+        if (target_settings_argv0)
+        {
+            m_options.launch_info.GetArguments().AppendArgument (target_settings_argv0);
+            m_options.launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), false);
+        }
+        else
+        {
+            m_options.launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
+        }
+
         if (launch_args.GetArgumentCount() == 0)
         {
             Args target_setting_args;
-            if (target->GetRunArguments(target_setting_args) > 0)
+            if (target->GetRunArguments(target_setting_args))
                 m_options.launch_info.GetArguments().AppendArguments (target_setting_args);
         }
         else
         {
+            m_options.launch_info.GetArguments().AppendArguments (launch_args);
+
             // Save the arguments for subsequent runs in the current target.
             target->SetRunArguments (launch_args);
-
-            m_options.launch_info.GetArguments().AppendArguments (launch_args);
         }
         
         if (target->GetDisableASLR())
