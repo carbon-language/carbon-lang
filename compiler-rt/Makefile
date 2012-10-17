@@ -92,7 +92,7 @@ test:
 %/.dir:
 	$(Summary) "  MKDIR:     $*"
 	$(Verb) $(MKDIR) $* > /dev/null
-	$(Verb) $(DATE) > $@
+	$(Verb) echo 'Created.' > $@
 
 # Remove directories
 %/.remove:
