@@ -91,3 +91,10 @@ Subsystem Documentation
 * :ref:`segmented_stacks`
 
    This document describes segmented stacks and how they are used in LLVM.
+
+* `Howto: Implementing LLVM Integrated Assembler`_
+
+   A simple guide for how to implement an LLVM integrated assembler for an
+   architecture.
+
+.. _`Howto: Implementing LLVM Integrated Assembler`: http://www.embecosm.com/download/ean10.html
