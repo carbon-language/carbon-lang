@@ -1785,9 +1785,9 @@ static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const DataLayout &TD,
       break;
     if (SequentialType *SeqTy = dyn_cast<SequentialType>(ElementTy)) {
       ElementTy = SeqTy->getElementType();
-      Indices.push_back(IRB.getInt(APInt(TD.getPointerSizeInBits(
-                ElementTy->isPointerTy() ? 
-                cast<PointerType>(ElementTy)->getAddressSpace(): 0), 0)));
+      // Note that we use the default address space as this index is over an
+      // array or a vector, not a pointer.
+      Indices.push_back(IRB.getInt(APInt(TD.getPointerSizeInBits(0), 0)));
     } else if (StructType *STy = dyn_cast<StructType>(ElementTy)) {
       if (STy->element_begin() == STy->element_end())
         break; // Nothing left to descend into.
