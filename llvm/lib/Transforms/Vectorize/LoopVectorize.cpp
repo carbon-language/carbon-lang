@@ -398,7 +398,6 @@ void SingleBlockLoopVectorizer::copyEmptyLoop() {
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
   Builder = new IRBuilder<>(BB);
-  Builder->SetInsertPoint(BB);
 
   // Generate the induction variable.
   PHINode *Phi = Builder->CreatePHI(IdxTy, 2, "index");
