@@ -48,12 +48,8 @@ class AnalysisDiagnostic:
         self._htmlReport = htmlReport
 
     def getFileName(self):
-        return self._report.run.getSourceName(self._report.files[self._loc['file']])
-
-    # TODO: This assumes single file! 
-    def getRelFileName(self):
         root = self._report.run.root
-        fileName = self._report.run.getSourceName(self._report.files[self._loc['file']])
+        fileName = self._report.files[self._loc['file']]
         if fileName.startswith(root) :
             return fileName[len(root):]  
         return fileName
@@ -87,6 +83,11 @@ class AnalysisDiagnostic:
         return '%s:%d:%d, %s: %s' % (self.getFileName(), self.getLine(), 
                                      self.getColumn(), self.getCategory(), 
                                      self.getDescription())
+        
+    # Note, the data format is not an API and may change from one analyzer 
+    # version to another.        
+    def getRawData(self):
+        return self._data
 
 class multidict:
     def __init__(self, elts=()):
@@ -121,8 +122,9 @@ class CmpOptions:
 class AnalysisReport:
     def __init__(self, run, files, clang_vers):
         self.run = run
-        self.files = files
         self.clang_version = clang_vers
+        self.files = files
+        self.diagnostics = []
 
 class AnalysisRun:
     def __init__(self, info):
@@ -130,12 +132,9 @@ class AnalysisRun:
         self.root = info.root
         self.info = info
         self.reports = []
+        # Cumulative list of all diagnostics from all the reports.
         self.diagnostics = []
 
-    def getSourceName(self, path):
-        if path.startswith(self.root):
-            return path[len(self.root):]
-        return path
 
 # Backward compatibility API. 
 def loadResults(path, opts, root = "", deleteEmpty=True):
@@ -172,14 +171,19 @@ def loadResultsFromSingleRun(info, deleteEmpty=True):
                 htmlFiles.append(d.pop('HTMLDiagnostics_files')[0])
         else:
             htmlFiles = [None] * len(data['diagnostics'])
-            
-        report = AnalysisReport(run, data.pop('files'), data.pop('clang_version'))
+        
+        clang_version = ''
+        if 'clang_version' in data:
+            clang_version = data.pop('clang_version')
+        
+        report = AnalysisReport(run, data.pop('files'), clang_version)
         diagnostics = [AnalysisDiagnostic(d, report, h) 
                        for d,h in zip(data.pop('diagnostics'),
                                       htmlFiles)]
 
         assert not data
-
+        
+        report.diagnostics.extend(diagnostics)
         run.reports.append(report)
         run.diagnostics.extend(diagnostics)
 
@@ -213,12 +217,12 @@ def compareResults(A, B):
         b = eltsB.pop()
         if (a.getIssueIdentifier() == b.getIssueIdentifier()) :
             res.append((a, b, 0))
-        elif a._data > b._data:
-            neqA.append(a)
+        elif a.getIssueIdentifier() > b.getIssueIdentifier():
             eltsB.append(b)
+            neqA.append(a)
         else:
-            neqB.append(b)
             eltsA.append(a)
+            neqB.append(b)
     neqA.extend(eltsA)
     neqB.extend(eltsB)
 
