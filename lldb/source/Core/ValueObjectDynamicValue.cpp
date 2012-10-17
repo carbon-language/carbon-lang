@@ -290,12 +290,14 @@ ValueObjectDynamicValue::UpdateValue ()
     if (!m_type_sp)
     {
         m_type_sp = dynamic_type_sp;
+        ResetCompleteTypeInfo ();
     }
     else if (dynamic_type_sp != m_type_sp)
     {
         // We are another type, we need to tear down our children...
         m_type_sp = dynamic_type_sp;
         SetValueDidChange (true);
+        ResetCompleteTypeInfo ();
     }
     
     if (!m_address.IsValid() || m_address != dynamic_address)

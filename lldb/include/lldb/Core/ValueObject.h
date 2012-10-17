@@ -1265,6 +1265,9 @@ protected:
     DataExtractor &
     GetDataExtractor ();
     
+    void
+    ResetCompleteTypeInfo ();
+    
     //------------------------------------------------------------------
     // Sublasses must implement the functions below.
     //------------------------------------------------------------------

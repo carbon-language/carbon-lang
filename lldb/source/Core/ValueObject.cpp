@@ -274,6 +274,13 @@ ValueObject::SetNeedsUpdate ()
     ClearUserVisibleData(eClearUserVisibleDataItemsValue);
 }
 
+void
+ValueObject::ResetCompleteTypeInfo ()
+{
+    m_did_calculate_complete_objc_class_type = false;
+    m_override_type = ClangASTType();
+}
+
 ClangASTType
 ValueObject::MaybeCalculateCompleteType ()
 {
