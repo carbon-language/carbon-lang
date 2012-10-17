@@ -476,18 +476,18 @@ protected:
         sstring.Printf("%s:%d",typeName.AsCString(),valobj.GetBitfieldBitSize());
         ConstString bitfieldname = ConstString(sstring.GetData());
         if (log)
-            log->Printf("appended bitfield info, final result is %s", bitfieldname.GetCString());
+            log->Printf("[Get_BitfieldMatch] appended bitfield info, final result is %s", bitfieldname.GetCString());
         if (Get(bitfieldname, entry))
         {
             if (log)
-                log->Printf("bitfield direct match found, returning");
+                log->Printf("[Get_BitfieldMatch] bitfield direct match found, returning");
             return true;
         }
         else
         {
             reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
             if (log)
-                log->Printf("no bitfield direct match");
+                log->Printf("[Get_BitfieldMatch] no bitfield direct match");
             return false;
         }
     }
@@ -501,27 +501,27 @@ protected:
         if (runtime == NULL)
         {
             if (log)
-                log->Printf("no valid ObjC runtime, skipping dynamic");
+                log->Printf("[Get_ObjC] no valid ObjC runtime, skipping dynamic");
             return false;
         }
         ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetClassDescriptor(valobj));
         if (!objc_class_sp)
         {
             if (log)
-                log->Printf("invalid ISA, skipping dynamic");
+                log->Printf("[Get_ObjC] invalid ISA, skipping dynamic");
             return false;
         }
         ConstString name (objc_class_sp->GetClassName());
         if (log)
-            log->Printf("dynamic type inferred is %s - looking for direct dynamic match", name.GetCString());
+            log->Printf("[Get_ObjC] dynamic type inferred is %s - looking for direct dynamic match", name.GetCString());
         if (Get(name, entry))
         {
             if (log)
-                log->Printf("direct dynamic match found, returning");
+                log->Printf("[Get_ObjC] direct dynamic match found, returning");
             return true;
         }
         if (log)
-            log->Printf("no dynamic match");
+            log->Printf("[Get_ObjC] no dynamic match");
         return false;
     }
     
@@ -535,7 +535,7 @@ protected:
         if (type.isNull())
         {
             if (log)
-                log->Printf("type is NULL, returning");
+                log->Printf("[Get] type is NULL, returning");
             return false;
         }
 
@@ -544,7 +544,7 @@ protected:
         if (!typePtr)
         {
             if (log)
-                log->Printf("type is NULL, returning");
+                log->Printf("[Get] type is NULL, returning");
             return false;
         }
         ConstString typeName(ClangASTType::GetTypeNameForQualType(valobj.GetClangAST(), type).c_str());
@@ -556,7 +556,7 @@ protected:
         }
         
         if (log)
-            log->Printf("trying to get %s for VO name %s of type %s",
+            log->Printf("[Get] trying to get %s for VO name %s of type %s",
                         m_name.c_str(),
                         valobj.GetName().AsCString(),
                         typeName.AsCString());
@@ -564,17 +564,17 @@ protected:
         if (Get(typeName, entry))
         {
             if (log)
-                log->Printf("direct match found, returning");
+                log->Printf("[Get] direct match found, returning");
             return true;
         }
         if (log)
-            log->Printf("no direct match");
+            log->Printf("[Get] no direct match");
 
         // strip pointers and references and see if that helps
         if (typePtr->isReferenceType())
         {
             if (log)
-                log->Printf("stripping reference");
+                log->Printf("[Get] stripping reference");
             if (Get(valobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->SkipsReferences())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
@@ -584,7 +584,7 @@ protected:
         else if (typePtr->isPointerType())
         {
             if (log)
-                log->Printf("stripping pointer");
+                log->Printf("[Get] stripping pointer");
             clang::QualType pointee = typePtr->getPointeeType();
             if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->SkipsPointers())
             {
@@ -604,7 +604,7 @@ protected:
             if (use_dynamic != lldb::eNoDynamicValues)
             {
                 if (log)
-                    log->Printf("allowed to figure out dynamic ObjC type");
+                    log->Printf("[Get] allowed to figure out dynamic ObjC type");
                 if (Get_ObjC(valobj,entry))
                 {
                     reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCDiscovery;
@@ -612,7 +612,7 @@ protected:
                 }
             }
             if (log)
-                log->Printf("dynamic disabled or failed - stripping ObjC pointer");
+                log->Printf("[Get] dynamic disabled or failed - stripping ObjC pointer");
             clang::QualType pointee = typePtr->getPointeeType();
             if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->SkipsPointers())
             {
@@ -626,7 +626,7 @@ protected:
         if (type_tdef)
         {
             if (log)
-                log->Printf("stripping typedef");
+                log->Printf("[Get] stripping typedef");
             if ((Get(valobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->Cascades())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionNavigatedTypedefs;

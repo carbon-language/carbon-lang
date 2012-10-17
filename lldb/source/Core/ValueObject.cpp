@@ -239,8 +239,9 @@ ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     if (log)
-        log->Printf("checking for FormatManager revisions. VO named %s is at revision %d, while the format manager is at revision %d",
+        log->Printf("[%s %p] checking for FormatManager revisions. ValueObject rev: %d - Global rev: %d",
            GetName().GetCString(),
+           this,
            m_last_format_mgr_revision,
            DataVisualization::GetCurrentRevision());
     

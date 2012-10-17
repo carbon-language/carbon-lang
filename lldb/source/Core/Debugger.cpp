@@ -1095,7 +1095,7 @@ ScanFormatDescriptor (const char* var_name_begin,
     if (!*percent_position || *percent_position > var_name_end)
     {
         if (log)
-            log->Printf("no format descriptor in string, skipping");
+            log->Printf("[ScanFormatDescriptor] no format descriptor in string, skipping");
         *var_name_final = var_name_end;
     }
     else
@@ -1104,13 +1104,13 @@ ScanFormatDescriptor (const char* var_name_begin,
         char* format_name = new char[var_name_end-*var_name_final]; format_name[var_name_end-*var_name_final-1] = '\0';
         memcpy(format_name, *var_name_final+1, var_name_end-*var_name_final-1);
         if (log)
-            log->Printf("parsing %s as a format descriptor", format_name);
+            log->Printf("ScanFormatDescriptor] parsing %s as a format descriptor", format_name);
         if ( !FormatManager::GetFormatFromCString(format_name,
                                                   true,
                                                   *custom_format) )
         {
             if (log)
-                log->Printf("%s is an unknown format", format_name);
+                log->Printf("ScanFormatDescriptor] %s is an unknown format", format_name);
             // if this is an @ sign, print ObjC description
             if (*format_name == '@')
                 *val_obj_display = ValueObject::eValueObjectRepresentationStyleLanguageSpecific;
@@ -1128,19 +1128,19 @@ ScanFormatDescriptor (const char* var_name_begin,
             else if (*format_name == 'T')
                 *val_obj_display = ValueObject::eValueObjectRepresentationStyleType;
             else if (log)
-                log->Printf("%s is an error, leaving the previous value alone", format_name);
+                log->Printf("ScanFormatDescriptor] %s is an error, leaving the previous value alone", format_name);
         }
         // a good custom format tells us to print the value using it
         else
         {
             if (log)
-                log->Printf("will display value for this VO");
+                log->Printf("ScanFormatDescriptor] will display value for this VO");
             *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
         }
         delete format_name;
     }
     if (log)
-        log->Printf("final format description outcome: custom_format = %d, val_obj_display = %d",
+        log->Printf("ScanFormatDescriptor] final format description outcome: custom_format = %d, val_obj_display = %d",
                     *custom_format,
                     *val_obj_display);
     return true;
@@ -1169,7 +1169,7 @@ ScanBracketedRange (const char* var_name_begin,
         if (*close_bracket_position - *open_bracket_position == 1)
         {
             if (log)
-                log->Printf("[] detected.. going from 0 to end of data");
+                log->Printf("[ScanBracketedRange] '[]' detected.. going from 0 to end of data");
             *index_lower = 0;
         }
         else if (*separator_position == NULL || *separator_position > var_name_end)
@@ -1178,7 +1178,7 @@ ScanBracketedRange (const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = *index_lower;
             if (log)
-                log->Printf("[%lld] detected, high index is same", *index_lower);
+                log->Printf("[ScanBracketedRange] [%lld] detected, high index is same", *index_lower);
         }
         else if (*close_bracket_position && *close_bracket_position < var_name_end)
         {
@@ -1186,25 +1186,25 @@ ScanBracketedRange (const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = ::strtoul (*separator_position+1, &end, 0);
             if (log)
-                log->Printf("[%lld-%lld] detected", *index_lower, *index_higher);
+                log->Printf("[ScanBracketedRange] [%lld-%lld] detected", *index_lower, *index_higher);
         }
         else
         {
             if (log)
-                log->Printf("expression is erroneous, cannot extract indices out of it");
+                log->Printf("[ScanBracketedRange] expression is erroneous, cannot extract indices out of it");
             return false;
         }
         if (*index_lower > *index_higher && *index_higher > 0)
         {
             if (log)
-                log->Printf("swapping indices");
+                log->Printf("[ScanBracketedRange] swapping indices");
             int temp = *index_lower;
             *index_lower = *index_higher;
             *index_higher = temp;
         }
     }
     else if (log)
-            log->Printf("no bracketed range, skipping entirely");
+            log->Printf("[ScanBracketedRange] no bracketed range, skipping entirely");
     return true;
 }
 
@@ -1219,7 +1219,7 @@ ExpandIndexedExpression (ValueObject* valobj,
     std::auto_ptr<char> ptr_deref_buffer(new char[10]);
     ::sprintf(ptr_deref_buffer.get(), ptr_deref_format, index);
     if (log)
-        log->Printf("name to deref: %s",ptr_deref_buffer.get());
+        log->Printf("[ExpandIndexedExpression] name to deref: %s",ptr_deref_buffer.get());
     const char* first_unparsed;
     ValueObject::GetValueForExpressionPathOptions options;
     ValueObject::ExpressionPathEndResultType final_value_type;
@@ -1234,14 +1234,14 @@ ExpandIndexedExpression (ValueObject* valobj,
     if (!item)
     {
         if (log)
-            log->Printf("ERROR: unparsed portion = %s, why stopping = %d,"
+            log->Printf("[ExpandIndexedExpression] ERROR: unparsed portion = %s, why stopping = %d,"
                " final_value_type %d",
                first_unparsed, reason_to_stop, final_value_type);
     }
     else
     {
         if (log)
-            log->Printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
+            log->Printf("[ExpandIndexedExpression] ALL RIGHT: unparsed portion = %s, why stopping = %d,"
                " final_value_type %d",
                first_unparsed, reason_to_stop, final_value_type);
     }
@@ -1354,7 +1354,7 @@ Debugger::FormatPrompt
                                     break;
                                 
                                 if (log)
-                                    log->Printf("initial string: %s",var_name_begin);
+                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
                                 
                                 // check for *var and *svar
                                 if (*var_name_begin == '*')
@@ -1364,7 +1364,7 @@ Debugger::FormatPrompt
                                 }
                                 
                                 if (log)
-                                    log->Printf("initial string: %s",var_name_begin);
+                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
                                 
                                 if (*var_name_begin == 's')
                                 {
@@ -1376,14 +1376,14 @@ Debugger::FormatPrompt
                                 }
                                 
                                 if (log)
-                                    log->Printf("initial string: %s",var_name_begin);
+                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
                                 
                                 // should be a 'v' by now
                                 if (*var_name_begin != 'v')
                                     break;
                                 
                                 if (log)
-                                    log->Printf("initial string: %s",var_name_begin);
+                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
                                                                 
                                 ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
                                                                                   ValueObject::eExpressionPathAftermathDereference : ValueObject::eExpressionPathAftermathNothing);
@@ -1457,7 +1457,7 @@ Debugger::FormatPrompt
                                     memcpy(expr_path.get(), var_name_begin+3,var_name_final-var_name_begin-3);
                                                                         
                                     if (log)
-                                        log->Printf("symbol to expand: %s",expr_path.get());
+                                        log->Printf("[Debugger::FormatPrompt] symbol to expand: %s",expr_path.get());
                                     
                                     target = valobj->GetValueForExpressionPath(expr_path.get(),
                                                                              &first_unparsed,
@@ -1469,7 +1469,7 @@ Debugger::FormatPrompt
                                     if (!target)
                                     {
                                         if (log)
-                                            log->Printf("ERROR: unparsed portion = %s, why stopping = %d,"
+                                            log->Printf("[Debugger::FormatPrompt] ERROR: unparsed portion = %s, why stopping = %d,"
                                                " final_value_type %d",
                                                first_unparsed, reason_to_stop, final_value_type);
                                         break;
@@ -1477,7 +1477,7 @@ Debugger::FormatPrompt
                                     else
                                     {
                                         if (log)
-                                            log->Printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
+                                            log->Printf("[Debugger::FormatPrompt] ALL RIGHT: unparsed portion = %s, why stopping = %d,"
                                                " final_value_type %d",
                                                first_unparsed, reason_to_stop, final_value_type);
                                     }
@@ -1500,7 +1500,7 @@ Debugger::FormatPrompt
                                     if (error.Fail())
                                     {
                                         if (log)
-                                            log->Printf("ERROR: %s\n", error.AsCString("unknown")); \
+                                            log->Printf("[Debugger::FormatPrompt] ERROR: %s\n", error.AsCString("unknown")); \
                                         break;
                                     }
                                     do_deref_pointer = false;
@@ -1529,7 +1529,7 @@ Debugger::FormatPrompt
                                 {
                                     StreamString str_temp;
                                     if (log)
-                                        log->Printf("I am into array || pointer && !range");
+                                        log->Printf("[Debugger::FormatPrompt] I am into array || pointer && !range");
                                     
                                     if (target->HasSpecialPrintableRepresentation(val_obj_display,
                                                                                   custom_format))
@@ -1539,7 +1539,7 @@ Debugger::FormatPrompt
                                                                                           val_obj_display,
                                                                                           custom_format);
                                         if (log)
-                                            log->Printf("special cases did%s match", var_success ? "" : "n't");
+                                            log->Printf("[Debugger::FormatPrompt] special cases did%s match", var_success ? "" : "n't");
                                         
                                         // should not happen
                                         if (!var_success)
@@ -1591,17 +1591,17 @@ Debugger::FormatPrompt
                                 if (!is_array_range)
                                 {
                                     if (log)
-                                        log->Printf("dumping ordinary printable output");
+                                        log->Printf("[Debugger::FormatPrompt] dumping ordinary printable output");
                                     var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
                                 }
                                 else
                                 {   
                                     if (log)
-                                        log->Printf("checking if I can handle as array");
+                                        log->Printf("[Debugger::FormatPrompt] checking if I can handle as array");
                                     if (!is_array && !is_pointer)
                                         break;
                                     if (log)
-                                        log->Printf("handle as array");
+                                        log->Printf("[Debugger::FormatPrompt] handle as array");
                                     const char* special_directions = NULL;
                                     StreamString special_directions_writer;
                                     if (close_bracket_position && (var_name_end-close_bracket_position > 1))
@@ -1633,12 +1633,12 @@ Debugger::FormatPrompt
                                         if (!item)
                                         {
                                             if (log)
-                                                log->Printf("ERROR in getting child item at index %lld", index_lower);
+                                                log->Printf("[Debugger::FormatPrompt] ERROR in getting child item at index %lld", index_lower);
                                         }
                                         else
                                         {
                                             if (log)
-                                                log->Printf("special_directions for child item: %s",special_directions);
+                                                log->Printf("[Debugger::FormatPrompt] special_directions for child item: %s",special_directions);
                                         }
 
                                         if (!special_directions)

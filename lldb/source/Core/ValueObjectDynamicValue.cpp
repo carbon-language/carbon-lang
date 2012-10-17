@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Core/Value.h"
@@ -287,10 +288,17 @@ ValueObjectDynamicValue::UpdateValue ()
     
     Value old_value(m_value);
 
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    
     if (!m_type_sp)
     {
         m_type_sp = dynamic_type_sp;
         ResetCompleteTypeInfo ();
+        if (log)
+            log->Printf("[%s %p] now has a dynamic type %s",
+                        GetName().GetCString(),
+                        this,
+                        GetTypeName().AsCString(""));
     }
     else if (dynamic_type_sp != m_type_sp)
     {
@@ -298,6 +306,11 @@ ValueObjectDynamicValue::UpdateValue ()
         m_type_sp = dynamic_type_sp;
         SetValueDidChange (true);
         ResetCompleteTypeInfo ();
+        if (log)
+            log->Printf("[%s %p] has a new dynamic type %s",
+                        GetName().GetCString(),
+                        this,
+                        GetTypeName().AsCString(""));
     }
     
     if (!m_address.IsValid() || m_address != dynamic_address)
