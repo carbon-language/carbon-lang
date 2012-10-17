@@ -147,7 +147,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   const TargetRegisterClass *RC = &X86::VR256RegClass;
   for (TargetRegisterClass::iterator i = RC->begin(), e = RC->end();
        i != e; i++) {
-    if (MRI.isPhysRegUsed(*i)) {
+    if (!MRI.reg_nodbg_empty(*i)) {
       YMMUsed = true;
       break;
     }
