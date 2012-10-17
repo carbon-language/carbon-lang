@@ -3611,8 +3611,7 @@ static void TryValueInitialization(Sema &S,
       //    user-provided or deleted default constructor, then the object is
       //    zero-initialized and, if T has a non-trivial default constructor,
       //    default-initialized;
-      // FIXME: The 'non-union' here is a defect (not yet assigned an issue
-      // number). Update the quotation when the defect is resolved.
+      // The 'non-union' here was removed by DR1502.
       if (NeedZeroInitialization)
         Sequence.AddZeroInitializationStep(Entity.getType());
 
