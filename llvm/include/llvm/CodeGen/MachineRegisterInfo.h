@@ -377,10 +377,6 @@ public:
   /// This should only be called during and after register allocation.
   void setPhysRegUsed(unsigned Reg) { UsedPhysRegs.set(Reg); }
 
-  /// addPhysRegsUsed - Mark the specified registers used in this function.
-  /// This should only be called during and after register allocation.
-  void addPhysRegsUsed(const BitVector &Regs) { UsedPhysRegs |= Regs; }
-
   /// addPhysRegsUsedFromRegMask - Mark any registers not in RegMask as used.
   /// This corresponds to the bit mask attached to register mask operands.
   void addPhysRegsUsedFromRegMask(const uint32_t *RegMask) {
