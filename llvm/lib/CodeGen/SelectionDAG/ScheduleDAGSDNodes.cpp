@@ -831,8 +831,7 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
     }
 
     SmallVector<SDNode *, 4> GluedNodes;
-    for (SDNode *N = SU->getNode()->getGluedNode(); N;
-         N = N->getGluedNode())
+    for (SDNode *N = SU->getNode()->getGluedNode(); N; N = N->getGluedNode())
       GluedNodes.push_back(N);
     while (!GluedNodes.empty()) {
       SDNode *N = GluedNodes.back();

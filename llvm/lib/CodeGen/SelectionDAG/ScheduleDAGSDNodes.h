@@ -114,7 +114,8 @@ namespace llvm {
     /// EmitSchedule - Insert MachineInstrs into the MachineBasicBlock
     /// according to the order specified in Sequence.
     ///
-    MachineBasicBlock *EmitSchedule(MachineBasicBlock::iterator &InsertPos);
+    virtual MachineBasicBlock*
+    EmitSchedule(MachineBasicBlock::iterator &InsertPos);
 
     virtual void dumpNode(const SUnit *SU) const;
 

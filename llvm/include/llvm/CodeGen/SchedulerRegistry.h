@@ -102,6 +102,11 @@ ScheduleDAGSDNodes *createVLIWDAGScheduler(SelectionDAGISel *IS,
 ScheduleDAGSDNodes *createDefaultScheduler(SelectionDAGISel *IS,
                                            CodeGenOpt::Level OptLevel);
 
+/// createDAGLinearizer - This creates a "no-scheduling" scheduler which
+/// linearize the DAG using topological order.
+ScheduleDAGSDNodes *createDAGLinearizer(SelectionDAGISel *IS,
+                                        CodeGenOpt::Level OptLevel);
+
 } // end namespace llvm
 
 #endif
