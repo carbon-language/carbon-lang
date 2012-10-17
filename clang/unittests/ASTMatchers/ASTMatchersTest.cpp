@@ -2991,14 +2991,17 @@ TEST(TypeMatching, MatchesAutoTypes) {
 }
 
 TEST(TypeMatching, PointerTypes) {
-  EXPECT_TRUE(matchAndVerifyResultTrue(
-      "int* a;",
-      pointerTypeLoc(pointeeLoc(typeLoc().bind("loc"))),
-      new VerifyIdIsBoundTo<TypeLoc>("loc", 1)));
-  EXPECT_TRUE(matchAndVerifyResultTrue(
-      "int* a;",
-      pointerTypeLoc().bind("loc"),
-      new VerifyIdIsBoundTo<TypeLoc>("loc", 1)));
+  // FIXME: Reactive when these tests can be more specific (not matching
+  // implicit code on certain platforms), likely when we have hasDescendant for
+  // Types/TypeLocs.
+  //EXPECT_TRUE(matchAndVerifyResultTrue(
+  //    "int* a;",
+  //    pointerTypeLoc(pointeeLoc(typeLoc().bind("loc"))),
+  //    new VerifyIdIsBoundTo<TypeLoc>("loc", 1)));
+  //EXPECT_TRUE(matchAndVerifyResultTrue(
+  //    "int* a;",
+  //    pointerTypeLoc().bind("loc"),
+  //    new VerifyIdIsBoundTo<TypeLoc>("loc", 1)));
   EXPECT_TRUE(matches(
       "int** a;",
       pointerTypeLoc(pointeeLoc(loc(qualType())))));
@@ -3010,22 +3013,34 @@ TEST(TypeMatching, PointerTypes) {
       loc(qualType(isConstQualified(), pointerType()))));
 
   std::string Fragment = "struct A { int i; }; int A::* ptr = &A::i;";
-  EXPECT_TRUE(notMatches(Fragment, blockPointerType()));
-  EXPECT_TRUE(matches(Fragment, memberPointerType()));
-  EXPECT_TRUE(notMatches(Fragment, pointerType()));
-  EXPECT_TRUE(notMatches(Fragment, referenceType()));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(blockPointerType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("ptr"),
+                                        hasType(memberPointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(pointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(referenceType()))));
 
-  Fragment = "int *I;";
-  EXPECT_TRUE(notMatches(Fragment, blockPointerType()));
-  EXPECT_TRUE(notMatches(Fragment, memberPointerType()));
-  EXPECT_TRUE(matches(Fragment, pointerType()));
-  EXPECT_TRUE(notMatches(Fragment, referenceType()));
+  Fragment = "int *ptr;";
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(blockPointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(memberPointerType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("ptr"),
+                                        hasType(pointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(referenceType()))));
 
-  Fragment = "int a; int &b = a;";
-  EXPECT_TRUE(notMatches(Fragment, blockPointerType()));
-  EXPECT_TRUE(notMatches(Fragment, memberPointerType()));
-  EXPECT_TRUE(notMatches(Fragment, pointerType()));
-  EXPECT_TRUE(matches(Fragment, referenceType()));
+  Fragment = "int a; int &ref = a;";
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(blockPointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(memberPointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(pointerType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("ref"),
+                                        hasType(referenceType()))));
 }
 
 TEST(TypeMatching, PointeeTypes) {
@@ -3058,9 +3073,12 @@ TEST(TypeMatching, MatchesPointersToConstTypes) {
 }
 
 TEST(TypeMatching, MatchesTypedefTypes) {
-  EXPECT_TRUE(matches("typedef int X;", typedefType()));
+  EXPECT_TRUE(matches("typedef int X; X a;", varDecl(hasName("a"),
+                                                     hasType(typedefType()))));
 
-  EXPECT_TRUE(matches("typedef int X;", typedefType(hasDecl(decl()))));
+  EXPECT_TRUE(matches("typedef int X; X a;",
+                      varDecl(hasName("a"),
+                              hasType(typedefType(hasDecl(decl()))))));
 }
 
 TEST(NNS, MatchesNestedNameSpecifiers) {
