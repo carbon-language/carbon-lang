@@ -1078,8 +1078,14 @@ TEST(AddressSanitizer, StrNCpyOOBTest) {
   free(from);
 }
 
-typedef char*(*PointerToStrChr)(const char*, int);
-void RunStrChrTest(PointerToStrChr StrChr) {
+// Users may have different definitions of "strchr" and "index", so provide
+// function pointer typedefs and overload RunStrChrTest implementation.
+// We can't use macro for RunStrChrTest body here, as this macro would
+// confuse EXPECT_DEATH gtest macro.
+typedef char*(*PointerToStrChr1)(const char*, int);
+typedef char*(*PointerToStrChr2)(char*, int);
+
+USED static void RunStrChrTest(PointerToStrChr1 StrChr) {
   size_t size = Ident(100);
   char *str = MallocAndMemsetString(size);
   str[10] = 'q';
@@ -1095,6 +1101,23 @@ void RunStrChrTest(PointerToStrChr StrChr) {
   EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBErrorMessage(0));
   free(str);
 }
+USED static void RunStrChrTest(PointerToStrChr2 StrChr) {
+  size_t size = Ident(100);
+  char *str = MallocAndMemsetString(size);
+  str[10] = 'q';
+  str[11] = '\0';
+  EXPECT_EQ(str, StrChr(str, 'z'));
+  EXPECT_EQ(str + 10, StrChr(str, 'q'));
+  EXPECT_EQ(NULL, StrChr(str, 'a'));
+  // StrChr argument points to not allocated memory.
+  EXPECT_DEATH(Ident(StrChr(str - 1, 'z')), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(StrChr(str + size, 'z')), RightOOBErrorMessage(0));
+  // Overwrite the terminator and hit not allocated memory.
+  str[11] = 'z';
+  EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBErrorMessage(0));
+  free(str);
+}
+
 TEST(AddressSanitizer, StrChrAndIndexOOBTest) {
   RunStrChrTest(&strchr);
   RunStrChrTest(&index);
