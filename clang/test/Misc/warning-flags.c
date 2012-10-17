@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (156):
+CHECK: Warnings without flags (154):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -30,8 +30,6 @@ CHECK-NEXT:   ext_new_paren_array_nonconst
 CHECK-NEXT:   ext_plain_complex
 CHECK-NEXT:   ext_pp_macro_redef
 CHECK-NEXT:   ext_template_arg_extra_parens
-CHECK-NEXT:   ext_typecheck_comparison_of_distinct_pointers
-CHECK-NEXT:   ext_typecheck_comparison_of_distinct_pointers_nonstandard
 CHECK-NEXT:   ext_typecheck_comparison_of_pointer_integer
 CHECK-NEXT:   ext_typecheck_cond_incompatible_operands
 CHECK-NEXT:   ext_typecheck_cond_incompatible_operands_nonstandard
