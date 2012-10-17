@@ -24,10 +24,11 @@ enum LangFeatures {
   C11 = (1 << 3),
   CPlusPlus = (1 << 4),
   CPlusPlus0x = (1 << 5),
-  Digraphs = (1 << 6),
-  GNUMode = (1 << 7),
-  HexFloat = (1 << 8),
-  ImplicitInt = (1 << 9)
+  CPlusPlus1y = (1 << 6),
+  Digraphs = (1 << 7),
+  GNUMode = (1 << 8),
+  HexFloat = (1 << 9),
+  ImplicitInt = (1 << 10)
 };
 
 }
@@ -70,6 +71,9 @@ public:
 
   /// isCPlusPlus0x - Language is a C++0x variant.
   bool isCPlusPlus0x() const { return Flags & frontend::CPlusPlus0x; }
+
+  /// isCPlusPlus1y - Language is a C++1y variant.
+  bool isCPlusPlus1y() const { return Flags & frontend::CPlusPlus1y; }
 
   /// hasDigraphs - Language supports digraphs.
   bool hasDigraphs() const { return Flags & frontend::Digraphs; }

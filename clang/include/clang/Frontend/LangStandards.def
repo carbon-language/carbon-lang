@@ -107,6 +107,14 @@ LANGSTANDARD(gnucxx11, "gnu++11",
              "ISO C++ 2011 with amendments and GNU extensions",
              BCPLComment | CPlusPlus | CPlusPlus0x | Digraphs | GNUMode)
 
+LANGSTANDARD(cxx1y, "c++1y",
+             "Working draft for ISO C++ 2014",
+             BCPLComment | CPlusPlus | CPlusPlus0x | CPlusPlus1y | Digraphs)
+LANGSTANDARD(gnucxx1y, "gnu++1y",
+             "Working draft for ISO C++ 2014 with GNU extensions",
+             BCPLComment | CPlusPlus | CPlusPlus0x | CPlusPlus1y | Digraphs |
+             GNUMode)
+
 // OpenCL
 LANGSTANDARD(opencl, "cl",
              "OpenCL 1.0",

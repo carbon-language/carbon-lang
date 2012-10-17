@@ -48,6 +48,7 @@ LANGOPT(MicrosoftMode     , 1, 0, "Microsoft compatibility mode")
 LANGOPT(Borland           , 1, 0, "Borland extensions")
 LANGOPT(CPlusPlus         , 1, 0, "C++")
 LANGOPT(CPlusPlus0x       , 1, 0, "C++0x")
+LANGOPT(CPlusPlus1y       , 1, 0, "C++1y")
 LANGOPT(ObjC1             , 1, 0, "Objective-C 1")
 LANGOPT(ObjC2             , 1, 0, "Objective-C 2")
 BENIGN_LANGOPT(ObjCDefaultSynthProperties , 1, 0, 
