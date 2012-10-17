@@ -47,7 +47,6 @@ typedef uint16_t  U2;
 typedef uint32_t  U4;
 typedef uint64_t  U8;
 
-static const char *progname;
 static const int kPageSize = 4096;
 
 // Simple stand-alone pseudorandom number generator.
@@ -2167,11 +2166,4 @@ TEST(AddressSanitizer, LongDoubleNegativeTest) {
   static long double c;
   memcpy(Ident(&a), Ident(&b), sizeof(long double));
   memcpy(Ident(&c), Ident(&b), sizeof(long double));
-}
-
-int main(int argc, char **argv) {
-  progname = argv[0];
-  testing::GTEST_FLAG(death_test_style) = "threadsafe";
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

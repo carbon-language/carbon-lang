@@ -104,6 +104,7 @@ endfunction()
 set(ASAN_NOINST_TEST_SOURCES
   asan_noinst_test.cc
   asan_break_optimization.cc
+  asan_test_main.cc
 )
 
 set(ASAN_INST_TEST_OBJECTS)

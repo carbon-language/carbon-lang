@@ -370,7 +370,7 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   // We cannot call GetAllocatedSize from the memory we didn't map,
   // and from the interior pointers (not returned by previous malloc).
   void *wild_addr = (void*)0x1;
-  EXPECT_FALSE( __asan_get_ownership(wild_addr));
+  EXPECT_FALSE(__asan_get_ownership(wild_addr));
   EXPECT_DEATH(__asan_get_allocated_size(wild_addr), kGetAllocatedSizeErrorMsg);
   EXPECT_FALSE(__asan_get_ownership(array + kArraySize / 2));
   EXPECT_DEATH(__asan_get_allocated_size(array + kArraySize / 2),
@@ -383,7 +383,7 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   // When memory is freed, it's not owned, and call to GetAllocatedSize
   // is forbidden.
   free(array);
-  EXPECT_FALSE( __asan_get_ownership(array));
+  EXPECT_FALSE(__asan_get_ownership(array));
   EXPECT_DEATH(__asan_get_allocated_size(array), kGetAllocatedSizeErrorMsg);
 
   delete int_ptr;
