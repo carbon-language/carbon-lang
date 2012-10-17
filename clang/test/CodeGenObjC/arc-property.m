@@ -11,8 +11,8 @@ void test0(Test0 *t0, id value) {
 // CHECK: call i8* @objc_retain(
 // CHECK: call i8* @objc_retain(
 // CHECK: @objc_msgSend
-// CHECK: call void @objc_release(
-// CHECK: call void @objc_release(
+// CHECK: call void @objc_storeStrong(
+// CHECK: call void @objc_storeStrong(
 
 struct S1 { Class isa; };
 @interface Test1

@@ -67,8 +67,7 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: store i8* [[T2]], i8** [[T0]]
 // CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] 
 // CHECK-LP64: call void @use_block(
-// CHECK-LP64-NEXT: [[T1:%.*]] = load i8** [[D0]]
-// CHECK-LP64-NEXT: call void @objc_release(i8* [[T1]])
+// CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[D0]], i8* null)
 
 // CHECK-LP64:      [[T0:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
 // CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[SAVED_ARRAY]] to i8*
@@ -79,9 +78,8 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: call void @objc_release(i8* [[T0]])
 
 // Destroy 'array'.
-// CHECK-LP64:      [[T0:%.*]] = load [[ARRAY_T]]** [[ARRAY]]
-// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[T0]] to i8*
-// CHECK-LP64-NEXT: call void @objc_release(i8* [[T1]])
+// CHECK-LP64:      [[T0:%.*]] = bitcast [[ARRAY_T]]** [[ARRAY]] to i8**
+// CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[T0]], i8* null)
 // CHECK-LP64-NEXT: ret void
 
 // CHECK-LP64:    define internal void @__test0_block_invoke

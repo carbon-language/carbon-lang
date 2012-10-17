@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -O2 -disable-llvm-optzns -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -o - %s | FileCheck -check-prefix=CHECK-UNOPT %s
 
 // This shouldn't crash.
 void test0(id (^maker)(void)) {
@@ -41,6 +42,24 @@ void test2(id x) {
 // CHECK-NEXT: ret void
   extern void test2_helper(id (^)(void));
   test2_helper(^{ return x; });
+
+// CHECK:    define internal void @__copy_helper_block_
+// CHECK:      [[T0:%.*]] = load i8**
+// CHECK-NEXT: [[SRC:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
+// CHECK-NEXT: [[T0:%.*]] = load i8**
+// CHECK-NEXT: [[DST:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[SRC]], i32 0, i32 5
+// CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]]) nounwind
+// CHECK-NEXT: ret void
+
+// CHECK:    define internal void @__destroy_helper_block_
+// CHECK:      [[T0:%.*]] = load i8**
+// CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[T1]], i32 0, i32 5
+// CHECK-NEXT: [[T3:%.*]] = load i8** [[T2]]
+// CHECK-NEXT: call void @objc_release(i8* [[T3]])
+// CHECK-NEXT: ret void
 }
 
 void test3(void (^sink)(id*)) {
@@ -359,7 +378,7 @@ void test10a(void) {
 // CHECK:      [[T0:%.*]] = load i8** {{%.*}}
 // CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[BYREF_T]]*
 // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BYREF_T]]* [[T1]], i32 0, i32 6
-// CHECK-NEXT: [[T3:%.*]] = load void ()** [[T2]], align 8
+// CHECK-NEXT: [[T3:%.*]] = load void ()** [[T2]]
 // CHECK-NEXT: [[T4:%.*]] = bitcast void ()* [[T3]] to i8*
 // CHECK-NEXT: call void @objc_release(i8* [[T4]])
 // CHECK-NEXT: ret void
@@ -589,3 +608,42 @@ id (^test17(id self, int which))(void) {
 // CHECK-NEXT: call void @objc_release(i8* [[T0]])
 // CHECK-NEXT: store i32
 // CHECK-NEXT: br label
+
+void test18(id x) {
+// CHECK-UNOPT:    define void @test18(
+// CHECK-UNOPT:      [[X:%.*]] = alloca i8*,
+// CHECK-UNOPT-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
+// CHECK-UNOPT-NEXT: [[PARM:%.*]] = call i8* @objc_retain(i8* {{%.*}})
+// CHECK-UNOPT-NEXT: store i8* [[PARM]], i8** [[X]]
+// CHECK-UNOPT-NEXT: [[SLOTREL:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-UNOPT:      [[SLOT:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-UNOPT-NEXT: [[T0:%.*]] = load i8** [[X]],
+// CHECK-UNOPT-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+// CHECK-UNOPT-NEXT: store i8* [[T1]], i8** [[SLOT]],
+// CHECK-UNOPT-NEXT: bitcast
+// CHECK-UNOPT-NEXT: call void @test18_helper(
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[SLOTREL]], i8* null) nounwind
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[X]], i8* null) nounwind
+// CHECK-UNOPT-NEXT: ret void
+  extern void test18_helper(id (^)(void));
+  test18_helper(^{ return x; });
+
+// CHECK-UNOPT:    define internal void @__copy_helper_block_
+// CHECK-UNOPT:      [[T0:%.*]] = load i8**
+// CHECK-UNOPT-NEXT: [[SRC:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
+// CHECK-UNOPT-NEXT: [[T0:%.*]] = load i8**
+// CHECK-UNOPT-NEXT: [[DST:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
+// CHECK-UNOPT-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[SRC]], i32 0, i32 5
+// CHECK-UNOPT-NEXT: [[T1:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[DST]], i32 0, i32 5
+// CHECK-UNOPT-NEXT: [[T2:%.*]] = load i8** [[T0]]
+// CHECK-UNOPT-NEXT: store i8* null, i8** [[T1]]
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[T1]], i8* [[T2]]) nounwind
+// CHECK-UNOPT-NEXT: ret void
+
+// CHECK-UNOPT:    define internal void @__destroy_helper_block_
+// CHECK-UNOPT:      [[T0:%.*]] = load i8**
+// CHECK-UNOPT-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
+// CHECK-UNOPT-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[T1]], i32 0, i32 5
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[T2]], i8* null)
+// CHECK-UNOPT-NEXT: ret void
+}

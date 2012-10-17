@@ -35,7 +35,7 @@ void test_new(id invalue) {
   // CHECK: call i8* @objc_initWeak
   new __weak id(invalue);
 
-  // CHECK: call void @objc_release
+  // CHECK: call void @objc_storeStrong
   // CHECK: ret void
 }
 
@@ -76,8 +76,7 @@ void test_array_delete(__strong id *sptr, __weak id *wptr) {
   // CHECK-NEXT: icmp eq i8** [[BEGIN]], [[END]]
   // CHECK: [[PAST:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]],
   // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
-  // CHECK-NEXT: [[T0:%.*]] = load i8** [[CUR]]
-  // CHECK-NEXT: call void @objc_release(i8* [[T0]])
+  // CHECK-NEXT: call void @objc_storeStrong(i8** [[CUR]], i8* null)
   // CHECK-NEXT: icmp eq i8** [[CUR]], [[BEGIN]]
   // CHECK: call void @_ZdaPv
   delete [] sptr;

@@ -1241,7 +1241,8 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
     const Expr *copyExpr = ci->getCopyExpr();
     BlockFieldFlags flags;
 
-    bool isARCWeakCapture = false;
+    bool useARCWeakCopy = false;
+    bool useARCStrongCopy = false;
 
     if (copyExpr) {
       assert(!ci->isByRef());
@@ -1254,21 +1255,35 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
 
     } else if (type->isObjCRetainableType()) {
       flags = BLOCK_FIELD_IS_OBJECT;
-      if (type->isBlockPointerType())
+      bool isBlockPointer = type->isBlockPointerType();
+      if (isBlockPointer)
         flags = BLOCK_FIELD_IS_BLOCK;
 
       // Special rules for ARC captures:
       if (getLangOpts().ObjCAutoRefCount) {
         Qualifiers qs = type.getQualifiers();
 
-        // Don't generate special copy logic for a captured object
-        // unless it's __strong or __weak.
-        if (!qs.hasStrongOrWeakObjCLifetime())
-          continue;
+        // We need to register __weak direct captures with the runtime.
+        if (qs.getObjCLifetime() == Qualifiers::OCL_Weak) {
+          useARCWeakCopy = true;
 
-        // Support __weak direct captures.
-        if (qs.getObjCLifetime() == Qualifiers::OCL_Weak)
-          isARCWeakCapture = true;
+        // We need to retain the copied value for __strong direct captures.
+        } else if (qs.getObjCLifetime() == Qualifiers::OCL_Strong) {
+          // If it's a block pointer, we have to copy the block and
+          // assign that to the destination pointer, so we might as
+          // well use _Block_object_assign.  Otherwise we can avoid that.
+          if (!isBlockPointer)
+            useARCStrongCopy = true;
+
+        // Otherwise the memcpy is fine.
+        } else {
+          continue;
+        }
+
+      // Non-ARC captures of retainable pointers are strong and
+      // therefore require a call to _Block_object_assign.
+      } else {
+        // fall through
       }
     } else {
       continue;
@@ -1281,14 +1296,36 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
     // If there's an explicit copy expression, we do that.
     if (copyExpr) {
       EmitSynthesizedCXXCopyCtor(dstField, srcField, copyExpr);
-    } else if (isARCWeakCapture) {
+    } else if (useARCWeakCopy) {
       EmitARCCopyWeak(dstField, srcField);
     } else {
       llvm::Value *srcValue = Builder.CreateLoad(srcField, "blockcopy.src");
-      srcValue = Builder.CreateBitCast(srcValue, VoidPtrTy);
-      llvm::Value *dstAddr = Builder.CreateBitCast(dstField, VoidPtrTy);
-      Builder.CreateCall3(CGM.getBlockObjectAssign(), dstAddr, srcValue,
-                          llvm::ConstantInt::get(Int32Ty, flags.getBitMask()));
+      if (useARCStrongCopy) {
+        // At -O0, store null into the destination field (so that the
+        // storeStrong doesn't over-release) and then call storeStrong.
+        // This is a workaround to not having an initStrong call.
+        if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
+          llvm::PointerType *ty = cast<llvm::PointerType>(srcValue->getType());
+          llvm::Value *null = llvm::ConstantPointerNull::get(ty);
+          Builder.CreateStore(null, dstField);
+          EmitARCStoreStrongCall(dstField, srcValue, true);
+
+        // With optimization enabled, take advantage of the fact that
+        // the blocks runtime guarantees a memcpy of the block data, and
+        // just emit a retain of the src field.
+        } else {
+          EmitARCRetainNonBlock(srcValue);
+
+          // We don't need this anymore, so kill it.  It's not quite
+          // worth the annoyance to avoid creating it in the first place.
+          cast<llvm::Instruction>(dstField)->eraseFromParent();
+        }
+      } else {
+        srcValue = Builder.CreateBitCast(srcValue, VoidPtrTy);
+        llvm::Value *dstAddr = Builder.CreateBitCast(dstField, VoidPtrTy);
+        Builder.CreateCall3(CGM.getBlockObjectAssign(), dstAddr, srcValue,
+                            llvm::ConstantInt::get(Int32Ty, flags.getBitMask()));
+      }
     }
   }
 
@@ -1353,7 +1390,8 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
     BlockFieldFlags flags;
     const CXXDestructorDecl *dtor = 0;
 
-    bool isARCWeakCapture = false;
+    bool useARCWeakDestroy = false;
+    bool useARCStrongDestroy = false;
 
     if (ci->isByRef()) {
       flags = BLOCK_FIELD_IS_BYREF;
@@ -1379,7 +1417,11 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
 
         // Support __weak direct captures.
         if (qs.getObjCLifetime() == Qualifiers::OCL_Weak)
-          isARCWeakCapture = true;
+          useARCWeakDestroy = true;
+
+        // Tools really want us to use objc_storeStrong here.
+        else
+          useARCStrongDestroy = true;
       }
     } else {
       continue;
@@ -1393,8 +1435,12 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
       PushDestructorCleanup(dtor, srcField);
 
     // If this is a __weak capture, emit the release directly.
-    } else if (isARCWeakCapture) {
+    } else if (useARCWeakDestroy) {
       EmitARCDestroyWeak(srcField);
+
+    // Destroy strong objects with a call if requested.
+    } else if (useARCStrongDestroy) {
+      EmitARCDestroyStrong(srcField, /*precise*/ false);
 
     // Otherwise we call _Block_object_dispose.  It wouldn't be too
     // hard to just emit this as a cleanup if we wanted to make sure
@@ -1494,10 +1540,7 @@ public:
   }
 
   void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
-    llvm::LoadInst *value = CGF.Builder.CreateLoad(field);
-    value->setAlignment(Alignment.getQuantity());
-
-    CGF.EmitARCRelease(value, /*precise*/ false);
+    CGF.EmitARCDestroyStrong(field, /*precise*/ false);
   }
 
   void profileImpl(llvm::FoldingSetNodeID &id) const {
@@ -1527,10 +1570,7 @@ public:
   }
 
   void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
-    llvm::LoadInst *value = CGF.Builder.CreateLoad(field);
-    value->setAlignment(Alignment.getQuantity());
-
-    CGF.EmitARCRelease(value, /*precise*/ false);
+    CGF.EmitARCDestroyStrong(field, /*precise*/ false);
   }
 
   void profileImpl(llvm::FoldingSetNodeID &id) const {

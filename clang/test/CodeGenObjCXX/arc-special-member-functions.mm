@@ -111,7 +111,7 @@ void test_ObjCBlockMember_copy_assign(ObjCBlockMember m1, ObjCBlockMember m2) {
 
 // Implicitly-generated destructor for ObjCBlockMember
 // CHECK: define linkonce_odr void @_ZN15ObjCBlockMemberD2Ev
-// CHECK: call void @objc_release(i8*
+// CHECK: call void @objc_storeStrong(i8*
 // CHECK: ret
 
 // Implicitly-generated default constructor for ObjCBlockMember
@@ -134,8 +134,7 @@ void test_ObjCBlockMember_copy_assign(ObjCBlockMember m1, ObjCBlockMember m2) {
 // CHECK-NEXT: br label
 // CHECK:      [[PAST:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
 // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
-// CHECK-NEXT: [[T0:%.*]] = load i8** [[CUR]]
-// CHECK-NEXT: call void @objc_release(i8* [[T0]])
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[CUR]], i8* null)
 // CHECK-NEXT: [[T1:%.*]] = icmp eq i8** [[CUR]], [[BEGIN]]
 // CHECK-NEXT: br i1 [[T1]], 
 // CHECK:      ret void
@@ -154,7 +153,7 @@ void test_ObjCBlockMember_copy_assign(ObjCBlockMember m1, ObjCBlockMember m2) {
 
 // Implicitly-generated destructor for ObjCMember
 // CHECK: define linkonce_odr void @_ZN10ObjCMemberD2Ev
-// CHECK: call void @objc_release
+// CHECK: call void @objc_storeStrong
 // CHECK: ret void
 
 // Implicitly-generated default constructor for ObjCMember

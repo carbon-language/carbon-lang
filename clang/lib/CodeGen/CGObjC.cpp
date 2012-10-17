@@ -1949,6 +1949,28 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value, bool precise) {
   }
 }
 
+/// Destroy a __strong variable.
+///
+/// At -O0, emit a call to store 'null' into the address;
+/// instrumenting tools prefer this because the address is exposed,
+/// but it's relatively cumbersome to optimize.
+///
+/// At -O1 and above, just load and call objc_release.
+///
+///   call void \@objc_storeStrong(i8** %addr, i8* null)
+void CodeGenFunction::EmitARCDestroyStrong(llvm::Value *addr, bool precise) {
+  if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
+    llvm::PointerType *addrTy = cast<llvm::PointerType>(addr->getType());
+    llvm::Value *null = llvm::ConstantPointerNull::get(
+                          cast<llvm::PointerType>(addrTy->getElementType()));
+    EmitARCStoreStrongCall(addr, null, /*ignored*/ true);
+    return;
+  }
+
+  llvm::Value *value = Builder.CreateLoad(addr);
+  EmitARCRelease(value, precise);
+}
+
 /// Store into a strong object.  Always calls this:
 ///   call void \@objc_storeStrong(i8** %addr, i8* %value)
 llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
@@ -2222,15 +2244,13 @@ void CodeGenFunction::EmitObjCMRRAutoreleasePoolPop(llvm::Value *Arg) {
 void CodeGenFunction::destroyARCStrongPrecise(CodeGenFunction &CGF,
                                               llvm::Value *addr,
                                               QualType type) {
-  llvm::Value *ptr = CGF.Builder.CreateLoad(addr, "strongdestroy");
-  CGF.EmitARCRelease(ptr, /*precise*/ true);
+  CGF.EmitARCDestroyStrong(addr, /*precise*/ true);
 }
 
 void CodeGenFunction::destroyARCStrongImprecise(CodeGenFunction &CGF,
                                                 llvm::Value *addr,
                                                 QualType type) {
-  llvm::Value *ptr = CGF.Builder.CreateLoad(addr, "strongdestroy");
-  CGF.EmitARCRelease(ptr, /*precise*/ false);  
+  CGF.EmitARCDestroyStrong(addr, /*precise*/ false);
 }
 
 void CodeGenFunction::destroyARCWeak(CodeGenFunction &CGF,

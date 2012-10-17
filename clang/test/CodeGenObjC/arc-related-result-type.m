@@ -20,11 +20,9 @@ void test0(Test0 *val) {
 // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
 // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[TEST0]]*
 // CHECK-NEXT: store [[TEST0]]* [[T2]], [[TEST0]]** [[X]]
-// CHECK-NEXT: [[T0:%.*]] = load [[TEST0]]** [[X]]
-// CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST0]]* [[T0]] to i8*
-// CHECK-NEXT: call void @objc_release(i8* [[T1]])
-// CHECK-NEXT: [[T0:%.*]] = load [[TEST0]]** [[VAL]]
-// CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST0]]* [[T0]] to i8*
-// CHECK-NEXT: call void @objc_release(i8* [[T1]])
+// CHECK-NEXT: [[T0:%.*]] = bitcast [[TEST0]]** [[X]] to i8**
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[T0]], i8* null)
+// CHECK-NEXT: [[T0:%.*]] = bitcast [[TEST0]]** [[VAL]] to i8**
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[T0]], i8* null)
 // CHECK-NEXT: ret void
 }

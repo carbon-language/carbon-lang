@@ -20,9 +20,8 @@ void test0(void) {
 // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_retain(i8* [[T2]]) nounwind
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to [[ETY]]*
 // CHECK-NEXT: store [[ETY]]* [[T4]], [[ETY]]** [[E]]
-// CHECK-NEXT: [[T0:%.*]] = load [[ETY]]** [[E]]
-// CHECK-NEXT: [[T1:%.*]] = bitcast [[ETY]]* [[T0]] to i8*
-// CHECK-NEXT: call void @objc_release(i8* [[T1]]) nounwind
+// CHECK-NEXT: [[T0:%.*]] = bitcast [[ETY]]** [[E]] to i8**
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[T0]], i8* null) nounwind
 // CHECK-NEXT: call void @objc_end_catch() nounwind
 
 void test1_helper(void);
