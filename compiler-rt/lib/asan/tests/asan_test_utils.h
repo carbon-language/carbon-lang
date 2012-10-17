@@ -38,6 +38,13 @@ typedef __int64          int64_t;
 #define __has_feature(x) 0
 #endif
 
+#if __has_feature(address_sanitizer)
+# define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS \
+    __attribute__((no_address_safety_analysis))
+#else
+# define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
+#endif
+
 #ifndef __WORDSIZE
 #if __LP64__ || defined(_WIN64)
 #define __WORDSIZE 64

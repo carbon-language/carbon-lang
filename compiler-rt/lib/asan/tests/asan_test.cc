@@ -1811,7 +1811,7 @@ TEST(AddressSanitizer, LargeStructCopyTest) {
   *Ident(&a) = *Ident(&a);
 }
 
-__attribute__((no_address_safety_analysis))
+ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 static void NoAddressSafety() {
   char *foo = new char[10];
   Ident(foo)[10] = 0;
