@@ -90,6 +90,22 @@ void testArgument() {
   clang_analyzer_eval(getAssignedField(getS()) == 42); // expected-warning{{TRUE}}
 }
 
+void testImmediateUseParens() {
+  int x = ((getS())).field;
+
+  if (x != 42) return;
+  clang_analyzer_eval(x == 42); // expected-warning{{TRUE}}
+
+  clang_analyzer_eval(getConstrainedField(((getS()))) == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(getAssignedField(((getS()))) == 42); // expected-warning{{TRUE}}
+
+#if __cplusplus
+  clang_analyzer_eval(((getS())).check()); // expected-warning{{TRUE}}
+  clang_analyzer_eval(!((getS()))); // expected-warning{{FALSE}}
+  clang_analyzer_eval(~((getS()))); // expected-warning{{FALSE}}
+#endif
+}
+
 
 //--------------------
 // C++-only tests

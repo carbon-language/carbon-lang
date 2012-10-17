@@ -20,6 +20,44 @@
 using namespace clang;
 using namespace ento;
 
+static const Expr *ignoreTransparentExprs(const Expr *E) {
+  E = E->IgnoreParens();
+
+  switch (E->getStmtClass()) {
+  case Stmt::OpaqueValueExprClass:
+    E = cast<OpaqueValueExpr>(E)->getSourceExpr();
+    break;
+  case Stmt::ExprWithCleanupsClass:
+    E = cast<ExprWithCleanups>(E)->getSubExpr();
+    break;
+  case Stmt::CXXBindTemporaryExprClass:
+    E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
+    break;
+  case Stmt::SubstNonTypeTemplateParmExprClass:
+    E = cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement();
+    break;
+  case Stmt::CXXDefaultArgExprClass:
+    E = cast<CXXDefaultArgExpr>(E)->getExpr();
+    break;
+  default:
+    // This is the base case: we can't look through more than we already have.
+    return E;
+  }
+
+  return ignoreTransparentExprs(E);
+}
+
+static const Stmt *ignoreTransparentExprs(const Stmt *S) {
+  if (const Expr *E = dyn_cast<Expr>(S))
+    return ignoreTransparentExprs(E);
+  return S;
+}
+
+EnvironmentEntry::EnvironmentEntry(const Stmt *S, const LocationContext *L)
+  : std::pair<const Stmt *,
+              const StackFrameContext *>(ignoreTransparentExprs(S),
+                                         L ? L->getCurrentStackFrame() : 0) {}
+
 SVal Environment::lookupExpr(const EnvironmentEntry &E) const {
   const SVal* X = ExprBindings.lookup(E);
   if (X) {
@@ -31,93 +69,71 @@ SVal Environment::lookupExpr(const EnvironmentEntry &E) const {
 
 SVal Environment::getSVal(const EnvironmentEntry &Entry,
                           SValBuilder& svalBuilder) const {
-  const Stmt *E = Entry.getStmt();
+  const Stmt *S = Entry.getStmt();
   const LocationContext *LCtx = Entry.getLocationContext();
-  
-  for (;;) {
-    if (const Expr *Ex = dyn_cast<Expr>(E))
-      E = Ex->IgnoreParens();
 
-    switch (E->getStmtClass()) {
-      case Stmt::AddrLabelExprClass:
-        return svalBuilder.makeLoc(cast<AddrLabelExpr>(E));
-      case Stmt::OpaqueValueExprClass: {
-        const OpaqueValueExpr *ope = cast<OpaqueValueExpr>(E);
-        E = ope->getSourceExpr();
-        continue;        
-      }        
-      case Stmt::ParenExprClass:
-      case Stmt::GenericSelectionExprClass:
-        llvm_unreachable("ParenExprs and GenericSelectionExprs should "
-                         "have been handled by IgnoreParens()");
-      case Stmt::CharacterLiteralClass: {
-        const CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return svalBuilder.makeIntVal(C->getValue(), C->getType());
-      }
-      case Stmt::CXXBoolLiteralExprClass: {
-        const SVal *X = ExprBindings.lookup(EnvironmentEntry(E, LCtx));
-        if (X) 
-          return *X;
-        else 
-          return svalBuilder.makeBoolVal(cast<CXXBoolLiteralExpr>(E));
-      }
-      case Stmt::CXXScalarValueInitExprClass:
-      case Stmt::ImplicitValueInitExprClass: {
-        QualType Ty = cast<Expr>(E)->getType();
-        return svalBuilder.makeZeroVal(Ty);
-      }
-      case Stmt::IntegerLiteralClass: {
-        // In C++, this expression may have been bound to a temporary object.
-        SVal const *X = ExprBindings.lookup(EnvironmentEntry(E, LCtx));
-        if (X)
-          return *X;
-        else
-          return svalBuilder.makeIntVal(cast<IntegerLiteral>(E));
-      }
-      case Stmt::ObjCBoolLiteralExprClass:
-        return svalBuilder.makeBoolVal(cast<ObjCBoolLiteralExpr>(E));
+  switch (S->getStmtClass()) {
+  case Stmt::CXXBindTemporaryExprClass:
+  case Stmt::CXXDefaultArgExprClass:
+  case Stmt::ExprWithCleanupsClass:
+  case Stmt::GenericSelectionExprClass:
+  case Stmt::OpaqueValueExprClass:
+  case Stmt::ParenExprClass:
+  case Stmt::SubstNonTypeTemplateParmExprClass:
+    llvm_unreachable("Should have been handled by ignoreTransparentExprs");
 
-      // For special C0xx nullptr case, make a null pointer SVal.
-      case Stmt::CXXNullPtrLiteralExprClass:
-        return svalBuilder.makeNull();
-      case Stmt::ExprWithCleanupsClass:
-        E = cast<ExprWithCleanups>(E)->getSubExpr();
-        continue;
-      case Stmt::CXXBindTemporaryExprClass:
-        E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
-        continue;
-      case Stmt::SubstNonTypeTemplateParmExprClass:
-        E = cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement();
-        continue;
-      case Stmt::CXXDefaultArgExprClass:
-        E = cast<CXXDefaultArgExpr>(E)->getExpr();
-        continue;
-      case Stmt::ObjCStringLiteralClass: {
-        MemRegionManager &MRMgr = svalBuilder.getRegionManager();
-        const ObjCStringLiteral *SL = cast<ObjCStringLiteral>(E);
-        return svalBuilder.makeLoc(MRMgr.getObjCStringRegion(SL));
-      }
-      case Stmt::StringLiteralClass: {
-        MemRegionManager &MRMgr = svalBuilder.getRegionManager();
-        const StringLiteral *SL = cast<StringLiteral>(E);
-        return svalBuilder.makeLoc(MRMgr.getStringRegion(SL));
-      }
-      case Stmt::ReturnStmtClass: {
-        const ReturnStmt *RS = cast<ReturnStmt>(E);
-        if (const Expr *RE = RS->getRetValue()) {
-          E = RE;
-          continue;
-        }
-        return UndefinedVal();        
-      }
-        
-      // Handle all other Stmt* using a lookup.
-      default:
-        break;
-    };
+  case Stmt::AddrLabelExprClass:
+    return svalBuilder.makeLoc(cast<AddrLabelExpr>(S));
+
+  case Stmt::CharacterLiteralClass: {
+    const CharacterLiteral *C = cast<CharacterLiteral>(S);
+    return svalBuilder.makeIntVal(C->getValue(), C->getType());
+  }
+
+  case Stmt::CXXBoolLiteralExprClass:
+    return svalBuilder.makeBoolVal(cast<CXXBoolLiteralExpr>(S));
+
+  case Stmt::CXXScalarValueInitExprClass:
+  case Stmt::ImplicitValueInitExprClass: {
+    QualType Ty = cast<Expr>(S)->getType();
+    return svalBuilder.makeZeroVal(Ty);
+  }
+
+  case Stmt::IntegerLiteralClass:
+    return svalBuilder.makeIntVal(cast<IntegerLiteral>(S));
+
+  case Stmt::ObjCBoolLiteralExprClass:
+    return svalBuilder.makeBoolVal(cast<ObjCBoolLiteralExpr>(S));
+
+  // For special C0xx nullptr case, make a null pointer SVal.
+  case Stmt::CXXNullPtrLiteralExprClass:
+    return svalBuilder.makeNull();
+
+  case Stmt::ObjCStringLiteralClass: {
+    MemRegionManager &MRMgr = svalBuilder.getRegionManager();
+    const ObjCStringLiteral *SL = cast<ObjCStringLiteral>(S);
+    return svalBuilder.makeLoc(MRMgr.getObjCStringRegion(SL));
+  }
+
+  case Stmt::StringLiteralClass: {
+    MemRegionManager &MRMgr = svalBuilder.getRegionManager();
+    const StringLiteral *SL = cast<StringLiteral>(S);
+    return svalBuilder.makeLoc(MRMgr.getStringRegion(SL));
+  }
+
+  case Stmt::ReturnStmtClass: {
+    const ReturnStmt *RS = cast<ReturnStmt>(S);
+    if (const Expr *RE = RS->getRetValue())
+      return getSVal(EnvironmentEntry(RE, LCtx), svalBuilder);
+    return UndefinedVal();        
+  }
+    
+  // Handle all other Stmt* using a lookup.
+  default:
     break;
   }
-  return lookupExpr(EnvironmentEntry(E, LCtx));
+  
+  return lookupExpr(EnvironmentEntry(S, LCtx));
 }
 
 Environment EnvironmentManager::bindExpr(Environment Env,
@@ -133,16 +149,16 @@ Environment EnvironmentManager::bindExpr(Environment Env,
   return Environment(F.add(Env.ExprBindings, E, V));
 }
 
-static inline EnvironmentEntry MakeLocation(const EnvironmentEntry &E) {
-  const Stmt *S = E.getStmt();
-  S = (const Stmt*) (((uintptr_t) S) | 0x1);
-  return EnvironmentEntry(S, E.getLocationContext());
+EnvironmentEntry EnvironmentEntry::makeLocation() const {
+  EnvironmentEntry Result = *this;
+  reinterpret_cast<uintptr_t &>(Result.first) |= 0x1;
+  return Result;
 }
 
 Environment EnvironmentManager::bindExprAndLocation(Environment Env,
                                                     const EnvironmentEntry &E,
                                                     SVal location, SVal V) {
-  return Environment(F.add(F.add(Env.ExprBindings, MakeLocation(E), location),
+  return Environment(F.add(F.add(Env.ExprBindings, E.makeLocation(), location),
                            E, V));
 }
 

@@ -33,10 +33,11 @@ class SValBuilder;
 /// other things.
 class EnvironmentEntry : public std::pair<const Stmt*,
                                           const StackFrameContext *> {
+  friend class EnvironmentManager;
+  EnvironmentEntry makeLocation() const;
+
 public:
-  EnvironmentEntry(const Stmt *s, const LocationContext *L)
-    : std::pair<const Stmt*,
-                const StackFrameContext*>(s, L ? L->getCurrentStackFrame():0) {}
+  EnvironmentEntry(const Stmt *s, const LocationContext *L);
 
   const Stmt *getStmt() const { return first; }
   const LocationContext *getLocationContext() const { return second; }
