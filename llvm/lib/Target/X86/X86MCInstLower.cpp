@@ -67,15 +67,11 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 /// operand to an MCSymbol.
 MCSymbol *X86MCInstLower::
 GetSymbolFromOperand(const MachineOperand &MO) const {
-  assert((MO.isGlobal() || MO.isSymbol()) && "Isn't a symbol reference");
+  assert((MO.isGlobal() || MO.isSymbol() || MO.isMBB()) && "Isn't a symbol reference");
 
   SmallString<128> Name;
 
-  if (!MO.isGlobal()) {
-    assert(MO.isSymbol());
-    Name += MAI.getGlobalPrefix();
-    Name += MO.getSymbolName();
-  } else {
+  if (MO.isGlobal()) {
     const GlobalValue *GV = MO.getGlobal();
     bool isImplicitlyPrivate = false;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
@@ -85,6 +81,11 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       isImplicitlyPrivate = true;
 
     Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+  } else if (MO.isSymbol()) {
+    Name += MAI.getGlobalPrefix();
+    Name += MO.getSymbolName();
+  } else if (MO.isMBB()) {
+    Name += MO.getMBB()->getSymbol()->getName();
   }
 
   // If the target flags on the operand changes the name of the symbol, do that
@@ -215,7 +216,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   if (Expr == 0)
     Expr = MCSymbolRefExpr::Create(Sym, RefKind, Ctx);
 
-  if (!MO.isJTI() && MO.getOffset())
+  if (!MO.isJTI() && !MO.isMBB() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
                                    Ctx);
@@ -348,9 +349,6 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = MCOperand::CreateImm(MO.getImm());
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
-                       MO.getMBB()->getSymbol(), Ctx));
-      break;
     case MachineOperand::MO_GlobalAddress:
     case MachineOperand::MO_ExternalSymbol:
       MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));

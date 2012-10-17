@@ -459,7 +459,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::EH_RETURN       , MVT::Other, Custom);
   // NOTE: EH_SJLJ_SETJMP/_LONGJMP supported here is NOT intened to support
   // SjLj exception handling but a light-weight setjmp/longjmp replacement to
-  // support continuation, user-level threading, and etc.. As a result, not
+  // support continuation, user-level threading, and etc.. As a result, no
   // other SjLj exception interfaces are implemented and please don't build
   // your own exception handling based on them.
   // LLVM/Clang supports zero-cost DWARF exception handling.
@@ -13312,7 +13312,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   // For v = setjmp(buf), we generate
   //
   // thisMBB:
-  //  buf[Label_Offset] = ljMBB
+  //  buf[LabelOffset] = restoreMBB
   //  SjLjSetup restoreMBB
   //
   // mainMBB:
@@ -13340,18 +13340,48 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:
-  unsigned PtrImmStoreOpc = (PVT == MVT::i64) ? X86::MOV64mi32 : X86::MOV32mi;
-  const int64_t Label_Offset = 1 * PVT.getStoreSize();
+  unsigned PtrStoreOpc = 0;
+  unsigned LabelReg = 0;
+  const int64_t LabelOffset = 1 * PVT.getStoreSize();
+  Reloc::Model RM = getTargetMachine().getRelocationModel();
+  bool UseImmLabel = (getTargetMachine().getCodeModel() == CodeModel::Small) &&
+                     (RM == Reloc::Static || RM == Reloc::DynamicNoPIC);
 
+  // Prepare IP either in reg or imm.
+  if (!UseImmLabel) {
+    PtrStoreOpc = (PVT == MVT::i64) ? X86::MOV64mr : X86::MOV32mr;
+    const TargetRegisterClass *PtrRC = getRegClassFor(PVT);
+    LabelReg = MRI.createVirtualRegister(PtrRC);
+    if (Subtarget->is64Bit()) {
+      MIB = BuildMI(*thisMBB, MI, DL, TII->get(X86::LEA64r), LabelReg)
+              .addReg(X86::RIP)
+              .addImm(0)
+              .addReg(0)
+              .addMBB(restoreMBB)
+              .addReg(0);
+    } else {
+      const X86InstrInfo *XII = static_cast<const X86InstrInfo*>(TII);
+      MIB = BuildMI(*thisMBB, MI, DL, TII->get(X86::LEA32r), LabelReg)
+              .addReg(XII->getGlobalBaseReg(MF))
+              .addImm(0)
+              .addReg(0)
+              .addMBB(restoreMBB, Subtarget->ClassifyBlockAddressReference())
+              .addReg(0);
+    }
+  } else
+    PtrStoreOpc = (PVT == MVT::i64) ? X86::MOV64mi32 : X86::MOV32mi;
   // Store IP
-  MIB = BuildMI(*thisMBB, MI, DL, TII->get(PtrImmStoreOpc));
+  MIB = BuildMI(*thisMBB, MI, DL, TII->get(PtrStoreOpc));
   for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
     if (i == X86::AddrDisp)
-      MIB.addDisp(MI->getOperand(MemOpndSlot + i), Label_Offset);
+      MIB.addDisp(MI->getOperand(MemOpndSlot + i), LabelOffset);
     else
       MIB.addOperand(MI->getOperand(MemOpndSlot + i));
   }
-  MIB.addMBB(restoreMBB);
+  if (!UseImmLabel)
+    MIB.addReg(LabelReg);
+  else
+    MIB.addMBB(restoreMBB);
   MIB.setMemRefs(MMOBegin, MMOEnd);
   // Setup
   MIB = BuildMI(*thisMBB, MI, DL, TII->get(X86::EH_SjLj_Setup))
@@ -13406,8 +13436,8 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
 
   MachineInstrBuilder MIB;
 
-  const int64_t Label_Offset = 1 * PVT.getStoreSize();
-  const int64_t SP_Offset = 2 * PVT.getStoreSize();
+  const int64_t LabelOffset = 1 * PVT.getStoreSize();
+  const int64_t SPOffset = 2 * PVT.getStoreSize();
 
   unsigned PtrLoadOpc = (PVT == MVT::i64) ? X86::MOV64rm : X86::MOV32rm;
   unsigned IJmpOpc = (PVT == MVT::i64) ? X86::JMP64r : X86::JMP32r;
@@ -13421,7 +13451,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   MIB = BuildMI(*MBB, MI, DL, TII->get(PtrLoadOpc), Tmp);
   for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
     if (i == X86::AddrDisp)
-      MIB.addDisp(MI->getOperand(i), Label_Offset);
+      MIB.addDisp(MI->getOperand(i), LabelOffset);
     else
       MIB.addOperand(MI->getOperand(i));
   }
@@ -13430,7 +13460,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   MIB = BuildMI(*MBB, MI, DL, TII->get(PtrLoadOpc), SP);
   for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
     if (i == X86::AddrDisp)
-      MIB.addDisp(MI->getOperand(i), SP_Offset);
+      MIB.addDisp(MI->getOperand(i), SPOffset);
     else
       MIB.addOperand(MI->getOperand(i));
   }
