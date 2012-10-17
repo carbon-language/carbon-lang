@@ -2824,7 +2824,7 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
   llvm::APInt Field0(32, StringRef(Uuidstr     , 8), 16);
   llvm::APInt Field1(16, StringRef(Uuidstr +  9, 4), 16);
   llvm::APInt Field2(16, StringRef(Uuidstr + 14, 4), 16);
-  int Field3ValueOffsets[] = { 19, 21, 24, 26, 28, 30, 32, 34 };
+  static const int Field3ValueOffsets[] = { 19, 21, 24, 26, 28, 30, 32, 34 };
 
   APValue InitStruct(APValue::UninitStruct(), /*NumBases=*/0, /*NumFields=*/4);
   InitStruct.getStructField(0) = APValue(llvm::APSInt(Field0));
