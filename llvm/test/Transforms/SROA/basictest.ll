@@ -1063,3 +1063,23 @@ entry:
   call void @llvm.lifetime.end(i64 -1, i8* %0)
   ret void
 }
+
+define void @PR14105({ [16 x i8] }* %ptr) {
+; Ensure that when rewriting the GEP index '-1' for this alloca we preserve is
+; sign as negative. We use a volatile memcpy to ensure promotion never actually
+; occurs.
+; CHECK: @PR14105
+
+entry:
+  %a = alloca { [16 x i8] }, align 8
+; CHECK: alloca [16 x i8], align 8
+
+  %gep = getelementptr inbounds { [16 x i8] }* %ptr, i64 -1
+; CHECK-NEXT: getelementptr inbounds { [16 x i8] }* %ptr, i64 -1, i32 0, i64 0
+
+  %cast1 = bitcast { [16 x i8 ] }* %gep to i8*
+  %cast2 = bitcast { [16 x i8 ] }* %a to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast1, i8* %cast2, i32 16, i32 8, i1 true)
+  ret void
+; CHECK: ret
+}

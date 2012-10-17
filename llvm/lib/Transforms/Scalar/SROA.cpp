@@ -1828,7 +1828,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const DataLayout &TD,
     if (ElementSizeInBits % 8)
       return 0; // GEPs over non-multiple of 8 size vector elements are invalid.
     APInt ElementSize(Offset.getBitWidth(), ElementSizeInBits / 8);
-    APInt NumSkippedElements = Offset.udiv(ElementSize);
+    APInt NumSkippedElements = Offset.sdiv(ElementSize);
     if (NumSkippedElements.ugt(VecTy->getNumElements()))
       return 0;
     Offset -= NumSkippedElements * ElementSize;
@@ -1840,7 +1840,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const DataLayout &TD,
   if (ArrayType *ArrTy = dyn_cast<ArrayType>(Ty)) {
     Type *ElementTy = ArrTy->getElementType();
     APInt ElementSize(Offset.getBitWidth(), TD.getTypeAllocSize(ElementTy));
-    APInt NumSkippedElements = Offset.udiv(ElementSize);
+    APInt NumSkippedElements = Offset.sdiv(ElementSize);
     if (NumSkippedElements.ugt(ArrTy->getNumElements()))
       return 0;
 
@@ -1896,7 +1896,7 @@ static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const DataLayout &TD,
   APInt ElementSize(Offset.getBitWidth(), TD.getTypeAllocSize(ElementTy));
   if (ElementSize == 0)
     return 0; // Zero-length arrays can't help us build a natural GEP.
-  APInt NumSkippedElements = Offset.udiv(ElementSize);
+  APInt NumSkippedElements = Offset.sdiv(ElementSize);
 
   Offset -= NumSkippedElements * ElementSize;
   Indices.push_back(IRB.getInt(NumSkippedElements));
