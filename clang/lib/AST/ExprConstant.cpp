@@ -2886,19 +2886,13 @@ LValueExprEvaluator::VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
 }
 
 bool LValueExprEvaluator::VisitCXXTypeidExpr(const CXXTypeidExpr *E) {
-  if (E->isTypeOperand())
+  if (!E->isPotentiallyEvaluated())
     return Success(E);
-  CXXRecordDecl *RD = E->getExprOperand()->getType()->getAsCXXRecordDecl();
-  // FIXME: The standard says "a typeid expression whose operand is of a
-  // polymorphic class type" is not a constant expression, but it probably
-  // means "a typeid expression whose operand is potentially evaluated".
-  if (RD && RD->isPolymorphic()) {
-    Info.Diag(E, diag::note_constexpr_typeid_polymorphic)
-      << E->getExprOperand()->getType()
-      << E->getExprOperand()->getSourceRange();
-    return false;
-  }
-  return Success(E);
+
+  Info.Diag(E, diag::note_constexpr_typeid_polymorphic)
+    << E->getExprOperand()->getType()
+    << E->getExprOperand()->getSourceRange();
+  return false;
 }
 
 bool LValueExprEvaluator::VisitCXXUuidofExpr(const CXXUuidofExpr *E) {

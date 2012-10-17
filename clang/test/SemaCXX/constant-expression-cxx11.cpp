@@ -1408,3 +1408,14 @@ namespace Void {
   static_assert(get(arr, 0) == 4, ""); // expected-error{{not an integral constant expression}} \
   // expected-note{{in call to 'get(arr, 0)'}}
 }
+
+namespace std { struct type_info; }
+
+namespace TypeId {
+  struct A { virtual ~A(); };
+  A f();
+  A &g();
+  constexpr auto &x = typeid(f());
+  constexpr auto &y = typeid(g()); // expected-error{{constant expression}} \
+  // expected-note{{typeid applied to expression of polymorphic type 'TypeId::A' is not allowed in a constant expression}}
+}
