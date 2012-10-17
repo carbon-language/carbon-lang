@@ -21,6 +21,26 @@ def mem16 : Operand<i32> {
 }
 
 //
+// EXT-I instruction format
+//
+class FEXT_I16_ins<bits<5> eop, string asmstr, InstrItinClass itin> :
+  FEXT_I16<eop, (outs), (ins brtarget:$imm16),
+           !strconcat(asmstr, "\t$imm16"),[], itin>;
+
+//
+// EXT-I8 instruction format
+//
+
+class FEXT_I816_ins_base<bits<3> _func, string asmstr,
+                         string asmstr2, InstrItinClass itin>:
+  FEXT_I816<_func, (outs), (ins uimm16:$imm), !strconcat(asmstr, asmstr2),
+            [], itin>;
+
+class FEXT_I816_ins<bits<3> _func, string asmstr,
+                    InstrItinClass itin>:
+  FEXT_I816_ins_base<_func, asmstr, "\t$imm", itin>;
+
+//
 // Assembler formats in alphabetical order.
 // Natural and pseudos are mixed together.
 //
@@ -40,12 +60,18 @@ class FEXT_RI16_ins<bits<5> _op, string asmstr,
 class FEXT_RI16_PC_ins<bits<5> _op, string asmstr, InstrItinClass itin>:
   FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $$pc, $imm", itin>;
 
+class FEXT_RI16_B_ins<bits<5> _op, string asmstr,
+                      InstrItinClass itin>:
+  FEXT_RI16<_op, (outs), (ins  CPU16Regs:$rx, brtarget:$imm),
+            !strconcat(asmstr, "\t$rx, $imm"), [], itin>;
+
 class FEXT_2RI16_ins<bits<5> _op, string asmstr,
                      InstrItinClass itin>:
   FEXT_RI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
             !strconcat(asmstr, "\t$rx, $imm"), [], itin> {
   let Constraints = "$rx_ = $rx";
 }
+
 
 // this has an explicit sp argument that we ignore to work around a problem
 // in the compiler
@@ -74,6 +100,31 @@ class FEXT_RRI16_mem2_ins<bits<5> op, string asmstr, Operand MemOpnd,
 class FEXT_SHIFT16_ins<bits<2> _f, string asmstr, InstrItinClass itin>:
   FEXT_SHIFT16<_f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry, shamt:$sa),
                !strconcat(asmstr, "\t$rx, $ry, $sa"), [], itin>;
+
+//
+// EXT-T8I8
+//
+class FEXT_T8I816_ins<bits<3> _func, string asmstr, string asmstr2,
+                      InstrItinClass itin>:
+  FEXT_I816<_func, (outs),
+            (ins CPU16Regs:$rx, CPU16Regs:$ry, brtarget:$imm),
+            !strconcat(asmstr2, !strconcat("\t$rx, $ry\n\t",
+            !strconcat(asmstr, "\t$imm"))),[], itin> {
+  let isCodeGenOnly=1;
+}
+
+//
+// EXT-T8I8I
+//
+class FEXT_T8I8I16_ins<bits<3> _func, string asmstr, string asmstr2,
+                       InstrItinClass itin>:
+  FEXT_I816<_func, (outs),
+            (ins CPU16Regs:$rx, simm16:$imm, brtarget:$targ),
+            !strconcat(asmstr2, !strconcat("\t$rx, $imm\n\t",
+            !strconcat(asmstr, "\t$targ"))), [], itin> {
+  let isCodeGenOnly=1;
+}
+//
 
 
 //
@@ -165,6 +216,17 @@ class ArithLogic16Defs<bit isCom=0> {
   bit neverHasSideEffects = 1;
 }
 
+class branch16 {
+  bit isBranch = 1;
+  bit isTerminator = 1;
+  bit isBarrier = 1;
+}
+
+class cbranch16 {
+  bit isBranch = 1;
+  bit isTerminator = 1;
+}
+
 class MayLoad {
   bit mayLoad = 1;
 }
@@ -204,6 +266,69 @@ def AdduRxRyRz16: FRRR16_ins<01, "addu", IIAlu>, ArithLogic16Defs<1>;
 // To do a bitwise logical AND.
 
 def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIAlu>, ArithLogic16Defs<1>;
+
+
+//
+// Format: BEQZ rx, offset MIPS16e
+// Purpose: Branch on Equal to Zero (Extended)
+// To test a GPR then do a PC-relative conditional branch.
+//
+def BeqzRxImmX16: FEXT_RI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
+
+// Format: B offset MIPS16e
+// Purpose: Unconditional Branch
+// To do an unconditional PC-relative branch.
+//
+def BimmX16: FEXT_I16_ins<0b00010, "b", IIAlu>, branch16;
+
+//
+// Format: BNEZ rx, offset MIPS16e
+// Purpose: Branch on Not Equal to Zero (Extended)
+// To test a GPR then do a PC-relative conditional branch.
+//
+def BnezRxImmX16: FEXT_RI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
+
+//
+// Format: BTEQZ offset MIPS16e
+// Purpose: Branch on T Equal to Zero (Extended)
+// To test special register T then do a PC-relative conditional branch.
+//
+def BteqzX16: FEXT_I816_ins<0b000, "bteqz", IIAlu>, cbranch16;
+
+def BteqzT8CmpX16: FEXT_T8I816_ins<0b000, "bteqz", "cmp", IIAlu>, cbranch16;
+
+def BteqzT8CmpiX16: FEXT_T8I8I16_ins<0b000, "bteqz", "cmpi", IIAlu>,
+  cbranch16;
+
+def BteqzT8SltX16: FEXT_T8I816_ins<0b000, "bteqz", "slt", IIAlu>, cbranch16;
+
+def BteqzT8SltuX16: FEXT_T8I816_ins<0b000, "bteqz", "sltu", IIAlu>, cbranch16;
+
+def BteqzT8SltiX16: FEXT_T8I8I16_ins<0b000, "bteqz", "slti", IIAlu>, cbranch16;
+
+def BteqzT8SltiuX16: FEXT_T8I8I16_ins<0b000, "bteqz", "sltiu", IIAlu>,
+  cbranch16;
+
+//
+// Format: BTNEZ offset MIPS16e
+// Purpose: Branch on T Not Equal to Zero (Extended)
+// To test special register T then do a PC-relative conditional branch.
+//
+def BtnezX16: FEXT_I816_ins<0b001, "btnez", IIAlu> ,cbranch16;
+
+def BtnezT8CmpX16: FEXT_T8I816_ins<0b000, "btnez", "cmp", IIAlu>, cbranch16;
+
+def BtnezT8CmpiX16: FEXT_T8I8I16_ins<0b000, "btnez", "cmpi", IIAlu>, cbranch16;
+
+def BtnezT8SltX16: FEXT_T8I816_ins<0b000, "btnez", "slt", IIAlu>, cbranch16;
+
+def BtnezT8SltuX16: FEXT_T8I816_ins<0b000, "btnez", "sltu", IIAlu>, cbranch16;
+
+def BtnezT8SltiX16: FEXT_T8I8I16_ins<0b000, "btnez", "slti", IIAlu>, cbranch16;
+
+def BtnezT8SltiuX16: FEXT_T8I8I16_ins<0b000, "btnez", "sltiu", IIAlu>,
+  cbranch16;
+
 //
 // Format: DIV rx, ry MIPS16e
 // Purpose: Divide Word
@@ -562,6 +687,11 @@ def: StoreM16_pat<truncstorei8, SbRxRyOffMemX16>;
 def: StoreM16_pat<truncstorei16, ShRxRyOffMemX16>;
 def: StoreM16_pat<store, SwRxRyOffMemX16>;
 
+// Unconditional branch
+class UncondBranch16_pat<SDNode OpNode, Instruction I>:
+  Mips16Pat<(OpNode bb:$imm16), (I bb:$imm16)> {
+    let Predicates = [RelocPIC, InMips16Mode];
+  }
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1 in
@@ -574,7 +704,144 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,
   hasExtraSrcRegAllocReq = 1 in
 def RetRA16 : MipsPseudo16<(outs), (ins), "", [(MipsRet)]>;
 
+
+//
+// Some branch conditional patterns are not generated by llvm at this time.
+// Some are for seemingly arbitrary reasons not used: i.e. with signed number
+// comparison they are used and for unsigned a different pattern is used.
+// I am pushing upstream from the full mips16 port and it seemed that I needed
+// these earlier and the mips32 port has these but now I cannot create test
+// cases that use these patterns. While I sort this all out I will leave these
+// extra patterns commented out and if I can be sure they are really not used,
+// I will delete the code. I don't want to check the code in uncommented without
+// a valid test case. In some cases, the compiler is generating patterns with
+// setcc instead and earlier I had implemented setcc first so may have masked
+// the problem. The setcc variants are suboptimal for mips16 so I may wantto
+// figure out how to enable the brcond patterns or else possibly new
+// combinations of of brcond and setcc.
+//
+//
+// bcond-seteq
+//
+def: Mips16Pat
+  <(brcond (i32 (seteq CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+   (BteqzT8CmpX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
+  >;
+
+
+def: Mips16Pat
+  <(brcond (i32 (seteq CPU16Regs:$rx, immZExt16:$imm)), bb:$targ16),
+   (BteqzT8CmpiX16 CPU16Regs:$rx, immSExt16:$imm,  bb:$targ16)
+  >;
+
+def: Mips16Pat
+  <(brcond (i32 (seteq CPU16Regs:$rx, 0)), bb:$targ16),
+   (BeqzRxImmX16 CPU16Regs:$rx, bb:$targ16)
+  >;
+
+//
+// bcond-setgt (do we need to have this pair of setlt, setgt??)
+//
+def: Mips16Pat
+  <(brcond (i32 (setgt CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+   (BtnezT8SltX16 CPU16Regs:$ry, CPU16Regs:$rx,  bb:$imm16)
+  >;
+
+//
+// bcond-setge
+//
+def: Mips16Pat
+  <(brcond (i32 (setge CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+   (BteqzT8SltX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
+  >;
+
+//
+// never called because compiler transforms a >= k to a > (k-1)
+//def: Mips16Pat
+//  <(brcond (i32 (setge CPU16Regs:$rx, immSExt16:$imm)), bb:$imm16),
+//   (BteqzT8SltiX16 CPU16Regs:$rx, immSExt16:$imm,  bb:$imm16)
+//  >;
+
+//
+// bcond-setlt
+//
+def: Mips16Pat
+  <(brcond (i32 (setlt CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+   (BtnezT8SltX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
+  >;
+
+def: Mips16Pat
+  <(brcond (i32 (setlt CPU16Regs:$rx, immSExt16:$imm)), bb:$imm16),
+   (BtnezT8SltiX16 CPU16Regs:$rx, immSExt16:$imm,  bb:$imm16)
+  >;
+
+//
+// bcond-setle
+//
+def: Mips16Pat
+  <(brcond (i32 (setle CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+   (BteqzT8SltX16 CPU16Regs:$ry, CPU16Regs:$rx,  bb:$imm16)
+  >;
+
+//
+// bcond-setne
+//
+def: Mips16Pat
+  <(brcond (i32 (setne CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+   (BtnezT8CmpX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
+  >;
+
+def: Mips16Pat
+  <(brcond (i32 (setne CPU16Regs:$rx, immZExt16:$imm)), bb:$targ16),
+   (BtnezT8CmpiX16 CPU16Regs:$rx, immSExt16:$imm,  bb:$targ16)
+  >;
+
+def: Mips16Pat
+  <(brcond (i32 (setne CPU16Regs:$rx, 0)), bb:$targ16),
+   (BnezRxImmX16 CPU16Regs:$rx, bb:$targ16)
+  >;
+
+//
+// This needs to be there but I forget which code will generate it
+//
+def: Mips16Pat
+  <(brcond CPU16Regs:$rx, bb:$targ16),
+   (BnezRxImmX16 CPU16Regs:$rx, bb:$targ16)
+  >;
+
+//
+
+//
+// bcond-setugt
+//
+//def: Mips16Pat
+//  <(brcond (i32 (setugt CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+//   (BtnezT8SltuX16 CPU16Regs:$ry, CPU16Regs:$rx,  bb:$imm16)
+//  >;
+
+//
+// bcond-setuge
+//
+//def: Mips16Pat
+//  <(brcond (i32 (setuge CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+//   (BteqzT8SltuX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
+//  >;
+
+
+//
+// bcond-setult
+//
+//def: Mips16Pat
+//  <(brcond (i32 (setult CPU16Regs:$rx, CPU16Regs:$ry)), bb:$imm16),
+//   (BtnezT8SltuX16 CPU16Regs:$rx, CPU16Regs:$ry,  bb:$imm16)
+//  >;
+
+def: UncondBranch16_pat<br, BimmX16>;
+
 // Small immediates
+def: Mips16Pat<(i32 immSExt16:$in),
+               (AddiuRxRxImmX16 (Move32R16 ZERO), immSExt16:$in)>;
+
 def: Mips16Pat<(i32 immZExt16:$in), (LiRxImmX16 immZExt16:$in)>;
 
 //

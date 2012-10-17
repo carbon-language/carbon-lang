@@ -25,7 +25,7 @@
 using namespace llvm;
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
-  : MipsInstrInfo(tm, /* FIXME: set mips16 unconditional br */ 0),
+  : MipsInstrInfo(tm, Mips::BimmX16),
     RI(*tm.getSubtargetImpl()) {}
 
 const MipsRegisterInfo &Mips16InstrInfo::getRegisterInfo() const {
@@ -137,12 +137,39 @@ bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 /// GetOppositeBranchOpc - Return the inverse of the specified
 /// opcode, e.g. turning BEQ to BNE.
 unsigned Mips16InstrInfo::GetOppositeBranchOpc(unsigned Opc) const {
+  switch (Opc) {
+  default:  llvm_unreachable("Illegal opcode!");
+  case Mips::BeqzRxImmX16: return Mips::BnezRxImmX16;
+  case Mips::BnezRxImmX16: return Mips::BeqzRxImmX16;
+  case Mips::BteqzT8CmpX16: return Mips::BtnezT8CmpX16;
+  case Mips::BteqzT8SltX16: return Mips::BtnezT8SltX16;
+  case Mips::BteqzT8SltiX16: return Mips::BtnezT8SltiX16;
+  case Mips::BtnezX16: return Mips::BteqzX16;
+  case Mips::BtnezT8CmpiX16: return Mips::BteqzT8CmpiX16;
+  case Mips::BtnezT8SltuX16: return Mips::BteqzT8SltuX16;
+  case Mips::BtnezT8SltiuX16: return Mips::BteqzT8SltiuX16;
+  case Mips::BteqzX16: return Mips::BtnezX16;
+  case Mips::BteqzT8CmpiX16: return Mips::BtnezT8CmpiX16;
+  case Mips::BteqzT8SltuX16: return Mips::BtnezT8SltuX16;
+  case Mips::BteqzT8SltiuX16: return Mips::BtnezT8SltiuX16;
+  case Mips::BtnezT8CmpX16: return Mips::BteqzT8CmpX16;
+  case Mips::BtnezT8SltX16: return Mips::BteqzT8SltX16;
+  case Mips::BtnezT8SltiX16: return Mips::BteqzT8SltiX16;
+  }
   assert(false && "Implement this function.");
   return 0;
 }
 
 unsigned Mips16InstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {
-  return 0;
+  return (Opc == Mips::BeqzRxImmX16   || Opc == Mips::BimmX16  ||
+          Opc == Mips::BnezRxImmX16   || Opc == Mips::BteqzX16 ||
+          Opc == Mips::BteqzT8CmpX16  || Opc == Mips::BteqzT8CmpiX16 ||
+          Opc == Mips::BteqzT8SltX16  || Opc == Mips::BteqzT8SltuX16  ||
+          Opc == Mips::BteqzT8SltiX16 || Opc == Mips::BteqzT8SltiuX16 ||
+          Opc == Mips::BtnezX16       || Opc == Mips::BtnezT8CmpX16 ||
+          Opc == Mips::BtnezT8CmpiX16 || Opc == Mips::BtnezT8SltX16 ||
+          Opc == Mips::BtnezT8SltuX16 || Opc == Mips::BtnezT8SltiX16 ||
+          Opc == Mips::BtnezT8SltiuX16 ) ? Opc : 0;
 }
 
 void Mips16InstrInfo::ExpandRetRA16(MachineBasicBlock &MBB,
