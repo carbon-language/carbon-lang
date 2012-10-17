@@ -64,3 +64,19 @@ public:
   static void f() {}
 };
 }
+
+namespace ThreeLayer {
+struct A {
+  virtual void f();
+};
+
+struct B: A {
+  void f();
+  void f(int);
+};
+
+struct C: B {
+  void f(int);
+  using A::f;
+};
+}

@@ -4770,7 +4770,12 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
       if (!Data.S->IsOverload(Data.Method, MD, false))
         return true;
       // Collect the overload only if its hidden.
-      if (!Data.OverridenAndUsingBaseMethods.count(MD))
+      bool Using = Data.OverridenAndUsingBaseMethods.count(MD);
+      for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+                                          E = MD->end_overridden_methods();
+           I != E && !Using; ++I)
+        Using = Data.OverridenAndUsingBaseMethods.count(*I);
+      if (!Using)
         overloadedMethods.push_back(MD);
     }
   }
