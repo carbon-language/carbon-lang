@@ -220,20 +220,6 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 
-void
-MSP430RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
-                                                                         const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
-  // Create a frame entry for the FPW register that must be saved.
-  if (TFI->hasFP(MF)) {
-    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4, true);
-    (void)FrameIdx;
-    assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
-           "Slot for FPW register must be last in order to be found!");
-  }
-}
-
 unsigned MSP430RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 

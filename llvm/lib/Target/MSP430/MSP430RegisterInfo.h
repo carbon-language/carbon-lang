@@ -49,8 +49,6 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
-
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;
 };

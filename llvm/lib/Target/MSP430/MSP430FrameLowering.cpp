@@ -221,3 +221,17 @@ MSP430FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   return true;
 }
+
+void
+MSP430FrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF)
+                                                                         const {
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+
+  // Create a frame entry for the FPW register that must be saved.
+  if (TFI->hasFP(MF)) {
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4, true);
+    (void)FrameIdx;
+    assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
+           "Slot for FPW register must be last in order to be found!");
+  }
+}
