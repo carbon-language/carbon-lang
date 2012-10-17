@@ -657,7 +657,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   bool anyregs = false;
   for (TargetRegisterClass::const_iterator I = RC->begin(), E = RC->end();
        I != E; ++I)
-    if (MF->getRegInfo().isPhysRegOrOverlapUsed(*I)) {
+    if (MF->getRegInfo().isPhysRegUsed(*I)) {
       anyregs = true;
       break;
     }

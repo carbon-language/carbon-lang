@@ -357,14 +357,13 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// isPhysRegUsed - Return true if the specified register is used in this
-  /// function.  This only works after register allocation.
+  /// function. Also check for clobbered aliases and registers clobbered by
+  /// function calls with register mask operands.
+  ///
+  /// This only works after register allocation. It is primarily used by
+  /// PrologEpilogInserter to determine which callee-saved registers need
+  /// spilling.
   bool isPhysRegUsed(unsigned Reg) const {
-    return UsedPhysRegs.test(Reg) || UsedPhysRegMask.test(Reg);
-  }
-
-  /// isPhysRegOrOverlapUsed - Return true if Reg or any overlapping register
-  /// is used in this function.
-  bool isPhysRegOrOverlapUsed(unsigned Reg) const {
     if (UsedPhysRegMask.test(Reg))
       return true;
     for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
