@@ -191,6 +191,9 @@ raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
 }
 
 void DeclPrinter::prettyPrintAttributes(Decl *D) {
+  if (Policy.SuppressAttributes)
+    return;
+  
   if (D->hasAttrs()) {
     AttrVec &Attrs = D->getAttrs();
     for (AttrVec::const_iterator i=Attrs.begin(), e=Attrs.end(); i!=e; ++i) {
@@ -874,7 +877,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isVariadic())
       Out << ", ...";
 
-  if (OMD->getBody()) {
+  if (OMD->getBody() && !Policy.TerseOutput) {
     Out << ' ';
     OMD->getBody()->printPretty(Out, 0, Policy);
     Out << '\n';

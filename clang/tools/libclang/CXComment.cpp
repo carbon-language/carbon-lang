@@ -16,6 +16,7 @@
 #include "CXComment.h"
 #include "CXCursor.h"
 
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/CommentVisitor.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/Decl.h"
@@ -1027,6 +1028,20 @@ void CommentASTToXMLConverter::visitVerbatimLineComment(
   Result << "</Verbatim>";
 }
 
+static StringRef getSourceTextOfDeclaration(const DeclInfo *ThisDecl) {
+  
+  ASTContext &Context = ThisDecl->CurrentDecl->getASTContext();
+  const LangOptions &LangOpts = Context.getLangOpts();
+  std::string SStr;
+  llvm::raw_string_ostream S(SStr);
+  PrintingPolicy PPolicy(LangOpts);
+  PPolicy.SuppressAttributes = true;
+  PPolicy.TerseOutput = true;
+  ThisDecl->CurrentDecl->print(S, PPolicy,
+                               /*Indentation*/0, /*PrintInstantiation*/true);
+  return S.str();
+}
+
 void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
   FullCommentParts Parts(C, Traits);
 
@@ -1096,7 +1111,7 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
 
     {
       // Print line and column number.
-      SourceLocation Loc = DI->Loc;
+      SourceLocation Loc = DI->CurrentDecl->getLocation();
       std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
       FileID FID = LocInfo.first;
       unsigned FileOffset = LocInfo.second;
@@ -1146,6 +1161,10 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
   }
 
   bool FirstParagraphIsBrief = false;
+  Result << "<Declaration>";
+  appendToResultWithXMLEscaping(getSourceTextOfDeclaration(DI));
+  Result << "</Declaration>";
+  
   if (Parts.Brief) {
     Result << "<Abstract>";
     visit(Parts.Brief);

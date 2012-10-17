@@ -25,6 +25,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Declaration" />
+      </optional>
+      <optional>
         <ref name="Abstract" />
       </optional>
       <optional>
@@ -71,6 +74,9 @@
       </optional>
       <!-- TODO: Add exception specification. -->
       <optional>
+        <ref name="Declaration" />
+      </optional>
+      <optional>
         <ref name="Abstract" />
       </optional>
       <optional>
@@ -115,6 +121,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Declaration" />
+      </optional>
+      <optional>
         <ref name="Abstract" />
       </optional>
       <optional>
@@ -142,6 +151,9 @@
       <ref name="Name" />
       <optional>
         <ref name="USR" />
+      </optional>
+      <optional>
+        <ref name="Declaration" />
       </optional>
       <optional>
         <ref name="Abstract" />
@@ -174,6 +186,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Declaration" />
+      </optional>
+      <optional>
         <ref name="Abstract" />
       </optional>
 
@@ -204,6 +219,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Declaration" />
+      </optional>
+      <optional>
         <ref name="Abstract" />
       </optional>
 
@@ -232,6 +250,9 @@
       <ref name="Name" />
       <optional>
         <ref name="USR" />
+      </optional>
+      <optional>
+        <ref name="Declaration" />
       </optional>
       <optional>
         <ref name="Abstract" />
@@ -298,6 +319,13 @@
       <zeroOrMore>
         <ref name="TextBlockContent" />
       </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="Declaration">
+    <element name="Declaration">
+      <!-- Non-empty text content. -->
+      <data type="string"/>
     </element>
   </define>
 

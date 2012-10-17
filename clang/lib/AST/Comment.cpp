@@ -156,7 +156,7 @@ void DeclInfo::fill() {
     IsFilled = true;
     return;
   }
-  Loc = CommentDecl->getLocation();
+  CurrentDecl = CommentDecl;
   
   Decl::Kind K = CommentDecl->getKind();
   switch (K) {

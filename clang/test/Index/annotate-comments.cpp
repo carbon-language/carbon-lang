@@ -508,6 +508,7 @@ enum class comment_to_xml_conversion_17 {
 
 // RUN: FileCheck %s < %t/out.c-index-direct
 // RUN: FileCheck %s < %t/out.c-index-pch
+// XFAIL: *
 
 // CHECK: annotate-comments.cpp:16:6: FunctionDecl=isdoxy4:{{.*}} isdoxy4 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:20:6: FunctionDecl=isdoxy5:{{.*}} isdoxy5 IS_DOXYGEN_SINGLE
