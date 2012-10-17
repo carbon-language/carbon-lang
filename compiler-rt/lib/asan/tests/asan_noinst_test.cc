@@ -370,20 +370,20 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   // We cannot call GetAllocatedSize from the memory we didn't map,
   // and from the interior pointers (not returned by previous malloc).
   void *wild_addr = (void*)0x1;
-  EXPECT_EQ(false, __asan_get_ownership(wild_addr));
+  EXPECT_FALSE( __asan_get_ownership(wild_addr));
   EXPECT_DEATH(__asan_get_allocated_size(wild_addr), kGetAllocatedSizeErrorMsg);
-  EXPECT_EQ(false, __asan_get_ownership(array + kArraySize / 2));
+  EXPECT_FALSE(__asan_get_ownership(array + kArraySize / 2));
   EXPECT_DEATH(__asan_get_allocated_size(array + kArraySize / 2),
                kGetAllocatedSizeErrorMsg);
 
   // NULL is not owned, but is a valid argument for __asan_get_allocated_size().
-  EXPECT_EQ(false, __asan_get_ownership(NULL));
+  EXPECT_FALSE(__asan_get_ownership(NULL));
   EXPECT_EQ(0U, __asan_get_allocated_size(NULL));
 
   // When memory is freed, it's not owned, and call to GetAllocatedSize
   // is forbidden.
   free(array);
-  EXPECT_EQ(false, __asan_get_ownership(array));
+  EXPECT_FALSE( __asan_get_ownership(array));
   EXPECT_DEATH(__asan_get_allocated_size(array), kGetAllocatedSizeErrorMsg);
 
   delete int_ptr;
@@ -477,6 +477,8 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
     old_free_bytes = new_free_bytes;
   }
   EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
+  for (i = 0; i < kNumOfChunks; i++)
+    free(chunks[i]);
 }
 
 static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<20, 357};
