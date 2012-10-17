@@ -293,7 +293,8 @@ class Symbolizer {
     }
   }
 
-  static const uptr kMaxNumberOfModuleContexts = 4096;
+  // 16K loaded modules should be enough for everyone.
+  static const uptr kMaxNumberOfModuleContexts = 1 << 14;
   LoadedModule *modules_;  // Array of module descriptions is leaked.
   uptr n_modules_;
 
