@@ -1371,11 +1371,9 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Type *TargetTy = GEP.getPointerOperandType()->getScalarType();
 
   Assert1(isa<PointerType>(TargetTy),
-          "GEP base pointer is not a vector or a vector of pointers", &GEP);
+    "GEP base pointer is not a vector or a vector of pointers", &GEP);
   Assert1(cast<PointerType>(TargetTy)->getElementType()->isSized(),
           "GEP into unsized type!", &GEP);
-  Assert1(GEP.getPointerOperand() != &GEP,
-          "GEP is using the result as the pointer operand!", &GEP);
 
   SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   Type *ElTy =
