@@ -116,10 +116,8 @@ void testReferenceAddress(int &x) {
 
   struct S { int &x; };
 
-  // FIXME: Should be TRUE. Fields of return-by-value structs are not yet
-  // symbolicated. Tracked by <rdar://problem/12137950>.
   extern S getS();
-  clang_analyzer_eval(&getS().x != 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(&getS().x != 0); // expected-warning{{TRUE}}
 
   extern S *getSP();
   clang_analyzer_eval(&getSP()->x != 0); // expected-warning{{TRUE}}

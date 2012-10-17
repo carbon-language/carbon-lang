@@ -163,6 +163,23 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
   return state;
 }
 
+/// If the value of the given expression is a NonLoc, copy it into a new
+/// temporary region, and replace the value of the expression with that.
+static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
+                                                     const LocationContext *LC,
+                                                     const Expr *E) {
+  SVal V = State->getSVal(E, LC);
+
+  if (isa<NonLoc>(V)) {
+    MemRegionManager &MRMgr = State->getStateManager().getRegionManager();
+    const MemRegion *R  = MRMgr.getCXXTempObjectRegion(E, LC);
+    State = State->bindLoc(loc::MemRegionVal(R), V);
+    State = State->BindExpr(E, LC, loc::MemRegionVal(R));
+  }
+
+  return State;
+}
+
 //===----------------------------------------------------------------------===//
 // Top-level transfer function logic (Dispatcher).
 //===----------------------------------------------------------------------===//
@@ -717,8 +734,26 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       break;
     }
 
+    case Stmt::CXXOperatorCallExprClass: {
+      const CXXOperatorCallExpr *OCE = cast<CXXOperatorCallExpr>(S);
+
+      // For instance method operators, make sure the 'this' argument has a
+      // valid region.
+      const Decl *Callee = OCE->getCalleeDecl();
+      if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(Callee)) {
+        if (MD->isInstance()) {
+          ProgramStateRef State = Pred->getState();
+          const LocationContext *LCtx = Pred->getLocationContext();
+          ProgramStateRef NewState =
+            createTemporaryRegionIfNeeded(State, LCtx, OCE->getArg(0));
+          if (NewState != State)
+            Pred = Bldr.generateNode(OCE, Pred, NewState, /*Tag=*/0,
+                                     ProgramPoint::PreStmtKind);
+        }
+      }
+      // FALLTHROUGH
+    }
     case Stmt::CallExprClass:
-    case Stmt::CXXOperatorCallExprClass:
     case Stmt::CXXMemberCallExprClass:
     case Stmt::UserDefinedLiteralClass: {
       Bldr.takeNodes(Pred);
@@ -1478,6 +1513,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   ExplodedNodeSet Dst;
   Decl *member = M->getMemberDecl();
 
+  // Handle static member variables accessed via member syntax.
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
     assert(M->isGLValue());
     Bldr.takeNodes(Pred);
@@ -1486,40 +1522,27 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
     return;
   }
 
+  ProgramStateRef state = Pred->getState();
+  const LocationContext *LCtx = Pred->getLocationContext();
+  Expr *BaseExpr = M->getBase();
+
   // Handle C++ method calls.
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(member)) {
-    Bldr.takeNodes(Pred);
+    if (MD->isInstance())
+      state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
+
     SVal MDVal = svalBuilder.getFunctionPointer(MD);
-    ProgramStateRef state =
-      Pred->getState()->BindExpr(M, Pred->getLocationContext(), MDVal);
+    state = state->BindExpr(M, LCtx, MDVal);
+
     Bldr.generateNode(M, Pred, state);
     return;
   }
 
+  // Handle regular struct fields / member variables.
+  state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
+  SVal baseExprVal = state->getSVal(BaseExpr, LCtx);
 
-  FieldDecl *field = dyn_cast<FieldDecl>(member);
-  if (!field) // FIXME: skipping member expressions for non-fields
-    return;
-
-  Expr *baseExpr = M->getBase()->IgnoreParens();
-  ProgramStateRef state = Pred->getState();
-  const LocationContext *LCtx = Pred->getLocationContext();
-  SVal baseExprVal = state->getSVal(baseExpr, Pred->getLocationContext());
-  if (isa<nonloc::LazyCompoundVal>(baseExprVal) ||
-      isa<nonloc::CompoundVal>(baseExprVal) ||
-      // FIXME: This can originate by conjuring a symbol for an unknown
-      // temporary struct object, see test/Analysis/fields.c:
-      // (p = getit()).x
-      isa<nonloc::SymbolVal>(baseExprVal)) {
-    Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, UnknownVal()));
-    return;
-  }
-
-  // FIXME: Should we insert some assumption logic in here to determine
-  // if "Base" is a valid piece of memory?  Before we put this assumption
-  // later when using FieldOffset lvals (which we no longer have).
-
-  // For all other cases, compute an lvalue.    
+  FieldDecl *field = cast<FieldDecl>(member);
   SVal L = state->getLValue(field, baseExprVal);
   if (M->isGLValue()) {
     if (field->getType()->isReferenceType()) {

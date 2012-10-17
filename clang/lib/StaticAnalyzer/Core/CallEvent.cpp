@@ -401,15 +401,7 @@ SVal CXXInstanceCall::getCXXThisVal() const {
     return UnknownVal();
 
   SVal ThisVal = getSVal(Base);
-
-  // FIXME: This is only necessary because we can call member functions on
-  // struct rvalues, which do not have regions we can use for a 'this' pointer.
-  // Ideally this should eventually be changed to an assert, i.e. all
-  // non-Unknown, non-null 'this' values should be loc::MemRegionVals.
-  if (isa<DefinedSVal>(ThisVal))
-    if (!ThisVal.getAsRegion() && !ThisVal.isConstant())
-      return UnknownVal();
-
+  assert(ThisVal.isUnknownOrUndef() || isa<Loc>(ThisVal));
   return ThisVal;
 }
 
