@@ -195,9 +195,8 @@ struct LoopVectorize : public LoopPass {
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
 
-    BasicBlock *Header = L->getHeader();
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
-          Header->getParent()->getName() << "\"\n");
+          L->getHeader()->getParent()->getName() << "\"\n");
 
     // Check if it is legal to vectorize the loop.
     LoopVectorizationLegality LVL(L, SE, DL);
