@@ -135,6 +135,7 @@ private:
         m_unwind_plan_ptr (NULL),
         m_curr_row (),
         m_curr_row_modified (false),
+        m_curr_insn_is_branch_immediate (false),
         m_cfa_reg_info (),
         m_fp_is_cfa (false),
         m_register_values (),
@@ -164,6 +165,7 @@ private:
     lldb_private::UnwindPlan* m_unwind_plan_ptr;
     lldb_private::UnwindPlan::RowSP m_curr_row;
     bool m_curr_row_modified;
+    bool m_curr_insn_is_branch_immediate;
     typedef std::map<uint64_t, uint64_t> PushedRegisterToAddrMap;
     uint64_t m_initial_sp;
     lldb_private::RegisterInfo m_cfa_reg_info;

@@ -109,7 +109,11 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                 // use later.
                 int instructions_since_last_prologue_insn = 0;     // # of insns since last CFI was update
                 bool prologue_complete = false;                    // true if we have finished prologue setup
+
                 bool reinstate_prologue_next_instruction = false;  // Next iteration, re-install the prologue row of CFI
+
+                bool last_instruction_restored_return_addr_reg = false;  // re-install the prologue row of CFI if the next instruction is a branch immediate
+
                 UnwindPlan::RowSP prologue_completed_row;          // copy of prologue row of CFI
 
                 // cache the pc register number (in whatever register numbering this UnwindPlan uses) for
@@ -118,7 +122,17 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                 RegisterInfo pc_reg_info;
                 if (m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, pc_reg_info))
                     pc_reg_num = pc_reg_info.kinds[unwind_plan.GetRegisterKind()];
+                else
+                    pc_reg_num = LLDB_INVALID_REGNUM;
 
+                // cache the return address register number (in whatever register numbering this UnwindPlan uses) for
+                // quick reference during instruction parsing.
+                uint32_t ra_reg_num = LLDB_INVALID_REGNUM;
+                RegisterInfo ra_reg_info;
+                if (m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, ra_reg_info))
+                    ra_reg_num = ra_reg_info.kinds[unwind_plan.GetRegisterKind()];
+                else
+                    ra_reg_num = LLDB_INVALID_REGNUM;
 
                 for (size_t idx=0; idx<num_instructions; ++idx)
                 {
@@ -159,6 +173,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                             // If there are any instructions past this, there must have been flow control over this
                             // epilogue so we'll reinstate the original prologue setup instructions.
                             UnwindPlan::Row::RegisterLocation pc_regloc;
+                            UnwindPlan::Row::RegisterLocation ra_regloc;
                             if (prologue_complete
                                 && pc_reg_num != LLDB_INVALID_REGNUM 
                                 && m_curr_row->GetRegisterInfo (pc_reg_num, pc_regloc)
@@ -168,13 +183,25 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                                     log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- pc is <same>, restore prologue instructions.");
                                 reinstate_prologue_next_instruction = true;
                             }
+                            else if (prologue_complete
+                                     && ra_reg_num != LLDB_INVALID_REGNUM
+                                     && m_curr_row->GetRegisterInfo (ra_reg_num, ra_regloc)
+                                     && ra_regloc.IsSame())
+                            {
+                                if (log && log->GetVerbose())
+                                    log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- lr is <same>, restore prologue instruction if the next instruction is a branch immediate.");
+                                last_instruction_restored_return_addr_reg = true;
+                            }
                         }
                         else
                         {
                             // If the previous instruction was a return-to-caller (epilogue), and we're still executing
                             // instructions in this function, there must be a code path that jumps over that epilogue.
+                            // Also detect the case where we epilogue & branch imm to another function (tail-call opt)
+                            // instead of a normal pop lr-into-pc exit.
                             // Reinstate the frame setup from the prologue.
-                            if (reinstate_prologue_next_instruction)
+                            if (reinstate_prologue_next_instruction
+                                || (m_curr_insn_is_branch_immediate && last_instruction_restored_return_addr_reg))
                             {
                                 if (log && log->GetVerbose())
                                     log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- Reinstating prologue instruction set");
@@ -189,8 +216,20 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                                 m_curr_row.reset(newrow);
 
                                 reinstate_prologue_next_instruction = false;
+                                last_instruction_restored_return_addr_reg = false; 
+                                m_curr_insn_is_branch_immediate = false;
                             }
 
+                            // clear both of these if either one wasn't set
+                            if (last_instruction_restored_return_addr_reg)
+                            {
+                                last_instruction_restored_return_addr_reg = false;
+                            }
+                            if (m_curr_insn_is_branch_immediate)
+                            {
+                                m_curr_insn_is_branch_immediate = false;
+                            }
+ 
                             // If we haven't seen any prologue instructions for a while (4 instructions in a row),
                             // the function prologue has probably completed.  Save a copy of that Row.
                             if (prologue_complete == false && instructions_since_last_prologue_insn++ > 3)
@@ -544,7 +583,6 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextAdjustPC:
         case EmulateInstruction::eContextRegisterStore:
         case EmulateInstruction::eContextRegisterLoad:  
-        case EmulateInstruction::eContextRelativeBranchImmediate:
         case EmulateInstruction::eContextAbsoluteBranchRegister:
         case EmulateInstruction::eContextSupervisorCall:
         case EmulateInstruction::eContextTableBranchReadMemory:
@@ -566,6 +604,15 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 //                    m_curr_row_modified = true;
 //                }
 //            }
+            break;
+
+        case EmulateInstruction::eContextRelativeBranchImmediate:
+            {
+                
+                {
+                    m_curr_insn_is_branch_immediate = true;
+                }
+            }
             break;
 
         case EmulateInstruction::eContextPopRegisterOffStack:
