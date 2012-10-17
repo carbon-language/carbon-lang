@@ -606,7 +606,7 @@ TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
 // program from the IR input to the JIT to assert that the JIT doesn't use its
 // definition.
 extern "C" int32_t JITTest_AvailableExternallyGlobal;
-int32_t JITTest_AvailableExternallyGlobal = 42;
+int32_t JITTest_AvailableExternallyGlobal LLVM_ATTRIBUTE_USED = 42;
 namespace {
 
 // Tests on ARM disabled as we're running the old jit
