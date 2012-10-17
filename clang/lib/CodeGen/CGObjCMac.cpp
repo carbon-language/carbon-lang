@@ -2367,7 +2367,10 @@ enum NonFragileClassFlags {
   NonFragileABI_Class_HasIvarReleaser      = 0x00040,
 
   /// Class implementation was compiled under ARC.
-  NonFragileABI_Class_CompiledByARC        = 0x00080
+  NonFragileABI_Class_CompiledByARC        = 0x00080,
+
+  /// Class has non-trivial destructors, but zero-initialization is okay.
+  NonFragileABI_Class_HasCXXDestructorOnly = 0x00100
 };
 
 /*
@@ -2401,7 +2404,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
                      Interface->all_referenced_protocol_begin(),
                      Interface->all_referenced_protocol_end());
   unsigned Flags = FragileABI_Class_Factory;
-  if (ID->hasCXXStructors())
+  if (ID->hasNonZeroConstructors() || ID->hasDestructors())
     Flags |= FragileABI_Class_HasCXXStructors;
   unsigned Size =
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize().getQuantity();
@@ -5154,12 +5157,20 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
 
+  // Build the flags for the metaclass.
   bool classIsHidden =
     ID->getClassInterface()->getVisibility() == HiddenVisibility;
   if (classIsHidden)
     flags |= NonFragileABI_Class_Hidden;
-  if (ID->hasCXXStructors())
+
+  // FIXME: why is this flag set on the metaclass?
+  // ObjC metaclasses have no fields and don't really get constructed.
+  if (ID->hasNonZeroConstructors() || ID->hasDestructors()) {
     flags |= NonFragileABI_Class_HasCXXStructors;
+    if (!ID->hasNonZeroConstructors())
+      flags |= NonFragileABI_Class_HasCXXDestructorOnly;  
+  }
+
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
     flags |= NonFragileABI_Class_Root;
@@ -5194,8 +5205,19 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   flags = 0;
   if (classIsHidden)
     flags |= NonFragileABI_Class_Hidden;
-  if (ID->hasCXXStructors())
+
+  if (ID->hasNonZeroConstructors() || ID->hasDestructors()) {
     flags |= NonFragileABI_Class_HasCXXStructors;
+
+    // Set a flag to enable a runtime optimization when a class has
+    // fields that require destruction but which don't require
+    // anything except zero-initialization during construction.  This
+    // is most notably true of __strong and __weak types, but you can
+    // also imagine there being C++ types with non-trivial default
+    // constructors that merely set all fields to null.
+    if (!ID->hasNonZeroConstructors())
+      flags |= NonFragileABI_Class_HasCXXDestructorOnly;
+  }
 
   if (hasObjCExceptionAttribute(CGM.getContext(), ID->getClassInterface()))
     flags |= NonFragileABI_Class_Exception;

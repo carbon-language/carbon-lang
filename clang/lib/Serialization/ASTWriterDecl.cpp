@@ -606,6 +606,8 @@ void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   Writer.AddDeclRef(D->getSuperClass(), Record);
   Writer.AddSourceLocation(D->getIvarLBraceLoc(), Record);
   Writer.AddSourceLocation(D->getIvarRBraceLoc(), Record);
+  Record.push_back(D->hasNonZeroConstructors());
+  Record.push_back(D->hasDestructors());
   Writer.AddCXXCtorInitializers(D->IvarInitializers, D->NumIvarInitializers,
                                 Record);
   Code = serialization::DECL_OBJC_IMPLEMENTATION;

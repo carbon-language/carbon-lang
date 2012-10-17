@@ -602,7 +602,10 @@ void test22(_Bool cond) {
 
 // rdar://problem/8922540
 //   Note that we no longer emit .release_ivars flags.
-// CHECK-GLOBALS: @"\01l_OBJC_CLASS_RO_$_Test23" = internal global [[RO_T:%.*]] { i32 134,
+// rdar://problem/12492434
+//   Note that we set the flag saying that we need destruction *and*
+//   the flag saying that we don't also need construction.
+// CHECK-GLOBALS: @"\01l_OBJC_CLASS_RO_$_Test23" = internal global [[RO_T:%.*]] { i32 390,
 @interface Test23 { id x; } @end
 @implementation Test23 @end
 
