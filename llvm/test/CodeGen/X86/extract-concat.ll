@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mcpu=corei7 -mtriple=x86_64-unknown-linux-gnu | FileCheck %s
-; XFAIL: *
 
 define void @foo(<4 x float> %in, <4 x i8>* %out) {
   %t0 = fptosi <4 x float> %in to <4 x i32>
