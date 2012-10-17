@@ -107,6 +107,12 @@ BasicBlockPass *
 createBBVectorizePass(const VectorizeConfig &C = VectorizeConfig());
 
 //===----------------------------------------------------------------------===//
+//
+// LoopVectorize - Create a loop vectorization pass.
+//
+Pass * createLoopVectorizePass();
+
+//===----------------------------------------------------------------------===//
 /// @brief Vectorize the BasicBlock.
 ///
 /// @param BB The BasicBlock to be vectorized

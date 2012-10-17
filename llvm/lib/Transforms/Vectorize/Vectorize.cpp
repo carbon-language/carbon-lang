@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements common infrastructure for libLLVMVectorizeOpts.a, which 
+// This file implements common infrastructure for libLLVMVectorizeOpts.a, which
 // implements several vectorization transformations over the LLVM intermediate
 // representation, including the C bindings for that library.
 //
@@ -23,10 +23,11 @@
 
 using namespace llvm;
 
-/// initializeVectorizationPasses - Initialize all passes linked into the 
+/// initializeVectorizationPasses - Initialize all passes linked into the
 /// Vectorization library.
 void llvm::initializeVectorization(PassRegistry &Registry) {
   initializeBBVectorizePass(Registry);
+  initializeLoopVectorizePass(Registry);
 }
 
 void LLVMInitializeVectorization(LLVMPassRegistryRef R) {
@@ -37,3 +38,6 @@ void LLVMAddBBVectorizePass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createBBVectorizePass());
 }
 
+void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createLoopVectorizePass());
+}
