@@ -383,6 +383,7 @@ def Most : DiagGroup<"most", [
     DeleteNonVirtualDtor,
     Format,
     Implicit,
+    IntToPointerCast,
     MismatchedTags,
     MissingBraces,
     MultiChar,
@@ -414,7 +415,7 @@ def ThreadSafety : DiagGroup<"thread-safety",
 // Note that putting warnings in -Wall will not disable them by default. If a
 // warning should be active _only_ when -Wall is passed in, mark it as
 // DefaultIgnore in addition to putting it here.
-def : DiagGroup<"all", [Most, Parentheses, Switch, IntToPointerCast]>;
+def : DiagGroup<"all", [Most, Parentheses, Switch]>;
 
 // Warnings enabled by -pedantic.  This is magically filled in by TableGen.
 def Pedantic : DiagGroup<"pedantic">;
