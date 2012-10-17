@@ -36,8 +36,8 @@ private:
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void *operator new(size_t s) LLVM_DELETED_FUNCTION;
   Operator() LLVM_DELETED_FUNCTION;
-  // NOTE: cannot use LLVM_DELETED_FUNCTION because gcc errors when deleting
-  // an override of a non-deleted function.
+  // NOTE: cannot use LLVM_DELETED_FUNCTION because it's not legal to delete
+  // an overridden method that's not deleted in the base class.
   ~Operator();
 
 public:
@@ -191,7 +191,7 @@ public:
 /// opcodes.
 template<typename SuperClass, unsigned Opc>
 class ConcreteOperator : public SuperClass {
-  ~ConcreteOperator() LLVM_DELETED_FUNCTION;
+  ~ConcreteOperator(); // DO NOT IMPLEMENT
 public:
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Opc;
@@ -207,44 +207,44 @@ public:
 
 class AddOperator
   : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Add> {
-  ~AddOperator() LLVM_DELETED_FUNCTION;
+  ~AddOperator(); // DO NOT IMPLEMENT
 };
 class SubOperator
   : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Sub> {
-  ~SubOperator() LLVM_DELETED_FUNCTION;
+  ~SubOperator(); // DO NOT IMPLEMENT
 };
 class MulOperator
   : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Mul> {
-  ~MulOperator() LLVM_DELETED_FUNCTION;
+  ~MulOperator(); // DO NOT IMPLEMENT
 };
 class ShlOperator
   : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Shl> {
-  ~ShlOperator() LLVM_DELETED_FUNCTION;
+  ~ShlOperator(); // DO NOT IMPLEMENT
 };
 
-  
+
 class SDivOperator
   : public ConcreteOperator<PossiblyExactOperator, Instruction::SDiv> {
-  ~SDivOperator() LLVM_DELETED_FUNCTION;
+  ~SDivOperator(); // DO NOT IMPLEMENT
 };
 class UDivOperator
   : public ConcreteOperator<PossiblyExactOperator, Instruction::UDiv> {
-  ~UDivOperator() LLVM_DELETED_FUNCTION;
+  ~UDivOperator(); // DO NOT IMPLEMENT
 };
 class AShrOperator
   : public ConcreteOperator<PossiblyExactOperator, Instruction::AShr> {
-  ~AShrOperator() LLVM_DELETED_FUNCTION;
+  ~AShrOperator(); // DO NOT IMPLEMENT
 };
 class LShrOperator
   : public ConcreteOperator<PossiblyExactOperator, Instruction::LShr> {
-  ~LShrOperator() LLVM_DELETED_FUNCTION;
+  ~LShrOperator(); // DO NOT IMPLEMENT
 };
-  
-  
-  
+
+
+
 class GEPOperator
   : public ConcreteOperator<Operator, Instruction::GetElementPtr> {
-  ~GEPOperator() LLVM_DELETED_FUNCTION;
+  ~GEPOperator(); // DO NOT IMPLEMENT
 
   enum {
     IsInBounds = (1 << 0)
