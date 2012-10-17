@@ -76,10 +76,16 @@ UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
 Configs += asan_osx_dynamic
 UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
 
-#UniversalArchs.ios += $(call CheckArches,armv7f armv7k armv7s,ios)
-#UniversalArchs.cc_kext += $(call CheckArches,armv7f armv7k armv7s,cc_kext)
-#UniversalArchs.cc_kext_ios5 += $(call CheckArches,armv7f armv7k armv7s,cc_kext_ios5)
-#UniversalArchs.profile_ios += $(call CheckArches,armv7f armv7k armv7s,profile_ios)
+# Darwin 10.6 has a bug in cctools that makes it unable to use ranlib on our ARM
+# object files. Of we are on that platform, we strip out all ARM archs. We still
+# build the libraries themselves so that Clang can find them where it expects
+# them, even though they might not have an expected slice.
+ifneq ($(shell sw_vers -productVersion | grep 10.6),)
+UniversalArchs.ios := $(filter-out armv7, $(UniversalArchs.ios))
+UniversalArchs.cc_kext := $(filter-out armv7, $(UniversalArchs.cc_kext))
+UniversalArchs.cc_kext_ios5 := $(filter-out armv7, $(UniversalArchs.cc_kext_ios5))
+UniversalArchs.profile_ios := $(filter-out armv7, $(UniversalArchs.profile_ios))
+endif
 
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
