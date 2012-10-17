@@ -58,6 +58,14 @@ unsigned TargetSchedModel::getNumMicroOps(MachineInstr *MI) const {
   return MI->isTransient() ? 0 : 1;
 }
 
+// The machine model may explicitly specify an invalid latency, which
+// effectively means infinite latency. Since users of the TargetSchedule API
+// don't know how to handle this, we convert it to a very large latency that is
+// easy to distinguish when debugging the DAG but won't induce overflow.
+static unsigned convertLatency(int Cycles) {
+  return Cycles >= 0 ? Cycles : 1000;
+}
+
 /// If we can determine the operand latency from the def only, without machine
 /// model or itinerary lookup, do so. Otherwise return -1.
 int TargetSchedModel::getDefLatency(const MachineInstr *DefMI,
@@ -178,7 +186,7 @@ unsigned TargetSchedModel::computeOperandLatency(
     const MCWriteLatencyEntry *WLEntry =
       STI->getWriteLatencyEntry(SCDesc, DefIdx);
     unsigned WriteID = WLEntry->WriteResourceID;
-    unsigned Latency = WLEntry->Cycles;
+    unsigned Latency = convertLatency(WLEntry->Cycles);
     if (!UseMI)
       return Latency;
 
@@ -219,7 +227,7 @@ unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
         // Lookup the definition's write latency in SubtargetInfo.
         const MCWriteLatencyEntry *WLEntry =
           STI->getWriteLatencyEntry(SCDesc, DefIdx);
-        Latency = std::max(Latency, WLEntry->Cycles);
+        Latency = std::max(Latency, convertLatency(WLEntry->Cycles));
       }
       return Latency;
     }

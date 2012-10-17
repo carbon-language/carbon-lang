@@ -54,10 +54,12 @@ struct MCWriteProcResEntry {
 };
 
 /// Specify the latency in cpu cycles for a particular scheduling class and def
-/// index. Also identify the WriteResources of this def. When the operand
-/// expands to a sequence of writes, this ID is the last write in the sequence.
+/// index. -1 indicates an invalid latency. Heuristics would typically consider
+/// an instruction with invalid latency to have infinite latency.  Also identify
+/// the WriteResources of this def. When the operand expands to a sequence of
+/// writes, this ID is the last write in the sequence.
 struct MCWriteLatencyEntry {
-  unsigned Cycles;
+  int Cycles;
   unsigned WriteResourceID;
 
   bool operator==(const MCWriteLatencyEntry &Other) const {
