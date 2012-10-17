@@ -534,7 +534,7 @@ void AddressSanitizer::createInitializerPoisonCalls(Module &M,
 
 bool AddressSanitizer::ShouldInstrumentGlobal(GlobalVariable *G) {
   Type *Ty = cast<PointerType>(G->getType())->getElementType();
-  DEBUG(dbgs() << "GLOBAL: " << *G);
+  DEBUG(dbgs() << "GLOBAL: " << *G << "\n");
 
   if (BL->isIn(*G)) return false;
   if (!Ty->isSized()) return false;
@@ -682,7 +682,7 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
         FirstDynamic = LastDynamic;
     }
 
-    DEBUG(dbgs() << "NEW GLOBAL:\n" << *NewGlobal);
+    DEBUG(dbgs() << "NEW GLOBAL: " << *NewGlobal << "\n");
   }
 
   ArrayType *ArrayOfGlobalStructTy = ArrayType::get(GlobalStructTy, n);
@@ -851,6 +851,7 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
 bool AddressSanitizer::runOnFunction(Function &F) {
   if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
+  DEBUG(dbgs() << "ASAN instrumenting:\n" << F << "\n");
 
   // If needed, insert __asan_init before checking for AddressSafety attr.
   maybeInsertAsanInitAtFunctionEntry(F);
@@ -914,8 +915,6 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     NumInstrumented++;
   }
 
-  DEBUG(dbgs() << F);
-
   bool ChangedStack = poisonStackInFunction(F);
 
   // We must unpoison the stack before every NoReturn call (throw, _exit, etc).
@@ -925,6 +924,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     IRBuilder<> IRB(CI);
     IRB.CreateCall(AsanHandleNoReturnFunc);
   }
+  DEBUG(dbgs() << "ASAN done instrumenting:\n" << F << "\n");
 
   return NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();
 }
