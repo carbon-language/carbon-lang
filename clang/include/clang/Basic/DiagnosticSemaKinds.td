@@ -865,6 +865,12 @@ def note_pure_virtual_function : Note<
 def err_deleted_decl_not_first : Error<
   "deleted definition must be first declaration">;
 
+def err_deleted_override : Error<
+  "deleted function %0 cannot override a non-deleted function">;
+
+def err_non_deleted_override : Error<
+  "non-deleted function %0 cannot override a deleted function">;
+
 def warn_weak_vtable : Warning<
   "%0 has no out-of-line virtual method definitions; its vtable will be "
   "emitted in every translation unit">,
