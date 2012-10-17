@@ -649,6 +649,11 @@ Release Notes</a>.</h1>
 <p>In addition, many APIs have changed in this release.  Some of the major
    LLVM API changes are:</p>
 
+<p> We've added a new interface for allowing IR-level passes to access
+  target-specific information. A new IR-level pass, called
+  "TargetTransformInfo" provides a number of low-level interfaces.
+  LSR and LowerInvoke already use the new interface. </p>
+
 <ul>
   <li>...</li>
 </ul>
