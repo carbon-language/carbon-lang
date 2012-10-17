@@ -2340,15 +2340,34 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   MethodDefinitions.clear();
 }
 
-// FIXME: Get from somewhere?
-enum ClassFlags {
-  eClassFlags_Factory              = 0x00001,
-  eClassFlags_Meta                 = 0x00002,
-  // <rdr://5142207>
-  eClassFlags_HasCXXStructors      = 0x02000,
-  eClassFlags_Hidden               = 0x20000,
-  eClassFlags_ABI2_Hidden          = 0x00010,
-  eClassFlags_ABI2_HasCXXStructors = 0x00004   // <rdr://4923634>
+enum FragileClassFlags {
+  FragileABI_Class_Factory                 = 0x00001,
+  FragileABI_Class_Meta                    = 0x00002,
+  FragileABI_Class_HasCXXStructors         = 0x02000,
+  FragileABI_Class_Hidden                  = 0x20000
+};
+
+enum NonFragileClassFlags {
+  /// Is a meta-class.
+  NonFragileABI_Class_Meta                 = 0x00001,
+
+  /// Is a root class.
+  NonFragileABI_Class_Root                 = 0x00002,
+
+  /// Has a C++ constructor and destructor.
+  NonFragileABI_Class_HasCXXStructors      = 0x00004,
+
+  /// Has hidden visibility.
+  NonFragileABI_Class_Hidden               = 0x00010,
+
+  /// Has the exception attribute.
+  NonFragileABI_Class_Exception            = 0x00020,
+
+  /// (Obsolete) ARC-specific: this class has a .release_ivars method
+  NonFragileABI_Class_HasIvarReleaser      = 0x00040,
+
+  /// Class implementation was compiled under ARC.
+  NonFragileABI_Class_CompiledByARC        = 0x00080
 };
 
 /*
@@ -2381,15 +2400,15 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getName(),
                      Interface->all_referenced_protocol_begin(),
                      Interface->all_referenced_protocol_end());
-  unsigned Flags = eClassFlags_Factory;
+  unsigned Flags = FragileABI_Class_Factory;
   if (ID->hasCXXStructors())
-    Flags |= eClassFlags_HasCXXStructors;
+    Flags |= FragileABI_Class_HasCXXStructors;
   unsigned Size =
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize().getQuantity();
 
   // FIXME: Set CXX-structors flag.
   if (ID->getClassInterface()->getVisibility() == HiddenVisibility)
-    Flags |= eClassFlags_Hidden;
+    Flags |= FragileABI_Class_Hidden;
 
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethods, ClassMethods;
   for (ObjCImplementationDecl::instmeth_iterator
@@ -2472,11 +2491,11 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
 llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          llvm::Constant *Protocols,
                                          ArrayRef<llvm::Constant*> Methods) {
-  unsigned Flags = eClassFlags_Meta;
+  unsigned Flags = FragileABI_Class_Meta;
   unsigned Size = CGM.getDataLayout().getTypeAllocSize(ObjCTypes.ClassTy);
 
   if (ID->getClassInterface()->getVisibility() == HiddenVisibility)
-    Flags |= eClassFlags_Hidden;
+    Flags |= FragileABI_Class_Hidden;
 
   llvm::Constant *Values[12];
   // The isa for the metaclass is the root of the hierarchy.
@@ -4943,19 +4962,6 @@ bool CGObjCNonFragileABIMac::isVTableDispatchedSelector(Selector Sel) {
   return VTableDispatchMethods.count(Sel);
 }
 
-// Metadata flags
-enum MetaDataDlags {
-  CLS = 0x0,
-  CLS_META = 0x1,
-  CLS_ROOT = 0x2,
-  OBJC2_CLS_HIDDEN = 0x10,
-  CLS_EXCEPTION = 0x20,
-
-  /// (Obsolete) ARC-specific: this class has a .release_ivars method
-  CLS_HAS_IVAR_RELEASER = 0x40,
-  /// class was compiled with -fobjc-arr
-  CLS_COMPILED_BY_ARC = 0x80  // (1<<7)
-};
 /// BuildClassRoTInitializer - generate meta-data for:
 /// struct _class_ro_t {
 ///   uint32_t const flags;
@@ -4980,19 +4986,20 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   llvm::Constant *Values[10]; // 11 for 64bit targets!
 
   if (CGM.getLangOpts().ObjCAutoRefCount)
-    flags |= CLS_COMPILED_BY_ARC;
+    flags |= NonFragileABI_Class_CompiledByARC;
 
   Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
   Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
-  Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes)
+  Values[ 3] = (flags & NonFragileABI_Class_Meta)
+    ? GetIvarLayoutName(0, ObjCTypes)
     : BuildIvarLayout(ID, true);
   Values[ 4] = GetClassName(ID->getIdentifier());
   // const struct _method_list_t * const baseMethods;
   std::vector<llvm::Constant*> Methods;
   std::string MethodListName("\01l_OBJC_$_");
-  if (flags & CLS_META) {
+  if (flags & NonFragileABI_Class_Meta) {
     MethodListName += "CLASS_METHODS_" + ID->getNameAsString();
     for (ObjCImplementationDecl::classmeth_iterator
            i = ID->classmeth_begin(), e = ID->classmeth_end(); i != e; ++i) {
@@ -5032,24 +5039,23 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
                                 OID->all_referenced_protocol_begin(),
                                 OID->all_referenced_protocol_end());
 
-  if (flags & CLS_META)
+  if (flags & NonFragileABI_Class_Meta) {
     Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
-  else
-    Values[ 7] = EmitIvarList(ID);
-  Values[ 8] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes)
-    : BuildIvarLayout(ID, false);
-  if (flags & CLS_META)
+    Values[ 8] = GetIvarLayoutName(0, ObjCTypes);
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
-  else
+  } else {
+    Values[ 7] = EmitIvarList(ID);
+    Values[ 8] = BuildIvarLayout(ID, false);
     Values[ 9] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getName(),
                                   ID, ID->getClassInterface(), ObjCTypes);
+  }
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
                                                    Values);
   llvm::GlobalVariable *CLASS_RO_GV =
     new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassRonfABITy, false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
-                             (flags & CLS_META) ?
+                             (flags & NonFragileABI_Class_Meta) ?
                              std::string("\01l_OBJC_METACLASS_RO_$_")+ClassName :
                              std::string("\01l_OBJC_CLASS_RO_$_")+ClassName);
   CLASS_RO_GV->setAlignment(
@@ -5142,7 +5148,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   uint32_t InstanceStart =
     CGM.getDataLayout().getTypeAllocSize(ObjCTypes.ClassnfABITy);
   uint32_t InstanceSize = InstanceStart;
-  uint32_t flags = CLS_META;
+  uint32_t flags = NonFragileABI_Class_Meta;
   std::string ObjCMetaClassName(getMetaclassSymbolPrefix());
   std::string ObjCClassName(getClassSymbolPrefix());
 
@@ -5151,12 +5157,12 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   bool classIsHidden =
     ID->getClassInterface()->getVisibility() == HiddenVisibility;
   if (classIsHidden)
-    flags |= OBJC2_CLS_HIDDEN;
+    flags |= NonFragileABI_Class_Hidden;
   if (ID->hasCXXStructors())
-    flags |= eClassFlags_ABI2_HasCXXStructors;
+    flags |= NonFragileABI_Class_HasCXXStructors;
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
-    flags |= CLS_ROOT;
+    flags |= NonFragileABI_Class_Root;
     SuperClassGV = GetClassGlobal(ObjCClassName + ClassName);
     IsAGV = GetClassGlobal(ObjCMetaClassName + ClassName);
   } else {
@@ -5185,17 +5191,17 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   DefinedMetaClasses.push_back(MetaTClass);
 
   // Metadata for the class
-  flags = CLS;
+  flags = 0;
   if (classIsHidden)
-    flags |= OBJC2_CLS_HIDDEN;
+    flags |= NonFragileABI_Class_Hidden;
   if (ID->hasCXXStructors())
-    flags |= eClassFlags_ABI2_HasCXXStructors;
+    flags |= NonFragileABI_Class_HasCXXStructors;
 
   if (hasObjCExceptionAttribute(CGM.getContext(), ID->getClassInterface()))
-    flags |= CLS_EXCEPTION;
+    flags |= NonFragileABI_Class_Exception;
 
   if (!ID->getClassInterface()->getSuperClass()) {
-    flags |= CLS_ROOT;
+    flags |= NonFragileABI_Class_Root;
     SuperClassGV = 0;
   } else {
     // Has a root. Current class is not a root.
@@ -5222,7 +5228,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     DefinedNonLazyClasses.push_back(ClassMD);
 
   // Force the definition of the EHType if necessary.
-  if (flags & CLS_EXCEPTION)
+  if (flags & NonFragileABI_Class_Exception)
     GetInterfaceEHType(ID->getClassInterface(), true);
   // Make sure method definition entries are all clear for next implementation.
   MethodDefinitions.clear();
