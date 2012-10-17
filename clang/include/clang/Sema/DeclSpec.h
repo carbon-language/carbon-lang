@@ -600,8 +600,7 @@ public:
   }
 
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
-                   unsigned &DiagID, const LangOptions &Lang,
-                   bool IsTypeSpec);
+                   unsigned &DiagID, const LangOptions &Lang);
 
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec,
                              unsigned &DiagID);

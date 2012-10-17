@@ -2741,15 +2741,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     // cv-qualifier:
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const, Loc, PrevSpec, DiagID,
-                                 getLangOpts(), /*IsTypeSpec*/true);
+                                 getLangOpts());
       break;
     case tok::kw_volatile:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec, DiagID,
-                                 getLangOpts(), /*IsTypeSpec*/true);
+                                 getLangOpts());
       break;
     case tok::kw_restrict:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
-                                 getLangOpts(), /*IsTypeSpec*/true);
+                                 getLangOpts());
       break;
 
     // C++ typename-specifier:
@@ -3948,15 +3948,15 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
 
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec, DiagID,
-                                 getLangOpts(), /*IsTypeSpec*/false);
+                                 getLangOpts());
       break;
     case tok::kw_volatile:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec, DiagID,
-                                 getLangOpts(), /*IsTypeSpec*/false);
+                                 getLangOpts());
       break;
     case tok::kw_restrict:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
-                                 getLangOpts(), /*IsTypeSpec*/false);
+                                 getLangOpts());
       break;
 
     // OpenCL qualifiers:

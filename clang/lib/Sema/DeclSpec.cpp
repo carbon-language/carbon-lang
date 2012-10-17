@@ -680,15 +680,13 @@ bool DeclSpec::SetTypeSpecError() {
 }
 
 bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
-                           unsigned &DiagID, const LangOptions &Lang,
-                           bool IsTypeSpec) {
-  // Duplicates are permitted in C99, and are permitted in C++11 unless the
-  // cv-qualifier appears as a type-specifier.  However, since this is likely 
-  // not what the user intended, we will always warn.  We do not need to set the
-  // qualifier's location since we already have it.
+                           unsigned &DiagID, const LangOptions &Lang) {
+  // Duplicates are permitted in C99, but are not permitted in C++. However,
+  // since this is likely not what the user intended, we will always warn.  We
+  // do not need to set the qualifier's location since we already have it.
   if (TypeQualifiers & T) {
     bool IsExtension = true;
-    if (Lang.C99 || (Lang.CPlusPlus0x && !IsTypeSpec))
+    if (Lang.C99)
       IsExtension = false;
     return BadSpecifier(T, T, PrevSpec, DiagID, IsExtension);
   }
