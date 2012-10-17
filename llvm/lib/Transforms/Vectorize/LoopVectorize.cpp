@@ -365,7 +365,7 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
       Cloned->setOperand(op, Op);
     }
 
-    // Place the clonsed scalar in the new loop.
+    // Place the cloned scalar in the new loop.
     Builder->Insert(Cloned);
 
     // If the original scalar returns a value we need to place it in a vector
@@ -432,7 +432,7 @@ void SingleBlockLoopVectorizer::copyEmptyLoop() {
   PH->getTerminator()->setSuccessor(0, BB);
   Builder->SetInsertPoint(BB->getFirstInsertionPt());
 
-  // Save the indiction variables.
+  // Save the induction variables.
   Induction = Phi;
   OldInduction = OldInd;
 }
@@ -442,7 +442,7 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
 
   // For each instruction in the old loop.
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
-  Instruction *Inst = it;
+    Instruction *Inst = it;
 
     switch (Inst->getOpcode()) {
       case Instruction::PHI:
@@ -677,7 +677,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       }
     }
 
-    // IF this is a load, record its pointer. If it is not a load, abort.
+    // If this is a load, record its pointer. If it is not a load, abort.
     // Notice that we don't handle function calls that read or write.
     if (I->mayReadFromMemory()) {
       LoadInst *Ld = dyn_cast<LoadInst>(I);
