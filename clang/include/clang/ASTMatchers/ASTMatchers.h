@@ -108,8 +108,9 @@ internal::Matcher<T> id(const std::string &ID,
 /// hierarchy.
 /// @{
 typedef internal::Matcher<Decl> DeclarationMatcher;
-typedef internal::Matcher<QualType> TypeMatcher;
 typedef internal::Matcher<Stmt> StatementMatcher;
+typedef internal::Matcher<QualType> TypeMatcher;
+typedef internal::Matcher<TypeLoc> TypeLocMatcher;
 typedef internal::Matcher<NestedNameSpecifier> NestedNameSpecifierMatcher;
 typedef internal::Matcher<NestedNameSpecifierLoc> NestedNameSpecifierLocMatcher;
 /// @}
@@ -2438,6 +2439,282 @@ isExplicitTemplateSpecialization() {
     internal::IsExplicitTemplateSpecializationMatcher>();
 }
 
+/// \brief Matches \c QualTypes in the clang AST.
+const internal::VariadicAllOfMatcher<QualType> qualType;
+
+/// \brief Matches \c Types in the clang AST.
+const internal::VariadicDynCastAllOfMatcher<Type, Type> type;
+
+/// \brief Matches \c TypeLocs in the clang AST.
+const internal::VariadicDynCastAllOfMatcher<TypeLoc, TypeLoc> typeLoc;
+
+/// \brief Matches \c TypeLocs for which the given inner
+/// QualType-matcher matches.
+inline internal::BindableMatcher<TypeLoc> loc(
+    const internal::Matcher<QualType> &InnerMatcher) {
+  return internal::BindableMatcher<TypeLoc>(
+      new internal::TypeLocTypeMatcher(InnerMatcher));
+}
+
+/// \brief Matches builtin Types.
+///
+/// Given
+/// \code
+///   struct A {};
+///   A a;
+///   int b;
+///   float c;
+///   bool d;
+/// \endcode
+/// builtinType()
+///   matches "int b", "float c" and "bool d"
+AST_TYPE_MATCHER(BuiltinType, builtinType);
+
+/// \brief Matches all kinds of arrays.
+///
+/// Given
+/// \code
+///   int a[] = { 2, 3 };
+///   int b[4];
+///   void f() { int c[a[0]]; }
+/// \endcode
+/// arrayType()
+///   matches "int a[]", "int b[4]" and "int c[a[0]]";
+AST_TYPE_MATCHER(ArrayType, arrayType);
+
+/// \brief Matches C99 complex types.
+///
+/// Given
+/// \code
+///   _Complex float f;
+/// \endcode
+/// complexType()
+///   matches "_Complex float f"
+AST_TYPE_MATCHER(ComplexType, complexType);
+
+/// \brief Matches arrays and C99 complex types that have a specific element
+/// type.
+///
+/// Given
+/// \code
+///   struct A {};
+///   A a[7];
+///   int b[7];
+/// \endcode
+/// arrayType(hasElementType(builtinType()))
+///   matches "int b[7]"
+///
+/// Usable as: Matcher<ArrayType>, Matcher<ComplexType>
+AST_TYPELOC_TRAVERSE_MATCHER(hasElementType, getElement);
+
+/// \brief Matches C arrays with a specified constant size.
+///
+/// Given
+/// \code
+///   void() {
+///     int a[2];
+///     int b[] = { 2, 3 };
+///     int c[b[0]];
+///   }
+/// \endcode
+/// constantArrayType()
+///   matches "int a[2]"
+AST_TYPE_MATCHER(ConstantArrayType, constantArrayType);
+
+/// \brief Matches \c ConstantArrayType nodes that have the specified size.
+///
+/// Given
+/// \code
+///   int a[42];
+///   int b[2 * 21];
+///   int c[41], d[43];
+/// \endcode
+/// constantArrayType(hasSize(42))
+///   matches "int a[42]" and "int b[2 * 21]"
+AST_MATCHER_P(ConstantArrayType, hasSize, unsigned, N) {
+  return Node.getSize() == N;
+}
+
+/// \brief Matches C++ arrays whose size is a value-dependent expression.
+///
+/// Given
+/// \code
+///   template<typename T, int Size>
+///   class array {
+///     T data[Size];
+///   };
+/// \endcode
+/// dependentSizedArrayType
+///   matches "T data[Size]"
+AST_TYPE_MATCHER(DependentSizedArrayType, dependentSizedArrayType);
+
+/// \brief Matches C arrays with unspecified size.
+///
+/// Given
+/// \code
+///   int a[] = { 2, 3 };
+///   int b[42];
+///   void f(int c[]) { int d[a[0]]; };
+/// \endcode
+/// incompleteArrayType()
+///   matches "int a[]" and "int c[]"
+AST_TYPE_MATCHER(IncompleteArrayType, incompleteArrayType);
+
+/// \brief Matches C arrays with a specified size that is not an
+/// integer-constant-expression.
+///
+/// Given
+/// \code
+///   void f() {
+///     int a[] = { 2, 3 }
+///     int b[42];
+///     int c[a[0]];
+/// \endcode
+/// variableArrayType()
+///   matches "int c[a[0]]"
+AST_TYPE_MATCHER(VariableArrayType, variableArrayType);
+
+/// \brief Matches \c VariableArrayType nodes that have a specific size
+/// expression.
+///
+/// Given
+/// \code
+///   void f(int b) {
+///     int a[b];
+///   }
+/// \endcode
+/// variableArrayType(hasSizeExpr(ignoringImpCasts(declRefExpr(to(
+///   varDecl(hasName("b")))))))
+///   matches "int a[b]"
+AST_MATCHER_P(VariableArrayType, hasSizeExpr,
+              internal::Matcher<Expr>, InnerMatcher) {
+  return InnerMatcher.matches(*Node.getSizeExpr(), Finder, Builder);
+}
+
+/// \brief Matches atomic types.
+///
+/// Given
+/// \code
+///   _Atomic(int) i;
+/// \endcode
+/// atomicType()
+///   matches "_Atomic(int) i"
+AST_TYPE_MATCHER(AtomicType, atomicType);
+
+/// \brief Matches atomic types with a specific value type.
+///
+/// Given
+/// \code
+///   _Atomic(int) i;
+///   _Atomic(float) f;
+/// \endcode
+/// atomicType(hasValueType(isInteger()))
+///  matches "_Atomic(int) i"
+///
+/// Usable as: Matcher<AtomicType>
+AST_TYPELOC_TRAVERSE_MATCHER(hasValueType, getValue);
+
+/// \brief Matches types nodes representing C++11 auto types.
+///
+/// Given:
+/// \code
+///   auto n = 4;
+///   int v[] = { 2, 3 }
+///   for (auto i : v) { }
+/// \endcode
+/// autoType()
+///   matches "auto n" and "auto i"
+AST_TYPE_MATCHER(AutoType, autoType);
+
+/// \brief Matches \c AutoType nodes where the deduced type is a specific type.
+///
+/// Note: There is no \c TypeLoc for the deduced type and thus no
+/// \c getDeducedLoc() matcher.
+///
+/// Given
+/// \code
+///   auto a = 1;
+///   auto b = 2.0;
+/// \endcode
+/// autoType(hasDeducedType(isInteger()))
+///   matches "auto a"
+///
+/// Usable as: Matcher<AutoType>
+AST_TYPE_TRAVERSE_MATCHER(hasDeducedType, getDeducedType);
+
+/// \brief Matches block pointer types, i.e. types syntactically represented as
+/// "void (^)(int)".
+///
+/// The \c pointee is always required to be a \c FunctionType.
+AST_TYPE_MATCHER(BlockPointerType, blockPointerType);
+
+/// \brief Matches member pointer types.
+/// Given
+/// \code
+///   struct A { int i; }
+///   A::* ptr = A::i;
+/// \endcode
+/// memberPointerType()
+///   matches "A::* ptr"
+AST_TYPE_MATCHER(MemberPointerType, memberPointerType);
+
+/// \brief Matches pointer types.
+///
+/// Given
+/// \code
+///   int *a;
+///   int &b = *a;
+///   int c = 5;
+/// \endcode
+/// pointerType()
+///   matches "int *a"
+AST_TYPE_MATCHER(PointerType, pointerType);
+
+/// \brief Matches reference types.
+///
+/// Given
+/// \code
+///   int *a;
+///   int &b = *a;
+///   int c = 5;
+/// \endcode
+/// pointerType()
+///   matches "int &b"
+AST_TYPE_MATCHER(ReferenceType, referenceType);
+
+/// \brief Narrows PointerType (and similar) matchers to those where the
+/// \c pointee matches a given matcher.
+///
+/// Given
+/// \code
+///   int *a;
+///   int const *b;
+///   float const *f;
+/// \endcode
+/// pointerType(pointee(isConstQualified(), isInteger()))
+///   matches "int const *b"
+///
+/// Usable as: Matcher<BlockPointerType>, Matcher<MemberPointerType>,
+///   Matcher<PointerType>, Matcher<ReferenceType>
+AST_TYPELOC_TRAVERSE_MATCHER(pointee, getPointee);
+
+/// \brief Matches typedef types.
+///
+/// Given
+/// \code
+///   typedef int X;
+/// \endcode
+/// typedefType()
+///   matches "typedef int X"
+AST_TYPE_MATCHER(TypedefType, typedefType);
+
+/// \brief Matches \c TypedefTypes referring to a specific
+/// \c TypedefNameDecl.
+AST_MATCHER_P(TypedefType, hasDecl,
+              internal::Matcher<TypedefNameDecl>, InnerMatcher) {
+  return InnerMatcher.matches(*Node.getDecl(), Finder, Builder);
+}
+
 /// \brief Matches nested name specifiers.
 ///
 /// Given
@@ -2468,8 +2745,6 @@ inline internal::BindableMatcher<NestedNameSpecifierLoc> loc(
 
 /// \brief Matches nested name specifiers that specify a type matching the
 /// given \c QualType matcher without qualifiers.
-/// FIXME: This is a temporary solution. Switch to using Type-matchers as soon
-/// as we have those.
 ///
 /// Given
 /// \code
@@ -2485,8 +2760,23 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesType,
   return InnerMatcher.matches(QualType(Node.getAsType(), 0), Finder, Builder);
 }
 
-/// \brief Matches on the prefix of a \c NestedNameSpecifier or
-/// \c NestedNameSpecifierLoc.
+/// \brief Matches nested name specifier locs that specify a type matching the
+/// given \c TypeLoc.
+///
+/// Given
+/// \code
+///   struct A { struct B { struct C {}; }; };
+///   A::B::C c;
+/// \endcode
+/// nestedNameSpecifierLoc(specifiesTypeLoc(loc(type(
+///   hasDeclaration(recordDecl(hasName("A")))))))
+///   matches "A::"
+AST_MATCHER_P(NestedNameSpecifierLoc, specifiesTypeLoc,
+              internal::Matcher<TypeLoc>, InnerMatcher) {
+  return InnerMatcher.matches(Node.getTypeLoc(), Finder, Builder);
+}
+
+/// \brief Matches on the prefix of a \c NestedNameSpecifier.
 ///
 /// Given
 /// \code
@@ -2494,9 +2784,27 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesType,
 ///   A::B::C c;
 /// \endcode
 /// nestedNameSpecifier(hasPrefix(specifiesType(asString("struct A")))) and
+///   matches "A::"
+inline internal::Matcher<NestedNameSpecifier> hasPrefix(
+    const internal::Matcher<NestedNameSpecifier> &InnerMatcher) {
+  return internal::makeMatcher(
+    new internal::NestedNameSpecifierPrefixMatcher(InnerMatcher));
+}
+
+/// \brief Matches on the prefix of a \c NestedNameSpecifierLoc.
+///
+/// Given
+/// \code
+///   struct A { struct B { struct C {}; }; };
+///   A::B::C c;
+/// \endcode
 /// nestedNameSpecifierLoc(hasPrefix(loc(specifiesType(asString("struct A")))))
-///   both match "A::"
-LOC_TRAVERSE_MATCHER(hasPrefix, NestedNameSpecifier, getPrefix)
+///   matches "A::"
+inline internal::Matcher<NestedNameSpecifierLoc> hasPrefix(
+    const internal::Matcher<NestedNameSpecifierLoc> &InnerMatcher) {
+  return internal::makeMatcher(
+    new internal::NestedNameSpecifierLocPrefixMatcher(InnerMatcher));
+}
 
 /// \brief Matches nested name specifiers that specify a namespace matching the
 /// given namespace matcher.

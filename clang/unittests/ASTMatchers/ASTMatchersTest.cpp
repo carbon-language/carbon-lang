@@ -2884,6 +2884,185 @@ TEST(HasAncestor, MatchesInImplicitCode) {
               hasAncestor(recordDecl(hasName("A")))))))));
 }
 
+TEST(TypeMatching, MatchesTypes) {
+  EXPECT_TRUE(matches("struct S {};", qualType().bind("loc")));
+}
+
+TEST(TypeMatching, MatchesArrayTypes) {
+  EXPECT_TRUE(matches("int a[] = {2,3};", arrayType()));
+  EXPECT_TRUE(matches("int a[42];", arrayType()));
+  EXPECT_TRUE(matches("void f(int b) { int a[b]; }", arrayType()));
+
+  EXPECT_TRUE(notMatches("struct A {}; A a[7];",
+                         arrayType(hasElementType(builtinType()))));
+
+  EXPECT_TRUE(matches(
+      "int const a[] = { 2, 3 };",
+      qualType(arrayType(hasElementType(builtinType())))));
+  EXPECT_TRUE(matches(
+      "int const a[] = { 2, 3 };",
+      qualType(isConstQualified(), arrayType(hasElementType(builtinType())))));
+  EXPECT_TRUE(matches(
+      "typedef const int T; T x[] = { 1, 2 };",
+      qualType(isConstQualified(), arrayType())));
+
+  EXPECT_TRUE(notMatches(
+      "int a[] = { 2, 3 };",
+      qualType(isConstQualified(), arrayType(hasElementType(builtinType())))));
+  EXPECT_TRUE(notMatches(
+      "int a[] = { 2, 3 };",
+      qualType(arrayType(hasElementType(isConstQualified(), builtinType())))));
+  EXPECT_TRUE(notMatches(
+      "int const a[] = { 2, 3 };",
+      qualType(arrayType(hasElementType(builtinType())),
+               unless(isConstQualified()))));
+
+  EXPECT_TRUE(matches("int a[2];",
+                      constantArrayType(hasElementType(builtinType()))));
+  EXPECT_TRUE(matches("const int a = 0;", qualType(isInteger())));
+}
+
+TEST(TypeMatching, MatchesComplexTypes) {
+  EXPECT_TRUE(matches("_Complex float f;", complexType()));
+  EXPECT_TRUE(matches(
+    "_Complex float f;",
+    complexType(hasElementType(builtinType()))));
+  EXPECT_TRUE(notMatches(
+    "_Complex float f;",
+    complexType(hasElementType(isInteger()))));
+}
+
+TEST(TypeMatching, MatchesConstantArrayTypes) {
+  EXPECT_TRUE(matches("int a[2];", constantArrayType()));
+  EXPECT_TRUE(notMatches(
+    "void f() { int a[] = { 2, 3 }; int b[a[0]]; }",
+    constantArrayType(hasElementType(builtinType()))));
+
+  EXPECT_TRUE(matches("int a[42];", constantArrayType(hasSize(42))));
+  EXPECT_TRUE(matches("int b[2*21];", constantArrayType(hasSize(42))));
+  EXPECT_TRUE(notMatches("int c[41], d[43];", constantArrayType(hasSize(42))));
+}
+
+TEST(TypeMatching, MatchesDependentSizedArrayTypes) {
+  EXPECT_TRUE(matches(
+    "template <typename T, int Size> class array { T data[Size]; };",
+    dependentSizedArrayType()));
+  EXPECT_TRUE(notMatches(
+    "int a[42]; int b[] = { 2, 3 }; void f() { int c[b[0]]; }",
+    dependentSizedArrayType()));
+}
+
+TEST(TypeMatching, MatchesIncompleteArrayType) {
+  EXPECT_TRUE(matches("int a[] = { 2, 3 };", incompleteArrayType()));
+  EXPECT_TRUE(matches("void f(int a[]) {}", incompleteArrayType()));
+
+  EXPECT_TRUE(notMatches("int a[42]; void f() { int b[a[0]]; }",
+                         incompleteArrayType()));
+}
+
+TEST(TypeMatching, MatchesVariableArrayType) {
+  EXPECT_TRUE(matches("void f(int b) { int a[b]; }", variableArrayType()));
+  EXPECT_TRUE(notMatches("int a[] = {2, 3}; int b[42];", variableArrayType()));
+  
+  EXPECT_TRUE(matches(
+    "void f(int b) { int a[b]; }",
+    variableArrayType(hasSizeExpr(ignoringImpCasts(declRefExpr(to(
+      varDecl(hasName("b")))))))));
+}
+
+TEST(TypeMatching, MatchesAtomicTypes) {
+  EXPECT_TRUE(matches("_Atomic(int) i;", atomicType()));
+
+  EXPECT_TRUE(matches("_Atomic(int) i;",
+                      atomicType(hasValueType(isInteger()))));
+  EXPECT_TRUE(notMatches("_Atomic(float) f;",
+                         atomicType(hasValueType(isInteger()))));
+}
+
+TEST(TypeMatching, MatchesAutoTypes) {
+  EXPECT_TRUE(matches("auto i = 2;", autoType()));
+  EXPECT_TRUE(matches("int v[] = { 2, 3 }; void f() { for (int i : v) {} }",
+                      autoType()));
+
+  EXPECT_TRUE(matches("auto a = 1;",
+                      autoType(hasDeducedType(isInteger()))));
+  EXPECT_TRUE(notMatches("auto b = 2.0;",
+                         autoType(hasDeducedType(isInteger()))));
+}
+
+TEST(TypeMatching, PointerTypes) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "int* a;",
+      pointerTypeLoc(pointeeLoc(typeLoc().bind("loc"))),
+      new VerifyIdIsBoundTo<TypeLoc>("loc", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "int* a;",
+      pointerTypeLoc().bind("loc"),
+      new VerifyIdIsBoundTo<TypeLoc>("loc", 1)));
+  EXPECT_TRUE(matches(
+      "int** a;",
+      pointerTypeLoc(pointeeLoc(loc(qualType())))));
+  EXPECT_TRUE(matches(
+      "int** a;",
+      loc(pointerType(pointee(pointerType())))));
+  EXPECT_TRUE(matches(
+      "int* b; int* * const a = &b;",
+      loc(qualType(isConstQualified(), pointerType()))));
+
+  std::string Fragment = "struct A { int i; }; int A::* ptr = &A::i;";
+  EXPECT_TRUE(notMatches(Fragment, blockPointerType()));
+  EXPECT_TRUE(matches(Fragment, memberPointerType()));
+  EXPECT_TRUE(notMatches(Fragment, pointerType()));
+  EXPECT_TRUE(notMatches(Fragment, referenceType()));
+
+  Fragment = "int *I;";
+  EXPECT_TRUE(notMatches(Fragment, blockPointerType()));
+  EXPECT_TRUE(notMatches(Fragment, memberPointerType()));
+  EXPECT_TRUE(matches(Fragment, pointerType()));
+  EXPECT_TRUE(notMatches(Fragment, referenceType()));
+
+  Fragment = "int a; int &b = a;";
+  EXPECT_TRUE(notMatches(Fragment, blockPointerType()));
+  EXPECT_TRUE(notMatches(Fragment, memberPointerType()));
+  EXPECT_TRUE(notMatches(Fragment, pointerType()));
+  EXPECT_TRUE(matches(Fragment, referenceType()));
+}
+
+TEST(TypeMatching, PointeeTypes) {
+  EXPECT_TRUE(matches("int b; int &a = b;",
+                      referenceType(pointee(builtinType()))));
+  EXPECT_TRUE(matches("int *a;", pointerType(pointee(builtinType()))));
+
+  EXPECT_TRUE(matches("int *a;",
+                      pointerTypeLoc(pointeeLoc(loc(builtinType())))));
+
+  EXPECT_TRUE(matches(
+      "int const *A;",
+      pointerType(pointee(isConstQualified(), builtinType()))));
+  EXPECT_TRUE(notMatches(
+      "int *A;",
+      pointerType(pointee(isConstQualified(), builtinType()))));
+}
+
+TEST(TypeMatching, MatchesPointersToConstTypes) {
+  EXPECT_TRUE(matches("int b; int * const a = &b;",
+                      loc(pointerType())));
+  EXPECT_TRUE(matches("int b; int * const a = &b;",
+                      pointerTypeLoc()));
+  EXPECT_TRUE(matches(
+      "int b; const int * a = &b;",
+      pointerTypeLoc(pointeeLoc(builtinTypeLoc()))));
+  EXPECT_TRUE(matches(
+      "int b; const int * a = &b;",
+      pointerType(pointee(builtinType()))));
+}
+
+TEST(TypeMatching, MatchesTypedefTypes) {
+  EXPECT_TRUE(matches("typedef int X;", typedefType()));
+
+  EXPECT_TRUE(matches("typedef int X;", typedefType(hasDecl(decl()))));
+}
+
 TEST(NNS, MatchesNestedNameSpecifiers) {
   EXPECT_TRUE(matches("namespace ns { struct A {}; } ns::A a;",
                       nestedNameSpecifier()));
@@ -2942,8 +3121,8 @@ TEST(NNS, MatchesNestedNameSpecifierPrefixes) {
       nestedNameSpecifier(hasPrefix(specifiesType(asString("struct A"))))));
   EXPECT_TRUE(matches(
       "struct A { struct B { struct C {}; }; }; A::B::C c;",
-      nestedNameSpecifierLoc(hasPrefix(loc(
-          specifiesType(asString("struct A")))))));
+      nestedNameSpecifierLoc(hasPrefix(
+          specifiesTypeLoc(loc(qualType(asString("struct A"))))))));
 }
 
 } // end namespace ast_matchers

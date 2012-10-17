@@ -74,9 +74,11 @@ private:
   enum NodeTypeTag {
     NT_Decl,
     NT_Stmt,
+    NT_Type,
     NT_NestedNameSpecifier,
     NT_NestedNameSpecifierLoc,
-    NT_QualType
+    NT_QualType,
+    NT_TypeLoc
   } Tag;
 
   /// \brief Stores the data of the node.
@@ -85,8 +87,11 @@ private:
   /// guaranteed to be unique pointers pointing to dedicated storage in the
   /// AST. \c QualTypes on the other hand do not have storage or unique
   /// pointers and thus need to be stored by value.
-  llvm::AlignedCharArrayUnion<Decl*, Stmt*, NestedNameSpecifierLoc, QualType> Storage;
+  llvm::AlignedCharArrayUnion<Decl*, QualType, TypeLoc, NestedNameSpecifierLoc>
+    Storage;
 };
+
+// FIXME: Pull out abstraction for the following.
 template<typename T> struct DynTypedNode::BaseConverter<T,
     typename llvm::enable_if<llvm::is_base_of<Decl, T> >::type> {
   static const T *get(NodeTypeTag Tag, const char Storage[]) {
@@ -112,6 +117,20 @@ template<typename T> struct DynTypedNode::BaseConverter<T,
     DynTypedNode Result;
     Result.Tag = NT_Stmt;
     new (Result.Storage.buffer) const Stmt*(&Node);
+    return Result;
+  }
+};
+template<typename T> struct DynTypedNode::BaseConverter<T,
+    typename llvm::enable_if<llvm::is_base_of<Type, T> >::type> {
+  static const T *get(NodeTypeTag Tag, const char Storage[]) {
+    if (Tag == NT_Type)
+      return dyn_cast<T>(*reinterpret_cast<Type*const*>(Storage));
+    return NULL;
+  }
+  static DynTypedNode create(const Type &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_Type;
+    new (Result.Storage.buffer) const Type*(&Node);
     return Result;
   }
 };
@@ -152,6 +171,19 @@ template<> struct DynTypedNode::BaseConverter<QualType, void> {
     DynTypedNode Result;
     Result.Tag = NT_QualType;
     new (Result.Storage.buffer) QualType(Node);
+    return Result;
+  }
+};
+template<> struct DynTypedNode::BaseConverter<TypeLoc, void> {
+  static const TypeLoc *get(NodeTypeTag Tag, const char Storage[]) {
+    if (Tag == NT_TypeLoc)
+      return reinterpret_cast<const TypeLoc*>(Storage);
+    return NULL;
+  }
+  static DynTypedNode create(const TypeLoc &Node) {
+    DynTypedNode Result;
+    Result.Tag = NT_TypeLoc;
+    new (Result.Storage.buffer) TypeLoc(Node);
     return Result;
   }
 };

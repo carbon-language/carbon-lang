@@ -553,10 +553,15 @@ bool MatchASTVisitor::TraverseType(QualType TypeNode) {
   return RecursiveASTVisitor<MatchASTVisitor>::TraverseType(TypeNode);
 }
 
-bool MatchASTVisitor::TraverseTypeLoc(TypeLoc TypeLoc) {
-  match(TypeLoc.getType());
-  return RecursiveASTVisitor<MatchASTVisitor>::
-      TraverseTypeLoc(TypeLoc);
+bool MatchASTVisitor::TraverseTypeLoc(TypeLoc TypeLocNode) {
+  // The RecursiveASTVisitor only visits types if they're not within TypeLocs.
+  // We still want to find those types via matchers, so we match them here. Note
+  // that the TypeLocs are structurally a shadow-hierarchy to the expressed
+  // type, so we visit all involved parts of a compound type when matching on
+  // each TypeLoc.
+  match(TypeLocNode);
+  match(TypeLocNode.getType());
+  return RecursiveASTVisitor<MatchASTVisitor>::TraverseTypeLoc(TypeLocNode);
 }
 
 bool MatchASTVisitor::TraverseNestedNameSpecifier(NestedNameSpecifier *NNS) {
@@ -647,6 +652,12 @@ void MatchFinder::addMatcher(const NestedNameSpecifierLocMatcher &NodeMatch,
                              MatchCallback *Action) {
   MatcherCallbackPairs.push_back(std::make_pair(
     new NestedNameSpecifierLocMatcher(NodeMatch), Action));
+}
+
+void MatchFinder::addMatcher(const TypeLocMatcher &NodeMatch,
+                             MatchCallback *Action) {
+  MatcherCallbackPairs.push_back(std::make_pair(
+    new TypeLocMatcher(NodeMatch), Action));
 }
 
 ASTConsumer *MatchFinder::newASTConsumer() {

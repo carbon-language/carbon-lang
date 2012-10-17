@@ -221,23 +221,69 @@
       const NodeType &Node, ASTMatchFinder *Finder,                            \
       BoundNodesTreeBuilder *Builder) const
 
-/// \brief LOC_TRAVERSE_MATCHER(MatcherName, NodeType, FunctionName)
-/// defines the matcher \c MatcherName that can be used to traverse
-/// a Type or NestedNameSpecifier as well as the corresponding ..Loc.
+/// \brief Creates a variadic matcher for both a specific \c Type as well as
+/// the corresponding \c TypeLoc.
+#define AST_TYPE_MATCHER(NodeType, MatcherName)                                \
+  const internal::VariadicDynCastAllOfMatcher<Type, NodeType> MatcherName;     \
+  const internal::VariadicDynCastAllOfMatcher<TypeLoc,                         \
+                                              NodeType##Loc> MatcherName##Loc
+
+/// \brief AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName) defines
+/// the matcher \c MatcherName that can be used to traverse from one \c Type
+/// to another.
 ///
-/// The traversal is done using the given \c FunctionName.
-#define LOC_TRAVERSE_MATCHER(                                                  \
-      MatcherName, NodeType, FunctionName)                                     \
-  inline internal::Matcher<NodeType> hasPrefix(                                \
-      const internal::Matcher<NodeType> &InnerMatcher) {                       \
-    return internal::makeMatcher(new internal::TraverseMatcher<NodeType>(      \
-      InnerMatcher, &NodeType::getPrefix));                                    \
+/// For a specific \c SpecificType, the traversal is done using 
+/// \c SpecificType::FunctionName. The existance of such a function determines
+/// whether a corresponding matcher can be used on \c SpecificType.
+#define AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName)                   \
+class Polymorphic##MatcherName##TypeMatcher {                                  \
+public:                                                                        \
+  Polymorphic##MatcherName##TypeMatcher(                                       \
+      const internal::Matcher<QualType> &InnerMatcher)                         \
+    : InnerMatcher(InnerMatcher) {}                                            \
+  template <typename T> operator internal::Matcher<T>() {                      \
+    return internal::Matcher<T>(new internal::TypeTraverseMatcher<T>(          \
+      InnerMatcher, &T::FunctionName));                                        \
   }                                                                            \
-  inline internal::Matcher<NodeType##Loc> hasPrefix(                           \
-      const internal::Matcher<NodeType##Loc> &InnerMatcher) {                  \
-    return internal::makeMatcher(                                              \
-      new internal::LocTraverseMatcher<NodeType##Loc>(                         \
-        InnerMatcher, &NodeType##Loc::getPrefix));                             \
-  }
+private:                                                                       \
+  const internal::Matcher<QualType> InnerMatcher;                              \
+};                                                                             \
+class Variadic##MatcherName##TypeTraverseMatcher                               \
+    : public llvm::VariadicFunction<                                           \
+        Polymorphic##MatcherName##TypeMatcher,                                 \
+        internal::Matcher<QualType>,                                           \
+        internal::makeTypeAllOfComposite<                                      \
+          Polymorphic##MatcherName##TypeMatcher, QualType> > {                 \
+public:                                                                        \
+  Variadic##MatcherName##TypeTraverseMatcher() {}                              \
+};                                                                             \
+const Variadic##MatcherName##TypeTraverseMatcher MatcherName
+
+/// \brief AST_TYPELOC_TRAVERSE_MATCHER(MatcherName, FunctionName) works
+/// identical to \c AST_TYPE_TRAVERSE_MATCHER but operates on \c TypeLocs.
+#define AST_TYPELOC_TRAVERSE_MATCHER(MatcherName, FunctionName)                \
+class Polymorphic##MatcherName##TypeLocMatcher {                               \
+public:                                                                        \
+  Polymorphic##MatcherName##TypeLocMatcher(                                    \
+      const internal::Matcher<TypeLoc> &InnerMatcher)                          \
+    : InnerMatcher(InnerMatcher) {}                                            \
+  template <typename T> operator internal::Matcher<T>() {                      \
+    return internal::Matcher<T>(new internal::TypeLocTraverseMatcher<T>(       \
+      InnerMatcher, &T::FunctionName##Loc));                                   \
+  }                                                                            \
+private:                                                                       \
+  const internal::Matcher<TypeLoc> InnerMatcher;                               \
+};                                                                             \
+class Variadic##MatcherName##TypeLocTraverseMatcher                            \
+    : public llvm::VariadicFunction<                                           \
+        Polymorphic##MatcherName##TypeLocMatcher,                              \
+        internal::Matcher<TypeLoc>,                                            \
+        internal::makeTypeAllOfComposite<                                      \
+          Polymorphic##MatcherName##TypeLocMatcher, TypeLoc> > {               \
+public:                                                                        \
+  Variadic##MatcherName##TypeLocTraverseMatcher() {}                           \
+};                                                                             \
+const Variadic##MatcherName##TypeLocTraverseMatcher MatcherName##Loc;          \
+AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName##Type)
 
 #endif // LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_MACROS_H
