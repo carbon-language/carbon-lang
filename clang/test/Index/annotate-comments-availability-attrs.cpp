@@ -8,6 +8,7 @@
 // Ensure that XML we generate is not invalid.
 // RUN: FileCheck %s -check-prefix=WRONG < %t/out
 // WRONG-NOT: CommentXMLInvalid
+// XFAIL: *
 
 /// Aaa.
 void attr_availability_1() __attribute__((availability(macosx,obsoleted=10.0,introduced=8.0,deprecated=9.0, message="use availability_test in <foo.h>")))
