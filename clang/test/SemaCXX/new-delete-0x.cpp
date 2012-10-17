@@ -27,6 +27,11 @@ void bad_news(int *ip)
 void good_deletes()
 {
   delete [&]{ return (int*)0; }();
-  // FIXME: This appears to be legal.
-  delete []{ return (int*)0; }(); // unexpected-error {{expected expression}}
+}
+
+void bad_deletes()
+{
+  // 'delete []' is always array delete, per [expr.delete]p1.
+  // FIXME: Give a better diagnostic.
+  delete []{ return (int*)0; }(); // expected-error {{expected expression}}
 }
