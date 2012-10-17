@@ -77,16 +77,20 @@ class MachineRegisterInfo {
     return MO->Contents.Reg.Next;
   }
 
-  /// UsedPhysRegs - This is a bit vector that is computed and set by the
+  /// UsedRegUnits - This is a bit vector that is computed and set by the
   /// register allocator, and must be kept up to date by passes that run after
   /// register allocation (though most don't modify this).  This is used
   /// so that the code generator knows which callee save registers to save and
   /// for other target specific uses.
-  /// This vector only has bits set for registers explicitly used, not their
-  /// aliases.
-  BitVector UsedPhysRegs;
+  /// This vector has bits set for register units that are modified in the
+  /// current function. It doesn't include registers clobbered by function
+  /// calls with register mask operands.
+  BitVector UsedRegUnits;
 
-  /// UsedPhysRegMask - Additional used physregs, but including aliases.
+  /// UsedPhysRegMask - Additional used physregs including aliases.
+  /// This bit vector represents all the registers clobbered by function calls.
+  /// It can model things that UsedRegUnits can't, such as function calls that
+  /// clobber ymm7 but preserve the low half in xmm7.
   BitVector UsedPhysRegMask;
 
   /// ReservedRegs - This is a bit vector of reserved registers.  The target
@@ -366,15 +370,18 @@ public:
   bool isPhysRegUsed(unsigned Reg) const {
     if (UsedPhysRegMask.test(Reg))
       return true;
-    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-      if (UsedPhysRegs.test(*AI))
+    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+      if (UsedRegUnits.test(*Units))
         return true;
     return false;
   }
 
   /// setPhysRegUsed - Mark the specified register used in this function.
   /// This should only be called during and after register allocation.
-  void setPhysRegUsed(unsigned Reg) { UsedPhysRegs.set(Reg); }
+  void setPhysRegUsed(unsigned Reg) {
+    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+      UsedRegUnits.set(*Units);
+  }
 
   /// addPhysRegsUsedFromRegMask - Mark any registers not in RegMask as used.
   /// This corresponds to the bit mask attached to register mask operands.
@@ -385,8 +392,9 @@ public:
   /// setPhysRegUnused - Mark the specified register unused in this function.
   /// This should only be called during and after register allocation.
   void setPhysRegUnused(unsigned Reg) {
-    UsedPhysRegs.reset(Reg);
     UsedPhysRegMask.reset(Reg);
+    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+      UsedRegUnits.reset(*Units);
   }
 
 
