@@ -370,10 +370,15 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
 
     return executeCommand(command, cwd=cwd, env=test.config.environment)
 
-def isExpectedFail(xfails, xtargets, target_triple):
-    # Check if any xfail matches this target.
+def isExpectedFail(test, xfails, xtargets):
+    # If the xfail matches an available feature, it always fails.
     for item in xfails:
-        if item == '*' or item in target_triple:
+        if item in test.config.available_features:
+            return True
+
+    # Otherwise, check if any xfail matches this target.
+    for item in xfails:
+        if item == '*' or item in test.suite.config.target_triple:
             break
     else:
         return False
@@ -382,7 +387,7 @@ def isExpectedFail(xfails, xtargets, target_triple):
     #
     # FIXME: Rename XTARGET to something that makes sense, like XPASS.
     for item in xtargets:
-        if item == '*' or item in target_triple:
+        if item == '*' or item in test.suite.config.target_triple:
             return False
 
     return True
@@ -491,7 +496,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
         return (Test.UNSUPPORTED,
                 "Test requires the following features: %s" % msg)
 
-    isXFail = isExpectedFail(xfails, xtargets, test.suite.config.target_triple)
+    isXFail = isExpectedFail(test, xfails, xtargets)
     return script,isXFail,tmpBase,execdir
 
 def formatTestOutput(status, out, err, exitCode, failDueToStderr, script):
