@@ -1028,7 +1028,7 @@ void CommentASTToXMLConverter::visitVerbatimLineComment(
   Result << "</Verbatim>";
 }
 
-static StringRef getSourceTextOfDeclaration(const DeclInfo *ThisDecl) {
+static std::string getSourceTextOfDeclaration(const DeclInfo *ThisDecl) {
   
   ASTContext &Context = ThisDecl->CurrentDecl->getASTContext();
   const LangOptions &LangOpts = Context.getLangOpts();
