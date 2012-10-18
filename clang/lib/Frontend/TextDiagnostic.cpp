@@ -43,19 +43,22 @@ static const enum raw_ostream::Colors savedColor =
 /// \brief Add highlights to differences in template strings.
 static void applyTemplateHighlighting(raw_ostream &OS, StringRef Str,
                                       bool &Normal, bool Bold) {
-  for (unsigned i = 0, e = Str.size(); i < e; ++i)
-    if (Str[i] != ToggleHighlight) {
-      OS << Str[i];
-    } else {
-      if (Normal)
-        OS.changeColor(templateColor, true);
-      else {
-        OS.resetColor();
-        if (Bold)
-          OS.changeColor(savedColor, true);
-      }
-      Normal = !Normal;
+  while (1) {
+    size_t Pos = Str.find(ToggleHighlight);
+    OS << Str.slice(0, Pos);
+    if (Pos == StringRef::npos)
+      break;
+
+    Str = Str.substr(Pos + 1);
+    if (Normal)
+      OS.changeColor(templateColor, true);
+    else {
+      OS.resetColor();
+      if (Bold)
+        OS.changeColor(savedColor, true);
     }
+    Normal = !Normal;
+  }
 }
 
 /// \brief Number of spaces to indent when word-wrapping.
