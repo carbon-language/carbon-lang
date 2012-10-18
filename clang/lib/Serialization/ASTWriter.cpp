@@ -994,19 +994,6 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(!isysroot.empty());
   Record.push_back(ASTHasCompilerErrors);
-  AddString(TargetOpts.Triple, Record);
-  AddString(TargetOpts.CPU, Record);
-  AddString(TargetOpts.ABI, Record);
-  AddString(TargetOpts.CXXABI, Record);
-  AddString(TargetOpts.LinkerVersion, Record);
-  Record.push_back(TargetOpts.FeaturesAsWritten.size());
-  for (unsigned I = 0, N = TargetOpts.FeaturesAsWritten.size(); I != N; ++I) {
-    AddString(TargetOpts.FeaturesAsWritten[I], Record);
-  }
-  Record.push_back(TargetOpts.Features.size());
-  for (unsigned I = 0, N = TargetOpts.Features.size(); I != N; ++I) {
-    AddString(TargetOpts.Features[I], Record);
-  }
   Stream.EmitRecord(METADATA, Record);
 
   // Imports
@@ -1046,6 +1033,23 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
   Record.push_back(LangOpts.CurrentModule.size());
   Record.append(LangOpts.CurrentModule.begin(), LangOpts.CurrentModule.end());
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
+
+  // Target options.
+  Record.clear();
+  AddString(TargetOpts.Triple, Record);
+  AddString(TargetOpts.CPU, Record);
+  AddString(TargetOpts.ABI, Record);
+  AddString(TargetOpts.CXXABI, Record);
+  AddString(TargetOpts.LinkerVersion, Record);
+  Record.push_back(TargetOpts.FeaturesAsWritten.size());
+  for (unsigned I = 0, N = TargetOpts.FeaturesAsWritten.size(); I != N; ++I) {
+    AddString(TargetOpts.FeaturesAsWritten[I], Record);
+  }
+  Record.push_back(TargetOpts.Features.size());
+  for (unsigned I = 0, N = TargetOpts.Features.size(); I != N; ++I) {
+    AddString(TargetOpts.Features[I], Record);
+  }
+  Stream.EmitRecord(TARGET_OPTIONS, Record);
 
   // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();

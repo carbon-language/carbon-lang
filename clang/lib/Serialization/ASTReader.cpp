@@ -1800,24 +1800,6 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
       }
 
       RelocatablePCH = Record[4];
-      if (Listener && &F == *ModuleMgr.begin()) {
-        unsigned Idx = 6;
-        TargetOptions TargetOpts;
-        TargetOpts.Triple = ReadString(Record, Idx);
-        TargetOpts.CPU = ReadString(Record, Idx);
-        TargetOpts.ABI = ReadString(Record, Idx);
-        TargetOpts.CXXABI = ReadString(Record, Idx);
-        TargetOpts.LinkerVersion = ReadString(Record, Idx);
-        for (unsigned N = Record[Idx++]; N; --N) {
-          TargetOpts.FeaturesAsWritten.push_back(ReadString(Record, Idx));
-        }
-        for (unsigned N = Record[Idx++]; N; --N) {
-          TargetOpts.Features.push_back(ReadString(Record, Idx));
-        }
-
-        if (Listener->ReadTargetOptions(F, TargetOpts))
-          return IgnorePCH;
-      }
       break;
     }
 
@@ -1848,6 +1830,28 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
           ParseLanguageOptions(F, Record) && !DisableValidation)
         return IgnorePCH;
       break;
+
+    case TARGET_OPTIONS: {
+      if (Listener && &F == *ModuleMgr.begin()) {
+        unsigned Idx = 0;
+        TargetOptions TargetOpts;
+        TargetOpts.Triple = ReadString(Record, Idx);
+        TargetOpts.CPU = ReadString(Record, Idx);
+        TargetOpts.ABI = ReadString(Record, Idx);
+        TargetOpts.CXXABI = ReadString(Record, Idx);
+        TargetOpts.LinkerVersion = ReadString(Record, Idx);
+        for (unsigned N = Record[Idx++]; N; --N) {
+          TargetOpts.FeaturesAsWritten.push_back(ReadString(Record, Idx));
+        }
+        for (unsigned N = Record[Idx++]; N; --N) {
+          TargetOpts.Features.push_back(ReadString(Record, Idx));
+        }
+
+        if (Listener->ReadTargetOptions(F, TargetOpts))
+          return IgnorePCH;
+      }
+      break;
+    }
 
     case ORIGINAL_FILE_NAME:
       // Only record from the primary AST file.

@@ -242,20 +242,23 @@ namespace clang {
       /// actually important to check.
       LANGUAGE_OPTIONS = 3,
 
+      /// \brief Record code for the target options table.
+      TARGET_OPTIONS = 4,
+
       /// \brief Record code for the original file that was used to
       /// generate the AST file.
-      ORIGINAL_FILE_NAME = 4,
+      ORIGINAL_FILE_NAME = 5,
 
       /// \brief Record code for the file ID of the original file used to 
       /// generate the AST file.
-      ORIGINAL_FILE_ID = 5,
+      ORIGINAL_FILE_ID = 6,
       
       /// \brief The directory that the PCH was originally created in.
-      ORIGINAL_PCH_DIR = 6,
+      ORIGINAL_PCH_DIR = 7,
 
       /// \brief Record code for the version control branch and revision
       /// information of the compiler used to build this AST file.
-      VERSION_CONTROL_BRANCH_REVISION = 7
+      VERSION_CONTROL_BRANCH_REVISION = 8
     };
 
     /// \brief Record types that occur within the AST block itself.
