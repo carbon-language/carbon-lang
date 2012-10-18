@@ -98,27 +98,38 @@ void TypeLoc::initializeImpl(ASTContext &Context, TypeLoc TL,
 
 SourceLocation TypeLoc::getBeginLoc() const {
   TypeLoc Cur = *this;
+  TypeLoc LeftMost = Cur;
   while (true) {
     switch (Cur.getTypeLocClass()) {
-    case FunctionProto:
-      if (cast<FunctionProtoTypeLoc>(&Cur)->getTypePtr()->hasTrailingReturn())
-        return Cur.getLocalSourceRange().getBegin();
-      Cur = Cur.getNextTypeLoc();
-      assert(!Cur.isNull());
-      continue;
-
-    // FIXME: Currently QualifiedTypeLoc does not have a source range
-    // case Qualified:
     case Elaborated:
-      return Cur.getLocalSourceRange().getBegin();
-
-    default:
-      if (Cur.getNextTypeLoc().isNull())
-        return Cur.getLocalSourceRange().getBegin();
+      LeftMost = Cur;
+      break;
+    case FunctionProto:
+      if (cast<FunctionProtoTypeLoc>(&Cur)->getTypePtr()->hasTrailingReturn()) {
+        LeftMost = Cur;
+        break;
+      }
+      /* Fall through */
+    case FunctionNoProto:
+    case ConstantArray:
+    case DependentSizedArray:
+    case IncompleteArray:
+    case VariableArray:
+      // FIXME: Currently QualifiedTypeLoc does not have a source range
+    case Qualified:
       Cur = Cur.getNextTypeLoc();
+      continue;
+    default:
+      if (!Cur.getLocalSourceRange().getBegin().isInvalid())
+        LeftMost = Cur;
+      Cur = Cur.getNextTypeLoc();
+      if (Cur.isNull())
+        break;
       continue;
     } // switch
+    break;
   } // while
+  return LeftMost.getLocalSourceRange().getBegin();
 }
 
 SourceLocation TypeLoc::getEndLoc() const {
