@@ -3643,7 +3643,9 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         }
 
         // Expr/Input or Output.
-        void *OpDecl = SI.LookupInlineAsmIdentifier(Operand->getName(), AsmLoc);
+        unsigned Size;
+        void *OpDecl = SI.LookupInlineAsmIdentifier(Operand->getName(), AsmLoc,
+                                                    Size);
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
           if (isOutput) {
