@@ -586,14 +586,14 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["__stpcpy_chk"] = &StrCpyChk;
   Optimizations["__strncpy_chk"] = &StrNCpyChk;
   Optimizations["__stpncpy_chk"] = &StrNCpyChk;
-  Optimizations["strcmp"] = &StrCmp;
-  Optimizations["strncmp"] = &StrNCmp;
 
   // String and memory library call optimizations.
   Optimizations["strcat"] = &StrCat;
   Optimizations["strncat"] = &StrNCat;
   Optimizations["strchr"] = &StrChr;
   Optimizations["strrchr"] = &StrRChr;
+  Optimizations["strcmp"] = &StrCmp;
+  Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
 }
 
