@@ -33,6 +33,7 @@ add_llvm_library(LLVMCore
   PrintModulePass.cpp
   Type.cpp
   TypeFinder.cpp
+  TargetTransformInfo.cpp
   Use.cpp
   User.cpp
   Value.cpp

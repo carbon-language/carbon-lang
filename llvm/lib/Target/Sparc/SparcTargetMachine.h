@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
 
@@ -32,6 +33,8 @@ class SparcTargetMachine : public LLVMTargetMachine {
   SparcTargetLowering TLInfo;
   SparcSelectionDAGInfo TSInfo;
   SparcFrameLowering FrameLowering;
+  ScalarTargetTransformImpl STTI;
+  VectorTargetTransformImpl VTTI;
 public:
   SparcTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -51,6 +54,12 @@ public:
   }
   virtual const SparcSelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
+  }
+  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
+    return &STTI;
+  }
+  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
+    return &VTTI;
   }
   virtual const DataLayout       *getDataLayout() const { return &DL; }
 

@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS bitreader asmparser bitwriter instrumentation scalaropts ipo vectorize)
+set(LLVM_LINK_COMPONENTS ${LLVM_TARGETS_TO_BUILD} bitreader asmparser bitwriter instrumentation scalaropts ipo vectorize)
 
 add_llvm_tool(opt
   AnalysisWrappers.cpp

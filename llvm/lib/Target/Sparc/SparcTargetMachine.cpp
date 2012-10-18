@@ -36,7 +36,7 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
     DL(Subtarget.getDataLayout()),
     InstrInfo(Subtarget),
     TLInfo(*this), TSInfo(*this),
-    FrameLowering(Subtarget) {
+    FrameLowering(Subtarget),STTI(&TLInfo) {
 }
 
 namespace {

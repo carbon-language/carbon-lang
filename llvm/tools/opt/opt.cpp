@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/CallGraphSCCPass.h"
+#include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
@@ -36,7 +37,9 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
@@ -478,6 +481,75 @@ static void AddStandardLinkPasses(PassManagerBase &PM) {
                                  /*RunInliner=*/ !DisableInline);
 }
 
+//===----------------------------------------------------------------------===//
+// CodeGen-related helper functions.
+//
+static TargetOptions GetTargetOptions() {
+  TargetOptions Options;
+  Options.LessPreciseFPMADOption = EnableFPMAD;
+  Options.NoFramePointerElim = DisableFPElim;
+  Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
+  Options.AllowFPOpFusion = FuseFPOps;
+  Options.UnsafeFPMath = EnableUnsafeFPMath;
+  Options.NoInfsFPMath = EnableNoInfsFPMath;
+  Options.NoNaNsFPMath = EnableNoNaNsFPMath;
+  Options.HonorSignDependentRoundingFPMathOption =
+  EnableHonorSignDependentRoundingFPMath;
+  Options.UseSoftFloat = GenerateSoftFloatCalls;
+  if (FloatABIForCalls != FloatABI::Default)
+    Options.FloatABIType = FloatABIForCalls;
+  Options.NoZerosInBSS = DontPlaceZerosInBSS;
+  Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
+  Options.DisableTailCalls = DisableTailCalls;
+  Options.StackAlignmentOverride = OverrideStackAlignment;
+  Options.RealignStack = EnableRealignStack;
+  Options.TrapFuncName = TrapFuncName;
+  Options.PositionIndependentExecutable = EnablePIE;
+  Options.EnableSegmentedStacks = SegmentedStacks;
+  Options.UseInitArray = UseInitArray;
+  Options.SSPBufferSize = SSPBufferSize;
+  return Options;
+}
+
+CodeGenOpt::Level GetCodeGenOptLevel() {
+  if (OptLevelO1)
+    return CodeGenOpt::Less;
+  if (OptLevelO2)
+    return CodeGenOpt::Default;
+  if (OptLevelO3)
+    return CodeGenOpt::Aggressive;
+  return CodeGenOpt::None;
+}
+
+// Returns the TargetMachine instance or zero if no triple is provided.
+static TargetMachine* GetTargetMachine(std::string TripleStr) {
+  if (TripleStr.empty())
+    return 0;
+
+  // Get the target specific parser.
+  std::string Error;
+  Triple TheTriple(Triple::normalize(TargetTriple));
+
+  const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
+                                                         Error);
+  if (!TheTarget) {
+    return 0;
+  }
+
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MAttrs.size()) {
+    SubtargetFeatures Features;
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
+
+  return TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                        MCPU, FeaturesStr, GetTargetOptions(),
+                                        RelocModel, CMModel,
+                                        GetCodeGenOptLevel());
+}
 
 //===----------------------------------------------------------------------===//
 // main for opt
@@ -578,6 +650,12 @@ int main(int argc, char **argv) {
 
   if (TD)
     Passes.add(TD);
+
+  std::auto_ptr<TargetMachine> TM(GetTargetMachine(TargetTriple));
+  if (TM.get()) {
+    Passes.add(new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
+                                       TM->getVectorTargetTransformInfo()));
+  }
 
   OwningPtr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
