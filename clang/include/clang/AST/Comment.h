@@ -902,11 +902,12 @@ public:
 
 /// Information about the declaration, useful to clients of FullComment.
 struct DeclInfo {
-  /// Declaration the comment is attached to.  Should not be NULL.
+  /// Declaration the comment is actually attached to (in the source).
+  /// Should not be NULL.
   const Decl *CommentDecl;
   
-  /// CurrentDecl is the declaration for which comment is being put into an XML comment.
-  /// Not necessarily same as CommentDecl.
+  /// CurrentDecl is the declaration with which the FullComment is associated.
+  /// The information in the DeclInfo corresponds to CurrentDecl.
   const Decl *CurrentDecl;
   
   /// Parameters that can be referenced by \\param if \c CommentDecl is something
