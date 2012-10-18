@@ -28,7 +28,6 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Value.h"
 #include "llvm/Function.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
@@ -143,7 +142,6 @@ private:
   DenseMap<Value*, Value*> WidenMap;
 };
 
-
 /// Perform the vectorization legality check. This class does not look at the
 /// profitability of vectorization, only the legality. At the moment the checks
 /// are very simple and focus on single basic block loops with a constant
@@ -184,22 +182,18 @@ struct LoopVectorize : public LoopPass {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
   }
 
-  AliasAnalysis *AA;
   ScalarEvolution *SE;
   DataLayout *DL;
   LoopInfo *LI;
-  DominatorTree *DT;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // Only vectorize innermost loops.
     if (!L->empty())
       return false;
 
-    AA = &getAnalysis<AliasAnalysis>();
     SE = &getAnalysis<ScalarEvolution>();
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
-    DT = &getAnalysis<DominatorTree>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
@@ -227,10 +221,8 @@ struct LoopVectorize : public LoopPass {
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     LoopPass::getAnalysisUsage(AU);
     AU.addRequiredID(LoopSimplifyID);
-    AU.addRequired<AliasAnalysis>();
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
-    AU.addRequired<DominatorTree>();
   }
 
 };
