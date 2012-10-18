@@ -41,3 +41,8 @@ struct X {
   void *operator new (typeof(sizeof(1)), int = 2);
 };
 void f2() { new X; }
+
+// CHECK: for (int i = 2097, j = 42; false;)
+void forInit() {
+  for (int i = 2097, j = 42; false;) {}
+}

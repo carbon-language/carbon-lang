@@ -141,9 +141,6 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, raw_ostream &OS,
     OS << "NULL TYPE";
     return;
   }
-  
-  if (Policy.SuppressSpecifiers && T->isSpecifierType())
-    return;
 
   SaveAndRestore<bool> PHVal(HasEmptyPlaceHolder, PlaceHolder.empty());
 
