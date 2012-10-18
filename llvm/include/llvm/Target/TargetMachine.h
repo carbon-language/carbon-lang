@@ -17,8 +17,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/TargetTransformInfo.h"
-#include "llvm/Target/TargetTransformImpl.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>
@@ -109,10 +107,6 @@ public:
   virtual const TargetLowering    *getTargetLowering() const { return 0; }
   virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const{ return 0; }
   virtual const DataLayout             *getDataLayout() const { return 0; }
-  virtual const ScalarTargetTransformInfo*
-  getScalarTargetTransformInfo() const { return 0; }
-  virtual const VectorTargetTransformInfo*
-  getVectorTargetTransformInfo() const { return 0; }
 
   /// getMCAsmInfo - Return target specific asm information.
   ///

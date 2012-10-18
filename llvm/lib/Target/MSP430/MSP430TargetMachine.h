@@ -24,7 +24,6 @@
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
 
@@ -37,8 +36,6 @@ class MSP430TargetMachine : public LLVMTargetMachine {
   MSP430TargetLowering   TLInfo;
   MSP430SelectionDAGInfo TSInfo;
   MSP430FrameLowering    FrameLowering;
-  ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
 
 public:
   MSP430TargetMachine(const Target &T, StringRef TT,
@@ -64,12 +61,7 @@ public:
   virtual const MSP430SelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
   }
-  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
-    return &STTI;
-  }
-  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
-    return &VTTI;
-  }
+
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 }; // MSP430TargetMachine.
 

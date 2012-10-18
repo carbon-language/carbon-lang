@@ -371,8 +371,6 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   // Add an appropriate DataLayout instance for this module...
   passes.add(new DataLayout(*_target->getDataLayout()));
-  passes.add(new TargetTransformInfo(_target->getScalarTargetTransformInfo(),
-                                     _target->getVectorTargetTransformInfo()));
 
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead

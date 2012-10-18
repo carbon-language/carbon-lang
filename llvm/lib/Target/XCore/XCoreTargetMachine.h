@@ -20,7 +20,6 @@
 #include "XCoreISelLowering.h"
 #include "XCoreSelectionDAGInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetTransformImpl.h"
 #include "llvm/DataLayout.h"
 
 namespace llvm {
@@ -32,8 +31,6 @@ class XCoreTargetMachine : public LLVMTargetMachine {
   XCoreFrameLowering FrameLowering;
   XCoreTargetLowering TLInfo;
   XCoreSelectionDAGInfo TSInfo;
-  ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
 public:
   XCoreTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -55,12 +52,6 @@ public:
 
   virtual const TargetRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
-  }
-  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
-    return &STTI;
-  }
-  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
-    return &VTTI;
   }
   virtual const DataLayout       *getDataLayout() const { return &DL; }
 

@@ -21,7 +21,6 @@
 #include "PPCISelLowering.h"
 #include "PPCSelectionDAGInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetTransformImpl.h"
 #include "llvm/DataLayout.h"
 
 namespace llvm {
@@ -37,8 +36,6 @@ class PPCTargetMachine : public LLVMTargetMachine {
   PPCTargetLowering   TLInfo;
   PPCSelectionDAGInfo TSInfo;
   InstrItineraryData  InstrItins;
-  ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
 
 public:
   PPCTargetMachine(const Target &T, StringRef TT,
@@ -65,12 +62,6 @@ public:
   virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return &InstrItins;
-  }
-  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
-    return &STTI;
-  }
-  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
-    return &VTTI;
   }
 
   // Pass Pipeline Configuration
