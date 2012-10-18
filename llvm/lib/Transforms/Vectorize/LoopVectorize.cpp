@@ -405,7 +405,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
 |    |
 |    v
 |   [ ] \
-|   [ ]_|   <-- old scalar loop to handle remainder. ()
+|   [ ]_|   <-- old scalar loop to handle remainder.
  \   |
   \  v
    >[ ]     <-- exit block.
