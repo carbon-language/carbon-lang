@@ -77,7 +77,8 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
         Printf(" %s\n", StripPathPrefix(buff.data(), strip_file_prefix));
         frame_num++;
       }
-    } else if (symbolize) {
+    }
+    if (symbolize && addr_frames_num == 0) {
       // Use our own (online) symbolizer, if necessary.
       addr_frames_num = SymbolizeCode(pc, addr_frames.data(),
                                       addr_frames.size());
