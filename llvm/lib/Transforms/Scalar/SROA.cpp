@@ -132,9 +132,6 @@ public:
     ///
     /// We flag partitions as splittable when they are formed entirely due to
     /// accesses by trivially splittable operations such as memset and memcpy.
-    ///
-    /// FIXME: At some point we should consider loads and stores of FCAs to be
-    /// splittable and eagerly split them into scalar values.
     bool IsSplittable;
 
     /// \brief Test whether a partition has been marked as dead.
