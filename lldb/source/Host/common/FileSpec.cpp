@@ -996,4 +996,28 @@ FileSpec::IsSourceImplementationFile () const
     return false;
 }
 
+bool
+FileSpec::IsRelativeToCurrentWorkingDirectory () const
+{
+    const char *directory = m_directory.GetCString();
+    if (directory && directory[0])
+    {
+        // If the path doesn't start with '/' or '~', return true
+        switch (directory[0])
+        {
+        case '/':
+        case '~':
+            return false;
+        default:
+            return true;
+        }
+    }
+    else if (m_filename)
+    {
+        // No directory, just a basename, return true
+        return true;
+    }
+    return false;
+}
+
 

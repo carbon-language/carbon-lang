@@ -57,7 +57,7 @@ TargetList::~TargetList()
 
 Error
 TargetList::CreateTarget (Debugger &debugger,
-                          const FileSpec& file,
+                          const char *user_exe_path,
                           const char *triple_cstr,
                           bool get_dependent_files,
                           const OptionGroupPlatform *platform_options,
@@ -112,39 +112,25 @@ TargetList::CreateTarget (Debugger &debugger,
         platform_arch = arch;
 
     error = TargetList::CreateTarget (debugger,
-                                      file,
+                                      user_exe_path,
                                       platform_arch,
                                       get_dependent_files,
                                       platform_sp,
                                       target_sp);
-
-    if (target_sp)
-    {
-        if (file.GetDirectory())
-        {
-            FileSpec file_dir;
-            file_dir.GetDirectory() = file.GetDirectory();
-            target_sp->GetExecutableSearchPaths ().Append (file_dir);
-        }
-    }
     return error;
 }
 
 Error
-TargetList::CreateTarget
-(
-    Debugger &debugger,
-    const FileSpec& file,
-    const ArchSpec& specified_arch,
-    bool get_dependent_files,
-    PlatformSP &platform_sp,
-    TargetSP &target_sp
-)
+TargetList::CreateTarget (Debugger &debugger,
+                          const char *user_exe_path,
+                          const ArchSpec& specified_arch,
+                          bool get_dependent_files,
+                          PlatformSP &platform_sp,
+                          TargetSP &target_sp)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "TargetList::CreateTarget (file = '%s/%s', arch = '%s')",
-                        file.GetDirectory().AsCString(),
-                        file.GetFilename().AsCString(),
+                        "TargetList::CreateTarget (file = '%s', arch = '%s')",
+                        user_exe_path,
                         specified_arch.GetArchitectureName());
     Error error;
 
@@ -168,12 +154,28 @@ TargetList::CreateTarget
 
     if (!arch.IsValid())
         arch = specified_arch;
-    
 
+    FileSpec file (user_exe_path, false);
     if (file)
     {
+        if (file.IsRelativeToCurrentWorkingDirectory())
+        {
+            // Ignore paths that start with "./" and "../"
+            if (!((user_exe_path[0] == '.' && user_exe_path[1] == '/') ||
+                  (user_exe_path[0] == '.' && user_exe_path[1] == '.' && user_exe_path[2] == '/')))
+            {
+                char cwd[PATH_MAX];
+                if (getcwd (cwd, sizeof(cwd)))
+                {
+                    std::string cwd_user_exe_path (cwd);
+                    cwd_user_exe_path += '/';
+                    cwd_user_exe_path += user_exe_path;
+                    file.SetFile(cwd_user_exe_path.c_str(), false);
+                }
+            }
+        }
+
         ModuleSP exe_module_sp;
-        FileSpec resolved_file(file);
         if (platform_sp)
         {
             FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
@@ -217,9 +219,22 @@ TargetList::CreateTarget
 
     if (target_sp)
     {
+        if (user_exe_path)
+        {
+            // Use exactly what the user typed as the first argument when we exec or posix_spawn
+            target_sp->SetArg0 (user_exe_path);
+        }
+        if (file.GetDirectory())
+        {
+            FileSpec file_dir;
+            file_dir.GetDirectory() = file.GetDirectory();
+            target_sp->GetExecutableSearchPaths ().Append (file_dir);
+        }
         Mutex::Locker locker(m_target_list_mutex);
         m_selected_target_idx = m_target_list.size();
         m_target_list.push_back(target_sp);
+        
+        
     }
 
     return error;

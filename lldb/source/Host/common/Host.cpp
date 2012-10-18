@@ -1247,7 +1247,7 @@ Host::GetDummyTarget (lldb_private::Debugger &debugger)
         if (!arch.IsValid())
             arch = Host::GetArchitecture ();
         Error err = debugger.GetTargetList().CreateTarget(debugger, 
-                                                          FileSpec(), 
+                                                          NULL,
                                                           arch.GetTriple().getTriple().c_str(),
                                                           false, 
                                                           NULL, 

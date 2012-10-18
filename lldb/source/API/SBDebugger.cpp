@@ -511,12 +511,11 @@ SBDebugger::CreateTarget (const char *filename,
     if (m_opaque_sp)
     {
         sb_error.Clear();
-        FileSpec filename_spec (filename, true);
         OptionGroupPlatform platform_options (false);
         platform_options.SetPlatformName (platform_name);
         
         sb_error.ref() = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
-                                                                    filename_spec, 
+                                                                    filename, 
                                                                     target_triple, 
                                                                     add_dependent_modules, 
                                                                     &platform_options,
@@ -554,10 +553,9 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
     TargetSP target_sp;
     if (m_opaque_sp)
     {
-        FileSpec file_spec (filename, true);
         const bool add_dependent_modules = true;
         Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
-                                                                file_spec, 
+                                                                filename, 
                                                                 target_triple, 
                                                                 add_dependent_modules, 
                                                                 NULL,
@@ -584,12 +582,11 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_
     TargetSP target_sp;
     if (m_opaque_sp)
     {
-        FileSpec file (filename, true);
         Error error;
         const bool add_dependent_modules = true;
 
-        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
-                                                           file, 
+        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp,
+                                                           filename, 
                                                            arch_cstr, 
                                                            add_dependent_modules, 
                                                            NULL, 
@@ -618,14 +615,13 @@ SBDebugger::CreateTarget (const char *filename)
     TargetSP target_sp;
     if (m_opaque_sp)
     {
-        FileSpec file (filename, true);
         ArchSpec arch = Target::GetDefaultArchitecture ();
         Error error;
         const bool add_dependent_modules = true;
 
         PlatformSP platform_sp(m_opaque_sp->GetPlatformList().GetSelectedPlatform());
         error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
-                                                           file, 
+                                                           filename, 
                                                            arch, 
                                                            add_dependent_modules, 
                                                            platform_sp,

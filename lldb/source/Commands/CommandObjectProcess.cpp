@@ -521,11 +521,10 @@ protected:
         {
             // If there isn't a current target create one.
             TargetSP new_target_sp;
-            FileSpec emptyFileSpec;
             Error error;
             
             error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
-                                                                              emptyFileSpec,
+                                                                              NULL,
                                                                               NULL, 
                                                                               false,
                                                                               NULL, // No platform options
@@ -1022,10 +1021,9 @@ protected:
         if (!target_sp)
         {
             // If there isn't a current target create one.
-            FileSpec emptyFileSpec;
             
             error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
-                                                                              emptyFileSpec,
+                                                                              NULL,
                                                                               NULL, 
                                                                               false,
                                                                               NULL, // No platform options

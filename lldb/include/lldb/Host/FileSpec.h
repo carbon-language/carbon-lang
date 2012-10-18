@@ -342,6 +342,17 @@ public:
     bool
     IsSourceImplementationFile () const;
 
+    //------------------------------------------------------------------
+    /// Returns true if the filespec represents path that is relative
+    /// path to the current working directory.
+    ///
+    /// @return
+    ///     \b true if the filespec represents a current working
+    ///     directory relative path, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsRelativeToCurrentWorkingDirectory () const;
+    
     TimeValue
     GetModificationTime () const;
 

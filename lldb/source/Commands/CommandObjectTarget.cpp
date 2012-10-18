@@ -221,17 +221,12 @@ protected:
         {
             const char *file_path = command.GetArgumentAtIndex(0);
             Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) target create '%s'", file_path);
-            FileSpec file_spec;
-            
-            if (file_path)
-                file_spec.SetFile (file_path, true);
-
             TargetSP target_sp;
             Debugger &debugger = m_interpreter.GetDebugger();
             const char *arch_cstr = m_arch_option.GetArchitectureName();
             const bool get_dependent_files = true;
             Error error (debugger.GetTargetList().CreateTarget (debugger,
-                                                                file_spec,
+                                                                file_path,
                                                                 arch_cstr,
                                                                 get_dependent_files,
                                                                 &m_platform_options,
@@ -1241,14 +1236,11 @@ DumpModuleUUID (Stream &strm, Module *module)
 }
 
 static uint32_t
-DumpCompileUnitLineTable
-(
- CommandInterpreter &interpreter,
- Stream &strm,
- Module *module,
- const FileSpec &file_spec,
- bool load_addresses
- )
+DumpCompileUnitLineTable (CommandInterpreter &interpreter,
+                          Stream &strm,
+                          Module *module,
+                          const FileSpec &file_spec,
+                          bool load_addresses)
 {
     uint32_t num_matches = 0;
     if (module)

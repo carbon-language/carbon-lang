@@ -408,11 +408,10 @@ PlatformLinux::Attach(ProcessAttachInfo &attach_info,
         if (target == NULL)
         {
             TargetSP new_target_sp;
-            FileSpec emptyFileSpec;
             ArchSpec emptyArchSpec;
 
             error = debugger.GetTargetList().CreateTarget (debugger,
-                                                           emptyFileSpec,
+                                                           NULL,
                                                            emptyArchSpec,
                                                            false,
                                                            m_remote_platform_sp,

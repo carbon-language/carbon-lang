@@ -98,7 +98,7 @@ public:
     //------------------------------------------------------------------
     Error
     CreateTarget (Debugger &debugger,
-                  const FileSpec& file_spec,
+                  const char *user_exe_path,
                   const char *triple_cstr,
                   bool get_dependent_modules,
                   const OptionGroupPlatform *platform_options,
@@ -112,7 +112,7 @@ public:
     //------------------------------------------------------------------
     Error
     CreateTarget (Debugger &debugger,
-                  const FileSpec& file_spec,
+                  const char *user_exe_path,
                   const ArchSpec& arch,
                   bool get_dependent_modules,
                   lldb::PlatformSP &platform_sp,

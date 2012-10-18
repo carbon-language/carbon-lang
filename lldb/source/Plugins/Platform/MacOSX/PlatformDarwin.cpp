@@ -533,10 +533,9 @@ PlatformDarwin::Attach (ProcessAttachInfo &attach_info,
         if (target == NULL)
         {
             TargetSP new_target_sp;
-            FileSpec emptyFileSpec;
             
             error = debugger.GetTargetList().CreateTarget (debugger,
-                                                           emptyFileSpec,
+                                                           NULL,
                                                            NULL, 
                                                            false,
                                                            NULL,
