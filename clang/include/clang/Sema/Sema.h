@@ -190,6 +190,13 @@ class Sema {
   Sema(const Sema &) LLVM_DELETED_FUNCTION;
   void operator=(const Sema &) LLVM_DELETED_FUNCTION;
   mutable const TargetAttributesSema* TheTargetAttributesSema;
+
+  ///\brief Source of additional semantic information.
+  ExternalSemaSource *ExternalSource;
+
+  ///\brief Whether Sema has generated a multiplexer and has to delete it.
+  bool isMultiplexExternalSource;
+
 public:
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
   typedef OpaquePtr<TemplateName> TemplateTy;
@@ -207,9 +214,6 @@ public:
 
   /// \brief Flag indicating whether or not to collect detailed statistics.
   bool CollectStats;
-
-  /// \brief Source of additional semantic information.
-  ExternalSemaSource *ExternalSource;
 
   /// \brief Code-completion consumer.
   CodeCompleteConsumer *CodeCompleter;
@@ -770,6 +774,14 @@ public:
   ASTContext &getASTContext() const { return Context; }
   ASTConsumer &getASTConsumer() const { return Consumer; }
   ASTMutationListener *getASTMutationListener() const;
+  ExternalSemaSource* getExternalSource() const { return ExternalSource; }
+
+  ///\brief Registers an external source. If an external source already exists,
+  /// creates a multiplex external source and appends to it.
+  ///
+  ///\param[in] E - A non-null external sema source.
+  ///
+  void addExternalSource(ExternalSemaSource *E);
 
   void PrintStats() const;
 

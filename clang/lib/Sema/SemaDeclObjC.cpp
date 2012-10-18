@@ -2582,7 +2582,7 @@ public:
     // with this selector before.
     Sema::GlobalMethodPool::iterator it = S.MethodPool.find(selector);
     if (it == S.MethodPool.end()) {
-      if (!S.ExternalSource) return;
+      if (!S.getExternalSource()) return;
       S.ReadMethodPool(selector);
       
       it = S.MethodPool.find(selector);

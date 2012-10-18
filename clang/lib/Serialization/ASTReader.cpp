@@ -5564,7 +5564,7 @@ void ASTReader::getMemoryBufferSizes(MemoryBufferSizes &sizes) const {
 
 void ASTReader::InitializeSema(Sema &S) {
   SemaObj = &S;
-  S.ExternalSource = this;
+  S.addExternalSource(this);
 
   // Makes sure any declarations that were deserialized "too early"
   // still get added to the identifier's declaration chains.

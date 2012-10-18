@@ -5340,11 +5340,11 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
     
     // If we have an external source, load the entire class method
     // pool from the AST file.
-    if (SemaRef.ExternalSource) {
+    if (SemaRef.getExternalSource()) {
       for (uint32_t I = 0, 
-                    N = SemaRef.ExternalSource->GetNumExternalSelectors();
+                    N = SemaRef.getExternalSource()->GetNumExternalSelectors();
            I != N; ++I) {
-        Selector Sel = SemaRef.ExternalSource->GetExternalSelector(I);
+        Selector Sel = SemaRef.getExternalSource()->GetExternalSelector(I);
         if (Sel.isNull() || SemaRef.MethodPool.count(Sel))
           continue;
         

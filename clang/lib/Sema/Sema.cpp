@@ -22,6 +22,7 @@
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
@@ -68,10 +69,11 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
            TranslationUnitKind TUKind,
            CodeCompleteConsumer *CodeCompleter)
-  : TheTargetAttributesSema(0), FPFeatures(pp.getLangOpts()),
+  : TheTargetAttributesSema(0), ExternalSource(0), 
+    isMultiplexExternalSource(false), FPFeatures(pp.getLangOpts()),
     LangOpts(pp.getLangOpts()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
-    CollectStats(false), ExternalSource(0), CodeCompleter(CodeCompleter),
+    CollectStats(false), CodeCompleter(CodeCompleter),
     CurContext(0), OriginalLexicalContext(0),
     PackContext(0), MSStructPragmaOn(false), VisContext(0),
     IsBuildingRecoveryCallExpr(false),
@@ -188,6 +190,10 @@ Sema::~Sema() {
   if (ExternalSemaSource *ExternalSema
         = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
     ExternalSema->ForgetSema();
+
+  // If Sema's ExternalSource is the multiplexer - we own it.
+  if (isMultiplexExternalSource)
+    delete ExternalSource;
 }
 
 /// makeUnavailableInSystemHeader - There is an error in the current
@@ -217,6 +223,27 @@ bool Sema::makeUnavailableInSystemHeader(SourceLocation loc,
 
 ASTMutationListener *Sema::getASTMutationListener() const {
   return getASTConsumer().GetASTMutationListener();
+}
+
+///\brief Registers an external source. If an external source already exists,
+/// creates a multiplex external source and appends to it.
+///
+///\param[in] E - A non-null external sema source.
+///
+void Sema::addExternalSource(ExternalSemaSource *E) {
+  assert(E && "Cannot use with NULL ptr");
+
+  if (!ExternalSource) {
+    ExternalSource = E;
+    return;
+  }
+
+  if (isMultiplexExternalSource)
+    static_cast<MultiplexExternalSemaSource*>(ExternalSource)->addSource(*E);
+  else {
+    ExternalSource = new MultiplexExternalSemaSource(*ExternalSource, *E);
+    isMultiplexExternalSource = true;
+  }
 }
 
 /// \brief Print out statistics about the semantic analysis.

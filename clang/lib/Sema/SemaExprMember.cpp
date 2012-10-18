@@ -354,7 +354,7 @@ CheckExtVectorComponent(Sema &S, QualType baseType, ExprValueKind &VK,
   // Now look up the TypeDefDecl from the vector type. Without this,
   // diagostics look bad. We want extended vector types to appear built-in.
   for (Sema::ExtVectorDeclsType::iterator 
-         I = S.ExtVectorDecls.begin(S.ExternalSource),
+         I = S.ExtVectorDecls.begin(S.getExternalSource()),
          E = S.ExtVectorDecls.end(); 
        I != E; ++I) {
     if ((*I)->getUnderlyingType() == VT)
