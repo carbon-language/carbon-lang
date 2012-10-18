@@ -716,6 +716,7 @@ def gno_record_gcc_switches : Flag<"-gno-record-gcc-switches">,
   Group<g_flags_Group>;
 def gstrict_dwarf : Flag<"-gstrict-dwarf">, Group<g_flags_Group>;
 def gno_strict_dwarf : Flag<"-gno-strict-dwarf">, Group<g_flags_Group>;
+def gcolumn_info : Flag<"-gcolumn-info">, Group<g_flags_Group>;
 def headerpad__max__install__names : Joined<"-headerpad_max_install_names">;
 def help : Flag<"-help">, Flags<[CC1Option]>,
   HelpText<"Display available options">;

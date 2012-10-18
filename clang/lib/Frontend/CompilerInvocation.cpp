@@ -197,6 +197,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
       Res.push_back("-fno-limit-debug-info");
       break;
   }
+  if (Opts.DebugColumnInfo)
+    Res.push_back("-gcolumn-info");
   if (Opts.DisableLLVMOpts)
     Res.push_back("-disable-llvm-optzns");
   if (Opts.DisableRedZone)
@@ -1228,6 +1230,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     else
       Opts.DebugInfo = CodeGenOptions::FullDebugInfo;
   }
+  Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
 
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);

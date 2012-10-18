@@ -12,5 +12,5 @@ void func(char c, char* d)
   
 }
 
-// CHECK: ret void, !dbg !17
-// CHECK: !17 = metadata !{i32 6,
+// CHECK: ret void, !dbg [[LINE:.*]]
+// CHECK: [[LINE]] = metadata !{i32 6,

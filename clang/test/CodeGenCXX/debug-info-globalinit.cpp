@@ -27,4 +27,4 @@ int main(void) {}
 // CHECK-NOT: dbg
 // CHECK: store i32 %[[C1]], i32* @_ZL1j, align 4
 // 
-// CHECK: ![[LINE]] = metadata !{i32 13, i32 16
+// CHECK: ![[LINE]] = metadata !{i32 13, i32

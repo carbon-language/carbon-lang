@@ -145,6 +145,9 @@ public:
   /// The kind of generated debug info.
   DebugInfoKind DebugInfo;
 
+  /// Whether or not to use column information in debug info.
+  bool DebugColumnInfo;
+
   /// The string to embed in the debug information for the compile unit, if
   /// non-empty.
   std::string DwarfDebugFlags;

@@ -259,6 +259,8 @@ unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
 unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
   if (Loc.isInvalid() && CurLoc.isInvalid())
     return 0;
+  if (!CGM.getCodeGenOpts().DebugColumnInfo)
+    return 0;
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
   return PLoc.isValid()? PLoc.getColumn() : 0;
