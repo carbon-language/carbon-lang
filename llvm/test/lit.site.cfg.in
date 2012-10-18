@@ -11,6 +11,7 @@ config.python_executable = "@PYTHON_EXECUTABLE@"
 config.ocamlopt_executable = "@OCAMLOPT@"
 config.enable_shared = @ENABLE_SHARED@
 config.enable_assertions = @ENABLE_ASSERTIONS@
+config.lto_is_enabled = "@LTO_IS_ENABLED@"
 config.targets_to_build = "@TARGETS_TO_BUILD@"
 config.llvm_bindings = "@LLVM_BINDINGS@"
 config.host_os = "@HOST_OS@"
