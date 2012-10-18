@@ -886,7 +886,10 @@ private:
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
-                            ModuleFile *ImportedBy);
+                            ModuleFile *ImportedBy,
+                            llvm::SmallVectorImpl<ModuleFile *> &Loaded);
+  ASTReadResult ReadControlBlock(ModuleFile &F,
+                                 llvm::SmallVectorImpl<ModuleFile *> &Loaded);
   ASTReadResult ReadASTBlock(ModuleFile &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);

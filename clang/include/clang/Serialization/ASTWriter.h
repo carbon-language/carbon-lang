@@ -409,9 +409,8 @@ private:
                     llvm::DenseSet<Stmt *> &ParentStmts);
 
   void WriteBlockInfoBlock();
-  void WriteMetadata(ASTContext &Context, StringRef isysroot,
-                     const std::string &OutputFile);
-  void WriteLanguageOptions(const LangOptions &LangOpts);
+  void WriteControlBlock(ASTContext &Context, StringRef isysroot,
+                         const std::string &OutputFile);
   void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
