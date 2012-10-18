@@ -39,7 +39,10 @@ public:
     ~ScriptInterpreterPython ();
 
     bool
-    ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io);
+    ExecuteOneLine (const char *command,
+                    CommandReturnObject *result,
+                    bool enable_io,
+                    bool set_lldb_globals = true);
 
     void
     ExecuteInterpreterLoop ();
@@ -48,10 +51,13 @@ public:
     ExecuteOneLineWithReturn (const char *in_string, 
                               ScriptInterpreter::ScriptReturnType return_type,
                               void *ret_value,
-                              bool enable_io);
+                              bool enable_io,
+                              bool set_lldb_globals = true);
 
     bool
-    ExecuteMultipleLines (const char *in_string, bool enable_io);
+    ExecuteMultipleLines (const char *in_string,
+                          bool enable_io,
+                          bool set_lldb_globals = true);
 
     bool
     ExportFunctionDefinitionToInterpreter (StringList &function_def);
@@ -155,6 +161,7 @@ public:
     virtual bool
     LoadScriptingModule (const char* filename,
                          bool can_reload,
+                         bool init_session,
                          lldb_private::Error& error);
     
     virtual lldb::ScriptInterpreterObjectSP

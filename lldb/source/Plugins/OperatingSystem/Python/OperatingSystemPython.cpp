@@ -55,8 +55,13 @@ OperatingSystem *
 OperatingSystemPython::CreateInstance (Process *process, bool force)
 {
     // Python OperatingSystem plug-ins must be requested by name, so force must be true
-    if (force)
-        return new OperatingSystemPython (process);
+    FileSpec python_os_plugin_spec (process->GetPythonOSPluginPath());
+    if (python_os_plugin_spec && python_os_plugin_spec.Exists())
+    {
+        std::auto_ptr<OperatingSystemPython> os_ap (new OperatingSystemPython (process, python_os_plugin_spec));
+        if (os_ap.get() && os_ap->IsValid())
+            return os_ap.release();
+    }
     return NULL;
 }
 
@@ -74,12 +79,12 @@ OperatingSystemPython::GetPluginDescriptionStatic()
 }
 
 
-OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process) :
+OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process, const FileSpec &python_module_path) :
     OperatingSystem (process),
     m_thread_list_valobj_sp (),
     m_register_info_ap (),
-    m_interpreter(NULL),
-    m_python_object(NULL)
+    m_interpreter (NULL),
+    m_python_object (NULL)
 {
     if (!process)
         return;
@@ -89,13 +94,27 @@ OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process) :
     m_interpreter = target_sp->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     if (m_interpreter)
     {
-        // TODO: hardcoded is not good
-        auto object_sp = m_interpreter->CreateOSPlugin("operating_system.PlugIn",process->CalculateProcess());
-        if (object_sp)
+        
+        std::string os_plugin_class_name (python_module_path.GetFilename().AsCString(""));
+        if (!os_plugin_class_name.empty())
         {
-            m_python_object = object_sp->GetObject();
-            
-            //GetDynamicRegisterInfo (); // COMMENT THIS LINE OUT PRIOR TO CHECKIN!!!
+            const bool init_session = false;
+            const bool allow_reload = true;
+            char python_module_path_cstr[PATH_MAX];
+            python_module_path.GetPath(python_module_path_cstr, sizeof(python_module_path_cstr));
+            Error error;
+            if (m_interpreter->LoadScriptingModule (python_module_path_cstr, allow_reload, init_session, error))
+            {
+                // Strip the ".py" extension if there is one
+                size_t py_extension_pos = os_plugin_class_name.rfind(".py");
+                if (py_extension_pos != std::string::npos)
+                    os_plugin_class_name.erase (py_extension_pos);
+                // Add ".OperatingSystemPlugIn" to the module name to get a string like "modulename.OperatingSystemPlugIn"
+                os_plugin_class_name += ".OperatingSystemPlugIn";
+                auto object_sp = m_interpreter->CreateOSPlugin(os_plugin_class_name.c_str(), process->CalculateProcess());
+                if (object_sp)
+                    m_python_object = object_sp->GetObject();
+            }
         }
     }
 }
@@ -217,8 +236,8 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
         return RegisterContextSP();
     auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
                                                                           thread->GetID());
-
-           if (!object_sp)
+    
+    if (!object_sp)
         return RegisterContextSP();
     
     PythonDataString reg_context_data((PyObject*)object_sp->GetObject());

@@ -1394,8 +1394,10 @@ protected:
         std::string path = command.GetArgumentAtIndex(0);
         Error error;
         
+        const bool init_session = true;
         if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
                                                                       m_options.m_allow_reload,
+                                                                      init_session,
                                                                       error))
         {
             result.SetStatus (eReturnStatusSuccessFinishNoResult);

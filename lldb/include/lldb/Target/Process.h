@@ -67,6 +67,12 @@ public:
 
     void
     SetExtraStartupCommands (const Args &args);
+    
+    FileSpec
+    GetPythonOSPluginPath () const;
+
+    void
+    SetPythonOSPluginPath (const FileSpec &file);
 };
 
 typedef STD_SHARED_PTR(ProcessProperties) ProcessPropertiesSP;

@@ -127,19 +127,28 @@ public:
     virtual ~ScriptInterpreter ();
 
     virtual bool
-    ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io) = 0;
+    ExecuteOneLine (const char *command,
+                    CommandReturnObject *result,
+                    bool enable_io,
+                    bool set_lldb_globals = true) = 0;
 
     virtual void
     ExecuteInterpreterLoop () = 0;
 
     virtual bool
-    ExecuteOneLineWithReturn (const char *in_string, ScriptReturnType return_type, void *ret_value, bool enable_io)
+    ExecuteOneLineWithReturn (const char *in_string,
+                              ScriptReturnType return_type,
+                              void *ret_value,
+                              bool enable_io,
+                              bool set_lldb_globals = true)
     {
         return true;
     }
 
     virtual bool
-    ExecuteMultipleLines (const char *in_string, bool enable_io)
+    ExecuteMultipleLines (const char *in_string,
+                          bool enable_io,
+                          bool set_lldb_globals = true)
     {
         return true;
     }
@@ -308,6 +317,7 @@ public:
     virtual bool
     LoadScriptingModule (const char* filename,
                          bool can_reload,
+                         bool init_session,
                          lldb_private::Error& error)
     {
         error.SetErrorString("loading unimplemented");

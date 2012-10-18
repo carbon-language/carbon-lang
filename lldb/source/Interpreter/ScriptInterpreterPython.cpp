@@ -721,7 +721,7 @@ GenerateUniqueName (const char* base_name_wanted,
 }
 
 bool
-ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io)
+ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io, bool set_lldb_globals)
 {
     if (!m_valid_session)
         return false;
@@ -732,8 +732,8 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
     // method to pass the command string directly down to Python.
 
     Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
+                  ScriptInterpreterPython::Locker::AcquireLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::InitSession : 0),
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::TearDownSession : 0));
 
     bool success = false;
 
@@ -1000,12 +1000,13 @@ bool
 ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                                                    ScriptInterpreter::ScriptReturnType return_type,
                                                    void *ret_value,
-                                                   bool enable_io)
+                                                   bool enable_io,
+                                                   bool set_lldb_globals)
 {
 
     Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
+                  ScriptInterpreterPython::Locker::AcquireLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::InitSession : 0),
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::TearDownSession : 0));
 
     PyObject *py_return = NULL;
     PyObject *mainmod = PyImport_AddModule ("__main__");
@@ -1165,13 +1166,13 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
 }
 
 bool
-ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, bool enable_io)
+ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, bool enable_io, bool set_lldb_globals)
 {
     
     
     Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
+                  ScriptInterpreterPython::Locker::AcquireLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::InitSession : 0),
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::TearDownSession : 0));
 
     bool success = false;
     PyObject *py_return = NULL;
@@ -2373,6 +2374,7 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpre
 bool
 ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                                               bool can_reload,
+                                              bool init_lldb_globals,
                                               lldb_private::Error& error)
 {
     if (!pathname || !pathname[0])
@@ -2404,14 +2406,16 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         std::string basename(target_file.GetFilename().GetCString());
 
         // Before executing Pyton code, lock the GIL.
-        Locker py_lock(this);
+        Locker py_lock (this,
+                        Locker::AcquireLock      | (init_lldb_globals ? Locker::InitSession     : 0),
+                        Locker::FreeAcquiredLock | (init_lldb_globals ? Locker::TearDownSession : 0));
         
         // now make sure that Python has "directory" in the search path
         StreamString command_stream;
         command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.append('%s');\n\n",
                               directory,
                               directory);
-        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), false);
+        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), false, false);
         if (!syspath_retval)
         {
             error.SetErrorString("Python sys.path handling failed");
@@ -2432,7 +2436,10 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         // this call will fail if the module does not exist (because the parameter to it is not a string
         // but an actual Python module object, which is non-existant if the module was not imported before)
         bool was_imported = (ExecuteOneLineWithReturn(command_stream.GetData(),
-                                                      ScriptInterpreterPython::eScriptReturnTypeInt, &refcount, false) && refcount > 0);
+                                                      ScriptInterpreterPython::eScriptReturnTypeInt,
+                                                      &refcount,
+                                                      false,
+                                                      false) && refcount > 0);
         if (was_imported == true && can_reload == false)
         {
             error.SetErrorString("module already imported");
@@ -2442,7 +2449,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         // now actually do the import
         command_stream.Clear();
         command_stream.Printf("import %s",basename.c_str());
-        bool import_retval = ExecuteOneLine(command_stream.GetData(), NULL, false);
+        bool import_retval = ExecuteOneLine(command_stream.GetData(), NULL, false, false);
         if (!import_retval)
         {
             error.SetErrorString("Python import statement failed");

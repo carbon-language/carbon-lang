@@ -94,12 +94,14 @@ g_properties[] =
 {
     { "disable-memory-cache" , OptionValue::eTypeBoolean, false, DISABLE_MEM_CACHE_DEFAULT, NULL, NULL, "Disable reading and caching of memory in fixed-size units." },
     { "extra-startup-command", OptionValue::eTypeArray  , false, OptionValue::eTypeString, NULL, NULL, "A list containing extra commands understood by the particular process plugin used." },
+    { "python-os-plugin-path", OptionValue::eTypeFileSpec, false, 0, NULL, NULL, "A path to a python OS plug-in module file that contains a OperatingSystemPlugIn class." },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
 };
 
 enum {
     ePropertyDisableMemCache,
-    ePropertyExtraStartCommand
+    ePropertyExtraStartCommand,
+    ePropertyPythonOSPluginPath
 };
 
 ProcessProperties::ProcessProperties (bool is_global) :
@@ -143,6 +145,20 @@ ProcessProperties::SetExtraStartupCommands (const Args &args)
 {
     const uint32_t idx = ePropertyExtraStartCommand;
     m_collection_sp->SetPropertyAtIndexFromArgs(NULL, idx, args);
+}
+
+FileSpec
+ProcessProperties::GetPythonOSPluginPath () const
+{
+    const uint32_t idx = ePropertyPythonOSPluginPath;
+    return m_collection_sp->GetPropertyAtIndexAsFileSpec(NULL, idx);
+}
+
+void
+ProcessProperties::SetPythonOSPluginPath (const FileSpec &file)
+{
+    const uint32_t idx = ePropertyPythonOSPluginPath;
+    m_collection_sp->SetPropertyAtIndexAsFileSpec(NULL, idx, file);
 }
 
 void

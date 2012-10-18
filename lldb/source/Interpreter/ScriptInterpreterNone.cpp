@@ -26,7 +26,7 @@ ScriptInterpreterNone::~ScriptInterpreterNone ()
 }
 
 bool
-ScriptInterpreterNone::ExecuteOneLine (const char *command, CommandReturnObject *, bool enable_io)
+ScriptInterpreterNone::ExecuteOneLine (const char *command, CommandReturnObject *, bool enable_io, bool set_lldb_globals)
 {
     m_interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
     return false;

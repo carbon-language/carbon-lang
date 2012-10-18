@@ -43,7 +43,8 @@ public:
     //------------------------------------------------------------------
     // Class Methods
     //------------------------------------------------------------------
-    OperatingSystemPython (lldb_private::Process *process);
+    OperatingSystemPython (lldb_private::Process *process,
+                           const lldb_private::FileSpec &python_module_path);
     
     virtual
     ~OperatingSystemPython ();
@@ -78,6 +79,10 @@ public:
 
 protected:
     
+    bool IsValid() const
+    {
+        return m_python_object != NULL;
+    }
     DynamicRegisterInfo *
     GetDynamicRegisterInfo ();
 

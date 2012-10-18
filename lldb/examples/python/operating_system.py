@@ -3,7 +3,7 @@
 import lldb
 import struct
 
-class PlugIn(object):
+class OperatingSystemPlugIn(object):
     """Class that provides data for an instance of a LLDB 'OperatingSystemPython' plug-in class"""
     
     def __init__(self, process):
