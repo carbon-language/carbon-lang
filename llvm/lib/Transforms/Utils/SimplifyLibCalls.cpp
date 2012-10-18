@@ -183,14 +183,30 @@ struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
         FT->getParamType(2) != TD->getIntPtrType(Context))
       return 0;
 
+    Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
+    if (Dst == Src)      // __strcpy_chk(x,x)  -> x
+      return Src;
+
     // If a) we don't have any length information, or b) we know this will
     // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
     // st[rp]cpy_chk call which may fail at runtime if the size is too long.
     // TODO: It might be nice to get a maximum length out of the possible
     // string lengths for varying.
     if (isFoldable(2, 1, true)) {
-      Value *Ret = EmitStrCpy(CI->getArgOperand(0), CI->getArgOperand(1), B, TD,
-                              TLI, Name.substr(2, 6));
+      Value *Ret = EmitStrCpy(Dst, Src, B, TD, TLI, Name.substr(2, 6));
+      return Ret;
+    } else {
+      // Maybe we can stil fold __strcpy_chk to __memcpy_chk.
+      uint64_t Len = GetStringLength(Src);
+      if (Len == 0) return 0;
+
+      // This optimization require DataLayout.
+      if (!TD) return 0;
+
+      Value *Ret =
+	EmitMemCpyChk(Dst, Src,
+                      ConstantInt::get(TD->getIntPtrType(Context), Len),
+                      CI->getArgOperand(2), B, TD, TLI);
       return Ret;
     }
     return 0;
@@ -497,6 +513,35 @@ struct StrNCmpOpt : public LibCallOptimization {
   }
 };
 
+struct StrCpyOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strcpy" function prototype.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != B.getInt8PtrTy())
+      return 0;
+
+    Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
+    if (Dst == Src)      // strcpy(x,x)  -> x
+      return Src;
+
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    // See if we can get the length of the input string.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0) return 0;
+
+    // We have enough information to now generate the memcpy call to do the
+    // copy for us.  Make a memcpy to copy the nul byte with align = 1.
+    B.CreateMemCpy(Dst, Src,
+		   ConstantInt::get(TD->getIntPtrType(*Context), Len), 1);
+    return Dst;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -520,6 +565,7 @@ class LibCallSimplifierImpl {
   StrRChrOpt StrRChr;
   StrCmpOpt StrCmp;
   StrNCmpOpt StrNCmp;
+  StrCpyOpt StrCpy;
 
   void initOptimizations();
 public:
@@ -548,6 +594,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["strncat"] = &StrNCat;
   Optimizations["strchr"] = &StrChr;
   Optimizations["strrchr"] = &StrRChr;
+  Optimizations["strcpy"] = &StrCpy;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
