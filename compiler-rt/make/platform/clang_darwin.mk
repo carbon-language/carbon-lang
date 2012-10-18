@@ -77,7 +77,7 @@ Configs += asan_osx_dynamic
 UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
 
 # Darwin 10.6 has a bug in cctools that makes it unable to use ranlib on our ARM
-# object files. Of we are on that platform, we strip out all ARM archs. We still
+# object files. If we are on that platform, strip out all ARM archs. We still
 # build the libraries themselves so that Clang can find them where it expects
 # them, even though they might not have an expected slice.
 ifneq ($(shell sw_vers -productVersion | grep 10.6),)
