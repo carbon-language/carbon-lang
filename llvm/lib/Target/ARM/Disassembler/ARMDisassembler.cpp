@@ -525,8 +525,9 @@ static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
     else
        ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
     const char *ReferenceName;
-    const char *Name = SymbolLookUp(DisInfo, Value, &ReferenceType, Address,
-                                    &ReferenceName);
+    uint64_t SymbolValue = 0x00000000ffffffffULL & Value;
+    const char *Name = SymbolLookUp(DisInfo, SymbolValue, &ReferenceType,
+                                    Address, &ReferenceName);
     if (Name) {
       SymbolicOp.AddSymbol.Name = Name;
       SymbolicOp.AddSymbol.Present = true;
