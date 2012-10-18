@@ -601,14 +601,28 @@ void ELFSymbolTableChunk<target_endianness, is64Bits>
       b = ELF::STB_WEAK;
     else
       b = ELF::STB_GLOBAL;
- } else if (const AbsoluteAtom *aa = llvm::dyn_cast<const AbsoluteAtom>(a)){
+  } else if (const AbsoluteAtom *aa = llvm::dyn_cast<const AbsoluteAtom>(a)){
 //FIXME: Absolute atoms need more properties to differentiate each other
 // based on binding and type of symbol
- symbol->st_value = aa->value();
+    t = ELF::STT_OBJECT;
+
+    switch (aa->scope()) {
+    case AbsoluteAtom::scopeLinkageUnit:
+      symbol->st_other = ELF::STV_HIDDEN;
+      b = ELF::STB_LOCAL;
+      break;
+    case AbsoluteAtom::scopeTranslationUnit:
+      b = ELF::STB_LOCAL;
+      break;
+    case AbsoluteAtom::scopeGlobal:
+      b = ELF::STB_GLOBAL;
+      break;
+    }
+    symbol->st_value = aa->value();
  } else {
- symbol->st_value = 0;
- t = ELF::STT_NOTYPE;
- b = ELF::STB_LOCAL;
+   symbol->st_value = 0;
+   t = ELF::STT_NOTYPE;
+   b = ELF::STB_LOCAL;
  }
  symbol->setBindingAndType(b, t);
 

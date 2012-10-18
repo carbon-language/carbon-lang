@@ -175,12 +175,16 @@ public:
 
   virtual const lld::File& file() const;
   virtual StringRef name() const;
-
+  virtual Scope scope() const {
+    const NativeAtomAttributesV1& attr = absAttributes();
+    return (Scope)(attr.scope);
+  }
   virtual uint64_t value() const {
     return _ivarData->value;
   }
 
 private:
+  const NativeAtomAttributesV1& absAttributes() const;
   const File                      *_file;
   const NativeAbsoluteAtomIvarsV1 *_ivarData;
 };
@@ -288,6 +292,9 @@ public:
           break;
         case NCS_AbsoluteAtomsV1:
           ec = file->processAbsoluteAtomsV1(base, chunk);
+          break;
+        case NCS_AbsoluteAttributesV1:
+          ec = file->processAbsoluteAttributesV1(base, chunk);
           break;
         case NCS_ReferencesArrayV1:
           ec = file->processReferencesV1(base, chunk);
@@ -419,6 +426,19 @@ private:
     this->_attributesMaxOffset = chunk->fileSize;
     DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
                     << " chunk AttributesV1:        "
+                    << " count=" << chunk->elementCount
+                    << " chunkSize=" << chunk->fileSize
+                    << "\n");
+    return make_error_code(native_reader_error::success);
+  }
+
+  // set up pointers to attributes array
+  error_code processAbsoluteAttributesV1(const uint8_t *base,
+                                 const NativeChunk *chunk) {
+    this->_absAttributes = base + chunk->fileOffset;
+    this->_absAbsoluteMaxOffset = chunk->fileSize;
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+                    << " chunk AbsoluteAttributesV1:        "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
@@ -677,6 +697,11 @@ private:
     return *reinterpret_cast<const NativeAtomAttributesV1*>(_attributes + off);
   }
 
+  const NativeAtomAttributesV1& absAttribute(uint32_t off) const {
+    assert(off < _absAbsoluteMaxOffset);
+    return *reinterpret_cast<const NativeAtomAttributesV1*>(_absAttributes + off);
+  }
+
   const uint8_t* content(uint32_t offset, uint32_t size) const {
     const uint8_t* result = _contentStart + offset;
     assert((result+size) <= _contentEnd);
@@ -768,6 +793,8 @@ private:
   AtomArray<UndefinedAtom>        _undefinedAtoms;
   AtomArray<SharedLibraryAtom>    _sharedLibraryAtoms;
   AtomArray<AbsoluteAtom>         _absoluteAtoms;
+  const uint8_t*                  _absAttributes;
+  uint32_t                        _absAbsoluteMaxOffset;
   const uint8_t*                  _attributes;
   uint32_t                        _attributesMaxOffset;
   IvarArray                       _references;
@@ -868,6 +895,9 @@ inline StringRef NativeAbsoluteAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 
+inline const NativeAtomAttributesV1& NativeAbsoluteAtomV1::absAttributes() const {
+  return _file->absAttribute(_ivarData->attributesOffset);
+}
 
 inline const Atom* NativeReferenceV1::target() const {
   return _file->target(_ivarData->targetIndex);

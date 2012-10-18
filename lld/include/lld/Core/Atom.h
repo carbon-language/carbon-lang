@@ -41,6 +41,17 @@ public:
     definitionSharedLibrary ///< Only in shared libraries to model export.
   };
 
+  /// The scope in which this atom is acessible to other atoms.
+  enum Scope {
+    scopeTranslationUnit,  ///< Accessible only to atoms in the same translation
+                           ///  unit (e.g. a C static).
+    scopeLinkageUnit,      ///< Accessible to atoms being linked but not visible
+                           ///  to runtime loader (e.g. visibility=hidden).
+    scopeGlobal            ///< Accessible to all atoms and visible to runtime
+                           ///  loader (e.g. visibility=default).
+  };
+
+
   /// file - returns the File that produced/owns this Atom
   virtual const class File& file() const = 0;
 

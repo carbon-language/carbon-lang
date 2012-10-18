@@ -88,16 +88,6 @@ class File;
 ///
 class DefinedAtom : public Atom {
 public:
-  /// The scope in which this atom is acessible to other atoms.
-  enum Scope {
-    scopeTranslationUnit,  ///< Accessible only to atoms in the same translation
-                           ///  unit (e.g. a C static).
-    scopeLinkageUnit,      ///< Accessible to atoms being linked but not visible
-                           ///  to runtime loader (e.g. visibility=hidden).
-    scopeGlobal            ///< Accessible to all atoms and visible to runtime
-                           ///  loader (e.g. visibility=default).
-  };
-
   enum Interposable {
     interposeNo,            // linker can directly bind uses of this atom
     interposeYes,           // linker must indirect (through GOT) uses

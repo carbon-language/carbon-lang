@@ -11,7 +11,6 @@
 // to consume an ELF file and produces atoms out of it.
 //
 //===----------------------------------------------------------------------===//
-
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
@@ -115,19 +114,32 @@ private:
 /// particular address.  This atom has no content its address will be used by
 /// the writer to fixup references that point to it.
 template<llvm::support::endianness target_endianness, bool is64Bits>
-class ELFAbsoluteAtom final: public AbsoluteAtom {
+class ELFAbsoluteAtom final : public AbsoluteAtom {
+
+  typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
 
 public:
   ELFAbsoluteAtom(const File &file,
                   llvm::StringRef name,
+                  const Elf_Sym *symbol,
                   uint64_t value)
     : _owningFile(file)
     , _name(name)
+    , _symbol(symbol)
     , _value(value)
   {}
 
   virtual const class File &file() const {
     return _owningFile;
+  }
+
+  virtual Scope scope() const {
+    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+      return scopeLinkageUnit;
+    if (_symbol->getBinding() == llvm::ELF::STB_LOCAL)
+      return scopeTranslationUnit;
+    else
+      return scopeGlobal;
   }
 
   virtual llvm::StringRef name() const {
@@ -141,6 +153,7 @@ public:
 private:
   const File &_owningFile;
   llvm::StringRef _name;
+  const Elf_Sym *_symbol;
   uint64_t _value;
 };
 
@@ -308,6 +321,7 @@ public:
         ret = typeZeroFill;
       break;
     }
+
     return ret;
   }
 
@@ -319,7 +333,6 @@ public:
         || _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(_symbol->st_value));
     }
-
     return Alignment(llvm::Log2_64(_section->sh_addralign));
   }
 
@@ -422,7 +435,6 @@ private:
   llvm::StringRef _sectionName;
   const Elf_Sym *_symbol;
   const Elf_Shdr *_section;
-
   // _contentData will hold the bits that make up the atom.
   llvm::ArrayRef<uint8_t> _contentData;
 
@@ -543,7 +555,7 @@ public:
         auto *newAtom = new (_readerStorage.Allocate
                        <ELFAbsoluteAtom<target_endianness, is64Bits> > ()) 
                         ELFAbsoluteAtom<target_endianness, is64Bits>
-                          (*this, symbolName, symbol->st_value);
+                          (*this, symbolName, symbol, symbol->st_value);
 
         _absoluteAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));

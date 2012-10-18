@@ -39,6 +39,10 @@ public:
     return OwningFile;
   }
 
+  virtual Scope scope() const {
+    return scopeGlobal;
+  }
+
   virtual llvm::StringRef name() const {
     return Name;
   }

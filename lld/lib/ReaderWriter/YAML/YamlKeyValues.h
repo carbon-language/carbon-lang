@@ -29,7 +29,7 @@ public:
   static const char* const                scopeKeyword;
   static const DefinedAtom::Scope         scopeDefault;
   static bool                             scope(StringRef, DefinedAtom::Scope&);
-  static const char*                      scope(DefinedAtom::Scope);
+  static const char*                      scope(Atom::Scope);
 
   static const char* const                contentTypeKeyword;
   static const DefinedAtom::ContentType   contentTypeDefault;

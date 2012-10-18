@@ -89,6 +89,7 @@ struct NativeFileHeader {
 enum NativeChunkSignatures {
   NCS_DefinedAtomsV1 = 1,
   NCS_AttributesArrayV1 = 2,
+  NCS_AbsoluteAttributesV1 = 12,
   NCS_UndefinedAtomsV1 = 3,
   NCS_SharedLibraryAtomsV1 = 4,
   NCS_AbsoluteAtomsV1 = 5,
@@ -183,6 +184,7 @@ struct NativeSharedLibraryAtomIvarsV1 {
 //
 struct NativeAbsoluteAtomIvarsV1 {
   uint32_t  nameOffset;
+  uint32_t  attributesOffset;
   uint32_t  reserved;
   uint64_t  value;
 };

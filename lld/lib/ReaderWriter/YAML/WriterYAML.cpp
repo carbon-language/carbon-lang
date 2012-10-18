@@ -412,6 +412,14 @@ public:
           << KeyValues::definition(atom.definition())
           << "\n";
 
+    if ( atom.scope() != KeyValues::scopeDefault ) {
+    out   << "      "
+            << "scope:"
+            << spacePadding(strlen("scope"))
+            << KeyValues::scope(atom.scope())
+            << "\n";
+    }
+
     out   << "      "
           << "value:"
           << spacePadding(strlen("value"))

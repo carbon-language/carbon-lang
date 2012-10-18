@@ -429,6 +429,10 @@ public:
     return _file;
   }
 
+  virtual Scope scope() const {
+    return scopeGlobal;
+  }
+
   virtual StringRef name() const {
     return _name;
   }

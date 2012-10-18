@@ -75,10 +75,10 @@ struct ScopeMapping {
 };
 
 static const ScopeMapping scopeMappings[] = {
-  { "global", DefinedAtom::scopeGlobal },
-  { "hidden", DefinedAtom::scopeLinkageUnit },
-  { "static", DefinedAtom::scopeTranslationUnit },
-  { nullptr,  DefinedAtom::scopeGlobal }
+  { "global", Atom::scopeGlobal },
+  { "hidden", Atom::scopeLinkageUnit },
+  { "static", Atom::scopeTranslationUnit },
+  { nullptr,  Atom::scopeGlobal }
 };
 
 bool KeyValues::scope(StringRef s, DefinedAtom::Scope &out)
@@ -92,14 +92,13 @@ bool KeyValues::scope(StringRef s, DefinedAtom::Scope &out)
   return true;
 }
 
-const char* KeyValues::scope(DefinedAtom::Scope s) {
+const char* KeyValues::scope(Atom::Scope s) {
   for (const ScopeMapping* p = scopeMappings; p->string != nullptr; ++p) {
     if ( p->value == s )
       return p->string;
   }
   llvm::report_fatal_error("bad scope value");
 }
-
 
 
 

@@ -102,6 +102,11 @@ private:
               _absoluteAtomIvars.size()
               * sizeof(NativeAbsoluteAtomIvarsV1));
     }
+    if (!_absAttributes.empty()) {
+      assert( out.tell() == findChunk(NCS_AbsoluteAttributesV1).fileOffset );
+      out.write((char*)&_absAttributes[0],
+                _absAttributes.size()*sizeof(NativeAtomAttributesV1));
+    }
 
     if (!_stringPool.empty()) {
       assert( out.tell() == findChunk(NCS_Strings).fileOffset );
@@ -164,6 +169,7 @@ private:
     _absoluteAtomIndex[&atom] = _absoluteAtomIvars.size();
     NativeAbsoluteAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
+    ivar.attributesOffset = getAttributeOffset(atom);
     ivar.reserved = 0;
     ivar.value = atom.value();
     _absoluteAtomIvars.push_back(ivar);
@@ -184,7 +190,7 @@ private:
     if ( hasDefines ) chunkCount += 2;
     if ( hasUndefines ) ++chunkCount;
     if ( hasSharedLibraries ) ++chunkCount;
-    if ( hasAbsolutes ) ++chunkCount;
+    if ( hasAbsolutes ) chunkCount += 2;
     if ( hasReferences ) ++chunkCount;
     if ( hasTargetsTable ) ++chunkCount;
     if ( hasAddendTable ) ++chunkCount;
@@ -247,13 +253,21 @@ private:
 
      // create chunk for shared library atom array
     if ( hasAbsolutes ) {
-      NativeChunk& chsl = chunks[nextIndex++];
-      chsl.signature = NCS_AbsoluteAtomsV1;
-      chsl.fileOffset = nextFileOffset;
-      chsl.fileSize = _absoluteAtomIvars.size() *
+      NativeChunk& chabs = chunks[nextIndex++];
+      chabs.signature = NCS_AbsoluteAtomsV1;
+      chabs.fileOffset = nextFileOffset;
+      chabs.fileSize = _absoluteAtomIvars.size() *
                                         sizeof(NativeAbsoluteAtomIvarsV1);
-      chsl.elementCount = _absoluteAtomIvars.size();
-      nextFileOffset = chsl.fileOffset + chsl.fileSize;
+      chabs.elementCount = _absoluteAtomIvars.size();
+      nextFileOffset = chabs.fileOffset + chabs.fileSize;
+
+      // create chunk for attributes
+      NativeChunk& cha = chunks[nextIndex++];
+      cha.signature = NCS_AbsoluteAttributesV1;
+      cha.fileOffset = nextFileOffset;
+      cha.fileSize = _absAttributes.size()*sizeof(NativeAtomAttributesV1);
+      cha.elementCount = _absAttributes.size();
+      nextFileOffset = cha.fileOffset + cha.fileSize;
     }
 
     // create chunk for symbol strings
@@ -380,6 +394,21 @@ private:
     return result;
   }
 
+  uint32_t getAttributeOffset(const class AbsoluteAtom& atom) {
+    NativeAtomAttributesV1 attrs;
+    computeAbsoluteAttributes(atom, attrs);
+    for(unsigned int i=0; i < _absAttributes.size(); ++i) {
+      if ( !memcmp(&_absAttributes[i], &attrs, sizeof(NativeAtomAttributesV1)) ) {
+        // found that this set of attributes already used, so re-use
+        return i * sizeof(NativeAtomAttributesV1);
+      }
+    }
+    // append new attribute set to end
+    uint32_t result = _absAttributes.size() * sizeof(NativeAtomAttributesV1);
+    _absAttributes.push_back(attrs);
+    return result;
+  }
+
   uint32_t sectionNameOffset(const class DefinedAtom& atom) {
     // if section based on content, then no custom section name available
     if ( atom.sectionChoice() == DefinedAtom::sectionBasedOnContent )
@@ -412,6 +441,11 @@ private:
     attrs.permissions       = atom.permissions();
     //attrs.thumb             = atom.isThumb();
     attrs.alias             = atom.isAlias();
+  }
+
+  void computeAbsoluteAttributes(const class AbsoluteAtom& atom,
+                                                NativeAtomAttributesV1& attrs) {
+    attrs.scope       = atom.scope();
   }
 
   // add references for this atom in a contiguous block in NCS_ReferencesArrayV1
@@ -528,6 +562,7 @@ private:
   std::vector<uint8_t>                    _contentPool;
   std::vector<NativeDefinedAtomIvarsV1>   _definedAtomIvars;
   std::vector<NativeAtomAttributesV1>     _attributes;
+  std::vector<NativeAtomAttributesV1>     _absAttributes;
   std::vector<NativeUndefinedAtomIvarsV1> _undefinedAtomIvars;
   std::vector<NativeSharedLibraryAtomIvarsV1> _sharedLibraryAtomIvars;
   std::vector<NativeAbsoluteAtomIvarsV1>  _absoluteAtomIvars;
