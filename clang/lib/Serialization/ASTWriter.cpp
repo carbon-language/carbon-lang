@@ -767,14 +767,20 @@ void ASTWriter::WriteBlockInfoBlock() {
 #define BLOCK(X) EmitBlockID(X ## _ID, #X, Stream, Record)
 #define RECORD(X) EmitRecordID(X, #X, Stream, Record)
 
-  // AST Top-Level Block.
-  BLOCK(AST_BLOCK);
+  // Control Block.
+  BLOCK(CONTROL_BLOCK);
+  RECORD(METADATA);
+  RECORD(IMPORTS);
+  RECORD(LANGUAGE_OPTIONS);
+  RECORD(TARGET_OPTIONS);
   RECORD(ORIGINAL_FILE_NAME);
   RECORD(ORIGINAL_FILE_ID);
+  RECORD(ORIGINAL_PCH_DIR);
+
+  // AST Top-Level Block.
+  BLOCK(AST_BLOCK);
   RECORD(TYPE_OFFSET);
   RECORD(DECL_OFFSET);
-  RECORD(LANGUAGE_OPTIONS);
-  RECORD(METADATA);
   RECORD(IDENTIFIER_OFFSET);
   RECORD(IDENTIFIER_TABLE);
   RECORD(EXTERNAL_DEFINITIONS);
@@ -790,9 +796,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(SOURCE_LOCATION_PRELOADS);
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
-  RECORD(VERSION_CONTROL_BRANCH_REVISION);
   RECORD(PPD_ENTITIES_OFFSETS);
-  RECORD(IMPORTS);
   RECORD(REFERENCED_SELECTOR_POOL);
   RECORD(TU_UPDATE_LEXICAL);
   RECORD(LOCAL_REDECLARATIONS_MAP);
@@ -807,7 +811,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DIAG_PRAGMA_MAPPINGS);
   RECORD(CUDA_SPECIAL_DECL_REFS);
   RECORD(HEADER_SEARCH_TABLE);
-  RECORD(ORIGINAL_PCH_DIR);
   RECORD(FP_PRAGMA_OPTIONS);
   RECORD(OPENCL_EXTENSIONS);
   RECORD(DELEGATING_CTORS);
@@ -982,19 +985,29 @@ adjustFilenameForRelocatablePCH(const char *Filename, StringRef isysroot) {
 void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
                                   const std::string &OutputFile) {
   using namespace llvm;
-  Stream.EnterSubblock(CONTROL_BLOCK_ID, 4);
+  Stream.EnterSubblock(CONTROL_BLOCK_ID, 5);
+  RecordData Record;
   
   // Metadata
-  const TargetInfo &Target = Context.getTargetInfo();
-  const TargetOptions &TargetOpts = Target.getTargetOpts();
-  RecordData Record;
+  BitCodeAbbrev *MetadataAbbrev = new BitCodeAbbrev();
+  MetadataAbbrev->Add(BitCodeAbbrevOp(METADATA));
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Major
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Minor
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang maj.
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang min.
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Relocatable
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Errors
+  MetadataAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // SVN branch/tag
+  unsigned MetadataAbbrevCode = Stream.EmitAbbrev(MetadataAbbrev);
+  Record.push_back(METADATA);
   Record.push_back(VERSION_MAJOR);
   Record.push_back(VERSION_MINOR);
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(!isysroot.empty());
   Record.push_back(ASTHasCompilerErrors);
-  Stream.EmitRecord(METADATA, Record);
+  Stream.EmitRecordWithBlob(MetadataAbbrevCode, Record,
+                            getClangFullRepositoryVersion());
 
   // Imports
   if (Chain) {
@@ -1036,6 +1049,8 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
 
   // Target options.
   Record.clear();
+  const TargetInfo &Target = Context.getTargetInfo();
+  const TargetOptions &TargetOpts = Target.getTargetOpts();
   AddString(TargetOpts.Triple, Record);
   AddString(TargetOpts.CPU, Record);
   AddString(TargetOpts.ABI, Record);
@@ -1091,16 +1106,6 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
     Record.push_back(ORIGINAL_PCH_DIR);
     Stream.EmitRecordWithBlob(AbbrevCode, Record, origDir);
   }
-
-  // Repository branch/version information.
-  BitCodeAbbrev *RepoAbbrev = new BitCodeAbbrev();
-  RepoAbbrev->Add(BitCodeAbbrevOp(VERSION_CONTROL_BRANCH_REVISION));
-  RepoAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // SVN branch/tag
-  unsigned RepoAbbrevCode = Stream.EmitAbbrev(RepoAbbrev);
-  Record.clear();
-  Record.push_back(VERSION_CONTROL_BRANCH_REVISION);
-  Stream.EmitRecordWithBlob(RepoAbbrevCode, Record,
-                            getClangFullRepositoryVersion());
 
   Stream.ExitBlock();
 }

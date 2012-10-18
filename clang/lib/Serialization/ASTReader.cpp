@@ -1800,6 +1800,13 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
       }
 
       RelocatablePCH = Record[4];
+
+      const std::string &CurBranch = getClangFullRepositoryVersion();
+      StringRef ASTBranch(BlobStart, BlobLen);
+      if (StringRef(CurBranch) != ASTBranch && !DisableValidation) {
+        Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
+        return IgnorePCH;
+      }
       break;
     }
 
@@ -1877,16 +1884,6 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
         OriginalDir.assign(BlobStart, BlobLen);
       }
       break;
-
-    case VERSION_CONTROL_BRANCH_REVISION: {
-      const std::string &CurBranch = getClangFullRepositoryVersion();
-      StringRef ASTBranch(BlobStart, BlobLen);
-      if (StringRef(CurBranch) != ASTBranch && !DisableValidation) {
-        Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
-        return IgnorePCH;
-      }
-      break;
-    }
     }
   }
 
@@ -3069,7 +3066,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
 
     unsigned BlockID = Stream.ReadSubBlockID();
 
-    // We only know the AST subblock ID.
+    // We only know the control subblock ID.
     switch (BlockID) {
     case llvm::bitc::BLOCKINFO_BLOCK_ID:
       if (Stream.ReadBlockInfoBlock()) {
