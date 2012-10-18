@@ -29,6 +29,7 @@ class MachineBasicBlock;
 class TargetFrameLowering;
 class BitVector;
 class Value;
+class AllocaInst;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
 /// callee saved register is in the current frame.
@@ -106,14 +107,14 @@ class MachineFrameInfo {
 
     /// Alloca - If this stack object is originated from an Alloca instruction
     /// this value saves the original IR allocation. Can be NULL.
-    const Value *Alloca;
+    const AllocaInst *Alloca;
 
     // PreAllocated - If true, the object was mapped into the local frame
     // block and doesn't need additional handling for allocation beyond that.
     bool PreAllocated;
 
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM,
-                bool isSS, bool NSP, const Value *Val)
+                bool isSS, bool NSP, const AllocaInst *Val)
       : SPOffset(SP), Size(Sz), Alignment(Al), isImmutable(IM),
         isSpillSlot(isSS), MayNeedSP(NSP), Alloca(Val), PreAllocated(false) {}
   };
@@ -369,7 +370,7 @@ public:
 
   /// getObjectAllocation - Return the underlying Alloca of the specified
   /// stack object if it exists. Returns 0 if none exists.
-  const Value* getObjectAllocation(int ObjectIdx) const {
+  const AllocaInst* getObjectAllocation(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Alloca;
@@ -495,7 +496,7 @@ public:
   /// a nonnegative identifier to represent it.
   ///
   int CreateStackObject(uint64_t Size, unsigned Alignment, bool isSS,
-                        bool MayNeedSP = false, const Value *Alloca = 0) {
+                        bool MayNeedSP = false, const AllocaInst *Alloca = 0) {
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
     Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, MayNeedSP,
                                   Alloca));
