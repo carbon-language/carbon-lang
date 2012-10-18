@@ -707,6 +707,10 @@ public:
   }
 
   StringRef getParamName(comments::FullComment *FC) const;
+  
+  StringRef getParamNameAsWritten() const {
+    return Args[0].Text;
+  }
 
   SourceRange getParamNameRange() const {
     return Args[0].Range;
@@ -760,6 +764,10 @@ public:
   }
 
   StringRef getParamName(comments::FullComment *FC) const;
+  
+  StringRef getParamNameAsWritten() const {
+    return Args[0].Text;
+  }
 
   SourceRange getParamNameRange() const {
     return Args[0].Range;

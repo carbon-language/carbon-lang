@@ -255,7 +255,7 @@ CXString clang_ParamCommandComment_getParamName(CXComment CXC) {
   if (!PCC || !PCC->hasParamName())
     return createCXString((const char *) 0);
 
-  return createCXString(PCC->getParamName(0), /*DupString=*/ false);
+  return createCXString(PCC->getParamNameAsWritten(), /*DupString=*/ false);
 }
 
 unsigned clang_ParamCommandComment_isParamIndexValid(CXComment CXC) {
@@ -306,7 +306,7 @@ CXString clang_TParamCommandComment_getParamName(CXComment CXC) {
   if (!TPCC || !TPCC->hasParamName())
     return createCXString((const char *) 0);
 
-  return createCXString(TPCC->getParamName(0), /*DupString=*/ false);
+  return createCXString(TPCC->getParamNameAsWritten(), /*DupString=*/ false);
 }
 
 unsigned clang_TParamCommandComment_isParamPositionValid(CXComment CXC) {
@@ -669,10 +669,11 @@ void CommentASTToHTMLConverter::visitParamCommandComment(
     Result << "<dt class=\"param-name-index-"
            << C->getParamIndex()
            << "\">";
-  } else
+    appendToResultWithHTMLEscaping(C->getParamName(FC));
+  } else {
     Result << "<dt class=\"param-name-index-invalid\">";
-
-  appendToResultWithHTMLEscaping(C->getParamName(FC));
+    appendToResultWithHTMLEscaping(C->getParamNameAsWritten());
+  }
   Result << "</dt>";
 
   if (C->isParamIndexValid()) {
@@ -695,10 +696,12 @@ void CommentASTToHTMLConverter::visitTParamCommandComment(
              << "\">";
     else
       Result << "<dt class=\"tparam-name-index-other\">";
-  } else
+    appendToResultWithHTMLEscaping(C->getParamName(FC));
+  } else {
     Result << "<dt class=\"tparam-name-index-invalid\">";
-
-  appendToResultWithHTMLEscaping(C->getParamName(FC));
+    appendToResultWithHTMLEscaping(C->getParamNameAsWritten());
+  }
+  
   Result << "</dt>";
 
   if (C->isPositionValid()) {
@@ -961,7 +964,8 @@ void CommentASTToXMLConverter::visitBlockCommandComment(const BlockCommandCommen
 
 void CommentASTToXMLConverter::visitParamCommandComment(const ParamCommandComment *C) {
   Result << "<Parameter><Name>";
-  appendToResultWithXMLEscaping(C->getParamName(FC));
+  appendToResultWithXMLEscaping(C->isParamIndexValid() ? C->getParamName(FC)
+                                                       : C->getParamNameAsWritten());
   Result << "</Name>";
 
   if (C->isParamIndexValid())
@@ -987,7 +991,8 @@ void CommentASTToXMLConverter::visitParamCommandComment(const ParamCommandCommen
 void CommentASTToXMLConverter::visitTParamCommandComment(
                                   const TParamCommandComment *C) {
   Result << "<Parameter><Name>";
-  appendToResultWithXMLEscaping(C->getParamName(FC));
+  appendToResultWithXMLEscaping(C->isPositionValid() ? C->getParamName(FC)
+                                : C->getParamNameAsWritten());
   Result << "</Name>";
 
   if (C->isPositionValid() && C->getDepth() == 1) {

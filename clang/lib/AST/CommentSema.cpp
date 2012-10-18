@@ -574,7 +574,7 @@ void Sema::resolveParamCommandIndexes(const FullComment *FC) {
     ParamCommandComment *PCC = dyn_cast<ParamCommandComment>(*I);
     if (!PCC || !PCC->hasParamName())
       continue;
-    StringRef ParamName = PCC->getParamName(0);
+    StringRef ParamName = PCC->getParamNameAsWritten();
 
     // Check that referenced parameter name is in the function decl.
     const unsigned ResolvedParamIndex = resolveParmVarReference(ParamName,
@@ -609,7 +609,7 @@ void Sema::resolveParamCommandIndexes(const FullComment *FC) {
     const ParamCommandComment *PCC = UnresolvedParamCommands[i];
 
     SourceRange ArgRange = PCC->getParamNameRange();
-    StringRef ParamName = PCC->getParamName(0);
+    StringRef ParamName = PCC->getParamNameAsWritten();
     Diag(ArgRange.getBegin(), diag::warn_doc_param_not_found)
       << ParamName << ArgRange;
 
