@@ -28,6 +28,8 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Value.h"
 #include "llvm/Function.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/SmallVector.h"
@@ -65,8 +67,8 @@ public:
 
   /// Ctor.
   SingleBlockLoopVectorizer(Loop *OrigLoop, ScalarEvolution *Se, LoopInfo *Li,
-                            unsigned VecWidth):
-  Orig(OrigLoop), SE(Se), LI(Li), VF(VecWidth),
+                            LPPassManager *Lpm, unsigned VecWidth):
+  Orig(OrigLoop), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
    Builder(0), Induction(0), OldInduction(0) { }
 
   ~SingleBlockLoopVectorizer() {
@@ -76,20 +78,20 @@ public:
   // Perform the actual loop widening (vectorization).
   void vectorize() {
     ///Create a new empty loop. Unlink the old loop and connect the new one.
-    copyEmptyLoop();
+    createEmptyLoop();
     /// Widen each instruction in the old loop to a new one in the new loop.
     vectorizeLoop();
-    // Delete the old loop.
-    deleteOldLoop();
+    // register the new loop.
+    cleanup();
  }
 
 private:
   /// Create an empty loop, based on the loop ranges of the old loop.
-  void copyEmptyLoop();
+  void createEmptyLoop();
   /// Copy and widen the instructions from the old loop.
   void vectorizeLoop();
-  /// Delete the old loop.
-  void deleteOldLoop();
+  /// Insert the new loop to the loop hierarchy and pass manager.
+  void cleanup();
 
   /// This instruction is un-vectorizable. Implement it as a sequence
   /// of scalars.
@@ -123,6 +125,8 @@ private:
   ScalarEvolution *SE;
   // Loop Info.
   LoopInfo *LI;
+  // Loop Pass Manager;
+  LPPassManager *LPM;
   // The vectorization factor to use.
   unsigned VF;
 
@@ -132,9 +136,9 @@ private:
   // --- Vectorization state ---
 
   /// The new Induction variable which was added to the new block.
-  Instruction *Induction;
+  PHINode *Induction;
   /// The induction variable of the old basic block.
-  Instruction *OldInduction;
+  PHINode *OldInduction;
   // Maps scalars to widened vectors.
   DenseMap<Value*, Value*> WidenMap;
 };
@@ -184,6 +188,7 @@ struct LoopVectorize : public LoopPass {
   ScalarEvolution *SE;
   DataLayout *DL;
   LoopInfo *LI;
+  DominatorTree *DT;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // Only vectorize innermost loops.
@@ -194,6 +199,7 @@ struct LoopVectorize : public LoopPass {
     SE = &getAnalysis<ScalarEvolution>();
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
+    DT = &getAnalysis<DominatorTree>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
@@ -203,8 +209,7 @@ struct LoopVectorize : public LoopPass {
     unsigned MaxVF = LVL.getLoopMaxVF();
 
     // Check that we can vectorize using the chosen vectorization width.
-    if ((MaxVF < DefaultVectorizationFactor) ||
-        (MaxVF % DefaultVectorizationFactor)) {
+    if (MaxVF < DefaultVectorizationFactor) {
       DEBUG(dbgs() << "LV: non-vectorizable MaxVF ("<< MaxVF << ").\n");
       return false;
     }
@@ -212,11 +217,10 @@ struct LoopVectorize : public LoopPass {
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< MaxVF << ").\n");
 
     // If we decided that is is *legal* to vectorizer the loop. Do it.
-    SingleBlockLoopVectorizer LB(L, SE, LI, DefaultVectorizationFactor);
+    SingleBlockLoopVectorizer LB(L, SE, LI, &LPM, DefaultVectorizationFactor);
     LB.vectorize();
 
-    // The loop is now vectorized. Remove it from LMP.
-    LPM.deleteLoopFromQueue(L);
+    DEBUG(verifyFunction(*L->getHeader()->getParent()));
     return true;
   }
 
@@ -226,6 +230,7 @@ struct LoopVectorize : public LoopPass {
     AU.addRequired<AliasAnalysis>();
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
+    AU.addRequired<DominatorTree>();
   }
 
 };
@@ -327,7 +332,7 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
     Instruction *SrcInst = dyn_cast<Instruction>(SrcOp);
 
     // If the src is an instruction that appeared earlier in the basic block
-    // then it should already be vectorized. 
+    // then it should already be vectorized.
     if (SrcInst && SrcInst->getParent() == Instr->getParent()) {
       assert(WidenMap.count(SrcInst) && "Source operand is unavailable");
       // The parameter is a vector value from earlier.
@@ -378,28 +383,71 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
     WidenMap[Instr] = VecResults;
 }
 
-void SingleBlockLoopVectorizer::copyEmptyLoop() {
-  assert(Orig->getNumBlocks() == 1 && "Invalid loop");
-  BasicBlock *PH = Orig->getLoopPreheader();
-  BasicBlock *ExitBlock = Orig->getExitBlock();
-  assert(ExitBlock && "Invalid loop exit");
+void SingleBlockLoopVectorizer::createEmptyLoop() {
+  /*
+   In this function we generate a new loop. The new loop will contain
+   the vectorized instructions while the old loop will continue to run the
+   scalar remainder.
 
-  // Create a new single-basic block loop.
-  BasicBlock *BB = BasicBlock::Create(PH->getContext(), "vectorizedloop",
-                                      PH->getParent(), ExitBlock);
+   [  ] <-- vector loop bypass.
+  /  |
+ /   v
+|   [ ]     <-- vector pre header.
+|    |
+|    v
+|   [  ] \
+|   [  ]_|   <-- vector loop.
+|    |
+ \   v
+   >[ ]   <--- middle-block.
+  /  |
+ /   v
+|   [ ]     <--- new preheader.
+|    |
+|    v
+|   [ ] \
+|   [ ]_|   <-- old scalar loop to handle remainder. ()
+ \   |
+  \  v
+   >[ ]     <-- exit block.
+   ...
+   */
+
+  // This is the original scalar-loop preheader.
+  BasicBlock *BypassBlock = Orig->getLoopPreheader();
+  BasicBlock *ExitBlock = Orig->getExitBlock();
+  assert(ExitBlock && "Must have an exit block");
+
+  BasicBlock *ScalarBody = Orig->getHeader();
+  assert(Orig->getNumBlocks() == 1 && "Invalid loop");
+  assert(ScalarBody && BypassBlock && "Invalid loop structure");
+
+  BasicBlock *VectorPH =
+      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+  BasicBlock *VecBody = VectorPH->splitBasicBlock(VectorPH->getTerminator(),
+                                                 "vector.body");
+
+  BasicBlock *MiddleBlock = VecBody->splitBasicBlock(VecBody->getTerminator(),
+                                                  "middle.block");
+
+
+  BasicBlock *ScalarPH =
+          MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
+                                       "scalar.preheader");
 
   // Find the induction variable.
   BasicBlock *OldBasicBlock = Orig->getHeader();
-  PHINode *OldInd = dyn_cast<PHINode>(OldBasicBlock->begin());
-  assert(OldInd && "We must have a single phi node.");
-  Type *IdxTy = OldInd->getType();
+  OldInduction = dyn_cast<PHINode>(OldBasicBlock->begin());
+  assert(OldInduction && "We must have a single phi node.");
+  Type *IdxTy = OldInduction->getType();
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
-  Builder = new IRBuilder<>(BB);
+  Builder = new IRBuilder<>(VecBody);
+  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Generate the induction variable.
-  PHINode *Phi = Builder->CreatePHI(IdxTy, 2, "index");
+  Induction = Builder->CreatePHI(IdxTy, 2, "index");
   Constant *Zero = ConstantInt::get(IdxTy, 0);
   Constant *Step = ConstantInt::get(IdxTy, VF);
 
@@ -407,32 +455,78 @@ void SingleBlockLoopVectorizer::copyEmptyLoop() {
   const SCEV *ExitCount = SE->getExitCount(Orig, Orig->getHeader());
   assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
 
-  // Get the trip count from the count by adding 1.
+  // Get the total trip count from the count by adding 1.
   ExitCount = SE->getAddExpr(ExitCount,
                              SE->getConstant(ExitCount->getType(), 1));
 
   // Expand the trip count and place the new instructions in the preheader.
   // Notice that the pre-header does not change, only the loop body.
   SCEVExpander Exp(*SE, "induction");
-  Instruction *Loc = Orig->getLoopPreheader()->getTerminator();
-  if (ExitCount->getType() != Phi->getType())
-    ExitCount = SE->getSignExtendExpr(ExitCount, Phi->getType());
-  Value *Count = Exp.expandCodeFor(ExitCount, Phi->getType(), Loc);
-  
-  // Create i+1 and fill the PHINode.
-  Value *Next = Builder->CreateAdd(Phi, Step, "index.next");
-  Phi->addIncoming(Zero, PH);
-  Phi->addIncoming(Next, BB);
-  // Create the compare.
-  Value *ICmp = Builder->CreateICmpEQ(Next, Count);
-  Builder->CreateCondBr(ICmp, ExitBlock, BB);
-  // Fix preheader.
-  PH->getTerminator()->setSuccessor(0, BB);
-  Builder->SetInsertPoint(BB->getFirstInsertionPt());
+  Instruction *Loc = BypassBlock->getTerminator();
 
-  // Save the induction variables.
-  Induction = Phi;
-  OldInduction = OldInd;
+  // We may need to extend the index in case there is a type mismatch.
+  // We know that the count starts at zero and does not overflow.
+  // We are using Zext because it should be less expensive.
+  if (ExitCount->getType() != Induction->getType())
+    ExitCount = SE->getZeroExtendExpr(ExitCount, IdxTy);
+
+  // Count holds the overall loop count (N).
+  Value *Count = Exp.expandCodeFor(ExitCount, Induction->getType(), Loc);
+  // Now we need to generate the expression for N - (N % VF), which is
+  // the part that the vectorized body will execute.
+  Constant *CIVF = ConstantInt::get(IdxTy, VF);
+  Value *R = BinaryOperator::CreateURem(Count, CIVF, "n.mod.vf", Loc);
+  Value *CountRoundDown = BinaryOperator::CreateSub(Count, R, "n.vec", Loc);
+
+  // Now, compare the new count to zero. If it is zero, jump to the scalar part.
+  Value *Cmp = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ,
+                               CountRoundDown, ConstantInt::getNullValue(IdxTy),
+                               "cmp.zero", Loc);
+  BranchInst::Create(MiddleBlock, VectorPH, Cmp, Loc);
+  // Remove the old terminator.
+  Loc->eraseFromParent();
+
+  // Add a check in the middle block to see if we have completed
+  // all of the iterations in the first vector loop.
+  // If (N - N%VF) == N, then we *don't* need to run the remainder.
+  Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, Count,
+                                CountRoundDown, "cmp.n",
+                                MiddleBlock->getTerminator());
+
+  BranchInst::Create(ExitBlock, ScalarPH, CmpN, MiddleBlock->getTerminator());
+  // Remove the old terminator.
+  MiddleBlock->getTerminator()->eraseFromParent();
+
+  // Create i+1 and fill the PHINode.
+  Value *NextIdx = Builder->CreateAdd(Induction, Step, "index.next");
+  Induction->addIncoming(Zero, VectorPH);
+  Induction->addIncoming(NextIdx, VecBody);
+  // Create the compare.
+  Value *ICmp = Builder->CreateICmpEQ(NextIdx, CountRoundDown);
+  Builder->CreateCondBr(ICmp, MiddleBlock, VecBody);
+
+  // Now we have two terminators. Remove the old one from the block.
+  VecBody->getTerminator()->eraseFromParent();
+
+  // Fix the scalar body iteration count.
+  unsigned BlockIdx = OldInduction->getBasicBlockIndex(ScalarPH);
+  OldInduction->setIncomingValue(BlockIdx, CountRoundDown);
+
+  // Get ready to start creating new instructions into the vectorized body.
+  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
+
+  // Register the new loop.
+  Loop* Lp = new Loop();
+  LPM->insertLoop(Lp, Orig->getParentLoop());
+
+  Lp->addBasicBlockToLoop(VecBody, LI->getBase());
+
+  Loop *ParentLoop = Orig->getParentLoop();
+  if (ParentLoop) {
+    ParentLoop->addBasicBlockToLoop(ScalarPH, LI->getBase());
+    ParentLoop->addBasicBlockToLoop(VectorPH, LI->getBase());
+    ParentLoop->addBasicBlockToLoop(MiddleBlock, LI->getBase());
+  }
 }
 
 void SingleBlockLoopVectorizer::vectorizeLoop() {
@@ -575,16 +669,9 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
   }// end of for_each instr.
 }
 
-void SingleBlockLoopVectorizer::deleteOldLoop() {
+void SingleBlockLoopVectorizer::cleanup() {
   // The original basic block.
-  BasicBlock *BB = Orig->getHeader();
   SE->forgetLoop(Orig);
-
-  LI->removeBlock(BB);
-  Orig->addBasicBlockToLoop(Induction->getParent(), LI->getBase());
-
-  // Remove the old loop block.
-  DeleteDeadBlock(BB);
 }
 
 unsigned LoopVectorizationLegality::getLoopMaxVF() {
@@ -605,26 +692,25 @@ unsigned LoopVectorizationLegality::getLoopMaxVF() {
   BasicBlock *BB = TheLoop->getHeader();
   DEBUG(dbgs() << "LV: Found a loop: " << BB->getName() << "\n");
 
-  // Find the max vectorization factor.
-  unsigned MaxVF = SE->getSmallConstantTripMultiple(TheLoop, BB);
-
-
-  // Perform an early check. Do not scan the block if we did not find a loop.
-  if (MaxVF < 2) {
-    DEBUG(dbgs() << "LV: Can't find a vectorizable loop structure\n");
-    return 1;
-  }
-
   // Go over each instruction and look at memory deps.
   if (!canVectorizeBlock(*BB)) {
     DEBUG(dbgs() << "LV: Can't vectorize this loop header\n");
     return 1;
   }
 
-  DEBUG(dbgs() << "LV: We can vectorize this loop! VF="<<MaxVF<<"\n");
-  
-  // Okay! We can vectorize. Return the max trip multiple.
-  return MaxVF;
+  // ScalarEvolution needs to be able to find the exit count.
+  const SCEV *ExitCount = SE->getExitCount(TheLoop, BB);
+  if (ExitCount == SE->getCouldNotCompute()) {
+    DEBUG(dbgs() << "LV: SCEV could not compute the loop exit count.\n");
+    return 1;
+  }
+
+  DEBUG(dbgs() << "LV: We can vectorize this loop!\n");
+
+  // Okay! We can vectorize. At this point we don't have any other mem analysis
+  // which may limit our maximum vectorization factor, so just return the
+  // maximum SIMD size.
+  return DefaultVectorizationFactor;
 }
 
 bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
@@ -724,6 +810,11 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       }
     }
   } // next instr.
+
+  if (NumPhis != 1) {
+      DEBUG(dbgs() << "LV: Did not find a Phi node.\n");
+      return false;
+  }
 
   // Check that the underlying objects of the reads and writes are either
   // disjoint memory locations, or that they are no-alias arguments.

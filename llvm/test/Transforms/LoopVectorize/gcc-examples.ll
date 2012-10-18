@@ -45,9 +45,8 @@ define void @example1() nounwind uwtable ssp {
   ret void
 }
 
-; We can't vectorize this loop because it has non constant loop bounds.
 ;CHECK: @example2
-;CHECK-NOT: <4 x i32>
+;CHECK: store <4 x i32>
 ;CHECK: ret void
 define void @example2(i32 %n, i32 %x) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 0
@@ -114,9 +113,8 @@ define void @example3(i32 %n, i32* noalias nocapture %p, i32* noalias nocapture 
   ret void
 }
 
-; We can't vectorize this loop because it has non constant loop bounds.
 ;CHECK: @example4
-;CHECK-NOT: <4 x i32>
+;CHECK: load <4 x i32>
 ;CHECK: ret void
 define void @example4(i32 %n, i32* noalias nocapture %p, i32* noalias nocapture %q) nounwind uwtable ssp {
   %1 = add nsw i32 %n, -1

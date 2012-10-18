@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 ;CHECK: @example1
 ;CHECK: shl i32
-;CHECK: sext i32
+;CHECK: zext i32
 ;CHECK: load <4 x i32>
 ;CHECK: add <4 x i32>
 ;CHECK: store <4 x i32>
