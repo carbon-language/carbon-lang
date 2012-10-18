@@ -311,6 +311,30 @@
                             <b>(lldb)</b> br s -S count<br>
                         </td>
                     </tr>
+                    <tr><td class="header" colspan="2">Set a breakpoint by regular expression on function name.</td></tr>
+
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> rbreak regular-expression<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> breakpoint set --regex regular-expression<br>
+                            <b>(lldb)</b> br s -r regular-expression<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Set a breakpoint by regular expression on source file contents.</td></tr>
+
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> shell grep -e -n pattern source-file<br>
+                            <b>(gdb)</b> break source-file:CopyLineNumbers<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> breakpoint set --source-pattern regular-expression --file SourceFile<br>
+                            <b>(lldb)</b> br s -p regular-expression -f file<br>
+                        </td>
+                    </tr>
 
                     <tr><td class="header" colspan="2">List all breakpoints.</td></tr>
                     <tr>
