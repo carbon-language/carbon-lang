@@ -1364,11 +1364,13 @@ target datalayout = "<i>layout specification</i>"
       8-bits. If omitted, the natural stack alignment defaults to "unspecified",
       which does not prevent any alignment promotions.</dd>
 
-  <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dt><tt>p[n]:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and
-      <i>preferred</i> alignments. All sizes are in bits. Specifying
-      the <i>pref</i> alignment is optional. If omitted, the
-      preceding <tt>:</tt> should be omitted too.</dd>
+      <i>preferred</i> alignments for address space <i>n</i>. All sizes are in
+      bits. Specifying the <i>pref</i> alignment is optional. If omitted, the
+      preceding <tt>:</tt> should be omitted too. The address space,
+      <i>n</i> is optional, and if not specified, denotes the default address
+      space 0. The value of <i>n</i> must be in the range [1,2^23).</dd>
 
   <dt><tt>i<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the alignment for an integer type of a given bit
@@ -1409,6 +1411,10 @@ target datalayout = "<i>layout specification</i>"
 <ul>
   <li><tt>E</tt> - big endian</li>
   <li><tt>p:64:64:64</tt> - 64-bit pointers with 64-bit alignment</li>
+  <li><tt>p1:32:32:32</tt> - 32-bit pointers with 32-bit alignment for
+  address space 1</li>
+  <li><tt>p2:16:32:32</tt> - 16-bit pointers with 32-bit alignment for
+  address space 2</li>
   <li><tt>i1:8:8</tt> - i1 is 8-bit (byte) aligned</li>
   <li><tt>i8:8:8</tt> - i8 is 8-bit (byte) aligned</li>
   <li><tt>i16:16:16</tt> - i16 is 16-bit aligned</li>
