@@ -119,6 +119,14 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
       MPM.add(Inliner);
       Inliner = 0;
     }
+
+    // FIXME: This is a HACK! The inliner pass above implicitly creates a CGSCC
+    // pass manager, but we don't want to add extensions into that pass manager.
+    // To prevent this we must insert a no-op module pass to reset the pass
+    // manager to get the same behavior as EP_OptimizerLast in non-O0 builds.
+    if (!GlobalExtensions->empty() || !Extensions.empty())
+      MPM.add(createBarrierNoopPass());
+
     addExtensionsToPM(EP_EnabledOnOptLevel0, MPM);
     return;
   }

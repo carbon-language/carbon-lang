@@ -198,6 +198,11 @@ ModulePass *createPartialInliningPass();
 //
 ModulePass *createMetaRenamerPass();
 
+//===----------------------------------------------------------------------===//
+/// createBarrierNoopPass - This pass is purely a module pass barrier in a pass
+/// manager.
+ModulePass *createBarrierNoopPass();
+
 } // End llvm namespace
 
 #endif

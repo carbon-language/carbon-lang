@@ -66,6 +66,7 @@ void initializeAliasDebuggerPass(PassRegistry&);
 void initializeAliasSetPrinterPass(PassRegistry&);
 void initializeAlwaysInlinerPass(PassRegistry&);
 void initializeArgPromotionPass(PassRegistry&);
+void initializeBarrierNoopPass(PassRegistry&);
 void initializeBasicAliasAnalysisPass(PassRegistry&);
 void initializeBasicCallGraphPass(PassRegistry&);
 void initializeBlockExtractorPassPass(PassRegistry&);
