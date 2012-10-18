@@ -981,7 +981,7 @@ struct DeclInfo {
   /// If false, only \c CommentDecl is valid.
   unsigned IsFilled : 1;
 
-  /// Simplified kind of \c CommentDecl, see\c DeclKind enum.
+  /// Simplified kind of \c CommentDecl, see \c DeclKind enum.
   unsigned Kind : 3;
 
   /// Is \c CommentDecl a template declaration.
@@ -990,7 +990,7 @@ struct DeclInfo {
   /// Is \c CommentDecl an ObjCMethodDecl.
   unsigned IsObjCMethod : 1;
 
-  /// Is \c ThisDecl a non-static member function of C++ class or
+  /// Is \c CommentDecl a non-static member function of C++ class or
   /// instance method of ObjC class.
   /// Can be true only if \c IsFunctionDecl is true.
   unsigned IsInstanceMethod : 1;
