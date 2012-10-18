@@ -261,7 +261,7 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
 
       MarkersFound++;
 
-      const Value *Allocation = MFI->getObjectAllocation(Slot);
+      const AllocaInst *Allocation = MFI->getObjectAllocation(Slot);
       if (Allocation) {
         DEBUG(dbgs()<<"Found a lifetime marker for slot #"<<Slot<<
               " with allocation: "<< Allocation->getName()<<"\n");
@@ -481,11 +481,11 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
   }
 
   // Keep a list of *allocas* which need to be remapped.
-  DenseMap<const Value*, const Value*> Allocas;
+  DenseMap<const AllocaInst*, const AllocaInst*> Allocas;
   for (DenseMap<int, int>::iterator it = SlotRemap.begin(),
        e = SlotRemap.end(); it != e; ++it) {
-    const Value *From = MFI->getObjectAllocation(it->first);
-    const Value *To = MFI->getObjectAllocation(it->second);
+    const AllocaInst *From = MFI->getObjectAllocation(it->first);
+    const AllocaInst *To = MFI->getObjectAllocation(it->second);
     assert(To && From && "Invalid allocation object");
     Allocas[From] = To;
   }
@@ -515,10 +515,17 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         V = GetUnderlyingObject(V);
         // If we did not find one, or if the one that we found is not in our
         // map, then move on.
-        if (!V || !Allocas.count(V))
+        if (!V || !isa<AllocaInst>(V)) {
+          // Clear mem operand since we don't know for sure that it doesn't
+          // alias a merged alloca.
+          MMO->setValue(0);
+          continue;
+        }
+        const AllocaInst *AI= cast<AllocaInst>(V);
+        if (!Allocas.count(AI))
           continue;
 
-        MMO->setValue(Allocas[V]);
+        MMO->setValue(Allocas[AI]);
         FixedMemOp++;
       }
 
