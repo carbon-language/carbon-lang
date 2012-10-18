@@ -92,6 +92,9 @@ public:
   /// allow resolving headers even after headers+PCH was moved to a new path.
   std::string OriginalDir;
 
+  /// \brief Whether this precompiled header is a relocatable PCH file.
+  bool RelocatablePCH;
+
   /// \brief The file entry for the module file.
   const FileEntry *File;
 

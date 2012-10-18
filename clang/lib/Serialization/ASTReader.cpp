@@ -848,7 +848,7 @@ bool ASTReader::ParseLineTable(ModuleFile &F,
     unsigned FilenameLen = Record[Idx++];
     std::string Filename(&Record[Idx], &Record[Idx] + FilenameLen);
     Idx += FilenameLen;
-    MaybeAddSystemRootToFilename(Filename);
+    MaybeAddSystemRootToFilename(F, Filename);
     FileIDs[I] = LineTable.getLineTableFilenameID(Filename);
   }
 
@@ -1125,7 +1125,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     
     std::string OrigFilename(BlobStart, BlobStart + BlobLen);
     std::string Filename = OrigFilename;
-    MaybeAddSystemRootToFilename(Filename);
+    MaybeAddSystemRootToFilename(*F, Filename);
     const FileEntry *File = 
       OverriddenBuffer? FileMgr.getVirtualFile(Filename, (off_t)Record[4],
                                                (time_t)Record[5])
@@ -1709,7 +1709,7 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
 
 const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
   std::string Filename = filenameStrRef;
-  MaybeAddSystemRootToFilename(Filename);
+  MaybeAddSystemRootToFilename(ModuleMgr.getPrimaryModule(), Filename);
   const FileEntry *File = FileMgr.getFile(Filename);
   if (File == 0 && !OriginalDir.empty() && !CurrentDir.empty() &&
       OriginalDir != CurrentDir) {
@@ -1726,9 +1726,10 @@ const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
 /// \brief If we are loading a relocatable PCH file, and the filename is
 /// not an absolute path, add the system root to the beginning of the file
 /// name.
-void ASTReader::MaybeAddSystemRootToFilename(std::string &Filename) {
+void ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M, 
+                                             std::string &Filename) {
   // If this is not a relocatable PCH file, there's nothing to do.
-  if (!RelocatablePCH)
+  if (!M.RelocatablePCH)
     return;
 
   if (Filename.empty() || llvm::sys::path::is_absolute(Filename))
@@ -1802,7 +1803,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
         return IgnorePCH;
       }
 
-      RelocatablePCH = Record[4];
+      F.RelocatablePCH = Record[4];
 
       const std::string &CurBranch = getClangFullRepositoryVersion();
       StringRef ASTBranch(BlobStart, BlobLen);
@@ -1869,7 +1870,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
         F.OriginalSourceFileID = FileID::get(Record[0]);
         F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
         F.OriginalSourceFileName = F.ActualOriginalSourceFileName;
-        MaybeAddSystemRootToFilename(F.OriginalSourceFileName);
+        MaybeAddSystemRootToFilename(F, F.OriginalSourceFileName);
       }
       break;
 
@@ -6844,8 +6845,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
     Consumer(0), ModuleMgr(PP.getFileManager()),
-    RelocatablePCH(false), isysroot(isysroot),
-    DisableValidation(DisableValidation),
+    isysroot(isysroot), DisableValidation(DisableValidation),
     DisableStatCache(DisableStatCache),
     AllowASTWithCompilerErrors(AllowASTWithCompilerErrors), 
     CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),

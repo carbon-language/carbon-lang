@@ -652,9 +652,6 @@ private:
   /// \brief The directory that the PCH we are reading is stored in.
   std::string CurrentDir;
 
-  /// \brief Whether this precompiled header is a relocatable PCH file.
-  bool RelocatablePCH;
-
   /// \brief The system include root to be used when loading the
   /// precompiled header.
   std::string isysroot;
@@ -871,7 +868,7 @@ private:
   /// into account all the necessary relocations.
   const FileEntry *getFileEntry(StringRef filename);
 
-  void MaybeAddSystemRootToFilename(std::string &Filename);
+  void MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
 
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
                             ModuleFile *ImportedBy,
