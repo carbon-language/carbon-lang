@@ -16,7 +16,12 @@
 #ifndef LLVM_ADT_OPTIONAL
 #define LLVM_ADT_OPTIONAL
 
+#include "LLVM/Support/Compiler.h"
 #include <cassert>
+
+#if LLVM_USE_RVALUE_REFERENCES
+#include <utility>
+#endif
 
 namespace llvm {
 
@@ -27,6 +32,10 @@ class Optional {
 public:
   explicit Optional() : x(), hasVal(false) {}
   Optional(const T &y) : x(y), hasVal(true) {}
+
+#if LLVM_USE_RVALUE_REFERENCES
+  Optional(T &&y) : x(std::forward<T>(y)), hasVal(true) {}
+#endif
 
   static inline Optional create(const T* y) {
     return y ? Optional(*y) : Optional();
