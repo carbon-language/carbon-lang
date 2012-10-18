@@ -44,7 +44,7 @@ TODO: File Manager Speedup:
    2. Instead of stat'ing the file in FileManager::getFile, check to see if 
       the dir has been read.  If so, fail immediately, if not, read the dir,
       then retry.
-   3. Reading the dir uses the getdirentries syscall, creating an FileEntry
+   3. Reading the dir uses the getdirentries syscall, creating a FileEntry
       for all files found.
 
 //===---------------------------------------------------------------------===//
