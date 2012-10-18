@@ -28,29 +28,37 @@ void ReplaceOperatorsNewAndDelete() { }
 
 using namespace __asan;  // NOLINT
 
+// On Android new() goes through malloc interceptors.
+#if !ASAN_ANDROID
+
 #define OPERATOR_NEW_BODY \
   GET_STACK_TRACE_HERE_FOR_MALLOC;\
   return asan_memalign(0, size, &stack);
 
-#if ASAN_ANDROID
-void *operator new(size_t size) { OPERATOR_NEW_BODY; }
-void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
-#else
+INTERCEPTOR_ATTRIBUTE
 void *operator new(size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void *operator new[](size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void *operator new(size_t size, std::nothrow_t const&) throw()
 { OPERATOR_NEW_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void *operator new[](size_t size, std::nothrow_t const&) throw()
 { OPERATOR_NEW_BODY; }
-#endif
 
 #define OPERATOR_DELETE_BODY \
   GET_STACK_TRACE_HERE_FOR_FREE(ptr);\
   asan_free(ptr, &stack);
 
+INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr) throw() { OPERATOR_DELETE_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr) throw() { OPERATOR_DELETE_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr, std::nothrow_t const&) throw()
 { OPERATOR_DELETE_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const&) throw()
 { OPERATOR_DELETE_BODY; }
+
+#endif
