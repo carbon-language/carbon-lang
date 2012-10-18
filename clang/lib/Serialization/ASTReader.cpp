@@ -819,11 +819,14 @@ void ASTReader::Error(unsigned DiagID,
 
 /// \brief Tell the AST listener about the predefines buffers in the chain.
 bool ASTReader::CheckPredefinesBuffers() {
-  if (Listener)
+  if (Listener) {
+    // We only care about the primary module.
+    ModuleFile &M = ModuleMgr.getPrimaryModule();
     return Listener->ReadPredefinesBuffer(PCHPredefinesBuffers,
-                                          ActualOriginalFileName,
+                                          M.ActualOriginalSourceFileName,
                                           SuggestedPredefines,
                                           FileMgr);
+  }
   return false;
 }
 
@@ -1833,7 +1836,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
     }
 
     case LANGUAGE_OPTIONS:
-      if (&F == *ModuleMgr.begin() && 
+      if (Listener && &F == *ModuleMgr.begin() && 
           ParseLanguageOptions(F, Record) && !DisableValidation)
         return IgnorePCH;
       break;
@@ -1854,7 +1857,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
           TargetOpts.Features.push_back(ReadString(Record, Idx));
         }
 
-        if (Listener->ReadTargetOptions(F, TargetOpts))
+        if (Listener->ReadTargetOptions(F, TargetOpts) && !DisableValidation)
           return IgnorePCH;
       }
       break;
@@ -1863,11 +1866,10 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
     case ORIGINAL_FILE:
       // Only record from the primary AST file.
       if (&F == *ModuleMgr.begin()) {
-        OriginalFileID = FileID::get(Record[0]);
-
-        ActualOriginalFileName.assign(BlobStart, BlobLen);
-        OriginalFileName = ActualOriginalFileName;
-        MaybeAddSystemRootToFilename(OriginalFileName);
+        F.OriginalSourceFileID = FileID::get(Record[0]);
+        F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
+        F.OriginalSourceFileName = F.ActualOriginalSourceFileName;
+        MaybeAddSystemRootToFilename(F.OriginalSourceFileName);
       }
       break;
 
@@ -2980,17 +2982,19 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   if (DeserializationListener)
     DeserializationListener->ReaderInitialized(this);
 
-  if (!OriginalFileID.isInvalid()) {
-    OriginalFileID = FileID::get(ModuleMgr.getPrimaryModule().SLocEntryBaseID
-                                      + OriginalFileID.getOpaqueValue() - 1);
+  ModuleFile &PrimaryModule = ModuleMgr.getPrimaryModule();
+  if (!PrimaryModule.OriginalSourceFileID.isInvalid()) {
+    PrimaryModule.OriginalSourceFileID 
+      = FileID::get(PrimaryModule.SLocEntryBaseID
+                    + PrimaryModule.OriginalSourceFileID.getOpaqueValue() - 1);
 
-    // If this AST file is a precompiled preamble, then set the preamble file ID
-    // of the source manager to the file source file from which the preamble was
-    // built.
+    // If this AST file is a precompiled preamble, then set the
+    // preamble file ID of the source manager to the file source file
+    // from which the preamble was built.
     if (Type == MK_Preamble) {
-      SourceMgr.setPreambleFileID(OriginalFileID);
+      SourceMgr.setPreambleFileID(PrimaryModule.OriginalSourceFileID);
     } else if (Type == MK_MainFile) {
-      SourceMgr.setMainFileID(OriginalFileID);
+      SourceMgr.setMainFileID(PrimaryModule.OriginalSourceFileID);
     }
   }
   

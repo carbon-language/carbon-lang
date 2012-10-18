@@ -75,6 +75,23 @@ public:
   /// \brief The file name of the module file.
   std::string FileName;
 
+  /// \brief The original source file name that was used to build the
+  /// primary AST file, which may have been modified for
+  /// relocatable-pch support.
+  std::string OriginalSourceFileName;
+
+  /// \brief The actual original source file name that was used to
+  /// build this AST file.
+  std::string ActualOriginalSourceFileName;
+
+  /// \brief The file ID for the original source file that was used to
+  /// build this AST file.
+  FileID OriginalSourceFileID;
+
+  /// \brief The directory that the PCH was originally created in. Used to
+  /// allow resolving headers even after headers+PCH was moved to a new path.
+  std::string OriginalDir;
+
   /// \brief The file entry for the module file.
   const FileEntry *File;
 
