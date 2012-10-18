@@ -367,19 +367,10 @@ public:
   MCAsmParserSemaCallbackImpl(class Sema *Ref) { SemaRef = Ref; }
   ~MCAsmParserSemaCallbackImpl() {}
 
-  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc,
-                                  void **IdentifierInfoPtr) {
+  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc) {
     SourceLocation Loc = SourceLocation::getFromPtrEncoding(SrcLoc);
     NamedDecl *OpDecl = SemaRef->LookupInlineAsmIdentifier(Name, Loc);
-    DeclarationNameInfo NameInfo(OpDecl->getDeclName(), Loc);
-    ExprResult OpExpr = SemaRef->BuildDeclarationNameExpr(CXXScopeSpec(),
-                                                          NameInfo,
-                                                          OpDecl);
-    if (OpExpr.isInvalid())
-      return 0;
-
-    *IdentifierInfoPtr = static_cast<void*>(OpDecl->getIdentifier());
-    return static_cast<void *>(OpExpr.take());
+    return static_cast<void *>(OpDecl);
   }
 };
 
@@ -468,14 +459,13 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   unsigned NumOutputs;
   unsigned NumInputs;
   std::string AsmStringIR;
-  SmallVector<void *, 4> VoidNames;
+  SmallVector<void *, 4> OpDecls;
   SmallVector<std::string, 4> Constraints;
-  SmallVector<void *, 4> VoidExprs;
   SmallVector<std::string, 4> Clobbers;
   MCAsmParserSemaCallbackImpl MCAPSI(this);
   if (Parser->ParseMSInlineAsm(AsmLoc.getPtrEncoding(), AsmStringIR,
-                               NumOutputs, NumInputs, VoidNames, Constraints,
-                               VoidExprs, Clobbers, MII, IP, MCAPSI))
+                               NumOutputs, NumInputs, OpDecls, Constraints,
+                               Clobbers, MII, IP, MCAPSI))
     return StmtError();
 
   // Build the vector of clobber StringRefs.
@@ -486,15 +476,23 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
 
   // Recast the void pointers and build the vector of constraint StringRefs.
   unsigned NumExprs = NumOutputs + NumInputs;
-  assert (VoidNames.size() == NumExprs && "Unexpected number of names!");
-  assert (VoidExprs.size() == NumExprs && "Unexpected number of exprs!");
   Names.resize(NumExprs);
   ConstraintRefs.resize(NumExprs);
   Exprs.resize(NumExprs);
   for (unsigned i = 0, e = NumExprs; i != e; ++i) {
-    Names[i] = static_cast<IdentifierInfo *>(VoidNames[i]);
+    NamedDecl *OpDecl = static_cast<NamedDecl *>(OpDecls[i]);
+    if (!OpDecl)
+      return StmtError();
+
+    DeclarationNameInfo NameInfo(OpDecl->getDeclName(), AsmLoc);
+    ExprResult OpExpr = BuildDeclarationNameExpr(CXXScopeSpec(), NameInfo,
+                                                 OpDecl);
+    if (OpExpr.isInvalid())
+      return StmtError();
+    
+    Names[i] = OpDecl->getIdentifier();
     ConstraintRefs[i] = StringRef(Constraints[i]);
-    Exprs[i] = static_cast<Expr *>(VoidExprs[i]);
+    Exprs[i] = OpExpr.take();
   }
 
   bool IsSimple = NumExprs > 0;
