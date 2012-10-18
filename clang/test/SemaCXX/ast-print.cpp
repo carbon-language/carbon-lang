@@ -30,3 +30,14 @@ void f()
     switch (int a = 1) { }
 }
 
+// CHECK: new (1) int;
+void *operator new (typeof(sizeof(1)), int, int = 2);
+void f2() {
+  new (1) int;
+}
+
+// CHECK: new X;
+struct X {
+  void *operator new (typeof(sizeof(1)), int = 2);
+};
+void f2() { new X; }
