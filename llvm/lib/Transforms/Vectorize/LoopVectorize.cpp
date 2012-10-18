@@ -166,7 +166,7 @@ private:
 
   // Check if a pointer value is known to be disjoint.
   // Example: Alloca, Global, NoAlias.
-  bool isKnownDisjoint(Value* Val);
+  bool isidentifiedSafeObject(Value* Val);
 
   /// The loop that we evaluate.
   Loop *TheLoop;
@@ -818,34 +818,31 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
   // disjoint memory locations, or that they are no-alias arguments.
   ValueVector::iterator r, re, w, we;
   for (r = Reads.begin(), re = Reads.end(); r != re; ++r) {
-    if (!isKnownDisjoint(*r)) {
+    if (!isidentifiedSafeObject(*r)) {
       DEBUG(dbgs() << "LV: Found a bad read Ptr: "<< **r << "\n");
       return false;
     }
   }
 
   for (w = Writes.begin(), we = Writes.end(); w != we; ++w) {
-    if (!isKnownDisjoint(*w)) {
+    if (!isidentifiedSafeObject(*w)) {
       DEBUG(dbgs() << "LV: Found a bad write Ptr: "<< **w << "\n");
       return false;
     }
   }
 
   // Check that there are no multiple write locations to the same pointer.
-  SmallPtrSet<Value*, 8> BasePointers;
+  SmallPtrSet<Value*, 8> WritePointerSet;
   for (w = Writes.begin(), we = Writes.end(); w != we; ++w) {
-    if (BasePointers.count(*w)) {
+    if (!WritePointerSet.insert(*w)) {
       DEBUG(dbgs() << "LV: Multiple writes to the same index :"<< **w << "\n");
       return false;
     }
-    BasePointers.insert(*w);
   }
 
-  // Sort the writes vector so that we can use a binary search.
-  std::sort(Writes.begin(), Writes.end());
   // Check that the reads and the writes are disjoint.
   for (r = Reads.begin(), re = Reads.end(); r != re; ++r) {
-    if (std::binary_search(Writes.begin(), Writes.end(), *r)) {
+    if (WritePointerSet.count(*r)) {
       DEBUG(dbgs() << "Vectorizer: Found a read/write ptr:"<< **r << "\n");
       return false;
     }
@@ -857,7 +854,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
 
 /// Checks if the value is a Global variable or if it is an Arguments
 /// marked with the NoAlias attribute.
-bool LoopVectorizationLegality::isKnownDisjoint(Value* Val) {
+bool LoopVectorizationLegality::isidentifiedSafeObject(Value* Val) {
   assert(Val && "Invalid value");
   if (dyn_cast<GlobalValue>(Val))
     return true;
