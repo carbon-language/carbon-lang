@@ -26,7 +26,7 @@ namespace options {
     HelpHidden       = (1 << 0),
     RenderAsInput    = (1 << 1),
     RenderJoined     = (1 << 2),
-    RenderSeparate   = (1 << 3),
+    RenderSeparate   = (1 << 3)
   };
 
   /// Flags specifically for clang options.
