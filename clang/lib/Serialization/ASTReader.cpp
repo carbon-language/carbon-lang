@@ -1130,10 +1130,10 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
       OverriddenBuffer? FileMgr.getVirtualFile(Filename, (off_t)Record[4],
                                                (time_t)Record[5])
                       : FileMgr.getFile(Filename, /*OpenFile=*/false);
-    if (File == 0 && !OriginalDir.empty() && !CurrentDir.empty() &&
-        OriginalDir != CurrentDir) {
+    if (File == 0 && !F->OriginalDir.empty() && !CurrentDir.empty() &&
+        F->OriginalDir != CurrentDir) {
       std::string resolved = resolveFileRelativeToOriginalDir(Filename,
-                                                              OriginalDir,
+                                                              F->OriginalDir,
                                                               CurrentDir);
       if (!resolved.empty())
         File = FileMgr.getFile(resolved);
@@ -1708,13 +1708,14 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
 }
 
 const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
+  ModuleFile &M = ModuleMgr.getPrimaryModule();
   std::string Filename = filenameStrRef;
-  MaybeAddSystemRootToFilename(ModuleMgr.getPrimaryModule(), Filename);
+  MaybeAddSystemRootToFilename(M, Filename);
   const FileEntry *File = FileMgr.getFile(Filename);
-  if (File == 0 && !OriginalDir.empty() && !CurrentDir.empty() &&
-      OriginalDir != CurrentDir) {
+  if (File == 0 && !M.OriginalDir.empty() && !CurrentDir.empty() &&
+      M.OriginalDir != CurrentDir) {
     std::string resolved = resolveFileRelativeToOriginalDir(Filename,
-                                                            OriginalDir,
+                                                            M.OriginalDir,
                                                             CurrentDir);
     if (!resolved.empty())
       File = FileMgr.getFile(resolved);
@@ -1865,20 +1866,14 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
     }
 
     case ORIGINAL_FILE:
-      // Only record from the primary AST file.
-      if (&F == *ModuleMgr.begin()) {
-        F.OriginalSourceFileID = FileID::get(Record[0]);
-        F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
-        F.OriginalSourceFileName = F.ActualOriginalSourceFileName;
-        MaybeAddSystemRootToFilename(F, F.OriginalSourceFileName);
-      }
+      F.OriginalSourceFileID = FileID::get(Record[0]);
+      F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
+      F.OriginalSourceFileName = F.ActualOriginalSourceFileName;
+      MaybeAddSystemRootToFilename(F, F.OriginalSourceFileName);
       break;
 
     case ORIGINAL_PCH_DIR:
-      // Only record from the primary AST file.
-      if (&F == *ModuleMgr.begin()) {
-        OriginalDir.assign(BlobStart, BlobLen);
-      }
+      F.OriginalDir.assign(BlobStart, BlobLen);
       break;
     }
   }
