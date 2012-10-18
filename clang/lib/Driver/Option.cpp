@@ -23,7 +23,8 @@ Option::Option(const OptTable::Info *info, const OptTable *owner)
   // Multi-level aliases are not supported, and alias options cannot
   // have groups. This just simplifies option tracking, it is not an
   // inherent limitation.
-  assert((!getAlias() || (!getAlias()->getAlias() && !getGroup())) &&
+  assert(!Info || (!getAlias().isValid() || (!getAlias().getAlias().isValid() &&
+         !getGroup().isValid())) &&
          "Multi-level aliases and aliases with groups are unsupported.");
 }
 
@@ -49,16 +50,16 @@ void Option::dump() const {
 
   llvm::errs() << " Name:\"" << getName() << '"';
 
-  const Option *Group = getGroup();
-  if (Group) {
+  const Option Group = getGroup();
+  if (Group.isValid()) {
     llvm::errs() << " Group:";
-    Group->dump();
+    Group.dump();
   }
 
-  const Option *Alias = getAlias();
-  if (Alias) {
+  const Option Alias = getAlias();
+  if (Alias.isValid()) {
     llvm::errs() << " Alias:";
-    Alias->dump();
+    Alias.dump();
   }
 
   if (getKind() == MultiArgClass)
@@ -69,17 +70,17 @@ void Option::dump() const {
 
 bool Option::matches(OptSpecifier Opt) const {
   // Aliases are never considered in matching, look through them.
-  const Option *Alias = getAlias();
-  if (Alias)
-    return Alias->matches(Opt);
+  const Option Alias = getAlias();
+  if (Alias.isValid())
+    return Alias.matches(Opt);
 
   // Check exact match.
   if (getID() == Opt.getID())
     return true;
 
-  const Option *Group = getGroup();
-  if (Group)
-    return Group->matches(Opt);
+  const Option Group = getGroup();
+  if (Group.isValid())
+    return Group.matches(Opt);
   return false;
 }
 
@@ -155,7 +156,7 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     // FIXME: Avoid strlen.
     if (getName().size() != strlen(Args.getArgString(Index))) {
       const char *Value = Args.getArgString(Index) + getName().size();
-      return new Arg(this, Index++, Value);
+      return new Arg(*this, Index++, Value);
     }
 
     // Otherwise it must be separate.

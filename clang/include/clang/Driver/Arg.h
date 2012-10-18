@@ -15,6 +15,8 @@
 #ifndef CLANG_DRIVER_ARG_H_
 #define CLANG_DRIVER_ARG_H_
 
+#include "clang/Driver/Option.h"
+
 #include "Util.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -23,7 +25,6 @@
 namespace clang {
 namespace driver {
   class ArgList;
-  class Option;
 
   /// \brief A concrete instance of a particular driver option.
   ///
@@ -38,7 +39,7 @@ namespace driver {
 
   private:
     /// \brief The option this argument is an instance of.
-    const Option *Opt;
+    const Option Opt;
 
     /// \brief The argument this argument was derived from (during tool chain
     /// argument translation), if any.
@@ -60,14 +61,14 @@ namespace driver {
     SmallVector<const char *, 2> Values;
 
   public:
-    Arg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
-    Arg(const Option *Opt, unsigned Index,
+    Arg(const Option Opt, unsigned Index, const Arg *BaseArg = 0);
+    Arg(const Option Opt, unsigned Index,
         const char *Value0, const Arg *BaseArg = 0);
-    Arg(const Option *Opt, unsigned Index,
+    Arg(const Option Opt, unsigned Index,
         const char *Value0, const char *Value1, const Arg *BaseArg = 0);
     ~Arg();
 
-    const Option &getOption() const { return *Opt; }
+    const Option getOption() const { return Opt; }
     unsigned getIndex() const { return Index; }
 
     /// \brief Return the base argument which generated this arg.
