@@ -240,7 +240,8 @@ void IndexingContext::enteredMainFile(const FileEntry *File) {
 void IndexingContext::ppIncludedFile(SourceLocation hashLoc,
                                      StringRef filename,
                                      const FileEntry *File,
-                                     bool isImport, bool isAngled) {
+                                     bool isImport, bool isAngled,
+                                     bool isModuleImport) {
   if (!CB.ppIncludedFile)
     return;
 
@@ -248,7 +249,7 @@ void IndexingContext::ppIncludedFile(SourceLocation hashLoc,
   CXIdxIncludedFileInfo Info = { getIndexLoc(hashLoc),
                                  SA.toCStr(filename),
                                  (CXFile)File,
-                                 isImport, isAngled };
+                                 isImport, isAngled, isModuleImport };
   CXIdxClientFile idxFile = CB.ppIncludedFile(ClientData, &Info);
   FileMap[File] = idxFile;
 }

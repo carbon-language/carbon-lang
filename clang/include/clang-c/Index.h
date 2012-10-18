@@ -4985,6 +4985,11 @@ typedef struct {
   CXFile file;
   int isImport;
   int isAngled;
+  /**
+   * \brief Non-zero if the directive was automatically turned into a module
+   * import.
+   */
+  int isModuleImport;
 } CXIdxIncludedFileInfo;
 
 /**

@@ -73,14 +73,10 @@ public:
                                   StringRef SearchPath,
                                   StringRef RelativePath,
                                   const Module *Imported) {
-    if (Imported) {
-      // We handle implicit imports via ImportDecls.
-      return;
-    }
-
     bool isImport = (IncludeTok.is(tok::identifier) &&
             IncludeTok.getIdentifierInfo()->getPPKeywordID() == tok::pp_import);
-    IndexCtx.ppIncludedFile(HashLoc, FileName, File, isImport, IsAngled);
+    IndexCtx.ppIncludedFile(HashLoc, FileName, File, isImport, IsAngled,
+                            Imported);
   }
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
@@ -458,16 +454,15 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
     PreprocessedEntity *PPE = *I;
 
     if (InclusionDirective *ID = dyn_cast<InclusionDirective>(PPE)) {
-      if (!ID->importedModule()) {
-        SourceLocation Loc = ID->getSourceRange().getBegin();
-        // Modules have synthetic main files as input, give an invalid location
-        // if the location points to such a file.
-        if (isModuleFile && Unit.isInMainFileID(Loc))
-          Loc = SourceLocation();
-        IdxCtx.ppIncludedFile(Loc, ID->getFileName(),
-                     ID->getFile(), ID->getKind() == InclusionDirective::Import,
-                     !ID->wasInQuotes());
-      }
+      SourceLocation Loc = ID->getSourceRange().getBegin();
+      // Modules have synthetic main files as input, give an invalid location
+      // if the location points to such a file.
+      if (isModuleFile && Unit.isInMainFileID(Loc))
+        Loc = SourceLocation();
+      IdxCtx.ppIncludedFile(Loc, ID->getFileName(),
+                            ID->getFile(),
+                            ID->getKind() == InclusionDirective::Import,
+                            !ID->wasInQuotes(), ID->importedModule());
     }
   }
 }

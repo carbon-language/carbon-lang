@@ -2363,7 +2363,8 @@ static CXIdxClientFile index_ppIncludedFile(CXClientData client_data,
   printf(" | name: \"%s\"", info->filename);
   printf(" | hash loc: ");
   printCXIndexLoc(info->hashLoc, client_data);
-  printf(" | isImport: %d | isAngled: %d\n", info->isImport, info->isAngled);
+  printf(" | isImport: %d | isAngled: %d | isModule: %d\n",
+         info->isImport, info->isAngled, info->isModuleImport);
 
   return (CXIdxClientFile)info->file;
 }

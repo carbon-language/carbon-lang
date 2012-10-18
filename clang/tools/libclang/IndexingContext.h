@@ -369,7 +369,7 @@ public:
 
   void ppIncludedFile(SourceLocation hashLoc,
                       StringRef filename, const FileEntry *File,
-                      bool isImport, bool isAngled);
+                      bool isImport, bool isAngled, bool isModuleImport);
 
   void importedModule(const ImportDecl *ImportD);
   void importedPCH(const FileEntry *File);
