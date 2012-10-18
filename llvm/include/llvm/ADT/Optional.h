@@ -16,7 +16,7 @@
 #ifndef LLVM_ADT_OPTIONAL
 #define LLVM_ADT_OPTIONAL
 
-#include "LLVM/Support/Compiler.h"
+#include "llvm/Support/Compiler.h"
 #include <cassert>
 
 #if LLVM_USE_RVALUE_REFERENCES
