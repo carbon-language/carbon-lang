@@ -69,13 +69,14 @@ public:
                                   StringRef Code,
                                   const std::vector<std::string> &Args,
                                   const DeclarationMatcher &NodeMatch,
-                                  StringRef ExpectedPrinted) {
+                                  StringRef ExpectedPrinted,
+                                  StringRef FileName) {
   PrintMatch Printer;
   MatchFinder Finder;
   Finder.addMatcher(NodeMatch, &Printer);
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
 
-  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args))
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, FileName))
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
 
   if (Printer.getNumFoundDecls() == 0)
@@ -102,7 +103,8 @@ public:
   return PrintedDeclMatches(Code,
                             Args,
                             namedDecl(hasName(DeclName)).bind("id"),
-                            ExpectedPrinted);
+                            ExpectedPrinted,
+                            "input.cc");
 }
 
 ::testing::AssertionResult PrintedDeclCXX98Matches(
@@ -113,7 +115,8 @@ public:
   return PrintedDeclMatches(Code,
                             Args,
                             NodeMatch,
-                            ExpectedPrinted);
+                            ExpectedPrinted,
+                            "input.cc");
 }
 
 ::testing::AssertionResult PrintedDeclCXX11Matches(StringRef Code,
@@ -123,7 +126,8 @@ public:
   return PrintedDeclMatches(Code,
                             Args,
                             namedDecl(hasName(DeclName)).bind("id"),
-                            ExpectedPrinted);
+                            ExpectedPrinted,
+                            "input.cc");
 }
 
 ::testing::AssertionResult PrintedDeclCXX11Matches(
@@ -134,7 +138,20 @@ public:
   return PrintedDeclMatches(Code,
                             Args,
                             NodeMatch,
-                            ExpectedPrinted);
+                            ExpectedPrinted,
+                            "input.cc");
+}
+
+::testing::AssertionResult PrintedDeclObjCMatches(
+                                  StringRef Code,
+                                  const DeclarationMatcher &NodeMatch,
+                                  StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "");
+  return PrintedDeclMatches(Code,
+                            Args,
+                            NodeMatch,
+                            ExpectedPrinted,
+                            "input.m");
 }
 
 } // unnamed namespace
@@ -1214,5 +1231,18 @@ TEST(DeclPrinter, TestTemplateArgumentList15) {
     "A",
     "Z<sizeof...(T)> A"));
     // Should be: with semicolon, without extra space in "> >"
+}
+
+TEST(DeclPrinter, TestObjCMethod1) {
+  ASSERT_TRUE(PrintedDeclObjCMatches(
+    "__attribute__((objc_root_class)) @interface X\n"
+    "- (int)A:(id)anObject inRange:(long)range;\n"
+    "@end\n"
+    "@implementation X\n"
+    "- (int)A:(id)anObject inRange:(long)range { int printThis; return 0; }\n"
+    "@end\n",
+    namedDecl(hasName("A:inRange:"),
+              hasDescendant(namedDecl(hasName("printThis")))).bind("id"),
+    "- (int) A:(id)anObject inRange:(long)range"));
 }
 
