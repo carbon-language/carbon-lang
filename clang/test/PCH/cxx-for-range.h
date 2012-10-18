@@ -9,11 +9,12 @@ struct T { };
 char *begin(T);
 char *end(T);
 
-struct U { };
-namespace std {
+namespace NS {
+  struct U { };
   char *begin(U);
   char *end(U);
 }
+using NS::U;
 
 void f() {
   char a[3] = { 0, 1, 2 };

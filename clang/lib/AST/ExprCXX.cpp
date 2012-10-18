@@ -247,7 +247,7 @@ UnresolvedLookupExpr::Create(ASTContext &C,
   return new (Mem) UnresolvedLookupExpr(C, NamingClass, QualifierLoc,
                                         TemplateKWLoc, NameInfo,
                                         ADL, /*Overload*/ true, Args,
-                                        Begin, End, /*StdIsAssociated=*/false);
+                                        Begin, End);
 }
 
 UnresolvedLookupExpr *

@@ -1894,8 +1894,7 @@ public:
                                             llvm::ArrayRef<Expr *> Args,
                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
-                                            bool PartialOverloading = false,
-                                        bool StdNamespaceIsAssociated = false);
+                                            bool PartialOverloading = false);
 
   // Emit as a 'note' the specific overload candidate
   void NoteOverloadCandidate(FunctionDecl *Fn, QualType DestType = QualType());
@@ -2188,8 +2187,7 @@ public:
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                SourceLocation Loc,
                                llvm::ArrayRef<Expr *> Args,
-                               ADLResult &Functions,
-                               bool StdNamespaceIsAssociated = false);
+                               ADLResult &Functions);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer,

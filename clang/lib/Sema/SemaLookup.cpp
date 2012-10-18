@@ -2649,8 +2649,7 @@ void ADLResult::insert(NamedDecl *New) {
 void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                    SourceLocation Loc,
                                    llvm::ArrayRef<Expr *> Args,
-                                   ADLResult &Result,
-                                   bool StdNamespaceIsAssociated) {
+                                   ADLResult &Result) {
   // Find all of the associated namespaces and classes based on the
   // arguments we have.
   AssociatedNamespaceSet AssociatedNamespaces;
@@ -2658,8 +2657,6 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
   FindAssociatedClassesAndNamespaces(Loc, Args,
                                      AssociatedNamespaces,
                                      AssociatedClasses);
-  if (StdNamespaceIsAssociated && StdNamespace)
-    AssociatedNamespaces.insert(getStdNamespace());
 
   QualType T1, T2;
   if (Operator) {

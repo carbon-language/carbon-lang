@@ -1368,8 +1368,6 @@ void ASTStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
 void ASTStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   VisitOverloadExpr(E);
   E->RequiresADL = Record[Idx++];
-  if (E->RequiresADL)
-    E->StdIsAssociatedNamespace = Record[Idx++];
   E->Overloaded = Record[Idx++];
   E->NamingClass = ReadDeclAs<CXXRecordDecl>(Record, Idx);
 }

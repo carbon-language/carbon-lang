@@ -27,10 +27,8 @@ struct D {
   B *end();
 };
 
-namespace std {
-  B *begin(C&);
-  B *end(C&);
-}
+B *begin(C&);
+B *end(C&);
 
 extern B array[5];
 
@@ -69,8 +67,8 @@ void for_range() {
   A a;
   for (B b : C()) {
     // CHECK: call void @_ZN1CC1Ev(
-    // CHECK: = call %struct.B* @_ZSt5beginR1C(
-    // CHECK: = call %struct.B* @_ZSt3endR1C(
+    // CHECK: = call %struct.B* @_Z5beginR1C(
+    // CHECK: = call %struct.B* @_Z3endR1C(
     // CHECK: br label %[[COND:.*]]
 
     // CHECK: [[COND]]:
