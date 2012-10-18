@@ -4224,7 +4224,52 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
     return SDValue();
 
   if (Op.getOperand(0).getValueType() == MVT::i64) {
-    SDValue Bits = DAG.getNode(ISD::BITCAST, dl, MVT::f64, Op.getOperand(0));
+    SDValue SINT = Op.getOperand(0);
+    // When converting to single-precision, we actually need to convert
+    // to double-precision first and then round to single-precision.
+    // To avoid double-rounding effects during that operation, we have
+    // to prepare the input operand.  Bits that might be truncated when
+    // converting to double-precision are replaced by a bit that won't
+    // be lost at this stage, but is below the single-precision rounding
+    // position.
+    //
+    // However, if -enable-unsafe-fp-math is in effect, accept double
+    // rounding to avoid the extra overhead.
+    if (Op.getValueType() == MVT::f32 &&
+        !DAG.getTarget().Options.UnsafeFPMath) {
+
+      // Twiddle input to make sure the low 11 bits are zero.  (If this
+      // is the case, we are guaranteed the value will fit into the 53 bit
+      // mantissa of an IEEE double-precision value without rounding.)
+      // If any of those low 11 bits were not zero originally, make sure
+      // bit 12 (value 2048) is set instead, so that the final rounding
+      // to single-precision gets the correct result.
+      SDValue Round = DAG.getNode(ISD::AND, dl, MVT::i64,
+                                  SINT, DAG.getConstant(2047, MVT::i64));
+      Round = DAG.getNode(ISD::ADD, dl, MVT::i64,
+                          Round, DAG.getConstant(2047, MVT::i64));
+      Round = DAG.getNode(ISD::OR, dl, MVT::i64, Round, SINT);
+      Round = DAG.getNode(ISD::AND, dl, MVT::i64,
+                          Round, DAG.getConstant(-2048, MVT::i64));
+
+      // However, we cannot use that value unconditionally: if the magnitude
+      // of the input value is small, the bit-twiddling we did above might
+      // end up visibly changing the output.  Fortunately, in that case, we
+      // don't need to twiddle bits since the original input will convert
+      // exactly to double-precision floating-point already.  Therefore,
+      // construct a conditional to use the original value if the top 11
+      // bits are all sign-bit copies, and use the rounded value computed
+      // above otherwise.
+      SDValue Cond = DAG.getNode(ISD::SRA, dl, MVT::i64,
+                                 SINT, DAG.getConstant(53, MVT::i32));
+      Cond = DAG.getNode(ISD::ADD, dl, MVT::i64,
+                         Cond, DAG.getConstant(1, MVT::i64));
+      Cond = DAG.getSetCC(dl, MVT::i32,
+                          Cond, DAG.getConstant(1, MVT::i64), ISD::SETUGT);
+
+      SINT = DAG.getNode(ISD::SELECT, dl, MVT::i64, Cond, Round, SINT);
+    }
+    SDValue Bits = DAG.getNode(ISD::BITCAST, dl, MVT::f64, SINT);
     SDValue FP = DAG.getNode(PPCISD::FCFID, dl, MVT::f64, Bits);
     if (Op.getValueType() == MVT::f32)
       FP = DAG.getNode(ISD::FP_ROUND, dl,
