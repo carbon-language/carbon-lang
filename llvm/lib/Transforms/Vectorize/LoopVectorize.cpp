@@ -410,9 +410,8 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   BasicBlock *ExitBlock = Orig->getExitBlock();
   assert(ExitBlock && "Must have an exit block");
 
-  BasicBlock *ScalarBody = Orig->getHeader();
   assert(Orig->getNumBlocks() == 1 && "Invalid loop");
-  assert(ScalarBody && BypassBlock && "Invalid loop structure");
+  assert(BypassBlock && "Invalid loop structure");
 
   BasicBlock *VectorPH =
       BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
