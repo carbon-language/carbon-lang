@@ -11,7 +11,6 @@
 #define CLANG_DRIVER_ARGLIST_H_
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Driver/Option.h"
 #include "clang/Driver/OptSpecifier.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
@@ -375,14 +374,14 @@ namespace driver {
 
     /// AddFlagArg - Construct a new FlagArg for the given option \p Id and
     /// append it to the argument list.
-    void AddFlagArg(const Arg *BaseArg, const Option Opt) {
+    void AddFlagArg(const Arg *BaseArg, const Option *Opt) {
       append(MakeFlagArg(BaseArg, Opt));
     }
 
     /// AddPositionalArg - Construct a new Positional arg for the given option
     /// \p Id, with the provided \p Value and append it to the argument
     /// list.
-    void AddPositionalArg(const Arg *BaseArg, const Option Opt,
+    void AddPositionalArg(const Arg *BaseArg, const Option *Opt,
                           StringRef Value) {
       append(MakePositionalArg(BaseArg, Opt, Value));
     }
@@ -391,7 +390,7 @@ namespace driver {
     /// AddSeparateArg - Construct a new Positional arg for the given option
     /// \p Id, with the provided \p Value and append it to the argument
     /// list.
-    void AddSeparateArg(const Arg *BaseArg, const Option Opt,
+    void AddSeparateArg(const Arg *BaseArg, const Option *Opt,
                         StringRef Value) {
       append(MakeSeparateArg(BaseArg, Opt, Value));
     }
@@ -399,28 +398,28 @@ namespace driver {
 
     /// AddJoinedArg - Construct a new Positional arg for the given option
     /// \p Id, with the provided \p Value and append it to the argument list.
-    void AddJoinedArg(const Arg *BaseArg, const Option Opt,
+    void AddJoinedArg(const Arg *BaseArg, const Option *Opt,
                       StringRef Value) {
       append(MakeJoinedArg(BaseArg, Opt, Value));
     }
 
 
     /// MakeFlagArg - Construct a new FlagArg for the given option \p Id.
-    Arg *MakeFlagArg(const Arg *BaseArg, const Option Opt) const;
+    Arg *MakeFlagArg(const Arg *BaseArg, const Option *Opt) const;
 
     /// MakePositionalArg - Construct a new Positional arg for the
     /// given option \p Id, with the provided \p Value.
-    Arg *MakePositionalArg(const Arg *BaseArg, const Option Opt,
+    Arg *MakePositionalArg(const Arg *BaseArg, const Option *Opt,
                            StringRef Value) const;
 
     /// MakeSeparateArg - Construct a new Positional arg for the
     /// given option \p Id, with the provided \p Value.
-    Arg *MakeSeparateArg(const Arg *BaseArg, const Option Opt,
+    Arg *MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
                          StringRef Value) const;
 
     /// MakeJoinedArg - Construct a new Positional arg for the
     /// given option \p Id, with the provided \p Value.
-    Arg *MakeJoinedArg(const Arg *BaseArg, const Option Opt,
+    Arg *MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
                        StringRef Value) const;
 
     /// @}

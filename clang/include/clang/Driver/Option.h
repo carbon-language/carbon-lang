@@ -21,20 +21,15 @@ namespace driver {
   class ArgList;
 
 namespace options {
-  /// Base flags for all options. Custom flags may be added after.
   enum DriverFlag {
-    HelpHidden       = (1 << 0),
-    RenderAsInput    = (1 << 1),
-    RenderJoined     = (1 << 2),
-    RenderSeparate   = (1 << 3)
-  };
-
-  /// Flags specifically for clang options.
-  enum ClangFlags {
-    DriverOption     = (1 << 4),
-    LinkerInput      = (1 << 5),
-    NoArgumentUnused = (1 << 6),
-    NoForward        = (1 << 7),
+    DriverOption     = (1 << 0),
+    HelpHidden       = (1 << 1),
+    LinkerInput      = (1 << 2),
+    NoArgumentUnused = (1 << 3),
+    NoForward        = (1 << 4),
+    RenderAsInput    = (1 << 5),
+    RenderJoined     = (1 << 6),
+    RenderSeparate   = (1 << 7),
     Unsupported      = (1 << 8),
     CC1Option        = (1 << 9)
   };
@@ -73,7 +68,7 @@ namespace options {
       RenderValuesStyle
     };
 
-  protected:
+  private:
     const OptTable::Info *Info;
     const OptTable *Owner;
 
@@ -81,38 +76,17 @@ namespace options {
     Option(const OptTable::Info *Info, const OptTable *Owner);
     ~Option();
 
-    bool isValid() const {
-      return Info != 0;
-    }
-
-    unsigned getID() const {
-      assert(Info && "Must have a valid info!");
-      return Info->ID;
-    }
-
-    OptionClass getKind() const {
-      assert(Info && "Must have a valid info!");
-      return OptionClass(Info->Kind);
-    }
-
-    StringRef getName() const {
-      assert(Info && "Must have a valid info!");
-      return Info->Name;
-    }
-
-    const Option getGroup() const {
-      assert(Info && "Must have a valid info!");
-      assert(Owner && "Must have a valid owner!");
-      return Owner->getOption(Info->GroupID);
-    }
-
-    const Option getAlias() const {
-      assert(Info && "Must have a valid info!");
-      assert(Owner && "Must have a valid owner!");
-      return Owner->getOption(Info->AliasID);
-    }
+    unsigned getID() const { return Info->ID; }
+    OptionClass getKind() const { return OptionClass(Info->Kind); }
+    StringRef getName() const { return Info->Name; }
+    const Option *getGroup() const { return Owner->getOption(Info->GroupID); }
+    const Option *getAlias() const { return Owner->getOption(Info->AliasID); }
 
     unsigned getNumArgs() const { return Info->Param; }
+
+    bool isUnsupported() const { return Info->Flags & options::Unsupported; }
+
+    bool isLinkerInput() const { return Info->Flags & options::LinkerInput; }
 
     bool hasNoOptAsInput() const { return Info->Flags & options::RenderAsInput;}
 
@@ -140,23 +114,32 @@ namespace options {
       llvm_unreachable("Unexpected kind!");
     }
 
-    /// Test if this option has the flag \a Val.
-    bool hasFlag(unsigned Val) const {
-      return Info->Flags & Val;
+    bool isDriverOption() const { return Info->Flags & options::DriverOption; }
+
+    bool hasNoArgumentUnused() const {
+      return Info->Flags & options::NoArgumentUnused;
+    }
+
+    bool hasNoForward() const { return Info->Flags & options::NoForward; }
+
+    bool isCC1Option() const { return Info->Flags & options::CC1Option; }
+
+    bool hasForwardToGCC() const {
+      return !hasNoForward() && !isDriverOption() && !isLinkerInput();
     }
 
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).
-    const Option getUnaliasedOption() const {
-      const Option Alias = getAlias();
-      if (Alias.isValid()) return Alias.getUnaliasedOption();
-      return *this;
+    const Option *getUnaliasedOption() const {
+      const Option *Alias = getAlias();
+      if (Alias) return Alias->getUnaliasedOption();
+      return this;
     }
 
     /// getRenderName - Return the name to use when rendering this
     /// option.
     StringRef getRenderName() const {
-      return getUnaliasedOption().getName();
+      return getUnaliasedOption()->getName();
     }
 
     /// matches - Predicate for whether this option is part of the

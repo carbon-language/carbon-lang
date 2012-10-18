@@ -98,7 +98,7 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
   for (ArgList::const_iterator it = Args->begin(), ie = Args->end();
        it != ie; ++it) {
     Arg *A = *it;
-    if (A->getOption().hasFlag(options::Unsupported)) {
+    if (A->getOption().isUnsupported()) {
       Diag(clang::diag::err_drv_unsupported_opt) << A->getAsString(*Args);
       continue;
     }
@@ -1033,7 +1033,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
       } else
         Inputs.push_back(std::make_pair(Ty, A));
 
-    } else if (A->getOption().hasFlag(options::LinkerInput)) {
+    } else if (A->getOption().isLinkerInput()) {
       // Just treat as object type, we could make a special type for this if
       // necessary.
       Inputs.push_back(std::make_pair(types::TY_Object, A));
@@ -1300,7 +1300,7 @@ void Driver::BuildJobs(Compilation &C) const {
     // DiagnosticsEngine, so that extra values, position, and so on could be
     // printed.
     if (!A->isClaimed()) {
-      if (A->getOption().hasFlag(options::NoArgumentUnused))
+      if (A->getOption().hasNoArgumentUnused())
         continue;
 
       // Suppress the warning automatically if this is just a flag, and it is an
