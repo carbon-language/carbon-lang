@@ -367,14 +367,16 @@ public:
   MCAsmParserSemaCallbackImpl(class Sema *Ref) { SemaRef = Ref; }
   ~MCAsmParserSemaCallbackImpl() {}
 
-  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc) {
+  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc, unsigned &Size){
     SourceLocation Loc = SourceLocation::getFromPtrEncoding(SrcLoc);
-    NamedDecl *OpDecl = SemaRef->LookupInlineAsmIdentifier(Name, Loc);
+    NamedDecl *OpDecl = SemaRef->LookupInlineAsmIdentifier(Name, Loc, Size);
     return static_cast<void *>(OpDecl);
   }
 };
 
-NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc) {
+NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
+                                           unsigned &Size) {
+  Size = 0;
   LookupResult Result(*this, &Context.Idents.get(Name), Loc,
                       Sema::LookupOrdinaryName);
 
@@ -391,6 +393,9 @@ NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc) {
 
   NamedDecl *ND = Result.getFoundDecl();
   if (isa<VarDecl>(ND) || isa<FunctionDecl>(ND)) {
+    if (VarDecl *Var = dyn_cast<VarDecl>(ND))
+      Size = Context.getTypeInfo(Var->getType()).first;
+
     return ND;
   }
 
