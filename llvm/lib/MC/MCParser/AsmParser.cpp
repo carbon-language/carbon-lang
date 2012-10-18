@@ -190,9 +190,8 @@ public:
 
   bool ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                         unsigned &NumOutputs, unsigned &NumInputs,
-                        SmallVectorImpl<void *> &Names,
+                        SmallVectorImpl<void *> &OpDecls,
                         SmallVectorImpl<std::string> &Constraints,
-                        SmallVectorImpl<void *> &Exprs,
                         SmallVectorImpl<std::string> &Clobbers,
                         const MCInstrInfo *MII,
                         const MCInstPrinter *IP,
@@ -3592,19 +3591,16 @@ public:
 
 bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                  unsigned &NumOutputs, unsigned &NumInputs,
-                                 SmallVectorImpl<void *> &Names,
+                                 SmallVectorImpl<void *> &OpDecls,
                                  SmallVectorImpl<std::string> &Constraints,
-                                 SmallVectorImpl<void *> &Exprs,
                                  SmallVectorImpl<std::string> &Clobbers,
                                  const MCInstrInfo *MII,
                                  const MCInstPrinter *IP,
                                  MCAsmParserSemaCallback &SI) {
-  SmallVector<void*, 4> Inputs;
-  SmallVector<void*, 4> Outputs;
+  SmallVector<void*, 4> InputDecls;
+  SmallVector<void*, 4> OutputDecls;
   SmallVector<std::string, 4> InputConstraints;
   SmallVector<std::string, 4> OutputConstraints;
-  SmallVector<void*, 4> InputExprs;
-  SmallVector<void*, 4> OutputExprs;
   std::set<std::string> ClobberRegs;
 
   SmallVector<struct AsmOpRewrite, 4> AsmStrRewrites;
@@ -3647,24 +3643,20 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         }
 
         // Expr/Input or Output.
-        void *II;
-        void *ExprResult = SI.LookupInlineAsmIdentifier(Operand->getName(),
-                                                        AsmLoc, &II);
-        if (ExprResult) {
+        void *OpDecl = SI.LookupInlineAsmIdentifier(Operand->getName(), AsmLoc);
+        if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
           if (isOutput) {
             std::string Constraint = "=";
             ++InputIdx;
-            Outputs.push_back(II);
-            OutputExprs.push_back(ExprResult);
+            OutputDecls.push_back(OpDecl);
             Constraint += Operand->getConstraint().str();
             OutputConstraints.push_back(Constraint);
             AsmStrRewrites.push_back(AsmOpRewrite(AOK_Output,
                                                   Operand->getStartLoc(),
                                                   Operand->getNameLen()));
           } else {
-            Inputs.push_back(II);
-            InputExprs.push_back(ExprResult);
+            InputDecls.push_back(OpDecl);
             InputConstraints.push_back(Operand->getConstraint().str());
             AsmStrRewrites.push_back(AsmOpRewrite(AOK_Input,
                                                   Operand->getStartLoc(),
@@ -3680,8 +3672,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   }
 
   // Set the number of Outputs and Inputs.
-  NumOutputs = Outputs.size();
-  NumInputs = Inputs.size();
+  NumOutputs = OutputDecls.size();
+  NumInputs = InputDecls.size();
 
   // Set the unique clobbers.
   for (std::set<std::string>::iterator I = ClobberRegs.begin(),
@@ -3691,18 +3683,15 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   // Merge the various outputs and inputs.  Output are expected first.
   if (NumOutputs || NumInputs) {
     unsigned NumExprs = NumOutputs + NumInputs;
-    Names.resize(NumExprs);
+    OpDecls.resize(NumExprs);
     Constraints.resize(NumExprs);
-    Exprs.resize(NumExprs);
     for (unsigned i = 0; i < NumOutputs; ++i) {
-      Names[i] = Outputs[i];
+      OpDecls[i] = OutputDecls[i];
       Constraints[i] = OutputConstraints[i];
-      Exprs[i] = OutputExprs[i];
     }
     for (unsigned i = 0, j = NumOutputs; i < NumInputs; ++i, ++j) {
-      Names[j] = Inputs[i];
+      OpDecls[j] = InputDecls[i];
       Constraints[j] = InputConstraints[i];
-      Exprs[j] = InputExprs[i];
     }
   }
 
