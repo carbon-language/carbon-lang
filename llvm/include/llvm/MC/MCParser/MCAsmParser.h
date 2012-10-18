@@ -20,6 +20,8 @@ class MCAsmLexer;
 class MCAsmParserExtension;
 class MCContext;
 class MCExpr;
+class MCInstPrinter;
+class MCInstrInfo;
 class MCParsedAsmOperand;
 class MCStreamer;
 class MCTargetAsmParser;
@@ -28,6 +30,13 @@ class SMRange;
 class SourceMgr;
 class StringRef;
 class Twine;
+
+/// MCAsmParserSemaCallback - Generic Sema callback for assembly parser.
+class MCAsmParserSemaCallback {
+public:
+  virtual void *LookupInlineAsmIdentifier(StringRef Name, void *Loc,
+                                          void **IdentifierInfoPtr) = 0;
+};
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
 /// assembly parsers.
@@ -77,24 +86,19 @@ public:
   virtual void setParsingInlineAsm(bool V) = 0;
   virtual bool isParsingInlineAsm() = 0;
 
+  /// ParseMSInlineAsm - Parse ms-style inline assembly.
+  virtual bool ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
+                                unsigned &NumOutputs, unsigned &NumInputs,
+                                SmallVectorImpl<void *> &Names,
+                                SmallVectorImpl<std::string> &Constraints,
+                                SmallVectorImpl<void *> &Exprs,
+                                SmallVectorImpl<std::string> &Clobbers,
+                                const MCInstrInfo *MII,
+                                const MCInstPrinter *IP,
+                                MCAsmParserSemaCallback &SI) = 0;
+
   /// ParseStatement - Parse the next statement.
   virtual bool ParseStatement() = 0;
-
-  /// getNumParsedOperands - Returns the number of MCAsmParsedOperands from the
-  /// previously parsed statement.
-  virtual unsigned getNumParsedOperands() = 0;
-
-  /// getParsedOperand - Get a MCAsmParsedOperand.
-  virtual MCParsedAsmOperand &getParsedOperand(unsigned OpNum) = 0;
-
-  /// freeParsedOperands - Free the MCAsmParsedOperands.
-  virtual void freeParsedOperands() = 0;
-
-  /// isInstruction - Was the previously parsed statement an instruction?
-  virtual bool isInstruction() = 0;
-
-  /// getOpcode - Get the opcode from the previously parsed instruction.
-  virtual unsigned getOpcode() = 0;
 
   /// Warning - Emit a warning at the location \p L, with the message \p Msg.
   ///
