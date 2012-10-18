@@ -63,7 +63,6 @@ namespace {
 /// to a given vectorization factor (VF).
 class SingleBlockLoopVectorizer {
 public:
-
   /// Ctor.
   SingleBlockLoopVectorizer(Loop *OrigLoop, ScalarEvolution *Se, LoopInfo *Li,
                             LPPassManager *Lpm, unsigned VecWidth):
@@ -118,6 +117,8 @@ private:
   /// broadcast them into a vector.
   Value *getVectorValue(Value *V);
 
+  typedef DenseMap<Value*, Value*> ValueMap;
+
   /// The original loop.
   Loop *Orig;
   // Scev analysis to use.
@@ -139,7 +140,7 @@ private:
   /// The induction variable of the old basic block.
   PHINode *OldInduction;
   // Maps scalars to widened vectors.
-  DenseMap<Value*, Value*> WidenMap;
+  ValueMap WidenMap;
 };
 
 /// Perform the vectorization legality check. This class does not look at the
@@ -284,8 +285,8 @@ bool SingleBlockLoopVectorizer::isConsecutiveGep(GetElementPtrInst *Gep) {
     if (!SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), Orig))
       return false;
 
-  // The last operand has to be the induction in order to emit
-  // a wide load/store.
+  // We can emit wide load/stores only of the last index is the induction
+  // variable.
   const SCEV *Last = SE->getSCEV(LastIndex);
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Last)) {
     const SCEV *Step = AR->getStepRecurrence(*SE);
@@ -300,9 +301,15 @@ bool SingleBlockLoopVectorizer::isConsecutiveGep(GetElementPtrInst *Gep) {
 }
 
 Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
-  if (WidenMap.count(V))
-    return WidenMap[V];
-  return getBroadcastInstrs(V);
+  // If we saved a vectorized copy of V, use it.
+  ValueMap::iterator it = WidenMap.find(V);
+  if (it != WidenMap.end())
+     return it->second;
+
+  // Broadcast V and save the value for future uses.
+  Value *B = getBroadcastInstrs(V);
+  WidenMap[V] = B;
+  return B;
 }
 
 void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
