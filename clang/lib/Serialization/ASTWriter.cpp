@@ -773,8 +773,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(IMPORTS);
   RECORD(LANGUAGE_OPTIONS);
   RECORD(TARGET_OPTIONS);
-  RECORD(ORIGINAL_FILE_NAME);
-  RECORD(ORIGINAL_FILE_ID);
+  RECORD(ORIGINAL_FILE);
   RECORD(ORIGINAL_PCH_DIR);
 
   // AST Top-Level Block.
@@ -1070,7 +1069,8 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
   SourceManager &SM = Context.getSourceManager();
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
     BitCodeAbbrev *FileAbbrev = new BitCodeAbbrev();
-    FileAbbrev->Add(BitCodeAbbrevOp(ORIGINAL_FILE_NAME));
+    FileAbbrev->Add(BitCodeAbbrevOp(ORIGINAL_FILE));
+    FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // File ID
     FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
     unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
 
@@ -1082,12 +1082,10 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
     MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
                                                       isysroot);
     RecordData Record;
-    Record.push_back(ORIGINAL_FILE_NAME);
-    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
-    
-    Record.clear();
+    Record.push_back(ORIGINAL_FILE);
     Record.push_back(SM.getMainFileID().getOpaqueValue());
-    Stream.EmitRecord(ORIGINAL_FILE_ID, Record);
+    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
+    Record.clear();
   }
 
   // Original PCH directory

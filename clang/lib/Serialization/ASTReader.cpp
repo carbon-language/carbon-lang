@@ -1860,24 +1860,17 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
       break;
     }
 
-    case ORIGINAL_FILE_NAME:
+    case ORIGINAL_FILE:
       // Only record from the primary AST file.
       if (&F == *ModuleMgr.begin()) {
-        // The primary AST will be the last to get here, so it will be the one
-        // that's used.
+        OriginalFileID = FileID::get(Record[0]);
+
         ActualOriginalFileName.assign(BlobStart, BlobLen);
         OriginalFileName = ActualOriginalFileName;
         MaybeAddSystemRootToFilename(OriginalFileName);
       }
       break;
 
-    case ORIGINAL_FILE_ID:
-      // Only record from the primary AST file.
-      if (&F == *ModuleMgr.begin()) {
-        OriginalFileID = FileID::get(Record[0]);
-      }
-      break;
-        
     case ORIGINAL_PCH_DIR:
       // Only record from the primary AST file.
       if (&F == *ModuleMgr.begin()) {
@@ -3323,8 +3316,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    if (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen)
-          == ORIGINAL_FILE_NAME)
+    if (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen) == ORIGINAL_FILE)
       return std::string(BlobStart, BlobLen);
   }
 

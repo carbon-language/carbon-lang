@@ -246,15 +246,12 @@ namespace clang {
       TARGET_OPTIONS = 4,
 
       /// \brief Record code for the original file that was used to
-      /// generate the AST file.
-      ORIGINAL_FILE_NAME = 5,
-
-      /// \brief Record code for the file ID of the original file used to 
-      /// generate the AST file.
-      ORIGINAL_FILE_ID = 6,
+      /// generate the AST file, including both its file ID and its
+      /// name.
+      ORIGINAL_FILE = 5,
       
       /// \brief The directory that the PCH was originally created in.
-      ORIGINAL_PCH_DIR = 7
+      ORIGINAL_PCH_DIR = 6
     };
 
     /// \brief Record types that occur within the AST block itself.
