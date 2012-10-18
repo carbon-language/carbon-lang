@@ -327,10 +327,13 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
   MethToIvarMapTy PropGetterToIvarMap;
   PropToIvarMapTy PropertyToIvarMap;
   IvarToPropMapTy IvarToPopertyMap;
-  for (ObjCInterfaceDecl::prop_iterator
-      I = InterfaceD->prop_begin(),
-      E = InterfaceD->prop_end(); I != E; ++I) {
-    const ObjCPropertyDecl *PD = *I;
+
+  ObjCInterfaceDecl::PropertyMap PropMap;
+  InterfaceD->collectPropertiesToImplement(PropMap);
+
+  for (ObjCInterfaceDecl::PropertyMap::iterator
+      I = PropMap.begin(), E = PropMap.end(); I != E; ++I) {
+    const ObjCPropertyDecl *PD = I->second;
 
     const ObjCIvarDecl *ID = findPropertyBackingIvar(PD, InterfaceD, Ivars);
     if (!ID) {
@@ -386,7 +389,8 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCMethodDecl *D,
         const ObjCPropertyDecl *PD = IvarToPopertyMap[IvarDecl];
         assert(PD &&
                "Do we synthesize ivars for something other than properties?");
-        os << "Property "<< PD->getName() << " needs to be invalidated";
+        os << "Property "<< PD->getName() <<
+              " needs to be invalidated or set to nil";
       } else {
         os << "Instance variable "<< IvarDecl->getName()
              << " needs to be invalidated or set to nil";
