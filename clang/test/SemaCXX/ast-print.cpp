@@ -13,8 +13,7 @@ struct Reference
     MyClass* operator ->() { return object; }
 };
 
-int main()
-{
+void test1() {
     Reference r;
     (r->method());
 }
@@ -23,7 +22,7 @@ int main()
 // CHECK:  while (int a = 1)
 // CHECK:  switch (int a = 1)
 
-void f()
+void test2()
 {
     if (int a = 1) { }
     while (int a = 1) { }
@@ -32,7 +31,7 @@ void f()
 
 // CHECK: new (1) int;
 void *operator new (typeof(sizeof(1)), int, int = 2);
-void f2() {
+void test3() {
   new (1) int;
 }
 
@@ -40,9 +39,16 @@ void f2() {
 struct X {
   void *operator new (typeof(sizeof(1)), int = 2);
 };
-void f2() { new X; }
+void test4() { new X; }
 
 // CHECK: for (int i = 2097, j = 42; false;)
-void forInit() {
+void test5() {
   for (int i = 2097, j = 42; false;) {}
+}
+
+// CHECK: test6fn((int &)y);
+void test6fn(int& x);
+void test6() {
+    unsigned int y = 0;
+    test6fn((int&)y);
 }
