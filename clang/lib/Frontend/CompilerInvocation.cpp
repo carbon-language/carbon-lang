@@ -2327,7 +2327,7 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // Issue errors on arguments that are not valid for CC1.
   for (ArgList::iterator I = Args->begin(), E = Args->end();
        I != E; ++I) {
-    if (!(*I)->getOption().isCC1Option()) {
+    if (!(*I)->getOption().hasFlag(options::CC1Option)) {
       Diags.Report(diag::err_drv_unknown_argument) << (*I)->getAsString(*Args);
       Success = false;
     }

@@ -200,6 +200,12 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
   CmdArgs.push_back(Args.MakeArgString(ProfileRT));
 }
 
+static bool forwardToGCC(const Option &O) {
+  return !O.hasFlag(options::NoForward) &&
+         !O.hasFlag(options::DriverOption) &&
+         !O.hasFlag(options::LinkerInput);
+}
+
 void Clang::AddPreprocessingOptions(Compilation &C,
                                     const Driver &D,
                                     const ArgList &Args,
@@ -3193,7 +3199,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
-    if (A->getOption().hasForwardToGCC()) {
+    if (forwardToGCC(A->getOption())) {
       // Don't forward any -g arguments to assembly steps.
       if (isa<AssembleJobAction>(JA) &&
           A->getOption().matches(options::OPT_g_Group))
@@ -3418,7 +3424,7 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
   for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
-    if (A->getOption().hasForwardToGCC()) {
+    if (forwardToGCC(A->getOption())) {
       // Don't forward any -g arguments to assembly steps.
       if (isa<AssembleJobAction>(JA) &&
           A->getOption().matches(options::OPT_g_Group))
