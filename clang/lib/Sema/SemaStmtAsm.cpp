@@ -24,19 +24,12 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
-#include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
-#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -367,55 +360,73 @@ static bool buildMSAsmString(Sema &SemaRef,
   return false;
 }
 
-namespace {
-enum AsmOpRewriteKind {
-   AOK_Imm,
-   AOK_Input,
-   AOK_Output
-};
-
-struct AsmOpRewrite {
-  AsmOpRewriteKind Kind;
-  llvm::SMLoc Loc;
-  unsigned Len;
+class MCAsmParserSemaCallbackImpl : public llvm::MCAsmParserSemaCallback {
+  Sema *SemaRef;
 
 public:
-  AsmOpRewrite(AsmOpRewriteKind kind, llvm::SMLoc loc, unsigned len)
-    : Kind(kind), Loc(loc), Len(len) { }
+  MCAsmParserSemaCallbackImpl(class Sema *Ref) { SemaRef = Ref; }
+  ~MCAsmParserSemaCallbackImpl() {}
+
+  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc,
+                                  void **IdentifierInfoPtr) {
+    SourceLocation Loc = SourceLocation::getFromPtrEncoding(SrcLoc);
+    NamedDecl *OpDecl = SemaRef->LookupInlineAsmIdentifier(Name, Loc);
+    DeclarationNameInfo NameInfo(OpDecl->getDeclName(), Loc);
+    ExprResult OpExpr = SemaRef->BuildDeclarationNameExpr(CXXScopeSpec(),
+                                                          NameInfo,
+                                                          OpDecl);
+    if (OpExpr.isInvalid())
+      return 0;
+
+    *IdentifierInfoPtr = static_cast<void*>(OpDecl->getIdentifier());
+    return static_cast<void *>(OpExpr.take());
+  }
 };
 
+NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc) {
+  LookupResult Result(*this, &Context.Idents.get(Name), Loc,
+                      Sema::LookupOrdinaryName);
+
+  if (!LookupName(Result, getCurScope())) {
+    // If we don't find anything, return null; the AsmParser will assume
+    // it is a label of some sort.
+    return 0;
+  }
+
+  if (!Result.isSingleResult()) {
+    // FIXME: Diagnose result.
+    return 0;
+  }
+
+  NamedDecl *ND = Result.getFoundDecl();
+  if (isa<VarDecl>(ND) || isa<FunctionDecl>(ND)) {
+    return ND;
+  }
+
+  // FIXME: Handle other kinds of results? (FieldDecl, etc.)
+  // FIXME: Diagnose if we find something we can't handle, like a typedef.
+  return 0;
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
                                 ArrayRef<Token> AsmToks,SourceLocation EndLoc) {
-  SmallVector<IdentifierInfo*, 4> Inputs;
-  SmallVector<IdentifierInfo*, 4> Outputs;
   SmallVector<IdentifierInfo*, 4> Names;
-  SmallVector<std::string, 4> InputConstraints;
-  SmallVector<std::string, 4> OutputConstraints;
-  SmallVector<StringRef, 4> Constraints;
-  unsigned NumOutputs;
-  unsigned NumInputs;
-  SmallVector<Expr*, 4> InputExprs;
-  SmallVector<Expr*, 4> OutputExprs;
+  SmallVector<StringRef, 4> ConstraintRefs;
   SmallVector<Expr*, 4> Exprs;
-  SmallVector<StringRef, 4> Clobbers;
-  std::set<std::string> ClobberRegs;
-
-  SmallVector<struct AsmOpRewrite, 4> AsmStrRewrites;
+  SmallVector<StringRef, 4> ClobberRefs;
 
   // Empty asm statements don't need to instantiate the AsmParser, etc.
-  if (AsmToks.empty()) { 
+  if (AsmToks.empty()) {
     StringRef EmptyAsmStr;
     MSAsmStmt *NS =
       new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
                               /*IsVolatile*/ true, AsmToks, /*NumOutputs*/ 0,
-                              /*NumInputs*/ 0, Names, Constraints, Exprs, EmptyAsmStr,
-                              Clobbers, EndLoc);
+                              /*NumInputs*/ 0, Names, ConstraintRefs, Exprs,
+                              EmptyAsmStr, ClobberRefs, EndLoc);
     return Owned(NS);
   }
 
-  std::string AsmString;  
+  std::string AsmString;
   if (buildMSAsmString(*this, AsmLoc, AsmToks, AsmString))
     return StmtError();
 
@@ -443,7 +454,6 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
     Parser(createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
   OwningPtr<llvm::MCTargetAsmParser>
     TargetParser(TheTarget->createMCAsmParser(*STI, *Parser));
-    Parser->setParsingInlineAsm(true);
 
   // Get the instruction descriptor.
   const llvm::MCInstrInfo *MII = TheTarget->createMCInstrInfo(); 
@@ -455,152 +465,43 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   Parser->setTargetParser(*TargetParser.get());
   Parser->setParsingInlineAsm(true);
 
-  // Prime the lexer.
-  Parser->Lex();
-
-  // While we have input, parse each statement.
-  unsigned InputIdx = 0;
-  unsigned OutputIdx = 0;
-  while (Parser->getLexer().isNot(llvm::AsmToken::Eof)) {
-    if (Parser->ParseStatement()) {
-      // FIXME: The AsmParser should report errors, but we could potentially be
-      // more verbose here.
-      break;
-    }
-
-    if (Parser->isInstruction()) {
-      const llvm::MCInstrDesc &Desc = MII->get(Parser->getOpcode());
-
-      // Build the list of clobbers, outputs and inputs.
-      for (unsigned i = 1, e = Parser->getNumParsedOperands(); i != e; ++i) {
-        llvm::MCParsedAsmOperand &Operand = Parser->getParsedOperand(i);
-
-        // Immediate.
-        if (Operand.isImm()) {
-          AsmStrRewrites.push_back(AsmOpRewrite(AOK_Imm,
-                                                Operand.getStartLoc(),
-                                                Operand.getNameLen()));
-          continue;
-        }
-
-
-        // Register operand.
-        if (Operand.isReg()) {
-          unsigned NumDefs = Desc.getNumDefs();
-          // Clobber.
-          if (NumDefs && Operand.getMCOperandNum() < NumDefs) {
-            std::string Reg;
-            llvm::raw_string_ostream OS(Reg);
-            IP->printRegName(OS, Operand.getReg());
-            StringRef Clobber(OS.str());
-            if (!Context.getTargetInfo().isValidClobber(Clobber))
-              return StmtError(
-                Diag(AsmLoc, diag::err_asm_unknown_register_name) << Clobber);
-            ClobberRegs.insert(Reg);
-          }
-          continue;
-        }
-
-
-        // Expr/Input or Output.
-        StringRef Name = Operand.getName();
-        if (IdentifierInfo *II = &Context.Idents.get(Name)) {
-          CXXScopeSpec SS;
-          UnqualifiedId Id;
-          SourceLocation Loc;
-          Id.setIdentifier(II, AsmLoc);
-          ExprResult Result = ActOnIdExpression(getCurScope(), SS, Loc, Id,
-                                                false, false);
-          if (!Result.isInvalid()) {
-            bool isOutput = (i == 1) && Desc.mayStore();
-            if (isOutput) {
-              std::string Constraint = "=";
-              ++InputIdx;
-              Outputs.push_back(II);
-              OutputExprs.push_back(Result.take());
-              Constraint += Operand.getConstraint().str();
-              OutputConstraints.push_back(Constraint);
-              AsmStrRewrites.push_back(AsmOpRewrite(AOK_Output,
-                                                    Operand.getStartLoc(),
-                                                    Operand.getNameLen()));
-            } else {
-              Inputs.push_back(II);
-              InputExprs.push_back(Result.take());
-              InputConstraints.push_back(Operand.getConstraint().str());
-              AsmStrRewrites.push_back(AsmOpRewrite(AOK_Input,
-                                                    Operand.getStartLoc(),
-                                                    Operand.getNameLen()));
-            }
-          }
-        }
-      }
-      Parser->freeParsedOperands();
-    }
-  }
-
-  // Set the number of Outputs and Inputs.
-  NumOutputs = Outputs.size();
-  NumInputs = Inputs.size();
-
-  // Set the unique clobbers.
-  for (std::set<std::string>::iterator I = ClobberRegs.begin(),
-         E = ClobberRegs.end(); I != E; ++I)
-    Clobbers.push_back(*I);
-
-  // Merge the various outputs and inputs.  Output are expected first.
-  Names.resize(NumOutputs + NumInputs);
-  Constraints.resize(NumOutputs + NumInputs);
-  Exprs.resize(NumOutputs + NumInputs);
-  for (unsigned i = 0; i < NumOutputs; ++i) {
-    Names[i] = Outputs[i];
-    Constraints[i] = OutputConstraints[i];
-    Exprs[i] = OutputExprs[i];
-  }
-  for (unsigned i = 0, j = NumOutputs; i < NumInputs; ++i, ++j) {
-    Names[j] = Inputs[i];
-    Constraints[j] = InputConstraints[i];
-    Exprs[j] = InputExprs[i];
-  }
-
-  // Build the IR assembly string.
+  unsigned NumOutputs;
+  unsigned NumInputs;
   std::string AsmStringIR;
-  llvm::raw_string_ostream OS(AsmStringIR);
-  const char *Start = AsmString.c_str();
-  for (SmallVectorImpl<struct AsmOpRewrite>::iterator I = AsmStrRewrites.begin(),
-         E = AsmStrRewrites.end(); I != E; ++I) {
-    const char *Loc = (*I).Loc.getPointer();
+  SmallVector<void *, 4> VoidNames;
+  SmallVector<std::string, 4> Constraints;
+  SmallVector<void *, 4> VoidExprs;
+  SmallVector<std::string, 4> Clobbers;
+  MCAsmParserSemaCallbackImpl MCAPSI(this);
+  if (Parser->ParseMSInlineAsm(AsmLoc.getPtrEncoding(), AsmStringIR,
+                               NumOutputs, NumInputs, VoidNames, Constraints,
+                               VoidExprs, Clobbers, MII, IP, MCAPSI))
+    return StmtError();
 
-    // Emit everything up to the immediate/expression.
-    OS << StringRef(Start, Loc - Start);
+  // Build the vector of clobber StringRefs.
+  unsigned NumClobbers = Clobbers.size();
+  ClobberRefs.resize(NumClobbers);
+  for (unsigned i = 0; i != NumClobbers; ++i)
+    ClobberRefs[i] = StringRef(Clobbers[i]);
 
-    // Rewrite expressions in $N notation.
-    switch ((*I).Kind) {
-    case AOK_Imm:
-      OS << Twine("$$") + StringRef(Loc, (*I).Len);
-      break;
-    case AOK_Input:
-      OS << '$';
-      OS << InputIdx++;
-      break;
-    case AOK_Output:
-      OS << '$';
-      OS << OutputIdx++;
-      break;
-    }
-
-    // Skip the original expression.
-    Start = Loc + (*I).Len;
+  // Recast the void pointers and build the vector of constraint StringRefs.
+  unsigned NumExprs = NumOutputs + NumInputs;
+  assert (VoidNames.size() == NumExprs && "Unexpected number of names!");
+  assert (VoidExprs.size() == NumExprs && "Unexpected number of exprs!");
+  Names.resize(NumExprs);
+  ConstraintRefs.resize(NumExprs);
+  Exprs.resize(NumExprs);
+  for (unsigned i = 0, e = NumExprs; i != e; ++i) {
+    Names[i] = static_cast<IdentifierInfo *>(VoidNames[i]);
+    ConstraintRefs[i] = StringRef(Constraints[i]);
+    Exprs[i] = static_cast<Expr *>(VoidExprs[i]);
   }
-  // Emit the remainder of the asm string.
-  const char *AsmEnd = AsmString.c_str() + AsmString.size();
-  if (Start != AsmEnd)
-    OS << StringRef(Start, AsmEnd - Start);
 
-  AsmString = OS.str();
+  bool IsSimple = NumExprs > 0;
   MSAsmStmt *NS =
-    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
-                            /*IsVolatile*/ true, AsmToks, NumOutputs,
-                            NumInputs, Names, Constraints, Exprs, AsmString,
-                            Clobbers, EndLoc);
+    new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
+                            /*IsVolatile*/ true, AsmToks, NumOutputs, NumInputs,
+                            Names, ConstraintRefs, Exprs, AsmStringIR,
+                            ClobberRefs, EndLoc);
   return Owned(NS);
 }

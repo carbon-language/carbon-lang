@@ -114,3 +114,20 @@ unsigned t12(void) {
 // CHECK: t12
 // CHECK: call void asm sideeffect inteldialect "mov eax, $2\0A\09mov $0, eax\0A\09mov eax, $3\0A\09mov $1, eax", "=*m,=*m,*m,*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}, i32* %{{.*}}, i32* %{{.*}}, i32* %{{.*}}) nounwind
 }
+
+#if 0
+void t13() {
+  unsigned i = 1, j = 2;
+//  __asm mov eax, [ebx]
+//  __asm mov eax, [4*ecx]
+//  __asm mov eax, [4]
+//  __asm mov eax, [ebx + 4*ecx]
+//  __asm mov eax, [ebx + 4*ecx + 4]
+  __asm mov eax, [i]
+  __asm mov eax, [i + 4*ecx]
+  __asm mov eax, [i + 4*ecx + 4]
+  __asm mov eax, [4*i]
+  __asm mov eax, [ebx + 4*i]
+  __asm mov eax, [ebx + 4*i + 4]
+}
+#endif
