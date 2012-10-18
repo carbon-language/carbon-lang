@@ -83,3 +83,24 @@ struct ConvertToIncomplete { operator IncompleteStruct&(); };
 @implementation SynthIncompleteRef // expected-error {{cannot synthesize property 'x' with incomplete type 'IncompleteStruct'}}
 @synthesize y; // expected-error {{cannot synthesize property 'y' with incomplete type 'IncompleteStruct'}}
 @end 
+
+
+// Check error handling for instantiation during property synthesis.
+template<typename T> class TemplateClass1 {
+  T *x; // expected-error {{'x' declared as a pointer to a reference of type 'int &'}}
+};
+template<typename T> class TemplateClass2 {
+  TemplateClass2& operator=(TemplateClass1<T>);
+  TemplateClass2& operator=(TemplateClass2) { T(); } // expected-error {{reference to type 'int' requires an initializer}} \
+                                                     // expected-note 2 {{implicitly declared private here}} \
+                                                     // expected-note {{'operator=' declared here}}
+};
+__attribute__((objc_root_class)) @interface InterfaceWithTemplateProperties 
+@property TemplateClass2<int&> intprop;
+@property TemplateClass2<int&> &floatprop;
+@end
+@implementation InterfaceWithTemplateProperties // expected-error 2 {{'operator=' is a private member of 'TemplateClass2<int &>'}} \
+																								// expected-error {{atomic property of reference type 'TemplateClass2<int &> &' cannot have non-trivial assignment operator}} \
+																								// expected-note {{in instantiation of template class}} \
+																								// expected-note {{in instantiation of member function}}
+@end  

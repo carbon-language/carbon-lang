@@ -1028,19 +1028,21 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // For Objective-C++, need to synthesize the AST for the IVAR object to be
       // returned by the getter as it must conform to C++'s copy-return rules.
       // FIXME. Eventually we want to do this for Objective-C as well.
+      SynthesizedFunctionScope Scope(*this, getterMethod);
       ImplicitParamDecl *SelfDecl = getterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
         new (Context) DeclRefExpr(SelfDecl, false, SelfDecl->getType(),
-                                  VK_RValue, SourceLocation());
+                                  VK_RValue, PropertyDiagLoc);
+      MarkDeclRefReferenced(SelfExpr);
       Expr *IvarRefExpr =
-        new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
+        new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), PropertyDiagLoc,
                                       SelfExpr, true, true);
       ExprResult Res = 
         PerformCopyInitialization(InitializedEntity::InitializeResult(
-                                    SourceLocation(),
+                                    PropertyDiagLoc,
                                     getterMethod->getResultType(),
                                     /*NRVO=*/false),
-                                  SourceLocation(),
+                                  PropertyDiagLoc,
                                   Owned(IvarRefExpr));
       if (!Res.isInvalid()) {
         Expr *ResExpr = Res.takeAs<Expr>();
@@ -1061,19 +1063,22 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     if (getLangOpts().CPlusPlus && Synthesize && !CompleteTypeErr &&
         Ivar->getType()->isRecordType()) {
       // FIXME. Eventually we want to do this for Objective-C as well.
+      SynthesizedFunctionScope Scope(*this, setterMethod);
       ImplicitParamDecl *SelfDecl = setterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
         new (Context) DeclRefExpr(SelfDecl, false, SelfDecl->getType(),
-                                  VK_RValue, SourceLocation());
+                                  VK_RValue, PropertyDiagLoc);
+      MarkDeclRefReferenced(SelfExpr);
       Expr *lhs =
-        new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
+        new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), PropertyDiagLoc,
                                       SelfExpr, true, true);
       ObjCMethodDecl::param_iterator P = setterMethod->param_begin();
       ParmVarDecl *Param = (*P);
       QualType T = Param->getType().getNonReferenceType();
-      Expr *rhs = new (Context) DeclRefExpr(Param, false, T,
-                                            VK_LValue, SourceLocation());
-      ExprResult Res = BuildBinOp(S, lhs->getLocEnd(), 
+      DeclRefExpr *rhs = new (Context) DeclRefExpr(Param, false, T,
+                                                   VK_LValue, PropertyDiagLoc);
+      MarkDeclRefReferenced(rhs);
+      ExprResult Res = BuildBinOp(S, PropertyDiagLoc, 
                                   BO_Assign, lhs, rhs);
       if (property->getPropertyAttributes() & 
           ObjCPropertyDecl::OBJC_PR_atomic) {
@@ -1083,7 +1088,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           if (const FunctionDecl *FuncDecl = CXXCE->getDirectCallee())
             if (!FuncDecl->isTrivial())
               if (property->getType()->isReferenceType()) {
-                Diag(PropertyLoc, 
+                Diag(PropertyDiagLoc, 
                      diag::err_atomic_property_nontrivial_assign_op)
                     << property->getType();
                 Diag(FuncDecl->getLocStart(), 

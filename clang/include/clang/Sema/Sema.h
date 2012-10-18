@@ -466,6 +466,26 @@ public:
     }
   };
 
+  /// \brief RAII object to handle the state changes required to synthesize
+  /// a function body.
+  class SynthesizedFunctionScope {
+    Sema &S;
+    Sema::ContextRAII SavedContext;
+    
+  public:
+    SynthesizedFunctionScope(Sema &S, DeclContext *DC)
+      : S(S), SavedContext(S, DC) 
+    {
+      S.PushFunctionScope();
+      S.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
+    }
+    
+    ~SynthesizedFunctionScope() {
+      S.PopExpressionEvaluationContext();
+      S.PopFunctionScopeInfo();
+    }
+  };
+
   /// WeakUndeclaredIdentifiers - Identifiers contained in
   /// \#pragma weak before declared. rare. may alias another
   /// identifier, declared or undeclared
