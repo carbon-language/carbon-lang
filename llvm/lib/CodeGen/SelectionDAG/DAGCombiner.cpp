@@ -9075,6 +9075,10 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
       if ((LLD->hasAnyUseOfValue(1) && LLD->isPredecessorOf(CondNode)) ||
           (RLD->hasAnyUseOfValue(1) && RLD->isPredecessorOf(CondNode)))
         return false;
+      // The loads must not depend on one another.
+      if (LLD->isPredecessorOf(RLD) ||
+          RLD->isPredecessorOf(LLD))
+        return false;
       Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
                          LLD->getBasePtr().getValueType(),
                          TheSelect->getOperand(0), LLD->getBasePtr(),
