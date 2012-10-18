@@ -166,7 +166,7 @@ private:
 
   // Check if a pointer value is known to be disjoint.
   // Example: Alloca, Global, NoAlias.
-  bool isidentifiedSafeObject(Value* Val);
+  bool isIdentifiedSafeObject(Value* Val);
 
   /// The loop that we evaluate.
   Loop *TheLoop;
@@ -427,8 +427,6 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
 
   BasicBlock *MiddleBlock = VecBody->splitBasicBlock(VecBody->getTerminator(),
                                                   "middle.block");
-
-
   BasicBlock *ScalarPH =
           MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
                                        "scalar.preheader");
@@ -818,14 +816,14 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
   // disjoint memory locations, or that they are no-alias arguments.
   ValueVector::iterator r, re, w, we;
   for (r = Reads.begin(), re = Reads.end(); r != re; ++r) {
-    if (!isidentifiedSafeObject(*r)) {
+    if (!isIdentifiedSafeObject(*r)) {
       DEBUG(dbgs() << "LV: Found a bad read Ptr: "<< **r << "\n");
       return false;
     }
   }
 
   for (w = Writes.begin(), we = Writes.end(); w != we; ++w) {
-    if (!isidentifiedSafeObject(*w)) {
+    if (!isIdentifiedSafeObject(*w)) {
       DEBUG(dbgs() << "LV: Found a bad write Ptr: "<< **w << "\n");
       return false;
     }
@@ -854,7 +852,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
 
 /// Checks if the value is a Global variable or if it is an Arguments
 /// marked with the NoAlias attribute.
-bool LoopVectorizationLegality::isidentifiedSafeObject(Value* Val) {
+bool LoopVectorizationLegality::isIdentifiedSafeObject(Value* Val) {
   assert(Val && "Invalid value");
   if (dyn_cast<GlobalValue>(Val))
     return true;
