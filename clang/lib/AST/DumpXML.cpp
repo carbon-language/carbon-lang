@@ -1,4 +1,4 @@
-//===--- DumpXML.cpp - Detailed XML dumping ---------------------*- C++ -*-===//
+//===--- DumpXML.cpp - Detailed XML dumping -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -64,6 +64,8 @@ template <class Impl> struct XMLDeclVisitor {
   static_cast<Impl*>(this)->NAME(static_cast<CLASS*>(D))
 
   void dispatch(Decl *D) {
+    if (D->isUsed())
+      static_cast<Impl*>(this)->set("used", "1");
     switch (D->getKind()) {
 #define DECL(DERIVED, BASE) \
       case Decl::DERIVED: \
