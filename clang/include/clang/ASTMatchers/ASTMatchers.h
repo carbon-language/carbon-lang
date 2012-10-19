@@ -1410,7 +1410,7 @@ forEachDescendant(
 /// void f() { if (true) { int x = 42; } }
 /// void g() { for (;;) { int x = 43; } }
 /// \endcode
-/// \c expr(integerLiteral(hasAncsestor(ifStmt()))) matches \c 42, but not 43.
+/// \c expr(integerLiteral(hasAncestor(ifStmt()))) matches \c 42, but not 43.
 ///
 /// Usable as: Any Matcher
 template <typename AncestorT>
