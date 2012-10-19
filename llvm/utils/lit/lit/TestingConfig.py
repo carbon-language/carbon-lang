@@ -16,6 +16,7 @@ class TestingConfig:
                 'PATH' : os.pathsep.join(litConfig.path +
                                          [os.environ.get('PATH','')]),
                 'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
+                'TERM' : os.environ.get('TERM',''),
                 'LLVM_DISABLE_CRASH_REPORT' : '1',
                 }
 
