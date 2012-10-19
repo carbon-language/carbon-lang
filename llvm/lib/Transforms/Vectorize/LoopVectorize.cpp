@@ -71,11 +71,7 @@ public:
   SingleBlockLoopVectorizer(Loop *OrigLoop, ScalarEvolution *Se, LoopInfo *Li,
                             LPPassManager *Lpm, unsigned VecWidth):
   Orig(OrigLoop), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
-   Builder(0), Induction(0), OldInduction(0) { }
-
-  ~SingleBlockLoopVectorizer() {
-    delete Builder;
-  }
+  Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *Legal) {
@@ -140,7 +136,7 @@ private:
   unsigned VF;
 
   // The builder that we use
-  IRBuilder<> *Builder;
+  IRBuilder<> Builder;
 
   // --- Vectorization state ---
 
@@ -305,9 +301,9 @@ Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
   Value *Zeros = ConstantAggregateZero::get(VectorType::get(I32, VF));
   Value *UndefVal = UndefValue::get(VTy);
   // Insert the value into a new vector.
-  Value *SingleElem = Builder->CreateInsertElement(UndefVal, V, Zero);
+  Value *SingleElem = Builder.CreateInsertElement(UndefVal, V, Zero);
   // Broadcast the scalar into all locations in the vector.
-  Value *Shuf = Builder->CreateShuffleVector(SingleElem, UndefVal, Zeros,
+  Value *Shuf = Builder.CreateShuffleVector(SingleElem, UndefVal, Zeros,
                                              "broadcast");
   // We are accessing the induction variable. Make sure to promote the
   // index for each consecutive SIMD lane. This adds 0,1,2 ... to all lanes.
@@ -333,7 +329,7 @@ Value *SingleBlockLoopVectorizer::getConsecutiveVector(Value* Val) {
   // Add the consecutive indices to the vector value.
   Constant *Cv = ConstantVector::get(Indices);
   assert(Cv->getType() == Val->getType() && "Invalid consecutive vec");
-  return Builder->CreateAdd(Val, Cv, "induction");
+  return Builder.CreateAdd(Val, Cv, "induction");
 }
 
 
@@ -440,18 +436,18 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
       Value *Op = Params[op];
       // Param is a vector. Need to extract the right lane.
       if (Op->getType()->isVectorTy())
-        Op = Builder->CreateExtractElement(Op, Builder->getInt32(i));
+        Op = Builder.CreateExtractElement(Op, Builder.getInt32(i));
       Cloned->setOperand(op, Op);
     }
 
     // Place the cloned scalar in the new loop.
-    Builder->Insert(Cloned);
+    Builder.Insert(Cloned);
 
     // If the original scalar returns a value we need to place it in a vector
     // so that future users will be able to use it.
     if (!IsVoidRetTy)
-      VecResults = Builder->CreateInsertElement(VecResults, Cloned,
-                                               Builder->getInt32(i));
+      VecResults = Builder.CreateInsertElement(VecResults, Cloned,
+                                               Builder.getInt32(i));
   }
 
   if (!IsVoidRetTy)
@@ -504,8 +500,8 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   BasicBlock *MiddleBlock = VecBody->splitBasicBlock(VecBody->getTerminator(),
                                                   "middle.block");
   BasicBlock *ScalarPH =
-          MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
-                                       "scalar.preheader");
+    MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
+                                 "scalar.preheader");
   // Find the induction variable.
   BasicBlock *OldBasicBlock = Orig->getHeader();
   OldInduction = dyn_cast<PHINode>(OldBasicBlock->begin());
@@ -514,11 +510,10 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
-  Builder = new IRBuilder<>(VecBody);
-  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Generate the induction variable.
-  Induction = Builder->CreatePHI(IdxTy, 2, "index");
+  Induction = Builder.CreatePHI(IdxTy, 2, "index");
   Constant *Zero = ConstantInt::get(IdxTy, 0);
   Constant *Step = ConstantInt::get(IdxTy, VF);
 
@@ -569,12 +564,12 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   MiddleBlock->getTerminator()->eraseFromParent();
 
   // Create i+1 and fill the PHINode.
-  Value *NextIdx = Builder->CreateAdd(Induction, Step, "index.next");
+  Value *NextIdx = Builder.CreateAdd(Induction, Step, "index.next");
   Induction->addIncoming(Zero, VectorPH);
   Induction->addIncoming(NextIdx, VecBody);
   // Create the compare.
-  Value *ICmp = Builder->CreateICmpEQ(NextIdx, CountRoundDown);
-  Builder->CreateCondBr(ICmp, MiddleBlock, VecBody);
+  Value *ICmp = Builder.CreateICmpEQ(NextIdx, CountRoundDown);
+  Builder.CreateCondBr(ICmp, MiddleBlock, VecBody);
 
   // Now we have two terminators. Remove the old one from the block.
   VecBody->getTerminator()->eraseFromParent();
@@ -584,7 +579,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   OldInduction->setIncomingValue(BlockIdx, CountRoundDown);
 
   // Get ready to start creating new instructions into the vectorized body.
-  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Register the new loop.
   Loop* Lp = new Loop();
@@ -640,7 +635,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         // This has to be a reduction variable.
         assert(Legal->getReductionVars()->count(P) && "Not a Reduction");
         Type *VecTy = VectorType::get(Inst->getType(), VF);
-        WidenMap[Inst] = Builder->CreatePHI(VecTy, 2, "vec.phi");
+        WidenMap[Inst] = Builder.CreatePHI(VecTy, 2, "vec.phi");
         PHIsToFix.push_back(P);
         continue;
       }
@@ -667,7 +662,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         // Use this vector value for all users of the original instruction.
-        WidenMap[Inst] = Builder->CreateBinOp(BinOp->getOpcode(), A, B);
+        WidenMap[Inst] = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
         break;
       }
       case Instruction::Select: {
@@ -677,7 +672,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         Value *C = getVectorValue(Inst->getOperand(2));
-        WidenMap[Inst] = Builder->CreateSelect(A, B, C);
+        WidenMap[Inst] = Builder.CreateSelect(A, B, C);
         break;
       }
 
@@ -689,9 +684,9 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         if (FCmp)
-          WidenMap[Inst] = Builder->CreateFCmp(Cmp->getPredicate(), A, B);
+          WidenMap[Inst] = Builder.CreateFCmp(Cmp->getPredicate(), A, B);
         else
-          WidenMap[Inst] = Builder->CreateICmp(Cmp->getPredicate(), A, B);
+          WidenMap[Inst] = Builder.CreateICmp(Cmp->getPredicate(), A, B);
         break;
       }
 
@@ -712,10 +707,10 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         unsigned NumOperands = Gep->getNumOperands();
         Gep2->setOperand(NumOperands - 1, Induction);
-        Ptr = Builder->Insert(Gep2);
-        Ptr = Builder->CreateBitCast(Ptr, StTy->getPointerTo());
+        Ptr = Builder.Insert(Gep2);
+        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
         Value *Val = getVectorValue(SI->getValueOperand());
-        Builder->CreateStore(Val, Ptr)->setAlignment(Alignment);
+        Builder.CreateStore(Val, Ptr)->setAlignment(Alignment);
         break;
       }
       case Instruction::Load: {
@@ -736,9 +731,9 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         unsigned NumOperands = Gep->getNumOperands();
         Gep2->setOperand(NumOperands - 1, Induction);
-        Ptr = Builder->Insert(Gep2);
-        Ptr = Builder->CreateBitCast(Ptr, RetTy->getPointerTo());
-        LI = Builder->CreateLoad(Ptr);
+        Ptr = Builder.Insert(Gep2);
+        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
+        LI = Builder.CreateLoad(Ptr);
         LI->setAlignment(Alignment);
         // Use this vector value for all users of the load.
         WidenMap[Inst] = LI;
@@ -760,7 +755,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         CastInst *CI = dyn_cast<CastInst>(Inst);
         Value *A = getVectorValue(Inst->getOperand(0));
         Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
-        WidenMap[Inst] = Builder->CreateCast(CI->getOpcode(), A, DestTy);
+        WidenMap[Inst] = Builder.CreateCast(CI->getOpcode(), A, DestTy);
         break;
       }
 
@@ -817,25 +812,25 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // the PHIs and the values we are going to write.
     // This allows us to write both PHINodes and the extractelement
     // instructions.
-    Builder->SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
+    Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
 
     // This PHINode contains the vectorized reduction variable, or
     // the identity vector, if we bypass the vector loop.
-    PHINode *NewPhi = Builder->CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
+    PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
     NewPhi->addIncoming(Identity, LoopBypassBlock);
     NewPhi->addIncoming(getVectorValue(ReductionVar.first), LoopVectorBody);
 
     // Extract the first scalar.
     Value *Scalar0 =
-      Builder->CreateExtractElement(NewPhi, Builder->getInt32(0));
+      Builder.CreateExtractElement(NewPhi, Builder.getInt32(0));
     // Extract and sum the remaining vector elements.
     for (unsigned i=1; i < VF; ++i) {
       Value *Scalar1 =
-        Builder->CreateExtractElement(NewPhi, Builder->getInt32(i));
+        Builder.CreateExtractElement(NewPhi, Builder.getInt32(i));
       if (RdxKind == LoopVectorizationLegality::IntegerAdd) {
-        Scalar0 = Builder->CreateAdd(Scalar0, Scalar1);
+        Scalar0 = Builder.CreateAdd(Scalar0, Scalar1);
       } else {
-        Scalar0 = Builder->CreateMul(Scalar0, Scalar1);
+        Scalar0 = Builder.CreateMul(Scalar0, Scalar1);
       }
     }
 
