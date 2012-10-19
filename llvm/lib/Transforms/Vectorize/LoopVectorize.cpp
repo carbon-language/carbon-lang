@@ -67,11 +67,7 @@ public:
   SingleBlockLoopVectorizer(Loop *OrigLoop, ScalarEvolution *Se, LoopInfo *Li,
                             LPPassManager *Lpm, unsigned VecWidth):
   Orig(OrigLoop), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
-   Builder(0), Induction(0), OldInduction(0) { }
-
-  ~SingleBlockLoopVectorizer() {
-    delete Builder;
-  }
+  Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
   // Perform the actual loop widening (vectorization).
   void vectorize() {
@@ -81,7 +77,7 @@ public:
     vectorizeLoop();
     // register the new loop.
     cleanup();
- }
+  }
 
 private:
   /// Create an empty loop, based on the loop ranges of the old loop.
@@ -131,7 +127,7 @@ private:
   unsigned VF;
 
   // The builder that we use
-  IRBuilder<> *Builder;
+  IRBuilder<> Builder;
 
   // --- Vectorization state ---
 
@@ -241,10 +237,10 @@ Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
   Value *Zeros = ConstantAggregateZero::get(VectorType::get(I32, VF));
   Value *UndefVal = UndefValue::get(VTy);
   // Insert the value into a new vector.
-  Value *SingleElem = Builder->CreateInsertElement(UndefVal, V, Zero);
+  Value *SingleElem = Builder.CreateInsertElement(UndefVal, V, Zero);
   // Broadcast the scalar into all locations in the vector.
-  Value *Shuf = Builder->CreateShuffleVector(SingleElem, UndefVal, Zeros,
-                                             "broadcast");
+  Value *Shuf = Builder.CreateShuffleVector(SingleElem, UndefVal, Zeros,
+                                            "broadcast");
   // We are accessing the induction variable. Make sure to promote the
   // index for each consecutive SIMD lane. This adds 0,1,2 ... to all lanes.
   if (V == Induction)
@@ -269,7 +265,7 @@ Value *SingleBlockLoopVectorizer::getConsecutiveVector(Value* Val) {
   // Add the consecutive indices to the vector value.
   Constant *Cv = ConstantVector::get(Indices);
   assert(Cv->getType() == Val->getType() && "Invalid consecutive vec");
-  return Builder->CreateAdd(Val, Cv, "induction");
+  return Builder.CreateAdd(Val, Cv, "induction");
 }
 
 
@@ -304,7 +300,7 @@ Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
   // If we saved a vectorized copy of V, use it.
   ValueMap::iterator it = WidenMap.find(V);
   if (it != WidenMap.end())
-     return it->second;
+    return it->second;
 
   // Broadcast V and save the value for future uses.
   Value *B = getBroadcastInstrs(V);
@@ -364,18 +360,18 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
       Value *Op = Params[op];
       // Param is a vector. Need to extract the right lane.
       if (Op->getType()->isVectorTy())
-        Op = Builder->CreateExtractElement(Op, Builder->getInt32(i));
+        Op = Builder.CreateExtractElement(Op, Builder.getInt32(i));
       Cloned->setOperand(op, Op);
     }
 
     // Place the cloned scalar in the new loop.
-    Builder->Insert(Cloned);
+    Builder.Insert(Cloned);
 
     // If the original scalar returns a value we need to place it in a vector
     // so that future users will be able to use it.
     if (!IsVoidRetTy)
-      VecResults = Builder->CreateInsertElement(VecResults, Cloned,
-                                               Builder->getInt32(i));
+      VecResults = Builder.CreateInsertElement(VecResults, Cloned,
+                                               Builder.getInt32(i));
   }
 
   if (!IsVoidRetTy)
@@ -421,15 +417,15 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   assert(BypassBlock && "Invalid loop structure");
 
   BasicBlock *VectorPH =
-      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+    BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
   BasicBlock *VecBody = VectorPH->splitBasicBlock(VectorPH->getTerminator(),
-                                                 "vector.body");
+                                                  "vector.body");
 
   BasicBlock *MiddleBlock = VecBody->splitBasicBlock(VecBody->getTerminator(),
-                                                  "middle.block");
+                                                     "middle.block");
   BasicBlock *ScalarPH =
-          MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
-                                       "scalar.preheader");
+    MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
+                                 "scalar.preheader");
 
   // Find the induction variable.
   BasicBlock *OldBasicBlock = Orig->getHeader();
@@ -439,11 +435,10 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
-  Builder = new IRBuilder<>(VecBody);
-  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Generate the induction variable.
-  Induction = Builder->CreatePHI(IdxTy, 2, "index");
+  Induction = Builder.CreatePHI(IdxTy, 2, "index");
   Constant *Zero = ConstantInt::get(IdxTy, 0);
   Constant *Step = ConstantInt::get(IdxTy, VF);
 
@@ -494,12 +489,12 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   MiddleBlock->getTerminator()->eraseFromParent();
 
   // Create i+1 and fill the PHINode.
-  Value *NextIdx = Builder->CreateAdd(Induction, Step, "index.next");
+  Value *NextIdx = Builder.CreateAdd(Induction, Step, "index.next");
   Induction->addIncoming(Zero, VectorPH);
   Induction->addIncoming(NextIdx, VecBody);
   // Create the compare.
-  Value *ICmp = Builder->CreateICmpEQ(NextIdx, CountRoundDown);
-  Builder->CreateCondBr(ICmp, MiddleBlock, VecBody);
+  Value *ICmp = Builder.CreateICmpEQ(NextIdx, CountRoundDown);
+  Builder.CreateCondBr(ICmp, MiddleBlock, VecBody);
 
   // Now we have two terminators. Remove the old one from the block.
   VecBody->getTerminator()->eraseFromParent();
@@ -509,7 +504,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   OldInduction->setIncomingValue(BlockIdx, CountRoundDown);
 
   // Get ready to start creating new instructions into the vectorized body.
-  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Register the new loop.
   Loop* Lp = new Loop();
@@ -562,7 +557,7 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         // Use this vector value for all users of the original instruction.
-        WidenMap[Inst] = Builder->CreateBinOp(BinOp->getOpcode(), A, B);
+        WidenMap[Inst] = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
         break;
       }
       case Instruction::Select: {
@@ -570,7 +565,7 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         Value *C = getVectorValue(Inst->getOperand(2));
-        WidenMap[Inst] = Builder->CreateSelect(A, B, C);
+        WidenMap[Inst] = Builder.CreateSelect(A, B, C);
         break;
       }
 
@@ -582,9 +577,9 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         if (FCmp)
-          WidenMap[Inst] = Builder->CreateFCmp(Cmp->getPredicate(), A, B);
+          WidenMap[Inst] = Builder.CreateFCmp(Cmp->getPredicate(), A, B);
         else
-          WidenMap[Inst] = Builder->CreateICmp(Cmp->getPredicate(), A, B);
+          WidenMap[Inst] = Builder.CreateICmp(Cmp->getPredicate(), A, B);
         break;
       }
 
@@ -605,10 +600,10 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         unsigned NumOperands = Gep->getNumOperands();
         Gep2->setOperand(NumOperands - 1, Induction);
-        Ptr = Builder->Insert(Gep2);
-        Ptr = Builder->CreateBitCast(Ptr, StTy->getPointerTo());
+        Ptr = Builder.Insert(Gep2);
+        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
         Value *Val = getVectorValue(SI->getValueOperand());
-        Builder->CreateStore(Val, Ptr)->setAlignment(Alignment);
+        Builder.CreateStore(Val, Ptr)->setAlignment(Alignment);
         break;
       }
       case Instruction::Load: {
@@ -629,9 +624,9 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         unsigned NumOperands = Gep->getNumOperands();
         Gep2->setOperand(NumOperands - 1, Induction);
-        Ptr = Builder->Insert(Gep2);
-        Ptr = Builder->CreateBitCast(Ptr, RetTy->getPointerTo());
-        LI = Builder->CreateLoad(Ptr);
+        Ptr = Builder.Insert(Gep2);
+        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
+        LI = Builder.CreateLoad(Ptr);
         LI->setAlignment(Alignment);
         // Use this vector value for all users of the load.
         WidenMap[Inst] = LI;
@@ -653,7 +648,7 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         CastInst *CI = dyn_cast<CastInst>(Inst);
         Value *A = getVectorValue(Inst->getOperand(0));
         Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
-        WidenMap[Inst] = Builder->CreateCast(CI->getOpcode(), A, DestTy);
+        WidenMap[Inst] = Builder.CreateCast(CI->getOpcode(), A, DestTy);
         break;
       }
 
@@ -815,8 +810,8 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
   } // next instr.
 
   if (NumPhis != 1) {
-      DEBUG(dbgs() << "LV: Did not find a Phi node.\n");
-      return false;
+    DEBUG(dbgs() << "LV: Did not find a Phi node.\n");
+    return false;
   }
 
   // Check that the underlying objects of the reads and writes are either
