@@ -208,6 +208,11 @@ namespace llvm {
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
 
+    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// for tail call optimization.
+    bool IsEligibleForTailCallOptimization(CallingConv::ID CalleeCC,
+                                           unsigned NextStackOffset) const;
+
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,

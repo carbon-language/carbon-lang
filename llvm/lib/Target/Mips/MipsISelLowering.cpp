@@ -25,6 +25,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -32,11 +33,18 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+STATISTIC(NumTailCalls, "Number of tail calls");
+
+static cl::opt<bool>
+EnableMipsTailCalls("enable-mips-tail-calls", cl::Hidden,
+                    cl::desc("MIPS: Enable tail calls."), cl::init(false));
 
 // If I is a shifted mask, set the size (Size) and the first bit of the
 // mask (Pos), and return true.
@@ -2871,9 +2879,26 @@ PassByValArg64(SDValue Chain, DebugLoc dl,
   MemOpChains.push_back(Chain);
 }
 
+/// IsEligibleForTailCallOptimization - Check whether the call is eligible
+/// for tail call optimization.
+bool MipsTargetLowering::
+IsEligibleForTailCallOptimization(CallingConv::ID CalleeCC,
+                                  unsigned NextStackOffset) const {
+  if (!EnableMipsTailCalls)
+    return false;
+
+  // Do not tail-call optimize if there is an argument passed on stack.
+  if (IsO32 && (CalleeCC != CallingConv::Fast)) {
+    if (NextStackOffset > 16)
+      return false;
+  } else if (NextStackOffset)
+    return false;
+
+  return true;
+}
+
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
-/// TODO: isTailCall.
 SDValue
 MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                               SmallVectorImpl<SDValue> &InVals) const {
@@ -2887,9 +2912,6 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool &isTailCall                      = CLI.IsTailCall;
   CallingConv::ID CallConv              = CLI.CallConv;
   bool isVarArg                         = CLI.IsVarArg;
-
-  // MIPs target does not yet support tail call optimization.
-  isTailCall = false;
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -2921,11 +2943,20 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (IsO32 && (CallConv != CallingConv::Fast))
     NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
+  // Check if it's really possible to do a tail call.
+  if (isTailCall)
+    isTailCall = IsEligibleForTailCallOptimization(CallConv, NextStackOffset);
+
+  if (isTailCall)
+    ++NumTailCalls;
+
   // Chain is the output chain of the last Load/Store or CopyToReg node.
   // ByValChain is the output chain of the last Memcpy node created for copying
   // byval arguments to the stack.
   SDValue NextStackOffsetVal = DAG.getIntPtrConstant(NextStackOffset, true);
-  Chain = DAG.getCALLSEQ_START(Chain, NextStackOffsetVal);
+
+  if (!isTailCall)
+    Chain = DAG.getCALLSEQ_START(Chain, NextStackOffsetVal);
 
   SDValue StackPtr = DAG.getCopyFromReg(Chain, dl,
                                         IsN64 ? Mips::SP_64 : Mips::SP,
@@ -3134,6 +3165,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
+
+  if (isTailCall)
+    return DAG.getNode(MipsISD::TailCall, dl, MVT::Other, &Ops[0], Ops.size());
 
   Chain  = DAG.getNode(MipsISD::JmpLink, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
