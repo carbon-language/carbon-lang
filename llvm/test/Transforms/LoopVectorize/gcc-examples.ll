@@ -202,9 +202,8 @@ define void @example8(i32 %x) nounwind uwtable ssp {
   ret void
 }
 
-; We can't vectorize because it has a reduction variable.
 ;CHECK: @example9
-;CHECK-NOT: <4 x i32>
+;CHECK: phi <4 x i32>
 ;CHECK: ret i32
 define i32 @example9() nounwind uwtable readonly ssp {
   br label %1

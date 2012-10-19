@@ -10,6 +10,8 @@
 // This is a simple loop vectorizer. We currently only support single block
 // loops. We have a very simple and restrictive legality check: we need to read
 // and write from disjoint memory locations. We still don't have a cost model.
+// We do support integer reductions.
+//
 // This pass has three parts:
 // 1. The main loop pass that drives the different parts.
 // 2. LoopVectorizationLegality - A helper class that checks for the legality
@@ -54,8 +56,10 @@ static cl::opt<unsigned>
 DefaultVectorizationFactor("default-loop-vectorize-width",
                           cl::init(4), cl::Hidden,
                           cl::desc("Set the default loop vectorization width"));
-
 namespace {
+
+// Forward declaration.
+class LoopVectorizationLegality;
 
 /// Vectorize a simple loop. This class performs the widening of simple single
 /// basic block loops into vectors. It does not perform any
@@ -67,23 +71,28 @@ public:
   SingleBlockLoopVectorizer(Loop *OrigLoop, ScalarEvolution *Se, LoopInfo *Li,
                             LPPassManager *Lpm, unsigned VecWidth):
   Orig(OrigLoop), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
-  Builder(Se->getContext()), Induction(0), OldInduction(0) { }
+   Builder(0), Induction(0), OldInduction(0) { }
+
+  ~SingleBlockLoopVectorizer() {
+    delete Builder;
+  }
 
   // Perform the actual loop widening (vectorization).
-  void vectorize() {
+  void vectorize(LoopVectorizationLegality *Legal) {
     ///Create a new empty loop. Unlink the old loop and connect the new one.
     createEmptyLoop();
     /// Widen each instruction in the old loop to a new one in the new loop.
-    vectorizeLoop();
+    /// Use the Legality module to find the induction and reduction variables.
+   vectorizeLoop(Legal);
     // register the new loop.
     cleanup();
-  }
+ }
 
 private:
   /// Create an empty loop, based on the loop ranges of the old loop.
   void createEmptyLoop();
   /// Copy and widen the instructions from the old loop.
-  void vectorizeLoop();
+  void vectorizeLoop(LoopVectorizationLegality *Legal);
   /// Insert the new loop to the loop hierarchy and pass manager.
   void cleanup();
 
@@ -113,6 +122,10 @@ private:
   /// broadcast them into a vector.
   Value *getVectorValue(Value *V);
 
+  /// Get a uniform vector of constant integers. We use this to get
+  /// vectors of ones and zeros for the reduction code.
+  Constant* getUniformVector(unsigned Val, Type* ScalarTy);
+
   typedef DenseMap<Value*, Value*> ValueMap;
 
   /// The original loop.
@@ -127,9 +140,20 @@ private:
   unsigned VF;
 
   // The builder that we use
-  IRBuilder<> Builder;
+  IRBuilder<> *Builder;
 
   // --- Vectorization state ---
+
+  /// Middle Block between the vector and the scalar.
+  BasicBlock *LoopMiddleBlock;
+  ///The ExitBlock of the scalar loop.
+  BasicBlock *LoopExitBlock;
+  ///The vector loop body.
+  BasicBlock *LoopVectorBody;
+  ///The scalar loop body.
+  BasicBlock *LoopScalarBody;
+  ///The first bypass block.
+  BasicBlock *LoopBypassBlock;
 
   /// The new Induction variable which was added to the new block.
   PHINode *Induction;
@@ -146,13 +170,35 @@ private:
 class LoopVectorizationLegality {
 public:
   LoopVectorizationLegality(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl):
-  TheLoop(Lp), SE(Se), DL(Dl) { }
+  TheLoop(Lp), SE(Se), DL(Dl), Induction(0) { }
+
+  /// This represents the kinds of reductions that we support.
+  enum ReductionKind {
+    IntegerAdd, /// Sum of numbers.
+    IntegerMult, /// Product of numbers.
+    NoReduction /// Not a reduction.
+  };
+
+  // Holds a pairing of reduction instruction and the reduction kind.
+  typedef std::pair<Instruction*, ReductionKind> ReductionPair;
+
+  /// ReductionList contains the reduction variables
+  /// as well as a single EXIT (from the block) value and the kind of
+  /// reduction variable..
+  /// Notice that the EXIT instruction can also be the PHI itself.
+  typedef DenseMap<PHINode*, ReductionPair> ReductionList;
 
   /// Returns the maximum vectorization factor that we *can* use to vectorize
   /// this loop. This does not mean that it is profitable to vectorize this
   /// loop, only that it is legal to do so. This may be a large number. We
   /// can vectorize to any SIMD width below this number.
   unsigned getLoopMaxVF();
+
+  /// Returns the Induction variable.
+  PHINode *getInduction() {return Induction;}
+
+  /// Returns the reduction variables found in the loop.
+  ReductionList *getReductionVars() { return &Reductions; }
 
 private:
   /// Check if a single basic block loop is vectorizable.
@@ -164,12 +210,32 @@ private:
   // Example: Alloca, Global, NoAlias.
   bool isIdentifiedSafeObject(Value* Val);
 
+  /// Returns True, if 'Phi' is the kind of reduction variable for type
+  /// 'Kind'. If this is a reduction variable, it adds it to ReductionList.
+  bool AddReductionVar(PHINode *Phi, ReductionKind Kind);
+  /// Checks if a constant matches the reduction kind.
+  /// Sums starts with zero. Products start at one.
+  bool isReductionConstant(Value *V, ReductionKind Kind);
+  /// Returns true if the instruction I can be a reduction variable of type
+  /// 'Kind'.
+  bool isReductionInstr(Instruction *I, ReductionKind Kind);
+
   /// The loop that we evaluate.
   Loop *TheLoop;
   /// Scev analysis.
   ScalarEvolution *SE;
   /// DataLayout analysis.
   DataLayout *DL;
+
+  //  ---  vectorization state --- //
+
+  /// Holds the induction variable.
+  PHINode *Induction;
+  /// Holds the reduction variables.
+  ReductionList Reductions;
+  /// Allowed outside users. This holds the reduction
+  /// vars which can be accessed from outside the loop.
+  SmallPtrSet<Value*, 4> AllowedExit;
 };
 
 struct LoopVectorize : public LoopPass {
@@ -184,6 +250,7 @@ struct LoopVectorize : public LoopPass {
   LoopInfo *LI;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
+
     // Only vectorize innermost loops.
     if (!L->empty())
       return false;
@@ -209,7 +276,7 @@ struct LoopVectorize : public LoopPass {
 
     // If we decided that is is *legal* to vectorizer the loop. Do it.
     SingleBlockLoopVectorizer LB(L, SE, LI, &LPM, DefaultVectorizationFactor);
-    LB.vectorize();
+    LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
     return true;
@@ -218,6 +285,7 @@ struct LoopVectorize : public LoopPass {
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     LoopPass::getAnalysisUsage(AU);
     AU.addRequiredID(LoopSimplifyID);
+    AU.addRequiredID(LCSSAID);
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
   }
@@ -237,10 +305,10 @@ Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
   Value *Zeros = ConstantAggregateZero::get(VectorType::get(I32, VF));
   Value *UndefVal = UndefValue::get(VTy);
   // Insert the value into a new vector.
-  Value *SingleElem = Builder.CreateInsertElement(UndefVal, V, Zero);
+  Value *SingleElem = Builder->CreateInsertElement(UndefVal, V, Zero);
   // Broadcast the scalar into all locations in the vector.
-  Value *Shuf = Builder.CreateShuffleVector(SingleElem, UndefVal, Zeros,
-                                            "broadcast");
+  Value *Shuf = Builder->CreateShuffleVector(SingleElem, UndefVal, Zeros,
+                                             "broadcast");
   // We are accessing the induction variable. Make sure to promote the
   // index for each consecutive SIMD lane. This adds 0,1,2 ... to all lanes.
   if (V == Induction)
@@ -265,7 +333,7 @@ Value *SingleBlockLoopVectorizer::getConsecutiveVector(Value* Val) {
   // Add the consecutive indices to the vector value.
   Constant *Cv = ConstantVector::get(Indices);
   assert(Cv->getType() == Val->getType() && "Invalid consecutive vec");
-  return Builder.CreateAdd(Val, Cv, "induction");
+  return Builder->CreateAdd(Val, Cv, "induction");
 }
 
 
@@ -297,15 +365,27 @@ bool SingleBlockLoopVectorizer::isConsecutiveGep(GetElementPtrInst *Gep) {
 }
 
 Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
+  assert(!V->getType()->isVectorTy() && "Can't widen a vector");
   // If we saved a vectorized copy of V, use it.
   ValueMap::iterator it = WidenMap.find(V);
   if (it != WidenMap.end())
-    return it->second;
+     return it->second;
 
   // Broadcast V and save the value for future uses.
   Value *B = getBroadcastInstrs(V);
   WidenMap[V] = B;
   return B;
+}
+
+Constant*
+SingleBlockLoopVectorizer::getUniformVector(unsigned Val, Type* ScalarTy) {
+  SmallVector<Constant*, 8> Indices;
+  // Create a vector of consecutive numbers from zero to VF.
+  for (unsigned i = 0; i < VF; ++i)
+    Indices.push_back(ConstantInt::get(ScalarTy, Val));
+
+  // Add the consecutive indices to the vector value.
+  return ConstantVector::get(Indices);
 }
 
 void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
@@ -360,18 +440,18 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
       Value *Op = Params[op];
       // Param is a vector. Need to extract the right lane.
       if (Op->getType()->isVectorTy())
-        Op = Builder.CreateExtractElement(Op, Builder.getInt32(i));
+        Op = Builder->CreateExtractElement(Op, Builder->getInt32(i));
       Cloned->setOperand(op, Op);
     }
 
     // Place the cloned scalar in the new loop.
-    Builder.Insert(Cloned);
+    Builder->Insert(Cloned);
 
     // If the original scalar returns a value we need to place it in a vector
     // so that future users will be able to use it.
     if (!IsVoidRetTy)
-      VecResults = Builder.CreateInsertElement(VecResults, Cloned,
-                                               Builder.getInt32(i));
+      VecResults = Builder->CreateInsertElement(VecResults, Cloned,
+                                               Builder->getInt32(i));
   }
 
   if (!IsVoidRetTy)
@@ -417,16 +497,15 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   assert(BypassBlock && "Invalid loop structure");
 
   BasicBlock *VectorPH =
-    BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
   BasicBlock *VecBody = VectorPH->splitBasicBlock(VectorPH->getTerminator(),
-                                                  "vector.body");
+                                                 "vector.body");
 
   BasicBlock *MiddleBlock = VecBody->splitBasicBlock(VecBody->getTerminator(),
-                                                     "middle.block");
+                                                  "middle.block");
   BasicBlock *ScalarPH =
-    MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
-                                 "scalar.preheader");
-
+          MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
+                                       "scalar.preheader");
   // Find the induction variable.
   BasicBlock *OldBasicBlock = Orig->getHeader();
   OldInduction = dyn_cast<PHINode>(OldBasicBlock->begin());
@@ -435,10 +514,11 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
-  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder = new IRBuilder<>(VecBody);
+  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Generate the induction variable.
-  Induction = Builder.CreatePHI(IdxTy, 2, "index");
+  Induction = Builder->CreatePHI(IdxTy, 2, "index");
   Constant *Zero = ConstantInt::get(IdxTy, 0);
   Constant *Step = ConstantInt::get(IdxTy, VF);
 
@@ -489,12 +569,12 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   MiddleBlock->getTerminator()->eraseFromParent();
 
   // Create i+1 and fill the PHINode.
-  Value *NextIdx = Builder.CreateAdd(Induction, Step, "index.next");
+  Value *NextIdx = Builder->CreateAdd(Induction, Step, "index.next");
   Induction->addIncoming(Zero, VectorPH);
   Induction->addIncoming(NextIdx, VecBody);
   // Create the compare.
-  Value *ICmp = Builder.CreateICmpEQ(NextIdx, CountRoundDown);
-  Builder.CreateCondBr(ICmp, MiddleBlock, VecBody);
+  Value *ICmp = Builder->CreateICmpEQ(NextIdx, CountRoundDown);
+  Builder->CreateCondBr(ICmp, MiddleBlock, VecBody);
 
   // Now we have two terminators. Remove the old one from the block.
   VecBody->getTerminator()->eraseFromParent();
@@ -504,7 +584,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
   OldInduction->setIncomingValue(BlockIdx, CountRoundDown);
 
   // Get ready to start creating new instructions into the vectorized body.
-  Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
+  Builder->SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Register the new loop.
   Loop* Lp = new Loop();
@@ -518,22 +598,52 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
     ParentLoop->addBasicBlockToLoop(VectorPH, LI->getBase());
     ParentLoop->addBasicBlockToLoop(MiddleBlock, LI->getBase());
   }
+
+  // Save the state.
+  LoopMiddleBlock = MiddleBlock;
+  LoopExitBlock = ExitBlock;
+  LoopVectorBody = VecBody;
+  LoopScalarBody = OldBasicBlock;
+  LoopBypassBlock = BypassBlock;
 }
 
-void SingleBlockLoopVectorizer::vectorizeLoop() {
+void
+SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
+  typedef SmallVector<PHINode*, 4> PhiVector;
   BasicBlock &BB = *Orig->getHeader();
+
+  // In order to support reduction variables we need to be able to vectorize
+  // Phi nodes. Phi nodes have cycles, so we need to vectorize them in two
+  // steages. First, we create a new vector PHI node with no incoming edges.
+  // We use this value when we vectorize all of the instructions that use the
+  // PHI. Next, after all of the instructions in the block are complete we
+  // add the new incoming edges to the PHI. At this point all of the
+  // instructions in the basic block are vectorized, so we can use them to
+  // construct the PHI.
+  PhiVector PHIsToFix;
 
   // For each instruction in the old loop.
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
     Instruction *Inst = it;
 
     switch (Inst->getOpcode()) {
-      case Instruction::PHI:
       case Instruction::Br:
         // Nothing to do for PHIs and BR, since we already took care of the
         // loop control flow instructions.
         continue;
-
+      case Instruction::PHI:{
+        PHINode* P = cast<PHINode>(Inst);
+        // Special handling for the induction var.
+        if (OldInduction == Inst)
+          continue;
+        // This is phase I of vectorizing PHIs.
+        // This has to be a reduction variable.
+        assert(Legal->getReductionVars()->count(P) && "Not a Reduction");
+        Type *VecTy = VectorType::get(Inst->getType(), VF);
+        WidenMap[Inst] = Builder->CreatePHI(VecTy, 2, "vec.phi");
+        PHIsToFix.push_back(P);
+        continue;
+      }
       case Instruction::Add:
       case Instruction::FAdd:
       case Instruction::Sub:
@@ -557,15 +667,17 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         // Use this vector value for all users of the original instruction.
-        WidenMap[Inst] = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
+        WidenMap[Inst] = Builder->CreateBinOp(BinOp->getOpcode(), A, B);
         break;
       }
       case Instruction::Select: {
         // Widen selects.
+        // TODO: If the selector is loop invariant we can issue a select
+        // instruction with a scalar condition.
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         Value *C = getVectorValue(Inst->getOperand(2));
-        WidenMap[Inst] = Builder.CreateSelect(A, B, C);
+        WidenMap[Inst] = Builder->CreateSelect(A, B, C);
         break;
       }
 
@@ -577,9 +689,9 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
         if (FCmp)
-          WidenMap[Inst] = Builder.CreateFCmp(Cmp->getPredicate(), A, B);
+          WidenMap[Inst] = Builder->CreateFCmp(Cmp->getPredicate(), A, B);
         else
-          WidenMap[Inst] = Builder.CreateICmp(Cmp->getPredicate(), A, B);
+          WidenMap[Inst] = Builder->CreateICmp(Cmp->getPredicate(), A, B);
         break;
       }
 
@@ -600,10 +712,10 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         unsigned NumOperands = Gep->getNumOperands();
         Gep2->setOperand(NumOperands - 1, Induction);
-        Ptr = Builder.Insert(Gep2);
-        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
+        Ptr = Builder->Insert(Gep2);
+        Ptr = Builder->CreateBitCast(Ptr, StTy->getPointerTo());
         Value *Val = getVectorValue(SI->getValueOperand());
-        Builder.CreateStore(Val, Ptr)->setAlignment(Alignment);
+        Builder->CreateStore(Val, Ptr)->setAlignment(Alignment);
         break;
       }
       case Instruction::Load: {
@@ -624,9 +736,9 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         unsigned NumOperands = Gep->getNumOperands();
         Gep2->setOperand(NumOperands - 1, Induction);
-        Ptr = Builder.Insert(Gep2);
-        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
-        LI = Builder.CreateLoad(Ptr);
+        Ptr = Builder->Insert(Gep2);
+        Ptr = Builder->CreateBitCast(Ptr, RetTy->getPointerTo());
+        LI = Builder->CreateLoad(Ptr);
         LI->setAlignment(Alignment);
         // Use this vector value for all users of the load.
         WidenMap[Inst] = LI;
@@ -648,7 +760,7 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         CastInst *CI = dyn_cast<CastInst>(Inst);
         Value *A = getVectorValue(Inst->getOperand(0));
         Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
-        WidenMap[Inst] = Builder.CreateCast(CI->getOpcode(), A, DestTy);
+        WidenMap[Inst] = Builder->CreateCast(CI->getOpcode(), A, DestTy);
         break;
       }
 
@@ -658,6 +770,102 @@ void SingleBlockLoopVectorizer::vectorizeLoop() {
         break;
     }// end of switch.
   }// end of for_each instr.
+
+  // At this point every instruction in the original loop is widended to
+  // a vector form. We are almost done. Now, we need to fix the PHI nodes
+  // that we vectorized. The PHI nodes are currently empty because we did
+  // not want to introduce cycles. Notice that the remaining PHI nodes
+  // that we need to fix are reduction variables.
+
+  // Create the 'reduced' values for each of the induction vars.
+  // The reduced values are the vector values that we scalarize and combine
+  // after the loop is finished.
+  for (PhiVector::iterator it = PHIsToFix.begin(), e = PHIsToFix.end();
+       it != e; ++it) {
+    PHINode *RdxPhi = *it;
+    PHINode *VecRdxPhi = dyn_cast<PHINode>(WidenMap[RdxPhi]);
+    assert(RdxPhi && "Unable to recover vectorized PHI");
+
+    // Find the reduction variable.
+    assert(Legal->getReductionVars()->count(RdxPhi) &&
+           "Unable to find the reduction variable");
+    LoopVectorizationLegality::ReductionPair ReductionVar =
+      (*Legal->getReductionVars())[RdxPhi];
+
+    // This is the vector-clone of the value that leaves the loop.
+    Value *VectorExit = getVectorValue(ReductionVar.first);
+    Type *VecTy = VectorExit->getType();
+
+    // This is the kind of reduction.
+    LoopVectorizationLegality::ReductionKind RdxKind = ReductionVar.second;
+    // Find the reduction identity variable.
+    // Zero for addition. One for Multiplication.
+    unsigned IdentitySclr =
+      (RdxKind == LoopVectorizationLegality::IntegerAdd ? 0 : 1);
+    Constant *Identity = getUniformVector(IdentitySclr, VecTy->getScalarType());
+
+    // Fix the vector-loop phi.
+    // We created the induction variable so we know that the
+    // preheader is the first entry.
+    BasicBlock *VecPreheader = Induction->getIncomingBlock(0);
+    VecRdxPhi->addIncoming(Identity, VecPreheader);
+    unsigned SelfEdgeIdx = (RdxPhi)->getBasicBlockIndex(LoopScalarBody);
+    Value *Val = getVectorValue(RdxPhi->getIncomingValue(SelfEdgeIdx));
+    VecRdxPhi->addIncoming(Val, LoopVectorBody);
+
+    // Before each round, move the insertion point right between
+    // the PHIs and the values we are going to write.
+    // This allows us to write both PHINodes and the extractelement
+    // instructions.
+    Builder->SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
+
+    // This PHINode contains the vectorized reduction variable, or
+    // the identity vector, if we bypass the vector loop.
+    PHINode *NewPhi = Builder->CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
+    NewPhi->addIncoming(Identity, LoopBypassBlock);
+    NewPhi->addIncoming(getVectorValue(ReductionVar.first), LoopVectorBody);
+
+    // Extract the first scalar.
+    Value *Scalar0 =
+      Builder->CreateExtractElement(NewPhi, Builder->getInt32(0));
+    // Extract and sum the remaining vector elements.
+    for (unsigned i=1; i < VF; ++i) {
+      Value *Scalar1 =
+        Builder->CreateExtractElement(NewPhi, Builder->getInt32(i));
+      if (RdxKind == LoopVectorizationLegality::IntegerAdd) {
+        Scalar0 = Builder->CreateAdd(Scalar0, Scalar1);
+      } else {
+        Scalar0 = Builder->CreateMul(Scalar0, Scalar1);
+      }
+    }
+
+    // Now, we need to fix the users of the reduction variable
+    // inside and outside of the scalar remainder loop.
+    // We know that the loop is in LCSSA form. We need to update the
+    // PHI nodes in the exit blocks.
+    for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
+         LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
+      PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
+      if (!LCSSAPhi) continue;
+
+      // All PHINodes need to have a single entry edge, or two if we already fixed them.
+      assert(LCSSAPhi->getNumIncomingValues() < 3 && "Invalid LCSSA PHI");
+
+      // We found our reduction value exit-PHI. Update it with the incoming bypass edge.
+      if (LCSSAPhi->getIncomingValue(0) == ReductionVar.first) {
+        // Add an edge coming from the bypass.
+        LCSSAPhi->addIncoming(Scalar0, LoopMiddleBlock);
+        break;
+      }
+    }// end of the LCSSA phi scan.
+
+    // Fix the scalar loop reduction variable with the incoming reduction sum
+    // from the vector body and from the backedge value.
+    int IncomingEdgeBlockIdx = (RdxPhi)->getBasicBlockIndex(LoopScalarBody);
+    int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1); // The other block.
+    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, Scalar0);
+    (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, ReductionVar.first);
+  }// end of for each redux variable.
 }
 
 void SingleBlockLoopVectorizer::cleanup() {
@@ -710,31 +918,35 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
   ValueVector Reads;
   ValueVector Writes;
 
-  SmallPtrSet<Value*, 16> AnalyzedPtrs;
-  unsigned NumPhis = 0;
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
     Instruction *I = it;
 
     PHINode *Phi = dyn_cast<PHINode>(I);
     if (Phi) {
-      NumPhis++;
-      // We only look at integer phi nodes.
-      if (!Phi->getType()->isIntegerTy()) {
-        DEBUG(dbgs() << "LV: Found an non-int PHI.\n");
-        return false;
-      }
-
-      // If we found an induction variable.
-      if (NumPhis > 1) {
-        DEBUG(dbgs() << "LV: Found more than one PHI.\n");
-        return false;
-      }
-
       // This should not happen because the loop should be normalized.
       if (Phi->getNumIncomingValues() != 2) {
         DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
         return false;
       }
+      // We only look at integer phi nodes.
+      if (!Phi->getType()->isIntegerTy()) {
+        DEBUG(dbgs() << "LV: Found an non-int PHI.\n");
+        return false;
+      }
+      if (AddReductionVar(Phi, IntegerAdd)) {
+        DEBUG(dbgs() << "LV: Found an ADD reduction PHI."<< *Phi <<"\n");
+        continue;
+      }
+      if (AddReductionVar(Phi, IntegerMult)) {
+        DEBUG(dbgs() << "LV: Found an Mult reduction PHI."<< *Phi <<"\n");
+        continue;
+      }
+      if (Induction) {
+        DEBUG(dbgs() << "LV: Found too many PHIs.\n");
+        return false;
+      }
+      // Found the induction variable.
+      Induction = Phi;
 
       // Check that the PHI is consecutive and starts at zero.
       const SCEV *PhiScev = SE->getSCEV(Phi);
@@ -751,7 +963,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: PHI does not start at zero or steps by one.\n");
         return false;
       }
-    }
+    }// end of PHI handling
 
     // If this is a load, record its pointer. If it is not a load, abort.
     // Notice that we don't handle function calls that read or write.
@@ -764,8 +976,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       }
 
       Value* Ptr = Ld->getPointerOperand();
-      if (AnalyzedPtrs.insert(Ptr))
-        GetUnderlyingObjects(Ptr, Reads, DL);
+      GetUnderlyingObjects(Ptr, Reads, DL);
     }
 
     // Record store pointers. Abort on all other instructions that write to
@@ -779,8 +990,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       }
 
       Value* Ptr = St->getPointerOperand();
-      if (AnalyzedPtrs.insert(Ptr))
-        GetUnderlyingObjects(St->getPointerOperand(), Writes, DL);
+      GetUnderlyingObjects(Ptr, Writes, DL);
     }
 
     // We still don't handle functions.
@@ -797,21 +1007,26 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       DEBUG(dbgs() << "LV: Found unvectorizable type." << "\n");
       return false;
     }
-    //Check that all of the users of the loop are inside the BB.
-    for (Value::use_iterator it = I->use_begin(), e = I->use_end();
-         it != e; ++it) {
-      Instruction *U = cast<Instruction>(*it);
-      BasicBlock *Parent = U->getParent();
-      if (Parent != &BB) {
-        DEBUG(dbgs() << "LV: Found an outside user for : "<< *U << "\n");
-        return false;
-      }
+
+    // Reduction instructions are allowed to have exit users.
+    // All other instructions must not have external users.
+    if (!AllowedExit.count(I))
+      //Check that all of the users of the loop are inside the BB.
+      for (Value::use_iterator it = I->use_begin(), e = I->use_end();
+           it != e; ++it) {
+        Instruction *U = cast<Instruction>(*it);
+        // This user may be a reduction exit value.
+        BasicBlock *Parent = U->getParent();
+        if (Parent != &BB) {
+          DEBUG(dbgs() << "LV: Found an outside user for : "<< *U << "\n");
+          return false;
+        }
     }
   } // next instr.
 
-  if (NumPhis != 1) {
-    DEBUG(dbgs() << "LV: Did not find a Phi node.\n");
-    return false;
+  if (!Induction) {
+      DEBUG(dbgs() << "LV: Did not find an induction var.\n");
+      return false;
   }
 
   // Check that the underlying objects of the reads and writes are either
@@ -866,6 +1081,110 @@ bool LoopVectorizationLegality::isIdentifiedSafeObject(Value* Val) {
   return A->hasNoAliasAttr();
 }
 
+bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
+                                                    ReductionKind Kind) {
+  if (Phi->getNumIncomingValues() != 2)
+    return false;
+
+  // Find the possible incoming reduction variable.
+  BasicBlock *BB = Phi->getParent();
+  int SelfEdgeIdx = Phi->getBasicBlockIndex(BB);
+  int InEdgeBlockIdx = (SelfEdgeIdx ? 0 : 1); // The other entry.
+  Value *RdxStart = Phi->getIncomingValue(InEdgeBlockIdx);
+
+  // We must have a constant that starts the reduction.
+  if (!isReductionConstant(RdxStart, Kind))
+    return false;
+
+  // ExitInstruction is the single value which is used outside the loop.
+  // We only allow for a single reduction value to be used outside the loop.
+  // This includes users of the reduction, variables (which form a cycle
+  // which ends in the phi node).
+  Instruction *ExitInstruction = 0;
+
+  // Iter is our iterator. We start with the PHI node and scan for all of the
+  // users of this instruction. All users must be instructions which can be
+  // used as reduction variables (such as ADD). We may have a single
+  // out-of-block user. They cycle must end with the original PHI.
+  // Also, we can't have multiple block-local users.
+  Instruction *Iter = Phi;
+  while (true) {
+    // Any reduction instr must be of one of the allowed kinds.
+    if (!isReductionInstr(Iter, Kind))
+      return false;
+
+    // Did we found a user inside this block ?
+    bool FoundInBlockUser = false;
+    // Did we reach the initial PHI node ?
+    bool FoundStartPHI = false;
+    // For each of the *users* of iter.
+    for (Value::use_iterator it = Iter->use_begin(), e = Iter->use_end();
+         it != e; ++it) {
+      Instruction *U = cast<Instruction>(*it);
+      // We already know that the PHI is a user.
+      if (U == Phi) {
+        FoundStartPHI = true;
+        continue;
+      }
+      // Check if we found the exit user.
+      BasicBlock *Parent = U->getParent();
+      if (Parent != BB) {
+        // We must have a single exit instruction.
+        if (ExitInstruction != 0)
+          return false;
+        ExitInstruction = Iter;
+      }
+      // We can't have multiple inside users.
+      if (FoundInBlockUser)
+        return false;
+      FoundInBlockUser = true;
+      Iter = U;
+    }
+
+    // We found a reduction var if we have reached the original
+    // phi node and we only have a single instruction with out-of-loop
+    // users.
+   if (FoundStartPHI && ExitInstruction) {
+     // This instruction is allowed to have out-of-loop users.
+     AllowedExit.insert(ExitInstruction);
+     // Mark this as a reduction var.
+     Reductions[Phi] = std::make_pair(ExitInstruction, Kind);
+     return true;
+   }
+  }
+}
+
+bool
+LoopVectorizationLegality::isReductionConstant(Value *V, ReductionKind Kind) {
+  ConstantInt *CI = dyn_cast<ConstantInt>(V);
+  if (!CI)
+    return false;
+  if (Kind == IntegerMult && CI->isOne())
+    return true;
+  if (Kind == IntegerAdd && CI->isZero())
+    return true;
+  return false;
+}
+
+bool
+LoopVectorizationLegality::isReductionInstr(Instruction *I,
+                                            ReductionKind Kind) {
+    switch (I->getOpcode()) {
+    default:
+      return false;
+    case Instruction::PHI:
+      // possibly.
+      return true;
+    case Instruction::Add:
+    case Instruction::Sub:
+      return Kind == IntegerAdd;
+    case Instruction::Mul:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+      return Kind == IntegerMult;
+    }
+}
+
 } // namespace
 
 char LoopVectorize::ID = 0;
@@ -880,6 +1199,5 @@ namespace llvm {
   Pass *createLoopVectorizePass() {
     return new LoopVectorize();
   }
-
 }
 
