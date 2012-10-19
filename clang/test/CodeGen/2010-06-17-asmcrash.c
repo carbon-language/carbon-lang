@@ -1,6 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | llc -mtriple=x86_64-apple-darwin | FileCheck %s
-// XFAIL: *
-// XTARGET: x86,i386,i686
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -O1 -S -o - %s | FileCheck %s
 
 typedef long long int64_t;
 typedef unsigned char uint8_t;

@@ -1,6 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s  -o /dev/null
-// XFAIL: *
-// XTARGET: arm, i386, i686, x86_64
+// RUN: %clang_cc1 -triple armv7-unknown-unknown %s  -o /dev/null
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s  -o /dev/null
 
 int foo() {
 #ifdef __arm__
