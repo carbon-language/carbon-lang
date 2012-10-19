@@ -1148,6 +1148,10 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
     }
   }
 
+  // We are done. Remove the old unused alloca instructions.
+  for (size_t i = 0, n = AllocaVec.size(); i < n; i++)
+    AllocaVec[i]->eraseFromParent();
+
   if (ClDebugStack) {
     DEBUG(dbgs() << F);
   }

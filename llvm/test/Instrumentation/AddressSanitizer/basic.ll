@@ -69,3 +69,23 @@ entry:
   store i32 42, i32* %a
   ret void
 }
+
+; Check that asan leaves just one alloca.
+
+declare void @alloca_test_use([10 x i8]*)
+define void @alloca_test() address_safety {
+entry:
+  %x = alloca [10 x i8], align 1
+  %y = alloca [10 x i8], align 1
+  %z = alloca [10 x i8], align 1
+  call void @alloca_test_use([10 x i8]* %x)
+  call void @alloca_test_use([10 x i8]* %y)
+  call void @alloca_test_use([10 x i8]* %z)
+  ret void
+}
+
+; CHECK: define void @alloca_test()
+; CHECK: = alloca
+; CHECK-NOT: = alloca
+; CHECK: ret void
+
