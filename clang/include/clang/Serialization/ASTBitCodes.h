@@ -221,7 +221,13 @@ namespace clang {
       /// \brief The control block, which contains all of the
       /// information that needs to be validated prior to committing
       /// to loading the AST file.
-      CONTROL_BLOCK_ID
+      CONTROL_BLOCK_ID,
+
+      /// \brief The block of input files, which were used as inputs
+      /// to create this AST file.
+      ///
+      /// This block is part of the control block.
+      INPUT_FILES_BLOCK_ID
     };
 
     /// \brief Record types that occur within the control block.
@@ -252,6 +258,13 @@ namespace clang {
       
       /// \brief The directory that the PCH was originally created in.
       ORIGINAL_PCH_DIR = 6
+    };
+
+    /// \brief Record types that occur within the input-files block
+    /// inside the control block.
+    enum InputFileRecordTypes {
+      /// \brief An input file.
+      INPUT_FILE = 1
     };
 
     /// \brief Record types that occur within the AST block itself.
@@ -439,61 +452,57 @@ namespace clang {
       /// \brief The list of delegating constructor declarations.
       DELEGATING_CTORS = 37,
 
-      /// \brief Record code for the table of offsets into the block
-      /// of file source-location information.
-      FILE_SOURCE_LOCATION_OFFSETS = 38,
-      
       /// \brief Record code for the set of known namespaces, which are used
       /// for typo correction.
-      KNOWN_NAMESPACES = 39,
+      KNOWN_NAMESPACES = 38,
 
       /// \brief Record code for the remapping information used to relate
       /// loaded modules to the various offsets and IDs(e.g., source location 
       /// offests, declaration and type IDs) that are used in that module to
       /// refer to other modules.
-      MODULE_OFFSET_MAP = 40,
+      MODULE_OFFSET_MAP = 39,
 
       /// \brief Record code for the source manager line table information,
       /// which stores information about \#line directives.
-      SOURCE_MANAGER_LINE_TABLE = 41,
+      SOURCE_MANAGER_LINE_TABLE = 40,
 
       /// \brief Record code for map of Objective-C class definition IDs to the 
       /// ObjC categories in a module that are attached to that class.
-      OBJC_CATEGORIES_MAP = 42,
+      OBJC_CATEGORIES_MAP = 41,
 
       /// \brief Record code for a file sorted array of DeclIDs in a module.
-      FILE_SORTED_DECLS = 43,
+      FILE_SORTED_DECLS = 42,
       
       /// \brief Record code for an array of all of the (sub)modules that were
       /// imported by the AST file.
-      IMPORTED_MODULES = 44,
+      IMPORTED_MODULES = 43,
       
       /// \brief Record code for the set of merged declarations in an AST file.
-      MERGED_DECLARATIONS = 45,
+      MERGED_DECLARATIONS = 44,
       
       /// \brief Record code for the array of redeclaration chains.
       ///
       /// This array can only be interpreted properly using the local 
       /// redeclarations map.
-      LOCAL_REDECLARATIONS = 46,
+      LOCAL_REDECLARATIONS = 45,
       
       /// \brief Record code for the array of Objective-C categories (including
       /// extensions).
       ///
       /// This array can only be interpreted properly using the Objective-C
       /// categories map.
-      OBJC_CATEGORIES = 47,
+      OBJC_CATEGORIES = 46,
 
       /// \brief Record code for the table of offsets of each macro ID.
       ///
       /// The offset table contains offsets into the blob stored in
       /// the preprocessor block. Each offset points to the corresponding
       /// macro definition.
-      MACRO_OFFSET = 48,
+      MACRO_OFFSET = 47,
 
       /// \brief Record of updates for a macro that was modified after
       /// being deserialized.
-      MACRO_UPDATES = 49
+      MACRO_UPDATES = 48
     };
 
     /// \brief Record types used within a source manager block.

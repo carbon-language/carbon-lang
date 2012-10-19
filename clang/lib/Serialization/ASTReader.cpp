@@ -1772,9 +1772,28 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
     }
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      Stream.ReadSubBlockID();
-      if (!Stream.SkipBlock())
+      switch (Stream.ReadSubBlockID()) {
+      case INPUT_FILES_BLOCK_ID:
+        switch (ReadInputFilesBlock(F)) {
+        case Success:
+          break;
+          
+        case Failure:
+          return Failure;
+          
+        case IgnorePCH:
+          // FIXME: We could consider reading through to the end of this
+          // AST block, skipping subblocks, to see if there are other
+          // AST blocks elsewhere.
+          return IgnorePCH;
+        }
         continue;
+        
+      default:
+        if (!Stream.SkipBlock())
+          continue;
+        break;
+      }
 
       Error("malformed block record in AST file");
       return Failure;
@@ -1875,6 +1894,117 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
     case ORIGINAL_PCH_DIR:
       F.OriginalDir.assign(BlobStart, BlobLen);
       break;
+    }
+  }
+
+  Error("premature end of bitstream in AST file");
+  return Failure;
+}
+
+ASTReader::ASTReadResult ASTReader::ReadInputFilesBlock(ModuleFile &F) {
+  llvm::BitstreamCursor &Stream = F.Stream;
+
+  // If we're not doing any validation, there's no reason to read this
+  // input-files block.
+  if (DisableValidation) {
+    return Stream.SkipBlock()? Failure : Success;
+  }
+
+  if (Stream.EnterSubBlock(INPUT_FILES_BLOCK_ID)) {
+    Error("malformed block record in AST file");
+    return Failure;
+  }
+
+ // Read all of the records and blocks for the AST file.
+  RecordData Record;
+  while (!Stream.AtEndOfStream()) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd()) {
+        Error("error at end of module block in AST file");
+        return Failure;
+      }
+
+      DeclContext *DC = Context.getTranslationUnitDecl();
+      if (!DC->hasExternalVisibleStorage() && DC->hasExternalLexicalStorage())
+        DC->setMustBuildLookupTable();
+
+      return Success;
+    }
+
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      Stream.ReadSubBlockID();
+      if (!Stream.SkipBlock())
+        continue;
+      Error("malformed block record in AST file");
+      return Failure;
+    }
+
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read and process a record.
+    Record.clear();
+    const char *BlobStart = 0;
+    unsigned BlobLen = 0;
+    switch ((InputFileRecordTypes)Stream.ReadRecord(Code, Record,
+                                                    &BlobStart, &BlobLen)) {
+    case INPUT_FILE: {
+      // Check that the file exists.
+      StringRef Filename(BlobStart, BlobLen);
+      const FileEntry *File = getFileEntry(Filename);
+      if (File == 0) {
+        std::string ErrorStr = "could not find file '";
+        ErrorStr += Filename;
+        ErrorStr += "' referenced by AST file";
+        Error(ErrorStr.c_str());
+        return IgnorePCH;
+      }
+
+      off_t StoredSize = (off_t)Record[0];
+      time_t StoredTime = (time_t)Record[1];
+
+      // Check if there was a request to override the contents of the file
+      // that was part of the precompiled header. Overridding such a file
+      // can lead to problems when lexing using the source locations from the
+      // PCH.
+      SourceManager &SM = getSourceManager();
+      if (SM.isFileOverridden(File)) {
+        Error(diag::err_fe_pch_file_overridden, Filename);
+        // After emitting the diagnostic, recover by disabling the override so
+        // that the original file will be used.
+        SM.disableFileContentsOverride(File);
+        // The FileEntry is a virtual file entry with the size of the contents
+        // that would override the original contents. Set it to the original's
+        // size/time.
+        FileMgr.modifyFileEntry(const_cast<FileEntry*>(File),
+                                StoredSize, StoredTime);
+      }
+
+      // The stat info from the FileEntry came from the cached stat
+      // info of the PCH, so we cannot trust it.
+      struct stat StatBuf;
+      if (::stat(File->getName(), &StatBuf) != 0) {
+        StatBuf.st_size = File->getSize();
+        StatBuf.st_mtime = File->getModificationTime();
+      }
+
+      if ((StoredSize != StatBuf.st_size
+#if !defined(LLVM_ON_WIN32)
+          // In our regression testing, the Windows file system seems to
+          // have inconsistent modification times that sometimes
+          // erroneously trigger this error-handling path.
+           || StoredTime != StatBuf.st_mtime
+#endif
+          )) {
+        Error(diag::err_fe_pch_file_modified, Filename);
+        return IgnorePCH;
+      }
+
+      break;
+    }
     }
   }
 
@@ -2356,11 +2486,6 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         return Failure;
       break;
 
-    case FILE_SOURCE_LOCATION_OFFSETS:
-      F.SLocFileOffsets = (const uint32_t *)BlobStart;
-      F.LocalNumSLocFileEntries = Record[0];
-      break;
-
     case SOURCE_LOCATION_PRELOADS: {
       // Need to transform from the local view (1-based IDs) to the global view,
       // which is based off F.SLocEntryBaseID.
@@ -2665,96 +2790,6 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
   return Failure;
 }
 
-ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
-  llvm::BitstreamCursor &SLocEntryCursor = M.SLocEntryCursor;
-
-  for (unsigned i = 0, e = M.LocalNumSLocFileEntries; i != e; ++i) {
-    SLocEntryCursor.JumpToBit(M.SLocFileOffsets[i]);
-    unsigned Code = SLocEntryCursor.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK ||
-        Code == llvm::bitc::ENTER_SUBBLOCK ||
-        Code == llvm::bitc::DEFINE_ABBREV) {
-      Error("incorrectly-formatted source location entry in AST file");
-      return Failure;
-    }
-
-    RecordData Record;
-    const char *BlobStart;
-    unsigned BlobLen;
-    switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
-    default:
-      Error("incorrectly-formatted source location entry in AST file");
-      return Failure;
-
-    case SM_SLOC_FILE_ENTRY: {
-      // If the buffer was overridden, the file need not exist.
-      if (Record[6])
-        break;
-      
-      StringRef Filename(BlobStart, BlobLen);
-      const FileEntry *File = getFileEntry(Filename);
-
-      if (File == 0) {
-        std::string ErrorStr = "could not find file '";
-        ErrorStr += Filename;
-        ErrorStr += "' referenced by AST file";
-        Error(ErrorStr.c_str());
-        return IgnorePCH;
-      }
-
-      if (Record.size() < 7) {
-        Error("source location entry is incorrect");
-        return Failure;
-      }
-      
-      off_t StoredSize = (off_t)Record[4];
-      time_t StoredTime = (time_t)Record[5];
-
-      // Check if there was a request to override the contents of the file
-      // that was part of the precompiled header. Overridding such a file
-      // can lead to problems when lexing using the source locations from the
-      // PCH.
-      SourceManager &SM = getSourceManager();
-      if (SM.isFileOverridden(File)) {
-        Error(diag::err_fe_pch_file_overridden, Filename);
-        // After emitting the diagnostic, recover by disabling the override so
-        // that the original file will be used.
-        SM.disableFileContentsOverride(File);
-        // The FileEntry is a virtual file entry with the size of the contents
-        // that would override the original contents. Set it to the original's
-        // size/time.
-        FileMgr.modifyFileEntry(const_cast<FileEntry*>(File),
-                                StoredSize, StoredTime);
-      }
-
-      // The stat info from the FileEntry came from the cached stat
-      // info of the PCH, so we cannot trust it.
-      struct stat StatBuf;
-      if (::stat(File->getName(), &StatBuf) != 0) {
-        StatBuf.st_size = File->getSize();
-        StatBuf.st_mtime = File->getModificationTime();
-      }
-
-      if ((StoredSize != StatBuf.st_size
-#if !defined(LLVM_ON_WIN32)
-          // In our regression testing, the Windows file system seems to
-          // have inconsistent modification times that sometimes
-          // erroneously trigger this error-handling path.
-           || StoredTime != StatBuf.st_mtime
-#endif
-          )) {
-        Error(diag::err_fe_pch_file_modified, Filename);
-        return IgnorePCH;
-      }
-
-      break;
-    }
-    }
-  }
-
-  return Success;
-}
-
 void ASTReader::makeNamesVisible(const HiddenNames &Names) {
   for (unsigned I = 0, N = Names.size(); I != N; ++I) {
     switch (Names[I].getKind()) {
@@ -2917,17 +2952,6 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     TotalModulesSizeInBits += F.SizeInBits;
     GlobalBitOffsetsMap.insert(std::make_pair(F.GlobalBitOffset, &F));
     
-    // Make sure that the files this module was built against are
-    // still available.
-    // FIXME: Move this validation into ReadControlBlock.
-    if (!DisableValidation) {
-      switch(validateFileEntries(F)) {
-      case Failure: return Failure;
-      case IgnorePCH: return IgnorePCH;
-      case Success: break;
-      }
-    }
-  
     // Preload SLocEntries.
     for (unsigned I = 0, N = F.PreloadSLocEntries.size(); I != N; ++I) {
       int Index = int(F.PreloadSLocEntries[I] - 1) + F.SLocEntryBaseID;

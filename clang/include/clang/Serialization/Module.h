@@ -149,13 +149,6 @@ public:
   /// \brief SLocEntries that we're going to preload.
   SmallVector<uint64_t, 4> PreloadSLocEntries;
 
-  /// \brief The number of source location file entries in this AST file.
-  unsigned LocalNumSLocFileEntries;
-
-  /// \brief Offsets for all of the source location file entries in the
-  /// AST file.
-  const uint32_t *SLocFileOffsets;
-
   /// \brief Remapping table for source locations in this module.
   ContinuousRangeMap<uint32_t, int, 2> SLocRemap;
 

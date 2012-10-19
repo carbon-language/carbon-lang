@@ -25,7 +25,7 @@ ModuleFile::ModuleFile(ModuleKind Kind, unsigned Generation)
     Generation(Generation), SizeInBits(0),
     LocalNumSLocEntries(0), SLocEntryBaseID(0),
     SLocEntryBaseOffset(0), SLocEntryOffsets(0),
-    SLocFileOffsets(0), LocalNumIdentifiers(0),
+    LocalNumIdentifiers(0),
     IdentifierOffsets(0), BaseIdentifierID(0), IdentifierTableData(0),
     IdentifierLookupTable(0),
     LocalNumMacros(0), MacroOffsets(0),

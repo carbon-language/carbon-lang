@@ -871,6 +871,7 @@ private:
                             llvm::SmallVectorImpl<ModuleFile *> &Loaded);
   ASTReadResult ReadControlBlock(ModuleFile &F,
                                  llvm::SmallVectorImpl<ModuleFile *> &Loaded);
+  ASTReadResult ReadInputFilesBlock(ModuleFile &F);
   ASTReadResult ReadASTBlock(ModuleFile &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
@@ -1040,10 +1041,6 @@ public:
 
   /// \brief Load the AST file designated by the given file name.
   ASTReadResult ReadAST(const std::string &FileName, ModuleKind Type);
-
-  /// \brief Checks that no file that is stored in PCH is out-of-sync with
-  /// the actual file in the file system.
-  ASTReadResult validateFileEntries(ModuleFile &M);
 
   /// \brief Make the entities in the given module and any of its (non-explicit)
   /// submodules visible to name lookup.

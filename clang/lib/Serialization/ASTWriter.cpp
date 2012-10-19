@@ -813,7 +813,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(FP_PRAGMA_OPTIONS);
   RECORD(OPENCL_EXTENSIONS);
   RECORD(DELEGATING_CTORS);
-  RECORD(FILE_SOURCE_LOCATION_OFFSETS);
   RECORD(KNOWN_NAMESPACES);
   RECORD(MODULE_OFFSET_MAP);
   RECORD(SOURCE_MANAGER_LINE_TABLE);
@@ -1105,6 +1104,63 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
     Stream.EmitRecordWithBlob(AbbrevCode, Record, origDir);
   }
 
+  WriteInputFiles(Context.SourceMgr, isysroot);
+  Stream.ExitBlock();
+}
+
+void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
+  using namespace llvm;
+  Stream.EnterSubblock(INPUT_FILES_BLOCK_ID, 4);
+  RecordData Record;
+  
+  // Create input-file abbreviation.
+  BitCodeAbbrev *IFAbbrev = new BitCodeAbbrev();
+  IFAbbrev->Add(BitCodeAbbrevOp(INPUT_FILE));
+  IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 12)); // Size
+  IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 32)); // Modification time
+  IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
+  unsigned IFAbbrevCode = Stream.EmitAbbrev(IFAbbrev);
+
+  // Write out all of the input files.
+  std::vector<uint32_t> InputFileOffsets;
+  for (unsigned I = 1, N = SourceMgr.local_sloc_entry_size(); I != N; ++I) {
+    // Get this source location entry.
+    const SrcMgr::SLocEntry *SLoc = &SourceMgr.getLocalSLocEntry(I);
+    FileID FID = FileID::get(I);
+    assert(&SourceMgr.getSLocEntry(FID) == SLoc);
+
+    // We only care about file entries that were not overridden.
+    if (!SLoc->isFile())
+      continue;
+    const SrcMgr::ContentCache *Cache = SLoc->getFile().getContentCache();
+    if (!Cache->OrigEntry || Cache->BufferOverridden)
+      continue;
+
+    Record.clear();
+    Record.push_back(INPUT_FILE);
+
+    // Emit size/modification time for this file.
+    Record.push_back(Cache->OrigEntry->getSize());
+    Record.push_back(Cache->OrigEntry->getModificationTime());
+
+    // Turn the file name into an absolute path, if it isn't already.
+    const char *Filename = Cache->OrigEntry->getName();
+    SmallString<128> FilePath(Filename);
+    
+    // Ask the file manager to fixup the relative path for us. This will 
+    // honor the working directory.
+    SourceMgr.getFileManager().FixupRelativePath(FilePath);
+    
+    // FIXME: This call to make_absolute shouldn't be necessary, the
+    // call to FixupRelativePath should always return an absolute path.
+    llvm::sys::fs::make_absolute(FilePath);
+    Filename = FilePath.c_str();
+    
+    Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+
+    Stream.EmitRecordWithBlob(IFAbbrevCode, Record, Filename);
+  }  
+  
   Stream.ExitBlock();
 }
 
@@ -1442,9 +1498,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   // Write out the source location entry table. We skip the first
   // entry, which is always the same dummy entry.
   std::vector<uint32_t> SLocEntryOffsets;
-  // Write out the offsets of only source location file entries.
-  // We will go through them in ASTReader::validateFileEntries().
-  std::vector<uint32_t> SLocFileEntryOffsets;
   RecordData PreloadSLocs;
   SLocEntryOffsets.reserve(SourceMgr.local_sloc_entry_size() - 1);
   for (unsigned I = 1, N = SourceMgr.local_sloc_entry_size();
@@ -1463,7 +1516,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       const SrcMgr::ContentCache *Cache = SLoc->getFile().getContentCache();
       if (Cache->OrigEntry) {
         Code = SM_SLOC_FILE_ENTRY;
-        SLocFileEntryOffsets.push_back(Stream.GetCurrentBitNo());
       } else
         Code = SM_SLOC_BUFFER_ENTRY;
     } else
@@ -1586,18 +1638,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Record.push_back(SLocEntryOffsets.size());
   Record.push_back(SourceMgr.getNextLocalOffset() - 1); // skip dummy
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record, data(SLocEntryOffsets));
-
-  Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(FILE_SOURCE_LOCATION_OFFSETS));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // # of slocs
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // offsets
-  unsigned SLocFileOffsetsAbbrev = Stream.EmitAbbrev(Abbrev);
-
-  Record.clear();
-  Record.push_back(FILE_SOURCE_LOCATION_OFFSETS);
-  Record.push_back(SLocFileEntryOffsets.size());
-  Stream.EmitRecordWithBlob(SLocFileOffsetsAbbrev, Record,
-                            data(SLocFileEntryOffsets));
 
   // Write the source location entry preloads array, telling the AST
   // reader which source locations entries it should load eagerly.

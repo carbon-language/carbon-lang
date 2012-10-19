@@ -411,6 +411,7 @@ private:
   void WriteBlockInfoBlock();
   void WriteControlBlock(ASTContext &Context, StringRef isysroot,
                          const std::string &OutputFile);
+  void WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot);
   void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
