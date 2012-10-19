@@ -29,6 +29,9 @@ namespace llvm {
       // Jump and link (call)
       JmpLink,
 
+      // Tail call
+      TailCall,
+
       // Get the Higher 16 bits from a 32-bit immediate
       // No relation with Mips Hi register
       Hi,
