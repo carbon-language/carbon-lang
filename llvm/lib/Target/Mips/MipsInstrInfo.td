@@ -598,9 +598,10 @@ class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
      IIAlu>;
 
 // Jump
-class JumpFJ<bits<6> op, string instr_asm, SDPatternOperator operator>:
-  FJ<op, (outs), (ins jmptarget:$target), !strconcat(instr_asm, "\t$target"),
-     [(operator bb:$target)], IIBranch> {
+class JumpFJ<bits<6> op, DAGOperand opnd, string instr_asm,
+             SDPatternOperator operator, SDPatternOperator targetoperator>:
+  FJ<op, (outs), (ins opnd:$target), !strconcat(instr_asm, "\t$target"),
+     [(operator targetoperator:$target)], IIBranch> {
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
@@ -1003,7 +1004,7 @@ def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>,
 }
 
 /// Jump and Branch Instructions
-def J       : JumpFJ<0x02, "j", br>,
+def J       : JumpFJ<0x02, jmptarget, "j", br, bb>,
               Requires<[RelocStatic, HasStandardEncoding]>, IsBranch;
 def JR      : IndirectBranch<CPURegs>;
 def B       : UncondBranch<0x04, "b">;
@@ -1022,7 +1023,7 @@ def JAL  : JumpLink<0x03, "jal">;
 def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
 def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
 def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
-def TAILCALL : JumpFJ<0x02, "j", br>, IsTailCall;
+def TAILCALL : JumpFJ<0x02, calltarget, "j", MipsTailCall, imm>, IsTailCall;
 def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, IsTailCall;
 
 def RET : RetBase<CPURegs>;
@@ -1133,6 +1134,11 @@ def : MipsPat<(MipsJmpLink (i32 texternalsym:$dst)),
 //def : MipsPat<(MipsJmpLink CPURegs:$dst),
 //              (JALR CPURegs:$dst)>;
 
+// Tail call
+def : MipsPat<(MipsTailCall (iPTR tglobaladdr:$dst)),
+              (TAILCALL tglobaladdr:$dst)>;
+def : MipsPat<(MipsTailCall (iPTR texternalsym:$dst)),
+              (TAILCALL texternalsym:$dst)>;
 // hi/lo relocs
 def : MipsPat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : MipsPat<(MipsHi tblockaddress:$in), (LUi tblockaddress:$in)>;
