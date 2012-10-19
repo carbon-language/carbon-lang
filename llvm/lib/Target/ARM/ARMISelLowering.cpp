@@ -2554,7 +2554,8 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                                         DebugLoc dl, SDValue &Chain,
                                         const Value *OrigArg,
                                         unsigned OffsetFromOrigArg,
-                                        unsigned ArgOffset) const {
+                                        unsigned ArgOffset,
+                                        bool ForceMutable) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -2603,7 +2604,8 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                           &MemOps[0], MemOps.size());
   } else
     // This will point to the next argument passed via stack.
-    AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(4, ArgOffset, true));
+    AFI->setVarArgsFrameIndex(
+        MFI->CreateFixedObject(4, ArgOffset, !ForceMutable));
 }
 
 SDValue
@@ -2729,15 +2731,20 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           // Since they could be overwritten by lowering of arguments in case of
           // a tail call.
           if (Flags.isByVal()) {
-            unsigned VARegSize, VARegSaveSize;
-            computeRegArea(CCInfo, MF, VARegSize, VARegSaveSize);
-            VarArgStyleRegisters(CCInfo, DAG,
-                                 dl, Chain, CurOrigArg, Ins[VA.getValNo()].PartOffset, 0);
-            unsigned Bytes = Flags.getByValSize() - VARegSize;
-            if (Bytes == 0) Bytes = 1; // Don't create zero-sized stack objects.
-            int FI = MFI->CreateFixedObject(Bytes,
-                                            VA.getLocMemOffset(), false);
-            InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));
+            ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+            if (!AFI->getVarArgsFrameIndex()) {
+              VarArgStyleRegisters(CCInfo, DAG,
+                                   dl, Chain, CurOrigArg,
+                                   Ins[VA.getValNo()].PartOffset,
+                                   VA.getLocMemOffset(),
+                                   true /*force mutable frames*/);
+              int VAFrameIndex = AFI->getVarArgsFrameIndex();
+              InVals.push_back(DAG.getFrameIndex(VAFrameIndex, getPointerTy()));
+            } else {
+              int FI = MFI->CreateFixedObject(Flags.getByValSize(),
+                                              VA.getLocMemOffset(), false);
+              InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));              
+            }
           } else {
             int FI = MFI->CreateFixedObject(VA.getLocVT().getSizeInBits()/8,
                                             VA.getLocMemOffset(), true);

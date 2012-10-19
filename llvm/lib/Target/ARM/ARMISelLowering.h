@@ -469,7 +469,8 @@ namespace llvm {
                               DebugLoc dl, SDValue &Chain,
                               const Value *OrigArg,
                               unsigned OffsetFromOrigArg,
-                              unsigned ArgOffset)
+                              unsigned ArgOffset,
+                              bool ForceMutable = false)
       const;
 
     void computeRegArea(CCState &CCInfo, MachineFunction &MF,
