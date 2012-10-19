@@ -4739,6 +4739,19 @@ namespace {
   };
 }
 
+/// \brief Check whether any most overriden method from MD in Methods
+static bool CheckMostOverridenMethods(const CXXMethodDecl *MD,
+                   const llvm::SmallPtrSet<const CXXMethodDecl *, 8>& Methods) {
+  if (MD->size_overridden_methods() == 0)
+    return Methods.count(MD->getCanonicalDecl());
+  for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+                                      E = MD->end_overridden_methods();
+       I != E; ++I)
+    if (CheckMostOverridenMethods(*I, Methods))
+      return true;
+  return false;
+}
+
 /// \brief Member lookup function that determines whether a given C++
 /// method overloads virtual methods in a base class without overriding any,
 /// to be used with CXXRecordDecl::lookupInBases().
@@ -4770,12 +4783,7 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
       if (!Data.S->IsOverload(Data.Method, MD, false))
         return true;
       // Collect the overload only if its hidden.
-      bool Using = Data.OverridenAndUsingBaseMethods.count(MD);
-      for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
-                                          E = MD->end_overridden_methods();
-           I != E && !Using; ++I)
-        Using = Data.OverridenAndUsingBaseMethods.count(*I);
-      if (!Using)
+      if (!CheckMostOverridenMethods(MD, Data.OverridenAndUsingBaseMethods))
         overloadedMethods.push_back(MD);
     }
   }
@@ -4784,6 +4792,17 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
     Data.OverloadedMethods.append(overloadedMethods.begin(),
                                    overloadedMethods.end());
   return foundSameNameMethod;
+}
+
+/// \brief Add the most overriden methods from MD to Methods
+static void AddMostOverridenMethods(const CXXMethodDecl *MD,
+                         llvm::SmallPtrSet<const CXXMethodDecl *, 8>& Methods) {
+  if (MD->size_overridden_methods() == 0)
+    Methods.insert(MD->getCanonicalDecl());
+  for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+                                      E = MD->end_overridden_methods();
+       I != E; ++I)
+    AddMostOverridenMethods(*I, Methods);
 }
 
 /// \brief See if a method overloads virtual methods in a base class without
@@ -4806,14 +4825,11 @@ void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   // by 'using' in a set. A base method not in this set is hidden.
   for (DeclContext::lookup_result res = DC->lookup(MD->getDeclName());
        res.first != res.second; ++res.first) {
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*res.first))
-      for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
-                                          E = MD->end_overridden_methods();
-           I != E; ++I)
-        Data.OverridenAndUsingBaseMethods.insert((*I)->getCanonicalDecl());
+    NamedDecl *ND = *res.first;
     if (UsingShadowDecl *shad = dyn_cast<UsingShadowDecl>(*res.first))
-      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(shad->getTargetDecl()))
-        Data.OverridenAndUsingBaseMethods.insert(MD->getCanonicalDecl());
+      ND = shad->getTargetDecl();
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
+      AddMostOverridenMethods(MD, Data.OverridenAndUsingBaseMethods);
   }
 
   if (DC->lookupInBases(&FindHiddenVirtualMethod, &Data, Paths) &&

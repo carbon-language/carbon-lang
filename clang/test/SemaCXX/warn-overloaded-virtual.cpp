@@ -80,3 +80,43 @@ struct C: B {
   using A::f;
 };
 }
+
+namespace UnbalancedVirtual {
+struct Base {
+  virtual void func();
+};
+
+struct Derived1: virtual Base {
+  virtual void func();
+};
+
+struct Derived2: virtual Base {
+};
+
+struct MostDerived: Derived1, Derived2 {
+  void func(int);
+  void func();
+};
+}
+
+namespace UnbalancedVirtual2 {
+struct Base {
+  virtual void func();
+};
+
+struct Derived1: virtual Base {
+  virtual void func();
+};
+
+struct Derived2: virtual Base {
+};
+
+struct Derived3: Derived1 {
+  virtual void func();
+};
+
+struct MostDerived: Derived3, Derived2 {
+  void func(int);
+  void func();
+};
+}
