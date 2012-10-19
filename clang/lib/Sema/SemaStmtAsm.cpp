@@ -460,6 +460,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   Parser->setAssemblerDialect(1);
   Parser->setTargetParser(*TargetParser.get());
   Parser->setParsingInlineAsm(true);
+  TargetParser->setParsingInlineAsm(true);
 
   unsigned NumOutputs;
   unsigned NumInputs;
