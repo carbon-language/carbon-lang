@@ -502,7 +502,9 @@ code, the source ranges, and the caret.  However, this behavior isn't required.
 Instead of formatting and printing out the diagnostics, this implementation just
 captures and remembers the diagnostics as they fly by.  Then -verify compares
 the list of produced diagnostics to the list of expected ones.  If they disagree,
-it prints out its own output.
+it prints out its own output.  Full documentation for the -verify mode can be
+found in the Clang API documentation for VerifyDiagnosticConsumer, <a
+href="/doxygen/classclang_1_1VerifyDiagnosticConsumer.html#details">here</a>.
 </p>
 
 <p>There are many other possible implementations of this interface, and this is

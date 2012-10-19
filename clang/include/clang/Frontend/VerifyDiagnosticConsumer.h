@@ -33,7 +33,9 @@ class FileEntry;
 /// Indicating that a line expects an error or a warning is simple. Put a
 /// comment on the line that has the diagnostic, use:
 ///
-///     expected-{error,warning,note}
+/// \code
+///   expected-{error,warning,note}
+/// \endcode
 ///
 /// to tag if it's an expected error or warning, and place the expected text
 /// between {{ and }} markers. The full text doesn't have to be included, only
@@ -94,12 +96,15 @@ class FileEntry;
 ///
 /// In this example, the diagnostic may appear only once, if at all.
 ///
-/// Regex matching mode may be selected by appending '-re' to type. Example:
+/// Regex matching mode may be selected by appending '-re' to type, such as:
 ///
+/// \code
 ///   expected-error-re
+/// \endcode
 ///
 /// Examples matching error: "variable has incomplete type 'struct s'"
 ///
+/// \code
 ///   // expected-error {{variable has incomplete type 'struct s'}}
 ///   // expected-error {{variable has incomplete type}}
 ///
@@ -107,6 +112,15 @@ class FileEntry;
 ///   // expected-error-re {{variable has has type 'struct .*'}}
 ///   // expected-error-re {{variable has has type 'struct (.*)'}}
 ///   // expected-error-re {{variable has has type 'struct[[:space:]](.*)'}}
+/// \endcode
+///
+/// VerifyDiagnosticConsumer expects at least one expected-* directive to
+/// be found inside the source code.  If no diagnostics are expected the
+/// following directive can be used to indicate this:
+///
+/// \code
+///   // expected-no-diagnostics
+/// \endcode
 ///
 class VerifyDiagnosticConsumer: public DiagnosticConsumer,
                                 public CommentHandler {
@@ -166,6 +180,13 @@ public:
     }
   };
 
+  enum DirectiveStatus {
+    HasNoDirectives,
+    HasNoDirectivesReported,
+    HasExpectedNoDiagnostics,
+    HasOtherExpectedDirectives
+  };
+
 private:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
@@ -175,6 +196,7 @@ private:
   const LangOptions *LangOpts;
   SourceManager *SrcManager;
   unsigned ActiveSourceFiles;
+  DirectiveStatus Status;
   ExpectedData ED;
 
   void CheckDiagnostics();

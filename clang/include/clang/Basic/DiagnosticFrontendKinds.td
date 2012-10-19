@@ -76,6 +76,11 @@ def err_verify_invalid_content : Error<
 def err_verify_inconsistent_diags : Error<
     "'%0' diagnostics %select{expected|seen}1 but not %select{seen|expected}1: "
     "%2">;
+def err_verify_invalid_no_diags : Error<
+    "%select{expected|'expected-no-diagnostics'}0 directive cannot follow "
+    "%select{'expected-no-diagnostics' directive|other expected directives}0">;
+def err_verify_no_directives : Error<
+    "no expected directives found: consider use of 'expected-no-diagnostics'">;
 
 def note_fixit_applied : Note<"FIX-IT applied suggested code changes">;
 def note_fixit_in_macro : Note<

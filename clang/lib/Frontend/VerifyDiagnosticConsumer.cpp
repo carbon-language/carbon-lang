@@ -31,7 +31,7 @@ VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &_Diags)
   : Diags(_Diags),
     PrimaryClient(Diags.getClient()), OwnsPrimaryClient(Diags.ownsClient()),
     Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0),
-    LangOpts(0), SrcManager(0), ActiveSourceFiles(0)
+    LangOpts(0), SrcManager(0), ActiveSourceFiles(0), Status(HasNoDirectives)
 {
   Diags.takeClient();
   if (Diags.hasSourceManager())
@@ -278,7 +278,8 @@ private:
 ///
 /// Returns true if any valid directives were found.
 static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
-                           SourceLocation Pos, DiagnosticsEngine &Diags) {
+                           SourceLocation Pos, DiagnosticsEngine &Diags,
+                           VerifyDiagnosticConsumer::DirectiveStatus &Status) {
   // A single comment may contain multiple directives.
   bool FoundDirective = false;
   for (ParseHelper PH(S); !PH.Done();) {
@@ -300,9 +301,23 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
       DL = ED ? &ED->Warnings : NULL;
     else if (PH.Next("note"))
       DL = ED ? &ED->Notes : NULL;
-    else
+    else if (PH.Next("no-diagnostics")) {
+      if (Status == VerifyDiagnosticConsumer::HasOtherExpectedDirectives)
+        Diags.Report(Pos, diag::err_verify_invalid_no_diags)
+          << /*IsExpectedNoDiagnostics=*/true;
+      else
+        Status = VerifyDiagnosticConsumer::HasExpectedNoDiagnostics;
+      continue;
+    } else
       continue;
     PH.Advance();
+
+    if (Status == VerifyDiagnosticConsumer::HasExpectedNoDiagnostics) {
+      Diags.Report(Pos, diag::err_verify_invalid_no_diags)
+        << /*IsExpectedNoDiagnostics=*/false;
+      continue;
+    }
+    Status = VerifyDiagnosticConsumer::HasOtherExpectedDirectives;
 
     // If a directive has been found but we're not interested
     // in storing the directive information, return now.
@@ -450,7 +465,7 @@ bool VerifyDiagnosticConsumer::HandleComment(Preprocessor &PP,
   // Fold any "\<EOL>" sequences
   size_t loc = C.find('\\');
   if (loc == StringRef::npos) {
-    ParseDirective(C, &ED, SM, CommentBegin, PP.getDiagnostics());
+    ParseDirective(C, &ED, SM, CommentBegin, PP.getDiagnostics(), Status);
     return false;
   }
 
@@ -480,7 +495,7 @@ bool VerifyDiagnosticConsumer::HandleComment(Preprocessor &PP,
   }
 
   if (!C2.empty())
-    ParseDirective(C2, &ED, SM, CommentBegin, PP.getDiagnostics());
+    ParseDirective(C2, &ED, SM, CommentBegin, PP.getDiagnostics(), Status);
   return false;
 }
 
@@ -505,6 +520,8 @@ static bool findDirectives(SourceManager &SM, FileID FID,
 
   Token Tok;
   Tok.setKind(tok::comment);
+  VerifyDiagnosticConsumer::DirectiveStatus Status =
+    VerifyDiagnosticConsumer::HasNoDirectives;
   while (Tok.isNot(tok::eof)) {
     RawLex.Lex(Tok);
     if (!Tok.is(tok::comment)) continue;
@@ -514,7 +531,7 @@ static bool findDirectives(SourceManager &SM, FileID FID,
 
     // Find first directive.
     if (ParseDirective(Comment, 0, SM, Tok.getLocation(),
-                       SM.getDiagnostics()))
+                       SM.getDiagnostics(), Status))
       return true;
   }
   return false;
@@ -718,6 +735,14 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
 #endif // !NDEBUG
 
   if (SrcManager) {
+    // Produce an error if no expected-* directives could be found in the
+    // source file(s) processed.
+    if (Status == HasNoDirectives) {
+      Diags.Report(diag::err_verify_no_directives).setForceEmit();
+      ++NumErrors;
+      Status = HasNoDirectivesReported;
+    }
+
     // Check that the expected diagnostics occurred.
     NumErrors += CheckResults(Diags, *SrcManager, *Buffer, ED);
   } else {

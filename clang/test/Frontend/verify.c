@@ -111,9 +111,10 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 #if 0
 // RUN: %clang_cc1 -verify %t.invalid 2>&1 | FileCheck -check-prefix=CHECK6 %s
 
-//      CHECK6: error: 'error' diagnostics seen but not expected:
+//      CHECK6: error: no expected directives found: consider use of 'expected-no-diagnostics'
+// CHECK6-NEXT: error: 'error' diagnostics seen but not expected:
 // CHECK6-NEXT:   (frontend): error reading '{{.*}}verify.c.tmp.invalid'
-// CHECK6-NEXT: 1 error generated.
+// CHECK6-NEXT: 2 errors generated.
 
 // RUN: echo -e '//expected-error@2{{1}}\n#error 2' | %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK7 %s
 
