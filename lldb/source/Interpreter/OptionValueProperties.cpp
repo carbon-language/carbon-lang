@@ -740,4 +740,19 @@ OptionValueProperties::Apropos (const char *keyword, std::vector<const Property 
     }
 }
 
+lldb::OptionValuePropertiesSP
+OptionValueProperties::GetSubProperty (const ExecutionContext *exe_ctx,
+                                       const ConstString &name)
+{
+    lldb::OptionValueSP option_value_sp(GetValueForKey(exe_ctx, name, false));
+    if (option_value_sp)
+    {
+        OptionValueProperties *ov_properties = option_value_sp->GetAsProperties ();
+        if (ov_properties)
+            return ov_properties->shared_from_this();
+    }
+    return lldb::OptionValuePropertiesSP();
+}
+
+
 

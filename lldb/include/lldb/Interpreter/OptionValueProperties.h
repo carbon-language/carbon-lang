@@ -235,7 +235,10 @@ public:
                    bool is_global,
                    const lldb::OptionValueSP &value_sp);
 
-    
+    lldb::OptionValuePropertiesSP
+    GetSubProperty (const ExecutionContext *exe_ctx,
+                    const ConstString &name);
+
 protected:
     
     const Property *

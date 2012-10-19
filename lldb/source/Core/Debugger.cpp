@@ -22,6 +22,7 @@
 #include "lldb/Core/FormatManager.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamAsynchronousIO.h"
@@ -125,7 +126,8 @@ g_properties[] =
 {   "term-width",               OptionValue::eTypeSInt64 , true, 80   , NULL, NULL, "The maximum number of columns to use for displaying text." },
 {   "thread-format",            OptionValue::eTypeString , true, 0    , DEFAULT_THREAD_FORMAT, NULL, "The default thread format string to use when displaying thread information." },
 {   "use-external-editor",      OptionValue::eTypeBoolean, true, false, NULL, NULL, "Whether to use an external editor or not." },
-{   NULL,                       OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
+
+    {   NULL,                       OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
 };
 
 enum
@@ -438,6 +440,8 @@ Debugger::InstanceInitialize ()
                                           this);
         }
     }
+    
+    PluginManager::DebuggerInitialize (*this);
 }
 
 DebuggerSP

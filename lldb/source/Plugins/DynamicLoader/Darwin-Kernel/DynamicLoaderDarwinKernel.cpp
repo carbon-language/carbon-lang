@@ -39,6 +39,60 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static PropertyDefinition
+g_properties[] =
+{
+    { "disable-kext-loading" , OptionValue::eTypeBoolean, false, false, NULL, NULL, "Disable kext image loading in a Darwin kernel debug session." },
+    {  NULL                  , OptionValue::eTypeInvalid, false, 0    , NULL, NULL, NULL  }
+};
+
+enum {
+    ePropertyDisableKextLoading
+};
+
+class DynamicLoaderDarwinKernelProperties : public Properties
+{
+public:
+    
+    static ConstString &
+    GetSettingName ()
+    {
+        static ConstString g_setting_name("macosx-kernel");
+        return g_setting_name;
+    }
+
+    DynamicLoaderDarwinKernelProperties() :
+        Properties ()
+    {
+        m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
+        m_collection_sp->Initialize(g_properties);
+    }
+
+    virtual
+    ~DynamicLoaderDarwinKernelProperties()
+    {
+    }
+    
+    bool
+    GetDisableKextLoading() const
+    {
+        const uint32_t idx = ePropertyDisableKextLoading;
+        return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    }
+    
+};
+
+typedef STD_SHARED_PTR(DynamicLoaderDarwinKernelProperties) DynamicLoaderDarwinKernelPropertiesSP;
+
+static const DynamicLoaderDarwinKernelPropertiesSP &
+GetGlobalProperties()
+{
+    static DynamicLoaderDarwinKernelPropertiesSP g_settings_sp;
+    if (!g_settings_sp)
+        g_settings_sp.reset (new DynamicLoaderDarwinKernelProperties ());
+    return g_settings_sp;
+}
+
 //----------------------------------------------------------------------
 // Create an instance of this class. This function is filled into
 // the plugin info class that gets handed out by the plugin factory and
@@ -190,7 +244,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
     ModuleSP memory_module_sp;
 
     // If this is a kext and the user asked us to ignore kexts, don't try to load it.
-    if (kernel_image == false && target.GetDisableKextLoading() == true)
+    if (kernel_image == false && GetGlobalProperties()->GetDisableKextLoading() == true)
     {
         return false;
     }
@@ -872,7 +926,8 @@ DynamicLoaderDarwinKernel::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
-                                   CreateInstance);
+                                   CreateInstance,
+                                   DebuggerInitialize);
 }
 
 void
@@ -881,6 +936,18 @@ DynamicLoaderDarwinKernel::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+void
+DynamicLoaderDarwinKernel::DebuggerInitialize (lldb_private::Debugger &debugger)
+{
+    if (!PluginManager::GetSettingForDynamicLoaderPlugin (debugger, DynamicLoaderDarwinKernelProperties::GetSettingName()))
+    {
+        const bool is_global_setting = true;
+        PluginManager::CreateSettingForDynamicLoaderPlugin (debugger,
+                                                            GetGlobalProperties()->GetValueProperties(),
+                                                            ConstString ("Properties for the DynamicLoaderDarwinKernel plug-in."),
+                                                            is_global_setting);
+    }
+}
 
 const char *
 DynamicLoaderDarwinKernel::GetPluginNameStatic()

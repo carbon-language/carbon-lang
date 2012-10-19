@@ -140,11 +140,6 @@ public:
     const char *
     GetExpressionPrefixContentsAsCString ();
 
-    bool
-    GetDisableKextLoading () const;
-
-    void
-    SetDisableKextLoading (bool b);
 };
 
 typedef STD_SHARED_PTR(TargetProperties) TargetPropertiesSP;

@@ -47,6 +47,9 @@ public:
     static lldb_private::DynamicLoader *
     CreateInstance (lldb_private::Process *process, bool force);
 
+    static void
+    DebuggerInitialize (lldb_private::Debugger &debugger);
+
     DynamicLoaderDarwinKernel (lldb_private::Process *process);
 
     virtual

@@ -2167,7 +2167,6 @@ g_properties[] =
         "Always checking for inlined breakpoint locations can be expensive (memory and time), so we try to minimize the "
         "times we look for inlined locations. This setting allows you to control exactly which strategy is used when settings "
         "file and line breakpoints." },
-    { "disable-kext-loading"              , OptionValue::eTypeBoolean   , false, false                     , NULL, NULL, "Disable kext image loading in a Darwin kernel debug session" },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2191,8 +2190,7 @@ enum
     ePropertyErrorPath,
     ePropertyDisableASLR,
     ePropertyDisableSTDIO,
-    ePropertyInlineStrategy,
-    ePropertyDisableKextLoading
+    ePropertyInlineStrategy
 };
 
 
@@ -2518,20 +2516,6 @@ TargetProperties::GetBreakpointsConsultPlatformAvoidList ()
 {
     const uint32_t idx = ePropertyBreakpointUseAvoidList;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
-}
-
-bool
-TargetProperties::GetDisableKextLoading () const
-{
-    const uint32_t idx = ePropertyDisableKextLoading;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
-}
-
-void
-TargetProperties::SetDisableKextLoading (bool b)
-{
-    const uint32_t idx = ePropertyDisableKextLoading;
-    m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
 }
 
 const TargetPropertiesSP &

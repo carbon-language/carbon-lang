@@ -36,6 +36,7 @@ namespace lldb_private
     typedef UnwindAssembly* (*UnwindAssemblyCreateInstance) (const ArchSpec &arch);
     typedef int (*ComparisonFunction)(const void *, const void *);
     typedef bool (*CommandOverrideCallback)(void *baton, const char **argv);
+    typedef void (*DebuggerInitializeCallback)(Debugger &debugger);
 
 } // namespace lldb_private
 

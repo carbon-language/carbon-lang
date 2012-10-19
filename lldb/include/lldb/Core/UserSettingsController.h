@@ -86,6 +86,9 @@ public:
     Apropos (const char *keyword,
              std::vector<const Property *> &matching_properties) const;
 
+    lldb::OptionValuePropertiesSP
+    GetSubProperty (const ExecutionContext *exe_ctx,
+                    const ConstString &name);
 protected:
     lldb::OptionValuePropertiesSP m_collection_sp;
 };

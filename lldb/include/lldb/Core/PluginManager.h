@@ -67,7 +67,8 @@ public:
     static bool
     RegisterPlugin (const char *name,
                     const char *description,
-                    DynamicLoaderCreateInstance create_callback);
+                    DynamicLoaderCreateInstance create_callback,
+                    DebuggerInitializeCallback debugger_init_callback = NULL);
 
     static bool
     UnregisterPlugin (DynamicLoaderCreateInstance create_callback);
@@ -77,7 +78,6 @@ public:
 
     static DynamicLoaderCreateInstance
     GetDynamicLoaderCreateCallbackForPluginName (const char *name);
-
 
     //------------------------------------------------------------------
     // EmulateInstruction
@@ -294,6 +294,25 @@ public:
     static UnwindAssemblyCreateInstance
     GetUnwindAssemblyCreateCallbackForPluginName (const char *name);
 
+    //------------------------------------------------------------------
+    // Some plug-ins might register a DebuggerInitializeCallback
+    // callback when registering the plug-in. After a new Debugger
+    // instance is created, this DebuggerInitialize function will get
+    // called. This allows plug-ins to install Properties and do any
+    // other intialization that requires a debugger instance.
+    //------------------------------------------------------------------
+    static void
+    DebuggerInitialize (Debugger &debugger);
+    
+    static lldb::OptionValuePropertiesSP
+    GetSettingForDynamicLoaderPlugin (Debugger &debugger,
+                                       const ConstString &setting_name);
+    
+    static bool
+    CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
+                                         const lldb::OptionValuePropertiesSP &properties_sp,
+                                         const ConstString &description,
+                                         bool is_global_property);
 };
 
 

@@ -14,10 +14,12 @@
 #include <string>
 #include <vector>
 
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
 
 #include "llvm/ADT/StringRef.h"
 
@@ -436,13 +438,15 @@ struct DynamicLoaderInstance
     DynamicLoaderInstance() :
         name(),
         description(),
-        create_callback(NULL)
+        create_callback(NULL),
+        debugger_init_callback (NULL)
     {
     }
 
     std::string name;
     std::string description;
     DynamicLoaderCreateInstance create_callback;
+    DebuggerInitializeCallback debugger_init_callback;
 };
 
 typedef std::vector<DynamicLoaderInstance> DynamicLoaderInstances;
@@ -468,7 +472,8 @@ PluginManager::RegisterPlugin
 (
     const char *name,
     const char *description,
-    DynamicLoaderCreateInstance create_callback
+    DynamicLoaderCreateInstance create_callback,
+    DebuggerInitializeCallback debugger_init_callback
 )
 {
     if (create_callback)
@@ -479,6 +484,7 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.debugger_init_callback = debugger_init_callback;
         Mutex::Locker locker (GetDynamicLoaderMutex ());
         GetDynamicLoaderInstances ().push_back (instance);
     }
@@ -1800,5 +1806,94 @@ PluginManager::GetUnwindAssemblyCreateCallbackForPluginName (const char *name)
         }
     }
     return NULL;
+}
+
+void
+PluginManager::DebuggerInitialize (Debugger &debugger)
+{
+    Mutex::Locker locker (GetDynamicLoaderMutex ());
+    DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
+    
+    DynamicLoaderInstances::iterator pos, end = instances.end();
+    for (pos = instances.begin(); pos != end; ++ pos)
+    {
+        if (pos->debugger_init_callback)
+            pos->debugger_init_callback (debugger);
+    }
+}
+
+static lldb::OptionValuePropertiesSP
+GetDebuggerPropertyForPlugins (Debugger &debugger,
+                               const ConstString &plugin_type_name,
+                               const ConstString &plugin_type_desc,
+                               bool can_create)
+{
+    lldb::OptionValuePropertiesSP parent_properties_sp (debugger.GetValueProperties());
+    if (parent_properties_sp)
+    {
+        static ConstString g_property_name("plugin");
+        
+        OptionValuePropertiesSP plugin_properties_sp = parent_properties_sp->GetSubProperty (NULL, g_property_name);
+        if (!plugin_properties_sp && can_create)
+        {
+            plugin_properties_sp.reset (new OptionValueProperties (g_property_name));
+            parent_properties_sp->AppendProperty (g_property_name,
+                                                  ConstString("Settings specify to plugins."),
+                                                  true,
+                                                  plugin_properties_sp);
+        }
+        
+        if (plugin_properties_sp)
+        {
+            lldb::OptionValuePropertiesSP plugin_type_properties_sp = plugin_properties_sp->GetSubProperty (NULL, plugin_type_name);
+            if (!plugin_type_properties_sp && can_create)
+            {
+                plugin_type_properties_sp.reset (new OptionValueProperties (plugin_type_name));
+                plugin_properties_sp->AppendProperty (plugin_type_name,
+                                                      plugin_type_desc,
+                                                      true,
+                                                      plugin_type_properties_sp);
+            }
+            return plugin_type_properties_sp;
+        }
+    }
+    return lldb::OptionValuePropertiesSP();
+}
+
+lldb::OptionValuePropertiesSP
+PluginManager::GetSettingForDynamicLoaderPlugin (Debugger &debugger, const ConstString &setting_name)
+{
+    lldb::OptionValuePropertiesSP properties_sp;
+    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+                                                                                            ConstString("dynamic-loader"),
+                                                                                            ConstString(), // not creating to so we don't need the description
+                                                                                            false));
+    if (plugin_type_properties_sp)
+        properties_sp = plugin_type_properties_sp->GetSubProperty (NULL, setting_name);
+    return properties_sp;
+}
+
+bool
+PluginManager::CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
+                                                    const lldb::OptionValuePropertiesSP &properties_sp,
+                                                    const ConstString &description,
+                                                    bool is_global_property)
+{
+    if (properties_sp)
+    {
+        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+                                                                                                ConstString("dynamic-loader"),
+                                                                                                ConstString("Settings for dynamic loader plug-ins"),
+                                                                                                true));
+        if (plugin_type_properties_sp)
+        {
+            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
+                                                       description,
+                                                       is_global_property,
+                                                       properties_sp);
+            return true;
+        }
+    }
+    return false;
 }
 
