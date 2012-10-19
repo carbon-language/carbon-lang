@@ -188,7 +188,14 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
 
     Target &target = process->GetTarget();
     ModuleSP memory_module_sp;
-    // Use the memory module as the module if we have one...
+
+    // If this is a kext and the user asked us to ignore kexts, don't try to load it.
+    if (kernel_image == false && target.GetDisableKextLoading() == true)
+    {
+        return false;
+    }
+
+    // Use the memory module as the module if we have one
     if (address != LLDB_INVALID_ADDRESS)
     {
         FileSpec file_spec;
@@ -395,6 +402,7 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
     {
         m_kernel.Clear(false);
         m_kernel.module_sp = m_process->GetTarget().GetExecutableModule();
+        m_kernel.kernel_image = true;
 
         ConstString kernel_name("mach_kernel");
         if (m_kernel.module_sp.get() 

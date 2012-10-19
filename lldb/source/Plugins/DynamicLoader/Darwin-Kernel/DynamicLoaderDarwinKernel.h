@@ -136,7 +136,7 @@ protected:
         char                     name[KERNEL_MODULE_MAX_NAME];
         lldb::ModuleSP           module_sp;
         uint32_t                 load_process_stop_id;
-        lldb_private::UUID       uuid;            // UUID for this dylib if it has one, else all zeros
+        lldb_private::UUID       uuid;              // UUID for this dylib if it has one, else all zeros
         lldb_private::Address    so_address;        // The section offset address for this kext in case it can be read from object files
         uint64_t                 address;
         uint64_t                 size;
@@ -144,6 +144,7 @@ protected:
         uint32_t                 load_tag;
         uint32_t                 flags;
         uint64_t                 reference_list;
+        bool                     kernel_image;      // true if this is the kernel, false if this is a kext
 
         OSKextLoadedKextSummary() :
             module_sp (),
@@ -155,7 +156,8 @@ protected:
             version (0),
             load_tag (0),
             flags (0),
-            reference_list (0)
+            reference_list (0),
+            kernel_image (false)
         {
             name[0] = '\0';
         }

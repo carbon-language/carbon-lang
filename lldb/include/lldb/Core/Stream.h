@@ -179,7 +179,7 @@ public:
     int
     PutPointer (void *ptr);
 
-    // Append \a src_len bytes from \a s to the stream as hex characters
+    // Append \a src_len bytes from \a src to the stream as hex characters
     // (two ascii characters per byte of input data)
     int
     PutBytesAsRawHex8 (const void *src,
