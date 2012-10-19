@@ -509,9 +509,6 @@ enum class comment_to_xml_conversion_17 {
 // RUN: FileCheck %s < %t/out.c-index-direct
 // RUN: FileCheck %s < %t/out.c-index-pch
 
-// FIXME: Investigating.
-// XFAIL: win32
-
 // CHECK: annotate-comments.cpp:16:6: FunctionDecl=isdoxy4:{{.*}} isdoxy4 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:20:6: FunctionDecl=isdoxy5:{{.*}} isdoxy5 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:25:6: FunctionDecl=isdoxy6:{{.*}} isdoxy6 IS_DOXYGEN_SINGLE
@@ -960,7 +957,7 @@ enum class comment_to_xml_conversion_17 {
 // CHECK: annotate-comments.cpp:458:5: VarDecl=comment_to_xml_conversion_12:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="458" column="5"><Name>comment_to_xml_conversion_12</Name><USR>c:@comment_to_xml_conversion_12</USR><Declaration>int comment_to_xml_conversion_12</Declaration><Abstract><Para> Aaa.</Para></Abstract></Variable>]
 // CHECK: annotate-comments.cpp:461:11: Namespace=comment_to_xml_conversion_13:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}annotate-comments.cpp" line="461" column="11"><Name>comment_to_xml_conversion_13</Name><USR>c:@N@comment_to_xml_conversion_13</USR><Declaration>namespace comment_to_xml_conversion_13 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
 // CHECK: annotate-comments.cpp:463:13: Namespace=comment_to_xml_conversion_14:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}annotate-comments.cpp" line="463" column="13"><Name>comment_to_xml_conversion_14</Name><USR>c:@N@comment_to_xml_conversion_13@N@comment_to_xml_conversion_14</USR><Declaration>namespace comment_to_xml_conversion_14 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
-// CHECK: annotate-comments.cpp:468:6: EnumDecl=comment_to_xml_conversion_15:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}annotate-comments.cpp" line="468" column="6"><Name>comment_to_xml_conversion_15</Name><USR>c:@E@comment_to_xml_conversion_15</USR><Declaration>enum comment_to_xml_conversion_15 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
+// CHECK: annotate-comments.cpp:468:6: EnumDecl=comment_to_xml_conversion_15:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}annotate-comments.cpp" line="468" column="6"><Name>comment_to_xml_conversion_15</Name><USR>c:@E@comment_to_xml_conversion_15</USR><Declaration>enum comment_to_xml_conversion_15{{( : int)?}} {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
 // CHECK: annotate-comments.cpp:470:3: EnumConstantDecl=comment_to_xml_conversion_16:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="470" column="3"><Name>comment_to_xml_conversion_16</Name><USR>c:@E@comment_to_xml_conversion_15@comment_to_xml_conversion_16</USR><Declaration>comment_to_xml_conversion_16</Declaration><Abstract><Para> Aaa.</Para></Abstract></Variable>]
 // CHECK: annotate-comments.cpp:474:12: EnumDecl=comment_to_xml_conversion_17:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}annotate-comments.cpp" line="474" column="12"><Name>comment_to_xml_conversion_17</Name><USR>c:@E@comment_to_xml_conversion_17</USR><Declaration>enum class comment_to_xml_conversion_17 : int {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
 // CHECK: annotate-comments.cpp:476:3: EnumConstantDecl=comment_to_xml_conversion_18:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}annotate-comments.cpp" line="476" column="3"><Name>comment_to_xml_conversion_18</Name><USR>c:@E@comment_to_xml_conversion_17@comment_to_xml_conversion_18</USR><Declaration>comment_to_xml_conversion_18</Declaration><Abstract><Para> Aaa.</Para></Abstract></Variable>]
