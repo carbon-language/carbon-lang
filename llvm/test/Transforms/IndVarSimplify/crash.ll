@@ -113,3 +113,21 @@ bb9:
   ret void
 }
 
+; PR12536
+define void @fn1() noreturn nounwind {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.end, %entry
+  %b.0 = phi i32 [ undef, %entry ], [ %conv, %for.end ]
+  br label %for.cond1
+
+for.cond1:                                        ; preds = %for.cond1, %for.cond
+  %c.0 = phi i32 [ %b.0, %for.cond1 ], [ 0, %for.cond ]
+  br i1 undef, label %for.cond1, label %for.end
+
+for.end:                                          ; preds = %for.cond1
+  %cmp2 = icmp slt i32 %c.0, 1
+  %conv = zext i1 %cmp2 to i32
+  br label %for.cond
+}

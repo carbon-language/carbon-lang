@@ -551,15 +551,17 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 
         PN->setIncomingValue(i, ExitVal);
 
-        // If this instruction is dead now, delete it.
-        RecursivelyDeleteTriviallyDeadInstructions(Inst, TLI);
+        // If this instruction is dead now, delete it. Don't do it now to avoid
+        // invalidating iterators.
+        if (isInstructionTriviallyDead(Inst, TLI))
+          DeadInsts.push_back(Inst);
 
         if (NumPreds == 1) {
           // Completely replace a single-pred PHI. This is safe, because the
           // NewVal won't be variant in the loop, so we don't need an LCSSA phi
           // node anymore.
           PN->replaceAllUsesWith(ExitVal);
-          RecursivelyDeleteTriviallyDeadInstructions(PN, TLI);
+          PN->eraseFromParent();
         }
       }
       if (NumPreds != 1) {
