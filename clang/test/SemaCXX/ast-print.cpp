@@ -52,3 +52,11 @@ void test6() {
     unsigned int y = 0;
     test6fn((int&)y);
 }
+
+// CHECK: S s( 1, 2 );
+
+template <class S> void test7()
+{
+    S s( 1,2 );
+}
+

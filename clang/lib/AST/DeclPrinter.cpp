@@ -629,13 +629,13 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
       ImplicitInit = D->getInitStyle() == VarDecl::CallInit &&
           Construct->getNumArgs() == 0 && !Construct->isListInitialization();
     if (!ImplicitInit) {
-      if (D->getInitStyle() == VarDecl::CallInit)
+      if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
         Out << "(";
       else if (D->getInitStyle() == VarDecl::CInit) {
         Out << " = ";
       }
       Init->printPretty(Out, 0, Policy, Indentation);
-      if (D->getInitStyle() == VarDecl::CallInit)
+      if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
         Out << ")";
     }
   }
