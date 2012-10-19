@@ -42,14 +42,11 @@ class LitConfig:
         self.numWarnings = 0
 
         self.valgrindArgs = []
-        self.valgrindTriple = ""
         if self.useValgrind:
-            self.valgrindTriple = "-vg"
             self.valgrindArgs = ['valgrind', '-q', '--run-libc-freeres=no',
                                  '--tool=memcheck', '--trace-children=yes',
                                  '--error-exitcode=123']
             if self.valgrindLeakCheck:
-                self.valgrindTriple += "_leak"
                 self.valgrindArgs.append('--leak-check=full')
             else:
                 # The default is 'summary'.

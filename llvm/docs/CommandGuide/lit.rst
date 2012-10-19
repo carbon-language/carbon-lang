@@ -125,11 +125,24 @@ EXECUTION OPTIONS
  *--error-exitcode* argument for valgrind is used so that valgrind failures will
  cause the program to exit with a non-zero status.
 
+ When this option is enabled, **lit** will also automatically provide a
+ "valgrind" feature that can be used to conditionally disable (or expect failure
+ in) certain tests.
+
 
 
 **--vg-arg**\ =\ *ARG*
 
  When *--vg* is used, specify an additional argument to pass to valgrind itself.
+
+
+
+**--vg-leak**
+
+ When *--vg* is used, enable memory leak checks. When this option is enabled,
+ **lit** will also automatically provide a "valgrind-leaks" feature that can be
+ used to conditionally disable (or expect failure in) certain tests.
+
 
 
 

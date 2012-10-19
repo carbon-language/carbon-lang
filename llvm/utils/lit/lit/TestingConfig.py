@@ -29,6 +29,13 @@ class TestingConfig:
                         'TMP' : os.environ.get('TMP',''),
                         })
 
+            # Set the default available features based on the LitConfig.
+            available_features = []
+            if litConfig.useValgrind:
+                available_features.append('valgrind')
+                if litConfig.valgrindLeakCheck:
+                    available_features.append('valgrind-leaks')
+
             config = TestingConfig(parent,
                                    name = '<unnamed>',
                                    suffixes = set(),
@@ -40,7 +47,7 @@ class TestingConfig:
                                    test_exec_root = None,
                                    test_source_root = None,
                                    excludes = [],
-                                   available_features = [])
+                                   available_features = available_features)
 
         if os.path.exists(path):
             # FIXME: Improve detection and error reporting of errors in the
