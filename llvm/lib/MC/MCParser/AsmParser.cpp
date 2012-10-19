@@ -3577,17 +3577,18 @@ namespace {
 enum AsmOpRewriteKind {
    AOK_Imm,
    AOK_Input,
-   AOK_Output
+   AOK_Output,
+   AOK_SizeDirective
 };
 
 struct AsmOpRewrite {
   AsmOpRewriteKind Kind;
   SMLoc Loc;
   unsigned Len;
-
+  unsigned Size;
 public:
-  AsmOpRewrite(AsmOpRewriteKind kind, SMLoc loc, unsigned len)
-    : Kind(kind), Loc(loc), Len(len) { }
+  AsmOpRewrite(AsmOpRewriteKind kind, SMLoc loc, unsigned len, unsigned size = 0)
+    : Kind(kind), Loc(loc), Len(len), Size(size) { }
 };
 }
 
@@ -3650,6 +3651,11 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                                     Size);
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
+          if (Operand->needSizeDirective())
+            AsmStrRewrites.push_back(AsmOpRewrite(AOK_SizeDirective,
+                                                  Operand->getStartLoc(), 0,
+                                                  Operand->getMemSize()));
+          
           if (isOutput) {
             std::string Constraint = "=";
             ++InputIdx;
@@ -3701,17 +3707,23 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
   // Build the IR assembly string.
   std::string AsmStringIR;
+  AsmOpRewriteKind PrevKind = AOK_Imm;
   raw_string_ostream OS(AsmStringIR);
   const char *Start = SrcMgr.getMemoryBuffer(0)->getBufferStart();
   for (SmallVectorImpl<struct AsmOpRewrite>::iterator
          I = AsmStrRewrites.begin(), E = AsmStrRewrites.end(); I != E; ++I) {
     const char *Loc = (*I).Loc.getPointer();
-    
-    // Emit everything up to the immediate/expression.
-    OS << StringRef(Start, Loc - Start);
-    
+
+    AsmOpRewriteKind Kind = (*I).Kind;
+
+    // Emit everything up to the immediate/expression.  If the previous rewrite
+    // was a size directive, then this has already been done.
+    if (PrevKind != AOK_SizeDirective)
+      OS << StringRef(Start, Loc - Start);
+    PrevKind = Kind;
+
     // Rewrite expressions in $N notation.
-    switch ((*I).Kind) {
+    switch (Kind) {
     case AOK_Imm:
       OS << Twine("$$") + StringRef(Loc, (*I).Len);
       break;
@@ -3723,10 +3735,22 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       OS << '$';
       OS << OutputIdx++;
       break;
+    case AOK_SizeDirective:
+      switch((*I).Size) {
+      default: break;
+      case 8:  OS << "byte ptr "; break;
+      case 16: OS << "word ptr "; break;
+      case 32: OS << "dword ptr "; break;
+      case 64: OS << "qword ptr "; break;
+      case 80: OS << "xword ptr "; break;
+      case 128: OS << "xmmword ptr "; break;
+      case 256: OS << "ymmword ptr "; break;
+      }
     }
-    
+
     // Skip the original expression.
-    Start = Loc + (*I).Len;
+    if (Kind != AOK_SizeDirective)
+      Start = Loc + (*I).Len;
   }
 
   // Emit the remainder of the asm string.

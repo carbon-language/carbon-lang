@@ -11,6 +11,7 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -180,6 +181,7 @@ struct X86Operand : public MCParsedAsmOperand {
       unsigned IndexReg;
       unsigned Scale;
       unsigned Size;
+      bool NeedSizeDir;
     } Mem;
   };
 
@@ -310,6 +312,16 @@ struct X86Operand : public MCParsedAsmOperand {
     // Otherwise, check the value is in a range that makes sense for this
     // extension.
     return isImmSExti64i32Value(CE->getValue());
+  }
+
+  unsigned getMemSize() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.Size;
+  }
+
+  bool needSizeDirective() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.NeedSizeDir;
   }
 
   bool isMem() const { return Kind == Memory; }
@@ -451,7 +463,8 @@ struct X86Operand : public MCParsedAsmOperand {
 
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc,
-                               SMLoc EndLoc, unsigned Size = 0) {
+                               SMLoc EndLoc, unsigned Size = 0,
+                               bool NeedSizeDir = false) {
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -459,6 +472,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
+    Res->Mem.NeedSizeDir = NeedSizeDir;
     return Res;
   }
 
@@ -466,7 +480,7 @@ struct X86Operand : public MCParsedAsmOperand {
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
-                               unsigned Size = 0) {
+                               unsigned Size = 0, bool NeedSizeDir = false) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
@@ -481,6 +495,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;
+    Res->Mem.NeedSizeDir = NeedSizeDir;
     return Res;
   }
 };
@@ -753,7 +768,19 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getParser().ParseExpression(Disp, End)) return 0;
   End = Parser.getTok().getLoc();
-  return X86Operand::CreateMem(Disp, Start, End, Size);
+
+  bool NeedSizeDir = false;
+  if (!Size && isParsingInlineAsm()) {
+    if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
+      const MCSymbol &Sym = SymRef->getSymbol();
+      // FIXME: The SemaLookup will fail if the name is anything other then an
+      // identifier.
+      // FIXME: Pass a valid SMLoc.
+      SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Size);
+      NeedSizeDir = Size > 0;
+    }
+  }
+  return X86Operand::CreateMem(Disp, Start, End, Size, NeedSizeDir);
 }
 
 X86Operand *X86AsmParser::ParseIntelOperand() {
