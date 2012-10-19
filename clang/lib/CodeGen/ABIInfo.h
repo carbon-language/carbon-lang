@@ -88,7 +88,7 @@ namespace clang {
                                 llvm::Type *Padding = 0) {
       return ABIArgInfo(Direct, T, Offset, false, false, false, Padding);
     }
-    static ABIArgInfo getDirectInReg(llvm::Type *T) {
+    static ABIArgInfo getDirectInReg(llvm::Type *T = 0) {
       return ABIArgInfo(Direct, T, 0, false, false, true, 0);
     }
     static ABIArgInfo getExtend(llvm::Type *T = 0) {

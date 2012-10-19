@@ -519,7 +519,8 @@ class X86_32ABIInfo : public ABIInfo {
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
-  ABIArgInfo getIndirectResult(QualType Ty, bool ByVal = true) const;
+  ABIArgInfo getIndirectResult(QualType Ty, bool ByVal,
+                               unsigned &FreeRegs) const;
 
   /// \brief Return the alignment to use for the given type on the stack.
   unsigned getTypeStackAlignInBytes(QualType Ty, unsigned Align) const;
@@ -527,9 +528,8 @@ class X86_32ABIInfo : public ABIInfo {
   Class classify(QualType Ty) const;
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 unsigned callingConvention) const;
-  ABIArgInfo classifyArgumentTypeWithReg(QualType RetTy,
-                                         unsigned &FreeRegs) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &FreeRegs) const;
+  bool shouldUseInReg(QualType Ty, unsigned &FreeRegs) const;
 
 public:
 
@@ -766,9 +766,15 @@ unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty,
   return MinABIStackAlignInBytes;
 }
 
-ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
-  if (!ByVal)
+ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal,
+                                            unsigned &FreeRegs) const {
+  if (!ByVal) {
+    if (FreeRegs) {
+      --FreeRegs; // Non byval indirects just use one pointer.
+      return ABIArgInfo::getIndirectInReg(0, false);
+    }
     return ABIArgInfo::getIndirect(0, false);
+  }
 
   // Compute the byval alignment.
   unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
@@ -798,45 +804,23 @@ X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
   return Integer;
 }
 
-ABIArgInfo
-X86_32ABIInfo::classifyArgumentTypeWithReg(QualType Ty,
-                                           unsigned &FreeRegs) const {
-  // Common case first.
-  if (FreeRegs == 0)
-    return classifyArgumentType(Ty);
-
+bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs) const {
   Class C = classify(Ty);
   if (C == Float)
-    return classifyArgumentType(Ty);
+    return false;
 
   unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
-  if (SizeInRegs == 0)
-    return classifyArgumentType(Ty);
-
   if (SizeInRegs > FreeRegs) {
     FreeRegs = 0;
-    return classifyArgumentType(Ty);
+    return false;
   }
-  assert(SizeInRegs >= 1 && SizeInRegs <= 3);
+
   FreeRegs -= SizeInRegs;
-
-  // If it is a simple scalar, keep the type so that we produce a cleaner IR.
-  ABIArgInfo Foo = classifyArgumentType(Ty);
-  if (Foo.isDirect() && !Foo.getDirectOffset() && !Foo.getPaddingType())
-    return ABIArgInfo::getDirectInReg(Foo.getCoerceToType());
-  if (Foo.isExtend())
-    return ABIArgInfo::getExtendInReg(Foo.getCoerceToType());
-
-  llvm::LLVMContext &LLVMContext = getVMContext();
-  llvm::Type *Int32 = llvm::Type::getInt32Ty(LLVMContext);
-  SmallVector<llvm::Type*, 3> Elements;
-  for (unsigned I = 0; I < SizeInRegs; ++I)
-    Elements.push_back(Int32);
-  llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
-  return ABIArgInfo::getDirectInReg(Result);
+  return true;
 }
 
-ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
+ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
+                                               unsigned &FreeRegs) const {
   // FIXME: Set alignment on indirect arguments.
   if (isAggregateTypeForABI(Ty)) {
     // Structures with flexible arrays are always indirect.
@@ -844,15 +828,26 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
       // Structures with either a non-trivial destructor or a non-trivial
       // copy constructor are always indirect.
       if (hasNonTrivialDestructorOrCopyConstructor(RT))
-        return getIndirectResult(Ty, /*ByVal=*/false);
+        return getIndirectResult(Ty, false, FreeRegs);
 
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return getIndirectResult(Ty);
+        return getIndirectResult(Ty, true, FreeRegs);
     }
 
     // Ignore empty structs/unions.
     if (isEmptyRecord(getContext(), Ty, true))
       return ABIArgInfo::getIgnore();
+
+    if (shouldUseInReg(Ty, FreeRegs)) {
+      unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+      llvm::LLVMContext &LLVMContext = getVMContext();
+      llvm::Type *Int32 = llvm::Type::getInt32Ty(LLVMContext);
+      SmallVector<llvm::Type*, 3> Elements;
+      for (unsigned I = 0; I < SizeInRegs; ++I)
+        Elements.push_back(Int32);
+      llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
+      return ABIArgInfo::getDirectInReg(Result);
+    }
 
     // Expand small (<= 128-bit) record types when we know that the stack layout
     // of those arguments will match the struct. This is important because the
@@ -862,7 +857,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
         canExpandIndirectArgument(Ty, getContext()))
       return ABIArgInfo::getExpand();
 
-    return getIndirectResult(Ty);
+    return getIndirectResult(Ty, true, FreeRegs);
   }
 
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
@@ -893,8 +888,16 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
-  return (Ty->isPromotableIntegerType() ?
-          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  bool InReg = shouldUseInReg(Ty, FreeRegs);
+
+  if (Ty->isPromotableIntegerType()) {
+    if (InReg)
+      return ABIArgInfo::getExtendInReg();
+    return ABIArgInfo::getExtend();
+  }
+  if (InReg)
+    return ABIArgInfo::getDirectInReg();
+  return ABIArgInfo::getDirect();
 }
 
 void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
@@ -916,7 +919,7 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
-    it->info = classifyArgumentTypeWithReg(it->type, FreeRegs);
+    it->info = classifyArgumentType(it->type, FreeRegs);
 }
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,

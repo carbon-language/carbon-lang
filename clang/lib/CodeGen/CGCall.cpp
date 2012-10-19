@@ -1051,6 +1051,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       break;
 
     case ABIArgInfo::Indirect:
+      if (AI.getInReg())
+        Attrs.addAttribute(llvm::Attributes::InReg);
+
       if (AI.getIndirectByVal())
         Attrs.addAttribute(llvm::Attributes::ByVal);
 
