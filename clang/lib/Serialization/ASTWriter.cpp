@@ -1129,8 +1129,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
   for (unsigned I = 1, N = SourceMgr.local_sloc_entry_size(); I != N; ++I) {
     // Get this source location entry.
     const SrcMgr::SLocEntry *SLoc = &SourceMgr.getLocalSLocEntry(I);
-    FileID FID = FileID::get(I);
-    assert(&SourceMgr.getSLocEntry(FID) == SLoc);
+    assert(&SourceMgr.getSLocEntry(FileID::get(I)) == SLoc);
 
     // We only care about file entries that were not overridden.
     if (!SLoc->isFile())
