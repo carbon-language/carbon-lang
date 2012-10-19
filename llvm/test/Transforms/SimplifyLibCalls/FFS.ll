@@ -1,6 +1,7 @@
-; Test that the ToAsciiOptimizer works correctly
-; RUN: opt < %s -simplify-libcalls -S | \
-; RUN:   not grep "call.*@ffs"
+; Test that FFSOpt works correctly
+; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
+
+; CHECK-NOT: call{{.*}}@ffs
 
 @non_const = external global i32		; <i32*> [#uses=1]
 
@@ -33,4 +34,12 @@ define i32 @main() {
 define i32 @a(i64) nounwind {
         %2 = call i32 @ffsll(i64 %0)            ; <i32> [#uses=1]
         ret i32 %2
+}
+
+; PR13028
+define i32 @b() nounwind {
+  %ffs = call i32 @ffsll(i64 0)
+  ret i32 %ffs
+; CHECK: @b
+; CHECK-NEXT: ret i32 0
 }

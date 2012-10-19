@@ -772,8 +772,8 @@ struct FFSOpt : public LibCallOptimization {
 
     // Constant fold.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
-      if (CI->getValue() == 0)  // ffs(0) -> 0.
-        return Constant::getNullValue(CI->getType());
+      if (CI->isZero()) // ffs(0) -> 0.
+        return B.getInt32(0);
       // ffs(c) -> cttz(c)+1
       return B.getInt32(CI->getValue().countTrailingZeros() + 1);
     }
