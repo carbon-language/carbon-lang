@@ -420,7 +420,7 @@ def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
                      GCCBuiltin<"__builtin_flt_rounds">;
 def int_trap : Intrinsic<[], [], [IntrNoReturn]>,
                GCCBuiltin<"__builtin_trap">;
-def int_debugtrap : Intrinsic<[]>,
+def int_debugtrap : Intrinsic<[], [], [IntrNoReturn]>,
                     GCCBuiltin<"__builtin_debugtrap">;
 
 // NOP: calls/invokes to this intrinsic are removed by codegen

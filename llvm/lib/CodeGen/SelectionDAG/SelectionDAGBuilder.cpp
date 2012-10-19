@@ -5175,10 +5175,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
+  case Intrinsic::debugtrap:
   case Intrinsic::trap: {
     StringRef TrapFuncName = TM.Options.getTrapFunctionName();
     if (TrapFuncName.empty()) {
-      DAG.setRoot(DAG.getNode(ISD::TRAP, dl,MVT::Other, getRoot()));
+      ISD::NodeType Op = (Intrinsic == Intrinsic::trap) ? 
+        ISD::TRAP : ISD::DEBUGTRAP;
+      DAG.setRoot(DAG.getNode(Op, dl,MVT::Other, getRoot()));
       return 0;
     }
     TargetLowering::ArgListTy Args;
@@ -5193,10 +5196,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Result.second);
     return 0;
   }
-  case Intrinsic::debugtrap: {
-    DAG.setRoot(DAG.getNode(ISD::DEBUGTRAP, dl,MVT::Other, getRoot()));
-    return 0;
-  }
+
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::usub_with_overflow:

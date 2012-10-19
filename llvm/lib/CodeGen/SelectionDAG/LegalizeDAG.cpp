@@ -1240,6 +1240,19 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     if (Action == TargetLowering::Legal)
       Action = TargetLowering::Custom;
     break;
+  case ISD::DEBUGTRAP:
+    Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
+    if (Action == TargetLowering::Expand) {
+      // replace ISD::DEBUGTRAP with ISD::TRAP
+      SDValue NewVal;
+      NewVal = DAG.getNode (ISD::TRAP, Node->getDebugLoc(), Node->getVTList(),
+                            Node->getOperand(0));
+      ReplaceNode(Node, NewVal.getNode());
+      LegalizeOp(NewVal.getNode());
+      return;
+    }
+    break;
+
   default:
     if (Node->getOpcode() >= ISD::BUILTIN_OP_END) {
       Action = TargetLowering::Legal;

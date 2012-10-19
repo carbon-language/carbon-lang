@@ -14,4 +14,16 @@ entry:
   unreachable
 }
 
+define void @t2() nounwind {
+entry:
+; INSTR: t2:
+; INSTR: trap
+
+; FUNC: t2:
+; FUNC: bl __trap
+  call void @llvm.debugtrap()
+  unreachable
+}
+
 declare void @llvm.trap() nounwind
+declare void @llvm.debugtrap() nounwind
