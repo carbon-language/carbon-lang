@@ -70,8 +70,8 @@ public:
     CanDebug (lldb_private::Target &target,
               bool plugin_specified_by_name);
     
-    //    virtual uint32_t
-    //    ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids);
+    virtual lldb_private::CommandObject *
+    GetPluginCommandObject();
     
     //------------------------------------------------------------------
     // Creating a new process, or attaching to an existing one
@@ -260,6 +260,8 @@ protected:
     bool m_destroy_in_process;
     std::string m_dyld_plugin_name;
     lldb::addr_t m_kernel_load_addr;
+    lldb::CommandObjectSP m_command_sp;
+
 
     bool
     StartAsyncThread ();

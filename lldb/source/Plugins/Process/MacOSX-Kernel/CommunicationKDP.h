@@ -171,6 +171,13 @@ public:
                             uint32_t src_len,
                             lldb_private::Error &error);
 
+    bool
+    SendRawRequest (uint8_t command_byte,
+                    const void *src,
+                    uint32_t src_len,
+                    lldb_private::DataExtractor &reply,
+                    lldb_private::Error &error);
+
     uint32_t
     SendRequestReadRegisters (uint32_t cpu,
                               uint32_t flavor,

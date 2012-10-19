@@ -94,7 +94,7 @@ OperatingSystemDarwinKernel::CreateInstance (Process *process, bool force)
 const char *
 OperatingSystemDarwinKernel::GetPluginNameStatic()
 {
-    return "darwin-kernel";
+    return "macosx-kernel";
 }
 
 const char *

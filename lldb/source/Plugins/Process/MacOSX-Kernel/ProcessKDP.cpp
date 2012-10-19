@@ -22,6 +22,12 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionGroupString.h"
+#include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -32,6 +38,7 @@
 #include "ProcessKDPLog.h"
 #include "ThreadKDP.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
+#include "Utility/StringExtractor.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -108,7 +115,8 @@ ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     m_async_thread (LLDB_INVALID_HOST_THREAD),
     m_destroy_in_process (false),
     m_dyld_plugin_name (),
-    m_kernel_load_addr (LLDB_INVALID_ADDRESS)
+    m_kernel_load_addr (LLDB_INVALID_ADDRESS),
+    m_command_sp()
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -828,4 +836,184 @@ ProcessKDP::AsyncThread (void *arg)
     return NULL;
 }
 
+
+class CommandObjectProcessKDPPacketSend : public CommandObjectParsed
+{
+private:
+    
+    OptionGroupOptions m_option_group;
+    OptionGroupUInt64 m_command_byte;
+    OptionGroupString m_packet_data;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_option_group;
+    }
+    
+
+public:
+    CommandObjectProcessKDPPacketSend(CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "process plugin packet send",
+                             "Send a custom packet through the KDP protocol by specifying the command byte and the packet payload data. A packet will be sent with a correct header and payload, and the raw result bytes will be displayed as a string value. ",
+                             NULL),
+        m_option_group (interpreter),
+        m_command_byte(LLDB_OPT_SET_1, true , "command", 'c', 0, eArgTypeNone, "Specify the command byte to use when sending the KDP request packet.", 0),
+        m_packet_data (LLDB_OPT_SET_1, false, "payload", 'p', 0, eArgTypeNone, "Specify packet payload bytes as a hex ASCII string with no spaces or hex prefixes.", NULL)
+    {
+        m_option_group.Append (&m_command_byte, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_packet_data , LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Finalize();
+    }
+    
+    ~CommandObjectProcessKDPPacketSend ()
+    {
+    }
+    
+    bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc == 0)
+        {
+            if (!m_command_byte.GetOptionValue().OptionWasSet())
+            {
+                result.AppendError ("the --command option must be set to a valid command byte");
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else
+            {
+                const uint64_t command_byte = m_command_byte.GetOptionValue().GetUInt64Value(0);
+                if (command_byte > 0 && command_byte <= UINT8_MAX)
+                {
+                    ProcessKDP *process = (ProcessKDP *)m_interpreter.GetExecutionContext().GetProcessPtr();
+                    if (process)
+                    {
+                        const StateType state = process->GetState();
+                        
+                        if (StateIsStoppedState (state, true))
+                        {
+                            std::vector<uint8_t> payload_bytes;
+                            const char *ascii_hex_bytes_cstr = m_packet_data.GetOptionValue().GetCurrentValue();
+                            if (ascii_hex_bytes_cstr && ascii_hex_bytes_cstr[0])
+                            {
+                                StringExtractor extractor(ascii_hex_bytes_cstr);
+                                const size_t ascii_hex_bytes_cstr_len = extractor.GetStringRef().size();
+                                if (ascii_hex_bytes_cstr_len & 1)
+                                {
+                                    result.AppendErrorWithFormat ("payload data must contain an even number of ASCII hex characters: '%s'", ascii_hex_bytes_cstr);
+                                    result.SetStatus (eReturnStatusFailed);
+                                    return false;
+                                }
+                                payload_bytes.resize(ascii_hex_bytes_cstr_len/2);
+                                if (extractor.GetHexBytes(&payload_bytes[0], payload_bytes.size(), '\xdd') != payload_bytes.size())
+                                {
+                                    result.AppendErrorWithFormat ("payload data must only contain ASCII hex characters (no spaces or hex prefixes): '%s'", ascii_hex_bytes_cstr);
+                                    result.SetStatus (eReturnStatusFailed);
+                                    return false;
+                                }
+                            }
+                            Error error;
+                            DataExtractor reply;
+                            process->GetCommunication().SendRawRequest (command_byte,
+                                                                        payload_bytes.empty() ? NULL : payload_bytes.data(),
+                                                                        payload_bytes.size(),
+                                                                        reply,
+                                                                        error);
+                            
+                            if (error.Success())
+                            {
+                                // Copy the binary bytes into a hex ASCII string for the result
+                                StreamString packet;
+                                packet.PutBytesAsRawHex8(reply.GetDataStart(),
+                                                         reply.GetByteSize(),
+                                                         lldb::endian::InlHostByteOrder(),
+                                                         lldb::endian::InlHostByteOrder());
+                                result.AppendMessage(packet.GetString().c_str());
+                                result.SetStatus (eReturnStatusSuccessFinishResult);
+                                return true;
+                            }
+                            else
+                            {
+                                const char *error_cstr = error.AsCString();
+                                if (error_cstr && error_cstr[0])
+                                    result.AppendError (error_cstr);
+                                else
+                                    result.AppendErrorWithFormat ("unknown error 0x%8.8x", error.GetError());
+                                result.SetStatus (eReturnStatusFailed);
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("process must be stopped in order to send KDP packets, state is %s", StateAsCString (state));
+                            result.SetStatus (eReturnStatusFailed);
+                        }
+                    }
+                    else
+                    {
+                        result.AppendError ("invalid process");
+                        result.SetStatus (eReturnStatusFailed);
+                    }
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("invalid command byte 0x%llx, valid values are 1 - 255", command_byte);
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("'%s' takes no arguments, only options.", m_cmd_name.c_str());
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return false;
+    }
+};
+
+class CommandObjectProcessKDPPacket : public CommandObjectMultiword
+{
+private:
+
+public:
+    CommandObjectProcessKDPPacket(CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "process plugin packet",
+                            "Commands that deal with KDP remote packets.",
+                            NULL)
+    {
+        LoadSubCommand ("send", CommandObjectSP (new CommandObjectProcessKDPPacketSend (interpreter)));
+    }
+    
+    ~CommandObjectProcessKDPPacket ()
+    {
+    }
+};
+
+class CommandObjectMultiwordProcessKDP : public CommandObjectMultiword
+{
+public:
+    CommandObjectMultiwordProcessKDP (CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "process plugin",
+                            "A set of commands for operating on a ProcessKDP process.",
+                            "process plugin <subcommand> [<subcommand-options>]")
+    {
+        LoadSubCommand ("packet", CommandObjectSP (new CommandObjectProcessKDPPacket    (interpreter)));
+    }
+    
+    ~CommandObjectMultiwordProcessKDP ()
+    {
+    }
+};
+
+CommandObject *
+ProcessKDP::GetPluginCommandObject()
+{
+    if (!m_command_sp)
+        m_command_sp.reset (new CommandObjectMultiwordProcessKDP (GetTarget().GetDebugger().GetCommandInterpreter()));
+    return m_command_sp.get();
+}
 

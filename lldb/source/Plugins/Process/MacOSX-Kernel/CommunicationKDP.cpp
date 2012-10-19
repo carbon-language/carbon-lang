@@ -84,7 +84,7 @@ typedef struct {
 #endif
 
 void
-CommunicationKDP::MakeRequestPacketHeader (CommandType request_type, 
+CommunicationKDP::MakeRequestPacketHeader (CommandType request_type,
                                            PacketStreamType &request_packet,
                                            uint16_t request_length)
 {
@@ -656,6 +656,10 @@ CommunicationKDP::SendRequestReadMemory (lldb::addr_t addr,
         else
             error.SetErrorString ("kdp read memory failed");
     }
+    else
+    {
+        error.SetErrorString ("failed to send packet");
+    }
     return 0;
 }
 
@@ -691,8 +695,47 @@ CommunicationKDP::SendRequestWriteMemory (lldb::addr_t addr,
             return src_len;
         }
     }
+    else
+    {
+        error.SetErrorString ("failed to send packet");
+    }
     return 0;
 }
+
+bool
+CommunicationKDP::SendRawRequest (uint8_t command_byte,
+                                  const void *src,  // Raw packet payload bytes
+                                  uint32_t src_len, // Raw packet payload length
+                                  DataExtractor &reply_packet,
+                                  Error &error)
+{
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
+    // Size is header + address size + uint32_t length
+    const uint32_t command_length = 8 + src_len;
+    const CommandType command = (CommandType)command_byte;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    request_packet.PutRawBytes(src, src_len);
+    
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        uint32_t offset = 8;
+        uint32_t kdp_error = reply_packet.GetU32 (&offset);
+        if (kdp_error)
+            error.SetErrorStringWithFormat ("request packet 0x%8.8x failed (error %u)", command_byte, kdp_error);
+        else
+        {
+            error.Clear();
+            return true;
+        }
+    }
+    else
+    {
+        error.SetErrorString ("failed to send packet");
+    }
+    return false;
+}
+
 
 const char *
 CommunicationKDP::GetCommandAsCString (uint8_t command)
@@ -1120,6 +1163,10 @@ CommunicationKDP::SendRequestReadRegisters (uint32_t cpu,
         else
             error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u", cpu, flavor);
     }
+    else
+    {
+        error.SetErrorString ("failed to send packet");
+    }
     return 0;
 }
 
@@ -1147,6 +1194,10 @@ CommunicationKDP::SendRequestWriteRegisters (uint32_t cpu,
         if (kdp_error == 0)
             return src_len;
         error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u (error %u)", cpu, flavor, kdp_error);
+    }
+    else
+    {
+        error.SetErrorString ("failed to send packet");
     }
     return 0;
 }

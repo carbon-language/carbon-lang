@@ -88,6 +88,8 @@
 		2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2628A4D313D4977900F5487A /* ThreadKDP.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
 		262D24E613FB8710002D1960 /* RegisterContextMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */; };
+		262ED0051631FA2800879631 /* OptionGroupString.h in Headers */ = {isa = PBXBuildFile; fileRef = 262ED0041631FA2800879631 /* OptionGroupString.h */; };
+		262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262ED0071631FA3A00879631 /* OptionGroupString.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
@@ -889,6 +891,8 @@
 		2628A4D413D4977900F5487A /* ThreadKDP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadKDP.h; sourceTree = "<group>"; };
 		262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMemory.cpp; path = Utility/RegisterContextMemory.cpp; sourceTree = "<group>"; };
 		262D24E513FB8710002D1960 /* RegisterContextMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMemory.h; path = Utility/RegisterContextMemory.h; sourceTree = "<group>"; };
+		262ED0041631FA2800879631 /* OptionGroupString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionGroupString.h; path = include/lldb/Interpreter/OptionGroupString.h; sourceTree = "<group>"; };
+		262ED0071631FA3A00879631 /* OptionGroupString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupString.cpp; path = source/Interpreter/OptionGroupString.cpp; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
@@ -2934,6 +2938,8 @@
 				26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */,
 				26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */,
 				26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */,
+				262ED0041631FA2800879631 /* OptionGroupString.h */,
+				262ED0071631FA3A00879631 /* OptionGroupString.cpp */,
 				2686536E1370AE5A00D186A3 /* OptionGroupUInt64.h */,
 				2686536F1370AE7200D186A3 /* OptionGroupUInt64.cpp */,
 				260E07C3136FA68900CF21D3 /* OptionGroupUUID.h */,
@@ -3429,6 +3435,7 @@
 				2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */,
 				260D9B2715EC369500960137 /* ModuleSpec.h in Headers */,
 				947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */,
+				262ED0051631FA2800879631 /* OptionGroupString.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4153,6 +4160,7 @@
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
 				94CDEB9D15F0258500DD2A7A /* CXXFormatterFunctions.cpp in Sources */,
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
+				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

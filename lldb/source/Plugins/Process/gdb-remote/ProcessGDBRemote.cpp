@@ -41,6 +41,8 @@
 #include "lldb/Host/Symbols.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -3016,8 +3018,6 @@ ProcessGDBRemote::GetDynamicLoader ()
     return m_dyld_ap.get();
 }
 
-#include "lldb/Interpreter/CommandObject.h"
-#include "lldb/Interpreter/CommandObjectMultiword.h"
 
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
