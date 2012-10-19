@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -fblocks -verify %s
+// expected-no-diagnostics
 int printf(const char *, ...);
 void _Block_byref_release(void*src){}
 

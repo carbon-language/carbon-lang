@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // PR5290
 int const f0();

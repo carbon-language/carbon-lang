@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify %s 
+// expected-no-diagnostics
 
 @interface I
 - (id) compare: (char) arg1;

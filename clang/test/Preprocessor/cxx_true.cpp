@@ -3,6 +3,7 @@
    RUN: %clang_cc1 -E %s -x c | not grep block
    RUN: %clang_cc1 -E %s -x c++ -verify -Wundef
 */
+// expected-no-diagnostics
 
 #if true
 block_1

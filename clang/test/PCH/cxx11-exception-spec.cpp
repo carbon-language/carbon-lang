@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -pedantic-errors -std=c++11 -emit-pch %s -o %t
 // RUN: %clang_cc1 -pedantic-errors -std=c++11 -include-pch %t -verify %s
+// expected-no-diagnostics
 
 #ifndef HEADER_INCLUDED
 

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i686-pc-linux-gnu -analyze -analyzer-checker=security.insecureAPI,security.FloatLoopCounter %s -verify
+// expected-no-diagnostics
 
 // This file complements 'security-syntax-checks.m', but tests that we omit
 // specific checks on platforms where they don't make sense.

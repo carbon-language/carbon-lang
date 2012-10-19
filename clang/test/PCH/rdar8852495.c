@@ -5,6 +5,8 @@
 // RUN: %clang_cc1 %s -emit-pch -o %t -Wsign-compare -Wtautological-compare
 // RUN: %clang_cc1 %s -include-pch %t -verify -fsyntax-only -Wno-sign-compare -Wtautological-compare
 
+// expected-no-diagnostics
+
 // This tests that diagnostic mappings from PCH are propagated for #pragma
 // diagnostics but not for command-line flags.
 

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s 
+// expected-no-diagnostics
 
 // The scope of atemplate-parameterextends from its point of
 // declaration until the end of its template. In particular, a

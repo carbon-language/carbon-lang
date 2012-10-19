@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=osx.coreFoundation.containers.PointerSizedValues -triple x86_64-apple-darwin -verify %s
+// expected-no-diagnostics
 
 typedef const struct __CFAllocator * CFAllocatorRef;
 typedef const struct __CFArray * CFArrayRef;

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // C++0x [class.nest] p3:
 //   If class X is defined in a namespace scope, a nested class Y may be

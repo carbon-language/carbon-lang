@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // Ensure that when enforcing access control an unqualified template name with
 // explicit template arguments, we don't lose the context of the name lookup

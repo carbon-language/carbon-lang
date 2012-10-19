@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -x objective-c %s -fsyntax-only -verify
+// expected-no-diagnostics
 // rdar://9362887
 
 typedef __typeof__(((int*)0)-((int*)0)) ptrdiff_t;

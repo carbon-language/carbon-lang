@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core %s -verify
+// expected-no-diagnostics
 
 namespace PR14054_reduced {
   struct Definition;

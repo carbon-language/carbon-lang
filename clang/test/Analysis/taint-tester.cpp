@@ -1,4 +1,5 @@
 // RUN: %clang_cc1  -analyze -analyzer-checker=alpha.security.taint,debug.TaintTest %s -verify
+// expected-no-diagnostics
 
 typedef struct _FILE FILE;
 typedef __typeof(sizeof(int)) size_t;

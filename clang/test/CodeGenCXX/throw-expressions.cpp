@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fcxx-exceptions -fexceptions -emit-llvm-only -verify %s -Wno-unreachable-code
+// expected-no-diagnostics
 
 int val = 42;
 int& test1() {

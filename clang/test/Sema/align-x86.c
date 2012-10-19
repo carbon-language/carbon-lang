@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // PR3433
 double g1;

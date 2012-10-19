@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify %s
+// expected-no-diagnostics
 template<typename T>
 void f0() {
   struct X;

@@ -1,6 +1,7 @@
 // Test with PCH
 // RUN: %clang_cc1 -std=c++11 -x c++-header -emit-pch -o %t %s
 // RUN: %clang_cc1 -std=c++11 -include-pch %t -verify %s
+// expected-no-diagnostics
 
 // PR10847
 #ifndef HEADER

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify -Wno-covered-switch-default %s
+// expected-no-diagnostics
 
 enum E {
     one,

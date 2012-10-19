@@ -5,6 +5,7 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-pch -o %t %S/asm.h
 // RUN: %clang_cc1 -triple i386-unknown-unknown -include-pch %t -fsyntax-only -verify %s 
 
+// expected-no-diagnostics
 
 void call_f(void) { f(); }
 

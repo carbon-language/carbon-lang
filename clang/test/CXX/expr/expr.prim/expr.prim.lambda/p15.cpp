@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -verify
+// expected-no-diagnostics
 
 class NonCopyable {
   NonCopyable(const NonCopyable&);

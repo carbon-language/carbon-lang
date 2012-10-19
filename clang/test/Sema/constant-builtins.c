@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only %s -verify -pedantic
+// expected-no-diagnostics
 
 // Math stuff
 

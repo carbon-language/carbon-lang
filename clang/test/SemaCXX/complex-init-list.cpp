@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only -pedantic
+// expected-no-diagnostics
 
 // This file tests the clang extension which allows initializing the components
 // of a complex number individually using an initialization list. Basically,

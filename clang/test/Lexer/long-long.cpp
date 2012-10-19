@@ -6,13 +6,15 @@
 
 #if !defined(__cplusplus)
 #  if __STDC_VERSION__ < 199901L
-/* expected-error@19 {{'long long' is an extension when C99 mode is not enabled}} */
+/* expected-error@21 {{'long long' is an extension when C99 mode is not enabled}} */
+#  else
+/* expected-no-diagnostics */
 #  endif
 #else
 #  if __cplusplus < 201103L
-/* expected-error@19 {{'long long' is a C++11 extension}} */
+/* expected-error@21 {{'long long' is a C++11 extension}} */
 #  else
-/* expected-warning@19 {{'long long' is incompatible with C++98}} */
+/* expected-warning@21 {{'long long' is incompatible with C++98}} */
 #  endif
 #endif
 

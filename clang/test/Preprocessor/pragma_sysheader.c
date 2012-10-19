@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -verify -pedantic %s -fsyntax-only
 // RUN: %clang_cc1 -E %s | FileCheck %s
+// expected-no-diagnostics
 // rdar://6899937
 #include "pragma_sysheader.h"
 
@@ -9,4 +10,4 @@
 // CHECK-NEXT: # 1 "{{.*}}pragma_sysheader.h" 3
 // CHECK-NEXT: typedef int x;
 // CHECK-NEXT: typedef int x;
-// CHECK-NEXT: # 5 "{{.*}}pragma_sysheader.c" 2
+// CHECK-NEXT: # 6 "{{.*}}pragma_sysheader.c" 2

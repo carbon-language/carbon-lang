@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // Note: Partial ordering of function templates containing template
 // parameter packs is independent of the number of deduced arguments

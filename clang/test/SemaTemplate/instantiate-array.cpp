@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
+// expected-no-diagnostics
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 #define __CONCAT(__X, __Y) __CONCAT1(__X, __Y)

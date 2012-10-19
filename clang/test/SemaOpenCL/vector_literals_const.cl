@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
+// expected-no-diagnostics
 
 typedef int int2 __attribute((ext_vector_type(2)));
 typedef int int3 __attribute((ext_vector_type(3)));

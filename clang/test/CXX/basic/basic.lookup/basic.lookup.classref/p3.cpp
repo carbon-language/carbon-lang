@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // C++0x [basic.lookup.classref]p3:
 //   If the unqualified-id is ~type-name, the type-name is looked up in the 

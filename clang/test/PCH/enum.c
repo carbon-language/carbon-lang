@@ -5,6 +5,8 @@
 // RUN: %clang_cc1 -emit-pch -o %t %S/enum.h
 // RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s 
 
+// expected-no-diagnostics
+
 int i = Red;
 
 int return_enum_constant() {

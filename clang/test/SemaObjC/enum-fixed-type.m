@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 #if !__has_feature(objc_fixed_enum)
 #  error Enumerations with a fixed underlying type are not supported

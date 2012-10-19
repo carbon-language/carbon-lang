@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks %s
+// expected-no-diagnostics
 
 // Here is a case where a pointer is treated as integer, invalidated as an
 // integer, and then used again as a pointer.   This test just makes sure

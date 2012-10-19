@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// expected-no-diagnostics
 
 template <class _Tp, class _Up>
 struct __allocator_traits_rebind

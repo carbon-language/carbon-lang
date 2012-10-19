@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify %s
+// expected-no-diagnostics
 //
 // This test case simply should not crash.  It evaluates the logic of not
 // using MemRegion::getRValueType in incorrect places.

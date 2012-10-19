@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i686-apple-darwin9 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 namespace rdar8745206 {
 

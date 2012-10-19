@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // This test creates cases where implicit instantiations of various entities
 // would cause a diagnostic, but provides expliict specializations for those

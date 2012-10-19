@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify -fblocks %s
+// expected-no-diagnostics
 
 struct X0 {
   static id makeObject1() __attribute__((ns_returns_retained));

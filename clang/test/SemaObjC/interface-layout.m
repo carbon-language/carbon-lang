@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify  -triple i386-apple-darwin9 -fobjc-runtime=macosx-fragile-10.5
+// expected-no-diagnostics
 typedef struct objc_object {} *id;
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;

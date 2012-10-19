@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify -fsyntax-only %s
+// expected-no-diagnostics
 
 template<typename T> struct Node {
 	int lhs;

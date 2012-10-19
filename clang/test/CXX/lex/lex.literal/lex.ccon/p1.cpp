@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // Check types of char literals
 extern char a;

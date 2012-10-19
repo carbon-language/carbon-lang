@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+// expected-no-diagnostics
 
 int printf(char const *, ...);
 

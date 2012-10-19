@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 template<typename T> int &f0(T&);
 template<typename T> float &f0(T&&);

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // The result of the expression const_cast<T>(v) is of type T. If T is
 // an lvalue reference to object type, the result is an lvalue; if T

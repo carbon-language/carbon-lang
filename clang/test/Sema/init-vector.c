@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 typedef float __attribute__((vector_size (16))) v4f_t;
 

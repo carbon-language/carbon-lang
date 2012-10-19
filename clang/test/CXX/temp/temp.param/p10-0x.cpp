@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s 
+// expected-no-diagnostics
 
 template<typename> struct Y1;
 template<typename, int> struct Y2;

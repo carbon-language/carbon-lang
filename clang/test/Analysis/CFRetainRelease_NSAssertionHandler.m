@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,alpha.core -verify %s -analyzer-constraints=range -analyzer-store=region
+// expected-no-diagnostics
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;

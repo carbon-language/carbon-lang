@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // All of these function templates are distinct.
 template<typename T> void f0(T) { }

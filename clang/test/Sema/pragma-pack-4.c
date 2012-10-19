@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple i686-apple-darwin9 %s -fsyntax-only -verify
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 %s -fsyntax-only -verify
+// expected-no-diagnostics
 
 // rdar://problem/7095436
 #pragma pack(4)

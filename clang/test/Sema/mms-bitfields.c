@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -mms-bitfields -fsyntax-only -verify -triple x86_64-apple-darwin9 %s
+// expected-no-diagnostics
 
 // The -mms-bitfields commandline parameter should behave the same
 // as the ms_struct attribute.

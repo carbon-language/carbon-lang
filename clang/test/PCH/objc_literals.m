@@ -3,6 +3,8 @@
 // RUN: %clang -cc1 -include-pch %t -ast-print %s | FileCheck -check-prefix=PRINT %s
 // RUN: %clang -cc1 -include-pch %t -emit-llvm -o - %s | FileCheck -check-prefix=IR %s
 
+// expected-no-diagnostics
+
 #ifndef HEADER
 #define HEADER
 

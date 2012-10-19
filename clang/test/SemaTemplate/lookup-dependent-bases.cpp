@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 class C {
 public:

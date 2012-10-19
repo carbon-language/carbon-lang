@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -Wunused -verify %s
+// expected-no-diagnostics
 
 static int foo(int x) { return x; }
 

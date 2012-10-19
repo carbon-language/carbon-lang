@@ -3,7 +3,11 @@
 
 // Test with pch.
 // RUN: %clang_cc1 -emit-pch -fblocks -o %t %S/exprs.h
-// RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s -DWITH_PCH
+
+#ifdef WITH_PCH
+// expected-no-diagnostics
+#endif
 
 __SIZE_TYPE__ size_type_value;
 int integer;

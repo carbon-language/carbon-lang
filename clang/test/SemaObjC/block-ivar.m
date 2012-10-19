@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks
+// expected-no-diagnostics
 
 @interface NSObject {
   struct objc_object *isa;

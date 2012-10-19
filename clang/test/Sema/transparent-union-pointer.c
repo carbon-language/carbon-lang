@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify
+// expected-no-diagnostics
 
 typedef union   {
   union wait *__uptr;

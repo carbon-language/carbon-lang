@@ -5,6 +5,8 @@
 // RUN: %clang_cc1 -x objective-c -emit-pch -o %t %S/objc_methods.h
 // RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s 
 
+// expected-no-diagnostics
+
 void func() {
  TestPCH *xx;
  TestForwardClassDecl *yy;

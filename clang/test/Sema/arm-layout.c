@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple armv7-unknown-unknown -target-abi apcs-gnu %s -verify
 // RUN: %clang_cc1 -triple armv7-unknown-unknown -target-abi aapcs %s -verify
+// expected-no-diagnostics
 
 #define check(name, cond) int _##name##_check[(cond) ? 1 : -1]
 

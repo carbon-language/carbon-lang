@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 %s -verify
+// expected-no-diagnostics
 
 struct A { void f(); };
 struct C { void f(); };

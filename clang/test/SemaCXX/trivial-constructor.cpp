@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
+// expected-no-diagnostics
 struct T1 {
 };
 static_assert(__has_trivial_constructor(T1), "T1 has trivial constructor!");

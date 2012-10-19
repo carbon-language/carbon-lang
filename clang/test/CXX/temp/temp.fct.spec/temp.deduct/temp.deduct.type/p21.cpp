@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // Note: Template argument deduction involving parameter packs
 // (14.5.3) can deduce zero or more arguments for each parameter pack.

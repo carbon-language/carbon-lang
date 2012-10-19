@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // PR5426 - the non-dependent obj would be fully processed and wrapped in a
 // CXXConstructExpr at definition time, which would lead to a failure at

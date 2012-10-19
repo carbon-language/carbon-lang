@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 typedef signed char BOOL;
 typedef struct _NSZone NSZone;
 

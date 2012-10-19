@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only %s -verify 
+// expected-no-diagnostics
 
 namespace rdar10544564 {
   // Check that we don't attempt to use an overloaded operator& when

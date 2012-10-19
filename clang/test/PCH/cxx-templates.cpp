@@ -7,6 +7,8 @@
 // RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -include-pch %t -verify %s -ast-dump  -o -
 // RUN: %clang_cc1 -std=c++11 -fcxx-exceptions -fexceptions -include-pch %t %s -emit-llvm -o - | FileCheck %s
 
+// expected-no-diagnostics
+
 // CHECK: define weak_odr void @_ZN2S4IiE1mEv
 // CHECK: define linkonce_odr void @_ZN2S3IiE1mEv
 

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core %s -analyzer-store=region -verify
+// expected-no-diagnostics
 
 typedef int bar_return_t;
 typedef struct {

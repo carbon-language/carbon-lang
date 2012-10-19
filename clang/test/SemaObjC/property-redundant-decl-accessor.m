@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -Werror -verify -Wno-objc-root-class %s
+// expected-no-diagnostics
 
 @interface MyClass {
     const char	*_myName;

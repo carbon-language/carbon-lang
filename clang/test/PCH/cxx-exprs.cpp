@@ -5,6 +5,8 @@
 // RUN: %clang_cc1 -std=c++11 -emit-pch -o %t %s
 // RUN: %clang_cc1 -include-pch %t -verify -std=c++11 %s 
 
+// expected-no-diagnostics
+
 #ifndef HEADER
 #define HEADER
 

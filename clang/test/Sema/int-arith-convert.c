@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple=i686-linux-gnu -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // Check types are the same through redeclaration
 unsigned long x;

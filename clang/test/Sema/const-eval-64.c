@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-linux %s
+// expected-no-diagnostics
 
 #define EVAL_EXPR(testno, expr) int test##testno = sizeof(struct{char qq[expr];});
 

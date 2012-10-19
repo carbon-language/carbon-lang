@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // PR5599
 

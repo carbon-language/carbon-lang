@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
+// expected-no-diagnostics
 // PR4287
 
 #include <stdarg.h>

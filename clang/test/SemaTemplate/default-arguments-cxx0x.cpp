@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
+// expected-no-diagnostics
 
 // Test default template arguments for function templates.
 template<typename T = int>

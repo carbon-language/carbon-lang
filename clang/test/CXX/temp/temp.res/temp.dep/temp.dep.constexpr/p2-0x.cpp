@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -verify %s
+// expected-no-diagnostics
 
 template<int n> struct S;
 

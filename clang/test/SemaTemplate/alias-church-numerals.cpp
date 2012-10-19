@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 template<template<template<typename> class, typename> class T, template<typename> class V> struct PartialApply {
   template<typename W> using R = T<V, W>;

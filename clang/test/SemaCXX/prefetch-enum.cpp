@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only %s -verify
+// expected-no-diagnostics
 // PR5679
 
 enum X { A = 3 };

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// expected-no-diagnostics
 
 #if !__has_feature(cxx_access_control_sfinae)
 #  error No support for access control as part of SFINAE?

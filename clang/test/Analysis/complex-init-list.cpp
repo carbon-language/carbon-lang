@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-output=text -verify %s
+// expected-no-diagnostics
 
 // Do not crash on initialization to complex numbers.
 void init_complex() {

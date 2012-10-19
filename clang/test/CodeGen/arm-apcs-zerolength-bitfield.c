@@ -1,5 +1,6 @@
 // REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -target-abi apcs-gnu -triple armv7-apple-darwin10 %s -verify
+// expected-no-diagnostics
 //
 // Note: gcc forces the alignment to 4 bytes, regardless of the type of the
 // zero length bitfield.

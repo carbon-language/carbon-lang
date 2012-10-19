@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core -std=gnu99 -analyzer-store=region -verify %s
+// expected-no-diagnostics
 
 
 // The store for 'a[1]' should not be removed mistakenly. SymbolicRegions may

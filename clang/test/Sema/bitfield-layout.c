@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -triple=i686-apple-darwin9
+// expected-no-diagnostics
 
 #define CHECK_SIZE(kind, name, size) extern int name##1[sizeof(kind name) == size ? 1 : -1];
 #define CHECK_ALIGN(kind, name, size) extern int name##2[__alignof(kind name) == size ? 1 : -1];

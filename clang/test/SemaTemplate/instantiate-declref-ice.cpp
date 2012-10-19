@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 template<int i> struct x {
   static const int j = i;
   x<j>* y;

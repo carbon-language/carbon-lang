@@ -7,6 +7,8 @@
 // RUN: %clang -cc1 -include-pch %t -ast-print %s | FileCheck -check-prefix=PRINT %s
 // RUN: %clang -cc1 -include-pch %t -emit-llvm -o - %s | FileCheck -check-prefix=IR %s
 
+// expected-no-diagnostics
+
 // CHECK-PRINT: id oldObject = array[10];
 // CHECK-PRINT: array[10] = oldObject;
 // CHECK-PRINT: oldObject = dictionary[key];

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm-only -verify
+// expected-no-diagnostics
 
 struct F {
   void (*x)();

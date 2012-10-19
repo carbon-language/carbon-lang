@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify %s -std=c++11
+// expected-no-diagnostics
 
 template<const int I> struct S {
   decltype(I) n;

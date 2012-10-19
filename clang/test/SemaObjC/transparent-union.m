@@ -1,4 +1,5 @@
 // RUN: %clang_cc1  -fsyntax-only -verify -Wno-objc-root-class %s
+// expected-no-diagnostics
 
 typedef union {
  struct xx_object_s *_do;

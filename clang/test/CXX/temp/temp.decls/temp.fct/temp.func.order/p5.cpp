@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 template<class T> int &f(T); 
 template<class T> float &f(T*, int=1); 
 

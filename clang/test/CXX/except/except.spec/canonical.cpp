@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// expected-no-diagnostics
 
 // PR10087: Make sure that we don't conflate exception specifications
 // from different functions in the canonical type system.

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 #define FOR_EACH_KEYWORD(macro) \
 macro(asm) \

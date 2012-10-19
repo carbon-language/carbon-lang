@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -o %t -emit-llvm -verify
+// expected-no-diagnostics
 // PR4289
 
 struct funcptr {

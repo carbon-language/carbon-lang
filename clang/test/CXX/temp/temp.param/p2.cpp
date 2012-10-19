@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // There is no semantic difference between class and typename in a
 // template-parameter. typename followed by an unqualified-id names a

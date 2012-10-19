@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -std=c++11 -verify %s
+// expected-no-diagnostics
 
 // radar://11485149, PR12871
 class PlotPoint {

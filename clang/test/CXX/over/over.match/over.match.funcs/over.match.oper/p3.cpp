@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// expected-no-diagnostics
 
 // This is specifically testing the bullet:
 // "do not have the same parameter-type-list as any non-template

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // C++0x [temp.local]p1:
 //   Like normal (non-template) classes, class templates have an

@@ -1,5 +1,6 @@
 // REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -target-abi aapcs -triple armv7-apple-darwin10 %s -verify
+// expected-no-diagnostics
 
 #include <stddef.h>
 

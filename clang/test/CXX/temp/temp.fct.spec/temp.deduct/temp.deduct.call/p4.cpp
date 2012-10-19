@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 namespace PR8598 {
   template<class T> struct identity { typedef T type; };

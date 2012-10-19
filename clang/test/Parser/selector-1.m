@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s 
 // RUN: %clang_cc1 -x objective-c++ -fsyntax-only -verify %s 
+// expected-no-diagnostics
 
 // rdar://8366474
 int main() {

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify %s
+// expected-no-diagnostics
 
 // Test function pointer casts.  Currently we track function addresses using
 // loc::FunctionVal.  Because casts can be arbitrary, do we need to model

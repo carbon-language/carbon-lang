@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 %s -Wunused -verify
+// expected-no-diagnostics
 
 template<typename T, typename U>
 struct is_same {

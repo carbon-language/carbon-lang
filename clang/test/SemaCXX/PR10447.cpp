@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify %s
+// expected-no-diagnostics
 
 // PR12223
 namespace test1 {

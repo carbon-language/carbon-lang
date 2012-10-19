@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
+// expected-no-diagnostics
 
 class Trivial { int n; void f(); };
 class NonTrivial1 { NonTrivial1(const NonTrivial1 &); };

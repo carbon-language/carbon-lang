@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // C++0x [basic.lookup.unqual]p14:
 //   If a variable member of a namespace is defined outside of the

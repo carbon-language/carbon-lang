@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -verify %s
+// expected-no-diagnostics
 
 // Test parameter 'a' is registered to LiveVariables analysis data although it
 // is not referenced in the function body. 

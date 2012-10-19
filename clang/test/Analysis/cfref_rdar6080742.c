@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -analyzer-constraints=range -verify %s
+// expected-no-diagnostics
 
 // This test case was reported in <rdar:problem/6080742>.
 // It tests path-sensitivity with respect to '!(cfstring != 0)' (negation of inequality).

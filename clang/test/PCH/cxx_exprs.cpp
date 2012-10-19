@@ -5,6 +5,8 @@
 // RUN: %clang_cc1 -fcxx-exceptions -fexceptions -x c++-header -std=c++11 -emit-pch -o %t %S/cxx_exprs.h
 // RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++11 -include-pch %t -fsyntax-only -verify %s -ast-dump
 
+// expected-no-diagnostics
+
 int integer;
 double floating;
 char character;

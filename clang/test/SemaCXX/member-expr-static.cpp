@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 typedef void (*thread_continue_t)();
 
 extern "C" {

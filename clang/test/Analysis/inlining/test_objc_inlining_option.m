@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=dynamic-bifurcate -analyzer-config objc-inlining=false -verify %s
+// expected-no-diagnostics
 
 typedef signed char BOOL;
 typedef struct objc_class *Class;

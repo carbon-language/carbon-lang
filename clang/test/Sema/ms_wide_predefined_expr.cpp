@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-extensions
+// expected-no-diagnostics
 
 // Wide character predefined identifiers
 #define _STR2WSTR(str) L##str

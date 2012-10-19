@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties -verify -Wno-objc-root-class %s
+// expected-no-diagnostics
 // rdar://8913053
 
 typedef unsigned char BOOL;

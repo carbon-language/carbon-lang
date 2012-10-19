@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify -emit-llvm -o - %s
+// expected-no-diagnostics
 
 // Test reference binding.
 

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i686-apple-darwin9 %s -fsyntax-only -verify
+// expected-no-diagnostics
 
 // Pragma pack handling with tag declarations
 

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks
+// expected-no-diagnostics
 template<typename T>
 struct is_unary_block {
   static const bool value = false;

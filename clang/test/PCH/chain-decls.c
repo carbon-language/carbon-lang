@@ -7,6 +7,8 @@
 // RUN: %clang_cc1 -include-pch %t2 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -ast-print -include-pch %t2 %s | FileCheck %s
 
+// expected-no-diagnostics
+
 // CHECK: void f();
 // CHECK: void g();
 

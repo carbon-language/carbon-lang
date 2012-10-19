@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
+// expected-no-diagnostics
 // PR5462
 
 void f1(void);

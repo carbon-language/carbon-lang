@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fexceptions -fobjc-exceptions %s
+// expected-no-diagnostics
 
 // Note that we're specifically excluding -fcxx-exceptions in the command line above.
 

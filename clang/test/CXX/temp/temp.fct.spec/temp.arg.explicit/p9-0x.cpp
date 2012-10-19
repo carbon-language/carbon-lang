@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // Metafunction to extract the Nth type from a set of types.
 template<unsigned N, typename ...Types> struct get_nth_type;

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple=x86_64-unknown-freebsd7.0 %s
+// expected-no-diagnostics
 
 // PR2631
 char* foo(char *fmt, __builtin_va_list ap)

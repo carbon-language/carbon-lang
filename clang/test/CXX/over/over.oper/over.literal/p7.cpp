@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 %s -verify
+// expected-no-diagnostics
 
 constexpr int operator "" _a(const char *c) {
   return c[0];

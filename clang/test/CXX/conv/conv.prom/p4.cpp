@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// expected-no-diagnostics
 
 enum X : short { A, B };
 extern decltype(+A) x;

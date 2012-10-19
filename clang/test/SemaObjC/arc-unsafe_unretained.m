@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -verify -fblocks %s
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fobjc-arc %s
+// expected-no-diagnostics
 
 struct X {
   __unsafe_unretained id object;

@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -DTEMPLATE_OVERLOAD -fsyntax-only -verify %s
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 #include <stddef.h>
 

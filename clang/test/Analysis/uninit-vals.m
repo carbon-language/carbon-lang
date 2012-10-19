@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -verify %s
+// expected-no-diagnostics
 
 typedef unsigned int NSUInteger;
 

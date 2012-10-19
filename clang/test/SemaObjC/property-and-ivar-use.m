@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
+// expected-no-diagnostics
 // Do not issue error if 'ivar' used previously belongs to the inherited class
 // and has same name as @dynalic property in current class.
 

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 // NULL is rdefined in stddef.h
 #define NULL ((void*) 0)

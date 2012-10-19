@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify %s
 // RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify -fshort-wchar %s
+// expected-no-diagnostics
 
 #include <stdint.h>
 

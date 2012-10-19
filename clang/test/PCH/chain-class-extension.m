@@ -4,6 +4,8 @@
 // With PCH
 // RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-apple-darwin10 -fobjc-arc %s -chain-include %s -chain-include %s
 
+// expected-no-diagnostics
+
 #ifndef HEADER1
 #define HEADER1
 //===----------------------------------------------------------------------===//

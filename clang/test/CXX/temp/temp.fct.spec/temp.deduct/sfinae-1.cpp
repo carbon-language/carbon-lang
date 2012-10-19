@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify %s
+// expected-no-diagnostics
 
 typedef char one_byte;
 struct two_bytes { char data[2]; };

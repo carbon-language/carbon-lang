@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
+// expected-no-diagnostics
 
 typedef __attribute__((ext_vector_type(4))) float float4;
 
