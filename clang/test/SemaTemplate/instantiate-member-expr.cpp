@@ -66,3 +66,11 @@ namespace test2 {
 
   template class B<int>;
 }
+
+namespace PR14124 {
+  template<typename T> struct S {
+    int value;
+  };
+  template<typename T> void f() { S<T>::value; } // expected-error {{invalid use of non-static data member 'value'}}
+  template void f<int>(); // expected-note {{in instantiation of}}
+}

@@ -574,6 +574,9 @@ public:
   /// \brief Transform the captures and body of a lambda expression.
   ExprResult TransformLambdaScope(LambdaExpr *E, CXXMethodDecl *CallOperator);
 
+  ExprResult TransformDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E,
+                                                bool IsAddressOfOperand);
+
 #define STMT(Node, Parent)                        \
   StmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
@@ -2073,7 +2076,8 @@ public:
                                           NestedNameSpecifierLoc QualifierLoc,
                                           SourceLocation TemplateKWLoc,
                                        const DeclarationNameInfo &NameInfo,
-                              const TemplateArgumentListInfo *TemplateArgs) {
+                              const TemplateArgumentListInfo *TemplateArgs,
+                                          bool IsAddressOfOperand) {
     CXXScopeSpec SS;
     SS.Adopt(QualifierLoc);
 
@@ -2081,7 +2085,8 @@ public:
       return getSema().BuildQualifiedTemplateIdExpr(SS, TemplateKWLoc,
                                                     NameInfo, TemplateArgs);
 
-    return getSema().BuildQualifiedDeclarationNameExpr(SS, NameInfo);
+    return getSema().BuildQualifiedDeclarationNameExpr(SS, NameInfo,
+                                                       IsAddressOfOperand);
   }
 
   /// \brief Build a new template-id expression.
@@ -6141,7 +6146,13 @@ TreeTransform<Derived>::TransformParenExpr(ParenExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformUnaryOperator(UnaryOperator *E) {
-  ExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
+  ExprResult SubExpr;
+
+  if (DependentScopeDeclRefExpr *DRE =
+        dyn_cast<DependentScopeDeclRefExpr>(E->getSubExpr()))
+    SubExpr = getDerived().TransformDependentScopeDeclRefExpr(DRE, true);
+  else
+    SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return ExprError();
 
@@ -7671,6 +7682,14 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                                DependentScopeDeclRefExpr *E) {
+  return TransformDependentScopeDeclRefExpr(E, /*IsAddressOfOperand*/false);
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
+                                               DependentScopeDeclRefExpr *E,
+                                               bool IsAddressOfOperand) {
   NestedNameSpecifierLoc QualifierLoc
   = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
   if (!QualifierLoc)
@@ -7697,7 +7716,8 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
     return getDerived().RebuildDependentScopeDeclRefExpr(QualifierLoc,
                                                          TemplateKWLoc,
                                                          NameInfo,
-                                                         /*TemplateArgs*/ 0);
+                                                         /*TemplateArgs*/ 0,
+                                                         IsAddressOfOperand);
   }
 
   TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
@@ -7709,7 +7729,8 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
   return getDerived().RebuildDependentScopeDeclRefExpr(QualifierLoc,
                                                        TemplateKWLoc,
                                                        NameInfo,
-                                                       &TransArgs);
+                                                       &TransArgs,
+                                                       IsAddressOfOperand);
 }
 
 template<typename Derived>
