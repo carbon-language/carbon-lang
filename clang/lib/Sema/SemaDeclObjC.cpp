@@ -383,19 +383,23 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     // Finally, in ActOnFinishFunctionBody() (SemaDecl), warn if flag is set.
     // Only do this if the current class actually has a superclass.
     if (IC->getSuperClass()) {
-      getCurFunction()->ObjCShouldCallSuperDealloc = 
-        !(Context.getLangOpts().ObjCAutoRefCount ||
-          Context.getLangOpts().getGC() == LangOptions::GCOnly) &&
-          MDecl->getMethodFamily() == OMF_dealloc;
-      if (!getCurFunction()->ObjCShouldCallSuperDealloc) {
-        IMD = IC->getSuperClass()->lookupMethod(MDecl->getSelector(), 
-                                                MDecl->isInstanceMethod());
-        getCurFunction()->ObjCShouldCallSuperDealloc = 
-          (IMD && IMD->hasAttr<ObjCRequiresSuperAttr>());
+      ObjCMethodFamily Family = MDecl->getMethodFamily();
+      if (Family == OMF_dealloc) {
+        if (!(getLangOpts().ObjCAutoRefCount ||
+              getLangOpts().getGC() == LangOptions::GCOnly))
+          getCurFunction()->ObjCShouldCallSuper = true;
+
+      } else if (Family == OMF_finalize) {
+        if (Context.getLangOpts().getGC() != LangOptions::NonGC)
+          getCurFunction()->ObjCShouldCallSuper = true;
+        
+      } else {
+        const ObjCMethodDecl *SuperMethod =
+          IC->getSuperClass()->lookupMethod(MDecl->getSelector(),
+                                            MDecl->isInstanceMethod());
+        getCurFunction()->ObjCShouldCallSuper = 
+          (SuperMethod && SuperMethod->hasAttr<ObjCRequiresSuperAttr>());
       }
-      getCurFunction()->ObjCShouldCallSuperFinalize =
-        Context.getLangOpts().getGC() != LangOptions::NonGC &&
-        MDecl->getMethodFamily() == OMF_finalize;
     }
   }
 }

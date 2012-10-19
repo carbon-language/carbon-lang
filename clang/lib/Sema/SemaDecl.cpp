@@ -7944,23 +7944,16 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       if (Body)
         computeNRVO(Body, getCurFunction());
     }
-    if (getCurFunction()->ObjCShouldCallSuperDealloc) {
+    if (getCurFunction()->ObjCShouldCallSuper) {
       Diag(MD->getLocEnd(), diag::warn_objc_missing_super_call)
         << MD->getSelector().getAsString();
-      getCurFunction()->ObjCShouldCallSuperDealloc = false;
-    }
-    if (getCurFunction()->ObjCShouldCallSuperFinalize) {
-      Diag(MD->getLocEnd(), diag::warn_objc_missing_super_finalize);
-      getCurFunction()->ObjCShouldCallSuperFinalize = false;
+      getCurFunction()->ObjCShouldCallSuper = false;
     }
   } else {
     return 0;
   }
 
-  assert(!getCurFunction()->ObjCShouldCallSuperDealloc &&
-         "This should only be set for ObjC methods, which should have been "
-         "handled in the block above.");
-  assert(!getCurFunction()->ObjCShouldCallSuperFinalize &&
+  assert(!getCurFunction()->ObjCShouldCallSuper &&
          "This should only be set for ObjC methods, which should have been "
          "handled in the block above.");
 

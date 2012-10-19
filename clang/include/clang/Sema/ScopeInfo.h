@@ -91,13 +91,10 @@ public:
   /// \brief Whether this function contains any indirect gotos.
   bool HasIndirectGoto;
 
-  /// A flag that is set when parsing a -dealloc method and no [super dealloc]
-  /// call was found yet.
-  bool ObjCShouldCallSuperDealloc;
-
-  /// A flag that is set when parsing a -finalize method and no [super finalize]
-  /// call was found yet.
-  bool ObjCShouldCallSuperFinalize;
+  /// A flag that is set when parsing a method that must call super's
+  /// implementation, such as \c -dealloc, \c -finalize, or any method marked
+  /// with \c __attribute__((objc_requires_super)).
+  bool ObjCShouldCallSuper;
 
   /// \brief Used to determine if errors occurred in this function or block.
   DiagnosticErrorTrap ErrorTrap;
@@ -299,8 +296,7 @@ public:
       HasBranchProtectedScope(false),
       HasBranchIntoScope(false),
       HasIndirectGoto(false),
-      ObjCShouldCallSuperDealloc(false),
-      ObjCShouldCallSuperFinalize(false),
+      ObjCShouldCallSuper(false),
       ErrorTrap(Diag) { }
 
   virtual ~FunctionScopeInfo();

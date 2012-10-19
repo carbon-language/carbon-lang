@@ -754,9 +754,6 @@ def warn_objc_missing_super_call : Warning<
 def error_dealloc_bad_result_type : Error<
   "dealloc return type must be correctly specified as 'void' under ARC, "
   "instead of %0">;
-def warn_objc_missing_super_finalize : Warning<
-  "method possibly missing a [super finalize] call">,
-  InGroup<ObjCMissingSuperCalls>;
 def warn_undeclared_selector : Warning<
   "undeclared selector %0">, InGroup<UndeclaredSelector>, DefaultIgnore;
 def warn_implicit_atomic_property : Warning<

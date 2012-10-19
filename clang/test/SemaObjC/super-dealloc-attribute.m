@@ -19,6 +19,8 @@
 - (void) MyDeallocMeth; // Method in root is not annotated.
 - (void) AnnotMyDeallocMeth __attribute((objc_requires_super));
 - (void) AnnotMyDeallocMethCAT NS_REQUIRES_SUPER; 
+
++ (void)registerClass:(id)name __attribute((objc_requires_super));
 @end
 
 @interface Baz : Root<NSObject>
@@ -41,6 +43,8 @@
 - (void) MyDeallocMeth {} // No warning here.
 - (void) AnnotMyDeallocMeth{} // expected-warning {{method possibly missing a [super AnnotMyDeallocMeth] call}}
 - (void) AnnotMeth{}; // No warning here. Annotation is in its class.
+
++ (void)registerClass:(id)name {} // expected-warning {{method possibly missing a [super registerClass:] call}}
 @end
 
 @interface Bar : Baz
@@ -63,4 +67,21 @@
 - (void) AnnotMeth{};  // expected-warning {{method possibly missing a [super AnnotMeth] call}}
 - (void) AnnotMyDeallocMethCAT{}; // expected-warning {{method possibly missing a [super AnnotMyDeallocMethCAT] call}}
 - (void) AnnotMethCAT {};
+@end
+
+
+@interface Valid : Baz
+@end
+
+@implementation Valid
+
+- (void)MyDeallocMeth {
+  [super MyDeallocMeth]; // no-warning
+}
+
+
++ (void)registerClass:(id)name {
+  [super registerClass:name]; // no-warning
+}
+
 @end
