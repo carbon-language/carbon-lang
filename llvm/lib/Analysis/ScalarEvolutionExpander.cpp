@@ -1618,6 +1618,17 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
          PEnd = Phis.end(); PIter != PEnd; ++PIter) {
     PHINode *Phi = *PIter;
 
+    // Fold constant phis. They may be congruent to other constant phis and
+    // would confuse the logic below that expects proper IVs.
+    if (Value *V = Phi->hasConstantValue()) {
+      Phi->replaceAllUsesWith(V);
+      DeadInsts.push_back(Phi);
+      ++NumElim;
+      DEBUG_WITH_TYPE(DebugType, dbgs()
+                      << "INDVARS: Eliminated constant iv: " << *Phi << '\n');
+      continue;
+    }
+
     if (!SE.isSCEVable(Phi->getType()))
       continue;
 

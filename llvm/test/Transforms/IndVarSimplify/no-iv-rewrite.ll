@@ -199,7 +199,6 @@ entry:
 ; back to the loop iv.
 ;
 ; CHECK: loop:
-; CHECK: phi i32
 ; CHECK-NOT: phi
 ; CHECK: exit:
 loop:
