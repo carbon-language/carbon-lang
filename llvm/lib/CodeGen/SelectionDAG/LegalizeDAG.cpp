@@ -1245,8 +1245,8 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     if (Action == TargetLowering::Expand) {
       // replace ISD::DEBUGTRAP with ISD::TRAP
       SDValue NewVal;
-      NewVal = DAG.getNode (ISD::TRAP, Node->getDebugLoc(), Node->getVTList(),
-                            Node->getOperand(0));
+      NewVal = DAG.getNode(ISD::TRAP, Node->getDebugLoc(), Node->getVTList(),
+                           Node->getOperand(0));
       ReplaceNode(Node, NewVal.getNode());
       LegalizeOp(NewVal.getNode());
       return;
