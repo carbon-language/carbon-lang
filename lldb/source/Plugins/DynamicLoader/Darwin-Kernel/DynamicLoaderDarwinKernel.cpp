@@ -42,12 +42,12 @@ using namespace lldb_private;
 static PropertyDefinition
 g_properties[] =
 {
-    { "disable-kext-loading" , OptionValue::eTypeBoolean, false, false, NULL, NULL, "Disable kext image loading in a Darwin kernel debug session." },
-    {  NULL                  , OptionValue::eTypeInvalid, false, 0    , NULL, NULL, NULL  }
+    { "load-kexts" , OptionValue::eTypeBoolean, true, true, NULL, NULL, "Automatically loads kext images when attaching to a kernel." },
+    {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
 };
 
 enum {
-    ePropertyDisableKextLoading
+    ePropertyLoadKexts
 };
 
 class DynamicLoaderDarwinKernelProperties : public Properties
@@ -74,9 +74,9 @@ public:
     }
     
     bool
-    GetDisableKextLoading() const
+    GetLoadKexts() const
     {
-        const uint32_t idx = ePropertyDisableKextLoading;
+        const uint32_t idx = ePropertyLoadKexts;
         return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
     }
     
@@ -244,7 +244,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
     ModuleSP memory_module_sp;
 
     // If this is a kext and the user asked us to ignore kexts, don't try to load it.
-    if (kernel_image == false && GetGlobalProperties()->GetDisableKextLoading() == true)
+    if (kernel_image == false && GetGlobalProperties()->GetLoadKexts() == false)
     {
         return false;
     }
