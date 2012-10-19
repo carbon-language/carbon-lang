@@ -49,6 +49,11 @@ Follow the <a href="../get_started.html">clang build instructions</a>. <BR>
 
 <h2 id="usage">Usage</h2>
 Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
+The AddressSanitizer run-time library should be linked to the final executable,
+so make sure to use <tt>clang</tt> (not <tt>ld</tt>) for the final link step.<BR>
+When linking shared libraries, the AddressSanitizer run-time is not linked,
+so <tt>-Wl,-z,defs</tt> may cause link errors (don't use it with AddressSanitizer). <BR>
+
 To get a reasonable performance add <tt>-O1</tt> or higher. <BR>
 To get nicer stack traces in error messages add
 <tt>-fno-omit-frame-pointer</tt>. <BR>
@@ -65,7 +70,15 @@ int main(int argc, char **argv) {
 </pre>
 
 <pre>
+# Compile and link
 % clang -O1 -g -faddress-sanitizer -fno-omit-frame-pointer example_UseAfterFree.cc
+</pre>
+OR
+<pre>
+# Compile
+% clang -O1 -g -faddress-sanitizer -fno-omit-frame-pointer -c example_UseAfterFree.cc
+# Link
+% clang -g -faddress-sanitizer example_UseAfterFree.o
 </pre>
 
 If a bug is detected, the program will print an error message to stderr and exit with a
@@ -116,10 +129,10 @@ Note: currently, this attribute will be lost if the function is inlined.
 
 <h2 id="platforms">Supported Platforms</h2>
 AddressSanitizer is supported on
-<ul><li>Linux x86_64 (tested on Ubuntu 10.04).
+<ul><li>Linux i386/x86_64 (tested on Ubuntu 10.04 and 12.04).
 <li>MacOS 10.6, 10.7 and 10.8 (i386/x86_64).
 </ul>
-Support for Linux i386/ARM is in progress
+Support for Linux ARM (and Android ARM) is in progress
 (it may work, but is not guaranteed too).
 
 
