@@ -347,7 +347,7 @@ Current breakpoints:
                     to see all the commands for watchpoint manipulations.  For instance, we might do the following to watch
                     a variable called 'global' for write operation, but only stop if the condition '(global==5)' is true:</p>
 
-                   <pre><tt>(lldb) watch set var -w write global
+                   <pre><tt>(lldb) watch set var global
 Watchpoint created: Watchpoint 1: addr = 0x100001018 size = 4 state = enabled type = w
     declare @ '/Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/watchpoint_commands/condition/main.cpp:12'
 (lldb) watch modify -c '(global==5)'
