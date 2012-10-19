@@ -8586,12 +8586,12 @@ static void DiagnoseBitwiseAndInBitwiseOr(Sema &S, SourceLocation OpLoc,
 }
 
 static void DiagnoseAdditionInShift(Sema &S, SourceLocation OpLoc,
-                                    Expr *SubExpr, StringRef shift) {
+                                    Expr *SubExpr, StringRef Shift) {
   if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(SubExpr)) {
     if (Bop->getOpcode() == BO_Add || Bop->getOpcode() == BO_Sub) {
       StringRef Op = Bop->getOpcodeStr();
       S.Diag(Bop->getOperatorLoc(), diag::warn_addition_in_bitshift)
-          << Bop->getSourceRange() << OpLoc << Op << shift;
+          << Bop->getSourceRange() << OpLoc << Shift << Op;
       SuggestParentheses(S, Bop->getOperatorLoc(),
           S.PDiag(diag::note_precedence_silence) << Op,
           Bop->getSourceRange());
@@ -8623,9 +8623,9 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
 
   if ((Opc == BO_Shl && LHSExpr->getType()->isIntegralType(Self.getASTContext()))
       || Opc == BO_Shr) {
-    StringRef shift = BinaryOperator::getOpcodeStr(Opc);
-    DiagnoseAdditionInShift(Self, OpLoc, LHSExpr, shift);
-    DiagnoseAdditionInShift(Self, OpLoc, RHSExpr, shift);
+    StringRef Shift = BinaryOperator::getOpcodeStr(Opc);
+    DiagnoseAdditionInShift(Self, OpLoc, LHSExpr, Shift);
+    DiagnoseAdditionInShift(Self, OpLoc, RHSExpr, Shift);
   }
 }
 

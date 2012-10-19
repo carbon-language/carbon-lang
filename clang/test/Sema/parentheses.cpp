@@ -49,11 +49,11 @@ void test(S *s, bool (S::*m_ptr)()) {
 }
 
 void test(int a, int b, int c) {
-  (void)(a >> b + c); // expected-warning {{'+' within '>>'}} \
+  (void)(a >> b + c); // expected-warning {{operator '>>' has lower precedence than '+'; '+' will be evaluated first}} \
                          expected-note {{place parentheses around the '+' expression to silence this warning}}
-  (void)(a - b << c); // expected-warning {{'-' within '<<'}} \
+  (void)(a - b << c); // expected-warning {{operator '<<' has lower precedence than '-'; '-' will be evaluated first}} \
                          expected-note {{place parentheses around the '-' expression to silence this warning}}
   Stream() << b + c;
-  Stream() >> b + c; // expected-warning {{'+' within '>>'}} \
+  Stream() >> b + c; // expected-warning {{operator '>>' has lower precedence than '+'; '+' will be evaluated first}} \
                         expected-note {{place parentheses around the '+' expression to silence this warning}}
 }

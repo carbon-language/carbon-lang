@@ -3865,7 +3865,8 @@ def warn_logical_and_in_logical_or : Warning<
   "'&&' within '||'">, InGroup<LogicalOpParentheses>;
 
 def warn_addition_in_bitshift : Warning<
-  "'%0' within '%1'">, InGroup<ShiftOpParentheses>;
+  "operator '%0' has lower precedence than '%1'; "
+  "'%1' will be evaluated first">, InGroup<ShiftOpParentheses>;
 
 def warn_self_assignment : Warning<
   "explicitly assigning a variable of type %0 to itself">,
