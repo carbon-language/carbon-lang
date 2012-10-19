@@ -11,7 +11,7 @@
 using namespace llvm;
 
 MCTargetAsmParser::MCTargetAsmParser()
-  : AvailableFeatures(0)
+  : AvailableFeatures(0), ParsingInlineAsm(false)
 {
 }
 
