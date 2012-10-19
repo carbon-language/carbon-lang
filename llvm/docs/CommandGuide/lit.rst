@@ -140,7 +140,7 @@ EXECUTION OPTIONS
 **--vg-leak**
 
  When *--vg* is used, enable memory leak checks. When this option is enabled,
- **lit** will also automatically provide a "valgrind-leaks" feature that can be
+ **lit** will also automatically provide a "vg_leak" feature that can be
  used to conditionally disable (or expect failure in) certain tests.
 
 

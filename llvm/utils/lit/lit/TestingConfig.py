@@ -34,7 +34,7 @@ class TestingConfig:
             if litConfig.useValgrind:
                 available_features.append('valgrind')
                 if litConfig.valgrindLeakCheck:
-                    available_features.append('valgrind-leaks')
+                    available_features.append('vg_leak')
 
             config = TestingConfig(parent,
                                    name = '<unnamed>',
