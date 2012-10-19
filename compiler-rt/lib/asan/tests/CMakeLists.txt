@@ -61,11 +61,13 @@ set(ASAN_GTEST_INCLUDE_CFLAGS
   -D__STDC_LIMIT_MACROS
 )
 
+set(ASAN_BLACKLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore")
+
 set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_UNITTEST_COMMON_CFLAGS}
   ${ASAN_GTEST_INCLUDE_CFLAGS}
   -faddress-sanitizer
-  -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
+  -mllvm "-asan-blacklist=${ASAN_BLACKLIST_FILE}"
   -mllvm -asan-stack=1
   -mllvm -asan-globals=1
   -mllvm -asan-mapping-scale=0        # default will be used
@@ -128,7 +130,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
               -c -o "${output_obj}"
               ${CMAKE_CURRENT_SOURCE_DIR}/${source}
       MAIN_DEPENDENCY ${source}
-      DEPENDS clang ${ASAN_RUNTIME_LIBRARIES} ${ARGN}
+      DEPENDS clang ${ASAN_RUNTIME_LIBRARIES} ${ASAN_BLACKLIST_FILE} ${ARGN}
       )
   endfunction()
 
