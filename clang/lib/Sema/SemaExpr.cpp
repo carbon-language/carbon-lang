@@ -1895,8 +1895,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 /// this path.
 ExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
-                                        const DeclarationNameInfo &NameInfo,
-                                        bool IsAddressOfOperand) {
+                                        const DeclarationNameInfo &NameInfo) {
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
     return BuildDependentDeclRefExpr(SS, /*TemplateKWLoc=*/SourceLocation(),
@@ -1917,16 +1916,7 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
     return ExprError();
   }
 
-  // Defend against this resolving to an implicit member access. We usually
-  // won't get here if this might be a legitimate a class member (we end up in
-  // BuildMemberReferenceExpr instead), but this can be valid if we're forming
-  // a pointer-to-member or in an unevaluated context in C++11.
-  if (!R.empty() && (*R.begin())->isCXXClassMember() && !IsAddressOfOperand)
-    return BuildPossibleImplicitMemberExpr(SS,
-                                           /*TemplateKWLoc=*/SourceLocation(),
-                                           R, /*TemplateArgs=*/0);
-
-  return BuildDeclarationNameExpr(SS, R, /* ADL */ false);
+  return BuildDeclarationNameExpr(SS, R, /*ADL*/ false);
 }
 
 /// LookupInObjCMethod - The parser has read a name in, and Sema has

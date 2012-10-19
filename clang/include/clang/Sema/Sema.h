@@ -2911,8 +2911,7 @@ public:
                                   bool HasTrailingLParen);
 
   ExprResult BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
-                                         const DeclarationNameInfo &NameInfo,
-                                               bool IsAddressOfOperand);
+                                         const DeclarationNameInfo &NameInfo);
   ExprResult BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
                                        SourceLocation TemplateKWLoc,
                                 const DeclarationNameInfo &NameInfo,
