@@ -396,7 +396,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   PassManager *PM = getCodeGenPasses();
 
   // Add LibraryInfo.
-  TargetLibraryInfo *TLI = new TargetLibraryInfo();
+  llvm::Triple TargetTriple(TheModule->getTargetTriple());
+  TargetLibraryInfo *TLI = new TargetLibraryInfo(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
     TLI->disableAllFunctions();
   PM->add(TLI);
