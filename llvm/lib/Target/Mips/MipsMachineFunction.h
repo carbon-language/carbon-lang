@@ -46,15 +46,13 @@ class MipsFunctionInfo : public MachineFunctionInfo {
   // InArgFIRange: Range of indices of all frame objects created during call to
   //               LowerFormalArguments.
   std::pair<int, int> InArgFIRange;
-  unsigned MaxCallFrameSize;
 
   bool EmitNOAT;
 
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : MF(MF), SRetReturnReg(0), GlobalBaseReg(0),
-    VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
-    MaxCallFrameSize(0), EmitNOAT(false)
+    VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)), EmitNOAT(false)
   {}
 
   bool isInArgFI(int FI) const {
@@ -70,9 +68,6 @@ public:
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
-
-  unsigned getMaxCallFrameSize() const { return MaxCallFrameSize; }
-  void setMaxCallFrameSize(unsigned S) { MaxCallFrameSize = S; }
 
   bool getEmitNOAT() const { return EmitNOAT; }
   void setEmitNOAT() { EmitNOAT = true; }
