@@ -179,6 +179,18 @@ class MipsPat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [HasStandardEncoding];
 }
 
+class IsBranch {
+  bit isBranch = 1;
+}
+
+class IsReturn {
+  bit isReturn = 1;
+}
+
+class IsCall {
+  bit isCall = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
 //===----------------------------------------------------------------------===//
@@ -577,14 +589,12 @@ class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
      IIAlu>;
 
 // Jump
-class JumpFJ<bits<6> op, string instr_asm>:
-  FJ<op, (outs), (ins jmptarget:$target),
-     !strconcat(instr_asm, "\t$target"), [(br bb:$target)], IIBranch> {
-  let isBranch=1;
+class JumpFJ<bits<6> op, string instr_asm, SDPatternOperator operator>:
+  FJ<op, (outs), (ins jmptarget:$target), !strconcat(instr_asm, "\t$target"),
+     [(operator bb:$target)], IIBranch> {
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
-  let Predicates = [RelocStatic, HasStandardEncoding];
   let DecoderMethod = "DecodeJumpTarget";
   let Defs = [AT];
 }
@@ -605,21 +615,21 @@ class UncondBranch<bits<6> op, string instr_asm>:
 
 // Base class for indirect branch and return instruction classes.
 let isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
-class JumpFR<RegisterClass RC, list<dag> pattern>:
-  FR<0, 0x8, (outs), (ins RC:$rs), "jr\t$rs", pattern, IIBranch> {
+class JumpFR<RegisterClass RC, SDPatternOperator operator = null_frag>:
+  FR<0, 0x8, (outs), (ins RC:$rs), "jr\t$rs", [(operator RC:$rs)], IIBranch> {
   let rt = 0;
   let rd = 0;
   let shamt = 0;
 }
 
 // Indirect branch
-class IndirectBranch<RegisterClass RC>: JumpFR<RC, [(brind RC:$rs)]> {
+class IndirectBranch<RegisterClass RC>: JumpFR<RC, brind> {
   let isBranch = 1;
   let isIndirectBranch = 1;
 }
 
 // Return instruction
-class RetBase<RegisterClass RC>: JumpFR<RC, []> {
+class RetBase<RegisterClass RC>: JumpFR<RC> {
   let isReturn = 1;
   let isCodeGenOnly = 1;
   let hasCtrlDep = 1;
@@ -984,7 +994,8 @@ def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>,
 }
 
 /// Jump and Branch Instructions
-def J       : JumpFJ<0x02, "j">;
+def J       : JumpFJ<0x02, "j", br>,
+              Requires<[RelocStatic, HasStandardEncoding]>, IsBranch;
 def JR      : IndirectBranch<CPURegs>;
 def B       : UncondBranch<0x04, "b">;
 def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;
