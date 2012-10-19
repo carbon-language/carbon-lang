@@ -536,7 +536,7 @@ class CommentASTToHTMLConverter :
     public ConstCommentVisitor<CommentASTToHTMLConverter> {
 public:
   /// \param Str accumulator for HTML.
-  CommentASTToHTMLConverter(FullComment *FC,
+  CommentASTToHTMLConverter(const FullComment *FC,
                             SmallVectorImpl<char> &Str,
                             const CommandTraits &Traits) :
       FC(FC), Result(Str), Traits(Traits)
@@ -568,7 +568,7 @@ public:
   void appendToResultWithHTMLEscaping(StringRef S);
 
 private:
-  FullComment *FC;
+  const FullComment *FC;
   /// Output stream for HTML.
   llvm::raw_svector_ostream Result;
 
@@ -844,8 +844,7 @@ CXString clang_FullComment_getAsHTML(CXComment CXC) {
     return createCXString((const char *) 0);
 
   SmallString<1024> HTML;
-  CommentASTToHTMLConverter Converter(const_cast<FullComment *>(FC),
-                                      HTML, getCommandTraits(CXC));
+  CommentASTToHTMLConverter Converter(FC, HTML, getCommandTraits(CXC));
   Converter.visit(FC);
   return createCXString(HTML.str(), /* DupString = */ true);
 }
@@ -857,7 +856,7 @@ class CommentASTToXMLConverter :
     public ConstCommentVisitor<CommentASTToXMLConverter> {
 public:
   /// \param Str accumulator for XML.
-  CommentASTToXMLConverter(FullComment *FC,
+  CommentASTToXMLConverter(const FullComment *FC,
                            SmallVectorImpl<char> &Str,
                            const CommandTraits &Traits,
                            const SourceManager &SM) :
@@ -884,8 +883,8 @@ public:
   void appendToResultWithXMLEscaping(StringRef S);
 
 private:
-  FullComment *FC;
-      
+  const FullComment *FC;
+
   /// Output stream for XML.
   llvm::raw_svector_ostream Result;
 
@@ -1325,8 +1324,7 @@ CXString clang_FullComment_getAsXML(CXComment CXC) {
   SourceManager &SM = static_cast<ASTUnit *>(TU->TUData)->getSourceManager();
 
   SmallString<1024> XML;
-  CommentASTToXMLConverter Converter(const_cast<FullComment *>(FC), XML,
-                                     getCommandTraits(CXC), SM);
+  CommentASTToXMLConverter Converter(FC, XML, getCommandTraits(CXC), SM);
   Converter.visit(FC);
   return createCXString(XML.str(), /* DupString = */ true);
 }

@@ -188,7 +188,7 @@ void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
 
   if (C->hasParamName()) {
     if (C->isParamIndexValid())
-      OS << " Param=\"" << C->getParamName(const_cast<FullComment*>(FC)) << "\"";
+      OS << " Param=\"" << C->getParamName(FC) << "\"";
     else
       OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
   }
@@ -202,7 +202,7 @@ void CommentDumper::visitTParamCommandComment(const TParamCommandComment *C) {
 
   if (C->hasParamName()) {
     if (C->isPositionValid())
-      OS << " Param=\"" << C->getParamName(const_cast<FullComment*>(FC)) << "\"";
+      OS << " Param=\"" << C->getParamName(FC) << "\"";
     else
       OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
   }

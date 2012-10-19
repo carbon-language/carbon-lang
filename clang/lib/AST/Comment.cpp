@@ -305,12 +305,12 @@ void DeclInfo::fill() {
   IsFilled = true;
 }
 
-StringRef ParamCommandComment::getParamName(comments::FullComment *FC) const {
+StringRef ParamCommandComment::getParamName(const FullComment *FC) const {
   assert(isParamIndexValid());
   return FC->getThisDeclInfo()->ParamVars[getParamIndex()]->getName();
 }
 
-StringRef TParamCommandComment::getParamName(comments::FullComment *FC) const {
+StringRef TParamCommandComment::getParamName(const FullComment *FC) const {
   assert(isPositionValid());
   const TemplateParameterList *TPL = FC->getThisDeclInfo()->TemplateParameters;
   for (unsigned i = 0, e = getDepth(); i != e; ++i) {
@@ -323,7 +323,7 @@ StringRef TParamCommandComment::getParamName(comments::FullComment *FC) const {
   }
   return "";
 }
-  
+
 } // end namespace comments
 } // end namespace clang
 

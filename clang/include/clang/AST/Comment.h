@@ -706,8 +706,8 @@ public:
     return getNumArgs() > 0;
   }
 
-  StringRef getParamName(comments::FullComment *FC) const;
-  
+  StringRef getParamName(const FullComment *FC) const;
+
   StringRef getParamNameAsWritten() const {
     return Args[0].Text;
   }
@@ -763,8 +763,8 @@ public:
     return getNumArgs() > 0;
   }
 
-  StringRef getParamName(comments::FullComment *FC) const;
-  
+  StringRef getParamName(const FullComment *FC) const;
+
   StringRef getParamNameAsWritten() const {
     return Args[0].Text;
   }
