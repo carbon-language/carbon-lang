@@ -319,6 +319,7 @@ private:
   // MS-style inline assembly parsing.
   bool isInstruction() { return Opcode != (unsigned)~0x0; }
   unsigned getOpcode() { return Opcode; }
+  void setOpcode(unsigned Value) { Opcode = Value; }
 };
 
 /// \brief Generic implementations of directive handling, etc. which is shared
@@ -3615,7 +3616,11 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   unsigned InputIdx = 0;
   unsigned OutputIdx = 0;
   while (getLexer().isNot(AsmToken::Eof)) {
-    if (ParseStatement()) return true;
+    // Clear the opcode.
+    setOpcode(~0x0);
+
+    if (ParseStatement())
+      return true;
 
     if (isInstruction()) {
       const MCInstrDesc &Desc = MII->get(getOpcode());
