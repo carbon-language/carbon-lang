@@ -3410,7 +3410,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   if (DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
     unsigned Reg = MipsFI->getSRetReturnReg();
     if (!Reg) {
-      Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i32));
+      Reg = MF.getRegInfo().
+        createVirtualRegister(getRegClassFor(IsN64 ? MVT::i64 : MVT::i32));
       MipsFI->setSRetReturnReg(Reg);
     }
     SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, InVals[0]);
@@ -3539,7 +3540,8 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
       llvm_unreachable("sret virtual register not created in the entry block");
     SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
 
-    Chain = DAG.getCopyToReg(Chain, dl, Mips::V0, Val, Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, IsN64 ? Mips::V0_64 : Mips::V0, Val,
+                             Flag);
     Flag = Chain.getValue(1);
   }
 
