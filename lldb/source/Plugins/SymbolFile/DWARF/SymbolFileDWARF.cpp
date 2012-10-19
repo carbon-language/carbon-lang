@@ -5611,6 +5611,27 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             // No children for this struct/union/class, lets finish it
                             ast.StartTagDeclarationDefinition (clang_type);
                             ast.CompleteTagDeclarationDefinition (clang_type);
+                            
+                            if (tag == DW_TAG_structure_type) // this only applies in C
+                            {
+                                clang::QualType qual_type = clang::QualType::getFromOpaquePtr (clang_type);
+                                const clang::RecordType *record_type = qual_type->getAs<clang::RecordType> ();
+                                
+                                if (record_type)
+                                {
+                                    clang::RecordDecl *record_decl = record_type->getDecl();
+                                    
+                                    if (record_decl)
+                                    {
+                                        LayoutInfo layout_info;
+                                        
+                                        layout_info.alignment = 0;
+                                        layout_info.bit_size = 0;
+                                        
+                                        m_record_decl_to_layout_map.insert(std::make_pair(record_decl, layout_info));
+                                    }
+                                }
+                            }
                         }
                         else if (clang_type_was_created)
                         {
