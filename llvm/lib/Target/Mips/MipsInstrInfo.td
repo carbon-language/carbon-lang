@@ -191,6 +191,15 @@ class IsCall {
   bit isCall = 1;
 }
 
+class IsTailCall {
+  bit isCall = 1;
+  bit isTerminator = 1;
+  bit isReturn = 1;
+  bit isBarrier = 1;
+  bit hasExtraSrcRegAllocReq = 1;
+  bit isCodeGenOnly = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
 //===----------------------------------------------------------------------===//
@@ -1013,6 +1022,8 @@ def JAL  : JumpLink<0x03, "jal">;
 def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
 def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
 def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
+def TAILCALL : JumpFJ<0x02, "j", br>, IsTailCall;
+def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, IsTailCall;
 
 def RET : RetBase<CPURegs>;
 

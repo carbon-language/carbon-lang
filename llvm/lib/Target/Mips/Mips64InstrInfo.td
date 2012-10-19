@@ -177,6 +177,7 @@ def BLTZ64 : CBranchZero<0x01, 0, "bltz", setlt, CPU64Regs>;
 }
 let DecoderNamespace = "Mips64" in
 def JALR64 : JumpLinkReg<0x00, 0x09, "jalr", CPU64Regs>;
+def TAILCALL64_R : JumpFR<CPU64Regs, MipsTailCall>, IsTailCall;
 
 let DecoderNamespace = "Mips64" in {
 /// Multiply and Divide Instructions.
