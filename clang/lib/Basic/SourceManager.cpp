@@ -1029,6 +1029,17 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
     return 1;
   }
 
+  // See if we just calculated the line number for this FilePos and can use
+  // that to lookup the start of the line instead of searching for it.
+  if (LastLineNoFileIDQuery == FID &&
+      LastLineNoContentCache->SourceLineCache != 0) {
+    unsigned *SourceLineCache = LastLineNoContentCache->SourceLineCache;
+    unsigned LineStart = SourceLineCache[LastLineNoResult - 1];
+    unsigned LineEnd = SourceLineCache[LastLineNoResult];
+    if (FilePos >= LineStart && FilePos < LineEnd)
+      return FilePos - LineStart + 1;
+  }
+
   const char *Buf = MemBuf->getBufferStart();
   unsigned LineStart = FilePos;
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
