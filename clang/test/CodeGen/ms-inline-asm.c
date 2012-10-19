@@ -124,3 +124,16 @@ void t13() {
 // CHECK: call void asm sideeffect inteldialect "movzx eax, byte ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i8* %{{.*}}) nounwind
 // CHECK: call void asm sideeffect inteldialect "movzx eax, word ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i16* %{{.*}}) nounwind
 }
+
+void t14() {
+  unsigned i = 1, j = 2;
+  __asm {
+    .if 1
+    mov eax, i
+    .else
+    mov ebx, j
+    .endif
+  }
+// CHECK: t14
+// CHECK: call void asm sideeffect inteldialect ".if 1\0A\09mov eax, dword ptr $0\0A\09.else\0A\09mov ebx, dword ptr $1\0A\09.endif", "*m,*m,~{eax},~{ebx},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}, i32* %{{.*}}) nounwind
+}
