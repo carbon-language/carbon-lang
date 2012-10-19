@@ -715,6 +715,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
   ValueVector Reads;
   ValueVector Writes;
 
+  SmallPtrSet<Value*, 16> AnalyzedPtrs;
   unsigned NumPhis = 0;
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
     Instruction *I = it;
@@ -766,7 +767,10 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: Found a non-simple load.\n");
         return false;
       }
-      GetUnderlyingObjects(Ld->getPointerOperand(), Reads, DL);
+
+      Value* Ptr = Ld->getPointerOperand();
+      if (AnalyzedPtrs.insert(Ptr))
+        GetUnderlyingObjects(Ptr, Reads, DL);
     }
 
     // Record store pointers. Abort on all other instructions that write to
@@ -778,7 +782,10 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: Found a non-simple store.\n");
         return false;
       }
-      GetUnderlyingObjects(St->getPointerOperand(), Writes, DL);
+
+      Value* Ptr = St->getPointerOperand();
+      if (AnalyzedPtrs.insert(Ptr))
+        GetUnderlyingObjects(St->getPointerOperand(), Writes, DL);
     }
 
     // We still don't handle functions.
