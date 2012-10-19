@@ -285,9 +285,9 @@ let Properties = [IntrNoMem] in {
 
 // NOTE: these are internal interfaces.
 def int_setjmp     : Intrinsic<[llvm_i32_ty],  [llvm_ptr_ty]>;
-def int_longjmp    : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty]>;
+def int_longjmp    : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty], [IntrNoReturn]>;
 def int_sigsetjmp  : Intrinsic<[llvm_i32_ty] , [llvm_ptr_ty, llvm_i32_ty]>;
-def int_siglongjmp : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty]>;
+def int_siglongjmp : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty], [IntrNoReturn]>;
 
 // Internal interface for object size checking
 def int_objectsize : Intrinsic<[llvm_anyint_ty], [llvm_ptr_ty, llvm_i1_ty],
@@ -345,7 +345,7 @@ let Properties = [IntrNoMem] in {
 }
 def int_eh_sjlj_functioncontext : Intrinsic<[], [llvm_ptr_ty]>;
 def int_eh_sjlj_setjmp          : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty]>;
-def int_eh_sjlj_longjmp         : Intrinsic<[], [llvm_ptr_ty]>;
+def int_eh_sjlj_longjmp         : Intrinsic<[], [llvm_ptr_ty], [IntrNoReturn]>;
 
 //===---------------- Generic Variable Attribute Intrinsics----------------===//
 //
