@@ -737,7 +737,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
         getDriver().Diag(diag::err_drv_invalid_Xarch_argument_with_args)
           << A->getAsString(Args);
         continue;
-      } else if (XarchArg->getOption().isDriverOption()) {
+      } else if (XarchArg->getOption().hasFlag(options::DriverOption)) {
         getDriver().Diag(diag::err_drv_invalid_Xarch_argument_isdriver)
           << A->getAsString(Args);
         continue;
@@ -751,7 +751,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       // Linker input arguments require custom handling. The problem is that we
       // have already constructed the phase actions, so we can not treat them as
       // "input arguments".
-      if (A->getOption().isLinkerInput()) {
+      if (A->getOption().hasFlag(options::LinkerInput)) {
         // Convert the argument into individual Zlinker_input_args.
         for (unsigned i = 0, e = A->getNumValues(); i != e; ++i) {
           DAL->AddSeparateArg(OriginalArg,

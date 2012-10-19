@@ -21,15 +21,20 @@ namespace driver {
   class ArgList;
 
 namespace options {
+  /// Base flags for all options. Custom flags may be added after.
   enum DriverFlag {
-    DriverOption     = (1 << 0),
-    HelpHidden       = (1 << 1),
-    LinkerInput      = (1 << 2),
-    NoArgumentUnused = (1 << 3),
-    NoForward        = (1 << 4),
-    RenderAsInput    = (1 << 5),
-    RenderJoined     = (1 << 6),
-    RenderSeparate   = (1 << 7),
+    HelpHidden       = (1 << 0),
+    RenderAsInput    = (1 << 1),
+    RenderJoined     = (1 << 2),
+    RenderSeparate   = (1 << 3)
+  };
+
+  /// Flags specifically for clang options.
+  enum ClangFlags {
+    DriverOption     = (1 << 4),
+    LinkerInput      = (1 << 5),
+    NoArgumentUnused = (1 << 6),
+    NoForward        = (1 << 7),
     Unsupported      = (1 << 8),
     CC1Option        = (1 << 9)
   };
@@ -68,7 +73,7 @@ namespace options {
       RenderValuesStyle
     };
 
-  private:
+  protected:
     const OptTable::Info *Info;
     const OptTable *Owner;
 
@@ -84,23 +89,23 @@ namespace options {
       assert(Info && "Must have a valid info!");
       return Info->ID;
     }
-    
+
     OptionClass getKind() const {
       assert(Info && "Must have a valid info!");
       return OptionClass(Info->Kind);
     }
-    
+
     StringRef getName() const {
       assert(Info && "Must have a valid info!");
       return Info->Name;
     }
-    
+
     const Option getGroup() const {
       assert(Info && "Must have a valid info!");
       assert(Owner && "Must have a valid owner!");
       return Owner->getOption(Info->GroupID);
     }
-    
+
     const Option getAlias() const {
       assert(Info && "Must have a valid info!");
       assert(Owner && "Must have a valid owner!");
@@ -108,10 +113,6 @@ namespace options {
     }
 
     unsigned getNumArgs() const { return Info->Param; }
-
-    bool isUnsupported() const { return Info->Flags & options::Unsupported; }
-
-    bool isLinkerInput() const { return Info->Flags & options::LinkerInput; }
 
     bool hasNoOptAsInput() const { return Info->Flags & options::RenderAsInput;}
 
@@ -139,18 +140,9 @@ namespace options {
       llvm_unreachable("Unexpected kind!");
     }
 
-    bool isDriverOption() const { return Info->Flags & options::DriverOption; }
-
-    bool hasNoArgumentUnused() const {
-      return Info->Flags & options::NoArgumentUnused;
-    }
-
-    bool hasNoForward() const { return Info->Flags & options::NoForward; }
-
-    bool isCC1Option() const { return Info->Flags & options::CC1Option; }
-
-    bool hasForwardToGCC() const {
-      return !hasNoForward() && !isDriverOption() && !isLinkerInput();
+    /// Test if this option has the flag \a Val.
+    bool hasFlag(unsigned Val) const {
+      return Info->Flags & Val;
     }
 
     /// getUnaliasedOption - Return the final option this option
