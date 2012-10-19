@@ -266,7 +266,7 @@ const uint64_t UnknownAddressOrSize = ~0ULL;
 
 /// ObjectFile - This class is the base class for all object file types.
 /// Concrete instances of this object are created by createObjectFile, which
-/// figure out which type to create.
+/// figures out which type to create.
 class ObjectFile : public Binary {
   virtual void anchor();
   ObjectFile() LLVM_DELETED_FUNCTION;
