@@ -45,6 +45,9 @@ BlackList::BlackList(const StringRef Path) {
   StringMap<std::string> Regexps;
   for (SmallVector<StringRef, 16>::iterator I = Lines.begin(), E = Lines.end();
        I != E; ++I) {
+    // Ignore empty lines and lines starting with "#"
+    if (I->empty() || I->startswith("#"))
+      continue;
     // Get our prefix and unparsed regexp.
     std::pair<StringRef, StringRef> SplitLine = I->split(":");
     StringRef Prefix = SplitLine.first;
