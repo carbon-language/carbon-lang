@@ -46,6 +46,8 @@ static cl::opt<bool>
 FatalAssemblerWarnings("fatal-assembler-warnings",
                        cl::desc("Consider warnings as error"));
 
+MCAsmParserSemaCallback::~MCAsmParserSemaCallback() {} 
+
 namespace {
 
 /// \brief Helper class for tracking macro definitions.
