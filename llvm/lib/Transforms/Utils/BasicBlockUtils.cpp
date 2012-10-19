@@ -687,3 +687,42 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
   return cast<ReturnInst>(NewRet);
 }
 
+/// SplitBlockAndInsertIfThen - Split the containing block at the
+/// specified instruction - everything before and including Cmp stays
+/// in the old basic block, and everything after Cmp is moved to a
+/// new block. The two blocks are connected by a conditional branch
+/// (with value of Cmp being the condition).
+/// Before:
+///   Head
+///   Cmp
+///   Tail
+/// After:
+///   Head
+///   Cmp
+///   if (Cmp)
+///     ThenBlock
+///   Tail
+///
+/// If Unreachable is true, then ThenBlock ends with
+/// UnreachableInst, otherwise it branches to Tail.
+/// Returns the NewBasicBlock's terminator.
+
+TerminatorInst *llvm::SplitBlockAndInsertIfThen(Instruction *Cmp,
+    bool Unreachable, MDNode *BranchWeights) {
+  Instruction *SplitBefore = Cmp->getNextNode();
+  BasicBlock *Head = SplitBefore->getParent();
+  BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
+  TerminatorInst *HeadOldTerm = Head->getTerminator();
+  LLVMContext &C = Head->getContext();
+  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  TerminatorInst *CheckTerm;
+  if (Unreachable)
+    CheckTerm = new UnreachableInst(C, ThenBlock);
+  else
+    CheckTerm = BranchInst::Create(Tail, ThenBlock);
+  BranchInst *HeadNewTerm =
+    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cmp);
+  HeadNewTerm->setMetadata(LLVMContext::MD_prof, BranchWeights);
+  ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
+  return CheckTerm;
+}

@@ -245,38 +245,6 @@ static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
                             GlobalValue::PrivateLinkage, StrConst, "");
 }
 
-// Split the basic block and insert an if-then code.
-// Before:
-//   Head
-//   Cmp
-//   Tail
-// After:
-//   Head
-//   if (Cmp)
-//     ThenBlock
-//   Tail
-//
-// ThenBlock block is created and its terminator is returned.
-// If Unreachable, ThenBlock is terminated with UnreachableInst, otherwise
-// it is terminated with BranchInst to Tail.
-static TerminatorInst *splitBlockAndInsertIfThen(Value *Cmp, bool Unreachable) {
-  Instruction *SplitBefore = cast<Instruction>(Cmp)->getNextNode();
-  BasicBlock *Head = SplitBefore->getParent();
-  BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
-  TerminatorInst *HeadOldTerm = Head->getTerminator();
-  LLVMContext &C = Head->getParent()->getParent()->getContext();
-  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
-  TerminatorInst *CheckTerm;
-  if (Unreachable)
-    CheckTerm = new UnreachableInst(C, ThenBlock);
-  else
-    CheckTerm = BranchInst::Create(Tail, ThenBlock);
-  BranchInst *HeadNewTerm =
-    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cmp);
-  ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
-  return CheckTerm;
-}
-
 Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
   // Shadow >> scale
   Shadow = IRB.CreateLShr(Shadow, MappingScale);
@@ -324,7 +292,7 @@ bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
 
     Value *Cmp = IRB.CreateICmpNE(Length,
                                   Constant::getNullValue(Length->getType()));
-    InsertBefore = splitBlockAndInsertIfThen(Cmp, false);
+    InsertBefore = SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false);
   }
 
   instrumentMemIntrinsicParam(MI, Dst, Length, InsertBefore, true);
@@ -480,7 +448,8 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   TerminatorInst *CrashTerm = 0;
 
   if (ClAlwaysSlowPath || (TypeSize < 8 * Granularity)) {
-    TerminatorInst *CheckTerm = splitBlockAndInsertIfThen(Cmp, false);
+    TerminatorInst *CheckTerm =
+        SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false);
     assert(dyn_cast<BranchInst>(CheckTerm)->isUnconditional());
     BasicBlock *NextBB = CheckTerm->getSuccessor(0);
     IRB.SetInsertPoint(CheckTerm);
@@ -491,7 +460,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
     BranchInst *NewTerm = BranchInst::Create(CrashBlock, NextBB, Cmp2);
     ReplaceInstWithInst(CheckTerm, NewTerm);
   } else {
-    CrashTerm = splitBlockAndInsertIfThen(Cmp, true);
+    CrashTerm = SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), true);
   }
 
   Instruction *Crash =
