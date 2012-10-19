@@ -57,7 +57,7 @@ public:
     static ConstString &
     GetSettingName ()
     {
-        static ConstString g_setting_name("macosx-kernel");
+        static ConstString g_setting_name("darwin-kernel");
         return g_setting_name;
     }
 
@@ -952,7 +952,7 @@ DynamicLoaderDarwinKernel::DebuggerInitialize (lldb_private::Debugger &debugger)
 const char *
 DynamicLoaderDarwinKernel::GetPluginNameStatic()
 {
-    return "dynamic-loader.macosx-kernel";
+    return "dynamic-loader.darwin-kernel";
 }
 
 const char *
