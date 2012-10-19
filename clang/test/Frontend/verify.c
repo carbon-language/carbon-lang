@@ -22,7 +22,7 @@
 #if 0
 // expected-error {{should be ignored}}
 #endif
-
+// eexpected-error {{should also be ignored: unrecognised directive}}
 #error should not be ignored
 // expected-error@-1 1+ {{should not be ignored}}
 

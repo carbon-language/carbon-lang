@@ -226,10 +226,22 @@ public:
 
   // Return true if string literal is found.
   // When true, P marks begin-position of S in content.
-  bool Search(StringRef S) {
-    P = std::search(C, End, S.begin(), S.end());
-    PEnd = P + S.size();
-    return P != End;
+  bool Search(StringRef S, bool EnsureStartOfWord = false) {
+    do {
+      P = std::search(C, End, S.begin(), S.end());
+      PEnd = P + S.size();
+      if (P == End)
+        break;
+      if (!EnsureStartOfWord
+            // Check if string literal starts a new word.
+            || P == Begin || isspace(P[-1])
+            // Or it could be preceeded by the start of a comment.
+            || (P > (Begin + 1) && (P[-1] == '/' || P[-1] == '*')
+                                &&  P[-2] == '/'))
+        return true;
+      // Otherwise, skip and search again.
+    } while (Advance());
+    return false;
   }
 
   // Advance 1-past previous next/search.
@@ -271,7 +283,7 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
   bool FoundDirective = false;
   for (ParseHelper PH(S); !PH.Done();) {
     // Search for token: expected
-    if (!PH.Search("expected"))
+    if (!PH.Search("expected", true))
       break;
     PH.Advance();
 

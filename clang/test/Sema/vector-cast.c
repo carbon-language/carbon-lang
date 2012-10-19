@@ -10,22 +10,22 @@ void f()
   t2 v2;
   t3 v3;
   
-  v2 = (t2)v1; // -expected-error {{invalid conversion between vector type \
+  v2 = (t2)v1; // expected-error {{invalid conversion between vector type \
 't2' and 't1' of different size}}
-  v1 = (t1)v2; // -expected-error {{invalid conversion between vector type \
+  v1 = (t1)v2; // expected-error {{invalid conversion between vector type \
 't1' and 't2' of different size}}
   v3 = (t3)v2;
   
-  v1 = (t1)(char *)10; // -expected-error {{invalid conversion between vector \
+  v1 = (t1)(char *)10; // expected-error {{invalid conversion between vector \
 type 't1' and scalar type 'char *'}}
   v1 = (t1)(long long)10;
-  v1 = (t1)(short)10; // -expected-error {{invalid conversion between vector \
+  v1 = (t1)(short)10; // expected-error {{invalid conversion between vector \
 type 't1' and integer type 'short' of different size}}
   
   long long r1 = (long long)v1;
-  short r2 = (short)v1; // -expected-error {{invalid conversion between vector \
+  short r2 = (short)v1; // expected-error {{invalid conversion between vector \
 type 't1' and integer type 'short' of different size}}
-  char *r3 = (char *)v1; // -expected-error {{invalid conversion between vector\
+  char *r3 = (char *)v1; // expected-error {{invalid conversion between vector\
  type 't1' and scalar type 'char *'}}
 }
 

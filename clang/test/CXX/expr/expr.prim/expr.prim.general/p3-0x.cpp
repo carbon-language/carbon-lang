@@ -91,11 +91,11 @@ namespace Static {
 
 namespace PR12564 {
   struct Base {
-    void bar(Base&) {} // unexpected-note {{here}}
+    void bar(Base&) {} // FIXME: expected-note {{here}}
   };
 
   struct Derived : Base {
     // FIXME: This should be accepted.
-    void foo(Derived& d) noexcept(noexcept(d.bar(d))) {} // unexpected-error {{cannot bind to a value of unrelated type}}
+    void foo(Derived& d) noexcept(noexcept(d.bar(d))) {} // expected-error {{cannot bind to a value of unrelated type}}
   };
 }
