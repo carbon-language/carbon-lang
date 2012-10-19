@@ -37,7 +37,7 @@
 //
 // TODO: Handle multiple loops at a time.
 //
-// TODO: Should TargetLowering::AddrMode::BaseGV be changed to a ConstantExpr
+// TODO: Should AddrMode::BaseGV be changed to a ConstantExpr
 //       instead of a GlobalValue?
 //
 // TODO: When truncation is free, truncate ICmp users' operands to make it a
@@ -67,6 +67,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/DenseSet.h"
@@ -74,7 +75,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -1118,7 +1118,7 @@ public:
   enum KindType {
     Basic,   ///< A normal use, with no folding.
     Special, ///< A special case of basic, allowing -1 scales.
-    Address, ///< An address use; folding according to TargetLowering
+    Address, ///< An address use; folding according to ScalarTargetTransformInfo.
     ICmpZero ///< An equality icmp with both operands folded into one.
     // TODO: Add a generic icmp too?
   };
@@ -1272,12 +1272,12 @@ void LSRUse::dump() const {
 /// address-mode folding and special icmp tricks.
 static bool isLegalUse(const AddrMode &AM,
                        LSRUse::KindType Kind, Type *AccessTy,
-                       const TargetLowering *TLI) {
+                       const ScalarTargetTransformInfo *STTI) {
   switch (Kind) {
   case LSRUse::Address:
     // If we have low-level target information, ask the target if it can
     // completely fold this address.
-    if (TLI) return TLI->isLegalAddressingMode(AM, AccessTy);
+    if (STTI) return STTI->isLegalAddressingMode(AM, AccessTy);
 
     // Otherwise, just guess that reg+reg addressing is legal.
     return !AM.BaseGV && AM.BaseOffs == 0 && AM.Scale <= 1;
@@ -1300,7 +1300,7 @@ static bool isLegalUse(const AddrMode &AM,
     // If we have low-level target information, ask the target if it can fold an
     // integer immediate on an icmp.
     if (AM.BaseOffs != 0) {
-      if (!TLI)
+      if (!STTI)
         return false;
       // We have one of:
       // ICmpZero     BaseReg + Offset => ICmp BaseReg, -Offset
@@ -1309,7 +1309,7 @@ static bool isLegalUse(const AddrMode &AM,
       int64_t Offs = AM.BaseOffs;
       if (AM.Scale == 0)
         Offs = -(uint64_t)Offs; // The cast does the right thing with INT64_MIN.
-      return TLI->isLegalICmpImmediate(Offs);
+      return STTI->isLegalICmpImmediate(Offs);
     }
 
     // ICmpZero BaseReg + -1*ScaleReg => ICmp BaseReg, ScaleReg
@@ -1330,20 +1330,20 @@ static bool isLegalUse(const AddrMode &AM,
 static bool isLegalUse(AddrMode AM,
                        int64_t MinOffset, int64_t MaxOffset,
                        LSRUse::KindType Kind, Type *AccessTy,
-                       const TargetLowering *TLI) {
+                       const ScalarTargetTransformInfo *LTTI) {
   // Check for overflow.
   if (((int64_t)((uint64_t)AM.BaseOffs + MinOffset) > AM.BaseOffs) !=
       (MinOffset > 0))
     return false;
   AM.BaseOffs = (uint64_t)AM.BaseOffs + MinOffset;
-  if (isLegalUse(AM, Kind, AccessTy, TLI)) {
+  if (isLegalUse(AM, Kind, AccessTy, LTTI)) {
     AM.BaseOffs = (uint64_t)AM.BaseOffs - MinOffset;
     // Check for overflow.
     if (((int64_t)((uint64_t)AM.BaseOffs + MaxOffset) > AM.BaseOffs) !=
         (MaxOffset > 0))
       return false;
     AM.BaseOffs = (uint64_t)AM.BaseOffs + MaxOffset;
-    return isLegalUse(AM, Kind, AccessTy, TLI);
+    return isLegalUse(AM, Kind, AccessTy, LTTI);
   }
   return false;
 }
@@ -1352,7 +1352,7 @@ static bool isAlwaysFoldable(int64_t BaseOffs,
                              GlobalValue *BaseGV,
                              bool HasBaseReg,
                              LSRUse::KindType Kind, Type *AccessTy,
-                             const TargetLowering *TLI) {
+                             const ScalarTargetTransformInfo *LTTI) {
   // Fast-path: zero is always foldable.
   if (BaseOffs == 0 && !BaseGV) return true;
 
@@ -1371,14 +1371,14 @@ static bool isAlwaysFoldable(int64_t BaseOffs,
     AM.HasBaseReg = true;
   }
 
-  return isLegalUse(AM, Kind, AccessTy, TLI);
+  return isLegalUse(AM, Kind, AccessTy, LTTI);
 }
 
 static bool isAlwaysFoldable(const SCEV *S,
                              int64_t MinOffset, int64_t MaxOffset,
                              bool HasBaseReg,
                              LSRUse::KindType Kind, Type *AccessTy,
-                             const TargetLowering *TLI,
+                             const ScalarTargetTransformInfo *LTTI,
                              ScalarEvolution &SE) {
   // Fast-path: zero is always foldable.
   if (S->isZero()) return true;
@@ -1402,7 +1402,7 @@ static bool isAlwaysFoldable(const SCEV *S,
   AM.HasBaseReg = HasBaseReg;
   AM.Scale = Kind == LSRUse::ICmpZero ? -1 : 1;
 
-  return isLegalUse(AM, MinOffset, MaxOffset, Kind, AccessTy, TLI);
+  return isLegalUse(AM, MinOffset, MaxOffset, Kind, AccessTy, LTTI);
 }
 
 namespace {
@@ -1502,7 +1502,7 @@ class LSRInstance {
   ScalarEvolution &SE;
   DominatorTree &DT;
   LoopInfo &LI;
-  const TargetLowering *const TLI;
+  const ScalarTargetTransformInfo *const STTI;
   Loop *const L;
   bool Changed;
 
@@ -1638,7 +1638,7 @@ class LSRInstance {
                          Pass *P);
 
 public:
-  LSRInstance(const TargetLowering *tli, Loop *l, Pass *P);
+  LSRInstance(const ScalarTargetTransformInfo *ltti, Loop *l, Pass *P);
 
   bool getChanged() const { return Changed; }
 
@@ -1688,11 +1688,10 @@ void LSRInstance::OptimizeShadowIV() {
     }
     if (!DestTy) continue;
 
-    if (TLI) {
+    if (STTI) {
       // If target does not support DestTy natively then do not apply
       // this transformation.
-      EVT DVT = TLI->getValueType(DestTy);
-      if (!TLI->isTypeLegal(DVT)) continue;
+      if (!STTI->isTypeLegal(DestTy)) continue;
     }
 
     PHINode *PH = dyn_cast<PHINode>(ShadowUse->getOperand(0));
@@ -2015,18 +2014,18 @@ LSRInstance::OptimizeLoopTermCond() {
             if (C->getValue().getMinSignedBits() >= 64 ||
                 C->getValue().isMinSignedValue())
               goto decline_post_inc;
-            // Without TLI, assume that any stride might be valid, and so any
+            // Without STTI, assume that any stride might be valid, and so any
             // use might be shared.
-            if (!TLI)
+            if (!STTI)
               goto decline_post_inc;
             // Check for possible scaled-address reuse.
             Type *AccessTy = getAccessType(UI->getUser());
             AddrMode AM;
             AM.Scale = C->getSExtValue();
-            if (TLI->isLegalAddressingMode(AM, AccessTy))
+            if (STTI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
             AM.Scale = -AM.Scale;
-            if (TLI->isLegalAddressingMode(AM, AccessTy))
+            if (STTI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
           }
         }
@@ -2097,12 +2096,12 @@ LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
   // Conservatively assume HasBaseReg is true for now.
   if (NewOffset < LU.MinOffset) {
     if (!isAlwaysFoldable(LU.MaxOffset - NewOffset, 0, HasBaseReg,
-                          Kind, AccessTy, TLI))
+                          Kind, AccessTy, STTI))
       return false;
     NewMinOffset = NewOffset;
   } else if (NewOffset > LU.MaxOffset) {
     if (!isAlwaysFoldable(NewOffset - LU.MinOffset, 0, HasBaseReg,
-                          Kind, AccessTy, TLI))
+                          Kind, AccessTy, STTI))
       return false;
     NewMaxOffset = NewOffset;
   }
@@ -2131,7 +2130,7 @@ LSRInstance::getUse(const SCEV *&Expr,
   int64_t Offset = ExtractImmediate(Expr, SE);
 
   // Basic uses can't accept any offset, for example.
-  if (!isAlwaysFoldable(Offset, 0, /*HasBaseReg=*/true, Kind, AccessTy, TLI)) {
+  if (!isAlwaysFoldable(Offset, 0, /*HasBaseReg=*/true, Kind, AccessTy, STTI)) {
     Expr = Copy;
     Offset = 0;
   }
@@ -2396,7 +2395,7 @@ bool IVChain::isProfitableIncrement(const SCEV *OperExpr,
 /// TODO: Consider IVInc free if it's already used in another chains.
 static bool
 isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
-                  ScalarEvolution &SE, const TargetLowering *TLI) {
+                  ScalarEvolution &SE, const ScalarTargetTransformInfo *STTI) {
   if (StressIVChain)
     return true;
 
@@ -2654,7 +2653,7 @@ void LSRInstance::CollectChains() {
   for (unsigned UsersIdx = 0, NChains = IVChainVec.size();
        UsersIdx < NChains; ++UsersIdx) {
     if (!isProfitableChain(IVChainVec[UsersIdx],
-                           ChainUsersVec[UsersIdx].FarUsers, SE, TLI))
+                           ChainUsersVec[UsersIdx].FarUsers, SE, STTI))
       continue;
     // Preserve the chain at UsesIdx.
     if (ChainIdx != UsersIdx)
@@ -2681,7 +2680,8 @@ void LSRInstance::FinalizeChain(IVChain &Chain) {
 
 /// Return true if the IVInc can be folded into an addressing mode.
 static bool canFoldIVIncExpr(const SCEV *IncExpr, Instruction *UserInst,
-                             Value *Operand, const TargetLowering *TLI) {
+                             Value *Operand,
+                             const ScalarTargetTransformInfo *STTI) {
   const SCEVConstant *IncConst = dyn_cast<SCEVConstant>(IncExpr);
   if (!IncConst || !isAddressUse(UserInst, Operand))
     return false;
@@ -2691,7 +2691,7 @@ static bool canFoldIVIncExpr(const SCEV *IncExpr, Instruction *UserInst,
 
   int64_t IncOffset = IncConst->getValue()->getSExtValue();
   if (!isAlwaysFoldable(IncOffset, /*BaseGV=*/0, /*HaseBaseReg=*/false,
-                       LSRUse::Address, getAccessType(UserInst), TLI))
+                       LSRUse::Address, getAccessType(UserInst), STTI))
     return false;
 
   return true;
@@ -2762,7 +2762,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
 
       // If an IV increment can't be folded, use it as the next IV value.
       if (!canFoldIVIncExpr(LeftOverExpr, IncI->UserInst, IncI->IVOperand,
-                            TLI)) {
+                            STTI)) {
         assert(IVTy == IVOper->getType() && "inconsistent IV increment type");
         IVSrc = IVOper;
         LeftOverExpr = 0;
@@ -3108,7 +3108,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
       // into an immediate field.
       if (isAlwaysFoldable(*J, LU.MinOffset, LU.MaxOffset,
                            Base.getNumRegs() > 1,
-                           LU.Kind, LU.AccessTy, TLI, SE))
+                           LU.Kind, LU.AccessTy, STTI, SE))
         continue;
 
       // Collect all operands except *J.
@@ -3122,7 +3122,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
       if (InnerAddOps.size() == 1 &&
           isAlwaysFoldable(InnerAddOps[0], LU.MinOffset, LU.MaxOffset,
                            Base.getNumRegs() > 1,
-                           LU.Kind, LU.AccessTy, TLI, SE))
+                           LU.Kind, LU.AccessTy, STTI, SE))
         continue;
 
       const SCEV *InnerSum = SE.getAddExpr(InnerAddOps);
@@ -3132,9 +3132,9 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 
       // Add the remaining pieces of the add back into the new formula.
       const SCEVConstant *InnerSumSC = dyn_cast<SCEVConstant>(InnerSum);
-      if (TLI && InnerSumSC &&
+      if (STTI && InnerSumSC &&
           SE.getTypeSizeInBits(InnerSumSC->getType()) <= 64 &&
-          TLI->isLegalAddImmediate((uint64_t)F.UnfoldedOffset +
+          STTI->isLegalAddImmediate((uint64_t)F.UnfoldedOffset +
                                    InnerSumSC->getValue()->getZExtValue())) {
         F.UnfoldedOffset = (uint64_t)F.UnfoldedOffset +
                            InnerSumSC->getValue()->getZExtValue();
@@ -3144,8 +3144,8 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 
       // Add J as its own register, or an unfolded immediate.
       const SCEVConstant *SC = dyn_cast<SCEVConstant>(*J);
-      if (TLI && SC && SE.getTypeSizeInBits(SC->getType()) <= 64 &&
-          TLI->isLegalAddImmediate((uint64_t)F.UnfoldedOffset +
+      if (STTI && SC && SE.getTypeSizeInBits(SC->getType()) <= 64 &&
+          STTI->isLegalAddImmediate((uint64_t)F.UnfoldedOffset +
                                    SC->getValue()->getZExtValue()))
         F.UnfoldedOffset = (uint64_t)F.UnfoldedOffset +
                            SC->getValue()->getZExtValue();
@@ -3205,7 +3205,7 @@ void LSRInstance::GenerateSymbolicOffsets(LSRUse &LU, unsigned LUIdx,
     Formula F = Base;
     F.AM.BaseGV = GV;
     if (!isLegalUse(F.AM, LU.MinOffset, LU.MaxOffset,
-                    LU.Kind, LU.AccessTy, TLI))
+                    LU.Kind, LU.AccessTy, STTI))
       continue;
     F.BaseRegs[i] = G;
     (void)InsertFormula(LU, LUIdx, F);
@@ -3230,7 +3230,7 @@ void LSRInstance::GenerateConstantOffsets(LSRUse &LU, unsigned LUIdx,
       Formula F = Base;
       F.AM.BaseOffs = (uint64_t)Base.AM.BaseOffs - *I;
       if (isLegalUse(F.AM, LU.MinOffset - *I, LU.MaxOffset - *I,
-                     LU.Kind, LU.AccessTy, TLI)) {
+                     LU.Kind, LU.AccessTy, STTI)) {
         // Add the offset to the base register.
         const SCEV *NewG = SE.getAddExpr(SE.getConstant(G->getType(), *I), G);
         // If it cancelled out, drop the base register, otherwise update it.
@@ -3250,7 +3250,7 @@ void LSRInstance::GenerateConstantOffsets(LSRUse &LU, unsigned LUIdx,
     Formula F = Base;
     F.AM.BaseOffs = (uint64_t)F.AM.BaseOffs + Imm;
     if (!isLegalUse(F.AM, LU.MinOffset, LU.MaxOffset,
-                    LU.Kind, LU.AccessTy, TLI))
+                    LU.Kind, LU.AccessTy, STTI))
       continue;
     F.BaseRegs[i] = G;
     (void)InsertFormula(LU, LUIdx, F);
@@ -3297,7 +3297,7 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     F.AM.BaseOffs = NewBaseOffs;
 
     // Check that this scale is legal.
-    if (!isLegalUse(F.AM, Offset, Offset, LU.Kind, LU.AccessTy, TLI))
+    if (!isLegalUse(F.AM, Offset, Offset, LU.Kind, LU.AccessTy, STTI))
       continue;
 
     // Compensate for the use having MinOffset built into it.
@@ -3353,12 +3353,12 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx, Formula Base) {
     Base.AM.HasBaseReg = Base.BaseRegs.size() > 1;
     // Check whether this scale is going to be legal.
     if (!isLegalUse(Base.AM, LU.MinOffset, LU.MaxOffset,
-                    LU.Kind, LU.AccessTy, TLI)) {
+                    LU.Kind, LU.AccessTy, STTI)) {
       // As a special-case, handle special out-of-loop Basic users specially.
       // TODO: Reconsider this special case.
       if (LU.Kind == LSRUse::Basic &&
           isLegalUse(Base.AM, LU.MinOffset, LU.MaxOffset,
-                     LSRUse::Special, LU.AccessTy, TLI) &&
+                     LSRUse::Special, LU.AccessTy, STTI) &&
           LU.AllFixupsOutsideLoop)
         LU.Kind = LSRUse::Special;
       else
@@ -3391,8 +3391,8 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx, Formula Base) {
 
 /// GenerateTruncates - Generate reuse formulae from different IV types.
 void LSRInstance::GenerateTruncates(LSRUse &LU, unsigned LUIdx, Formula Base) {
-  // This requires TargetLowering to tell us which truncates are free.
-  if (!TLI) return;
+  // This requires ScalarTargetTransformInfo to tell us which truncates are free.
+  if (!STTI) return;
 
   // Don't bother truncating symbolic values.
   if (Base.AM.BaseGV) return;
@@ -3405,7 +3405,7 @@ void LSRInstance::GenerateTruncates(LSRUse &LU, unsigned LUIdx, Formula Base) {
   for (SmallSetVector<Type *, 4>::const_iterator
        I = Types.begin(), E = Types.end(); I != E; ++I) {
     Type *SrcTy = *I;
-    if (SrcTy != DstTy && TLI->isTruncateFree(SrcTy, DstTy)) {
+    if (SrcTy != DstTy && STTI->isTruncateFree(SrcTy, DstTy)) {
       Formula F = Base;
 
       if (F.ScaledReg) F.ScaledReg = SE.getAnyExtendExpr(F.ScaledReg, *I);
@@ -3561,7 +3561,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
         Formula NewF = F;
         NewF.AM.BaseOffs = Offs;
         if (!isLegalUse(NewF.AM, LU.MinOffset, LU.MaxOffset,
-                        LU.Kind, LU.AccessTy, TLI))
+                        LU.Kind, LU.AccessTy, STTI))
           continue;
         NewF.ScaledReg = SE.getAddExpr(NegImmS, NewF.ScaledReg);
 
@@ -3586,9 +3586,9 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
           Formula NewF = F;
           NewF.AM.BaseOffs = (uint64_t)NewF.AM.BaseOffs + Imm;
           if (!isLegalUse(NewF.AM, LU.MinOffset, LU.MaxOffset,
-                          LU.Kind, LU.AccessTy, TLI)) {
-            if (!TLI ||
-                !TLI->isLegalAddImmediate((uint64_t)NewF.UnfoldedOffset + Imm))
+                          LU.Kind, LU.AccessTy, STTI)) {
+            if (!STTI ||
+                !STTI->isLegalAddImmediate((uint64_t)NewF.UnfoldedOffset + Imm))
               continue;
             NewF = F;
             NewF.UnfoldedOffset = (uint64_t)NewF.UnfoldedOffset + Imm;
@@ -3900,7 +3900,7 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
                 Formula &F = LUThatHas->Formulae[i];
                 if (!isLegalUse(F.AM,
                                 LUThatHas->MinOffset, LUThatHas->MaxOffset,
-                                LUThatHas->Kind, LUThatHas->AccessTy, TLI)) {
+                                LUThatHas->Kind, LUThatHas->AccessTy, STTI)) {
                   DEBUG(dbgs() << "  Deleting "; F.print(dbgs());
                         dbgs() << '\n');
                   LUThatHas->DeleteFormula(F);
@@ -4589,12 +4589,12 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   Changed |= DeleteTriviallyDeadInstructions(DeadInsts);
 }
 
-LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
+LSRInstance::LSRInstance(const ScalarTargetTransformInfo *stti, Loop *l, Pass *P)
   : IU(P->getAnalysis<IVUsers>()),
     SE(P->getAnalysis<ScalarEvolution>()),
     DT(P->getAnalysis<DominatorTree>()),
     LI(P->getAnalysis<LoopInfo>()),
-    TLI(tli), L(l), Changed(false), IVIncInsertPos(0) {
+    STTI(stti), L(l), Changed(false), IVIncInsertPos(0) {
 
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm())
@@ -4684,7 +4684,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
      for (SmallVectorImpl<Formula>::const_iterator J = LU.Formulae.begin(),
           JE = LU.Formulae.end(); J != JE; ++J)
         assert(isLegalUse(J->AM, LU.MinOffset, LU.MaxOffset,
-                          LU.Kind, LU.AccessTy, TLI) &&
+                          LU.Kind, LU.AccessTy, STTI) &&
                "Illegal formula generated!");
   };
 #endif
@@ -4757,13 +4757,13 @@ void LSRInstance::dump() const {
 namespace {
 
 class LoopStrengthReduce : public LoopPass {
-  /// TLI - Keep a pointer of a TargetLowering to consult for determining
-  /// transformation profitability.
-  const TargetLowering *const TLI;
+  /// ScalarTargetTransformInfo provides target information that is needed
+  /// for strength reducing loops.
+  const ScalarTargetTransformInfo *STTI;
 
 public:
   static char ID; // Pass ID, replacement for typeid
-  explicit LoopStrengthReduce(const TargetLowering *tli = 0);
+  LoopStrengthReduce();
 
 private:
   bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -4783,13 +4783,12 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopStrengthReduce, "loop-reduce",
                 "Loop Strength Reduction", false, false)
 
-
-Pass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
-  return new LoopStrengthReduce(TLI);
+Pass *llvm::createLoopStrengthReducePass() {
+  return new LoopStrengthReduce();
 }
 
-LoopStrengthReduce::LoopStrengthReduce(const TargetLowering *tli)
-  : LoopPass(ID), TLI(tli) {
+LoopStrengthReduce::LoopStrengthReduce()
+  : LoopPass(ID), STTI(0) {
     initializeLoopStrengthReducePass(*PassRegistry::getPassRegistry());
   }
 
@@ -4815,8 +4814,13 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
   bool Changed = false;
 
+  TargetTransformInfo *TTI = getAnalysisIfAvailable<TargetTransformInfo>();
+
+  if (TTI)
+    STTI = TTI->getScalarTargetTransformInfo();
+
   // Run the main LSR transformation.
-  Changed |= LSRInstance(TLI, L, this).getChanged();
+  Changed |= LSRInstance(STTI, L, this).getChanged();
 
   // Remove any extra phis created by processing inner loops.
   Changed |= DeleteDeadPHIs(L->getHeader());
@@ -4827,7 +4831,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
     Rewriter.setDebugType(DEBUG_TYPE);
 #endif
     unsigned numFolded = Rewriter.
-      replaceCongruentIVs(L, &getAnalysis<DominatorTree>(), DeadInsts, TLI);
+      replaceCongruentIVs(L, &getAnalysis<DominatorTree>(), DeadInsts, STTI);
     if (numFolded) {
       Changed = true;
       DeleteTriviallyDeadInstructions(DeadInsts);

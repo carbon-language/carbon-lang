@@ -22,7 +22,7 @@
 #include <set>
 
 namespace llvm {
-  class TargetLowering;
+  class ScalarTargetTransformInfo;
 
   /// Return true if the given expression is safe to expand in the sense that
   /// all materialized values are safe to speculate.
@@ -129,7 +129,7 @@ namespace llvm {
     /// representative. Return the number of phis eliminated.
     unsigned replaceCongruentIVs(Loop *L, const DominatorTree *DT,
                                  SmallVectorImpl<WeakVH> &DeadInsts,
-                                 const TargetLowering *TLI = NULL);
+                                 const ScalarTargetTransformInfo *STTI = NULL);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
