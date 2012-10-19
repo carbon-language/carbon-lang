@@ -8629,9 +8629,9 @@ SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
     //    (extract_subvec (concat V1, V2, ...), i)
     // Into:
     //    Vi if possible
-    for (unsigned i = 0, e = V->getNumOperands(); i != e; ++i)
-      if (V->getOperand(i).getValueType() != NVT)
-        return SDValue();
+    // Only operand 0 is checked as 'concat' assumes all inputs of the same type.
+    if (V->getOperand(0).getValueType() != NVT)
+      return SDValue();
     unsigned Idx = dyn_cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
     unsigned NumElems = NVT.getVectorNumElements();
     assert((Idx % NumElems) == 0 &&
