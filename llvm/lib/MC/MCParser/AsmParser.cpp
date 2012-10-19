@@ -1138,7 +1138,7 @@ bool AsmParser::ParseStatement() {
     return ParseDirectiveEndIf(IDLoc);
 
   // If we are in a ".if 0" block, ignore this statement.
-  if (TheCondState.Ignore) {
+  if (TheCondState.Ignore && !ParsingInlineAsm) {
     EatToEndOfStatement();
     return false;
   }
