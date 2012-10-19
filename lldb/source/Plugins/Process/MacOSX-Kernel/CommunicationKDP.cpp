@@ -676,7 +676,7 @@ CommunicationKDP::SendRequestWriteMemory (lldb::addr_t addr,
     MakeRequestPacketHeader (command, request_packet, command_length);
     request_packet.PutMaxHex64 (addr, command_addr_byte_size);
     request_packet.PutHex32 (src_len);
-    request_packet.PutBytesAsRawHex8(src, src_len);
+    request_packet.PutRawBytes(src, src_len);
 
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))

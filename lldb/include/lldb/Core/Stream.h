@@ -179,12 +179,15 @@ public:
     int
     PutPointer (void *ptr);
 
+    // Append \a src_len bytes from \s to the stream as hex characters
+    // (two ascii characters per byte of input data)
     int
     PutBytesAsRawHex8 (const void *src,
                        size_t src_len,
                        lldb::ByteOrder src_byte_order = lldb::eByteOrderInvalid,
                        lldb::ByteOrder dst_byte_order = lldb::eByteOrderInvalid);
 
+    // Append \a src_len bytes from \s to the stream as binary data.
     int
     PutRawBytes (const void *s, 
                  size_t src_len,
