@@ -710,7 +710,7 @@ SBTarget::Launch
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
-        log->Printf ("SBTarget(%p)::Launch (...) => SBProceess(%p)", 
+        log->Printf ("SBTarget(%p)::Launch (...) => SBProcess(%p)", 
                      target_sp.get(), process_sp.get());
     }
 
@@ -810,7 +810,7 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
-        log->Printf ("SBTarget(%p)::Launch (...) => SBProceess(%p)", 
+        log->Printf ("SBTarget(%p)::Launch (...) => SBProcess(%p)", 
                      target_sp.get(), process_sp.get());
     }
     
@@ -820,9 +820,17 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
 lldb::SBProcess
 SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
     SBProcess sb_process;
     ProcessSP process_sp;
     TargetSP target_sp(GetSP());
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::Attach (sb_attach_info, error)...", target_sp.get());
+    }
+    
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
@@ -839,6 +847,11 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
                     error.SetErrorString ("process attach is in progress");
                 else
                     error.SetErrorString ("a process is already being debugged");
+                if (log)
+                {
+                    log->Printf ("SBTarget(%p)::Attach (...) => error %s",
+                                 target_sp.get(), error.GetCString());
+                }
                 return sb_process;
             }            
         }
@@ -864,6 +877,11 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
                     else
                     {
                         error.ref().SetErrorStringWithFormat("no process found with process ID %llu", attach_pid);
+                        if (log)
+                        {
+                            log->Printf ("SBTarget(%p)::Attach (...) => error %s",
+                                         target_sp.get(), error.GetCString());
+                        }
                         return sb_process;
                     }
                 }
@@ -887,6 +905,13 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
     {
         error.SetErrorString ("SBTarget is invalid");
     }
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::Attach (...) => SBProcess(%p)",
+                     target_sp.get(), process_sp.get());
+    }
+    
     return sb_process;
 }
 
@@ -911,9 +936,17 @@ SBTarget::AttachToProcessWithID
     SBError& error  // An error explaining what went wrong if attach fails
 )
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
     SBProcess sb_process;
     ProcessSP process_sp;
     TargetSP target_sp(GetSP());
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::AttachToProcessWithID (listener, pid=%lld, error)...", target_sp.get(), pid);
+    }
+    
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
@@ -983,8 +1016,13 @@ SBTarget::AttachToProcessWithID
     {
         error.SetErrorString ("SBTarget is invalid");
     }
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::AttachToProcessWithID (...) => SBProcess(%p)",
+                     target_sp.get(), process_sp.get());
+    }
     return sb_process;
-
 }
 
 lldb::SBProcess
@@ -996,9 +1034,17 @@ SBTarget::AttachToProcessWithName
     SBError& error      // An error explaining what went wrong if attach fails
 )
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
     SBProcess sb_process;
     ProcessSP process_sp;
     TargetSP target_sp(GetSP());
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::AttachToProcessWithName (listener, name=%s, wait_for=%s, error)...", target_sp.get(), name, wait_for ? "true" : "false");
+    }
+    
     if (name && target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
@@ -1059,8 +1105,13 @@ SBTarget::AttachToProcessWithName
     {
         error.SetErrorString ("SBTarget is invalid");
     }
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::AttachToPorcessWithName (...) => SBProcess(%p)",
+                     target_sp.get(), process_sp.get());
+    }
     return sb_process;
-
 }
 
 lldb::SBProcess
@@ -1072,9 +1123,17 @@ SBTarget::ConnectRemote
     SBError& error
 )
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
     SBProcess sb_process;
     ProcessSP process_sp;
     TargetSP target_sp(GetSP());
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::ConnectRemote (listener, url=%s, plugin_name=%s, error)...", target_sp.get(), url, plugin_name);
+    }
+    
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
@@ -1097,6 +1156,12 @@ SBTarget::ConnectRemote
     else
     {
         error.SetErrorString ("SBTarget is invalid");
+    }
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::ConnectRemote (...) => SBProcess(%p)",
+                     target_sp.get(), process_sp.get());
     }
     return sb_process;
 }
