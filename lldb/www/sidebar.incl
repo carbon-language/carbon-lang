@@ -15,11 +15,8 @@
       <h1 class="headerbar">Use and Extension</h1>
       <ul>
         <li><a href="architecture.html">Architecture</a></li>
-        <li><a href="customization.html">Customization</a></li>
-        <li><a href="docs.html">Documentation</a></li>
-        <li><a href="faq.html">FAQ</a></li>
         <li><a href="formats.html">Frame and Thread Formatting</a></li>
-        <li><a href="lldb-gdb.html">LLDB and GDB</a></li>
+        <li><a href="lldb-gdb.html">GDB and LLDB command examples</a></li>
         <li><a href="python-reference.html">Python Reference</a></li>
         <li><a href="scripting.html">Python Example</a></li>
         <li><a href="tutorial.html">Tutorial</a></li>
