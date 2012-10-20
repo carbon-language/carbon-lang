@@ -102,9 +102,10 @@ void operator R"xyzzy()xyzzy" _foo(long double); // ok
 
 void operator"" "" R"()" "" _foo(const char *); // ok
 
+void operator ""_no_space(const char *); // ok
+
 // Ensure we diagnose the bad cases.
 void operator "\0" _non_empty(const char *); // expected-error {{must be '""'}}
-void operator ""_no_space(const char *); // expected-error {{C++11 requires a space}}
 void operator L"" _not_char(const char *); // expected-error {{cannot have an encoding prefix}}
 void operator "" ""
 U"" // expected-error {{cannot have an encoding prefix}}

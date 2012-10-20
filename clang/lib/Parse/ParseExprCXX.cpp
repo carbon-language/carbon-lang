@@ -1881,8 +1881,9 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
 
   // Parse a literal-operator-id.
   //
-  //   literal-operator-id: [C++0x 13.5.8]
-  //     operator "" identifier
+  //   literal-operator-id: C++11 [over.literal]
+  //     operator string-literal identifier
+  //     operator user-defined-string-literal
 
   if (getLangOpts().CPlusPlus0x && isTokenStringLiteral()) {
     Diag(Tok.getLocation(), diag::warn_cxx98_compat_literal_operator);
@@ -1896,6 +1897,9 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
     llvm::SmallVector<SourceLocation, 4> TokLocs;
     while (isTokenStringLiteral()) {
       if (!Tok.is(tok::string_literal) && !DiagId) {
+        // C++11 [over.literal]p1:
+        //   The string-literal or user-defined-string-literal in a
+        //   literal-operator-id shall have no encoding-prefix [...].
         DiagLoc = Tok.getLocation();
         DiagId = diag::err_literal_operator_string_prefix;
       }
@@ -1917,9 +1921,6 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
         Lexer::AdvanceToTokenCharacter(TokLocs[Literal.getUDSuffixToken()],
                                        Literal.getUDSuffixOffset(),
                                        PP.getSourceManager(), getLangOpts());
-      // This form is not permitted by the standard (yet).
-      DiagLoc = SuffixLoc;
-      DiagId = diag::err_literal_operator_missing_space;
     } else if (Tok.is(tok::identifier)) {
       II = Tok.getIdentifierInfo();
       SuffixLoc = ConsumeToken();
@@ -1931,6 +1932,10 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
 
     // The string literal must be empty.
     if (!Literal.GetString().empty() || Literal.Pascal) {
+      // C++11 [over.literal]p1:
+      //   The string-literal or user-defined-string-literal in a
+      //   literal-operator-id shall [...] contain no characters
+      //   other than the implicit terminating '\0'.
       DiagLoc = TokLocs.front();
       DiagId = diag::err_literal_operator_string_not_empty;
     }

@@ -472,9 +472,6 @@ def err_literal_operator_string_prefix : Error<
   "string literal after 'operator' cannot have an encoding prefix">;
 def err_literal_operator_string_not_empty : Error<
   "string literal after 'operator' must be '\"\"'">;
-def err_literal_operator_missing_space : Error<
-  "C++11 requires a space between the \"\" and the user-defined suffix in a "
-  "literal operator">;
 def warn_cxx98_compat_literal_operator : Warning<
   "literal operators are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
