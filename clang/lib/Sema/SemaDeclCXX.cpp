@@ -9379,7 +9379,7 @@ CheckOperatorNewDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
 }
 
 static bool
-CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
+CheckOperatorDeleteDeclaration(Sema &SemaRef, FunctionDecl *FnDecl) {
   // C++ [basic.stc.dynamic.deallocation]p1:
   //   A program is ill-formed if deallocation functions are declared in a
   //   namespace scope other than global scope or declared static in global 

@@ -4,10 +4,10 @@
 // the exception specification adjustment occurs.
 namespace DR1492 {
   struct A { ~A(); }; // expected-note {{here}}
-  A::~A() noexcept {} // expected-error {{does not match previous declaration}}
+  A::~A() noexcept {} // expected-warning {{previously declared with an implicit exception specification}}
 
   struct B { ~B() noexcept; }; // expected-note {{here}}
-  B::~B() {} // expected-warning {{~B' is missing exception specification 'noexcept'}}
+  B::~B() {} // expected-warning {{previously declared with an explicit exception specification}}
 
   template<typename T> struct C {
     T t;

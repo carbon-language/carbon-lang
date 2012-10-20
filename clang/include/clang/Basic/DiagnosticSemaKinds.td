@@ -5425,6 +5425,10 @@ def err_out_of_line_default_deletes : Error<
   "defaulting this %select{default constructor|copy constructor|move "
   "constructor|copy assignment operator|move assignment operator|destructor}0 "
   "would delete it after its first declaration">;
+def ext_implicit_exception_spec_mismatch : ExtWarn<
+  "function previously declared with an %select{explicit|implicit}0 exception "
+  "specification redeclared with an %select{implicit|explicit}0 exception "
+  "specification">, InGroup<DiagGroup<"implicit-exception-spec-mismatch">>;
 
 def warn_ptr_arith_precedes_bounds : Warning<
   "the pointer decremented by %0 refers before the beginning of the array">,

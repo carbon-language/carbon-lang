@@ -5519,6 +5519,20 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
            diag::err_static_out_of_line)
         << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
     }
+
+    // C++11 [except.spec]p15:
+    //   A deallocation function with no exception-specification is treated
+    //   as if it were specified with noexcept(true).
+    const FunctionProtoType *FPT = R->getAs<FunctionProtoType>();
+    if ((Name.getCXXOverloadedOperator() == OO_Delete ||
+         Name.getCXXOverloadedOperator() == OO_Array_Delete) &&
+        getLangOpts().CPlusPlus0x && FPT && !FPT->hasExceptionSpec()) {
+      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+      EPI.ExceptionSpecType = EST_BasicNoexcept;
+      NewFD->setType(Context.getFunctionType(FPT->getResultType(),
+                                             FPT->arg_type_begin(),
+                                             FPT->getNumArgs(), EPI));
+    }
   }
 
   // Filter out previous declarations that don't match the scope.

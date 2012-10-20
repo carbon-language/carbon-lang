@@ -2169,16 +2169,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
   ASTContext &Context = S.Context;
   const LangOptions &LangOpts = S.getLangOpts();
 
-  bool ImplicitlyNoexcept = false;
-  if (D.getName().getKind() == UnqualifiedId::IK_OperatorFunctionId &&
-      LangOpts.CPlusPlus0x) {
-    OverloadedOperatorKind OO = D.getName().OperatorFunctionId.Operator;
-    /// In C++0x, deallocation functions (normal and array operator delete)
-    /// are implicitly noexcept.
-    if (OO == OO_Delete || OO == OO_Array_Delete)
-      ImplicitlyNoexcept = true;
-  }
-
   // The name we're declaring, if any.
   DeclarationName Name;
   if (D.getIdentifier())
@@ -2577,12 +2567,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                       NoexceptExpr,
                                       Exceptions,
                                       EPI);
-
-        if (FTI.getExceptionSpecType() == EST_None &&
-            ImplicitlyNoexcept && chunkIndex == 0) {
-          // Only the outermost chunk is marked noexcept, of course.
-          EPI.ExceptionSpecType = EST_BasicNoexcept;
-        }
 
         T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(), EPI);
       }
