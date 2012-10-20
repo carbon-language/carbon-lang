@@ -466,13 +466,15 @@ Release Notes</a>.</h1>
 <p>In addition to many minor performance tweaks and bug fixes, this release
    includes a few major enhancements and additions to the optimizers:</p>
 
-<p> Loop Vectorizer - We've added a basic loop vectorizer and we are now able
-    to vectorize small loops. The loop vectorizer is disabled by default and
-    can be enabled using the -mllvm -vectorize flags. We can vectorize this code:
+<p> Loop Vectorizer - We've added a loop vectorizer and we are now able to
+    vectorize small loops. The loop vectorizer is disabled by default and
+    can be enabled using the <b>-mllvm -vectorize</b> flag. <br/>
+    We can now vectorize this code:
 
     <pre class="doc_code">
     for (i=0; i&lt;n; i++) {
       a[i] = b[i+1] + c[i+3] + i;
+      sum += d[i];
     }
     </pre>
 
