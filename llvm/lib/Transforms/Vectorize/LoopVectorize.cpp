@@ -206,7 +206,7 @@ private:
   /// we read and write from memory. This method checks if it is
   /// legal to vectorize the code, considering only memory constrains.
   /// Returns true if BB is vectorizable
-  bool canVectorizeMemory(BasicBlock &BB;)
+  bool canVectorizeMemory(BasicBlock &BB);
 
   // Check if a pointer value is known to be disjoint.
   // Example: Alloca, Global, NoAlias.
