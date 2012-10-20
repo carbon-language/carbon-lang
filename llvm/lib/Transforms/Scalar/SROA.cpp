@@ -2888,10 +2888,7 @@ private:
 
     Value *NewPtr = getAdjustedAllocaPtr(PtrBuilder, OldPtr->getType());
     // Replace the operands which were using the old pointer.
-    User::op_iterator OI = PN.op_begin(), OE = PN.op_end();
-    for (; OI != OE; ++OI)
-      if (*OI == OldPtr)
-        *OI = NewPtr;
+    std::replace(PN.op_begin(), PN.op_end(), cast<Value>(OldPtr), NewPtr);
 
     DEBUG(dbgs() << "          to: " << PN << "\n");
     deleteIfTriviallyDead(OldPtr);
@@ -3261,11 +3258,7 @@ static Type *getTypePartition(const DataLayout &TD, Type *Ty,
   }
 
   // Try to build up a sub-structure.
-  SmallVector<Type *, 4> ElementTys;
-  do {
-    ElementTys.push_back(*EI++);
-  } while (EI != EE);
-  StructType *SubTy = StructType::get(STy->getContext(), ElementTys,
+  StructType *SubTy = StructType::get(STy->getContext(), makeArrayRef(EI, EE),
                                       STy->isPacked());
   const StructLayout *SubSL = TD.getStructLayout(SubTy);
   if (Size != SubSL->getSizeInBytes())
