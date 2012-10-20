@@ -202,6 +202,12 @@ private:
   /// and we only need to check individual instructions.
   bool canVectorizeBlock(BasicBlock &BB);
 
+  /// When we vectorize loops we may change the order in which
+  /// we read and write from memory. This method checks if it is
+  /// legal to vectorize the code, considering only memory constrains.
+  /// Returns true if BB is vectorizable
+  bool canVectorizeMemory(BasicBlock &BB;)
+
   // Check if a pointer value is known to be disjoint.
   // Example: Alloca, Global, NoAlias.
   bool isIdentifiedSafeObject(Value* Val);
@@ -908,11 +914,7 @@ unsigned LoopVectorizationLegality::getLoopMaxVF() {
 }
 
 bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
-  // Holds the read and write pointers that we find.
-  typedef SmallVector<Value*, 10> ValueVector;
-  ValueVector Reads;
-  ValueVector Writes;
-
+  // Scan the instructions in the block and look for hazards.
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
     Instruction *I = it;
 
@@ -960,34 +962,6 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       }
     }// end of PHI handling
 
-    // If this is a load, record its pointer. If it is not a load, abort.
-    // Notice that we don't handle function calls that read or write.
-    if (I->mayReadFromMemory()) {
-      LoadInst *Ld = dyn_cast<LoadInst>(I);
-      if (!Ld) return false;
-      if (!Ld->isSimple()) {
-        DEBUG(dbgs() << "LV: Found a non-simple load.\n");
-        return false;
-      }
-
-      Value* Ptr = Ld->getPointerOperand();
-      GetUnderlyingObjects(Ptr, Reads, DL);
-    }
-
-    // Record store pointers. Abort on all other instructions that write to
-    // memory.
-    if (I->mayWriteToMemory()) {
-      StoreInst *St = dyn_cast<StoreInst>(I);
-      if (!St) return false;
-      if (!St->isSimple()) {
-        DEBUG(dbgs() << "LV: Found a non-simple store.\n");
-        return false;
-      }
-
-      Value* Ptr = St->getPointerOperand();
-      GetUnderlyingObjects(Ptr, Writes, DL);
-    }
-
     // We still don't handle functions.
     CallInst *CI = dyn_cast<CallInst>(I);
     if (CI) {
@@ -1023,6 +997,50 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       DEBUG(dbgs() << "LV: Did not find an induction var.\n");
       return false;
   }
+
+  // If the memory dependencies do not prevent us from
+  // vectorizing, then vectorize.
+  return canVectorizeMemory(BB);
+}
+
+bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
+  // Holds the read and write pointers that we find.
+  typedef SmallVector<Value*, 10> ValueVector;
+  ValueVector Reads;
+  ValueVector Writes;
+
+  for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
+    Instruction *I = it;
+
+    // If this is a load, record its pointer. If it is not a load, abort.
+    // Notice that we don't handle function calls that read or write.
+    if (I->mayReadFromMemory()) {
+      LoadInst *Ld = dyn_cast<LoadInst>(I);
+      if (!Ld) return false;
+      if (!Ld->isSimple()) {
+        DEBUG(dbgs() << "LV: Found a non-simple load.\n");
+        return false;
+      }
+
+      Value* Ptr = Ld->getPointerOperand();
+      GetUnderlyingObjects(Ptr, Reads, DL);
+    }
+
+    // Record store pointers. Abort on all other instructions that write to
+    // memory.
+    if (I->mayWriteToMemory()) {
+      StoreInst *St = dyn_cast<StoreInst>(I);
+      if (!St) return false;
+      if (!St->isSimple()) {
+        DEBUG(dbgs() << "LV: Found a non-simple store.\n");
+        return false;
+      }
+
+      Value* Ptr = St->getPointerOperand();
+      GetUnderlyingObjects(Ptr, Writes, DL);
+    }
+  } // next instr.
+
 
   // Check that the underlying objects of the reads and writes are either
   // disjoint memory locations, or that they are no-alias arguments.
