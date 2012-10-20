@@ -829,3 +829,37 @@ define i1 @test63(i1 %A, i1 %B) {
 ; CHECK: %C = or i1 %B, %not
 ; CHECK: ret i1 %C
 }
+
+; PR14131
+define void @test64(i32 %p, i16 %b) noreturn nounwind {
+entry:
+  %p.addr.0.insert.mask = and i32 %p, -65536
+  %conv2 = and i32 %p, 65535
+  br i1 undef, label %lor.rhs, label %lor.end
+
+lor.rhs:
+  %p.addr.0.extract.trunc = trunc i32 %p.addr.0.insert.mask to i16
+  %phitmp = zext i16 %p.addr.0.extract.trunc to i32
+  br label %lor.end
+
+lor.end:
+  %t.1 = phi i32 [ 0, %entry ], [ %phitmp, %lor.rhs ]
+  %conv6 = zext i16 %b to i32
+  %div = udiv i32 %conv6, %t.1
+  %tobool8 = icmp eq i32 %div, 0
+  %cmp = icmp eq i32 %t.1, 0
+  %cmp12 = icmp ult i32 %conv2, 2
+  %cmp.sink = select i1 %tobool8, i1 %cmp12, i1 %cmp
+  br i1 %cmp.sink, label %cond.end17, label %cond.false16
+
+cond.false16:
+  br label %cond.end17
+
+cond.end17:
+  br label %while.body
+
+while.body:
+  br label %while.body
+; CHECK: @test64
+; CHECK-NOT: select
+}
