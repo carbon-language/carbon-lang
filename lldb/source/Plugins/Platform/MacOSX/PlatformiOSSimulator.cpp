@@ -207,7 +207,7 @@ PlatformiOSSimulator::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  NULL);
         
-            if (exe_module_sp->GetObjectFile())
+            if (exe_module_sp && exe_module_sp->GetObjectFile())
                 return error;
             exe_module_sp.reset();
         }
@@ -409,14 +409,6 @@ PlatformiOSSimulator::FindProcesses (const ProcessInstanceInfoMatch &match_info,
     // TODO: if connected, send a packet to get the remote process infos by name
     process_infos.Clear();
     return 0;
-}
-
-bool
-PlatformiOSSimulator::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
-{
-    // TODO: if connected, send a packet to get the remote process info
-    process_info.Clear();
-    return false;
 }
 
 bool
