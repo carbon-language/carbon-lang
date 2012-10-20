@@ -11,6 +11,8 @@
 #include <stddef.h>
 
 #include <bitset>
+#include <limits>
+#include <sstream>
 #include <string>
 
 #include "llvm/ADT/APFloat.h"
@@ -1706,22 +1708,28 @@ DataExtractor::Dump (Stream *s,
             break;
 
         case eFormatFloat:
-            if (sizeof(float) == item_byte_size)
             {
-                s->Printf ("%g", GetFloat (&offset));
-            }
-            else if (sizeof(double) == item_byte_size)
-            {
-                s->Printf ("%lg", GetDouble(&offset));
-            }
-            else if (sizeof(long double) == item_byte_size)
-            {
-                s->Printf ("%Lg", GetLongDouble(&offset));
-            }
-            else
-            {
-                s->Printf("error: unsupported byte size (%u) for float format", item_byte_size);
-                return offset;
+                std::ostringstream ss;
+                switch (item_byte_size)
+                {
+                default:
+                    s->Printf("error: unsupported byte size (%u) for float format", item_byte_size);
+                    return offset;
+                case sizeof(float):
+                    ss.precision(std::numeric_limits<float>::digits10);
+                    ss << GetFloat(&offset);
+                    break;
+                case sizeof(double):
+                    ss.precision(std::numeric_limits<double>::digits10);
+                    ss << GetDouble(&offset);
+                    break;
+                case sizeof(long double):
+                    ss.precision(std::numeric_limits<long double>::digits10);
+                    ss << GetLongDouble(&offset);
+                    break;
+                }
+                ss.flush();
+                s->Printf("%s", ss.str().c_str());
             }
             break;
 
