@@ -146,6 +146,132 @@ useful to use C style (``/* */``) comments however:
 To comment out a large block of code, use ``#if 0`` and ``#endif``. These nest
 properly and are better behaved in general than C style comments.
 
+Doxygen Use in Documentation Comments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use the ``\file`` command to turn the standard file header into a file-level
+comment.
+
+Include descriptive ``\brief`` paragraphs for all public interfaces (public
+classes, member and non-member functions).  Explain API use and purpose in
+``\brief`` paragraphs, don't just restate the information that can be inferred
+from the API name.  Put detailed discussion into separate paragraphs.
+
+To refer to parameter names inside a paragraph, use the ``\p name`` command.
+Don't use the ``\arg name`` command since it starts a new paragraph that
+contains documentation for the parameter.
+
+Wrap non-inline code examples in ``\code ... \endcode``.
+
+To document a function parameter, start a new paragraph with the
+``\param name`` command.  If the parameter is used as an out or an in/out
+parameter, use the ``\param [out] name`` or ``\param [in,out] name`` command,
+respectively.
+
+To describe function return value, start a new paragraph with the ``\returns``
+command.
+
+A minimal documentation comment:
+
+.. code-block:: c++
+
+  /// \brief Does foo and bar.
+  void fooBar(bool Baz);
+
+A documentation comment that uses all Doxygen features in a preferred way:
+
+.. code-block:: c++
+
+  /// \brief Does foo and bar.
+  ///
+  /// Does not do foo the usual way if \p Baz is true.
+  ///
+  /// Typical usage:
+  /// \code
+  ///   fooBar(false, "quux", Res);
+  /// \endcode
+  ///
+  /// \param Quux kind of foo to do.
+  /// \param [out] Result filled with bar sequence on foo success.
+  ///
+  /// \returns true on success.
+  bool fooBar(bool Baz, StringRef Quux, std::vector<int> &Result);
+
+Don't duplicate the documentation comment in the header file and in the
+implementation file.  Put the documentation comments for public APIs into the
+header file.  Documentation comments for private APIs can go to the
+implementation file.  In any case, implementation files can include additional
+comments (not necessarily in Doxygen markup) to explain implementation details
+as needed.
+
+Don't duplicate function or class name at the beginning of the comment.
+For humans it is obvious which function or class is being documented;
+automatic documentation processing tools are smart enough to bind the comment
+to the correct declaration.
+
+Wrong:
+
+.. code-block:: c++
+
+  // In Something.h:
+
+  /// Something - An abstraction for some complicated thing.
+  class Something {
+  public:
+    /// fooBar - Does foo and bar.
+    void fooBar();
+  };
+
+  // In Something.cpp:
+
+  /// fooBar - Does foo and bar.
+  void Something::fooBar() { ... }
+
+Correct:
+
+.. code-block:: c++
+
+  // In Something.h:
+
+  /// \brief An abstraction for some complicated thing.
+  class Something {
+  public:
+    /// \brief Does foo and bar.
+    void fooBar();
+  };
+
+  // In Something.cpp:
+
+  // Builds a B-tree in order to do foo.  See paper by...
+  void Something::fooBar() { ... }
+
+It is not required to use additional Doxygen features, but sometimes it might
+be a good idea to do so.
+
+Consider:
+
+* adding comments to any narrow namespace containing a collection of
+  related functions or types;
+
+* using top-level groups to organize a collection of related functions at
+  namespace scope where the grouping is smaller than the namespace;
+
+* using member groups and additional comments attached to member
+  groups to organize within a class.
+
+For example:
+
+.. code-block:: c++
+
+  class Something {
+    /// \name Functions that do Foo.
+    /// @{
+    void fooBar();
+    void fooBaz();
+    /// @}
+    ...
+  };
+
 ``#include`` Style
 ^^^^^^^^^^^^^^^^^^
 
@@ -604,8 +730,7 @@ code to be structured like this:
 
 .. code-block:: c++
 
-  /// containsFoo - Return true if the specified list has an element that is
-  /// a foo.
+  /// \returns true if the specified list has an element that is a foo.
   static bool containsFoo(const std::vector<Bar*> &List) {
     for (unsigned i = 0, e = List.size(); i != e; ++i)
       if (List[i]->isFoo())
@@ -1051,21 +1176,21 @@ If a namespace definition is small and *easily* fits on a screen (say, less than
 
   namespace llvm {
     namespace X86 {
-      /// RelocationType - An enum for the x86 relocation codes. Note that
+      /// \brief An enum for the x86 relocation codes.  Note that
       /// the terminology here doesn't follow x86 convention - word means
       /// 32-bit and dword means 64-bit.
       enum RelocationType {
-        /// reloc_pcrel_word - PC relative relocation, add the relocated value to
+        /// \brief PC relative relocation, add the relocated value to
         /// the value already in memory, after we adjust it for where the PC is.
         reloc_pcrel_word = 0,
 
-        /// reloc_picrel_word - PIC base relative relocation, add the relocated
-        /// value to the value already in memory, after we adjust it for where the
+        /// \brief PIC base relative relocation, add the relocated value to
+        /// the value already in memory, after we adjust it for where the
         /// PIC base is.
         reloc_picrel_word = 1,
 
-        /// reloc_absolute_word, reloc_absolute_dword - Absolute relocation, just
-        /// add the relocated value to the value already in memory.
+        /// \brief Absolute relocation, just add the relocated value to the
+        /// value already in memory.
         reloc_absolute_word = 2,
         reloc_absolute_dword = 3
       };
@@ -1084,7 +1209,7 @@ closed.  For example:
   namespace llvm {
   namespace knowledge {
 
-  /// Grokable - This class represents things that Smith can have an intimate
+  /// This class represents things that Smith can have an intimate
   /// understanding of and contains the data associated with it.
   class Grokable {
   ...
