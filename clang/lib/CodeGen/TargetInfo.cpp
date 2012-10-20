@@ -2539,6 +2539,8 @@ llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
+namespace {
+
 class NaClX86_64ABIInfo : public ABIInfo {
  public:
   NaClX86_64ABIInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
@@ -2556,6 +2558,8 @@ class NaClX86_64TargetCodeGenInfo : public TargetCodeGenInfo  {
   NaClX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
       : TargetCodeGenInfo(new NaClX86_64ABIInfo(CGT, HasAVX)) {}
 };
+
+}
 
 void NaClX86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   if (FI.getASTCallingConvention() == CC_PnaclCall)
@@ -3304,6 +3308,8 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
+namespace {
+
 class NaClARMABIInfo : public ABIInfo {
  public:
   NaClARMABIInfo(CodeGen::CodeGenTypes &CGT, ARMABIInfo::ABIKind Kind)
@@ -3321,6 +3327,8 @@ class NaClARMTargetCodeGenInfo : public TargetCodeGenInfo  {
   NaClARMTargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, ARMABIInfo::ABIKind Kind)
       : TargetCodeGenInfo(new NaClARMABIInfo(CGT, Kind)) {}
 };
+
+}
 
 void NaClARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   if (FI.getASTCallingConvention() == CC_PnaclCall)

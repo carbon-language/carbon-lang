@@ -360,6 +360,8 @@ static bool buildMSAsmString(Sema &SemaRef,
   return false;
 }
 
+namespace {
+
 class MCAsmParserSemaCallbackImpl : public llvm::MCAsmParserSemaCallback {
   Sema *SemaRef;
 
@@ -373,6 +375,8 @@ public:
     return static_cast<void *>(OpDecl);
   }
 };
+
+}
 
 NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
                                            unsigned &Size) {
