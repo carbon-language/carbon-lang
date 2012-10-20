@@ -1556,7 +1556,11 @@ private:
   getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                    unsigned Offset) const;
   void computeMacroArgsCache(MacroArgsMap *&MacroArgsCache, FileID FID) const;
-
+  void associateFileChunkWithMacroArgExp(MacroArgsMap &MacroArgsCache,
+                                         FileID FID,
+                                         SourceLocation SpellLoc,
+                                         SourceLocation ExpansionLoc,
+                                         unsigned ExpansionLength) const;
   friend class ASTReader;
   friend class ASTWriter;
 };

@@ -2,8 +2,8 @@
 +(void)meth;
 @end
 
-#define MACRO2(x) x
-#define MACRO(x) MACRO2(x)
+#define MACRO2(x) (x)
+#define MACRO(x) MACRO2((x))
 
 void test() {
   MACRO([MyClass meth]);
