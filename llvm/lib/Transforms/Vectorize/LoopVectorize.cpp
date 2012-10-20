@@ -76,7 +76,7 @@ public:
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *Legal) {
     ///Create a new empty loop. Unlink the old loop and connect the new one.
-    createEmptyLoop();
+    createEmptyLoop(Legal);
     /// Widen each instruction in the old loop to a new one in the new loop.
     /// Use the Legality module to find the induction and reduction variables.
    vectorizeLoop(Legal);
@@ -86,7 +86,7 @@ public:
 
 private:
   /// Create an empty loop, based on the loop ranges of the old loop.
-  void createEmptyLoop();
+  void createEmptyLoop(LoopVectorizationLegality *Legal);
   /// Copy and widen the instructions from the old loop.
   void vectorizeLoop(LoopVectorizationLegality *Legal);
   /// Insert the new loop to the loop hierarchy and pass manager.
@@ -106,10 +106,6 @@ private:
   /// This is a helper function used by getBroadcastInstrs. It adds 0, 1, 2 ..
   /// for each element in the vector. Starting from zero.
   Value *getConsecutiveVector(Value* Val);
-
-  /// Check that the GEP operands are all uniform except for the last index
-  /// which has to be the induction variable.
-  bool isConsecutiveGep(GetElementPtrInst *Gep);
 
   /// When we go over instructions in the basic block we rely on previous
   /// values within the current basic block or on loop invariant values.
@@ -196,6 +192,10 @@ public:
   /// Returns the reduction variables found in the loop.
   ReductionList *getReductionVars() { return &Reductions; }
 
+  /// Check that the GEP operands are all uniform except for the last index
+  /// which has to be the induction variable.
+  bool isConsecutiveGep(Value *Ptr);
+
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -221,6 +221,8 @@ private:
   /// Returns true if the instruction I can be a reduction variable of type
   /// 'Kind'.
   bool isReductionInstr(Instruction *I, ReductionKind Kind);
+  /// Returns True, if 'Phi' is an induction variable.
+  bool isInductionVariable(PHINode *Phi);
 
   /// The loop that we evaluate.
   Loop *TheLoop;
@@ -338,8 +340,8 @@ Value *SingleBlockLoopVectorizer::getConsecutiveVector(Value* Val) {
   return Builder.CreateAdd(Val, Cv, "induction");
 }
 
-
-bool SingleBlockLoopVectorizer::isConsecutiveGep(GetElementPtrInst *Gep) {
+bool LoopVectorizationLegality::isConsecutiveGep(Value *Ptr) {
+  GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
   if (!Gep)
     return false;
 
@@ -348,7 +350,7 @@ bool SingleBlockLoopVectorizer::isConsecutiveGep(GetElementPtrInst *Gep) {
 
   // Check that all of the gep indices are uniform except for the last.
   for (unsigned i = 0; i < NumOperands - 1; ++i)
-    if (!SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), Orig))
+    if (!SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), TheLoop))
       return false;
 
   // We can emit wide load/stores only of the last index is the induction
@@ -460,7 +462,7 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
     WidenMap[Instr] = VecResults;
 }
 
-void SingleBlockLoopVectorizer::createEmptyLoop() {
+void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   /*
    In this function we generate a new loop. The new loop will contain
    the vectorized instructions while the old loop will continue to run the
@@ -510,7 +512,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop() {
                                  "scalar.preheader");
   // Find the induction variable.
   BasicBlock *OldBasicBlock = Orig->getHeader();
-  OldInduction = dyn_cast<PHINode>(OldBasicBlock->begin());
+  OldInduction = Legal->getInduction();
   assert(OldInduction && "We must have a single phi node.");
   Type *IdxTy = OldInduction->getType();
 
@@ -637,7 +639,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         // Special handling for the induction var.
         if (OldInduction == Inst)
           continue;
-        // This is phase I of vectorizing PHIs.
+        // This is phase one of vectorizing PHIs.
         // This has to be a reduction variable.
         assert(Legal->getReductionVars()->count(P) && "Not a Reduction");
         Type *VecTy = VectorType::get(Inst->getType(), VF);
@@ -704,7 +706,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         unsigned Alignment = SI->getAlignment();
         GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
         // This store does not use GEPs.
-        if (!isConsecutiveGep(Gep)) {
+        if (!Legal->isConsecutiveGep(Gep)) {
           scalarizeInstruction(Inst);
           break;
         }
@@ -728,7 +730,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
 
         // We don't have a gep. Scalarize the load.
-        if (!isConsecutiveGep(Gep)) {
+        if (!Legal->isConsecutiveGep(Gep)) {
           scalarizeInstruction(Inst);
           break;
         }
@@ -930,6 +932,16 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: Found an non-int PHI.\n");
         return false;
       }
+
+      if (isInductionVariable(Phi)) {
+        if (Induction) {
+          DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
+          return false;
+        }
+        DEBUG(dbgs() << "LV: Found the induction PHI."<< *Phi <<"\n");
+        Induction = Phi;
+        continue;
+      }
       if (AddReductionVar(Phi, IntegerAdd)) {
         DEBUG(dbgs() << "LV: Found an ADD reduction PHI."<< *Phi <<"\n");
         continue;
@@ -937,28 +949,6 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       if (AddReductionVar(Phi, IntegerMult)) {
         DEBUG(dbgs() << "LV: Found an Mult reduction PHI."<< *Phi <<"\n");
         continue;
-      }
-      if (Induction) {
-        DEBUG(dbgs() << "LV: Found too many PHIs.\n");
-        return false;
-      }
-      // Found the induction variable.
-      Induction = Phi;
-
-      // Check that the PHI is consecutive and starts at zero.
-      const SCEV *PhiScev = SE->getSCEV(Phi);
-      const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
-      if (!AR) {
-        DEBUG(dbgs() << "LV: PHI is not a poly recurrence.\n");
-        return false;
-      }
-
-      const SCEV *Step = AR->getStepRecurrence(*SE);
-      const SCEV *Start = AR->getStart();
-
-      if (!Step->isOne() || !Start->isZero()) {
-        DEBUG(dbgs() << "LV: PHI does not start at zero or steps by one.\n");
-        return false;
       }
     }// end of PHI handling
 
@@ -1004,16 +994,19 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
-  // Holds the read and write pointers that we find.
-  typedef SmallVector<Value*, 10> ValueVector;
-  ValueVector Reads;
-  ValueVector Writes;
+  typedef SmallVector<Value*, 16> ValueVector;
+  typedef SmallPtrSet<Value*, 16> ValueSet;
+  // Holds the Load and Store *instructions*.
+  ValueVector Loads;
+  ValueVector Stores;
 
+  // Scan the BB and collect legal loads and stores.
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
     Instruction *I = it;
 
-    // If this is a load, record its pointer. If it is not a load, abort.
-    // Notice that we don't handle function calls that read or write.
+    // If this is a load, save it. If this instruction can read from memory
+    // but is not a load, then we quit. Notice that we don't handle function
+    // calls that read or write.
     if (I->mayReadFromMemory()) {
       LoadInst *Ld = dyn_cast<LoadInst>(I);
       if (!Ld) return false;
@@ -1021,13 +1014,11 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: Found a non-simple load.\n");
         return false;
       }
-
-      Value* Ptr = Ld->getPointerOperand();
-      GetUnderlyingObjects(Ptr, Reads, DL);
+      Loads.push_back(Ld);
+      continue;
     }
 
-    // Record store pointers. Abort on all other instructions that write to
-    // memory.
+    // Save store instructions. Abort if other instructions write to memory.
     if (I->mayWriteToMemory()) {
       StoreInst *St = dyn_cast<StoreInst>(I);
       if (!St) return false;
@@ -1035,45 +1026,99 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: Found a non-simple store.\n");
         return false;
       }
-
-      Value* Ptr = St->getPointerOperand();
-      GetUnderlyingObjects(Ptr, Writes, DL);
+      Stores.push_back(St);
     }
   } // next instr.
 
+  // Now we have two lists that hold the loads and the stores.
+  // Next, we find the pointers that they use.
 
-  // Check that the underlying objects of the reads and writes are either
-  // disjoint memory locations, or that they are no-alias arguments.
-  ValueVector::iterator r, re, w, we;
-  for (r = Reads.begin(), re = Reads.end(); r != re; ++r) {
-    if (!isIdentifiedSafeObject(*r)) {
-      DEBUG(dbgs() << "LV: Found a bad read Ptr: "<< **r << "\n");
-      return false;
-    }
+  // Check if we see any stores. If there are no stores, then we don't
+  // care if the pointers are *restrict*.
+  if (!Stores.size()) {
+        DEBUG(dbgs() << "LV: Found a read-only loop!\n");
+        return true;
   }
 
-  for (w = Writes.begin(), we = Writes.end(); w != we; ++w) {
-    if (!isIdentifiedSafeObject(*w)) {
-      DEBUG(dbgs() << "LV: Found a bad write Ptr: "<< **w << "\n");
-      return false;
-    }
+  // Holds the read and read-write *pointers* that we find.
+  ValueVector Reads;
+  ValueVector ReadWrites;
+
+  // Holds the analyzed pointers. We don't want to call GetUnderlyingObjects
+  // multiple times on the same object. If the ptr is accessed twice, once
+  // for read and once for write, it will only appear once (on the write
+  // list). This is okay, since we are going to check for conflicts between
+  // writes and between reads and writes, but not between reads and reads.
+  ValueSet Seen;
+
+  ValueVector::iterator I, IE;
+  for (I = Stores.begin(), IE = Stores.end(); I != IE; ++I) {
+    StoreInst *ST = dyn_cast<StoreInst>(*I);
+    assert(ST && "Bad StoreInst");
+    Value* Ptr = ST->getPointerOperand();
+    // If we did *not* see this pointer before, insert it to
+    // the read-write list. At this phase it is only a 'write' list.
+    if (Seen.insert(Ptr))
+      ReadWrites.push_back(Ptr);
   }
 
-  // Check that there are no multiple write locations to the same pointer.
-  SmallPtrSet<Value*, 8> WritePointerSet;
-  for (w = Writes.begin(), we = Writes.end(); w != we; ++w) {
-    if (!WritePointerSet.insert(*w)) {
-      DEBUG(dbgs() << "LV: Multiple writes to the same index :"<< **w << "\n");
-      return false;
-    }
+  for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
+    LoadInst *LD = dyn_cast<LoadInst>(*I);
+    assert(LD && "Bad LoadInst");
+    Value* Ptr = LD->getPointerOperand();
+    // If we did *not* see this pointer before, insert it to the
+    // read list. If we *did* see it before, then it is already in
+    // the read-write list. This allows us to vectorize expressions
+    // such as A[i] += x;  Because the address of A[i] is a read-write
+    // pointer. This only works if the index of A[i] is consecutive.
+    // If the address of i is unknown (for example A[B[i]]) then we may
+    // read a few words, modify, and write a few words, and some of the
+    // words may be written to the same address.
+    if (Seen.insert(Ptr) || !isConsecutiveGep(Ptr))
+      Reads.push_back(Ptr);
   }
 
-  // Check that the reads and the writes are disjoint.
-  for (r = Reads.begin(), re = Reads.end(); r != re; ++r) {
-    if (WritePointerSet.count(*r)) {
-      DEBUG(dbgs() << "Vectorizer: Found a read/write ptr:"<< **r << "\n");
-      return false;
+  // Now that the pointers are in two lists (Reads and ReadWrites), we
+  // can check that there are no conflicts between each of the writes and
+  // between the writes to the reads.
+  ValueSet WriteObjects;
+  ValueVector TempObjects;
+
+  // Check that the read-writes do not conflict with other read-write
+  // pointers.
+  for (I = ReadWrites.begin(), IE = ReadWrites.end(); I != IE; ++I) {
+    GetUnderlyingObjects(*I, TempObjects, DL);
+    for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
+         it != e; ++it) {
+      if (!isIdentifiedSafeObject(*it)) {
+        DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **it <<"\n");
+        return false;
+      }
+      if (!WriteObjects.insert(*it)) {
+        DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
+              << **it <<"\n");
+        return false;
+      }
     }
+    TempObjects.clear();
+  }
+
+  /// Check that the reads don't conflict with the read-writes.
+  for (I = Reads.begin(), IE = Reads.end(); I != IE; ++I) {
+    GetUnderlyingObjects(*I, TempObjects, DL);
+    for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
+         it != e; ++it) {
+      if (!isIdentifiedSafeObject(*it)) {
+        DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **it <<"\n");
+        return false;
+      }
+      if (WriteObjects.count(*it)) {
+        DEBUG(dbgs() << "LV: Found a possible read/write reorder:"
+              << **it <<"\n");
+        return false;
+      }
+    }
+    TempObjects.clear();
   }
 
   // All is okay.
@@ -1196,6 +1241,24 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
     case Instruction::SDiv:
       return Kind == IntegerMult;
     }
+}
+
+bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
+  // Check that the PHI is consecutive and starts at zero.
+  const SCEV *PhiScev = SE->getSCEV(Phi);
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
+  if (!AR) {
+    DEBUG(dbgs() << "LV: PHI is not a poly recurrence.\n");
+    return false;
+  }
+  const SCEV *Step = AR->getStepRecurrence(*SE);
+  const SCEV *Start = AR->getStart();
+
+  if (!Step->isOne() || !Start->isZero()) {
+    DEBUG(dbgs() << "LV: PHI does not start at zero or steps by one.\n");
+    return false;
+  }
+  return true;
 }
 
 } // namespace
