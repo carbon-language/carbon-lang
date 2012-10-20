@@ -2,8 +2,8 @@
 ; RUN: %clang -arch x86_64 -mllvm -fast-isel=false -mllvm -regalloc=default -g %s -c -o %t.o
 ; RUN: %clang -arch x86_64 %t.o -o %t.out
 ; RUN: %test_debuginfo %s %t.out
-; XFAIL: *
-; XTARGET: darwin
+;
+; REQUIRES: system-darwin
 
 target triple = "x86_64-apple-darwin"
 %struct.XYZ = type { i32, i32, i32, i32, i32 }
