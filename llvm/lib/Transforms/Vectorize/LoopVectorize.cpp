@@ -1175,6 +1175,12 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     bool FoundInBlockUser = false;
     // Did we reach the initial PHI node ?
     bool FoundStartPHI = false;
+
+    // If the instruction has no users then this is a broken
+    // chain and can't be a reduction variable.
+    if (Iter->use_begin() == Iter->use_end())
+      return false;
+
     // For each of the *users* of iter.
     for (Value::use_iterator it = Iter->use_begin(), e = Iter->use_end();
          it != e; ++it) {
