@@ -105,10 +105,6 @@ public:
                    lldb_private::ProcessInstanceInfoList &process_infos);
 
     virtual bool
-    GetProcessInfo (lldb::pid_t pid, 
-                    lldb_private::ProcessInstanceInfo &proc_info);
-
-    virtual bool
     GetSupportedArchitectureAtIndex (uint32_t idx, 
                                      lldb_private::ArchSpec &arch);
 
