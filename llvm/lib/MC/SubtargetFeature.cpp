@@ -119,8 +119,8 @@ void SubtargetFeatures::AddFeature(const StringRef String,
 }
 
 /// Find KV in array using binary search.
-const SubtargetFeatureKV *Find(const StringRef S, const SubtargetFeatureKV *A,
-                               size_t L) {
+static const SubtargetFeatureKV *Find(StringRef S, const SubtargetFeatureKV *A,
+                                      size_t L) {
   // Make the lower bound element we're looking for
   SubtargetFeatureKV KV;
   KV.Key = S.data();

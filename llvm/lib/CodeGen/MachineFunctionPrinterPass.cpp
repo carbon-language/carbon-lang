@@ -51,7 +51,7 @@ struct MachineFunctionPrinterPass : public MachineFunctionPass {
 char MachineFunctionPrinterPass::ID = 0;
 }
 
-char &MachineFunctionPrinterPassID = MachineFunctionPrinterPass::ID;
+char &llvm::MachineFunctionPrinterPassID = MachineFunctionPrinterPass::ID;
 INITIALIZE_PASS(MachineFunctionPrinterPass, "print-machineinstrs",
                 "Machine Function Printer", false, false)
 

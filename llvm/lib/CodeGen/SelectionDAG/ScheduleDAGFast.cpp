@@ -635,6 +635,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
 }
 
 
+namespace {
 //===----------------------------------------------------------------------===//
 // ScheduleDAGLinearize - No scheduling scheduler, it simply linearize the
 // DAG in topological order.
@@ -654,6 +655,7 @@ private:
 
   void ScheduleNode(SDNode *N);
 };
+} // end anonymous namespace
 
 void ScheduleDAGLinearize::ScheduleNode(SDNode *N) {
   if (N->getNodeId() != 0)
