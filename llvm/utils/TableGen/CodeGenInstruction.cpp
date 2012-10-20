@@ -233,11 +233,12 @@ static void ParseConstraint(const std::string &CStr, CGIOperandList &Ops) {
   if (wpos == std::string::npos)
     throw "Illegal format for tied-to constraint: '" + CStr + "'";
 
-  std::pair<unsigned,unsigned> SrcOp =
-  Ops.ParseOperandName(Name.substr(wpos), false);
-  if (SrcOp > DestOp)
-    throw "Illegal tied-to operand constraint '" + CStr + "'";
-
+  std::string SrcOpName = Name.substr(wpos);
+  std::pair<unsigned,unsigned> SrcOp = Ops.ParseOperandName(SrcOpName, false);
+  if (SrcOp > DestOp) {
+    std::swap(SrcOp, DestOp);
+    std::swap(SrcOpName, DestOpName);
+  }
 
   unsigned FlatOpNo = Ops.getFlattenedOperandNumber(SrcOp);
 
