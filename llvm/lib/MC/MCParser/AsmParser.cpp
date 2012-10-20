@@ -3575,7 +3575,7 @@ bool AsmParser::ParseDirectiveEndr(SMLoc DirectiveLoc) {
 }
 
 namespace {
-enum AsmOpRewriteKind {
+enum AsmRewriteKind {
    AOK_Imm,
    AOK_Input,
    AOK_Output,
@@ -3583,13 +3583,13 @@ enum AsmOpRewriteKind {
    AOK_Skip
 };
 
-struct AsmOpRewrite {
-  AsmOpRewriteKind Kind;
+struct AsmRewrite {
+  AsmRewriteKind Kind;
   SMLoc Loc;
   unsigned Len;
   unsigned Size;
 public:
-  AsmOpRewrite(AsmOpRewriteKind kind, SMLoc loc, unsigned len, unsigned size = 0)
+  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len, unsigned size = 0)
     : Kind(kind), Loc(loc), Len(len), Size(size) { }
 };
 }
@@ -3608,7 +3608,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   SmallVector<std::string, 4> OutputConstraints;
   std::set<std::string> ClobberRegs;
 
-  SmallVector<struct AsmOpRewrite, 4> AsmStrRewrites;
+  SmallVector<struct AsmRewrite, 4> AsmStrRewrites;
 
   // Prime the lexer.
   Lex();
@@ -3634,7 +3634,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     // emitting this directive.
     if (PreParseCondStateIgnore && TheCondState.Ignore) {
       unsigned Len = getLexer().getLoc().getPointer() - Start.getPointer();
-      AsmStrRewrites.push_back(AsmOpRewrite(AOK_Skip, Start, Len));
+      AsmStrRewrites.push_back(AsmRewrite(AOK_Skip, Start, Len));
       continue;
     }
 
@@ -3647,7 +3647,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
         // Immediate.
         if (Operand->isImm()) {
-          AsmStrRewrites.push_back(AsmOpRewrite(AOK_Imm,
+          AsmStrRewrites.push_back(AsmRewrite(AOK_Imm,
                                                 Operand->getStartLoc(),
                                                 Operand->getNameLen()));
           continue;
@@ -3673,7 +3673,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
           if (Operand->needSizeDirective())
-            AsmStrRewrites.push_back(AsmOpRewrite(AOK_SizeDirective,
+            AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
                                                   Operand->getStartLoc(), 0,
                                                   Operand->getMemSize()));
           
@@ -3683,13 +3683,13 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
             OutputDecls.push_back(OpDecl);
             Constraint += Operand->getConstraint().str();
             OutputConstraints.push_back(Constraint);
-            AsmStrRewrites.push_back(AsmOpRewrite(AOK_Output,
+            AsmStrRewrites.push_back(AsmRewrite(AOK_Output,
                                                   Operand->getStartLoc(),
                                                   Operand->getNameLen()));
           } else {
             InputDecls.push_back(OpDecl);
             InputConstraints.push_back(Operand->getConstraint().str());
-            AsmStrRewrites.push_back(AsmOpRewrite(AOK_Input,
+            AsmStrRewrites.push_back(AsmRewrite(AOK_Input,
                                                   Operand->getStartLoc(),
                                                   Operand->getNameLen()));
           }
@@ -3728,14 +3728,14 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
   // Build the IR assembly string.
   std::string AsmStringIR;
-  AsmOpRewriteKind PrevKind = AOK_Imm;
+  AsmRewriteKind PrevKind = AOK_Imm;
   raw_string_ostream OS(AsmStringIR);
   const char *Start = SrcMgr.getMemoryBuffer(0)->getBufferStart();
-  for (SmallVectorImpl<struct AsmOpRewrite>::iterator
+  for (SmallVectorImpl<struct AsmRewrite>::iterator
          I = AsmStrRewrites.begin(), E = AsmStrRewrites.end(); I != E; ++I) {
     const char *Loc = (*I).Loc.getPointer();
 
-    AsmOpRewriteKind Kind = (*I).Kind;
+    AsmRewriteKind Kind = (*I).Kind;
 
     // Emit everything up to the immediate/expression.  If the previous rewrite
     // was a size directive, then this has already been done.
