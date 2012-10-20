@@ -135,5 +135,5 @@ void t14() {
     .endif
   }
 // CHECK: t14
-// CHECK: call void asm sideeffect inteldialect ".if 1\0A\09mov eax, dword ptr $0\0A\09.else\0A\09mov ebx, dword ptr $1\0A\09.endif", "*m,*m,~{eax},~{ebx},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}, i32* %{{.*}}) nounwind
+// CHECK: call void asm sideeffect inteldialect ".if 1\0A\09mov eax, dword ptr $0\0A\09.else\0A\09.endif", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
 }
