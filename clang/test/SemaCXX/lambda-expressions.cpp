@@ -83,12 +83,15 @@ namespace ImplicitCapture {
     const int h = a; // expected-note {{declared}}
     []() { return h; }; // expected-error {{variable 'h' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}}
 
-    // The exemption for variables which can appear in constant expressions
-    // applies only to objects (and not to references).
-    // FIXME: This might be a bug in the standard.
-    static int i;
-    constexpr int &ref_i = i; // expected-note {{declared}}
+    // References can appear in constant expressions if they are initialized by
+    // reference constant expressions.
+    int i;
+    int &ref_i = i; // expected-note {{declared}}
     [] { return ref_i; }; // expected-error {{variable 'ref_i' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}}
+
+    static int j;
+    int &ref_j = j;
+    [] { return ref_j; }; // ok
   }
 }
 

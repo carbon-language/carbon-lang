@@ -40,7 +40,7 @@ void for_array() {
     // CHECK-NOT: 5begin
     // CHECK-NOT: 3end
     // CHECK: getelementptr {{.*}}, i32 0
-    // CHECK: getelementptr {{.*}}, i64 5
+    // CHECK: getelementptr {{.*}}, i64 1, i64 0
     // CHECK: br label %[[COND:.*]]
 
     // CHECK: [[COND]]:

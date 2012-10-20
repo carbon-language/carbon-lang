@@ -432,11 +432,7 @@ namespace InitFromConst {
     // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
     consume<const S&>(s);
 
-    // FIXME CHECK-NOT: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
-    // There's no lvalue-to-rvalue conversion here, so 'r' is odr-used, and
-    // we're permitted to emit a load of it. This seems likely to be a defect
-    // in the standard. If we start emitting a direct reference to 's', update
-    // this test.
+    // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
     consume<const S&>(r);
 
     // CHECK: call void @_ZN13InitFromConst7consumeIPKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
