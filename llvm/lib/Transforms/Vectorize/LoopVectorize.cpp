@@ -7,10 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is a simple loop vectorizer. We currently only support single block
-// loops. We have a very simple and restrictive legality check: we need to read
-// and write from disjoint memory locations. We still don't have a cost model.
-// We do support integer reductions.
+// This is the LLVM loop vectorizer. This pass modifies 'vectorizable' loops
+// and generates target-independent LLVM-IR. Legalization of the IR is done
+// in the codegen. However, the vectorizes uses (will use) the codegen
+// interfaces to generate IR that is likely to result in an optimal binary.
+//
+// The loop vectorizer combines consecutive loop iteration into a single
+// 'wide' iteration. After this transformation the index is incremented
+// by the SIMD vector width, and not by one.
 //
 // This pass has three parts:
 // 1. The main loop pass that drives the different parts.
@@ -18,6 +22,16 @@
 //    of the vectorization.
 // 3. SingleBlockLoopVectorizer - A helper class that performs the actual
 //    widening of instructions.
+//===----------------------------------------------------------------------===//
+//
+// The reduction-variable vectorization is based on the paper:
+//  D. Nuzman and R. Henderson. Multi-platform Auto-vectorization.
+//
+// Variable uniformity checks are inspired by:
+// Karrenberg, R. and Hack, S. Whole Function Vectorization.
+//
+// Other ideas/concepts are from:
+//  A. Zaks and D. Nuzman. Autovectorization in GCC—two years later.
 //
 //===----------------------------------------------------------------------===//
 #define LV_NAME "loop-vectorize"
