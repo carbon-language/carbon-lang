@@ -398,13 +398,13 @@ bool LoopVectorizationLegality::isConsecutiveGep(Value *Ptr) {
 Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
   assert(!V->getType()->isVectorTy() && "Can't widen a vector");
   // If we saved a vectorized copy of V, use it.
-  ValueMap::iterator it = WidenMap.find(V);
-  if (it != WidenMap.end())
-     return it->second;
+  Value *&MapEntry = WidenMap[V];
+  if (MapEntry)
+    return MapEntry;
 
   // Broadcast V and save the value for future uses.
   Value *B = getBroadcastInstrs(V);
-  WidenMap[V] = B;
+  MapEntry = B;
   return B;
 }
 
