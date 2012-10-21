@@ -39,7 +39,6 @@ template<typename T> class fp_contract_4 {
   float method(float a, float b, float c) {
     #pragma STDC FP_CONTRACT ON
     return a * b + c;
-    #pragma STDC FP_CONTRACT OFF    
   }
 };
 

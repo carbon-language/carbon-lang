@@ -729,6 +729,10 @@ def warn_pragma_unused_expected_var : Warning<
   "expected '#pragma unused' argument to be a variable name">;
 def warn_pragma_unused_expected_punc : Warning<
   "expected ')' or ',' in '#pragma unused'">;
+// - #pragam fp_contract
+def err_pragma_fp_contract_scope : Error<
+  "'#pragma fp_contract' should only appear at file scope or at the start of a "
+  "compound expression">; 
 
 // OpenCL Section 6.8.g
 def err_not_opencl_storage_class_specifier : Error<

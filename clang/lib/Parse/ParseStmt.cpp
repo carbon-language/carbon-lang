@@ -280,9 +280,10 @@ Retry:
     return StmtEmpty();
 
   case tok::annot_pragma_fp_contract:
-    ProhibitAttributes(Attrs);
-    HandlePragmaFPContract();
-    return StmtEmpty();
+    Diag(Tok, diag::err_pragma_fp_contract_scope);
+    ConsumeToken();
+    return StmtError();
+
 
   case tok::annot_pragma_opencl_extension:
     ProhibitAttributes(Attrs);
@@ -727,6 +728,10 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   Sema::CompoundScopeRAII CompoundScope(Actions);
 
   StmtVector Stmts;
+
+  // Parse FP_CONTRACT if present.
+  if (Tok.is(tok::annot_pragma_fp_contract))
+    HandlePragmaFPContract();
 
   // "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
   // only allowed at the start of a compound stmt regardless of the language.
