@@ -299,8 +299,6 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     PM.add(polly::createIslCodeGenerationPass());
     break;
 #endif
-  default:
-    llvm_unreachable("Unknown code generator");
   }
 
   if (CFGPrinter)
