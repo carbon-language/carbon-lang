@@ -740,10 +740,15 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
           break;
         }
 
+        // The last index does not have to be the induction. It can be
+        // consecutive and be a function of the index. For example A[I+1];
+        unsigned NumOperands = Gep->getNumOperands();
+        Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands -1));
+        LastIndex = Builder.CreateExtractElement(LastIndex, Builder.getInt32(0));
+
         // Create the new GEP with the new induction variable.
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-        unsigned NumOperands = Gep->getNumOperands();
-        Gep2->setOperand(NumOperands - 1, Induction);
+        Gep2->setOperand(NumOperands - 1, LastIndex);
         Ptr = Builder.Insert(Gep2);
         Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
         Value *Val = getVectorValue(SI->getValueOperand());
@@ -764,10 +769,15 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
           break;
         }
 
+        // The last index does not have to be the induction. It can be
+        // consecutive and be a function of the index. For example A[I+1];
+        unsigned NumOperands = Gep->getNumOperands();
+        Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands -1));
+        LastIndex = Builder.CreateExtractElement(LastIndex, Builder.getInt32(0));
+
         // Create the new GEP with the new induction variable.
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-        unsigned NumOperands = Gep->getNumOperands();
-        Gep2->setOperand(NumOperands - 1, Induction);
+        Gep2->setOperand(NumOperands - 1, LastIndex);
         Ptr = Builder.Insert(Gep2);
         Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
         LI = Builder.CreateLoad(Ptr);
