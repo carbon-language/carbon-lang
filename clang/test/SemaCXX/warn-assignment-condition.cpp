@@ -133,14 +133,14 @@ void test2() {
 
 namespace rdar9027658 {
 template <typename T>
-void f() {
-    if ((T::g == 3)) { } // expected-warning {{equality comparison with extraneous parentheses}} \
+void f(T t) {
+    if ((t.g == 3)) { } // expected-warning {{equality comparison with extraneous parentheses}} \
                          // expected-note {{use '=' to turn this equality comparison into an assignment}} \
                          // expected-note {{remove extraneous parentheses around the comparison to silence this warning}}
 }
 
 struct S { int g; };
 void test() {
-  f<S>(); // expected-note {{in instantiation}}
+  f(S()); // expected-note {{in instantiation}}
 }
 }

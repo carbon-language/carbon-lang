@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -pedantic
 template<typename T>
 struct S {
  S() { }
@@ -65,4 +65,19 @@ namespace test2 {
   };
 
   template class B<int>;
+}
+
+namespace PR14124 {
+  template<typename T> struct S {
+    int value;
+  };
+  template<typename T> void f() { S<T>::value; } // expected-error {{invalid use of non-static data member 'value'}}
+  template void f<int>(); // expected-note {{in instantiation of}}
+
+  struct List { List *next; };
+  template<typename T, T *(T::*p) = &T::next> struct A {};
+  A<List> a; // ok
+  void operator&(struct Whatever);
+  template<typename T, T *(T::*p) = &T::next> struct B {};
+  B<List> b; // still ok
 }
