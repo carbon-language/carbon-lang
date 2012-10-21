@@ -79,3 +79,53 @@ entry:
 ; CHECK-AO-NOT: <2 x
 }
 
+; Simple 3-pair chain with loads and stores (using ptrs and gep)
+; using pointer vectors.
+define void @test3(<2 x i64*>* %a, <2 x i64*>* %b, <2 x i64*>* %c) nounwind uwtable readonly {
+entry:
+  %i0 = load <2 x i64*>* %a, align 8
+  %i1 = load <2 x i64*>* %b, align 8
+  %arrayidx3 = getelementptr inbounds <2 x i64*>* %a, i64 1
+  %i3 = load <2 x i64*>* %arrayidx3, align 8
+  %arrayidx4 = getelementptr inbounds <2 x i64*>* %b, i64 1
+  %i4 = load <2 x i64*>* %arrayidx4, align 8
+  %j1 = extractelement <2 x i64*> %i1, i32 0
+  %j4 = extractelement <2 x i64*> %i4, i32 0
+  %o1 = load i64* %j1, align 8
+  %o4 = load i64* %j4, align 8
+  %j0 = extractelement <2 x i64*> %i0, i32 0
+  %j3 = extractelement <2 x i64*> %i3, i32 0
+  %ptr0 = getelementptr inbounds i64* %j0, i64 %o1
+  %ptr3 = getelementptr inbounds i64* %j3, i64 %o4
+  %qtr0 = insertelement <2 x i64*> undef, i64* %ptr0, i32 0
+  %rtr0 = insertelement <2 x i64*> %qtr0, i64* %ptr0, i32 1
+  %qtr3 = insertelement <2 x i64*> undef, i64* %ptr3, i32 0
+  %rtr3 = insertelement <2 x i64*> %qtr3, i64* %ptr3, i32 1
+  store <2 x i64*> %rtr0, <2 x i64*>* %c, align 8
+  %arrayidx5 = getelementptr inbounds <2 x i64*>* %c, i64 1
+  store <2 x i64*> %rtr3, <2 x i64*>* %arrayidx5, align 8
+  ret void
+; CHECK: @test3
+; CHECK: %i0.v.i0 = bitcast <2 x i64*>* %a to <4 x i64*>*
+; CHECK: %i1 = load <2 x i64*>* %b, align 8
+; CHECK: %i0 = load <4 x i64*>* %i0.v.i0, align 8
+; CHECK: %arrayidx4 = getelementptr inbounds <2 x i64*>* %b, i64 1
+; CHECK: %i4 = load <2 x i64*>* %arrayidx4, align 8
+; CHECK: %j1 = extractelement <2 x i64*> %i1, i32 0
+; CHECK: %j4 = extractelement <2 x i64*> %i4, i32 0
+; CHECK: %o1 = load i64* %j1, align 8
+; CHECK: %o4 = load i64* %j4, align 8
+; CHECK: %ptr0.v.i1.1 = insertelement <2 x i64> undef, i64 %o1, i32 0
+; CHECK: %ptr0.v.i1.2 = insertelement <2 x i64> %ptr0.v.i1.1, i64 %o4, i32 1
+; CHECK: %ptr0.v.i0 = shufflevector <4 x i64*> %i0, <4 x i64*> undef, <2 x i32> <i32 0, i32 2>
+; CHECK: %ptr0 = getelementptr inbounds <2 x i64*> %ptr0.v.i0, <2 x i64> %ptr0.v.i1.2
+; CHECK: %rtr0 = shufflevector <2 x i64*> %ptr0, <2 x i64*> undef, <2 x i32> zeroinitializer
+; CHECK: %rtr3 = shufflevector <2 x i64*> %ptr0, <2 x i64*> undef, <2 x i32> <i32 1, i32 1>
+; CHECK: %0 = bitcast <2 x i64*>* %c to <4 x i64*>*
+; CHECK: %1 = shufflevector <2 x i64*> %rtr0, <2 x i64*> %rtr3, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+; CHECK: store <4 x i64*> %1, <4 x i64*>* %0, align 8
+; CHECK: ret void
+; CHECK-AO: @test3
+; CHECK-AO-NOT: <4 x
+}
+

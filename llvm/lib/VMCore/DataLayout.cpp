@@ -559,8 +559,10 @@ uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   // only 80 bits contain information.
   case Type::X86_FP80TyID:
     return 80;
-  case Type::VectorTyID:
-    return cast<VectorType>(Ty)->getBitWidth();
+  case Type::VectorTyID: {
+    VectorType *VTy = cast<VectorType>(Ty);
+    return VTy->getNumElements()*getTypeSizeInBits(VTy->getElementType());
+  }
   default:
     llvm_unreachable("DataLayout::getTypeSizeInBits(): Unsupported type");
   }
