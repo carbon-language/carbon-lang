@@ -64,23 +64,11 @@ Optimizer("polly-optimizer",
             clEnumValEnd),
           cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore);
 
-#ifndef CLOOG_FOUND
-#ifndef ISL_CODEGEN_FOUND
-  #error No code generator found.
-#endif
-#endif
-
 enum CodeGenChoice {
 #ifdef CLOOG_FOUND
-  CODEGEN_CLOOG
-  #ifdef ISL_CODEGEN_FOUND
-    , // Avoid a warning in C++03 pedantic mode
-  #endif
+  CODEGEN_CLOOG,
 #endif
-
-#ifdef ISL_CODEGEN_FOUND
   CODEGEN_ISL
-#endif
 };
 
 #ifdef CLOOG_FOUND
@@ -97,9 +85,7 @@ CodeGenerator("polly-code-generator",
 #ifdef CLOOG_FOUND
                          clEnumValN(CODEGEN_CLOOG, "cloog", "CLooG"),
 #endif
-#ifdef ISL_CODEGEN_FOUND
                          clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
-#endif
                          clEnumValEnd),
           cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore);
 
@@ -167,18 +153,14 @@ static void initializePollyPasses(PassRegistry &Registry) {
   initializeCloogInfoPass(Registry);
   initializeCodeGenerationPass(Registry);
 #endif
-#ifdef ISL_CODEGEN_FOUND
   initializeIslCodeGenerationPass(Registry);
-#endif
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
   initializeDependencesPass(Registry);
   initializeIndependentBlocksPass(Registry);
   initializeJSONExporterPass(Registry);
   initializeJSONImporterPass(Registry);
-#ifdef ISL_CODEGEN_FOUND
   initializeIslAstInfoPass(Registry);
-#endif
   initializeIslScheduleOptimizerPass(Registry);
 #ifdef SCOPLIB_FOUND
   initializePoccPass(Registry);
@@ -294,11 +276,9 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     }
     break;
 #endif
-#ifdef ISL_CODEGEN_FOUND
   case CODEGEN_ISL:
     PM.add(polly::createIslCodeGenerationPass());
     break;
-#endif
   }
 
   if (CFGPrinter)

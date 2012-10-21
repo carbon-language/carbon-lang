@@ -23,9 +23,6 @@
 #define POLLY_ISL_AST_H
 
 #include "polly/Config/config.h"
-
-#ifdef ISL_CODEGEN_FOUND
-
 #include "polly/ScopPass.h"
 
 struct clast_name;
@@ -70,6 +67,4 @@ namespace llvm {
   class PassRegistry;
   void initializeIslAstInfoPass(llvm::PassRegistry&);
 }
-
-#endif /* ISL_CODEGEN_FOUND */
 #endif /* POLLY_ISL_AST_H */

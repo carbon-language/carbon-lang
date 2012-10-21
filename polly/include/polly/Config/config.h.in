@@ -12,9 +12,6 @@
 /* Define if gpu codegen is enabled */
 #undef GPU_CODEGEN
 
-/* Define if ISL has a code generator */
-#undef ISL_CODEGEN_FOUND
-
 /* Define if openscop found */
 #undef OPENSCOP_FOUND
 

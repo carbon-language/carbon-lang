@@ -20,8 +20,6 @@
 //===----------------------------------------------------------------------===//
 #include "polly/Config/config.h"
 
-#ifdef ISL_CODEGEN_FOUND
-
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
@@ -897,5 +895,3 @@ INITIALIZE_PASS_END(IslCodeGeneration, "polly-codegen-isl",
 Pass *polly::createIslCodeGenerationPass() {
   return new IslCodeGeneration();
 }
-
-#endif /* ISL_CODEGEN_FOUND */

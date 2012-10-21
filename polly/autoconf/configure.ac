@@ -78,12 +78,7 @@ dnl Find Gmp
 find_lib_and_headers([gmp], [gmp.h], [gmp], [required])
 
 dnl Find Isl
-find_lib_and_headers([isl], [isl/config.h], [isl], [required])
-
-dnl Find whether ISL has a codegen.h file.
-find_lib_and_headers([isl], [isl/ast.h], [isl])
-AS_IF([test "x$isl_found" = "xyes"],
-  [AC_DEFINE([ISL_CODEGEN_FOUND],[1],[Define if ISL has a code generator])])
+find_lib_and_headers([isl], [isl/ast.h], [isl], [required])
 
 dnl Check that we have cloog.
 saved_CXXFLAGS=$CXXFLAGS

@@ -21,7 +21,6 @@
 
 #include "polly/CodeGen/IslAst.h"
 
-#ifdef ISL_CODEGEN_FOUND
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 
@@ -209,5 +208,3 @@ INITIALIZE_PASS_END(IslAstInfo, "polly-ast",
 Pass *polly::createIslAstInfoPass() {
   return new IslAstInfo();
 }
-
-#endif // CLOOG_FOUND

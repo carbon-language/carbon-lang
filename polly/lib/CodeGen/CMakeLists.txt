@@ -4,11 +4,9 @@ if (CLOOG_FOUND)
       CodeGeneration.cpp)
 endif (CLOOG_FOUND)
 
-if (ISL_CODEGEN_FOUND)
-  set(ISL_CODEGEN_FILES
-      IslAst.cpp
-      IslCodeGeneration.cpp)
-endif (ISL_CODEGEN_FOUND)
+set(ISL_CODEGEN_FILES
+    IslAst.cpp
+    IslCodeGeneration.cpp)
 
 if (GPU_CODEGEN)
   set (GPGPU_CODEGEN_FILES

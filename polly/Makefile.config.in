@@ -29,7 +29,6 @@ endif
 POLLY_CXXFLAGS += "-fno-rtti -fno-exceptions"
 
 CLOOG_FOUND := @cloog_found@
-ISL_CODEGEN_FOUND := @isl_codegen_found@
 OPENSCOP_FOUND := @openscop_found@
 SCOPLIB_FOUND := @scoplib_found@
 CUDALIB_FOUND := @cuda_found@
