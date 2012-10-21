@@ -39,13 +39,13 @@ available. You can load Polly either by adding the relevant commands to
 the CPPFLAGS or by creating an alias.
 
 <pre class="code">
-$ export CPPFLAGS="-fplugin=/path/to/dragonegg.so -fplugin-arg-dragonegg-llvm-option=load:${POLLY_BUILD_DIR}/lib/LLVMPolly.so"
+$ export CPPFLAGS="-fplugin=/path/to/dragonegg.so -fplugin-arg-dragonegg-llvm-option=-load:${POLLY_BUILD_DIR}/lib/LLVMPolly.so"
 </pre>
 
 or
 
 <pre class="code">
-$ alias pollycc gcc -fplugin=/path/to/dragonegg.so -fplugin-arg-dragonegg-llvm-option=load:${POLLY_BUILD_DIR}/lib/LLVMPolly.so
+$ alias pollycc gcc -fplugin=/path/to/dragonegg.so -fplugin-arg-dragonegg-llvm-option=-load:${POLLY_BUILD_DIR}/lib/LLVMPolly.so
 </pre>
 
 <h2>Optimizing with Polly</h2>
