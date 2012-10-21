@@ -93,16 +93,16 @@ define i32 @reduction_mix(i32 %n, i32* noalias nocapture %A, i32* noalias nocapt
   ret i32 %sum.0.lcssa
 }
 
-;CHECK: @reduction_bad
-;CHECK-NOT: <4 x i32>
+;CHECK: @reduction_mul
+;CHECK: mul <4 x i32>
 ;CHECK: ret i32
-define i32 @reduction_bad(i32 %n, i32* noalias nocapture %A, i32* noalias nocapture %B) nounwind uwtable readonly noinline ssp {
+define i32 @reduction_mul(i32 %n, i32* noalias nocapture %A, i32* noalias nocapture %B) nounwind uwtable readonly noinline ssp {
   %1 = icmp sgt i32 %n, 0
   br i1 %1, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
-  %sum.02 = phi i32 [ %9, %.lr.ph ], [ 0, %0 ]
+  %sum.02 = phi i32 [ %9, %.lr.ph ], [ 19, %0 ]
   %2 = getelementptr inbounds i32* %A, i64 %indvars.iv
   %3 = load i32* %2, align 4
   %4 = getelementptr inbounds i32* %B, i64 %indvars.iv
@@ -120,3 +120,33 @@ define i32 @reduction_bad(i32 %n, i32* noalias nocapture %A, i32* noalias nocapt
   %sum.0.lcssa = phi i32 [ 0, %0 ], [ %9, %.lr.ph ]
   ret i32 %sum.0.lcssa
 }
+
+;CHECK: @start_at_non_zero
+;CHECK: phi <4 x i32>
+;CHECK: <i32 120, i32 0, i32 0, i32 0>
+;CHECK: ret i32
+define i32 @start_at_non_zero(i32* nocapture %in, i32* nocapture %coeff, i32* nocapture %out, i32 %n) nounwind uwtable readonly ssp {
+entry:
+  %cmp7 = icmp sgt i32 %n, 0
+  br i1 %cmp7, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %sum.09 = phi i32 [ %add, %for.body ], [ 120, %entry ]
+  %arrayidx = getelementptr inbounds i32* %in, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %arrayidx2 = getelementptr inbounds i32* %coeff, i64 %indvars.iv
+  %1 = load i32* %arrayidx2, align 4
+  %mul = mul nsw i32 %1, %0
+  %add = add nsw i32 %mul, %sum.09
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  %sum.0.lcssa = phi i32 [ 120, %entry ], [ %add, %for.body ]
+  ret i32 %sum.0.lcssa
+}
+
+

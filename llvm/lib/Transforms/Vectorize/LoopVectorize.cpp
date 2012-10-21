@@ -179,20 +179,36 @@ public:
   TheLoop(Lp), SE(Se), DL(Dl), Induction(0) { }
 
   /// This represents the kinds of reductions that we support.
+  /// We use the enum values to hold the 'identity' value for
+  /// each operand. This value does not change the result if applied.
   enum ReductionKind {
-    IntegerAdd, /// Sum of numbers.
-    IntegerMult, /// Product of numbers.
-    NoReduction /// Not a reduction.
+    NoReduction = -1, /// Not a reduction.
+    IntegerAdd  = 0,  /// Sum of numbers.
+    IntegerMult = 1  /// Product of numbers.
   };
 
-  // Holds a pairing of reduction instruction and the reduction kind.
-  typedef std::pair<Instruction*, ReductionKind> ReductionPair;
+  /// This POD struct holds information about reduction variables.
+  struct ReductionDescriptor {
+    // Default C'tor
+    ReductionDescriptor():
+    StartValue(0), LoopExitInstr(0), Kind(NoReduction) {}
 
-  /// ReductionList contains the reduction variables
-  /// as well as a single EXIT (from the block) value and the kind of
-  /// reduction variable..
-  /// Notice that the EXIT instruction can also be the PHI itself.
-  typedef DenseMap<PHINode*, ReductionPair> ReductionList;
+    // C'tor.
+    ReductionDescriptor(Value *Start, Instruction *Exit, ReductionKind K):
+    StartValue(Start), LoopExitInstr(Exit), Kind(K) {}
+
+    // The starting value of the reduction.
+    // It does not have to be zero!
+    Value *StartValue;
+    // The instruction who's value is used outside the loop.
+    Instruction *LoopExitInstr;
+    // The kind of the reduction.
+    ReductionKind Kind;
+  };
+
+  /// ReductionList contains the reduction descriptors for all
+  /// of the reductions that were found in the loop.
+  typedef DenseMap<PHINode*, ReductionDescriptor> ReductionList;
 
   /// Returns the maximum vectorization factor that we *can* use to vectorize
   /// this loop. This does not mean that it is profitable to vectorize this
@@ -229,9 +245,6 @@ private:
   /// Returns True, if 'Phi' is the kind of reduction variable for type
   /// 'Kind'. If this is a reduction variable, it adds it to ReductionList.
   bool AddReductionVar(PHINode *Phi, ReductionKind Kind);
-  /// Checks if a constant matches the reduction kind.
-  /// Sums starts with zero. Products start at one.
-  bool isReductionConstant(Value *V, ReductionKind Kind);
   /// Returns true if the instruction I can be a reduction variable of type
   /// 'Kind'.
   bool isReductionInstr(Instruction *I, ReductionKind Kind);
@@ -628,6 +641,8 @@ void
 SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   typedef SmallVector<PHINode*, 4> PhiVector;
   BasicBlock &BB = *Orig->getHeader();
+  Constant *Zero = ConstantInt::get(
+    IntegerType::getInt32Ty(BB.getContext()), 0);
 
   // In order to support reduction variables we need to be able to vectorize
   // Phi nodes. Phi nodes have cycles, so we need to vectorize them in two
@@ -803,29 +818,42 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     PHINode *VecRdxPhi = dyn_cast<PHINode>(WidenMap[RdxPhi]);
     assert(RdxPhi && "Unable to recover vectorized PHI");
 
-    // Find the reduction variable.
+    // Find the reduction variable descriptor.
     assert(Legal->getReductionVars()->count(RdxPhi) &&
            "Unable to find the reduction variable");
-    LoopVectorizationLegality::ReductionPair ReductionVar =
+    LoopVectorizationLegality::ReductionDescriptor RdxDesc =
       (*Legal->getReductionVars())[RdxPhi];
 
+    // We need to generate a reduction vector from the incoming scalar.
+    // To do so, we need to generate the 'identity' vector and overide
+    // one of the elements with the incoming scalar reduction. We need
+    // to do it in the vector-loop preheader.
+    Builder.SetInsertPoint(LoopBypassBlock->getTerminator());
+
     // This is the vector-clone of the value that leaves the loop.
-    Value *VectorExit = getVectorValue(ReductionVar.first);
+    Value *VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
     Type *VecTy = VectorExit->getType();
 
-    // This is the kind of reduction.
-    LoopVectorizationLegality::ReductionKind RdxKind = ReductionVar.second;
-    // Find the reduction identity variable.
-    // Zero for addition. One for Multiplication.
-    unsigned IdentitySclr =
-      (RdxKind == LoopVectorizationLegality::IntegerAdd ? 0 : 1);
-    Constant *Identity = getUniformVector(IdentitySclr, VecTy->getScalarType());
+    // Find the reduction identity variable. The value of the enum is the
+    // identity. Zero for addition. One for Multiplication.
+    unsigned IdentitySclr =  RdxDesc.Kind;
+    Constant *Identity = getUniformVector(IdentitySclr,
+                                          VecTy->getScalarType());
+
+    // This vector is the Identity vector where the first element is the
+    // incoming scalar reduction.
+    Value *VectorStart = Builder.CreateInsertElement(Identity,
+                                                    RdxDesc.StartValue, Zero);
+
 
     // Fix the vector-loop phi.
     // We created the induction variable so we know that the
     // preheader is the first entry.
     BasicBlock *VecPreheader = Induction->getIncomingBlock(0);
-    VecRdxPhi->addIncoming(Identity, VecPreheader);
+
+    // Reductions do not have to start at zero. They can start with
+    // any loop invariant values.
+    VecRdxPhi->addIncoming(VectorStart, VecPreheader);
     unsigned SelfEdgeIdx = (RdxPhi)->getBasicBlockIndex(LoopScalarBody);
     Value *Val = getVectorValue(RdxPhi->getIncomingValue(SelfEdgeIdx));
     VecRdxPhi->addIncoming(Val, LoopVectorBody);
@@ -837,10 +865,10 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
 
     // This PHINode contains the vectorized reduction variable, or
-    // the identity vector, if we bypass the vector loop.
+    // the initial value vector, if we bypass the vector loop.
     PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
-    NewPhi->addIncoming(Identity, LoopBypassBlock);
-    NewPhi->addIncoming(getVectorValue(ReductionVar.first), LoopVectorBody);
+    NewPhi->addIncoming(VectorStart, LoopBypassBlock);
+    NewPhi->addIncoming(getVectorValue(RdxDesc.LoopExitInstr), LoopVectorBody);
 
     // Extract the first scalar.
     Value *Scalar0 =
@@ -849,7 +877,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     for (unsigned i=1; i < VF; ++i) {
       Value *Scalar1 =
         Builder.CreateExtractElement(NewPhi, Builder.getInt32(i));
-      if (RdxKind == LoopVectorizationLegality::IntegerAdd) {
+      if (RdxDesc.Kind == LoopVectorizationLegality::IntegerAdd) {
         Scalar0 = Builder.CreateAdd(Scalar0, Scalar1);
       } else {
         Scalar0 = Builder.CreateMul(Scalar0, Scalar1);
@@ -865,11 +893,13 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
       PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
       if (!LCSSAPhi) continue;
 
-      // All PHINodes need to have a single entry edge, or two if we already fixed them.
+      // All PHINodes need to have a single entry edge, or two if
+      // we already fixed them.
       assert(LCSSAPhi->getNumIncomingValues() < 3 && "Invalid LCSSA PHI");
 
-      // We found our reduction value exit-PHI. Update it with the incoming bypass edge.
-      if (LCSSAPhi->getIncomingValue(0) == ReductionVar.first) {
+      // We found our reduction value exit-PHI. Update it with the
+      // incoming bypass edge.
+      if (LCSSAPhi->getIncomingValue(0) == RdxDesc.LoopExitInstr) {
         // Add an edge coming from the bypass.
         LCSSAPhi->addIncoming(Scalar0, LoopMiddleBlock);
         break;
@@ -881,7 +911,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     int IncomingEdgeBlockIdx = (RdxPhi)->getBasicBlockIndex(LoopScalarBody);
     int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1); // The other block.
     (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, Scalar0);
-    (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, ReductionVar.first);
+    (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
 }
 
@@ -1157,7 +1187,7 @@ bool LoopVectorizationLegality::isIdentifiedSafeObject(Value* Val) {
 }
 
 bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
-                                                    ReductionKind Kind) {
+                                                ReductionKind Kind) {
   if (Phi->getNumIncomingValues() != 2)
     return false;
 
@@ -1166,10 +1196,6 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   int SelfEdgeIdx = Phi->getBasicBlockIndex(BB);
   int InEdgeBlockIdx = (SelfEdgeIdx ? 0 : 1); // The other entry.
   Value *RdxStart = Phi->getIncomingValue(InEdgeBlockIdx);
-
-  // We must have a constant that starts the reduction.
-  if (!isReductionConstant(RdxStart, Kind))
-    return false;
 
   // ExitInstruction is the single value which is used outside the loop.
   // We only allow for a single reduction value to be used outside the loop.
@@ -1228,23 +1254,13 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
    if (FoundStartPHI && ExitInstruction) {
      // This instruction is allowed to have out-of-loop users.
      AllowedExit.insert(ExitInstruction);
-     // Mark this as a reduction var.
-     Reductions[Phi] = std::make_pair(ExitInstruction, Kind);
+
+     // Save the description of this reduction variable.
+     ReductionDescriptor RD(RdxStart, ExitInstruction, Kind);
+     Reductions[Phi] = RD;
      return true;
    }
   }
-}
-
-bool
-LoopVectorizationLegality::isReductionConstant(Value *V, ReductionKind Kind) {
-  ConstantInt *CI = dyn_cast<ConstantInt>(V);
-  if (!CI)
-    return false;
-  if (Kind == IntegerMult && CI->isOne())
-    return true;
-  if (Kind == IntegerAdd && CI->isZero())
-    return true;
-  return false;
 }
 
 bool
