@@ -950,6 +950,9 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         DEBUG(dbgs() << "LV: Found an Mult reduction PHI."<< *Phi <<"\n");
         continue;
       }
+
+      DEBUG(dbgs() << "LV: Found an unidentified PHI."<< *Phi <<"\n");
+      return false;
     }// end of PHI handling
 
     // We still don't handle functions.
