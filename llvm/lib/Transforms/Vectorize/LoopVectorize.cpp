@@ -1186,14 +1186,13 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
 /// marked with the NoAlias attribute.
 bool LoopVectorizationLegality::isIdentifiedSafeObject(Value* Val) {
   assert(Val && "Invalid value");
-  if (dyn_cast<GlobalValue>(Val))
+  if (isa<GlobalValue>(Val))
     return true;
-  if (dyn_cast<AllocaInst>(Val))
+  if (isa<AllocaInst>(Val))
     return true;
-  Argument *A = dyn_cast<Argument>(Val);
-  if (!A)
-    return false;
-  return A->hasNoAliasAttr();
+  if (Argument *A = dyn_cast<Argument>(Val))
+    return A->hasNoAliasAttr();
+  return false;
 }
 
 bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
