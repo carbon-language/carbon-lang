@@ -1230,7 +1230,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
 
     // If the instruction has no users then this is a broken
     // chain and can't be a reduction variable.
-    if (Iter->use_begin() == Iter->use_end())
+    if (Iter->use_empty())
       return false;
 
     // For each of the *users* of iter.
