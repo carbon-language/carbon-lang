@@ -63,3 +63,41 @@ namespace PR13381 {
   static_assert(!noexcept(X(X::val())), "");
   static_assert(!noexcept(X::ref() = X::val()), "");
 }
+
+namespace PR14141 {
+  // Part of DR1351: the implicit exception-specification is noexcept(false) if
+  // the set of potential exceptions of the special member function contains
+  // "any". Hence it is compatible with noexcept(false).
+  struct ThrowingBase {
+    ThrowingBase() noexcept(false);
+    ThrowingBase(const ThrowingBase&) noexcept(false);
+    ThrowingBase(ThrowingBase&&) noexcept(false);
+    ThrowingBase &operator=(const ThrowingBase&) noexcept(false);
+    ThrowingBase &operator=(ThrowingBase&&) noexcept(false);
+    ~ThrowingBase() noexcept(false);
+  };
+  struct Derived : ThrowingBase {
+    Derived() noexcept(false) = default;
+    Derived(const Derived&) noexcept(false) = default;
+    Derived(Derived&&) noexcept(false) = default;
+    Derived &operator=(const Derived&) noexcept(false) = default;
+    Derived &operator=(Derived&&) noexcept(false) = default;
+    ~Derived() noexcept(false) = default;
+  };
+  struct Derived2 : ThrowingBase {
+    Derived2() = default;
+    Derived2(const Derived2&) = default;
+    Derived2(Derived2&&) = default;
+    Derived2 &operator=(const Derived2&) = default;
+    Derived2 &operator=(Derived2&&) = default;
+    ~Derived2() = default;
+  };
+  struct Derived3 : ThrowingBase {
+    Derived3() noexcept(true) = default; // expected-error {{does not match the calculated}}
+    Derived3(const Derived3&) noexcept(true) = default; // expected-error {{does not match the calculated}}
+    Derived3(Derived3&&) noexcept(true) = default; // expected-error {{does not match the calculated}}
+    Derived3 &operator=(const Derived3&) noexcept(true) = default; // expected-error {{does not match the calculated}}
+    Derived3 &operator=(Derived3&&) noexcept(true) = default; // expected-error {{does not match the calculated}}
+    ~Derived3() noexcept(true) = default; // expected-error {{does not match the calculated}}
+  };
+}

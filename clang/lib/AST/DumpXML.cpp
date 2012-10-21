@@ -977,6 +977,16 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     setFlag("const", T->isConst());
     setFlag("volatile", T->isVolatile());
     setFlag("restrict", T->isRestrict());
+    switch (T->getExceptionSpecType()) {
+    case EST_None: break;
+    case EST_DynamicNone: set("exception_spec", "throw()"); break;
+    case EST_Dynamic: set("exception_spec", "throw(T)"); break;
+    case EST_MSAny: set("exception_spec", "throw(...)"); break;
+    case EST_BasicNoexcept: set("exception_spec", "noexcept"); break;
+    case EST_ComputedNoexcept: set("exception_spec", "noexcept(expr)"); break;
+    case EST_Unevaluated: set("exception_spec", "unevaluated"); break;
+    case EST_Uninstantiated: set("exception_spec", "uninstantiated"); break;
+    }
   }
   void visitFunctionProtoTypeChildren(FunctionProtoType *T) {
     push("parameters");
