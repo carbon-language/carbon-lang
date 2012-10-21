@@ -1302,7 +1302,7 @@ public:
                    SmallVectorImpl<unsigned> &ShrinkRegs);
 
   /// Get the value assignments suitable for passing to LiveInterval::join.
-  const int *getAssignments() const { return &Assignments[0]; }
+  const int *getAssignments() const { return Assignments.data(); }
 };
 } // end anonymous namespace
 
