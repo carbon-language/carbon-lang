@@ -1127,7 +1127,8 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
       if (!llvm::sys::fs::exists(LibDir))
         continue;
       for (unsigned k = 0, ke = CandidateTripleAliases.size(); k < ke; ++k)
-        ScanLibDirForGCCTriple(TargetArch, LibDir, CandidateTripleAliases[k]);
+        ScanLibDirForGCCTriple(TargetArch, Args, LibDir,
+                               CandidateTripleAliases[k]);
     }
     for (unsigned j = 0, je = CandidateMultiarchLibDirs.size(); j < je; ++j) {
       const std::string LibDir
@@ -1136,7 +1137,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
         continue;
       for (unsigned k = 0, ke = CandidateMultiarchTripleAliases.size(); k < ke;
            ++k)
-        ScanLibDirForGCCTriple(TargetArch, LibDir,
+        ScanLibDirForGCCTriple(TargetArch, Args, LibDir,
                                CandidateMultiarchTripleAliases[k],
                                /*NeedsMultiarchSuffix=*/true);
     }
@@ -1322,8 +1323,32 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     MultiarchTripleAliases.push_back(MultiarchTriple.str());
 }
 
+// FIXME: There is the same routine in the Tools.cpp.
+static bool hasMipsN32ABIArg(const ArgList &Args) {
+  Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
+  return A && (A->getValue(Args) == StringRef("n32"));
+}
+
+static StringRef getTargetMultiarchSuffix(llvm::Triple::ArchType TargetArch,
+                                          const ArgList &Args) {
+  if (TargetArch == llvm::Triple::x86_64 ||
+      TargetArch == llvm::Triple::ppc64)
+    return "/64";
+
+  if (TargetArch == llvm::Triple::mips64 ||
+      TargetArch == llvm::Triple::mips64el) {
+    if (hasMipsN32ABIArg(Args))
+      return "/n32";
+    else
+      return "/64";
+  }
+
+  return "/32";
+}
+
 void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
-    llvm::Triple::ArchType TargetArch, const std::string &LibDir,
+    llvm::Triple::ArchType TargetArch, const ArgList &Args,
+    const std::string &LibDir,
     StringRef CandidateTriple, bool NeedsMultiarchSuffix) {
   // There are various different suffixes involving the triple we
   // check for. We also record what is necessary to walk from each back
@@ -1370,11 +1395,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // *if* there is a subdirectory of the right name with crtbegin.o in it,
       // we use that. If not, and if not a multiarch triple, we look for
       // crtbegin.o without the subdirectory.
-      StringRef MultiarchSuffix
-        = (TargetArch == llvm::Triple::x86_64 ||
-           TargetArch == llvm::Triple::ppc64 ||
-           TargetArch == llvm::Triple::mips64 ||
-           TargetArch == llvm::Triple::mips64el) ? "/64" : "/32";
+      StringRef MultiarchSuffix = getTargetMultiarchSuffix(TargetArch, Args);
       if (llvm::sys::fs::exists(LI->path() + MultiarchSuffix + "/crtbegin.o")) {
         GCCMultiarchSuffix = MultiarchSuffix.str();
       } else {
@@ -2129,8 +2150,7 @@ static StringRef getMultilibDir(const llvm::Triple &Triple,
   // lib32 directory has a special meaning on MIPS targets.
   // It contains N32 ABI binaries. Use this folder if produce
   // code for N32 ABI only.
-  Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
-  if (A && (A->getValue(Args) == StringRef("n32")))
+  if (hasMipsN32ABIArg(Args))
     return "lib32";
 
   return Triple.isArch32Bit() ? "lib" : "lib64";

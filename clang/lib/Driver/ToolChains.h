@@ -111,6 +111,7 @@ protected:
       SmallVectorImpl<StringRef> &MultiarchTripleAliases);
 
     void ScanLibDirForGCCTriple(llvm::Triple::ArchType TargetArch,
+                                const ArgList &Args,
                                 const std::string &LibDir,
                                 StringRef CandidateTriple,
                                 bool NeedsMultiarchSuffix = false);
