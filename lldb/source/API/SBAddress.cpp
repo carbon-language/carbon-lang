@@ -119,10 +119,13 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
 
     lldb::addr_t addr = LLDB_INVALID_ADDRESS;
     TargetSP target_sp (target.GetSP());
-    if (m_opaque_ap.get())
+    if (target_sp)
     {
-        Mutex::Locker api_locker (target_sp->GetAPIMutex());
-        addr = m_opaque_ap->GetLoadAddress (target_sp.get());
+        if (m_opaque_ap.get())
+        {
+            Mutex::Locker api_locker (target_sp->GetAPIMutex());
+            addr = m_opaque_ap->GetLoadAddress (target_sp.get());
+        }
     }
     
     if (log)
