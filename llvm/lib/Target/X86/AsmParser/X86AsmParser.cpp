@@ -320,6 +320,11 @@ struct X86Operand : public MCParsedAsmOperand {
     return Mem.Size;
   }
 
+  bool isOffsetOf() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.OffsetOf;
+  }
+
   bool needSizeDirective() const {
     assert(Kind == Memory && "Invalid access!");
     return Mem.NeedSizeDir;

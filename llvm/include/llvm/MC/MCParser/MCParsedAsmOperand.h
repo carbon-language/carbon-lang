@@ -64,6 +64,11 @@ public:
   /// getEndLoc - Get the location of the last token of this operand.
   virtual SMLoc getEndLoc() const = 0;
 
+  /// isOffsetOf - Do we need to emit code to get the offset of the variable,
+  /// rather then the value of the variable?   Only valid when parsing MS-style
+  /// inline assembly.
+  virtual bool isOffsetOf() const { return false; }
+
   /// needSizeDirective - Do we need to emit a sizing directive for this
   /// operand?  Only valid when parsing MS-style inline assembly.
   virtual bool needSizeDirective() const { return false; }
