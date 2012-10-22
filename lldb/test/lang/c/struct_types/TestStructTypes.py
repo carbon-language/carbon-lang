@@ -55,6 +55,11 @@ class StructTypesTestCase(TestBase):
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
+        # The padding should be an array of size 0
+        self.expect("image lookup -t point_tag",
+            DATA_TYPES_DISPLAYED_CORRECTLY,
+            substrs = ['padding[0]'])
+
 
 if __name__ == '__main__':
     import atexit

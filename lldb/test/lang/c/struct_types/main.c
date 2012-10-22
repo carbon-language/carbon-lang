@@ -10,15 +10,15 @@ int main (int argc, char const *argv[])
 {
     struct point_tag {
         int x;
-        char padding[0];
         int y;
+        char padding[0];
     }; // Set break point at this line.
 
     struct rect_tag {
         struct point_tag bottom_left;
         struct point_tag top_right;
     };
-    struct point_tag pt = { 2, {}, 3 }; // This is the first executable statement.
-    struct rect_tag rect = {{1, {}, 2}, {3, {}, 4}};
+    struct point_tag pt = { 2, 3, {} }; // This is the first executable statement.
+    struct rect_tag rect = {{1, 2, {}}, {3, 4, {}}};
     return 0;
 }

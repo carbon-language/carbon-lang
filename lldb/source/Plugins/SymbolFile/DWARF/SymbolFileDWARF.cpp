@@ -4085,8 +4085,7 @@ SymbolFileDWARF::ParseChildArrayInfo
                     if (upper_bound > lower_bound)
                         num_elements = upper_bound - lower_bound + 1;
 
-                    if (num_elements > 0)
-                        element_orders.push_back (num_elements);
+                    element_orders.push_back (num_elements);
                 }
             }
             break;
