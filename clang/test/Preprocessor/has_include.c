@@ -67,7 +67,7 @@
 // Try badly formed expressions.
 // FIXME: We can recover better in almost all of these cases. (PR13335)
 
-// expected-error@+1 {{missing '(' after '__has_include'}} expected-error@+1 {{expected end of line}}
+// expected-error@+1 {{missing '(' after '__has_include'}}
 #if __has_include "stdint.h")
 #endif
 
@@ -83,11 +83,11 @@
 #if __has_include)
 #endif
 
-// expected-error@+1 {{missing '(' after '__has_include'}} expected-error@+1 {{token is not a valid binary operator in a preprocessor subexpression}}
+// expected-error@+1 {{missing '(' after '__has_include'}}
 #if __has_include<stdint.h>)
 #endif
 
-// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} expected-warning@+1 {{missing terminating '"' character}}
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} expected-warning@+1 {{missing terminating '"' character}}  expected-error@+1 {{invalid token at start of a preprocessor expression}}
 #if __has_include("stdint.h)
 #endif
 
@@ -99,11 +99,25 @@
 #if __has_include(stdint.h>)
 #endif
 
+// expected-error@+1 {{missing '(' after '__has_include'}}
+__has_include
 
-// FIXME: These test cases cause the compiler to crash. (PR13334)
-//#if __has_include("stdint.h"
-//#if __has_include(
-//#if __has_include
-//#if __has_include(<stdint.h>
-//#if __has_include(<stdint.h)
+// expected-error@+1 {{missing ')' after '__has_include'}} // expected-error@+1 {{expected value in expression}}  // expected-note@+1 {{to match this '('}}
+#if __has_include("stdint.h"
+#endif
 
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} // expected-error@+1 {{expected value in expression}}
+#if __has_include(
+#endif
+
+// expected-error@+1 {{missing '(' after '__has_include'}} // expected-error@+1 {{expected value in expression}}
+#if __has_include
+#endif
+
+// expected-error@+1 {{missing ')' after '__has_include'}}  // expected-error@+1 {{expected value in expression}}  // expected-note@+1 {{to match this '('}}
+#if __has_include(<stdint.h>
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} // expected-error@+1 {{expected value in expression}}
+#if __has_include(<stdint.h)
+#endif
