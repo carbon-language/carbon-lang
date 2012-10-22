@@ -69,7 +69,6 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -118,45 +117,34 @@ FunctionPass *llvm::createTailCallEliminationPass() {
   return new TailCallElim();
 }
 
-/// CanTRE - Scan the specified basic block for alloca instructions.
-/// If it contains any that are variable-sized or not in the entry block,
-/// returns false.
-static bool CanTRE(AllocaInst *AI) {
-  // Because of PR962, we don't TRE allocas outside the entry block.
-
-  // If this alloca is in the body of the function, or if it is a variable
-  // sized allocation, we cannot tail call eliminate calls marked 'tail'
-  // with this mechanism.
-  BasicBlock *BB = AI->getParent();
-  return BB == &BB->getParent()->getEntryBlock() &&
-         isa<ConstantInt>(AI->getArraySize());
+/// AllocaMightEscapeToCalls - Return true if this alloca may be accessed by
+/// callees of this function.  We only do very simple analysis right now, this
+/// could be expanded in the future to use mod/ref information for particular
+/// call sites if desired.
+static bool AllocaMightEscapeToCalls(AllocaInst *AI) {
+  // FIXME: do simple 'address taken' analysis.
+  return true;
 }
 
-struct AllocaCaptureTracker : public CaptureTracker {
-  AllocaCaptureTracker() : Captured(false) {}
+/// CheckForEscapingAllocas - Scan the specified basic block for alloca
+/// instructions.  If it contains any that might be accessed by calls, return
+/// true.
+static bool CheckForEscapingAllocas(BasicBlock *BB,
+                                    bool &CannotTCETailMarkedCall) {
+  bool RetVal = false;
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+      RetVal |= AllocaMightEscapeToCalls(AI);
 
-  void tooManyUses() { Captured = true; }
-
-  bool shouldExplore(Use *U) {
-    Value *V = U->getUser();
-    if (isa<CallInst>(V) || isa<InvokeInst>(V))
-      UsesAlloca.push_back(V);
-
-    return true;
-  }
-
-  bool captured(Use *U) {
-    if (isa<ReturnInst>(U->getUser()))
-      return false;
-
-    Captured = true;
-    return true;
-  }
-
-  SmallVector<WeakVH, 64> UsesAlloca;
-
-  bool Captured;
-};
+      // If this alloca is in the body of the function, or if it is a variable
+      // sized allocation, we cannot tail call eliminate calls marked 'tail'
+      // with this mechanism.
+      if (BB != &BB->getParent()->getEntryBlock() ||
+          !isa<ConstantInt>(AI->getArraySize()))
+        CannotTCETailMarkedCall = true;
+    }
+  return RetVal;
+}
 
 bool TailCallElim::runOnFunction(Function &F) {
   // If this function is a varargs function, we won't be able to PHI the args
@@ -169,34 +157,38 @@ bool TailCallElim::runOnFunction(Function &F) {
   bool MadeChange = false;
   bool FunctionContainsEscapingAllocas = false;
 
-  // CanTRETailMarkedCall - If false, we cannot perform TRE on tail calls
+  // CannotTCETailMarkedCall - If true, we cannot perform TCE on tail calls
   // marked with the 'tail' attribute, because doing so would cause the stack
-  // size to increase (real TRE would deallocate variable sized allocas, TRE
+  // size to increase (real TCE would deallocate variable sized allocas, TCE
   // doesn't).
-  bool CanTRETailMarkedCall = true;
+  bool CannotTCETailMarkedCall = false;
 
-  // Find calls that can be marked tail.
-  AllocaCaptureTracker ACT;
-  for (Function::iterator BB = F.begin(), EE = F.end(); BB != EE; ++BB) {
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-        CanTRETailMarkedCall &= CanTRE(AI);
-        PointerMayBeCaptured(AI, &ACT);
-        if (ACT.Captured)
-          return false;
-      }
-    }
+  // Loop over the function, looking for any returning blocks, and keeping track
+  // of whether this function has any non-trivially used allocas.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (FunctionContainsEscapingAllocas && CannotTCETailMarkedCall)
+      break;
+
+    FunctionContainsEscapingAllocas |=
+      CheckForEscapingAllocas(BB, CannotTCETailMarkedCall);
   }
 
-  // Second pass, change any tail recursive calls to loops.
+  /// FIXME: The code generator produces really bad code when an 'escaping
+  /// alloca' is changed from being a static alloca to being a dynamic alloca.
+  /// Until this is resolved, disable this transformation if that would ever
+  /// happen.  This bug is PR962.
+  if (FunctionContainsEscapingAllocas)
+    return false;
+
+  // Second pass, change any tail calls to loops.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator())) {
       bool Change = ProcessReturningBlock(Ret, OldEntry, TailCallsAreMarkedTail,
-                                          ArgumentPHIs, !CanTRETailMarkedCall);
+                                          ArgumentPHIs,CannotTCETailMarkedCall);
       if (!Change && BB->getFirstNonPHIOrDbg() == Ret)
         Change = FoldReturnAndProcessPred(BB, Ret, OldEntry,
                                           TailCallsAreMarkedTail, ArgumentPHIs,
-                                          !CanTRETailMarkedCall);
+                                          CannotTCETailMarkedCall);
       MadeChange |= Change;
     }
   }
@@ -218,23 +210,20 @@ bool TailCallElim::runOnFunction(Function &F) {
     }
   }
 
-  // Finally, if this function contains no non-escaping allocas and doesn't
-  // call setjmp, mark all calls in the function as eligible for tail calls
-  // (there is no stack memory for them to access).
-  std::sort(ACT.UsesAlloca.begin(), ACT.UsesAlloca.end());
-
+  // Finally, if this function contains no non-escaping allocas, or calls
+  // setjmp, mark all calls in the function as eligible for tail calls
+  //(there is no stack memory for them to access).
   if (!FunctionContainsEscapingAllocas && !F.callsFunctionThatReturnsTwice())
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        if (CallInst *CI = dyn_cast<CallInst>(I))
-          if (!std::binary_search(ACT.UsesAlloca.begin(), ACT.UsesAlloca.end(),
-                                  CI)) {
-            CI->setTailCall();
-            MadeChange = true;
-          }
+        if (CallInst *CI = dyn_cast<CallInst>(I)) {
+          CI->setTailCall();
+          MadeChange = true;
+        }
 
   return MadeChange;
 }
+
 
 /// CanMoveAboveCall - Return true if it is safe to move the specified
 /// instruction from after the call to before the call, assuming that all
