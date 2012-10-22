@@ -108,3 +108,35 @@ entry:
 ; CHECK-AO: store <2 x float> %mulf, <2 x float>* %0, align 8
 ; CHECK-AO: ret void
 }
+
+; Simple 3-pair chain with loads and stores (unreachable)
+define void @test4(i1 %bool, double* %a, double* %b, double* %c) nounwind uwtable readonly {
+entry:
+  br i1 %bool, label %if.then1, label %if.end
+
+if.then1:
+  unreachable
+  br label %if.then
+
+if.then:
+  %i0 = load double* %a, align 8
+  %i1 = load double* %b, align 8
+  %mul = fmul double %i0, %i1
+  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %i3 = load double* %arrayidx3, align 8
+  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %i4 = load double* %arrayidx4, align 8
+  %mul5 = fmul double %i3, %i4
+  store double %mul, double* %c, align 8
+  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  store double %mul5, double* %arrayidx5, align 8
+  br label %if.end
+
+if.end:
+  ret void
+; CHECK: @test4
+; CHECK-NOT: <2 x double>
+; CHECK-AO: @test4
+; CHECK-AO-NOT: <2 x double>
+}
+

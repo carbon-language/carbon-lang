@@ -34,6 +34,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -177,6 +178,7 @@ namespace {
     BBVectorize(Pass *P, const VectorizeConfig &C)
       : BasicBlockPass(ID), Config(C) {
       AA = &P->getAnalysis<AliasAnalysis>();
+      DT = &P->getAnalysis<DominatorTree>();
       SE = &P->getAnalysis<ScalarEvolution>();
       TD = P->getAnalysisIfAvailable<DataLayout>();
     }
@@ -191,6 +193,7 @@ namespace {
                 VPPIteratorPair;
 
     AliasAnalysis *AA;
+    DominatorTree *DT;
     ScalarEvolution *SE;
     DataLayout *TD;
 
@@ -330,6 +333,12 @@ namespace {
     void combineMetadata(Instruction *K, const Instruction *J);
 
     bool vectorizeBB(BasicBlock &BB) {
+      if (!DT->isReachableFromEntry(&BB)) {
+        DEBUG(dbgs() << "BBV: skipping unreachable " << BB.getName() <<
+              " in " << BB.getParent()->getName() << "\n");
+        return false;
+      }
+
       bool changed = false;
       // Iterate a sufficient number of times to merge types of size 1 bit,
       // then 2 bits, then 4, etc. up to half of the target vector width of the
@@ -363,6 +372,7 @@ namespace {
 
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       AA = &getAnalysis<AliasAnalysis>();
+      DT = &getAnalysis<DominatorTree>();
       SE = &getAnalysis<ScalarEvolution>();
       TD = getAnalysisIfAvailable<DataLayout>();
 
@@ -372,8 +382,10 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       BasicBlockPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<DominatorTree>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<AliasAnalysis>();
+      AU.addPreserved<DominatorTree>();
       AU.addPreserved<ScalarEvolution>();
       AU.setPreservesCFG();
     }
@@ -2397,6 +2409,7 @@ char BBVectorize::ID = 0;
 static const char bb_vectorize_name[] = "Basic-Block Vectorization";
 INITIALIZE_PASS_BEGIN(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)
 
