@@ -181,6 +181,7 @@ struct X86Operand : public MCParsedAsmOperand {
       unsigned IndexReg;
       unsigned Scale;
       unsigned Size;
+      bool OffsetOf;
       bool NeedSizeDir;
     } Mem;
   };
@@ -464,7 +465,7 @@ struct X86Operand : public MCParsedAsmOperand {
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc,
                                SMLoc EndLoc, unsigned Size = 0,
-                               bool NeedSizeDir = false) {
+                               bool OffsetOf = false, bool NeedSizeDir = false){
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -472,6 +473,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
+    Res->Mem.OffsetOf = OffsetOf;
     Res->Mem.NeedSizeDir = NeedSizeDir;
     return Res;
   }
@@ -480,7 +482,8 @@ struct X86Operand : public MCParsedAsmOperand {
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
-                               unsigned Size = 0, bool NeedSizeDir = false) {
+                               unsigned Size = 0, bool OffsetOf = false,
+                               bool NeedSizeDir = false) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
@@ -495,6 +498,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;
+    Res->Mem.OffsetOf = OffsetOf;
     Res->Mem.NeedSizeDir = NeedSizeDir;
     return Res;
   }
@@ -649,7 +653,7 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
   return Size;
 }
 
-X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
+X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, 
                                                    unsigned Size) {
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   SMLoc Start = Parser.getTok().getLoc(), End;
@@ -752,10 +756,22 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
     Parser.Lex();
   }
 
-  if (getLexer().is(AsmToken::LBrac))
+  // Parse the 'offset' operator.  This operator is used to specify the
+  // location rather then the content of a variable.
+  bool OffsetOf = false;
+  if(isParsingInlineAsm() && (Tok.getString() == "offset" ||
+                              Tok.getString() == "OFFSET")) {
+    OffsetOf = true;
+    Parser.Lex(); // Eat offset.
+  }
+
+  if (getLexer().is(AsmToken::LBrac)) {
+    assert (!OffsetOf && "Unexpected offset operator!");
     return ParseIntelBracExpression(SegReg, Size);
+  }
 
   if (!ParseRegister(SegReg, Start, End)) {
+    assert (!OffsetOf && "Unexpected offset operator!");
     // Handel SegReg : [ ... ]
     if (getLexer().isNot(AsmToken::Colon))
       return ErrorOperand(Start, "Expected ':' token!");
@@ -780,7 +796,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
       NeedSizeDir = Size > 0;
     }
   }
-  return X86Operand::CreateMem(Disp, Start, End, Size, NeedSizeDir);
+  return X86Operand::CreateMem(Disp, Start, End, Size, OffsetOf, NeedSizeDir);
 }
 
 X86Operand *X86AsmParser::ParseIntelOperand() {
