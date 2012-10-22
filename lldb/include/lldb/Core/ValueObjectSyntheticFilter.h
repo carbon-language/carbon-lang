@@ -142,6 +142,9 @@ private:
     friend class ValueObject;
     ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter);
     
+    void
+    CopyParentData ();
+    
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

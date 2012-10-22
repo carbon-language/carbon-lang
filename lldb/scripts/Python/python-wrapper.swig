@@ -336,6 +336,7 @@ LLDBSwigPythonCreateSyntheticProvider
     // I do not want the SBValue to be deallocated when going out of scope because python
     // has ownership of it and will manage memory for this object by itself
     lldb::SBValue *valobj_sb = new lldb::SBValue(valobj_sp);
+    valobj_sb->SetPreferSyntheticValue(false);
 
     PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *)valobj_sb, SWIGTYPE_p_lldb__SBValue, 0);
 

@@ -276,10 +276,14 @@ ValueObject::SetNeedsUpdate ()
 }
 
 void
-ValueObject::ResetCompleteTypeInfo ()
+ValueObject::ClearDynamicTypeInformation ()
 {
     m_did_calculate_complete_objc_class_type = false;
+    m_last_format_mgr_revision = 0;
     m_override_type = ClangASTType();
+    SetValueFormat(lldb::TypeFormatImplSP());
+    SetSummaryFormat(lldb::TypeSummaryImplSP());
+    SetSyntheticChildren(lldb::SyntheticChildrenSP());
 }
 
 ClangASTType
@@ -2059,10 +2063,15 @@ ValueObject::CalculateSyntheticValue (bool use_synthetic)
         return;
     }
     
+    lldb::SyntheticChildrenSP current_synth_sp(m_synthetic_children_sp);
+    
     if (!UpdateFormatsIfNeeded(m_last_format_mgr_dynamic) && m_synthetic_value)
         return;
     
     if (m_synthetic_children_sp.get() == NULL)
+        return;
+    
+    if (current_synth_sp == m_synthetic_children_sp && m_synthetic_value)
         return;
     
     m_synthetic_value = new ValueObjectSynthetic(*this, m_synthetic_children_sp);
@@ -2079,7 +2088,10 @@ ValueObject::CalculateDynamicValue (DynamicValueType use_dynamic)
         ExecutionContext exe_ctx (GetExecutionContextRef());
         Process *process = exe_ctx.GetProcessPtr();
         if (process && process->IsPossibleDynamicValue(*this))
+        {
+            ClearDynamicTypeInformation ();
             m_dynamic_value = new ValueObjectDynamicValue (*this, use_dynamic);
+        }
     }
 }
 

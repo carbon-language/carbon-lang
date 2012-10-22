@@ -67,6 +67,7 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
 #else
     SetName(parent.GetName());
 #endif
+    CopyParentData();
     CreateSynthFilter();
 }
 
@@ -157,6 +158,8 @@ ValueObjectSynthetic::UpdateValue ()
         m_synthetic_children_count = UINT32_MAX;
     }
     
+    CopyParentData();
+    
     SetValueIsValid(true);
     return true;
 }
@@ -229,4 +232,12 @@ lldb::ValueObjectSP
 ValueObjectSynthetic::GetNonSyntheticValue ()
 {
     return m_parent->GetSP();
+}
+
+void
+ValueObjectSynthetic::CopyParentData ()
+{
+    m_value = m_parent->GetValue();
+    ExecutionContext exe_ctx (GetExecutionContextRef());
+    m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule().get());
 }

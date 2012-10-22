@@ -129,9 +129,24 @@ public:
     
     lldb::SBValue
     GetNonSyntheticValue ();
+
+    lldb::DynamicValueType
+    GetPreferDynamicValue ();
+    
+    void
+    SetPreferDynamicValue (lldb::DynamicValueType use_dynamic);
+    
+    bool
+    GetPreferSyntheticValue ();
+    
+    void
+    SetPreferSyntheticValue (bool use_synthetic);
     
     bool
     IsDynamic();
+    
+    bool
+    IsSynthetic ();
 
     const char *
     GetLocation ();

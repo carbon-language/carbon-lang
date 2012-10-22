@@ -290,28 +290,23 @@ ValueObjectDynamicValue::UpdateValue ()
 
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
+    bool has_changed_type = false;
+    
     if (!m_type_sp)
     {
         m_type_sp = dynamic_type_sp;
-        ResetCompleteTypeInfo ();
-        if (log)
-            log->Printf("[%s %p] now has a dynamic type %s",
-                        GetName().GetCString(),
-                        this,
-                        GetTypeName().AsCString(""));
+        has_changed_type = true;
     }
     else if (dynamic_type_sp != m_type_sp)
     {
         // We are another type, we need to tear down our children...
         m_type_sp = dynamic_type_sp;
         SetValueDidChange (true);
-        ResetCompleteTypeInfo ();
-        if (log)
-            log->Printf("[%s %p] has a new dynamic type %s",
-                        GetName().GetCString(),
-                        this,
-                        GetTypeName().AsCString(""));
+        has_changed_type = true;
     }
+    
+    if (has_changed_type)
+        ClearDynamicTypeInformation ();
     
     if (!m_address.IsValid() || m_address != dynamic_address)
     {
@@ -341,6 +336,12 @@ ValueObjectDynamicValue::UpdateValue ()
     // because we aren't pointing to the LOCATION that stores the pointer to us, we're pointing to us...
     m_value.SetValueType(Value::eValueTypeScalar);
 
+    if (has_changed_type && log)
+        log->Printf("[%s %p] has a new dynamic type %s",
+                    GetName().GetCString(),
+                    this,
+                    GetTypeName().GetCString());
+    
     if (m_address.IsValid() && m_type_sp)
     {
         // The variable value is in the Scalar value inside the m_value.

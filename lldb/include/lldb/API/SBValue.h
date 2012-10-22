@@ -14,6 +14,9 @@
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBType.h"
 
+namespace {
+    class ValueImpl;
+}
 
 namespace lldb {
 
@@ -95,8 +98,23 @@ public:
     lldb::SBValue
     GetNonSyntheticValue ();
     
+    lldb::DynamicValueType
+    GetPreferDynamicValue ();
+    
+    void
+    SetPreferDynamicValue (lldb::DynamicValueType use_dynamic);
+    
     bool
-    IsDynamic();
+    GetPreferSyntheticValue ();
+    
+    void
+    SetPreferSyntheticValue (bool use_synthetic);
+    
+    bool
+    IsDynamic ();
+    
+    bool
+    IsSynthetic ();
 
     const char *
     GetLocation ();
@@ -380,29 +398,40 @@ public:
     // currently rely on being able to extract the SharedPointer out of an SBValue. if the implementation
     // is deferred to the .cpp file instead of being inlined here, the platform will fail to link
     // correctly. however, this is temporary till a better general solution is found. FIXME
-    lldb::ValueObjectSP&
+    lldb::ValueObjectSP
     get_sp()
     {
-        return m_opaque_sp;
+        return GetSP();
     }
 
 protected:
-    friend class SBValueList;
+    friend class SBBlock;
     friend class SBFrame;
     friend class SBThread;
+    friend class SBValueList;
 
     lldb::ValueObjectSP
     GetSP () const;
     
-    // anyone who needs to set the value of the SP on this SBValue should rely on SetSP() exclusively
-    // since this function contains logic to "do the right thing" with regard to providing to the user
-    // a synthetic value when possible - in the future the same should automatically occur with
-    // dynamic values
+    // these calls do the right thing WRT adjusting their settings according to the target's preferences
     void
     SetSP (const lldb::ValueObjectSP &sp);
+
+    void
+    SetSP (const lldb::ValueObjectSP &sp, bool use_synthetic);
+    
+    void
+    SetSP (const lldb::ValueObjectSP &sp, lldb::DynamicValueType use_dynamic);
+
+    void
+    SetSP (const lldb::ValueObjectSP &sp, lldb::DynamicValueType use_dynamic, bool use_synthetic);
     
 private:
-    lldb::ValueObjectSP m_opaque_sp;
+    typedef STD_SHARED_PTR(ValueImpl) ValueImplSP;
+    ValueImplSP m_opaque_sp;
+    
+    void
+    SetSP (ValueImplSP impl_sp);
 };
 
 } // namespace lldb

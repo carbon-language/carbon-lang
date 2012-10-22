@@ -299,7 +299,12 @@ SBBlock::GetVariables (lldb::SBFrame& frame,
                         if (add_variable)
                         {
                             if (frame_sp)
-                                value_list.Append (frame_sp->GetValueObjectForFrameVariable (variable_sp, use_dynamic));
+                            {
+                                lldb::ValueObjectSP valobj_sp(frame_sp->GetValueObjectForFrameVariable (variable_sp,eNoDynamicValues));
+                                SBValue value_sb;
+                                value_sb.SetSP(valobj_sp, use_dynamic);
+                                value_list.Append (value_sb);
+                            }
                         }
                     }
                 }

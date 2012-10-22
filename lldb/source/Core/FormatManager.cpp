@@ -437,14 +437,20 @@ CategoryMap::GetSummaryFormat (ValueObject& valobj,
     uint32_t reason_why;        
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
-        lldb::TypeCategoryImplSP category = *begin;
+        lldb::TypeCategoryImplSP category_sp = *begin;
         lldb::TypeSummaryImplSP current_format;
-        if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
+        if (log)
+            log->Printf("[CategoryMap::GetSummaryFormat] Trying to use category %s\n", category_sp->GetName());
+        if (!category_sp->Get(valobj, current_format, use_dynamic, &reason_why))
             continue;
         return current_format;
     }
+    if (log)
+        log->Printf("[CategoryMap::GetSummaryFormat] nothing found - returning empty SP\n");
     return lldb::TypeSummaryImplSP();
 }
 
@@ -554,14 +560,20 @@ CategoryMap::GetSyntheticChildren (ValueObject& valobj,
     
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
-        lldb::TypeCategoryImplSP category = *begin;
+        lldb::TypeCategoryImplSP category_sp = *begin;
         lldb::SyntheticChildrenSP current_format;
-        if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
+        if (log)
+            log->Printf("[CategoryMap::GetSyntheticChildren] Trying to use category %s\n", category_sp->GetName());
+        if (!category_sp->Get(valobj, current_format, use_dynamic, &reason_why))
             continue;
         return current_format;
     }
+    if (log)
+        log->Printf("[CategoryMap::GetSyntheticChildren] nothing found - returning empty SP\n");
     return lldb::SyntheticChildrenSP();
 }
 #endif
