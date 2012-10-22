@@ -92,9 +92,9 @@ class LoopVectorizationLegality;
 class SingleBlockLoopVectorizer {
 public:
   /// Ctor.
-  SingleBlockLoopVectorizer(Loop *OrigLoop, ScalarEvolution *Se, LoopInfo *Li,
+  SingleBlockLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
                             LPPassManager *Lpm, unsigned VecWidth):
-  Orig(OrigLoop), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
+  OrigLoop(Orig), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
   Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
   // Perform the actual loop widening (vectorization).
@@ -145,7 +145,7 @@ private:
   typedef DenseMap<Value*, Value*> ValueMap;
 
   /// The original loop.
-  Loop *Orig;
+  Loop *OrigLoop;
   // Scev analysis to use.
   ScalarEvolution *SE;
   // Loop Info.
@@ -541,11 +541,11 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
    */
 
   // This is the original scalar-loop preheader.
-  BasicBlock *BypassBlock = Orig->getLoopPreheader();
-  BasicBlock *ExitBlock = Orig->getExitBlock();
+  BasicBlock *BypassBlock = OrigLoop->getLoopPreheader();
+  BasicBlock *ExitBlock = OrigLoop->getExitBlock();
   assert(ExitBlock && "Must have an exit block");
 
-  assert(Orig->getNumBlocks() == 1 && "Invalid loop");
+  assert(OrigLoop->getNumBlocks() == 1 && "Invalid loop");
   assert(BypassBlock && "Invalid loop structure");
 
   BasicBlock *VectorPH =
@@ -559,7 +559,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
     MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
                                  "scalar.preheader");
   // Find the induction variable.
-  BasicBlock *OldBasicBlock = Orig->getHeader();
+  BasicBlock *OldBasicBlock = OrigLoop->getHeader();
   OldInduction = Legal->getInduction();
   assert(OldInduction && "We must have a single phi node.");
   Type *IdxTy = OldInduction->getType();
@@ -574,7 +574,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
   Constant *Step = ConstantInt::get(IdxTy, VF);
 
   // Find the loop boundaries.
-  const SCEV *ExitCount = SE->getExitCount(Orig, Orig->getHeader());
+  const SCEV *ExitCount = SE->getExitCount(OrigLoop, OrigLoop->getHeader());
   assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
 
   // Get the total trip count from the count by adding 1.
@@ -639,11 +639,11 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
 
   // Register the new loop.
   Loop* Lp = new Loop();
-  LPM->insertLoop(Lp, Orig->getParentLoop());
+  LPM->insertLoop(Lp, OrigLoop->getParentLoop());
 
   Lp->addBasicBlockToLoop(VecBody, LI->getBase());
 
-  Loop *ParentLoop = Orig->getParentLoop();
+  Loop *ParentLoop = OrigLoop->getParentLoop();
   if (ParentLoop) {
     ParentLoop->addBasicBlockToLoop(ScalarPH, LI->getBase());
     ParentLoop->addBasicBlockToLoop(VectorPH, LI->getBase());
@@ -661,7 +661,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
 void
 SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   typedef SmallVector<PHINode*, 4> PhiVector;
-  BasicBlock &BB = *Orig->getHeader();
+  BasicBlock &BB = *OrigLoop->getHeader();
   Constant *Zero = ConstantInt::get(
     IntegerType::getInt32Ty(BB.getContext()), 0);
 
@@ -728,7 +728,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         // If the selector is loop invariant we can create a select
         // instruction with a scalar condition. Otherwise, use vector-select.
         Value *Cond = Inst->getOperand(0);
-        bool InvariantCond = SE->isLoopInvariant(SE->getSCEV(Cond), Orig);
+        bool InvariantCond = SE->isLoopInvariant(SE->getSCEV(Cond), OrigLoop);
 
         // The condition can be loop invariant  but still defined inside the
         // loop. This means that we can't just use the original 'cond' value.
@@ -958,7 +958,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
 
 void SingleBlockLoopVectorizer::cleanup() {
   // The original basic block.
-  SE->forgetLoop(Orig);
+  SE->forgetLoop(OrigLoop);
 }
 
 unsigned LoopVectorizationLegality::getLoopMaxVF() {
