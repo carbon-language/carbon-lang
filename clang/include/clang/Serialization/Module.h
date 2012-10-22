@@ -128,6 +128,18 @@ public:
   /// \brief The first source location in this module.
   SourceLocation FirstLoc;
 
+  // === Input Files ===
+  /// \brief The cursor to the start of the input-files block.
+  llvm::BitstreamCursor InputFilesCursor;
+
+  /// \brief Offsets for all of the input file entries in the AST file.
+  const uint32_t *InputFileOffsets;
+
+  /// \brief The input files that have been loaded from this AST file, along
+  /// with a bool indicating whether this was an overridden buffer.
+  std::vector<llvm::PointerIntPair<const FileEntry *, 1, bool> > 
+    InputFilesLoaded;
+
   // === Source Locations ===
 
   /// \brief Cursor used to read source location entries.

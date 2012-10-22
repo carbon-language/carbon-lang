@@ -257,7 +257,11 @@ namespace clang {
       ORIGINAL_FILE = 5,
       
       /// \brief The directory that the PCH was originally created in.
-      ORIGINAL_PCH_DIR = 6
+      ORIGINAL_PCH_DIR = 6,
+
+      /// \brief Offsets into the input-files block where input files
+      /// reside.
+      INPUT_FILE_OFFSETS = 7
     };
 
     /// \brief Record types that occur within the input-files block

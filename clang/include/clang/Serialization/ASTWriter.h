@@ -45,6 +45,7 @@ class ASTContext;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
+class FileEntry;
 class FPOptions;
 class HeaderSearch;
 class IdentifierResolver;
@@ -120,6 +121,10 @@ private:
 
   /// \brief Indicates that the AST contained compiler errors.
   bool ASTHasCompilerErrors;
+
+  /// \brief Mapping from input file entries to the index into the
+  /// offset table where information about that input file is stored.
+  llvm::DenseMap<const FileEntry *, uint32_t> InputFileIDs;
 
   /// \brief Stores a declaration or a type to be written to the AST file.
   class DeclOrType {

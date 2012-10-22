@@ -860,18 +860,23 @@ private:
   /// \brief Reads a statement from the specified cursor.
   Stmt *ReadStmtFromStream(ModuleFile &F);
 
+  typedef llvm::PointerIntPair<const FileEntry *, 1, bool> InputFile;
+
+  /// \brief Retrieve the file entry and 'overridden' bit for an input
+  /// file in the given module file.
+  InputFile getInputFile(ModuleFile &F, unsigned ID);
+
   /// \brief Get a FileEntry out of stored-in-PCH filename, making sure we take
   /// into account all the necessary relocations.
   const FileEntry *getFileEntry(StringRef filename);
 
-  void MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
+  StringRef MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
 
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
                             ModuleFile *ImportedBy,
                             llvm::SmallVectorImpl<ModuleFile *> &Loaded);
   ASTReadResult ReadControlBlock(ModuleFile &F,
                                  llvm::SmallVectorImpl<ModuleFile *> &Loaded);
-  ASTReadResult ReadInputFilesBlock(ModuleFile &F);
   ASTReadResult ReadASTBlock(ModuleFile &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);

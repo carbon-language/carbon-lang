@@ -775,6 +775,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(TARGET_OPTIONS);
   RECORD(ORIGINAL_FILE);
   RECORD(ORIGINAL_PCH_DIR);
+  RECORD(INPUT_FILE_OFFSETS);
 
   BLOCK(INPUT_FILES_BLOCK);
   RECORD(INPUT_FILE);
@@ -1119,8 +1120,10 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
   // Create input-file abbreviation.
   BitCodeAbbrev *IFAbbrev = new BitCodeAbbrev();
   IFAbbrev->Add(BitCodeAbbrevOp(INPUT_FILE));
+  IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // ID
   IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 12)); // Size
   IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 32)); // Modification time
+  IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Overridden
   IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   unsigned IFAbbrevCode = Stream.EmitAbbrev(IFAbbrev);
 
@@ -1135,15 +1138,23 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
     if (!SLoc->isFile())
       continue;
     const SrcMgr::ContentCache *Cache = SLoc->getFile().getContentCache();
-    if (!Cache->OrigEntry || Cache->BufferOverridden)
+    if (!Cache->OrigEntry)
       continue;
+
+    // Record this entry's offset.
+    InputFileOffsets.push_back(Stream.GetCurrentBitNo());
+    InputFileIDs[Cache->OrigEntry] = InputFileOffsets.size();
 
     Record.clear();
     Record.push_back(INPUT_FILE);
+    Record.push_back(InputFileOffsets.size());
 
     // Emit size/modification time for this file.
     Record.push_back(Cache->OrigEntry->getSize());
     Record.push_back(Cache->OrigEntry->getModificationTime());
+
+    // Whether this file was overridden.
+    Record.push_back(Cache->BufferOverridden);
 
     // Turn the file name into an absolute path, if it isn't already.
     const char *Filename = Cache->OrigEntry->getName();
@@ -1164,6 +1175,19 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
   }  
   
   Stream.ExitBlock();
+
+  // Create input file offsets abbreviation.
+  BitCodeAbbrev *OffsetsAbbrev = new BitCodeAbbrev();
+  OffsetsAbbrev->Add(BitCodeAbbrevOp(INPUT_FILE_OFFSETS));
+  OffsetsAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // # input files
+  OffsetsAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));   // Array
+  unsigned OffsetsAbbrevCode = Stream.EmitAbbrev(OffsetsAbbrev);
+
+  // Write input file offsets.
+  Record.clear();
+  Record.push_back(INPUT_FILE_OFFSETS);
+  Record.push_back(InputFileOffsets.size());
+  Stream.EmitRecordWithBlob(OffsetsAbbrevCode, Record, data(InputFileOffsets));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1269,13 +1293,10 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
   // FileEntry fields.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 12)); // Size
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 32)); // Modification time
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // BufferOverridden
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Input File ID
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumCreatedFIDs
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 24)); // FirstDeclIndex
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumDecls
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   return Stream.EmitAbbrev(Abbrev);
 }
 
@@ -1538,13 +1559,10 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         assert(Content->OrigEntry == Content->ContentsEntry &&
                "Writing to AST an overridden file is not supported");
 
-        // The source location entry is a file. The blob associated
-        // with this entry is the file name.
+        // The source location entry is a file. Emit input file ID.
+        assert(InputFileIDs[Content->OrigEntry] != 0 && "Missed file entry");
+        Record.push_back(InputFileIDs[Content->OrigEntry]);
 
-        // Emit size/modification time for this file.
-        Record.push_back(Content->OrigEntry->getSize());
-        Record.push_back(Content->OrigEntry->getModificationTime());
-        Record.push_back(Content->BufferOverridden);
         Record.push_back(File.NumCreatedFIDs);
         
         FileDeclIDsTy::iterator FDI = FileDeclIDs.find(FID);
@@ -1556,21 +1574,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
           Record.push_back(0);
         }
         
-        // Turn the file name into an absolute path, if it isn't already.
-        const char *Filename = Content->OrigEntry->getName();
-        SmallString<128> FilePath(Filename);
-
-        // Ask the file manager to fixup the relative path for us. This will 
-        // honor the working directory.
-        SourceMgr.getFileManager().FixupRelativePath(FilePath);
-
-        // FIXME: This call to make_absolute shouldn't be necessary, the
-        // call to FixupRelativePath should always return an absolute path.
-        llvm::sys::fs::make_absolute(FilePath);
-        Filename = FilePath.c_str();
-
-        Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
-        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename);
+        Stream.EmitRecordWithAbbrev(SLocFileAbbrv, Record);
         
         if (Content->BufferOverridden) {
           Record.clear();
