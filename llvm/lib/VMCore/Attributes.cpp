@@ -127,7 +127,7 @@ uint64_t Attributes::encodeLLVMAttributesForBitcode(Attributes Attrs) {
   uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
   if (Attrs.hasAttribute(Attributes::Alignment))
     EncodedAttrs |= Attrs.getAlignment() << 16;
-  EncodedAttrs |= (Attrs.Raw() & (0xfffULL << 21)) << 11;
+  EncodedAttrs |= (Attrs.Raw() & (0xffffULL << 21)) << 11;
   return EncodedAttrs;
 }
 
@@ -145,7 +145,7 @@ Attributes Attributes::decodeLLVMAttributesForBitcode(LLVMContext &C,
   AttrBuilder B(EncodedAttrs & 0xffff);
   if (Alignment)
     B.addAlignmentAttr(Alignment);
-  B.addRawValue((EncodedAttrs & (0xfffULL << 32)) >> 11);
+  B.addRawValue((EncodedAttrs & (0xffffULL << 32)) >> 11);
   return Attributes::get(C, B);
 }
 
@@ -201,6 +201,8 @@ std::string Attributes::getAsString() const {
     Result += "nonlazybind ";
   if (hasAttribute(Attributes::AddressSafety))
     Result += "address_safety ";
+  if (hasAttribute(Attributes::ForceSizeOpt))
+    Result += "forcesizeopt ";
   if (hasAttribute(Attributes::StackAlignment)) {
     Result += "alignstack(";
     Result += utostr(getStackAlignment());
@@ -324,6 +326,7 @@ uint64_t AttributesImpl::getAttrMask(uint64_t Val) {
   case Attributes::UWTable:         return 1 << 30;
   case Attributes::NonLazyBind:     return 1U << 31;
   case Attributes::AddressSafety:   return 1ULL << 32;
+  case Attributes::ForceSizeOpt:    return 1ULL << 33;
   }
   llvm_unreachable("Unsupported attribute type");
 }

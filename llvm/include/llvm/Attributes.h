@@ -84,7 +84,8 @@ public:
     StackProtectReq = 24,  ///< Stack protection required.
     StructRet       = 25,  ///< Hidden pointer to structure to return
     UWTable         = 26,  ///< Function must be in a unwind table
-    ZExt            = 27   ///< Zero extended before/after call
+    ZExt            = 27,  ///< Zero extended before/after call
+    ForceSizeOpt    = 28  ///< Function must be optimized for size first
   };
 private:
   AttributesImpl *Attrs;
@@ -152,7 +153,8 @@ public:
       hasAttribute(Attributes::UWTable) ||
       hasAttribute(Attributes::NonLazyBind) ||
       hasAttribute(Attributes::ReturnsTwice) ||
-      hasAttribute(Attributes::AddressSafety);
+      hasAttribute(Attributes::AddressSafety) ||
+      hasAttribute(Attributes::ForceSizeOpt);
   }
 
   bool operator==(const Attributes &A) const {
@@ -263,7 +265,8 @@ public:
       .removeAttribute(Attributes::UWTable)
       .removeAttribute(Attributes::NonLazyBind)
       .removeAttribute(Attributes::ReturnsTwice)
-      .removeAttribute(Attributes::AddressSafety);
+      .removeAttribute(Attributes::AddressSafety)
+      .removeAttribute(Attributes::ForceSizeOpt);
   }
 
   uint64_t Raw() const { return Bits; }
