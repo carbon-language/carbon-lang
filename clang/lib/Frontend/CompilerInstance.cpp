@@ -343,7 +343,8 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
             static_cast<ASTDeserializationListener *>(DeserializationListener));
   switch (Reader->ReadAST(Path,
                           Preamble ? serialization::MK_Preamble
-                                   : serialization::MK_PCH)) {
+                                   : serialization::MK_PCH,
+                          ASTReader::ARR_None)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.
@@ -965,7 +966,8 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     // Try to load the module we found.
     switch (ModuleManager->ReadAST(ModuleFile->getName(),
-                                   serialization::MK_Module)) {
+                                   serialization::MK_Module,
+                                   ASTReader::ARR_None)) {
     case ASTReader::Success:
       break;
 

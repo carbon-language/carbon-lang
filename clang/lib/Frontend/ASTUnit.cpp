@@ -524,7 +524,8 @@ public:
       InitializedLanguage(false) {}
 
   virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
-                                   const LangOptions &LangOpts) {
+                                   const LangOptions &LangOpts,
+                                   bool Complain) {
     if (InitializedLanguage)
       return false;
     
@@ -538,7 +539,8 @@ public:
   }
 
   virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
-                                 const TargetOptions &TargetOpts) {
+                                 const TargetOptions &TargetOpts,
+                                 bool Complain) {
     // If we've already initialized the target, don't do it again.
     if (Target)
       return false;
@@ -557,7 +559,8 @@ public:
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     StringRef OriginalFileName,
                                     std::string &SuggestedPredefines,
-                                    FileManager &FileMgr) {
+                                    FileManager &FileMgr,
+                                    bool Complain) {
     Predefines = Buffers[0].Data;
     for (unsigned I = 1, N = Buffers.size(); I != N; ++I) {
       Predefines += Buffers[I].Data;
@@ -809,7 +812,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                            AST->TargetOpts, AST->Target, 
                                            Predefines, Counter));
 
-  switch (Reader->ReadAST(Filename, serialization::MK_MainFile)) {
+  switch (Reader->ReadAST(Filename, serialization::MK_MainFile,
+                          ASTReader::ARR_None)) {
   case ASTReader::Success:
     break;
 
