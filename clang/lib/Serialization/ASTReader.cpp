@@ -1079,8 +1079,7 @@ resolveFileRelativeToOriginalDir(const std::string &Filename,
   return currPCHPath.str();
 }
 
-/// \brief Read in the source location entry with the given ID.
-bool ASTReader::ReadSLocEntryRecord(int ID) {
+bool ASTReader::ReadSLocEntry(int ID) {
   if (ID == 0)
     return false;
 
@@ -2906,9 +2905,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     // Preload SLocEntries.
     for (unsigned I = 0, N = F.PreloadSLocEntries.size(); I != N; ++I) {
       int Index = int(F.PreloadSLocEntries[I] - 1) + F.SLocEntryBaseID;
-      // Load it through the SourceManager and don't call ReadSLocEntryRecord()
+      // Load it through the SourceManager and don't call ReadSLocEntry()
       // directly because the entry may have already been loaded in which case
-      // calling ReadSLocEntryRecord() directly would trigger an assertion in
+      // calling ReadSLocEntry() directly would trigger an assertion in
       // SourceManager.
       SourceMgr.getLoadedSLocEntryByID(Index);
     }
@@ -6007,10 +6006,6 @@ MacroID ASTReader::getGlobalMacroID(ModuleFile &M, unsigned LocalID) {
   assert(I != M.MacroRemap.end() && "Invalid index into macro index remap");
 
   return LocalID + I->second;
-}
-
-bool ASTReader::ReadSLocEntry(int ID) {
-  return ReadSLocEntryRecord(ID);
 }
 
 serialization::SubmoduleID

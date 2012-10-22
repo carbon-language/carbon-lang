@@ -900,7 +900,6 @@ private:
   bool CheckPredefinesBuffers();
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
   bool ReadSourceManagerBlock(ModuleFile &F);
-  bool ReadSLocEntryRecord(int ID);
   llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(ModuleFile *F);
   bool ReadSubmoduleBlock(ModuleFile &F);
