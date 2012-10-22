@@ -354,7 +354,10 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
     // Unrecoverable failure: don't even try to process the input file.
     break;
 
-  case ASTReader::IgnorePCH:
+  case ASTReader::OutOfDate:
+  case ASTReader::VersionMismatch:
+  case ASTReader::ConfigurationMismatch:
+  case ASTReader::HadErrors:
     // No suitable PCH file could be found. Return an error.
     break;
   }
@@ -966,7 +969,10 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     case ASTReader::Success:
       break;
 
-    case ASTReader::IgnorePCH:
+    case ASTReader::OutOfDate:
+    case ASTReader::VersionMismatch:
+    case ASTReader::ConfigurationMismatch:
+    case ASTReader::HadErrors:
       // FIXME: The ASTReader will already have complained, but can we showhorn
       // that diagnostic information into a more useful form?
       KnownModules[Path[0].first] = 0;

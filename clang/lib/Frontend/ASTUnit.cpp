@@ -814,7 +814,10 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
     break;
 
   case ASTReader::Failure:
-  case ASTReader::IgnorePCH:
+  case ASTReader::OutOfDate:
+  case ASTReader::VersionMismatch:
+  case ASTReader::ConfigurationMismatch:
+  case ASTReader::HadErrors:
     AST->getDiagnostics().Report(diag::err_fe_unable_to_load_pch);
     return NULL;
   }

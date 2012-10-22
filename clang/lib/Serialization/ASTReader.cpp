@@ -980,7 +980,7 @@ public:
 
 
 /// \brief Read a source manager block
-ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
+bool ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
   using namespace SrcMgr;
 
   llvm::BitstreamCursor &SLocEntryCursor = F.SLocEntryCursor;
@@ -994,13 +994,13 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
   // The stream itself is going to skip over the source manager block.
   if (F.Stream.SkipBlock()) {
     Error("malformed block record in AST file");
-    return Failure;
+    return true;
   }
 
   // Enter the source manager block.
   if (SLocEntryCursor.EnterSubBlock(SOURCE_MANAGER_BLOCK_ID)) {
     Error("malformed source manager block record in AST file");
-    return Failure;
+    return true;
   }
 
   RecordData Record;
@@ -1009,9 +1009,9 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
     if (Code == llvm::bitc::END_BLOCK) {
       if (SLocEntryCursor.ReadBlockEnd()) {
         Error("error at end of Source Manager block in AST file");
-        return Failure;
+        return true;
       }
-      return Success;
+      return false;
     }
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
@@ -1019,7 +1019,7 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
       SLocEntryCursor.ReadSubBlockID();
       if (SLocEntryCursor.SkipBlock()) {
         Error("malformed block record in AST file");
-        return Failure;
+        return true;
       }
       continue;
     }
@@ -1041,7 +1041,7 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
     case SM_SLOC_BUFFER_ENTRY:
     case SM_SLOC_EXPANSION_ENTRY:
       // Once we hit one of the source location entries, we're done.
-      return Success;
+      return false;
     }
   }
 }
@@ -1080,13 +1080,13 @@ resolveFileRelativeToOriginalDir(const std::string &Filename,
 }
 
 /// \brief Read in the source location entry with the given ID.
-ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
+bool ASTReader::ReadSLocEntryRecord(int ID) {
   if (ID == 0)
-    return Success;
+    return false;
 
   if (unsigned(-ID) - 2 >= getTotalNumSLocs() || ID > 0) {
     Error("source location entry ID out-of-range for AST file");
-    return Failure;
+    return true;
   }
 
   ModuleFile *F = GlobalSLocEntryMap.find(-ID)->second;
@@ -1100,7 +1100,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
       Code == llvm::bitc::ENTER_SUBBLOCK ||
       Code == llvm::bitc::DEFINE_ABBREV) {
     Error("incorrectly-formatted source location entry in AST file");
-    return Failure;
+    return true;
   }
 
   RecordData Record;
@@ -1109,19 +1109,18 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
   switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
   default:
     Error("incorrectly-formatted source location entry in AST file");
-    return Failure;
+    return true;
 
   case SM_SLOC_FILE_ENTRY: {
     // We will detect whether a file changed and return 'Failure' for it, but
     // we will also try to fail gracefully by setting up the SLocEntry.
-    ASTReader::ASTReadResult Result = Success;    
     unsigned InputID = Record[4];
     InputFile IF = getInputFile(*F, InputID);
     const FileEntry *File = IF.getPointer();
     bool OverriddenBuffer = IF.getInt();
 
     if (!IF.getPointer())
-      return IgnorePCH;
+      return true;
 
     SourceLocation IncludeLoc = ReadSourceLocation(*F, Record[1]);
     if (IncludeLoc.isInvalid() && F->Kind != MK_MainFile) {
@@ -1158,7 +1157,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
       
       if (RecCode != SM_SLOC_BUFFER_BLOB) {
         Error("AST record has invalid code");
-        return Failure;
+        return true;
       }
       
       llvm::MemoryBuffer *Buffer
@@ -1167,8 +1166,6 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
       SourceMgr.overrideFileContents(File, Buffer);
     }
 
-    if (Result == Failure)
-      return Failure;
     break;
   }
 
@@ -1182,7 +1179,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
 
     if (RecCode != SM_SLOC_BUFFER_BLOB) {
       Error("AST record has invalid code");
-      return Failure;
+      return true;
     }
 
     llvm::MemoryBuffer *Buffer
@@ -1214,7 +1211,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
   }
   }
 
-  return Success;
+  return false;
 }
 
 /// \brief Find the location where the module F is imported.
@@ -1847,7 +1844,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
       if (!DisableValidation) {
         for (unsigned I = 0, N = Record[0]; I < N; ++I)
           if (!getInputFile(F, I+1).getPointer())
-            return IgnorePCH;
+            return OutOfDate;
       }
 
       return Success;
@@ -1890,13 +1887,13 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
       if (Record[0] != VERSION_MAJOR && !DisableValidation) {
         Diag(Record[0] < VERSION_MAJOR? diag::warn_pch_version_too_old
                                       : diag::warn_pch_version_too_new);
-        return IgnorePCH;
+        return VersionMismatch;
       }
 
       bool hasErrors = Record[5];
       if (hasErrors && !DisableValidation && !AllowASTWithCompilerErrors) {
         Diag(diag::err_pch_with_compiler_errors);
-        return IgnorePCH;
+        return HadErrors;
       }
 
       F.RelocatablePCH = Record[4];
@@ -1905,7 +1902,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
       StringRef ASTBranch(BlobStart, BlobLen);
       if (StringRef(CurBranch) != ASTBranch && !DisableValidation) {
         Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
-        return IgnorePCH;
+        return VersionMismatch;
       }
       break;
     }
@@ -1925,7 +1922,10 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
         switch(ReadASTCore(ImportedFile, ImportedKind, &F, Loaded)) {
         case Failure: return Failure;
           // If we have to ignore the dependency, we'll have to ignore this too.
-        case IgnorePCH: return IgnorePCH;
+        case OutOfDate: return OutOfDate;
+        case VersionMismatch: return VersionMismatch;
+        case ConfigurationMismatch: return ConfigurationMismatch;
+        case HadErrors: return HadErrors;
         case Success: break;
         }
       }
@@ -1935,7 +1935,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
     case LANGUAGE_OPTIONS:
       if (Listener && &F == *ModuleMgr.begin() && 
           ParseLanguageOptions(F, Record) && !DisableValidation)
-        return IgnorePCH;
+        return ConfigurationMismatch;
       break;
 
     case TARGET_OPTIONS: {
@@ -1955,7 +1955,7 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
         }
 
         if (Listener->ReadTargetOptions(F, TargetOpts) && !DisableValidation)
-          return IgnorePCH;
+          return ConfigurationMismatch;
       }
       break;
     }
@@ -1982,13 +1982,12 @@ ASTReader::ASTReadResult ASTReader::ReadControlBlock(ModuleFile &F,
   return Failure;
 }
 
-ASTReader::ASTReadResult
-ASTReader::ReadASTBlock(ModuleFile &F) {
+bool ASTReader::ReadASTBlock(ModuleFile &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
   if (Stream.EnterSubBlock(AST_BLOCK_ID)) {
     Error("malformed block record in AST file");
-    return Failure;
+    return true;
   }
 
   // Read all of the records and blocks for the AST file.
@@ -1998,14 +1997,14 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     if (Code == llvm::bitc::END_BLOCK) {
       if (Stream.ReadBlockEnd()) {
         Error("error at end of module block in AST file");
-        return Failure;
+        return true;
       }
 
       DeclContext *DC = Context.getTranslationUnitDecl();
       if (!DC->hasExternalVisibleStorage() && DC->hasExternalLexicalStorage())
         DC->setMustBuildLookupTable();
 
-      return Success;
+      return false;
     }
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
@@ -2020,14 +2019,14 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
             // Read the abbrevs.
             ReadBlockAbbrevs(F.DeclsCursor, DECLTYPES_BLOCK_ID)) {
           Error("malformed block record in AST file");
-          return Failure;
+          return true;
         }
         break;
 
       case DECL_UPDATES_BLOCK_ID:
         if (Stream.SkipBlock()) {
           Error("malformed block record in AST file");
-          return Failure;
+          return true;
         }
         break;
 
@@ -2039,7 +2038,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         if (Stream.SkipBlock() ||
             ReadBlockAbbrevs(F.MacroCursor, PREPROCESSOR_BLOCK_ID)) {
           Error("malformed block record in AST file");
-          return Failure;
+          return true;
         }
         F.MacroStartOffset = F.MacroCursor.GetCurrentBitNo();
         break;
@@ -2050,7 +2049,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
             ReadBlockAbbrevs(F.PreprocessorDetailCursor, 
                              PREPROCESSOR_DETAIL_BLOCK_ID)) {
           Error("malformed preprocessor detail record in AST file");
-          return Failure;
+          return true;
         }
         F.PreprocessorDetailStartOffset
           = F.PreprocessorDetailCursor.GetCurrentBitNo();
@@ -2062,31 +2061,13 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         break;
         
       case SOURCE_MANAGER_BLOCK_ID:
-        switch (ReadSourceManagerBlock(F)) {
-        case Success:
-          break;
-
-        case Failure:
-          Error("malformed source manager block in AST file");
-          return Failure;
-
-        case IgnorePCH:
-          return IgnorePCH;
-        }
+        if (ReadSourceManagerBlock(F))
+          return true;
         break;
 
       case SUBMODULE_BLOCK_ID:
-        switch (ReadSubmoduleBlock(F)) {
-        case Success:
-          break;
-          
-        case Failure:
-          Error("malformed submodule block in AST file");
-          return Failure;
-          
-        case IgnorePCH:
-          return IgnorePCH;            
-        }
+        if (ReadSubmoduleBlock(F))
+          return true;
         break;
 
       case COMMENTS_BLOCK_ID: {
@@ -2094,7 +2075,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         if (Stream.SkipBlock() ||
             ReadBlockAbbrevs(C, COMMENTS_BLOCK_ID)) {
           Error("malformed comments block in AST file");
-          return Failure;
+          return true;
         }
         CommentsCursors.push_back(std::make_pair(C, &F));
         break;
@@ -2104,7 +2085,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         if (!Stream.SkipBlock())
           break;
         Error("malformed block record in AST file");
-        return Failure;
+        return true;
       }
       continue;
     }
@@ -2126,7 +2107,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case TYPE_OFFSET: {
       if (F.LocalNumTypes != 0) {
         Error("duplicate TYPE_OFFSET record in AST file");
-        return Failure;
+        return true;
       }
       F.TypeOffsets = (const uint32_t *)BlobStart;
       F.LocalNumTypes = Record[0];
@@ -2150,7 +2131,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case DECL_OFFSET: {
       if (F.LocalNumDecls != 0) {
         Error("duplicate DECL_OFFSET record in AST file");
-        return Failure;
+        return true;
       }
       F.DeclOffsets = (const DeclOffset *)BlobStart;
       F.LocalNumDecls = Record[0];
@@ -2220,7 +2201,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case IDENTIFIER_OFFSET: {
       if (F.LocalNumIdentifiers != 0) {
         Error("duplicate IDENTIFIER_OFFSET record in AST file");
-        return Failure;
+        return true;
       }
       F.IdentifierOffsets = (const uint32_t *)BlobStart;
       F.LocalNumIdentifiers = Record[0];
@@ -2275,7 +2256,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case WEAK_UNDECLARED_IDENTIFIERS:
       if (Record.size() % 4 != 0) {
         Error("invalid weak identifiers record");
-        return Failure;
+        return true;
       }
         
       // FIXME: Ignore weak undeclared identifiers from non-original PCH 
@@ -2412,7 +2393,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         ModuleFile *OM = ModuleMgr.lookup(Name);
         if (!OM) {
           Error("SourceLocation remap refers to unknown module");
-          return Failure;
+          return true;
         }
 
         uint32_t SLocOffset = io::ReadUnalignedLE32(Data);
@@ -2453,7 +2434,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
 
     case SOURCE_MANAGER_LINE_TABLE:
       if (ParseLineTable(F, Record))
-        return Failure;
+        return true;
       break;
 
     case SOURCE_LOCATION_PRELOADS: {
@@ -2461,7 +2442,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       // which is based off F.SLocEntryBaseID.
       if (!F.PreloadSLocEntries.empty()) {
         Error("Multiple SOURCE_LOCATION_PRELOADS records in AST file");
-        return Failure;
+        return true;
       }
       
       F.PreloadSLocEntries.swap(Record);
@@ -2488,7 +2469,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case VTABLE_USES:
       if (Record.size() % 3 != 0) {
         Error("Invalid VTABLE_USES record");
-        return Failure;
+        return true;
       }
         
       // Later tables overwrite earlier ones.
@@ -2512,12 +2493,12 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case PENDING_IMPLICIT_INSTANTIATIONS:
       if (PendingInstantiations.size() % 2 != 0) {
         Error("Invalid existing PendingInstantiations");
-        return Failure;
+        return true;
       }
 
       if (Record.size() % 2 != 0) {
         Error("Invalid PENDING_IMPLICIT_INSTANTIATIONS block");
-        return Failure;
+        return true;
       }
 
       for (unsigned I = 0, N = Record.size(); I != N; /* in loop */) {
@@ -2570,7 +2551,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case DECL_UPDATE_OFFSETS: {
       if (Record.size() % 2 != 0) {
         Error("invalid DECL_UPDATE_OFFSETS block in AST file");
-        return Failure;
+        return true;
       }
       for (unsigned I = 0, N = Record.size(); I != N; I += 2)
         DeclUpdateOffsets[getGlobalDeclID(F, Record[I])]
@@ -2581,7 +2562,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case DECL_REPLACEMENTS: {
       if (Record.size() % 3 != 0) {
         Error("invalid DECL_REPLACEMENTS block in AST file");
-        return Failure;
+        return true;
       }
       for (unsigned I = 0, N = Record.size(); I != N; I += 3)
         ReplacedDecls[getGlobalDeclID(F, Record[I])]
@@ -2592,7 +2573,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case OBJC_CATEGORIES_MAP: {
       if (F.LocalNumObjCCategoriesInMap != 0) {
         Error("duplicate OBJC_CATEGORIES_MAP record in AST file");
-        return Failure;
+        return true;
       }
       
       F.LocalNumObjCCategoriesInMap = Record[0];
@@ -2607,7 +2588,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case CXX_BASE_SPECIFIER_OFFSETS: {
       if (F.LocalNumCXXBaseSpecifiers != 0) {
         Error("duplicate CXX_BASE_SPECIFIER_OFFSETS record in AST file");
-        return Failure;
+        return true;
       }
       
       F.LocalNumCXXBaseSpecifiers = Record[0];
@@ -2619,7 +2600,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case DIAG_PRAGMA_MAPPINGS:
       if (Record.size() % 2 != 0) {
         Error("invalid DIAG_USER_MAPPINGS block in AST file");
-        return Failure;
+        return true;
       }
         
       if (F.PragmaDiagMappings.empty())
@@ -2698,7 +2679,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case LOCAL_REDECLARATIONS_MAP: {
       if (F.LocalNumRedeclarationsInMap != 0) {
         Error("duplicate LOCAL_REDECLARATIONS_MAP record in AST file");
-        return Failure;
+        return true;
       }
       
       F.LocalNumRedeclarationsInMap = Record[0];
@@ -2719,7 +2700,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case MACRO_OFFSET: {
       if (F.LocalNumMacros != 0) {
         Error("duplicate MACRO_OFFSET record in AST file");
-        return Failure;
+        return true;
       }
       F.MacroOffsets = (const uint32_t *)BlobStart;
       F.LocalNumMacros = Record[0];
@@ -2757,7 +2738,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     }
   }
   Error("premature end of bitstream in AST file");
-  return Failure;
+  return true;
 }
 
 void ASTReader::makeNamesVisible(const HiddenNames &Names) {
@@ -2897,7 +2878,10 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   llvm::SmallVector<ModuleFile *, 4> Loaded;
   switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0, Loaded)) {
   case Failure: return Failure;
-  case IgnorePCH: return IgnorePCH;
+  case OutOfDate: return OutOfDate;
+  case VersionMismatch: return VersionMismatch;
+  case ConfigurationMismatch: return ConfigurationMismatch;
+  case HadErrors: return HadErrors;
   case Success: break;
   }
 
@@ -2910,11 +2894,8 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     ModuleFile &F = **M;
 
     // Read the AST block.
-    switch(ReadASTBlock(F)) {
-    case Failure: return Failure;
-    case IgnorePCH: return IgnorePCH;
-    case Success: break;
-    }
+    if (ReadASTBlock(F))
+      return Failure;
 
     // Once read, set the ModuleFile bit base offset and update the size in 
     // bits of all files we've seen.
@@ -2939,7 +2920,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
       // if DisableValidation is true, defines that were set on command-line
       // but not in the PCH file will not be added to SuggestedPredefines.
       CheckPredefinesBuffers())
-    return IgnorePCH;
+    return ConfigurationMismatch;
 
   // Mark all of the identifiers in the identifier table as being out of date,
   // so that various accessors know to check the loaded modules when the
@@ -3066,14 +3047,11 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
       case Success:
         break;
 
-      case Failure:
-        return Failure;
-
-      case IgnorePCH:
-        // FIXME: We could consider reading through to the end of this
-        // AST block, skipping subblocks, to see if there are other
-        // AST blocks elsewhere.
-        return IgnorePCH;
+      case Failure: return Failure;
+      case OutOfDate: return OutOfDate;
+      case VersionMismatch: return VersionMismatch;
+      case ConfigurationMismatch: return ConfigurationMismatch;
+      case HadErrors: return HadErrors;
       }
       break;
     case AST_BLOCK_ID:
@@ -3317,11 +3295,11 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
   return std::string();
 }
 
-ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
+bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
   // Enter the submodule block.
   if (F.Stream.EnterSubBlock(SUBMODULE_BLOCK_ID)) {
     Error("malformed submodule block record in AST file");
-    return Failure;
+    return true;
   }
 
   ModuleMap &ModMap = PP.getHeaderSearchInfo().getModuleMap();
@@ -3333,9 +3311,9 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     if (Code == llvm::bitc::END_BLOCK) {
       if (F.Stream.ReadBlockEnd()) {
         Error("error at end of submodule block in AST file");
-        return Failure;
+        return true;
       }
-      return Success;
+      return false;
     }
     
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
@@ -3343,7 +3321,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       F.Stream.ReadSubBlockID();
       if (F.Stream.SkipBlock()) {
         Error("malformed block record in AST file");
-        return Failure;
+        return true;
       }
       continue;
     }
@@ -3364,12 +3342,12 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_DEFINITION: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
 
       if (Record.size() < 7) {
         Error("malformed module definition");
-        return Failure;
+        return true;
       }
       
       StringRef Name(BlobStart, BlobLen);
@@ -3395,7 +3373,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       if (GlobalIndex >= SubmodulesLoaded.size() ||
           SubmodulesLoaded[GlobalIndex]) {
         Error("too many submodules");
-        return Failure;
+        return true;
       }
       
       CurrentModule->setASTFile(F.File);
@@ -3414,7 +3392,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_UMBRELLA_HEADER: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
 
       if (!CurrentModule)
@@ -3426,7 +3404,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
           ModMap.setUmbrellaHeader(CurrentModule, Umbrella);
         else if (CurrentModule->getUmbrellaHeader() != Umbrella) {
           Error("mismatched umbrella headers in submodule");
-          return Failure;
+          return true;
         }
       }
       break;
@@ -3435,7 +3413,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_HEADER: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
 
       if (!CurrentModule)
@@ -3455,7 +3433,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_EXCLUDED_HEADER: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
 
       if (!CurrentModule)
@@ -3475,7 +3453,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_TOPHEADER: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
 
       if (!CurrentModule)
@@ -3491,7 +3469,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_UMBRELLA_DIR: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
       
       if (!CurrentModule)
@@ -3504,7 +3482,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
           ModMap.setUmbrellaDir(CurrentModule, Umbrella);
         else if (CurrentModule->getUmbrellaDir() != Umbrella) {
           Error("mismatched umbrella directories in submodule");
-          return Failure;
+          return true;
         }
       }
       break;
@@ -3513,7 +3491,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_METADATA: {
       if (!First) {
         Error("submodule metadata record not at beginning of block");
-        return Failure;
+        return true;
       }
       First = false;
       
@@ -3539,7 +3517,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_IMPORTS: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
       
       if (!CurrentModule)
@@ -3560,7 +3538,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_EXPORTS: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
       
       if (!CurrentModule)
@@ -3584,7 +3562,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     case SUBMODULE_REQUIRES: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
-        return Failure;
+        return true;
       }
 
       if (!CurrentModule)
@@ -6032,7 +6010,7 @@ MacroID ASTReader::getGlobalMacroID(ModuleFile &M, unsigned LocalID) {
 }
 
 bool ASTReader::ReadSLocEntry(int ID) {
-  return ReadSLocEntryRecord(ID) != Success;
+  return ReadSLocEntryRecord(ID);
 }
 
 serialization::SubmoduleID

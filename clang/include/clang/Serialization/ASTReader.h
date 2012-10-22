@@ -210,7 +210,26 @@ class ASTReader
 public:
   typedef SmallVector<uint64_t, 64> RecordData;
 
-  enum ASTReadResult { Success, Failure, IgnorePCH };
+  /// \brief The result of reading the control block of an AST file, which
+  /// can fail for various reasons.
+  enum ASTReadResult {
+    /// \brief The control block was read successfully. Aside from failures,
+    /// the AST file is safe to read into the current context.
+    Success,
+    /// \brief The AST file itself appears corrupted.
+    Failure,
+    /// \brief The AST file is out-of-date relative to its input files,
+    /// and needs to be regenerated.
+    OutOfDate,
+    /// \brief The AST file was written by a different version of Clang.
+    VersionMismatch,
+    /// \brief The AST file was writtten with a different language/target
+    /// configuration.
+    ConfigurationMismatch,
+    /// \brief The AST file has errors.
+    HadErrors
+  };
+  
   /// \brief Types of AST files.
   friend class PCHValidator;
   friend class ASTDeclReader;
@@ -877,14 +896,14 @@ private:
                             llvm::SmallVectorImpl<ModuleFile *> &Loaded);
   ASTReadResult ReadControlBlock(ModuleFile &F,
                                  llvm::SmallVectorImpl<ModuleFile *> &Loaded);
-  ASTReadResult ReadASTBlock(ModuleFile &F);
+  bool ReadASTBlock(ModuleFile &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
-  ASTReadResult ReadSourceManagerBlock(ModuleFile &F);
-  ASTReadResult ReadSLocEntryRecord(int ID);
+  bool ReadSourceManagerBlock(ModuleFile &F);
+  bool ReadSLocEntryRecord(int ID);
   llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(ModuleFile *F);
-  ASTReadResult ReadSubmoduleBlock(ModuleFile &F);
+  bool ReadSubmoduleBlock(ModuleFile &F);
   bool ParseLanguageOptions(const ModuleFile &M, const RecordData &Record);
   
   struct RecordLocation {
