@@ -696,7 +696,8 @@ Module::FindTypes (const SymbolContext& sc,
     std::string type_scope;
     std::string type_basename;
     const bool append = true;
-    if (Type::GetTypeScopeAndBasename (type_name_cstr, type_scope, type_basename))
+    TypeClass type_class = eTypeClassAny;
+    if (Type::GetTypeScopeAndBasename (type_name_cstr, type_scope, type_basename, type_class))
     {
         // Check if "name" starts with "::" which means the qualified type starts
         // from the root namespace and implies and exact match. The typenames we
@@ -711,14 +712,25 @@ Module::FindTypes (const SymbolContext& sc,
         ConstString type_basename_const_str (type_basename.c_str());
         if (FindTypes_Impl(sc, type_basename_const_str, NULL, append, max_matches, types))
         {
-            types.RemoveMismatchedTypes (type_scope, type_basename, exact_match);
+            types.RemoveMismatchedTypes (type_scope, type_basename, type_class, exact_match);
             num_matches = types.GetSize();
         }
     }
     else
     {
         // The type is not in a namespace/class scope, just search for it by basename
-        num_matches = FindTypes_Impl(sc, name, NULL, append, max_matches, types);
+        if (type_class != eTypeClassAny)
+        {
+            // The "type_name_cstr" will have been modified if we have a valid type class
+            // prefix (like "struct", "class", "union", "typedef" etc).
+            num_matches = FindTypes_Impl(sc, ConstString(type_name_cstr), NULL, append, max_matches, types);
+            types.RemoveMismatchedTypes (type_class);
+            num_matches = types.GetSize();
+        }
+        else
+        {
+            num_matches = FindTypes_Impl(sc, name, NULL, append, max_matches, types);
+        }
     }
     
     return num_matches;

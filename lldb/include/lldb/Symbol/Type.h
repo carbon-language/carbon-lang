@@ -255,9 +255,10 @@ public:
     // From a fully qualified typename, split the type into the type basename
     // and the remaining type scope (namespaces/classes).
     static bool
-    GetTypeScopeAndBasename (const char* name_cstr,
+    GetTypeScopeAndBasename (const char* &name_cstr,
                              std::string &scope,
-                             std::string &basename);
+                             std::string &basename,
+                             lldb::TypeClass &type_class);
     void
     SetEncodingType (Type *encoding_type)
     {

@@ -61,7 +61,12 @@ public:
     void
     RemoveMismatchedTypes (const std::string &type_scope,
                            const std::string &type_basename,
+                           lldb::TypeClass type_class,
                            bool exact_match);
+
+    void
+    RemoveMismatchedTypes (lldb::TypeClass type_class);
+
 private:
     typedef std::multimap<lldb::user_id_t, lldb::TypeSP> collection;
     typedef collection::iterator iterator;

@@ -207,17 +207,19 @@ TypeList::RemoveMismatchedTypes (const char *qualified_typename,
 {
     std::string type_scope;
     std::string type_basename;
-    if (!Type::GetTypeScopeAndBasename (qualified_typename, type_scope, type_basename))
+    TypeClass type_class = eTypeClassAny;
+    if (!Type::GetTypeScopeAndBasename (qualified_typename, type_scope, type_basename, type_class))
     {
         type_basename = qualified_typename;
         type_scope.clear();
     }
-    return RemoveMismatchedTypes (type_scope, type_basename, exact_match);
+    return RemoveMismatchedTypes (type_scope, type_basename, type_class, exact_match);
 }
 
 void
 TypeList::RemoveMismatchedTypes (const std::string &type_scope,
                                  const std::string &type_basename,
+                                 TypeClass type_class,
                                  bool exact_match)
 {
     // Our "collection" type currently is a std::map which doesn't
@@ -232,6 +234,15 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
     {
         Type* the_type = pos->second.get();
         bool keep_match = false;
+        TypeClass match_type_class = eTypeClassAny;
+
+        if (type_class != eTypeClassAny)
+        {
+            match_type_class = ClangASTType::GetTypeClass (the_type->GetClangAST(),
+                                                           the_type->GetClangForwardType());
+            if ((match_type_class & type_class) == 0)
+                continue;
+        }
 
         ConstString match_type_name_const_str (the_type->GetQualifiedName());
         if (match_type_name_const_str)
@@ -241,7 +252,8 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
             std::string match_type_basename;
             if (Type::GetTypeScopeAndBasename (match_type_name,
                                                match_type_scope,
-                                               match_type_basename))
+                                               match_type_basename,
+                                               match_type_class))
             {
                 if (match_type_basename == type_basename)
                 {
@@ -295,6 +307,31 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
         {
             matching_types.insert (*pos);
         }
+    }
+    m_types.swap(matching_types);
+}
+
+void
+TypeList::RemoveMismatchedTypes (TypeClass type_class)
+{
+    if (type_class == eTypeClassAny)
+        return;
+
+    // Our "collection" type currently is a std::map which doesn't
+    // have any good way to iterate and remove items from the map
+    // so we currently just make a new list and add all of the matching
+    // types to it, and then swap it into m_types at the end
+    collection matching_types;
+    
+    iterator pos, end = m_types.end();
+    
+    for (pos = m_types.begin(); pos != end; ++pos)
+    {
+        Type* the_type = pos->second.get();
+        TypeClass match_type_class = ClangASTType::GetTypeClass (the_type->GetClangAST(),
+                                                                 the_type->GetClangForwardType());
+        if (match_type_class & type_class)
+            matching_types.insert (*pos);
     }
     m_types.swap(matching_types);
 }

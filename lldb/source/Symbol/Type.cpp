@@ -28,6 +28,8 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
+#include "llvm/ADT/StringRef.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -728,14 +730,43 @@ Type::GetQualifiedName ()
 
 
 bool
-Type::GetTypeScopeAndBasename (const char* name_cstr,
+Type::GetTypeScopeAndBasename (const char* &name_cstr,
                                std::string &scope,
-                               std::string &basename)
+                               std::string &basename,
+                               TypeClass &type_class)
 {
     // Protect against null c string.
     
+    type_class = eTypeClassAny;
+
     if (name_cstr && name_cstr[0])
     {
+        llvm::StringRef name_strref(name_cstr);
+        if (name_strref.startswith("struct "))
+        {
+            name_cstr += 7;
+            type_class = eTypeClassStruct;
+        }
+        else if (name_strref.startswith("class "))
+        {
+            name_cstr += 6;
+            type_class = eTypeClassClass;
+        }
+        else if (name_strref.startswith("union "))
+        {
+            name_cstr += 6;
+            type_class = eTypeClassUnion;
+        }
+        else if (name_strref.startswith("enum "))
+        {
+            name_cstr += 5;
+            type_class = eTypeClassEnumeration;
+        }
+        else if (name_strref.startswith("typedef "))
+        {
+            name_cstr += 8;
+            type_class = eTypeClassTypedef;
+        }
         const char *basename_cstr = name_cstr;
         const char* namespace_separator = ::strstr (basename_cstr, "::");
         if (namespace_separator)
