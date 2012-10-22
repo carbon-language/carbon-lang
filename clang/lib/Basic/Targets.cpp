@@ -3213,7 +3213,9 @@ public:
       Builder.defineMacro("__THUMB_INTERWORK__");
 
     if (ABI == "aapcs" || ABI == "aapcs-linux") {
-      Builder.defineMacro("__ARM_EABI__");
+      // M-class CPUs on Darwin follow AAPCS, but not EABI.
+      if (!(getTriple().isOSDarwin() == llvm::Triple::IOS && CPUProfile == "M"))
+        Builder.defineMacro("__ARM_EABI__");
       Builder.defineMacro("__ARM_PCS", "1");
 
       if (!SoftFloat && !SoftFloatABI)
