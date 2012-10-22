@@ -3214,7 +3214,7 @@ public:
 
     if (ABI == "aapcs" || ABI == "aapcs-linux") {
       // M-class CPUs on Darwin follow AAPCS, but not EABI.
-      if (!(getTriple().isOSDarwin() == llvm::Triple::IOS && CPUProfile == "M"))
+      if (!(getTriple().isOSDarwin() && CPUProfile == "M"))
         Builder.defineMacro("__ARM_EABI__");
       Builder.defineMacro("__ARM_PCS", "1");
 
