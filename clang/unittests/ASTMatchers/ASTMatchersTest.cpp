@@ -2884,6 +2884,18 @@ TEST(HasAncestor, MatchesInImplicitCode) {
               hasAncestor(recordDecl(hasName("A")))))))));
 }
 
+TEST(HasParent, MatchesOnlyParent) {
+  EXPECT_TRUE(matches(
+      "void f() { if (true) { int x = 42; } }",
+      compoundStmt(hasParent(ifStmt()))));
+  EXPECT_TRUE(notMatches(
+      "void f() { for (;;) { int x = 42; } }",
+      compoundStmt(hasParent(ifStmt()))));
+  EXPECT_TRUE(notMatches(
+      "void f() { if (true) for (;;) { int x = 42; } }",
+      compoundStmt(hasParent(ifStmt()))));
+}
+
 TEST(TypeMatching, MatchesTypes) {
   EXPECT_TRUE(matches("struct S {};", qualType().bind("loc")));
 }

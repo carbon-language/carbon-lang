@@ -352,7 +352,7 @@ public:
                                   const Matcher<NamedDecl> &Base,
                                   BoundNodesTreeBuilder *Builder);
 
-  // Implements ASTMatchFinder::MatchesChildOf.
+  // Implements ASTMatchFinder::matchesChildOf.
   virtual bool matchesChildOf(const ast_type_traits::DynTypedNode &Node,
                               const DynTypedMatcher &Matcher,
                               BoundNodesTreeBuilder *Builder,
@@ -361,7 +361,7 @@ public:
     return matchesRecursively(Node, Matcher, Builder, 1, Traversal,
                               Bind);
   }
-  // Implements ASTMatchFinder::MatchesDescendantOf.
+  // Implements ASTMatchFinder::matchesDescendantOf.
   virtual bool matchesDescendantOf(const ast_type_traits::DynTypedNode &Node,
                                    const DynTypedMatcher &Matcher,
                                    BoundNodesTreeBuilder *Builder,
@@ -372,7 +372,8 @@ public:
   // Implements ASTMatchFinder::matchesAncestorOf.
   virtual bool matchesAncestorOf(const ast_type_traits::DynTypedNode &Node,
                                  const DynTypedMatcher &Matcher,
-                                 BoundNodesTreeBuilder *Builder) {
+                                 BoundNodesTreeBuilder *Builder,
+                                 AncestorMatchMode MatchMode) {
     if (!Parents) {
       // We always need to run over the whole translation unit, as
       // \c hasAncestor can escape any subtree.
@@ -395,6 +396,8 @@ public:
       Ancestor = I->second;
       if (Matcher.matches(Ancestor, this, Builder))
         return true;
+      if (MatchMode == ASTMatchFinder::AMM_ParentOnly)
+        return false;
     }
     return false;
   }

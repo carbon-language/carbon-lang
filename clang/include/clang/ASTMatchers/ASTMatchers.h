@@ -1402,6 +1402,24 @@ forEachDescendant(
     DescendantT>(DescendantMatcher);
 }
 
+/// \brief Matches AST nodes that have a parent that matches the provided
+/// matcher.
+///
+/// Given
+/// \code
+/// void f() { for (;;) { int x = 42; if (true) { int x = 43; } } }
+/// \endcode
+/// \c compoundStmt(hasParent(ifStmt())) matches "{ int x = 43; }".
+///
+/// Usable as: Any Matcher
+template <typename ParentT>
+internal::ArgumentAdaptingMatcher<internal::HasParentMatcher, ParentT>
+hasParent(const internal::Matcher<ParentT> &ParentMatcher) {
+  return internal::ArgumentAdaptingMatcher<
+    internal::HasParentMatcher,
+    ParentT>(ParentMatcher);
+}
+
 /// \brief Matches AST nodes that have an ancestor that matches the provided
 /// matcher.
 ///
