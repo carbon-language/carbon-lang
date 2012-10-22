@@ -1692,6 +1692,7 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID) {
   case INPUT_FILE: {
     unsigned StoredID = Record[0];
     assert(ID == StoredID && "Bogus stored ID or offset");
+    (void)StoredID;
     off_t StoredSize = (off_t)Record[1];
     time_t StoredTime = (time_t)Record[2];
     bool Overridden = (bool)Record[3];
