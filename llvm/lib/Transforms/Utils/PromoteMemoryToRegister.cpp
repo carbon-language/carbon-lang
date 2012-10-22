@@ -214,7 +214,7 @@ namespace {
 
     /// NewPhiNodes - The PhiNodes we're adding.
     ///
-    DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*> NewPhiNodes;
+    DenseMap<std::pair<unsigned, unsigned>, PHINode*> NewPhiNodes;
     
     /// PhiToAllocaMap - For each PHI node, keep track of which entry in Allocas
     /// it corresponds to.
@@ -588,7 +588,7 @@ void PromoteMem2Reg::run() {
   while (EliminatedAPHI) {
     EliminatedAPHI = false;
     
-    for (DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator I =
+    for (DenseMap<std::pair<unsigned, unsigned>, PHINode*>::iterator I =
            NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E;) {
       PHINode *PN = I->second;
 
@@ -612,7 +612,7 @@ void PromoteMem2Reg::run() {
   // have incoming values for all predecessors.  Loop over all PHI nodes we have
   // created, inserting undef values if they are missing any incoming values.
   //
-  for (DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator I =
+  for (DenseMap<std::pair<unsigned, unsigned>, PHINode*>::iterator I =
          NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
     // We want to do this once per basic block.  As such, only process a block
     // when we find the PHI that is the first entry in the block.
@@ -992,7 +992,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
 bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                                   unsigned &Version) {
   // Look up the basic-block in question.
-  PHINode *&PN = NewPhiNodes[std::make_pair(BB, AllocaNo)];
+  PHINode *&PN = NewPhiNodes[std::make_pair(BBNumbers[BB], AllocaNo)];
 
   // If the BB already has a phi node added for the i'th alloca then we're done!
   if (PN) return false;
