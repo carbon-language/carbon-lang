@@ -158,7 +158,8 @@ enum ActionType {
   AC_AsLex,
   AC_Assemble,
   AC_Disassemble,
-  AC_EDisassemble
+  AC_EDisassemble,
+  AC_MDisassemble
 };
 
 static cl::opt<ActionType>
@@ -172,6 +173,8 @@ Action(cl::desc("Action to perform:"),
                              "Disassemble strings of hex bytes"),
                   clEnumValN(AC_EDisassemble, "edis",
                              "Enhanced disassembly of strings of hex bytes"),
+                  clEnumValN(AC_MDisassemble, "mdis",
+                             "Marked up disassembly of strings of hex bytes"),
                   clEnumValEnd));
 
 static const Target *GetTarget(const char *ProgName) {
@@ -402,8 +405,9 @@ int main(int argc, char **argv) {
   OwningPtr<MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
 
+  MCInstPrinter *IP;
   if (FileType == OFT_AssemblyFile) {
-    MCInstPrinter *IP =
+    IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MCII, *MRI, *STI);
     MCCodeEmitter *CE = 0;
     MCAsmBackend *MAB = 0;
@@ -436,6 +440,9 @@ int main(int argc, char **argv) {
   case AC_Assemble:
     Res = AssembleInput(ProgName, TheTarget, SrcMgr, Ctx, *Str, *MAI, *STI);
     break;
+  case AC_MDisassemble:
+    IP->setUseMarkup(1);
+    // Fall through to do disassembly.
   case AC_Disassemble:
     Res = Disassembler::disassemble(*TheTarget, TripleName, *STI, *Str,
                                     *Buffer, SrcMgr, Out->os());

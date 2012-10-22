@@ -34,7 +34,11 @@ using namespace llvm;
 
 void X86ATTInstPrinter::printRegName(raw_ostream &OS,
                                      unsigned RegNo) const {
+  if (UseMarkup)
+    OS << "<reg:";
   OS << '%' << getRegisterName(RegNo);
+  if (UseMarkup)
+    OS << ">";
 }
 
 void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
@@ -151,17 +155,29 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
+    if (UseMarkup)
+      O << "<reg:";
     O << '%' << getRegisterName(Op.getReg());
+    if (UseMarkup)
+      O << ">";
   } else if (Op.isImm()) {
+    if (UseMarkup)
+      O << "<imm:";
     // Print X86 immediates as signed values.
     O << '$' << (int64_t)Op.getImm();
+    if (UseMarkup)
+      O << ">";
     
     if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
       *CommentStream << format("imm = 0x%" PRIX64 "\n", (uint64_t)Op.getImm());
     
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
+    if (UseMarkup)
+      O << "<imm:";
     O << '$' << *Op.getExpr();
+    if (UseMarkup)
+      O << ">";
   }
 }
 
@@ -172,6 +188,9 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   const MCOperand &DispSpec = MI->getOperand(Op+3);
   const MCOperand &SegReg = MI->getOperand(Op+4);
   
+  if (UseMarkup)
+    O << "<mem:";
+
   // If this has a segment register, print it.
   if (SegReg.getReg()) {
     printOperand(MI, Op+4, O);
@@ -196,9 +215,18 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
       O << ',';
       printOperand(MI, Op+2, O);
       unsigned ScaleVal = MI->getOperand(Op+1).getImm();
-      if (ScaleVal != 1)
-        O << ',' << ScaleVal;
+      if (ScaleVal != 1) {
+        O << ',';
+        if (UseMarkup)
+          O << "<imm:";
+        O << ScaleVal;
+        if (UseMarkup)
+          O << ">";
+      }
     }
     O << ')';
   }
+
+  if (UseMarkup)
+    O << ">";
 }

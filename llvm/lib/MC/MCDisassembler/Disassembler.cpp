@@ -184,3 +184,17 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
   }
   llvm_unreachable("Invalid DecodeStatus!");
 }
+
+//
+// LLVMSetDisasmOptions() sets the disassembler's options.  It returns 1 if it
+// can set all the Options and 0 otherwise.
+//
+int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
+  if (Options & LLVMDisassembler_Option_UseMarkup){
+      LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
+      MCInstPrinter *IP = DC->getIP();
+      IP->setUseMarkup(1);
+      Options &= ~LLVMDisassembler_Option_UseMarkup;
+  }
+  return (Options == 0);
+}

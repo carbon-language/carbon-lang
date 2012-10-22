@@ -146,6 +146,15 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                       LLVMSymbolLookupCallback SymbolLookUp);
 
 /**
+ * Set the disassembler's options.  Returns 1 if it can set the Options and 0
+ * otherwise.
+ */
+int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, uint64_t Options);
+
+/* The option to produce marked up assembly. */
+#define LLVMDisassembler_Option_UseMarkup 1
+
+/**
  * Dispose of a disassembler context.
  */
 void LLVMDisasmDispose(LLVMDisasmContextRef DC);

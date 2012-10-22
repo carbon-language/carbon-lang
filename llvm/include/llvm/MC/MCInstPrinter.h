@@ -33,12 +33,16 @@ protected:
   /// The current set of available features.
   unsigned AvailableFeatures;
 
+  /// True if we are printing marked up assembly.
+  bool UseMarkup;
+
   /// Utility function for printing annotations.
   void printAnnotation(raw_ostream &OS, StringRef Annot);
 public:
   MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
                 const MCRegisterInfo &mri)
-    : CommentStream(0), MAI(mai), MII(mii), MRI(mri), AvailableFeatures(0) {}
+    : CommentStream(0), MAI(mai), MII(mii), MRI(mri), AvailableFeatures(0),
+      UseMarkup(0) {}
 
   virtual ~MCInstPrinter();
 
@@ -59,6 +63,9 @@ public:
 
   unsigned getAvailableFeatures() const { return AvailableFeatures; }
   void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }
+
+  bool getUseMarkup() const { return UseMarkup; }
+  void setUseMarkup(bool Value) { UseMarkup = Value; }
 };
 
 } // namespace llvm
