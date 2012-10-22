@@ -97,9 +97,6 @@ public:
                                 const MCInstPrinter *IP,
                                 MCAsmParserSemaCallback &SI) = 0;
 
-  /// ParseStatement - Parse the next statement.
-  virtual bool ParseStatement() = 0;
-
   /// Warning - Emit a warning at the location \p L, with the message \p Msg.
   ///
   /// \return The return value is true, if warnings are fatal.
