@@ -3579,8 +3579,7 @@ enum AsmRewriteKind {
    AOK_Imm,
    AOK_Input,
    AOK_Output,
-   AOK_SizeDirective,
-   AOK_Skip
+   AOK_SizeDirective
 };
 
 struct AsmRewrite {
@@ -3620,23 +3619,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     // Clear the opcode.
     setOpcode(~0x0);
 
-    // Save the conditional ignore state of the parser prior to parsing the statement.
-    bool PreParseCondStateIgnore = TheCondState.Ignore;
-
-    // Save the starting point of this statement in case we need to skip it.
-    SMLoc Start = getLexer().getLoc();
-
     if (ParseStatement())
       return true;
-
-    // If PreParseCondStateIgnore is false, but TheCondState.Ignore is true, then we
-    // just parsed a directive that changed the state to ignore.  Don't skip 
-    // emitting this directive.
-    if (PreParseCondStateIgnore && TheCondState.Ignore) {
-      unsigned Len = getLexer().getLoc().getPointer() - Start.getPointer();
-      AsmStrRewrites.push_back(AsmRewrite(AOK_Skip, Start, Len));
-      continue;
-    }
 
     if (isInstruction()) {
       const MCInstrDesc &Desc = MII->get(getOpcode());
@@ -3743,15 +3727,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       OS << StringRef(Start, Loc - Start);
     PrevKind = Kind;
 
-    // Skip the original expression.
-    if (Kind == AOK_Skip) {
-      Start = Loc + (*I).Len;
-      continue;
-    }
-
     // Rewrite expressions in $N notation.
     switch (Kind) {
-    default: break;
     case AOK_Imm:
       OS << Twine("$$") + StringRef(Loc, (*I).Len);
       break;
