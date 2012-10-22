@@ -2224,16 +2224,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
                                              OPT_include_pth),
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
-    // PCH is handled specially, we need to extra the original include path.
-    if (A->getOption().matches(OPT_include_pch)) {
-      std::string OriginalFile =
-        ASTReader::getOriginalSourceFile(A->getValue(Args), FileMgr, Diags);
-      if (OriginalFile.empty())
-        continue;
-
-      Opts.Includes.push_back(OriginalFile);
-    } else
-      Opts.Includes.push_back(A->getValue(Args));
+    Opts.Includes.push_back(A->getValue(Args));
   }
 
   for (arg_iterator it = Args.filtered_begin(OPT_chain_include),

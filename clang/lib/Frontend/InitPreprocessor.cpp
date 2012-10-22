@@ -22,6 +22,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -79,6 +80,19 @@ static void AddImplicitIncludePTH(MacroBuilder &Builder, Preprocessor &PP,
       << ImplicitIncludePTH;
     return;
   }
+
+  AddImplicitInclude(Builder, OriginalFile, PP.getFileManager());
+}
+
+/// \brief Add an implicit \#include using the original file used to generate
+/// a PCH file.
+static void AddImplicitIncludePCH(MacroBuilder &Builder, Preprocessor &PP,
+                                  StringRef ImplicitIncludePCH) {
+  std::string OriginalFile =
+    ASTReader::getOriginalSourceFile(ImplicitIncludePCH, PP.getFileManager(),
+                                     PP.getDiagnostics());
+  if (OriginalFile.empty())
+    return;
 
   AddImplicitInclude(Builder, OriginalFile, PP.getFileManager());
 }
@@ -763,6 +777,8 @@ void clang::InitializePreprocessor(Preprocessor &PP,
     const std::string &Path = InitOpts.Includes[i];
     if (Path == InitOpts.ImplicitPTHInclude)
       AddImplicitIncludePTH(Builder, PP, Path);
+    else if (Path == InitOpts.ImplicitPCHInclude)
+      AddImplicitIncludePCH(Builder, PP, Path);
     else
       AddImplicitInclude(Builder, Path, PP.getFileManager());
   }
