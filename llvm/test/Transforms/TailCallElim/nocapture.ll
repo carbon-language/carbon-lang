@@ -1,7 +1,7 @@
 ; RUN: opt %s -tailcallelim -S | FileCheck %s
+; XFAIL: *
 
 declare void @use(i8* nocapture, i8* nocapture)
-declare void @boring()
 
 define i8* @foo(i8* nocapture %A, i1 %cond) {
 ; CHECK: tailrecurse:
@@ -19,9 +19,7 @@ cond_true:
 cond_false:
 ; CHECK: cond_false
   call void @use(i8* %A, i8* %B)
-; CHECK: call void @use(i8* %A.tr, i8* %B)
-  call void @boring()
-; CHECK: tail call void @boring()
+; CHECK: tail call void @use(i8* %A.tr, i8* %B)
   ret i8* null
 ; CHECK: ret i8* null
 }
