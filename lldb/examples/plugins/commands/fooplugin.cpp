@@ -1,3 +1,12 @@
+//===-- fooplugin.cpp -------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 /*
 An example plugin for LLDB that provides a new foo command with a child subcommand
 Compile this into a dylib foo.dylib and load by placing in appropriate locations on disk or
