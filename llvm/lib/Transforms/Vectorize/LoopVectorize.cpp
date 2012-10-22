@@ -31,7 +31,7 @@
 // Karrenberg, R. and Hack, S. Whole Function Vectorization.
 //
 // Other ideas/concepts are from:
-//  A. Zaks and D. Nuzman. Autovectorization in GCC—two years later.
+//  A. Zaks and D. Nuzman. Autovectorization in GCC-two years later.
 //
 //===----------------------------------------------------------------------===//
 #define LV_NAME "loop-vectorize"
@@ -75,10 +75,20 @@ namespace {
 // Forward declaration.
 class LoopVectorizationLegality;
 
-/// Vectorize a simple loop. This class performs the widening of simple single
-/// basic block loops into vectors. It does not perform any
-/// vectorization-legality checks, and just does it.  It widens the vectors
-/// to a given vectorization factor (VF).
+/// SingleBlockLoopVectorizer vectorizes loops which contain only one basic
+/// block to a specified vectorization factor (VF).
+/// This class performs the widening of scalars into vectors, or multiple
+/// scalars. This class also implements the following features:
+/// * It inserts an epilogue loop for handling loops that don't have iteration
+///   counts that are known to be a multiple of the vectorization factor.
+/// * It handles the code generation for reduction variables.
+/// * Scalarization (implementation using scalars) of un-vectorizable
+///   instructions.
+/// SingleBlockLoopVectorizer does not perform any vectorization-legality
+/// checks, and relies on the caller to check for the different legality
+/// aspects. The SingleBlockLoopVectorizer relies on the
+/// LoopVectorizationLegality class to provide information about the induction
+/// and reduction variables that were found to a given vectorization factor.
 class SingleBlockLoopVectorizer {
 public:
   /// Ctor.
@@ -169,10 +179,19 @@ private:
   ValueMap WidenMap;
 };
 
-/// Perform the vectorization legality check. This class does not look at the
-/// profitability of vectorization, only the legality. At the moment the checks
-/// are very simple and focus on single basic block loops with a constant
-/// iteration count and no reductions.
+/// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
+/// to what vectorization factor.
+/// This class does not look at the profitability of vectorization, only the
+/// legality. This class has two main kinds of checks:
+/// * Memory checks - The code in canVectorizeMemory checks if vectorization
+///   will change the order of memory accesses in a way that will change the
+///   correctness of the program.
+/// * Scalars checks - The code in canVectorizeBlock checks for a number
+///   of different conditions, such as the availability of a single induction
+///   variable, that all types are supported and vectorize-able, etc.
+/// This code reflects the capabilities of SingleBlockLoopVectorizer.
+/// This class is also used by SingleBlockLoopVectorizer for identifying
+/// induction variable and the different reduction variables.
 class LoopVectorizationLegality {
 public:
   LoopVectorizationLegality(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl):
@@ -222,8 +241,10 @@ public:
   /// Returns the reduction variables found in the loop.
   ReductionList *getReductionVars() { return &Reductions; }
 
-  /// Check that the GEP operands are all uniform except for the last index
-  /// which has to be the induction variable.
+  /// Check if the pointer returned by this GEP is consecutive
+  /// when the index is vectorized. This happens when the last
+  /// index of the GEP is consecutive, like the induction variable.
+  /// This check allows us to vectorize A[idx] into a wide load/store.
   bool isConsecutiveGep(Value *Ptr);
 
 private:
@@ -281,8 +302,7 @@ struct LoopVectorize : public LoopPass {
   LoopInfo *LI;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
-
-    // Only vectorize innermost loops.
+    // We only vectorize innermost loops.
     if (!L->empty())
       return false;
 
@@ -297,7 +317,8 @@ struct LoopVectorize : public LoopPass {
     LoopVectorizationLegality LVL(L, SE, DL);
     unsigned MaxVF = LVL.getLoopMaxVF();
 
-    // Check that we can vectorize using the chosen vectorization width.
+    // Check that we can vectorize this loop using the chosen vectorization
+    // width.
     if (MaxVF < DefaultVectorizationFactor) {
       DEBUG(dbgs() << "LV: non-vectorizable MaxVF ("<< MaxVF << ").\n");
       return false;
@@ -305,7 +326,7 @@ struct LoopVectorize : public LoopPass {
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< MaxVF << ").\n");
 
-    // If we decided that is is *legal* to vectorizer the loop. Do it.
+    // If we decided that it is *legal* to vectorizer the loop then do it.
     SingleBlockLoopVectorizer LB(L, SE, LI, &LPM, DefaultVectorizationFactor);
     LB.vectorize(&LVL);
 
@@ -461,7 +482,7 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
   if (!IsVoidRetTy)
     VecResults = UndefValue::get(VectorType::get(Instr->getType(), VF));
 
-  // For each scalar that we create.
+  // For each scalar that we create:
   for (unsigned i = 0; i < VF; ++i) {
     Instruction *Cloned = Instr->clone();
     if (!IsVoidRetTy)
@@ -495,7 +516,7 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
    the vectorized instructions while the old loop will continue to run the
    scalar remainder.
 
-   [  ] <-- vector loop bypass.
+    [ ] <-- vector loop bypass.
   /  |
  /   v
 |   [ ]     <-- vector pre header.
