@@ -725,12 +725,22 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
       }
       case Instruction::Select: {
         // Widen selects.
-        // TODO: If the selector is loop invariant we can issue a select
-        // instruction with a scalar condition.
-        Value *A = getVectorValue(Inst->getOperand(0));
-        Value *B = getVectorValue(Inst->getOperand(1));
-        Value *C = getVectorValue(Inst->getOperand(2));
-        WidenMap[Inst] = Builder.CreateSelect(A, B, C);
+        // If the selector is loop invariant we can create a select
+        // instruction with a scalar condition. Otherwise, use vector-select.
+        Value *Cond = Inst->getOperand(0);
+        bool InvariantCond = SE->isLoopInvariant(SE->getSCEV(Cond), Orig);
+
+        // The condition can be loop invariant  but still defined inside the
+        // loop. This means that we can't just use the original 'cond' value.
+        // We have to take the 'vectorized' value and pick the first lane.
+        // Instcombine will make this a no-op.
+        Cond = getVectorValue(Cond);
+        if (InvariantCond)
+          Cond = Builder.CreateExtractElement(Cond, Builder.getInt32(0));
+
+        Value *Op0 = getVectorValue(Inst->getOperand(1));
+        Value *Op1 = getVectorValue(Inst->getOperand(2));
+        WidenMap[Inst] = Builder.CreateSelect(Cond, Op0, Op1);
         break;
       }
 
