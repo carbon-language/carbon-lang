@@ -683,6 +683,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   // Get the effective triple, which takes into account the deployment target.
   std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   llvm::Triple Triple(TripleStr);
+  std::string CPUName = getARMTargetCPU(Args, Triple);
 
   // Select the ABI to use.
   //
@@ -690,6 +691,14 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   const char *ABIName = 0;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue(Args);
+  } else if (Triple.isOSDarwin()) {
+    // The backend is hardwired to assume AAPCS for M-class processors, ensure
+    // the frontend matches that.
+    if (StringRef(CPUName).startswith("cortex-m")) {
+      ABIName = "aapcs";
+    } else {
+      ABIName = "apcs-gnu";
+    }
   } else {
     // Select the default based on the platform.
     switch(Triple.getEnvironment()) {
@@ -710,7 +719,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Set the CPU based on -march= and -mcpu=.
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(Args.MakeArgString(getARMTargetCPU(Args, Triple)));
+  CmdArgs.push_back(Args.MakeArgString(CPUName));
 
   // Determine floating point ABI from the options & target defaults.
   StringRef FloatABI = getARMFloatABI(D, Args, Triple);
