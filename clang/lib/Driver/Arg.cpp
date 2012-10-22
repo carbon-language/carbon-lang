@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Arg.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
 #include "llvm/ADT/SmallString.h"
@@ -15,22 +16,23 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang::driver;
+using clang::StringRef;
 
-Arg::Arg(const Option _Opt, unsigned _Index, const Arg *_BaseArg)
-  : Opt(_Opt), BaseArg(_BaseArg), Index(_Index),
+Arg::Arg(const Option _Opt, StringRef S, unsigned _Index, const Arg *_BaseArg)
+  : Opt(_Opt), BaseArg(_BaseArg), Spelling(S), Index(_Index),
     Claimed(false), OwnsValues(false) {
 }
 
-Arg::Arg(const Option _Opt, unsigned _Index,
+Arg::Arg(const Option _Opt, StringRef S, unsigned _Index,
          const char *Value0, const Arg *_BaseArg)
-  : Opt(_Opt), BaseArg(_BaseArg), Index(_Index),
+  : Opt(_Opt), BaseArg(_BaseArg), Spelling(S), Index(_Index),
     Claimed(false), OwnsValues(false) {
   Values.push_back(Value0);
 }
 
-Arg::Arg(const Option _Opt, unsigned _Index,
+Arg::Arg(const Option _Opt, StringRef S, unsigned _Index,
          const char *Value0, const char *Value1, const Arg *_BaseArg)
-  : Opt(_Opt), BaseArg(_BaseArg), Index(_Index),
+  : Opt(_Opt), BaseArg(_BaseArg), Spelling(S), Index(_Index),
     Claimed(false), OwnsValues(false) {
   Values.push_back(Value0);
   Values.push_back(Value1);
@@ -96,7 +98,7 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
   case Option::RenderCommaJoinedStyle: {
     SmallString<256> Res;
     llvm::raw_svector_ostream OS(Res);
-    OS << getOption().getName();
+    OS << getSpelling();
     for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
       if (i) OS << ',';
       OS << getValue(Args, i);
@@ -107,13 +109,13 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
 
  case Option::RenderJoinedStyle:
     Output.push_back(Args.GetOrMakeJoinedArgString(
-                       getIndex(), getOption().getName(), getValue(Args, 0)));
+                       getIndex(), getSpelling(), getValue(Args, 0)));
     for (unsigned i = 1, e = getNumValues(); i != e; ++i)
       Output.push_back(getValue(Args, i));
     break;
 
   case Option::RenderSeparateStyle:
-    Output.push_back(getOption().getName().data());
+    Output.push_back(Args.MakeArgString(getSpelling()));
     for (unsigned i = 0, e = getNumValues(); i != e; ++i)
       Output.push_back(getValue(Args, i));
     break;

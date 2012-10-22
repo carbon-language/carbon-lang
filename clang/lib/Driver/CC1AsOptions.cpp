@@ -15,11 +15,19 @@ using namespace clang::driver;
 using namespace clang::driver::options;
 using namespace clang::driver::cc1asoptions;
 
+#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+               HELPTEXT, METAVAR)
+#include "clang/Driver/CC1AsOptions.inc"
+#undef OPTION
+#undef PREFIX
+
 static const OptTable::Info CC1AsInfoTable[] = {
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define PREFIX(NAME, VALUE)
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
-  { NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, FLAGS, \
-    OPT_##GROUP, OPT_##ALIAS },
+  { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, \
+    FLAGS, OPT_##GROUP, OPT_##ALIAS },
 #include "clang/Driver/CC1AsOptions.inc"
 };
 

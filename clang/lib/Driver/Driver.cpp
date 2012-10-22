@@ -608,7 +608,7 @@ void Driver::PrintOptions(const ArgList &Args) const {
        it != ie; ++it, ++i) {
     Arg *A = *it;
     llvm::errs() << "Option " << i << " - "
-                 << "Name: \"" << A->getOption().getName() << "\", "
+                 << "Name: \"" << A->getOption().getPrefixedName() << "\", "
                  << "Values: {";
     for (unsigned j = 0; j < A->getNumValues(); ++j) {
       if (j)

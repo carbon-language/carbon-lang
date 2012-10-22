@@ -99,8 +99,9 @@ class OptionGroup<string name> {
 
 // Define the option class.
 
-class Option<string name, OptionKind kind> {
+class Option<list<string> prefixes, string name, OptionKind kind> {
   string EnumName = ?; // Uses the def name if undefined.
+  list<string> Prefixes = prefixes;
   string Name = name;
   OptionKind Kind = kind;
   // Used by MultiArg option kind.
@@ -114,15 +115,22 @@ class Option<string name, OptionKind kind> {
 
 // Helpers for defining options.
 
-class Flag<string name> : Option<name, KIND_FLAG>;
-class Joined<string name> : Option<name, KIND_JOINED>;
-class Separate<string name> : Option<name, KIND_SEPARATE>;
-class CommaJoined<string name> : Option<name, KIND_COMMAJOINED>;
-class MultiArg<string name, int numargs> : Option<name, KIND_MULTIARG> {
+class Flag<list<string> prefixes, string name>
+  : Option<prefixes, name, KIND_FLAG>;
+class Joined<list<string> prefixes, string name>
+  : Option<prefixes, name, KIND_JOINED>;
+class Separate<list<string> prefixes, string name>
+  : Option<prefixes, name, KIND_SEPARATE>;
+class CommaJoined<list<string> prefixes, string name>
+  : Option<prefixes, name, KIND_COMMAJOINED>;
+class MultiArg<list<string> prefixes, string name, int numargs>
+  : Option<prefixes, name, KIND_MULTIARG> {
   int NumArgs = numargs;
 }
-class JoinedOrSeparate<string name> : Option<name, KIND_JOINED_OR_SEPARATE>;
-class JoinedAndSeparate<string name> : Option<name, KIND_JOINED_AND_SEPARATE>;
+class JoinedOrSeparate<list<string> prefixes, string name>
+  : Option<prefixes, name, KIND_JOINED_OR_SEPARATE>;
+class JoinedAndSeparate<list<string> prefixes, string name>
+  : Option<prefixes, name, KIND_JOINED_AND_SEPARATE>;
 
 // Mix-ins for adding optional attributes.
 
@@ -137,5 +145,5 @@ class MetaVarName<string name> { string MetaVarName = name; }
 
 // FIXME: Have generator validate that these appear in correct position (and
 // aren't duplicated).
-def INPUT : Option<"<input>", KIND_INPUT>, Flags<[DriverOption,CC1Option]>;
-def UNKNOWN : Option<"<unknown>", KIND_UNKNOWN>;
+def INPUT : Option<[], "<input>", KIND_INPUT>, Flags<[DriverOption,CC1Option]>;
+def UNKNOWN : Option<[], "<unknown>", KIND_UNKNOWN>;

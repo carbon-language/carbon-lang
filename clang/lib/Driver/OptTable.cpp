@@ -55,6 +55,13 @@ static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
   if (int N = StrCmpOptionName(A.Name, B.Name))
     return N == -1;
 
+  for (const char * const *APre = A.Prefixes,
+                  * const *BPre = B.Prefixes;
+                          *APre != 0 && *BPre != 0; ++APre, ++BPre) {
+    if (int N = StrCmpOptionName(*APre, *BPre))
+      return N == -1;
+  }
+
   // Names are the same, check that classes are in order; exactly one
   // should be joined, and it should succeed the other.
   assert(((A.Kind == Option::JoinedClass) ^ (B.Kind == Option::JoinedClass)) &&
@@ -123,6 +130,26 @@ OptTable::OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos)
     }
   }
 #endif
+
+  // Build prefixes.
+  for (unsigned i = FirstSearchableIndex+1, e = getNumOptions(); i != e; ++i) {
+    if (const char *const *P = getInfo(i).Prefixes) {
+      for (; *P != 0; ++P) {
+        PrefixesUnion.insert(*P);
+      }
+    }
+  }
+
+  // Build prefix chars.
+  for (llvm::StringSet<>::const_iterator I = PrefixesUnion.begin(),
+                                         E = PrefixesUnion.end(); I != E; ++I) {
+    StringRef Prefix = I->getKey();
+    for (StringRef::const_iterator C = Prefix.begin(), CE = Prefix.end();
+                                   C != CE; ++C)
+      if (std::find(PrefixChars.begin(), PrefixChars.end(), *C)
+            == PrefixChars.end())
+        PrefixChars.push_back(*C);
+  }
 }
 
 OptTable::~OptTable() {
@@ -140,19 +167,41 @@ bool OptTable::isOptionHelpHidden(OptSpecifier id) const {
   return getInfo(id).Flags & options::HelpHidden;
 }
 
+static bool isInput(const llvm::StringSet<> &Prefixes, StringRef Arg) {
+  if (Arg == "-")
+    return true;
+  for (llvm::StringSet<>::const_iterator I = Prefixes.begin(),
+                                         E = Prefixes.end(); I != E; ++I)
+    if (Arg.startswith(I->getKey()))
+      return false;
+  return true;
+}
+
+/// \returns Matched size. 0 means no match.
+static unsigned matchOption(const OptTable::Info *I, StringRef Str) {
+  for (const char * const *Pre = I->Prefixes; *Pre != 0; ++Pre) {
+    StringRef Prefix(*Pre);
+    if (Str.startswith(Prefix) && Str.substr(Prefix.size()).startswith(I->Name))
+      return Prefix.size() + StringRef(I->Name).size();
+  }
+  return 0;
+}
+
 Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   unsigned Prev = Index;
   const char *Str = Args.getArgString(Index);
 
-  // Anything that doesn't start with '-' is an input, as is '-' itself.
-  if (Str[0] != '-' || Str[1] == '\0')
-    return new Arg(getOption(TheInputOptionID), Index++, Str);
+  // Anything that doesn't start with PrefixesUnion is an input, as is '-'
+  // itself.
+  if (isInput(PrefixesUnion, Str))
+    return new Arg(getOption(TheInputOptionID), Str, Index++, Str);
 
   const Info *Start = OptionInfos + FirstSearchableIndex;
   const Info *End = OptionInfos + getNumOptions();
+  StringRef Name = StringRef(Str).ltrim(PrefixChars);
 
   // Search for the first next option which could be a prefix.
-  Start = std::lower_bound(Start, End, Str);
+  Start = std::lower_bound(Start, End, Name.data());
 
   // Options are stored in sorted order, with '\0' at the end of the
   // alphabet. Since the only options which can accept a string must
@@ -162,17 +211,17 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   // FIXME: This is searching much more than necessary, but I am
   // blanking on the simplest way to make it fast. We can solve this
   // problem when we move to TableGen.
-  StringRef StrRef(Str);
   for (; Start != End; ++Start) {
+    unsigned ArgSize = 0;
     // Scan for first option which is a proper prefix.
     for (; Start != End; ++Start)
-      if (StrRef.startswith(Start->Name))
+      if ((ArgSize = matchOption(Start, Str)))
         break;
     if (Start == End)
       break;
 
     // See if this option matches.
-    if (Arg *A = getOption(Start - OptionInfos + 1).accept(Args, Index))
+    if (Arg *A = Option(Start, this).accept(Args, Index, ArgSize))
       return A;
 
     // Otherwise, see if this argument was missing values.
@@ -180,7 +229,7 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
       return 0;
   }
 
-  return new Arg(getOption(TheUnknownOptionID), Index++, Str);
+  return new Arg(getOption(TheUnknownOptionID), Str, Index++, Str);
 }
 
 InputArgList *OptTable::ParseArgs(const char* const *ArgBegin,
@@ -220,10 +269,11 @@ InputArgList *OptTable::ParseArgs(const char* const *ArgBegin,
 }
 
 static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
-  std::string Name = Opts.getOptionName(Id);
+  const Option O = Opts.getOption(Id);
+  std::string Name = O.getPrefixedName();
 
   // Add metavar, if used.
-  switch (Opts.getOptionKind(Id)) {
+  switch (O.getKind()) {
   case Option::GroupClass: case Option::InputClass: case Option::UnknownClass:
     llvm_unreachable("Invalid option with help text.");
 

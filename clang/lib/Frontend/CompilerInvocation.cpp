@@ -1001,10 +1001,10 @@ static void addWarningArgs(ArgList &Args, std::vector<std::string> &Warnings) {
   for (arg_iterator I = Args.filtered_begin(OPT_W_Group),
          E = Args.filtered_end(); I != E; ++I) {
     Arg *A = *I;
-    // If the argument is a pure flag, add its name (minus the "-W" at the beginning)
+    // If the argument is a pure flag, add its name (minus the "W" at the beginning)
     // to the warning list. Else, add its value (for the OPT_W case).
     if (A->getOption().getKind() == Option::FlagClass) {
-      Warnings.push_back(A->getOption().getName().substr(2));
+      Warnings.push_back(A->getOption().getName().substr(1));
     } else {
       for (unsigned Idx = 0, End = A->getNumValues();
            Idx < End; ++Idx) {

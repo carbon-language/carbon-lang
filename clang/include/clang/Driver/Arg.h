@@ -45,6 +45,9 @@ namespace driver {
     /// argument translation), if any.
     const Arg *BaseArg;
 
+    /// \brief How this instance of the option was spelled.
+    StringRef Spelling;
+
     /// \brief The index at which this argument appears in the containing
     /// ArgList.
     unsigned Index;
@@ -61,14 +64,16 @@ namespace driver {
     SmallVector<const char *, 2> Values;
 
   public:
-    Arg(const Option Opt, unsigned Index, const Arg *BaseArg = 0);
-    Arg(const Option Opt, unsigned Index,
+    Arg(const Option Opt, StringRef Spelling, unsigned Index,
+        const Arg *BaseArg = 0);
+    Arg(const Option Opt, StringRef Spelling, unsigned Index,
         const char *Value0, const Arg *BaseArg = 0);
-    Arg(const Option Opt, unsigned Index,
+    Arg(const Option Opt, StringRef Spelling, unsigned Index,
         const char *Value0, const char *Value1, const Arg *BaseArg = 0);
     ~Arg();
 
     const Option getOption() const { return Opt; }
+    StringRef getSpelling() const { return Spelling; }
     unsigned getIndex() const { return Index; }
 
     /// \brief Return the base argument which generated this arg.

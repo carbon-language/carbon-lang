@@ -1175,8 +1175,8 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
     (*it)->claim();
 
     // Skip over "-m".
-    assert(Name.startswith("-m") && "Invalid feature name.");
-    Name = Name.substr(2);
+    assert(Name.startswith("m") && "Invalid feature name.");
+    Name = Name.substr(1);
 
     bool IsNegative = Name.startswith("no-");
     if (IsNegative)
@@ -2283,7 +2283,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fbounds-checking=1");
   }
 
-  if (Args.hasArg(options::OPT__relocatable_pch))
+  if (Args.hasArg(options::OPT_relocatable_pch))
     CmdArgs.push_back("-relocatable-pch");
 
   if (Arg *A = Args.getLastArg(options::OPT_fconstant_string_class_EQ)) {

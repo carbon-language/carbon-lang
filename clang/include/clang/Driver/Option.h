@@ -95,6 +95,7 @@ namespace options {
       return OptionClass(Info->Kind);
     }
 
+    /// \brief Get the name of this option without any prefix.
     StringRef getName() const {
       assert(Info && "Must have a valid info!");
       return Info->Name;
@@ -110,6 +111,19 @@ namespace options {
       assert(Info && "Must have a valid info!");
       assert(Owner && "Must have a valid owner!");
       return Owner->getOption(Info->AliasID);
+    }
+
+    /// \brief Get the default prefix for this option.
+    StringRef getPrefix() const {
+      const char *Prefix = *Info->Prefixes;
+      return Prefix ? Prefix : StringRef();
+    }
+
+    /// \brief Get the name of this option with the default prefix.
+    std::string getPrefixedName() const {
+      std::string Ret = getPrefix();
+      Ret += getName();
+      return Ret;
     }
 
     unsigned getNumArgs() const { return Info->Param; }
@@ -174,7 +188,11 @@ namespace options {
     /// If the option accepts the current argument, accept() sets
     /// Index to the position where argument parsing should resume
     /// (even if the argument is missing values).
-    Arg *accept(const ArgList &Args, unsigned &Index) const;
+    ///
+    /// \parm ArgSize The number of bytes taken up by the matched Option prefix
+    ///               and name. This is used to determine where joined values
+    ///               start.
+    Arg *accept(const ArgList &Args, unsigned &Index, unsigned ArgSize) const;
 
     void dump() const;
   };

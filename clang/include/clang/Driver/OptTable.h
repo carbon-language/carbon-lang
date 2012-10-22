@@ -12,6 +12,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/OptSpecifier.h"
+#include "llvm/ADT/StringSet.h"
 
 namespace clang {
 namespace driver {
@@ -31,6 +32,9 @@ namespace driver {
   public:
     /// \brief Entry for a single option instance in the option data table.
     struct Info {
+      /// A null terminated array of prefix strings to apply to name while
+      /// matching.
+      const char *const *Prefixes;
       const char *Name;
       const char *HelpText;
       const char *MetaVar;
@@ -53,6 +57,11 @@ namespace driver {
     /// The index of the first option which can be parsed (i.e., is not a
     /// special option like 'input' or 'unknown', and is not an option group).
     unsigned FirstSearchableIndex;
+
+    /// The union of all option prefixes. If an argument does not begin with
+    /// one of these, it is an input.
+    llvm::StringSet<> PrefixesUnion;
+    std::string PrefixChars;
 
   private:
     const Info &getInfo(OptSpecifier Opt) const {

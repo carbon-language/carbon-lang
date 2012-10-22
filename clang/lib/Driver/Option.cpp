@@ -48,6 +48,12 @@ void Option::dump() const {
 #undef P
   }
 
+  llvm::errs() << " Prefixes:[";
+  for (const char * const *Pre = Info->Prefixes; *Pre != 0; ++Pre) {
+    llvm::errs() << '"' << *Pre << (*(Pre + 1) == 0 ? "\"" : "\", ");
+  }
+  llvm::errs() << ']';
+
   llvm::errs() << " Name:\"" << getName() << '"';
 
   const Option Group = getGroup();
@@ -84,21 +90,24 @@ bool Option::matches(OptSpecifier Opt) const {
   return false;
 }
 
-Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
+Arg *Option::accept(const ArgList &Args,
+                    unsigned &Index,
+                    unsigned ArgSize) const {
+  StringRef Spelling(Args.getArgString(Index), ArgSize);
   switch (getKind()) {
   case FlagClass:
-    if (getName().size() != strlen(Args.getArgString(Index)))
+    if (ArgSize != strlen(Args.getArgString(Index)))
       return 0;
 
-    return new Arg(getUnaliasedOption(), Index++);
+    return new Arg(getUnaliasedOption(), Spelling, Index++);
   case JoinedClass: {
-    const char *Value = Args.getArgString(Index) + getName().size();
-    return new Arg(getUnaliasedOption(), Index++, Value);
+    const char *Value = Args.getArgString(Index) + ArgSize;
+    return new Arg(getUnaliasedOption(), Spelling, Index++, Value);
   }
   case CommaJoinedClass: {
     // Always matches.
-    const char *Str = Args.getArgString(Index) + getName().size();
-    Arg *A = new Arg(getUnaliasedOption(), Index++);
+    const char *Str = Args.getArgString(Index) + ArgSize;
+    Arg *A = new Arg(getUnaliasedOption(), Spelling, Index++);
 
     // Parse out the comma separated values.
     const char *Prev = Str;
@@ -126,26 +135,26 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
   case SeparateClass:
     // Matches iff this is an exact match.
     // FIXME: Avoid strlen.
-    if (getName().size() != strlen(Args.getArgString(Index)))
+    if (ArgSize != strlen(Args.getArgString(Index)))
       return 0;
 
     Index += 2;
     if (Index > Args.getNumInputArgStrings())
       return 0;
 
-    return new Arg(getUnaliasedOption(),
+    return new Arg(getUnaliasedOption(), Spelling,
                    Index - 2, Args.getArgString(Index - 1));
   case MultiArgClass: {
     // Matches iff this is an exact match.
     // FIXME: Avoid strlen.
-    if (getName().size() != strlen(Args.getArgString(Index)))
+    if (ArgSize != strlen(Args.getArgString(Index)))
       return 0;
 
     Index += 1 + getNumArgs();
     if (Index > Args.getNumInputArgStrings())
       return 0;
 
-    Arg *A = new Arg(getUnaliasedOption(), Index - 1 - getNumArgs(),
+    Arg *A = new Arg(getUnaliasedOption(), Spelling, Index - 1 - getNumArgs(),
                       Args.getArgString(Index - getNumArgs()));
     for (unsigned i = 1; i != getNumArgs(); ++i)
       A->getValues().push_back(Args.getArgString(Index - getNumArgs() + i));
@@ -154,9 +163,9 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
   case JoinedOrSeparateClass: {
     // If this is not an exact match, it is a joined arg.
     // FIXME: Avoid strlen.
-    if (getName().size() != strlen(Args.getArgString(Index))) {
-      const char *Value = Args.getArgString(Index) + getName().size();
-      return new Arg(*this, Index++, Value);
+    if (ArgSize != strlen(Args.getArgString(Index))) {
+      const char *Value = Args.getArgString(Index) + ArgSize;
+      return new Arg(*this, Spelling, Index++, Value);
     }
 
     // Otherwise it must be separate.
@@ -164,7 +173,7 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     if (Index > Args.getNumInputArgStrings())
       return 0;
 
-    return new Arg(getUnaliasedOption(),
+    return new Arg(getUnaliasedOption(), Spelling,
                    Index - 2, Args.getArgString(Index - 1));
   }
   case JoinedAndSeparateClass:
@@ -173,9 +182,9 @@ Arg *Option::accept(const ArgList &Args, unsigned &Index) const {
     if (Index > Args.getNumInputArgStrings())
       return 0;
 
-    return new Arg(getUnaliasedOption(), Index - 2,
-                   Args.getArgString(Index-2)+getName().size(),
-                   Args.getArgString(Index-1));
+    return new Arg(getUnaliasedOption(), Spelling, Index - 2,
+                   Args.getArgString(Index - 2) + ArgSize,
+                   Args.getArgString(Index - 1));
   default:
     llvm_unreachable("Invalid option kind!");
   }
