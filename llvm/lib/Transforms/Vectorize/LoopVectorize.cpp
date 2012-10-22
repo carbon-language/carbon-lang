@@ -389,7 +389,7 @@ Value *SingleBlockLoopVectorizer::getConsecutiveVector(Value* Val) {
 }
 
 bool LoopVectorizationLegality::isConsecutiveGep(Value *Ptr) {
-  GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
+  GetElementPtrInst *Gep = dyn_cast_or_null<GetElementPtrInst>(Ptr);
   if (!Gep)
     return false;
 
