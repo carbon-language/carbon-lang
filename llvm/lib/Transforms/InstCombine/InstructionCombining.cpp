@@ -965,7 +965,7 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
         continue;
       }
 
-      if (Cast->getOperand(0)) {
+      if (Cast->getOpcode() == Instruction::Trunc) {
         // Op is truncated from a larger type, descale in the larger type.
         // Suppose Op = trunc X, and we descale X as Y * sext Scale.  Then
         //   trunc (Y * sext Scale) = (trunc Y) * Scale
