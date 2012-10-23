@@ -810,6 +810,10 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs) const {
     return false;
 
   unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+
+  if (SizeInRegs == 0)
+    return false;
+
   if (SizeInRegs > FreeRegs) {
     FreeRegs = 0;
     return false;

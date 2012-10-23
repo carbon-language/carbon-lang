@@ -21,7 +21,18 @@ struct S2 {
 };
 
 void __attribute__((regparm(3))) foo3(struct S2 a, int b);
-// declare void @_Z4foo12S1i(i32 inreg, i32 inreg) optsize
+// CHECK: declare void @_Z4foo32S2i(i32 inreg, i32 inreg)
 void bar3(struct S2 a, int b) {
   foo3(a, b);
+}
+
+struct S3 {
+  struct {
+    struct {} b[0];
+  } a;
+};
+__attribute((regparm(2))) void foo4(S3 a, int b);
+// CHECK: declare void @_Z4foo42S3i(%struct.S3* byval align 4, i32 inreg)
+void bar3(S3 a, int b) {
+  foo4(a, b);
 }
