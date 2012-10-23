@@ -53,7 +53,7 @@ Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, size_t size, const Cl
     {
         // If we don't have a known type, then we force it to unsigned int of the right size.
         ClangASTContext *ast_context = target.GetScratchClangASTContext();
-        clang_type_t clang_type = ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, size);
+        clang_type_t clang_type = ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 8 * size);
         m_type.SetClangType(ast_context->getASTContext(), clang_type);
     }
     
@@ -141,6 +141,14 @@ Watchpoint::CaptureWatchedValue (const ExecutionContext &exe_ctx)
     ConstString watch_name("$__lldb__watch_value");
     m_old_value_sp = m_new_value_sp;
     Address watch_address(GetLoadAddress());
+    if (!m_type.IsValid())
+    {
+        // Don't know how to report new & old values, since we couldn't make a scalar type for this watchpoint.
+        // This works around an assert in ValueObjectMemory::Create.
+        // FIXME: This should not happen, but if it does in some case we care about,
+        // we can go grab the value raw and print it as unsigned.
+        return false;
+    }
     m_new_value_sp = ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(), watch_name.AsCString(), watch_address, m_type);
     m_new_value_sp = m_new_value_sp->CreateConstantValue(watch_name);
     if (m_new_value_sp && m_new_value_sp->GetError().Success())
