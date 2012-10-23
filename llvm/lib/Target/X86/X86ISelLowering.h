@@ -236,6 +236,12 @@ namespace llvm {
       // VSEXT_MOVL - Vector move low and sign extend.
       VSEXT_MOVL,
 
+      // VZEXT - Vector integer zero-extend.
+      VZEXT,
+
+      // VSEXT - Vector integer signed-extend.
+      VSEXT,
+
       // VFPEXT - Vector FP extend.
       VFPEXT,
 
@@ -831,6 +837,8 @@ namespace llvm {
     SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue LowerVectorAllZeroTest(SDValue Op, SelectionDAG &DAG) const;
+
+    SDValue lowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

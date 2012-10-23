@@ -20,7 +20,7 @@ entry:
 ; CHECK: shuff_f
 define i32 @shuff_f(<4 x i8>* %A) {
 entry:
-; CHECK: pshufb
+; CHECK: pmovzxbd
 ; CHECK: paddd
 ; CHECK: pshufb
   %0 = load <4 x i8>* %A, align 8

@@ -3,7 +3,7 @@
 ; CHECK: load_store
 define void @load_store(<4 x i16>* %in) {
 entry:
-; CHECK: movsd
+; CHECK: pmovzxwd
   %A27 = load <4 x i16>* %in, align 4
   %A28 = add <4 x i16> %A27, %A27
 ; CHECK: movlpd
@@ -27,6 +27,6 @@ define <2 x i32> @load_64(<2 x i32>* %ptr) {
 BB:
   %t = load <2 x i32>* %ptr
   ret <2 x i32> %t
-;CHECK: movsd
+;CHECK: pmovzxdq
 ;CHECK: ret
 }

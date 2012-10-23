@@ -170,7 +170,7 @@ define void @add31i8(%i8vec31* nocapture sret %ret, %i8vec31* %ap, %i8vec31* %bp
 ; CHECK: rot
 %i8vec3pack = type { <3 x i8>, i8 }
 define %i8vec3pack  @rot() nounwind {
-; CHECK: movd {{-?[0-9]+}}(%rsp), {{%xmm[0-9]}}
+; CHECK: pmovzxbd {{-?[0-9]+}}(%rsp), {{%xmm[0-9]}}
 entry:
   %X = alloca %i8vec3pack, align 4
   %rot = alloca %i8vec3pack, align 4

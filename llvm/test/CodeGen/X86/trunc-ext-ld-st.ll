@@ -2,8 +2,7 @@
 
 ;CHECK: load_2_i8
 ; A single 16-bit load
-;CHECK: movzwl
-;CHECK: pshufb
+;CHECK: pmovzxbq
 ;CHECK: paddq
 ;CHECK: pshufb
 ; A single 16-bit store
@@ -19,8 +18,7 @@ define void @load_2_i8(<2 x i8>* %A)  {
 
 ;CHECK: load_2_i16
 ; Read 32-bits
-;CHECK: movd
-;CHECK: pshufb
+;CHECK: pmovzxwq
 ;CHECK: paddq
 ;CHECK: pshufb
 ;CHECK: movd
@@ -33,7 +31,7 @@ define void @load_2_i16(<2 x i16>* %A)  {
 } 
 
 ;CHECK: load_2_i32
-;CHECK: pshufd
+;CHECK: pmovzxdq
 ;CHECK: paddq
 ;CHECK: pshufd
 ;CHECK: ret
@@ -45,8 +43,7 @@ define void @load_2_i32(<2 x i32>* %A)  {
 } 
 
 ;CHECK: load_4_i8
-;CHECK: movd
-;CHECK: pshufb
+;CHECK: pmovzxbd
 ;CHECK: paddd
 ;CHECK: pshufb
 ;CHECK: ret
@@ -58,7 +55,7 @@ define void @load_4_i8(<4 x i8>* %A)  {
 } 
 
 ;CHECK: load_4_i16
-;CHECK: punpcklwd
+;CHECK: pmovzxwd
 ;CHECK: paddd
 ;CHECK: pshufb
 ;CHECK: ret
@@ -70,7 +67,7 @@ define void @load_4_i16(<4 x i16>* %A)  {
 } 
 
 ;CHECK: load_8_i8
-;CHECK: punpcklbw
+;CHECK: pmovzxbw
 ;CHECK: paddw
 ;CHECK: pshufb
 ;CHECK: ret

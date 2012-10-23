@@ -81,8 +81,7 @@ define <4 x i32*> @INT2PTR1(<4 x i8>* %p) nounwind {
 entry:
   %G = load <4 x i8>* %p
 ;CHECK: movl
-;CHECK: movd
-;CHECK: pshufb
+;CHECK: pmovzxbd
 ;CHECK: pand
   %K = inttoptr <4 x i8> %G to <4 x i32*>
 ;CHECK: ret
@@ -105,7 +104,7 @@ define <2 x i32*> @BITCAST1(<2 x i8*>* %p) nounwind {
 entry:
   %G = load <2 x i8*>* %p
 ;CHECK: movl
-;CHECK: movsd
+;CHECK: pmovzxdq
   %T = bitcast <2 x i8*> %G to <2 x i32*>
 ;CHECK: ret
   ret <2 x i32*> %T
