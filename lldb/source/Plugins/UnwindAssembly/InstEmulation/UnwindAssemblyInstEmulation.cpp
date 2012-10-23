@@ -108,11 +108,12 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                 // copy of the CFI at that point into prologue_completed_row for possible
                 // use later.
                 int instructions_since_last_prologue_insn = 0;     // # of insns since last CFI was update
-                bool prologue_complete = false;                    // true if we have finished prologue setup
 
                 bool reinstate_prologue_next_instruction = false;  // Next iteration, re-install the prologue row of CFI
 
                 bool last_instruction_restored_return_addr_reg = false;  // re-install the prologue row of CFI if the next instruction is a branch immediate
+
+                bool return_address_register_has_been_saved = false; // if we've seen the ra register get saved yet
 
                 UnwindPlan::RowSP prologue_completed_row;          // copy of prologue row of CFI
 
@@ -137,6 +138,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                 for (size_t idx=0; idx<num_instructions; ++idx)
                 {
                     m_curr_row_modified = false;
+                    m_curr_insn_restored_a_register = false;
                     inst = inst_list.GetInstructionAtIndex (idx).get();
                     if (inst)
                     {
@@ -166,15 +168,33 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                             *newrow = *m_curr_row.get();
                             m_curr_row.reset(newrow);
 
-                            instructions_since_last_prologue_insn = 0;
+                            // If m_curr_insn_restored_a_register == true, we're looking at an epilogue instruction.
+                            // Set instructions_since_last_prologue_insn to a very high number so we don't append 
+                            // any of these epilogue instructions to our prologue_complete row.
+                            if (m_curr_insn_restored_a_register == false && instructions_since_last_prologue_insn < 8)
+                              instructions_since_last_prologue_insn = 0;
+                            else
+                              instructions_since_last_prologue_insn = 99;
+
+                            UnwindPlan::Row::RegisterLocation pc_regloc;
+                            UnwindPlan::Row::RegisterLocation ra_regloc;
+
+                            // While parsing the instructions of this function, if we've ever
+                            // seen the return address register (aka lr on arm) in a non-IsSame() state,
+                            // it has been saved on the stack.  If it's evern back to IsSame(), we've
+                            // executed an epilogue.
+                            if (ra_reg_num != LLDB_INVALID_REGNUM
+                                && m_curr_row->GetRegisterInfo (ra_reg_num, ra_regloc)
+                                && !ra_regloc.IsSame())
+                            {
+                                return_address_register_has_been_saved = true;
+                            }
 
                             // If the caller's pc is "same", we've just executed an epilogue and we return to the caller
                             // after this instruction completes executing.
                             // If there are any instructions past this, there must have been flow control over this
                             // epilogue so we'll reinstate the original prologue setup instructions.
-                            UnwindPlan::Row::RegisterLocation pc_regloc;
-                            UnwindPlan::Row::RegisterLocation ra_regloc;
-                            if (prologue_complete
+                            if (prologue_completed_row.get()
                                 && pc_reg_num != LLDB_INVALID_REGNUM 
                                 && m_curr_row->GetRegisterInfo (pc_reg_num, pc_regloc)
                                 && pc_regloc.IsSame())
@@ -183,7 +203,8 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                                     log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- pc is <same>, restore prologue instructions.");
                                 reinstate_prologue_next_instruction = true;
                             }
-                            else if (prologue_complete
+                            else if (prologue_completed_row.get()
+                                     && return_address_register_has_been_saved
                                      && ra_reg_num != LLDB_INVALID_REGNUM
                                      && m_curr_row->GetRegisterInfo (ra_reg_num, ra_regloc)
                                      && ra_regloc.IsSame())
@@ -230,16 +251,15 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                                 m_curr_insn_is_branch_immediate = false;
                             }
  
-                            // If we haven't seen any prologue instructions for a while (4 instructions in a row),
-                            // the function prologue has probably completed.  Save a copy of that Row.
-                            if (prologue_complete == false && instructions_since_last_prologue_insn++ > 3)
+                            // Stop updating the prologue instructions if we've seen 8 non-prologue instructions
+                            // in a row.
+                            if (instructions_since_last_prologue_insn++ < 8)
                             {
-                                prologue_complete = true;
                                 UnwindPlan::Row *newrow = new UnwindPlan::Row;
                                 *newrow = *m_curr_row.get();
                                 prologue_completed_row.reset(newrow);
                                 if (log && log->GetVerbose())
-                                    log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- prologue has been set up, saving a copy.");
+                                    log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- saving a copy of the current row as the prologue row.");
                             }
                         }
                     }
@@ -622,6 +642,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 {
                     m_curr_row->SetRegisterLocationToSame (reg_num, must_replace);
                     m_curr_row_modified = true;
+                    m_curr_insn_restored_a_register = true;
                 }
             }
             break;

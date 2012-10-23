@@ -134,12 +134,13 @@ private:
         m_thread_ptr (NULL),
         m_unwind_plan_ptr (NULL),
         m_curr_row (),
-        m_curr_row_modified (false),
-        m_curr_insn_is_branch_immediate (false),
         m_cfa_reg_info (),
         m_fp_is_cfa (false),
         m_register_values (),
-        m_pushed_regs()
+        m_pushed_regs(),
+        m_curr_row_modified (false),
+        m_curr_insn_is_branch_immediate (false),
+        m_curr_insn_restored_a_register (false)
     {
         if (m_inst_emulator_ap.get())
         {
@@ -164,8 +165,6 @@ private:
     lldb_private::Thread* m_thread_ptr;
     lldb_private::UnwindPlan* m_unwind_plan_ptr;
     lldb_private::UnwindPlan::RowSP m_curr_row;
-    bool m_curr_row_modified;
-    bool m_curr_insn_is_branch_immediate;
     typedef std::map<uint64_t, uint64_t> PushedRegisterToAddrMap;
     uint64_t m_initial_sp;
     lldb_private::RegisterInfo m_cfa_reg_info;
@@ -173,6 +172,17 @@ private:
     typedef std::map<uint64_t, lldb_private::RegisterValue> RegisterValueMap;
     RegisterValueMap m_register_values;
     PushedRegisterToAddrMap m_pushed_regs;
+
+    // While processing the instruction stream, we need to communicate some state change
+    // information up to the higher level loop that makes decisions about how to push
+    // the unwind instructions for the UnwindPlan we're constructing.
+    
+    // The instruction we're processing updated the UnwindPlan::Row contents
+    bool m_curr_row_modified;
+    // The instruction we're examining is a branch immediate instruction
+    bool m_curr_insn_is_branch_immediate;
+    // The instruction we're processing restored a caller's reg value (e.g. in an epilogue)
+    bool m_curr_insn_restored_a_register;
 };
 
 #endif // liblldb_UnwindAssemblyInstEmulation_h_
