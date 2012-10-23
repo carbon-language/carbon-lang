@@ -2604,14 +2604,14 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
   MachineBasicBlock *IndirectBrMBB = FuncInfo.MBB;
 
   // Update machine-CFG edges with unique successors.
-  SmallVector<BasicBlock*, 32> succs;
-  succs.reserve(I.getNumSuccessors());
-  for (unsigned i = 0, e = I.getNumSuccessors(); i != e; ++i)
-    succs.push_back(I.getSuccessor(i));
-  array_pod_sort(succs.begin(), succs.end());
-  succs.erase(std::unique(succs.begin(), succs.end()), succs.end());
-  for (unsigned i = 0, e = succs.size(); i != e; ++i) {
-    MachineBasicBlock *Succ = FuncInfo.MBBMap[succs[i]];
+  SmallSet<BasicBlock*, 32> Done;
+  for (unsigned i = 0, e = I.getNumSuccessors(); i != e; ++i) {
+    BasicBlock *BB = I.getSuccessor(i);
+    bool Inserted = Done.insert(BB);
+    if (!Inserted)
+        continue;
+
+    MachineBasicBlock *Succ = FuncInfo.MBBMap[BB];
     addSuccessorWithWeight(IndirectBrMBB, Succ);
   }
 
