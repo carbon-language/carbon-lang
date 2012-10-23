@@ -46,3 +46,18 @@ namespace AnonObject {
     int(1); // expected-warning {{expression result unused}}
   }
 }
+
+// Test that constructing an object (which may have side effects) with
+// constructor arguments which are dependent doesn't produce an unused value
+// warning.
+namespace UnresolvedLookup {
+  struct Foo {
+    Foo(int i, int j);
+  };
+  template <typename T>
+  struct Bar {
+    void f(T t) {
+      Foo(t, 0);  // no warning
+    }
+  };
+}
