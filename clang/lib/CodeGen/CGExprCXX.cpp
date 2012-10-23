@@ -175,8 +175,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI && CGM.getCodeGenOpts().DebugInfo == CodeGenOptions::LimitedDebugInfo
-      && !isa<CallExpr>(ME->getBase())) {
+  if (DI &&
+      CGM.getCodeGenOpts().getDebugInfo() == CodeGenOptions::LimitedDebugInfo &&
+      !isa<CallExpr>(ME->getBase())) {
     QualType PQTy = ME->getBase()->IgnoreParenImpCasts()->getType();
     if (const PointerType * PTy = dyn_cast<PointerType>(PQTy)) {
       DI->getOrCreateRecordType(PTy->getPointeeType(), 

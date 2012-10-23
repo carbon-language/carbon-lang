@@ -1134,7 +1134,8 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
       const VarDecl *variable = ci->getVariable();
       DI->EmitLocation(Builder, variable->getLocation());
 
-      if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+      if (CGM.getCodeGenOpts().getDebugInfo()
+            >= CodeGenOptions::LimitedDebugInfo) {
         const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
         if (capture.isConstant()) {
           DI->EmitDeclareOfAutoVariable(variable, LocalDeclMap[variable],

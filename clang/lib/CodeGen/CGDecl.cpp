@@ -333,7 +333,7 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();
   if (DI &&
-      CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+      CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo) {
     DI->setLocation(D.getLocation());
     DI->EmitGlobalVariable(var, &D);
   }
@@ -914,7 +914,8 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   // Emit debug info for local var declaration.
   if (HaveInsertPoint())
     if (CGDebugInfo *DI = getDebugInfo()) {
-      if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+      if (CGM.getCodeGenOpts().getDebugInfo()
+            >= CodeGenOptions::LimitedDebugInfo) {
         DI->setLocation(D.getLocation());
         if (Target.useGlobalsForAutomaticVariables()) {
           DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr),
@@ -1498,8 +1499,8 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
       LocalDeclMap[&D] = Arg;
 
       if (CGDebugInfo *DI = getDebugInfo()) {
-        if (CGM.getCodeGenOpts().DebugInfo >=
-            CodeGenOptions::LimitedDebugInfo) {
+        if (CGM.getCodeGenOpts().getDebugInfo()
+              >= CodeGenOptions::LimitedDebugInfo) {
           DI->setLocation(D.getLocation());
           DI->EmitDeclareOfBlockLiteralArgVariable(*BlockInfo, Arg, Builder);
         }
@@ -1581,7 +1582,8 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
 
   // Emit debug info for param declaration.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+    if (CGM.getCodeGenOpts().getDebugInfo()
+          >= CodeGenOptions::LimitedDebugInfo) {
       DI->EmitDeclareOfArgVariable(&D, DeclPtr, ArgNo, Builder);
     }
   }

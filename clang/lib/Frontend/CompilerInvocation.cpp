@@ -182,7 +182,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts, ToArgsList &Res) {
 }
 
 static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
-  switch (Opts.DebugInfo) {
+  switch (Opts.getDebugInfo()) {
     case CodeGenOptions::NoDebugInfo:
       break;
     case CodeGenOptions::DebugLineTablesOnly:
@@ -313,7 +313,7 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
   for (unsigned i = 0, e = Opts.BackendOptions.size(); i != e; ++i)
     Res.push_back("-backend-option", Opts.BackendOptions[i]);
 
-  switch (Opts.DefaultTLSModel) {
+  switch (Opts.getDefaultTLSModel()) {
   case CodeGenOptions::GeneralDynamicTLSModel:
     break;
   case CodeGenOptions::LocalDynamicTLSModel:
@@ -1215,20 +1215,21 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.OptimizationLevel = OptLevel;
 
   // We must always run at least the always inlining pass.
-  Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
-    : CodeGenOptions::OnlyAlwaysInlining;
+  Opts.setInlining(
+    (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
+                                 : CodeGenOptions::OnlyAlwaysInlining);
   // -fno-inline-functions overrides OptimizationLevel > 1.
   Opts.NoInline = Args.hasArg(OPT_fno_inline);
-  Opts.Inlining = Args.hasArg(OPT_fno_inline_functions) ?
-    CodeGenOptions::OnlyAlwaysInlining : Opts.Inlining;
+  Opts.setInlining(Args.hasArg(OPT_fno_inline_functions) ?
+                     CodeGenOptions::OnlyAlwaysInlining : Opts.getInlining());
 
   if (Args.hasArg(OPT_gline_tables_only)) {
-    Opts.DebugInfo = CodeGenOptions::DebugLineTablesOnly;
+    Opts.setDebugInfo(CodeGenOptions::DebugLineTablesOnly);
   } else if (Args.hasArg(OPT_g_Flag)) {
     if (Args.hasFlag(OPT_flimit_debug_info, OPT_fno_limit_debug_info, true))
-      Opts.DebugInfo = CodeGenOptions::LimitedDebugInfo;
+      Opts.setDebugInfo(CodeGenOptions::LimitedDebugInfo);
     else
-      Opts.DebugInfo = CodeGenOptions::FullDebugInfo;
+      Opts.setDebugInfo(CodeGenOptions::FullDebugInfo);
   }
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
 
@@ -1308,7 +1309,9 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.StackRealignment = Args.hasArg(OPT_mstackrealign);
   if (Arg *A = Args.getLastArg(OPT_mstack_alignment)) {
     StringRef Val = A->getValue(Args);
-    Val.getAsInteger(10, Opts.StackAlignment);
+    unsigned StackAlignment = Opts.StackAlignment;
+    Val.getAsInteger(10, StackAlignment);
+    Opts.StackAlignment = StackAlignment;
   }
 
   if (Arg *A = Args.getLastArg(OPT_fobjc_dispatch_method_EQ)) {
@@ -1322,7 +1325,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Name;
       Success = false;
     } else {
-      Opts.ObjCDispatchMethod = Method;
+      Opts.setObjCDispatchMethod(
+        static_cast<CodeGenOptions::ObjCDispatchMethodKind>(Method));
     }
   }
 
@@ -1338,7 +1342,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Name;
       Success = false;
     } else {
-      Opts.DefaultTLSModel = static_cast<CodeGenOptions::TLSModel>(Model);
+      Opts.setDefaultTLSModel(static_cast<CodeGenOptions::TLSModel>(Model));
     }
   }
 

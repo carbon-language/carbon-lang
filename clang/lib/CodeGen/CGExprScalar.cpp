@@ -969,7 +969,8 @@ Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
   // debug info size.
   CGDebugInfo *DI = CGF.getDebugInfo();
   if (DI &&
-      CGF.CGM.getCodeGenOpts().DebugInfo == CodeGenOptions::LimitedDebugInfo) {
+      CGF.CGM.getCodeGenOpts().getDebugInfo()
+        == CodeGenOptions::LimitedDebugInfo) {
     QualType PQTy = E->getBase()->IgnoreParenImpCasts()->getType();
     if (const PointerType * PTy = dyn_cast<PointerType>(PQTy))
       if (FieldDecl *M = dyn_cast<FieldDecl>(E->getMemberDecl()))

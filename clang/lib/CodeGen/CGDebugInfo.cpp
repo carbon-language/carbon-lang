@@ -570,7 +570,7 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
 /// then emit record's fwd if debug info size reduction is enabled.
 llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
                                             llvm::DIFile Unit) {
-  if (CGM.getCodeGenOpts().DebugInfo != CodeGenOptions::LimitedDebugInfo)
+  if (CGM.getCodeGenOpts().getDebugInfo() != CodeGenOptions::LimitedDebugInfo)
     return getOrCreateType(PointeeTy, Unit);
 
   // Limit debug info for the pointee type.
@@ -1210,7 +1210,7 @@ CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
 /// getOrCreateRecordType - Emit record type's standalone debug info. 
 llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy, 
                                                 SourceLocation Loc) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   llvm::DIType T = getOrCreateType(RTy, getOrCreateFile(Loc));
   return T;
 }
@@ -1219,7 +1219,7 @@ llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy,
 /// debug info.
 llvm::DIType CGDebugInfo::getOrCreateInterfaceType(QualType D,
 						   SourceLocation Loc) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   llvm::DIType T = getOrCreateType(D, getOrCreateFile(Loc));
   DBuilder.retainType(T);
   return T;
@@ -1882,7 +1882,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   StringRef RDName = RD->getName();
 
   llvm::DIDescriptor RDContext;
-  if (CGM.getCodeGenOpts().DebugInfo == CodeGenOptions::LimitedDebugInfo)
+  if (CGM.getCodeGenOpts().getDebugInfo() == CodeGenOptions::LimitedDebugInfo)
     RDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
   else
     RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
@@ -2078,10 +2078,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       Flags |= llvm::DIDescriptor::FlagPrototyped;
     }
     if (LinkageName == Name ||
-        CGM.getCodeGenOpts().DebugInfo <= CodeGenOptions::DebugLineTablesOnly)
+        CGM.getCodeGenOpts().getDebugInfo() <= CodeGenOptions::DebugLineTablesOnly)
       LinkageName = StringRef();
 
-    if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+    if (CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo) {
       if (const NamespaceDecl *NSDecl =
           dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
         FDContext = getOrCreateNameSpace(NSDecl);
@@ -2109,7 +2109,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
   llvm::DIType DIFnType;
   llvm::DISubprogram SPDecl;
-  if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+  if (CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo) {
     DIFnType = getOrCreateFunctionType(D, FnType, Unit);
     SPDecl = getFunctionDeclaration(D);
   } else {
@@ -2285,7 +2285,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
 void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                               llvm::Value *Storage, 
                               unsigned ArgNo, CGBuilderTy &Builder) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
@@ -2427,7 +2427,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
                                             llvm::Value *Storage,
                                             CGBuilderTy &Builder) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, 0, Builder);
 }
 
@@ -2435,7 +2435,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(const VarDecl *VD,
                                                     llvm::Value *Storage,
                                                     CGBuilderTy &Builder,
                                                  const CGBlockInfo &blockInfo) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
   
   if (Builder.GetInsertBlock() == 0)
@@ -2501,7 +2501,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(const VarDecl *VD,
 void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *VD, llvm::Value *AI,
                                            unsigned ArgNo,
                                            CGBuilderTy &Builder) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, ArgNo, Builder);
 }
 
@@ -2518,7 +2518,7 @@ namespace {
 void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
                                                        llvm::Value *addr,
                                                        CGBuilderTy &Builder) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   ASTContext &C = CGM.getContext();
   const BlockDecl *blockDecl = block.getBlockDecl();
 
@@ -2663,7 +2663,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 /// EmitGlobalVariable - Emit information about a global variable.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *D) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   // Create global variable debug descriptor.
   llvm::DIFile Unit = getOrCreateFile(D->getLocation());
   unsigned LineNo = getLineNumber(D->getLocation());
@@ -2697,7 +2697,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
 /// EmitGlobalVariable - Emit information about an objective-c interface.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      ObjCInterfaceDecl *ID) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   // Create global variable debug descriptor.
   llvm::DIFile Unit = getOrCreateFile(ID->getLocation());
   unsigned LineNo = getLineNumber(ID->getLocation());
@@ -2723,7 +2723,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
 /// EmitGlobalVariable - Emit global variable's debug info.
 void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD, 
                                      llvm::Constant *Init) {
-  assert(CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo);
+  assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   // Create the descriptor for the variable.
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   StringRef Name = VD->getName();

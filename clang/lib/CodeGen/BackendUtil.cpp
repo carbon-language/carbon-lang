@@ -139,7 +139,7 @@ static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
 
 void EmitAssemblyHelper::CreatePasses() {
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
-  CodeGenOptions::InliningMethod Inlining = CodeGenOpts.Inlining;
+  CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
 
   // Handle disabling of LLVM optimization, where we want to preserve the
   // internal module before any optimization.
@@ -233,7 +233,7 @@ void EmitAssemblyHelper::CreatePasses() {
                                     CodeGenOpts.EmitGcovArcs,
                                     TargetTriple.isMacOSX()));
 
-    if (CodeGenOpts.DebugInfo == CodeGenOptions::NoDebugInfo)
+    if (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
       MPM->add(createStripSymbolsPass(true));
   }
   
