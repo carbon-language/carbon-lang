@@ -774,6 +774,10 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
                               Tok.getString() == "OFFSET")) {
     OffsetOf = true;
     OffsetOfLoc = Parser.getTok().getLoc();
+
+    // Size is based on the size of a pointer, not the size of the variable.
+    assert (!Size && "Unexpected size!");
+    Size = is64BitMode() ? 64 : 32;
     Parser.Lex(); // Eat offset.
   }
 
