@@ -13,6 +13,12 @@ class MaskedData_SyntheticChildrenProvider:
 		# answer questions about N children
 		return 4
 
+	def has_children(self):
+		# we simply say True here because we know we have 4 children
+		# in general, you want to make this calculation as simple as possible
+		# and return True if in doubt (you can always return num_children == 0 later)
+		return True
+
 	def get_child_index(self,name): 
 		# given a name, return its index
 		# you can return None if you don't know the answer for a given name

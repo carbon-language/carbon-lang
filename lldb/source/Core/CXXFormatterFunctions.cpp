@@ -776,7 +776,9 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::Update()
 bool
 lldb_private::formatters::NSArrayMSyntheticFrontEnd::MightHaveChildren ()
 {
-    return CalculateNumChildren() > 0;
+    if (!m_data_32 && !m_data_64)
+        Update ();
+    return CalculateNumChildren();
 }
 
 static uint32_t
@@ -891,7 +893,9 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::Update()
 bool
 lldb_private::formatters::NSArrayISyntheticFrontEnd::MightHaveChildren ()
 {
-    return CalculateNumChildren() > 0;
+    if (!m_data_ptr)
+        Update ();
+    return CalculateNumChildren();
 }
 
 lldb::ValueObjectSP
@@ -1186,7 +1190,9 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::Update()
 bool
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::MightHaveChildren ()
 {
-    return CalculateNumChildren() > 0;
+    if (!m_data_32 && !m_data_64)
+        Update ();
+    return CalculateNumChildren();
 }
 
 lldb::ValueObjectSP
@@ -1333,7 +1339,9 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::Update()
 bool
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::MightHaveChildren ()
 {
-    return CalculateNumChildren() > 0;
+    if (!m_data_32 && !m_data_64)
+        Update ();
+    return CalculateNumChildren();
 }
 
 lldb::ValueObjectSP
