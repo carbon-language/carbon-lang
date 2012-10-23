@@ -349,10 +349,10 @@ public:
     }
     
     void
-    SetName (ConstString &type_name_const_str);
+    SetName (const ConstString &type_name);
     
     void 
-    SetName (const char *type_name_str);
+    SetName (const char *type_name_cstr);
     
     void
     SetTypeSP (lldb::TypeSP type_sp);

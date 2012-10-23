@@ -838,15 +838,15 @@ TypeAndOrName::GetName () const
 }
 
 void
-TypeAndOrName::SetName (ConstString &type_name_const_str)
+TypeAndOrName::SetName (const ConstString &type_name)
 {
-    m_type_name = type_name_const_str;
+    m_type_name = type_name;
 }
 
 void
-TypeAndOrName::SetName (const char *type_name_str)
+TypeAndOrName::SetName (const char *type_name_cstr)
 {
-    m_type_name.SetCString (type_name_str);
+    m_type_name.SetCString (type_name_cstr);
 }
 
 void

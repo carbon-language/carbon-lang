@@ -259,152 +259,31 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
     if (CouldHaveDynamicValue (in_value))
     {
         // First job, pull out the address at 0 offset from the object  That will be the ISA pointer.
-        Error error;
-        const addr_t object_ptr = in_value.GetPointerValue();
-        const addr_t isa_addr = m_process->ReadPointerFromMemory (object_ptr, error);
-
-        if (error.Fail())
-            return false;
-
-        address.SetRawAddress(object_ptr);
-
-        // First check the cache...
-        SymbolContext sc;
-        class_type_or_name = LookupInClassNameCache (isa_addr);
-        
-        if (!class_type_or_name.IsEmpty())
+        ClassDescriptorSP objc_class_sp (GetNonKVOClassDescriptor (in_value));
+        if (objc_class_sp)
         {
-            if (class_type_or_name.GetTypeSP())
-                return true;
-            else
-                return false;
-        }
+            const addr_t object_ptr = in_value.GetPointerValue();
+            address.SetRawAddress(object_ptr);
 
-        // We don't have the object cached, so make sure the class
-        // address is readable, otherwise this is not a good object:
-        m_process->ReadPointerFromMemory (isa_addr, error);
-        
-        if (error.Fail())
-            return false;
-
-        const char *class_name = NULL;
-        Address isa_address;
-        Target &target = m_process->GetTarget();
-        target.GetSectionLoadList().ResolveLoadAddress (isa_addr, isa_address);
-        
-        if (isa_address.IsValid())
-        {
-            // If the ISA pointer points to one of the sections in the binary, then see if we can
-            // get the class name from the symbols.
-        
-            SectionSP section_sp (isa_address.GetSection());
-
-            if (section_sp)
-            {
-                // If this points to a section that we know about, then this is
-                // some static class or nothing.  See if it is in the right section 
-                // and if its name is the right form.
-                ConstString section_name = section_sp->GetName();
-                static ConstString g_objc_class_section_name ("__objc_data");
-                if (section_name == g_objc_class_section_name)
-                {
-                    isa_address.CalculateSymbolContext(&sc, eSymbolContextModule | eSymbolContextSymbol);
-                    if (sc.symbol)
-                    {
-                        if (sc.symbol->GetType() == eSymbolTypeObjCClass)
-                            class_name = sc.symbol->GetName().GetCString();
-                        else if (sc.symbol->GetType() == eSymbolTypeObjCMetaClass)
-                        {
-                            // FIXME: Meta-classes can't have dynamic types...
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        
-        char class_buffer[1024];
-        if (class_name == NULL && use_dynamic == eDynamicCanRunTarget)
-        {
-            // If the class address didn't point into the binary, or
-            // it points into the right section but there wasn't a symbol
-            // there, try to look it up by calling the class method in the target.
-            
-            ExecutionContext exe_ctx (in_value.GetExecutionContextRef());
-            
-            Thread *thread_to_use = exe_ctx.GetThreadPtr();
-            
-            if (thread_to_use == NULL)
-                thread_to_use = m_process->GetThreadList().GetSelectedThread().get();
-                
-            if (thread_to_use == NULL)
-                return false;
-                
-            if (!RunFunctionToFindClassName (object_ptr, thread_to_use, class_buffer, 1024))
-                return false;
-                
-             class_name = class_buffer;   
-            
-        }
-        
-        if (class_name && class_name[0])
-        {
-            class_type_or_name.SetName (class_name);
-            
-            TypeList class_types;
-            const bool exact_match = true;
-            uint32_t num_matches = target.GetImages().FindTypes (sc,
-                                                                 class_type_or_name.GetName(),
-                                                                 exact_match,
-                                                                 UINT32_MAX,
-                                                                 class_types);
-            if (num_matches == 1)
-            {
-                class_type_or_name.SetTypeSP (class_types.GetTypeAtIndex(0));
-                return true;
-            }
+            ConstString class_name (objc_class_sp->GetClassName());
+            class_type_or_name.SetName(class_name);
+            TypeSP type_sp (objc_class_sp->GetType());
+            if (type_sp)
+                class_type_or_name.SetTypeSP (type_sp);
             else
             {
-                for (size_t i  = 0; i < num_matches; i++)
+                type_sp = LookupInCompleteClassCache (class_name);
+                if (type_sp)
                 {
-                    TypeSP this_type(class_types.GetTypeAtIndex(i));
-                    if (this_type)
-                    {
-                        // Only consider "real" ObjC classes.  For now this means avoiding
-                        // the Type objects that are made up from the OBJC_CLASS_$_<NAME> symbols.
-                        // we don't want to use them since they are empty and useless.
-                        if (this_type->IsRealObjCClass())
-                        {
-                            // There can only be one type with a given name,
-                            // so we've just found duplicate definitions, and this
-                            // one will do as well as any other.
-                            // We don't consider something to have a dynamic type if
-                            // it is the same as the static type.  So compare against
-                            // the value we were handed:
-                            
-                            clang::ASTContext *in_ast_ctx = in_value.GetClangAST ();
-                            clang::ASTContext *this_ast_ctx = this_type->GetClangAST ();
-                            if (in_ast_ctx != this_ast_ctx
-                                || !ClangASTContext::AreTypesSame (in_ast_ctx, 
-                                                                   in_value.GetClangType(),
-                                                                   this_type->GetClangFullType()))
-                            {
-                                class_type_or_name.SetTypeSP (this_type);
-                            }
-                            break;
-                        }
-                    }
+                    objc_class_sp->SetType (type_sp);
+                    class_type_or_name.SetTypeSP (type_sp);
                 }
             }
             
-            AddToClassNameCache (isa_addr, class_type_or_name);
-            if (class_type_or_name.GetTypeSP())
+            if (type_sp)
                 return true;
-            else
-                return false;
         }
-    }
-    
+    }    
     return false;
 }
 
@@ -1699,7 +1578,17 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
                 Error error;
                 ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
                 if (isa != LLDB_INVALID_ADDRESS)
+                {
                     objc_class_sp = ObjCLanguageRuntime::GetClassDescriptor (isa);
+                    if (isa && !objc_class_sp)
+                    {
+                        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+                        if (log)
+                            log->Printf("0x%llx: AppleObjCRuntimeV2::GetClassDescriptor() ISA was not in class descriptor cache 0x%llx",
+                                        isa_pointer,
+                                        isa);
+                    }
+                }
             }
         }
     }

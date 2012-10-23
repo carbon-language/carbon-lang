@@ -58,47 +58,6 @@ ObjCLanguageRuntime::LookupInMethodCache (lldb::addr_t class_addr, lldb::addr_t 
     return LLDB_INVALID_ADDRESS;
 }
 
-void
-ObjCLanguageRuntime::AddToClassNameCache (lldb::addr_t class_addr, const char *name, lldb::TypeSP type_sp)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    if (log)
-    {
-        log->Printf ("Caching: class 0x%llx name: %s.", class_addr, name);
-    }
-    
-    TypeAndOrName class_type_or_name;
-    
-    if (type_sp)
-        class_type_or_name.SetTypeSP (type_sp);
-    else if (name && *name != '\0')
-        class_type_or_name.SetName (name);
-    else 
-        return;
-    m_class_name_cache.insert (std::pair<lldb::addr_t,TypeAndOrName> (class_addr, class_type_or_name));
-}
-
-void
-ObjCLanguageRuntime::AddToClassNameCache (lldb::addr_t class_addr, const TypeAndOrName &class_type_or_name)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    if (log)
-    {
-        log->Printf ("Caching: class 0x%llx name: %s.", class_addr, class_type_or_name.GetName().AsCString());
-    }
-    
-    m_class_name_cache.insert (std::pair<lldb::addr_t,TypeAndOrName> (class_addr, class_type_or_name));
-}
-
-TypeAndOrName
-ObjCLanguageRuntime::LookupInClassNameCache (lldb::addr_t class_addr)
-{
-    ClassNameMap::iterator pos, end = m_class_name_cache.end();
-    pos = m_class_name_cache.find (class_addr);
-    if (pos != end)
-        return (*pos).second;
-    return TypeAndOrName ();
-}
 
 lldb::TypeSP
 ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
@@ -107,72 +66,77 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
     
     if (complete_class_iter != m_complete_class_cache.end())
     {
-        TypeSP ret(complete_class_iter->second);
+        // Check the weak pointer to make sure the type hasn't been unloaded
+        TypeSP complete_type_sp (complete_class_iter->second.lock());
         
-        if (!ret)
-            m_complete_class_cache.erase(name);
+        if (complete_type_sp)
+            return complete_type_sp;
         else
-            return TypeSP(complete_class_iter->second);
+            m_complete_class_cache.erase(name);
     }
     
     ModuleList &modules = m_process->GetTarget().GetImages();
-    
+
     SymbolContextList sc_list;
+    const size_t matching_symbols = modules.FindSymbolsWithNameAndType (name,
+                                                                        eSymbolTypeObjCClass,
+                                                                        sc_list);
     
-    modules.FindSymbolsWithNameAndType(name, eSymbolTypeObjCClass, sc_list);
-    
-    if (sc_list.GetSize() == 0)
-        return TypeSP();
-    
-    SymbolContext sc;
-    
-    sc_list.GetContextAtIndex(0, sc);
-    
-    ModuleSP module_sp(sc.module_sp);
-    
-    if (!module_sp)
-        return TypeSP();
-    
-    const SymbolContext null_sc;
-    const bool exact_match = true;
-    const uint32_t max_matches = UINT32_MAX;
-    TypeList types;
-    
-    module_sp->FindTypes (null_sc,
-                          name,
-                          exact_match,
-                          max_matches,
-                          types);
-    
-    if (types.GetSize() == 1)
+    if (matching_symbols)
     {
-        TypeSP candidate_type = types.GetTypeAtIndex(0);
+        SymbolContext sc;
         
-        if (ClangASTContext::IsObjCClassType(candidate_type->GetClangForwardType()))
-        {
-            m_complete_class_cache[name] = TypeWP(candidate_type);
-            return candidate_type;
-        }
-        else
-        {
+        sc_list.GetContextAtIndex(0, sc);
+        
+        ModuleSP module_sp(sc.module_sp);
+        
+        if (!module_sp)
             return TypeSP();
-        }
-    }
-    
-    for (uint32_t ti = 0, te = types.GetSize();
-         ti < te;
-         ++ti)
-    {
-        TypeSP candidate_type = types.GetTypeAtIndex(ti);
         
-        if (candidate_type->IsCompleteObjCClass() &&
-            ClangASTContext::IsObjCClassType(candidate_type->GetClangForwardType()))
+        const SymbolContext null_sc;
+        const bool exact_match = true;
+        const uint32_t max_matches = UINT32_MAX;
+        TypeList types;
+        
+        const uint32_t num_types = module_sp->FindTypes (null_sc,
+                                                         name,
+                                                         exact_match,
+                                                         max_matches,
+                                                         types);
+        
+        if (num_types)
         {
-            m_complete_class_cache[name] = TypeWP(candidate_type);
-            return candidate_type;                                       
+            TypeSP incomplete_type_sp;
+            
+            uint32_t i;
+            for (i = 0; i < num_types; ++i)
+            {
+                TypeSP type_sp (types.GetTypeAtIndex(i));
+                
+                if (ClangASTContext::IsObjCClassType(type_sp->GetClangForwardType()))
+                {
+                    if (type_sp->IsCompleteObjCClass())
+                    {
+                        m_complete_class_cache[name] = type_sp;
+                        return type_sp;
+                    }
+                    else if (!incomplete_type_sp)
+                        incomplete_type_sp = type_sp;
+                }
+            }
+           
+            // We didn't find any "real" definitions, so just use any??? Why was
+            // this being done? Prior to this, if there was 1 match only, then it
+            // would always use any objc definition, else we would only accept a
+            // definition if it was the real thing???? Doesn't make sense.
+
+            if (incomplete_type_sp)
+            {
+                m_complete_class_cache[name] = incomplete_type_sp;
+                return incomplete_type_sp;
+            }
         }
     }
-    
     return TypeSP();
 }
 
