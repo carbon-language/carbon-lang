@@ -6610,7 +6610,7 @@ X86TargetLowering::lowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
     int EltIdx = SVOp->getMaskElt(i);
     if ((i & Mask) != 0 && EltIdx != -1)
       return SDValue();
-    if ((i & Mask) == 0 && EltIdx != (i >> Shift))
+    if ((i & Mask) == 0 && (unsigned)EltIdx != (i >> Shift))
       return SDValue();
   }
 
