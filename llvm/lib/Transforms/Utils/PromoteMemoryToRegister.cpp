@@ -212,7 +212,11 @@ namespace {
     ///
     DenseMap<AllocaInst*, unsigned>  AllocaLookup;
 
-    /// NewPhiNodes - The PhiNodes we're adding.
+    /// NewPhiNodes - The PhiNodes we're adding.  That map is used to simplify
+    /// some Phi nodes as we iterate over it, so it should have deterministic
+    /// iterators.  We could use a MapVector, but since we already maintain a
+    /// map from BasicBlock* to a stable numbering (BBNumbers), the DenseMap is
+    /// more efficient (also supports removal).
     ///
     DenseMap<std::pair<unsigned, unsigned>, PHINode*> NewPhiNodes;
     
@@ -588,6 +592,10 @@ void PromoteMem2Reg::run() {
   while (EliminatedAPHI) {
     EliminatedAPHI = false;
     
+    // Iterating over NewPhiNodes is deterministic, so it is safe to try to
+    // simplify and RUAW them as we go.  If it was not, we could add uses to
+    // the values we replace with in a non deterministic order, thus creating
+    // non deterministic def->use chains.
     for (DenseMap<std::pair<unsigned, unsigned>, PHINode*>::iterator I =
            NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E;) {
       PHINode *PN = I->second;
