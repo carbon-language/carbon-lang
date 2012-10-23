@@ -36,3 +36,17 @@ void MCInstPrinter::printAnnotation(raw_ostream &OS, StringRef Annot) {
       OS << " " << MAI.getCommentString() << " " << Annot;
   }
 }
+
+/// Utility functions to make adding mark ups simpler.
+StringRef MCInstPrinter::markup(StringRef s) const {
+  if (getUseMarkup())
+    return s;
+  else
+    return "";
+}
+StringRef MCInstPrinter::markup(StringRef a, StringRef b) const {
+  if (getUseMarkup())
+    return a;
+  else
+    return b;
+}

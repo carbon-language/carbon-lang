@@ -47,7 +47,7 @@ static void printRegImmShift(raw_ostream &O, ARM_AM::ShiftOpc ShOpc,
   assert (!(ShOpc == ARM_AM::ror && !ShImm) && "Cannot have ror #0");
   O << getShiftOpcStr(ShOpc);
 
-  if (ShOpc != ARM_AM::rrx){
+  if (ShOpc != ARM_AM::rrx) {
     O << " ";
     if (UseMarkup)
       O << "<imm:";
@@ -67,11 +67,9 @@ ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI,
 }
 
 void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
-  if (UseMarkup)
-    OS << "<reg:";
-  OS << getRegisterName(RegNo);
-  if (UseMarkup)
-    OS << ">";
+  OS << markup("<reg:")
+     << getRegisterName(RegNo)
+     << markup(">");
 }
 
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
@@ -143,12 +141,10 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       return;
     }
 
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
-    if (UseMarkup)
-      O << ">";
+    O << ", "
+      << markup("<imm:")
+      << "#" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()))
+      << markup(">");
     printAnnotation(O, Annot);
     return;
   }
@@ -267,11 +263,9 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     unsigned Reg = Op.getReg();
     printRegName(O, Reg);
   } else if (Op.isImm()) {
-    if (UseMarkup)
-      O << "<imm:";
-    O << '#' << Op.getImm();
-    if (UseMarkup)
-      O << ">";
+    O << markup("<imm:")
+      << '#' << Op.getImm()
+      << markup(">");
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     // If a symbolic branch target was added as a constant expression then print
@@ -295,18 +289,9 @@ void ARMInstPrinter::printT2LdrLabelOperand(const MCInst *MI, unsigned OpNum,
   if (MO1.isExpr())
     O << *MO1.getExpr();
   else if (MO1.isImm()) {
-    if (UseMarkup)
-      O << "<mem:";
-    O << "[pc, ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#";
-    O << MO1.getImm();
-    if (UseMarkup)
-      O << ">";
-    O << "]";
-    if (UseMarkup)
-      O << ">";
+    O << markup("<mem:") << "[pc, "
+      << markup("<imm:") << "#" << MO1.getImm()
+      << markup(">]>", "]");
   }
   else
     llvm_unreachable("Unknown LDR label operand?");
@@ -359,25 +344,19 @@ void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
   const MCOperand &MO2 = MI->getOperand(Op+1);
   const MCOperand &MO3 = MI->getOperand(Op+2);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
 
   if (!MO2.getReg()) {
     if (ARM_AM::getAM2Offset(MO3.getImm())) { // Don't print +0.
-      O << ", ";
-      if (UseMarkup)
-	O << "<imm:";
-      O << "#";
-      O << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()));
-      O << ARM_AM::getAM2Offset(MO3.getImm());
-      if (UseMarkup)
-	O << ">";
+      O << ", "
+        << markup("<imm:")
+        << "#"
+        << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
+        << ARM_AM::getAM2Offset(MO3.getImm())
+        << markup(">");
     }
-    O << "]";
-    if (UseMarkup)
-      O << ">";
+    O << "]" << markup(">");
     return;
   }
 
@@ -387,45 +366,29 @@ void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
 
   printRegImmShift(O, ARM_AM::getAM2ShiftOpc(MO3.getImm()),
                    ARM_AM::getAM2Offset(MO3.getImm()), UseMarkup);
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printAddrModeTBB(const MCInst *MI, unsigned Op,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op+1);
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   O << ", ";
   printRegName(O, MO2.getReg());
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printAddrModeTBH(const MCInst *MI, unsigned Op,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op+1);
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   O << ", ";
   printRegName(O, MO2.getReg());
-  O << ", lsl ";
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#1";
-  if (UseMarkup)
-    O << ">";
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << ", lsl " << markup("<imm:") << "#1" << markup(">") << "]" << markup(">");
 }
 
 void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
@@ -455,13 +418,10 @@ void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
 
   if (!MO1.getReg()) {
     unsigned ImmOffs = ARM_AM::getAM2Offset(MO2.getImm());
-    if (UseMarkup)
-      O << "<imm:";
-    O << '#'
-      << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO2.getImm()))
-      << ImmOffs;
-    if (UseMarkup)
-      O << ">";
+    O << markup("<imm:")
+      << '#' << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO2.getImm()))
+      << ImmOffs
+      << markup(">");
     return;
   }
 
@@ -482,13 +442,9 @@ void ARMInstPrinter::printAM3PostIndexOp(const MCInst *MI, unsigned Op,
   const MCOperand &MO2 = MI->getOperand(Op+1);
   const MCOperand &MO3 = MI->getOperand(Op+2);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
-  O << "], ";
-  if (UseMarkup)
-    O << ">";
+  O << "], " << markup(">");
 
   if (MO2.getReg()) {
     O << (char)ARM_AM::getAM3Op(MO3.getImm());
@@ -497,13 +453,11 @@ void ARMInstPrinter::printAM3PostIndexOp(const MCInst *MI, unsigned Op,
   }
 
   unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm());
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#'
+  O << markup("<imm:")
+    << '#'
     << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()))
-    << ImmOffs;
-  if (UseMarkup)
-    O << ">";
+    << ImmOffs
+    << markup(">");
 }
 
 void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
@@ -512,18 +466,13 @@ void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
   const MCOperand &MO2 = MI->getOperand(Op+1);
   const MCOperand &MO3 = MI->getOperand(Op+2);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << '[';
+  O << markup("<mem:") << '[';
   printRegName(O, MO1.getReg());
 
   if (MO2.getReg()) {
-    O << ", ";
-    O << getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()));
+    O << ", " << getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()));
     printRegName(O, MO2.getReg());
-    O << ']';
-    if (UseMarkup)
-      O << ">";
+    O << ']' << markup(">");
     return;
   }
 
@@ -532,18 +481,14 @@ void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
   ARM_AM::AddrOpc op = ARM_AM::getAM3Op(MO3.getImm());
 
   if (ImmOffs || (op == ARM_AM::sub)) {
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#"
+    O << ", "
+      << markup("<imm:")
+      << "#"
       << ARM_AM::getAddrOpcStr(op)
-      << ImmOffs;
-    if (UseMarkup)
-      O << ">";
+      << ImmOffs
+      << markup(">");
   }
-  O << ']';
-  if (UseMarkup)
-    O << ">";
+  O << ']' << markup(">");
 }
 
 void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned Op,
@@ -577,13 +522,9 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
   }
 
   unsigned ImmOffs = ARM_AM::getAM3Offset(MO2.getImm());
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#'
-    << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO2.getImm()))
-    << ImmOffs;
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << '#' << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO2.getImm())) << ImmOffs
+    << markup(">");
 }
 
 void ARMInstPrinter::printPostIdxImm8Operand(const MCInst *MI,
@@ -591,11 +532,9 @@ void ARMInstPrinter::printPostIdxImm8Operand(const MCInst *MI,
                                              raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   unsigned Imm = MO.getImm();
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#' << ((Imm & 256) ? "" : "-") << (Imm & 0xff);
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << '#' << ((Imm & 256) ? "" : "-") << (Imm & 0xff)
+    << markup(">");
 }
 
 void ARMInstPrinter::printPostIdxRegOperand(const MCInst *MI, unsigned OpNum,
@@ -612,11 +551,9 @@ void ARMInstPrinter::printPostIdxImm8s4Operand(const MCInst *MI,
                                              raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   unsigned Imm = MO.getImm();
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#' << ((Imm & 256) ? "" : "-") << ((Imm & 0xff) << 2);
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << '#' << ((Imm & 256) ? "" : "-") << ((Imm & 0xff) << 2)
+    << markup(">");
 }
 
 
@@ -637,26 +574,20 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
     return;
   }
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
 
   unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm());
   unsigned Op = ARM_AM::getAM5Op(MO2.getImm());
   if (ImmOffs || Op == ARM_AM::sub) {
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#"
+    O << ", "
+      << markup("<imm:")
+      << "#"
       << ARM_AM::getAddrOpcStr(ARM_AM::getAM5Op(MO2.getImm()))
-      << ImmOffs * 4;
-    if (UseMarkup)
-      O << ">";
+      << ImmOffs * 4
+      << markup(">");
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
@@ -664,29 +595,21 @@ void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   if (MO2.getImm()) {
     // FIXME: Both darwin as and GNU as violate ARM docs here.
     O << ", :" << (MO2.getImm() << 3);
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printAddrMode7Operand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
@@ -709,17 +632,9 @@ void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
   int32_t lsb = CountTrailingZeros_32(v);
   int32_t width = (32 - CountLeadingZeros_32 (v)) - lsb;
   assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#' << lsb;
-  if (UseMarkup)
-    O << ">";
-  O << ", ";
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#' << width;
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:") << '#' << lsb << markup(">")
+    << ", "
+    << markup("<imm:") << '#' << width << markup(">");
 }
 
 void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
@@ -734,20 +649,16 @@ void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
   bool isASR = (ShiftOp & (1 << 5)) != 0;
   unsigned Amt = ShiftOp & 0x1f;
   if (isASR) {
-    O << ", asr ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << (Amt == 0 ? 32 : Amt);
-    if (UseMarkup)
-      O << ">";
+    O << ", asr "
+      << markup("<imm:")
+      << "#" << (Amt == 0 ? 32 : Amt)
+      << markup(">");
   }
   else if (Amt) {
-    O << ", lsl ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << Amt;
-    if (UseMarkup)
-      O << ">";
+    O << ", lsl "
+      << markup("<imm:")
+      << "#" << Amt
+      << markup(">");
   }
 }
 
@@ -757,12 +668,7 @@ void ARMInstPrinter::printPKHLSLShiftImm(const MCInst *MI, unsigned OpNum,
   if (Imm == 0)
     return;
   assert(Imm > 0 && Imm < 32 && "Invalid PKH shift immediate value!");
-  O << ", lsl ";
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << Imm;
-  if (UseMarkup)
-    O << ">";
+  O << ", lsl " << markup("<imm:") << "#" << Imm << markup(">");
 }
 
 void ARMInstPrinter::printPKHASRShiftImm(const MCInst *MI, unsigned OpNum,
@@ -772,12 +678,7 @@ void ARMInstPrinter::printPKHASRShiftImm(const MCInst *MI, unsigned OpNum,
   if (Imm == 0)
     Imm = 32;
   assert(Imm > 0 && Imm <= 32 && "Invalid PKH shift immediate value!");
-  O << ", asr ";
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << Imm;
-  if (UseMarkup)
-    O << ">";
+  O << ", asr " << markup("<imm:") << "#" << Imm << markup(">");
 }
 
 void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
@@ -959,35 +860,29 @@ void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
 
   int32_t OffImm = (int32_t)MO.getImm();
 
-  if (UseMarkup)
-    O << "<imm:";
+  O << markup("<imm:");
   if (OffImm == INT32_MIN)
     O << "#-0";
   else if (OffImm < 0)
     O << "#-" << -OffImm;
   else
     O << "#" << OffImm;
-  if (UseMarkup)
-    O << ">";
+  O << markup(">");
 }
 
 void ARMInstPrinter::printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << MI->getOperand(OpNum).getImm() * 4;
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << "#" << MI->getOperand(OpNum).getImm() * 4
+    << markup(">");
 }
 
 void ARMInstPrinter::printThumbSRImm(const MCInst *MI, unsigned OpNum,
                                      raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << (Imm == 0 ? 32 : Imm);
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << "#" << (Imm == 0 ? 32 : Imm)
+    << markup(">");
 }
 
 void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,
@@ -1017,17 +912,13 @@ void ARMInstPrinter::printThumbAddrModeRROperand(const MCInst *MI, unsigned Op,
     return;
   }
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   if (unsigned RegNum = MO2.getReg()) {
     O << ", ";
     printRegName(O, RegNum);
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printThumbAddrModeImm5SOperand(const MCInst *MI,
@@ -1042,21 +933,15 @@ void ARMInstPrinter::printThumbAddrModeImm5SOperand(const MCInst *MI,
     return;
   }
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   if (unsigned ImmOffs = MO2.getImm()) {
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << ImmOffs * Scale;
-    if (UseMarkup)
-      O << ">";
+    O << ", "
+      << markup("<imm:")
+      << "#" << ImmOffs * Scale
+      << markup(">");
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printThumbAddrModeImm5S1Operand(const MCInst *MI,
@@ -1110,9 +995,7 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
     return;
   }
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
 
   int32_t OffImm = (int32_t)MO2.getImm();
@@ -1121,24 +1004,18 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
   if (OffImm == INT32_MIN)
     OffImm = 0;
   if (isSub) {
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#-" << -OffImm;
-    if (UseMarkup)
-      O << ">";
+    O << ", "
+      << markup("<imm:") 
+      << "#-" << -OffImm
+      << markup(">");
   }
   else if (OffImm > 0) {
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << OffImm;
-    if (UseMarkup)
-      O << ">";
+    O << ", "
+      << markup("<imm:") 
+      << "#" << OffImm
+      << markup(">");
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printT2AddrModeImm8Operand(const MCInst *MI,
@@ -1147,9 +1024,7 @@ void ARMInstPrinter::printT2AddrModeImm8Operand(const MCInst *MI,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
 
   int32_t OffImm = (int32_t)MO2.getImm();
@@ -1166,9 +1041,7 @@ void ARMInstPrinter::printT2AddrModeImm8Operand(const MCInst *MI,
     O << "#" << OffImm;
   if (OffImm != 0 && UseMarkup)
     O << ">";
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
@@ -1182,9 +1055,7 @@ void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
     return;
   }
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
 
   int32_t OffImm = (int32_t)MO2.getImm();
@@ -1204,9 +1075,7 @@ void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
     O << "#" << OffImm;
   if (OffImm != 0 && UseMarkup)
     O << ">";
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printT2AddrModeImm0_1020s4Operand(const MCInst *MI,
@@ -1215,21 +1084,15 @@ void ARMInstPrinter::printT2AddrModeImm0_1020s4Operand(const MCInst *MI,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   if (MO2.getImm()) {
-    O << ", ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << MO2.getImm() * 4;
-    if (UseMarkup)
-      O << ">";
+    O << ", "
+      << markup("<imm:")
+      << "#" << MO2.getImm() * 4
+      << markup(">");
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(const MCInst *MI,
@@ -1237,15 +1100,12 @@ void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(const MCInst *MI,
                                                       raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   int32_t OffImm = (int32_t)MO1.getImm();
-  O << ", ";
-  if (UseMarkup)
-    O << "<imm:";
+  O << ", " << markup("<imm:");
   if (OffImm < 0)
     O << "#-" << -OffImm;
   else
     O << "#" << OffImm;
-  if (UseMarkup)
-    O << ">";
+  O << markup(">");
 }
 
 void ARMInstPrinter::printT2AddrModeImm8s4OffsetOperand(const MCInst *MI,
@@ -1278,9 +1138,7 @@ void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
   const MCOperand &MO3 = MI->getOperand(OpNum+2);
 
-  if (UseMarkup)
-    O << "<mem:";
-  O << "[";
+  O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
 
   assert(MO2.getReg() && "Invalid so_reg load / store address!");
@@ -1290,26 +1148,20 @@ void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
   unsigned ShAmt = MO3.getImm();
   if (ShAmt) {
     assert(ShAmt <= 3 && "Not a valid Thumb2 addressing mode!");
-    O << ", lsl ";
-    if (UseMarkup)
-      O << "<imm:";
-    O << "#" << ShAmt;
-    if (UseMarkup)
-      O << ">";
+    O << ", lsl "
+      << markup("<imm:")
+      << "#" << ShAmt
+      << markup(">");
   }
-  O << "]";
-  if (UseMarkup)
-    O << ">";
+  O << "]" << markup(">");
 }
 
 void ARMInstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
                                        raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
-  if (UseMarkup)
-    O << "<imm:";
-  O << '#' << ARM_AM::getFPImmFloat(MO.getImm());
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << '#' << ARM_AM::getFPImmFloat(MO.getImm())
+    << markup(">");
 }
 
 void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
@@ -1317,22 +1169,18 @@ void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
   unsigned EncodedImm = MI->getOperand(OpNum).getImm();
   unsigned EltBits;
   uint64_t Val = ARM_AM::decodeNEONModImm(EncodedImm, EltBits);
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#0x";
+  O << markup("<imm:")
+    << "#0x";
   O.write_hex(Val);
-  if (UseMarkup)
-    O << ">";
+  O << markup(">");
 }
 
 void ARMInstPrinter::printImmPlusOneOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << Imm + 1;
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << "#" << Imm + 1
+    << markup(">");
 }
 
 void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
@@ -1340,45 +1188,35 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
   unsigned Imm = MI->getOperand(OpNum).getImm();
   if (Imm == 0)
     return;
-  O << ", ror ";
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#";
+  O << ", ror "
+    << markup("<imm:")
+    << "#";
   switch (Imm) {
   default: assert (0 && "illegal ror immediate!");
   case 1: O << "8"; break;
   case 2: O << "16"; break;
   case 3: O << "24"; break;
   }
-  if (UseMarkup)
-    O << ">";
+  O << markup(">");
 }
 
 void ARMInstPrinter::printFBits16(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << 16 - MI->getOperand(OpNum).getImm();
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << "#" << 16 - MI->getOperand(OpNum).getImm()
+    << markup(">");
 }
 
 void ARMInstPrinter::printFBits32(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
-  if (UseMarkup)
-    O << "<imm:";
-  O << "#" << 32 - MI->getOperand(OpNum).getImm();
-  if (UseMarkup)
-    O << ">";
+  O << markup("<imm:")
+    << "#" << 32 - MI->getOperand(OpNum).getImm()
+    << markup(">");
 }
 
 void ARMInstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O) {
-  if (UseMarkup)
-    O << "<mem:";
   O << "[" << MI->getOperand(OpNum).getImm() << "]";
-  if (UseMarkup)
-    O << ">";
 }
 
 void ARMInstPrinter::printVectorListOne(const MCInst *MI, unsigned OpNum,

@@ -66,6 +66,10 @@ public:
 
   bool getUseMarkup() const { return UseMarkup; }
   void setUseMarkup(bool Value) { UseMarkup = Value; }
+
+  /// Utility functions to make adding mark ups simpler.
+  StringRef markup(StringRef s) const;
+  StringRef markup(StringRef a, StringRef b) const;
 };
 
 } // namespace llvm
