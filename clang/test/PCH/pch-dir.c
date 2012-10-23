@@ -6,7 +6,7 @@
 // RUN: %clang -x c++ -include %t.h -fsyntax-only %s -Xclang -print-stats 2> %t.cpplog
 // RUN: FileCheck -check-prefix=CPP %s < %t.cpplog
 
-// FIXME: It doesn't fail on msvc.
+// msvc(*-win32) implies -std=c++11, then it is expected to pass on msvc.
 // XFAIL: win32
 // RUN: not %clang -x c++ -std=c++11 -include %t.h -fsyntax-only %s 2> %t.cpp11log
 // RUN: FileCheck -check-prefix=CPP11 %s < %t.cpp11log
