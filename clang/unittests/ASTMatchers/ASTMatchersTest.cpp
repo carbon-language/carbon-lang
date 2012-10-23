@@ -1333,6 +1333,13 @@ TEST(Matcher, ConstructorArgumentCount) {
                  Constructor1Arg));
 }
 
+TEST(Matcher,ThisExpr) {
+  EXPECT_TRUE(
+      matches("struct X { int a; int f () { return a; } };", thisExpr()));
+  EXPECT_TRUE(
+      notMatches("struct X { int f () { int a; return a; } };", thisExpr()));
+}
+
 TEST(Matcher, BindTemporaryExpression) {
   StatementMatcher TempExpression = bindTemporaryExpr();
 
