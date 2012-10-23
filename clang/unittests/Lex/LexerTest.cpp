@@ -31,7 +31,7 @@ protected:
   LexerTest()
     : FileMgr(FileMgrOpts),
       DiagID(new DiagnosticIDs()),
-      Diags(DiagID, new IgnoringDiagConsumer()),
+      Diags(DiagID, new DiagnosticOptions, new IgnoringDiagConsumer()),
       SourceMgr(Diags, FileMgr),
       TargetOpts(new TargetOptions) 
   {

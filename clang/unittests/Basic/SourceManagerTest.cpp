@@ -32,7 +32,7 @@ protected:
   SourceManagerTest()
     : FileMgr(FileMgrOpts),
       DiagID(new DiagnosticIDs()),
-      Diags(DiagID, new IgnoringDiagConsumer()),
+      Diags(DiagID, new DiagnosticOptions, new IgnoringDiagConsumer()),
       SourceMgr(Diags, FileMgr),
       TargetOpts(new TargetOptions) {
     TargetOpts->Triple = "x86_64-apple-darwin11.1.0";
