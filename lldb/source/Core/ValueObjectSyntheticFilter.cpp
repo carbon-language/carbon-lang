@@ -45,6 +45,12 @@ public:
     }
     
     bool
+    MightHaveChildren ()
+    {
+        return true;
+    }
+    
+    bool
     Update()
     {
         return false;
@@ -58,7 +64,8 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
     m_children_byindex(),
     m_name_toindex(),
     m_synthetic_children_count(UINT32_MAX),
-    m_parent_type_name(parent.GetTypeName())
+    m_parent_type_name(parent.GetTypeName()),
+    m_might_have_children(eLazyBoolCalculate)
 {
 #ifdef LLDB_CONFIGURATION_DEBUG
     std::string new_name(parent.GetName().AsCString());
@@ -99,8 +106,9 @@ ValueObjectSynthetic::CalculateNumChildren()
 bool
 ValueObjectSynthetic::MightHaveChildren()
 {
-    // TODO: make this more efficient by adding API calls to calculate this efficiently
-    return GetNumChildren () > 0;
+    if (m_might_have_children == eLazyBoolCalculate)
+        m_might_have_children = (m_synth_filter_ap->MightHaveChildren() ? eLazyBoolYes : eLazyBoolNo);
+    return (m_might_have_children == eLazyBoolNo ? false : true);
 }
 
 
@@ -164,6 +172,7 @@ ValueObjectSynthetic::UpdateValue ()
         // that they need to come back to us asking for children
         m_children_count_valid = false;
         m_synthetic_children_count = UINT32_MAX;
+        m_might_have_children = eLazyBoolCalculate;
     }
     
     CopyParentData();

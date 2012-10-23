@@ -773,6 +773,12 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::Update()
     return false;
 }
 
+bool
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::MightHaveChildren ()
+{
+    return CalculateNumChildren() > 0;
+}
+
 static uint32_t
 ExtractIndexFromString (const char* item_name)
 {
@@ -882,6 +888,12 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::Update()
     return false;
 }
 
+bool
+lldb_private::formatters::NSArrayISyntheticFrontEnd::MightHaveChildren ()
+{
+    return CalculateNumChildren() > 0;
+}
+
 lldb::ValueObjectSP
 lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
 {
@@ -976,6 +988,12 @@ lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::Update()
     return false;
 }
 
+bool
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::MightHaveChildren ()
+{
+    return CalculateNumChildren() > 0;
+}
+
 uint32_t
 lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
@@ -1065,6 +1083,12 @@ bool
 lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::Update()
 {
     return false;
+}
+
+bool
+lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::MightHaveChildren ()
+{
+    return CalculateNumChildren() > 0;
 }
 
 uint32_t
@@ -1157,6 +1181,12 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::Update()
         return false;
     m_data_ptr = data_location + m_ptr_size;
     return false;
+}
+
+bool
+lldb_private::formatters::NSDictionaryISyntheticFrontEnd::MightHaveChildren ()
+{
+    return CalculateNumChildren() > 0;
 }
 
 lldb::ValueObjectSP
@@ -1298,6 +1328,12 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::Update()
     if (error.Fail())
         return false;
     return false;
+}
+
+bool
+lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::MightHaveChildren ()
+{
+    return CalculateNumChildren() > 0;
 }
 
 lldb::ValueObjectSP

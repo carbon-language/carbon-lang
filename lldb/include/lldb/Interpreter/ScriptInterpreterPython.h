@@ -109,6 +109,9 @@ public:
     UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor);
     
     virtual bool
+    MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor);
+    
+    virtual bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,
                           ScriptedCommandSynchronicity synchronicity,

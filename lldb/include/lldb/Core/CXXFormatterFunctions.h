@@ -107,6 +107,9 @@ namespace lldb_private {
             virtual bool
             Update();
             
+            virtual bool
+            MightHaveChildren ();
+            
             virtual uint32_t
             GetIndexOfChildWithName (const ConstString &name);
             
@@ -135,6 +138,9 @@ namespace lldb_private {
             virtual bool
             Update();
             
+            virtual bool
+            MightHaveChildren ();
+            
             virtual uint32_t
             GetIndexOfChildWithName (const ConstString &name);
             
@@ -162,6 +168,9 @@ namespace lldb_private {
             
             virtual bool
             Update();
+            
+            virtual bool
+            MightHaveChildren ();
             
             virtual uint32_t
             GetIndexOfChildWithName (const ConstString &name);
@@ -204,6 +213,9 @@ namespace lldb_private {
             
             virtual bool
             Update();
+            
+            virtual bool
+            MightHaveChildren ();
             
             virtual uint32_t
             GetIndexOfChildWithName (const ConstString &name);
@@ -258,6 +270,9 @@ namespace lldb_private {
             virtual bool
             Update();
             
+            virtual bool
+            MightHaveChildren ();
+            
             virtual uint32_t
             GetIndexOfChildWithName (const ConstString &name);
             
@@ -285,6 +300,9 @@ namespace lldb_private {
             
             virtual bool
             Update();
+            
+            virtual bool
+            MightHaveChildren ();
             
             virtual uint32_t
             GetIndexOfChildWithName (const ConstString &name);

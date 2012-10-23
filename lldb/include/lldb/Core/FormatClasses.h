@@ -228,17 +228,17 @@ protected:
     ValueObject &m_backend;
 public:
     
-    SyntheticChildrenFrontEnd(ValueObject &backend) :
-    m_backend(backend)
+    SyntheticChildrenFrontEnd (ValueObject &backend) :
+        m_backend(backend)
     {}
     
     virtual
-    ~SyntheticChildrenFrontEnd()
+    ~SyntheticChildrenFrontEnd ()
     {
     }
     
     virtual uint32_t
-    CalculateNumChildren() = 0;
+    CalculateNumChildren () = 0;
     
     virtual lldb::ValueObjectSP
     GetChildAtIndex (uint32_t idx) = 0;
@@ -252,7 +252,14 @@ public:
     // if =true, ValueObjectSyntheticFilter is allowed to use the children it fetched previously and cached
     // if =false, ValueObjectSyntheticFilter must throw away its cache, and query again for children
     virtual bool
-    Update() = 0;
+    Update () = 0;
+    
+    // if this function returns false, then CalculateNumChildren() MUST return 0 since UI frontends
+    // might validly decide not to inquire for children given a false return value from this call
+    // if it returns true, then CalculateNumChildren() can return any number >= 0 (0 being valid)
+    // it should if at all possible be more efficient than CalculateNumChildren()
+    virtual bool
+    MightHaveChildren () = 0;
     
     typedef STD_SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
     typedef std::auto_ptr<SyntheticChildrenFrontEnd> AutoPointer;
@@ -566,6 +573,12 @@ public:
         virtual bool
         Update() { return false; }
         
+        virtual bool
+        MightHaveChildren ()
+        {
+            return filter->GetCount() > 0;
+        }
+        
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name)
         {
@@ -726,7 +739,16 @@ public:
             
             return m_interpreter->UpdateSynthProviderInstance(m_wrapper_sp);
         }
-                
+        
+        virtual bool
+        MightHaveChildren()
+        {
+            if (!m_wrapper_sp || m_interpreter == NULL)
+                return false;
+            
+            return m_interpreter->MightHaveChildrenSynthProviderInstance(m_wrapper_sp);
+        }
+        
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name)
         {
@@ -921,6 +943,12 @@ public:
         CalculateNumChildren()
         {
             return filter->GetCount();
+        }
+        
+        virtual bool
+        MightHaveChildren ()
+        {
+            return filter->GetCount() > 0;
         }
         
         virtual lldb::ValueObjectSP

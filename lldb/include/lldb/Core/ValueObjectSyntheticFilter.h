@@ -141,6 +141,8 @@ protected:
     
     ConstString     m_parent_type_name;
 
+    LazyBool        m_might_have_children;
+    
 private:
     friend class ValueObject;
     ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter);

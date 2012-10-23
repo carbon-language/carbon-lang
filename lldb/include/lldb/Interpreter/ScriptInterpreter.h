@@ -87,11 +87,13 @@ public:
                                                const char *session_dictionary_name,
                                                const lldb::ProcessSP& process_sp);
     
-    typedef uint32_t       (*SWIGPythonCalculateNumChildren)        (void *implementor);
-    typedef void*          (*SWIGPythonGetChildAtIndex)             (void *implementor, uint32_t idx);
-    typedef int            (*SWIGPythonGetIndexOfChildWithName)     (void *implementor, const char* child_name);
-    typedef void*          (*SWIGPythonCastPyObjectToSBValue)       (void* data);
-    typedef bool           (*SWIGPythonUpdateSynthProviderInstance) (void* data);
+    typedef uint32_t       (*SWIGPythonCalculateNumChildren)                   (void *implementor);
+    typedef void*          (*SWIGPythonGetChildAtIndex)                        (void *implementor, uint32_t idx);
+    typedef int            (*SWIGPythonGetIndexOfChildWithName)                (void *implementor, const char* child_name);
+    typedef void*          (*SWIGPythonCastPyObjectToSBValue)                  (void* data);
+    typedef bool           (*SWIGPythonUpdateSynthProviderInstance)            (void* data);
+    typedef bool           (*SWIGPythonMightHaveChildrenSynthProviderInstance) (void* data);
+
     
     typedef bool           (*SWIGPythonCallCommand)                 (const char *python_function_name,
                                                                      const char *session_dictionary_name,
@@ -296,7 +298,13 @@ public:
     {
         return false;
     }
-        
+    
+    virtual bool
+    MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor)
+    {
+        return true;
+    }
+    
     virtual bool
     RunScriptBasedCommand (const char* impl_function,
                            const char* args,

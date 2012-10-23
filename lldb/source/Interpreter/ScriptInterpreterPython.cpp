@@ -53,6 +53,7 @@ static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = NUL
 static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = NULL;
 static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = NULL;
 static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = NULL;
+static ScriptInterpreter::SWIGPythonMightHaveChildrenSynthProviderInstance g_swig_mighthavechildren_provider = NULL;
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
 static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = NULL;
 static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = NULL;
@@ -99,11 +100,12 @@ LLDBSwigPythonCreateSyntheticProvider
  );
 
 
-extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren        (void *implementor);
-extern "C" void*          LLDBSwigPython_GetChildAtIndex             (void *implementor, uint32_t idx);
-extern "C" int            LLDBSwigPython_GetIndexOfChildWithName     (void *implementor, const char* child_name);
-extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
-extern "C" bool           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
+extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren                   (void *implementor);
+extern "C" void*          LLDBSwigPython_GetChildAtIndex                        (void *implementor, uint32_t idx);
+extern "C" int            LLDBSwigPython_GetIndexOfChildWithName                (void *implementor, const char* child_name);
+extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue                  (void* data);
+extern "C" bool           LLDBSwigPython_UpdateSynthProviderInstance            (void* implementor);
+extern "C" bool           LLDBSwigPython_MightHaveChildrenSynthProviderInstance (void* implementor);
 
 extern "C" bool           LLDBSwigPythonCallCommand 
 (
@@ -2348,6 +2350,30 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpre
 }
 
 bool
+ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor_sp)
+{
+    bool ret_val = false;
+    
+    if (!implementor_sp)
+        return ret_val;
+    
+    void* implementor = implementor_sp->GetObject();
+    
+    if (!implementor)
+        return ret_val;
+    
+    if (!g_swig_mighthavechildren_provider)
+        return ret_val;
+    
+    {
+        Locker py_lock(this);
+        ret_val = g_swig_mighthavechildren_provider (implementor);
+    }
+    
+    return ret_val;
+}
+
+bool
 ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                                               bool can_reload,
                                               bool init_lldb_globals,
@@ -2566,6 +2592,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_get_index_child = LLDBSwigPython_GetIndexOfChildWithName;
     g_swig_cast_to_sbvalue = LLDBSWIGPython_CastPyObjectToSBValue;
     g_swig_update_provider = LLDBSwigPython_UpdateSynthProviderInstance;
+    g_swig_mighthavechildren_provider = LLDBSwigPython_MightHaveChildrenSynthProviderInstance;
     g_swig_call_command = LLDBSwigPythonCallCommand;
     g_swig_call_module_init = LLDBSwigPythonCallModuleInit;
     g_swig_create_os_plugin = LLDBSWIGPythonCreateOSPlugin;
