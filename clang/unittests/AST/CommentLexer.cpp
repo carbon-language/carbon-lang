@@ -10,6 +10,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "llvm/ADT/STLExtras.h"
