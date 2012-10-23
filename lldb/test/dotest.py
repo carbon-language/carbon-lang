@@ -409,7 +409,10 @@ def parseOptionsAndInitTestdirs():
 
     platform_system = platform.system()
     platform_machine = platform.machine()
-    print args
+    
+    # only print the args if being verbose
+    if args.v:
+        print args
 
     if args.h:
         do_help = True
@@ -425,7 +428,9 @@ def parseOptionsAndInitTestdirs():
     if args.categoriesList:
         for category in args.categoriesList:
             if not(category in validCategories):
-                print "fatal error: category '" + category + "' is not a valid category - edit dotest.py or correct your invocation"
+                print "fatal error: category '" + category + "' is not a valid category"
+                print "if you have added a new category, please edit dotest.py, adding your new category to validCategories"
+                print "else, please specify one or more of the following: " + str(validCategories.keys())
                 sys.exit(1)
         categoriesList = set(args.categoriesList)
         useCategories = True
