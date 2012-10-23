@@ -446,7 +446,7 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
     SectionEntry &Section = Sections[Rel.SectionID];
     uint8_t *Target = Section.Address + Rel.Offset;
 
-    //  Look up for existing stub.
+    // Look for an existing stub.
     StubMap::const_iterator i = Stubs.find(Value);
     if (i != Stubs.end()) {
       resolveRelocation(Target, (uint64_t)Target, (uint64_t)Section.Address +
