@@ -467,6 +467,15 @@ namespace llvm {
                   DebugLoc dl, SelectionDAG &DAG) const;
 
     SDValue
+      extendArgForPPC64(ISD::ArgFlagsTy Flags, EVT ObjectVT, SelectionDAG &DAG,
+                        SDValue ArgVal, DebugLoc dl) const;
+
+    void
+      setMinReservedArea(MachineFunction &MF, SelectionDAG &DAG,
+                         unsigned nAltivecParamsAtEnd,
+                         unsigned MinReservedArea, bool isPPC64) const;
+
+    SDValue
       LowerFormalArguments_Darwin(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -486,7 +495,21 @@ namespace llvm {
                                   SmallVectorImpl<SDValue> &InVals) const;
 
     SDValue
-      LowerCall_Darwin_Or_64SVR4(SDValue Chain, SDValue Callee,
+      createMemcpyOutsideCallSeq(SDValue Arg, SDValue PtrOff,
+                                 SDValue CallSeqStart, ISD::ArgFlagsTy Flags,
+                                 SelectionDAG &DAG, DebugLoc dl) const;
+
+    SDValue
+      LowerCall_Darwin(SDValue Chain, SDValue Callee,
+                       CallingConv::ID CallConv,
+                       bool isVarArg, bool isTailCall,
+                       const SmallVectorImpl<ISD::OutputArg> &Outs,
+                       const SmallVectorImpl<SDValue> &OutVals,
+                       const SmallVectorImpl<ISD::InputArg> &Ins,
+                       DebugLoc dl, SelectionDAG &DAG,
+                       SmallVectorImpl<SDValue> &InVals) const;
+    SDValue
+      LowerCall_64SVR4(SDValue Chain, SDValue Callee,
                        CallingConv::ID CallConv,
                        bool isVarArg, bool isTailCall,
                        const SmallVectorImpl<ISD::OutputArg> &Outs,
