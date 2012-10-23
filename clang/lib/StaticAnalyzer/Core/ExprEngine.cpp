@@ -1512,13 +1512,13 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 
   StmtNodeBuilder Bldr(Pred, TopDst, *currBldrCtx);
   ExplodedNodeSet Dst;
-  Decl *member = M->getMemberDecl();
+  ValueDecl *Member = M->getMemberDecl();
 
-  // Handle static member variables accessed via member syntax.
-  if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
-    assert(M->isGLValue());
+  // Handle static member variables and enum constants accessed via
+  // member syntax.
+  if (isa<VarDecl>(Member) || isa<EnumConstantDecl>(Member)) {
     Bldr.takeNodes(Pred);
-    VisitCommonDeclRefExpr(M, VD, Pred, Dst);
+    VisitCommonDeclRefExpr(M, Member, Pred, Dst);
     Bldr.addNodes(Dst);
     return;
   }
@@ -1528,7 +1528,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   Expr *BaseExpr = M->getBase();
 
   // Handle C++ method calls.
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(member)) {
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
     if (MD->isInstance())
       state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
 
@@ -1543,7 +1543,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   state = createTemporaryRegionIfNeeded(state, LCtx, BaseExpr);
   SVal baseExprVal = state->getSVal(BaseExpr, LCtx);
 
-  FieldDecl *field = cast<FieldDecl>(member);
+  FieldDecl *field = cast<FieldDecl>(Member);
   SVal L = state->getLValue(field, baseExprVal);
   if (M->isGLValue()) {
     if (field->getType()->isReferenceType()) {
