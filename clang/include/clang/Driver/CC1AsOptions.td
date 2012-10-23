@@ -48,7 +48,7 @@ def o : Separate<["-"], "o">, MetaVarName<"<path>">,
 def filetype : Separate<["-"], "filetype">,
     HelpText<"Specify the output file type ('asm', 'null', or 'obj')">;
 
-def help : Flag<["-", "--"], "-help">,
+def help : Flag<["-", "--"], "help">,
   HelpText<"Print this help text">;
 
 def version : Flag<["-", "--"], "version">,
@@ -78,7 +78,7 @@ def show_inst : Flag<["-"], "show-inst">,
 def relax_all : Flag<["-"], "relax-all">,
     HelpText<"Relax all fixups (for performance testing)">;
 
-def no_exec_stack : Flag<["-"], "-noexecstack">,
+def no_exec_stack : Flag<["--"], "noexecstack">,
     HelpText<"Mark the file as not needing an executable stack">;
 
 def fatal_warnings : Flag<["--"], "fatal-warnings">,
