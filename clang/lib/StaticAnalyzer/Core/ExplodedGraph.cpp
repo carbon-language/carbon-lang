@@ -47,10 +47,8 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
-static const unsigned CounterTop = 1000;
-
 ExplodedGraph::ExplodedGraph()
-  : NumNodes(0), reclaimNodes(false), reclaimCounter(CounterTop) {}
+  : NumNodes(0), ReclaimNodeInterval(0) {}
 
 ExplodedGraph::~ExplodedGraph() {}
 
@@ -144,13 +142,13 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   if (ChangedNodes.empty())
     return;
 
-  // Only periodically relcaim nodes so that we can build up a set of
+  // Only periodically reclaim nodes so that we can build up a set of
   // nodes that meet the reclamation criteria.  Freshly created nodes
   // by definition have no successor, and thus cannot be reclaimed (see below).
-  assert(reclaimCounter > 0);
-  if (--reclaimCounter != 0)
+  assert(ReclaimCounter > 0);
+  if (--ReclaimCounter != 0)
     return;
-  reclaimCounter = CounterTop;
+  ReclaimCounter = ReclaimNodeInterval;
 
   for (NodeVector::iterator it = ChangedNodes.begin(), et = ChangedNodes.end();
        it != et; ++it) {
@@ -284,7 +282,7 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
 
     new (V) NodeTy(L, State, IsSink);
 
-    if (reclaimNodes)
+    if (ReclaimNodeInterval)
       ChangedNodes.push_back(V);
 
     // Insert the node into the node set and return it.

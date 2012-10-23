@@ -282,11 +282,13 @@ protected:
   /// A list of nodes that can be reused.
   NodeVector FreeNodes;
   
-  /// A flag that indicates whether nodes should be recycled.
-  bool reclaimNodes;
+  /// Determines how often nodes are reclaimed.
+  ///
+  /// If this is 0, nodes will never be reclaimed.
+  unsigned ReclaimNodeInterval;
   
   /// Counter to determine when to reclaim nodes.
-  unsigned reclaimCounter;
+  unsigned ReclaimCounter;
 
 public:
 
@@ -374,7 +376,9 @@ public:
 
   /// Enable tracking of recently allocated nodes for potential reclamation
   /// when calling reclaimRecentlyAllocatedNodes().
-  void enableNodeReclamation() { reclaimNodes = true; }
+  void enableNodeReclamation(unsigned Interval) {
+    ReclaimCounter = ReclaimNodeInterval = Interval;
+  }
 
   /// Reclaim "uninteresting" nodes created since the last time this method
   /// was called.

@@ -72,10 +72,11 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
     ObjCGCEnabled(gcEnabled), BR(mgr, *this),
     VisitedCallees(VisitedCalleesIn)
 {
-    if (mgr.options.eagerlyTrimExplodedGraph) {
-      // Enable eager node reclaimation when constructing the ExplodedGraph.
-      G.enableNodeReclamation();
-    }
+  unsigned TrimInterval = mgr.options.getGraphTrimInterval();
+  if (TrimInterval != 0) {
+    // Enable eager node reclaimation when constructing the ExplodedGraph.
+    G.enableNodeReclamation(TrimInterval);
+  }
 }
 
 ExprEngine::~ExprEngine() {

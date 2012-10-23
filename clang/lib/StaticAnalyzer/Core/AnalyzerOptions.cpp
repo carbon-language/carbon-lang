@@ -121,6 +121,12 @@ unsigned AnalyzerOptions::getAlwaysInlineSize() {
   return AlwaysInlineSize.getValue();
 }
 
+unsigned AnalyzerOptions::getGraphTrimInterval() {
+  if (!GraphTrimInterval.hasValue())
+    GraphTrimInterval = getOptionAsInteger("graph-trim-interval", 1000);
+  return GraphTrimInterval.getValue();
+}
+
 bool AnalyzerOptions::shouldSynthesizeBodies() {
   return getBooleanOption("faux-bodies", true);
 }

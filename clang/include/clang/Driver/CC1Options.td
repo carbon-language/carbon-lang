@@ -69,8 +69,6 @@ def analyze_function : Separate<["-"], "analyze-function">,
 def analyze_function_EQ : Joined<["-"], "analyze-function=">, Alias<analyze_function>;
 def analyzer_eagerly_assume : Flag<["-"], "analyzer-eagerly-assume">,
   HelpText<"Eagerly assume the truth/falseness of some symbolic constraints">;
-def analyzer_no_eagerly_trim_egraph : Flag<["-"], "analyzer-no-eagerly-trim-egraph">,
-  HelpText<"Don't eagerly remove uninteresting ExplodedNodes from the ExplodedGraph">;
 def trim_egraph : Flag<["-"], "trim-egraph">,
   HelpText<"Only show error-related paths in the analysis graph">;
 def analyzer_viz_egraph_graphviz : Flag<["-"], "analyzer-viz-egraph-graphviz">,
