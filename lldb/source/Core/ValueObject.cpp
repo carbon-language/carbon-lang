@@ -601,7 +601,7 @@ ValueObject::GetNumChildren ()
 bool
 ValueObject::MightHaveChildren()
 {
-    bool has_children;
+    bool has_children = false;
     clang_type_t clang_type = GetClangType();
     if (clang_type)
     {
