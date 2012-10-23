@@ -2,7 +2,7 @@
 
 // This test concerns the identity of dependent types within the
 // canonical type system, specifically focusing on the difference
-// between members of the current instantiation and membmers of an
+// between members of the current instantiation and members of an
 // unknown specialization. This considers C++ [temp.type], which
 // specifies type equivalence within a template, and C++0x
 // [temp.dep.type], which defines what it means to be a member of the
@@ -234,4 +234,16 @@ namespace rdar10194295 {
   template<typename XT>
   template<typename X<XT>::Enum>
   class X<XT>::Inner { };
+}
+
+namespace RebuildDependentScopeDeclRefExpr {
+  template<int> struct N {};
+  template<typename T> struct X {
+    static const int thing = 0;
+    N<thing> data();
+    N<thing> foo();
+  };
+  template<typename T> N<X<T>::thing> X<T>::data() {}
+  // FIXME: We should issue a typo-correction here.
+  template<typename T> N<X<T>::think> X<T>::foo() {} // expected-error {{no member named 'think' in 'X<T>'}}
 }

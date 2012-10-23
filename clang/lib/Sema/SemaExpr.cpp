@@ -1897,8 +1897,8 @@ ExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
                                         const DeclarationNameInfo &NameInfo,
                                         bool IsAddressOfOperand) {
-  DeclContext *DC;
-  if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
+  DeclContext *DC = computeDeclContext(SS, false);
+  if (!DC)
     return BuildDependentDeclRefExpr(SS, /*TemplateKWLoc=*/SourceLocation(),
                                      NameInfo, /*TemplateArgs=*/0);
 
@@ -1910,6 +1910,10 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
 
   if (R.isAmbiguous())
     return ExprError();
+
+  if (R.getResultKind() == LookupResult::NotFoundInCurrentInstantiation)
+    return BuildDependentDeclRefExpr(SS, /*TemplateKWLoc=*/SourceLocation(),
+                                     NameInfo, /*TemplateArgs=*/0);
 
   if (R.empty()) {
     Diag(NameInfo.getLoc(), diag::err_no_member)
