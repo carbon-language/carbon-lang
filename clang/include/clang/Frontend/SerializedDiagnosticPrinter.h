@@ -54,7 +54,7 @@ enum RecordIDs {
 /// (via libclang) without needing to parse Clang's command line output.
 ///
 DiagnosticConsumer *create(llvm::raw_ostream *OS,
-                           const DiagnosticOptions &diags);
+                           DiagnosticOptions *diags);
 
 } // end serialized_diags namespace
 } // end clang namespace

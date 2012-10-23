@@ -122,8 +122,10 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // Run clang -cc1 test.
   if (ArgBegin != ArgEnd && StringRef(ArgBegin[0]) == "-cc1test") {
-    DiagnosticsEngine Diags(DiagID, new TextDiagnosticPrinter(llvm::errs(), 
-                                                       DiagnosticOptions()));
+    IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+    DiagnosticsEngine Diags(DiagID, &*DiagOpts,
+                            new TextDiagnosticPrinter(llvm::errs(),
+                                                      &*DiagOpts));
     return cc1_test(Diags, ArgBegin + 1, ArgEnd);
   }
 
@@ -135,8 +137,9 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // Buffer diagnostics from argument parsing so that we can output them using a
   // well formed diagnostic object.
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticBuffer *DiagsBuffer = new TextDiagnosticBuffer;
-  DiagnosticsEngine Diags(DiagID, DiagsBuffer);
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagsBuffer);
   bool Success;
   Success = CompilerInvocation::CreateFromArgs(Clang->getInvocation(),
                                                ArgBegin, ArgEnd, Diags);

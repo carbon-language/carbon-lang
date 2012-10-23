@@ -20,6 +20,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/ABI.h"
+#include "clang/Basic/DiagnosticOptions.h"
 
 #include <map>
 

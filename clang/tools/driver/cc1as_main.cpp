@@ -19,9 +19,9 @@
 #include "clang/Driver/CC1AsOptions.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Options.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -394,11 +394,12 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   InitializeAllAsmParsers();
 
   // Construct our diagnostic client.
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter *DiagClient
-    = new TextDiagnosticPrinter(errs(), DiagnosticOptions());
+    = new TextDiagnosticPrinter(errs(), &*DiagOpts);
   DiagClient->setPrefix("clang -cc1as");
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  DiagnosticsEngine Diags(DiagID, DiagClient);
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
   // error handler.

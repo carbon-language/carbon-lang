@@ -29,6 +29,7 @@
 namespace clang {
   class DiagnosticConsumer;
   class DiagnosticBuilder;
+  class DiagnosticOptions;
   class IdentifierInfo;
   class DeclContext;
   class LangOptions;
@@ -190,6 +191,7 @@ private:
                                     // backtrace stack, 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   IntrusiveRefCntPtr<DiagnosticIDs> Diags;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   DiagnosticConsumer *Client;
   bool OwnsDiagClient;
   SourceManager *SourceMgr;
@@ -341,6 +343,7 @@ private:
 public:
   explicit DiagnosticsEngine(
                       const IntrusiveRefCntPtr<DiagnosticIDs> &Diags,
+                      DiagnosticOptions *DiagOpts,
                       DiagnosticConsumer *client = 0,
                       bool ShouldOwnClient = true);
   ~DiagnosticsEngine();
@@ -348,6 +351,9 @@ public:
   const IntrusiveRefCntPtr<DiagnosticIDs> &getDiagnosticIDs() const {
     return Diags;
   }
+
+  /// \brief Retrieve the diagnostic options.
+  DiagnosticOptions &getDiagnosticOptions() const { return *DiagOpts; }
 
   DiagnosticConsumer *getClient() { return Client; }
   const DiagnosticConsumer *getClient() const { return Client; }

@@ -93,15 +93,15 @@ void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
 }
 
 // Diagnostics
-static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
+static void SetUpBuildDumpLog(DiagnosticOptions *DiagOpts,
                               unsigned argc, const char* const *argv,
                               DiagnosticsEngine &Diags) {
   std::string ErrorInfo;
   OwningPtr<raw_ostream> OS(
-    new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo));
+    new llvm::raw_fd_ostream(DiagOpts->DumpBuildInformation.c_str(),ErrorInfo));
   if (!ErrorInfo.empty()) {
     Diags.Report(diag::err_fe_unable_to_open_logfile)
-                 << DiagOpts.DumpBuildInformation << ErrorInfo;
+                 << DiagOpts->DumpBuildInformation << ErrorInfo;
     return;
   }
 
@@ -116,20 +116,20 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
 }
 
-static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
+static void SetUpDiagnosticLog(DiagnosticOptions *DiagOpts,
                                const CodeGenOptions *CodeGenOpts,
                                DiagnosticsEngine &Diags) {
   std::string ErrorInfo;
   bool OwnsStream = false;
   raw_ostream *OS = &llvm::errs();
-  if (DiagOpts.DiagnosticLogFile != "-") {
+  if (DiagOpts->DiagnosticLogFile != "-") {
     // Create the output stream.
     llvm::raw_fd_ostream *FileOS(
-      new llvm::raw_fd_ostream(DiagOpts.DiagnosticLogFile.c_str(),
+      new llvm::raw_fd_ostream(DiagOpts->DiagnosticLogFile.c_str(),
                                ErrorInfo, llvm::raw_fd_ostream::F_Append));
     if (!ErrorInfo.empty()) {
       Diags.Report(diag::warn_fe_cc_log_diagnostics_failure)
-        << DiagOpts.DumpBuildInformation << ErrorInfo;
+        << DiagOpts->DumpBuildInformation << ErrorInfo;
     } else {
       FileOS->SetUnbuffered();
       FileOS->SetUseAtomicWrites(true);
@@ -146,7 +146,7 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
 }
 
-static void SetupSerializedDiagnostics(const DiagnosticOptions &DiagOpts,
+static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
                                        DiagnosticsEngine &Diags,
                                        StringRef OutputFile) {
   std::string ErrorInfo;
@@ -172,13 +172,13 @@ void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                          DiagnosticConsumer *Client,
                                          bool ShouldOwnClient,
                                          bool ShouldCloneClient) {
-  Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client,
+  Diagnostics = createDiagnostics(&getDiagnosticOpts(), Argc, Argv, Client,
                                   ShouldOwnClient, ShouldCloneClient,
                                   &getCodeGenOpts());
 }
 
 IntrusiveRefCntPtr<DiagnosticsEngine>
-CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
+CompilerInstance::createDiagnostics(DiagnosticOptions *Opts,
                                     int Argc, const char* const *Argv,
                                     DiagnosticConsumer *Client,
                                     bool ShouldOwnClient,
@@ -186,7 +186,7 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     const CodeGenOptions *CodeGenOpts) {
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine>
-      Diags(new DiagnosticsEngine(DiagID));
+      Diags(new DiagnosticsEngine(DiagID, Opts));
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
@@ -199,22 +199,22 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
     Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
 
   // Chain in -verify checker, if requested.
-  if (Opts.VerifyDiagnostics)
+  if (Opts->VerifyDiagnostics)
     Diags->setClient(new VerifyDiagnosticConsumer(*Diags));
 
   // Chain in -diagnostic-log-file dumper, if requested.
-  if (!Opts.DiagnosticLogFile.empty())
+  if (!Opts->DiagnosticLogFile.empty())
     SetUpDiagnosticLog(Opts, CodeGenOpts, *Diags);
 
-  if (!Opts.DumpBuildInformation.empty())
+  if (!Opts->DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
 
-  if (!Opts.DiagnosticSerializationFile.empty())
+  if (!Opts->DiagnosticSerializationFile.empty())
     SetupSerializedDiagnostics(Opts, *Diags,
-                               Opts.DiagnosticSerializationFile);
+                               Opts->DiagnosticSerializationFile);
   
   // Configure our handling of diagnostics.
-  ProcessWarningOptions(*Diags, Opts);
+  ProcessWarningOptions(*Diags, *Opts);
 
   return Diags;
 }

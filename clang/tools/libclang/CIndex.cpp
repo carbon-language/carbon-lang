@@ -2559,10 +2559,10 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   bool ForSerialization = options & CXTranslationUnit_ForSerialization;
 
   // Configure the diagnostics.
-  DiagnosticOptions DiagOpts;
   IntrusiveRefCntPtr<DiagnosticsEngine>
-    Diags(CompilerInstance::createDiagnostics(DiagOpts, num_command_line_args, 
-                                                command_line_args));
+    Diags(CompilerInstance::createDiagnostics(new DiagnosticOptions,
+                                              num_command_line_args,
+                                              command_line_args));
 
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,

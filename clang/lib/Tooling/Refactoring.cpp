@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
@@ -164,12 +164,11 @@ Replacements &RefactoringTool::getReplacements() { return Replace; }
 int RefactoringTool::run(FrontendActionFactory *ActionFactory) {
   int Result = Tool.run(ActionFactory);
   LangOptions DefaultLangOptions;
-  DiagnosticOptions DefaultDiagnosticOptions;
-  TextDiagnosticPrinter DiagnosticPrinter(llvm::errs(),
-                                          DefaultDiagnosticOptions);
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+  TextDiagnosticPrinter DiagnosticPrinter(llvm::errs(), &*DiagOpts);
   DiagnosticsEngine Diagnostics(
       llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-      &DiagnosticPrinter, false);
+      &*DiagOpts, &DiagnosticPrinter, false);
   SourceManager Sources(Diagnostics, Tool.getFiles());
   Rewriter Rewrite(Sources, DefaultLangOptions);
   if (!applyAllReplacements(Replace, Rewrite)) {

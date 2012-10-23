@@ -16,6 +16,7 @@
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
@@ -76,7 +77,7 @@ ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
 {
   IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = IntrusiveRefCntPtr<DiagnosticsEngine>(
-            new DiagnosticsEngine(DiagIDs));
+            new DiagnosticsEngine(DiagIDs, new DiagnosticOptions));
   Diags->setClient(DC.clone(*Diags), /*ShouldOwnClient=*/true);
   SourceMgr = new SourceManager(*Diags, FileMgr);
 }

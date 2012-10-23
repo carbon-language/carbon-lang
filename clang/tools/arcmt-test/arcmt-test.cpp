@@ -105,11 +105,12 @@ public:
 
 static bool checkForMigration(StringRef resourcesPath,
                               ArrayRef<const char *> Args) {
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   DiagnosticConsumer *DiagClient =
-    new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
+    new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient));
+      new DiagnosticsEngine(DiagID, &*DiagOpts, DiagClient));
   // Chain in -verify checker, if requested.
   VerifyDiagnosticConsumer *verifyDiag = 0;
   if (VerifyDiags) {
@@ -150,11 +151,12 @@ static bool performTransformations(StringRef resourcesPath,
   if (checkForMigration(resourcesPath, Args))
     return true;
 
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   DiagnosticConsumer *DiagClient =
-    new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
+    new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> TopDiags(
-      new DiagnosticsEngine(DiagID, DiagClient));
+      new DiagnosticsEngine(DiagID, &*DiagOpts, &*DiagClient));
 
   CompilerInvocation origCI;
   if (!CompilerInvocation::CreateFromArgs(origCI, Args.begin(), Args.end(),

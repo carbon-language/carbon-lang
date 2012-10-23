@@ -35,12 +35,14 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 CompilerInvocationBase::CompilerInvocationBase()
-  : LangOpts(new LangOptions()), TargetOpts(new TargetOptions()) {}
+  : LangOpts(new LangOptions()), TargetOpts(new TargetOptions()),
+    DiagnosticOpts(new DiagnosticOptions()) {}
 
 CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
   : RefCountedBase<CompilerInvocation>(),
     LangOpts(new LangOptions(*X.getLangOpts())), 
-    TargetOpts(new TargetOptions(X.getTargetOpts())) {}
+    TargetOpts(new TargetOptions(X.getTargetOpts())),
+    DiagnosticOpts(new DiagnosticOptions(X.getDiagnosticOpts())) {}
 
 //===----------------------------------------------------------------------===//
 // Utility functions.

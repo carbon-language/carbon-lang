@@ -90,10 +90,10 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
                                                                  IK));
 
     TextDiagnosticPrinter *DiagClient =
-      new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
+      new TextDiagnosticPrinter(llvm::errs(), new DiagnosticOptions());
     IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-        new DiagnosticsEngine(DiagID, DiagClient));
+        new DiagnosticsEngine(DiagID, &CI.getDiagnosticOpts(), DiagClient));
 
     OwningPtr<CompilerInstance> Clang(new CompilerInstance());
     Clang->setInvocation(CInvok.take());

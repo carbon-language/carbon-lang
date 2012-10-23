@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/DiagnosticRenderer.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Edit/EditedSource.h"
 #include "clang/Edit/Commit.h"
@@ -60,8 +60,8 @@ static StringRef getImmediateMacroName(SourceLocation Loc,
 }
 
 DiagnosticRenderer::DiagnosticRenderer(const LangOptions &LangOpts,
-                                       const DiagnosticOptions &DiagOpts)
-: LangOpts(LangOpts), DiagOpts(DiagOpts), LastLevel() {}
+                                       DiagnosticOptions *DiagOpts)
+  : LangOpts(LangOpts), DiagOpts(DiagOpts), LastLevel() {}
 
 DiagnosticRenderer::~DiagnosticRenderer() {}
 
@@ -194,7 +194,7 @@ void DiagnosticRenderer::emitIncludeStack(SourceLocation Loc,
     return;
   LastIncludeLoc = Loc;
   
-  if (!DiagOpts.ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
+  if (!DiagOpts->ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
     return;
   
   emitIncludeStackRecursively(Loc, SM);
@@ -269,11 +269,11 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
   Loc = SM.getImmediateMacroCalleeLoc(Loc);
   
   unsigned MacroSkipStart = 0, MacroSkipEnd = 0;
-  if (MacroDepth > DiagOpts.MacroBacktraceLimit &&
-      DiagOpts.MacroBacktraceLimit != 0) {
-    MacroSkipStart = DiagOpts.MacroBacktraceLimit / 2 +
-    DiagOpts.MacroBacktraceLimit % 2;
-    MacroSkipEnd = MacroDepth - DiagOpts.MacroBacktraceLimit / 2;
+  if (MacroDepth > DiagOpts->MacroBacktraceLimit &&
+      DiagOpts->MacroBacktraceLimit != 0) {
+    MacroSkipStart = DiagOpts->MacroBacktraceLimit / 2 +
+    DiagOpts->MacroBacktraceLimit % 2;
+    MacroSkipEnd = MacroDepth - DiagOpts->MacroBacktraceLimit / 2;
   }
   
   // Whether to suppress printing this macro expansion.

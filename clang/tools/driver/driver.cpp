@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Compilation.h"
@@ -19,7 +20,6 @@
 #include "clang/Driver/Option.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 
@@ -375,7 +375,7 @@ int main(int argc_, const char **argv_) {
 
   llvm::sys::Path Path = GetExecutablePath(argv[0], CanonicalPrefixes);
 
-  DiagnosticOptions DiagOpts;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
   {
     // Note that ParseDiagnosticArgs() uses the cc1 option table.
     OwningPtr<OptTable> CC1Opts(createDriverOptTable());
@@ -385,17 +385,17 @@ int main(int argc_, const char **argv_) {
     // We ignore MissingArgCount and the return value of ParseDiagnosticArgs.
     // Any errors that would be diagnosed here will also be diagnosed later,
     // when the DiagnosticsEngine actually exists.
-    (void) ParseDiagnosticArgs(DiagOpts, *Args);
+    (void) ParseDiagnosticArgs(*DiagOpts, *Args);
   }
   // Now we can create the DiagnosticsEngine with a properly-filled-out
   // DiagnosticOptions instance.
   TextDiagnosticPrinter *DiagClient
-    = new TextDiagnosticPrinter(llvm::errs(), DiagOpts);
+    = new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
   DiagClient->setPrefix(llvm::sys::path::stem(Path.str()));
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
-  DiagnosticsEngine Diags(DiagID, DiagClient);
-  ProcessWarningOptions(Diags, DiagOpts);
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+  ProcessWarningOptions(Diags, *DiagOpts);
 
 #ifdef CLANG_IS_PRODUCTION
   const bool IsProduction = true;

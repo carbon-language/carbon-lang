@@ -41,8 +41,9 @@ void ASTMergeAction::ExecuteAction() {
       DiagIDs(CI.getDiagnostics().getDiagnosticIDs());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
     IntrusiveRefCntPtr<DiagnosticsEngine>
-        Diags(new DiagnosticsEngine(DiagIDs, CI.getDiagnostics().getClient(),
-                             /*ShouldOwnClient=*/false));
+        Diags(new DiagnosticsEngine(DiagIDs, &CI.getDiagnosticOpts(),
+                                    CI.getDiagnostics().getClient(),
+                                    /*ShouldOwnClient=*/false));
     ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags,
                                              CI.getFileSystemOpts(), false);
     if (!Unit)

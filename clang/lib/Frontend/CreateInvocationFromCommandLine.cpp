@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
@@ -34,8 +34,8 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
-    DiagnosticOptions DiagOpts;
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgList.size(),
+    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions,
+                                                ArgList.size(),
                                                 ArgList.begin());
   }
 

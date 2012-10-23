@@ -13,11 +13,11 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/FileSystemOptions.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/Frontend/MigratorOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/LangStandard.h"
@@ -55,6 +55,10 @@ protected:
 
   /// Options controlling the target.
   IntrusiveRefCntPtr<TargetOptions> TargetOpts;
+
+  /// Options controlling the diagnostic engine.
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagnosticOpts;
+
 public:
   CompilerInvocationBase();
 
@@ -67,6 +71,8 @@ public:
   const TargetOptions &getTargetOpts() const {
     return *TargetOpts.getPtr();
   }
+
+  DiagnosticOptions &getDiagnosticOpts() const { return *DiagnosticOpts; }
 };
   
 /// \brief Helper class for holding the data necessary to invoke the compiler.
@@ -85,9 +91,6 @@ class CompilerInvocation : public CompilerInvocationBase {
 
   /// Options controlling dependency output.
   DependencyOutputOptions DependencyOutputOpts;
-
-  /// Options controlling the diagnostic engine.
-  DiagnosticOptions DiagnosticOpts;
 
   /// Options controlling file system operations.
   FileSystemOptions FileSystemOpts;
@@ -173,9 +176,6 @@ public:
   const DependencyOutputOptions &getDependencyOutputOpts() const {
     return DependencyOutputOpts;
   }
-
-  DiagnosticOptions &getDiagnosticOpts() { return DiagnosticOpts; }
-  const DiagnosticOptions &getDiagnosticOpts() const { return DiagnosticOpts; }
 
   FileSystemOptions &getFileSystemOpts() { return FileSystemOpts; }
   const FileSystemOptions &getFileSystemOpts() const {

@@ -159,11 +159,12 @@ bool ToolInvocation::run() {
   for (int I = 0, E = CommandLine.size(); I != E; ++I)
     Argv.push_back(CommandLine[I].c_str());
   const char *const BinaryName = Argv[0];
-  DiagnosticOptions DefaultDiagnosticOptions;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter DiagnosticPrinter(
-      llvm::errs(), DefaultDiagnosticOptions);
-  DiagnosticsEngine Diagnostics(llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(
-      new DiagnosticIDs()), &DiagnosticPrinter, false);
+      llvm::errs(), &*DiagOpts);
+  DiagnosticsEngine Diagnostics(
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()),
+    &*DiagOpts, &DiagnosticPrinter, false);
 
   const llvm::OwningPtr<clang::driver::Driver> Driver(
       newDriver(&Diagnostics, BinaryName));

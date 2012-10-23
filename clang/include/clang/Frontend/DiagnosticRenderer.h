@@ -44,7 +44,7 @@ typedef llvm::PointerUnion<const Diagnostic *,
 class DiagnosticRenderer {
 protected:
   const LangOptions &LangOpts;
-  const DiagnosticOptions &DiagOpts;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   
   /// \brief The location of the previous diagnostic if known.
   ///
@@ -66,7 +66,7 @@ protected:
   DiagnosticsEngine::Level LastLevel;
 
   DiagnosticRenderer(const LangOptions &LangOpts,
-                     const DiagnosticOptions &DiagOpts);
+                     DiagnosticOptions *DiagOpts);
   
   virtual ~DiagnosticRenderer();
   
@@ -139,7 +139,7 @@ public:
 class DiagnosticNoteRenderer : public DiagnosticRenderer {
 public:
   DiagnosticNoteRenderer(const LangOptions &LangOpts,
-                         const DiagnosticOptions &DiagOpts)
+                         DiagnosticOptions *DiagOpts)
     : DiagnosticRenderer(LangOpts, DiagOpts) {}
   
   virtual ~DiagnosticNoteRenderer();

@@ -7,10 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_DIAGNOSTICOPTIONS_H
-#define LLVM_CLANG_FRONTEND_DIAGNOSTICOPTIONS_H
+#ifndef LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
+#define LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 #include <string>
 #include <vector>
@@ -19,7 +20,7 @@ namespace clang {
 
 /// DiagnosticOptions - Options for controlling the compiler diagnostics
 /// engine.
-class DiagnosticOptions {
+class DiagnosticOptions : public llvm::RefCountedBase<DiagnosticOptions>{
 public:
   unsigned IgnoreWarnings : 1;   /// -w
   unsigned NoRewriteMacros : 1;  /// -Wno-rewrite-macros

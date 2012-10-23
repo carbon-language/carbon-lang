@@ -290,13 +290,13 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   CaptureDiagnosticConsumer *CaptureDiag = new CaptureDiagnosticConsumer();
 
   // Configure the diagnostics.
-  DiagnosticOptions DiagOpts;
   IntrusiveRefCntPtr<DiagnosticsEngine>
-    Diags(CompilerInstance::createDiagnostics(DiagOpts, num_command_line_args, 
-                                                command_line_args,
-                                                CaptureDiag,
-                                                /*ShouldOwnClient=*/true,
-                                                /*ShouldCloneClient=*/false));
+    Diags(CompilerInstance::createDiagnostics(new DiagnosticOptions,
+                                              num_command_line_args,
+                                              command_line_args,
+                                              CaptureDiag,
+                                              /*ShouldOwnClient=*/true,
+                                              /*ShouldCloneClient=*/false));
 
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,

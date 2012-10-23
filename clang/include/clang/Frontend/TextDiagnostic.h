@@ -40,7 +40,7 @@ class TextDiagnostic : public DiagnosticRenderer {
 public:
   TextDiagnostic(raw_ostream &OS,
                  const LangOptions &LangOpts,
-                 const DiagnosticOptions &DiagOpts);
+                 DiagnosticOptions *DiagOpts);
 
   virtual ~TextDiagnostic();
   

@@ -668,11 +668,11 @@ void ASTUnit::ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
-    DiagnosticOptions DiagOpts;
     DiagnosticConsumer *Client = 0;
     if (CaptureDiagnostics)
       Client = new StoredDiagnosticConsumer(AST.StoredDiagnostics);
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd-ArgBegin,
+    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions(),
+                                                ArgEnd-ArgBegin,
                                                 ArgBegin, Client,
                                                 /*ShouldOwnClient=*/true,
                                                 /*ShouldCloneClient=*/false);
@@ -1947,8 +1947,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
-    DiagnosticOptions DiagOpts;
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd - ArgBegin, 
+    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions(),
+                                                ArgEnd - ArgBegin,
                                                 ArgBegin);
   }
 

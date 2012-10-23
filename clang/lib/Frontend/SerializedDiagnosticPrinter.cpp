@@ -12,6 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/DenseSet.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
@@ -52,7 +53,7 @@ class SDiagsRenderer : public DiagnosticNoteRenderer {
   SDiagsWriter &Writer;
 public:
   SDiagsRenderer(SDiagsWriter &Writer, const LangOptions &LangOpts,
-                 const DiagnosticOptions &DiagOpts)
+                 DiagnosticOptions *DiagOpts)
     : DiagnosticNoteRenderer(LangOpts, DiagOpts), Writer(Writer) {}
 
   virtual ~SDiagsRenderer() {}
@@ -89,7 +90,7 @@ protected:
 class SDiagsWriter : public DiagnosticConsumer {
   friend class SDiagsRenderer;
 public:  
-  explicit SDiagsWriter(llvm::raw_ostream *os, const DiagnosticOptions &diags)
+  explicit SDiagsWriter(llvm::raw_ostream *os, DiagnosticOptions *diags)
     : LangOpts(0), DiagOpts(diags), Stream(Buffer), OS(os),
       EmittedAnyDiagBlocks(false) {
     EmitPreamble();
@@ -175,7 +176,7 @@ private:
   enum { Version = 1 };
 
   const LangOptions *LangOpts;
-  const DiagnosticOptions &DiagOpts;
+  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   
   /// \brief The byte buffer for the serialized content.
   SmallString<1024> Buffer;
@@ -217,7 +218,7 @@ private:
 namespace clang {
 namespace serialized_diags {
 DiagnosticConsumer *create(llvm::raw_ostream *OS,
-                           const DiagnosticOptions &diags) {
+                           DiagnosticOptions *diags) {
   return new SDiagsWriter(OS, diags);
 }
 } // end namespace serialized_diags
@@ -517,7 +518,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
 
   assert(Info.hasSourceManager() && LangOpts &&
          "Unexpected diagnostic with valid location outside of a source file");
-  SDiagsRenderer Renderer(*this, *LangOpts, DiagOpts);
+  SDiagsRenderer Renderer(*this, *LangOpts, &*DiagOpts);
   Renderer.emitDiagnostic(Info.getLocation(), DiagLevel,
                           diagBuf.str(),
                           Info.getRanges(),

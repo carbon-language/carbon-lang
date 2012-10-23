@@ -14,6 +14,7 @@
 #include "DiagTool.h"
 #include "DiagnosticNames.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -50,7 +51,9 @@ static void resetColor(bool ShowColors, llvm::raw_ostream &out) {
 }
 
 static clang::DiagnosticsEngine::Level getLevel(unsigned DiagID) {
-  static clang::DiagnosticsEngine Diags(new DiagnosticIDs);
+  // FIXME: This feels like a hack.
+  static clang::DiagnosticsEngine Diags(new DiagnosticIDs,
+                                        new DiagnosticOptions);
   return Diags.getDiagnosticLevel(DiagID, SourceLocation());
 }
 

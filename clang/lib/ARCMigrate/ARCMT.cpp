@@ -243,12 +243,13 @@ createInvocationForMigration(CompilerInvocation &origCI) {
 }
 
 static void emitPremigrationErrors(const CapturedDiagList &arcDiags,
-                                   const DiagnosticOptions &diagOpts,
+                                   DiagnosticOptions *diagOpts,
                                    Preprocessor &PP) {
   TextDiagnosticPrinter printer(llvm::errs(), diagOpts);
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, &printer, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, diagOpts, &printer,
+                            /*ShouldOwnClient=*/false));
   Diags->setSourceManager(&PP.getSourceManager());
   
   printer.BeginSourceFile(PP.getLangOpts(), &PP);
@@ -286,7 +287,8 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   assert(DiagClient);
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, &origCI.getDiagnosticOpts(),
+                            DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
   CaptureDiagnosticConsumer errRec(*Diags, *DiagClient, capturedDiags);
@@ -314,7 +316,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   }
 
   if (emitPremigrationARCErrors)
-    emitPremigrationErrors(capturedDiags, origCI.getDiagnosticOpts(),
+    emitPremigrationErrors(capturedDiags, &origCI.getDiagnosticOpts(),
                            Unit->getPreprocessor());
   if (!plistOut.empty()) {
     SmallVector<StoredDiagnostic, 8> arcDiags;
@@ -395,7 +397,8 @@ static bool applyTransforms(CompilerInvocation &origCI,
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, &origCI.getDiagnosticOpts(),
+                            DiagClient, /*ShouldOwnClient=*/false));
 
   if (outputDir.empty()) {
     origCI.getLangOpts()->ObjCAutoRefCount = true;
@@ -434,7 +437,8 @@ bool arcmt::getFileRemappings(std::vector<std::pair<std::string,std::string> > &
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, new DiagnosticOptions,
+                            DiagClient, /*ShouldOwnClient=*/false));
 
   FileRemapper remapper;
   bool err = remapper.initFromDisk(outputDir, *Diags,
@@ -458,7 +462,8 @@ bool arcmt::getFileRemappingsFromFileList(
 
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, new DiagnosticOptions,
+                            DiagClient, /*ShouldOwnClient=*/false));
 
   for (ArrayRef<StringRef>::iterator
          I = remapFiles.begin(), E = remapFiles.end(); I != E; ++I) {
@@ -574,7 +579,8 @@ MigrationProcess::MigrationProcess(const CompilerInvocation &CI,
   if (!outputDir.empty()) {
     IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, &CI.getDiagnosticOpts(),
+                            DiagClient, /*ShouldOwnClient=*/false));
     Remapper.initFromDisk(outputDir, *Diags, /*ignoreIfFilesChanges=*/true);
   }
 }
@@ -593,7 +599,8 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   assert(DiagClient);
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+      new DiagnosticsEngine(DiagID, new DiagnosticOptions,
+                            DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
   CaptureDiagnosticConsumer errRec(*Diags, *DiagClient, capturedDiags);

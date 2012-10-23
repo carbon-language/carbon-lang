@@ -42,7 +42,7 @@ class LogDiagnosticPrinter : public DiagnosticConsumer {
   
   raw_ostream &OS;
   const LangOptions *LangOpts;
-  const DiagnosticOptions *DiagOpts;
+  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
 
   SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
@@ -54,7 +54,7 @@ class LogDiagnosticPrinter : public DiagnosticConsumer {
   std::string DwarfDebugFlags;
 
 public:
-  LogDiagnosticPrinter(raw_ostream &OS, const DiagnosticOptions &Diags,
+  LogDiagnosticPrinter(raw_ostream &OS, DiagnosticOptions *Diags,
                        bool OwnsOutputStream = false);
   virtual ~LogDiagnosticPrinter();
 

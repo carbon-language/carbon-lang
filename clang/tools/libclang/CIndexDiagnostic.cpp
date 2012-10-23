@@ -19,7 +19,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
-#include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -87,7 +87,7 @@ public:
 class CXDiagnosticRenderer : public DiagnosticNoteRenderer {
 public:  
   CXDiagnosticRenderer(const LangOptions &LangOpts,
-                       const DiagnosticOptions &DiagOpts,
+                       DiagnosticOptions *DiagOpts,
                        CXDiagnosticSetImpl *mainSet)
   : DiagnosticNoteRenderer(LangOpts, DiagOpts),
     CurrentSet(mainSet), MainSet(mainSet) {}
@@ -191,9 +191,9 @@ CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
   if (!TU->Diagnostics) {
     CXDiagnosticSetImpl *Set = new CXDiagnosticSetImpl();
     TU->Diagnostics = Set;
-    DiagnosticOptions DOpts;
+    llvm::IntrusiveRefCntPtr<DiagnosticOptions> DOpts = new DiagnosticOptions;
     CXDiagnosticRenderer Renderer(AU->getASTContext().getLangOpts(),
-                                  DOpts, Set);
+                                  &*DOpts, Set);
     
     for (ASTUnit::stored_diag_iterator it = AU->stored_diag_begin(),
          ei = AU->stored_diag_end(); it != ei; ++it) {
