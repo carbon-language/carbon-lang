@@ -122,3 +122,10 @@ void f(int i, ...) {
 
 // PR8371
 int fn5() __attribute__ ((__const));
+
+// OpenSSL has some macros like this.
+#define M(a, b) (long)foo((a), (b))
+void t11(int i, int j) {
+  M(i, j);  // no warning
+}
+#undef M

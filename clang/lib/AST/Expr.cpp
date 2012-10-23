@@ -2026,6 +2026,10 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
   }
   case CXXFunctionalCastExprClass:
   case CStyleCastExprClass: {
+    // Ignore casts within macro expansions.
+    if (getExprLoc().isMacroID())
+      return false;
+
     // Ignore an explicit cast to void unless the operand is a non-trivial
     // volatile lvalue.
     const CastExpr *CE = cast<CastExpr>(this);
