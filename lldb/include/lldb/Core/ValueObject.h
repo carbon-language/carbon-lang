@@ -1071,6 +1071,25 @@ public:
         m_did_calculate_complete_objc_class_type = true;
     }
     
+    //------------------------------------------------------------------
+    /// Find out if a SBValue might have children.
+    ///
+    /// This call is much more efficient than CalculateNumChildren() as
+    /// it doesn't need to complete the underlying type. This is designed
+    /// to be used in a UI environment in order to detect if the
+    /// disclosure triangle should be displayed or not.
+    ///
+    /// This function returns true for class, union, structure,
+    /// pointers, references, arrays and more. Again, it does so without
+    /// doing any expensive type completion.
+    ///
+    /// @return
+    ///     Returns \b true if the SBValue might have children, or \b
+    ///     false otherwise.
+    //------------------------------------------------------------------
+    virtual bool
+    MightHaveChildren();
+
 protected:
     typedef ClusterManager<ValueObject> ValueObjectManager;
     

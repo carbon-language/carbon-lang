@@ -597,6 +597,30 @@ ValueObject::GetNumChildren ()
     }
     return m_children.GetChildrenCount();
 }
+
+bool
+ValueObject::MightHaveChildren()
+{
+    bool has_children;
+    clang_type_t clang_type = GetClangType();
+    if (clang_type)
+    {
+        const uint32_t type_info = ClangASTContext::GetTypeInfo (clang_type,
+                                                                 GetClangAST(),
+                                                                 NULL);
+        if (type_info & (ClangASTContext::eTypeHasChildren |
+                         ClangASTContext::eTypeIsPointer |
+                         ClangASTContext::eTypeIsReference))
+            has_children = true;
+    }
+    else
+    {
+        has_children = GetNumChildren () > 0;
+    }
+    return has_children;
+}
+
+// Should only be called by ValueObject::GetNumChildren()
 void
 ValueObject::SetNumChildren (uint32_t num_children)
 {

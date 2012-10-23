@@ -1354,6 +1354,20 @@ SBValue::GetValueAsUnsigned(uint64_t fail_value)
     return fail_value;
 }
 
+bool
+SBValue::MightHaveChildren ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    bool has_children = false;
+    lldb::ValueObjectSP value_sp(GetSP());
+    if (value_sp)
+        has_children = value_sp->MightHaveChildren();
+
+    if (log)
+        log->Printf ("SBValue(%p)::HasChildren() => %i", value_sp.get(), has_children);
+    return has_children;
+}
+
 uint32_t
 SBValue::GetNumChildren ()
 {

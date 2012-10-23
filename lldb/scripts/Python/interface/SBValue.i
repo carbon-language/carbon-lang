@@ -302,6 +302,9 @@ public:
     lldb::SBDeclaration
     GetDeclaration ();
     
+    bool
+    MightHaveChildren ();
+
     uint32_t
     GetNumChildren ();
 

@@ -96,6 +96,14 @@ ValueObjectSynthetic::CalculateNumChildren()
     return (m_synthetic_children_count = m_synth_filter_ap->CalculateNumChildren());
 }
 
+bool
+ValueObjectSynthetic::MightHaveChildren()
+{
+    // TODO: make this more efficient by adding API calls to calculate this efficiently
+    return GetNumChildren () > 0;
+}
+
+
 clang::ASTContext *
 ValueObjectSynthetic::GetClangASTImpl ()
 {

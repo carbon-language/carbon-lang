@@ -39,6 +39,9 @@ public:
     virtual ConstString
     GetTypeName();
 
+    virtual bool
+    MightHaveChildren();
+
     virtual uint32_t
     CalculateNumChildren();
 
