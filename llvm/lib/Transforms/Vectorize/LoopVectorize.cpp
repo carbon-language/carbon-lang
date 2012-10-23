@@ -259,10 +259,6 @@ private:
   /// Returns true if BB is vectorizable
   bool canVectorizeMemory(BasicBlock &BB);
 
-  // Check if a pointer value is known to be disjoint.
-  // Example: Alloca, Global, NoAlias.
-  bool isIdentifiedSafeObject(Value* Val);
-
   /// Returns True, if 'Phi' is the kind of reduction variable for type
   /// 'Kind'. If this is a reduction variable, it adds it to ReductionList.
   bool AddReductionVar(PHINode *Phi, ReductionKind Kind);
@@ -1178,7 +1174,7 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
     GetUnderlyingObjects(*I, TempObjects, DL);
     for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
          it != e; ++it) {
-      if (!isIdentifiedSafeObject(*it)) {
+      if (!isIdentifiedObject(*it)) {
         DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **it <<"\n");
         return false;
       }
@@ -1196,7 +1192,7 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
     GetUnderlyingObjects(*I, TempObjects, DL);
     for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
          it != e; ++it) {
-      if (!isIdentifiedSafeObject(*it)) {
+      if (!isIdentifiedObject(*it)) {
         DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **it <<"\n");
         return false;
       }
@@ -1211,19 +1207,6 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
 
   // All is okay.
   return true;
-}
-
-/// Checks if the value is a Global variable or if it is an Arguments
-/// marked with the NoAlias attribute.
-bool LoopVectorizationLegality::isIdentifiedSafeObject(Value* Val) {
-  assert(Val && "Invalid value");
-  if (isa<GlobalValue>(Val))
-    return true;
-  if (isa<AllocaInst>(Val))
-    return true;
-  if (Argument *A = dyn_cast<Argument>(Val))
-    return A->hasNoAliasAttr();
-  return false;
 }
 
 bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
