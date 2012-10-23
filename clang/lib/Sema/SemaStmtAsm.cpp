@@ -328,6 +328,7 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
 static bool buildMSAsmString(Sema &SemaRef,
                              SourceLocation AsmLoc,
                              ArrayRef<Token> AsmToks,
+                             llvm::SmallVectorImpl<unsigned> &TokOffsets,
                              std::string &AsmString) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
@@ -355,6 +356,7 @@ static bool buildMSAsmString(Sema &SemaRef,
 
     StringRef Spelling = getSpelling(SemaRef, AsmToks[i]);
     Asm += Spelling;
+    TokOffsets.push_back(Asm.size());
   }
   AsmString = Asm.str();
   return false;
@@ -363,16 +365,52 @@ static bool buildMSAsmString(Sema &SemaRef,
 namespace {
 
 class MCAsmParserSemaCallbackImpl : public llvm::MCAsmParserSemaCallback {
-  Sema *SemaRef;
+  Sema &SemaRef;
+  SourceLocation AsmLoc;
+  ArrayRef<Token> AsmToks;
+  ArrayRef<unsigned> TokOffsets;
 
 public:
-  MCAsmParserSemaCallbackImpl(class Sema *Ref) { SemaRef = Ref; }
+  MCAsmParserSemaCallbackImpl(Sema &Ref, SourceLocation Loc,
+                              ArrayRef<Token> Toks,
+                              ArrayRef<unsigned> Offsets)
+    : SemaRef(Ref), AsmLoc(Loc), AsmToks(Toks), TokOffsets(Offsets) { }
   ~MCAsmParserSemaCallbackImpl() {}
 
   void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc, unsigned &Size){
     SourceLocation Loc = SourceLocation::getFromPtrEncoding(SrcLoc);
-    NamedDecl *OpDecl = SemaRef->LookupInlineAsmIdentifier(Name, Loc, Size);
+    NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(Name, Loc, Size);
     return static_cast<void *>(OpDecl);
+  }
+
+  static void MSAsmDiagHandlerCallback(const llvm::SMDiagnostic &D,
+                                       void *Context) {
+    ((MCAsmParserSemaCallbackImpl*)Context)->MSAsmDiagHandler(D);
+  }
+  void MSAsmDiagHandler(const llvm::SMDiagnostic &D) {
+    // Compute an offset into the inline asm buffer.
+    // FIXME: This isn't right if .macro is involved (but hopefully, no
+    // real-world code does that).
+    const llvm::SourceMgr &LSM = *D.getSourceMgr();
+    const llvm::MemoryBuffer *LBuf =
+    LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(D.getLoc()));
+    unsigned Offset = D.getLoc().getPointer()  - LBuf->getBufferStart();
+
+    // Figure out which token that offset points into.
+    const unsigned *OffsetPtr =
+        std::lower_bound(TokOffsets.begin(), TokOffsets.end(), Offset);
+    unsigned TokIndex = OffsetPtr - TokOffsets.begin();
+
+    // If we come up with an answer which seems sane, use it; otherwise,
+    // just point at the __asm keyword.
+    // FIXME: Assert the answer is sane once we handle .macro correctly.
+    SourceLocation Loc = AsmLoc;
+    if (TokIndex < AsmToks.size()) {
+      const Token *Tok = &AsmToks[TokIndex];
+      Loc = Tok->getLocation();
+      Loc = Loc.getLocWithOffset(Offset - (*OffsetPtr - Tok->getLength()));
+    }
+    SemaRef.Diag(Loc, diag::err_inline_ms_asm_parsing) << D.getMessage();
   }
 };
 
@@ -427,7 +465,8 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   }
 
   std::string AsmString;
-  if (buildMSAsmString(*this, AsmLoc, AsmToks, AsmString))
+  llvm::SmallVector<unsigned, 8> TokOffsets;
+  if (buildMSAsmString(*this, AsmLoc, AsmToks, TokOffsets, AsmString))
     return StmtError();
 
   // Get the target specific parser.
@@ -466,8 +505,10 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   Parser->setParsingInlineAsm(true);
   TargetParser->setParsingInlineAsm(true);
 
-  MCAsmParserSemaCallbackImpl MCAPSI(this);
+  MCAsmParserSemaCallbackImpl MCAPSI(*this, AsmLoc, AsmToks, TokOffsets);
   TargetParser->setSemaCallback(&MCAPSI);
+  SrcMgr.setDiagHandler(MCAsmParserSemaCallbackImpl::MSAsmDiagHandlerCallback,
+                        &MCAPSI);
 
   unsigned NumOutputs;
   unsigned NumInputs;

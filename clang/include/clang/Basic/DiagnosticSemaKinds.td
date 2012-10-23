@@ -5143,6 +5143,8 @@ let CategoryName = "Inline Assembly Issue" in {
     "invalid use of a cast in a inline asm context requiring an l-value: "
     "accepted due to -fheinous-gnu-extensions, but clang may remove support "
     "for this in the future">;
+
+  def err_inline_ms_asm_parsing : Error<"%0">;
 }
 
 let CategoryName = "Semantic Issue" in {
