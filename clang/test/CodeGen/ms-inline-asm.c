@@ -1,5 +1,5 @@
 // REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -O0 -fms-extensions -fenable-experimental-ms-inline-asm -w -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple i386-apple-darwin10 -O0 -fms-extensions -fenable-experimental-ms-inline-asm -w -emit-llvm -o - | FileCheck %s
 
 void t1() {
 // CHECK: @t1
