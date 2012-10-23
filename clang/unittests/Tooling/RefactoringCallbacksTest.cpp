@@ -10,8 +10,8 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/RefactoringCallbacks.h"
-#include "gtest/gtest.h"
 #include "RewriterTestContext.h"
+#include "gtest/gtest.h"
 
 namespace clang {
 namespace tooling {
