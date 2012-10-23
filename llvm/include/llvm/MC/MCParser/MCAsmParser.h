@@ -90,7 +90,7 @@ public:
   /// ParseMSInlineAsm - Parse ms-style inline assembly.
   virtual bool ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                 unsigned &NumOutputs, unsigned &NumInputs,
-                                SmallVectorImpl<void *> &OpDecls,
+                                SmallVectorImpl<std::pair<void *, bool> > &OpDecls,
                                 SmallVectorImpl<std::string> &Constraints,
                                 SmallVectorImpl<std::string> &Clobbers,
                                 const MCInstrInfo *MII,

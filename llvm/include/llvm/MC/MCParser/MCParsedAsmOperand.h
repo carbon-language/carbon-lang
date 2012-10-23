@@ -69,6 +69,9 @@ public:
   /// inline assembly.
   virtual bool isOffsetOf() const { return false; }
 
+  /// getOffsetOfLoc - Get the location of the offset operator.
+  virtual SMLoc getOffsetOfLoc() const { return SMLoc(); }
+
   /// needSizeDirective - Do we need to emit a sizing directive for this
   /// operand?  Only valid when parsing MS-style inline assembly.
   virtual bool needSizeDirective() const { return false; }

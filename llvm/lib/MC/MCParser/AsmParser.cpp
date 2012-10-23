@@ -207,7 +207,7 @@ public:
 
   bool ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                         unsigned &NumOutputs, unsigned &NumInputs,
-                        SmallVectorImpl<void *> &OpDecls,
+                        SmallVectorImpl<std::pair<void *,bool> > &OpDecls,
                         SmallVectorImpl<std::string> &Constraints,
                         SmallVectorImpl<std::string> &Clobbers,
                         const MCInstrInfo *MII,
@@ -3589,7 +3589,8 @@ enum AsmRewriteKind {
    AOK_Input,
    AOK_Output,
    AOK_SizeDirective,
-   AOK_Emit
+   AOK_Emit,
+   AOK_Skip
 };
 
 struct AsmRewrite {
@@ -3621,14 +3622,16 @@ bool AsmParser::ParseDirectiveEmit(SMLoc IDLoc, ParseStatementInfo &Info) {
 
 bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                  unsigned &NumOutputs, unsigned &NumInputs,
-                                 SmallVectorImpl<void *> &OpDecls,
+                                 SmallVectorImpl<std::pair<void *, bool> > &OpDecls,
                                  SmallVectorImpl<std::string> &Constraints,
                                  SmallVectorImpl<std::string> &Clobbers,
                                  const MCInstrInfo *MII,
                                  const MCInstPrinter *IP,
                                  MCAsmParserSemaCallback &SI) {
-  SmallVector<void*, 4> InputDecls;
-  SmallVector<void*, 4> OutputDecls;
+  SmallVector<void *, 4> InputDecls;
+  SmallVector<void *, 4> OutputDecls;
+  SmallVector<bool, 4> InputDeclsOffsetOf;
+  SmallVector<bool, 4> OutputDeclsOffsetOf;
   SmallVector<std::string, 4> InputConstraints;
   SmallVector<std::string, 4> OutputConstraints;
   std::set<std::string> ClobberRegs;
@@ -3656,8 +3659,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         // Immediate.
         if (Operand->isImm()) {
           AsmStrRewrites.push_back(AsmRewrite(AOK_Imm,
-                                                Operand->getStartLoc(),
-                                                Operand->getNameLen()));
+                                              Operand->getStartLoc(),
+                                              Operand->getNameLen()));
           continue;
         }
 
@@ -3680,26 +3683,33 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                                     Size);
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
-          if (Operand->needSizeDirective())
+          if (Operand->needSizeDirective() && !Operand->isOffsetOf())
             AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
-                                                  Operand->getStartLoc(), 0,
-                                                  Operand->getMemSize()));
-          
+                                                Operand->getStartLoc(), 0,
+                                                Operand->getMemSize()));
+
+          // Don't emit the offset directive.
+          if (Operand->isOffsetOf())
+            AsmStrRewrites.push_back(AsmRewrite(AOK_Skip,
+                                                Operand->getOffsetOfLoc(), 7));
+
           if (isOutput) {
             std::string Constraint = "=";
             ++InputIdx;
             OutputDecls.push_back(OpDecl);
+            OutputDeclsOffsetOf.push_back(Operand->isOffsetOf());
             Constraint += Operand->getConstraint().str();
             OutputConstraints.push_back(Constraint);
             AsmStrRewrites.push_back(AsmRewrite(AOK_Output,
-                                                  Operand->getStartLoc(),
-                                                  Operand->getNameLen()));
+                                                Operand->getStartLoc(),
+                                                Operand->getNameLen()));
           } else {
             InputDecls.push_back(OpDecl);
+            InputDeclsOffsetOf.push_back(Operand->isOffsetOf());
             InputConstraints.push_back(Operand->getConstraint().str());
             AsmStrRewrites.push_back(AsmRewrite(AOK_Input,
-                                                  Operand->getStartLoc(),
-                                                  Operand->getNameLen()));
+                                                Operand->getStartLoc(),
+                                                Operand->getNameLen()));
           }
         }
       }
@@ -3720,13 +3730,15 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     unsigned NumExprs = NumOutputs + NumInputs;
     OpDecls.resize(NumExprs);
     Constraints.resize(NumExprs);
+    // FIXME: Constraints are hard coded to 'm', but we need an 'r'
+    // constraint for offsetof.  This needs to be cleaned up!
     for (unsigned i = 0; i < NumOutputs; ++i) {
-      OpDecls[i] = OutputDecls[i];
-      Constraints[i] = OutputConstraints[i];
+      OpDecls[i] = std::make_pair(OutputDecls[i], OutputDeclsOffsetOf[i]);
+      Constraints[i] = OutputDeclsOffsetOf[i] ? "=r" : OutputConstraints[i];
     }
     for (unsigned i = 0, j = NumOutputs; i < NumInputs; ++i, ++j) {
-      OpDecls[j] = InputDecls[i];
-      Constraints[j] = InputConstraints[i];
+      OpDecls[j] = std::make_pair(InputDecls[i], InputDeclsOffsetOf[i]);
+      Constraints[j] = InputDeclsOffsetOf[i] ? "r" : InputConstraints[i];
     }
   }
 
@@ -3747,8 +3759,15 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       OS << StringRef(Start, Loc - Start);
     PrevKind = Kind;
 
+    // Skip the original expression.
+    if (Kind == AOK_Skip) {
+      Start = Loc + (*I).Len;
+      continue;
+    }
+
     // Rewrite expressions in $N notation.
     switch (Kind) {
+    default: break;
     case AOK_Imm:
       OS << Twine("$$") + StringRef(Loc, (*I).Len);
       break;
