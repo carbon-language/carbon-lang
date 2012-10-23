@@ -48,7 +48,7 @@ function(llvm_process_sources OUT_VAR)
     set( f ${CMAKE_CURRENT_SOURCE_DIR}/${s} )
     add_file_dependencies( ${f} ${TABLEGEN_OUTPUT} )
   endforeach(s)
-  if( MSVC_IDE )
+  if( MSVC_IDE OR XCODE )
     # This adds .td and .h files to the Visual Studio solution:
     # FIXME: Shall we handle *.def here?
     add_td_sources(sources)
