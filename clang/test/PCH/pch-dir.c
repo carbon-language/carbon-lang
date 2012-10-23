@@ -11,10 +11,10 @@
 
 int get() {
 #ifdef __cplusplus
-  // CHECK-CPP: .h.gch/cpp.gch
+  // CHECK-CPP: .h.gch{{[/\\]}}cpp.gch
   return i;
 #else
-  // CHECK-C: .h.gch/c.gch
+  // CHECK-C: .h.gch{{[/\\]}}c.gch
   return j;
 #endif
 }
