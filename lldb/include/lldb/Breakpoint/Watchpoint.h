@@ -32,8 +32,7 @@ class Watchpoint :
 {
 public:
 
-    Watchpoint (lldb::addr_t addr, size_t size, bool hardware = true);
-
+    Watchpoint (Target& target, lldb::addr_t addr, size_t size, const ClangASTType *type, bool hardware = true);
     ~Watchpoint ();
 
     void
@@ -63,21 +62,13 @@ public:
     // Snapshot management interface.
     bool        IsWatchVariable() const;
     void        SetWatchVariable(bool val);
-    std::string GetOldSnapshot() const;
-    void        SetOldSnapshot (const std::string &str);
-    std::string GetNewSnapshot() const;
-    void        SetNewSnapshot (const std::string &str);
-    uint64_t    GetOldSnapshotVal() const;
-    void        SetOldSnapshotVal (uint64_t val);
-    uint64_t    GetNewSnapshotVal() const;
-    void        SetNewSnapshotVal (uint64_t val);
-    void        ClearSnapshots();
+    bool        CaptureWatchedValue (const ExecutionContext &exe_ctx);
 
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
     void        DumpSnapshots (Stream *s, const char * prefix = NULL) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
-    Target      &GetTarget() { return *m_target; }
+    Target      &GetTarget() { return m_target; }
     const Error &GetError() { return m_error; }
 
     //------------------------------------------------------------------
@@ -158,15 +149,21 @@ public:
 
     bool
     IsDisabledDuringEphemeralMode();
+    
+    const ClangASTType &
+    GetClangASTType()
+    {
+        return m_type;
+    }
+
 
 private:
     friend class Target;
     friend class WatchpointList;
 
-    void        SetTarget(Target *target_ptr) { m_target = target_ptr; }
     void        ResetHitCount() { m_hit_count = 0; }
 
-    Target      *m_target;
+    Target      &m_target;
     bool        m_enabled;             // Is this watchpoint enabled
     bool        m_is_hardware;         // Is this a hardware watchpoint
     bool        m_is_watch_variable;   // True if set via 'watchpoint set variable'.
@@ -185,10 +182,9 @@ private:
     uint32_t    m_false_alarms;        // Number of false alarms.
     std::string m_decl_str;            // Declaration information, if any.
     std::string m_watch_spec_str;      // Spec for the watchpoint.
-    std::string m_snapshot_old_str;    // Old snapshot for the watchpoint value as by ValueObject::DumpValueObject().
-    std::string m_snapshot_new_str;    // New Snapshot for the watchpoint value as by ValueObject::DumpValueObject().
-    uint64_t    m_snapshot_old_val;    // Old snapshot for the watchpoint bytes.
-    uint64_t    m_snapshot_new_val;    // New Snapshot for the watchpoint bytes.
+    lldb::ValueObjectSP m_old_value_sp;
+    lldb::ValueObjectSP m_new_value_sp;
+    ClangASTType m_type;
     Error       m_error;               // An error object describing errors associated with this watchpoint.
     WatchpointOptions m_options;       // Settable watchpoint options, which is a delegate to handle
                                        // the callback machinery.

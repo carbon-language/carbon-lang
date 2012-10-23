@@ -1783,7 +1783,9 @@ SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write, S
             watch_type |= LLDB_WATCH_TYPE_WRITE;
         // Target::CreateWatchpoint() is thread safe.
         Error cw_error;
-        watchpoint_sp = target_sp->CreateWatchpoint(addr, size, watch_type, cw_error);
+        // This API doesn't take in a type, so we can't figure out what it is.
+        ClangASTType *type = NULL;
+        watchpoint_sp = target_sp->CreateWatchpoint(addr, size, type, watch_type, cw_error);
         error.SetError(cw_error);
         sb_watchpoint.SetSP (watchpoint_sp);
     }

@@ -12,6 +12,15 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "watchpoint", "variable_out_of_scope")
 
+    #
+    # This test depends on not tracking watchpoint expression hits if we have
+    # left the watchpoint scope.  We will provide such an ability at some point
+    # but the way this was done was incorrect, and it is unclear that for the
+    # most part that's not what folks mostly want, so we have to provide a 
+    # clearer API to express this.
+    #
+
+    @unittest2.expectedFailure
     @dsym_test
     def test_watched_var_should_only_hit_when_in_scope_with_dsym(self):
         """Test that a variable watchpoint should only hit when in scope."""
@@ -19,6 +28,7 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watched_var()
 
+    @unittest2.expectedFailure
     @dwarf_test
     def test_watched_var_should_only_hit_when_in_scope_with_dwarf(self):
         """Test that a variable watchpoint should only hit when in scope."""

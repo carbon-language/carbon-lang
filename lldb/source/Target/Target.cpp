@@ -523,12 +523,12 @@ CheckIfWatchpointsExhausted(Target *target, Error &error)
 // See also Watchpoint::SetWatchpointType(uint32_t type) and
 // the OptionGroupWatchpoint::WatchType enum type.
 WatchpointSP
-Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type, Error &error)
+Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *type, uint32_t kind, Error &error)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf("Target::%s (addr = 0x%8.8llx size = %llu type = %u)\n",
-                    __FUNCTION__, addr, (uint64_t)size, type);
+                    __FUNCTION__, addr, (uint64_t)size, kind);
 
     WatchpointSP wp_sp;
     if (!ProcessIsValid())
@@ -559,7 +559,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type, Error &e
             (matched_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
             (matched_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
         // Return the existing watchpoint if both size and type match.
-        if (size == old_size && type == old_type) {
+        if (size == old_size && kind == old_type) {
             wp_sp = matched_sp;
             wp_sp->SetEnabled(false);
         } else {
@@ -570,13 +570,12 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type, Error &e
     }
 
     if (!wp_sp) {
-        Watchpoint *new_wp = new Watchpoint(addr, size);
+        Watchpoint *new_wp = new Watchpoint(*this, addr, size, type);
         if (!new_wp) {
             printf("Watchpoint ctor failed, out of memory?\n");
             return wp_sp;
         }
-        new_wp->SetWatchpointType(type);
-        new_wp->SetTarget(this);
+        new_wp->SetWatchpointType(kind);
         wp_sp.reset(new_wp);
         m_watchpoint_list.Add(wp_sp);
     }

@@ -550,75 +550,6 @@ public:
                 }
             }
 
-            // Record the snapshot of our watchpoint.
-            VariableSP var_sp;
-            ValueObjectSP valobj_sp;        
-            StackFrame *frame = exe_ctx.GetFramePtr();
-            if (frame)
-            {
-                bool snapshot_taken = true;
-                if (!wp_sp->IsWatchVariable())
-                {
-                    // We are not watching a variable, just read from the process memory for the watched location.
-                    assert (process);
-                    Error error;
-                    uint64_t val = process->ReadUnsignedIntegerFromMemory(wp_sp->GetLoadAddress(),
-                                                                          wp_sp->GetByteSize(),
-                                                                          0,
-                                                                          error);
-                    if (log)
-                    {
-                        if (error.Success())
-                            log->Printf("Watchpoint snapshot val taken: 0x%llx\n", val);
-                        else
-                            log->Printf("Watchpoint snapshot val taking failed.\n");
-                    }                        
-                    wp_sp->SetNewSnapshotVal(val);
-                }
-                else if (!wp_sp->GetWatchSpec().empty())
-                {
-                    // Use our frame to evaluate the variable expression.
-                    Error error;
-                    uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                                 StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
-                    valobj_sp = frame->GetValueForVariableExpressionPath (wp_sp->GetWatchSpec().c_str(), 
-                                                                          eNoDynamicValues, 
-                                                                          expr_path_options,
-                                                                          var_sp,
-                                                                          error);
-                    if (valobj_sp)
-                    {
-                        // We're in business.
-                        StreamString ss;
-                        ValueObject::DumpValueObject(ss, valobj_sp.get());
-                        wp_sp->SetNewSnapshot(ss.GetString());
-                    }
-                    else
-                    {
-                        // The variable expression has become out of scope?
-                        // Let us forget about this stop info.
-                        if (log)
-                            log->Printf("Snapshot attempt failed.  Variable expression has become out of scope?");
-                        snapshot_taken = false;
-                        m_should_stop = false;
-                        wp_sp->IncrementFalseAlarmsAndReviseHitCount();
-                    }
-
-                    if (log && snapshot_taken)
-                        log->Printf("Watchpoint snapshot taken: '%s'\n", wp_sp->GetNewSnapshot().c_str());
-                }
-
-                // Now dump the snapshots we have taken.
-                if (snapshot_taken)
-                {
-                    Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
-                    StreamSP output_sp = debugger.GetAsyncOutputStream ();
-                    wp_sp->DumpSnapshots(output_sp.get());
-                    output_sp->EOL();
-                    output_sp->Flush();
-                }
-            }
-
             if (m_should_stop && wp_sp->GetConditionText() != NULL)
             {
                 // We need to make sure the user sees any parse errors in their condition, so we'll hook the
@@ -703,6 +634,18 @@ public:
                     m_should_stop = false;
                 }
             }
+            // Finally, if we are going to stop, print out the new & old values:
+            if (m_should_stop)
+            {
+                wp_sp->CaptureWatchedValue(exe_ctx);
+                
+                Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
+                StreamSP output_sp = debugger.GetAsyncOutputStream ();
+                wp_sp->DumpSnapshots(output_sp.get());
+                output_sp->EOL();
+                output_sp->Flush();
+            }
+            
         }
         else
         {
@@ -713,6 +656,7 @@ public:
         }
         if (log)
             log->Printf ("Process::%s returning from action with m_should_stop: %d.", __FUNCTION__, m_should_stop);
+        
     }
         
     virtual const char *

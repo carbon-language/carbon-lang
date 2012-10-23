@@ -522,7 +522,8 @@ public:
     lldb::WatchpointSP
     CreateWatchpoint (lldb::addr_t addr,
                       size_t size,
-                      uint32_t type,
+                      const ClangASTType *type,
+                      uint32_t kind,
                       Error &error);
 
     lldb::WatchpointSP

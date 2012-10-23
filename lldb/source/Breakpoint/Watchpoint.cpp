@@ -15,6 +15,10 @@
 // Project includes
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectMemory.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
@@ -23,9 +27,9 @@
 using namespace lldb;
 using namespace lldb_private;
 
-Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
+Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, size_t size, const ClangASTType *type, bool hardware) :
     StoppointLocation (0, addr, size, hardware),
-    m_target(NULL),
+    m_target(target),
     m_enabled(false),
     m_is_hardware(hardware),
     m_is_watch_variable(false),
@@ -39,13 +43,27 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_false_alarms(0),
     m_decl_str(),
     m_watch_spec_str(),
-    m_snapshot_old_str(),
-    m_snapshot_new_str(),
-    m_snapshot_old_val(0),
-    m_snapshot_new_val(0),
+    m_type(),
     m_error(),
     m_options ()
 {
+    if (type && type->IsValid())
+        m_type = *type;
+    else
+    {
+        // If we don't have a known type, then we force it to unsigned int of the right size.
+        ClangASTContext *ast_context = target.GetScratchClangASTContext();
+        clang_type_t clang_type = ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, size);
+        m_type.SetClangType(ast_context->getASTContext(), clang_type);
+    }
+    
+    // Set the initial value of the watched variable:
+    if (m_target.GetProcessSP())
+    {
+        ExecutionContext exe_ctx;
+        m_target.GetProcessSP()->CalculateExecutionContext(exe_ctx);
+        CaptureWatchedValue (exe_ctx);
+    }
 }
 
 Watchpoint::~Watchpoint()
@@ -97,78 +115,6 @@ Watchpoint::SetWatchSpec (const std::string &str)
     return;
 }
 
-// Strip at most one character from the end of the string.
-static inline std::string
-RStripOnce(const std::string &str, const char c)
-{
-    std::string res = str;
-    size_t len = res.length();
-    if (len && res.at(len - 1) == '\n')
-        res.resize(len - 1);
-    return res;
-}
-
-std::string
-Watchpoint::GetOldSnapshot() const
-{
-    return m_snapshot_old_str;
-}
-
-void
-Watchpoint::SetOldSnapshot (const std::string &str)
-{
-    m_snapshot_old_str = RStripOnce(str, '\n');
-}
-
-std::string
-Watchpoint::GetNewSnapshot() const
-{
-    return m_snapshot_new_str;
-}
-
-void
-Watchpoint::SetNewSnapshot (const std::string &str)
-{
-    m_snapshot_old_str = m_snapshot_new_str;
-    m_snapshot_new_str = RStripOnce(str, '\n');
-}
-
-uint64_t
-Watchpoint::GetOldSnapshotVal() const
-{
-    return m_snapshot_old_val;
-}
-
-void
-Watchpoint::SetOldSnapshotVal (uint64_t val)
-{
-    m_snapshot_old_val = val;
-    return;
-}
-
-uint64_t
-Watchpoint::GetNewSnapshotVal() const
-{
-    return m_snapshot_new_val;
-}
-
-void
-Watchpoint::SetNewSnapshotVal (uint64_t val)
-{
-    m_snapshot_old_val = m_snapshot_new_val;
-    m_snapshot_new_val = val;
-    return;
-}
-
-void
-Watchpoint::ClearSnapshots()
-{
-    m_snapshot_old_str.clear();
-    m_snapshot_new_str.clear();
-    m_snapshot_old_val = 0;
-    m_snapshot_new_val = 0;
-}
-
 // Override default impl of StoppointLocation::IsHardware() since m_is_hardware
 // member field is more accurate.
 bool
@@ -187,6 +133,20 @@ void
 Watchpoint::SetWatchVariable(bool val)
 {
     m_is_watch_variable = val;
+}
+
+bool
+Watchpoint::CaptureWatchedValue (const ExecutionContext &exe_ctx)
+{
+    ConstString watch_name("$__lldb__watch_value");
+    m_old_value_sp = m_new_value_sp;
+    Address watch_address(GetLoadAddress());
+    m_new_value_sp = ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(), watch_name.AsCString(), watch_address, m_type);
+    m_new_value_sp = m_new_value_sp->CreateConstantValue(watch_name);
+    if (m_new_value_sp && m_new_value_sp->GetError().Success())
+        return true;
+    else
+        return false;
 }
 
 void
@@ -247,19 +207,14 @@ Watchpoint::DumpSnapshots(Stream *s, const char *prefix) const
         s->Printf("\nWatchpoint %u hit:", GetID());
         prefix = "";
     }
-
-    if (IsWatchVariable())
+    
+    if (m_old_value_sp)
     {
-        if (!m_snapshot_old_str.empty())
-            s->Printf("\n%sold value: %s", prefix, m_snapshot_old_str.c_str());
-        if (!m_snapshot_new_str.empty())
-            s->Printf("\n%snew value: %s", prefix, m_snapshot_new_str.c_str());
+        s->Printf("\n%sold value: %s", prefix, m_old_value_sp->GetValueAsCString());
     }
-    else
+    if (m_new_value_sp)
     {
-        uint32_t num_hex_digits = GetByteSize() * 2;
-        s->Printf("\n%sold value: 0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_old_val);
-        s->Printf("\n%snew value: 0x%0*.*llx", prefix, num_hex_digits, num_hex_digits, m_snapshot_new_val);
+        s->Printf("\n%snew value: %s", prefix, m_new_value_sp->GetValueAsCString());
     }
 }
 
@@ -345,7 +300,6 @@ Watchpoint::SetEnabled(bool enabled)
 
         // Don't clear the snapshots for now.
         // Within StopInfo.cpp, we purposely do disable/enable watchpoint while performing watchpoint actions.
-        //ClearSnapshots();
     }
     m_enabled = enabled;
 }

@@ -1930,7 +1930,8 @@ SBValue::Watch (bool resolve_location, bool read, bool write, SBError &error)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
         
         Error rc;
-        WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, watch_type, rc);
+        ClangASTType type (value_sp->GetClangAST(), value_sp->GetClangType());
+        WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, &type, watch_type, rc);
         error.SetError(rc);
                 
         if (watchpoint_sp) 
