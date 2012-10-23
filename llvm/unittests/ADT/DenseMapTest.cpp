@@ -330,4 +330,37 @@ TEST(DenseMapCustomTest, FindAsTest) {
   EXPECT_TRUE(map.find_as("d") == map.end());
 }
 
+struct ContiguousDenseMapInfo {
+  static inline unsigned getEmptyKey() { return ~0; }
+  static inline unsigned getTombstoneKey() { return ~0U - 1; }
+  static unsigned getHashValue(const unsigned& Val) { return Val; }
+  static bool isEqual(const unsigned& LHS, const unsigned& RHS) {
+    return LHS == RHS;
+  }
+};
+
+// Test that filling a small dense map with exactly the number of elements in
+// the map grows to have enough space for an empty bucket.
+TEST(DenseMapCustomTest, SmallDenseMapGrowTest) {
+  SmallDenseMap<unsigned, unsigned, 32, ContiguousDenseMapInfo> map;
+  // Add some number of elements, then delete a few to leave us some tombstones.
+  // If we just filled the map with 32 elements we'd grow because of not enough
+  // tombstones which masks the issue here.
+  for (unsigned i = 0; i < 20; ++i)
+    map[i] = i + 1;
+  for (unsigned i = 0; i < 10; ++i)
+    map.erase(i);
+  for (unsigned i = 20; i < 32; ++i)
+    map[i] = i + 1;
+
+  // Size tests
+  EXPECT_EQ(22u, map.size());
+
+  // Try to find an element which doesn't exist.  There was a bug in
+  // SmallDenseMap which led to a map with num elements == small capacity not
+  // having an empty bucket any more.  Finding an element not in the map would
+  // therefore never terminate.
+  EXPECT_TRUE(map.find(32) == map.end());
+}
+
 }

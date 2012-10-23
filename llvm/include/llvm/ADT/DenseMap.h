@@ -826,11 +826,11 @@ public:
   }
 
   void grow(unsigned AtLeast) {
-    if (AtLeast > InlineBuckets)
+    if (AtLeast >= InlineBuckets)
       AtLeast = std::max<unsigned>(64, NextPowerOf2(AtLeast));
 
     if (Small) {
-      if (AtLeast <= InlineBuckets)
+      if (AtLeast < InlineBuckets)
         return; // Nothing to do.
 
       // First move the inline buckets into a temporary storage.
