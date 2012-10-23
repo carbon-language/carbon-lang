@@ -12,6 +12,7 @@
 
 #include "clang/ARCMigrate/FileRemapper.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Basic/SourceLocation.h"
 
 namespace clang {
   class ASTContext;

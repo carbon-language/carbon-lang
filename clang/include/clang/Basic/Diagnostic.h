@@ -16,6 +16,7 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -159,13 +160,6 @@ public:
     ak_nestednamespec,  ///< NestedNameSpecifier *
     ak_declcontext,     ///< DeclContext *
     ak_qualtype_pair    ///< pair<QualType, QualType>
-  };
-
-  /// \brief Specifies which overload candidates to display when overload
-  /// resolution fails.
-  enum OverloadsShown {
-    Ovl_All,  ///< Show all overloads.
-    Ovl_Best  ///< Show just the "best" overload candidates.
   };
 
   /// \brief Represents on argument value, which is a union discriminated

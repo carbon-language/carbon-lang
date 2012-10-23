@@ -10,7 +10,6 @@
 #ifndef LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
 #define LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
 
-#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 #include <string>
@@ -18,39 +17,32 @@
 
 namespace clang {
 
+/// \brief Specifies which overload candidates to display when overload
+/// resolution fails.
+enum OverloadsShown {
+  Ovl_All,  ///< Show all overloads.
+  Ovl_Best  ///< Show just the "best" overload candidates.
+};
+
 /// DiagnosticOptions - Options for controlling the compiler diagnostics
 /// engine.
 class DiagnosticOptions : public llvm::RefCountedBase<DiagnosticOptions>{
 public:
-  unsigned IgnoreWarnings : 1;   /// -w
-  unsigned NoRewriteMacros : 1;  /// -Wno-rewrite-macros
-  unsigned Pedantic : 1;         /// -pedantic
-  unsigned PedanticErrors : 1;   /// -pedantic-errors
-  unsigned ShowColumn : 1;       /// Show column number on diagnostics.
-  unsigned ShowLocation : 1;     /// Show source location information.
-  unsigned ShowCarets : 1;       /// Show carets in diagnostics.
-  unsigned ShowFixits : 1;       /// Show fixit information.
-  unsigned ShowSourceRanges : 1; /// Show source ranges in numeric form.
-  unsigned ShowParseableFixits : 1; /// Show machine parseable fix-its.
-  unsigned ShowOptionNames : 1;  /// Show the option name for mappable
-                                 /// diagnostics.
-  unsigned ShowNoteIncludeStack : 1; /// Show include stacks for notes.
-  unsigned ShowCategories : 2;   /// Show categories: 0 -> none, 1 -> Number,
-                                 /// 2 -> Full Name.
-                                 
-  unsigned Format : 2;           /// Format for diagnostics: 
   enum TextDiagnosticFormat { Clang, Msvc, Vi };
-  
-  unsigned ShowColors : 1;       /// Show diagnostics with ANSI color sequences.
-  unsigned ShowOverloads : 1;    /// Overload candidates to show.  Values from
-                                 /// DiagnosticsEngine::OverloadsShown
-  unsigned VerifyDiagnostics: 1; /// Check that diagnostics match the expected
-                                 /// diagnostics, indicated by markers in the
-                                 /// input source file.
 
-  unsigned ElideType: 1;         /// Elide identical types in template diffing
-  unsigned ShowTemplateTree: 1;  /// Print a template tree when diffing
+  // Define simple diagnostic options (with no accessors).
+#define DIAGOPT(Name, Bits, Default) unsigned Name : Bits;
+#define ENUM_DIAGOPT(Name, Type, Bits, Default)
+#include "clang/Basic/DiagnosticOptions.def"
 
+protected:
+  // Define diagnostic options of enumeration type. These are private, and will
+  // have accessors (below).
+#define DIAGOPT(Name, Bits, Default)
+#define ENUM_DIAGOPT(Name, Type, Bits, Default) unsigned Name : Bits;
+#include "clang/Basic/DiagnosticOptions.def"
+
+public:
   unsigned ErrorLimit;           /// Limit # errors emitted.
   unsigned MacroBacktraceLimit;  /// Limit depth of macro expansion backtrace.
   unsigned TemplateBacktraceLimit; /// Limit depth of instantiation backtrace.
@@ -81,25 +73,20 @@ public:
   std::vector<std::string> Warnings;
 
 public:
+  // Define accessors/mutators for diagnostic options of enumeration type.
+#define DIAGOPT(Name, Bits, Default)
+#define ENUM_DIAGOPT(Name, Type, Bits, Default) \
+  Type get##Name() const { return static_cast<Type>(Name); } \
+  void set##Name(Type Value) { Name = static_cast<unsigned>(Value); }
+#include "clang/Basic/DiagnosticOptions.def"
+
   DiagnosticOptions() {
-    IgnoreWarnings = 0;
-    TabStop = DefaultTabStop;
+#define DIAGOPT(Name, Bits, Default) Name = Default;
+#define ENUM_DIAGOPT(Name, Type, Bits, Default) set##Name(Default);
+#include "clang/Basic/DiagnosticOptions.def"
+
     MessageLength = 0;
-    NoRewriteMacros = 0;
-    Pedantic = 0;
-    PedanticErrors = 0;
-    ShowCarets = 1;
-    ShowColors = 0;
-    ShowOverloads = DiagnosticsEngine::Ovl_All;
-    ShowColumn = 1;
-    ShowFixits = 1;
-    ShowLocation = 1;
-    ShowOptionNames = 0;
-    ShowCategories = 0;
-    Format = Clang;
-    ShowSourceRanges = 0;
-    ShowParseableFixits = 0;
-    VerifyDiagnostics = 0;
+    TabStop = DefaultTabStop;
     ErrorLimit = 0;
     TemplateBacktraceLimit = DefaultTemplateBacktraceLimit;
     MacroBacktraceLimit = DefaultMacroBacktraceLimit;

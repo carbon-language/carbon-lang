@@ -8832,8 +8832,7 @@ void OverloadCandidateSet::NoteCandidates(Sema &S,
   bool ReportedAmbiguousConversions = false;
 
   SmallVectorImpl<OverloadCandidate*>::iterator I, E;
-  const DiagnosticsEngine::OverloadsShown ShowOverloads = 
-      S.Diags.getShowOverloads();
+  const OverloadsShown ShowOverloads = S.Diags.getShowOverloads();
   unsigned CandsShown = 0;
   for (I = Cands.begin(), E = Cands.end(); I != E; ++I) {
     OverloadCandidate *Cand = *I;
@@ -8841,7 +8840,7 @@ void OverloadCandidateSet::NoteCandidates(Sema &S,
     // Set an arbitrary limit on the number of candidate functions we'll spam
     // the user with.  FIXME: This limit should depend on details of the
     // candidate list.
-    if (CandsShown >= 4 && ShowOverloads == DiagnosticsEngine::Ovl_Best) {
+    if (CandsShown >= 4 && ShowOverloads == Ovl_Best) {
       break;
     }
     ++CandsShown;

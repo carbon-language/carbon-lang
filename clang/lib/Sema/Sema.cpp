@@ -1187,8 +1187,7 @@ static void noteOverloads(Sema &S, const UnresolvedSetImpl &Overloads,
        DeclsEnd = Overloads.end(); It != DeclsEnd; ++It) {
     // FIXME: Magic number for max shown overloads stolen from
     // OverloadCandidateSet::NoteCandidates.
-    if (ShownOverloads >= 4 &&
-        S.Diags.getShowOverloads() == DiagnosticsEngine::Ovl_Best) {
+    if (ShownOverloads >= 4 && S.Diags.getShowOverloads() == Ovl_Best) {
       ++SuppressedOverloads;
       continue;
     }

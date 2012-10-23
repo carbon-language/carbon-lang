@@ -378,7 +378,7 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-fdiagnostics-show-category=id");
   else if (Opts.ShowCategories == 2)
     Res.push_back("-fdiagnostics-show-category=name");
-  switch (Opts.Format) {
+  switch (Opts.getFormat()) {
   case DiagnosticOptions::Clang: 
     Res.push_back("-fdiagnostics-format=clang"); break;
   case DiagnosticOptions::Msvc:  
@@ -1395,9 +1395,9 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   StringRef ShowOverloads =
     Args.getLastArgValue(OPT_fshow_overloads_EQ, "all");
   if (ShowOverloads == "best")
-    Opts.ShowOverloads = DiagnosticsEngine::Ovl_Best;
+    Opts.setShowOverloads(Ovl_Best);
   else if (ShowOverloads == "all")
-    Opts.ShowOverloads = DiagnosticsEngine::Ovl_All;
+    Opts.setShowOverloads(Ovl_All);
   else {
     Success = false;
     if (Diags)
@@ -1425,11 +1425,11 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   StringRef Format =
     Args.getLastArgValue(OPT_fdiagnostics_format, "clang");
   if (Format == "clang")
-    Opts.Format = DiagnosticOptions::Clang;
+    Opts.setFormat(DiagnosticOptions::Clang);
   else if (Format == "msvc")
-    Opts.Format = DiagnosticOptions::Msvc;
+    Opts.setFormat(DiagnosticOptions::Msvc);
   else if (Format == "vi")
-    Opts.Format = DiagnosticOptions::Vi;
+    Opts.setFormat(DiagnosticOptions::Vi);
   else {
     Success = false;
     if (Diags)

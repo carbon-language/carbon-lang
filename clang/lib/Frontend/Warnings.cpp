@@ -51,8 +51,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
                                   const DiagnosticOptions &Opts) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
   Diags.setIgnoreAllWarnings(Opts.IgnoreWarnings);
-  Diags.setShowOverloads(
-    static_cast<DiagnosticsEngine::OverloadsShown>(Opts.ShowOverloads));
+  Diags.setShowOverloads(Opts.getShowOverloads());
 
   Diags.setElideType(Opts.ElideType);
   Diags.setPrintTemplateTree(Opts.ShowTemplateTree);

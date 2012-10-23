@@ -809,7 +809,7 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
     OS.changeColor(savedColor, true);
 
   OS << PLoc.getFilename();
-  switch (DiagOpts->Format) {
+  switch (DiagOpts->getFormat()) {
   case DiagnosticOptions::Clang: OS << ':'  << LineNo; break;
   case DiagnosticOptions::Msvc:  OS << '('  << LineNo; break;
   case DiagnosticOptions::Vi:    OS << " +" << LineNo; break;
@@ -818,14 +818,14 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
   if (DiagOpts->ShowColumn)
     // Compute the column number.
     if (unsigned ColNo = PLoc.getColumn()) {
-      if (DiagOpts->Format == DiagnosticOptions::Msvc) {
+      if (DiagOpts->getFormat() == DiagnosticOptions::Msvc) {
         OS << ',';
         ColNo--;
       } else
         OS << ':';
       OS << ColNo;
     }
-  switch (DiagOpts->Format) {
+  switch (DiagOpts->getFormat()) {
   case DiagnosticOptions::Clang:
   case DiagnosticOptions::Vi:    OS << ':';    break;
   case DiagnosticOptions::Msvc:  OS << ") : "; break;
