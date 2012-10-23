@@ -1184,7 +1184,10 @@ class TestBase(Base):
                                  "Command '" + str + "' is expected to fail!")
         else:
             # No execution required, just compare str against the golden input.
-            output = str
+            if isinstance(str,lldb.SBCommandReturnObject):
+                output = str.GetOutput()
+            else:
+                output = str
             with recording(self, trace) as sbuf:
                 print >> sbuf, "looking at:", output
 

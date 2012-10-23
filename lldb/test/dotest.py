@@ -827,6 +827,9 @@ def setupSysPath():
         print relPath + ', or ' + baiPath
         sys.exit(-1)
 
+    # If tests need to find LLDB_FRAMEWORK, now they can do it
+    os.environ["LLDB_FRAMEWORK"] = os.path.dirname(os.path.dirname(lldbPath))
+
     # This is to locate the lldb.py module.  Insert it right after sys.path[0].
     sys.path[1:1] = [lldbPath]
     if dumpSysPath:
