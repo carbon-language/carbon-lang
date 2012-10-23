@@ -805,6 +805,244 @@ static bool shouldMergeGEPs(GEPOperator &GEP, GEPOperator &Src) {
   return true;
 }
 
+/// Descale - Return a value X such that Val = X * Scale, or null if none.  If
+/// the multiplication is known not to overflow then NoSignedWrap is set.
+Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
+  assert(isa<IntegerType>(Val->getType()) && "Can only descale integers!");
+  assert(cast<IntegerType>(Val->getType())->getBitWidth() ==
+         Scale.getBitWidth() && "Scale not compatible with value!");
+
+  // If Val is zero or Scale is one then Val = Val * Scale.
+  if (match(Val, m_Zero()) || Scale == 1) {
+    NoSignedWrap = true;
+    return Val;
+  }
+
+  // If Scale is zero then it does not divide Val.
+  if (Scale.isMinValue())
+    return 0;
+
+  // Look through chains of multiplications, searching for a constant that is
+  // divisible by Scale.  For example, descaling X*(Y*(Z*4)) by a factor of 4
+  // will find the constant factor 4 and produce X*(Y*Z).  Descaling X*(Y*8) by
+  // a factor of 4 will produce X*(Y*2).  The principle of operation is to bore
+  // down from Val:
+  //
+  //     Val = M1 * X          ||   Analysis starts here and works down
+  //      M1 = M2 * Y          ||   Doesn't descend into terms with more
+  //      M2 =  Z * 4          \/   than one use
+  //
+  // Then to modify a term at the bottom:
+  //
+  //     Val = M1 * X
+  //      M1 =  Z * Y          ||   Replaced M2 with Z
+  //
+  // Then to work back up correcting nsw flags.
+
+  // Op - the term we are currently analyzing.  Starts at Val then drills down.
+  // Replaced with its descaled value before exiting from the drill down loop.
+  Value *Op = Val;
+
+  // Parent - initially null, but after drilling down notes where Op came from.
+  // In the example above, Parent is (Val, 0) when Op is M1, because M1 is the
+  // 0'th operand of Val.
+  std::pair<Instruction*, unsigned> Parent;
+
+  // RequireNoSignedWrap - Set if the transform requires a descaling at deeper
+  // levels that doesn't overflow.
+  bool RequireNoSignedWrap = false;
+
+  // logScale - log base 2 of the scale.  Negative if not a power of 2.
+  int32_t logScale = Scale.exactLogBase2();
+
+  for (;; Op = Parent.first->getOperand(Parent.second)) { // Drill down
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+      // If Op is a constant divisible by Scale then descale to the quotient.
+      APInt Quotient(Scale), Remainder(Scale); // Init ensures right bitwidth.
+      APInt::sdivrem(CI->getValue(), Scale, Quotient, Remainder);
+      if (!Remainder.isMinValue())
+        // Not divisible by Scale.
+        return 0;
+      // Replace with the quotient in the parent.
+      Op = ConstantInt::get(CI->getType(), Quotient);
+      NoSignedWrap = true;
+      break;
+    }
+
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op)) {
+
+      if (BO->getOpcode() == Instruction::Mul) {
+        // Multiplication.
+        NoSignedWrap = BO->hasNoSignedWrap();
+        if (RequireNoSignedWrap && !NoSignedWrap)
+          return 0;
+
+        // There are three cases for multiplication: multiplication by exactly
+        // the scale, multiplication by a constant different to the scale, and
+        // multiplication by something else.
+        Value *LHS = BO->getOperand(0);
+        Value *RHS = BO->getOperand(1);
+
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
+          // Multiplication by a constant.
+          if (CI->getValue() == Scale) {
+            // Multiplication by exactly the scale, replace the multiplication
+            // by its left-hand side in the parent.
+            Op = LHS;
+            break;
+          }
+
+          // Otherwise drill down into the constant.
+          if (!Op->hasOneUse())
+            return 0;
+
+          Parent = std::make_pair(BO, 1);
+          continue;
+        }
+
+        // Multiplication by something else. Drill down into the left-hand side
+        // since that's where the reassociate pass puts the good stuff.
+        if (!Op->hasOneUse())
+          return 0;
+
+        Parent = std::make_pair(BO, 0);
+        continue;
+      }
+
+      if (logScale > 0 && BO->getOpcode() == Instruction::Shl &&
+          isa<ConstantInt>(BO->getOperand(1))) {
+        // Multiplication by a power of 2.
+        NoSignedWrap = BO->hasNoSignedWrap();
+        if (RequireNoSignedWrap && !NoSignedWrap)
+          return 0;
+
+        Value *LHS = BO->getOperand(0);
+        int32_t Amt = cast<ConstantInt>(BO->getOperand(1))->
+          getLimitedValue(Scale.getBitWidth());
+        // Op = LHS << Amt.
+
+        if (Amt == logScale) {
+          // Multiplication by exactly the scale, replace the multiplication
+          // by its left-hand side in the parent.
+          Op = LHS;
+          break;
+        }
+        if (Amt < logScale || !Op->hasOneUse())
+          return 0;
+
+        // Multiplication by more than the scale.  Reduce the multiplying amount
+        // by the scale in the parent.
+        Parent = std::make_pair(BO, 1);
+        Op = ConstantInt::get(BO->getType(), Amt - logScale);
+        break;
+      }
+    }
+
+    if (!Op->hasOneUse())
+      return 0;
+
+    if (CastInst *Cast = dyn_cast<CastInst>(Op)) {
+      if (Cast->getOpcode() == Instruction::SExt) {
+        // Op is sign-extended from a smaller type, descale in the smaller type.
+        unsigned SmallSize = Cast->getSrcTy()->getPrimitiveSizeInBits();
+        APInt SmallScale = Scale.trunc(SmallSize);
+        // Suppose Op = sext X, and we descale X as Y * SmallScale.  We want to
+        // descale Op as (sext Y) * Scale.  In order to have
+        //   sext (Y * SmallScale) = (sext Y) * Scale
+        // some conditions need to hold however: SmallScale must sign-extend to
+        // Scale and the multiplication Y * SmallScale should not overflow.
+        if (SmallScale.sext(Scale.getBitWidth()) != Scale)
+          // SmallScale does not sign-extend to Scale.
+          return 0;
+        assert(SmallScale.exactLogBase2() == logScale);
+        // Require that Y * SmallScale must not overflow.
+        RequireNoSignedWrap = true;
+
+        // Drill down through the cast.
+        Parent = std::make_pair(Cast, 0);
+        Scale = SmallScale;
+        continue;
+      }
+
+      if (Cast->getOperand(0)) {
+        // Op is truncated from a larger type, descale in the larger type.
+        // Suppose Op = trunc X, and we descale X as Y * sext Scale.  Then
+        //   trunc (Y * sext Scale) = (trunc Y) * Scale
+        // always holds.  However (trunc Y) * Scale may overflow even if
+        // trunc (Y * sext Scale) does not, so nsw flags need to be cleared
+        // from this point up in the expression (see later).
+        if (RequireNoSignedWrap)
+          return 0;
+
+        // Drill down through the cast.
+        unsigned LargeSize = Cast->getSrcTy()->getPrimitiveSizeInBits();
+        Parent = std::make_pair(Cast, 0);
+        Scale = Scale.sext(LargeSize);
+        if (logScale + 1 == (int32_t)Cast->getType()->getPrimitiveSizeInBits())
+          logScale = -1;
+        assert(Scale.exactLogBase2() == logScale);
+        continue;
+      }
+    }
+
+    // Unsupported expression, bail out.
+    return 0;
+  }
+
+  // We know that we can successfully descale, so from here on we can safely
+  // modify the IR.  Op holds the descaled version of the deepest term in the
+  // expression.  NoSignedWrap is 'true' if multiplying Op by Scale is known
+  // not to overflow.
+
+  if (!Parent.first)
+    // The expression only had one term.
+    return Op;
+
+  // Rewrite the parent using the descaled version of its operand.
+  assert(Parent.first->hasOneUse() && "Drilled down when more than one use!");
+  assert(Op != Parent.first->getOperand(Parent.second) &&
+         "Descaling was a no-op?");
+  Parent.first->setOperand(Parent.second, Op);
+  Worklist.Add(Parent.first);
+
+  // Now work back up the expression correcting nsw flags.  The logic is based
+  // on the following observation: if X * Y is known not to overflow as a signed
+  // multiplication, and Y is replaced by a value Z with smaller absolute value,
+  // then X * Z will not overflow as a signed multiplication either.  As we work
+  // our way up, having NoSignedWrap 'true' means that the descaled value at the
+  // current level has strictly smaller absolute value than the original.
+  Instruction *Ancestor = Parent.first;
+  do {
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Ancestor)) {
+      // If the multiplication wasn't nsw then we can't say anything about the
+      // value of the descaled multiplication, and we have to clear nsw flags
+      // from this point on up.
+      bool OpNoSignedWrap = BO->hasNoSignedWrap();
+      NoSignedWrap &= OpNoSignedWrap;
+      if (NoSignedWrap != OpNoSignedWrap) {
+        BO->setHasNoSignedWrap(NoSignedWrap);
+        Worklist.Add(Ancestor);
+      }
+    } else if (Ancestor->getOpcode() == Instruction::Trunc) {
+      // The fact that the descaled input to the trunc has smaller absolute
+      // value than the original input doesn't tell us anything useful about
+      // the absolute values of the truncations.
+      NoSignedWrap = false;
+    }
+    assert((Ancestor->getOpcode() != Instruction::SExt || NoSignedWrap) &&
+           "Failed to keep proper track of nsw flags while drilling down?");
+
+    if (Ancestor == Val)
+      // Got to the top, all done!
+      return Val;
+
+    // Move up one level in the expression.
+    assert(Ancestor->hasOneUse() && "Drilled down when more than one use!");
+    Ancestor = Ancestor->use_back();
+  } while (1);
+}
+
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   SmallVector<Value*, 8> Ops(GEP.op_begin(), GEP.op_end());
 
@@ -855,7 +1093,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     if (!shouldMergeGEPs(*cast<GEPOperator>(&GEP), *Src))
       return 0;
 
-    // Note that if our source is a gep chain itself that we wait for that
+    // Note that if our source is a gep chain itself then we wait for that
     // chain to be resolved before we perform this transformation.  This
     // avoids us creating a TON of code in some cases.
     if (GEPOperator *SrcGEP =
@@ -987,62 +1225,73 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
 
       // Transform things like:
+      // %V = mul i64 %N, 4
+      // %t = getelementptr i8* bitcast (i32* %arr to i8*), i32 %V
+      // into:  %t1 = getelementptr i32* %arr, i32 %N; bitcast
+      if (TD && ResElTy->isSized() && SrcElTy->isSized()) {
+        // Check that changing the type amounts to dividing the index by a scale
+        // factor.
+        uint64_t ResSize = TD->getTypeAllocSize(ResElTy);
+        uint64_t SrcSize = TD->getTypeAllocSize(SrcElTy);
+        if (ResSize && SrcSize % ResSize == 0) {
+          Value *Idx = GEP.getOperand(1);
+          unsigned BitWidth = Idx->getType()->getPrimitiveSizeInBits();
+          uint64_t Scale = SrcSize / ResSize;
+
+          // Earlier transforms ensure that the index has type IntPtrType, which
+          // considerably simplifies the logic by eliminating implicit casts.
+          assert(Idx->getType() == TD->getIntPtrType(GEP.getContext()) &&
+                 "Index not cast to pointer width?");
+
+          bool NSW;
+          if (Value *NewIdx = Descale(Idx, APInt(BitWidth, Scale), NSW)) {
+            // Successfully decomposed Idx as NewIdx * Scale, form a new GEP.
+            // If the multiplication NewIdx * Scale may overflow then the new
+            // GEP may not be "inbounds".
+            Value *NewGEP = GEP.isInBounds() && NSW ?
+              Builder->CreateInBoundsGEP(StrippedPtr, NewIdx, GEP.getName()) :
+              Builder->CreateGEP(StrippedPtr, NewIdx, GEP.getName());
+            // The NewGEP must be pointer typed, so must the old one -> BitCast
+            return new BitCastInst(NewGEP, GEP.getType());
+          }
+        }
+      }
+
+      // Similarly, transform things like:
       // getelementptr i8* bitcast ([100 x double]* X to i8*), i32 %tmp
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
-
-      if (TD && SrcElTy->isArrayTy() && ResElTy->isIntegerTy(8)) {
+      if (TD && ResElTy->isSized() && SrcElTy->isSized() &&
+          SrcElTy->isArrayTy()) {
+        // Check that changing to the array element type amounts to dividing the
+        // index by a scale factor.
+        uint64_t ResSize = TD->getTypeAllocSize(ResElTy);
         uint64_t ArrayEltSize =
-            TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
+          TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
+        if (ResSize && ArrayEltSize % ResSize == 0) {
+          Value *Idx = GEP.getOperand(1);
+          unsigned BitWidth = Idx->getType()->getPrimitiveSizeInBits();
+          uint64_t Scale = ArrayEltSize / ResSize;
 
-        // Check to see if "tmp" is a scale by a multiple of ArrayEltSize.  We
-        // allow either a mul, shift, or constant here.
-        Value *NewIdx = 0;
-        ConstantInt *Scale = 0;
-        if (ArrayEltSize == 1) {
-          NewIdx = GEP.getOperand(1);
-          Scale = ConstantInt::get(cast<IntegerType>(NewIdx->getType()), 1);
-        } else if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(1))) {
-          NewIdx = ConstantInt::get(CI->getType(), 1);
-          Scale = CI;
-        } else if (Instruction *Inst =dyn_cast<Instruction>(GEP.getOperand(1))){
-          if (Inst->getOpcode() == Instruction::Shl &&
-              isa<ConstantInt>(Inst->getOperand(1))) {
-            ConstantInt *ShAmt = cast<ConstantInt>(Inst->getOperand(1));
-            uint32_t ShAmtVal = ShAmt->getLimitedValue(64);
-            Scale = ConstantInt::get(cast<IntegerType>(Inst->getType()),
-                                     1ULL << ShAmtVal);
-            NewIdx = Inst->getOperand(0);
-          } else if (Inst->getOpcode() == Instruction::Mul &&
-                     isa<ConstantInt>(Inst->getOperand(1))) {
-            Scale = cast<ConstantInt>(Inst->getOperand(1));
-            NewIdx = Inst->getOperand(0);
+          // Earlier transforms ensure that the index has type IntPtrType, which
+          // considerably simplifies the logic by eliminating implicit casts.
+          assert(Idx->getType() == TD->getIntPtrType(GEP.getContext()) &&
+                 "Index not cast to pointer width?");
+
+          bool NSW;
+          if (Value *NewIdx = Descale(Idx, APInt(BitWidth, Scale), NSW)) {
+            // Successfully decomposed Idx as NewIdx * Scale, form a new GEP.
+            // If the multiplication NewIdx * Scale may overflow then the new
+            // GEP may not be "inbounds".
+            Value *Off[2];
+            Off[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
+            Off[1] = NewIdx;
+            Value *NewGEP = GEP.isInBounds() && NSW ?
+              Builder->CreateInBoundsGEP(StrippedPtr, Off, GEP.getName()) :
+              Builder->CreateGEP(StrippedPtr, Off, GEP.getName());
+            // The NewGEP must be pointer typed, so must the old one -> BitCast
+            return new BitCastInst(NewGEP, GEP.getType());
           }
-        }
-
-        // If the index will be to exactly the right offset with the scale taken
-        // out, perform the transformation. Note, we don't know whether Scale is
-        // signed or not. We'll use unsigned version of division/modulo
-        // operation after making sure Scale doesn't have the sign bit set.
-        if (ArrayEltSize && Scale && Scale->getSExtValue() >= 0LL &&
-            Scale->getZExtValue() % ArrayEltSize == 0) {
-          Scale = ConstantInt::get(Scale->getType(),
-                                   Scale->getZExtValue() / ArrayEltSize);
-          if (Scale->getZExtValue() != 1) {
-            Constant *C = ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
-                                                       false /*ZExt*/);
-            NewIdx = Builder->CreateMul(NewIdx, C, "idxscale");
-          }
-
-          // Insert the new GEP instruction.
-          Value *Idx[2];
-          Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
-          Idx[1] = NewIdx;
-          Value *NewGEP = GEP.isInBounds() ?
-            Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()):
-            Builder->CreateGEP(StrippedPtr, Idx, GEP.getName());
-          // The NewGEP must be pointer typed, so must the old one -> BitCast
-          return new BitCastInst(NewGEP, GEP.getType());
         }
       }
     }

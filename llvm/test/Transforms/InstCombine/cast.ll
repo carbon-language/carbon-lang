@@ -694,3 +694,200 @@ define i1 @test67(i1 %a, i32 %b) {
 ; CHECK: @test67
 ; CHECK: ret i1 false
 }
+
+%s = type { i32, i32, i32 }
+
+define %s @test68(%s *%p, i64 %i) {
+; CHECK: @test68
+  %o = mul i64 %i, 12
+  %q = bitcast %s* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o
+; CHECK-NEXT: getelementptr %s*
+  %r = bitcast i8* %pp to %s*
+  %l = load %s* %r
+; CHECK-NEXT: load %s*
+  ret %s %l
+; CHECK-NEXT: ret %s
+}
+
+define double @test69(double *%p, i64 %i) {
+; CHECK: @test69
+  %o = shl nsw i64 %i, 3
+  %q = bitcast double* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o
+; CHECK-NEXT: getelementptr inbounds double*
+  %r = bitcast i8* %pp to double*
+  %l = load double* %r
+; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
+
+define %s @test70(%s *%p, i64 %i) {
+; CHECK: @test70
+  %o = mul nsw i64 %i, 36
+; CHECK-NEXT: mul nsw i64 %i, 3
+  %q = bitcast %s* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o
+; CHECK-NEXT: getelementptr inbounds %s*
+  %r = bitcast i8* %pp to %s*
+  %l = load %s* %r
+; CHECK-NEXT: load %s*
+  ret %s %l
+; CHECK-NEXT: ret %s
+}
+
+define double @test71(double *%p, i64 %i) {
+; CHECK: @test71
+  %o = shl i64 %i, 5
+; CHECK-NEXT: shl i64 %i, 2
+  %q = bitcast double* %p to i8*
+  %pp = getelementptr i8* %q, i64 %o
+; CHECK-NEXT: getelementptr double*
+  %r = bitcast i8* %pp to double*
+  %l = load double* %r
+; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
+
+define double @test72(double *%p, i32 %i) {
+; CHECK: @test72
+  %so = mul nsw i32 %i, 8
+  %o = sext i32 %so to i64
+; CHECK-NEXT: sext i32 %i to i64
+  %q = bitcast double* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o
+; CHECK-NEXT: getelementptr inbounds double*
+  %r = bitcast i8* %pp to double*
+  %l = load double* %r
+; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
+
+define double @test73(double *%p, i128 %i) {
+; CHECK: @test73
+  %lo = mul nsw i128 %i, 8
+  %o = trunc i128 %lo to i64
+; CHECK-NEXT: trunc i128 %i to i64
+  %q = bitcast double* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o
+; CHECK-NEXT: getelementptr double*
+  %r = bitcast i8* %pp to double*
+  %l = load double* %r
+; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
+
+define double @test74(double *%p, i64 %i) {
+; CHECK: @test74
+  %q = bitcast double* %p to i64*
+  %pp = getelementptr inbounds i64* %q, i64 %i
+; CHECK-NEXT: getelementptr inbounds double*
+  %r = bitcast i64* %pp to double*
+  %l = load double* %r
+; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
+
+define i32* @test75(i32* %p, i32 %x) {
+; CHECK: @test75
+  %y = shl i32 %x, 3
+; CHECK-NEXT: shl i32 %x, 3
+  %z = sext i32 %y to i64
+; CHECK-NEXT: sext i32 %y to i64
+  %q = bitcast i32* %p to i8*
+  %r = getelementptr i8* %q, i64 %z
+  %s = bitcast i8* %r to i32*
+  ret i32* %s
+}
+
+define %s @test76(%s *%p, i64 %i, i64 %j) {
+; CHECK: @test76
+  %o = mul i64 %i, 12
+  %o2 = mul nsw i64 %o, %j
+; CHECK-NEXT: %o2 = mul i64 %i, %j
+  %q = bitcast %s* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o2
+; CHECK-NEXT: getelementptr %s* %p, i64 %o2
+  %r = bitcast i8* %pp to %s*
+  %l = load %s* %r
+; CHECK-NEXT: load %s*
+  ret %s %l
+; CHECK-NEXT: ret %s
+}
+
+define %s @test77(%s *%p, i64 %i, i64 %j) {
+; CHECK: @test77
+  %o = mul nsw i64 %i, 36
+  %o2 = mul nsw i64 %o, %j
+; CHECK-NEXT: %o = mul nsw i64 %i, 3
+; CHECK-NEXT: %o2 = mul nsw i64 %o, %j
+  %q = bitcast %s* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %o2
+; CHECK-NEXT: getelementptr inbounds %s* %p, i64 %o2
+  %r = bitcast i8* %pp to %s*
+  %l = load %s* %r
+; CHECK-NEXT: load %s*
+  ret %s %l
+; CHECK-NEXT: ret %s
+}
+
+define %s @test78(%s *%p, i64 %i, i64 %j, i32 %k, i32 %l, i128 %m, i128 %n) {
+; CHECK: @test78
+  %a = mul nsw i32 %k, 36
+; CHECK-NEXT: mul nsw i32 %k, 3
+  %b = mul nsw i32 %a, %l
+; CHECK-NEXT: mul nsw i32 %a, %l
+  %c = sext i32 %b to i128
+; CHECK-NEXT: sext i32 %b to i128
+  %d = mul nsw i128 %c, %m
+; CHECK-NEXT: mul nsw i128 %c, %m
+  %e = mul i128 %d, %n
+; CHECK-NEXT: mul i128 %d, %n
+  %f = trunc i128 %e to i64
+; CHECK-NEXT: trunc i128 %e to i64
+  %g = mul nsw i64 %f, %i
+; CHECK-NEXT: mul i64 %f, %i
+  %h = mul nsw i64 %g, %j
+; CHECK-NEXT: mul i64 %g, %j
+  %q = bitcast %s* %p to i8*
+  %pp = getelementptr inbounds i8* %q, i64 %h
+; CHECK-NEXT: getelementptr %s* %p, i64 %h
+  %r = bitcast i8* %pp to %s*
+  %load = load %s* %r
+; CHECK-NEXT: load %s*
+  ret %s %load
+; CHECK-NEXT: ret %s
+}
+
+define %s @test79(%s *%p, i64 %i, i32 %j) {
+; CHECK: @test79
+  %a = mul nsw i64 %i, 36
+; CHECK: mul nsw i64 %i, 36
+  %b = trunc i64 %a to i32
+  %c = mul i32 %b, %j
+  %q = bitcast %s* %p to i8*
+; CHECK: bitcast
+  %pp = getelementptr inbounds i8* %q, i32 %c
+  %r = bitcast i8* %pp to %s*
+  %l = load %s* %r
+  ret %s %l
+}
+
+define double @test80([100 x double]* %p, i32 %i) {
+; CHECK: @test80
+  %tmp = mul nsw i32 %i, 8
+; CHECK-NEXT: sext i32 %i to i64
+  %q = bitcast [100 x double]* %p to i8*
+  %pp = getelementptr i8* %q, i32 %tmp
+; CHECK-NEXT: getelementptr [100 x double]*
+  %r = bitcast i8* %pp to double*
+  %l = load double* %r
+; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
