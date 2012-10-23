@@ -162,39 +162,77 @@ LanguageRuntime::ExceptionBreakpointResolver::GetDepth ()
         return m_actual_resolver_sp->GetDepth();
 }
 
-static const char *language_names[] =
+/*
+typedef enum LanguageType
 {
-    "unknown",
-    "c89",
-    "c",
-    "ada83",
-    "c++",
-    "cobol74",
-    "cobol85",
-    "fortran77",
-    "fortran90",
-    "pascal83",
-    "modula2",
-    "java",
-    "c99",
-    "ada95",
-    "fortran95",
-    "pli",
-    "objective-c",
-    "objective-c++",
-    "upc",
-    "d",
-    "python"
+    eLanguageTypeUnknown         = 0x0000,   ///< Unknown or invalid language value.
+    eLanguageTypeC89             = 0x0001,   ///< ISO C:1989.
+    eLanguageTypeC               = 0x0002,   ///< Non-standardized C, such as K&R.
+    eLanguageTypeAda83           = 0x0003,   ///< ISO Ada:1983.
+    eLanguageTypeC_plus_plus     = 0x0004,   ///< ISO C++:1998.
+    eLanguageTypeCobol74         = 0x0005,   ///< ISO Cobol:1974.
+    eLanguageTypeCobol85         = 0x0006,   ///< ISO Cobol:1985.
+    eLanguageTypeFortran77       = 0x0007,   ///< ISO Fortran 77.
+    eLanguageTypeFortran90       = 0x0008,   ///< ISO Fortran 90.
+    eLanguageTypePascal83        = 0x0009,   ///< ISO Pascal:1983.
+    eLanguageTypeModula2         = 0x000a,   ///< ISO Modula-2:1996.
+    eLanguageTypeJava            = 0x000b,   ///< Java.
+    eLanguageTypeC99             = 0x000c,   ///< ISO C:1999.
+    eLanguageTypeAda95           = 0x000d,   ///< ISO Ada:1995.
+    eLanguageTypeFortran95       = 0x000e,   ///< ISO Fortran 95.
+    eLanguageTypePLI             = 0x000f,   ///< ANSI PL/I:1976.
+    eLanguageTypeObjC            = 0x0010,   ///< Objective-C.
+    eLanguageTypeObjC_plus_plus  = 0x0011,   ///< Objective-C++.
+    eLanguageTypeUPC             = 0x0012,   ///< Unified Parallel C.
+    eLanguageTypeD               = 0x0013,   ///< D.
+    eLanguageTypePython          = 0x0014    ///< Python.
+} LanguageType;
+ */
+
+struct language_name_pair {
+    const char *name;
+    LanguageType type;
 };
-static uint32_t num_languages = sizeof(language_names) / sizeof (char *);
+
+struct language_name_pair language_names[] =
+{
+    // To allow GetNameForLanguageType to be a simple array lookup, the first
+    // part of this array must follow enum LanguageType exactly.
+    {   "unknown",          eLanguageTypeUnknown        },
+    {   "c89",              eLanguageTypeC89            },
+    {   "c",                eLanguageTypeC              },
+    {   "ada83",            eLanguageTypeAda83          },
+    {   "c++",              eLanguageTypeC_plus_plus    },
+    {   "cobol74",          eLanguageTypeCobol74        },
+    {   "cobol85",          eLanguageTypeCobol85        },
+    {   "fortran77",        eLanguageTypeFortran77      },
+    {   "fortran90",        eLanguageTypeFortran90      },
+    {   "pascal83",         eLanguageTypePascal83       },
+    {   "modula2",          eLanguageTypeModula2        },
+    {   "java",             eLanguageTypeJava           },
+    {   "c99",              eLanguageTypeC99            },
+    {   "ada95",            eLanguageTypeAda95          },
+    {   "fortran95",        eLanguageTypeFortran95      },
+    {   "pli",              eLanguageTypePLI            },
+    {   "objective-c",      eLanguageTypeObjC           },
+    {   "objective-c++",    eLanguageTypeObjC_plus_plus },
+    {   "upc",              eLanguageTypeUPC            },
+    {   "d",                eLanguageTypeD              },
+    {   "python",           eLanguageTypePython         },
+    // Now synonyms, in arbitrary order
+    {   "objc",             eLanguageTypeObjC           },
+    {   "objc++",           eLanguageTypeObjC_plus_plus }
+};
+
+static uint32_t num_languages = sizeof(language_names) / sizeof (struct language_name_pair);
 
 LanguageType
 LanguageRuntime::GetLanguageTypeFromString (const char *string)
 {
     for (uint32_t i = 0; i < num_languages; i++)
     {
-        if (strcmp (language_names[i], string) == 0)
-            return (LanguageType) i;
+        if (strcasecmp (language_names[i].name, string) == 0)
+            return (LanguageType) language_names[i].type;
     }
     return eLanguageTypeUnknown;
 }
@@ -203,8 +241,8 @@ const char *
 LanguageRuntime::GetNameForLanguageType (LanguageType language)
 {
     if (language < num_languages)
-        return language_names[language];
+        return language_names[language].name;
     else
-        return language_names[eLanguageTypeUnknown];
+        return language_names[eLanguageTypeUnknown].name;
 }
         
