@@ -517,8 +517,8 @@ CommandInterpreter::LoadCommandDictionary ()
     std::auto_ptr<CommandObjectRegexCommand>
     connect_gdb_remote_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "gdb-remote",
-                                                      "Connect to a remote GDB server.",
-                                                      "gdb-remote [<host>:<port>]\ngdb-remote [<port>]", 2));
+                                                      "Connect to a remote GDB server.  If no hostname is provided, localhost is assumed.",
+                                                      "gdb-remote [<hostname>:]<portnum>", 2));
     if (connect_gdb_remote_cmd_ap.get())
     {
         if (connect_gdb_remote_cmd_ap->AddRegexCommand("^([^:]+:[[:digit:]]+)$", "process connect --plugin gdb-remote connect://%1") &&
@@ -532,8 +532,8 @@ CommandInterpreter::LoadCommandDictionary ()
     std::auto_ptr<CommandObjectRegexCommand>
     connect_kdp_remote_cmd_ap(new CommandObjectRegexCommand (*this,
                                                              "kdp-remote",
-                                                             "Connect to a remote KDP server.",
-                                                             "kdp-remote [<host>]\nkdp-remote [<host>:<port>]", 2));
+                                                             "Connect to a remote KDP server.  udp port 41139 is the default port number.",
+                                                             "kdp-remote <hostname>[:<portnum>]", 2));
     if (connect_kdp_remote_cmd_ap.get())
     {
         if (connect_kdp_remote_cmd_ap->AddRegexCommand("^([^:]+:[[:digit:]]+)$", "process connect --plugin kdp-remote udp://%1") &&
