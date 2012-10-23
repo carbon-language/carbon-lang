@@ -7148,6 +7148,17 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
     }
   }
 
+  if (var->isThisDeclarationADefinition() &&
+      var->getLinkage() == ExternalLinkage) {
+    // Find a previous declaration that's not a definition.
+    VarDecl *prev = var->getPreviousDecl();
+    while (prev && prev->isThisDeclarationADefinition())
+      prev = prev->getPreviousDecl();
+
+    if (!prev)
+      Diag(var->getLocation(), diag::warn_missing_variable_declarations) << var;
+  }
+
   // All the following checks are C++ only.
   if (!getLangOpts().CPlusPlus) return;
 

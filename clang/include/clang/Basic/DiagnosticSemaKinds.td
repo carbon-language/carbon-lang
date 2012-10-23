@@ -3139,6 +3139,9 @@ def note_sentinel_here : Note<
 def warn_missing_prototype : Warning<
   "no previous prototype for function %0">,
   InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;
+def warn_missing_variable_declarations : Warning<
+  "no previous extern declaration for non-static variable %0">,
+  InGroup<DiagGroup<"missing-variable-declarations">>, DefaultIgnore;
 def err_redefinition : Error<"redefinition of %0">;
 def err_definition_of_implicitly_declared_member : Error<
   "definition of implicitly declared %select{default constructor|copy "

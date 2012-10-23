@@ -665,6 +665,8 @@ void Sema::ActOnEndOfTranslationUnit() {
                                    diag::err_tentative_def_incomplete_type))
       VD->setInvalidDecl();
 
+    CheckCompleteVariableDeclaration(VD);
+
     // Notify the consumer that we've completed a tentative definition.
     if (!VD->isInvalidDecl())
       Consumer.CompleteTentativeDefinition(VD);
