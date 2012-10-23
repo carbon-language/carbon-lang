@@ -1709,14 +1709,26 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
   }
   
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
-    // Also methods in class extensions need be looked at next.
-    for (const ObjCCategoryDecl *ClsExtDecl = I->getFirstClassExtension(); 
-         ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension())
-      MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                 IMPDecl,
-                                 const_cast<ObjCCategoryDecl *>(ClsExtDecl), 
-                                 IncompleteImpl, false, 
-                                 WarnCategoryMethodImpl);
+    // when checking that methods in implementation match their declaration,
+    // i.e. when WarnCategoryMethodImpl is false, check declarations in class
+    // extension; as well as those in categories.
+    if (!WarnCategoryMethodImpl)
+      for (const ObjCCategoryDecl *CDeclChain = I->getCategoryList();
+           CDeclChain; CDeclChain = CDeclChain->getNextClassCategory())
+        MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
+                                   IMPDecl,
+                                   const_cast<ObjCCategoryDecl *>(CDeclChain),
+                                   IncompleteImpl, false,
+                                   WarnCategoryMethodImpl);
+    else 
+      // Also methods in class extensions need be looked at next.
+      for (const ObjCCategoryDecl *ClsExtDecl = I->getFirstClassExtension(); 
+           ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension())
+        MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
+                                   IMPDecl,
+                                   const_cast<ObjCCategoryDecl *>(ClsExtDecl), 
+                                   IncompleteImpl, false, 
+                                   WarnCategoryMethodImpl);
     
     // Check for any implementation of a methods declared in protocol.
     for (ObjCInterfaceDecl::all_protocol_iterator

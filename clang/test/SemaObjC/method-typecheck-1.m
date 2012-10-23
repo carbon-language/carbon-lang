@@ -34,3 +34,18 @@
 (float) x { return 0; }	//  expected-warning {{conflicting parameter types in implementation of 'setCat:': 'int' vs 'float'}}
 + (int) cCat: (int) x { return 0; }	//  expected-warning {{conflicting return type in implementation of 'cCat:': 'void' vs 'int'}}
 @end
+
+// rdar://12519216
+// test that when implementation implements method in a category, types match.
+@interface testObject {}
+@end
+
+@interface testObject(Category)
+- (float)returnCGFloat; // expected-note {{previous definition is here}}
+@end
+
+@implementation testObject
+- (double)returnCGFloat { // expected-warning {{conflicting return type in implementation of 'returnCGFloat': 'float' vs 'double'}}
+  return 0.0;
+}
+@end
