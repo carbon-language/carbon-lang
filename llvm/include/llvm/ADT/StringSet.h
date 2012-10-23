@@ -29,8 +29,13 @@ namespace llvm {
       assert(!InLang.empty());
       const char *KeyStart = InLang.data();
       const char *KeyEnd = KeyStart + InLang.size();
-      return base::insert(llvm::StringMapEntry<char>::
-                          Create(KeyStart, KeyEnd, base::getAllocator(), '+'));
+      llvm::StringMapEntry<char> *Entry = llvm::StringMapEntry<char>::
+                            Create(KeyStart, KeyEnd, base::getAllocator(), '+');
+      if (!base::insert(Entry)) {
+        Entry->Destroy(base::getAllocator());
+        return false;
+      }
+      return true;
     }
   };
 }
