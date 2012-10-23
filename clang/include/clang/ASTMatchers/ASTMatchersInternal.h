@@ -380,18 +380,14 @@ private:
     /// FIXME: Add other ways to convert...
     if (Node.isNull())
       return false;
-    CXXRecordDecl *NodeAsRecordDecl = Node->getAsCXXRecordDecl();
-    return NodeAsRecordDecl != NULL &&
-      InnerMatcher.matches(*NodeAsRecordDecl, Finder, Builder);
+    return matchesDecl(Node->getAsCXXRecordDecl(), Finder, Builder);
   }
 
   /// \brief Extracts the Decl of the callee of a CallExpr and returns whether
   /// the inner matcher matches on it.
   bool matchesSpecialized(const CallExpr &Node, ASTMatchFinder *Finder,
                           BoundNodesTreeBuilder *Builder) const {
-    const Decl *NodeAsDecl = Node.getCalleeDecl();
-    return NodeAsDecl != NULL &&
-      InnerMatcher.matches(*NodeAsDecl, Finder, Builder);
+    return matchesDecl(Node.getCalleeDecl(), Finder, Builder);
   }
 
   /// \brief Extracts the Decl of the constructor call and returns whether the
@@ -399,9 +395,23 @@ private:
   bool matchesSpecialized(const CXXConstructExpr &Node,
                           ASTMatchFinder *Finder,
                           BoundNodesTreeBuilder *Builder) const {
-    const Decl *NodeAsDecl = Node.getConstructor();
-    return NodeAsDecl != NULL &&
-      InnerMatcher.matches(*NodeAsDecl, Finder, Builder);
+    return matchesDecl(Node.getConstructor(), Finder, Builder);
+  }
+
+  /// \brief Extracts the \c ValueDecl a \c MemberExpr refers to and returns
+  /// whether the inner matcher matches on it.
+  bool matchesSpecialized(const MemberExpr &Node,
+                          ASTMatchFinder *Finder,
+                          BoundNodesTreeBuilder *Builder) const {
+    return matchesDecl(Node.getMemberDecl(), Finder, Builder);
+  }
+
+  /// \brief Returns whether the inner matcher \c Node. Returns false if \c Node
+  /// is \c NULL.
+  bool matchesDecl(const Decl *Node,
+                   ASTMatchFinder *Finder,
+                   BoundNodesTreeBuilder *Builder) const {
+    return Node != NULL && InnerMatcher.matches(*Node, Finder, Builder);
   }
 
   const Matcher<Decl> InnerMatcher;
