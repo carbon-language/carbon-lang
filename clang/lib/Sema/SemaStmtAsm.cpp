@@ -513,7 +513,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   unsigned NumOutputs;
   unsigned NumInputs;
   std::string AsmStringIR;
-  SmallVector<void *, 4> OpDecls;
+  SmallVector<std::pair<void *, bool>, 4> OpDecls;
   SmallVector<std::string, 4> Constraints;
   SmallVector<std::string, 4> Clobbers;
   if (Parser->ParseMSInlineAsm(AsmLoc.getPtrEncoding(), AsmStringIR,
@@ -533,7 +533,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   ConstraintRefs.resize(NumExprs);
   Exprs.resize(NumExprs);
   for (unsigned i = 0, e = NumExprs; i != e; ++i) {
-    NamedDecl *OpDecl = static_cast<NamedDecl *>(OpDecls[i]);
+    NamedDecl *OpDecl = static_cast<NamedDecl *>(OpDecls[i].first);
     if (!OpDecl)
       return StmtError();
 
@@ -542,7 +542,12 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
                                                  OpDecl);
     if (OpExpr.isInvalid())
       return StmtError();
-    
+
+    // Need offset of variable.
+    if (OpDecls[i].second)
+      OpExpr = BuildUnaryOp(getCurScope(), AsmLoc, clang::UO_AddrOf,
+                            OpExpr.take());
+
     Names[i] = OpDecl->getIdentifier();
     ConstraintRefs[i] = StringRef(Constraints[i]);
     Exprs[i] = OpExpr.take();
