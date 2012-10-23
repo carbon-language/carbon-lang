@@ -37,7 +37,7 @@
 using namespace llvm;
 
 static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
-  // Create the fib function and insert it into module M.  This function is said
+  // Create the fib function and insert it into module M. This function is said
   // to return an int and take an int parameter.
   Function *FibF =
     cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
