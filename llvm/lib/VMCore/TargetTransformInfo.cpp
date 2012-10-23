@@ -17,6 +17,10 @@ using namespace llvm;
 /// @note This has to exist, because this is a pass, but it should never be
 /// used.
 TargetTransformInfo::TargetTransformInfo() : ImmutablePass(ID) {
+  /// You are seeing this error because your pass required the TTI
+  /// using a call to "getAnalysis<TargetTransformInfo>()", and you did
+  /// not initialize a machine target which can provide the TTI.
+  /// You should use "getAnalysisIfAvailable<TargetTransformInfo>()" instead.
   report_fatal_error("Bad TargetTransformInfo ctor used.  "
                      "Tool did not specify a TargetTransformInfo to use?");
 }
