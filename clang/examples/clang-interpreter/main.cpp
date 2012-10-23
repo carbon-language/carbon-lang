@@ -13,9 +13,9 @@
 #include "clang/Driver/Tool.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Basic/DiagnosticOptions.h"
 
 #include "llvm/Module.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -69,11 +69,12 @@ static int Execute(llvm::Module *Mod, char * const *envp) {
 int main(int argc, const char **argv, char * const *envp) {
   void *MainAddr = (void*) (intptr_t) GetExecutablePath;
   llvm::sys::Path Path = GetExecutablePath(argv[0]);
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter *DiagClient =
-    new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
+    new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  DiagnosticsEngine Diags(DiagID, DiagClient);
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
   Driver TheDriver(Path.str(), llvm::sys::getDefaultTargetTriple(),
                    "a.out", /*IsProduction=*/false, Diags);
   TheDriver.setTitle("clang interpreter");
