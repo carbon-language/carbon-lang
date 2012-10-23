@@ -19,6 +19,7 @@
 
 #include <list>
 #include <map>
+#include <llvm/ADT/ilist.h>
 
 namespace PBQP {
 
@@ -31,16 +32,16 @@ namespace PBQP {
     class NodeEntry;
     class EdgeEntry;
 
-    typedef std::list<NodeEntry> NodeList;
-    typedef std::list<EdgeEntry> EdgeList;
+    typedef llvm::ilist<NodeEntry> NodeList;
+    typedef llvm::ilist<EdgeEntry> EdgeList;
 
   public:
 
-    typedef NodeList::iterator NodeItr;
-    typedef NodeList::const_iterator ConstNodeItr;
+    typedef NodeEntry* NodeItr;
+    typedef const NodeEntry* ConstNodeItr;
 
-    typedef EdgeList::iterator EdgeItr;
-    typedef EdgeList::const_iterator ConstEdgeItr;
+    typedef EdgeEntry* EdgeItr;
+    typedef const EdgeEntry* ConstEdgeItr;
 
   private:
 
@@ -52,12 +53,14 @@ namespace PBQP {
 
   private:
 
-    class NodeEntry {
+    class NodeEntry : public llvm::ilist_node<NodeEntry> {
+      friend struct llvm::ilist_sentinel_traits<NodeEntry>;
     private:
       Vector costs;      
       AdjEdgeList adjEdges;
       unsigned degree;
       void *data;
+      NodeEntry() : costs(0, 0) {}
     public:
       NodeEntry(const Vector &costs) : costs(costs), degree(0) {}
       Vector& getCosts() { return costs; }
@@ -77,12 +80,14 @@ namespace PBQP {
       void* getData() { return data; }
     };
 
-    class EdgeEntry {
+    class EdgeEntry : public llvm::ilist_node<EdgeEntry> {
+      friend struct llvm::ilist_sentinel_traits<EdgeEntry>;
     private:
       NodeItr node1, node2;
       Matrix costs;
       AdjEdgeItr node1AEItr, node2AEItr;
       void *data;
+      EdgeEntry() : costs(0, 0, 0) {}
     public:
       EdgeEntry(NodeItr node1, NodeItr node2, const Matrix &costs)
         : node1(node1), node2(node2), costs(costs) {}
