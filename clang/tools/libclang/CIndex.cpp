@@ -6137,6 +6137,9 @@ void SetSafetyThreadStackSize(unsigned Value) {
 }
 
 void clang::setThreadBackgroundPriority() {
+  if (getenv("LIBCLANG_BGPRIO_DISABLE"))
+    return;
+
   // FIXME: Move to llvm/Support and make it cross-platform.
 #ifdef __APPLE__
   setpriority(PRIO_DARWIN_THREAD, 0, PRIO_DARWIN_BG);
