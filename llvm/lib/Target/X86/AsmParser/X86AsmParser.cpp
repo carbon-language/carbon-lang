@@ -811,9 +811,9 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
   if (!isParsingInlineAsm())
     return X86Operand::CreateMem(Disp, Start, End, OffsetOfLoc, Size);
   else
-    // When parsing inline assembly we set the basereg to a non-zero value as we
-    // don't know the actualy value at this time.  This is necessary to get the
-    // matching correct in some cases.
+    // When parsing inline assembly we set the base register to a non-zero value
+    // as we don't know the actual value at this time.  This is necessary to
+    // get the matching correct in some cases.
     return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
                                  /*Scale*/1, Start, End, OffsetOfLoc, Size,
                                  OffsetOf, NeedSizeDir);
