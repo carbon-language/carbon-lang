@@ -2,8 +2,8 @@
 .\" License. See LICENSE.TXT for details.
 .\" $Id$
 .Dd May 25, 2012
+.Dt SCAN-BUILD 1
 .Os "clang" "3.1"
-.Dt SCAN-BUILD \&1 CLANG
 .Sh NAME
 .Nm scan-build
 .Nd Clang static analyzer
@@ -139,7 +139,7 @@ which is far less precise but can more quickly analyze code.
 was the default store model for checker-0.221 and earlier.
 .\"
 .El
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 .Nm
 returns the value returned by
 .Ar build_command
@@ -188,10 +188,10 @@ Check for undefined results of binary operators.
 .It core.VLASize
 Check for declarations of VLA of undefined or zero size.
 .It core.builtin.BuiltinFunctions
-Evaluate compiler builtin functions, e.g. 
+Evaluate compiler builtin functions, e.g.
 .Fn alloca .
 .It core.builtin.NoReturnFunctions
-Evaluate 
+Evaluate
 .Ql panic
 functions that are known to not return to the caller.
 .It core.uninitialized.ArraySubscript
