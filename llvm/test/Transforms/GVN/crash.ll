@@ -163,3 +163,39 @@ entry:
   ret i8 %1
 }
 
+
+; Test that a GEP in an unreachable block with the following form doesn't crash
+; GVN:
+;
+;    %x = gep %some.type %x, ...
+
+%struct.type = type { i64, i32, i32 }
+
+define fastcc void @func() nounwind uwtable ssp align 2 {
+entry:
+  br label %reachable.bb
+
+;; Unreachable code.
+
+unreachable.bb:
+  %gep.val = getelementptr inbounds %struct.type* %gep.val, i64 1
+  br i1 undef, label %u2.bb, label %u1.bb
+
+u1.bb:
+  %tmp1 = getelementptr inbounds %struct.type* %gep.val, i64 0, i32 0
+  store i64 -1, i64* %tmp1, align 8
+  br label %unreachable.bb
+
+u2.bb:
+  %0 = load i32* undef, align 4
+  %conv.i.i.i.i.i = zext i32 %0 to i64
+  br label %u2.bb
+
+;; Reachable code.
+
+reachable.bb:
+  br label %r1.bb
+
+r1.bb:
+  br label %u2.bb
+}
