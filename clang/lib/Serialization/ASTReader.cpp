@@ -63,59 +63,66 @@ using namespace clang::serialization::reader;
 
 ASTReaderListener::~ASTReaderListener() {}
 
-bool
-PCHValidator::ReadLanguageOptions(const ModuleFile &M,
-                                  const LangOptions &LangOpts,
-                                  bool Complain) {
-  const LangOptions &PPLangOpts = PP.getLangOpts();
-  
-#define LANGOPT(Name, Bits, Default, Description)           \
-  if (PPLangOpts.Name != LangOpts.Name) {                   \
-    if (Complain)                                           \
-      Reader.Diag(diag::err_pch_langopt_mismatch)           \
-        << Description << LangOpts.Name << PPLangOpts.Name; \
-    return true;                                            \
+/// \brief Compare the given set of language options against an existing set of
+/// language options.
+///
+/// \param Diags If non-NULL, diagnostics will be emitted via this engine.
+///
+/// \returns true if the languagae options mis-match, false otherwise.
+static bool checkLanguageOptions(const LangOptions &LangOpts,
+                                 const LangOptions &ExistingLangOpts,
+                                 DiagnosticsEngine *Diags) {
+#define LANGOPT(Name, Bits, Default, Description)                 \
+  if (ExistingLangOpts.Name != LangOpts.Name) {                   \
+    if (Diags)                                                    \
+      Diags->Report(diag::err_pch_langopt_mismatch)               \
+        << Description << LangOpts.Name << ExistingLangOpts.Name; \
+    return true;                                                  \
   }
 
-#define VALUE_LANGOPT(Name, Bits, Default, Description) \
-  if (PPLangOpts.Name != LangOpts.Name) {               \
-    if (Complain)                                       \
-      Reader.Diag(diag::err_pch_langopt_value_mismatch) \
-        << Description;                                 \
-    return true;                                        \
+#define VALUE_LANGOPT(Name, Bits, Default, Description)   \
+  if (ExistingLangOpts.Name != LangOpts.Name) {           \
+    if (Diags)                                            \
+      Diags->Report(diag::err_pch_langopt_value_mismatch) \
+        << Description;                                   \
+    return true;                                          \
   }
 
-#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
-  if (PPLangOpts.get##Name() != LangOpts.get##Name()) {      \
-    if (Complain)                                            \
-      Reader.Diag(diag::err_pch_langopt_value_mismatch)      \
-        << Description;                                      \
-    return true;                                             \
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description)   \
+  if (ExistingLangOpts.get##Name() != LangOpts.get##Name()) {  \
+    if (Diags)                                                 \
+      Diags->Report(diag::err_pch_langopt_value_mismatch)      \
+        << Description;                                        \
+    return true;                                               \
   }
 
 #define BENIGN_LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
 
-  if (PPLangOpts.ObjCRuntime != LangOpts.ObjCRuntime) {
-    if (Complain)
-      Reader.Diag(diag::err_pch_langopt_value_mismatch)
-        << "target Objective-C runtime";
+  if (ExistingLangOpts.ObjCRuntime != LangOpts.ObjCRuntime) {
+    if (Diags)
+      Diags->Report(diag::err_pch_langopt_value_mismatch)
+      << "target Objective-C runtime";
     return true;
   }
-  
+
   return false;
 }
 
-bool PCHValidator::ReadTargetOptions(const ModuleFile &M, 
-                                     const TargetOptions &TargetOpts,
-                                     bool Complain) {
-  const TargetOptions &ExistingTargetOpts = PP.getTargetInfo().getTargetOpts();
-
+/// \brief Compare the given set of target options against an existing set of
+/// target options.
+///
+/// \param Diags If non-NULL, diagnostics will be emitted via this engine.
+///
+/// \returns true if the target options mis-match, false otherwise.
+static bool checkTargetOptions(const TargetOptions &TargetOpts,
+                               const TargetOptions &ExistingTargetOpts,
+                               DiagnosticsEngine *Diags) {
 #define CHECK_TARGET_OPT(Field, Name)                             \
   if (TargetOpts.Field != ExistingTargetOpts.Field) {             \
-    if (Complain)                                                 \
-      Reader.Diag(diag::err_pch_targetopt_mismatch)               \
+    if (Diags)                                                    \
+      Diags->Report(diag::err_pch_targetopt_mismatch)             \
         << Name << TargetOpts.Field << ExistingTargetOpts.Field;  \
     return true;                                                  \
   }
@@ -129,8 +136,8 @@ bool PCHValidator::ReadTargetOptions(const ModuleFile &M,
 
   // Compare feature sets.
   SmallVector<StringRef, 4> ExistingFeatures(
-                              ExistingTargetOpts.FeaturesAsWritten.begin(),
-                              ExistingTargetOpts.FeaturesAsWritten.end());
+                                             ExistingTargetOpts.FeaturesAsWritten.begin(),
+                                             ExistingTargetOpts.FeaturesAsWritten.end());
   SmallVector<StringRef, 4> ReadFeatures(TargetOpts.FeaturesAsWritten.begin(),
                                          TargetOpts.FeaturesAsWritten.end());
   std::sort(ExistingFeatures.begin(), ExistingFeatures.end());
@@ -146,33 +153,48 @@ bool PCHValidator::ReadTargetOptions(const ModuleFile &M,
     }
 
     if (ReadFeatures[ReadIdx] < ExistingFeatures[ExistingIdx]) {
-      if (Complain)
-        Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+      if (Diags)
+        Diags->Report(diag::err_pch_targetopt_feature_mismatch)
           << false << ReadFeatures[ReadIdx];
       return true;
     }
 
-    if (Complain)
-      Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+    if (Diags)
+      Diags->Report(diag::err_pch_targetopt_feature_mismatch)
         << true << ExistingFeatures[ExistingIdx];
     return true;
   }
 
   if (ExistingIdx < ExistingN) {
-    if (Complain)
-      Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+    if (Diags)
+      Diags->Report(diag::err_pch_targetopt_feature_mismatch)
         << true << ExistingFeatures[ExistingIdx];
     return true;
   }
 
   if (ReadIdx < ReadN) {
-    if (Complain)
-      Reader.Diag(diag::err_pch_targetopt_feature_mismatch)
+    if (Diags)
+      Diags->Report(diag::err_pch_targetopt_feature_mismatch)
         << false << ReadFeatures[ReadIdx];
     return true;
   }
 
   return false;
+}
+
+bool
+PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts,
+                                  bool Complain) {
+  const LangOptions &PPLangOpts = PP.getLangOpts();
+  return checkLanguageOptions(LangOpts, PPLangOpts,
+                              Complain? &Reader.Diags : 0);
+}
+
+bool PCHValidator::ReadTargetOptions(const TargetOptions &TargetOpts,
+                                     bool Complain) {
+  const TargetOptions &ExistingTargetOpts = PP.getTargetInfo().getTargetOpts();
+  return checkTargetOptions(TargetOpts, ExistingTargetOpts,
+                            Complain? &Reader.Diags : 0);
 }
 
 namespace {
@@ -1970,32 +1992,18 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case LANGUAGE_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
       if (Listener && &F == *ModuleMgr.begin() &&
-          ParseLanguageOptions(F, Record, Complain) && !DisableValidation)
+          ParseLanguageOptions(Record, Complain, *Listener) &&
+          !DisableValidation)
         return ConfigurationMismatch;
       break;
     }
 
     case TARGET_OPTIONS: {
-      if (Listener && &F == *ModuleMgr.begin()) {
-        unsigned Idx = 0;
-        TargetOptions TargetOpts;
-        TargetOpts.Triple = ReadString(Record, Idx);
-        TargetOpts.CPU = ReadString(Record, Idx);
-        TargetOpts.ABI = ReadString(Record, Idx);
-        TargetOpts.CXXABI = ReadString(Record, Idx);
-        TargetOpts.LinkerVersion = ReadString(Record, Idx);
-        for (unsigned N = Record[Idx++]; N; --N) {
-          TargetOpts.FeaturesAsWritten.push_back(ReadString(Record, Idx));
-        }
-        for (unsigned N = Record[Idx++]; N; --N) {
-          TargetOpts.Features.push_back(ReadString(Record, Idx));
-        }
-
-        bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
-        if (Listener->ReadTargetOptions(F, TargetOpts, Complain) &&
-            !DisableValidation)
-          return ConfigurationMismatch;
-      }
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
+      if (Listener && &F == *ModuleMgr.begin() &&
+          ParseTargetOptions(Record, Complain, *Listener) &&
+          !DisableValidation)
+        return ConfigurationMismatch;
       break;
     }
 
@@ -3339,6 +3347,135 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
   return std::string();
 }
 
+namespace {
+  class SimplePCHValidator : public ASTReaderListener {
+    const LangOptions &ExistingLangOpts;
+    const TargetOptions &ExistingTargetOpts;
+
+  public:
+    SimplePCHValidator(const LangOptions &ExistingLangOpts,
+                       const TargetOptions &ExistingTargetOpts)
+      : ExistingLangOpts(ExistingLangOpts),
+        ExistingTargetOpts(ExistingTargetOpts)
+    {
+    }
+
+    virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
+                                     bool Complain) {
+      return checkLanguageOptions(ExistingLangOpts, LangOpts, 0);
+    }
+    virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
+                                   bool Complain) {
+      return checkTargetOptions(ExistingTargetOpts, TargetOpts, 0);
+    }
+  };
+}
+
+bool ASTReader::isAcceptableASTFile(StringRef Filename,
+                                    FileManager &FileMgr,
+                                    const LangOptions &LangOpts,
+                                    const TargetOptions &TargetOpts) {
+  // Open the AST file.
+  std::string ErrStr;
+  OwningPtr<llvm::MemoryBuffer> Buffer;
+  Buffer.reset(FileMgr.getBufferForFile(Filename, &ErrStr));
+  if (!Buffer) {
+    return false;
+  }
+
+  // Initialize the stream
+  llvm::BitstreamReader StreamFile;
+  llvm::BitstreamCursor Stream;
+  StreamFile.init((const unsigned char *)Buffer->getBufferStart(),
+                  (const unsigned char *)Buffer->getBufferEnd());
+  Stream.init(StreamFile);
+
+  // Sniff for the signature.
+  if (Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'P' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'H') {
+    return false;
+  }
+
+  SimplePCHValidator Validator(LangOpts, TargetOpts);
+  RecordData Record;
+  bool InControlBlock = false;
+  while (!Stream.AtEndOfStream()) {
+    unsigned Code = Stream.ReadCode();
+
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      unsigned BlockID = Stream.ReadSubBlockID();
+
+      // We only know the control subblock ID.
+      switch (BlockID) {
+      case CONTROL_BLOCK_ID:
+        if (Stream.EnterSubBlock(CONTROL_BLOCK_ID)) {
+          return false;
+        } else {
+          InControlBlock = true;
+        }
+        break;
+
+      default:
+        if (Stream.SkipBlock())
+          return false;
+        break;
+      }
+      continue;
+    }
+
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd()) {
+        return false;
+      }
+      InControlBlock = false;
+      continue;
+    }
+
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+
+    Record.clear();
+    const char *BlobStart = 0;
+    unsigned BlobLen = 0;
+    unsigned RecCode = Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen);
+    if (InControlBlock) {
+      switch ((ControlRecordTypes)RecCode) {
+      case METADATA: {
+        if (Record[0] != VERSION_MAJOR) {
+          return false;
+        }
+
+        const std::string &CurBranch = getClangFullRepositoryVersion();
+        StringRef ASTBranch(BlobStart, BlobLen);
+        if (StringRef(CurBranch) != ASTBranch)
+          return false;
+
+        break;
+      }
+      case LANGUAGE_OPTIONS:
+        if (ParseLanguageOptions(Record, false, Validator))
+          return false;
+        break;
+
+      case TARGET_OPTIONS:
+        if (ParseTargetOptions(Record, false, Validator))
+          return false;
+        break;
+
+      default:
+        // No other validation to perform.
+        break;
+      }
+    }
+  }
+  
+  return true;
+}
+
 bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
   // Enter the submodule block.
   if (F.Stream.EnterSubBlock(SUBMODULE_BLOCK_ID)) {
@@ -3628,29 +3765,45 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
 /// them to the AST listener if one is set.
 ///
 /// \returns true if the listener deems the file unacceptable, false otherwise.
-bool ASTReader::ParseLanguageOptions(const ModuleFile &M,
-                                     const RecordData &Record,
-                                     bool Complain) {
-  if (Listener) {
-    LangOptions LangOpts;
-    unsigned Idx = 0;
+bool ASTReader::ParseLanguageOptions(const RecordData &Record,
+                                     bool Complain,
+                                     ASTReaderListener &Listener) {
+  LangOptions LangOpts;
+  unsigned Idx = 0;
 #define LANGOPT(Name, Bits, Default, Description) \
   LangOpts.Name = Record[Idx++];
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
   LangOpts.set##Name(static_cast<LangOptions::Type>(Record[Idx++]));
 #include "clang/Basic/LangOptions.def"
 
-    ObjCRuntime::Kind runtimeKind = (ObjCRuntime::Kind) Record[Idx++];
-    VersionTuple runtimeVersion = ReadVersionTuple(Record, Idx);
-    LangOpts.ObjCRuntime = ObjCRuntime(runtimeKind, runtimeVersion);
-    
-    unsigned Length = Record[Idx++];
-    LangOpts.CurrentModule.assign(Record.begin() + Idx, 
-                                  Record.begin() + Idx + Length);
-    return Listener->ReadLanguageOptions(M, LangOpts, Complain);
+  ObjCRuntime::Kind runtimeKind = (ObjCRuntime::Kind) Record[Idx++];
+  VersionTuple runtimeVersion = ReadVersionTuple(Record, Idx);
+  LangOpts.ObjCRuntime = ObjCRuntime(runtimeKind, runtimeVersion);
+  
+  unsigned Length = Record[Idx++];
+  LangOpts.CurrentModule.assign(Record.begin() + Idx, 
+                                Record.begin() + Idx + Length);
+  return Listener.ReadLanguageOptions(LangOpts, Complain);
+}
+
+bool ASTReader::ParseTargetOptions(const RecordData &Record,
+                                   bool Complain,
+                                   ASTReaderListener &Listener) {
+  unsigned Idx = 0;
+  TargetOptions TargetOpts;
+  TargetOpts.Triple = ReadString(Record, Idx);
+  TargetOpts.CPU = ReadString(Record, Idx);
+  TargetOpts.ABI = ReadString(Record, Idx);
+  TargetOpts.CXXABI = ReadString(Record, Idx);
+  TargetOpts.LinkerVersion = ReadString(Record, Idx);
+  for (unsigned N = Record[Idx++]; N; --N) {
+    TargetOpts.FeaturesAsWritten.push_back(ReadString(Record, Idx));
+  }
+  for (unsigned N = Record[Idx++]; N; --N) {
+    TargetOpts.Features.push_back(ReadString(Record, Idx));
   }
 
-  return false;
+  return Listener.ReadTargetOptions(TargetOpts, Complain);
 }
 
 std::pair<ModuleFile *, unsigned>

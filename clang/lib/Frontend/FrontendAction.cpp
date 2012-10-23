@@ -23,10 +23,12 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Serialization/ASTReader.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
+#include "llvm/Support/Timer.h"
 using namespace clang;
 
 namespace {
@@ -155,6 +157,7 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
   return new MultiplexConsumer(Consumers);
 }
 
+
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                      const FrontendInputFile &Input) {
   assert(!Instance && "Already processing a source file!");
@@ -222,6 +225,44 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       goto failure;
 
     return true;
+  }
+
+  // If the implicit PCH include is actually a directory, rather than
+  // a single file, search for a suitable PCH file in that directory.
+  if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
+    FileManager &FileMgr = CI.getFileManager();
+    PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+    StringRef PCHInclude = PPOpts.ImplicitPCHInclude;
+    if (const DirectoryEntry *PCHDir = FileMgr.getDirectory(PCHInclude)) {
+      llvm::error_code EC;
+      SmallString<128> DirNative;
+      llvm::sys::path::native(PCHDir->getName(), DirNative);
+      bool Found = false;
+      for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
+           Dir != DirEnd && !EC; Dir.increment(EC)) {
+        // Check whether this is an acceptable AST file.
+        if (ASTReader::isAcceptableASTFile(Dir->path(), FileMgr,
+                                           CI.getLangOpts(),
+                                           CI.getTargetOpts())) {
+          for (unsigned I = 0, N = PPOpts.Includes.size(); I != N; ++I) {
+            if (PPOpts.Includes[I] == PPOpts.ImplicitPCHInclude) {
+              PPOpts.Includes[I] = Dir->path();
+              PPOpts.ImplicitPCHInclude = Dir->path();
+              Found = true;
+              break;
+            }
+          }
+
+          assert(Found && "Implicit PCH include not in includes list?");
+          break;
+        }
+      }
+
+      if (!Found) {
+        CI.getDiagnostics().Report(diag::err_fe_no_pch_in_dir) << PCHInclude;
+        return true;
+      }
+    }
   }
 
   // Set up the preprocessor.

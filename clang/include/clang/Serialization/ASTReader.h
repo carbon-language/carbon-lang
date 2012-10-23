@@ -106,8 +106,7 @@ public:
   /// \brief Receives the language options.
   ///
   /// \returns true to indicate the options are invalid or false otherwise.
-  virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
-                                   const LangOptions &LangOpts,
+  virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
                                    bool Complain) {
     return false;
   }
@@ -116,8 +115,7 @@ public:
   ///
   /// \returns true to indicate the target options are invalid, or false
   /// otherwise.
-  virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
-                                 const TargetOptions &TargetOpts,
+  virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
                                  bool Complain) {
     return false;
   }
@@ -163,11 +161,9 @@ public:
   PCHValidator(Preprocessor &PP, ASTReader &Reader)
     : PP(PP), Reader(Reader), NumHeaderInfos(0) {}
 
-  virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
-                                   const LangOptions &LangOpts,
+  virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
                                    bool Complain);
-  virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
-                                 const TargetOptions &TargetOpts,
+  virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
                                  bool Complain);
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     StringRef OriginalFileName,
@@ -913,9 +909,11 @@ private:
   llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(ModuleFile *F);
   bool ReadSubmoduleBlock(ModuleFile &F);
-  bool ParseLanguageOptions(const ModuleFile &M, const RecordData &Record,
-                            bool Complain);
-  
+  static bool ParseLanguageOptions(const RecordData &Record, bool Complain,
+                                   ASTReaderListener &Listener);
+  static bool ParseTargetOptions(const RecordData &Record, bool Complain,
+                                 ASTReaderListener &Listener);
+
   struct RecordLocation {
     RecordLocation(ModuleFile *M, uint64_t O)
       : F(M), Offset(O) {}
@@ -1159,6 +1157,13 @@ public:
   static std::string getOriginalSourceFile(const std::string &ASTFileName,
                                            FileManager &FileMgr,
                                            DiagnosticsEngine &Diags);
+
+  /// \brief Determine whether the given AST file is acceptable to load into a
+  /// translation unit with the given language and target options.
+  static bool isAcceptableASTFile(StringRef Filename,
+                                  FileManager &FileMgr,
+                                  const LangOptions &LangOpts,
+                                  const TargetOptions &TargetOpts);
 
   /// \brief Returns the suggested contents of the predefines buffer,
   /// which contains a (typically-empty) subset of the predefines
@@ -1623,10 +1628,10 @@ public:
   llvm::APFloat ReadAPFloat(const RecordData &Record, unsigned &Idx);
 
   // \brief Read a string
-  std::string ReadString(const RecordData &Record, unsigned &Idx);
+  static std::string ReadString(const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a version tuple.
-  VersionTuple ReadVersionTuple(const RecordData &Record, unsigned &Idx);
+  static VersionTuple ReadVersionTuple(const RecordData &Record, unsigned &Idx);
 
   CXXTemporary *ReadCXXTemporary(ModuleFile &F, const RecordData &Record,
                                  unsigned &Idx);

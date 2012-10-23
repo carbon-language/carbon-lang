@@ -523,14 +523,11 @@ public:
       Predefines(Predefines), Counter(Counter), NumHeaderInfos(0),
       InitializedLanguage(false) {}
 
-  virtual bool ReadLanguageOptions(const serialization::ModuleFile &M,
-                                   const LangOptions &LangOpts,
+  virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
                                    bool Complain) {
     if (InitializedLanguage)
       return false;
     
-    assert(M.Kind == serialization::MK_MainFile);
-
     LangOpt = LangOpts;
     InitializedLanguage = true;
     
@@ -538,15 +535,11 @@ public:
     return false;
   }
 
-  virtual bool ReadTargetOptions(const serialization::ModuleFile &M,
-                                 const TargetOptions &TargetOpts,
+  virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
                                  bool Complain) {
     // If we've already initialized the target, don't do it again.
     if (Target)
       return false;
-    
-    assert(M.Kind == serialization::MK_MainFile);
-
     
     this->TargetOpts = new TargetOptions(TargetOpts);
     Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(), 

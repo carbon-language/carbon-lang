@@ -10,4 +10,4 @@
 // submitted on 2012-02-06 introduced a segfault in the case where the PCH is
 // an empty file and clang was built with assertions.
 // CHECK-EMPTY: error: input is not a PCH file: '{{.*[/\\]}}badpch-empty.h.gch'
-// CHECK-DIR: error: unable to read PCH file {{.*[/\\]}}badpch-dir.h.gch:
+// CHECK-DIR:error: no suitable precompiled header file found in directory '{{.*[/\\]}}badpch-dir.h.gch
