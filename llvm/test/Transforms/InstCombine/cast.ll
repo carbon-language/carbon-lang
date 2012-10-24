@@ -891,3 +891,12 @@ define double @test80([100 x double]* %p, i32 %i) {
   ret double %l
 ; CHECK-NEXT: ret double
 }
+
+define double @test81(double *%p, float %f) {
+  %i = fptosi float %f to i64
+  %q = bitcast double* %p to i8*
+  %pp = getelementptr i8* %q, i64 %i
+  %r = bitcast i8* %pp to double*
+  %l = load double* %r
+  ret double %l
+}
