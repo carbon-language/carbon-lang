@@ -3349,7 +3349,8 @@ static void print_usage(void) {
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
     "       c-index-test -code-completion-timing=<site> <compiler arguments>\n"
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
-    "       c-index-test -file-refs-at=<site> <compiler arguments>\n"
+    "       c-index-test -file-refs-at=<site> <compiler arguments>\n");
+  fprintf(stderr,
     "       c-index-test -index-file [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
     "       c-index-test -index-file-full [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
     "       c-index-test -index-tu [-check-prefix=<FileCheck prefix>] <AST file>\n"
