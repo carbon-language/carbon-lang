@@ -249,9 +249,7 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
 }
 
 INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
-#if MAC_INTERPOSE_FUNCTIONS
-  if (!asan_inited) return REAL(memmove)(to, from, size);
-#endif
+  if (!asan_inited) return internal_memmove(to, from, size);
   if (asan_init_is_running) {
     return REAL(memmove)(to, from, size);
   }
