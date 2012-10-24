@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
-#define LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
+#ifndef LLVM_CLANG_LEX_PREPROCESSOROPTIONS_H_
+#define LLVM_CLANG_LEX_PREPROCESSOROPTIONS_H_
 
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
@@ -38,7 +39,7 @@ enum ObjCXXARCStandardLibraryKind {
   
 /// PreprocessorOptions - This class is used for passing the various options
 /// used in preprocessor initialization to InitializePreprocessor().
-class PreprocessorOptions {
+class PreprocessorOptions : public llvm::RefCountedBase<PreprocessorOptions> {
 public:
   std::vector<std::pair<std::string, bool/*isUndef*/> > Macros;
   std::vector<std::string> Includes;

@@ -15,13 +15,13 @@
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/Frontend/MigratorOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/LangStandard.h"
-#include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -62,6 +62,9 @@ protected:
   /// Options controlling the \#include directive.
   IntrusiveRefCntPtr<HeaderSearchOptions> HeaderSearchOpts;
 
+  /// Options controlling the preprocessor (aside from \#include handling).
+  IntrusiveRefCntPtr<PreprocessorOptions> PreprocessorOpts;
+
 public:
   CompilerInvocationBase();
 
@@ -80,6 +83,11 @@ public:
   HeaderSearchOptions &getHeaderSearchOpts() { return *HeaderSearchOpts; }
   const HeaderSearchOptions &getHeaderSearchOpts() const {
     return *HeaderSearchOpts;
+  }
+
+  PreprocessorOptions &getPreprocessorOpts() { return *PreprocessorOpts; }
+  const PreprocessorOptions &getPreprocessorOpts() const {
+    return *PreprocessorOpts;
   }
 };
   
@@ -105,9 +113,6 @@ class CompilerInvocation : public CompilerInvocationBase {
 
   /// Options controlling the frontend itself.
   FrontendOptions FrontendOpts;
-
-  /// Options controlling the preprocessor (aside from \#include handling).
-  PreprocessorOptions PreprocessorOpts;
 
   /// Options controlling preprocessed output.
   PreprocessorOutputOptions PreprocessorOutputOpts;
@@ -190,11 +195,6 @@ public:
   FrontendOptions &getFrontendOpts() { return FrontendOpts; }
   const FrontendOptions &getFrontendOpts() const {
     return FrontendOpts;
-  }
-
-  PreprocessorOptions &getPreprocessorOpts() { return PreprocessorOpts; }
-  const PreprocessorOptions &getPreprocessorOpts() const {
-    return PreprocessorOpts;
   }
 
   PreprocessorOutputOptions &getPreprocessorOutputOpts() {
