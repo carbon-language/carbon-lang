@@ -153,3 +153,13 @@ void t16() {
 // CHECK: t16
 // CHECK: call void asm sideeffect inteldialect "mov [eax], $0", "r,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
 }
+
+void t17() {
+  __asm _emit 0x4A
+  __asm _emit 0x43
+  __asm _emit 0x4B
+// CHECK: t17
+// CHECK:  call void asm sideeffect inteldialect ".byte 0x4A", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK:  call void asm sideeffect inteldialect ".byte 0x43", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK:  call void asm sideeffect inteldialect ".byte 0x4B", "~{dirflag},~{fpsr},~{flags}"() nounwind
+}
