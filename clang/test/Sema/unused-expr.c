@@ -123,9 +123,13 @@ void f(int i, ...) {
 // PR8371
 int fn5() __attribute__ ((__const));
 
-// OpenSSL has some macros like this.
-#define M(a, b) (long)foo((a), (b))
+// OpenSSL has some macros like this; we shouldn't warn on the cast.
+#define M1(a, b) (long)foo((a), (b))
+// But, we should still warn on other subexpressions of casts in macros.
+#define M2 (long)0;
 void t11(int i, int j) {
-  M(i, j);  // no warning
+  M1(i, j);  // no warning
+  M2;  // expected-warning {{expression result unused}}
 }
-#undef M
+#undef M1
+#undef M2
