@@ -10,6 +10,7 @@
 #include "llvm/Constant.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/User.h"
+#include "llvm/Operator.h"
 
 namespace llvm {
 
@@ -76,6 +77,14 @@ void User::operator delete(void *Usr) {
   // If there were hung-off uses, they will have been freed already and
   // NumOperands reset to 0, so here we just free the User itself.
   ::operator delete(Storage);
+}
+
+//===----------------------------------------------------------------------===//
+//                             Operator Class
+//===----------------------------------------------------------------------===//
+
+Operator::~Operator() {
+  llvm_unreachable("should never destroy an Operator");
 }
 
 } // End llvm namespace
