@@ -54,6 +54,7 @@ private:
   X86Operand *ParseOperand();
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
+  X86Operand *ParseIntelOffsetOfOperator(SMLoc StartLoc);
   X86Operand *ParseIntelMemOperand(unsigned SegReg, SMLoc StartLoc);
   X86Operand *ParseIntelBracExpression(unsigned SegReg, unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
@@ -182,7 +183,6 @@ struct X86Operand : public MCParsedAsmOperand {
       unsigned IndexReg;
       unsigned Scale;
       unsigned Size;
-      bool OffsetOf;
       bool NeedSizeDir;
     } Mem;
   };
@@ -324,8 +324,7 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   bool isOffsetOf() const {
-    assert(Kind == Memory && "Invalid access!");
-    return Mem.OffsetOf;
+    return OffsetOfLoc.getPointer();
   }
 
   bool needSizeDirective() const {
@@ -458,9 +457,11 @@ struct X86Operand : public MCParsedAsmOperand {
     return Res;
   }
 
-  static X86Operand *CreateReg(unsigned RegNo, SMLoc StartLoc, SMLoc EndLoc) {
+  static X86Operand *CreateReg(unsigned RegNo, SMLoc StartLoc, SMLoc EndLoc,
+                               SMLoc OffsetOfLoc = SMLoc()) {
     X86Operand *Res = new X86Operand(Register, StartLoc, EndLoc);
     Res->Reg.RegNo = RegNo;
+    Res->OffsetOfLoc = OffsetOfLoc;
     return Res;
   }
 
@@ -472,8 +473,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc,
-                               SMLoc EndLoc, SMLoc OffsetOfLoc = SMLoc(), 
-                               unsigned Size = 0, bool OffsetOf = false,
+                               SMLoc EndLoc, unsigned Size = 0,
                                bool NeedSizeDir = false){
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
@@ -482,8 +482,6 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
-    Res->Mem.OffsetOf = OffsetOf;
-    Res->OffsetOfLoc  = OffsetOfLoc;
     Res->Mem.NeedSizeDir = NeedSizeDir;
     return Res;
   }
@@ -492,8 +490,7 @@ struct X86Operand : public MCParsedAsmOperand {
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
-                               SMLoc OffsetOfLoc = SMLoc(), unsigned Size = 0,
-                               bool OffsetOf = false, bool NeedSizeDir = false){
+                               unsigned Size = 0, bool NeedSizeDir = false) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
@@ -508,8 +505,6 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;
-    Res->Mem.OffsetOf = OffsetOf;
-    Res->OffsetOfLoc  = OffsetOfLoc;
     Res->Mem.NeedSizeDir = NeedSizeDir;
     return Res;
   }
@@ -667,7 +662,7 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, 
                                                    unsigned Size) {
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
-  SMLoc Start = Parser.getTok().getLoc(), End, OffsetOfLoc;
+  SMLoc Start = Parser.getTok().getLoc(), End;
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   // Parse [ BaseReg + Scale*IndexReg + Disp ] or [ symbol ]
@@ -685,7 +680,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Start, "Expected ']' token!");
       Parser.Lex();
-      return X86Operand::CreateMem(Disp, Start, End, OffsetOfLoc, Size);
+      return X86Operand::CreateMem(Disp, Start, End, Size);
     }
   } else if (getLexer().is(AsmToken::Integer)) {
       int64_t Val = Parser.getTok().getIntVal();
@@ -697,8 +692,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         const MCExpr *Disp = MCConstantExpr::Create(Val, getContext());
         if (SegReg)
           return X86Operand::CreateMem(SegReg, Disp, 0, 0, Scale,
-                                       Start, End, OffsetOfLoc, Size);
-        return X86Operand::CreateMem(Disp, Start, End, OffsetOfLoc, Size);
+                                       Start, End, Size);
+        return X86Operand::CreateMem(Disp, Start, End, Size);
       } else if (getLexer().is(AsmToken::Star)) {
         // Handle '[' Scale*IndexReg ']'
         Parser.Lex();
@@ -748,16 +743,16 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
   // handle [-42]
   if (!BaseReg && !IndexReg)
-    return X86Operand::CreateMem(Disp, Start, End, OffsetOfLoc, Size);
+    return X86Operand::CreateMem(Disp, Start, End, Size);
 
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-                               Start, End, OffsetOfLoc, Size);
+                               Start, End, Size);
 }
 
 /// ParseIntelMemOperand - Parse intel style memory operand.
 X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
   const AsmToken &Tok = Parser.getTok();
-  SMLoc End, OffsetOfLoc;
+  SMLoc End;
 
   unsigned Size = getIntelMemOperandSize(Tok.getString());
   if (Size) {
@@ -767,27 +762,10 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
     Parser.Lex();
   }
 
-  // Parse the 'offset' operator.  This operator is used to specify the
-  // location rather then the content of a variable.
-  bool OffsetOf = false;
-  if(isParsingInlineAsm() && (Tok.getString() == "offset" ||
-                              Tok.getString() == "OFFSET")) {
-    OffsetOf = true;
-    OffsetOfLoc = Parser.getTok().getLoc();
-
-    // Size is based on the size of a pointer, not the size of the variable.
-    assert (!Size && "Unexpected size!");
-    Size = is64BitMode() ? 64 : 32;
-    Parser.Lex(); // Eat offset.
-  }
-
-  if (getLexer().is(AsmToken::LBrac)) {
-    assert (!OffsetOf && "Unexpected offset operator!");
+  if (getLexer().is(AsmToken::LBrac))
     return ParseIntelBracExpression(SegReg, Size);
-  }
 
   if (!ParseRegister(SegReg, Start, End)) {
-    assert (!OffsetOf && "Unexpected offset operator!");
     // Handel SegReg : [ ... ]
     if (getLexer().isNot(AsmToken::Colon))
       return ErrorOperand(Start, "Expected ':' token!");
@@ -813,18 +791,45 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
     }
   }
   if (!isParsingInlineAsm())
-    return X86Operand::CreateMem(Disp, Start, End, OffsetOfLoc, Size);
+    return X86Operand::CreateMem(Disp, Start, End, Size);
   else
     // When parsing inline assembly we set the base register to a non-zero value
     // as we don't know the actual value at this time.  This is necessary to
     // get the matching correct in some cases.
     return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
-                                 /*Scale*/1, Start, End, OffsetOfLoc, Size,
-                                 OffsetOf, NeedSizeDir);
+                                 /*Scale*/1, Start, End, Size, NeedSizeDir);
+}
+
+/// Parse the 'offset' operator.  This operator is used to specify the
+/// location rather then the content of a variable.
+X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
+  SMLoc OffsetOfLoc = Start;
+  Parser.Lex(); // Eat offset.
+  Start = Parser.getTok().getLoc();
+  assert (Parser.getTok().is(AsmToken::Identifier) && "Expected an identifier");
+
+  SMLoc End;  
+  const MCExpr *Val;
+  if (getParser().ParseExpression(Val, End))
+    return 0;
+
+  End = Parser.getTok().getLoc();
+
+  // The offset operator will have an 'r' constraint, thus we need to create
+  // register operand to ensure proper matching.  Just pick a GPR based on
+  // the size of a pointer.
+  unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
+  return X86Operand::CreateReg(RegNo, Start, End, OffsetOfLoc);
 }
 
 X86Operand *X86AsmParser::ParseIntelOperand() {
   SMLoc Start = Parser.getTok().getLoc(), End;
+
+  // offset operator.
+  const AsmToken &Tok = Parser.getTok();
+  if ((Tok.getString() == "offset" || Tok.getString() == "OFFSET") &&
+      isParsingInlineAsm())
+    return ParseIntelOffsetOfOperator(Start);
 
   // immediate.
   if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Real) ||

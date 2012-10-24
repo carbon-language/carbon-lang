@@ -3665,7 +3665,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         }
 
         // Register operand.
-        if (Operand->isReg()) {
+        if (Operand->isReg() && !Operand->isOffsetOf()) {
           unsigned NumDefs = Desc.getNumDefs();
           // Clobber.
           if (NumDefs && Operand->getMCOperandNum() < NumDefs) {
@@ -3683,7 +3683,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                                     Size);
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
-          if (Operand->needSizeDirective() && !Operand->isOffsetOf())
+          if (!Operand->isOffsetOf() && Operand->needSizeDirective())
             AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
                                                 Operand->getStartLoc(), 0,
                                                 Operand->getMemSize()));
