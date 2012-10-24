@@ -100,9 +100,15 @@ private:
 
   void CreatePasses(TargetMachine *TM);
 
-  /// CreateTargetMachine - Generates the TargetMachine. Returns Null
-  /// if it is unable to create the target machine.
-  TargetMachine *CreateTargetMachine();
+  /// CreateTargetMachine - Generates the TargetMachine.
+  /// Returns Null if it is unable to create the target machine.
+  /// Some of our clang tests specify triples which are not built
+  /// into clang. This is okay because these tests check the generated
+  /// IR, and they require DataLayout which depends on the triple.
+  /// In this case, we allow this method to fail and not report an error.
+  /// When MustCreateTM is used, we print an error if we are unable to load
+  /// the requested target.
+  TargetMachine *CreateTargetMachine(bool MustCreateTM);
 
   /// AddEmitPasses - Add passes necessary to emit assembly or LLVM IR.
   ///
@@ -260,18 +266,18 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
     if (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
       MPM->add(createStripSymbolsPass(true));
   }
-  
-  
+
   PMBuilder.populateModulePassManager(*MPM);
 }
 
-TargetMachine *EmitAssemblyHelper::CreateTargetMachine() {
+TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   // Create the TargetMachine for generating code.
   std::string Error;
   std::string Triple = TheModule->getTargetTriple();
   const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   if (!TheTarget) {
-    Diags.Report(diag::err_fe_unable_to_create_target) << Error;
+    if (MustCreateTM)
+      Diags.Report(diag::err_fe_unable_to_create_target) << Error;
     return 0;
   }
 
@@ -466,7 +472,10 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
   TimeRegion Region(llvm::TimePassesIsEnabled ? &CodeGenerationTime : 0);
   llvm::formatted_raw_ostream FormattedOS;
 
-  TargetMachine *TM = CreateTargetMachine();
+  bool UsesCodeGen = (Action != Backend_EmitNothing &&
+                      Action != Backend_EmitBC &&
+                      Action != Backend_EmitLL);
+  TargetMachine *TM = CreateTargetMachine(UsesCodeGen);
   CreatePasses(TM);
 
   switch (Action) {
