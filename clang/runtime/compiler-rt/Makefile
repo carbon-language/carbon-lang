@@ -112,6 +112,9 @@ test_source = $(LLVM_SRC_ROOT)/tools/clang/runtime/compiler-rt/clang_linux_test_
 ifeq ($(call TryCompile,$(ToolDir)/clang,$(test_source),-m32),0)
 RuntimeLibrary.linux.Configs += asan-i386.a
 endif
+ifneq ($(LLVM_ANDROID_TOOLCHAIN_DIR),)
+RuntimeLibrary.linux.Configs += asan-arm-android.so
+endif
 endif
 
 endif
@@ -130,6 +133,7 @@ BuildRuntimeLibraries:
 	  ProjSrcRoot=$(COMPILERRT_SRC_ROOT) \
 	  ProjObjRoot=$(PROJ_OBJ_DIR) \
 	  CC="$(ToolDir)/clang" \
+	  LLVM_ANDROID_TOOLCHAIN_DIR="$(LLVM_ANDROID_TOOLCHAIN_DIR)" \
 	  $(RuntimeDirs:%=clang_%)
 .PHONY: BuildRuntimeLibraries
 CleanRuntimeLibraries:
