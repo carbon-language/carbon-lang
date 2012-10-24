@@ -1468,7 +1468,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::Or:
     case Instruction::Xor: {
       Type *VTy = VectorType::get(I->getType(), VF);
-          return VTTI->getInstrCost(I->getOpcode(), VTy);
+      return VTTI->getInstrCost(I->getOpcode(), VTy);
     }
     case Instruction::Select: {
       SelectInst *SI = cast<SelectInst>(I);
@@ -1476,8 +1476,8 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
       bool ScalarCond = (SE->isLoopInvariant(CondSCEV, TheLoop));
       Type *CondTy = SI->getCondition()->getType();
-        if (ScalarCond)
-          CondTy = VectorType::get(CondTy, VF);
+      if (ScalarCond)
+        CondTy = VectorType::get(CondTy, VF);
 
       return VTTI->getInstrCost(I->getOpcode(), VTy, CondTy);
     }
