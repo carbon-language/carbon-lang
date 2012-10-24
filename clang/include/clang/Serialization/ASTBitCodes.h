@@ -270,7 +270,10 @@ namespace clang {
       FILE_SYSTEM_OPTIONS = 9,
 
       /// \brief Record code for the headers search options table.
-      HEADER_SEARCH_OPTIONS = 10
+      HEADER_SEARCH_OPTIONS = 10,
+
+      /// \brief Record code for the preprocessor options table.
+      PREPROCESSOR_OPTIONS = 11
     };
 
     /// \brief Record types that occur within the input-files block

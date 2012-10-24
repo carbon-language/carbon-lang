@@ -30,6 +30,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Basic/OnDiskHashTable.h"
@@ -2035,6 +2036,15 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
     }
 
+    case PREPROCESSOR_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
+      if (Listener && &F == *ModuleMgr.begin() &&
+          ParsePreprocessorOptions(Record, Complain, *Listener) &&
+          !DisableValidation)
+        return ConfigurationMismatch;
+      break;
+    }
+
     case ORIGINAL_FILE:
       F.OriginalSourceFileID = FileID::get(Record[0]);
       F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
@@ -3509,6 +3519,11 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
           return false;
         break;
 
+      case PREPROCESSOR_OPTIONS:
+        if (ParsePreprocessorOptions(Record, false, Validator))
+          return false;
+        break;
+
       default:
         // No other validation to perform.
         break;
@@ -3912,6 +3927,36 @@ bool ASTReader::ParseHeaderSearchOptions(const RecordData &Record,
   HSOpts.UseLibcxx = Record[Idx++];
 
   return Listener.ReadHeaderSearchOptions(HSOpts, Complain);
+}
+
+bool ASTReader::ParsePreprocessorOptions(const RecordData &Record,
+                                         bool Complain,
+                                         ASTReaderListener &Listener) {
+  PreprocessorOptions PPOpts;
+  unsigned Idx = 0;
+
+  // Macro definitions/undefs
+  for (unsigned N = Record[Idx++]; N; --N) {
+    std::string Macro = ReadString(Record, Idx);
+    bool IsUndef = Record[Idx++];
+    PPOpts.Macros.push_back(std::make_pair(Macro, IsUndef));
+  }
+
+  // Includes
+  for (unsigned N = Record[Idx++]; N; --N) {
+    PPOpts.Includes.push_back(ReadString(Record, Idx));
+  }
+
+  // Macro Includes
+  for (unsigned N = Record[Idx++]; N; --N) {
+    PPOpts.MacroIncludes.push_back(ReadString(Record, Idx));
+  }
+
+  PPOpts.ImplicitPCHInclude = ReadString(Record, Idx);
+  PPOpts.ImplicitPTHInclude = ReadString(Record, Idx);
+  PPOpts.ObjCXXARCStandardLibrary =
+    static_cast<ObjCXXARCStandardLibraryKind>(Record[Idx++]);
+  return Listener.ReadPreprocessorOptions(PPOpts, Complain);
 }
 
 std::pair<ModuleFile *, unsigned>

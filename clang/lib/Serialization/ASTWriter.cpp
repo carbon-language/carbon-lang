@@ -29,6 +29,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemStatCache.h"
@@ -780,7 +781,8 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DIAGNOSTIC_OPTIONS);
   RECORD(FILE_SYSTEM_OPTIONS);
   RECORD(HEADER_SEARCH_OPTIONS);
-  
+  RECORD(PREPROCESSOR_OPTIONS);
+
   BLOCK(INPUT_FILES_BLOCK);
   RECORD(INPUT_FILE);
 
@@ -1130,6 +1132,32 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Record.push_back(HSOpts.UseLibcxx);
   Stream.EmitRecord(HEADER_SEARCH_OPTIONS, Record);
 
+  // Preprocessor options.
+  Record.clear();
+  const PreprocessorOptions &PPOpts = PP.getPreprocessorOpts();
+
+  // Macro definitions.
+  Record.push_back(PPOpts.Macros.size());
+  for (unsigned I = 0, N = PPOpts.Macros.size(); I != N; ++I) {
+    AddString(PPOpts.Macros[I].first, Record);
+    Record.push_back(PPOpts.Macros[I].second);
+  }
+
+  // Includes
+  Record.push_back(PPOpts.Includes.size());
+  for (unsigned I = 0, N = PPOpts.Includes.size(); I != N; ++I)
+    AddString(PPOpts.Includes[I], Record);
+
+  // Macro includes
+  Record.push_back(PPOpts.MacroIncludes.size());
+  for (unsigned I = 0, N = PPOpts.MacroIncludes.size(); I != N; ++I)
+    AddString(PPOpts.MacroIncludes[I], Record);
+
+  AddString(PPOpts.ImplicitPCHInclude, Record);
+  AddString(PPOpts.ImplicitPTHInclude, Record);
+  Record.push_back(static_cast<unsigned>(PPOpts.ObjCXXARCStandardLibrary));
+  Stream.EmitRecord(PREPROCESSOR_OPTIONS, Record);
+
   // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
@@ -1146,11 +1174,10 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     const char *MainFileNameStr = MainFilePath.c_str();
     MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
                                                       isysroot);
-    RecordData Record;
+    Record.clear();
     Record.push_back(ORIGINAL_FILE);
     Record.push_back(SM.getMainFileID().getOpaqueValue());
     Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
-    Record.clear();
   }
 
   // Original PCH directory

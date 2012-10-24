@@ -73,6 +73,7 @@ class MacroDefinition;
 class NamedDecl;
 class OpaqueValueExpr;
 class Preprocessor;
+class PreprocessorOptions;
 class Sema;
 class SwitchCase;
 class ASTDeserializationListener;
@@ -144,6 +145,15 @@ public:
   /// \returns true to indicate the header search options are invalid, or false
   /// otherwise.
   virtual bool ReadHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
+                                       bool Complain) {
+    return false;
+  }
+
+  /// \brief Receives the preprocessor options.
+  ///
+  /// \returns true to indicate the preprocessor options are invalid, or false
+  /// otherwise.
+  virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
                                        bool Complain) {
     return false;
   }
@@ -946,6 +956,8 @@ private:
   static bool ParseFileSystemOptions(const RecordData &Record, bool Complain,
                                      ASTReaderListener &Listener);
   static bool ParseHeaderSearchOptions(const RecordData &Record, bool Complain,
+                                       ASTReaderListener &Listener);
+  static bool ParsePreprocessorOptions(const RecordData &Record, bool Complain,
                                        ASTReaderListener &Listener);
 
   struct RecordLocation {
