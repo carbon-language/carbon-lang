@@ -54,36 +54,61 @@ class EmitAssemblyHelper {
   mutable FunctionPassManager *PerFunctionPasses;
 
 private:
-  PassManager *getCodeGenPasses() const {
+  PassManager *getCodeGenPasses(TargetMachine *TM) const {
     if (!CodeGenPasses) {
       CodeGenPasses = new PassManager();
       CodeGenPasses->add(new DataLayout(TheModule));
+      // Add TargetTransformInfo.
+      if (TM) {
+        TargetTransformInfo *TTI =
+        new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
+                                TM->getVectorTargetTransformInfo());
+        CodeGenPasses->add(TTI);
+      }
     }
     return CodeGenPasses;
   }
 
-  PassManager *getPerModulePasses() const {
+  PassManager *getPerModulePasses(TargetMachine *TM) const {
     if (!PerModulePasses) {
       PerModulePasses = new PassManager();
       PerModulePasses->add(new DataLayout(TheModule));
+      if (TM) {
+        TargetTransformInfo *TTI =
+        new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
+                                TM->getVectorTargetTransformInfo());
+        PerModulePasses->add(TTI);
+      }
     }
     return PerModulePasses;
   }
 
-  FunctionPassManager *getPerFunctionPasses() const {
+  FunctionPassManager *getPerFunctionPasses(TargetMachine *TM) const {
     if (!PerFunctionPasses) {
       PerFunctionPasses = new FunctionPassManager(TheModule);
       PerFunctionPasses->add(new DataLayout(TheModule));
+      if (TM) {
+        TargetTransformInfo *TTI =
+        new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
+                                TM->getVectorTargetTransformInfo());
+        PerFunctionPasses->add(TTI);
+      }
     }
     return PerFunctionPasses;
   }
 
-  void CreatePasses();
+
+  void CreatePasses(TargetMachine *TM);
+
+  /// CreateTargetMachine - Generates the TargetMachine. Returns Null
+  /// if it is unable to create the target machine.
+  TargetMachine *CreateTargetMachine();
 
   /// AddEmitPasses - Add passes necessary to emit assembly or LLVM IR.
   ///
   /// \return True on success.
-  bool AddEmitPasses(BackendAction Action, formatted_raw_ostream &OS);
+  bool AddEmitPasses(BackendAction Action, formatted_raw_ostream &OS,
+                     TargetMachine *TM);
 
 public:
   EmitAssemblyHelper(DiagnosticsEngine &_Diags,
@@ -137,7 +162,7 @@ static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
   PM.add(createThreadSanitizerPass());
 }
 
-void EmitAssemblyHelper::CreatePasses() {
+void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
 
@@ -218,15 +243,14 @@ void EmitAssemblyHelper::CreatePasses() {
     break;
   }
 
- 
   // Set up the per-function pass manager.
-  FunctionPassManager *FPM = getPerFunctionPasses();
+  FunctionPassManager *FPM = getPerFunctionPasses(TM);
   if (CodeGenOpts.VerifyModule)
     FPM->add(createVerifierPass());
   PMBuilder.populateFunctionPassManager(*FPM);
 
   // Set up the per-module pass manager.
-  PassManager *MPM = getPerModulePasses();
+  PassManager *MPM = getPerModulePasses(TM);
 
   if (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes) {
     MPM->add(createGCOVProfilerPass(CodeGenOpts.EmitGcovNotes,
@@ -241,15 +265,14 @@ void EmitAssemblyHelper::CreatePasses() {
   PMBuilder.populateModulePassManager(*MPM);
 }
 
-bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
-                                       formatted_raw_ostream &OS) {
+TargetMachine *EmitAssemblyHelper::CreateTargetMachine() {
   // Create the TargetMachine for generating code.
   std::string Error;
   std::string Triple = TheModule->getTargetTriple();
   const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   if (!TheTarget) {
     Diags.Report(diag::err_fe_unable_to_create_target) << Error;
-    return false;
+    return 0;
   }
 
   // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
@@ -392,8 +415,15 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   if (CodeGenOpts.NoExecStack)
     TM->setMCNoExecStack(true);
 
+  return TM;
+}
+
+bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
+                                       formatted_raw_ostream &OS,
+                                       TargetMachine *TM) {
+
   // Create the code generator passes.
-  PassManager *PM = getCodeGenPasses();
+  PassManager *PM = getCodeGenPasses(TM);
 
   // Add LibraryInfo.
   llvm::Triple TargetTriple(TheModule->getTargetTriple());
@@ -436,23 +466,25 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
   TimeRegion Region(llvm::TimePassesIsEnabled ? &CodeGenerationTime : 0);
   llvm::formatted_raw_ostream FormattedOS;
 
-  CreatePasses();
+  TargetMachine *TM = CreateTargetMachine();
+  CreatePasses(TM);
+
   switch (Action) {
   case Backend_EmitNothing:
     break;
 
   case Backend_EmitBC:
-    getPerModulePasses()->add(createBitcodeWriterPass(*OS));
+    getPerModulePasses(TM)->add(createBitcodeWriterPass(*OS));
     break;
 
   case Backend_EmitLL:
     FormattedOS.setStream(*OS, formatted_raw_ostream::PRESERVE_STREAM);
-    getPerModulePasses()->add(createPrintModulePass(&FormattedOS));
+    getPerModulePasses(TM)->add(createPrintModulePass(&FormattedOS));
     break;
 
   default:
     FormattedOS.setStream(*OS, formatted_raw_ostream::PRESERVE_STREAM);
-    if (!AddEmitPasses(Action, FormattedOS))
+    if (!AddEmitPasses(Action, FormattedOS, TM))
       return;
   }
 
