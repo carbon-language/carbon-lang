@@ -806,7 +806,6 @@ unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
                                           const DataLayout *TD) {
   assert(V->getType()->isPointerTy() &&
          "getOrEnforceKnownAlignment expects a pointer!");
-  unsigned AS = cast<PointerType>(V->getType())->getAddressSpace();
   unsigned BitWidth = TD ? TD->getTypeSizeInBits(V->getType()) : 64;
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
   ComputeMaskedBits(V, KnownZero, KnownOne, TD);
