@@ -155,7 +155,7 @@ public:
         m_option_group (interpreter),
         m_arch_option (),
         m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
-        m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypePath, "Fullpath to a core file to use for this target.")
+        m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename, "Fullpath to a core file to use for this target.")
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;
@@ -584,8 +584,8 @@ public:
         m_option_group (interpreter),
         m_option_variable (false), // Don't include frame options
         m_option_format (eFormatDefault),
-        m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypePath, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
-        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypePath, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
+        m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypeFilename, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
+        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypeFilename, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
         m_varobj_options()
     {
         CommandArgumentEntry arg;
@@ -1159,7 +1159,7 @@ public:
         CommandArgumentData path_arg;
         
         // Define the first (and only) variant of this arg.
-        path_arg.arg_type = eArgTypePath;
+        path_arg.arg_type = eArgTypeDirectoryName;
         path_arg.arg_repetition = eArgRepeatPlain;
         
         // There is only one variant this argument could be; put it into the argument entry.
@@ -2556,7 +2556,7 @@ public:
                                                       "Set the load addresses for one or more sections in a target module.",
                                                       "target modules load [--file <module> --uuid <uuid>] <sect-name> <address> [<sect-name> <address> ....]"),
         m_option_group (interpreter),
-        m_file_option (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypePath, "Fullpath or basename for module to load."),
+        m_file_option (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypeFilename, "Fullpath or basename for module to load."),
         m_slide_option(LLDB_OPT_SET_1, false, "slide", 's', 0, eArgTypeOffset, "Set the load address for all sections to be the virtual address in the file plus the offset.", 0)
     {
         m_option_group.Append (&m_uuid_option_group, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);

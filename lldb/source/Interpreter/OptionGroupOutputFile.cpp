@@ -31,7 +31,7 @@ OptionGroupOutputFile::~OptionGroupOutputFile ()
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1 , false, "outfile", 'o', required_argument, NULL, 0, eArgTypePath , "Specify a path for capturing command output."},
+    { LLDB_OPT_SET_1 , false, "outfile", 'o', required_argument, NULL, 0, eArgTypeFilename , "Specify a path for capturing command output."},
     { LLDB_OPT_SET_1 , false, "append-outfile" , 'A', no_argument, NULL, 0, eArgTypeNone , "Append to the the file specified with '--outfile <path>'."},
 };
 

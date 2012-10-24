@@ -314,13 +314,13 @@ protected:
 //CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 //{
 //{ SET1 | SET2 | SET3, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
-//{ SET1              , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
-//{ SET1              , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
-//{ SET1              , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
+//{ SET1              , false, "stdin",         'i', required_argument, NULL, 0, eArgTypeDirectoryName,    "Redirect stdin for the process to <path>."},
+//{ SET1              , false, "stdout",        'o', required_argument, NULL, 0, eArgTypeDirectoryName,    "Redirect stdout for the process to <path>."},
+//{ SET1              , false, "stderr",        'e', required_argument, NULL, 0, eArgTypeDirectoryName,    "Redirect stderr for the process to <path>."},
 //{ SET1 | SET2 | SET3, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
-//{        SET2       , false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
+//{        SET2       , false, "tty",           't', optional_argument, NULL, 0, eArgTypeDirectoryName,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
 //{               SET3, false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
-//{ SET1 | SET2 | SET3, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,    "Set the current working directory to <path> when running the inferior."},
+//{ SET1 | SET2 | SET3, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypeDirectoryName,    "Set the current working directory to <path> when running the inferior."},
 //{ 0,                  false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 //};
 //
