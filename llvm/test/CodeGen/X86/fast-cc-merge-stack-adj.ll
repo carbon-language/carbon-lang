@@ -3,7 +3,7 @@
 
 target triple = "i686-pc-linux-gnu"
 
-declare x86_fastcallcc void @func(i32*, i64)
+declare x86_fastcallcc void @func(i32*, i64 inreg)
 
 define x86_fastcallcc void @caller(i32, i64) {
         %X = alloca i32         ; <i32*> [#uses=1]

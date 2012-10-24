@@ -324,7 +324,7 @@ def CC_X86_32_FastCall : CallingConv<[
   CCIfNest<CCAssignToReg<[EAX]>>,
 
   // The first 2 integer arguments are passed in ECX/EDX
-  CCIfType<[i32], CCAssignToReg<[ECX, EDX]>>,
+  CCIfInReg<CCIfType<[i32], CCAssignToReg<[ECX, EDX]>>>,
 
   // Otherwise, same as everything else.
   CCDelegateTo<CC_X86_32_Common>
