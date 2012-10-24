@@ -43,3 +43,5 @@ RANLIBFLAGS := 2> /dev/null
 
 STRIP := strip
 LIPO := lipo
+
+SHARED_LIBRARY_SUFFIX := so

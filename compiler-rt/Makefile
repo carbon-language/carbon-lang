@@ -133,10 +133,12 @@ $(call Set,Tmp.Config,$(1))
 $(call Set,Tmp.ObjPath,$(ProjObjRoot)/$(Tmp.Name)/$(Tmp.Config))
 $(call Set,Tmp.SHARED_LIBRARY,$(strip \
   $(call GetCNAVar,SHARED_LIBRARY,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
+$(call Set,Tmp.SHARED_LIBRARY_SUFFIX,$(strip \
+  $(call GetCNAVar,SHARED_LIBRARY_SUFFIX,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 
 # Compute the library suffix.
 $(if $(call streq,1,$(Tmp.SHARED_LIBRARY)),
-  $(call Set,Tmp.LibrarySuffix,dylib),
+  $(call Set,Tmp.LibrarySuffix,$(Tmp.SHARED_LIBRARY_SUFFIX)),
   $(call Set,Tmp.LibrarySuffix,a))
 
 # Compute the archs to build, depending on whether this is a universal build or
@@ -192,7 +194,7 @@ $(call Set,Tmp.SHARED_LIBRARY,$(strip \
 
 # Compute the library suffix.
 $(if $(call streq,1,$(Tmp.SHARED_LIBRARY)),
-  $(call Set,Tmp.LibrarySuffix,dylib),
+  $(call Set,Tmp.LibrarySuffix,$(Tmp.SHARED_LIBRARY_SUFFIX)),
   $(call Set,Tmp.LibrarySuffix,a))
 
 # Compute the object inputs for this library.
@@ -209,6 +211,10 @@ $(Tmp.ObjPath)/libcompiler_rt.a: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
 $(Tmp.ObjPath)/libcompiler_rt.dylib: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
 	$(Summary) "  DYLIB:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$@"
 	$(Verb) $(Tmp.CC) -arch $(Tmp.Arch) -dynamiclib -o $$@ \
+	  $(Tmp.Inputs) $(Tmp.LDFLAGS)
+$(Tmp.ObjPath)/libcompiler_rt.so: $(Tmp.Inputs) $(Tmp.ObjPath)/.dir
+	$(Summary) "  SO:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$@"
+	$(Verb) $(Tmp.CC) -shared -o $$@ \
 	  $(Tmp.Inputs) $(Tmp.LDFLAGS)
 .PRECIOUS: $(Tmp.ObjPath)/.dir
 

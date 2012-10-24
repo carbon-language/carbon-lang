@@ -66,6 +66,11 @@ Arch.asan-x86_64 := x86_64
 Arch.tsan-x86_64 := x86_64
 endif
 
+ifneq ($(LLVM_ANDROID_TOOLCHAIN_DIR),)
+Configs += asan-arm-android
+Arch.asan-arm-android := arm-android
+endif
+
 endif
 endif
 
@@ -80,6 +85,14 @@ CFLAGS.profile-x86_64 := $(CFLAGS) -m64
 CFLAGS.asan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin
 CFLAGS.asan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 CFLAGS.tsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
+
+SHARED_LIBRARY.asan-arm-android := 1
+ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
+	--sysroot=$(LLVM_ANDROID_TOOLCHAIN_DIR)/sysroot \
+	-B$(LLVM_ANDROID_TOOLCHAIN_DIR)
+CFLAGS.asan-arm-android := $(CFLAGS) -fPIC -fno-builtin \
+	$(ANDROID_COMMON_FLAGS) -mllvm -arm-enable-ehabi
+LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl
 
 # Use our stub SDK as the sysroot to support more portable building. For now we
 # just do this for the non-ASAN modules, because the stub SDK doesn't have
@@ -97,6 +110,8 @@ FUNCTIONS.asan-i386 := $(AsanFunctions) $(InterceptionFunctions) \
                                         $(SanitizerCommonFunctions)
 FUNCTIONS.asan-x86_64 := $(AsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions)
+FUNCTIONS.asan-arm-android := $(AsanFunctions) $(InterceptionFunctions) \
+                                          $(SanitizerCommonFunctions)
 FUNCTIONS.tsan-x86_64 := $(TsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions) 
 
@@ -105,3 +120,5 @@ OPTIMIZED := 1
 
 # We don't need to use visibility hidden on Linux.
 VISIBILITY_HIDDEN := 0
+
+SHARED_LIBRARY_SUFFIX := so

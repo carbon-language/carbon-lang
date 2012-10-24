@@ -435,3 +435,5 @@ KERNEL_USE.cc_kext := 1
 KERNEL_USE.cc_kext_ios5 := 1
 
 VISIBILITY_HIDDEN := 1
+
+SHARED_LIBRARY_SUFFIX := dylib
