@@ -728,7 +728,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   } while (Visited.insert(V));
 
-  Type *IntPtrTy = TD.getIntPtrType(V->getContext());
+  Type *IntPtrTy = TD.getIntPtrType(V->getContext(), AS);
   return ConstantInt::get(IntPtrTy, Offset);
 }
 

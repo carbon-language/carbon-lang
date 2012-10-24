@@ -935,7 +935,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
     Type *IntPtrTy =
-          TLI->getDataLayout()->getIntPtrType(AccessTy->getContext());
+          TLI->getDataLayout()->getIntPtrType(Addr->getType());
 
     Value *Result = 0;
 

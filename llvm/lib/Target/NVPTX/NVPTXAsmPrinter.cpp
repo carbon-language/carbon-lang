@@ -151,7 +151,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
     // Handle casts to pointers by changing them into casts to the appropriate
     // integer type.  This promotes constant folding and simplifies this code.
     Constant *Op = CE->getOperand(0);
-    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CV->getContext()),
+    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CE->getType()),
                                       false/*ZExt*/);
     return LowerConstant(Op, AP);
   }

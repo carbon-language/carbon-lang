@@ -177,8 +177,9 @@ static inline unsigned getKnownAlignment(Value *V, const DataLayout *TD = 0) {
 template<typename IRBuilderTy>
 Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
                      bool NoAssumptions = false) {
+  unsigned AS = cast<GEPOperator>(GEP)->getPointerAddressSpace();
   gep_type_iterator GTI = gep_type_begin(GEP);
-  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
+  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext(), AS);
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // If the GEP is inbounds, we know that none of the addressing operations will
@@ -186,7 +187,6 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
   bool isInBounds = cast<GEPOperator>(GEP)->isInBounds() && !NoAssumptions;
 
   // Build a mask for high order bits.
-  unsigned AS = cast<GEPOperator>(GEP)->getPointerAddressSpace();
   unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
   uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
 

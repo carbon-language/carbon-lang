@@ -774,13 +774,13 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
 
     // Convert source pointers to integers, which can be bitcast.
     if (StoredValTy->isPointerTy()) {
-      StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
+      StoredValTy = TD.getIntPtrType(StoredValTy);
       StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
     }
 
     Type *TypeToCastTo = LoadedTy;
     if (TypeToCastTo->isPointerTy())
-      TypeToCastTo = TD.getIntPtrType(StoredValTy->getContext());
+      TypeToCastTo = TD.getIntPtrType(StoredValTy);
 
     if (StoredValTy != TypeToCastTo)
       StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", InsertPt);
@@ -799,7 +799,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
 
   // Convert source pointers to integers, which can be manipulated.
   if (StoredValTy->isPointerTy()) {
-    StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
+    StoredValTy = TD.getIntPtrType(StoredValTy);
     StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
   }
 
@@ -1020,7 +1020,8 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   // Compute which bits of the stored value are being used by the load.  Convert
   // to an integer type to start with.
   if (SrcVal->getType()->isPointerTy())
-    SrcVal = Builder.CreatePtrToInt(SrcVal, TD.getIntPtrType(Ctx));
+    SrcVal = Builder.CreatePtrToInt(SrcVal,
+        TD.getIntPtrType(SrcVal->getType()));
   if (!SrcVal->getType()->isIntegerTy())
     SrcVal = Builder.CreateBitCast(SrcVal, IntegerType::get(Ctx, StoreSize*8));
 

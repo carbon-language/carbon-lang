@@ -392,7 +392,7 @@ static ConstantInt *GetConstantInt(Value *V, const DataLayout *TD) {
 
   // This is some kind of pointer constant. Turn it into a pointer-sized
   // ConstantInt if possible.
-  IntegerType *PtrTy = TD->getIntPtrType(V->getContext());
+  IntegerType *PtrTy = TD->getIntPtrType(V->getType());
 
   // Null pointer means 0, see SelectionDAGBuilder::getValue(const Value*).
   if (isa<ConstantPointerNull>(V))
@@ -532,9 +532,13 @@ Value *SimplifyCFGOpt::isValueEqualityComparison(TerminatorInst *TI) {
           CV = ICI->getOperand(0);
 
   // Unwrap any lossless ptrtoint cast.
-  if (TD && CV && CV->getType() == TD->getIntPtrType(CV->getContext()))
-    if (PtrToIntInst *PTII = dyn_cast<PtrToIntInst>(CV))
+  if (TD && CV) {
+    PtrToIntInst *PTII = NULL;
+    if ((PTII = dyn_cast<PtrToIntInst>(CV)) &&
+        CV->getType() == TD->getIntPtrType(CV->getContext(),
+          PTII->getPointerAddressSpace()))
       CV = PTII->getOperand(0);
+  }
   return CV;
 }
 
@@ -981,7 +985,7 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
       // Convert pointer to int before we switch.
       if (CV->getType()->isPointerTy()) {
         assert(TD && "Cannot switch on pointer without DataLayout");
-        CV = Builder.CreatePtrToInt(CV, TD->getIntPtrType(CV->getContext()),
+        CV = Builder.CreatePtrToInt(CV, TD->getIntPtrType(CV->getType()),
                                     "magicptr");
       }
 
@@ -2709,7 +2713,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *TD,
   if (CompVal->getType()->isPointerTy()) {
     assert(TD && "Cannot switch on pointer without DataLayout");
     CompVal = Builder.CreatePtrToInt(CompVal,
-                                     TD->getIntPtrType(CompVal->getContext()),
+                                     TD->getIntPtrType(CompVal->getType()),
                                      "magicptr");
   }
 

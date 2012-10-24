@@ -165,9 +165,10 @@ struct StpCpyOpt: public LibCallOptimization {
     uint64_t Len = GetStringLength(Src);
     if (Len == 0) return 0;
 
-    Value *LenV = ConstantInt::get(TD->getIntPtrType(*Context), Len);
+    Type *PT = FT->getParamType(0);
+    Value *LenV = ConstantInt::get(TD->getIntPtrType(PT), Len);
     Value *DstEnd = B.CreateGEP(Dst,
-                                ConstantInt::get(TD->getIntPtrType(*Context),
+                                ConstantInt::get(TD->getIntPtrType(PT),
                                                  Len - 1));
 
     // We have enough information to now generate the memcpy call to do the
@@ -220,9 +221,10 @@ struct StrNCpyOpt : public LibCallOptimization {
     // Let strncpy handle the zero padding
     if (Len > SrcLen+1) return 0;
 
+    Type *PT = FT->getParamType(0);
     // strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant]
     B.CreateMemCpy(Dst, Src,
-                   ConstantInt::get(TD->getIntPtrType(*Context), Len), 1);
+                   ConstantInt::get(TD->getIntPtrType(PT), Len), 1);
 
     return Dst;
   }
@@ -508,10 +510,11 @@ struct MemCpyOpt : public LibCallOptimization {
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
+    Type *PT = FT->getParamType(0);
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
+        FT->getParamType(2) != TD->getIntPtrType(PT))
       return 0;
 
     // memcpy(x, y, n) -> llvm.memcpy(x, y, n, 1)
@@ -530,10 +533,11 @@ struct MemMoveOpt : public LibCallOptimization {
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
+    Type *PT = FT->getParamType(0);
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
+        FT->getParamType(2) != TD->getIntPtrType(PT))
       return 0;
 
     // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
@@ -552,10 +556,11 @@ struct MemSetOpt : public LibCallOptimization {
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
+    Type *PT = FT->getParamType(0);
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
+        FT->getParamType(2) != TD->getIntPtrType(PT))
       return 0;
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
@@ -980,8 +985,9 @@ struct SPrintFOpt : public LibCallOptimization {
       if (!TD) return 0;
 
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
+      Type *AT = CI->getArgOperand(0)->getType();
       B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
-                     ConstantInt::get(TD->getIntPtrType(*Context), // Copy the
+                     ConstantInt::get(TD->getIntPtrType(AT), // Copy the
                                       FormatStr.size() + 1), 1);   // nul byte.
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
@@ -1108,8 +1114,9 @@ struct FPutsOpt : public LibCallOptimization {
     uint64_t Len = GetStringLength(CI->getArgOperand(0));
     if (!Len) return 0;
     // Known to have no uses (see above).
+    Type *PT = FT->getParamType(0);
     return EmitFWrite(CI->getArgOperand(0),
-                      ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
+                      ConstantInt::get(TD->getIntPtrType(PT), Len-1),
                       CI->getArgOperand(1), B, TD, TLI);
   }
 };
@@ -1134,8 +1141,9 @@ struct FPrintFOpt : public LibCallOptimization {
       // These optimizations require DataLayout.
       if (!TD) return 0;
 
+      Type *AT = CI->getArgOperand(1)->getType();
       Value *NewCI = EmitFWrite(CI->getArgOperand(1),
-                                ConstantInt::get(TD->getIntPtrType(*Context),
+                                ConstantInt::get(TD->getIntPtrType(AT),
                                                  FormatStr.size()),
                                 CI->getArgOperand(0), B, TD, TLI);
       return NewCI ? ConstantInt::get(CI->getType(), FormatStr.size()) : 0;

@@ -963,7 +963,7 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
   if (SV->getType()->isFloatingPointTy() || SV->getType()->isVectorTy())
     SV = Builder.CreateBitCast(SV, IntegerType::get(SV->getContext(),SrcWidth));
   else if (SV->getType()->isPointerTy())
-    SV = Builder.CreatePtrToInt(SV, TD.getIntPtrType(SV->getContext()));
+    SV = Builder.CreatePtrToInt(SV, TD.getIntPtrType(SV->getType()));
 
   // Zero extend or truncate the value if needed.
   if (SV->getType() != AllocaType) {

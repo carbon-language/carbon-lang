@@ -3804,7 +3804,8 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI.getDataLayout()->getIntPtrType(*getContext());
+  unsigned AS = SrcPtrInfo.getAddrSpace();
+  Entry.Ty = TLI.getDataLayout()->getIntPtrType(*getContext(), AS);
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
@@ -3859,7 +3860,8 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI.getDataLayout()->getIntPtrType(*getContext());
+  unsigned AS = SrcPtrInfo.getAddrSpace();
+  Entry.Ty = TLI.getDataLayout()->getIntPtrType(*getContext(), AS);
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
@@ -3908,7 +3910,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
     return Result;
 
   // Emit a library call.
-  Type *IntPtrTy = TLI.getDataLayout()->getIntPtrType(*getContext());
+  unsigned AS = DstPtrInfo.getAddrSpace();
+  Type *IntPtrTy = TLI.getDataLayout()->getIntPtrType(*getContext(), AS);
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Dst; Entry.Ty = IntPtrTy;

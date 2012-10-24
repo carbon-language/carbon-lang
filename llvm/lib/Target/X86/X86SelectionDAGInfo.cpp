@@ -54,7 +54,8 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
     if (const char *bzeroEntry =  V &&
         V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
       EVT IntPtr = TLI.getPointerTy();
-      Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());
+      unsigned AS = DstPtrInfo.getAddrSpace();
+      Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext(), AS);
       TargetLowering::ArgListTy Args;
       TargetLowering::ArgListEntry Entry;
       Entry.Node = Dst;

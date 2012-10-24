@@ -30,7 +30,7 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
     Scale  = 0;
     return ConstantInt::get(Val->getType(), 0);
   }
-  
+
   if (BinaryOperator *I = dyn_cast<BinaryOperator>(Val)) {
     // Cannot look past anything that might overflow.
     OverflowingBinaryOperator *OBI = dyn_cast<OverflowingBinaryOperator>(Val);
@@ -47,19 +47,19 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
         Offset = 0;
         return I->getOperand(0);
       }
-      
+
       if (I->getOpcode() == Instruction::Mul) {
         // This value is scaled by 'RHS'.
         Scale = RHS->getZExtValue();
         Offset = 0;
         return I->getOperand(0);
       }
-      
+
       if (I->getOpcode() == Instruction::Add) {
-        // We have X+C.  Check to see if we really have (X*C2)+C1, 
+        // We have X+C.  Check to see if we really have (X*C2)+C1,
         // where C1 is divisible by C2.
         unsigned SubScale;
-        Value *SubVal = 
+        Value *SubVal =
           DecomposeSimpleLinearExpr(I->getOperand(0), SubScale, Offset);
         Offset += RHS->getZExtValue();
         Scale = SubScale;
@@ -82,7 +82,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   if (!TD) return 0;
 
   PointerType *PTy = cast<PointerType>(CI.getType());
-  
+
   BuilderTy AllocaBuilder(*Builder);
   AllocaBuilder.SetInsertPoint(AI.getParent(), &AI);
 
@@ -110,7 +110,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   uint64_t ArrayOffset;
   Value *NumElements = // See if the array size is a decomposable linear expr.
     DecomposeSimpleLinearExpr(AI.getOperand(0), ArraySizeScale, ArrayOffset);
- 
+
   // If we can now satisfy the modulus, by using a non-1 scale, we really can
   // do the xform.
   if ((AllocElTySize*ArraySizeScale) % CastElTySize != 0 ||
@@ -125,17 +125,17 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     // Insert before the alloca, not before the cast.
     Amt = AllocaBuilder.CreateMul(Amt, NumElements);
   }
-  
+
   if (uint64_t Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
     Value *Off = ConstantInt::get(AI.getArraySize()->getType(),
                                   Offset, true);
     Amt = AllocaBuilder.CreateAdd(Amt, Off);
   }
-  
+
   AllocaInst *New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
   New->setAlignment(AI.getAlignment());
   New->takeName(&AI);
-  
+
   // If the allocation has multiple real uses, insert a cast and change all
   // things that used it to use the new cast.  This will also hack on CI, but it
   // will die soon.
@@ -148,10 +148,10 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   return ReplaceInstUsesWith(CI, New);
 }
 
-/// EvaluateInDifferentType - Given an expression that 
+/// EvaluateInDifferentType - Given an expression that
 /// CanEvaluateTruncated or CanEvaluateSExtd returns true for, actually
 /// insert the code to evaluate the expression.
-Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty, 
+Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
                                              bool isSigned) {
   if (Constant *C = dyn_cast<Constant>(V)) {
     C = ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
@@ -181,7 +181,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
     Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
     Res = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
     break;
-  }    
+  }
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
@@ -190,7 +190,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
     // new.
     if (I->getOperand(0)->getType() == Ty)
       return I->getOperand(0);
-    
+
     // Otherwise, must be the same type of cast, so just reinsert a new one.
     // This also handles the case of zext(trunc(x)) -> zext(x).
     Res = CastInst::CreateIntegerCast(I->getOperand(0), Ty,
@@ -212,11 +212,11 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
     Res = NPN;
     break;
   }
-  default: 
+  default:
     // TODO: Can handle more cases here.
     llvm_unreachable("Unreachable!");
   }
-  
+
   Res->takeName(I);
   return InsertNewInstWith(Res, *I);
 }
@@ -224,7 +224,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
 
 /// This function is a wrapper around CastInst::isEliminableCastPair. It
 /// simply extracts arguments and returns what that function returns.
-static Instruction::CastOps 
+static Instruction::CastOps
 isEliminableCastPair(
   const CastInst *CI, ///< The first cast instruction
   unsigned opcode,       ///< The opcode of the second cast instruction
@@ -238,19 +238,18 @@ isEliminableCastPair(
   // Get the opcodes of the two Cast instructions
   Instruction::CastOps firstOp = Instruction::CastOps(CI->getOpcode());
   Instruction::CastOps secondOp = Instruction::CastOps(opcode);
-
   unsigned Res = CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
                                                 DstTy,
-                                  TD ? TD->getIntPtrType(CI->getContext()) : 0);
-  
+                                  TD ? TD->getIntPtrType(DstTy) : 0);
+
   // We don't want to form an inttoptr or ptrtoint that converts to an integer
   // type that differs from the pointer size.
   if ((Res == Instruction::IntToPtr &&
-          (!TD || SrcTy != TD->getIntPtrType(CI->getContext()))) ||
+          (!TD || SrcTy != TD->getIntPtrType(DstTy))) ||
       (Res == Instruction::PtrToInt &&
-          (!TD || DstTy != TD->getIntPtrType(CI->getContext()))))
+          (!TD || DstTy != TD->getIntPtrType(SrcTy))))
     Res = 0;
-  
+
   return Instruction::CastOps(Res);
 }
 
@@ -262,18 +261,18 @@ bool InstCombiner::ShouldOptimizeCast(Instruction::CastOps opc, const Value *V,
                                       Type *Ty) {
   // Noop casts and casts of constants should be eliminated trivially.
   if (V->getType() == Ty || isa<Constant>(V)) return false;
-  
+
   // If this is another cast that can be eliminated, we prefer to have it
   // eliminated.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
     if (isEliminableCastPair(CI, opc, Ty, TD))
       return false;
-  
+
   // If this is a vector sext from a compare, then we don't want to break the
   // idiom where each element of the extended vector is either zero or all ones.
   if (opc == Instruction::SExt && isa<CmpInst>(V) && Ty->isVectorTy())
     return false;
-  
+
   return true;
 }
 
@@ -285,7 +284,7 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   // Many cases of "cast of a cast" are eliminable. If it's eliminable we just
   // eliminate it now.
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
-    if (Instruction::CastOps opc = 
+    if (Instruction::CastOps opc =
         isEliminableCastPair(CSrc, CI.getOpcode(), CI.getType(), TD)) {
       // The first cast (CSrc) is eliminable so we need to fix up or replace
       // the second cast (CI). CSrc will then have a good chance of being dead.
@@ -308,7 +307,7 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
       if (Instruction *NV = FoldOpIntoPhi(CI))
         return NV;
   }
-  
+
   return 0;
 }
 
@@ -327,15 +326,15 @@ static bool CanEvaluateTruncated(Value *V, Type *Ty) {
   // We can always evaluate constants in another type.
   if (isa<Constant>(V))
     return true;
-  
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;
-  
+
   Type *OrigTy = V->getType();
-  
+
   // If this is an extension from the dest type, we can eliminate it, even if it
   // has multiple uses.
-  if ((isa<ZExtInst>(I) || isa<SExtInst>(I)) && 
+  if ((isa<ZExtInst>(I) || isa<SExtInst>(I)) &&
       I->getOperand(0)->getType() == Ty)
     return true;
 
@@ -420,29 +419,29 @@ static bool CanEvaluateTruncated(Value *V, Type *Ty) {
     // TODO: Can handle more cases here.
     break;
   }
-  
+
   return false;
 }
 
 Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   if (Instruction *Result = commonCastTransforms(CI))
     return Result;
-  
-  // See if we can simplify any instructions used by the input whose sole 
+
+  // See if we can simplify any instructions used by the input whose sole
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(CI))
     return &CI;
-  
+
   Value *Src = CI.getOperand(0);
   Type *DestTy = CI.getType(), *SrcTy = Src->getType();
-  
+
   // Attempt to truncate the entire input expression tree to the destination
   // type.   Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
   if ((DestTy->isVectorTy() || ShouldChangeType(SrcTy, DestTy)) &&
       CanEvaluateTruncated(Src, DestTy)) {
-      
+
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.
     DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
@@ -459,7 +458,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     Value *Zero = Constant::getNullValue(Src->getType());
     return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
   }
-  
+
   // Transform trunc(lshr (zext A), Cst) to eliminate one type conversion.
   Value *A = 0; ConstantInt *Cst = 0;
   if (Src->hasOneUse() &&
@@ -469,7 +468,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     // ASize < MidSize   and MidSize > ResultSize, but don't know the relation
     // between ASize and ResultSize.
     unsigned ASize = A->getType()->getPrimitiveSizeInBits();
-    
+
     // If the shift amount is larger than the size of A, then the result is
     // known to be zero because all the input bits got shifted out.
     if (Cst->getZExtValue() >= ASize)
@@ -482,7 +481,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     Shift->takeName(Src);
     return CastInst::CreateIntegerCast(Shift, CI.getType(), false);
   }
-  
+
   // Transform "trunc (and X, cst)" -> "and (trunc X), cst" so long as the dest
   // type isn't non-native.
   if (Src->hasOneUse() && isa<IntegerType>(Src->getType()) &&
@@ -505,7 +504,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
   // cast to integer to avoid the comparison.
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
     const APInt &Op1CV = Op1C->getValue();
-      
+
     // zext (x <s  0) to i32 --> x>>u31      true if signbit set.
     // zext (x >s -1) to i32 --> (x>>u31)^1  true if signbit clear.
     if ((ICI->getPredicate() == ICmpInst::ICMP_SLT && Op1CV == 0) ||
@@ -535,14 +534,14 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
     // zext (X != 0) to i32 --> X>>1     iff X has only the 2nd bit set.
     // zext (X != 1) to i32 --> X^1      iff X has only the low bit set.
     // zext (X != 2) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
-    if ((Op1CV == 0 || Op1CV.isPowerOf2()) && 
+    if ((Op1CV == 0 || Op1CV.isPowerOf2()) &&
         // This only works for EQ and NE
         ICI->isEquality()) {
       // If Op1C some other power of two, convert:
       uint32_t BitWidth = Op1C->getType()->getBitWidth();
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
       ComputeMaskedBits(ICI->getOperand(0), KnownZero, KnownOne);
-        
+
       APInt KnownZeroMask(~KnownZero);
       if (KnownZeroMask.isPowerOf2()) { // Exactly 1 possible 1?
         if (!DoXform) return ICI;
@@ -556,7 +555,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
           Res = ConstantExpr::getZExt(Res, CI.getType());
           return ReplaceInstUsesWith(CI, Res);
         }
-          
+
         uint32_t ShiftAmt = KnownZeroMask.logBase2();
         Value *In = ICI->getOperand(0);
         if (ShiftAmt) {
@@ -565,12 +564,12 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
           In = Builder->CreateLShr(In, ConstantInt::get(In->getType(),ShiftAmt),
                                    In->getName()+".lobit");
         }
-          
+
         if ((Op1CV != 0) == isNE) { // Toggle the low bit.
           Constant *One = ConstantInt::get(In->getType(), 1);
           In = Builder->CreateXor(In, One);
         }
-          
+
         if (CI.getType() == In->getType())
           return ReplaceInstUsesWith(CI, In);
         return CastInst::CreateIntegerCast(In, CI.getType(), false/*ZExt*/);
@@ -643,19 +642,19 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
   BitsToClear = 0;
   if (isa<Constant>(V))
     return true;
-  
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;
-  
+
   // If the input is a truncate from the destination type, we can trivially
   // eliminate it.
   if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
     return true;
-  
+
   // We can't extend or shrink something that has multiple uses: doing so would
   // require duplicating the instruction in general, which isn't profitable.
   if (!I->hasOneUse()) return false;
-  
+
   unsigned Opc = I->getOpcode(), Tmp;
   switch (Opc) {
   case Instruction::ZExt:  // zext(zext(x)) -> zext(x).
@@ -675,7 +674,7 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
     // These can all be promoted if neither operand has 'bits to clear'.
     if (BitsToClear == 0 && Tmp == 0)
       return true;
-      
+
     // If the operation is an AND/OR/XOR and the bits to clear are zero in the
     // other side, BitsToClear is ok.
     if (Tmp == 0 &&
@@ -688,10 +687,10 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
                             APInt::getHighBitsSet(VSize, BitsToClear)))
         return true;
     }
-      
+
     // Otherwise, we don't know how to analyze this BitsToClear case yet.
     return false;
-      
+
   case Instruction::LShr:
     // We can promote lshr(x, cst) if we can promote x.  This requires the
     // ultimate 'and' to clear out the high zero bits we're clearing out though.
@@ -713,7 +712,7 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
         Tmp != BitsToClear)
       return false;
     return true;
-      
+
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
     // get into trouble with cyclic PHIs here because we only consider
@@ -740,44 +739,44 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // eliminated before we try to optimize this zext.
   if (CI.hasOneUse() && isa<TruncInst>(CI.use_back()))
     return 0;
-  
+
   // If one of the common conversion will work, do it.
   if (Instruction *Result = commonCastTransforms(CI))
     return Result;
 
-  // See if we can simplify any instructions used by the input whose sole 
+  // See if we can simplify any instructions used by the input whose sole
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(CI))
     return &CI;
-  
+
   Value *Src = CI.getOperand(0);
   Type *SrcTy = Src->getType(), *DestTy = CI.getType();
-  
+
   // Attempt to extend the entire input expression tree to the destination
   // type.   Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
   unsigned BitsToClear;
   if ((DestTy->isVectorTy() || ShouldChangeType(SrcTy, DestTy)) &&
-      CanEvaluateZExtd(Src, DestTy, BitsToClear)) { 
+      CanEvaluateZExtd(Src, DestTy, BitsToClear)) {
     assert(BitsToClear < SrcTy->getScalarSizeInBits() &&
            "Unreasonable BitsToClear");
-    
+
     // Okay, we can transform this!  Insert the new expression now.
     DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
           " to avoid zero extend: " << CI);
     Value *Res = EvaluateInDifferentType(Src, DestTy, false);
     assert(Res->getType() == DestTy);
-    
+
     uint32_t SrcBitsKept = SrcTy->getScalarSizeInBits()-BitsToClear;
     uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-    
+
     // If the high bits are already filled with zeros, just replace this
     // cast with the result.
     if (MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
                                                      DestBitSize-SrcBitsKept)))
       return ReplaceInstUsesWith(CI, Res);
-    
+
     // We need to emit an AND to clear the high bits.
     Constant *C = ConstantInt::get(Res->getType(),
                                APInt::getLowBitsSet(DestBitSize, SrcBitsKept));
@@ -789,7 +788,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // 'and' which will be much cheaper than the pair of casts.
   if (TruncInst *CSrc = dyn_cast<TruncInst>(Src)) {   // A->B->C cast
     // TODO: Subsume this into EvaluateInDifferentType.
-    
+
     // Get the sizes of the types involved.  We know that the intermediate type
     // will be smaller than A or C, but don't know the relation between A and C.
     Value *A = CSrc->getOperand(0);
@@ -806,7 +805,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
       Value *And = Builder->CreateAnd(A, AndConst, CSrc->getName()+".mask");
       return new ZExtInst(And, CI.getType());
     }
-    
+
     if (SrcSize == DstSize) {
       APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
       return BinaryOperator::CreateAnd(A, ConstantInt::get(A->getType(),
@@ -815,7 +814,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     if (SrcSize > DstSize) {
       Value *Trunc = Builder->CreateTrunc(A, CI.getType());
       APInt AndValue(APInt::getLowBitsSet(DstSize, MidSize));
-      return BinaryOperator::CreateAnd(Trunc, 
+      return BinaryOperator::CreateAnd(Trunc,
                                        ConstantInt::get(Trunc->getType(),
                                                         AndValue));
     }
@@ -873,7 +872,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     Value *New = Builder->CreateZExt(X, CI.getType());
     return BinaryOperator::CreateXor(New, ConstantInt::get(CI.getType(), 1));
   }
-  
+
   return 0;
 }
 
@@ -986,14 +985,14 @@ static bool CanEvaluateSExtd(Value *V, Type *Ty) {
   // If this is a constant, it can be trivially promoted.
   if (isa<Constant>(V))
     return true;
-  
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;
-  
+
   // If this is a truncate from the dest type, we can trivially eliminate it.
   if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
     return true;
-  
+
   // We can't extend or shrink something that has multiple uses: doing so would
   // require duplicating the instruction in general, which isn't profitable.
   if (!I->hasOneUse()) return false;
@@ -1012,14 +1011,14 @@ static bool CanEvaluateSExtd(Value *V, Type *Ty) {
     // These operators can all arbitrarily be extended if their inputs can.
     return CanEvaluateSExtd(I->getOperand(0), Ty) &&
            CanEvaluateSExtd(I->getOperand(1), Ty);
-      
+
   //case Instruction::Shl:   TODO
   //case Instruction::LShr:  TODO
-      
+
   case Instruction::Select:
     return CanEvaluateSExtd(I->getOperand(1), Ty) &&
            CanEvaluateSExtd(I->getOperand(2), Ty);
-      
+
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
     // get into trouble with cyclic PHIs here because we only consider
@@ -1033,7 +1032,7 @@ static bool CanEvaluateSExtd(Value *V, Type *Ty) {
     // TODO: Can handle more cases here.
     break;
   }
-  
+
   return false;
 }
 
@@ -1042,15 +1041,15 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   // eliminated before we try to optimize this zext.
   if (CI.hasOneUse() && isa<TruncInst>(CI.use_back()))
     return 0;
-  
+
   if (Instruction *I = commonCastTransforms(CI))
     return I;
-  
-  // See if we can simplify any instructions used by the input whose sole 
+
+  // See if we can simplify any instructions used by the input whose sole
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(CI))
     return &CI;
-  
+
   Value *Src = CI.getOperand(0);
   Type *SrcTy = Src->getType(), *DestTy = CI.getType();
 
@@ -1073,7 +1072,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
     // cast with the result.
     if (ComputeNumSignBits(Res) > DestBitSize - SrcBitSize)
       return ReplaceInstUsesWith(CI, Res);
-    
+
     // We need to emit a shl + ashr to do the sign extend.
     Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
     return BinaryOperator::CreateAShr(Builder->CreateShl(Res, ShAmt, "sext"),
@@ -1086,7 +1085,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
     if (TI->hasOneUse() && TI->getOperand(0)->getType() == DestTy) {
       uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
       uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-      
+
       // We need to emit a shl + ashr to do the sign extend.
       Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
       Value *Res = Builder->CreateShl(TI->getOperand(0), ShAmt, "sext");
@@ -1122,7 +1121,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
     A = Builder->CreateShl(A, ShAmtV, CI.getName());
     return BinaryOperator::CreateAShr(A, ShAmtV);
   }
-  
+
   return 0;
 }
 
@@ -1144,7 +1143,7 @@ static Value *LookThroughFPExtensions(Value *V) {
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::FPExt)
       return LookThroughFPExtensions(I->getOperand(0));
-  
+
   // If this value is a constant, return the constant in the smallest FP type
   // that can accurately represent it.  This allows us to turn
   // (float)((double)X+2.0) into x+2.0f.
@@ -1163,14 +1162,14 @@ static Value *LookThroughFPExtensions(Value *V) {
       return V;
     // Don't try to shrink to various long double types.
   }
-  
+
   return V;
 }
 
 Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
   if (Instruction *I = commonCastTransforms(CI))
     return I;
-  
+
   // If we have fptrunc(fadd (fpextend x), (fpextend y)), where x and y are
   // smaller than the destination type, we can eliminate the truncate by doing
   // the add as the smaller type.  This applies to fadd/fsub/fmul/fdiv as well
@@ -1187,7 +1186,7 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
       Type *SrcTy = OpI->getType();
       Value *LHSTrunc = LookThroughFPExtensions(OpI->getOperand(0));
       Value *RHSTrunc = LookThroughFPExtensions(OpI->getOperand(1));
-      if (LHSTrunc->getType() != SrcTy && 
+      if (LHSTrunc->getType() != SrcTy &&
           RHSTrunc->getType() != SrcTy) {
         unsigned DstSize = CI.getType()->getScalarSizeInBits();
         // If the source types were both smaller than the destination type of
@@ -1199,10 +1198,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
           return BinaryOperator::Create(OpI->getOpcode(), LHSTrunc, RHSTrunc);
         }
       }
-      break;  
+      break;
     }
   }
-  
+
   // Fold (fptrunc (sqrt (fpext x))) -> (sqrtf x)
   CallInst *Call = dyn_cast<CallInst>(CI.getOperand(0));
   if (Call && Call->getCalledFunction() && TLI->has(LibFunc::sqrtf) &&
@@ -1217,7 +1216,7 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         Arg->getOperand(0)->getType()->isFloatTy()) {
       Function *Callee = Call->getCalledFunction();
       Module *M = CI.getParent()->getParent()->getParent();
-      Constant *SqrtfFunc = M->getOrInsertFunction("sqrtf", 
+      Constant *SqrtfFunc = M->getOrInsertFunction("sqrtf",
                                                    Callee->getAttributes(),
                                                    Builder->getFloatTy(),
                                                    Builder->getFloatTy(),
@@ -1225,15 +1224,15 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
       CallInst *ret = CallInst::Create(SqrtfFunc, Arg->getOperand(0),
                                        "sqrtfcall");
       ret->setAttributes(Callee->getAttributes());
-      
-      
+
+
       // Remove the old Call.  With -fmath-errno, it won't get marked readnone.
       ReplaceInstUsesWith(*Call, UndefValue::get(Call->getType()));
       EraseInstFromFunction(*Call);
       return ret;
     }
   }
-  
+
   return 0;
 }
 
@@ -1251,7 +1250,7 @@ Instruction *InstCombiner::visitFPToUI(FPToUIInst &FI) {
   // This is safe if the intermediate type has enough bits in its mantissa to
   // accurately represent all values of X.  For example, do not do this with
   // i64->float->i64.  This is also safe for sitofp case, because any negative
-  // 'X' value would cause an undefined result for the fptoui. 
+  // 'X' value would cause an undefined result for the fptoui.
   if ((isa<UIToFPInst>(OpI) || isa<SIToFPInst>(OpI)) &&
       OpI->getOperand(0)->getType() == FI.getType() &&
       (int)FI.getType()->getScalarSizeInBits() < /*extra bit for sign */
@@ -1265,19 +1264,19 @@ Instruction *InstCombiner::visitFPToSI(FPToSIInst &FI) {
   Instruction *OpI = dyn_cast<Instruction>(FI.getOperand(0));
   if (OpI == 0)
     return commonCastTransforms(FI);
-  
+
   // fptosi(sitofp(X)) --> X
   // fptosi(uitofp(X)) --> X
   // This is safe if the intermediate type has enough bits in its mantissa to
   // accurately represent all values of X.  For example, do not do this with
   // i64->float->i64.  This is also safe for sitofp case, because any negative
-  // 'X' value would cause an undefined result for the fptoui. 
+  // 'X' value would cause an undefined result for the fptoui.
   if ((isa<UIToFPInst>(OpI) || isa<SIToFPInst>(OpI)) &&
       OpI->getOperand(0)->getType() == FI.getType() &&
       (int)FI.getType()->getScalarSizeInBits() <=
                     OpI->getType()->getFPMantissaWidth())
     return ReplaceInstUsesWith(FI, OpI->getOperand(0));
-  
+
   return commonCastTransforms(FI);
 }
 
@@ -1298,17 +1297,17 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() >
         TD->getPointerSizeInBits(AS)) {
       Value *P = Builder->CreateTrunc(CI.getOperand(0),
-                                      TD->getIntPtrType(CI.getContext()));
+                                      TD->getIntPtrType(CI.getType()));
       return new IntToPtrInst(P, CI.getType());
     }
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() <
         TD->getPointerSizeInBits(AS)) {
       Value *P = Builder->CreateZExt(CI.getOperand(0),
-                                     TD->getIntPtrType(CI.getContext()));
+                                     TD->getIntPtrType(CI.getType()));
       return new IntToPtrInst(P, CI.getType());
     }
   }
-  
+
   if (Instruction *I = commonCastTransforms(CI))
     return I;
 
@@ -1318,19 +1317,19 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
 /// @brief Implement the transforms for cast of pointer (bitcast/ptrtoint)
 Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
   Value *Src = CI.getOperand(0);
-  
+
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
     // If casting the result of a getelementptr instruction with no offset, turn
     // this into a cast of the original pointer!
     if (GEP->hasAllZeroIndices()) {
       // Changing the cast operand is usually not a good idea but it is safe
-      // here because the pointer operand is being replaced with another 
+      // here because the pointer operand is being replaced with another
       // pointer operand so the opcode doesn't need to change.
       Worklist.Add(GEP);
       CI.setOperand(0, GEP->getOperand(0));
       return &CI;
     }
-    
+
     // If the GEP has a single use, and the base pointer is a bitcast, and the
     // GEP computes a constant offset, see if we can convert these three
     // instructions into fewer.  This typically happens with unions and other
@@ -1345,7 +1344,8 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
       Type *GEPIdxTy =
       cast<PointerType>(OrigBase->getType())->getElementType();
       SmallVector<Value*, 8> NewIndices;
-      if (FindElementAtOffset(GEPIdxTy, Offset, NewIndices)) {
+      Type *IntPtrTy = TD->getIntPtrType(OrigBase->getType());
+      if (FindElementAtOffset(GEPIdxTy, Offset, IntPtrTy, NewIndices)) {
         // If we were able to index down into an element, create the GEP
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.
@@ -1353,15 +1353,15 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         Builder->CreateInBoundsGEP(OrigBase, NewIndices) :
         Builder->CreateGEP(OrigBase, NewIndices);
         NGEP->takeName(GEP);
-        
+
         if (isa<BitCastInst>(CI))
           return new BitCastInst(NGEP, CI.getType());
         assert(isa<PtrToIntInst>(CI));
         return new PtrToIntInst(NGEP, CI.getType());
-      }      
+      }
     }
   }
-  
+
   return commonCastTransforms(CI);
 }
 
@@ -1373,16 +1373,16 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   if (TD) {
     if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits(AS)) {
       Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                         TD->getIntPtrType(CI.getContext()));
+                                       TD->getIntPtrType(CI.getContext(), AS));
       return new TruncInst(P, CI.getType());
     }
     if (CI.getType()->getScalarSizeInBits() > TD->getPointerSizeInBits(AS)) {
       Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                         TD->getIntPtrType(CI.getContext()));
+                                       TD->getIntPtrType(CI.getContext(), AS));
       return new ZExtInst(P, CI.getType());
     }
   }
-  
+
   return commonPointerCastTransforms(CI);
 }
 
@@ -1397,33 +1397,33 @@ static Instruction *OptimizeVectorResize(Value *InVal, VectorType *DestTy,
   // element size, or the input is a multiple of the output element size.
   // Convert the input type to have the same element type as the output.
   VectorType *SrcTy = cast<VectorType>(InVal->getType());
-  
+
   if (SrcTy->getElementType() != DestTy->getElementType()) {
     // The input types don't need to be identical, but for now they must be the
     // same size.  There is no specific reason we couldn't handle things like
     // <4 x i16> -> <4 x i32> by bitcasting to <2 x i32> but haven't gotten
-    // there yet. 
+    // there yet.
     if (SrcTy->getElementType()->getPrimitiveSizeInBits() !=
         DestTy->getElementType()->getPrimitiveSizeInBits())
       return 0;
-    
+
     SrcTy = VectorType::get(DestTy->getElementType(), SrcTy->getNumElements());
     InVal = IC.Builder->CreateBitCast(InVal, SrcTy);
   }
-  
+
   // Now that the element types match, get the shuffle mask and RHS of the
   // shuffle to use, which depends on whether we're increasing or decreasing the
   // size of the input.
   SmallVector<uint32_t, 16> ShuffleMask;
   Value *V2;
-  
+
   if (SrcTy->getNumElements() > DestTy->getNumElements()) {
     // If we're shrinking the number of elements, just shuffle in the low
     // elements from the input and use undef as the second shuffle input.
     V2 = UndefValue::get(SrcTy);
     for (unsigned i = 0, e = DestTy->getNumElements(); i != e; ++i)
       ShuffleMask.push_back(i);
-    
+
   } else {
     // If we're increasing the number of elements, shuffle in all of the
     // elements from InVal and fill the rest of the result elements with zeros
@@ -1437,7 +1437,7 @@ static Instruction *OptimizeVectorResize(Value *InVal, VectorType *DestTy,
     for (unsigned i = 0, e = DestTy->getNumElements()-SrcElts; i != e; ++i)
       ShuffleMask.push_back(SrcElts);
   }
-  
+
   return new ShuffleVectorInst(InVal, V2,
                                ConstantDataVector::get(V2->getContext(),
                                                        ShuffleMask));
@@ -1464,7 +1464,7 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
                                      Type *VecEltTy) {
   // Undef values never contribute useful bits to the result.
   if (isa<UndefValue>(V)) return true;
-  
+
   // If we got down to a value of the right type, we win, try inserting into the
   // right element.
   if (V->getType() == VecEltTy) {
@@ -1472,15 +1472,15 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     if (Constant *C = dyn_cast<Constant>(V))
       if (C->isNullValue())
         return true;
-    
+
     // Fail if multiple elements are inserted into this slot.
     if (ElementIndex >= Elements.size() || Elements[ElementIndex] != 0)
       return false;
-    
+
     Elements[ElementIndex] = V;
     return true;
   }
-  
+
   if (Constant *C = dyn_cast<Constant>(V)) {
     // Figure out the # elements this provides, and bitcast it or slice it up
     // as required.
@@ -1491,7 +1491,7 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     if (NumElts == 1)
       return CollectInsertionElements(ConstantExpr::getBitCast(C, VecEltTy),
                                       ElementIndex, Elements, VecEltTy);
-    
+
     // Okay, this is a constant that covers multiple elements.  Slice it up into
     // pieces and insert each element-sized piece into the vector.
     if (!isa<IntegerType>(C->getType()))
@@ -1499,7 +1499,7 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
                                        C->getType()->getPrimitiveSizeInBits()));
     unsigned ElementSize = VecEltTy->getPrimitiveSizeInBits();
     Type *ElementIntTy = IntegerType::get(C->getContext(), ElementSize);
-    
+
     for (unsigned i = 0; i != NumElts; ++i) {
       Constant *Piece = ConstantExpr::getLShr(C, ConstantInt::get(C->getType(),
                                                                i*ElementSize));
@@ -1509,23 +1509,23 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     }
     return true;
   }
-  
+
   if (!V->hasOneUse()) return false;
-  
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return false;
   switch (I->getOpcode()) {
   default: return false; // Unhandled case.
   case Instruction::BitCast:
     return CollectInsertionElements(I->getOperand(0), ElementIndex,
-                                    Elements, VecEltTy);  
+                                    Elements, VecEltTy);
   case Instruction::ZExt:
     if (!isMultipleOfTypeSize(
                           I->getOperand(0)->getType()->getPrimitiveSizeInBits(),
                               VecEltTy))
       return false;
     return CollectInsertionElements(I->getOperand(0), ElementIndex,
-                                    Elements, VecEltTy);  
+                                    Elements, VecEltTy);
   case Instruction::Or:
     return CollectInsertionElements(I->getOperand(0), ElementIndex,
                                     Elements, VecEltTy) &&
@@ -1537,11 +1537,11 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     if (CI == 0) return false;
     if (!isMultipleOfTypeSize(CI->getZExtValue(), VecEltTy)) return false;
     unsigned IndexShift = getTypeSizeIndex(CI->getZExtValue(), VecEltTy);
-    
+
     return CollectInsertionElements(I->getOperand(0), ElementIndex+IndexShift,
                                     Elements, VecEltTy);
   }
-      
+
   }
 }
 
@@ -1576,11 +1576,11 @@ static Value *OptimizeIntegerToVectorInsertions(BitCastInst &CI,
   Value *Result = Constant::getNullValue(CI.getType());
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     if (Elements[i] == 0) continue;  // Unset element.
-    
+
     Result = IC.Builder->CreateInsertElement(Result, Elements[i],
                                              IC.Builder->getInt32(i));
   }
-  
+
   return Result;
 }
 
@@ -1608,11 +1608,11 @@ static Instruction *OptimizeIntToFloatBitCast(BitCastInst &CI,InstCombiner &IC){
                                 VecTy->getPrimitiveSizeInBits() / DestWidth);
         VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
       }
-    
+
       return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(0));
     }
   }
-  
+
   // bitcast(trunc(lshr(bitcast(somevector), cst))
   ConstantInt *ShAmt = 0;
   if (match(Src, m_Trunc(m_LShr(m_BitCast(m_Value(VecInput)),
@@ -1629,7 +1629,7 @@ static Instruction *OptimizeIntToFloatBitCast(BitCastInst &CI,InstCombiner &IC){
                                 VecTy->getPrimitiveSizeInBits() / DestWidth);
         VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
       }
-      
+
       unsigned Elt = ShAmt->getZExtValue() / DestWidth;
       return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(Elt));
     }
@@ -1653,12 +1653,12 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     PointerType *SrcPTy = cast<PointerType>(SrcTy);
     Type *DstElTy = DstPTy->getElementType();
     Type *SrcElTy = SrcPTy->getElementType();
-    
+
     // If the address spaces don't match, don't eliminate the bitcast, which is
     // required for changing types.
     if (SrcPTy->getAddressSpace() != DstPTy->getAddressSpace())
       return 0;
-    
+
     // If we are casting a alloca to a pointer to a type of the same
     // size, rewrite the allocation instruction to allocate the "right" type.
     // There is no need to modify malloc calls because it is their bitcast that
@@ -1666,14 +1666,14 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     if (AllocaInst *AI = dyn_cast<AllocaInst>(Src))
       if (Instruction *V = PromoteCastOfAllocation(CI, *AI))
         return V;
-    
+
     // If the source and destination are pointers, and this cast is equivalent
     // to a getelementptr X, 0, 0, 0...  turn it into the appropriate gep.
     // This can enhance SROA and other transforms that want type-safe pointers.
     Constant *ZeroUInt =
       Constant::getNullValue(Type::getInt32Ty(CI.getContext()));
     unsigned NumZeros = 0;
-    while (SrcElTy != DstElTy && 
+    while (SrcElTy != DstElTy &&
            isa<CompositeType>(SrcElTy) && !SrcElTy->isPointerTy() &&
            SrcElTy->getNumContainedTypes() /* not "{}" */) {
       SrcElTy = cast<CompositeType>(SrcElTy)->getTypeAtIndex(ZeroUInt);
@@ -1686,7 +1686,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       return GetElementPtrInst::CreateInBounds(Src, Idxs);
     }
   }
-  
+
   // Try to optimize int -> float bitcasts.
   if ((DestTy->isFloatTy() || DestTy->isDoubleTy()) && isa<IntegerType>(SrcTy))
     if (Instruction *I = OptimizeIntToFloatBitCast(CI, *this))
@@ -1699,7 +1699,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
                      Constant::getNullValue(Type::getInt32Ty(CI.getContext())));
       // FIXME: Canonicalize bitcast(insertelement) -> insertelement(bitcast)
     }
-    
+
     if (isa<IntegerType>(SrcTy)) {
       // If this is a cast from an integer to vector, check to see if the input
       // is a trunc or zext of a bitcast from vector.  If so, we can replace all
@@ -1712,7 +1712,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
                                                cast<VectorType>(DestTy), *this))
               return I;
       }
-      
+
       // If the input is an 'or' instruction, we may be doing shifts and ors to
       // assemble the elements of the vector manually.  Try to rip the code out
       // and replace it with insertelements.
@@ -1723,7 +1723,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
 
   if (VectorType *SrcVTy = dyn_cast<VectorType>(SrcTy)) {
     if (SrcVTy->getNumElements() == 1 && !DestTy->isVectorTy()) {
-      Value *Elem = 
+      Value *Elem =
         Builder->CreateExtractElement(Src,
                    Constant::getNullValue(Type::getInt32Ty(CI.getContext())));
       return CastInst::Create(Instruction::BitCast, Elem, DestTy);
@@ -1733,7 +1733,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(Src)) {
     // Okay, we have (bitcast (shuffle ..)).  Check to see if this is
     // a bitcast to a vector with the same # elts.
-    if (SVI->hasOneUse() && DestTy->isVectorTy() && 
+    if (SVI->hasOneUse() && DestTy->isVectorTy() &&
         cast<VectorType>(DestTy)->getNumElements() ==
               SVI->getType()->getNumElements() &&
         SVI->getType()->getNumElements() ==
@@ -1742,9 +1742,9 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       // If either of the operands is a cast from CI.getType(), then
       // evaluating the shuffle in the casted destination's type will allow
       // us to eliminate at least one cast.
-      if (((Tmp = dyn_cast<BitCastInst>(SVI->getOperand(0))) && 
+      if (((Tmp = dyn_cast<BitCastInst>(SVI->getOperand(0))) &&
            Tmp->getOperand(0)->getType() == DestTy) ||
-          ((Tmp = dyn_cast<BitCastInst>(SVI->getOperand(1))) && 
+          ((Tmp = dyn_cast<BitCastInst>(SVI->getOperand(1))) &&
            Tmp->getOperand(0)->getType() == DestTy)) {
         Value *LHS = Builder->CreateBitCast(SVI->getOperand(0), DestTy);
         Value *RHS = Builder->CreateBitCast(SVI->getOperand(1), DestTy);
@@ -1754,7 +1754,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       }
     }
   }
-  
+
   if (SrcTy->isPointerTy())
     return commonPointerCastTransforms(CI);
   return commonCastTransforms(CI);

@@ -2120,6 +2120,17 @@ bool CastInst::isNoopCast(Type *IntPtrTy) const {
   return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
 }
 
+/// @brief Determine if a cast is a no-op
+bool CastInst::isNoopCast(const DataLayout &DL) const {
+  unsigned AS = 0;
+  if (getOpcode() == Instruction::PtrToInt)
+    AS = getOperand(0)->getType()->getPointerAddressSpace();
+  else if (getOpcode() == Instruction::IntToPtr)
+    AS = getType()->getPointerAddressSpace();
+  Type *IntPtrTy = DL.getIntPtrType(getContext(), AS);
+  return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
+}
+
 /// This function determines if a pair of casts can be eliminated and what 
 /// opcode should be used in the elimination. This assumes that there are two 
 /// instructions like this:
