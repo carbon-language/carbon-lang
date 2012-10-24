@@ -118,6 +118,9 @@ class StdMapDataFormatterTestCase(TestBase):
         self.expect("frame variable ii[8]", matching=True,
                     substrs = ['1234567'])
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("ii").MightHaveChildren(), "ii.MightHaveChildren() says False for non empty!")
+
         # check that the expression parser does not make use of
         # synthetic children instead of running code
         # TOT clang has a fix for this, which makes the expression command here succeed
@@ -189,7 +192,10 @@ class StdMapDataFormatterTestCase(TestBase):
         self.expect("frame variable si[0]",
                     substrs = ['first = ', 'four',
                                'second = 4']);
-        
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("si").MightHaveChildren(), "si.MightHaveChildren() says False for non empty!")
+
         # check that the expression parser does not make use of
         # synthetic children instead of running code
         # TOT clang has a fix for this, which makes the expression command here succeed
@@ -247,7 +253,10 @@ class StdMapDataFormatterTestCase(TestBase):
         self.expect("frame variable is[0]",
                     substrs = ['first = ',
                                'second =']);
-        
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("is").MightHaveChildren(), "is.MightHaveChildren() says False for non empty!")
+
         # check that the expression parser does not make use of
         # synthetic children instead of running code
         # TOT clang has a fix for this, which makes the expression command here succeed
@@ -304,6 +313,9 @@ class StdMapDataFormatterTestCase(TestBase):
         # check access-by-index
         self.expect("frame variable ss[3]",
                     substrs = ['gatto', 'cat']);
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("ss").MightHaveChildren(), "ss.MightHaveChildren() says False for non empty!")
         
         # check that the expression parser does not make use of
         # synthetic children instead of running code

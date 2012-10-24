@@ -74,6 +74,9 @@ class DataFormatterRdar11988289TestCase(TestBase):
         self.expect('frame variable mutable --ptr-depth 3 -d no-run-target',
         substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"puartist"','3 key/value pairs {','@"bar"','@"2 objects"','(int)1','@"two"'])
 
+        self.assertTrue(self.frame().FindVariable("dictionary").MightHaveChildren(), "dictionary says it does not have children!")
+        self.assertTrue(self.frame().FindVariable("mutable").MightHaveChildren(), "mutable says it does not have children!")
+
 
 if __name__ == '__main__':
     import atexit

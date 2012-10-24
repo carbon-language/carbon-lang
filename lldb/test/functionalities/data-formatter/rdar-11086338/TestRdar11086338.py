@@ -72,6 +72,9 @@ class DataFormatterRdar11086338TestCase(TestBase):
         self.expect('frame variable other_arr --ptr-depth 2 -d no-run-target',
                     substrs = ['@"4 objects"','@"6 objects" {','@"hello"','@"world"','@"this"','@"is"','@"me"','@"http://www.apple.com'])
 
+        self.assertTrue(self.frame().FindVariable("arr").MightHaveChildren(), "arr says it does not have children!")
+        self.assertTrue(self.frame().FindVariable("other_arr").MightHaveChildren(), "arr says it does not have children!")
+
 
 if __name__ == '__main__':
     import atexit

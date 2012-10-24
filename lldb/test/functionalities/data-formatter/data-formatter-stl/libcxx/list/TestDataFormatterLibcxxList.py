@@ -141,6 +141,9 @@ class LibcxxListDataFormatterTestCase(TestBase):
                                '[2] = ', '3',
                                '[3] = ', '4'])            
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("numbers_list").MightHaveChildren(), "numbers_list.MightHaveChildren() says False for non empty!")
+
         self.runCmd("type format delete int")
 
         self.runCmd("c")
@@ -150,6 +153,9 @@ class LibcxxListDataFormatterTestCase(TestBase):
                                '[0]', 'goofy',
                                '[1]', 'is',
                                '[2]', 'smart'])
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("text_list").MightHaveChildren(), "text_list.MightHaveChildren() says False for non empty!")
 
         self.expect("p text_list",
                     substrs = ['list has 3 items',

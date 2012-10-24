@@ -143,6 +143,9 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.expect("expression numbers[6]", matching=False, error=True,
             substrs = ['1234567'])
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("numbers").MightHaveChildren(), "numbers.MightHaveChildren() says False for non empty!")
+
         # clear out the vector and see that we do the right thing once again
         self.runCmd("n")
 
@@ -203,6 +206,9 @@ class StdVectorDataFormatterTestCase(TestBase):
         # another way to check this)
         self.expect("expression strings[0]", matching=False, error=True,
                     substrs = ['goofy'])
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("strings").MightHaveChildren(), "strings.MightHaveChildren() says False for non empty!")
 
         self.runCmd("n")
 

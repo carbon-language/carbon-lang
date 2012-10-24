@@ -1021,6 +1021,27 @@ class TestBase(Base):
         if lldb.pre_flight:
             lldb.pre_flight(self)
 
+    # utility methods that tests can use to access the current objects
+    def target(self):
+        if not self.dbg:
+            raise Exception('Invalid debugger instance')
+        return self.dbg.GetSelectedTarget()
+
+    def process(self):
+        if not self.dbg:
+            raise Exception('Invalid debugger instance')
+        return self.dbg.GetSelectedTarget().GetProcess()
+
+    def thread(self):
+        if not self.dbg:
+            raise Exception('Invalid debugger instance')
+        return self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread()
+
+    def frame(self):
+        if not self.dbg:
+            raise Exception('Invalid debugger instance')
+        return self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+
     def tearDown(self):
         #import traceback
         #traceback.print_stack()

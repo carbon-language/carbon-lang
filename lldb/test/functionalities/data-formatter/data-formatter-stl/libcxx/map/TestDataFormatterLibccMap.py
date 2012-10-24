@@ -118,6 +118,9 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                     substrs = ['first =',
                                'second =']);
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("ii").MightHaveChildren(), "ii.MightHaveChildren() says False for non empty!")
+
         # check that the expression parser does not make use of
         # synthetic children instead of running code
         # TOT clang has a fix for this, which makes the expression command here succeed
@@ -180,6 +183,9 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'first = \"three\"',
                                'second = 3'])
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("si").MightHaveChildren(), "si.MightHaveChildren() says False for non empty!")
+
         # check access-by-index
         self.expect("frame variable si[0]",
                     substrs = ['first = ', 'one',
@@ -238,6 +244,9 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'second = \"!!!\"',
                                'first = 3'])
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("is").MightHaveChildren(), "is.MightHaveChildren() says False for non empty!")
+
         # check access-by-index
         self.expect("frame variable is[0]",
                     substrs = ['first = ',
@@ -290,6 +299,9 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                '[2] = ',
                                'second = \"cat\"',
                                'first = \"gatto\"'])
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("ss").MightHaveChildren(), "ss.MightHaveChildren() says False for non empty!")
 
         # check access-by-index
         self.expect("frame variable ss[2]",

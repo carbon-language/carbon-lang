@@ -132,6 +132,9 @@ class StdListDataFormatterTestCase(TestBase):
         self.expect("expression numbers_list[0]", matching=False, error=True,
                     substrs = ['0x12345678'])
 
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("numbers_list").MightHaveChildren(), "numbers_list.MightHaveChildren() says False for non empty!")
+
         self.runCmd("n")
             
         self.expect("frame variable numbers_list",
@@ -180,6 +183,9 @@ class StdListDataFormatterTestCase(TestBase):
         # but check that expression does not rely on us
         self.expect("expression text_list[0]", matching=False, error=True,
                     substrs = ['goofy'])
+
+        # check that MightHaveChildren() gets it right
+        self.assertTrue(self.frame().FindVariable("text_list").MightHaveChildren(), "text_list.MightHaveChildren() says False for non empty!")
 
 if __name__ == '__main__':
     import atexit
