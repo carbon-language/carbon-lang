@@ -300,10 +300,10 @@ private:
 class LoopVectorizationCostModel {
 public:
   /// C'tor.
-  LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl,
+  LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se,
                              LoopVectorizationLegality *Leg,
                              const VectorTargetTransformInfo *Vtti):
-  TheLoop(Lp), SE(Se), DL(Dl), Legal(Leg), VTTI(Vtti) { }
+  TheLoop(Lp), SE(Se), Legal(Leg), VTTI(Vtti) { }
 
   /// Returns the most profitable vectorization factor for the loop that is
   /// smaller or equal to the VF argument. This method checks every power
@@ -325,8 +325,7 @@ private:
   Loop *TheLoop;
   /// Scev analysis.
   ScalarEvolution *SE;
-  /// DataLayout analysis.
-  DataLayout *DL;
+
   /// Vectorization legality.
   LoopVectorizationLegality *Legal;
   /// Vector target information.
@@ -372,7 +371,7 @@ struct LoopVectorize : public LoopPass {
       if (TTI)
         VTTI = TTI->getVectorTargetTransformInfo();
       // Use the cost model.
-      LoopVectorizationCostModel CM(L, SE, DL, &LVL, VTTI);
+      LoopVectorizationCostModel CM(L, SE, &LVL, VTTI);
       VF = CM.findBestVectorizationFactor();
 
       if (VF == 1) {
@@ -1432,11 +1431,12 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
   // For each instruction in the old loop.
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     Instruction *Inst = it;
-    Cost += getInstructionCost(Inst, VF);
+    unsigned C = getInstructionCost(Inst, VF);
+    Cost += C;
+    DEBUG(dbgs() << "LV: Found an estimated cost of "<< C <<" for VF "<< VF <<
+          " For instruction: "<< *Inst << "\n");
   }
 
-  // Return the cost divided by VF, because we will be executing
-  // less iterations of the vector form.
   return Cost;
 }
 
@@ -1444,11 +1444,13 @@ unsigned
 LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   assert(VTTI && "Invalid vector target transformation info");
   switch (I->getOpcode()) {
+    case Instruction::GetElementPtr:
+      return 0;
     case Instruction::Br: {
       return VTTI->getInstrCost(I->getOpcode());
     }
     case Instruction::PHI:
-      // PHIs are handled the same as the binary instructions below.
+      return 0;
     case Instruction::Add:
     case Instruction::FAdd:
     case Instruction::Sub:
@@ -1493,11 +1495,17 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       // Scalarized stores.
       if (!Legal->isConsecutiveGep(SI->getPointerOperand())) {
         unsigned Cost = 0;
-        unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement, VTy);
-        // The cost of extracting from the vector value.
-        Cost += VF * ExtCost;
+        if (VF != 1) {
+          unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement,
+                                                VTy);
+          // The cost of extracting from the value vector and pointer vector.
+          Cost += VF * (ExtCost * 2);
+        }
         // The cost of the scalar stores.
-        Cost += VF * VTTI->getInstrCost(I->getOpcode(), VTy->getScalarType());
+        Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(),
+                                           VTy->getScalarType(),
+                                           SI->getAlignment(),
+                                           SI->getPointerAddressSpace());
         return Cost;
       }
 
@@ -1512,11 +1520,18 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       // Scalarized loads.
       if (!Legal->isConsecutiveGep(LI->getPointerOperand())) {
         unsigned Cost = 0;
-        unsigned InCost = VTTI->getInstrCost(Instruction::InsertElement, VTy);
-        // The cost of inserting the loaded value into the result vector.
-        Cost += VF * InCost;
+        if (VF != 1) {
+          unsigned InCost = VTTI->getInstrCost(Instruction::InsertElement, VTy);
+          unsigned ExCost = VTTI->getInstrCost(Instruction::ExtractValue, VTy);
+
+          // The cost of inserting the loaded value into the result vector, and
+          // extracting from a vector of pointers.
+          Cost += VF * (InCost + ExCost);
+        }
         // The cost of the scalar stores.
-        Cost += VF * VTTI->getInstrCost(I->getOpcode(), VTy->getScalarType());
+        Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(), VTy->getScalarType(),
+                                           LI->getAlignment(),
+                                           LI->getPointerAddressSpace());
         return Cost;
       }
 

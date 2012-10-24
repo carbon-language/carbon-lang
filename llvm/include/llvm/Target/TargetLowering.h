@@ -1958,6 +1958,7 @@ private:
 
   ValueTypeActionImpl ValueTypeActions;
 
+public:
   LegalizeKind
   getTypeConversion(LLVMContext &Context, EVT VT) const {
     // If this is a simple type, use the ComputeRegisterProp mechanism.
@@ -2074,6 +2075,7 @@ private:
     return LegalizeKind(TypeSplitVector, NVT);
   }
 
+private:
   std::vector<std::pair<EVT, const TargetRegisterClass*> > AvailableRegClasses;
 
   /// TargetDAGCombineArray - Targets can specify ISD nodes that they would

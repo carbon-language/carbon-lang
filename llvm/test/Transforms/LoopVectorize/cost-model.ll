@@ -8,10 +8,8 @@ target triple = "x86_64-apple-macosx10.8.0"
 @d = common global [2048 x i32] zeroinitializer, align 16
 @a = common global [2048 x i32] zeroinitializer, align 16
 
-; At this point the cost model is pretty bad and we are vectorizing the code below.
-; TODO: This code should not be vectorized on x86.
 ;CHECK: cost_model_1
-;CHECK: <4 x i32>
+;CHECK-NOT: <4 x i32>
 ;CHECK: ret void
 define void @cost_model_1() nounwind uwtable noinline ssp {
 entry:

@@ -16,6 +16,7 @@
 #define LLVM_TARGET_TARGET_TRANSFORMATION_IMPL_H
 
 #include "llvm/TargetTransformInfo.h"
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
 
@@ -50,6 +51,10 @@ public:
 class VectorTargetTransformImpl : public VectorTargetTransformInfo {
 private:
   const TargetLowering *TLI;
+
+  /// Estimate the cost of type-legalization and the legalized type.
+  std::pair<unsigned, EVT>
+  getTypeLegalizationCost(LLVMContext &C, EVT Ty) const;
 
 public:
   explicit VectorTargetTransformImpl(const TargetLowering *TL) : TLI(TL) {}
