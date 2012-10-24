@@ -17,6 +17,7 @@ Subsystem Documentation
    TableGenFundamentals
    DebuggingJITedCode
    GoldPlugin
+   MarkedUpDisassembly
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
@@ -98,3 +99,8 @@ Subsystem Documentation
    architecture.
 
 .. _`Howto: Implementing LLVM Integrated Assembler`: http://www.embecosm.com/download/ean10.html
+
+* :ref:`marked_up_disassembly`
+
+   This document describes the optional rich disassembly output syntax.
+
