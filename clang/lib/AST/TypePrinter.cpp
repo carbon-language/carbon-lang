@@ -799,6 +799,7 @@ void TypePrinter::printAtomicAfter(const AtomicType *T, raw_ostream &OS) { }
 /// Appends the given scope to the end of a string.
 void TypePrinter::AppendScope(DeclContext *DC, raw_ostream &OS) {
   if (DC->isTranslationUnit()) return;
+  if (DC->isFunctionOrMethod()) return;
   AppendScope(DC->getParent(), OS);
 
   if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
