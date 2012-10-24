@@ -600,7 +600,7 @@ struct TupleExpander : SetTheory::Expander {
     unsigned Length = ~0u;
     SmallVector<SetTheory::RecSet, 4> Lists(Dim);
     for (unsigned i = 0; i != Dim; ++i) {
-      ST.evaluate(SubRegs->getElement(i), Lists[i]);
+      ST.evaluate(SubRegs->getElement(i), Lists[i], Def->getLoc());
       Length = std::min(Length, unsigned(Lists[i].size()));
     }
 
@@ -728,7 +728,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   // Alternative allocation orders may be subsets.
   SetTheory::RecSet Order;
   for (unsigned i = 0, e = AltOrders->size(); i != e; ++i) {
-    RegBank.getSets().evaluate(AltOrders->getElement(i), Order);
+    RegBank.getSets().evaluate(AltOrders->getElement(i), Order, R->getLoc());
     Orders[1 + i].append(Order.begin(), Order.end());
     // Verify that all altorder members are regclass members.
     while (!Order.empty()) {

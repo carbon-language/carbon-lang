@@ -38,8 +38,9 @@ static void dumpIdxVec(const SmallVectorImpl<unsigned> &V) {
 
 // (instrs a, b, ...) Evaluate and union all arguments. Identical to AddOp.
 struct InstrsOp : public SetTheory::Operator {
-  void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts) {
-    ST.evaluate(Expr->arg_begin(), Expr->arg_end(), Elts);
+  void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
+             ArrayRef<SMLoc> Loc) {
+    ST.evaluate(Expr->arg_begin(), Expr->arg_end(), Elts, Loc);
   }
 };
 
@@ -55,13 +56,15 @@ struct InstRegexOp : public SetTheory::Operator {
   const CodeGenTarget &Target;
   InstRegexOp(const CodeGenTarget &t): Target(t) {}
 
-  void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts) {
+  void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
+             ArrayRef<SMLoc> Loc) {
     SmallVector<Regex*, 4> RegexList;
     for (DagInit::const_arg_iterator
            AI = Expr->arg_begin(), AE = Expr->arg_end(); AI != AE; ++AI) {
       StringInit *SI = dyn_cast<StringInit>(*AI);
       if (!SI)
-        throw "instregex requires pattern string: " + Expr->getAsString();
+        throw TGError(Loc, "instregex requires pattern string: "
+          + Expr->getAsString());
       std::string pat = SI->getValue();
       // Implement a python-style prefix match.
       if (pat[0] != '^') {

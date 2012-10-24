@@ -49,6 +49,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Support/SourceMgr.h"
 #include <map>
 #include <vector>
 
@@ -72,7 +73,8 @@ public:
 
     /// apply - Apply this operator to Expr's arguments and insert the result
     /// in Elts.
-    virtual void apply(SetTheory&, DagInit *Expr, RecSet &Elts) =0;
+    virtual void apply(SetTheory&, DagInit *Expr, RecSet &Elts,
+                       ArrayRef<SMLoc> Loc) =0;
   };
 
   /// Expander - A callback function that can transform a Record representing a
@@ -119,13 +121,13 @@ public:
   void addOperator(StringRef Name, Operator*);
 
   /// evaluate - Evaluate Expr and append the resulting set to Elts.
-  void evaluate(Init *Expr, RecSet &Elts);
+  void evaluate(Init *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc);
 
   /// evaluate - Evaluate a sequence of Inits and append to Elts.
   template<typename Iter>
-  void evaluate(Iter begin, Iter end, RecSet &Elts) {
+  void evaluate(Iter begin, Iter end, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     while (begin != end)
-      evaluate(*begin++, Elts);
+      evaluate(*begin++, Elts, Loc);
   }
 
   /// expand - Expand a record into a set of elements if possible.  Return a
