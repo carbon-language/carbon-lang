@@ -8434,7 +8434,7 @@ SDValue DAGCombiner::reduceBuildVecExtToExtBuildVec(SDNode *N) {
   SmallVector<SDValue, 8> Ops(NewBVElems, Filler);
 
   // Populate the new build_vector
-  for (unsigned i=0; i < N->getNumOperands(); ++i) {
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     SDValue Cast = N->getOperand(i);
     assert((Cast.getOpcode() == ISD::ANY_EXTEND ||
             Cast.getOpcode() == ISD::ZERO_EXTEND ||
