@@ -55,10 +55,12 @@ class Radar12481949DataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         self.assertTrue(self.frame().FindVariable("myvar").GetValueAsSigned() == -1, "GetValueAsSigned() says -1")
-        self.assertTrue(self.frame().FindVariable("myvar").GetValueAsSigned() != 4294967295, "GetValueAsSigned() does not say 0xFFFFFFFF")
+        self.assertTrue(self.frame().FindVariable("myvar").GetValueAsSigned() != 0xFFFFFFFF, "GetValueAsSigned() does not say 0xFFFFFFFF")
+        self.assertTrue(self.frame().FindVariable("myvar").GetValueAsSigned() != 0xFFFFFFFFFFFFFFFF, "GetValueAsSigned() does not say 0xFFFFFFFFFFFFFFFF")
 
         self.assertTrue(self.frame().FindVariable("myvar").GetValueAsUnsigned() != -1, "GetValueAsUnsigned() does not say -1")
-        self.assertTrue(self.frame().FindVariable("myvar").GetValueAsUnsigned() == 4294967295, "GetValueAsUnsigned() says 0xFFFFFFFF")
+        self.assertTrue(self.frame().FindVariable("myvar").GetValueAsUnsigned() == 0xFFFFFFFFFFFFFFFF, "GetValueAsUnsigned() says 0xFFFFFFFFFFFFFFFF")
+        self.assertTrue(self.frame().FindVariable("myvar").GetValueAsSigned() != 0xFFFFFFFF, "GetValueAsUnsigned() does not say 0xFFFFFFFF")
 
 if __name__ == '__main__':
     import atexit
