@@ -39,6 +39,7 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
@@ -563,6 +564,11 @@ int main(int argc, char **argv) {
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   LLVMContext &Context = getGlobalContext();
+
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
 
   // Initialize passes
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
