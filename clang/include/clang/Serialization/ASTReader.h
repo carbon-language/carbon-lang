@@ -139,6 +139,15 @@ public:
     return false;
   }
 
+  /// \brief Receives the header search options.
+  ///
+  /// \returns true to indicate the header search options are invalid, or false
+  /// otherwise.
+  virtual bool ReadHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
+                                       bool Complain) {
+    return false;
+  }
+
   /// \brief Receives the contents of the predefines buffer.
   ///
   /// \param Buffers Information about the predefines buffers.
@@ -936,6 +945,8 @@ private:
                                      ASTReaderListener &Listener);
   static bool ParseFileSystemOptions(const RecordData &Record, bool Complain,
                                      ASTReaderListener &Listener);
+  static bool ParseHeaderSearchOptions(const RecordData &Record, bool Complain,
+                                       ASTReaderListener &Listener);
 
   struct RecordLocation {
     RecordLocation(ModuleFile *M, uint64_t O)

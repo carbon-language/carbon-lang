@@ -267,7 +267,10 @@ namespace clang {
       DIAGNOSTIC_OPTIONS = 8,
 
       /// \brief Record code for the filesystem options table.
-      FILE_SYSTEM_OPTIONS = 9
+      FILE_SYSTEM_OPTIONS = 9,
+
+      /// \brief Record code for the headers search options table.
+      HEADER_SEARCH_OPTIONS = 10
     };
 
     /// \brief Record types that occur within the input-files block

@@ -25,6 +25,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Serialization/ASTReader.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
@@ -778,6 +779,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(INPUT_FILE_OFFSETS);
   RECORD(DIAGNOSTIC_OPTIONS);
   RECORD(FILE_SYSTEM_OPTIONS);
+  RECORD(HEADER_SEARCH_OPTIONS);
   
   BLOCK(INPUT_FILES_BLOCK);
   RECORD(INPUT_FILE);
@@ -986,7 +988,8 @@ adjustFilenameForRelocatablePCH(const char *Filename, StringRef isysroot) {
 }
 
 /// \brief Write the control block.
-void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
+void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
+                                  StringRef isysroot,
                                   const std::string &OutputFile) {
   using namespace llvm;
   Stream.EnterSubblock(CONTROL_BLOCK_ID, 5);
@@ -1091,6 +1094,41 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
     = Context.getSourceManager().getFileManager().getFileSystemOptions();
   AddString(FSOpts.WorkingDir, Record);
   Stream.EmitRecord(FILE_SYSTEM_OPTIONS, Record);
+
+  // Header search options.
+  Record.clear();
+  const HeaderSearchOptions &HSOpts
+    = PP.getHeaderSearchInfo().getHeaderSearchOpts();
+  AddString(HSOpts.Sysroot, Record);
+
+  // Include entries.
+  Record.push_back(HSOpts.UserEntries.size());
+  for (unsigned I = 0, N = HSOpts.UserEntries.size(); I != N; ++I) {
+    const HeaderSearchOptions::Entry &Entry = HSOpts.UserEntries[I];
+    AddString(Entry.Path, Record);
+    Record.push_back(static_cast<unsigned>(Entry.Group));
+    Record.push_back(Entry.IsUserSupplied);
+    Record.push_back(Entry.IsFramework);
+    Record.push_back(Entry.IgnoreSysRoot);
+    Record.push_back(Entry.IsInternal);
+    Record.push_back(Entry.ImplicitExternC);
+  }
+
+  // System header prefixes.
+  Record.push_back(HSOpts.SystemHeaderPrefixes.size());
+  for (unsigned I = 0, N = HSOpts.SystemHeaderPrefixes.size(); I != N; ++I) {
+    AddString(HSOpts.SystemHeaderPrefixes[I].Prefix, Record);
+    Record.push_back(HSOpts.SystemHeaderPrefixes[I].IsSystemHeader);
+  }
+
+  AddString(HSOpts.ResourceDir, Record);
+  AddString(HSOpts.ModuleCachePath, Record);
+  Record.push_back(HSOpts.DisableModuleHash);
+  Record.push_back(HSOpts.UseBuiltinIncludes);
+  Record.push_back(HSOpts.UseStandardSystemIncludes);
+  Record.push_back(HSOpts.UseStandardCXXIncludes);
+  Record.push_back(HSOpts.UseLibcxx);
+  Stream.EmitRecord(HEADER_SEARCH_OPTIONS, Record);
 
   // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();
@@ -3515,7 +3553,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   }
 
   // Write the control block
-  WriteControlBlock(Context, isysroot, OutputFile);
+  WriteControlBlock(PP, Context, isysroot, OutputFile);
 
   // Write the remaining AST contents.
   RecordData Record;

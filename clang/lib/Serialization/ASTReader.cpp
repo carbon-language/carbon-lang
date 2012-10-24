@@ -31,6 +31,7 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
@@ -2025,6 +2026,15 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
     }
 
+    case HEADER_SEARCH_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
+      if (Listener && &F == *ModuleMgr.begin() &&
+          ParseHeaderSearchOptions(Record, Complain, *Listener) &&
+          !DisableValidation)
+        return ConfigurationMismatch;
+      break;
+    }
+
     case ORIGINAL_FILE:
       F.OriginalSourceFileID = FileID::get(Record[0]);
       F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
@@ -3489,6 +3499,16 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
           return false;
         break;
 
+      case FILE_SYSTEM_OPTIONS:
+        if (ParseFileSystemOptions(Record, false, Validator))
+          return false;
+        break;
+
+      case HEADER_SEARCH_OPTIONS:
+        if (ParseHeaderSearchOptions(Record, false, Validator))
+          return false;
+        break;
+
       default:
         // No other validation to perform.
         break;
@@ -3851,6 +3871,47 @@ bool ASTReader::ParseFileSystemOptions(const RecordData &Record, bool Complain,
   unsigned Idx = 0;
   FSOpts.WorkingDir = ReadString(Record, Idx);
   return Listener.ReadFileSystemOptions(FSOpts, Complain);
+}
+
+bool ASTReader::ParseHeaderSearchOptions(const RecordData &Record,
+                                         bool Complain,
+                                         ASTReaderListener &Listener) {
+  HeaderSearchOptions HSOpts;
+  unsigned Idx = 0;
+  HSOpts.Sysroot = ReadString(Record, Idx);
+
+  // Include entries.
+  for (unsigned N = Record[Idx++]; N; --N) {
+    std::string Path = ReadString(Record, Idx);
+    frontend::IncludeDirGroup Group
+      = static_cast<frontend::IncludeDirGroup>(Record[Idx++]);
+    bool IsUserSupplied = Record[Idx++];
+    bool IsFramework = Record[Idx++];
+    bool IgnoreSysRoot = Record[Idx++];
+    bool IsInternal = Record[Idx++];
+    bool ImplicitExternC = Record[Idx++];
+    HSOpts.UserEntries.push_back(
+      HeaderSearchOptions::Entry(Path, Group, IsUserSupplied, IsFramework,
+                                 IgnoreSysRoot, IsInternal, ImplicitExternC));
+  }
+
+  // System header prefixes.
+  for (unsigned N = Record[Idx++]; N; --N) {
+    std::string Prefix = ReadString(Record, Idx);
+    bool IsSystemHeader = Record[Idx++];
+    HSOpts.SystemHeaderPrefixes.push_back(
+      HeaderSearchOptions::SystemHeaderPrefix(Prefix, IsSystemHeader));
+  }
+
+  HSOpts.ResourceDir = ReadString(Record, Idx);
+  HSOpts.ModuleCachePath = ReadString(Record, Idx);
+  HSOpts.DisableModuleHash = Record[Idx++];
+  HSOpts.UseBuiltinIncludes = Record[Idx++];
+  HSOpts.UseStandardSystemIncludes = Record[Idx++];
+  HSOpts.UseStandardCXXIncludes = Record[Idx++];
+  HSOpts.UseLibcxx = Record[Idx++];
+
+  return Listener.ReadHeaderSearchOptions(HSOpts, Complain);
 }
 
 std::pair<ModuleFile *, unsigned>
