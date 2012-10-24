@@ -123,6 +123,13 @@ public:
   /// \brief Creates a clang ASTConsumer that finds all matches.
   clang::ASTConsumer *newASTConsumer();
 
+  /// \brief Finds all matches on the given \c Node.
+  ///
+  /// @{
+  void findAll(const Decl &Node, ASTContext &Context);
+  void findAll(const Stmt &Node, ASTContext &Context);
+  /// @}
+
   /// \brief Registers a callback to notify the end of parsing.
   ///
   /// The provided closure is called after parsing is done, before the AST is

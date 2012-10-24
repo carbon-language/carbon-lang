@@ -24,7 +24,10 @@ using clang::tooling::FrontendActionFactory;
 class BoundNodesCallback {
 public:
   virtual ~BoundNodesCallback() {}
-  virtual bool run(const BoundNodes *BoundNodes) = 0;
+  virtual bool run(const BoundNodes *BoundNodes) { return false; }
+  virtual bool run(const BoundNodes *BoundNodes, ASTContext *Context) {
+    return run(BoundNodes);
+  }
 };
 
 // If 'FindResultVerifier' is not NULL, sets *Verified to the result of
@@ -37,7 +40,7 @@ public:
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (FindResultReviewer != NULL) {
-      *Verified = FindResultReviewer->run(&Result.Nodes);
+      *Verified = FindResultReviewer->run(&Result.Nodes, Result.Context);
     } else {
       *Verified = true;
     }

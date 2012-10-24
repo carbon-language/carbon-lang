@@ -667,6 +667,18 @@ ASTConsumer *MatchFinder::newASTConsumer() {
   return new internal::MatchASTConsumer(&MatcherCallbackPairs, ParsingDone);
 }
 
+void MatchFinder::findAll(const Decl &Node, ASTContext &Context) {
+  internal::MatchASTVisitor Visitor(&MatcherCallbackPairs);
+  Visitor.set_active_ast_context(&Context);
+  Visitor.TraverseDecl(const_cast<Decl*>(&Node));
+}
+
+void MatchFinder::findAll(const Stmt &Node, ASTContext &Context) {
+  internal::MatchASTVisitor Visitor(&MatcherCallbackPairs);
+  Visitor.set_active_ast_context(&Context);
+  Visitor.TraverseStmt(const_cast<Stmt*>(&Node));
+}
+
 void MatchFinder::registerTestCallbackAfterParsing(
     MatchFinder::ParsingDoneTestCallback *NewParsingDone) {
   ParsingDone = NewParsingDone;
