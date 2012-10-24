@@ -20,3 +20,16 @@ entry:
 	%tmp2 = sub i64 %tmp1, %b
 	ret i64 %tmp2
 }
+
+; rdar://12559385
+define i64 @f3(i32 %vi) {
+entry:
+; CHECK: f3:
+; CHECK: movw [[REG:r[0-9]+]], #36102
+; CHECK: sbcs r{{[0-9]+}}, [[REG]]
+    %v0 = zext i32 %vi to i64
+    %v1 = xor i64 %v0, -155057456198619
+    %v4 = add i64 %v1, 155057456198619
+    %v5 = add i64 %v4, %v1
+    ret i64 %v5
+}

@@ -1953,7 +1953,7 @@ def : T2Pat<(ARMadde    rGPR:$src, imm0_255_not:$imm, CPSR),
 def : T2Pat<(ARMadde    rGPR:$src, t2_so_imm_not:$imm, CPSR),
             (t2SBCri    rGPR:$src, t2_so_imm_not:$imm)>;
 def : T2Pat<(ARMadde    rGPR:$src, imm0_65535_neg:$imm, CPSR),
-            (t2SBCrr    rGPR:$src, (t2MOVi16 (imm_neg_XFORM imm:$imm)))>;
+            (t2SBCrr    rGPR:$src, (t2MOVi16 (imm_not_XFORM imm:$imm)))>;
 
 // Select Bytes -- for disassembly only
 
