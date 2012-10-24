@@ -37,6 +37,7 @@ private:
   void *operator new(size_t s) LLVM_DELETED_FUNCTION;
   Operator() LLVM_DELETED_FUNCTION;
 
+protected:
   // NOTE: Cannot use LLVM_DELETED_FUNCTION because it's not legal to delete
   // an overridden method that's not deleted in the base class. Cannot leave
   // this unimplemented because that leads to an ODR-violation.
