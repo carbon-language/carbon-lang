@@ -18,6 +18,7 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -472,9 +473,8 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   /// Create an absolute memory operand.
-  static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc,
-                               SMLoc EndLoc, unsigned Size = 0,
-                               bool NeedSizeDir = false){
+  static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc, SMLoc EndLoc,
+                               unsigned Size = 0, bool NeedSizeDir = false){
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -662,9 +662,10 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, 
                                                    unsigned Size) {
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
-  SMLoc Start = Parser.getTok().getLoc(), End;
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc Start = Tok.getLoc(), End;
 
-  const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+  const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
   // Parse [ BaseReg + Scale*IndexReg + Disp ] or [ symbol ]
 
   // Eat '['
@@ -683,9 +684,9 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
   } else if (getLexer().is(AsmToken::Integer)) {
-      int64_t Val = Parser.getTok().getIntVal();
+      int64_t Val = Tok.getIntVal();
       Parser.Lex();
-      SMLoc Loc = Parser.getTok().getLoc();
+      SMLoc Loc = Tok.getLoc();
       if (getLexer().is(AsmToken::RBrac)) {
         // Handle '[' number ']'
         Parser.Lex();
@@ -697,7 +698,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       } else if (getLexer().is(AsmToken::Star)) {
         // Handle '[' Scale*IndexReg ']'
         Parser.Lex();
-        SMLoc IdxRegLoc = Parser.getTok().getLoc();
+        SMLoc IdxRegLoc = Tok.getLoc();
         if (ParseRegister(IndexReg, IdxRegLoc, End))
           return ErrorOperand(IdxRegLoc, "Expected register");
         Scale = Val;
@@ -708,13 +709,13 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus)) {
     bool isPlus = getLexer().is(AsmToken::Plus);
     Parser.Lex();
-    SMLoc PlusLoc = Parser.getTok().getLoc();
+    SMLoc PlusLoc = Tok.getLoc();
     if (getLexer().is(AsmToken::Integer)) {
-      int64_t Val = Parser.getTok().getIntVal();
+      int64_t Val = Tok.getIntVal();
       Parser.Lex();
       if (getLexer().is(AsmToken::Star)) {
         Parser.Lex();
-        SMLoc IdxRegLoc = Parser.getTok().getLoc();
+        SMLoc IdxRegLoc = Tok.getLoc();
         if (ParseRegister(IndexReg, IdxRegLoc, End))
           return ErrorOperand(IdxRegLoc, "Expected register");
         Scale = Val;
@@ -725,7 +726,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         return ErrorOperand(PlusLoc, "unexpected token after +");
     } else if (getLexer().is(AsmToken::Identifier)) {
       // This could be an index register or a displacement expression.
-      End = Parser.getTok().getLoc();
+      End = Tok.getLoc();
       if (!IndexReg)
         ParseRegister(IndexReg, Start, End);
       else if (getParser().ParseExpression(Disp, End)) return 0;
@@ -735,11 +736,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   if (getLexer().isNot(AsmToken::RBrac))
     if (getParser().ParseExpression(Disp, End)) return 0;
 
-  End = Parser.getTok().getLoc();
+  End = Tok.getLoc();
   if (getLexer().isNot(AsmToken::RBrac))
     return ErrorOperand(End, "expected ']' token!");
   Parser.Lex();
-  End = Parser.getTok().getLoc();
+  End = Tok.getLoc();
 
   // handle [-42]
   if (!BaseReg && !IndexReg)
