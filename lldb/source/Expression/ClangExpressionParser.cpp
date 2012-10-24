@@ -463,13 +463,13 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
 	func_end = LLDB_INVALID_ADDRESS;
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    std::auto_ptr<llvm::ExecutionEngine> execution_engine;
+    std::auto_ptr<llvm::ExecutionEngine> execution_engine_ap;
     
     Error err;
     
-    llvm::Module *module = m_code_generator->ReleaseModule();
+    std::auto_ptr<llvm::Module> module_ap (m_code_generator->ReleaseModule());
 
-    if (!module)
+    if (!module_ap.get())
     {
         err.SetErrorToGenericError();
         err.SetErrorString("IR doesn't contain a module");
@@ -480,7 +480,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     
     std::string function_name;
     
-    if (!FindFunctionInModule(function_name, module, m_expr.FunctionName()))
+    if (!FindFunctionInModule(function_name, module_ap.get(), m_expr.FunctionName()))
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Couldn't find %s() in the module", m_expr.FunctionName());
@@ -509,7 +509,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                                   error_stream,
                                   function_name.c_str());
         
-        bool ir_can_run = ir_for_target.runOnModule(*module);
+        bool ir_can_run = ir_for_target.runOnModule(*module_ap);
         
         Error &interpreter_error(ir_for_target.getInterpreterError());
         
@@ -570,7 +570,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             
             IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.c_str());
         
-            if (!ir_dynamic_checks.runOnModule(*module))
+            if (!ir_dynamic_checks.runOnModule(*module_ap))
             {
                 err.SetErrorToGenericError();
                 err.SetErrorString("Couldn't add dynamic checks to the expression");
@@ -590,14 +590,15 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         std::string s;
         raw_string_ostream oss(s);
         
-        module->print(oss, NULL);
+        module_ap->print(oss, NULL);
         
         oss.flush();
         
         log->Printf ("Module being sent to JIT: \n%s", s.c_str());
     }
-    
-    EngineBuilder builder(module);
+    llvm::Triple triple(module_ap->getTargetTriple());
+    llvm::Function *function = module_ap->getFunction (function_name.c_str());
+    EngineBuilder builder(module_ap.release());
     builder.setEngineKind(EngineKind::JIT)
         .setErrorStr(&error_string)
         .setRelocationModel(llvm::Reloc::PIC_)
@@ -607,7 +608,6 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         .setCodeModel(CodeModel::Small)
         .setUseMCJIT(true);
     
-    llvm::Triple triple(module->getTargetTriple());
     StringRef mArch;
     StringRef mCPU;
     SmallVector<std::string, 0> mAttrs;
@@ -617,22 +617,21 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                                                          mCPU,
                                                          mAttrs);
     
-    execution_engine.reset(builder.create(target_machine));
+    execution_engine_ap.reset(builder.create(target_machine));
         
-    if (!execution_engine.get())
+    if (!execution_engine_ap.get())
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Couldn't JIT the function: %s", error_string.c_str());
         return err;
     }
     
-    execution_engine->DisableLazyCompilation();
+    execution_engine_ap->DisableLazyCompilation();
     
-    llvm::Function *function = module->getFunction (function_name.c_str());
     
     // We don't actually need the function pointer here, this just forces it to get resolved.
     
-    void *fun_ptr = execution_engine->getPointerToFunction(function);
+    void *fun_ptr = execution_engine_ap->getPointerToFunction(function);
         
     // Errors usually cause failures in the JIT, but if we're lucky we get here.
     
@@ -662,7 +661,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     }
         
     jit_memory_manager->CommitAllocations(*process);
-    jit_memory_manager->ReportAllocations(*execution_engine);
+    jit_memory_manager->ReportAllocations(*execution_engine_ap);
     jit_memory_manager->WriteData(*process);
     
     std::vector<JittedFunction>::iterator pos, end = m_jitted_functions.end();
@@ -696,8 +695,6 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             log->Printf("Function disassembly:\n%s", disassembly_stream.GetData());
         }
     }
-    
-    execution_engine.reset();
     
     err.Clear();
     return err;
