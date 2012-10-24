@@ -97,10 +97,6 @@ INTERCEPTOR(void, free, void *ptr) {
   }
 }
 
-namespace __asan {
-  void ReplaceCFAllocator();
-}
-
 // We can't always replace the default CFAllocator with cf_asan right in
 // ReplaceSystemMalloc(), because it is sometimes called before
 // __CFInitialize(), when the default allocator is invalid and replacing it may
@@ -118,7 +114,7 @@ INTERCEPTOR(void, __CFInitialize, void) {
   CHECK(asan_inited);
 #endif
   REAL(__CFInitialize)();
-  if (!cf_asan && asan_inited) ReplaceCFAllocator();
+  if (!cf_asan && asan_inited) MaybeReplaceCFAllocator();
 }
 
 namespace {
@@ -331,7 +327,7 @@ boolean_t mi_zone_locked(malloc_zone_t *zone) {
 extern int __CFRuntimeClassTableSize;
 
 namespace __asan {
-void ReplaceCFAllocator() {
+void MaybeReplaceCFAllocator() {
   static CFAllocatorContext asan_context = {
         /*version*/ 0, /*info*/ &asan_zone,
         /*retain*/ 0, /*release*/ 0,
@@ -342,7 +338,7 @@ void ReplaceCFAllocator() {
         /*preferredSize*/ 0 };
   if (!cf_asan)
     cf_asan = CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
-  if (CFAllocatorGetDefault() != cf_asan)
+  if (flags()->replace_cfallocator && CFAllocatorGetDefault() != cf_asan)
     CFAllocatorSetDefault(cf_asan);
 }
 
@@ -410,16 +406,14 @@ void ReplaceSystemMalloc() {
   // Make sure the default allocator was replaced.
   CHECK(malloc_default_zone() == &asan_zone);
 
-  if (flags()->replace_cfallocator) {
-    // If __CFInitialize() hasn't been called yet, cf_asan will be created and
-    // installed as the default allocator after __CFInitialize() finishes (see
-    // the interceptor for __CFInitialize() above). Otherwise install cf_asan
-    // right now. On both Snow Leopard and Lion __CFInitialize() calls
-    // __CFAllocatorInitialize(), which initializes the _base._cfisa field of
-    // the default allocators we check here.
-    if (((CFRuntimeBase*)kCFAllocatorSystemDefault)->_cfisa) {
-      ReplaceCFAllocator();
-    }
+  // If __CFInitialize() hasn't been called yet, cf_asan will be created and
+  // installed as the default allocator after __CFInitialize() finishes (see
+  // the interceptor for __CFInitialize() above). Otherwise install cf_asan
+  // right now. On both Snow Leopard and Lion __CFInitialize() calls
+  // __CFAllocatorInitialize(), which initializes the _base._cfisa field of
+  // the default allocators we check here.
+  if (((CFRuntimeBase*)kCFAllocatorSystemDefault)->_cfisa) {
+    MaybeReplaceCFAllocator();
   }
 }
 }  // namespace __asan

@@ -50,7 +50,7 @@ extern "C" void __CFInitialize();
 namespace __asan {
 
 int GetMacosVersion();
-void ReplaceCFAllocator();
+void MaybeReplaceCFAllocator();
 
 }  // namespace __asan
 
