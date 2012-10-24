@@ -45,7 +45,8 @@ The tool can detect the following types of bugs:
 Typical slowdown introduced by AddressSanitizer is <b>2x</b>.
 
 <h2 id="howtobuild">How to build</h2>
-Follow the <a href="../get_started.html">clang build instructions</a>. <BR>
+Follow the <a href="../get_started.html">clang build instructions</a>.
+CMake build is supported.<BR>
 
 <h2 id="usage">Usage</h2>
 Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
@@ -58,7 +59,7 @@ To get a reasonable performance add <tt>-O1</tt> or higher. <BR>
 To get nicer stack traces in error messages add
 <tt>-fno-omit-frame-pointer</tt>. <BR>
 To get perfect stack traces you may need to disable inlining (just use <tt>-O1</tt>) and tail call
-elimination (</tt>-fno-optimize-sibling-calls</tt>).
+elimination (<tt>-fno-optimize-sibling-calls</tt>).
 
 <pre>
 % cat example_UseAfterFree.cc
@@ -118,8 +119,8 @@ can be used for this purpose.
 </pre>
 
 <h3 id="no_address_safety_analysis">__attribute__((no_address_safety_analysis))</h3>
-Some code should not be instrumentated by AddressSanitizer.
-One may use the function attribute 
+Some code should not be instrumented by AddressSanitizer.
+One may use the function attribute
 <a href="LanguageExtensions.html#address_sanitizer">
   <tt>no_address_safety_analysis</tt></a>
 to disable instrumentation of a particular function.
@@ -139,8 +140,8 @@ Support for Linux ARM (and Android ARM) is in progress
 <h2 id="limitations">Limitations</h2>
 <ul>
 <li> AddressSanitizer uses more real memory than a native run.
-How much -- depends on the allocations sizes. The smaller the
-allocations you make the bigger the overhead.
+Exact overhead depends on the allocations sizes. The smaller the
+allocations you make the bigger the overhead is.
 <li> AddressSanitizer uses more stack memory. We have seen up to 3x increase.
 <li> On 64-bit platforms AddressSanitizer maps (but not reserves)
 16+ Terabytes of virtual address space.
@@ -151,8 +152,8 @@ This means that tools like <tt>ulimit</tt> may not work as usually expected.
 
 <h2 id="status">Current Status</h2>
 AddressSanitizer is fully functional on supported platforms starting from LLVM 3.1.
-The test suite is integrated into CMake build (can be run with "make
-check-asan" command).
+The test suite is integrated into CMake build and can be run with
+<tt>make check-asan</tt> command.
 
 <h2 id="moreinfo">More Information</h2>
 <a href="http://code.google.com/p/address-sanitizer/">http://code.google.com/p/address-sanitizer</a>.
