@@ -43,7 +43,6 @@ void EmptyPragmaHandler::HandlePragma(Preprocessor &PP,
 // PragmaNamespace Implementation.
 //===----------------------------------------------------------------------===//
 
-
 PragmaNamespace::~PragmaNamespace() {
   for (llvm::StringMap<PragmaHandler*>::iterator
          I = Handlers.begin(), E = Handlers.end(); I != E; ++I)
