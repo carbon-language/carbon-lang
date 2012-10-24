@@ -12,6 +12,12 @@
 
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+//
+// Calls used by scalar transformations.
+//
+//===----------------------------------------------------------------------===//
+
 bool ScalarTargetTransformImpl::isLegalAddImmediate(int64_t imm) const {
   return TLI->isLegalAddImmediate(imm);
 }
@@ -40,4 +46,28 @@ unsigned ScalarTargetTransformImpl::getJumpBufAlignment() const {
 
 unsigned ScalarTargetTransformImpl::getJumpBufSize() const {
   return TLI->getJumpBufSize();
+}
+
+//===----------------------------------------------------------------------===//
+//
+// Calls used by the vectorizers.
+//
+//===----------------------------------------------------------------------===//
+
+unsigned
+VectorTargetTransformImpl::getInstrCost(unsigned Opcode, Type *Ty1,
+                                        Type *Ty2) const {
+  return 1;
+}
+
+unsigned
+VectorTargetTransformImpl::getBroadcastCost(Type *Tp) const {
+  return 1;
+}
+
+unsigned
+VectorTargetTransformImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
+                                           unsigned Alignment,
+                                           unsigned AddressSpace) const {
+  return 1;
 }

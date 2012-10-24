@@ -49,7 +49,7 @@ X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
     TSInfo(*this),
     TLInfo(*this),
     JITInfo(*this),
-    STTI(&TLInfo) {
+    STTI(&TLInfo), VTTI(&TLInfo) {
 }
 
 void X86_64TargetMachine::anchor() { }
@@ -66,7 +66,7 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
     TSInfo(*this),
     TLInfo(*this),
     JITInfo(*this),
-    STTI(&TLInfo) {
+    STTI(&TLInfo), VTTI(&TLInfo){
 }
 
 /// X86TargetMachine ctor - Create an X86 target.

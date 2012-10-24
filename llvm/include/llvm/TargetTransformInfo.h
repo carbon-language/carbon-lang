@@ -54,10 +54,10 @@ public:
   TargetTransformInfo(const TargetTransformInfo &T) :
     ImmutablePass(ID), STTI(T.STTI), VTTI(T.VTTI) { }
 
-  const ScalarTargetTransformInfo* getScalarTargetTransformInfo() {
+  const ScalarTargetTransformInfo* getScalarTargetTransformInfo() const {
     return STTI;
   }
-  const VectorTargetTransformInfo* getVectorTargetTransformInfo() {
+  const VectorTargetTransformInfo* getVectorTargetTransformInfo() const {
     return VTTI;
   }
 
@@ -119,8 +119,43 @@ public:
   }
 };
 
+/// VectorTargetTransformInfo - This interface is used by the vectorizers
+/// to estimate the profitability of vectorization for different instructions.
 class VectorTargetTransformInfo {
-  // TODO: define an interface for VectorTargetTransformInfo.
+public:
+  virtual ~VectorTargetTransformInfo() {}
+
+  /// Returns the expected cost of the instruction opcode. The opcode is one of
+  /// the enums like Instruction::Add. The type arguments are the type of the
+  /// operation.
+  /// Most instructions only use the first type and in that case the second
+  /// operand is ignored.
+  ///
+  /// Exceptions:
+  /// * Br instructions do not use any of the types.
+  /// * Select instructions pass the return type as Ty1 and the selector as Ty2.
+  /// * Cast instructions pass the destination as Ty1 and the source as Ty2.
+  /// * Insert/Extract element pass only the vector type as Ty1.
+  /// * ShuffleVector, Load, Store do not use this call.
+  virtual unsigned getInstrCost(unsigned Opcode,
+                                Type *Ty1 = 0,
+                                Type *Ty2 = 0) const {
+    return 1;
+  }
+
+  /// Returns the cost of a vector broadcast of a scalar at place zero to a
+  /// vector of type 'Tp'.
+  virtual unsigned getBroadcastCost(Type *Tp) const {
+    return 1;
+  }
+
+  /// Returns the cost of Load and Store instructions. 
+  virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
+                                   unsigned Alignment,
+                                   unsigned AddressSpace) const {
+    return 1;
+  }
+
 };
 
 } // End llvm namespace

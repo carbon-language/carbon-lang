@@ -73,7 +73,7 @@ NVPTXTargetMachine::NVPTXTargetMachine(const Target &T,
   Subtarget(TT, CPU, FS, is64bit),
   DL(Subtarget.getDataLayout()),
   InstrInfo(*this), TLInfo(*this), TSInfo(*this), FrameLowering(*this,is64bit),
-  STTI(&TLInfo)
+  STTI(&TLInfo), VTTI(&TLInfo)
 /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {
 }
 

@@ -47,7 +47,23 @@ public:
   virtual unsigned getJumpBufSize() const;
 };
 
-class VectorTargetTransformImpl : public VectorTargetTransformInfo { };
+class VectorTargetTransformImpl : public VectorTargetTransformInfo {
+private:
+  const TargetLowering *TLI;
+
+public:
+  explicit VectorTargetTransformImpl(const TargetLowering *TL) : TLI(TL) {}
+  
+  virtual ~VectorTargetTransformImpl() {}
+
+  virtual unsigned getInstrCost(unsigned Opcode, Type *Ty1, Type *Ty2) const;
+
+  virtual unsigned getBroadcastCost(Type *Tp) const;
+
+  virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
+                                   unsigned Alignment,
+                                   unsigned AddressSpace) const;
+};
 
 } // end llvm namespace
 
