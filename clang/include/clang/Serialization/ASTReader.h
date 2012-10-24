@@ -130,6 +130,15 @@ public:
     return false;
   }
 
+  /// \brief Receives the file system options.
+  ///
+  /// \returns true to indicate the file system options are invalid, or false
+  /// otherwise.
+  virtual bool ReadFileSystemOptions(const FileSystemOptions &FSOpts,
+                                     bool Complain) {
+    return false;
+  }
+
   /// \brief Receives the contents of the predefines buffer.
   ///
   /// \param Buffers Information about the predefines buffers.
@@ -924,6 +933,8 @@ private:
   static bool ParseTargetOptions(const RecordData &Record, bool Complain,
                                  ASTReaderListener &Listener);
   static bool ParseDiagnosticOptions(const RecordData &Record, bool Complain,
+                                     ASTReaderListener &Listener);
+  static bool ParseFileSystemOptions(const RecordData &Record, bool Complain,
                                      ASTReaderListener &Listener);
 
   struct RecordLocation {

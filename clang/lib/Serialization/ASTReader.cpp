@@ -2015,6 +2015,16 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         return ConfigurationMismatch;
       break;
     }
+
+    case FILE_SYSTEM_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
+      if (Listener && &F == *ModuleMgr.begin() &&
+          ParseFileSystemOptions(Record, Complain, *Listener) &&
+          !DisableValidation)
+        return ConfigurationMismatch;
+      break;
+    }
+
     case ORIGINAL_FILE:
       F.OriginalSourceFileID = FileID::get(Record[0]);
       F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
@@ -3833,6 +3843,14 @@ bool ASTReader::ParseDiagnosticOptions(const RecordData &Record, bool Complain,
   }
 
   return Listener.ReadDiagnosticOptions(DiagOpts, Complain);
+}
+
+bool ASTReader::ParseFileSystemOptions(const RecordData &Record, bool Complain,
+                                       ASTReaderListener &Listener) {
+  FileSystemOptions FSOpts;
+  unsigned Idx = 0;
+  FSOpts.WorkingDir = ReadString(Record, Idx);
+  return Listener.ReadFileSystemOptions(FSOpts, Complain);
 }
 
 std::pair<ModuleFile *, unsigned>

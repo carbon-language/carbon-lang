@@ -777,7 +777,8 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(ORIGINAL_PCH_DIR);
   RECORD(INPUT_FILE_OFFSETS);
   RECORD(DIAGNOSTIC_OPTIONS);
-
+  RECORD(FILE_SYSTEM_OPTIONS);
+  
   BLOCK(INPUT_FILES_BLOCK);
   RECORD(INPUT_FILE);
 
@@ -1083,6 +1084,13 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
   // Note: we don't serialize the log or serialization file names, because they
   // are generally transient files and will almost always be overridden.
   Stream.EmitRecord(DIAGNOSTIC_OPTIONS, Record);
+
+  // File system options.
+  Record.clear();
+  const FileSystemOptions &FSOpts
+    = Context.getSourceManager().getFileManager().getFileSystemOptions();
+  AddString(FSOpts.WorkingDir, Record);
+  Stream.EmitRecord(FILE_SYSTEM_OPTIONS, Record);
 
   // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();
