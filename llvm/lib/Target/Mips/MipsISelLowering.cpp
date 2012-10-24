@@ -3539,10 +3539,11 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
     if (!Reg)
       llvm_unreachable("sret virtual register not created in the entry block");
     SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
+    unsigned V0 = IsN64 ? Mips::V0_64 : Mips::V0;
 
-    Chain = DAG.getCopyToReg(Chain, dl, IsN64 ? Mips::V0_64 : Mips::V0, Val,
-                             Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, V0, Val, Flag);
     Flag = Chain.getValue(1);
+    MF.getRegInfo().addLiveOut(V0);
   }
 
   // Return on Mips is always a "jr $ra"
