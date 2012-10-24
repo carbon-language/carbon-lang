@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fexceptions -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck -check-prefix NOEXC %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -fexceptions -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -o - %s | FileCheck -check-prefix NOEXC %s
 
 int opaque();
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fexceptions -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -fexceptions -emit-llvm %s -o - | FileCheck %s
 int c(void) __attribute__((const));
 int p(void) __attribute__((pure));
 int t(void);

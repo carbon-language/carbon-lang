@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -S -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -std=c++11 -S -emit-llvm -o - %s | FileCheck %s
 
 struct A { int a[1]; };
 typedef A x[];

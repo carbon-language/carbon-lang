@@ -1,5 +1,5 @@
 // RUN: echo "GNU89 tests:"
-// RUN: %clang %s -O1 -emit-llvm -S -o %t -std=gnu89
+// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o %t -std=gnu89
 // RUN: grep "define available_externally i32 @ei()" %t
 // RUN: grep "define i32 @foo()" %t
 // RUN: grep "define i32 @bar()" %t
@@ -21,7 +21,7 @@
 // RUN: grep "define void @testC" %t
 
 // RUN: echo "C99 tests:"
-// RUN: %clang %s -O1 -emit-llvm -S -o %t -std=gnu99
+// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o %t -std=gnu99
 // RUN: grep "define i32 @ei()" %t
 // RUN: grep "define available_externally i32 @foo()" %t
 // RUN: grep "define i32 @bar()" %t
@@ -43,7 +43,7 @@
 // RUN: grep "define void @testC" %t
 
 // RUN: echo "C++ tests:"
-// RUN: %clang -x c++ %s -O1 -emit-llvm -S -o %t -std=c++98
+// RUN: %clang -x c++ %s -target i386-unknown-unknown -O1 -emit-llvm -S -o %t -std=c++98
 // RUN: grep "define linkonce_odr i32 @_Z2eiv()" %t
 // RUN: grep "define linkonce_odr i32 @_Z3foov()" %t
 // RUN: grep "define i32 @_Z3barv()" %t
