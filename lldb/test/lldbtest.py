@@ -448,7 +448,6 @@ class Base(unittest2.TestCase):
             if traceAlways:
                 print >> sys.stderr, "Change dir to:", os.path.join(os.environ["LLDB_TEST"], cls.mydir)
             os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
-            print "I chdired"
 
     @classmethod
     def tearDownClass(cls):
