@@ -130,6 +130,11 @@ OperatingSystemPython::GetDynamicRegisterInfo ()
     {
         if (!m_interpreter || !m_python_object)
             return NULL;
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        
+        if (log)
+            log->Printf ("OperatingSystemPython::GetDynamicRegisterInfo() fetching thread register definitions from python for pid %llu", m_process->GetID());
+        
         auto object_sp = m_interpreter->OSPlugin_QueryForRegisterInfo(m_interpreter->MakeScriptObject(m_python_object));
         if (!object_sp)
             return NULL;
@@ -169,9 +174,14 @@ OperatingSystemPython::GetPluginVersion()
 bool
 OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    
     if (!m_interpreter || !m_python_object)
         return NULL;
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    
+    if (log)
+        log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %llu", m_process->GetID());
+
     auto object_sp = m_interpreter->OSPlugin_QueryForThreadsInfo(m_interpreter->MakeScriptObject(m_python_object));
     if (!object_sp)
         return NULL;
@@ -234,6 +244,12 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
     RegisterContextSP reg_ctx_sp;
     if (!m_interpreter || !m_python_object || !thread)
         return RegisterContextSP();
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+
+    if (log)
+        log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%llx) fetching register data from python", thread->GetID());
+
     auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
                                                                           thread->GetID());
     
