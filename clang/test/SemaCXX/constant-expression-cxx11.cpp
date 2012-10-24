@@ -741,6 +741,15 @@ constexpr bool check(T a, T b) { return a == b.k; }
 static_assert(S(5) == 11, "");
 static_assert(check(S(5), 11), "");
 
+namespace PR14171 {
+
+struct X {
+  constexpr (operator int)() { return 0; }
+};
+static_assert(X() == 0, "");
+
+}
+
 }
 
 }

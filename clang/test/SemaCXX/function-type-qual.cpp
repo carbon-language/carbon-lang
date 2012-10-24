@@ -26,3 +26,6 @@ class C {
 
 void (C::*mpf)() const;
 cfn C::*mpg;
+
+// Don't crash!
+void (PR14171)() const; // expected-error {{non-member function cannot have 'const' qualifier}}
