@@ -36,13 +36,15 @@ using namespace clang;
 
 CompilerInvocationBase::CompilerInvocationBase()
   : LangOpts(new LangOptions()), TargetOpts(new TargetOptions()),
-    DiagnosticOpts(new DiagnosticOptions()) {}
+    DiagnosticOpts(new DiagnosticOptions()),
+    HeaderSearchOpts(new HeaderSearchOptions()) {}
 
 CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
   : RefCountedBase<CompilerInvocation>(),
     LangOpts(new LangOptions(*X.getLangOpts())), 
     TargetOpts(new TargetOptions(X.getTargetOpts())),
-    DiagnosticOpts(new DiagnosticOptions(X.getDiagnosticOpts())) {}
+    DiagnosticOpts(new DiagnosticOptions(X.getDiagnosticOpts())),
+    HeaderSearchOpts(new HeaderSearchOptions(X.getHeaderSearchOpts())) {}
 
 //===----------------------------------------------------------------------===//
 // Utility functions.

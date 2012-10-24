@@ -19,6 +19,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/PreprocessingRecord.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
@@ -63,15 +64,16 @@ class ASTDeserializationListener;
 ///
 class ASTUnit : public ModuleLoader {
 private:
-  IntrusiveRefCntPtr<LangOptions>       LangOpts;
-  IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
-  IntrusiveRefCntPtr<FileManager>       FileMgr;
-  IntrusiveRefCntPtr<SourceManager>     SourceMgr;
-  OwningPtr<HeaderSearch>               HeaderInfo;
-  IntrusiveRefCntPtr<TargetInfo>        Target;
-  IntrusiveRefCntPtr<Preprocessor>      PP;
-  IntrusiveRefCntPtr<ASTContext>        Ctx;
-  IntrusiveRefCntPtr<TargetOptions>     TargetOpts;
+  IntrusiveRefCntPtr<LangOptions>         LangOpts;
+  IntrusiveRefCntPtr<DiagnosticsEngine>   Diagnostics;
+  IntrusiveRefCntPtr<FileManager>         FileMgr;
+  IntrusiveRefCntPtr<SourceManager>       SourceMgr;
+  OwningPtr<HeaderSearch>                 HeaderInfo;
+  IntrusiveRefCntPtr<TargetInfo>          Target;
+  IntrusiveRefCntPtr<Preprocessor>        PP;
+  IntrusiveRefCntPtr<ASTContext>          Ctx;
+  IntrusiveRefCntPtr<TargetOptions>       TargetOpts;
+  IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts;
   ASTReader *Reader;
 
   struct ASTWriterData;

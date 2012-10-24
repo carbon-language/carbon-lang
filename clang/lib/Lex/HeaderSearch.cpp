@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/Diagnostic.h"
@@ -38,10 +39,11 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 
 ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
-HeaderSearch::HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags,
+HeaderSearch::HeaderSearch(llvm::IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
+                           FileManager &FM, DiagnosticsEngine &Diags,
                            const LangOptions &LangOpts, 
                            const TargetInfo *Target)
-  : FileMgr(FM), FrameworkMap(64),
+  : HSOpts(HSOpts), FileMgr(FM), FrameworkMap(64),
     ModMap(FileMgr, *Diags.getClient(), LangOpts, Target)
 {
   AngledDirIdx = 0;
