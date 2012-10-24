@@ -52,9 +52,6 @@ CODEGENOPT(EmitOpenCLArgMetadata , 1, 0) ///< Emit OpenCL kernel arg metadata.
 CODEGENOPT(ForbidGuardVariables , 1, 0) ///< Issue errors if C++ guard variables
                                         ///< are required.
 CODEGENOPT(FunctionSections  , 1, 0) ///< Set when -ffunction-sections is enabled.
-CODEGENOPT(HiddenWeakTemplateVTables , 1, 0) ///< Emit weak vtables and RTTI for
-                                             ///< template classes with hidden 
-                                             ///< visibility
 CODEGENOPT(HiddenWeakVTables , 1, 0) ///< Emit weak vtables, RTTI, and thunks with
                                      ///< hidden visibility.
 CODEGENOPT(InstrumentFunctions , 1, 0) ///< Set when -finstrument-functions is

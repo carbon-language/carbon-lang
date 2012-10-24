@@ -156,8 +156,7 @@ static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
 
   case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
-    if (!CGM.getCodeGenOpts().HiddenWeakTemplateVTables)
-      return;
+    return;
     break;
   }
 

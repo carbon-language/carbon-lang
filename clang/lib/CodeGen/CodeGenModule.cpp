@@ -353,9 +353,7 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   // to deal with mixed-visibility symbols.
   case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
-    if (!CodeGenOpts.HiddenWeakTemplateVTables)
-      return;
-    break;
+    return;
   }
 
   // If there's a key function, there may be translation units
