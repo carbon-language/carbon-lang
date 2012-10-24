@@ -123,3 +123,15 @@ namespace PR11550 {
     S3 z = a; // expected-warning {{unused variable 'z'}}
   }
 }
+
+namespace ctor_with_cleanups {
+  struct S1 {
+    ~S1();
+  };
+  struct S2 {
+    S2(const S1&);
+  };
+  void func() {
+    S2 s((S1()));
+  }
+}
