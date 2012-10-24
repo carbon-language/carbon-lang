@@ -27,6 +27,7 @@
 #include "clang/Serialization/ASTWriter.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
@@ -772,7 +773,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   OwningPtr<ASTReader> Reader;
 
-  AST->PP = new Preprocessor(AST->getDiagnostics(), AST->ASTFileLangOpts, 
+  AST->PP = new Preprocessor(new PreprocessorOptions(),
+                             AST->getDiagnostics(), AST->ASTFileLangOpts,
                              /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
                              *AST, 
                              /*IILookup=*/0,

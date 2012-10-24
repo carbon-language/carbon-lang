@@ -55,6 +55,7 @@ class CodeCompletionHandler;
 class DirectoryLookup;
 class PreprocessingRecord;
 class ModuleLoader;
+class PreprocessorOptions;
 
 /// \brief Stores token information for comparing actual tokens with
 /// predefined values.  Only handles simple tokens and identifiers.
@@ -83,6 +84,7 @@ public:
 /// like the \#include stack, token expansion, etc.
 ///
 class Preprocessor : public RefCountedBase<Preprocessor> {
+  llvm::IntrusiveRefCntPtr<PreprocessorOptions> PPOpts;
   DiagnosticsEngine        *Diags;
   LangOptions       &LangOpts;
   const TargetInfo  *Target;
@@ -394,7 +396,8 @@ private:  // Cached tokens state.
   MacroInfoChain *MICache;
 
 public:
-  Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
+  Preprocessor(llvm::IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
+               DiagnosticsEngine &diags, LangOptions &opts,
                const TargetInfo *target,
                SourceManager &SM, HeaderSearch &Headers,
                ModuleLoader &TheModuleLoader,

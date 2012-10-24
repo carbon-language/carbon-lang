@@ -18,6 +18,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "llvm/Config/config.h"
 
@@ -86,8 +87,7 @@ TEST_F(PreprocessingRecordTest, PPRecAPI) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, FileMgr, Diags, LangOpts, 
                           Target.getPtr());
-  Preprocessor PP(Diags, LangOpts,
-                  Target.getPtr(),
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,Target.getPtr(),
                   SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/ 0,
                   /*OwnsHeaderSearch =*/false,

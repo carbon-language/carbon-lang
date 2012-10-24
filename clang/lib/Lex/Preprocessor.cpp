@@ -26,6 +26,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "MacroArgs.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderSearch.h"
@@ -51,14 +52,16 @@ ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 PPMutationListener::~PPMutationListener() { }
 
-Preprocessor::Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
+Preprocessor::Preprocessor(llvm::IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
+                           DiagnosticsEngine &diags, LangOptions &opts,
                            const TargetInfo *target, SourceManager &SM,
                            HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
                            IdentifierInfoLookup* IILookup,
                            bool OwnsHeaders,
                            bool DelayInitialization,
                            bool IncrProcessing)
-  : Diags(&diags), LangOpts(opts), Target(target),FileMgr(Headers.getFileMgr()),
+  : PPOpts(PPOpts), Diags(&diags), LangOpts(opts), Target(target),
+    FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), TheModuleLoader(TheModuleLoader),
     ExternalSource(0), Identifiers(opts, IILookup), 
     IncrementalProcessing(IncrProcessing), CodeComplete(0), 
