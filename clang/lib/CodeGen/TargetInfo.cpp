@@ -528,8 +528,10 @@ class X86_32ABIInfo : public ABIInfo {
   Class classify(QualType Ty) const;
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 unsigned callingConvention) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &FreeRegs) const;
-  bool shouldUseInReg(QualType Ty, unsigned &FreeRegs) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &FreeRegs,
+                                  bool IsFastCall) const;
+  bool shouldUseInReg(QualType Ty, unsigned &FreeRegs,
+                      bool IsFastCall) const;
 
 public:
 
@@ -804,12 +806,14 @@ X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
   return Integer;
 }
 
-bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs) const {
+bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
+                                   bool IsFastCall) const {
   Class C = classify(Ty);
   if (C == Float)
     return false;
 
-  unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+  unsigned Size = getContext().getTypeSize(Ty);
+  unsigned SizeInRegs = (Size + 31) / 32;
 
   if (SizeInRegs == 0)
     return false;
@@ -820,11 +824,29 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs) const {
   }
 
   FreeRegs -= SizeInRegs;
+
+  if (IsFastCall) {
+    if (Size > 32)
+      return false;
+
+    if (Ty->isIntegralOrEnumerationType())
+      return true;
+
+    if (Ty->isPointerType())
+      return true;
+
+    if (Ty->isReferenceType())
+      return true;
+
+    return false;
+  }
+
   return true;
 }
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
-                                               unsigned &FreeRegs) const {
+                                               unsigned &FreeRegs,
+                                               bool IsFastCall) const {
   // FIXME: Set alignment on indirect arguments.
   if (isAggregateTypeForABI(Ty)) {
     // Structures with flexible arrays are always indirect.
@@ -842,7 +864,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     if (isEmptyRecord(getContext(), Ty, true))
       return ABIArgInfo::getIgnore();
 
-    if (shouldUseInReg(Ty, FreeRegs)) {
+    if (shouldUseInReg(Ty, FreeRegs, IsFastCall)) {
       unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
       llvm::LLVMContext &LLVMContext = getVMContext();
       llvm::Type *Int32 = llvm::Type::getInt32Ty(LLVMContext);
@@ -892,7 +914,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
-  bool InReg = shouldUseInReg(Ty, FreeRegs);
+  bool InReg = shouldUseInReg(Ty, FreeRegs, IsFastCall);
 
   if (Ty->isPromotableIntegerType()) {
     if (InReg)
@@ -908,8 +930,15 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
                                           FI.getCallingConvention());
 
-  unsigned FreeRegs = FI.getHasRegParm() ? FI.getRegParm() :
-    DefaultNumRegisterParameters;
+  unsigned CC = FI.getCallingConvention();
+  bool IsFastCall = CC == llvm::CallingConv::X86_FastCall;
+  unsigned FreeRegs;
+  if (IsFastCall)
+    FreeRegs = 2;
+  else if (FI.getHasRegParm())
+    FreeRegs = FI.getRegParm();
+  else
+    FreeRegs = DefaultNumRegisterParameters;
 
   // If the return value is indirect, then the hidden argument is consuming one
   // integer register.
@@ -923,7 +952,7 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
-    it->info = classifyArgumentType(it->type, FreeRegs);
+    it->info = classifyArgumentType(it->type, FreeRegs, IsFastCall);
 }
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,

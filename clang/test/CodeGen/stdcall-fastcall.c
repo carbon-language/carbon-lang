@@ -48,3 +48,99 @@ void f8(void) {
   f7(0);
   // CHECK: call x86_stdcallcc void @f7(i32 0)
 }
+
+void __attribute__((fastcall)) foo1(int y);
+void bar1(int y) {
+  // CHECK: define void @bar1
+  // CHECK: call x86_fastcallcc void @foo1(i32 inreg %
+  foo1(y);
+}
+
+struct S1 {
+  int x;
+};
+void __attribute__((fastcall)) foo2(struct S1 y);
+void bar2(struct S1 y) {
+  // CHECK: define void @bar2
+  // CHECK: call x86_fastcallcc void @foo2(i32 %
+  foo2(y);
+}
+
+void __attribute__((fastcall)) foo3(int *y);
+void bar3(int *y) {
+  // CHECK: define void @bar3
+  // CHECK: call x86_fastcallcc void @foo3(i32* inreg %
+  foo3(y);
+}
+
+enum Enum {Eval};
+void __attribute__((fastcall)) foo4(enum Enum y);
+void bar4(enum Enum y) {
+  // CHECK: define void @bar4
+  // CHECK: call x86_fastcallcc void @foo4(i32 inreg %
+  foo4(y);
+}
+
+struct S2 {
+  int x1;
+  double x2;
+  double x3;
+};
+void __attribute__((fastcall)) foo5(struct S2 y);
+void bar5(struct S2 y) {
+  // CHECK: define void @bar5
+  // CHECK: call x86_fastcallcc void @foo5(%struct.S2* byval align 4 %
+  foo5(y);
+}
+
+void __attribute__((fastcall)) foo6(long long y);
+void bar6(long long y) {
+  // CHECK: define void @bar6
+  // CHECK: call x86_fastcallcc void @foo6(i64 %
+  foo6(y);
+}
+
+void __attribute__((fastcall)) foo7(int a, struct S1 b, int c);
+void bar7(int a, struct S1 b, int c) {
+  // CHECK: define void @bar7
+  // CHECK: call x86_fastcallcc void @foo7(i32 inreg %{{.*}}, i32 %{{.*}}, i32 %{{.*}}
+  foo7(a, b, c);
+}
+
+void __attribute__((fastcall)) foo8(struct S1 a, int b);
+void bar8(struct S1 a, int b) {
+  // CHECK: define void @bar8
+  // CHECK: call x86_fastcallcc void @foo8(i32 %{{.*}}, i32 inreg %
+  foo8(a, b);
+}
+
+void __attribute__((fastcall)) foo9(struct S2 a, int b);
+void bar9(struct S2 a, int b) {
+  // CHECK: define void @bar9
+  // CHECK: call x86_fastcallcc void @foo9(%struct.S2* byval align 4 %{{.*}}, i32 %
+  foo9(a, b);
+}
+
+void __attribute__((fastcall)) foo10(float y, int x);
+void bar10(float y, int x) {
+  // CHECK: define void @bar10
+  // CHECK: call x86_fastcallcc void @foo10(float %{{.*}}, i32 inreg %
+  foo10(y, x);
+}
+
+void __attribute__((fastcall)) foo11(double y, int x);
+void bar11(double y, int x) {
+  // CHECK: define void @bar11
+  // CHECK: call x86_fastcallcc void @foo11(double %{{.*}}, i32 inreg %
+  foo11(y, x);
+}
+
+struct S3 {
+  float x;
+};
+void __attribute__((fastcall)) foo12(struct S3 y, int x);
+void bar12(struct S3 y, int x) {
+  // CHECK: define void @bar12
+  // CHECK: call x86_fastcallcc void @foo12(float %{{.*}}, i32 inreg %
+  foo12(y, x);
+}
