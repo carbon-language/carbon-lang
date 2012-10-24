@@ -3979,8 +3979,11 @@ getSmallConstantTripMultiple(Loop *L, BasicBlock *ExitingBlock) {
 
   ConstantInt *Result = MulC->getValue();
 
-  // Guard against huge trip counts.
-  if (!Result || Result->getValue().getActiveBits() > 32)
+  // Guard against huge trip counts (this requires checking
+  // for zero to handle the case where the trip count == -1 and the
+  // addition wraps).
+  if (!Result || Result->getValue().getActiveBits() > 32 ||
+      Result->getValue().getActiveBits() == 0)
     return 1;
 
   return (unsigned)Result->getZExtValue();
