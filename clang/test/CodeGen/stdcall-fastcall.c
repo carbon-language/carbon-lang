@@ -62,7 +62,7 @@ struct S1 {
 void __attribute__((fastcall)) foo2(struct S1 y);
 void bar2(struct S1 y) {
   // CHECK: define void @bar2
-  // CHECK: call x86_fastcallcc void @foo2(i32 %
+  // CHECK: call x86_fastcallcc void @foo2(i32 inreg undef, i32 %
   foo2(y);
 }
 
@@ -110,7 +110,7 @@ void bar7(int a, struct S1 b, int c) {
 void __attribute__((fastcall)) foo8(struct S1 a, int b);
 void bar8(struct S1 a, int b) {
   // CHECK: define void @bar8
-  // CHECK: call x86_fastcallcc void @foo8(i32 %{{.*}}, i32 inreg %
+  // CHECK: call x86_fastcallcc void @foo8(i32 inreg undef, i32 %{{.*}}, i32 inreg %
   foo8(a, b);
 }
 

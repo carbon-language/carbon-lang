@@ -531,7 +531,7 @@ class X86_32ABIInfo : public ABIInfo {
   ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &FreeRegs,
                                   bool IsFastCall) const;
   bool shouldUseInReg(QualType Ty, unsigned &FreeRegs,
-                      bool IsFastCall) const;
+                      bool IsFastCall, bool &NeedsPadding) const;
 
 public:
 
@@ -807,7 +807,8 @@ X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
 }
 
 bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
-                                   bool IsFastCall) const {
+                                   bool IsFastCall, bool &NeedsPadding) const {
+  NeedsPadding = false;
   Class C = classify(Ty);
   if (C == Float)
     return false;
@@ -838,6 +839,9 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
     if (Ty->isReferenceType())
       return true;
 
+    if (FreeRegs)
+      NeedsPadding = true;
+
     return false;
   }
 
@@ -864,16 +868,18 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     if (isEmptyRecord(getContext(), Ty, true))
       return ABIArgInfo::getIgnore();
 
-    if (shouldUseInReg(Ty, FreeRegs, IsFastCall)) {
+    llvm::LLVMContext &LLVMContext = getVMContext();
+    llvm::IntegerType *Int32 = llvm::Type::getInt32Ty(LLVMContext);
+    bool NeedsPadding;
+    if (shouldUseInReg(Ty, FreeRegs, IsFastCall, NeedsPadding)) {
       unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
-      llvm::LLVMContext &LLVMContext = getVMContext();
-      llvm::Type *Int32 = llvm::Type::getInt32Ty(LLVMContext);
       SmallVector<llvm::Type*, 3> Elements;
       for (unsigned I = 0; I < SizeInRegs; ++I)
         Elements.push_back(Int32);
       llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
       return ABIArgInfo::getDirectInReg(Result);
     }
+    llvm::IntegerType *PaddingType = NeedsPadding ? Int32 : 0;
 
     // Expand small (<= 128-bit) record types when we know that the stack layout
     // of those arguments will match the struct. This is important because the
@@ -881,7 +887,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     // optimizations.
     if (getContext().getTypeSize(Ty) <= 4*32 &&
         canExpandIndirectArgument(Ty, getContext()))
-      return ABIArgInfo::getExpand();
+      return ABIArgInfo::getExpandWithPadding(IsFastCall, PaddingType);
 
     return getIndirectResult(Ty, true, FreeRegs);
   }
@@ -914,7 +920,8 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
-  bool InReg = shouldUseInReg(Ty, FreeRegs, IsFastCall);
+  bool NeedsPadding;
+  bool InReg = shouldUseInReg(Ty, FreeRegs, IsFastCall, NeedsPadding);
 
   if (Ty->isPromotableIntegerType()) {
     if (InReg)

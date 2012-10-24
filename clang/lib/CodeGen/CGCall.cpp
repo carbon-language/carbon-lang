@@ -867,6 +867,10 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
          ie = FI.arg_end(); it != ie; ++it) {
     const ABIArgInfo &argAI = it->info;
 
+    // Insert a padding type to ensure proper alignment.
+    if (llvm::Type *PaddingType = argAI.getPaddingType())
+      argTypes.push_back(PaddingType);
+
     switch (argAI.getKind()) {
     case ABIArgInfo::Ignore:
       break;
@@ -880,9 +884,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
 
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
-      // Insert a padding type to ensure proper alignment.
-      if (llvm::Type *PaddingType = argAI.getPaddingType())
-        argTypes.push_back(PaddingType);
       // If the coerce-to type is a first class aggregate, flatten it.  Either
       // way is semantically identical, but fast-isel and the optimizer
       // generally likes scalar values better than FCAs.
@@ -1019,6 +1020,18 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     const ABIArgInfo &AI = it->info;
     llvm::AttrBuilder Attrs;
 
+    if (AI.getPaddingType()) {
+      if (AI.getPaddingInReg()) {
+        llvm::AttrBuilder PadAttrs;
+        PadAttrs.addAttribute(llvm::Attributes::InReg);
+
+        llvm::Attributes A =llvm::Attributes::get(getLLVMContext(), PadAttrs);
+        PAL.push_back(llvm::AttributeWithIndex::get(Index, A));
+      }
+      // Increment Index if there is padding.
+      ++Index;
+    }
+
     // 'restrict' -> 'noalias' is done in EmitFunctionProlog when we
     // have the corresponding parameter variable.  It doesn't make
     // sense to do it here because parameters are so messed up.
@@ -1034,9 +1047,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         Attrs.addAttribute(llvm::Attributes::InReg);
 
       // FIXME: handle sseregparm someday...
-
-      // Increment Index if there is padding.
-      Index += (AI.getPaddingType() != 0);
 
       if (llvm::StructType *STy =
           dyn_cast<llvm::StructType>(AI.getCoerceToType())) {
@@ -1155,6 +1165,10 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     bool isPromoted =
       isa<ParmVarDecl>(Arg) && cast<ParmVarDecl>(Arg)->isKNRPromoted();
 
+    // Skip the dummy padding argument.
+    if (ArgI.getPaddingType())
+      ++AI;
+
     switch (ArgI.getKind()) {
     case ABIArgInfo::Indirect: {
       llvm::Value *V = AI;
@@ -1196,9 +1210,6 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
-      // Skip the dummy padding argument.
-      if (ArgI.getPaddingType())
-        ++AI;
 
       // If we have the trivial case, handle it with no muss and fuss.
       if (!isa<llvm::StructType>(ArgI.getCoerceToType()) &&
@@ -1976,6 +1987,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
     unsigned TypeAlign =
       getContext().getTypeAlignInChars(I->Ty).getQuantity();
+
+    // Insert a padding argument to ensure proper alignment.
+    if (llvm::Type *PaddingType = ArgInfo.getPaddingType()) {
+      Args.push_back(llvm::UndefValue::get(PaddingType));
+      ++IRArgNo;
+    }
+
     switch (ArgInfo.getKind()) {
     case ABIArgInfo::Indirect: {
       if (RV.isScalar() || RV.isComplex()) {
@@ -2031,12 +2049,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
-      // Insert a padding argument to ensure proper alignment.
-      if (llvm::Type *PaddingType = ArgInfo.getPaddingType()) {
-        Args.push_back(llvm::UndefValue::get(PaddingType));
-        ++IRArgNo;
-      }
-
       if (!isa<llvm::StructType>(ArgInfo.getCoerceToType()) &&
           ArgInfo.getCoerceToType() == ConvertType(info_it->type) &&
           ArgInfo.getDirectOffset() == 0) {
