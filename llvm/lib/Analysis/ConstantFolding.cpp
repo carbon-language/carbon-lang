@@ -937,8 +937,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
     // pointer, so it can't be done in ConstantExpr::getCast.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
       if (TD && CE->getOpcode() == Instruction::PtrToInt &&
-          TD->getPointerSizeInBits(
-            cast<PointerType>(CE->getOperand(0)->getType())->getAddressSpace())
+          TD->getTypeSizeInBits(CE->getOperand(0)->getType())
           <= CE->getType()->getScalarSizeInBits())
         return FoldBitCast(CE->getOperand(0), DestTy, *TD);
 

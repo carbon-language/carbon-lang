@@ -262,6 +262,14 @@ public:
     }
     return 8*val->second.TypeBitWidth;
   }
+  /// Layout pointer size, in bits, based on the type.
+  /// If this function is called with a pointer type, then
+  /// the type size of the pointer is returned.
+  /// If this function is called with a vector of pointers,
+  /// then the type size of the pointer is returned.
+  /// Otherwise the type sizeo f a default pointer is returned.
+  unsigned getPointerTypeSizeInBits(Type* Ty)    const;
+
   /// Size examples:
   ///
   /// Type        SizeInBits  StoreSizeInBits  AllocSizeInBits[*]

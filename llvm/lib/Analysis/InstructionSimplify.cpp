@@ -1880,9 +1880,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     // Turn icmp (ptrtoint x), (ptrtoint/constant) into a compare of the input
     // if the integer type is the same size as the pointer type.
     if (MaxRecurse && Q.TD && isa<PtrToIntInst>(LI) &&
-        Q.TD->getPointerSizeInBits(
-          cast<PtrToIntInst>(LI)->getPointerAddressSpace()) ==
-        DstTy->getPrimitiveSizeInBits()) {
+        Q.TD->getTypeSizeInBits(SrcTy) == DstTy->getPrimitiveSizeInBits()) {
       if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
         // Transfer the cast to the constant.
         if (Value *V = SimplifyICmpInst(Pred, SrcOp,

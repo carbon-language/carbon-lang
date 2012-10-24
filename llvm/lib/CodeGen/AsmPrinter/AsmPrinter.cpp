@@ -385,8 +385,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - __tlv_bootstrap - used to make sure support exists
     //   - spare pointer, used when mapped by the runtime
     //   - pointer to mangled symbol above with initializer
-    unsigned AS = GV->getType()->getAddressSpace();
-    unsigned PtrSize = TD->getPointerSizeInBits(AS)/8;
+    assert(GV->getType()->isPointerTy() && "GV must be a pointer type!");
+    unsigned PtrSize = TD->getTypeSizeInBits(GV->getType())/8;
     OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
                           PtrSize, 0);
     OutStreamer.EmitIntValue(0, PtrSize, 0);
@@ -1481,9 +1481,9 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     if (Offset == 0)
       return Base;
 
-    unsigned AS = cast<PointerType>(CE->getType())->getAddressSpace();
+    assert(CE->getType()->isPointerTy() && "We must have a pointer type!");
     // Truncate/sext the offset to the pointer size.
-    unsigned Width = TD.getPointerSizeInBits(AS);
+    unsigned Width = TD.getTypeSizeInBits(CE->getType());
     if (Width < 64)
       Offset = SignExtend64(Offset, Width);
 

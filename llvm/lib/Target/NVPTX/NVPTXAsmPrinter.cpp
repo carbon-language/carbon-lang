@@ -126,10 +126,9 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
       return Base;
 
     // Truncate/sext the offset to the pointer size.
-    unsigned AS = PtrVal->getType()->isPointerTy() ?
-      cast<PointerType>(PtrVal->getType())->getAddressSpace() : 0;
-    if (TD.getPointerSizeInBits(AS) != 64) {
-      int SExtAmount = 64-TD.getPointerSizeInBits(AS);
+    unsigned PtrSize = TD.getPointerTypeSizeInBits(PtrVal->getType());
+    if (PtrSize != 64) {
+      int SExtAmount = 64-PtrSize;
       Offset = (Offset << SExtAmount) >> SExtAmount;
     }
 

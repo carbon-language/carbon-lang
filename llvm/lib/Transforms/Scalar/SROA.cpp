@@ -2364,8 +2364,9 @@ private:
 
   Value *getAdjustedAllocaPtr(IRBuilder<> &IRB, Type *PointerTy) {
     assert(BeginOffset >= NewAllocaBeginOffset);
-    unsigned AS = cast<PointerType>(PointerTy)->getAddressSpace();
-    APInt Offset(TD.getPointerSizeInBits(AS), BeginOffset - NewAllocaBeginOffset);
+    assert(PointerTy->isPointerTy() &&
+        "Type must be pointer type!");
+    APInt Offset(TD.getTypeSizeInBits(PointerTy), BeginOffset - NewAllocaBeginOffset);
     return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy, getName(""));
   }
 
@@ -2687,9 +2688,8 @@ private:
       = P.getMemTransferOffsets(II);
 
     assert(OldPtr->getType()->isPointerTy() && "Must be a pointer type!");
-    unsigned AS = cast<PointerType>(OldPtr->getType())->getAddressSpace();
     // Compute the relative offset within the transfer.
-    unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+    unsigned IntPtrWidth = TD.getTypeSizeInBits(OldPtr->getType());
     APInt RelOffset(IntPtrWidth, BeginOffset - (IsDest ? MTO.DestBegin
                                                        : MTO.SourceBegin));
 

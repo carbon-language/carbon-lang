@@ -645,16 +645,17 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::PtrToInt: {
       GenericValue GV = getConstantValue(Op0);
-      unsigned AS = cast<PointerType>(CE->getOperand(1)->getType())
-        ->getAddressSpace();
-      uint32_t PtrWidth = TD->getPointerSizeInBits(AS);
+      assert(CE->getOperand(1)->getType()->isPointerTy() &&
+          "Must be a pointer type!");
+      uint32_t PtrWidth = TD->getTypeSizeInBits(CE->getOperand(1)->getType());
       GV.IntVal = APInt(PtrWidth, uintptr_t(GV.PointerVal));
       return GV;
     }
     case Instruction::IntToPtr: {
       GenericValue GV = getConstantValue(Op0);
-      unsigned AS = cast<PointerType>(CE->getType())->getAddressSpace();
-      uint32_t PtrWidth = TD->getPointerSizeInBits(AS);
+      assert(CE->getOperand(1)->getType()->isPointerTy() &&
+          "Must be a pointer type!");
+      uint32_t PtrWidth = TD->getTypeSizeInBits(CE->getType());
       if (PtrWidth != GV.IntVal.getBitWidth())
         GV.IntVal = GV.IntVal.zextOrTrunc(PtrWidth);
       assert(GV.IntVal.getBitWidth() <= 64 && "Bad pointer width");

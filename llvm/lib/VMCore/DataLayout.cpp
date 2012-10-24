@@ -524,6 +524,14 @@ std::string DataLayout::getStringRepresentation() const {
   return OS.str();
 }
 
+unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const
+{
+    if (Ty->isPointerTy()) return getTypeSizeInBits(Ty);
+    if (Ty->isVectorTy()
+        && cast<VectorType>(Ty)->getElementType()->isPointerTy())
+      return getTypeSizeInBits(cast<VectorType>(Ty)->getElementType());
+    return getPointerSizeInBits(0);
+}
 
 uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
