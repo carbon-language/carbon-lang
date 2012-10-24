@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -triple nvptx-unknown-unknown -emit-llvm -o %t %s
 // RUN: %clang_cc1 -triple nvptx64-unknown-unknown -emit-llvm -o %t %s
-// REQUIRES: nvptx-registered-target,nvptx64-registered-target
 
 int read_tid() {
 

@@ -36,8 +36,6 @@
 // CHECK-ARMV6: define internal void @"\01-[A im0]"
 // CHECK-ARMV6: define internal void @"\01-[A(Cat) im1]"
 
-// REQUIRES: arm-registered-target,x86-64-registered-target
-
 @interface A
 @end
 

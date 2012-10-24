@@ -4,8 +4,6 @@
 // RUN: %clang_cc1 -triple armv6-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 -target-abi apcs-gnu -emit-llvm -o %t2 %s
 // RUN: FileCheck -check-prefix=CHECK-ARM < %t2 %s
 
-// REQUIRES: arm-registered-target,x86-registered-target
-
 @interface I0 { 
 @public
     unsigned x:15;
