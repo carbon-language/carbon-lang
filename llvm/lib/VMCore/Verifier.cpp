@@ -705,6 +705,7 @@ void Verifier::visitFunction(Function &F) {
   case CallingConv::Cold:
   case CallingConv::X86_FastCall:
   case CallingConv::X86_ThisCall:
+  case CallingConv::Intel_OCL_BI:
   case CallingConv::PTX_Kernel:
   case CallingConv::PTX_Device:
     Assert1(!F.isVarArg(),

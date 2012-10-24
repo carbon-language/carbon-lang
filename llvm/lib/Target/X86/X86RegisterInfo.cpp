@@ -229,15 +229,26 @@ const uint16_t *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool callsEHReturn = false;
   bool ghcCall = false;
+  bool oclBiCall = false;
+  bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
 
   if (MF) {
     callsEHReturn = MF->getMMI().callsEHReturn();
     const Function *F = MF->getFunction();
     ghcCall = (F ? F->getCallingConv() == CallingConv::GHC : false);
+    oclBiCall = (F ? F->getCallingConv() == CallingConv::Intel_OCL_BI : false);
   }
 
   if (ghcCall)
     return CSR_NoRegs_SaveList;
+  if (oclBiCall) {
+    if (HasAVX && IsWin64)
+        return CSR_Win64_Intel_OCL_BI_AVX_SaveList;
+    if (HasAVX && Is64Bit)
+        return CSR_64_Intel_OCL_BI_AVX_SaveList;
+    if (!HasAVX && !IsWin64 && Is64Bit)
+        return CSR_64_Intel_OCL_BI_SaveList;
+  }
   if (Is64Bit) {
     if (IsWin64)
       return CSR_Win64_SaveList;
@@ -252,6 +263,16 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 const uint32_t*
 X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
+
+  if (CC == CallingConv::Intel_OCL_BI) {
+    if (IsWin64 && HasAVX)
+      return CSR_Win64_Intel_OCL_BI_AVX_RegMask;
+    if (Is64Bit && HasAVX)
+      return CSR_64_Intel_OCL_BI_AVX_RegMask;
+    if (!HasAVX && !IsWin64 && Is64Bit)
+      return CSR_64_Intel_OCL_BI_RegMask;
+  }
   if (CC == CallingConv::GHC)
     return CSR_NoRegs_RegMask;
   if (!Is64Bit)

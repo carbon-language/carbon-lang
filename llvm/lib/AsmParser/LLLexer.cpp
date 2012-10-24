@@ -527,6 +527,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(ptx_device);
   KEYWORD(spir_kernel);
   KEYWORD(spir_func);
+  KEYWORD(intel_ocl_bicc);
 
   KEYWORD(cc);
   KEYWORD(c);

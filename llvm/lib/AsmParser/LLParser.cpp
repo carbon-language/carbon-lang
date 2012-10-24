@@ -1094,6 +1094,7 @@ bool LLParser::ParseOptionalVisibility(unsigned &Res) {
 ///   ::= /*empty*/
 ///   ::= 'ccc'
 ///   ::= 'fastcc'
+///   ::= 'kw_intel_ocl_bicc'
 ///   ::= 'coldcc'
 ///   ::= 'x86_stdcallcc'
 ///   ::= 'x86_fastcallcc'
@@ -1125,6 +1126,7 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_ptx_device:     CC = CallingConv::PTX_Device; break;
   case lltok::kw_spir_kernel:    CC = CallingConv::SPIR_KERNEL; break;
   case lltok::kw_spir_func:      CC = CallingConv::SPIR_FUNC; break;
+  case lltok::kw_intel_ocl_bicc: CC = CallingConv::Intel_OCL_BI; break;
   case lltok::kw_cc: {
       unsigned ArbitraryCC;
       Lex.Lex();

@@ -88,6 +88,21 @@ def RetCC_X86_32_Fast : CallingConv<[
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
+// Intel_OCL_BI return-value convention.
+def RetCC_Intel_OCL_BI : CallingConv<[
+  // Vector types are returned in XMM0,XMM1,XMMM2 and XMM3.
+  CCIfType<[f32, f64, v4i32, v2i64, v4f32, v2f64],
+            CCAssignToReg<[XMM0,XMM1,XMM2,XMM3]>>,
+
+  // 256-bit FP vectors
+  // No more than 4 registers
+  CCIfType<[v8f32, v4f64, v8i32, v4i64],
+            CCAssignToReg<[YMM0,YMM1,YMM2,YMM3]>>,
+
+  // i32, i64 in the standard way
+  CCDelegateTo<RetCC_X86Common>
+]>;
+
 // X86-64 C return-value convention.
 def RetCC_X86_64_C : CallingConv<[
   // The X86-64 calling convention always returns FP values in XMM0.
@@ -128,6 +143,10 @@ def RetCC_X86_64 : CallingConv<[
 
 // This is the return-value convention used for the entire X86 backend.
 def RetCC_X86 : CallingConv<[
+
+  // Check if this is the Intel OpenCL built-ins calling convention
+  CCIfCC<"CallingConv::Intel_OCL_BI", CCDelegateTo<RetCC_Intel_OCL_BI>>,
+
   CCIfSubtarget<"is64Bit()", CCDelegateTo<RetCC_X86_64>>,
   CCDelegateTo<RetCC_X86_32>
 ]>;
@@ -234,6 +253,29 @@ def CC_X86_Win64_C : CallingConv<[
   // subtarget.
   CCIfType<[f80], CCAssignToStack<0, 0>>
 ]>;
+
+// X86-64 Intel OpenCL built-ins calling convention.
+def CC_Intel_OCL_BI : CallingConv<[
+  CCIfType<[i32], CCIfSubtarget<"isTargetWin32()", CCAssignToStack<4, 4>>>,
+
+  CCIfType<[i32], CCIfSubtarget<"isTargetWin64()", CCAssignToReg<[ECX, EDX, R8D, R9D]>>>,
+  CCIfType<[i64], CCIfSubtarget<"isTargetWin64()", CCAssignToReg<[RCX, RDX, R8,  R9 ]>>>,
+
+  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX]>>,
+  CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX]>>,
+
+ // The SSE vector arguments are passed in XMM registers.
+  CCIfType<[f32, f64, v4i32, v2i64, v4f32, v2f64],
+           CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,
+  
+  // The 256-bit vector arguments are passed in YMM registers.
+  CCIfType<[v8f32, v4f64, v8i32, v4i64],
+                CCAssignToReg<[YMM0, YMM1, YMM2, YMM3]>>,
+  
+  CCIfSubtarget<"isTargetWin64()", CCDelegateTo<CC_X86_Win64_C>>,
+  CCDelegateTo<CC_X86_64_C>
+]>;
+
 
 def CC_X86_64_GHC : CallingConv<[
   // Promote i8/i16/i32 arguments to i64.
@@ -408,6 +450,7 @@ def CC_X86_64 : CallingConv<[
 
 // This is the argument convention used for the entire X86 backend.
 def CC_X86 : CallingConv<[
+  CCIfCC<"CallingConv::Intel_OCL_BI", CCDelegateTo<CC_Intel_OCL_BI>>,
   CCIfSubtarget<"is64Bit()", CCDelegateTo<CC_X86_64>>,
   CCDelegateTo<CC_X86_32>
 ]>;
@@ -426,3 +469,17 @@ def CSR_64EHRet : CalleeSavedRegs<(add RAX, RDX, CSR_64)>;
 
 def CSR_Win64 : CalleeSavedRegs<(add RBX, RBP, RDI, RSI, R12, R13, R14, R15,
                                      (sequence "XMM%u", 6, 15))>;
+
+
+// Standard C + YMM6-15
+def CSR_Win64_Intel_OCL_BI_AVX : CalleeSavedRegs<(add RBX, RBP, RDI, RSI, R12,
+                                                  R13, R14, R15, 
+                                                  (sequence "YMM%u", 6, 15))>;
+
+//Standard C + XMM 8-15
+def CSR_64_Intel_OCL_BI       : CalleeSavedRegs<(add CSR_64,
+                                                 (sequence "XMM%u", 8, 15))>;
+
+//Standard C + YMM 8-15
+def CSR_64_Intel_OCL_BI_AVX    : CalleeSavedRegs<(add CSR_64,
+                                                  (sequence "YMM%u", 8, 15))>;
