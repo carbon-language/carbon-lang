@@ -8,3 +8,8 @@
 // CHECK: unknown warning option '-Wmonkey'
 // CHECK: unknown warning option '-Wno-monkey'
 // CHECK: unknown warning option '-Wno-unused-command-line-arguments'; did you mean '-Wno-unused-command-line-argument'?
+
+// FIXME: Remove this together with -Warc-abi once an Xcode is released that doesn't pass this flag.
+// RUN: %clang -### -Warc-abi -Wno-arc-abi %s 2>&1 | FileCheck -check-prefix=ARCABI %s
+// ARCABI-NOT: unknown warning option '-Warc-abi'
+// ARCABI-NOT: unknown warning option '-Wno-arc-abi'
