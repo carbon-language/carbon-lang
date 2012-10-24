@@ -1153,6 +1153,7 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   for (unsigned I = 0, N = PPOpts.MacroIncludes.size(); I != N; ++I)
     AddString(PPOpts.MacroIncludes[I], Record);
 
+  Record.push_back(PPOpts.UsePredefines);
   AddString(PPOpts.ImplicitPCHInclude, Record);
   AddString(PPOpts.ImplicitPTHInclude, Record);
   Record.push_back(static_cast<unsigned>(PPOpts.ObjCXXARCStandardLibrary));

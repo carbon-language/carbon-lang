@@ -187,8 +187,8 @@ static bool checkTargetOptions(const TargetOptions &TargetOpts,
 bool
 PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts,
                                   bool Complain) {
-  const LangOptions &PPLangOpts = PP.getLangOpts();
-  return checkLanguageOptions(LangOpts, PPLangOpts,
+  const LangOptions &ExistingLangOpts = PP.getLangOpts();
+  return checkLanguageOptions(LangOpts, ExistingLangOpts,
                               Complain? &Reader.Diags : 0);
 }
 
@@ -197,6 +197,119 @@ bool PCHValidator::ReadTargetOptions(const TargetOptions &TargetOpts,
   const TargetOptions &ExistingTargetOpts = PP.getTargetInfo().getTargetOpts();
   return checkTargetOptions(TargetOpts, ExistingTargetOpts,
                             Complain? &Reader.Diags : 0);
+}
+
+namespace {
+  typedef llvm::StringMap<std::pair<StringRef, bool /*IsUndef*/> >
+    MacroDefinitionsMap;
+}
+
+/// \brief Collect the macro definitions provided by the given preprocessor
+/// options.
+static void collectMacroDefinitions(const PreprocessorOptions &PPOpts,
+                                    MacroDefinitionsMap &Macros,
+                                    SmallVectorImpl<StringRef> *MacroNames = 0){
+  for (unsigned I = 0, N = PPOpts.Macros.size(); I != N; ++I) {
+    StringRef Macro = PPOpts.Macros[I].first;
+    bool IsUndef = PPOpts.Macros[I].second;
+
+    std::pair<StringRef, StringRef> MacroPair = Macro.split('=');
+    StringRef MacroName = MacroPair.first;
+    StringRef MacroBody = MacroPair.second;
+
+    // For an #undef'd macro, we only care about the name.
+    if (IsUndef) {
+      if (MacroNames && !Macros.count(MacroName))
+        MacroNames->push_back(MacroName);
+
+      Macros[MacroName] = std::make_pair("", true);
+      continue;
+    }
+
+    // For a #define'd macro, figure out the actual definition.
+    if (MacroName.size() == Macro.size())
+      MacroBody = "1";
+    else {
+      // Note: GCC drops anything following an end-of-line character.
+      StringRef::size_type End = MacroBody.find_first_of("\n\r");
+      MacroBody = MacroBody.substr(0, End);
+    }
+
+    if (MacroNames && !Macros.count(MacroName))
+      MacroNames->push_back(MacroName);
+    Macros[MacroName] = std::make_pair(MacroBody, false);
+  }
+}
+         
+/// \brief Check the preprocessor options deserialized from the control block
+/// against the preprocessor options in an existing preprocessor.
+///
+/// \param Diags If non-null, produce diagnostics for any mismatches incurred.
+static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
+                                     const PreprocessorOptions &ExistingPPOpts,
+                                     DiagnosticsEngine *Diags) {
+  // Check macro definitions.
+  MacroDefinitionsMap ASTFileMacros;
+  collectMacroDefinitions(PPOpts, ASTFileMacros);
+  MacroDefinitionsMap ExistingMacros;
+  SmallVector<StringRef, 4> ExistingMacroNames;
+  collectMacroDefinitions(ExistingPPOpts, ExistingMacros, &ExistingMacroNames);
+
+  for (unsigned I = 0, N = ExistingMacroNames.size(); I != N; ++I) {
+    // Dig out the macro definition in the existing preprocessor options.
+    StringRef MacroName = ExistingMacroNames[I];
+    std::pair<StringRef, bool> Existing = ExistingMacros[MacroName];
+
+    // Check whether we know anything about this macro name or not.
+    llvm::StringMap<std::pair<StringRef, bool /*IsUndef*/> >::iterator Known
+      = ASTFileMacros.find(MacroName);
+    if (Known == ASTFileMacros.end()) {
+      // FIXME: Check whether this identifier was referenced anywhere in the
+      // AST file. If so, we should reject the AST file. Unfortunately, this
+      // information isn't in the control block. What shall we do about it?
+      continue;
+    }
+
+    // If the macro was defined in one but undef'd in the other, we have a
+    // conflict.
+    if (Existing.second != Known->second.second) {
+      if (Diags) {
+        Diags->Report(diag::err_pch_macro_def_undef)
+          << MacroName << Known->second.second;
+      }
+      return true;
+    }
+
+    // If the macro was #undef'd in both, or if the macro bodies are identical,
+    // it's fine.
+    if (Existing.second || Existing.first == Known->second.first)
+      continue;
+
+    // The macro bodies differ; complain.
+    if (Diags) {
+      Diags->Report(diag::err_pch_macro_def_conflict)
+        << MacroName << Known->second.first << Existing.first;
+    }
+    return true;
+  }
+
+  // Check whether we're using predefines.
+  if (PPOpts.UsePredefines != ExistingPPOpts.UsePredefines) {
+    if (Diags) {
+      Diags->Report(diag::err_pch_undef) << ExistingPPOpts.UsePredefines;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+bool PCHValidator::ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
+                                           bool Complain) {
+  const PreprocessorOptions &ExistingPPOpts = PP.getPreprocessorOpts();
+
+  return checkPreprocessorOptions(PPOpts, ExistingPPOpts,
+                                  Complain? &Reader.Diags : 0);
 }
 
 namespace {
@@ -3389,12 +3502,15 @@ namespace {
   class SimplePCHValidator : public ASTReaderListener {
     const LangOptions &ExistingLangOpts;
     const TargetOptions &ExistingTargetOpts;
+    const PreprocessorOptions &ExistingPPOpts;
 
   public:
     SimplePCHValidator(const LangOptions &ExistingLangOpts,
-                       const TargetOptions &ExistingTargetOpts)
+                       const TargetOptions &ExistingTargetOpts,
+                       const PreprocessorOptions &ExistingPPOpts)
       : ExistingLangOpts(ExistingLangOpts),
-        ExistingTargetOpts(ExistingTargetOpts)
+        ExistingTargetOpts(ExistingTargetOpts),
+        ExistingPPOpts(ExistingPPOpts)
     {
     }
 
@@ -3406,13 +3522,18 @@ namespace {
                                    bool Complain) {
       return checkTargetOptions(ExistingTargetOpts, TargetOpts, 0);
     }
+    virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
+                                         bool Complain) {
+      return checkPreprocessorOptions(ExistingPPOpts, PPOpts, 0);
+    }
   };
 }
 
 bool ASTReader::isAcceptableASTFile(StringRef Filename,
                                     FileManager &FileMgr,
                                     const LangOptions &LangOpts,
-                                    const TargetOptions &TargetOpts) {
+                                    const TargetOptions &TargetOpts,
+                                    const PreprocessorOptions &PPOpts) {
   // Open the AST file.
   std::string ErrStr;
   OwningPtr<llvm::MemoryBuffer> Buffer;
@@ -3436,7 +3557,7 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
     return false;
   }
 
-  SimplePCHValidator Validator(LangOpts, TargetOpts);
+  SimplePCHValidator Validator(LangOpts, TargetOpts, PPOpts);
   RecordData Record;
   bool InControlBlock = false;
   while (!Stream.AtEndOfStream()) {
@@ -3952,6 +4073,7 @@ bool ASTReader::ParsePreprocessorOptions(const RecordData &Record,
     PPOpts.MacroIncludes.push_back(ReadString(Record, Idx));
   }
 
+  PPOpts.UsePredefines = Record[Idx++];
   PPOpts.ImplicitPCHInclude = ReadString(Record, Idx);
   PPOpts.ImplicitPTHInclude = ReadString(Record, Idx);
   PPOpts.ObjCXXARCStandardLibrary =

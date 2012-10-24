@@ -203,6 +203,8 @@ public:
                                    bool Complain);
   virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
                                  bool Complain);
+  virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
+                                       bool Complain);
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     StringRef OriginalFileName,
                                     std::string &SuggestedPredefines,
@@ -1209,7 +1211,8 @@ public:
   static bool isAcceptableASTFile(StringRef Filename,
                                   FileManager &FileMgr,
                                   const LangOptions &LangOpts,
-                                  const TargetOptions &TargetOpts);
+                                  const TargetOptions &TargetOpts,
+                                  const PreprocessorOptions &PPOpts);
 
   /// \brief Returns the suggested contents of the predefines buffer,
   /// which contains a (typically-empty) subset of the predefines

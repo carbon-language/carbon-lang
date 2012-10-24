@@ -243,7 +243,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
         // Check whether this is an acceptable AST file.
         if (ASTReader::isAcceptableASTFile(Dir->path(), FileMgr,
                                            CI.getLangOpts(),
-                                           CI.getTargetOpts())) {
+                                           CI.getTargetOpts(),
+                                           CI.getPreprocessorOpts())) {
           for (unsigned I = 0, N = PPOpts.Includes.size(); I != N; ++I) {
             if (PPOpts.Includes[I] == PPOpts.ImplicitPCHInclude) {
               PPOpts.Includes[I] = Dir->path();
