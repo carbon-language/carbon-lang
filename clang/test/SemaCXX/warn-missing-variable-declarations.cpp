@@ -4,6 +4,10 @@
 int vbad1; // expected-warning{{no previous extern declaration for non-static variable 'vbad1'}}
 int vbad2 = 10; // expected-warning{{no previous extern declaration for non-static variable 'vbad2'}}
 
+namespace x {
+  int vbad3; // expected-warning{{no previous extern declaration for non-static variable 'vbad3'}}
+}
+
 // Variable declarations that should not trigger a warning.
 static int vgood1;
 extern int vgood2;
