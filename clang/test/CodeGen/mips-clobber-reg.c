@@ -1,4 +1,5 @@
 // RUN: %clang -target mipsel-unknown-linux -S -o - -emit-llvm %s 
+// REQUIRES: mips-registered-target
 
 /*
     This checks that the frontend will accept both

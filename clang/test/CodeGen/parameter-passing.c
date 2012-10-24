@@ -14,6 +14,8 @@
 // RUN: %clang_cc1 %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o %t
 // RUN: not grep '@g0' %t
 
+// REQUIRES: ppc32-registered-target,x86-registered-target,x86-64-registered-target
+
 typedef _Bool BoolTy;
 typedef int ScalarTy;
 typedef _Complex int ComplexTy;
