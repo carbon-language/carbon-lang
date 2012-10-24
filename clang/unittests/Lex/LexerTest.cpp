@@ -16,6 +16,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Config/config.h"
 
@@ -72,7 +73,8 @@ TEST_F(LexerTest, LexAPI) {
   (void)SourceMgr.createMainFileIDForMemBuffer(buf);
 
   VoidModuleLoader ModLoader;
-  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts, Target.getPtr());
+  HeaderSearch HeaderInfo(new HeaderSearchOptions, FileMgr, Diags, LangOpts, 
+                          Target.getPtr());
   Preprocessor PP(Diags, LangOpts,
                   Target.getPtr(),
                   SourceMgr, HeaderInfo, ModLoader,
