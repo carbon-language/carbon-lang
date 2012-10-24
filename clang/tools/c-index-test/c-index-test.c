@@ -2101,12 +2101,49 @@ static int find_file_refs_at(int argc, const char **argv) {
   return 0;
 }
 
+#define MAX_IMPORTED_ASTFILES 200
+
+typedef struct {
+  char **filenames;
+  unsigned num_files;
+} ImportedASTFilesData;
+
+static ImportedASTFilesData *importedASTs_create() {
+  ImportedASTFilesData *p;
+  p = malloc(sizeof(ImportedASTFilesData));
+  p->filenames = malloc(MAX_IMPORTED_ASTFILES * sizeof(const char *));
+  p->num_files = 0;
+  return p;
+}
+
+static void importedASTs_dispose(ImportedASTFilesData *p) {
+  unsigned i;
+  if (!p)
+    return;
+
+  for (i = 0; i < p->num_files; ++i)
+    free(p->filenames[i]);
+  free(p->filenames);
+  free(p);
+}
+
+static void importedASTS_insert(ImportedASTFilesData *p, const char *file) {
+  unsigned i;
+  assert(p && file);
+  for (i = 0; i < p->num_files; ++i)
+    if (strcmp(file, p->filenames[i]) == 0)
+      return;
+  assert(p->num_files + 1 < MAX_IMPORTED_ASTFILES);
+  p->filenames[p->num_files++] = strdup(file);
+}
+
 typedef struct {
   const char *check_prefix;
   int first_check_printed;
   int fail_for_error;
   int abort;
   const char *main_filename;
+  ImportedASTFilesData *importedASTs;
 } IndexData;
 
 static void printCheck(IndexData *data) {
@@ -2375,6 +2412,12 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
+  if (index_data->importedASTs) {
+    CXString filename = clang_getFileName(info->file);
+    importedASTS_insert(index_data->importedASTs, clang_getCString(filename));
+    clang_disposeString(filename);
+  }
+  
   printf("[importedASTFile]: ");
   printCXIndexFile((CXIdxClientFile)info->file);
   if (info->module) {
@@ -2539,7 +2582,7 @@ static unsigned getIndexOptions(void) {
   return index_opts;
 }
 
-static int index_file(int argc, const char **argv) {
+static int index_file(int argc, const char **argv, int full) {
   const char *check_prefix;
   CXIndex Idx;
   CXIndexAction idxAction;
@@ -2573,6 +2616,10 @@ static int index_file(int argc, const char **argv) {
   index_data.fail_for_error = 0;
   index_data.abort = 0;
   index_data.main_filename = "";
+  index_data.importedASTs = 0;
+  
+  if (full)
+    index_data.importedASTs = importedASTs_create();
 
   index_opts = getIndexOptions();
   idxAction = clang_IndexAction_create(Idx);
@@ -2582,7 +2629,26 @@ static int index_file(int argc, const char **argv) {
                                  getDefaultParsingOptions());
   if (index_data.fail_for_error)
     result = -1;
+  
+  if (full) {
+    CXTranslationUnit TU;
+    unsigned i;
+    
+    for (i = 0; i < index_data.importedASTs->num_files; ++i) {
+      if (!CreateTranslationUnit(Idx, index_data.importedASTs->filenames[i],
+                                 &TU)) {
+        result = -1;
+        goto finished;
+      }
+      result = clang_indexTranslationUnit(idxAction, &index_data,
+                                          &IndexCB,sizeof(IndexCB),
+                                          index_opts, TU);
+      clang_disposeTranslationUnit(TU);
+    }
+  }
 
+finished:
+  importedASTs_dispose(index_data.importedASTs);
   clang_IndexAction_dispose(idxAction);
   clang_disposeIndex(Idx);
   return result;
@@ -2617,6 +2683,7 @@ static int index_tu(int argc, const char **argv) {
     return 1;
   }
   idxAction = 0;
+  TU = 0;
   result = 1;
 
   if (!CreateTranslationUnit(Idx, argv[0], &TU))
@@ -2627,6 +2694,7 @@ static int index_tu(int argc, const char **argv) {
   index_data.fail_for_error = 0;
   index_data.abort = 0;
   index_data.main_filename = "";
+  index_data.importedASTs = 0;
 
   index_opts = getIndexOptions();
   idxAction = clang_IndexAction_create(Idx);
@@ -2638,6 +2706,7 @@ static int index_tu(int argc, const char **argv) {
 
   finished:
   clang_IndexAction_dispose(idxAction);
+  clang_disposeTranslationUnit(TU);
   clang_disposeIndex(Idx);
   
   return result;
@@ -3282,6 +3351,7 @@ static void print_usage(void) {
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
     "       c-index-test -file-refs-at=<site> <compiler arguments>\n"
     "       c-index-test -index-file [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
+    "       c-index-test -index-file-full [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
     "       c-index-test -index-tu [-check-prefix=<FileCheck prefix>] <AST file>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n");
@@ -3339,7 +3409,9 @@ int cindextest_main(int argc, const char **argv) {
   if (argc > 2 && strstr(argv[1], "-file-refs-at=") == argv[1])
     return find_file_refs_at(argc, argv);
   if (argc > 2 && strcmp(argv[1], "-index-file") == 0)
-    return index_file(argc - 2, argv + 2);
+    return index_file(argc - 2, argv + 2, /*full=*/0);
+  if (argc > 2 && strcmp(argv[1], "-index-file-full") == 0)
+    return index_file(argc - 2, argv + 2, /*full=*/1);
   if (argc > 2 && strcmp(argv[1], "-index-tu") == 0)
     return index_tu(argc - 2, argv + 2);
   else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
