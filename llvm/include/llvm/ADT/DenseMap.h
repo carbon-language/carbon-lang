@@ -600,8 +600,7 @@ public:
     unsigned OldNumBuckets = NumBuckets;
     BucketT *OldBuckets = Buckets;
 
-    AtLeast = isPowerOf2_32(AtLeast) ? AtLeast : NextPowerOf2(AtLeast);
-    allocateBuckets(std::max<unsigned>(64, AtLeast));
+    allocateBuckets(std::max<unsigned>(64, NextPowerOf2(AtLeast-1)));
     assert(Buckets);
     if (!OldBuckets) {
       this->BaseT::initEmpty();
@@ -827,10 +826,8 @@ public:
   }
 
   void grow(unsigned AtLeast) {
-    if (AtLeast >= InlineBuckets) {
-      AtLeast = isPowerOf2_32(AtLeast) ? AtLeast : NextPowerOf2(AtLeast);
-      AtLeast = std::max<unsigned>(64, AtLeast);
-    }
+    if (AtLeast >= InlineBuckets)
+      AtLeast = std::max<unsigned>(64, NextPowerOf2(AtLeast-1));
 
     if (Small) {
       if (AtLeast < InlineBuckets)
