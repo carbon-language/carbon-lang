@@ -13,6 +13,7 @@
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Host/Endian.h"
@@ -500,12 +501,66 @@ RegisterContext_x86_64::GetRegisterName(unsigned reg)
 }
 
 bool
-RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info,
-                                          RegisterValue &value)
+RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(GetRegOffset(reg), GetRegSize(reg), value);
+
+    if (reg >= k_first_fpr && reg <= k_last_fpr) {
+        if (!ReadFPR())
+            return false;
+    }
+    else {
+        ProcessMonitor &monitor = GetMonitor();
+        return monitor.ReadRegisterValue(GetRegOffset(reg),GetRegSize(reg), value);
+    }
+
+    if (reg_info->encoding == eEncodingVector) {
+        // Get the target process whose privileged thread was used for the register read.
+        Process *process = CalculateProcess().get();
+        if (process) {
+            if (reg >= fpu_stmm0 && reg <= fpu_stmm7) {
+               value.SetBytes(user.i387.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, process->GetByteOrder());
+               return value.GetType() == RegisterValue::eTypeBytes;
+            }
+            if (reg >= fpu_xmm0 && reg <= fpu_xmm15) {
+                value.SetBytes(user.i387.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, process->GetByteOrder());
+                return value.GetType() == RegisterValue::eTypeBytes;
+            }
+        }
+        return false;
+    }
+
+    // Note that lldb uses slightly different naming conventions from sys/user.h
+    switch (reg)
+    {
+    default:
+        return false;
+    case fpu_dp:
+        value = user.i387.dp;
+        break;
+    case fpu_fcw:
+        value = user.i387.fcw;
+        break;
+    case fpu_fsw:
+        value = user.i387.fsw;
+        break;
+    case fpu_ip:
+        value = user.i387.ip;
+        break;
+    case fpu_fop:
+        value = user.i387.fop;
+        break;
+    case fpu_ftw:
+        value = user.i387.ftw;
+        break;
+    case fpu_mxcsr:
+        value = user.i387.mxcsr;
+        break;
+    case fpu_mxcsrmask:
+        value = user.i387.mxcsrmask;
+        break;
+    }
+    return true;
 }
 
 bool

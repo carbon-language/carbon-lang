@@ -91,6 +91,8 @@ BREAKPOINT_HIT_TWICE = "Breakpoint resolved with hit cout = 2"
 
 BREAKPOINT_HIT_THRICE = "Breakpoint resolved with hit cout = 3"
 
+MISSING_EXPECTED_REGISTERS = "At least one expected register is unavailable."
+
 OBJECT_PRINTED_CORRECTLY = "Object printed correctly"
 
 SOURCE_DISPLAYED_CORRECTLY = "Source code displayed correctly"

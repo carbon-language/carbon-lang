@@ -50,7 +50,8 @@ class RegisterCommandsTestCase(TestBase):
 
         # Test some register-related commands.
 
-        self.runCmd("register read -a")
+        self.expect("register read -a", MISSING_EXPECTED_REGISTERS,
+            substrs = ['registers were unavailable'], matching = False)
         self.runCmd("register read xmm0")
 
         # rdar://problem/10611315
