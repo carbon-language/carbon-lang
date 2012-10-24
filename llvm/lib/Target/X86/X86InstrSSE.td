@@ -5882,6 +5882,8 @@ let Predicates = [HasAVX] in {
             (VPMOVZXDQrm addr:$src)>;
   def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2f64 (scalar_to_vector (loadf64 addr:$src))))))),
             (VPMOVZXDQrm addr:$src)>;
+  def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2i64 (X86vzload addr:$src)))))),
+            (VPMOVZXDQrm addr:$src)>;
 }
 
 let Predicates = [UseSSE41] in {
@@ -5913,6 +5915,8 @@ let Predicates = [UseSSE41] in {
   def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2i64 (scalar_to_vector (loadi64 addr:$src))))))),
             (PMOVZXDQrm addr:$src)>;
   def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2f64 (scalar_to_vector (loadf64 addr:$src))))))),
+            (PMOVZXDQrm addr:$src)>;
+  def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2i64 (X86vzload addr:$src)))))),
             (PMOVZXDQrm addr:$src)>;
 }
 

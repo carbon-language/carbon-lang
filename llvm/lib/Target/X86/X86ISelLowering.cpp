@@ -950,6 +950,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i8,  Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i16, Custom);
+    // As there is no 64-bit GPR available, we need build a special custom
+    // sequence to convert from v2i32 to v2f32.
+    if (!Subtarget->is64Bit())
+      setOperationAction(ISD::UINT_TO_FP,       MVT::v2f32, Custom);
 
     setOperationAction(ISD::FP_EXTEND,          MVT::v2f32, Custom);
     setOperationAction(ISD::FP_ROUND,           MVT::v2f32, Custom);
@@ -11752,6 +11756,22 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       else
         Results.push_back(FIST);
     }
+    return;
+  }
+  case ISD::UINT_TO_FP: {
+    if (N->getOperand(0).getValueType() != MVT::v2i32 &&
+        N->getValueType(0) != MVT::v2f32)
+      return;
+    SDValue ZExtIn = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v2i64,
+                                 N->getOperand(0));
+    SDValue Bias = DAG.getConstantFP(BitsToDouble(0x4330000000000000ULL),
+                                     MVT::f64);
+    SDValue VBias = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2f64, Bias, Bias);
+    SDValue Or = DAG.getNode(ISD::OR, dl, MVT::v2i64, ZExtIn,
+                             DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, VBias));
+    Or = DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Or);
+    SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, Or, VBias);
+    Results.push_back(DAG.getNode(X86ISD::VFPROUND, dl, MVT::v4f32, Sub));
     return;
   }
   case ISD::FP_ROUND: {
