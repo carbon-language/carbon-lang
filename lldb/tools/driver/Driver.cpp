@@ -84,7 +84,7 @@ static OptionDefinition g_options[] =
         "be one of the architectures for which the program was compiled." },
     { LLDB_OPT_SET_3,    true , "file"           , 'f', required_argument, 0,  eArgTypeFilename,
         "Tells the debugger to use the file <filename> as the program to be debugged." },
-    { LLDB_OPT_SET_3,    false, "core"           , 'c', required_argument, 0,  eArgTypePath,
+    { LLDB_OPT_SET_3,    false, "core"           , 'c', required_argument, 0,  eArgTypeFilename,
         "Tells the debugger to use the fullpath to <path> as the core file." },
     { LLDB_OPT_SET_4,    true , "attach-name"    , 'n', required_argument, 0,  eArgTypeProcessName,
         "Tells the debugger to attach to a process with the given name." },
