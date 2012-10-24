@@ -765,11 +765,11 @@ Scalar::UInt(unsigned int fail_value) const
     {
     default:
     case e_void:        break;
-    case e_sint:        return (unsigned int)m_data.sint;
+    case e_sint:         
     case e_uint:        return (unsigned int)m_data.uint;
-    case e_slong:       return (unsigned int)m_data.slong;
+    case e_slong:        
     case e_ulong:       return (unsigned int)m_data.ulong;
-    case e_slonglong:   return (unsigned int)m_data.slonglong;
+    case e_slonglong:    
     case e_ulonglong:   return (unsigned int)m_data.ulonglong;
     case e_float:       return (unsigned int)m_data.flt;
     case e_double:      return (unsigned int)m_data.dbl;
@@ -808,11 +808,11 @@ Scalar::ULong(unsigned long fail_value) const
     {
     default:
     case e_void:        break;
-    case e_sint:        return (unsigned long)m_data.sint;
+    case e_sint:         
     case e_uint:        return (unsigned long)m_data.uint;
-    case e_slong:       return (unsigned long)m_data.slong;
+    case e_slong:        
     case e_ulong:       return (unsigned long)m_data.ulong;
-    case e_slonglong:   return (unsigned long)m_data.slonglong;
+    case e_slonglong:    
     case e_ulonglong:   return (unsigned long)m_data.ulonglong;
     case e_float:       return (unsigned long)m_data.flt;
     case e_double:      return (unsigned long)m_data.dbl;
@@ -902,11 +902,11 @@ Scalar::ULongLong(unsigned long long fail_value) const
     {
     default:
     case e_void:        break;
-    case e_sint:        return (unsigned long long)m_data.sint;
+    case e_sint:        
     case e_uint:        return (unsigned long long)m_data.uint;
-    case e_slong:       return (unsigned long long)m_data.slong;
+    case e_slong:       
     case e_ulong:       return (unsigned long long)m_data.ulong;
-    case e_slonglong:   return (unsigned long long)m_data.slonglong;
+    case e_slonglong:   
     case e_ulonglong:   return (unsigned long long)m_data.ulonglong;
     case e_float:       return (unsigned long long)m_data.flt;
     case e_double:      return (unsigned long long)m_data.dbl;

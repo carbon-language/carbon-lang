@@ -1294,7 +1294,7 @@ ValueObject::GetValueAsUnsigned (uint64_t fail_value, bool *success)
         {
             if (success)
                 *success = true;
-            return scalar.GetRawBits64(fail_value);
+            return scalar.ULongLong(fail_value);
         }
         // fallthrough, otherwise...
     }
@@ -1681,7 +1681,7 @@ ValueObject::SetValueFromCString (const char *value_str, Error& error)
                     Process *process = exe_ctx.GetProcessPtr();
                     if (process)
                     {
-                        addr_t target_addr = m_value.GetScalar().GetRawBits64(LLDB_INVALID_ADDRESS);
+                        addr_t target_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
                         size_t bytes_written = process->WriteScalarToMemory (target_addr, 
                                                                              new_scalar, 
                                                                              byte_size, 
