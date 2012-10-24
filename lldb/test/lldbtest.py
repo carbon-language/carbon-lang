@@ -32,6 +32,7 @@ $
 """
 
 import os, sys, traceback
+import os.path
 import re
 from subprocess import *
 import StringIO
@@ -434,6 +435,11 @@ class Base(unittest2.TestCase):
         # Fail fast if 'mydir' attribute is not overridden.
         if not cls.mydir or len(cls.mydir) == 0:
             raise Exception("Subclasses must override the 'mydir' attribute.")
+
+        # Fail fast if 'mydir' is not an existing directory
+        if not os.path.exists(cls.mydir) or not os.path.isdir(cls.mydir):
+            raise Exception("Subclasses must define 'mydir' to be an existing directory.")
+
         # Save old working directory.
         cls.oldcwd = os.getcwd()
 

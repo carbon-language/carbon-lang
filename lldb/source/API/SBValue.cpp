@@ -1248,7 +1248,7 @@ SBValue::GetValueAsSigned(SBError& error, int64_t fail_value)
                 Mutex::Locker api_locker (target_sp->GetAPIMutex());
                 Scalar scalar;
                 if (value_sp->ResolveValue (scalar))
-                    return scalar.GetRawBits64(fail_value);
+                    return scalar.SLongLong(fail_value);
                 else
                     error.SetErrorString("could not get value");
             }
@@ -1318,7 +1318,7 @@ SBValue::GetValueAsSigned(int64_t fail_value)
                 Mutex::Locker api_locker (target_sp->GetAPIMutex());
                 Scalar scalar;
                 if (value_sp->ResolveValue (scalar))
-                    return scalar.GetRawBits64(fail_value);
+                    return scalar.SLongLong(fail_value);
             }
         }
     }
