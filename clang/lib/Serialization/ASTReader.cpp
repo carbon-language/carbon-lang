@@ -2007,6 +2007,14 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
     }
 
+    case DIAGNOSTIC_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
+      if (Listener && &F == *ModuleMgr.begin() &&
+          ParseDiagnosticOptions(Record, Complain, *Listener) &&
+          !DisableValidation)
+        return ConfigurationMismatch;
+      break;
+    }
     case ORIGINAL_FILE:
       F.OriginalSourceFileID = FileID::get(Record[0]);
       F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
@@ -3466,6 +3474,11 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
           return false;
         break;
 
+      case DIAGNOSTIC_OPTIONS:
+        if (ParseDiagnosticOptions(Record, false, Validator))
+          return false;
+        break;
+
       default:
         // No other validation to perform.
         break;
@@ -3804,6 +3817,22 @@ bool ASTReader::ParseTargetOptions(const RecordData &Record,
   }
 
   return Listener.ReadTargetOptions(TargetOpts, Complain);
+}
+
+bool ASTReader::ParseDiagnosticOptions(const RecordData &Record, bool Complain,
+                                       ASTReaderListener &Listener) {
+  DiagnosticOptions DiagOpts;
+  unsigned Idx = 0;
+#define DIAGOPT(Name, Bits, Default) DiagOpts.Name = Record[Idx++];
+#define ENUM_DIAGOPT(Name, Type, Bits, Default) \
+  DiagOpts.set##Name(static_cast<Type>(Record[Idx++]));
+#include "clang/Basic/DiagnosticOptions.def"
+
+  for (unsigned N = Record[Idx++]; N; --N) {
+    DiagOpts.Warnings.push_back(ReadString(Record, Idx));
+  }
+
+  return Listener.ReadDiagnosticOptions(DiagOpts, Complain);
 }
 
 std::pair<ModuleFile *, unsigned>

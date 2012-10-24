@@ -11,7 +11,9 @@
 // must define the DIAGOPT macro to make use of this information.
 // Optionally, the user may also define ENUM_DIAGOPT (for options
 // that have enumeration type and VALUE_DIAGOPT (for options that
-// describe a value rather than a flag).
+// describe a value rather than a flag). The SEMANTIC_* variants of these macros
+// indicate options that affect the processing of the program, rather than
+// simply the output.
 //
 //===----------------------------------------------------------------------===//
 #ifndef DIAGOPT
@@ -28,7 +30,21 @@ DIAGOPT(Name, Bits, Default)
 DIAGOPT(Name, Bits, Default)
 #endif
 
-DIAGOPT(IgnoreWarnings, 1, 0)   /// -w
+#ifndef SEMANTIC_DIAGOPT
+#  define SEMANTIC_DIAGOPT(Name, Bits, Default) DIAGOPT(Name, Bits, Default)
+#endif
+
+#ifndef SEMANTIC_VALUE_DIAGOPT
+#  define SEMANTIC_VALUE_DIAGOPT(Name, Bits, Default) \
+     VALUE_DIAGOPT(Name, Bits, Default)
+#endif
+
+#ifndef SEMANTIC_ENUM_DIAGOPT
+#  define SEMANTIC_ENUM_DIAGOPT(Name, Type, Bits, Default) \
+     ENUM_DIAGOPT(Name, Type, Bits, Default)
+#endif
+
+SEMANTIC_DIAGOPT(IgnoreWarnings, 1, 0)   /// -w
 DIAGOPT(NoRewriteMacros, 1, 0)  /// -Wno-rewrite-macros
 DIAGOPT(Pedantic, 1, 0)         /// -pedantic
 DIAGOPT(PedanticErrors, 1, 0)   /// -pedantic-errors
@@ -50,12 +66,27 @@ DIAGOPT(ShowColors, 1, 0)       /// Show diagnostics with ANSI color sequences.
 ENUM_DIAGOPT(ShowOverloads, OverloadsShown, 1,
              Ovl_All)    /// Overload candidates to show.
 DIAGOPT(VerifyDiagnostics, 1, 0) /// Check that diagnostics match the expected
-                              /// diagnostics, indicated by markers in the
-                              /// input source file.
+                                 /// diagnostics, indicated by markers in the
+                                 /// input source file.
 
 DIAGOPT(ElideType, 1, 0)         /// Elide identical types in template diffing
 DIAGOPT(ShowTemplateTree, 1, 0)  /// Print a template tree when diffing
 
+VALUE_DIAGOPT(ErrorLimit, 32, 0)           /// Limit # errors emitted.
+/// Limit depth of macro expansion backtrace.
+VALUE_DIAGOPT(MacroBacktraceLimit, 32, DefaultMacroBacktraceLimit)
+/// Limit depth of instantiation backtrace.
+VALUE_DIAGOPT(TemplateBacktraceLimit, 32, DefaultTemplateBacktraceLimit)
+/// Limit depth of constexpr backtrace.
+VALUE_DIAGOPT(ConstexprBacktraceLimit, 32, DefaultConstexprBacktraceLimit)
+
+VALUE_DIAGOPT(TabStop, 32, DefaultTabStop) /// The distance between tab stops.
+/// Column limit for formatting message diagnostics, or 0 if unused.
+VALUE_DIAGOPT(MessageLength, 32, 0)
+
 #undef DIAGOPT
 #undef ENUM_DIAGOPT
 #undef VALUE_DIAGOPT
+#undef SEMANTIC_DIAGOPT
+#undef SEMANTIC_ENUM_DIAGOPT
+#undef SEMANTIC_

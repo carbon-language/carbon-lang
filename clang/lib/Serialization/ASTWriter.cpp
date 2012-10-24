@@ -776,6 +776,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(ORIGINAL_FILE);
   RECORD(ORIGINAL_PCH_DIR);
   RECORD(INPUT_FILE_OFFSETS);
+  RECORD(DIAGNOSTIC_OPTIONS);
 
   BLOCK(INPUT_FILES_BLOCK);
   RECORD(INPUT_FILE);
@@ -1067,6 +1068,21 @@ void ASTWriter::WriteControlBlock(ASTContext &Context, StringRef isysroot,
     AddString(TargetOpts.Features[I], Record);
   }
   Stream.EmitRecord(TARGET_OPTIONS, Record);
+
+  // Diagnostic options.
+  Record.clear();
+  const DiagnosticOptions &DiagOpts
+    = Context.getDiagnostics().getDiagnosticOptions();
+#define DIAGOPT(Name, Bits, Default) Record.push_back(DiagOpts.Name);
+#define ENUM_DIAGOPT(Name, Type, Bits, Default) \
+  Record.push_back(static_cast<unsigned>(DiagOpts.get##Name()));
+#include "clang/Basic/DiagnosticOptions.def"
+  Record.push_back(DiagOpts.Warnings.size());
+  for (unsigned I = 0, N = DiagOpts.Warnings.size(); I != N; ++I)
+    AddString(DiagOpts.Warnings[I], Record);
+  // Note: we don't serialize the log or serialization file names, because they
+  // are generally transient files and will almost always be overridden.
+  Stream.EmitRecord(DIAGNOSTIC_OPTIONS, Record);
 
   // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();

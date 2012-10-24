@@ -261,7 +261,10 @@ namespace clang {
 
       /// \brief Offsets into the input-files block where input files
       /// reside.
-      INPUT_FILE_OFFSETS = 7
+      INPUT_FILE_OFFSETS = 7,
+
+      /// \brief Record code for the diagnostic options table.
+      DIAGNOSTIC_OPTIONS = 8
     };
 
     /// \brief Record types that occur within the input-files block

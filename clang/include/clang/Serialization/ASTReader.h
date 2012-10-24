@@ -63,6 +63,7 @@ class ASTUnit; // FIXME: Layering violation and egregious hack.
 class Attr;
 class Decl;
 class DeclContext;
+class DiagnosticOptions;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXConstructorDecl;
@@ -117,6 +118,15 @@ public:
   /// otherwise.
   virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
                                  bool Complain) {
+    return false;
+  }
+
+  /// \brief Receives the diagnostic options.
+  ///
+  /// \returns true to indicate the diagnostic options are invalid, or false
+  /// otherwise.
+  virtual bool ReadDiagnosticOptions(const DiagnosticOptions &DiagOpts,
+                                     bool Complain) {
     return false;
   }
 
@@ -913,6 +923,8 @@ private:
                                    ASTReaderListener &Listener);
   static bool ParseTargetOptions(const RecordData &Record, bool Complain,
                                  ASTReaderListener &Listener);
+  static bool ParseDiagnosticOptions(const RecordData &Record, bool Complain,
+                                     ASTReaderListener &Listener);
 
   struct RecordLocation {
     RecordLocation(ModuleFile *M, uint64_t O)

@@ -30,6 +30,12 @@ class DiagnosticOptions : public llvm::RefCountedBase<DiagnosticOptions>{
 public:
   enum TextDiagnosticFormat { Clang, Msvc, Vi };
 
+  // Default values.
+  enum { DefaultTabStop = 8, MaxTabStop = 100,
+    DefaultMacroBacktraceLimit = 6,
+    DefaultTemplateBacktraceLimit = 10,
+    DefaultConstexprBacktraceLimit = 10 };
+
   // Define simple diagnostic options (with no accessors).
 #define DIAGOPT(Name, Bits, Default) unsigned Name : Bits;
 #define ENUM_DIAGOPT(Name, Type, Bits, Default)
@@ -43,21 +49,6 @@ protected:
 #include "clang/Basic/DiagnosticOptions.def"
 
 public:
-  unsigned ErrorLimit;           /// Limit # errors emitted.
-  unsigned MacroBacktraceLimit;  /// Limit depth of macro expansion backtrace.
-  unsigned TemplateBacktraceLimit; /// Limit depth of instantiation backtrace.
-  unsigned ConstexprBacktraceLimit; /// Limit depth of constexpr backtrace.
-
-  /// The distance between tab stops.
-  unsigned TabStop;
-  enum { DefaultTabStop = 8, MaxTabStop = 100, 
-         DefaultMacroBacktraceLimit = 6,
-         DefaultTemplateBacktraceLimit = 10,
-         DefaultConstexprBacktraceLimit = 10 };
-
-  /// Column limit for formatting message diagnostics, or 0 if unused.
-  unsigned MessageLength;
-
   /// If non-empty, a file to log extended build information to, for development
   /// testing and analysis.
   std::string DumpBuildInformation;
@@ -84,15 +75,10 @@ public:
 #define DIAGOPT(Name, Bits, Default) Name = Default;
 #define ENUM_DIAGOPT(Name, Type, Bits, Default) set##Name(Default);
 #include "clang/Basic/DiagnosticOptions.def"
-
-    MessageLength = 0;
-    TabStop = DefaultTabStop;
-    ErrorLimit = 0;
-    TemplateBacktraceLimit = DefaultTemplateBacktraceLimit;
-    MacroBacktraceLimit = DefaultMacroBacktraceLimit;
-    ConstexprBacktraceLimit = DefaultConstexprBacktraceLimit;
   }
 };
+
+typedef DiagnosticOptions::TextDiagnosticFormat TextDiagnosticFormat;
 
 }  // end namespace clang
 
