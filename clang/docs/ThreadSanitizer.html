@@ -37,9 +37,8 @@ Typical slowdown introduced by ThreadSanitizer is <b>5x-15x</b> (TODO: these num
 approximate so far).
 
 <h2 id="howtobuild">How to build</h2>
-Follow the <a href="../get_started.html">clang build instructions</a>. <BR>
-Note: CMake build does not work yet.
-See <a href="http://llvm.org/bugs/show_bug.cgi?id=12272">bug 12272</a>.
+Follow the <a href="../get_started.html">clang build instructions</a>.
+CMake build is supported.<BR>
 
 <h2 id="platforms">Supported Platforms</h2>
 ThreadSanitizer is supported on Linux x86_64 (tested on Ubuntu 10.04). <BR>
@@ -111,7 +110,9 @@ This means that tools like <tt>ulimit</tt> may not work as usually expected.
 ThreadSanitizer is in alpha stage.
 It is known to work on large C++ programs using pthreads, but we do not promise
 anything (yet). <BR>
-C++11 threading is not yet supported.
+C++11 threading is not yet supported. <BR>
+The test suite is integrated into CMake build and can be run with
+<tt>make check-tsan</tt> command. <BR>
 
 We are actively working on enhancing the tool -- stay tuned.
 Any help, especially in the form of minimized standalone tests is more than welcome.
