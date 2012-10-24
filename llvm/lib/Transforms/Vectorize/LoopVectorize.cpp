@@ -18,10 +18,13 @@
 //
 // This pass has three parts:
 // 1. The main loop pass that drives the different parts.
-// 2. LoopVectorizationLegality - A helper class that checks for the legality
+// 2. LoopVectorizationLegality - A unit that checks for the legality
 //    of the vectorization.
-// 3. SingleBlockLoopVectorizer - A helper class that performs the actual
+// 3. SingleBlockLoopVectorizer - A unit that performs the actual
 //    widening of instructions.
+// 4. LoopVectorizationCostModel - A unit that checks for the profitability
+//    of vectorization. It decides on the optimal vector width, which
+//    can be one, if vectorization is not profitable.
 //===----------------------------------------------------------------------===//
 //
 // The reduction-variable vectorization is based on the paper:
@@ -51,13 +54,14 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -67,13 +71,14 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-DefaultVectorizationFactor("default-loop-vectorize-width",
-                          cl::init(4), cl::Hidden,
-                          cl::desc("Set the default loop vectorization width"));
+VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
+          cl::desc("Set the default vectorization width. Zero is autoselect."));
+
 namespace {
 
-// Forward declaration.
+// Forward declarations.
 class LoopVectorizationLegality;
+class LoopVectorizationCostModel;
 
 /// SingleBlockLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
@@ -229,11 +234,10 @@ public:
   /// of the reductions that were found in the loop.
   typedef DenseMap<PHINode*, ReductionDescriptor> ReductionList;
 
-  /// Returns the maximum vectorization factor that we *can* use to vectorize
-  /// this loop. This does not mean that it is profitable to vectorize this
-  /// loop, only that it is legal to do so. This may be a large number. We
-  /// can vectorize to any SIMD width below this number.
-  unsigned getLoopMaxVF();
+  /// Returns true if it is legal to vectorize this loop.
+  /// This does not mean that it is profitable to vectorize this
+  /// loop, only that it is legal to do so.
+  bool canVectorize();
 
   /// Returns the Induction variable.
   PHINode *getInduction() {return Induction;}
@@ -286,6 +290,49 @@ private:
   SmallPtrSet<Value*, 4> AllowedExit;
 };
 
+/// LoopVectorizationCostModel - estimates the expected speedups due to
+/// vectorization.
+/// In many cases vectorization is not profitable. This can happen because
+/// of a number of reasons. In this class we mainly attempt to predict
+/// the expected speedup/slowdowns due to the supported instruction set.
+/// We use the VectorTargetTransformInfo to query the different backends
+/// for the cost of different operations.
+class LoopVectorizationCostModel {
+public:
+  /// C'tor.
+  LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl,
+                             LoopVectorizationLegality *Leg,
+                             const VectorTargetTransformInfo *Vtti):
+  TheLoop(Lp), SE(Se), DL(Dl), Legal(Leg), VTTI(Vtti) { }
+
+  /// Returns the most profitable vectorization factor for the loop that is
+  /// smaller or equal to the VF argument. This method checks every power
+  /// of two up to VF.
+  unsigned findBestVectorizationFactor(unsigned VF = 4);
+
+private:
+  /// Returns the expected execution cost. The unit of the cost does
+  /// not matter because we use the 'cost' units to compare different
+  /// vector widths. The cost that is returned is *not* normalized by
+  /// the factor width.
+  unsigned expectedCost(unsigned VF);
+
+  /// Returns the execution time cost of an instruction for a given vector
+  /// width. Vector width of one means scalar.
+  unsigned getInstructionCost(Instruction *I, unsigned VF);
+
+  /// The loop that we evaluate.
+  Loop *TheLoop;
+  /// Scev analysis.
+  ScalarEvolution *SE;
+  /// DataLayout analysis.
+  DataLayout *DL;
+  /// Vectorization legality.
+  LoopVectorizationLegality *Legal;
+  /// Vector target information.
+  const VectorTargetTransformInfo *VTTI;
+};
+
 struct LoopVectorize : public LoopPass {
   static char ID; // Pass identification, replacement for typeid
 
@@ -296,6 +343,7 @@ struct LoopVectorize : public LoopPass {
   ScalarEvolution *SE;
   DataLayout *DL;
   LoopInfo *LI;
+  TargetTransformInfo *TTI;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -305,25 +353,42 @@ struct LoopVectorize : public LoopPass {
     SE = &getAnalysis<ScalarEvolution>();
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
+    TTI = getAnalysisIfAvailable<TargetTransformInfo>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
 
     // Check if it is legal to vectorize the loop.
     LoopVectorizationLegality LVL(L, SE, DL);
-    unsigned MaxVF = LVL.getLoopMaxVF();
-
-    // Check that we can vectorize this loop using the chosen vectorization
-    // width.
-    if (MaxVF < DefaultVectorizationFactor) {
-      DEBUG(dbgs() << "LV: non-vectorizable MaxVF ("<< MaxVF << ").\n");
+    if (!LVL.canVectorize()) {
+      DEBUG(dbgs() << "LV: Not vectorizing.\n");
       return false;
     }
 
-    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< MaxVF << ").\n");
+    // Select the preffered vectorization factor.
+    unsigned VF = 1;
+    if (VectorizationFactor == 0) {
+      const VectorTargetTransformInfo *VTTI = 0;
+      if (TTI)
+        VTTI = TTI->getVectorTargetTransformInfo();
+      // Use the cost model.
+      LoopVectorizationCostModel CM(L, SE, DL, &LVL, VTTI);
+      VF = CM.findBestVectorizationFactor();
+
+      if (VF == 1) {
+        DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
+        return false;
+      }
+
+    } else {
+      // Use the user command flag.
+      VF = VectorizationFactor;
+    }
+
+    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ").\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
-    SingleBlockLoopVectorizer LB(L, SE, LI, &LPM, DefaultVectorizationFactor);
+    SingleBlockLoopVectorizer LB(L, SE, LI, &LPM, VF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -656,6 +721,13 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
 
 void
 SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
+  //===------------------------------------------------===//
+  //
+  // Notice: any optimization or new instruction that go
+  // into the code below should be also be implemented in
+  // the cost-model.
+  //
+  //===------------------------------------------------===//
   typedef SmallVector<PHINode*, 4> PhiVector;
   BasicBlock &BB = *OrigLoop->getHeader();
   Constant *Zero = ConstantInt::get(
@@ -957,18 +1029,18 @@ void SingleBlockLoopVectorizer::cleanup() {
   SE->forgetLoop(OrigLoop);
 }
 
-unsigned LoopVectorizationLegality::getLoopMaxVF() {
+bool LoopVectorizationLegality::canVectorize() {
   if (!TheLoop->getLoopPreheader()) {
     assert(false && "No preheader!!");
     DEBUG(dbgs() << "LV: Loop not normalized." << "\n");
-    return  1;
+    return  false;
   }
 
   // We can only vectorize single basic block loops.
   unsigned NumBlocks = TheLoop->getNumBlocks();
   if (NumBlocks != 1) {
     DEBUG(dbgs() << "LV: Too many blocks:" << NumBlocks << "\n");
-    return 1;
+    return false;
   }
 
   // We need to have a loop header.
@@ -978,22 +1050,22 @@ unsigned LoopVectorizationLegality::getLoopMaxVF() {
   // Go over each instruction and look at memory deps.
   if (!canVectorizeBlock(*BB)) {
     DEBUG(dbgs() << "LV: Can't vectorize this loop header\n");
-    return 1;
+    return false;
   }
 
   // ScalarEvolution needs to be able to find the exit count.
   const SCEV *ExitCount = SE->getExitCount(TheLoop, BB);
   if (ExitCount == SE->getCouldNotCompute()) {
     DEBUG(dbgs() << "LV: SCEV could not compute the loop exit count.\n");
-    return 1;
+    return false;
   }
 
   DEBUG(dbgs() << "LV: We can vectorize this loop!\n");
 
   // Okay! We can vectorize. At this point we don't have any other mem analysis
-  // which may limit our maximum vectorization factor, so just return the
-  // maximum SIMD size.
-  return DefaultVectorizationFactor;
+  // which may limit our maximum vectorization factor, so just return true with
+  // no restrictions.
+  return true;
 }
 
 bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
@@ -1322,6 +1394,177 @@ bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   }
   return true;
 }
+
+unsigned
+LoopVectorizationCostModel::findBestVectorizationFactor(unsigned VF) {
+  if (!VTTI) {
+    DEBUG(dbgs() << "LV: No vector target information. Not vectorizing. \n");
+    return 1;
+  }
+
+  float Cost = expectedCost(1);
+  unsigned Width = 1;
+  DEBUG(dbgs() << "LV: Scalar loop costs: "<< (int)Cost << ".\n");
+  for (unsigned i=2; i <= VF; i*=2) {
+    // Notice that the vector loop needs to be executed less times, so
+    // we need to divide the cost of the vector loops by the width of
+    // the vector elements.
+    float VectorCost = expectedCost(i) / (float)i;
+    DEBUG(dbgs() << "LV: Vector loop of width "<< i << " costs: " <<
+          (int)VectorCost << ".\n");
+    if (VectorCost < Cost) {
+      Cost = VectorCost;
+      Width = i;
+    }
+  }
+
+  DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
+  return Width;
+}
+
+unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
+  // We can only estimate the cost of single basic block loops.
+  assert(1 == TheLoop->getNumBlocks() && "Too many blocks in loop");
+
+  BasicBlock *BB = TheLoop->getHeader();
+  unsigned Cost = 0;
+
+  // For each instruction in the old loop.
+  for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+    Instruction *Inst = it;
+    Cost += getInstructionCost(Inst, VF);
+  }
+
+  // Return the cost divided by VF, because we will be executing
+  // less iterations of the vector form.
+  return Cost;
+}
+
+unsigned
+LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
+  assert(VTTI && "Invalid vector target transformation info");
+  switch (I->getOpcode()) {
+    case Instruction::Br: {
+      return VTTI->getInstrCost(I->getOpcode());
+    }
+    case Instruction::PHI:
+      // PHIs are handled the same as the binary instructions below.
+    case Instruction::Add:
+    case Instruction::FAdd:
+    case Instruction::Sub:
+    case Instruction::FSub:
+    case Instruction::Mul:
+    case Instruction::FMul:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::FDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor: {
+      Type *VTy = VectorType::get(I->getType(), VF);
+          return VTTI->getInstrCost(I->getOpcode(), VTy);
+    }
+    case Instruction::Select: {
+      SelectInst *SI = cast<SelectInst>(I);
+      Type *VTy = VectorType::get(I->getType(), VF);
+      const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
+      bool ScalarCond = (SE->isLoopInvariant(CondSCEV, TheLoop));
+      Type *CondTy = SI->getCondition()->getType();
+        if (ScalarCond)
+          CondTy = VectorType::get(CondTy, VF);
+
+      return VTTI->getInstrCost(I->getOpcode(), VTy, CondTy);
+    }
+    case Instruction::ICmp:
+    case Instruction::FCmp: {
+      Type *VTy = VectorType::get(I->getOperand(0)->getType(), VF);
+      return VTTI->getInstrCost(I->getOpcode(), VTy);
+    }
+    case Instruction::Store: {
+      StoreInst *SI = cast<StoreInst>(I);
+      Type *VTy = VectorType::get(SI->getValueOperand()->getType(), VF);
+
+      // Scalarized stores.
+      if (!Legal->isConsecutiveGep(SI->getPointerOperand())) {
+        unsigned Cost = 0;
+        unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement, VTy);
+        // The cost of extracting from the vector value.
+        Cost += VF * ExtCost;
+        // The cost of the scalar stores.
+        Cost += VF * VTTI->getInstrCost(I->getOpcode(), VTy->getScalarType());
+        return Cost;
+      }
+
+      // Wide stores.
+      return VTTI->getMemoryOpCost(I->getOpcode(), VTy, SI->getAlignment(),
+                                   SI->getPointerAddressSpace());
+    }
+    case Instruction::Load: {
+      LoadInst *LI = cast<LoadInst>(I);
+      Type *VTy = VectorType::get(I->getType(), VF);
+
+      // Scalarized loads.
+      if (!Legal->isConsecutiveGep(LI->getPointerOperand())) {
+        unsigned Cost = 0;
+        unsigned InCost = VTTI->getInstrCost(Instruction::InsertElement, VTy);
+        // The cost of inserting the loaded value into the result vector.
+        Cost += VF * InCost;
+        // The cost of the scalar stores.
+        Cost += VF * VTTI->getInstrCost(I->getOpcode(), VTy->getScalarType());
+        return Cost;
+      }
+
+      // Wide loads.
+      return VTTI->getMemoryOpCost(I->getOpcode(), VTy, LI->getAlignment(),
+                                   LI->getPointerAddressSpace());
+    }
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+    case Instruction::FPExt:
+    case Instruction::PtrToInt:
+    case Instruction::IntToPtr:
+    case Instruction::SIToFP:
+    case Instruction::UIToFP:
+    case Instruction::Trunc:
+    case Instruction::FPTrunc:
+    case Instruction::BitCast: {
+      Type *SrcTy = VectorType::get(I->getOperand(0)->getType(), VF);
+      Type *DstTy = VectorType::get(I->getType(), VF);
+      return VTTI->getInstrCost(I->getOpcode(), DstTy, SrcTy);
+    }
+    default: {
+      // We are scalarizing the instruction. Return the cost of the scalar
+      // instruction, plus the cost of insert and extract into vector
+      // elements, times the vector width.
+      unsigned Cost = 0;
+      Type *Ty = I->getType();
+
+      if (!Ty->isVoidTy()) {
+        Type *VTy = VectorType::get(Ty, VF);
+        unsigned InsCost = VTTI->getInstrCost(Instruction::InsertElement, VTy);
+        unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement, VTy);
+        Cost += VF * (InsCost + ExtCost);
+      }
+
+      /// We don't have any information on the scalar instruction, but maybe
+      /// the target has.
+      /// TODO: This may be a target-specific intrinsic.
+      /// Need to add API for that.
+      Cost += VF * VTTI->getInstrCost(I->getOpcode(), Ty);
+
+      return Cost;
+    }
+  }// end of switch.
+}
+
 
 } // namespace
 

@@ -1,4 +1,4 @@
-; RUN: opt < %s  -loop-vectorize -dce
+; RUN: opt < %s  -loop-vectorize -force-vector-width=4 -dce
 
 ; Check that we don't fall into an infinite loop.
 define void @test() nounwind {
