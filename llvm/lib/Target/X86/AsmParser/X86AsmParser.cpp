@@ -60,6 +60,8 @@ private:
   X86Operand *ParseIntelBracExpression(unsigned SegReg, unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
+  const MCExpr *ParseIntelDotOperator(const MCExpr *Disp);
+
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
 
@@ -742,6 +744,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   Parser.Lex();
   End = Tok.getLoc();
 
+  if (Tok.getString().startswith("."))
+    Disp = ParseIntelDotOperator(Disp);
+
+  End = Tok.getLoc();
+
   // handle [-42]
   if (!BaseReg && !IndexReg)
     return X86Operand::CreateMem(Disp, Start, End, Size);
@@ -799,6 +806,33 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
     // get the matching correct in some cases.
     return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
                                  /*Scale*/1, Start, End, Size, NeedSizeDir);
+}
+
+/// Parse the '.' operator.
+const MCExpr *X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp) {
+  AsmToken Tok = *&Parser.getTok();
+
+  // Drop the '.'.
+  StringRef DotDispStr = Tok.getString().drop_front(1);
+
+  Lex(); // Eat .field.
+
+  // .Imm gets lexed as a real.
+  if (Tok.is(AsmToken::Real)) {
+    APInt DotDisp;
+    DotDispStr.getAsInteger(10, DotDisp);
+    uint64_t DotDispVal = DotDisp.getZExtValue();
+
+    // Special case zero dot displacement.
+    if (!DotDispVal) return Disp;
+
+    // FIXME: Handle non-constant expressions.
+    if (const MCConstantExpr *OrigDisp = dyn_cast<MCConstantExpr>(Disp)) {
+      uint64_t OrigDispVal = OrigDisp->getValue();
+      return MCConstantExpr::Create(OrigDispVal + DotDispVal, getContext());
+    }
+  }
+  return Disp;
 }
 
 /// Parse the 'offset' operator.  This operator is used to specify the
