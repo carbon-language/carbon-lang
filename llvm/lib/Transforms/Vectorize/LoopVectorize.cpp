@@ -777,7 +777,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         Gep2->setOperand(NumOperands - 1, LastIndex);
         Ptr = Builder.Insert(Gep2);
-        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo(Ptr->getType()));
+        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
         Value *Val = getVectorValue(SI->getValueOperand());
         Builder.CreateStore(Val, Ptr)->setAlignment(Alignment);
         break;
@@ -806,7 +806,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
         Gep2->setOperand(NumOperands - 1, LastIndex);
         Ptr = Builder.Insert(Gep2);
-        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo(Ptr->getType()));
+        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
         LI = Builder.CreateLoad(Ptr);
         LI->setAlignment(Alignment);
         // Use this vector value for all users of the load.

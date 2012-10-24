@@ -134,8 +134,7 @@ void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
   // types.
   Type *GlobalDtorElems[2] = {
     Type::getInt32Ty(Mod->getContext()),
-    FunctionType::get(Type::getVoidTy(Mod->getContext()), false)
-      ->getPointerTo()
+    FunctionType::get(Type::getVoidTy(Mod->getContext()), false)->getPointerTo()
   };
   StructType *GlobalDtorElemTy =
       StructType::get(Mod->getContext(), GlobalDtorElems, false);

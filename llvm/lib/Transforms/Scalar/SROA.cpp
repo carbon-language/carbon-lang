@@ -2763,9 +2763,9 @@ private:
                               : II.getRawDest()->getType();
     if (!EmitMemCpy) {
       if (IsVectorElement)
-        OtherPtrTy = VecTy->getElementType()->getPointerTo(OtherPtrTy);
+        OtherPtrTy = VecTy->getElementType()->getPointerTo();
       else if (IntTy && !IsWholeAlloca)
-        OtherPtrTy = SubIntTy->getPointerTo(OtherPtrTy);
+        OtherPtrTy = SubIntTy->getPointerTo();
       else
         OtherPtrTy = NewAI.getType();
     }

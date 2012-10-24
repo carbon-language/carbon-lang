@@ -434,8 +434,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
     if (ArrayType *ATy = dyn_cast<ArrayType>(GV.getType())) {
       StructType *STy = dyn_cast<StructType>(ATy->getElementType());
       PointerType *FuncPtrTy =
-          FunctionType::get(Type::getVoidTy(*Context), false)
-          ->getPointerTo(GV.getType());
+          FunctionType::get(Type::getVoidTy(*Context), false)->getPointerTo();
       Assert1(STy && STy->getNumElements() == 2 &&
               STy->getTypeAtIndex(0u)->isIntegerTy(32) &&
               STy->getTypeAtIndex(1) == FuncPtrTy,

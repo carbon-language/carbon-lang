@@ -1268,7 +1268,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   llvm::Value *unwindExceptionClass =
     builder.CreateLoad(builder.CreateStructGEP(
              builder.CreatePointerCast(unwindException,
-                                       ourUnwindExceptionType->getPointerTo(0)),
+                                       ourUnwindExceptionType->getPointerTo()),
                                                0));
 
   // Branch to the externalExceptionBlock if the exception is foreign or

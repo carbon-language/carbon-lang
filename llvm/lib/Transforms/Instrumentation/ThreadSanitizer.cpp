@@ -375,7 +375,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     const size_t ByteSize = 1 << Idx;
     const size_t BitSize = ByteSize * 8;
     Type *Ty = Type::getIntNTy(IRB.getContext(), BitSize);
-    Type *PtrTy = Ty->getPointerTo(Addr->getType());
+    Type *PtrTy = Ty->getPointerTo();
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      createOrdering(&IRB, LI->getOrdering())};
     CallInst *C = CallInst::Create(TsanAtomicLoad[Idx],
@@ -390,7 +390,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     const size_t ByteSize = 1 << Idx;
     const size_t BitSize = ByteSize * 8;
     Type *Ty = Type::getIntNTy(IRB.getContext(), BitSize);
-    Type *PtrTy = Ty->getPointerTo(Addr->getType());
+    Type *PtrTy = Ty->getPointerTo();
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      IRB.CreateIntCast(SI->getValueOperand(), Ty, false),
                      createOrdering(&IRB, SI->getOrdering())};
