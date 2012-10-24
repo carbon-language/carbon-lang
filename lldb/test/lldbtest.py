@@ -417,8 +417,18 @@ class Base(unittest2.TestCase):
     accomplish things.
     
     """
-    # The concrete subclass should override this attribute.
-    mydir = None
+    mydir_ = None
+
+    @classmethod
+    def mydir_get(cls):
+        return cls.mydir_
+
+    @classmethod
+    def mydir_set(cls,val):
+        print "mydir_set"
+        cls.mydir_ = val
+
+    Base.mydir = property(mydir_get,mydir_set)
 
     # Keep track of the old current working directory.
     oldcwd = None
@@ -438,10 +448,6 @@ class Base(unittest2.TestCase):
         if not cls.mydir or len(cls.mydir) == 0:
             raise Exception("Subclasses must override the 'mydir' attribute.")
 
-        # Fail fast if 'mydir' is not an existing directory
-        if not os.path.exists(cls.mydir) or not os.path.isdir(cls.mydir):
-            raise Exception("Subclasses must define 'mydir' to be an existing directory.")
-
         # Save old working directory.
         cls.oldcwd = os.getcwd()
 
@@ -451,6 +457,7 @@ class Base(unittest2.TestCase):
             if traceAlways:
                 print >> sys.stderr, "Change dir to:", os.path.join(os.environ["LLDB_TEST"], cls.mydir)
             os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
+            print "I chdired"
 
     @classmethod
     def tearDownClass(cls):

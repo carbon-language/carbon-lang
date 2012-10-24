@@ -9,7 +9,7 @@ from lldbtest import *
 
 class ExprCommandCallFunctionTestCase(TestBase):
 
-    mydir = os.path.join("expression_command", "call-function")
+    mydir = os.path.join("expressioa_command", "call-function")
 
     def setUp(self):
         # Call super's setUp().
