@@ -417,18 +417,9 @@ class Base(unittest2.TestCase):
     accomplish things.
     
     """
-    mydir_ = None
 
-    @classmethod
-    def mydir_get(cls):
-        return cls.mydir_
-
-    @classmethod
-    def mydir_set(cls,val):
-        print "mydir_set"
-        cls.mydir_ = val
-
-    Base.mydir = property(mydir_get,mydir_set)
+    # The concrete subclass should override this attribute.
+    mydir = None
 
     # Keep track of the old current working directory.
     oldcwd = None
