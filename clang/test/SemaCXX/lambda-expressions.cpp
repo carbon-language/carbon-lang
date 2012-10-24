@@ -77,8 +77,8 @@ namespace ImplicitCapture {
     struct G { G(); G(G&); int a; }; // expected-note 6 {{not viable}}
     G g;
     [=]() { const G* gg = &g; return gg->a; };
-    [=]() { return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error {{no matching constructor for initialization of 'ImplicitCapture::G'}}
-    (void)^{ return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error 2 {{no matching constructor for initialization of 'const ImplicitCapture::G'}}
+    [=]() { return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error {{no matching constructor for initialization of 'G'}}
+    (void)^{ return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error 2 {{no matching constructor for initialization of 'const G'}}
 
     const int h = a; // expected-note {{declared}}
     []() { return h; }; // expected-error {{variable 'h' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}}

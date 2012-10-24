@@ -40,10 +40,10 @@ namespace Conversion {
   void testExplicit()
   {
     // Taken from 12.3.2p2
-    class Y { }; // expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y &' for 1st argument}} \
-					          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}} \
-                    expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y &' for 1st argument}} \
-          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}}
+    class Y { }; // expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Z' to 'const Y &' for 1st argument}} \
+					          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Z' to 'Y &&' for 1st argument}} \
+                    expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Z' to 'const Y &' for 1st argument}} \
+          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Z' to 'Y &&' for 1st argument}}
 
     struct Z {
       explicit operator Y() const;
@@ -52,7 +52,7 @@ namespace Conversion {
     
     Z z;
     // 13.3.1.4p1 & 8.5p16:
-    Y y2 = z; // expected-error {{no viable conversion from 'Conversion::Z' to 'Conversion::Y'}}
+    Y y2 = z; // expected-error {{no viable conversion from 'Z' to 'Y'}}
     Y y3 = (Y)z;
     Y y4 = Y(z);
     Y y5 = static_cast<Y>(z);
@@ -62,7 +62,7 @@ namespace Conversion {
     int i3 = static_cast<int>(z);
     int i4(z);
     // 13.3.1.6p1 & 8.5.3p5:
-    const Y& y6 = z; // expected-error {{no viable conversion from 'Conversion::Z' to 'const Conversion::Y'}}
+    const Y& y6 = z; // expected-error {{no viable conversion from 'Z' to 'const Y'}}
     const int& y7(z);
   }
   
@@ -78,7 +78,7 @@ namespace Conversion {
     NotBool n;
 
     (void) (1 + b);
-    (void) (1 + n); // expected-error {{invalid operands to binary expression ('int' and 'Conversion::NotBool')}}
+    (void) (1 + n); // expected-error {{invalid operands to binary expression ('int' and 'NotBool')}}
     
     // 5.3.1p9:
     (void) (!b);
@@ -105,7 +105,7 @@ namespace Conversion {
     
     // 6.4.2p2:
     switch (b) {} // expected-warning {{switch condition has boolean value}}
-    switch (n) {} // expected-error {{switch condition type 'Conversion::NotBool' requires explicit conversion to 'bool'}} \
+    switch (n) {} // expected-error {{switch condition type 'NotBool' requires explicit conversion to 'bool'}} \
                      expected-warning {{switch condition has boolean value}}
     
     // 6.5.1:
@@ -135,7 +135,7 @@ namespace Conversion {
     NotInt ni;
     
     new int[i];
-    new int[ni]; // expected-error {{array size expression of type 'Conversion::NotInt' requires explicit conversion to type 'int'}}
+    new int[ni]; // expected-error {{array size expression of type 'NotInt' requires explicit conversion to type 'int'}}
   }
   
   void testDelete()
@@ -152,7 +152,7 @@ namespace Conversion {
     NotPtr np;
     
     delete p;
-    delete np; // expected-error {{cannot delete expression of type 'Conversion::NotPtr'}}
+    delete np; // expected-error {{cannot delete expression of type 'NotPtr'}}
   }
   
   void testFunctionPointer()
@@ -170,6 +170,6 @@ namespace Conversion {
     FP    fp;
     NotFP nfp;
     fp(1);
-    nfp(1); // expected-error {{type 'Conversion::NotFP' does not provide a call operator}}
+    nfp(1); // expected-error {{type 'NotFP' does not provide a call operator}}
   }
 }
