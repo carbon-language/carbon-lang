@@ -271,6 +271,7 @@ namespace {
     SDValue ReduceLoadOpStoreWidth(SDNode *N);
     SDValue TransformFPLoadStorePair(SDNode *N);
     SDValue reduceBuildVecExtToExtBuildVec(SDNode *N);
+    SDValue reduceBuildVecConvertToConvertBuildVec(SDNode *N);
 
     SDValue GetDemandedBits(SDValue V, const APInt &Mask);
 
@@ -8467,6 +8468,72 @@ SDValue DAGCombiner::reduceBuildVecExtToExtBuildVec(SDNode *N) {
   return DAG.getNode(ISD::BITCAST, dl, VT, BV);
 }
 
+SDValue DAGCombiner::reduceBuildVecConvertToConvertBuildVec(SDNode *N) {
+  EVT VT = N->getValueType(0);
+
+  unsigned NumInScalars = N->getNumOperands();
+  DebugLoc dl = N->getDebugLoc();
+
+  EVT SrcVT = MVT::Other;
+  unsigned Opcode = ISD::DELETED_NODE;
+  unsigned NumDefs = 0;
+
+  for (unsigned i = 0; i != NumInScalars; ++i) {
+    SDValue In = N->getOperand(i);
+    unsigned Opc = In.getOpcode();
+
+    if (Opc == ISD::UNDEF)
+      continue;
+
+    // If all scalar values are floats and converted from integers.
+    if (Opcode == ISD::DELETED_NODE &&
+        (Opc == ISD::UINT_TO_FP || Opc == ISD::SINT_TO_FP)) {
+      Opcode = Opc;
+      // If not supported by target, bail out.
+      if (TLI.getOperationAction(Opcode, VT) != TargetLowering::Legal &&
+          TLI.getOperationAction(Opcode, VT) != TargetLowering::Custom)
+        return SDValue();
+    }
+    if (Opc != Opcode)
+      return SDValue();
+
+    EVT InVT = In.getOperand(0).getValueType();
+
+    // If all scalar values are typed differently, bail out. It's chosen to
+    // simplify BUILD_VECTOR of integer types.
+    if (SrcVT == MVT::Other)
+      SrcVT = InVT;
+    if (SrcVT != InVT)
+      return SDValue();
+    NumDefs++;
+  }
+
+  // If the vector has just one element defined, it's not worth to fold it into
+  // a vectorized one.
+  if (NumDefs < 2)
+    return SDValue();
+
+  assert((Opcode == ISD::UINT_TO_FP || Opcode == ISD::SINT_TO_FP)
+         && "Should only handle conversion from integer to float.");
+  assert(SrcVT != MVT::Other && "Cannot determine source type!");
+
+  EVT NVT = EVT::getVectorVT(*DAG.getContext(), SrcVT, NumInScalars);
+  SmallVector<SDValue, 8> Opnds;
+  for (unsigned i = 0; i != NumInScalars; ++i) {
+    SDValue In = N->getOperand(i);
+
+    if (In.getOpcode() == ISD::UNDEF)
+      Opnds.push_back(DAG.getUNDEF(SrcVT));
+    else
+      Opnds.push_back(In.getOperand(0));
+  }
+  SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, NVT,
+                           &Opnds[0], Opnds.size());
+  AddToWorkList(BV.getNode());
+
+  return DAG.getNode(Opcode, dl, VT, BV);
+}
+
 SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   unsigned NumInScalars = N->getNumOperands();
   DebugLoc dl = N->getDebugLoc();
@@ -8477,6 +8544,10 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     return DAG.getUNDEF(VT);
 
   SDValue V = reduceBuildVecExtToExtBuildVec(N);
+  if (V.getNode())
+    return V;
+
+  V = reduceBuildVecConvertToConvertBuildVec(N);
   if (V.getNode())
     return V;
 
