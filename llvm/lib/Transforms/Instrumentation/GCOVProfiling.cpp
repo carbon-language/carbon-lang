@@ -586,8 +586,8 @@ Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
   Type *Int32Ty = Type::getInt32Ty(*Ctx);
   Type *Int64Ty = Type::getInt64Ty(*Ctx);
   Type *Args[] = {
-    Int32Ty->getPointerTo(),                // uint32_t *predecessor
-    Int64Ty->getPointerTo()->getPointerTo() // uint64_t **counters
+    Int32Ty->getPointerTo(Int32Ty),                // uint32_t *predecessor
+    Int64Ty->getPointerTo(Int64Ty)->getPointerTo(Int64Ty) // uint64_t **counters
   };
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), Args, false);
   return M->getOrInsertFunction("__llvm_gcov_indirect_counter_increment", FTy);
@@ -733,7 +733,8 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Value *GEP = Builder.CreateGEP(Arg, ZExtPred);
   Value *Counter = Builder.CreateLoad(GEP, "counter");
   Cond = Builder.CreateICmpEQ(Counter,
-                              Constant::getNullValue(Int64Ty->getPointerTo()));
+                              Constant::getNullValue(
+                                Int64Ty->getPointerTo(Counter->getType())));
   Builder.CreateCondBr(Cond, Exit, CounterEnd);
 
   // ++*counter;

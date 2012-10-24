@@ -779,6 +779,28 @@ PointerType *Type::getPointerTo(unsigned addrs) {
   return PointerType::get(this, addrs);
 }
 
+PointerType *Type::getPointerTo(const Type *Ty) {
+  unsigned AS = 0;
+  // For pointers, we return a new pointer based on the address space.
+  if (Ty->isPointerTy()) AS = Ty->getPointerAddressSpace();
+  // For vector of pointers, we return a new pointer based on the
+  // address space of the element pointer type.
+  if (Ty->isVectorTy())
+    AS = Ty->getVectorElementType()->getPointerAddressSpace();
+  // Otherwise return a pointer based on the default address space
+  // since we want a pointer to the current type without having
+  // a type that can give us the correct address space.
+  // An example of this occuring is that you want to get a pointer to 
+  // all of the arguments in a function. However, the PointerType
+  // for a non-pointer type cannot be determined by the type, so
+  // the default value is used.
+  return getPointerTo(AS);
+}
+
+PointerType *Type::getPointerTo() {
+  return getPointerTo(this);
+}
+
 bool PointerType::isValidElementType(Type *ElemTy) {
   return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
          !ElemTy->isMetadataTy();

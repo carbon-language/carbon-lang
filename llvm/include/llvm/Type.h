@@ -389,10 +389,16 @@ public:
   static PointerType *getInt32PtrTy(LLVMContext &C, unsigned AS = 0);
   static PointerType *getInt64PtrTy(LLVMContext &C, unsigned AS = 0);
 
-  /// getPointerTo - Return a pointer to the current type.  This is equivalent
-  /// to PointerType::get(Foo, AddrSpace).
-  PointerType *getPointerTo(unsigned AddrSpace = 0);
+  /// getPointerTo - Return a pointer to the current type for the given address space.
+  /// This is equivalent to PointerType::get(Foo, AddrSpace).
+  PointerType *getPointerTo(unsigned AddrSpace);
 
+  /// getPointerTo - Return a pointer to the current type for the address space
+  /// space of the passed in type.
+  PointerType *getPointerTo(const Type *Ty);
+
+  /// getPointerTo - Retrun a pointer to the current type.
+  PointerType *getPointerTo();
 private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
   /// iff all of the members of the type are sized as well.  Since asking for
