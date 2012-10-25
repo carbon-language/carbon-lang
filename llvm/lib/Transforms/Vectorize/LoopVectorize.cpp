@@ -324,6 +324,11 @@ private:
   /// width. Vector width of one means scalar.
   unsigned getInstructionCost(Instruction *I, unsigned VF);
 
+  /// A helper function for converting Scalar types to vector types.
+  /// If the incoming type is void, we return void. If the VF is 1, we return
+  /// the scalar type.
+  static Type* ToVectorTy(Type *Scalar, unsigned VF);
+
   /// The loop that we evaluate.
   Loop *TheLoop;
   /// Scev analysis.
@@ -1478,8 +1483,16 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
 unsigned
 LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   assert(VTTI && "Invalid vector target transformation info");
+
+  Type *RetTy = I->getType();
+  Type *VectorTy = ToVectorTy(RetTy, VF);
+
+  // TODO: We need to estimate the cost of intrinsic calls.
   switch (I->getOpcode()) {
     case Instruction::GetElementPtr:
+      // We mark this instruction as zero-cost because scalar GEPs are usually
+      // lowered to the intruction addressing mode. At the moment we don't
+      // generate vector geps.
       return 0;
     case Instruction::Br: {
       return VTTI->getInstrCost(I->getOpcode());
@@ -1504,74 +1517,76 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor: {
-      Type *VTy = VectorType::get(I->getType(), VF);
-      return VTTI->getInstrCost(I->getOpcode(), VTy);
+      return VTTI->getInstrCost(I->getOpcode(), VectorTy);
     }
     case Instruction::Select: {
       SelectInst *SI = cast<SelectInst>(I);
-      Type *VTy = VectorType::get(I->getType(), VF);
       const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
       bool ScalarCond = (SE->isLoopInvariant(CondSCEV, TheLoop));
       Type *CondTy = SI->getCondition()->getType();
       if (ScalarCond)
         CondTy = VectorType::get(CondTy, VF);
 
-      return VTTI->getInstrCost(I->getOpcode(), VTy, CondTy);
+      return VTTI->getInstrCost(I->getOpcode(), VectorTy, CondTy);
     }
     case Instruction::ICmp:
     case Instruction::FCmp: {
-      Type *VTy = VectorType::get(I->getOperand(0)->getType(), VF);
-      return VTTI->getInstrCost(I->getOpcode(), VTy);
+      Type *ValTy = I->getOperand(0)->getType();
+      VectorTy = ToVectorTy(ValTy, VF);
+      return VTTI->getInstrCost(I->getOpcode(), VectorTy);
     }
     case Instruction::Store: {
       StoreInst *SI = cast<StoreInst>(I);
-      Type *VTy = VectorType::get(SI->getValueOperand()->getType(), VF);
+      Type *ValTy = SI->getValueOperand()->getType();
+      VectorTy = ToVectorTy(ValTy, VF);
+
+      if (VF == 1)
+        return VTTI->getMemoryOpCost(I->getOpcode(), ValTy,
+                              SI->getAlignment(), SI->getPointerAddressSpace());
 
       // Scalarized stores.
       if (!Legal->isConsecutiveGep(SI->getPointerOperand())) {
         unsigned Cost = 0;
-        if (VF != 1) {
-          unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement,
-                                                VTy);
-          // The cost of extracting from the value vector and pointer vector.
-          Cost += VF * (ExtCost * 2);
-        }
+        unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement,
+                                              ValTy);
+        // The cost of extracting from the value vector.
+        Cost += VF * (ExtCost);
         // The cost of the scalar stores.
         Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(),
-                                           VTy->getScalarType(),
+                                           ValTy->getScalarType(),
                                            SI->getAlignment(),
                                            SI->getPointerAddressSpace());
         return Cost;
       }
 
       // Wide stores.
-      return VTTI->getMemoryOpCost(I->getOpcode(), VTy, SI->getAlignment(),
+      return VTTI->getMemoryOpCost(I->getOpcode(), VectorTy, SI->getAlignment(),
                                    SI->getPointerAddressSpace());
     }
     case Instruction::Load: {
       LoadInst *LI = cast<LoadInst>(I);
-      Type *VTy = VectorType::get(I->getType(), VF);
+
+      if (VF == 1)
+        return VTTI->getMemoryOpCost(I->getOpcode(), RetTy,
+                                     LI->getAlignment(),
+                                     LI->getPointerAddressSpace());
 
       // Scalarized loads.
       if (!Legal->isConsecutiveGep(LI->getPointerOperand())) {
         unsigned Cost = 0;
-        if (VF != 1) {
-          unsigned InCost = VTTI->getInstrCost(Instruction::InsertElement, VTy);
-          unsigned ExCost = VTTI->getInstrCost(Instruction::ExtractValue, VTy);
-
-          // The cost of inserting the loaded value into the result vector, and
-          // extracting from a vector of pointers.
-          Cost += VF * (InCost + ExCost);
-        }
+        unsigned InCost = VTTI->getInstrCost(Instruction::InsertElement, RetTy);
+        // The cost of inserting the loaded value into the result vector.
+        Cost += VF * (InCost);
         // The cost of the scalar stores.
-        Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(), VTy->getScalarType(),
+        Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(),
+                                           RetTy->getScalarType(),
                                            LI->getAlignment(),
                                            LI->getPointerAddressSpace());
         return Cost;
       }
 
       // Wide loads.
-      return VTTI->getMemoryOpCost(I->getOpcode(), VTy, LI->getAlignment(),
+      return VTTI->getMemoryOpCost(I->getOpcode(), VectorTy, LI->getAlignment(),
                                    LI->getPointerAddressSpace());
     }
     case Instruction::ZExt:
@@ -1586,35 +1601,40 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::Trunc:
     case Instruction::FPTrunc:
     case Instruction::BitCast: {
-      Type *SrcTy = VectorType::get(I->getOperand(0)->getType(), VF);
-      Type *DstTy = VectorType::get(I->getType(), VF);
-      return VTTI->getInstrCost(I->getOpcode(), DstTy, SrcTy);
+      Type *SrcVecTy = ToVectorTy(I->getOperand(0)->getType(), VF);
+      return VTTI->getInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
     }
     default: {
       // We are scalarizing the instruction. Return the cost of the scalar
       // instruction, plus the cost of insert and extract into vector
       // elements, times the vector width.
       unsigned Cost = 0;
-      Type *Ty = I->getType();
 
-      if (!Ty->isVoidTy()) {
-        Type *VTy = VectorType::get(Ty, VF);
-        unsigned InsCost = VTTI->getInstrCost(Instruction::InsertElement, VTy);
-        unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement, VTy);
-        Cost += VF * (InsCost + ExtCost);
-      }
+      bool IsVoid = RetTy->isVoidTy();
 
-      /// We don't have any information on the scalar instruction, but maybe
-      /// the target has.
-      /// TODO: This may be a target-specific intrinsic.
-      /// Need to add API for that.
-      Cost += VF * VTTI->getInstrCost(I->getOpcode(), Ty);
+      unsigned InsCost = (IsVoid ? 0 :
+                          VTTI->getInstrCost(Instruction::InsertElement,
+                                             VectorTy));
 
+      unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement,
+                                            VectorTy);
+
+      // The cost of inserting the results plus extracting each one of the
+      // operands.
+      Cost += VF * (InsCost + ExtCost * I->getNumOperands());
+
+      // The cost of executing VF copies of the scalar instruction.
+      Cost += VF * VTTI->getInstrCost(I->getOpcode(), RetTy);
       return Cost;
     }
   }// end of switch.
 }
 
+Type* LoopVectorizationCostModel::ToVectorTy(Type *Scalar, unsigned VF) {
+  if (Scalar->isVoidTy() || VF == 1)
+    return Scalar;
+  return VectorType::get(Scalar, VF);
+}
 
 } // namespace
 
