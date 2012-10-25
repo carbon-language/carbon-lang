@@ -18,17 +18,18 @@ class CommentDumper: public comments::ConstCommentVisitor<CommentDumper> {
   raw_ostream &OS;
   const CommandTraits *Traits;
   const SourceManager *SM;
-  unsigned IndentLevel;
+
+  /// The \c FullComment parent of the comment being dumped.
   const FullComment *FC;
-  
+
+  unsigned IndentLevel;
+
 public:
   CommentDumper(raw_ostream &OS,
                 const CommandTraits *Traits,
                 const SourceManager *SM,
-                const FullComment * FC) :
-      OS(OS), Traits(Traits), SM(SM), IndentLevel(0),
-      FC(FC)
-  
+                const FullComment *FC) :
+      OS(OS), Traits(Traits), SM(SM), FC(FC), IndentLevel(0)
   { }
 
   void dumpIndent() const {
