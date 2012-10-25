@@ -149,4 +149,83 @@ for.end:                                          ; preds = %for.body, %entry
   ret i32 %sum.0.lcssa
 }
 
+;CHECK: @reduction_and
+;CHECK: and <4 x i32>
+;CHECK: ret i32
+define i32 @reduction_and(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
+entry:
+  %cmp7 = icmp sgt i32 %n, 0
+  br i1 %cmp7, label %for.body, label %for.end
 
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %result.08 = phi i32 [ %and, %for.body ], [ -1, %entry ]
+  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %arrayidx2 = getelementptr inbounds i32* %B, i64 %indvars.iv
+  %1 = load i32* %arrayidx2, align 4
+  %add = add nsw i32 %1, %0
+  %and = and i32 %add, %result.08
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  %result.0.lcssa = phi i32 [ -1, %entry ], [ %and, %for.body ]
+  ret i32 %result.0.lcssa
+}
+
+;CHECK: @reduction_or
+;CHECK: or <4 x i32>
+;CHECK: ret i32
+define i32 @reduction_or(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
+entry:
+  %cmp7 = icmp sgt i32 %n, 0
+  br i1 %cmp7, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %result.08 = phi i32 [ %or, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %arrayidx2 = getelementptr inbounds i32* %B, i64 %indvars.iv
+  %1 = load i32* %arrayidx2, align 4
+  %add = add nsw i32 %1, %0
+  %or = or i32 %add, %result.08
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  %result.0.lcssa = phi i32 [ 0, %entry ], [ %or, %for.body ]
+  ret i32 %result.0.lcssa
+}
+
+;CHECK: @reduction_xor
+;CHECK: xor <4 x i32>
+;CHECK: ret i32
+define i32 @reduction_xor(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
+entry:
+  %cmp7 = icmp sgt i32 %n, 0
+  br i1 %cmp7, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %result.08 = phi i32 [ %xor, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %arrayidx2 = getelementptr inbounds i32* %B, i64 %indvars.iv
+  %1 = load i32* %arrayidx2, align 4
+  %add = add nsw i32 %1, %0
+  %xor = xor i32 %add, %result.08
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  %result.0.lcssa = phi i32 [ 0, %entry ], [ %xor, %for.body ]
+  ret i32 %result.0.lcssa
+}

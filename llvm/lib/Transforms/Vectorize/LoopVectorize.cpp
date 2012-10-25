@@ -208,7 +208,10 @@ public:
   enum ReductionKind {
     NoReduction = -1, /// Not a reduction.
     IntegerAdd  = 0,  /// Sum of numbers.
-    IntegerMult = 1  /// Product of numbers.
+    IntegerMult = 1,  /// Product of numbers.
+    IntegerOr   = 2,  /// Bitwise or logical OR of numbers.
+    IntegerAnd  = 3,  /// Bitwise or logical AND of numbers.
+    IntegerXor  = 4   /// Bitwise or logical XOR of numbers.
   };
 
   /// This POD struct holds information about reduction variables.
@@ -981,14 +984,28 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // Extract the first scalar.
     Value *Scalar0 =
       Builder.CreateExtractElement(NewPhi, Builder.getInt32(0));
-    // Extract and sum the remaining vector elements.
+    // Extract and reduce the remaining vector elements.
     for (unsigned i=1; i < VF; ++i) {
       Value *Scalar1 =
         Builder.CreateExtractElement(NewPhi, Builder.getInt32(i));
-      if (RdxDesc.Kind == LoopVectorizationLegality::IntegerAdd) {
-        Scalar0 = Builder.CreateAdd(Scalar0, Scalar1);
-      } else {
-        Scalar0 = Builder.CreateMul(Scalar0, Scalar1);
+      switch (RdxDesc.Kind) {
+        case LoopVectorizationLegality::IntegerAdd:
+          Scalar0 = Builder.CreateAdd(Scalar0, Scalar1);
+          break;
+        case LoopVectorizationLegality::IntegerMult:
+          Scalar0 = Builder.CreateMul(Scalar0, Scalar1);
+          break;
+        case LoopVectorizationLegality::IntegerOr:
+          Scalar0 = Builder.CreateOr(Scalar0, Scalar1);
+          break;
+        case LoopVectorizationLegality::IntegerAnd:
+          Scalar0 = Builder.CreateAnd(Scalar0, Scalar1);
+          break;
+        case LoopVectorizationLegality::IntegerXor:
+          Scalar0 = Builder.CreateXor(Scalar0, Scalar1);
+          break;
+        default:
+          llvm_unreachable("Unknown reduction operation");
       }
     }
 
@@ -1099,7 +1116,19 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         continue;
       }
       if (AddReductionVar(Phi, IntegerMult)) {
-        DEBUG(dbgs() << "LV: Found an Mult reduction PHI."<< *Phi <<"\n");
+        DEBUG(dbgs() << "LV: Found a MUL reduction PHI."<< *Phi <<"\n");
+        continue;
+      }
+      if (AddReductionVar(Phi, IntegerOr)) {
+        DEBUG(dbgs() << "LV: Found an OR reduction PHI."<< *Phi <<"\n");
+        continue;
+      }
+      if (AddReductionVar(Phi, IntegerAnd)) {
+        DEBUG(dbgs() << "LV: Found an AND reduction PHI."<< *Phi <<"\n");
+        continue;
+      }
+      if (AddReductionVar(Phi, IntegerXor)) {
+        DEBUG(dbgs() << "LV: Found a XOR reduction PHI."<< *Phi <<"\n");
         continue;
       }
 
@@ -1373,6 +1402,12 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
     case Instruction::UDiv:
     case Instruction::SDiv:
       return Kind == IntegerMult;
+    case Instruction::And:
+      return Kind == IntegerAnd;
+    case Instruction::Or:
+      return Kind == IntegerOr;
+    case Instruction::Xor:
+      return Kind == IntegerXor;
     }
 }
 
