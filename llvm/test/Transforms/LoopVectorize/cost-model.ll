@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @a = common global [2048 x i32] zeroinitializer, align 16
 
 ;CHECK: cost_model_1
-;CHECK-NOT: <4 x i32>
+;CHECK: <4 x i32>
 ;CHECK: ret void
 define void @cost_model_1() nounwind uwtable noinline ssp {
 entry:
