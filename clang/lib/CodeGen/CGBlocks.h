@@ -47,7 +47,7 @@ namespace CodeGen {
 class CodeGenModule;
 class CGBlockInfo;
 
-enum BlockFlag_t {
+enum BlockLiteralFlags {
   BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
   BLOCK_HAS_CXX_OBJ =       (1 << 26),
   BLOCK_IS_GLOBAL =         (1 << 28),
@@ -60,7 +60,7 @@ class BlockFlags {
   BlockFlags(uint32_t flags) : flags(flags) {}
 public:
   BlockFlags() : flags(0) {}
-  BlockFlags(BlockFlag_t flag) : flags(flag) {}
+  BlockFlags(BlockLiteralFlags flag) : flags(flag) {}
 
   uint32_t getBitMask() const { return flags; }
   bool empty() const { return flags == 0; }
@@ -76,7 +76,7 @@ public:
     return (l.flags & r.flags);
   }
 };
-inline BlockFlags operator|(BlockFlag_t l, BlockFlag_t r) {
+inline BlockFlags operator|(BlockLiteralFlags l, BlockLiteralFlags r) {
   return BlockFlags(l) | BlockFlags(r);
 }
 
