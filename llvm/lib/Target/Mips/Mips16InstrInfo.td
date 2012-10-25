@@ -229,6 +229,95 @@ class FRRR16_ins<bits<2> _f, string asmstr,  InstrItinClass itin> :
          !strconcat(asmstr, "\t$rz, $rx, $ry"), [], itin>;
 
 //
+// These Sel patterns support the generation of conditional move
+// pseudo instructions.
+//
+// The nomenclature uses the components making up the pseudo and may
+// be a bit counter intuitive when compared with the end result we seek.
+// For example using a bqez in the example directly below results in the
+// conditional move being done if the tested register is not zero.
+// I considered in easier to check by keeping the pseudo consistent with
+// it's components but it could have been done differently.
+//
+// The simplest case is when can test and operand directly and do the
+// conditional move based on a simple mips16 conditional
+//  branch instruction.
+// for example:
+// if $op == beqz or bnez:
+//
+// $op1 $rt, .+4
+// move $rd, $rs
+//
+// if $op == beqz, then if $rt != 0, then the conditional assignment
+// $rd = $rs is done.
+
+// if $op == bnez, then if $rt == 0, then the conditional assignment
+// $rd = $rs is done.
+//
+// So this pseudo class only has one operand, i.e. op
+//
+class Sel<bits<5> f1, string op, InstrItinClass itin>:
+  MipsInst16_32<(outs CPU16Regs:$rd_), (ins CPU16Regs:$rd, CPU16Regs:$rs,
+                CPU16Regs:$rt),
+                !strconcat(op, "\t$rt, .+4\n\t\n\tmove $rd, $rs"), [], itin,
+                Pseudo16> {
+  let isCodeGenOnly=1;
+  let Constraints = "$rd = $rd_";
+}
+
+//
+// The next two instruction classes allow for an operand which tests
+// two operands and returns a value in register T8 and
+//then does a conditional branch based on the value of T8
+//
+
+// op2 can be cmpi or slti/sltiu
+// op1 can bteqz or btnez
+// the operands for op2 are a register and a signed constant
+//
+// $op2 $t, $imm  ;test register t and branch conditionally
+// $op1 .+4       ;op1 is a conditional branch
+// move $rd, $rs
+//
+//
+class SeliT<bits<5> f1, string op1, bits<5> f2, string op2,
+                 InstrItinClass itin>:
+  MipsInst16_32<(outs CPU16Regs:$rd_), (ins CPU16Regs:$rd, CPU16Regs:$rs,
+                                        CPU16Regs:$rl, simm16:$imm),
+                 !strconcat(op2,
+                 !strconcat("\t$rl, $imm\n\t",
+                 !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), [], itin,
+                 Pseudo16> {
+  let isCodeGenOnly=1;
+  let Constraints = "$rd = $rd_";
+}
+
+//
+// op2 can be cmp or slt/sltu
+// op1 can be bteqz or btnez
+// the operands for op2 are two registers
+// op1 is a conditional branch
+//
+//
+// $op2 $rl, $rr  ;test registers rl,rr
+// $op1 .+4       ;op2 is a conditional branch
+// move $rd, $rs
+//
+//
+class SelT<bits<5> f1, string op1, bits<5> f2, string op2,
+           InstrItinClass itin>:
+  MipsInst16_32<(outs CPU16Regs:$rd_), (ins CPU16Regs:$rd, CPU16Regs:$rs,
+                CPU16Regs:$rl, CPU16Regs:$rr),
+                !strconcat(op2,
+                !strconcat("\t$rl, $rr\n\t",
+                !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), [], itin,
+                Pseudo16> {
+  let isCodeGenOnly=1;
+  let Constraints = "$rd = $rd_";
+}
+
+
+//
 // Some general instruction class info
 //
 //
@@ -565,6 +654,120 @@ def SbRxRyOffMemX16:
   FEXT_RRI16_mem2_ins<0b11000, "sb", mem16, IIStore>, MayStore;
 
 //
+// The Sel(T) instructions are pseudos
+// T means that they use T8 implicitly.
+//
+//
+// Format: SelBeqZ rd, rs, rt
+// Purpose: if rt==0, do nothing
+//          else rs = rt
+//
+def SelBeqZ: Sel<0b00100, "beqz", IIAlu>;
+
+//
+// Format:  SelTBteqZCmp rd, rs, rl, rr
+// Purpose: b = Cmp rl, rr.
+//          If b==0 then do nothing.
+//          if b!=0 then rd = rs
+//
+def SelTBteqZCmp: SelT<0b000, "bteqz", 0b01010, "cmp", IIAlu>;
+
+//
+// Format:  SelTBteqZCmpi rd, rs, rl, rr
+// Purpose: b = Cmpi rl, imm.
+//          If b==0 then do nothing.
+//          if b!=0 then rd = rs
+//
+def SelTBteqZCmpi: SeliT<0b000, "bteqz", 0b01110, "cmpi", IIAlu>;
+
+//
+// Format:  SelTBteqZSlt rd, rs, rl, rr
+// Purpose: b = Slt rl, rr.
+//          If b==0 then do nothing.
+//          if b!=0 then rd = rs
+//
+def SelTBteqZSlt: SelT<0b000, "bteqz", 0b00010, "slt", IIAlu>;
+
+//
+// Format:  SelTBteqZSlti rd, rs, rl, rr
+// Purpose: b = Slti rl, imm.
+//          If b==0 then do nothing.
+//          if b!=0 then rd = rs
+//
+def SelTBteqZSlti: SeliT<0b000, "bteqz", 0b01010, "slti", IIAlu>;
+
+//
+// Format:  SelTBteqZSltu rd, rs, rl, rr
+// Purpose: b = Sltu rl, rr.
+//          If b==0 then do nothing.
+//          if b!=0 then rd = rs
+//
+def SelTBteqZSltu: SelT<0b000, "bteqz", 0b00011, "sltu", IIAlu>;
+
+//
+// Format:  SelTBteqZSltiu rd, rs, rl, rr
+// Purpose: b = Sltiu rl, imm.
+//          If b==0 then do nothing.
+//          if b!=0 then rd = rs
+//
+def SelTBteqZSltiu: SeliT<0b000, "bteqz", 0b01011, "sltiu", IIAlu>;
+
+//
+// Format: SelBnez rd, rs, rt
+// Purpose: if rt!=0, do nothing
+//          else rs = rt
+//
+def SelBneZ: Sel<0b00101, "bnez", IIAlu>;
+
+//
+// Format:  SelTBtneZCmp rd, rs, rl, rr
+// Purpose: b = Cmp rl, rr.
+//          If b!=0 then do nothing.
+//          if b0=0 then rd = rs
+//
+def SelTBtneZCmp: SelT<0b001, "btnez", 0b01010, "cmp", IIAlu>;
+
+//
+// Format:  SelTBtnezCmpi rd, rs, rl, rr
+// Purpose: b = Cmpi rl, imm.
+//          If b!=0 then do nothing.
+//          if b==0 then rd = rs
+//
+def SelTBtneZCmpi: SeliT<0b000, "btnez", 0b01110, "cmpi", IIAlu>;
+
+//
+// Format:  SelTBtneZSlt rd, rs, rl, rr
+// Purpose: b = Slt rl, rr.
+//          If b!=0 then do nothing.
+//          if b==0 then rd = rs
+//
+def SelTBtneZSlt: SelT<0b001, "btnez", 0b00010, "slt", IIAlu>;
+
+//
+// Format:  SelTBtneZSlti rd, rs, rl, rr
+// Purpose: b = Slti rl, imm.
+//          If b!=0 then do nothing.
+//          if b==0 then rd = rs
+//
+def SelTBtneZSlti: SeliT<0b001, "btnez", 0b01010, "slti", IIAlu>;
+
+//
+// Format:  SelTBtneZSltu rd, rs, rl, rr
+// Purpose: b = Sltu rl, rr.
+//          If b!=0 then do nothing.
+//          if b==0 then rd = rs
+//
+def SelTBtneZSltu: SelT<0b001, "btnez", 0b00011, "sltu", IIAlu>;
+
+//
+// Format:  SelTBtneZSltiu rd, rs, rl, rr
+// Purpose: b = Slti rl, imm.
+//          If b!=0 then do nothing.
+//          if b==0 then rd = rs
+//
+def SelTBtneZSltiu: SeliT<0b001, "btnez", 0b01011, "sltiu", IIAlu>;
+//
+//
 // Format: SH ry, offset(rx) MIPS16e
 // Purpose: Store Halfword (Extended)
 // To store a halfword to memory.
@@ -766,7 +969,7 @@ class SetCC_R16<PatFrag cond_op, Instruction I>:
 
 class SetCC_I16<PatFrag cond_op, PatLeaf imm_type, Instruction I>:
   Mips16Pat<(cond_op CPU16Regs:$rx, imm_type:$imm16),
-            (I   CPU16Regs:$rx, imm_type:$imm16)>;
+            (I CPU16Regs:$rx, imm_type:$imm16)>;
 
 
 //
@@ -922,6 +1125,180 @@ def: Mips16Pat
   <(MipsDivRemU CPU16Regs:$rx, CPU16Regs:$ry),
    (DivuRxRy16 CPU16Regs:$rx, CPU16Regs:$ry)>;
 
+//  signed a,b
+//  x = (a>=b)?x:y
+//
+//  if !(a < b) x = y
+//
+def : Mips16Pat<(select (i32 (setge CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBteqZSlt CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$a, CPU16Regs:$b)>;
+
+//  signed a,b
+//  x = (a>b)?x:y
+//
+//  if  (b < a) x = y
+//
+def : Mips16Pat<(select (i32 (setgt CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBtneZSlt CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$b, CPU16Regs:$a)>;
+
+// unsigned a,b
+// x = (a>=b)?x:y
+//
+// if !(a < b) x = y;
+//
+def : Mips16Pat<
+  (select (i32 (setuge CPU16Regs:$a, CPU16Regs:$b)),
+   CPU16Regs:$x, CPU16Regs:$y),
+  (SelTBteqZSltu CPU16Regs:$x, CPU16Regs:$y,
+   CPU16Regs:$a, CPU16Regs:$b)>;
+
+//  unsigned a,b
+//  x = (a>b)?x:y
+//
+//  if (b < a) x = y
+//
+def : Mips16Pat<(select (i32 (setugt CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBtneZSltu CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$b, CPU16Regs:$a)>;
+
+// signed
+// x = (a >= k)?x:y
+// due to an llvm optimization, i don't think that this will ever
+// be used. This is transformed into x = (a > k-1)?x:y
+//
+//
+
+//def : Mips16Pat<
+//  (select (i32 (setge CPU16Regs:$lhs, immSExt16:$rhs)),
+//   CPU16Regs:$T, CPU16Regs:$F),
+//  (SelTBteqZSlti CPU16Regs:$T, CPU16Regs:$F,
+//   CPU16Regs:$lhs, immSExt16:$rhs)>;
+
+//def : Mips16Pat<
+//  (select (i32 (setuge CPU16Regs:$lhs, immSExt16:$rhs)),
+//   CPU16Regs:$T, CPU16Regs:$F),
+//  (SelTBteqZSltiu CPU16Regs:$T, CPU16Regs:$F,
+//   CPU16Regs:$lhs, immSExt16:$rhs)>;
+
+// signed
+// x = (a < k)?x:y
+//
+// if !(a < k) x = y;
+//
+def : Mips16Pat<
+  (select (i32 (setlt CPU16Regs:$a, immSExt16:$b)),
+   CPU16Regs:$x, CPU16Regs:$y),
+  (SelTBtneZSlti CPU16Regs:$x, CPU16Regs:$y,
+   CPU16Regs:$a, immSExt16:$b)>;
+
+
+//
+//
+// signed
+// x = (a <= b)? x : y
+//
+// if  (b < a) x = y
+//
+def : Mips16Pat<(select (i32 (setle CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBteqZSlt CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$b, CPU16Regs:$a)>;
+
+//
+// unnsigned
+// x = (a <= b)? x : y
+//
+// if  (b < a) x = y
+//
+def : Mips16Pat<(select (i32 (setule CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBteqZSltu CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$b, CPU16Regs:$a)>;
+
+//
+// signed/unsigned
+// x = (a == b)? x : y
+//
+// if (a != b) x = y
+//
+def : Mips16Pat<(select (i32 (seteq CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBteqZCmp CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$b, CPU16Regs:$a)>;
+
+//
+// signed/unsigned
+// x = (a == 0)? x : y
+//
+// if (a != 0) x = y
+//
+def : Mips16Pat<(select (i32 (seteq CPU16Regs:$a, 0)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelBeqZ CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$a)>;
+
+
+//
+// signed/unsigned
+// x = (a == k)? x : y
+//
+// if (a != k) x = y
+//
+def : Mips16Pat<(select (i32 (seteq CPU16Regs:$a, immZExt16:$k)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBteqZCmpi CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$a, immZExt16:$k)>;
+
+
+//
+// signed/unsigned
+// x = (a != b)? x : y
+//
+// if (a == b) x = y
+//
+//
+def : Mips16Pat<(select (i32 (setne CPU16Regs:$a, CPU16Regs:$b)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBtneZCmp CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$b, CPU16Regs:$a)>;
+
+//
+// signed/unsigned
+// x = (a != 0)? x : y
+//
+// if (a == 0) x = y
+//
+def : Mips16Pat<(select (i32 (setne CPU16Regs:$a, 0)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelBneZ CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$a)>;
+
+// signed/unsigned
+// x = (a)? x : y
+//
+// if (!a) x = y
+//
+def : Mips16Pat<(select  CPU16Regs:$a,
+                 CPU16Regs:$x, CPU16Regs:$y),
+      (SelBneZ CPU16Regs:$x, CPU16Regs:$y,
+       CPU16Regs:$a)>;
+
+
+//
+// signed/unsigned
+// x = (a != k)? x : y
+//
+// if (a == k) x = y
+//
+def : Mips16Pat<(select (i32 (setne CPU16Regs:$a, immZExt16:$k)),
+                 CPU16Regs:$x, CPU16Regs:$y),
+                (SelTBtneZCmpi CPU16Regs:$x, CPU16Regs:$y,
+                 CPU16Regs:$a, immZExt16:$k)>;
 
 //
 // When writing C code to test setxx these patterns,
@@ -1013,7 +1390,7 @@ def: Mips16Pat
 //def: Mips16Pat
 //  <(setuge CPU16Regs:$lhs, immZExt16:$rhs),
 //   (XorRxRxRy16 (SltiuCCRxImmX16 CPU16Regs:$lhs, immZExt16:$rhs),
-//    (LiRxImmX16 1))>;
+//   (LiRxImmX16 1))>;
 
 //
 // setugt
