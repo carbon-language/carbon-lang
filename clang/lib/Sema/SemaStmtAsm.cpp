@@ -209,6 +209,54 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     return StmtError();
   }
 
+  // Validate constraints and modifiers.
+  for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
+    GCCAsmStmt::AsmStringPiece &Piece = Pieces[i];
+    if (!Piece.isOperand()) continue;
+
+    // Look for the correct constraint index.
+    unsigned Idx = 0;
+    unsigned ConstraintIdx = 0;
+    for (unsigned i = 0, e = NS->getNumOutputs(); i != e; ++i, ++ConstraintIdx) {
+      TargetInfo::ConstraintInfo &Info = OutputConstraintInfos[i];
+      if (Idx == Piece.getOperandNo())
+        break;
+      ++Idx;
+
+      if (Info.isReadWrite()) {
+        if (Idx == Piece.getOperandNo())
+          break;
+        ++Idx;
+      }
+    }
+
+    for (unsigned i = 0, e = NS->getNumInputs(); i != e; ++i, ++ConstraintIdx) {
+      TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];
+      if (Idx == Piece.getOperandNo())
+        break;
+      ++Idx;
+
+      if (Info.isReadWrite()) {
+        if (Idx == Piece.getOperandNo())
+          break;
+        ++Idx;
+      }
+    }
+
+    // Now that we have the right indexes go ahead and check.
+    StringLiteral *Literal = Constraints[ConstraintIdx];
+    const Type *Ty = Exprs[ConstraintIdx]->getType().getTypePtr();
+    if (Ty->isDependentType() || Ty->isIncompleteType())
+      continue;
+
+    unsigned Size = Context.getTypeSize(Ty);
+    if (!Context.getTargetInfo()
+          .validateConstraintModifier(Literal->getString(), Piece.getModifier(),
+                                      Size))
+      Diag(Exprs[ConstraintIdx]->getLocStart(),
+           diag::warn_asm_mismatched_size_modifier);
+  }
+
   // Validate tied input operands for type mismatches.
   for (unsigned i = 0, e = InputConstraintInfos.size(); i != e; ++i) {
     TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];

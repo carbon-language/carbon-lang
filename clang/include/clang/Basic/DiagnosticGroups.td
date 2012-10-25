@@ -481,3 +481,9 @@ def ObjCStringComparison : DiagGroup<"objc-string-compare">;
 def ObjCLiteralComparison : DiagGroup<"objc-literal-compare", [
     ObjCStringComparison
   ]>;
+
+// Inline ASM warnings.
+def ASMOperandWidths : DiagGroup<"asm-operand-widths">;
+def ASM : DiagGroup<"asm", [
+    ASMOperandWidths
+  ]>;
