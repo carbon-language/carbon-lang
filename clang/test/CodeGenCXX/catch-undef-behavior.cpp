@@ -47,7 +47,11 @@ void member_access(S *p) {
   // If this number changes, it indicates that either the mangled name of ::S
   // has changed, or that LLVM's hashing function has changed. The latter case
   // is OK if the hashing function is still stable.
-  // CHECK-NEXT: xor i64 -4030275160588942838, %[[VPTR]]
+  //
+  // The two hash values are for 64- and 32-bit Clang binaries, respectively.
+  // FIXME: We should produce a 64-bit value either way.
+  //
+  // CHECK-NEXT: xor i64 {{-4030275160588942838|2562089159}}, %[[VPTR]]
   // CHECK-NEXT: mul i64 {{.*}}, -7070675565921424023
   // CHECK-NEXT: lshr i64 {{.*}}, 47
   // CHECK-NEXT: xor i64
