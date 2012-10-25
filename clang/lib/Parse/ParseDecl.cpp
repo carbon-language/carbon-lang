@@ -3771,6 +3771,9 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_virtual:
   case tok::kw_explicit:
 
+    // friend keyword.
+  case tok::kw_friend:
+
     // static_assert-declaration
   case tok::kw__Static_assert:
 
@@ -3779,11 +3782,10 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
 
     // GNU attributes.
   case tok::kw___attribute:
-    return true;
 
-    // C++0x decltype.
+    // C++11 decltype and constexpr.
   case tok::annot_decltype:
-    return true;
+  case tok::kw_constexpr:
 
     // C11 _Atomic()
   case tok::kw__Atomic:
