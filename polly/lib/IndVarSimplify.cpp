@@ -1530,7 +1530,8 @@ FindLoopCounter(Loop *L, const SCEV *BECount,
 /// genLoopLimit - Help LinearFunctionTestReplace by generating a value that
 /// holds the RHS of the new loop test.
 static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
-                           SCEVExpander &Rewriter, ScalarEvolution *SE) {
+                           SCEVExpander &Rewriter, ScalarEvolution *SE,
+                           const DataLayout *TD) {
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
   assert(AR && AR->getLoop() == L && AR->isAffine() && "bad loop counter");
   const SCEV *IVInit = AR->getStart();
@@ -1555,9 +1556,11 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
     assert(AR->getStart() == SE->getSCEV(GEPBase) && "bad loop counter");
     // We could handle pointer IVs other than i8*, but we need to compensate for
     // gep index scaling. See canExpandBackedgeTakenCount comments.
-    assert(SE->getSizeOfExpr(
-             cast<PointerType>(GEPBase->getType())->getElementType())->isOne()
-           && "unit stride pointer IV must be i8*");
+    if (TD)
+      assert(SE->getSizeOfExpr(
+               cast<PointerType>(GEPBase->getType())->getElementType(),
+               TD->getIntPtrType(GEPBase->getType()))->isOne()
+             && "unit stride pointer IV must be i8*");
 
     IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
     return Builder.CreateGEP(GEPBase, GEPOffset, "lftr.limit");
@@ -1656,7 +1659,7 @@ LinearFunctionTestReplace(Loop *L,
     CmpIndVar = IndVar;
   }
 
-  Value *ExitCnt = genLoopLimit(IndVar, IVCount, L, Rewriter, SE);
+  Value *ExitCnt = genLoopLimit(IndVar, IVCount, L, Rewriter, SE, TD);
   assert(ExitCnt->getType()->isPointerTy() == IndVar->getType()->isPointerTy()
          && "genLoopLimit missed a cast");
 
