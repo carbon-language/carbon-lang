@@ -797,6 +797,5 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
     if (tryConvertIf(I->getBlock()))
       Changed = true;
 
-  MF.verify(this, "After early if-conversion");
   return Changed;
 }
