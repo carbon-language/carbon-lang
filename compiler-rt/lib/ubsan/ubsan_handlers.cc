@@ -1,4 +1,4 @@
-//===-- ubsan_report.cc ---------------------------------------------------===//
+//===-- ubsan_handlers.cc -------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -31,12 +31,15 @@ NORETURN void __sanitizer::CheckFailed(const char *File, int Line,
   Die();
 }
 
-void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
-                                           ValueHandle Pointer) {
+namespace __ubsan {
   const char *TypeCheckKinds[] = {
     "load of", "store to", "reference binding to", "member access within",
-    "member call on"
+    "member call on", "constructor call on"
   };
+}
+
+void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
+                                           ValueHandle Pointer) {
   if (!Pointer)
     Diag(Data->Loc, "%0 null pointer of type %1")
       << TypeCheckKinds[Data->TypeCheckKind] << Data->Type;

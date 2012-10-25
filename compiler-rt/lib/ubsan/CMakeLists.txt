@@ -3,6 +3,8 @@
 set(UBSAN_SOURCES
   ubsan_diag.cc
   ubsan_handlers.cc
+  ubsan_handlers_cxx.cc
+  ubsan_type_hash.cc
   ubsan_value.cc
   )
 
