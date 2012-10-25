@@ -46,6 +46,12 @@ protected:
                              uint32_t Type,
                              int32_t Addend);
 
+  void resolvePPC64Relocation(uint8_t *LocalAddress,
+                              uint64_t FinalAddress,
+                              uint64_t Value,
+                              uint32_t Type,
+                              int64_t Addend);
+
   virtual void resolveRelocation(uint8_t *LocalAddress,
                                  uint64_t FinalAddress,
                                  uint64_t Value,
@@ -59,6 +65,11 @@ protected:
                                     StubMap &Stubs);
 
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
+
+  uint64_t findPPC64TOC() const;
+  void findOPDEntrySection(ObjectImage &Obj,
+                           ObjSectionToIDMap &LocalSections,
+                           RelocationValueRef &Rel);
 
 public:
   RuntimeDyldELF(RTDyldMemoryManager *mm)

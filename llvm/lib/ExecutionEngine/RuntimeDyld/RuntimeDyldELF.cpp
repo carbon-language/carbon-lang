@@ -30,6 +30,14 @@ using namespace llvm::object;
 
 namespace {
 
+static inline
+error_code check(error_code Err) {
+  if (Err) {
+    report_fatal_error(Err.message());
+  }
+  return Err;
+}
+
 template<support::endianness target_endianness, bool is64Bits>
 class DyldELFObject : public ELFObjectFile<target_endianness, is64Bits> {
   LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
@@ -340,6 +348,179 @@ void RuntimeDyldELF::resolveMIPSRelocation(uint8_t *LocalAddress,
    }
 }
 
+// Return the .TOC. section address to R_PPC64_TOC relocations.
+uint64_t RuntimeDyldELF::findPPC64TOC() const {
+  // The TOC consists of sections .got, .toc, .tocbss, .plt in that
+  // order. The TOC starts where the first of these sections starts.
+  SectionList::const_iterator it = Sections.begin();
+  SectionList::const_iterator ite = Sections.end();
+  for (; it != ite; ++it) {
+    if (it->Name == ".got" ||
+        it->Name == ".toc" ||
+        it->Name == ".tocbss" ||
+        it->Name == ".plt")
+      break;
+  }
+  if (it == ite) {
+    // This may happen for
+    // * references to TOC base base (sym@toc, .odp relocation) without
+    // a .toc directive.
+    // In this case just use the first section (which is usually
+    // the .odp) since the code won't reference the .toc base
+    // directly.
+    it = Sections.begin();
+  }
+  assert (it != ite);
+  // Per the ppc64-elf-linux ABI, The TOC base is TOC value plus 0x8000
+  // thus permitting a full 64 Kbytes segment.
+  return it->LoadAddress + 0x8000;
+}
+
+// Returns the sections and offset associated with the ODP entry referenced
+// by Symbol.
+void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
+                                         ObjSectionToIDMap &LocalSections,
+                                         RelocationValueRef &Rel) {
+  // Get the ELF symbol value (st_value) to compare with Relocation offset in
+  // .opd entries
+
+  error_code err;
+  for (section_iterator si = Obj.begin_sections(),
+     se = Obj.end_sections(); si != se; si.increment(err)) {
+    StringRef SectionName;
+    check(si->getName(SectionName));
+    if (SectionName != ".opd")
+      continue;
+
+    for (relocation_iterator i = si->begin_relocations(),
+         e = si->end_relocations(); i != e;) {
+      check(err);
+
+      // The R_PPC64_ADDR64 relocation indicates the first field
+      // of a .opd entry
+      uint64_t TypeFunc;
+      check(i->getType(TypeFunc));
+      if (TypeFunc != ELF::R_PPC64_ADDR64) {
+        i.increment(err);
+        continue;
+      }
+
+      SymbolRef TargetSymbol;
+      uint64_t TargetSymbolOffset;
+      int64_t TargetAdditionalInfo;
+      check(i->getSymbol(TargetSymbol));
+      check(i->getOffset(TargetSymbolOffset));
+      check(i->getAdditionalInfo(TargetAdditionalInfo));
+
+      i = i.increment(err);
+      if (i == e)
+        break;
+      check(err);
+
+      // Just check if following relocation is a R_PPC64_TOC
+      uint64_t TypeTOC;
+      check(i->getType(TypeTOC));
+      if (TypeTOC != ELF::R_PPC64_TOC)
+        continue;
+
+      // Finally compares the Symbol value and the target symbol offset
+      // to check if this .opd entry refers to the symbol the relocation
+      // points to.
+      if (Rel.Addend != (intptr_t)TargetSymbolOffset)
+        continue;
+
+      section_iterator tsi(Obj.end_sections());
+      check(TargetSymbol.getSection(tsi));
+      Rel.SectionID = findOrEmitSection(Obj, (*tsi), true, LocalSections);
+      Rel.Addend = (intptr_t)TargetAdditionalInfo;
+      return;
+    }
+  }
+  llvm_unreachable("Attempting to get address of ODP entry!");
+}
+
+// Relocation masks following the #lo(value), #hi(value), #higher(value),
+// and #highest(value) macros defined in section 4.5.1. Relocation Types
+// in PPC-elf64abi document.
+//
+static inline
+uint16_t applyPPClo (uint64_t value)
+{
+  return value & 0xffff;
+}
+
+static inline
+uint16_t applyPPChi (uint64_t value)
+{
+  return (value >> 16) & 0xffff;
+}
+
+static inline
+uint16_t applyPPChigher (uint64_t value)
+{
+  return (value >> 32) & 0xffff;
+}
+
+static inline
+uint16_t applyPPChighest (uint64_t value)
+{
+  return (value >> 48) & 0xffff;
+}
+
+void RuntimeDyldELF::resolvePPC64Relocation(uint8_t *LocalAddress,
+					    uint64_t FinalAddress,
+					    uint64_t Value,
+					    uint32_t Type,
+					    int64_t Addend) {
+  switch (Type) {
+  default:
+    llvm_unreachable("Relocation type not implemented yet!");
+  break;
+  case ELF::R_PPC64_ADDR16_LO :
+    writeInt16BE(LocalAddress, applyPPClo (Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR16_HI :
+    writeInt16BE(LocalAddress, applyPPChi (Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR16_HIGHER :
+    writeInt16BE(LocalAddress, applyPPChigher (Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR16_HIGHEST :
+    writeInt16BE(LocalAddress, applyPPChighest (Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR14 : {
+    assert(((Value + Addend) & 3) == 0);
+    // Preserve the AA/LK bits in the branch instruction
+    uint8_t aalk = *(LocalAddress+3);
+    writeInt16BE(LocalAddress + 2, (aalk & 3) | ((Value + Addend) & 0xfffc));
+  } break;
+  case ELF::R_PPC64_REL24 : {
+    int32_t delta = static_cast<int32_t>(Value - FinalAddress + Addend);
+    if (SignExtend32<24>(delta) != delta)
+      llvm_unreachable("Relocation R_PPC64_REL24 overflow");
+    // Generates a 'bl <address>' instruction
+    writeInt32BE(LocalAddress, 0x48000001 | (delta & 0x03FFFFFC));
+  } break;
+  case ELF::R_PPC64_ADDR64 :
+    writeInt64BE(LocalAddress, Value + Addend);
+    break;
+  case ELF::R_PPC64_TOC :
+    writeInt64BE(LocalAddress, findPPC64TOC());
+    break;
+  case ELF::R_PPC64_TOC16 : {
+    uint64_t TOCStart = findPPC64TOC();
+    Value = applyPPClo((Value + Addend) - TOCStart);
+    writeInt16BE(LocalAddress, applyPPClo(Value));
+  } break;
+  case ELF::R_PPC64_TOC16_DS : {
+    uint64_t TOCStart = findPPC64TOC();
+    Value = ((Value + Addend) - TOCStart);
+    writeInt16BE(LocalAddress, applyPPClo(Value));
+  } break;
+  }
+}
+
+
 void RuntimeDyldELF::resolveRelocation(uint8_t *LocalAddress,
                                        uint64_t FinalAddress,
                                        uint64_t Value,
@@ -366,6 +547,9 @@ void RuntimeDyldELF::resolveRelocation(uint8_t *LocalAddress,
                           (uint32_t)(Value & 0xffffffffL), Type,
                           (uint32_t)(Addend & 0xffffffffL));
     break;
+  case Triple::ppc64:
+    resolvePPC64Relocation(LocalAddress, FinalAddress, Value, Type, Addend);
+    break;
   default: llvm_unreachable("Unsupported CPU type!");
   }
 }
@@ -390,6 +574,8 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
   RelocationValueRef Value;
   // First search for the symbol in the local symbol table
   SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
+  SymbolRef::Type SymType;
+  Symbol.getType(SymType);
   if (lsi != Symbols.end()) {
     Value.SectionID = lsi->second.first;
     Value.Addend = lsi->second.second;
@@ -401,8 +587,6 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
       Value.SectionID = gsi->second.first;
       Value.Addend = gsi->second.second;
     } else {
-      SymbolRef::Type SymType;
-      Symbol.getType(SymType);
       switch (SymType) {
         case SymbolRef::ST_Debug: {
           // TODO: Now ELF SymbolRef::ST_Debug = STT_SECTION, it's not obviously
@@ -515,6 +699,93 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
                         (uint64_t)Section.Address +
                         Section.StubOffset, RelType, 0);
       Section.StubOffset += getMaxStubSize();
+    }
+  } else if (Arch == Triple::ppc64) {
+    if (RelType == ELF::R_PPC64_REL24) {
+      // A PPC branch relocation will need a stub function if the target is
+      // an external symbol (Symbol::ST_Unknown) or if the target address
+      // is not within the signed 24-bits branch address.
+      SectionEntry &Section = Sections[Rel.SectionID];
+      uint8_t *Target = Section.Address + Rel.Offset;
+      bool RangeOverflow = false;
+      if (SymType != SymbolRef::ST_Unknown) {
+        // A function call may points to the .opd entry, so the final symbol value
+        // in calculated based in the relocation values in .opd section.
+        findOPDEntrySection(Obj, ObjSectionToID, Value);
+        uint8_t *RelocTarget = Sections[Value.SectionID].Address + Value.Addend;
+        int32_t delta = static_cast<int32_t>(Target - RelocTarget);
+        // If it is within 24-bits branch range, just set the branch target
+        if (SignExtend32<24>(delta) == delta) {
+          RelocationEntry RE(Rel.SectionID, Rel.Offset, RelType, Value.Addend);
+          if (Value.SymbolName)
+            addRelocationForSymbol(RE, Value.SymbolName);
+          else
+            addRelocationForSection(RE, Value.SectionID);
+        } else {
+          RangeOverflow = true;
+        }
+      }
+      if (SymType == SymbolRef::ST_Unknown || RangeOverflow == true) {
+        // It is an external symbol (SymbolRef::ST_Unknown) or within a range
+        // larger than 24-bits.
+        StubMap::const_iterator i = Stubs.find(Value);
+        if (i != Stubs.end()) {
+          // Symbol function stub already created, just relocate to it
+          resolveRelocation(Target, (uint64_t)Target, (uint64_t)Section.Address
+                            + i->second, RelType, 0);
+          DEBUG(dbgs() << " Stub function found\n");
+        } else {
+          // Create a new stub function.
+          DEBUG(dbgs() << " Create a new stub function\n");
+          Stubs[Value] = Section.StubOffset;
+          uint8_t *StubTargetAddr = createStubFunction(Section.Address +
+                                                       Section.StubOffset);
+          RelocationEntry RE(Rel.SectionID, StubTargetAddr - Section.Address,
+                             ELF::R_PPC64_ADDR64, Value.Addend);
+
+          // Generates the 64-bits address loads as exemplified in section
+          // 4.5.1 in PPC64 ELF ABI.
+          RelocationEntry REhst(Rel.SectionID,
+                                StubTargetAddr - Section.Address + 2,
+                                ELF::R_PPC64_ADDR16_HIGHEST, Value.Addend);
+          RelocationEntry REhr(Rel.SectionID,
+                               StubTargetAddr - Section.Address + 6,
+                               ELF::R_PPC64_ADDR16_HIGHER, Value.Addend);
+          RelocationEntry REh(Rel.SectionID,
+                              StubTargetAddr - Section.Address + 14,
+                              ELF::R_PPC64_ADDR16_HI, Value.Addend);
+          RelocationEntry REl(Rel.SectionID,
+                              StubTargetAddr - Section.Address + 18,
+                              ELF::R_PPC64_ADDR16_LO, Value.Addend);
+
+          if (Value.SymbolName) {
+            addRelocationForSymbol(REhst, Value.SymbolName);
+            addRelocationForSymbol(REhr,  Value.SymbolName);
+            addRelocationForSymbol(REh,   Value.SymbolName);
+            addRelocationForSymbol(REl,   Value.SymbolName);
+          } else {
+            addRelocationForSection(REhst, Value.SectionID);
+            addRelocationForSection(REhr,  Value.SectionID);
+            addRelocationForSection(REh,   Value.SectionID);
+            addRelocationForSection(REl,   Value.SectionID);
+          }
+
+          resolveRelocation(Target, (uint64_t)Target, (uint64_t)Section.Address
+                            + Section.StubOffset, RelType, 0);
+          if (SymType == SymbolRef::ST_Unknown)
+            // Restore the TOC for external calls
+            writeInt32BE(Target+4, 0xE8410028); // ld r2,40(r1)
+          Section.StubOffset += getMaxStubSize();
+        }
+      }
+    } else {
+      RelocationEntry RE(Rel.SectionID, Rel.Offset, RelType, Value.Addend);
+      // Extra check to avoid relocation againt empty symbols (usually
+      // the R_PPC64_TOC).
+      if (Value.SymbolName && !TargetName.empty())
+        addRelocationForSymbol(RE, Value.SymbolName);
+      else
+        addRelocationForSection(RE, Value.SectionID);
     }
   } else {
     RelocationEntry RE(Rel.SectionID, Rel.Offset, RelType, Value.Addend);

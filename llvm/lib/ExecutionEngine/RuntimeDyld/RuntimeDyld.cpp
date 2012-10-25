@@ -190,7 +190,7 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
-  Sections.push_back(SectionEntry(Addr, TotalSize, TotalSize, 0));
+  Sections.push_back(SectionEntry(StringRef(), Addr, TotalSize, TotalSize, 0));
   memset(Addr, 0, TotalSize);
 
   DEBUG(dbgs() << "emitCommonSection SectionID: " << SectionID
@@ -233,10 +233,12 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   bool IsVirtual;
   bool IsZeroInit;
   uint64_t DataSize;
+  StringRef Name;
   Check(Section.isRequiredForExecution(IsRequired));
   Check(Section.isVirtual(IsVirtual));
   Check(Section.isZeroInit(IsZeroInit));
   Check(Section.getSize(DataSize));
+  Check(Section.getName(Name));
 
   unsigned Allocate;
   unsigned SectionID = Sections.size();
@@ -264,6 +266,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
       memcpy(Addr, pData, DataSize);
 
     DEBUG(dbgs() << "emitSection SectionID: " << SectionID
+                 << " Name: " << Name
                  << " obj addr: " << format("%p", pData)
                  << " new addr: " << format("%p", Addr)
                  << " DataSize: " << DataSize
@@ -279,6 +282,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
     Allocate = 0;
     Addr = 0;
     DEBUG(dbgs() << "emitSection SectionID: " << SectionID
+                 << " Name: " << Name
                  << " obj addr: " << format("%p", data.data())
                  << " new addr: 0"
                  << " DataSize: " << DataSize
@@ -287,7 +291,8 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
                  << "\n");
   }
 
-  Sections.push_back(SectionEntry(Addr, Allocate, DataSize,(uintptr_t)pData));
+  Sections.push_back(SectionEntry(Name, Addr, Allocate, DataSize,
+				  (uintptr_t)pData));
   return SectionID;
 }
 
@@ -352,6 +357,24 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     *StubAddr = JrT9Instr;
     StubAddr++;
     *StubAddr = NopInstr;
+    return Addr;
+  } else if (Arch == Triple::ppc64) {
+    // PowerPC64 stub: the address points to a function descriptor
+    // instead of the function itself. Load the function address
+    // on r11 and sets it to control register. Also loads the function
+    // TOC in r2 and environment pointer to r11.
+    writeInt32BE(Addr,    0x3D800000); // lis   r12, highest(addr)
+    writeInt32BE(Addr+4,  0x618C0000); // ori   r12, higher(addr)
+    writeInt32BE(Addr+8,  0x798C07C6); // sldi  r12, r12, 32
+    writeInt32BE(Addr+12, 0x658C0000); // oris  r12, r12, h(addr)
+    writeInt32BE(Addr+16, 0x618C0000); // ori   r12, r12, l(addr)
+    writeInt32BE(Addr+20, 0xF8410028); // std   r2,  40(r1)
+    writeInt32BE(Addr+24, 0xE96C0000); // ld    r11, 0(r12)
+    writeInt32BE(Addr+28, 0xE84C0008); // ld    r2,  0(r12)
+    writeInt32BE(Addr+32, 0x7D6903A6); // mtctr r11
+    writeInt32BE(Addr+36, 0xE96C0010); // ld    r11, 16(r2)
+    writeInt32BE(Addr+40, 0x4E800420); // bctr
+    
     return Addr;
   }
   return Addr;
