@@ -123,7 +123,7 @@ int InstructionOpcodeToISD(unsigned Opcode) {
   return OpToISDTbl[Opcode - 1];
 }
 
-std::pair<unsigned, EVT> 
+std::pair<unsigned, EVT>
 VectorTargetTransformImpl::getTypeLegalizationCost(LLVMContext &C,
                                                          EVT Ty) const {
   unsigned Cost = 1;
@@ -150,16 +150,16 @@ VectorTargetTransformImpl::getInstrCost(unsigned Opcode, Type *Ty1,
   // Check if any of the operands are vector operands.
   int ISD = InstructionOpcodeToISD(Opcode);
 
-  // Selects on vectors are actually vector selects.
-  if (ISD == ISD::SELECT) {
-    assert(Ty2 && "Ty2 must hold the select type");
-    if (Ty2->isVectorTy())
-    ISD = ISD::VSELECT;
-  }
-
   // If we don't have any information about this instruction assume it costs 1.
   if (ISD == 0)
     return 1;
+
+  // Selects on vectors are actually vector selects.
+  if (ISD == ISD::SELECT) {
+    assert(Ty2 && "Ty2 must hold the condition type");
+    if (Ty2->isVectorTy())
+    ISD = ISD::VSELECT;
+  }
 
   assert(Ty1 && "We need to have at least one type");
 
@@ -174,7 +174,7 @@ VectorTargetTransformImpl::getInstrCost(unsigned Opcode, Type *Ty1,
   }
 
   unsigned NumElem =
-  (LT.second.isVector() ? LT.second.getVectorNumElements() : 1);
+    (LT.second.isVector() ? LT.second.getVectorNumElements() : 1);
 
   // We will probably scalarize this instruction. Assume that the cost is the
   // number of the vector elements.
