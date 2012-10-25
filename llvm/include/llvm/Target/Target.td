@@ -998,6 +998,55 @@ class ProcessorModel<string n, SchedMachineModel m, list<SubtargetFeature> f>
 }
 
 //===----------------------------------------------------------------------===//
+// InstrMapping - This class is used to create mapping tables to relate
+// instructions with each other based on the values specified in RowFields,
+// ColFields, KeyCol and ValueCols.
+//
+class InstrMapping {
+  // FilterClass - Used to limit search space only to the instructions that
+  // define the relationship modeled by this InstrMapping record.
+  string FilterClass;
+
+  // RowFields - List of fields/attributes that should be same for all the
+  // instructions in a row of the relation table. Think of this as a set of
+  // properties shared by all the instructions related by this relationship
+  // model and is used to categorize instructions into subgroups. For instance,
+  // if we want to define a relation that maps 'Add' instruction to its
+  // predicated forms, we can define RowFields like this:
+  //
+  // let RowFields = BaseOp
+  // All add instruction predicated/non-predicated will have to set their BaseOp
+  // to the same value.
+  //
+  // def Add: { let BaseOp = 'ADD'; let predSense = 'nopred' }
+  // def Add_predtrue: { let BaseOp = 'ADD'; let predSense = 'true' }
+  // def Add_predfalse: { let BaseOp = 'ADD'; let predSense = 'false'  }
+  list<string> RowFields = [];
+
+  // List of fields/attributes that are same for all the instructions
+  // in a column of the relation table.
+  // Ex: let ColFields = 'predSense' -- It means that the columns are arranged
+  // based on the 'predSense' values. All the instruction in a specific
+  // column have the same value and it is fixed for the column according
+  // to the values set in 'ValueCols'.
+  list<string> ColFields = [];
+
+  // Values for the fields/attributes listed in 'ColFields'.
+  // Ex: let KeyCol = 'nopred' -- It means that the key instruction (instruction
+  // that models this relation) should be non-predicated.
+  // In the example above, 'Add' is the key instruction.
+  list<string> KeyCol = [];
+
+  // List of values for the fields/attributes listed in 'ColFields', one for
+  // each column in the relation table.
+  //
+  // Ex: let ValueCols = [['true'],['false']] -- It adds two columns in the
+  // table. First column requires all the instructions to have predSense
+  // set to 'true' and second column requires it to be 'false'.
+  list<list<string> > ValueCols = [];
+}
+
+//===----------------------------------------------------------------------===//
 // Pull in the common support for calling conventions.
 //
 include "llvm/Target/TargetCallingConv.td"

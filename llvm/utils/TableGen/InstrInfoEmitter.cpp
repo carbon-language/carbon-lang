@@ -16,6 +16,7 @@
 #include "CodeGenDAGPatterns.h"
 #include "CodeGenSchedule.h"
 #include "CodeGenTarget.h"
+#include "TableGenBackends.h"
 #include "SequenceToOffsetTable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/TableGen/Record.h"
@@ -415,6 +416,7 @@ namespace llvm {
 
 void EmitInstrInfo(RecordKeeper &RK, raw_ostream &OS) {
   InstrInfoEmitter(RK).run(OS);
+  EmitMapTable(RK, OS);
 }
 
 } // End llvm namespace

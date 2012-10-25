@@ -32,6 +32,7 @@
   <li><a href="#InstructionSet">Instruction Set</a>
   <ul>  
     <li><a href="#operandMapping">Instruction Operand Mapping</a></li>
+    <li><a href="#relationMapping">Instruction Relation Mapping</a></li>
     <li><a href="#implementInstr">Implement a subclass of TargetInstrInfo</a></li>
     <li><a href="#branchFolding">Branch Folding and If Conversion</a></li>
   </ul></li>
@@ -1255,6 +1256,29 @@ instruction binding <tt>$dst</tt>, <tt>$b</tt>, and <tt>$c</tt> operands to
 the <tt>rd</tt>, <tt>rs1</tt>, and <tt>rs2</tt> fields respectively.
 </p>
 
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+  <a name="relationMapping">Instruction Relation Mapping</a>
+</h3>
+
+<div>
+
+<p>
+This TableGen feature is used to relate instructions with each other. It is
+particularly useful when you have multiple instruction formats and need to
+switch between them after instruction selection. This entire feature is driven
+by relation models which can be defined in <tt>XXXInstrInfo.td</tt> files
+according to the target-specific instruction set. Relation models are defined
+using <tt>InstrMapping</tt> class as a base. TableGen parses all the models
+and generates instruction relation maps using the specified information.
+Relation maps are emitted as tables in the <tt>XXXGenInstrInfo.inc</tt> file
+along with the functions to query them. For the detailed information on how to
+use this feature, please refer to
+<a href="HowToUseInstrMappings.html">How to add Instruction Mappings</a>
+document.
+</p>
 </div>
 
 <!-- ======================================================================= -->
