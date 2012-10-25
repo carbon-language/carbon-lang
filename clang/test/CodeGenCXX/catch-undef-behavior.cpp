@@ -98,7 +98,7 @@ void member_access(S *p) {
   // (3b) Check that 'p' actually points to an 'S'
 
   // CHECK: load i64*
-  // CHECK-NEXT: xor i64 -4030275160588942838,
+  // CHECK-NEXT: xor i64 {{-4030275160588942838|2562089159}},
   // [...]
   // CHECK: getelementptr inbounds [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %
   // CHECK: br i1
