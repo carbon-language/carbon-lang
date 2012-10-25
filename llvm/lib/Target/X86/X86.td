@@ -162,7 +162,7 @@ def : Proc<"core2",           [FeatureSSSE3, FeatureCMPXCHG16B,
                                FeatureSlowBTMem]>;
 def : Proc<"penryn",          [FeatureSSE41, FeatureCMPXCHG16B,
                                FeatureSlowBTMem]>;
-def : AtomProc<"atom",        [ProcIntelAtom, FeatureSSE3, FeatureCMPXCHG16B,
+def : AtomProc<"atom",        [ProcIntelAtom, FeatureSSSE3, FeatureCMPXCHG16B,
                                FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
                                FeatureSlowDivide]>;
 // "Arrandale" along with corei3 and corei5
