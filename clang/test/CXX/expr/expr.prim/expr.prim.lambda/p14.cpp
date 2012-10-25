@@ -73,3 +73,18 @@ struct ExpectedThisLayout {
     static_assert(sizeof(x) == sizeof(ExpectedThisLayout), "Layout mismatch!");
   }
 };
+
+struct CaptureArrayAndThis {
+  int value;
+
+  void f() {
+    int array[3];
+    [=]() -> int {
+      int result = value;
+      for (unsigned i = 0; i < 3; ++i)
+        result += array[i];
+      return result;
+    }();
+  }
+};
+
