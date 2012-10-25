@@ -60,7 +60,8 @@ private:
   X86Operand *ParseIntelBracExpression(unsigned SegReg, unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
-  const MCExpr *ParseIntelDotOperator(const MCExpr *Disp);
+  bool ParseIntelDotOperator(const MCExpr *Disp, const MCExpr **NewDisp,
+                             SmallString<64> &Err);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
@@ -744,8 +745,15 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   Parser.Lex();
   End = Tok.getLoc();
 
-  if (Tok.getString().startswith("."))
-    Disp = ParseIntelDotOperator(Disp);
+  if (Tok.getString().startswith(".")) {
+    SmallString<64> Err;
+    const MCExpr *NewDisp;
+    if (ParseIntelDotOperator(Disp, &NewDisp, Err))
+      return ErrorOperand(Tok.getLoc(), Err);
+    
+    Parser.Lex();  // Eat the field.
+    Disp = NewDisp;
+  }
 
   End = Tok.getLoc();
 
@@ -809,30 +817,41 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
 }
 
 /// Parse the '.' operator.
-const MCExpr *X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp) {
+bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
+                                         const MCExpr **NewDisp,
+                                         SmallString<64> &Err) {
   AsmToken Tok = *&Parser.getTok();
+  uint64_t OrigDispVal, DotDispVal;
+
+  // FIXME: Handle non-constant expressions.
+  if (const MCConstantExpr *OrigDisp = dyn_cast<MCConstantExpr>(Disp)) {
+    OrigDispVal = OrigDisp->getValue();
+  } else {
+    Err = "Non-constant offsets are not supported!";
+    return true;
+  }
 
   // Drop the '.'.
   StringRef DotDispStr = Tok.getString().drop_front(1);
-
-  Lex(); // Eat .field.
 
   // .Imm gets lexed as a real.
   if (Tok.is(AsmToken::Real)) {
     APInt DotDisp;
     DotDispStr.getAsInteger(10, DotDisp);
-    uint64_t DotDispVal = DotDisp.getZExtValue();
-
-    // Special case zero dot displacement.
-    if (!DotDispVal) return Disp;
-
-    // FIXME: Handle non-constant expressions.
-    if (const MCConstantExpr *OrigDisp = dyn_cast<MCConstantExpr>(Disp)) {
-      uint64_t OrigDispVal = OrigDisp->getValue();
-      return MCConstantExpr::Create(OrigDispVal + DotDispVal, getContext());
-    }
+    DotDispVal = DotDisp.getZExtValue();
+  } else {
+    Err = "Unexpected token type!";
+    return true;
   }
-  return Disp;
+
+  // Special case zero dot displacement.
+  if (!DotDispVal) {
+    *NewDisp = Disp;
+    return false;
+  }
+
+  *NewDisp = MCConstantExpr::Create(OrigDispVal + DotDispVal, getContext());
+  return false;
 }
 
 /// Parse the 'offset' operator.  This operator is used to specify the
