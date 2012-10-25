@@ -37,8 +37,9 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   // C++11 [class.mfct.non-static]p2:
   //   If a non-static member function of a class X is called for an object that
   //   is not of type X, or of a type derived from X, the behavior is undefined.
-  EmitTypeCheck(TCK_MemberCall, CallLoc, This,
-                getContext().getRecordType(MD->getParent()));
+  EmitTypeCheck(isa<CXXConstructorDecl>(MD) ? TCK_ConstructorCall
+                                            : TCK_MemberCall,
+                CallLoc, This, getContext().getRecordType(MD->getParent()));
 
   CallArgList Args;
 

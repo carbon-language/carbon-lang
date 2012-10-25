@@ -1871,7 +1871,9 @@ public:
     TCK_MemberAccess,
     /// Checking the 'this' pointer for a call to a non-static member function.
     /// Must be an object within its lifetime.
-    TCK_MemberCall
+    TCK_MemberCall,
+    /// Checking the 'this' pointer for a constructor call.
+    TCK_ConstructorCall
   };
 
   /// \brief Emit a check that \p V is the address of storage of the
@@ -2576,7 +2578,8 @@ public:
   /// conditional branch to it.
   void EmitCheck(llvm::Value *Checked, StringRef CheckName,
                  llvm::ArrayRef<llvm::Constant *> StaticArgs,
-                 llvm::ArrayRef<llvm::Value *> DynamicArgs);
+                 llvm::ArrayRef<llvm::Value *> DynamicArgs,
+                 bool Recoverable = false);
 
   /// EmitCallArg - Emit a single call argument.
   void EmitCallArg(CallArgList &args, const Expr *E, QualType ArgType);
