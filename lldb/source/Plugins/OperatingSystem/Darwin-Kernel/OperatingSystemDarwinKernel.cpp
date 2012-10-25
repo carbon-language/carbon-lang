@@ -189,10 +189,6 @@ OperatingSystemDarwinKernel::GetDynamicRegisterInfo ()
                     reg_info.kinds[eRegisterKindLLDB] = reg_num++;
                     m_register_info_ap->AddRegister (reg_info, reg_name, empty_name, gpr_name);
                 }
-                else
-                {
-                    printf ("not able to find register info for %s\n", reg_name.GetCString()); // REMOVE THIS printf before checkin!!!
-                }
             }
             
             m_register_info_ap->Finalize();

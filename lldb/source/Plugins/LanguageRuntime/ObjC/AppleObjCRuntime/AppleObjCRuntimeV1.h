@@ -123,17 +123,58 @@ public:
         return eAppleObjC_V1;
     }
     
-    virtual bool
-    UpdateISAToDescriptorMap_Impl();
+    virtual void
+    UpdateISAToDescriptorMapIfNeeded();
 
 protected:
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
-            
+    
+    
+    class HashTableSignature
+    {
+    public:
+        HashTableSignature () :
+            m_count (0),
+            m_num_buckets (0),
+            m_buckets_ptr (LLDB_INVALID_ADDRESS)
+        {
+        }
+        
+        bool
+        NeedsUpdate (uint32_t count,
+                     uint32_t num_buckets,
+                     lldb::addr_t buckets_ptr)
+        {
+            return m_count       != count       ||
+                   m_num_buckets != num_buckets ||
+                   m_buckets_ptr != buckets_ptr ;
+        }
+        
+        void
+        UpdateSignature (uint32_t count,
+                         uint32_t num_buckets,
+                         lldb::addr_t buckets_ptr)
+        {
+            m_count = count;
+            m_num_buckets = num_buckets;
+            m_buckets_ptr = buckets_ptr;
+        }
+
+    protected:
+        uint32_t m_count;
+        uint32_t m_num_buckets;
+        lldb::addr_t m_buckets_ptr;
+    };
+    
+
+    lldb::addr_t
+    GetISAHashTablePointer ();
+    
+    HashTableSignature m_hash_signature;
+    lldb::addr_t m_isa_hash_table_ptr;
 private:
-    AppleObjCRuntimeV1(Process *process) : 
-        lldb_private::AppleObjCRuntime (process)
-     { } // Call CreateInstance instead.
+    AppleObjCRuntimeV1(Process *process);
 };
     
 } // namespace lldb_private

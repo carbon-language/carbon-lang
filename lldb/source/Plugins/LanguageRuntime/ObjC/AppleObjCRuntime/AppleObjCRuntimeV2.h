@@ -21,6 +21,8 @@
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "AppleObjCRuntime.h"
 
+class RemoteNXMapTable;
+
 namespace lldb_private {
 
 class AppleObjCRuntimeV2 :
@@ -72,9 +74,9 @@ public:
 
     virtual size_t
     GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
-    
-    virtual bool
-    UpdateISAToDescriptorMap_Impl();
+
+    virtual void
+    UpdateISAToDescriptorMapIfNeeded();
     
     // none of these are valid ISAs - we use them to infer the type
     // of tagged pointers - if we have something meaningful to say
@@ -97,34 +99,49 @@ public:
     virtual TypeVendor *
     GetTypeVendor();
     
-    lldb::ProcessSP
-    GetProcessSP ()
-    {
-        return m_process_wp.lock();
-    }
-    
 protected:
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
 
 private:
     
+    class HashTableSignature
+    {
+    public:
+        HashTableSignature ();
+
+        bool
+        NeedsUpdate (Process *process,
+                     AppleObjCRuntimeV2 *runtime,
+                     RemoteNXMapTable &hash_table);
+        
+        void
+        UpdateSignature (const RemoteNXMapTable &hash_table);
+    protected:
+        uint32_t m_count;
+        uint32_t m_num_buckets;
+        lldb::addr_t m_buckets_ptr;
+    };
+
     AppleObjCRuntimeV2 (Process *process,
                         const lldb::ModuleSP &objc_module_sp);
     
     bool
     IsTaggedPointer(lldb::addr_t ptr);
     
+    lldb::addr_t
+    GetISAHashTablePointer ();
+
     bool RunFunctionToFindClassName (lldb::addr_t class_addr, Thread *thread, char *name_dst, size_t max_name_len);
     
-    bool                                m_has_object_getClass;
     std::auto_ptr<ClangFunction>        m_get_class_name_function;
     std::auto_ptr<ClangUtilityFunction> m_get_class_name_code;
     lldb::addr_t                        m_get_class_name_args;
     Mutex                               m_get_class_name_args_mutex;
-    
     std::auto_ptr<TypeVendor>           m_type_vendor_ap;
-    lldb::ProcessWP                     m_process_wp; // used by class descriptors to lazily fill their own data
+    lldb::addr_t                        m_isa_hash_table_ptr;
+    HashTableSignature                  m_hash_signature;
+    bool                                m_has_object_getClass;
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;

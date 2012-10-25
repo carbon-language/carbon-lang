@@ -32,7 +32,7 @@ ObjCLanguageRuntime::ObjCLanguageRuntime (Process *process) :
     LanguageRuntime (process),
     m_has_new_literals_and_indexing (eLazyBoolCalculate),
     m_isa_to_descriptor_cache(),
-    m_isa_to_descriptor_cache_is_up_to_date (false)
+    m_isa_to_descriptor_cache_stop_id (UINT32_MAX)
 {
 
 }

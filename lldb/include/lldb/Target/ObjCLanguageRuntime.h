@@ -251,16 +251,17 @@ public:
         return m_isa_to_descriptor_cache.count(isa) > 0;
     }
 
-    virtual bool
-    UpdateISAToDescriptorMap_Impl() = 0;
-    
+    virtual void
+    UpdateISAToDescriptorMapIfNeeded() = 0;
+
     void
     UpdateISAToDescriptorMap()
     {
-        if (m_isa_to_descriptor_cache_is_up_to_date)
-            return;
-        
-        m_isa_to_descriptor_cache_is_up_to_date = UpdateISAToDescriptorMap_Impl();
+        if (m_process && m_process->GetStopID() != m_isa_to_descriptor_cache_stop_id)
+        {
+            UpdateISAToDescriptorMapIfNeeded ();
+            assert (m_process->GetStopID() == m_isa_to_descriptor_cache_stop_id); // REMOVE THIS PRIOR TO CHECKIN
+        }
     }
     
     virtual ObjCISA
@@ -450,9 +451,8 @@ private:
 protected:
     typedef std::map<ObjCISA, ClassDescriptorSP> ISAToDescriptorMap;
     typedef ISAToDescriptorMap::iterator ISAToDescriptorIterator;
-    ISAToDescriptorMap                  m_isa_to_descriptor_cache;
-    bool                                m_isa_to_descriptor_cache_is_up_to_date;
-    
+    ISAToDescriptorMap m_isa_to_descriptor_cache;
+    uint32_t m_isa_to_descriptor_cache_stop_id;
     typedef std::map<ConstString, lldb::TypeWP> CompleteClassMap;
     CompleteClassMap m_complete_class_cache;
 

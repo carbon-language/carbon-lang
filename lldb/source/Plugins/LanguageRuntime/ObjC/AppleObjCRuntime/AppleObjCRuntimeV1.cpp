@@ -40,8 +40,16 @@ static const char *pluginName = "AppleObjCRuntimeV1";
 static const char *pluginDesc = "Apple Objective C Language Runtime - Version 1";
 static const char *pluginShort = "language.apple.objc.v1";
 
+
+AppleObjCRuntimeV1::AppleObjCRuntimeV1(Process *process) :
+    AppleObjCRuntime (process),
+    m_hash_signature (),
+    m_isa_hash_table_ptr (LLDB_INVALID_ADDRESS)
+{
+}
+
 bool
-AppleObjCRuntimeV1::GetDynamicTypeAndAddress (ValueObject &in_value, 
+AppleObjCRuntimeV1::GetDynamicTypeAndAddress (ValueObject &in_value,
                                              lldb::DynamicValueType use_dynamic, 
                                              TypeAndOrName &class_type_or_name, 
                                              Address &address)
@@ -69,6 +77,7 @@ AppleObjCRuntimeV1::CreateInstance (Process *process, lldb::LanguageType languag
     else
         return NULL;
 }
+
 
 void
 AppleObjCRuntimeV1::Initialize()
@@ -188,11 +197,8 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 
 AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ValueObject &isa_pointer)
 {
-    ObjCISA ptr_value = isa_pointer.GetValueAsUnsigned(0);
-
-    lldb::ProcessSP process_sp = isa_pointer.GetProcessSP();
-
-    Initialize (ptr_value,process_sp);
+    Initialize (isa_pointer.GetValueAsUnsigned(0),
+                isa_pointer.GetProcessSP());
 }
 
 AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ObjCISA isa, lldb::ProcessSP process_sp)
@@ -288,62 +294,99 @@ AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
     return ObjCLanguageRuntime::ClassDescriptorSP(new AppleObjCRuntimeV1::ClassDescriptorV1(m_parent_isa,process_sp));
 }
 
-bool
-AppleObjCRuntimeV1::UpdateISAToDescriptorMap_Impl()
+lldb::addr_t
+AppleObjCRuntimeV1::GetISAHashTablePointer ()
 {
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-    
-    Process *process_ptr = GetProcess();
-    
-    if (!process_ptr)
-        return false;
-    
-    ProcessSP process_sp = process_ptr->shared_from_this();
-    
-    ModuleSP objc_module_sp(GetObjCModule());
-    
-    if (!objc_module_sp)
-        return false;
-    
-    uint32_t isa_count = 0;
-    
-    static ConstString g_objc_debug_class_hash("_objc_debug_class_hash");
-    
-    const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_objc_debug_class_hash, lldb::eSymbolTypeData);
-    if (symbol)
+    if (m_isa_hash_table_ptr == LLDB_INVALID_ADDRESS)
     {
-        lldb::addr_t objc_debug_class_hash_addr = symbol->GetAddress().GetLoadAddress(&process_sp->GetTarget());
+        ModuleSP objc_module_sp(GetObjCModule());
         
-        if (objc_debug_class_hash_addr != LLDB_INVALID_ADDRESS)
+        if (!objc_module_sp)
+            return LLDB_INVALID_ADDRESS;
+        
+        static ConstString g_objc_debug_class_hash("_objc_debug_class_hash");
+        
+        const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_objc_debug_class_hash, lldb::eSymbolTypeData);
+        if (symbol)
         {
-            Error error;
-            lldb::addr_t objc_debug_class_hash_ptr = process_sp->ReadPointerFromMemory(objc_debug_class_hash_addr, error);
-            if (error.Success() && objc_debug_class_hash_ptr != 0 && objc_debug_class_hash_ptr != LLDB_INVALID_ADDRESS)
+            Process *process = GetProcess();
+            if (process)
             {
-                // Read the NXHashTable struct:
-                //
-                // typedef struct {
-                //     const NXHashTablePrototype *prototype;
-                //     unsigned   count;
-                //     unsigned   nbBuckets;
-                //     void       *buckets;
-                //     const void *info;
-                // } NXHashTable;
 
-                DataBufferHeap buffer(1024, 0);
-                if (process_sp->ReadMemory(objc_debug_class_hash_ptr, buffer.GetBytes(), 20, error) == 20)
+                lldb::addr_t objc_debug_class_hash_addr = symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+            
+                if (objc_debug_class_hash_addr != LLDB_INVALID_ADDRESS)
                 {
-                    const uint32_t addr_size = m_process->GetAddressByteSize();
-                    const ByteOrder byte_order = m_process->GetByteOrder();
-                    DataExtractor data (buffer.GetBytes(), buffer.GetByteSize(), byte_order, addr_size);
-                    uint32_t offset = addr_size + 4; // Skip prototype
-                    const uint32_t num_buckets = data.GetU32(&offset);
-                    const addr_t buckets_ptr = data.GetPointer(&offset);
-                
+                    Error error;
+                    lldb::addr_t objc_debug_class_hash_ptr = process->ReadPointerFromMemory(objc_debug_class_hash_addr, error);
+                    if (objc_debug_class_hash_ptr != 0 &&
+                        objc_debug_class_hash_ptr != LLDB_INVALID_ADDRESS)
+                    {
+                        m_isa_hash_table_ptr = objc_debug_class_hash_ptr;
+                    }
+                }
+            }
+        }
+    }
+    return m_isa_hash_table_ptr;
+}
+
+void
+AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
+{
+    // TODO: implement HashTableSignature...
+    Process *process = GetProcess();
+    
+    if (process)
+    {
+        // Update the process stop ID that indicates the last time we updated the
+        // map, wether it was successful or not.
+        m_isa_to_descriptor_cache_stop_id = process->GetStopID();
+        
+
+        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+        
+        ProcessSP process_sp = process->shared_from_this();
+        
+        ModuleSP objc_module_sp(GetObjCModule());
+        
+        if (!objc_module_sp)
+            return;
+        
+        uint32_t isa_count = 0;
+        
+        lldb::addr_t hash_table_ptr = GetISAHashTablePointer ();
+        if (hash_table_ptr != LLDB_INVALID_ADDRESS)
+        {
+            // Read the NXHashTable struct:
+            //
+            // typedef struct {
+            //     const NXHashTablePrototype *prototype;
+            //     unsigned   count;
+            //     unsigned   nbBuckets;
+            //     void       *buckets;
+            //     const void *info;
+            // } NXHashTable;
+
+            Error error;
+            DataBufferHeap buffer(1024, 0);
+            if (process->ReadMemory(hash_table_ptr, buffer.GetBytes(), 20, error) == 20)
+            {
+                const uint32_t addr_size = m_process->GetAddressByteSize();
+                const ByteOrder byte_order = m_process->GetByteOrder();
+                DataExtractor data (buffer.GetBytes(), buffer.GetByteSize(), byte_order, addr_size);
+                uint32_t offset = addr_size; // Skip prototype
+                const uint32_t count = data.GetU32(&offset);
+                const uint32_t num_buckets = data.GetU32(&offset);
+                const addr_t buckets_ptr = data.GetPointer(&offset);
+                if (m_hash_signature.NeedsUpdate (count, num_buckets, buckets_ptr))
+                {
+                    m_hash_signature.UpdateSignature (count, num_buckets, buckets_ptr);
+
                     const uint32_t data_size = num_buckets * 2 * sizeof(uint32_t);
                     buffer.SetByteSize(data_size);
                     
-                    if (process_sp->ReadMemory(buckets_ptr, buffer.GetBytes(), data_size, error) == data_size)
+                    if (process->ReadMemory(buckets_ptr, buffer.GetBytes(), data_size, error) == data_size)
                     {
                         data.SetData(buffer.GetBytes(), buffer.GetByteSize(), byte_order);
                         offset = 0;
@@ -403,9 +446,11 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMap_Impl()
                     }
                 }
             }
-        }
+        }        
     }
-
-    return isa_count > 0;
+    else
+    {
+        m_isa_to_descriptor_cache_stop_id = UINT32_MAX;
+    }
 }
 
