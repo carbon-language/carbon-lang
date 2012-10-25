@@ -259,16 +259,16 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   }
 
   // Compute the function type we're calling.
+  const CXXMethodDecl *CalleeDecl = DevirtualizedMethod ? DevirtualizedMethod : MD;
   const CGFunctionInfo *FInfo = 0;
-  if (isa<CXXDestructorDecl>(MD))
-    FInfo = &CGM.getTypes().arrangeCXXDestructor(cast<CXXDestructorDecl>(MD),
+  if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(CalleeDecl))
+    FInfo = &CGM.getTypes().arrangeCXXDestructor(Dtor,
                                                  Dtor_Complete);
-  else if (isa<CXXConstructorDecl>(MD))
-    FInfo = &CGM.getTypes().arrangeCXXConstructorDeclaration(
-                                                 cast<CXXConstructorDecl>(MD),
-                                                 Ctor_Complete);
+  else if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(CalleeDecl))
+    FInfo = &CGM.getTypes().arrangeCXXConstructorDeclaration(Ctor,
+                                                             Ctor_Complete);
   else
-    FInfo = &CGM.getTypes().arrangeCXXMethodDeclaration(MD);
+    FInfo = &CGM.getTypes().arrangeCXXMethodDeclaration(CalleeDecl);
 
   llvm::Type *Ty = CGM.getTypes().GetFunctionType(*FInfo);
 
