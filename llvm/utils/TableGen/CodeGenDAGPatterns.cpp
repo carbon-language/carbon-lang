@@ -1219,7 +1219,7 @@ SubstituteFormalArguments(std::map<std::string, TreePatternNode*> &ArgMap) {
 /// PatFrag references.
 TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   if (TP.hasError())
-    return false;
+    return 0;
 
   if (isLeaf())
      return this;  // nothing to do.
@@ -1248,7 +1248,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   if (Frag->getNumArgs() != Children.size()) {
     TP.error("'" + Op->getName() + "' fragment requires " +
              utostr(Frag->getNumArgs()) + " operands!");
-    return false;
+    return 0;
   }
 
   TreePatternNode *FragTree = Frag->getOnlyTree()->clone();
