@@ -77,7 +77,7 @@ static int CompareOptionRecords(const void *Av, const void *Bv) {
       B->getValueAsListOfStrings("Prefixes")) {
     PrintError(A->getLoc(), Twine("Option is equivilent to"));
     PrintError(B->getLoc(), Twine("Other defined here"));
-    throw "Eqivilant Options found.";
+    PrintFatalError("Equivalent Options found.");
   }
   return APrec < BPrec ? -1 : 1;
 }

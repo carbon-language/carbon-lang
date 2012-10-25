@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <map>
@@ -133,7 +134,8 @@ void EmitClangSACheckers(RecordKeeper &Records, raw_ostream &OS) {
           DI = dyn_cast<DefInit>(R->getValueInit("ParentPackage")))
       package = DI->getDef();
     if (!isCheckerNamed(R) && !package)
-      throw "Checker '" + R->getName() + "' is neither named, nor in a package!";
+      PrintFatalError(R->getLoc(), "Checker '" + R->getName() +
+                      "' is neither named, nor in a package!");
 
     if (isCheckerNamed(R)) {
       // Create a pseudo-group to hold this checker.

@@ -18,6 +18,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
@@ -394,8 +395,8 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
       if (DefInit *Group = dyn_cast<DefInit>(R.getValueInit("Group"))) {
         const Record *GroupRec = Group->getDef();
         const std::string &GroupName = GroupRec->getValueAsString("GroupName");
-        throw "Error " + R.getName() + " cannot be in a warning group [" +
-              GroupName + "]";
+        PrintFatalError(R.getLoc(), "Error " + R.getName() +
+                      " cannot be in a warning group [" + GroupName + "]");
       }
     }
 
@@ -556,7 +557,8 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
     if (I->first.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                    "0123456789!@#$%^*-+=:?")!=std::string::npos)
-      throw "Invalid character in diagnostic group '" + I->first + "'";
+      PrintFatalError("Invalid character in diagnostic group '" +
+                      I->first + "'");
     OS.write_escaped(I->first) << "\","
                                << std::string(MaxLen-I->first.size()+1, ' ');
 
