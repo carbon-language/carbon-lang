@@ -437,8 +437,9 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     if (SrcTy->isPointerTy())
       SrcBitWidth = TD->getTypeSizeInBits(SrcTy);
     else
-      SrcBitWidth = SrcTy->getScalarSizeInBits();
-    
+      SrcBitWidth = TD->getTypeSizeInBits(SrcTy->getScalarType());
+
+    assert(SrcBitWidth && "SrcBitWidth can't be zero");
     KnownZero = KnownZero.zextOrTrunc(SrcBitWidth);
     KnownOne = KnownOne.zextOrTrunc(SrcBitWidth);
     ComputeMaskedBits(I->getOperand(0), KnownZero, KnownOne, TD, Depth+1);
