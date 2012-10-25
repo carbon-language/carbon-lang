@@ -3583,32 +3583,30 @@ static bool SwitchToLookupTable(SwitchInst *SI,
 }
 
 bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
-  // If this switch is too complex to want to look at, ignore it.
-  if (!isValueEqualityComparison(SI))
-    return false;
-
   BasicBlock *BB = SI->getParent();
 
-  // If we only have one predecessor, and if it is a branch on this value,
-  // see if that predecessor totally determines the outcome of this switch.
-  if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
-    if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred, Builder))
-      return SimplifyCFG(BB) | true;
+  if (isValueEqualityComparison(SI)) {
+    // If we only have one predecessor, and if it is a branch on this value,
+    // see if that predecessor totally determines the outcome of this switch.
+    if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
+      if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred, Builder))
+        return SimplifyCFG(BB) | true;
 
-  Value *Cond = SI->getCondition();
-  if (SelectInst *Select = dyn_cast<SelectInst>(Cond))
-    if (SimplifySwitchOnSelect(SI, Select))
-      return SimplifyCFG(BB) | true;
+    Value *Cond = SI->getCondition();
+    if (SelectInst *Select = dyn_cast<SelectInst>(Cond))
+      if (SimplifySwitchOnSelect(SI, Select))
+        return SimplifyCFG(BB) | true;
 
-  // If the block only contains the switch, see if we can fold the block
-  // away into any preds.
-  BasicBlock::iterator BBI = BB->begin();
-  // Ignore dbg intrinsics.
-  while (isa<DbgInfoIntrinsic>(BBI))
-    ++BBI;
-  if (SI == &*BBI)
-    if (FoldValueComparisonIntoPredecessors(SI, Builder))
-      return SimplifyCFG(BB) | true;
+    // If the block only contains the switch, see if we can fold the block
+    // away into any preds.
+    BasicBlock::iterator BBI = BB->begin();
+    // Ignore dbg intrinsics.
+    while (isa<DbgInfoIntrinsic>(BBI))
+      ++BBI;
+    if (SI == &*BBI)
+      if (FoldValueComparisonIntoPredecessors(SI, Builder))
+        return SimplifyCFG(BB) | true;
+  }
 
   // Try to transform the switch into an icmp and a branch.
   if (TurnSwitchRangeIntoICmp(SI, Builder))
