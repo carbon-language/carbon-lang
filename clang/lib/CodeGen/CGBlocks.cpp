@@ -56,7 +56,18 @@ static llvm::Constant *buildDisposeHelper(CodeGenModule &CGM,
   return CodeGenFunction(CGM).GenerateDestroyHelperFunction(blockInfo);
 }
 
-/// Build the block descriptor constant for a block.
+/// buildBlockDescriptor - Build the block descriptor meta-data for a block.
+/// buildBlockDescriptor is accessed from 5th field of the Block_literal
+/// meta-data and contains stationary information about the block literal.
+/// Its definition will have 4 (or optinally 6) words.
+/// struct Block_descriptor {
+///   unsigned long reserved;
+///   unsigned long size;  // size of Block_literal metadata in bytes.
+///   void *copy_func_helper_decl;  // optional copy helper.
+///   void *destroy_func_decl; // optioanl destructor helper.
+///   void *block_method_encoding_address;//@encode for block literal signature.
+///   void *block_layout_info; // encoding of captured block variables.
+/// };
 static llvm::Constant *buildBlockDescriptor(CodeGenModule &CGM,
                                             const CGBlockInfo &blockInfo) {
   ASTContext &C = CGM.getContext();
