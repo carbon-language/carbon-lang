@@ -577,9 +577,17 @@ entry:
   %ai = load i24* %aiptr
 ; CHCEK-NOT: store
 ; CHCEK-NOT: load
-; CHECK:      %[[mask0:.*]] = and i24 undef, -256
-; CHECK-NEXT: %[[mask1:.*]] = and i24 %[[mask0]], -65281
-; CHECK-NEXT: %[[mask2:.*]] = and i24 %[[mask1]], 65535
+; CHECK:      %[[ext2:.*]] = zext i8 0 to i24
+; CHECK-NEXT: %[[shift2:.*]] = shl i24 %[[ext2]], 16
+; CHECK-NEXT: %[[mask2:.*]] = and i24 undef, 65535
+; CHECK-NEXT: %[[insert2:.*]] = or i24 %[[mask2]], %[[shift2]]
+; CHECK-NEXT: %[[ext1:.*]] = zext i8 0 to i24
+; CHECK-NEXT: %[[shift1:.*]] = shl i24 %[[ext1]], 8
+; CHECK-NEXT: %[[mask1:.*]] = and i24 %[[insert2]], -65281
+; CHECK-NEXT: %[[insert1:.*]] = or i24 %[[mask1]], %[[shift1]]
+; CHECK-NEXT: %[[ext0:.*]] = zext i8 0 to i24
+; CHECK-NEXT: %[[mask0:.*]] = and i24 %[[insert1]], -256
+; CHECK-NEXT: %[[insert0:.*]] = or i24 %[[mask0]], %[[ext0]]
 
   %biptr = bitcast [3 x i8]* %b to i24*
   store i24 %ai, i24* %biptr
@@ -591,10 +599,10 @@ entry:
   %b2 = load i8* %b2ptr
 ; CHCEK-NOT: store
 ; CHCEK-NOT: load
-; CHECK:      %[[trunc0:.*]] = trunc i24 %[[mask2]] to i8
-; CHECK-NEXT: %[[shift1:.*]] = lshr i24 %[[mask2]], 8
+; CHECK:      %[[trunc0:.*]] = trunc i24 %[[insert0]] to i8
+; CHECK-NEXT: %[[shift1:.*]] = lshr i24 %[[insert0]], 8
 ; CHECK-NEXT: %[[trunc1:.*]] = trunc i24 %[[shift1]] to i8
-; CHECK-NEXT: %[[shift2:.*]] = lshr i24 %[[mask2]], 16
+; CHECK-NEXT: %[[shift2:.*]] = lshr i24 %[[insert0]], 16
 ; CHECK-NEXT: %[[trunc2:.*]] = trunc i24 %[[shift2]] to i8
 
   %bsum0 = add i8 %b0, %b1
@@ -1062,6 +1070,49 @@ entry:
   store double %add.r.i, double* %d, align 8
   call void @llvm.lifetime.end(i64 -1, i8* %0)
   ret void
+}
+
+define i64 @PR14059.2({ float, float }* %phi) {
+; Check that SROA can split up alloca-wide integer loads and stores where the
+; underlying alloca has smaller components that are accessed independently. This
+; shows up particularly with ABI lowering patterns coming out of Clang that rely
+; on the particular register placement of a single large integer return value.
+; CHECK: @PR14059.2
+
+entry:
+  %retval = alloca { float, float }, align 4
+  ; CHECK-NOT: alloca
+
+  %0 = bitcast { float, float }* %retval to i64*
+  store i64 0, i64* %0
+  ; CHECK-NOT: store
+
+  %phi.realp = getelementptr inbounds { float, float }* %phi, i32 0, i32 0
+  %phi.real = load float* %phi.realp
+  %phi.imagp = getelementptr inbounds { float, float }* %phi, i32 0, i32 1
+  %phi.imag = load float* %phi.imagp
+  ; CHECK:      %[[realp:.*]] = getelementptr inbounds { float, float }* %phi, i32 0, i32 0
+  ; CHECK-NEXT: %[[real:.*]] = load float* %[[realp]]
+  ; CHECK-NEXT: %[[imagp:.*]] = getelementptr inbounds { float, float }* %phi, i32 0, i32 1
+  ; CHECK-NEXT: %[[imag:.*]] = load float* %[[imagp]]
+
+  %real = getelementptr inbounds { float, float }* %retval, i32 0, i32 0
+  %imag = getelementptr inbounds { float, float }* %retval, i32 0, i32 1
+  store float %phi.real, float* %real
+  store float %phi.imag, float* %imag
+  ; CHECK-NEXT: %[[imag_convert:.*]] = bitcast float %[[imag]] to i32
+  ; CHECK-NEXT: %[[imag_ext:.*]] = zext i32 %[[imag_convert]] to i64
+  ; CHECK-NEXT: %[[imag_shift:.*]] = shl i64 %[[imag_ext]], 32
+  ; CHECK-NEXT: %[[imag_mask:.*]] = and i64 undef, 4294967295
+  ; CHECK-NEXT: %[[imag_insert:.*]] = or i64 %[[imag_mask]], %[[imag_shift]]
+  ; CHECK-NEXT: %[[real_convert:.*]] = bitcast float %[[real]] to i32
+  ; CHECK-NEXT: %[[real_ext:.*]] = zext i32 %[[real_convert]] to i64
+  ; CHECK-NEXT: %[[real_mask:.*]] = and i64 %[[imag_insert]], -4294967296
+  ; CHECK-NEXT: %[[real_insert:.*]] = or i64 %[[real_mask]], %[[real_ext]]
+
+  %1 = load i64* %0, align 1
+  ret i64 %1
+  ; CHECK-NEXT: ret i64 %[[real_insert]]
 }
 
 define void @PR14105({ [16 x i8] }* %ptr) {
