@@ -45,10 +45,6 @@ void PrintWarning(const Twine &Msg) {
   errs() << "warning:" << Msg << "\n";
 }
 
-void PrintWarning(const TGError &Warning) {
-  PrintWarning(Warning.getLoc(), Warning.getMessage());
-}
-
 void PrintError(ArrayRef<SMLoc> ErrorLoc, const Twine &Msg) {
   PrintMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
 }
@@ -59,10 +55,6 @@ void PrintError(const char *Loc, const Twine &Msg) {
 
 void PrintError(const Twine &Msg) {
   errs() << "error:" << Msg << "\n";
-}
-
-void PrintError(const TGError &Error) {
-  PrintError(Error.getLoc(), Error.getMessage());
 }
 
 void PrintFatalError(const std::string &Msg) {

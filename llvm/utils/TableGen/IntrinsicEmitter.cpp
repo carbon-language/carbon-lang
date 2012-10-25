@@ -15,6 +15,7 @@
 #include "CodeGenTarget.h"
 #include "SequenceToOffsetTable.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
 #include "llvm/TableGen/TableGenBackend.h"
@@ -249,7 +250,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   if (EVT(VT).isInteger()) {
     unsigned BitWidth = EVT(VT).getSizeInBits();
     switch (BitWidth) {
-    default: throw "unhandled integer type width in intrinsic!";
+    default: PrintFatalError("unhandled integer type width in intrinsic!");
     case 1: return Sig.push_back(IIT_I1);
     case 8: return Sig.push_back(IIT_I8);
     case 16: return Sig.push_back(IIT_I16);
@@ -259,7 +260,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   }
   
   switch (VT) {
-  default: throw "unhandled MVT in intrinsic!";
+  default: PrintFatalError("unhandled MVT in intrinsic!");
   case MVT::f32: return Sig.push_back(IIT_F32);
   case MVT::f64: return Sig.push_back(IIT_F64);
   case MVT::Metadata: return Sig.push_back(IIT_METADATA);
@@ -328,7 +329,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
   if (EVT(VT).isVector()) {
     EVT VVT = VT;
     switch (VVT.getVectorNumElements()) {
-    default: throw "unhandled vector type width in intrinsic!";
+    default: PrintFatalError("unhandled vector type width in intrinsic!");
     case 2: Sig.push_back(IIT_V2); break;
     case 4: Sig.push_back(IIT_V4); break;
     case 8: Sig.push_back(IIT_V8); break;
@@ -692,8 +693,8 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
       
       if (!BIM.insert(std::make_pair(Ints[i].GCCBuiltinName,
                                      Ints[i].EnumName)).second)
-        throw "Intrinsic '" + Ints[i].TheDef->getName() +
-              "': duplicate GCC builtin name!";
+        PrintFatalError("Intrinsic '" + Ints[i].TheDef->getName() +
+              "': duplicate GCC builtin name!");
     }
   }
   

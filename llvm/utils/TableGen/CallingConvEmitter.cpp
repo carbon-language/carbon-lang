@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenTarget.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <cassert>
@@ -93,7 +94,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << Action->getValueAsString("Predicate");
     } else {
       Action->dump();
-      throw "Unknown CCPredicateAction!";
+      PrintFatalError("Unknown CCPredicateAction!");
     }
     
     O << ") {\n";
@@ -131,7 +132,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
       ListInit *ShadowRegList = Action->getValueAsListInit("ShadowRegList");
       if (ShadowRegList->getSize() >0 &&
           ShadowRegList->getSize() != RegList->getSize())
-        throw "Invalid length of list of shadowed registers";
+        PrintFatalError("Invalid length of list of shadowed registers");
 
       if (RegList->getSize() == 1) {
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(";
@@ -221,7 +222,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << IndentStr << IndentStr << "return false;\n";
     } else {
       Action->dump();
-      throw "Unknown CCAction!";
+      PrintFatalError("Unknown CCAction!");
     }
   }
 }

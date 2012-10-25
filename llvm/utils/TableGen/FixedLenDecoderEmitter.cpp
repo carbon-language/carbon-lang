@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "decoder-emitter"
 
 #include "CodeGenTarget.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallString.h"
@@ -741,7 +742,7 @@ void FixedLenDecoderEmitter::emitTable(formatted_raw_ostream &OS,
 
     switch (*I) {
     default:
-      throw "invalid decode table opcode";
+      PrintFatalError("invalid decode table opcode");
     case MCD::OPC_ExtractField: {
       ++I;
       unsigned Start = *I++;

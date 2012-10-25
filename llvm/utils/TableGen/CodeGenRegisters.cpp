@@ -54,19 +54,20 @@ void CodeGenSubRegIndex::updateComponents(CodeGenRegBank &RegBank) {
   std::vector<Record*> Comps = TheDef->getValueAsListOfDefs("ComposedOf");
   if (!Comps.empty()) {
     if (Comps.size() != 2)
-      throw TGError(TheDef->getLoc(), "ComposedOf must have exactly two entries");
+      PrintFatalError(TheDef->getLoc(),
+                      "ComposedOf must have exactly two entries");
     CodeGenSubRegIndex *A = RegBank.getSubRegIdx(Comps[0]);
     CodeGenSubRegIndex *B = RegBank.getSubRegIdx(Comps[1]);
     CodeGenSubRegIndex *X = A->addComposite(B, this);
     if (X)
-      throw TGError(TheDef->getLoc(), "Ambiguous ComposedOf entries");
+      PrintFatalError(TheDef->getLoc(), "Ambiguous ComposedOf entries");
   }
 
   std::vector<Record*> Parts =
     TheDef->getValueAsListOfDefs("CoveringSubRegIndices");
   if (!Parts.empty()) {
     if (Parts.size() < 2)
-      throw TGError(TheDef->getLoc(),
+      PrintFatalError(TheDef->getLoc(),
                     "CoveredBySubRegs must have two or more entries");
     SmallVector<CodeGenSubRegIndex*, 8> IdxParts;
     for (unsigned i = 0, e = Parts.size(); i != e; ++i)
@@ -112,8 +113,8 @@ void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
   std::vector<Record*> SRs = TheDef->getValueAsListOfDefs("SubRegs");
 
   if (SRIs.size() != SRs.size())
-    throw TGError(TheDef->getLoc(),
-                  "SubRegs and SubRegIndices must have the same size");
+    PrintFatalError(TheDef->getLoc(),
+                    "SubRegs and SubRegIndices must have the same size");
 
   for (unsigned i = 0, e = SRIs.size(); i != e; ++i) {
     ExplicitSubRegIndices.push_back(RegBank.getSubRegIdx(SRIs[i]));
@@ -224,8 +225,8 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     CodeGenRegister *SR = ExplicitSubRegs[i];
     CodeGenSubRegIndex *Idx = ExplicitSubRegIndices[i];
     if (!SubRegs.insert(std::make_pair(Idx, SR)).second)
-      throw TGError(TheDef->getLoc(), "SubRegIndex " + Idx->getName() +
-                    " appears twice in Register " + getName());
+      PrintFatalError(TheDef->getLoc(), "SubRegIndex " + Idx->getName() +
+                      " appears twice in Register " + getName());
     // Map explicit sub-registers first, so the names take precedence.
     // The inherited sub-registers are mapped below.
     SubReg2Idx.insert(std::make_pair(SR, Idx));
@@ -308,8 +309,8 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
       ArrayRef<SMLoc> Loc;
       if (TheDef)
         Loc = TheDef->getLoc();
-      throw TGError(Loc, "Register " + getName() +
-                    " has itself as a sub-register");
+      PrintFatalError(Loc, "Register " + getName() +
+                      " has itself as a sub-register");
     }
     // Ensure that every sub-register has a unique name.
     DenseMap<const CodeGenRegister*, CodeGenSubRegIndex*>::iterator Ins =
@@ -320,7 +321,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     ArrayRef<SMLoc> Loc;
     if (TheDef)
       Loc = TheDef->getLoc();
-    throw TGError(Loc, "Sub-register can't have two names: " +
+    PrintFatalError(Loc, "Sub-register can't have two names: " +
                   SI->second->getName() + " available as " +
                   SI->first->getName() + " and " + Ins->second->getName());
   }
@@ -467,8 +468,8 @@ void CodeGenRegister::computeSecondarySubRegs(CodeGenRegBank &RegBank) {
            SE = NewSubReg->SubRegs.end(); SI != SE; ++SI) {
       CodeGenSubRegIndex *SubIdx = getSubRegIndex(SI->second);
       if (!SubIdx)
-        throw TGError(TheDef->getLoc(), "No SubRegIndex for " +
-                      SI->second->getName() + " in " + getName());
+        PrintFatalError(TheDef->getLoc(), "No SubRegIndex for " +
+                        SI->second->getName() + " in " + getName());
       NewIdx->addComposite(SI->first, SubIdx);
     }
   }
@@ -592,9 +593,10 @@ struct TupleExpander : SetTheory::Expander {
     unsigned Dim = Indices.size();
     ListInit *SubRegs = Def->getValueAsListInit("SubRegs");
     if (Dim != SubRegs->getSize())
-      throw TGError(Def->getLoc(), "SubRegIndices and SubRegs size mismatch");
+      PrintFatalError(Def->getLoc(), "SubRegIndices and SubRegs size mismatch");
     if (Dim < 2)
-      throw TGError(Def->getLoc(), "Tuples must have at least 2 sub-registers");
+      PrintFatalError(Def->getLoc(),
+                      "Tuples must have at least 2 sub-registers");
 
     // Evaluate the sub-register lists to be zipped.
     unsigned Length = ~0u;
@@ -706,8 +708,8 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   for (unsigned i = 0, e = TypeList.size(); i != e; ++i) {
     Record *Type = TypeList[i];
     if (!Type->isSubClassOf("ValueType"))
-      throw "RegTypes list member '" + Type->getName() +
-        "' does not derive from the ValueType class!";
+      PrintFatalError("RegTypes list member '" + Type->getName() +
+        "' does not derive from the ValueType class!");
     VTs.push_back(getValueType(Type));
   }
   assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
@@ -735,7 +737,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
       CodeGenRegister *Reg = RegBank.getReg(Order.back());
       Order.pop_back();
       if (!contains(Reg))
-        throw TGError(R->getLoc(), " AltOrder register " + Reg->getName() +
+        PrintFatalError(R->getLoc(), " AltOrder register " + Reg->getName() +
                       " is not a class member");
     }
   }
@@ -1021,7 +1023,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   // Read in register class definitions.
   std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
   if (RCs.empty())
-    throw std::string("No 'RegisterClass' subclasses defined!");
+    PrintFatalError(std::string("No 'RegisterClass' subclasses defined!"));
 
   // Allocate user-defined register classes.
   RegClasses.reserve(RCs.size());
@@ -1098,7 +1100,7 @@ CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
   if (CodeGenRegisterClass *RC = Def2RC[Def])
     return RC;
 
-  throw TGError(Def->getLoc(), "Not a known RegisterClass!");
+  PrintFatalError(Def->getLoc(), "Not a known RegisterClass!");
 }
 
 CodeGenSubRegIndex*

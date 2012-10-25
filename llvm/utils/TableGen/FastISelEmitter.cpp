@@ -549,7 +549,7 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
     };
     
     if (SimplePatterns[Operands][OpcodeName][VT][RetVT].count(PredicateCheck))
-      throw TGError(Pattern.getSrcRecord()->getLoc(),
+      PrintFatalError(Pattern.getSrcRecord()->getLoc(),
                     "Duplicate record in FastISel table!");
 
     SimplePatterns[Operands][OpcodeName][VT][RetVT][PredicateCheck] = Memo;

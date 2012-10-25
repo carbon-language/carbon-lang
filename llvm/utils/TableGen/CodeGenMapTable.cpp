@@ -78,6 +78,7 @@
 
 #include "CodeGenTarget.h"
 #include "llvm/Support/Format.h"
+#include "llvm/TableGen/Error.h"
 using namespace llvm;
 typedef std::map<std::string, std::vector<Record*> > InstrRelMapTy;
 
@@ -128,20 +129,19 @@ public:
 
     // Each instruction map must specify at least one column for it to be valid.
     if (ColValList->getSize() == 0)
-      throw "InstrMapping record `" + MapRec->getName() + "' has empty " +
-            "`ValueCols' field!";
+      PrintFatalError(MapRec->getLoc(), "InstrMapping record `" +
+        MapRec->getName() + "' has empty " + "`ValueCols' field!");
 
     for (unsigned i = 0, e = ColValList->getSize(); i < e; i++) {
       ListInit *ColI = dyn_cast<ListInit>(ColValList->getElement(i));
 
       // Make sure that all the sub-lists in 'ValueCols' have same number of
       // elements as the fields in 'ColFields'.
-      if (ColI->getSize() == ColFields->getSize())
-        ValueCols.push_back(ColI);
-      else {
-        throw "Record `" + MapRec->getName() + "', field `" + "ValueCols" +
-            "' entries don't match with the entries in 'ColFields'!";
-      }
+      if (ColI->getSize() != ColFields->getSize())
+        PrintFatalError(MapRec->getLoc(), "Record `" + MapRec->getName() +
+          "', field `ValueCols' entries don't match with " +
+          " the entries in 'ColFields'!");
+      ValueCols.push_back(ColI);
     }
   }
 
@@ -344,10 +344,9 @@ Record *MapTableEmitter::getInstrForColumn(Record *KeyInstr,
     if (MatchFound) {
       if (MatchInstr) // Already had a match
         // Error if multiple matches are found for a column.
-        throw "Multiple matches found for `" + KeyInstr->getName() +
-              "', for the relation `" + InstrMapDesc.getName();
-      else
-        MatchInstr = CurInstr;
+        PrintFatalError("Multiple matches found for `" + KeyInstr->getName() +
+              "', for the relation `" + InstrMapDesc.getName());
+      MatchInstr = CurInstr;
     }
   }
   return MatchInstr;
@@ -516,10 +515,9 @@ static void emitEnums(raw_ostream &OS, RecordKeeper &Records) {
     for (unsigned j = 0; j < ListSize; j++) {
       ListInit *ListJ = dyn_cast<ListInit>(List->getElement(j));
 
-      if (ListJ->getSize() != ColFields->getSize()) {
-        throw "Record `" + CurMap->getName() + "', field `" + "ValueCols" +
-            "' entries don't match with the entries in 'ColFields' !";
-      }
+      if (ListJ->getSize() != ColFields->getSize())
+        PrintFatalError("Record `" + CurMap->getName() + "', field "
+          "`ValueCols' entries don't match with the entries in 'ColFields' !");
       ValueCols.push_back(ListJ);
     }
 

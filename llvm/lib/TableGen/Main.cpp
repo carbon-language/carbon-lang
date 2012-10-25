@@ -80,56 +80,46 @@ namespace llvm {
 int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
   RecordKeeper Records;
 
-  try {
-    // Parse the input file.
-    OwningPtr<MemoryBuffer> File;
-    if (error_code ec =
-          MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
-      errs() << "Could not open input file '" << InputFilename << "': "
-             << ec.message() <<"\n";
-      return 1;
-    }
-    MemoryBuffer *F = File.take();
-
-    // Tell SrcMgr about this buffer, which is what TGParser will pick up.
-    SrcMgr.AddNewSourceBuffer(F, SMLoc());
-
-    // Record the location of the include directory so that the lexer can find
-    // it later.
-    SrcMgr.setIncludeDirs(IncludeDirs);
-
-    TGParser Parser(SrcMgr, Records);
-
-    if (Parser.ParseFile())
-      return 1;
-
-    std::string Error;
-    tool_output_file Out(OutputFilename.c_str(), Error);
-    if (!Error.empty()) {
-      errs() << argv0 << ": error opening " << OutputFilename
-        << ":" << Error << "\n";
-      return 1;
-    }
-    if (!DependFilename.empty())
-      if (int Ret = createDependencyFile(Parser, argv0))
-        return Ret;
-
-    if (MainFn(Out.os(), Records))
-      return 1;
-
-    // Declare success.
-    Out.keep();
-    return 0;
-
-  } catch (const TGError &Error) {
-    PrintError(Error);
-  } catch (const std::string &Error) {
-    PrintError(Error);
-  } catch (const char *Error) {
-    PrintError(Error);
-  } catch (...) {
-    errs() << argv0 << ": Unknown unexpected exception occurred.\n";
+  // Parse the input file.
+  OwningPtr<MemoryBuffer> File;
+  if (error_code ec =
+        MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
+    errs() << "Could not open input file '" << InputFilename << "': "
+           << ec.message() <<"\n";
+    return 1;
   }
+  MemoryBuffer *F = File.take();
+
+  // Tell SrcMgr about this buffer, which is what TGParser will pick up.
+  SrcMgr.AddNewSourceBuffer(F, SMLoc());
+
+  // Record the location of the include directory so that the lexer can find
+  // it later.
+  SrcMgr.setIncludeDirs(IncludeDirs);
+
+  TGParser Parser(SrcMgr, Records);
+
+  if (Parser.ParseFile())
+    return 1;
+
+  std::string Error;
+  tool_output_file Out(OutputFilename.c_str(), Error);
+  if (!Error.empty()) {
+    errs() << argv0 << ": error opening " << OutputFilename
+      << ":" << Error << "\n";
+    return 1;
+  }
+  if (!DependFilename.empty()) {
+    if (int Ret = createDependencyFile(Parser, argv0))
+      return Ret;
+  }
+
+  if (MainFn(Out.os(), Records))
+    return 1;
+
+  // Declare success.
+  Out.keep();
+  return 0;
 
   return 1;
 }

@@ -117,11 +117,9 @@ void EmitDisassembler(RecordKeeper &Records, raw_ostream &OS) {
     for (unsigned i = 0, e = numberedInstructions.size(); i != e; ++i)
       RecognizableInstr::processInstr(Tables, *numberedInstructions[i], i);
 
-    // FIXME: As long as we are using exceptions, might as well drop this to the
-    // actual conflict site.
     if (Tables.hasConflicts())
-      throw TGError(Target.getTargetRecord()->getLoc(),
-                    "Primary decode conflict");
+      PrintFatalError(Target.getTargetRecord()->getLoc(),
+                      "Primary decode conflict");
 
     Tables.emit(OS);
     return;

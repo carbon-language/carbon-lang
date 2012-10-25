@@ -566,9 +566,9 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
         std::vector<std::string> AltNames =
           Reg.TheDef->getValueAsListOfStrings("AltNames");
         if (AltNames.size() <= Idx)
-          throw TGError(Reg.TheDef->getLoc(),
-                        (Twine("Register definition missing alt name for '") +
-                        AltName + "'.").str());
+          PrintFatalError(Reg.TheDef->getLoc(),
+            (Twine("Register definition missing alt name for '") +
+             AltName + "'.").str());
         AsmName = AltNames[Idx];
       }
     }

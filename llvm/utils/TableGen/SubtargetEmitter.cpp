@@ -675,7 +675,7 @@ Record *SubtargetEmitter::FindWriteResources(
         continue;
     }
     if (AliasDef)
-      throw TGError(AliasRW.TheDef->getLoc(), "Multiple aliases "
+      PrintFatalError(AliasRW.TheDef->getLoc(), "Multiple aliases "
                     "defined for processor " + ProcModel.ModelName +
                     " Ensure only one SchedAlias exists per RW.");
     AliasDef = AliasRW.TheDef;
@@ -692,7 +692,7 @@ Record *SubtargetEmitter::FindWriteResources(
     if (AliasDef == (*WRI)->getValueAsDef("WriteType")
         || SchedWrite.TheDef == (*WRI)->getValueAsDef("WriteType")) {
       if (ResDef) {
-        throw TGError((*WRI)->getLoc(), "Resources are defined for both "
+        PrintFatalError((*WRI)->getLoc(), "Resources are defined for both "
                       "SchedWrite and its alias on processor " +
                       ProcModel.ModelName);
       }
@@ -702,7 +702,7 @@ Record *SubtargetEmitter::FindWriteResources(
   // TODO: If ProcModel has a base model (previous generation processor),
   // then call FindWriteResources recursively with that model here.
   if (!ResDef) {
-    throw TGError(ProcModel.ModelDef->getLoc(),
+    PrintFatalError(ProcModel.ModelDef->getLoc(),
                   std::string("Processor does not define resources for ")
                   + SchedWrite.TheDef->getName());
   }
@@ -729,7 +729,7 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
         continue;
     }
     if (AliasDef)
-      throw TGError(AliasRW.TheDef->getLoc(), "Multiple aliases "
+      PrintFatalError(AliasRW.TheDef->getLoc(), "Multiple aliases "
                     "defined for processor " + ProcModel.ModelName +
                     " Ensure only one SchedAlias exists per RW.");
     AliasDef = AliasRW.TheDef;
@@ -746,7 +746,7 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
     if (AliasDef == (*RAI)->getValueAsDef("ReadType")
         || SchedRead.TheDef == (*RAI)->getValueAsDef("ReadType")) {
       if (ResDef) {
-        throw TGError((*RAI)->getLoc(), "Resources are defined for both "
+        PrintFatalError((*RAI)->getLoc(), "Resources are defined for both "
                       "SchedRead and its alias on processor " +
                       ProcModel.ModelName);
       }
@@ -756,7 +756,7 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
   // TODO: If ProcModel has a base model (previous generation processor),
   // then call FindReadAdvance recursively with that model here.
   if (!ResDef && SchedRead.TheDef->getName() != "ReadDefault") {
-    throw TGError(ProcModel.ModelDef->getLoc(),
+    PrintFatalError(ProcModel.ModelDef->getLoc(),
                   std::string("Processor does not define resources for ")
                   + SchedRead.TheDef->getName());
   }
@@ -1098,7 +1098,7 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     if (PI->hasInstrSchedModel())
       EmitProcessorResources(*PI, OS);
     else if(!PI->ProcResourceDefs.empty())
-      throw TGError(PI->ModelDef->getLoc(), "SchedMachineModel defines "
+      PrintFatalError(PI->ModelDef->getLoc(), "SchedMachineModel defines "
                     "ProcResources without defining WriteRes SchedWriteRes");
 
     // Begin processor itinerary properties

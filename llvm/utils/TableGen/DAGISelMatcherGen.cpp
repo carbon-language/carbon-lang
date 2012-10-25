@@ -10,6 +10,7 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "CodeGenRegisters.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -172,15 +173,10 @@ void MatcherGen::InferPossibleTypes() {
   // diagnostics, which we know are impossible at this point.
   TreePattern &TP = *CGP.pf_begin()->second;
 
-  try {
-    bool MadeChange = true;
-    while (MadeChange)
-      MadeChange = PatWithNoTypes->ApplyTypeConstraints(TP,
-                                                true/*Ignore reg constraints*/);
-  } catch (...) {
-    errs() << "Type constraint application shouldn't fail!";
-    abort();
-  }
+  bool MadeChange = true;
+  while (MadeChange)
+    MadeChange = PatWithNoTypes->ApplyTypeConstraints(TP,
+                                              true/*Ignore reg constraints*/);
 }
 
 
@@ -876,7 +872,7 @@ void MatcherGen::EmitResultOperand(const TreePatternNode *N,
   if (OpRec->isSubClassOf("SDNodeXForm"))
     return EmitResultSDNodeXFormAsOperand(N, ResultOps);
   errs() << "Unknown result node to emit code for: " << *N << '\n';
-  throw std::string("Unknown node in result pattern!");
+  PrintFatalError("Unknown node in result pattern!");
 }
 
 void MatcherGen::EmitResultCode() {

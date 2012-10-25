@@ -1092,7 +1092,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     else if (RegisterClasses.size() < UINT16_MAX)
       OS << "  static const uint16_t Table[";
     else
-      throw "Too many register classes.";
+      PrintFatalError("Too many register classes.");
     OS << RegisterClasses.size() << "][" << SubRegIndices.size() << "] = {\n";
     for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci) {
       const CodeGenRegisterClass &RC = *RegisterClasses[rci];

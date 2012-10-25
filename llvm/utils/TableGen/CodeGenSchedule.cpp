@@ -63,7 +63,7 @@ struct InstRegexOp : public SetTheory::Operator {
            AI = Expr->arg_begin(), AE = Expr->arg_end(); AI != AE; ++AI) {
       StringInit *SI = dyn_cast<StringInit>(*AI);
       if (!SI)
-        throw TGError(Loc, "instregex requires pattern string: "
+        PrintFatalError(Loc, "instregex requires pattern string: "
           + Expr->getAsString());
       std::string pat = SI->getValue();
       // Implement a python-style prefix match.
@@ -268,13 +268,13 @@ void CodeGenSchedModels::collectSchedRW() {
     Record *AliasDef = (*AI)->getValueAsDef("AliasRW");
     if (MatchDef->isSubClassOf("SchedWrite")) {
       if (!AliasDef->isSubClassOf("SchedWrite"))
-        throw TGError((*AI)->getLoc(), "SchedWrite Alias must be SchedWrite");
+        PrintFatalError((*AI)->getLoc(), "SchedWrite Alias must be SchedWrite");
       scanSchedRW(AliasDef, SWDefs, RWSet);
     }
     else {
       assert(MatchDef->isSubClassOf("SchedRead") && "Unknown SchedReadWrite");
       if (!AliasDef->isSubClassOf("SchedRead"))
-        throw TGError((*AI)->getLoc(), "SchedRead Alias must be SchedRead");
+        PrintFatalError((*AI)->getLoc(), "SchedRead Alias must be SchedRead");
       scanSchedRW(AliasDef, SRDefs, RWSet);
     }
   }
@@ -305,7 +305,7 @@ void CodeGenSchedModels::collectSchedRW() {
     Record *MatchDef = (*AI)->getValueAsDef("MatchRW");
     CodeGenSchedRW &RW = getSchedRW(MatchDef);
     if (RW.IsAlias)
-      throw TGError((*AI)->getLoc(), "Cannot Alias an Alias");
+      PrintFatalError((*AI)->getLoc(), "Cannot Alias an Alias");
     RW.Aliases.push_back(*AI);
   }
   DEBUG(
@@ -437,9 +437,9 @@ void CodeGenSchedModels::expandRWSeqForProc(
         continue;
     }
     if (AliasDef)
-      throw TGError(AliasRW.TheDef->getLoc(), "Multiple aliases "
-                    "defined for processor " + ProcModel.ModelName +
-                    " Ensure only one SchedAlias exists per RW.");
+      PrintFatalError(AliasRW.TheDef->getLoc(), "Multiple aliases "
+                      "defined for processor " + ProcModel.ModelName +
+                      " Ensure only one SchedAlias exists per RW.");
     AliasDef = AliasRW.TheDef;
   }
   if (AliasDef) {
@@ -706,7 +706,7 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
   // Sort Instrs into sets.
   const RecVec *InstDefs = Sets.expand(InstRWDef);
   if (InstDefs->empty())
-    throw TGError(InstRWDef->getLoc(), "No matching instruction opcodes");
+    PrintFatalError(InstRWDef->getLoc(), "No matching instruction opcodes");
 
   for (RecIter I = InstDefs->begin(), E = InstDefs->end(); I != E; ++I) {
     unsigned SCIdx = 0;
@@ -766,7 +766,7 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
         for (RecIter RI = SchedClasses[OldSCIdx].InstRWs.begin(),
                RE = SchedClasses[OldSCIdx].InstRWs.end(); RI != RE; ++RI) {
           if ((*RI)->getValueAsDef("SchedModel") == RWModelDef) {
-            throw TGError(InstRWDef->getLoc(), "Overlapping InstRW def " +
+            PrintFatalError(InstRWDef->getLoc(), "Overlapping InstRW def " +
                           (*II)->getName() + " also matches " +
                           (*RI)->getValue("Instrs")->getValue()->getAsString());
           }
@@ -825,11 +825,11 @@ void CodeGenSchedModels::collectProcItinRW() {
   std::sort(ItinRWDefs.begin(), ItinRWDefs.end(), LessRecord());
   for (RecIter II = ItinRWDefs.begin(), IE = ItinRWDefs.end(); II != IE; ++II) {
     if (!(*II)->getValueInit("SchedModel")->isComplete())
-      throw TGError((*II)->getLoc(), "SchedModel is undefined");
+      PrintFatalError((*II)->getLoc(), "SchedModel is undefined");
     Record *ModelDef = (*II)->getValueAsDef("SchedModel");
     ProcModelMapTy::const_iterator I = ProcModelMap.find(ModelDef);
     if (I == ProcModelMap.end()) {
-      throw TGError((*II)->getLoc(), "Undefined SchedMachineModel "
+      PrintFatalError((*II)->getLoc(), "Undefined SchedMachineModel "
                     + ModelDef->getName());
     }
     ProcModels[I->second].ItinRWDefs.push_back(*II);
@@ -867,7 +867,7 @@ void CodeGenSchedModels::inferFromItinClass(Record *ItinClassDef,
       if (!std::count(Matched.begin(), Matched.end(), ItinClassDef))
         continue;
       if (HasMatch)
-        throw TGError((*II)->getLoc(), "Duplicate itinerary class "
+        PrintFatalError((*II)->getLoc(), "Duplicate itinerary class "
                       + ItinClassDef->getName()
                       + " in ItinResources for " + PM.ModelName);
       HasMatch = true;
@@ -1095,9 +1095,10 @@ void PredTransitions::getIntersectingVariants(
       if (Cnt > 1) {
         const CodeGenProcModel &PM =
           *(SchedModels.procModelBegin() + Variant.ProcIdx);
-        throw TGError(Variant.VarOrSeqDef->getLoc(),
-                      "Multiple variants defined for processor " + PM.ModelName +
-                      " Ensure only one SchedAlias exists per RW.");
+        PrintFatalError(Variant.VarOrSeqDef->getLoc(),
+                        "Multiple variants defined for processor " +
+                        PM.ModelName +
+                        " Ensure only one SchedAlias exists per RW.");
       }
     }
     if (Variant.VarOrSeqDef->isSubClassOf("SchedVar")) {
@@ -1215,8 +1216,9 @@ void PredTransitions::substituteVariantOperand(
       std::vector<TransVariant> IntersectingVariants;
       getIntersectingVariants(SchedRW, TransIdx, IntersectingVariants);
       if (IntersectingVariants.empty())
-        throw TGError(SchedRW.TheDef->getLoc(), "No variant of this type has a "
-                      "matching predicate on any processor ");
+        PrintFatalError(SchedRW.TheDef->getLoc(),
+                      "No variant of this type has "
+                      "a matching predicate on any processor");
       // Now expand each variant on top of its copy of the transition.
       for (std::vector<TransVariant>::const_iterator
              IVI = IntersectingVariants.begin(),
@@ -1440,9 +1442,9 @@ void CodeGenSchedModels::collectItinProcResources(Record *ItinClassDef) {
       if (!std::count(Matched.begin(), Matched.end(), ItinClassDef))
         continue;
       if (HasMatch)
-        throw TGError((*II)->getLoc(), "Duplicate itinerary class "
-                      + ItinClassDef->getName()
-                      + " in ItinResources for " + PM.ModelName);
+        PrintFatalError((*II)->getLoc(), "Duplicate itinerary class "
+                        + ItinClassDef->getName()
+                        + " in ItinResources for " + PM.ModelName);
       HasMatch = true;
       IdxVec Writes, Reads;
       findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
@@ -1519,17 +1521,17 @@ Record *CodeGenSchedModels::findProcResUnits(Record *ProcResKind,
     if ((*RI)->getValueAsDef("Kind") == ProcResKind
         && (*RI)->getValueAsDef("SchedModel") == PM.ModelDef) {
       if (ProcUnitDef) {
-        throw TGError((*RI)->getLoc(),
-                      "Multiple ProcessorResourceUnits associated with "
-                      + ProcResKind->getName());
+        PrintFatalError((*RI)->getLoc(),
+                        "Multiple ProcessorResourceUnits associated with "
+                        + ProcResKind->getName());
       }
       ProcUnitDef = *RI;
     }
   }
   if (!ProcUnitDef) {
-    throw TGError(ProcResKind->getLoc(),
-                  "No ProcessorResources associated with "
-                  + ProcResKind->getName());
+    PrintFatalError(ProcResKind->getLoc(),
+                    "No ProcessorResources associated with "
+                    + ProcResKind->getName());
   }
   return ProcUnitDef;
 }
@@ -1586,8 +1588,8 @@ unsigned CodeGenProcModel::getProcResourceIdx(Record *PRDef) const {
   RecIter PRPos = std::find(ProcResourceDefs.begin(), ProcResourceDefs.end(),
                             PRDef);
   if (PRPos == ProcResourceDefs.end())
-    throw TGError(PRDef->getLoc(), "ProcResource def is not included in "
-                  "the ProcResources list for " + ModelName);
+    PrintFatalError(PRDef->getLoc(), "ProcResource def is not included in "
+                    "the ProcResources list for " + ModelName);
   // Idx=0 is reserved for invalid.
   return 1 + PRPos - ProcResourceDefs.begin();
 }

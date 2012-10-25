@@ -616,7 +616,8 @@ ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
 Record *ListInit::getElementAsRecord(unsigned i) const {
   assert(i < Values.size() && "List element index out of range!");
   DefInit *DI = dyn_cast<DefInit>(Values[i]);
-  if (DI == 0) throw "Expected record in list!";
+  if (DI == 0)
+    PrintFatalError("Expected record in list!");
   return DI->getDef();
 }
 
@@ -725,7 +726,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         if (CurRec) {
           if (const RecordVal *RV = CurRec->getValue(Name)) {
             if (RV->getType() != getType())
-              throw "type mismatch in cast";
+              PrintFatalError("type mismatch in cast");
             return VarInit::get(Name, RV->getType());
           }
 
@@ -737,7 +738,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
             assert(RV && "Template arg doesn't exist??");
 
             if (RV->getType() != getType())
-              throw "type mismatch in cast";
+              PrintFatalError("type mismatch in cast");
 
             return VarInit::get(TemplateArgName, RV->getType());
           }
@@ -751,7 +752,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
             assert(RV && "Template arg doesn't exist??");
 
             if (RV->getType() != getType())
-              throw "type mismatch in cast";
+              PrintFatalError("type mismatch in cast");
 
             return VarInit::get(MCName, RV->getType());
           }
@@ -760,7 +761,8 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         if (Record *D = (CurRec->getRecords()).getDef(Name))
           return DefInit::get(D);
 
-        throw TGError(CurRec->getLoc(), "Undefined reference:'" + Name + "'\n");
+        PrintFatalError(CurRec->getLoc(),
+                        "Undefined reference:'" + Name + "'\n");
       }
     }
     break;
@@ -860,7 +862,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       DefInit *LOp = dyn_cast<DefInit>(LHSs->getOperator());
       DefInit *ROp = dyn_cast<DefInit>(RHSs->getOperator());
       if (LOp == 0 || ROp == 0 || LOp->getDef() != ROp->getDef())
-        throw "Concated Dag operators do not match!";
+        PrintFatalError("Concated Dag operators do not match!");
       std::vector<Init*> Args;
       std::vector<std::string> ArgNames;
       for (unsigned i = 0, e = LHSs->getNumArgs(); i != e; ++i) {
@@ -1027,14 +1029,13 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
   OpInit *RHSo = dyn_cast<OpInit>(RHS);
 
   if (!RHSo) {
-    throw TGError(CurRec->getLoc(), "!foreach requires an operator\n");
+    PrintFatalError(CurRec->getLoc(), "!foreach requires an operator\n");
   }
 
   TypedInit *LHSt = dyn_cast<TypedInit>(LHS);
 
-  if (!LHSt) {
-    throw TGError(CurRec->getLoc(), "!foreach requires typed variable\n");
-  }
+  if (!LHSt)
+    PrintFatalError(CurRec->getLoc(), "!foreach requires typed variable\n");
 
   if ((MHSd && isa<DagRecTy>(Type)) || (MHSl && isa<ListRecTy>(Type))) {
     if (MHSd) {
@@ -1632,7 +1633,7 @@ void Record::checkName() {
   assert(TypedName && "Record name is not typed!");
   RecTy *Type = TypedName->getType();
   if (!isa<StringRecTy>(Type))
-    throw TGError(getLoc(), "Record name is not a string!");
+    PrintFatalError(getLoc(), "Record name is not a string!");
 }
 
 DefInit *Record::getDefInit() {
@@ -1683,7 +1684,7 @@ void Record::resolveReferencesTo(const RecordVal *RV) {
       continue;
     if (Init *V = Values[i].getValue())
       if (Values[i].setValue(V->resolveReferences(*this, RV)))
-        throw TGError(getLoc(), "Invalid value is found when setting '"
+        PrintFatalError(getLoc(), "Invalid value is found when setting '"
                       + Values[i].getNameInitAsString()
                       + "' after resolving references"
                       + (RV ? " against '" + RV->getNameInitAsString()
@@ -1738,68 +1739,68 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
 }
 
 /// getValueInit - Return the initializer for a value with the specified name,
-/// or throw an exception if the field does not exist.
+/// or abort if the field does not exist.
 ///
 Init *Record::getValueInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
   return R->getValue();
 }
 
 
 /// getValueAsString - This method looks up the specified field and returns its
-/// value as a string, throwing an exception if the field does not exist or if
+/// value as a string, aborts if the field does not exist or if
 /// the value is not a string.
 ///
 std::string Record::getValueAsString(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (StringInit *SI = dyn_cast<StringInit>(R->getValue()))
     return SI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a string initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a string initializer!");
 }
 
 /// getValueAsBitsInit - This method looks up the specified field and returns
-/// its value as a BitsInit, throwing an exception if the field does not exist
-/// or if the value is not the right type.
+/// its value as a BitsInit, aborts if the field does not exist or if
+/// the value is not the right type.
 ///
 BitsInit *Record::getValueAsBitsInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (BitsInit *BI = dyn_cast<BitsInit>(R->getValue()))
     return BI;
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a BitsInit initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a BitsInit initializer!");
 }
 
 /// getValueAsListInit - This method looks up the specified field and returns
-/// its value as a ListInit, throwing an exception if the field does not exist
-/// or if the value is not the right type.
+/// its value as a ListInit, aborting if the field does not exist or if
+/// the value is not the right type.
 ///
 ListInit *Record::getValueAsListInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (ListInit *LI = dyn_cast<ListInit>(R->getValue()))
     return LI;
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a list initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a list initializer!");
 }
 
 /// getValueAsListOfDefs - This method looks up the specified field and returns
-/// its value as a vector of records, throwing an exception if the field does
-/// not exist or if the value is not the right type.
+/// its value as a vector of records, aborting if the field does not exist
+/// or if the value is not the right type.
 ///
 std::vector<Record*>
 Record::getValueAsListOfDefs(StringRef FieldName) const {
@@ -1809,32 +1810,32 @@ Record::getValueAsListOfDefs(StringRef FieldName) const {
     if (DefInit *DI = dyn_cast<DefInit>(List->getElement(i))) {
       Defs.push_back(DI->getDef());
     } else {
-      throw "Record `" + getName() + "', field `" + FieldName.str() +
-            "' list is not entirely DefInit!";
+      PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+        FieldName.str() + "' list is not entirely DefInit!");
     }
   }
   return Defs;
 }
 
 /// getValueAsInt - This method looks up the specified field and returns its
-/// value as an int64_t, throwing an exception if the field does not exist or if
-/// the value is not the right type.
+/// value as an int64_t, aborting if the field does not exist or if the value
+/// is not the right type.
 ///
 int64_t Record::getValueAsInt(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (IntInit *II = dyn_cast<IntInit>(R->getValue()))
     return II->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have an int initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have an int initializer!");
 }
 
 /// getValueAsListOfInts - This method looks up the specified field and returns
-/// its value as a vector of integers, throwing an exception if the field does
-/// not exist or if the value is not the right type.
+/// its value as a vector of integers, aborting if the field does not exist or
+/// if the value is not the right type.
 ///
 std::vector<int64_t>
 Record::getValueAsListOfInts(StringRef FieldName) const {
@@ -1844,16 +1845,16 @@ Record::getValueAsListOfInts(StringRef FieldName) const {
     if (IntInit *II = dyn_cast<IntInit>(List->getElement(i))) {
       Ints.push_back(II->getValue());
     } else {
-      throw "Record `" + getName() + "', field `" + FieldName.str() +
-            "' does not have a list of ints initializer!";
+      PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+        FieldName.str() + "' does not have a list of ints initializer!");
     }
   }
   return Ints;
 }
 
 /// getValueAsListOfStrings - This method looks up the specified field and
-/// returns its value as a vector of strings, throwing an exception if the
-/// field does not exist or if the value is not the right type.
+/// returns its value as a vector of strings, aborting if the field does not
+/// exist or if the value is not the right type.
 ///
 std::vector<std::string>
 Record::getValueAsListOfStrings(StringRef FieldName) const {
@@ -1863,50 +1864,50 @@ Record::getValueAsListOfStrings(StringRef FieldName) const {
     if (StringInit *II = dyn_cast<StringInit>(List->getElement(i))) {
       Strings.push_back(II->getValue());
     } else {
-      throw "Record `" + getName() + "', field `" + FieldName.str() +
-            "' does not have a list of strings initializer!";
+      PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+        FieldName.str() + "' does not have a list of strings initializer!");
     }
   }
   return Strings;
 }
 
 /// getValueAsDef - This method looks up the specified field and returns its
-/// value as a Record, throwing an exception if the field does not exist or if
-/// the value is not the right type.
+/// value as a Record, aborting if the field does not exist or if the value
+/// is not the right type.
 ///
 Record *Record::getValueAsDef(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (DefInit *DI = dyn_cast<DefInit>(R->getValue()))
     return DI->getDef();
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a def initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a def initializer!");
 }
 
 /// getValueAsBit - This method looks up the specified field and returns its
-/// value as a bit, throwing an exception if the field does not exist or if
-/// the value is not the right type.
+/// value as a bit, aborting if the field does not exist or if the value is
+/// not the right type.
 ///
 bool Record::getValueAsBit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (BitInit *BI = dyn_cast<BitInit>(R->getValue()))
     return BI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a bit initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a bit initializer!");
 }
 
 bool Record::getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (R->getValue() == UnsetInit::get()) {
     Unset = true;
@@ -1915,24 +1916,24 @@ bool Record::getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const {
   Unset = false;
   if (BitInit *BI = dyn_cast<BitInit>(R->getValue()))
     return BI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a bit initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a bit initializer!");
 }
 
 /// getValueAsDag - This method looks up the specified field and returns its
-/// value as an Dag, throwing an exception if the field does not exist or if
-/// the value is not the right type.
+/// value as an Dag, aborting if the field does not exist or if the value is
+/// not the right type.
 ///
 DagInit *Record::getValueAsDag(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName.str() + "'!\n";
+    PrintFatalError(getLoc(), "Record `" + getName() +
+      "' does not have a field named `" + FieldName.str() + "'!\n");
 
   if (DagInit *DI = dyn_cast<DagInit>(R->getValue()))
     return DI;
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-        "' does not have a dag initializer!";
+  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
+    FieldName.str() + "' does not have a dag initializer!");
 }
 
 
@@ -1975,7 +1976,7 @@ std::vector<Record*>
 RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
   Record *Class = getClass(ClassName);
   if (!Class)
-    throw "ERROR: Couldn't find the `" + ClassName + "' class!\n";
+    PrintFatalError("ERROR: Couldn't find the `" + ClassName + "' class!\n");
 
   std::vector<Record*> Defs;
   for (std::map<std::string, Record*>::const_iterator I = getDefs().begin(),

@@ -1,5 +1,3 @@
-set(LLVM_REQUIRES_EH 1)
-
 add_llvm_library(LLVMTableGen
   Error.cpp
   Main.cpp

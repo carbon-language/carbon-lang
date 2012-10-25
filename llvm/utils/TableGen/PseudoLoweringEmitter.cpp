@@ -90,7 +90,7 @@ addDagOperandMapping(Record *Rec, DagInit *Dag, CodeGenInstruction &Insn,
       // FIXME: We probably shouldn't ever get a non-zero BaseIdx here.
       assert(BaseIdx == 0 && "Named subargument in pseudo expansion?!");
       if (DI->getDef() != Insn.Operands[BaseIdx + i].Rec)
-        throw TGError(Rec->getLoc(),
+        PrintFatalError(Rec->getLoc(),
                       "Pseudo operand type '" + DI->getDef()->getName() +
                       "' does not match expansion operand type '" +
                       Insn.Operands[BaseIdx + i].Rec->getName() + "'");
@@ -129,22 +129,22 @@ void PseudoLoweringEmitter::evaluateExpansion(Record *Rec) {
 
   DefInit *OpDef = dyn_cast<DefInit>(Dag->getOperator());
   if (!OpDef)
-    throw TGError(Rec->getLoc(), Rec->getName() +
+    PrintFatalError(Rec->getLoc(), Rec->getName() +
                   " has unexpected operator type!");
   Record *Operator = OpDef->getDef();
   if (!Operator->isSubClassOf("Instruction"))
-    throw TGError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
-                                 "' is not an instruction!");
+    PrintFatalError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
+                    "' is not an instruction!");
 
   CodeGenInstruction Insn(Operator);
 
   if (Insn.isCodeGenOnly || Insn.isPseudo)
-    throw TGError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
-                                 "' cannot be another pseudo instruction!");
+    PrintFatalError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
+                    "' cannot be another pseudo instruction!");
 
   if (Insn.Operands.size() != Dag->getNumArgs())
-    throw TGError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
-                                 "' operand count mismatch");
+    PrintFatalError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
+                    "' operand count mismatch");
 
   unsigned NumMIOperands = 0;
   for (unsigned i = 0, e = Insn.Operands.size(); i != e; ++i)
@@ -179,9 +179,9 @@ void PseudoLoweringEmitter::evaluateExpansion(Record *Rec) {
     StringMap<unsigned>::iterator SourceOp =
       SourceOperands.find(Dag->getArgName(i));
     if (SourceOp == SourceOperands.end())
-      throw TGError(Rec->getLoc(),
-                    "Pseudo output operand '" + Dag->getArgName(i) +
-                    "' has no matching source operand.");
+      PrintFatalError(Rec->getLoc(),
+                      "Pseudo output operand '" + Dag->getArgName(i) +
+                      "' has no matching source operand.");
     // Map the source operand to the destination operand index for each
     // MachineInstr operand.
     for (unsigned I = 0, E = Insn.Operands[i].MINumOperands; I != E; ++I)

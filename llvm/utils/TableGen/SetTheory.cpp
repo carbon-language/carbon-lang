@@ -36,7 +36,7 @@ struct AddOp : public SetTheory::Operator {
 struct SubOp : public SetTheory::Operator {
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Expr->arg_size() < 2)
-      throw TGError(Loc, "Set difference needs at least two arguments: " +
+      PrintFatalError(Loc, "Set difference needs at least two arguments: " +
         Expr->getAsString());
     RecSet Add, Sub;
     ST.evaluate(*Expr->arg_begin(), Add, Loc);
@@ -51,7 +51,7 @@ struct SubOp : public SetTheory::Operator {
 struct AndOp : public SetTheory::Operator {
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Expr->arg_size() != 2)
-      throw TGError(Loc, "Set intersection requires two arguments: " +
+      PrintFatalError(Loc, "Set intersection requires two arguments: " +
         Expr->getAsString());
     RecSet S1, S2;
     ST.evaluate(Expr->arg_begin()[0], S1, Loc);
@@ -70,13 +70,13 @@ struct SetIntBinOp : public SetTheory::Operator {
 
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (Expr->arg_size() != 2)
-      throw TGError(Loc, "Operator requires (Op Set, Int) arguments: " +
+      PrintFatalError(Loc, "Operator requires (Op Set, Int) arguments: " +
         Expr->getAsString());
     RecSet Set;
     ST.evaluate(Expr->arg_begin()[0], Set, Loc);
     IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[1]);
     if (!II)
-      throw TGError(Loc, "Second argument must be an integer: " +
+      PrintFatalError(Loc, "Second argument must be an integer: " +
         Expr->getAsString());
     apply2(ST, Expr, Set, II->getValue(), Elts, Loc);
   }
@@ -88,7 +88,7 @@ struct ShlOp : public SetIntBinOp {
              RecSet &Set, int64_t N,
              RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (N < 0)
-      throw TGError(Loc, "Positive shift required: " +
+      PrintFatalError(Loc, "Positive shift required: " +
         Expr->getAsString());
     if (unsigned(N) < Set.size())
       Elts.insert(Set.begin() + N, Set.end());
@@ -101,7 +101,7 @@ struct TruncOp : public SetIntBinOp {
              RecSet &Set, int64_t N,
              RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (N < 0)
-      throw TGError(Loc, "Positive length required: " +
+      PrintFatalError(Loc, "Positive length required: " +
         Expr->getAsString());
     if (unsigned(N) > Set.size())
       N = Set.size();
@@ -138,7 +138,7 @@ struct DecimateOp : public SetIntBinOp {
              RecSet &Set, int64_t N,
              RecSet &Elts, ArrayRef<SMLoc> Loc) {
     if (N <= 0)
-      throw TGError(Loc, "Positive stride required: " +
+      PrintFatalError(Loc, "Positive stride required: " +
         Expr->getAsString());
     for (unsigned I = 0; I < Set.size(); I += N)
       Elts.insert(Set[I]);
@@ -168,35 +168,36 @@ struct SequenceOp : public SetTheory::Operator {
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
     int Step = 1;
     if (Expr->arg_size() > 4)
-      throw TGError(Loc, "Bad args to (sequence \"Format\", From, To): " +
+      PrintFatalError(Loc, "Bad args to (sequence \"Format\", From, To): " +
         Expr->getAsString());
     else if (Expr->arg_size() == 4) {
       if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[3])) {
         Step = II->getValue();
       } else
-        throw TGError(Loc, "Stride must be an integer: " + Expr->getAsString());
+        PrintFatalError(Loc, "Stride must be an integer: " +
+          Expr->getAsString());
     }
 
     std::string Format;
     if (StringInit *SI = dyn_cast<StringInit>(Expr->arg_begin()[0]))
       Format = SI->getValue();
     else
-      throw TGError(Loc,  "Format must be a string: " + Expr->getAsString());
+      PrintFatalError(Loc,  "Format must be a string: " + Expr->getAsString());
 
     int64_t From, To;
     if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[1]))
       From = II->getValue();
     else
-      throw TGError(Loc, "From must be an integer: " + Expr->getAsString());
+      PrintFatalError(Loc, "From must be an integer: " + Expr->getAsString());
     if (From < 0 || From >= (1 << 30))
-      throw TGError(Loc, "From out of range");
+      PrintFatalError(Loc, "From out of range");
 
     if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[2]))
       To = II->getValue();
     else
-      throw TGError(Loc, "From must be an integer: " + Expr->getAsString());
+      PrintFatalError(Loc, "From must be an integer: " + Expr->getAsString());
     if (To < 0 || To >= (1 << 30))
-      throw TGError(Loc, "To out of range");
+      PrintFatalError(Loc, "To out of range");
 
     RecordKeeper &Records =
       cast<DefInit>(Expr->getOperator())->getDef()->getRecords();
@@ -212,7 +213,7 @@ struct SequenceOp : public SetTheory::Operator {
       OS << format(Format.c_str(), unsigned(From));
       Record *Rec = Records.getDef(OS.str());
       if (!Rec)
-        throw TGError(Loc, "No def named '" + Name + "': " +
+        PrintFatalError(Loc, "No def named '" + Name + "': " +
           Expr->getAsString());
       // Try to reevaluate Rec in case it is a set.
       if (const RecVec *Result = ST.expand(Rec))
@@ -282,13 +283,13 @@ void SetTheory::evaluate(Init *Expr, RecSet &Elts, ArrayRef<SMLoc> Loc) {
   // Anything else must be a DAG.
   DagInit *DagExpr = dyn_cast<DagInit>(Expr);
   if (!DagExpr)
-    throw TGError(Loc, "Invalid set element: " + Expr->getAsString());
+    PrintFatalError(Loc, "Invalid set element: " + Expr->getAsString());
   DefInit *OpInit = dyn_cast<DefInit>(DagExpr->getOperator());
   if (!OpInit)
-    throw TGError(Loc, "Bad set expression: " + Expr->getAsString());
+    PrintFatalError(Loc, "Bad set expression: " + Expr->getAsString());
   Operator *Op = Operators.lookup(OpInit->getDef()->getName());
   if (!Op)
-    throw TGError(Loc, "Unknown set operator: " + Expr->getAsString());
+    PrintFatalError(Loc, "Unknown set operator: " + Expr->getAsString());
   Op->apply(*this, DagExpr, Elts, Loc);
 }
 

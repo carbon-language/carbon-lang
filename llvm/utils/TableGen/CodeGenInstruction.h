@@ -152,7 +152,7 @@ namespace llvm {
 
     /// getOperandNamed - Return the index of the operand with the specified
     /// non-empty name.  If the instruction does not have an operand with the
-    /// specified name, throw an exception.
+    /// specified name, abort.
     unsigned getOperandNamed(StringRef Name) const;
 
     /// hasOperandNamed - Query whether the instruction has an operand of the
@@ -162,9 +162,8 @@ namespace llvm {
 
     /// ParseOperandName - Parse an operand name like "$foo" or "$foo.bar",
     /// where $foo is a whole operand and $foo.bar refers to a suboperand.
-    /// This throws an exception if the name is invalid.  If AllowWholeOp is
-    /// true, references to operands with suboperands are allowed, otherwise
-    /// not.
+    /// This aborts if the name is invalid.  If AllowWholeOp is true, references
+    /// to operands with suboperands are allowed, otherwise not.
     std::pair<unsigned,unsigned> ParseOperandName(const std::string &Op,
                                                   bool AllowWholeOp = true);
 
