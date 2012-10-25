@@ -9,6 +9,8 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCELFObjectWriter.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCValue.h"
 
 using namespace llvm;
 
@@ -35,6 +37,12 @@ const MCSymbol *MCELFObjectTargetWriter::ExplicitRelSym(const MCAssembler &Asm,
   return NULL;
 }
 
+const MCSymbol *MCELFObjectTargetWriter::undefinedExplicitRelSym(const MCValue &Target,
+                                                                 const MCFixup &Fixup,
+                                                                 bool IsPCRel) const {
+  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+  return &Symbol.AliasedSymbol();
+}
 
 void MCELFObjectTargetWriter::adjustFixupOffset(const MCFixup &Fixup,
                                                 uint64_t &RelocOffset) {

@@ -420,10 +420,14 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer.EmitValueToAlignment(8);
   MCSymbol *Symbol1 = 
     OutContext.GetOrCreateSymbol(".L." + Twine(CurrentFnSym->getName()));
-  MCSymbol *Symbol2 = OutContext.GetOrCreateSymbol(StringRef(".TOC.@tocbase"));
+  // Generates a R_PPC64_ADDR64 (from FK_DATA_8) relocation for the function
+  // entry point.
   OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol1, OutContext),
                         8/*size*/, 0/*addrspace*/);
-  OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol2, OutContext),
+  MCSymbol *Symbol2 = OutContext.GetOrCreateSymbol(StringRef(".TOC."));
+  // Generates a R_PPC64_TOC relocation for TOC base insertion.
+  OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol2,
+                        MCSymbolRefExpr::VK_PPC_TOC, OutContext),
                         8/*size*/, 0/*addrspace*/);
   // Emit a null environment pointer.
   OutStreamer.EmitIntValue(0, 8 /* size */, 0 /* addrspace */);

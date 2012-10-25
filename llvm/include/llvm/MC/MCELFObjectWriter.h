@@ -85,6 +85,9 @@ public:
                                          const MCFragment &F,
                                          const MCFixup &Fixup,
                                          bool IsPCRel) const;
+  virtual const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
+                                                  const MCFixup &Fixup,
+                                                  bool IsPCRel) const;
   virtual void adjustFixupOffset(const MCFixup &Fixup,
                                  uint64_t &RelocOffset);
 

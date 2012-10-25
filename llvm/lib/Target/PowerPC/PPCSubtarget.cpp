@@ -54,18 +54,25 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
     CPUName = sys::getHostCPUName();
 #endif
 
-  // Parse features string.
-  ParseSubtargetFeatures(CPUName, FS);
-
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
+
+  // Make sure 64-bit features are available when CPUname is generic
+  std::string FullFS = FS;
 
   // If we are generating code for ppc64, verify that options make sense.
   if (is64Bit) {
     Has64BitSupport = true;
     // Silently force 64-bit register use on ppc64.
     Use64BitRegs = true;
+    if (!FullFS.empty())
+      FullFS = "+64bit," + FullFS;
+    else
+      FullFS = "+64bit";
   }
+
+  // Parse features string.
+  ParseSubtargetFeatures(CPUName, FullFS);
 
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
   // support it, ignore.

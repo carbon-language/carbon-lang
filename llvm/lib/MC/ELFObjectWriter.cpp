@@ -133,6 +133,11 @@ class ELFObjectWriter : public MCObjectWriter {
                                    bool IsPCRel) const {
       return TargetObjectWriter->ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
     }
+    const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
+                                            const MCFixup &Fixup,
+                                            bool IsPCRel) const {
+      return TargetObjectWriter->undefinedExplicitRelSym(Target, Fixup, IsPCRel);
+    }
 
     bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
     bool hasRelocationAddend() const {
@@ -639,7 +644,7 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
   if (ASymbol.isUndefined()) {
     if (Renamed)
       return Renamed;
-    return &ASymbol;
+    return undefinedExplicitRelSym(Target, Fixup, IsPCRel);
   }
 
   if (SD.isExternal()) {
@@ -721,10 +726,13 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       MCSymbolData &SD = Asm.getSymbolData(ASymbol);
       MCFragment *F = SD.getFragment();
 
-      Index = F->getParent()->getOrdinal() + 1;
-
-      // Offset of the symbol in the section
-      Value += Layout.getSymbolOffset(&SD);
+      if (F) {
+        Index = F->getParent()->getOrdinal() + 1;
+        // Offset of the symbol in the section
+        Value += Layout.getSymbolOffset(&SD);
+      } else {
+        Index = 0;
+      }
     } else {
       if (Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
         WeakrefUsedInReloc.insert(RelocSymbol);
