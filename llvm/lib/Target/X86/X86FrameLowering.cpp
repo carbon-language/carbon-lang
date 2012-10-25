@@ -313,11 +313,11 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
   if (CSI.empty()) return;
 
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-  const DataLayout *TD = TM.getDataLayout();
+  const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
   bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
-  int stackGrowth = -TD->getPointerSize(0);
+  int stackGrowth = -RegInfo->getSlotSize();
 
   // FIXME: This is dirty hack. The code itself is pretty mess right now.
   // It should be rewritten from scratch and generalized sometimes.
@@ -715,9 +715,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   //        ELSE                        => DW_CFA_offset_extended
 
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-  const DataLayout *TD = MF.getTarget().getDataLayout();
   uint64_t NumBytes = 0;
-  int stackGrowth = -TD->getPointerSize(0);
+  int stackGrowth = -SlotSize;
 
   if (HasFP) {
     // Calculate required stack adjustment.

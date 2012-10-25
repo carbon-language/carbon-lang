@@ -2184,16 +2184,14 @@ X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
 /// optimization is performed and it is required (FPDiff!=0).
 static SDValue
 EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
-                         SDValue Chain, SDValue RetAddrFrIdx,
-                         bool Is64Bit, int FPDiff, DebugLoc dl) {
+                         SDValue Chain, SDValue RetAddrFrIdx, EVT PtrVT,
+                         unsigned SlotSize, int FPDiff, DebugLoc dl) {
   // Store the return address to the appropriate stack slot.
   if (!FPDiff) return Chain;
   // Calculate the new stack slot for the return address.
-  int SlotSize = Is64Bit ? 8 : 4;
   int NewReturnAddrFI =
     MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize, false);
-  EVT VT = Is64Bit ? MVT::i64 : MVT::i32;
-  SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
+  SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, PtrVT);
   Chain = DAG.getStore(Chain, dl, RetAddrFrIdx, NewRetAddrFrIdx,
                        MachinePointerInfo::getFixedStack(NewReturnAddrFI),
                        false, false, 0);
@@ -2462,7 +2460,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                           &MemOpChains2[0], MemOpChains2.size());
 
     // Store the return address to the appropriate stack slot.
-    Chain = EmitTailCallStoreRetAddr(DAG, MF, Chain, RetAddrFrIdx, Is64Bit,
+    Chain = EmitTailCallStoreRetAddr(DAG, MF, Chain, RetAddrFrIdx,
+                                     getPointerTy(), RegInfo->getSlotSize(),
                                      FPDiff, dl);
   }
 
@@ -2674,7 +2673,7 @@ X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
   unsigned StackAlignment = TFI.getStackAlignment();
   uint64_t AlignMask = StackAlignment - 1;
   int64_t Offset = StackSize;
-  uint64_t SlotSize = TD->getPointerSize(0);
+  unsigned SlotSize = RegInfo->getSlotSize();
   if ( (Offset & AlignMask) <= (StackAlignment - SlotSize) ) {
     // Number smaller than 12 so just add the difference.
     Offset += ((StackAlignment - SlotSize) - (Offset & AlignMask));
@@ -3042,7 +3041,7 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) const {
 
   if (ReturnAddrIndex == 0) {
     // Set up a frame object for the return address.
-    uint64_t SlotSize = TD->getPointerSize(0);
+    unsigned SlotSize = RegInfo->getSlotSize();
     ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(SlotSize, -SlotSize,
                                                            false);
     FuncInfo->setRAIndex(ReturnAddrIndex);
@@ -10544,21 +10543,21 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
 
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   DebugLoc dl = Op.getDebugLoc();
+  EVT PtrVT = getPointerTy();
 
   if (Depth > 0) {
     SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
     SDValue Offset =
-      DAG.getConstant(TD->getPointerSize(0),
-                      Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
-    return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
-                       DAG.getNode(ISD::ADD, dl, getPointerTy(),
+      DAG.getConstant(RegInfo->getSlotSize(), PtrVT);
+    return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(),
+                       DAG.getNode(ISD::ADD, dl, PtrVT,
                                    FrameAddr, Offset),
                        MachinePointerInfo(), false, false, false, 0);
   }
 
   // Just load the return address.
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
-  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+  return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(),
                      RetAddrFI, MachinePointerInfo(), false, false, false, 0);
 }
 
@@ -10580,7 +10579,7 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
                                                      SelectionDAG &DAG) const {
-  return DAG.getIntPtrConstant(2*TD->getPointerSize(0));
+  return DAG.getIntPtrConstant(2 * RegInfo->getSlotSize());
 }
 
 SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
@@ -10595,7 +10594,7 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   unsigned StoreAddrReg = (Subtarget->is64Bit() ? X86::RCX : X86::ECX);
 
   SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), Frame,
-                                  DAG.getIntPtrConstant(TD->getPointerSize(0)));
+                                  DAG.getIntPtrConstant(RegInfo->getSlotSize()));
   StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StoreAddr, Offset);
   Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, MachinePointerInfo(),
                        false, false, 0);
