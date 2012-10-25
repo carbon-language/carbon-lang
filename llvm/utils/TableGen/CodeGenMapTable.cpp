@@ -183,7 +183,6 @@ class MapTableEmitter {
 private:
 //  std::string TargetName;
   const CodeGenTarget &Target;
-  RecordKeeper &Records;
   // InstrMapDesc - InstrMapping record to be processed.
   InstrMap InstrMapDesc;
 
@@ -201,10 +200,10 @@ private:
 
 public:
   MapTableEmitter(CodeGenTarget &Target, RecordKeeper &Records, Record *IMRec):
-                  Target(Target), Records(Records), InstrMapDesc(IMRec) {
+                  Target(Target), InstrMapDesc(IMRec) {
     const std::string FilterClass = InstrMapDesc.getFilterClass();
     InstrDefs = Records.getAllDerivedDefinitions(FilterClass);
-  };
+  }
 
   void buildRowInstrMap();
 
