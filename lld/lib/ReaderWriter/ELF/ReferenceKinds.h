@@ -52,7 +52,7 @@ protected:
 };
 
 
-class KindHandler_hexagon : public KindHandler {
+class HexagonKindHandler : public KindHandler {
 public:
 
 // Note: Reference::Kinds are a another representation of
@@ -70,8 +70,8 @@ public:
     Overflow
   };
 
-  virtual ~KindHandler_hexagon();
-  KindHandler_hexagon();
+  virtual ~HexagonKindHandler();
+  HexagonKindHandler();
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
@@ -82,22 +82,29 @@ public:
                           uint8_t *location,
                           uint64_t fixupAddress, uint64_t targetAddress);
 
+// A map is used here and in the other handlers but if performace overhead
+// becomes an issue this could be implemented as an array of function pointers.
 private:
-  std::map<int32_t,
-           int (*)(uint8_t *location, uint64_t fixupAddress,
-                   uint64_t targetAddress, uint64_t addend)> _fixupHandler;
+  llvm::DenseMap<int32_t,
+           std::function <int (uint8_t *location, uint64_t fixupAddress,
+                      uint64_t targetAddress, uint64_t addend)> > _fixupHandler;
 
 };
 
 
-class KindHandler_x86 : public KindHandler {
+class X86KindHandler : public KindHandler {
 public:
   enum Kinds {
     invalid,         // used to denote an error creating a Reference
     none,
   };
 
-  virtual ~KindHandler_x86();
+  enum RelocationError {
+    NoError,
+  };
+
+  virtual ~X86KindHandler();
+  X86KindHandler();
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
@@ -107,9 +114,13 @@ public:
   virtual void applyFixup(int32_t reloc, uint64_t addend, uint8_t *location,
                           uint64_t fixupAddress, uint64_t targetAddress);
 
+private:
+  llvm::DenseMap<int32_t,
+           std::function <int (uint8_t *location, uint64_t fixupAddress,
+                      uint64_t targetAddress, uint64_t addend)> > _fixupHandler;
 };
 
-class KindHandler_ppc : public KindHandler {
+class PPCKindHandler : public KindHandler {
 public:
 
 // Note: Reference::Kinds are a another representation of
@@ -127,8 +138,8 @@ public:
     Overflow
   };
 
-  virtual ~KindHandler_ppc();
-  KindHandler_ppc(llvm::support::endianness endian);
+  virtual ~PPCKindHandler();
+  PPCKindHandler(llvm::support::endianness endian);
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
@@ -140,9 +151,9 @@ public:
                           uint64_t fixupAddress, uint64_t targetAddress);
 
 private:
-  std::map<int32_t,
-           int (*)(uint8_t *location, uint64_t fixupAddress,
-                   uint64_t targetAddress, uint64_t addend)> _fixupHandler;
+  llvm::DenseMap<int32_t,
+           std::function <int (uint8_t *location, uint64_t fixupAddress,
+                      uint64_t targetAddress, uint64_t addend)> > _fixupHandler;
 
 };
 

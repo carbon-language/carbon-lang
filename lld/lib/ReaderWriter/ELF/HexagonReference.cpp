@@ -21,11 +21,11 @@ namespace lld {
 namespace elf {
 
 //===----------------------------------------------------------------------===//
-//  KindHandler_hexagon
+//  HexagonKindHandler
 //  TODO: more to do here
 //===----------------------------------------------------------------------===//
 
-KindHandler_hexagon::~KindHandler_hexagon() {
+HexagonKindHandler::~HexagonKindHandler() {
 }
 
 /// \brief The following relocation routines are derived from the
@@ -36,70 +36,70 @@ KindHandler_hexagon::~KindHandler_hexagon() {
 ///  S: Value of the symbol whose index resides in the relocation entry.
 
 namespace hexagon {
-int reloc_NONE(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
-  return KindHandler_hexagon::NoError;
+int relocNONE(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  return HexagonKindHandler::NoError;
 }
 
 /// \brief Word32_B22: 0x01ff3ffe : (S + A - P) >> 2 : Verify
-int reloc_B22_PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+int relocB22PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(((S + A) - P)>>2);
   if ((result < 0x200000) && (result > -0x200000)) {
     result = ((result<<1) & 0x3ffe) | ((result<<3) & 0x01ff0000);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
                      *reinterpret_cast<llvm::support::ulittle32_t *>(location);
-    return KindHandler_hexagon::NoError;
+    return HexagonKindHandler::NoError;
   }
-  return KindHandler_hexagon::Overflow;
+  return HexagonKindHandler::Overflow;
 }
 
 /// \brief Word32_B15: 0x00df20fe : (S + A - P) >> 2 : Verify
-int reloc_B15_PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+int relocB15PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(((S + A) - P)>>2);
   if ((result < 0x8000) && (result > -0x8000)) {
     result = ((result<<1) & 0x20fe) | ((result<<7) & 0x00df0000);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
                       *reinterpret_cast<llvm::support::ulittle32_t *>(location);
-    return KindHandler_hexagon::NoError;
+    return HexagonKindHandler::NoError;
   }
-  return KindHandler_hexagon::Overflow;
+  return HexagonKindHandler::Overflow;
 }
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) : Truncate
-int reloc_LO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
   result = ((result & 0x3fff) | ((result << 2) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
                     *reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  return KindHandler_hexagon::NoError;
+  return HexagonKindHandler::NoError;
 }
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
-int reloc_HI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A)>>16);
   result = ((result & 0x3fff) | ((result << 2) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
                     *reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  return KindHandler_hexagon::NoError;
+  return HexagonKindHandler::NoError;
 }
 
 /// \brief Word32: 0xffffffff : (S + A) : Truncate
-int reloc_32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
                     *reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  return KindHandler_hexagon::NoError;
+  return HexagonKindHandler::NoError;
 }
 } // namespace hexagon
 
-KindHandler_hexagon::KindHandler_hexagon(){
-  _fixupHandler[llvm::ELF::R_HEX_B22_PCREL] = hexagon::reloc_B22_PCREL;
-  _fixupHandler[llvm::ELF::R_HEX_B15_PCREL] = hexagon::reloc_B15_PCREL;
-  _fixupHandler[llvm::ELF::R_HEX_LO16]      = hexagon::reloc_LO16;
-  _fixupHandler[llvm::ELF::R_HEX_HI16]      = hexagon::reloc_HI16;
-  _fixupHandler[llvm::ELF::R_HEX_32]        = hexagon::reloc_32;
+HexagonKindHandler::HexagonKindHandler(){
+  _fixupHandler[llvm::ELF::R_HEX_B22_PCREL] = hexagon::relocB22PCREL;
+  _fixupHandler[llvm::ELF::R_HEX_B15_PCREL] = hexagon::relocB15PCREL;
+  _fixupHandler[llvm::ELF::R_HEX_LO16]      = hexagon::relocLO16;
+  _fixupHandler[llvm::ELF::R_HEX_HI16]      = hexagon::relocHI16;
+  _fixupHandler[llvm::ELF::R_HEX_32]        = hexagon::reloc32;
 }
 
-Reference::Kind KindHandler_hexagon::stringToKind(StringRef str) {
+Reference::Kind HexagonKindHandler::stringToKind(StringRef str) {
   return llvm::StringSwitch<Reference::Kind>(str)
     .Case("none",                  none)
     .Case("R_HEX_B22_PCREL", llvm::ELF::R_HEX_B22_PCREL)
@@ -110,7 +110,7 @@ Reference::Kind KindHandler_hexagon::stringToKind(StringRef str) {
     .Default(invalid);
 }
 
-StringRef KindHandler_hexagon::kindToString(Reference::Kind kind) {
+StringRef HexagonKindHandler::kindToString(Reference::Kind kind) {
   switch (static_cast<int32_t>(kind)) {
   case llvm::ELF::R_HEX_B22_PCREL:
     return "R_HEX_B22_PCREL";
@@ -127,34 +127,34 @@ StringRef KindHandler_hexagon::kindToString(Reference::Kind kind) {
   }
 }
 
-bool KindHandler_hexagon::isCallSite(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isCallSite");
+bool HexagonKindHandler::isCallSite(Kind kind) {
+  llvm_unreachable("Unimplemented: HexagonKindHandler::isCallSite");
   return false;
 }
 
-bool KindHandler_hexagon::isPointer(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isPointer");
+bool HexagonKindHandler::isPointer(Kind kind) {
+  llvm_unreachable("Unimplemented: HexagonKindHandler::isPointer");
   return false;
 }
 
-bool KindHandler_hexagon::isLazyImmediate(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isLazyImmediate");
+bool HexagonKindHandler::isLazyImmediate(Kind kind) {
+  llvm_unreachable("Unimplemented: HexagonKindHandler::isLazyImmediate");
   return false;
 }
 
-bool KindHandler_hexagon::isLazyTarget(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_hexagon::isLazyTarget");
+bool HexagonKindHandler::isLazyTarget(Kind kind) {
+  llvm_unreachable("Unimplemented: HexagonKindHandler::isLazyTarget");
   return false;
 }
 
-void KindHandler_hexagon::applyFixup(int32_t reloc, uint64_t addend,
+void HexagonKindHandler::applyFixup(int32_t reloc, uint64_t addend,
                                      uint8_t *location, uint64_t fixupAddress,
                                      uint64_t targetAddress) {
   int error;
   if (_fixupHandler[reloc])
   {
-    error = (*_fixupHandler[reloc])(location,
-                                    fixupAddress, targetAddress, addend);
+    error = (_fixupHandler[reloc])(location,
+                                   fixupAddress, targetAddress, addend);
 
     switch ((RelocationError)error) {
     case NoError:

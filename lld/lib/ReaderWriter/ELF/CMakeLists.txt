@@ -4,5 +4,6 @@ add_lld_library(lldELF
   ReferenceKinds.cpp
   HexagonReference.cpp
   PPCReference.cpp
+  X86Reference.cpp
   WriterOptionsELF.cpp
   )

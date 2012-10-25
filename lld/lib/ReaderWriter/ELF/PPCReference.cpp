@@ -21,11 +21,11 @@ namespace lld {
 namespace elf {
 
 //===----------------------------------------------------------------------===//
-//  KindHandler_ppc
+//  PPCKindHandler
 //  TODO: more to do here
 //===----------------------------------------------------------------------===//
 
-KindHandler_ppc::~KindHandler_ppc() {
+PPCKindHandler::~PPCKindHandler() {
 }
 
 /// \brief The following relocation routines are derived from the
@@ -36,35 +36,35 @@ KindHandler_ppc::~KindHandler_ppc() {
 ///  S: Value of the symbol whose index resides in the relocation entry.
 
 namespace ppc {
-int reloc_NONE(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
-  return KindHandler_ppc::NoError;
+int relocNONE(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  return PPCKindHandler::NoError;
 }
 
 /// \brief low24 (S + A - P) >> 2 : Verify
-int reloc_B24_PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+int relocB24PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(((S + A) - P));
   if ((result < 0x1000000) && (result > -0x1000000)) {
     result &= ~-(0x1000000);
     *reinterpret_cast<llvm::support::ubig32_t *>(location) = result |
                       *reinterpret_cast<llvm::support::ubig32_t *>(location);
-    return KindHandler_ppc::NoError;
+    return PPCKindHandler::NoError;
   }
-  return KindHandler_ppc::Overflow;
+  return PPCKindHandler::Overflow;
 }
 } // namespace ppc
 
-KindHandler_ppc::KindHandler_ppc(llvm::support::endianness endian){
-  _fixupHandler[llvm::ELF::R_PPC_REL24] = ppc::reloc_B24_PCREL;
+PPCKindHandler::PPCKindHandler(llvm::support::endianness endian){
+  _fixupHandler[llvm::ELF::R_PPC_REL24] = ppc::relocB24PCREL;
 }
 
-Reference::Kind KindHandler_ppc::stringToKind(StringRef str) {
+Reference::Kind PPCKindHandler::stringToKind(StringRef str) {
   return llvm::StringSwitch<Reference::Kind>(str)
     .Case("none",                  none)
     .Case("R_PPC_REL24", llvm::ELF::R_PPC_REL24)
     .Default(invalid);
 }
 
-StringRef KindHandler_ppc::kindToString(Reference::Kind kind) {
+StringRef PPCKindHandler::kindToString(Reference::Kind kind) {
   switch ((int32_t)kind) {
   case llvm::ELF::R_PPC_REL24:
     return "R_PPC_REL24";
@@ -73,34 +73,34 @@ StringRef KindHandler_ppc::kindToString(Reference::Kind kind) {
   }
 }
 
-bool KindHandler_ppc::isCallSite(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_ppc::isCallSite");
+bool PPCKindHandler::isCallSite(Kind kind) {
+  llvm_unreachable("Unimplemented: PPCKindHandler::isCallSite");
   return false;
 }
 
-bool KindHandler_ppc::isPointer(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_ppc::isPointer");
+bool PPCKindHandler::isPointer(Kind kind) {
+  llvm_unreachable("Unimplemented: PPCKindHandler::isPointer");
   return false;
 }
 
-bool KindHandler_ppc::isLazyImmediate(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_ppc::isLazyImmediate");
+bool PPCKindHandler::isLazyImmediate(Kind kind) {
+  llvm_unreachable("Unimplemented: PPCKindHandler::isLazyImmediate");
   return false;
 }
 
-bool KindHandler_ppc::isLazyTarget(Kind kind) {
-  llvm_unreachable("Unimplemented: KindHandler_ppc::isLazyTarget");
+bool PPCKindHandler::isLazyTarget(Kind kind) {
+  llvm_unreachable("Unimplemented: PPCKindHandler::isLazyTarget");
   return false;
 }
 
-void KindHandler_ppc::applyFixup(int32_t reloc, uint64_t addend,
+void PPCKindHandler::applyFixup(int32_t reloc, uint64_t addend,
                                  uint8_t *location, uint64_t fixupAddress,
                                  uint64_t targetAddress) {
   int error;
   if (_fixupHandler[reloc])
   {
-    error = (*_fixupHandler[reloc])(location,
-                                    fixupAddress, targetAddress, addend);
+    error = (_fixupHandler[reloc])(location,
+                                   fixupAddress, targetAddress, addend);
 
     switch ((RelocationError)error) {
     case NoError:
