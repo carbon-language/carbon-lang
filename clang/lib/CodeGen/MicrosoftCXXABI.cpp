@@ -164,7 +164,7 @@ CharUnits MicrosoftCXXABI::getArrayCookieSizeImpl(QualType type) {
 llvm::Value *MicrosoftCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
                                                   llvm::Value *allocPtr,
                                                   CharUnits cookieSize) {
-  unsigned AS = cast<llvm::PointerType>(allocPtr->getType())->getAddressSpace();
+  unsigned AS = allocPtr->getType()->getPointerAddressSpace();
   llvm::Value *numElementsPtr =
     CGF.Builder.CreateBitCast(allocPtr, CGF.SizeTy->getPointerTo(AS));
   return CGF.Builder.CreateLoad(numElementsPtr);
@@ -184,7 +184,7 @@ llvm::Value* MicrosoftCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   llvm::Value *cookiePtr = newPtr;
 
   // Write the number of elements into the appropriate slot.
-  unsigned AS = cast<llvm::PointerType>(newPtr->getType())->getAddressSpace();
+  unsigned AS = newPtr->getType()->getPointerAddressSpace();
   llvm::Value *numElementsPtr
     = CGF.Builder.CreateBitCast(cookiePtr, CGF.SizeTy->getPointerTo(AS));
   CGF.Builder.CreateStore(numElements, numElementsPtr);

@@ -1001,8 +1001,7 @@ llvm::Value *CodeGenFunction::emitArrayLength(const ArrayType *origArrayType,
       arrayType = getContext().getAsArrayType(eltType);
     }
 
-    unsigned AddressSpace =
-        cast<llvm::PointerType>(addr->getType())->getAddressSpace();
+    unsigned AddressSpace = addr->getType()->getPointerAddressSpace();
     llvm::Type *BaseType = ConvertType(eltType)->getPointerTo(AddressSpace);
     addr = Builder.CreateBitCast(addr, BaseType, "array.begin");
   } else {

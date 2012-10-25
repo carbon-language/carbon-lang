@@ -304,7 +304,7 @@ llvm::Value *ItaniumCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
 
   CGBuilderTy &Builder = CGF.Builder;
 
-  unsigned AS = cast<llvm::PointerType>(Base->getType())->getAddressSpace();
+  unsigned AS = Base->getType()->getPointerAddressSpace();
 
   // Cast to char*.
   Base = Builder.CreateBitCast(Base, Builder.getInt8Ty()->getPointerTo(AS));
@@ -834,7 +834,7 @@ llvm::Value *ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
                                                   QualType ElementType) {
   assert(requiresArrayCookie(expr));
 
-  unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
+  unsigned AS = NewPtr->getType()->getPointerAddressSpace();
 
   ASTContext &Ctx = getContext();
   QualType SizeTy = Ctx.getSizeType();
@@ -876,7 +876,7 @@ llvm::Value *ItaniumCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
       CGF.Builder.CreateConstInBoundsGEP1_64(numElementsPtr,
                                              numElementsOffset.getQuantity());
 
-  unsigned AS = cast<llvm::PointerType>(allocPtr->getType())->getAddressSpace();
+  unsigned AS = allocPtr->getType()->getPointerAddressSpace();
   numElementsPtr = 
     CGF.Builder.CreateBitCast(numElementsPtr, CGF.SizeTy->getPointerTo(AS));
   return CGF.Builder.CreateLoad(numElementsPtr);
@@ -902,7 +902,7 @@ llvm::Value *ARMCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 
   // NewPtr is a char*.
 
-  unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
+  unsigned AS = NewPtr->getType()->getPointerAddressSpace();
 
   ASTContext &Ctx = getContext();
   CharUnits SizeSize = Ctx.getTypeSizeInChars(Ctx.getSizeType());
@@ -937,7 +937,7 @@ llvm::Value *ARMCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
   llvm::Value *numElementsPtr
     = CGF.Builder.CreateConstInBoundsGEP1_64(allocPtr, CGF.SizeSizeInBytes);
 
-  unsigned AS = cast<llvm::PointerType>(allocPtr->getType())->getAddressSpace();
+  unsigned AS = allocPtr->getType()->getPointerAddressSpace();
   numElementsPtr = 
     CGF.Builder.CreateBitCast(numElementsPtr, CGF.SizeTy->getPointerTo(AS));
   return CGF.Builder.CreateLoad(numElementsPtr);

@@ -189,7 +189,7 @@ void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *ptr,
                                llvm::Value *&numElements,
                                llvm::Value *&allocPtr, CharUnits &cookieSize) {
   // Derive a char* in the same address space as the pointer.
-  unsigned AS = cast<llvm::PointerType>(ptr->getType())->getAddressSpace();
+  unsigned AS = ptr->getType()->getPointerAddressSpace();
   llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS);
   ptr = CGF.Builder.CreateBitCast(ptr, charPtrTy);
 

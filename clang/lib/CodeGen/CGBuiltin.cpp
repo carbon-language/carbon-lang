@@ -86,8 +86,7 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
   assert(CGF.getContext().hasSameUnqualifiedType(T, E->getArg(1)->getType()));
 
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
-  unsigned AddrSpace =
-    cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
+  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
 
   llvm::IntegerType *IntType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
@@ -121,8 +120,7 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
   assert(CGF.getContext().hasSameUnqualifiedType(T, E->getArg(1)->getType()));
 
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
-  unsigned AddrSpace =
-    cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
+  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
 
   llvm::IntegerType *IntType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
@@ -918,8 +916,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_val_compare_and_swap_16: {
     QualType T = E->getType();
     llvm::Value *DestPtr = EmitScalarExpr(E->getArg(0));
-    unsigned AddrSpace =
-      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
+    unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
 
     llvm::IntegerType *IntType =
       llvm::IntegerType::get(getLLVMContext(),
@@ -946,8 +943,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_bool_compare_and_swap_16: {
     QualType T = E->getArg(1)->getType();
     llvm::Value *DestPtr = EmitScalarExpr(E->getArg(0));
-    unsigned AddrSpace =
-      cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
+    unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
 
     llvm::IntegerType *IntType =
       llvm::IntegerType::get(getLLVMContext(),
@@ -1044,8 +1040,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         PtrTy->castAs<PointerType>()->getPointeeType().isVolatileQualified();
 
     Value *Ptr = EmitScalarExpr(E->getArg(0));
-    unsigned AddrSpace =
-        cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
+    unsigned AddrSpace = Ptr->getType()->getPointerAddressSpace();
     Ptr = Builder.CreateBitCast(Ptr, Int8Ty->getPointerTo(AddrSpace));
     Value *NewVal = Builder.getInt8(1);
     Value *Order = EmitScalarExpr(E->getArg(1));
@@ -1131,8 +1126,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         PtrTy->castAs<PointerType>()->getPointeeType().isVolatileQualified();
 
     Value *Ptr = EmitScalarExpr(E->getArg(0));
-    unsigned AddrSpace =
-        cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
+    unsigned AddrSpace = Ptr->getType()->getPointerAddressSpace();
     Ptr = Builder.CreateBitCast(Ptr, Int8Ty->getPointerTo(AddrSpace));
     Value *NewVal = Builder.getInt8(0);
     Value *Order = EmitScalarExpr(E->getArg(1));

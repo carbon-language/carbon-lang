@@ -1239,8 +1239,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   llvm::BasicBlock *contBB = 0;
 
   llvm::Value *allocation = RV.getScalarVal();
-  unsigned AS =
-    cast<llvm::PointerType>(allocation->getType())->getAddressSpace();
+  unsigned AS = allocation->getType()->getPointerAddressSpace();
 
   // The null-check means that the initializer is conditionally
   // evaluated.
