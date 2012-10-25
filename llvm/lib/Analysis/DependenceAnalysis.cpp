@@ -55,12 +55,16 @@
 
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Instructions.h"
 #include "llvm/Operator.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 

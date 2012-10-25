@@ -30,23 +30,17 @@
 #ifndef LLVM_ANALYSIS_DEPENDENCEANALYSIS_H
 #define LLVM_ANALYSIS_DEPENDENCEANALYSIS_H
 
-#include "llvm/BasicBlock.h"
-#include "llvm/Function.h"
-#include "llvm/Instruction.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/SmallBitVector.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Support/raw_ostream.h"
-
 
 namespace llvm {
   class AliasAnalysis;
+  class Loop;
+  class LoopInfo;
   class ScalarEvolution;
   class SCEV;
-  class Value;
+  class SCEVConstant;
   class raw_ostream;
 
   /// Dependence - This class represents a dependence between two memory
