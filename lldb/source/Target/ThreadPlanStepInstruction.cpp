@@ -131,10 +131,14 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
                     s.Address (return_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
                     log->Printf("%s.", s.GetData());
                 }
+                
+                // StepInstruction should probably have the tri-state RunMode, but for now it is safer to
+                // run others.
+                const bool stop_others = false;
                 m_thread.QueueThreadPlanForStepOut(false,
                                                    NULL,
                                                    true,
-                                                   m_stop_other_threads,
+                                                   stop_others,
                                                    eVoteNo,
                                                    eVoteNoOpinion,
                                                    0);

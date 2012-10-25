@@ -95,14 +95,14 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     }
     else
     {
-        // Stepping through should be done stopping other threads in general, since we're setting a breakpoint and
-        // continuing...
+        // Stepping through should be done running other threads in general, since we're setting a breakpoint and
+        // continuing.  So only stop others if we are explicitly told to do so.
         
         bool stop_others;
-        if (m_stop_others != lldb::eAllThreads)
-            stop_others = true;
-        else
+        if (m_stop_others == lldb::eOnlyThisThread)
             stop_others = false;
+        else
+            stop_others = true;
             
         FrameComparison frame_order = CompareCurrentFrameToStartFrame();
         
@@ -291,10 +291,13 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
     if (should_step_out)
     {
         // FIXME: Make sure the ThreadPlanForStepOut does the right thing with inlined functions.
+        // We really should have all plans take the tri-state for "stop others" so we can do the right
+        // thing.  For now let's be safe and always run others when we are likely to run arbitrary code.
+        const bool stop_others = false;
         return current_plan->GetThread().QueueThreadPlanForStepOut (false, 
                                                                     NULL, 
                                                                     true, 
-                                                                    current_plan->StopOthers(), 
+                                                                    stop_others,
                                                                     eVoteNo, 
                                                                     eVoteNoOpinion,
                                                                     0); // Frame index

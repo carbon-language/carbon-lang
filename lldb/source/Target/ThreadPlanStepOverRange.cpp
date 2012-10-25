@@ -78,7 +78,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     
     // If we're out of the range but in the same frame or in our caller's frame
     // then we should stop.
-    // When stepping out we only step if we are forcing running one thread.
+    // When stepping out we only stop others if we are forcing running one thread.
     bool stop_others;
     if (m_stop_others == lldb::eOnlyThisThread)
         stop_others = true;
