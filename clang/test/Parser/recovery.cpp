@@ -1,4 +1,4 @@
-// RUN: %clang -cc1 -verify -std=c++11 %s
+// RUN: %clang_cc1 -verify -std=c++11 %s
 
 8gi///===--- recovery.cpp ---===// // expected-error {{unqualified-id}}
 namespace Std { // expected-note {{here}}
