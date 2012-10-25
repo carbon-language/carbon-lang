@@ -180,7 +180,8 @@ void OMPGenerator::createCallLoopEndNowait() {
 }
 
 IntegerType *OMPGenerator::getIntPtrTy() {
-  return P->getAnalysis<DataLayout>().getIntPtrType(Builder.getContext());
+  // FIXME: This might need to get a proper address space. Hard code 0 for now.
+  return P->getAnalysis<DataLayout>().getIntPtrType(Builder.getContext(), 0u);
 }
 
 Module *OMPGenerator::getModule() {
