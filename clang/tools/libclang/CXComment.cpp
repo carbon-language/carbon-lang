@@ -891,6 +891,19 @@ private:
   const CommandTraits &Traits;
   const SourceManager &SM;
 };
+
+void getSourceTextOfDeclaration(const DeclInfo *ThisDecl,
+                                SmallVectorImpl<char> &Str) {
+  ASTContext &Context = ThisDecl->CurrentDecl->getASTContext();
+  const LangOptions &LangOpts = Context.getLangOpts();
+  llvm::raw_svector_ostream OS(Str);
+  PrintingPolicy PPolicy(LangOpts);
+  PPolicy.SuppressAttributes = true;
+  PPolicy.TerseOutput = true;
+  ThisDecl->CurrentDecl->print(OS, PPolicy,
+                               /*Indentation*/0, /*PrintInstantiation*/true);
+}
+
 } // end unnamed namespace
 
 void CommentASTToXMLConverter::visitTextComment(const TextComment *C) {
@@ -1032,20 +1045,6 @@ void CommentASTToXMLConverter::visitVerbatimLineComment(
   Result << "</Verbatim>";
 }
 
-static std::string getSourceTextOfDeclaration(const DeclInfo *ThisDecl) {
-  
-  ASTContext &Context = ThisDecl->CurrentDecl->getASTContext();
-  const LangOptions &LangOpts = Context.getLangOpts();
-  std::string SStr;
-  llvm::raw_string_ostream S(SStr);
-  PrintingPolicy PPolicy(LangOpts);
-  PPolicy.SuppressAttributes = true;
-  PPolicy.TerseOutput = true;
-  ThisDecl->CurrentDecl->print(S, PPolicy,
-                               /*Indentation*/0, /*PrintInstantiation*/true);
-  return S.str();
-}
-
 void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
   FullCommentParts Parts(C, Traits);
 
@@ -1164,11 +1163,16 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     Result << "<Other><Name>unknown</Name>";
   }
 
+  {
+    // Pretty-print the declaration.
+    Result << "<Declaration>";
+    SmallString<128> Declaration;
+    getSourceTextOfDeclaration(DI, Declaration);
+    appendToResultWithXMLEscaping(Declaration);
+    Result << "</Declaration>";
+  }
+
   bool FirstParagraphIsBrief = false;
-  Result << "<Declaration>";
-  appendToResultWithXMLEscaping(getSourceTextOfDeclaration(DI));
-  Result << "</Declaration>";
-  
   if (Parts.Brief) {
     Result << "<Abstract>";
     visit(Parts.Brief);
