@@ -156,8 +156,14 @@ TargetList::CreateTarget (Debugger &debugger,
         arch = specified_arch;
 
     FileSpec file (user_exe_path, false);
+    bool user_exe_path_is_bundle = false;
+    char resolved_bundle_exe_path[PATH_MAX];
+    resolved_bundle_exe_path[0] = '\0';
     if (file)
     {
+        if (file.GetFileType() == FileSpec::eFileTypeDirectory)
+            user_exe_path_is_bundle = true;
+
         if (file.IsRelativeToCurrentWorkingDirectory())
         {
             // Ignore paths that start with "./" and "../"
@@ -208,6 +214,8 @@ TargetList::CreateTarget (Debugger &debugger,
             }
             target_sp.reset(new Target(debugger, arch, platform_sp));
             target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
+            if (user_exe_path_is_bundle)
+                exe_module_sp->GetFileSpec().GetPath(resolved_bundle_exe_path, sizeof(resolved_bundle_exe_path));
         }
     }
     else
@@ -219,10 +227,21 @@ TargetList::CreateTarget (Debugger &debugger,
 
     if (target_sp)
     {
+        // Set argv0 with what the user typed, unless the user specified a
+        // directory. If the user specified a directory, then it is probably a
+        // bundle that was resolved and we need to use the resolved bundle path
         if (user_exe_path)
         {
             // Use exactly what the user typed as the first argument when we exec or posix_spawn
-            target_sp->SetArg0 (user_exe_path);
+            if (user_exe_path_is_bundle && resolved_bundle_exe_path[0])
+            {
+                target_sp->SetArg0 (resolved_bundle_exe_path);
+            }
+            else
+            {
+                // Just use what the user typed
+                target_sp->SetArg0 (user_exe_path);
+            }
         }
         if (file.GetDirectory())
         {

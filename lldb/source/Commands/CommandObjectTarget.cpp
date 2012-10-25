@@ -234,13 +234,6 @@ protected:
 
             if (target_sp)
             {
-                if (file_path)
-                {
-                    // Use exactly what the user typed as the first argument
-                    // when we exec or posix_spawn
-                    target_sp->SetArg0 (file_path);
-                }
-
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());
                 if (core_file)
                 {
