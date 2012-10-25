@@ -37,6 +37,8 @@ public:
   virtual ~MCAsmParserSemaCallback(); 
   virtual void *LookupInlineAsmIdentifier(StringRef Name, void *Loc,
                                           unsigned &Size) = 0;
+  virtual bool LookupInlineAsmField(StringRef Base, StringRef Member,
+                                    unsigned &Offset) = 0;
 };
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific

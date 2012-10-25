@@ -841,15 +841,30 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
     APInt DotDisp;
     DotDispStr.getAsInteger(10, DotDisp);
     DotDispVal = DotDisp.getZExtValue();
+  } else if (Tok.is(AsmToken::Identifier)) {
+    // We should only see an identifier when parsing the original inline asm.
+    // The front-end should rewrite this in terms of immediates.
+    assert (isParsingInlineAsm() && "Unexpected field name!");
+
+    unsigned DotDisp;
+    std::pair<StringRef, StringRef> BaseMember = DotDispStr.split('.');
+    if (SemaCallback->LookupInlineAsmField(BaseMember.first, BaseMember.second,
+                                           DotDisp)) {
+      Err = "Unable to lookup field reference!";
+      return true;
+    }
+    DotDispVal = DotDisp;
   } else {
     Err = "Unexpected token type!";
     return true;
   }
 
-  // Special case zero dot displacement.
-  if (!DotDispVal) {
-    *NewDisp = Disp;
-    return false;
+  if (isParsingInlineAsm() && Tok.is(AsmToken::Identifier)) {
+    SMLoc Loc = SMLoc::getFromPointer(DotDispStr.data());
+    unsigned Len = DotDispStr.size();
+    unsigned Val = OrigDispVal + DotDispVal;
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_DotOperator, Loc, Len,
+                                                Val));
   }
 
   *NewDisp = MCConstantExpr::Create(OrigDispVal + DotDispVal, getContext());
