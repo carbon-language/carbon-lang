@@ -5146,9 +5146,6 @@ let CategoryName = "Inline Assembly Issue" in {
     "invalid use of a cast in a inline asm context requiring an l-value: "
     "accepted due to -fheinous-gnu-extensions, but clang may remove support "
     "for this in the future">;
-  def warn_mismatched_size_modifier : Warning<
-    "the size being stored may not be the size intended, use a modifier to "
-    "specify the size">;
 
   def err_inline_ms_asm_parsing : Error<"%0">;
 }

@@ -3315,29 +3315,6 @@ public:
     }
     return R;
   }
-  virtual bool validateConstraintModifier(StringRef Constraint,
-                                          const char Modifier,
-                                          unsigned Size) const {
-    // Strip off constraint modifiers.
-    while (Constraint[0] == '=' ||
-           Constraint[0] == '+' ||
-           Constraint[0] == '&')
-      Constraint = Constraint.substr(1);
-
-    switch (Constraint[0]) {
-    default: break;
-    case 'r': {
-      switch (Modifier) {
-      default: return Size == 32;
-      case 'q':
-        // A register of size 32 cannot fit a vector type.
-        return false;
-      }
-    }
-    }
-
-    return true;
-  }
   virtual const char *getClobbers() const {
     // FIXME: Is this really right?
     return "";
