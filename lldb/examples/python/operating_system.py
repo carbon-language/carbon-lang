@@ -40,7 +40,7 @@ class OperatingSystemPlugIn(object):
             self.threads = [
                     { 'tid' : 0x111111111, 'name' : 'one'  , 'queue' : 'queue1', 'state' : 'stopped', 'stop_reason' : 'breakpoint'},
                     { 'tid' : 0x222222222, 'name' : 'two'  , 'queue' : 'queue2', 'state' : 'stopped', 'stop_reason' : 'none'      },
-                    { 'tid' : 0x333333333, 'name' : 'three', 'queue' : 'queue3', 'state' : 'stopped', 'stop_reason' : 'trace'     }
+                    { 'tid' : 0x333333333, 'name' : 'three', 'queue' : 'queue3', 'state' : 'stopped', 'stop_reason' : 'trace'     , 'register_data_addr' : 0x100000000 }
                 ]
         return self.threads
     

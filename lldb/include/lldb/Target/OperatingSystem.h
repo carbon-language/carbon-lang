@@ -71,7 +71,7 @@ public:
     ThreadWasSelected (Thread *thread) = 0;
     
     virtual lldb::RegisterContextSP
-    CreateRegisterContextForThread (Thread *thread) = 0;
+    CreateRegisterContextForThread (Thread *thread, lldb::addr_t reg_data_addr) = 0;
 
     virtual lldb::StopInfoSP
     CreateThreadStopReason (Thread *thread) = 0;

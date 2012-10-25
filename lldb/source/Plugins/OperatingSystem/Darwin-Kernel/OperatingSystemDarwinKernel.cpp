@@ -268,7 +268,7 @@ OperatingSystemDarwinKernel::ThreadWasSelected (Thread *thread)
 }
 
 RegisterContextSP
-OperatingSystemDarwinKernel::CreateRegisterContextForThread (Thread *thread)
+OperatingSystemDarwinKernel::CreateRegisterContextForThread (Thread *thread, lldb::addr_t reg_data_addr)
 {
     ThreadMemory *generic_thread = (ThreadMemory *)thread;
     RegisterContextSP reg_ctx_sp;

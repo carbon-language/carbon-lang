@@ -24,7 +24,8 @@ public:
     ThreadMemory (lldb_private::Process &process,
                   lldb::tid_t tid,
                   const char *name,
-                  const char *queue);
+                  const char *queue,
+                  lldb::addr_t register_data_addr);
 
     virtual
     ~ThreadMemory();
@@ -72,6 +73,7 @@ protected:
     lldb::ValueObjectSP m_thread_info_valobj_sp;
     std::string m_name;
     std::string m_queue;
+    lldb::addr_t m_register_data_addr;
 private:
     //------------------------------------------------------------------
     // For ThreadMemory only

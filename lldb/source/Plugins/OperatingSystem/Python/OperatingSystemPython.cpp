@@ -202,6 +202,7 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
         PythonDataString queue_pystr("queue");
         PythonDataString state_pystr("state");
         PythonDataString stop_reason_pystr("stop_reason");
+        PythonDataString reg_data_addr_pystr ("register_data_addr");
         
         const uint32_t num_threads = threads_array.GetSize();
         for (uint32_t i=0; i<num_threads; ++i)
@@ -209,7 +210,8 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
             PythonDataDictionary thread_dict(threads_array.GetItemAtIndex(i).GetDictionaryObject());
             if (thread_dict)
             {
-                const tid_t tid = thread_dict.GetItemForKeyAsInteger(tid_pystr, LLDB_INVALID_THREAD_ID);
+                const tid_t tid = thread_dict.GetItemForKeyAsInteger (tid_pystr, LLDB_INVALID_THREAD_ID);
+                const addr_t reg_data_addr = thread_dict.GetItemForKeyAsInteger (reg_data_addr_pystr, LLDB_INVALID_ADDRESS);
                 const char *name = thread_dict.GetItemForKeyAsString (name_pystr);
                 const char *queue = thread_dict.GetItemForKeyAsString (queue_pystr);
                 //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
@@ -220,7 +222,8 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
                     thread_sp.reset (new ThreadMemory (*m_process,
                                                        tid,
                                                        name,
-                                                       queue));
+                                                       queue,
+                                                       reg_data_addr));
                 new_thread_list.AddThread(thread_sp);
 
             }
@@ -239,7 +242,7 @@ OperatingSystemPython::ThreadWasSelected (Thread *thread)
 }
 
 RegisterContextSP
-OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
+OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, lldb::addr_t reg_data_addr)
 {
     RegisterContextSP reg_ctx_sp;
     if (!m_interpreter || !m_python_object || !thread)
@@ -247,27 +250,40 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread)
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
 
-    if (log)
-        log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%llx) fetching register data from python", thread->GetID());
-
-    auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
-                                                                          thread->GetID());
-    
-    if (!object_sp)
-        return RegisterContextSP();
-    
-    PythonDataString reg_context_data((PyObject*)object_sp->GetObject());
-    if (reg_context_data)
+    if (reg_data_addr != LLDB_INVALID_ADDRESS)
     {
-        DataBufferSP data_sp (new DataBufferHeap (reg_context_data.GetString(),
-                                                  reg_context_data.GetSize()));
-        if (data_sp->GetByteSize())
+        // The registers data is in contiguous memory, just create the register
+        // context using the address provided
+        if (log)
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%llx, reg_data_addr = 0x%llx) creating memory register context", thread->GetID(), reg_data_addr);
+        reg_ctx_sp.reset (new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), reg_data_addr));
+    }
+    else
+    {
+        // No register data address is provided, query the python plug-in to let
+        // it make up the data as it sees fit
+        if (log)
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%llx) fetching register data from python", thread->GetID());
+
+        auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
+                                                                              thread->GetID());
+        
+        if (!object_sp)
+            return RegisterContextSP();
+        
+        PythonDataString reg_context_data((PyObject*)object_sp->GetObject());
+        if (reg_context_data)
         {
-            RegisterContextMemory *reg_ctx_memory = new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), LLDB_INVALID_ADDRESS);
-            if (reg_ctx_memory)
+            DataBufferSP data_sp (new DataBufferHeap (reg_context_data.GetString(),
+                                                      reg_context_data.GetSize()));
+            if (data_sp->GetByteSize())
             {
-                reg_ctx_sp.reset(reg_ctx_memory);
-                reg_ctx_memory->SetAllRegisterData (data_sp);
+                RegisterContextMemory *reg_ctx_memory = new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), LLDB_INVALID_ADDRESS);
+                if (reg_ctx_memory)
+                {
+                    reg_ctx_sp.reset(reg_ctx_memory);
+                    reg_ctx_memory->SetAllRegisterData (data_sp);
+                }
             }
         }
     }
