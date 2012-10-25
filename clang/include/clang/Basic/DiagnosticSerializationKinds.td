@@ -64,22 +64,6 @@ def err_pch_undef : Error<
     "'-undef' but %select{precompiled header was not built with it|"
     "it is not present on the command line}0">;
 
-def warn_cmdline_conflicting_macro_def : Error<
-    "definition of the macro '%0' conflicts with the definition used to "
-    "build the precompiled header">;
-def note_pch_macro_defined_as : Note<
-    "definition of macro '%0' in the precompiled header">;
-def warn_cmdline_missing_macro_defs : Warning<
-    "macro definitions used to build the precompiled header are missing">;
-def note_using_macro_def_from_pch : Note<
-    "using this macro definition from precompiled header">;
-def warn_macro_name_used_in_pch : Error<
-    "definition of macro %0 conflicts with an identifier used in the "
-    "precompiled header">;
-def warn_pch_compiler_options_mismatch : Error<
-    "compiler options used when building the precompiled header differ from "
-    "the options used when using the precompiled header">;
-
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;
 }

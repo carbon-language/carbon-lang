@@ -86,15 +86,6 @@ struct HeaderFileInfo;
 class VersionTuple;
 class TargetOptions;
 
-struct PCHPredefinesBlock {
-  /// \brief The file ID for this predefines buffer in a PCH file.
-  FileID BufferID;
-
-  /// \brief This predefines buffer in a PCH file.
-  StringRef Data;
-};
-typedef SmallVector<PCHPredefinesBlock, 2> PCHPredefinesBlocks;
-
 /// \brief Abstract interface for callback invocations by the ASTReader.
 ///
 /// While reading an AST file, the ASTReader will call the methods of the
@@ -163,27 +154,6 @@ public:
     return false;
   }
 
-  /// \brief Receives the contents of the predefines buffer.
-  ///
-  /// \param Buffers Information about the predefines buffers.
-  ///
-  /// \param OriginalFileName The original file name for the AST file, which
-  /// will appear as an entry in the predefines buffer.
-  ///
-  /// \param SuggestedPredefines If necessary, additional definitions are added
-  /// here.
-  ///
-  /// \param Complain Whether to complain about non-matching predefines buffers.
-  ///
-  /// \returns true to indicate the predefines are invalid or false otherwise.
-  virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
-                                    StringRef OriginalFileName,
-                                    std::string &SuggestedPredefines,
-                                    FileManager &FileMgr,
-                                    bool Complain) {
-    return false;
-  }
-
   /// \brief Receives a HeaderFileInfo entry.
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID) {}
 
@@ -211,11 +181,6 @@ public:
   virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
                                        bool Complain,
                                        std::string &SuggestedPredefines);
-  virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
-                                    StringRef OriginalFileName,
-                                    std::string &SuggestedPredefines,
-                                    FileManager &FileMgr,
-                                    bool Complain);
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID);
   virtual void ReadCounter(const serialization::ModuleFile &M, unsigned Value);
 
@@ -912,10 +877,6 @@ private:
     ~ReadingKindTracker() { Reader.ReadingKind = PrevKind; }
   };
 
-  /// \brief All predefines buffers in the chain, to be treated as if
-  /// concatenated.
-  PCHPredefinesBlocks PCHPredefinesBuffers;
-
   /// \brief Suggested contents of the predefines buffer, after this
   /// PCH file has been processed.
   ///
@@ -949,7 +910,6 @@ private:
                                  llvm::SmallVectorImpl<ModuleFile *> &Loaded,
                                  unsigned ClientLoadCapabilities);
   bool ReadASTBlock(ModuleFile &F);
-  bool CheckPredefinesBuffers(bool Complain);
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
   bool ReadSourceManagerBlock(ModuleFile &F);
   llvm::BitstreamCursor &SLocCursorForID(int ID);
