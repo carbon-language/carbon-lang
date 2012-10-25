@@ -74,7 +74,8 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 
-  bool ParseInstruction(StringRef Name, SMLoc NameLoc,
+  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+                        SMLoc NameLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   bool parseMathOperation(StringRef Name, SMLoc NameLoc,
@@ -1056,7 +1057,7 @@ parseMathOperation(StringRef Name, SMLoc NameLoc,
 }
 
 bool MipsAsmParser::
-ParseInstruction(StringRef Name, SMLoc NameLoc,
+ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // floating point instructions: should register be treated as double?
   if (requestsDoubleOperand(Name)) {

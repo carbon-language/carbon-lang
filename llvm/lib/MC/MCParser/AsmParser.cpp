@@ -86,7 +86,7 @@ public:
                      MemoryBuffer *I);
 };
 
-struct AsmRewrite;
+//struct AsmRewrite;
 struct ParseStatementInfo {
   /// ParsedOperands - The parsed operands from the last parsed statement.
   SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
@@ -1365,8 +1365,9 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
     OpcodeStr.push_back(tolower(IDVal[i]));
 
-  bool HadError = getTargetParser().ParseInstruction(OpcodeStr.str(), IDLoc,
-                                                     Info.ParsedOperands);
+  ParseInstructionInfo IInfo(Info.AsmRewrites);
+  bool HadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr.str(),
+                                                     IDLoc,Info.ParsedOperands);
 
   // Dump the parsed representation, if requested.
   if (getShowParsedOperands()) {
@@ -3583,27 +3584,6 @@ bool AsmParser::ParseDirectiveEndr(SMLoc DirectiveLoc) {
   return false;
 }
 
-namespace {
-enum AsmRewriteKind {
-   AOK_Imm,
-   AOK_Input,
-   AOK_Output,
-   AOK_SizeDirective,
-   AOK_Emit,
-   AOK_Skip
-};
-
-struct AsmRewrite {
-  AsmRewriteKind Kind;
-  SMLoc Loc;
-  unsigned Len;
-  unsigned Size;
-public:
-  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len, unsigned size = 0)
-    : Kind(kind), Loc(loc), Len(len), Size(size) { }
-};
-}
-
 bool AsmParser::ParseDirectiveEmit(SMLoc IDLoc, ParseStatementInfo &Info) {
   const MCExpr *Value;
   SMLoc ExprLoc = getLexer().getLoc();
@@ -3780,7 +3760,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       OS << OutputIdx++;
       break;
     case AOK_SizeDirective:
-      switch((*I).Size) {
+      switch((*I).Val) {
       default: break;
       case 8:  OS << "byte ptr "; break;
       case 16: OS << "word ptr "; break;
@@ -3793,6 +3773,9 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       break;
     case AOK_Emit:
       OS << ".byte";
+      break;
+    case AOK_DotOperator:
+      OS << (*I).Val;
       break;
     }
 

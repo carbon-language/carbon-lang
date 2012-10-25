@@ -61,7 +61,8 @@ public:
   MBlazeAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
     : MCTargetAsmParser(), Parser(_Parser) {}
 
-  virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
+  virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+                                SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
@@ -477,7 +478,7 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
 /// Parse an mblaze instruction mnemonic followed by its operands.
 bool MBlazeAsmParser::
-ParseInstruction(StringRef Name, SMLoc NameLoc,
+ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // The first operands is the token for the instruction name
   size_t dotLoc = Name.find('.');

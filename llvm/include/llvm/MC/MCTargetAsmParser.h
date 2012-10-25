@@ -21,6 +21,39 @@ class MCParsedAsmOperand;
 class MCInst;
 template <typename T> class SmallVectorImpl;
 
+namespace {
+enum AsmRewriteKind {
+   AOK_Imm,
+   AOK_Input,
+   AOK_Output,
+   AOK_SizeDirective,
+   AOK_Emit,
+   AOK_Skip,
+   AOK_DotOperator
+};
+
+struct AsmRewrite {
+  AsmRewriteKind Kind;
+  SMLoc Loc;
+  unsigned Len;
+  unsigned Val;
+public:
+  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len, unsigned val = 0)
+    : Kind(kind), Loc(loc), Len(len), Val(val) {}
+};
+}
+
+struct ParseInstructionInfo {
+
+  SmallVectorImpl<AsmRewrite> *AsmRewrites;
+
+  ParseInstructionInfo() : AsmRewrites(0) {}
+  ParseInstructionInfo(SmallVectorImpl<AsmRewrite> *rewrites)
+    : AsmRewrites(rewrites) {}
+
+  ~ParseInstructionInfo() {}
+};
+
 /// MCTargetAsmParser - Generic interface to target specific assembly parsers.
 class MCTargetAsmParser : public MCAsmParserExtension {
 public:
@@ -77,7 +110,8 @@ public:
   /// \param Operands [out] - The list of parsed operands, this returns
   ///        ownership of them to the caller.
   /// \return True on failure.
-  virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
+  virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+                                SMLoc NameLoc,
                             SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
 
   /// ParseDirective - Parse a target specific assembler directive

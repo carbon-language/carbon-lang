@@ -366,8 +366,9 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
     instName = OpcodeToken.getString();
     instLoc = OpcodeToken.getLoc();
     
+    ParseInstructionInfo Info;
     if (NextToken.isNot(AsmToken::Eof) &&
-        TargetParser->ParseInstruction(instName, instLoc, operands))
+        TargetParser->ParseInstruction(Info, instName, instLoc, operands))
       ret = -1;
   } else {
     ret = -1;
