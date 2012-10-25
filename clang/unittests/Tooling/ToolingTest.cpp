@@ -130,5 +130,35 @@ TEST(ToolInvocation, TestMapVirtualFile) {
   EXPECT_TRUE(Invocation.run());
 }
 
+struct VerifyEndCallback : public EndOfSourceFileCallback {
+  VerifyEndCallback() : Called(0), Matched(false) {}
+  virtual void run() {
+    ++Called;
+  }
+  ASTConsumer *newASTConsumer() {
+    return new FindTopLevelDeclConsumer(&Matched);
+  }
+  unsigned Called;
+  bool Matched;
+};
+
+TEST(newFrontendActionFactory, InjectsEndOfSourceFileCallback) {
+  VerifyEndCallback EndCallback;
+
+  FixedCompilationDatabase Compilations("/", std::vector<std::string>());
+  std::vector<std::string> Sources;
+  Sources.push_back("/a.cc");
+  Sources.push_back("/b.cc");
+  ClangTool Tool(Compilations, Sources);
+
+  Tool.mapVirtualFile("/a.cc", "void a() {}");
+  Tool.mapVirtualFile("/b.cc", "void b() {}");
+
+  Tool.run(newFrontendActionFactory(&EndCallback, &EndCallback));
+
+  EXPECT_TRUE(EndCallback.Matched);
+  EXPECT_EQ(2u, EndCallback.Called);
+}
+
 } // end namespace tooling
 } // end namespace clang

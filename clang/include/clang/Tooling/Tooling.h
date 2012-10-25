@@ -74,6 +74,14 @@ public:
 template <typename T>
 FrontendActionFactory *newFrontendActionFactory();
 
+/// \brief Called at the end of each source file when used with
+/// \c newFrontendActionFactory.
+class EndOfSourceFileCallback {
+public:
+  virtual ~EndOfSourceFileCallback() {}
+  virtual void run() = 0;
+};
+
 /// \brief Returns a new FrontendActionFactory for any type that provides an
 /// implementation of newASTConsumer().
 ///
@@ -87,7 +95,7 @@ FrontendActionFactory *newFrontendActionFactory();
 ///   newFrontendActionFactory(&Factory);
 template <typename FactoryT>
 inline FrontendActionFactory *newFrontendActionFactory(
-    FactoryT *ConsumerFactory);
+    FactoryT *ConsumerFactory, EndOfSourceFileCallback *EndCallback = NULL);
 
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag.
 ///
@@ -217,34 +225,45 @@ FrontendActionFactory *newFrontendActionFactory() {
 
 template <typename FactoryT>
 inline FrontendActionFactory *newFrontendActionFactory(
-    FactoryT *ConsumerFactory) {
+    FactoryT *ConsumerFactory, EndOfSourceFileCallback *EndCallback) {
   class FrontendActionFactoryAdapter : public FrontendActionFactory {
   public:
-    explicit FrontendActionFactoryAdapter(FactoryT *ConsumerFactory)
-      : ConsumerFactory(ConsumerFactory) {}
+    explicit FrontendActionFactoryAdapter(FactoryT *ConsumerFactory,
+                                          EndOfSourceFileCallback *EndCallback)
+      : ConsumerFactory(ConsumerFactory), EndCallback(EndCallback) {}
 
     virtual clang::FrontendAction *create() {
-      return new ConsumerFactoryAdaptor(ConsumerFactory);
+      return new ConsumerFactoryAdaptor(ConsumerFactory, EndCallback);
     }
 
   private:
     class ConsumerFactoryAdaptor : public clang::ASTFrontendAction {
     public:
-      ConsumerFactoryAdaptor(FactoryT *ConsumerFactory)
-        : ConsumerFactory(ConsumerFactory) {}
+      ConsumerFactoryAdaptor(FactoryT *ConsumerFactory,
+                             EndOfSourceFileCallback *EndCallback)
+        : ConsumerFactory(ConsumerFactory), EndCallback(EndCallback) {}
 
       clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &,
                                             llvm::StringRef) {
         return ConsumerFactory->newASTConsumer();
       }
 
+    protected:
+      virtual void EndSourceFileAction() {
+        if (EndCallback != NULL)
+          EndCallback->run();
+        clang::ASTFrontendAction::EndSourceFileAction();
+      }
+
     private:
       FactoryT *ConsumerFactory;
+      EndOfSourceFileCallback *EndCallback;
     };
     FactoryT *ConsumerFactory;
+    EndOfSourceFileCallback *EndCallback;
   };
 
-  return new FrontendActionFactoryAdapter(ConsumerFactory);
+  return new FrontendActionFactoryAdapter(ConsumerFactory, EndCallback);
 }
 
 /// \brief Returns the absolute path of \c File, by prepending it with
