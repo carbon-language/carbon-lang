@@ -1,5 +1,5 @@
 ; RUN: llc -march=x86 -mcpu=generic -mattr=+sse42 < %s | FileCheck %s
-; RUN: llc -march=x86 -mcpu=atom -mattr=+sse42 < %s | FileCheck -check-prefix=ATOM %s
+; RUN: llc -march=x86 -mcpu=atom < %s | FileCheck -check-prefix=ATOM %s
 
 ; CHECK: paddd
 ; CHECK: movl

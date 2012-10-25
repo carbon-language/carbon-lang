@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mcpu=generic -mattr=sse41 | FileCheck %s
-; RUN: llc < %s -march=x86 -mcpu=atom -mattr=+sse41 | FileCheck -check-prefix=ATOM %s
+; RUN: llc < %s -march=x86 -mcpu=atom | FileCheck -check-prefix=ATOM %s
 
 ; Transpose example using the more generic vector shuffle. Return float8
 ; instead of float16
@@ -47,8 +47,8 @@ entry:
 ; CHECK: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
 ; ATOM: lo_hi_shift
 ; ATOM: movhps ([[BASEREG:%[a-z]+]]),
-; ATOM: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
-; ATOM: extractps ${{[0-9]+}}, %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
+; ATOM: movd %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
+; ATOM: movd %xmm{{[0-9]+}}, {{[0-9]*}}([[BASEREG]])
   %v.i = bitcast float* %y to <4 x float>*
   %0 = load <4 x float>* %v.i, align 1
   %1 = bitcast float* %x to <1 x i64>*
