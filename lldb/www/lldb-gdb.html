@@ -585,6 +585,25 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Creating and assigning a value to a convenience variable.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> set $foo = 5<br>
+                            <b>(gdb)</b> set variable $foo = 5<br>
+                              or using the print command <br>
+                            <b>(gdb)</b> print $foo = 5<br>
+                              or using the call command <br>
+                            <b>(gdb)</b> call $foo = 5<br>
+                              and if you want to specify the type of the variable:
+                            <b>(gdb)</b> set $foo = (unsigned int) 5<br>
+
+                        </td>
+                        <td class="content">
+                          In lldb you evaluate a variable declaration expression as you would write it in C:<br>
+                            <b>(lldb)</b> expr unsigned int $foo = 5<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Printing the ObjC "description" of an object.</td></tr>
                     <tr>
                         <td class="content">
