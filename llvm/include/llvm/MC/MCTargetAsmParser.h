@@ -21,7 +21,6 @@ class MCParsedAsmOperand;
 class MCInst;
 template <typename T> class SmallVectorImpl;
 
-namespace {
 enum AsmRewriteKind {
    AOK_Imm,
    AOK_Input,
@@ -41,7 +40,6 @@ public:
   AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len, unsigned val = 0)
     : Kind(kind), Loc(loc), Len(len), Val(val) {}
 };
-}
 
 struct ParseInstructionInfo {
 
