@@ -223,6 +223,9 @@ public:
     lldb_private::UUID 
     GetUUID ();
 
+    bool
+    RemoteIsEFI ();
+
     lldb::addr_t
     GetLoadAddress ();
 

@@ -38,6 +38,7 @@
 #include "ProcessKDPLog.h"
 #include "ThreadKDP.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
+#include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
 #include "Utility/StringExtractor.h"
 
 using namespace lldb;
@@ -229,12 +230,17 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
                     m_target.SetArchitecture(kernel_arch);
 
-                    /* Get the kernel's UUID and load address via kdp-kernelversion packet.  */
-                        
+                    /* Get the kernel's UUID and load address via KDP_KERNELVERSION packet.  */
+                    /* An EFI kdp session has neither UUID nor load address. */
+
                     UUID kernel_uuid = m_comm.GetUUID ();
                     addr_t kernel_load_addr = m_comm.GetLoadAddress ();
 
-                    if (kernel_load_addr != LLDB_INVALID_ADDRESS)
+                    if (m_comm.RemoteIsEFI ())
+                    {
+                        m_dyld_plugin_name = DynamicLoaderStatic::GetPluginNameStatic();
+                    }
+                    else if (kernel_load_addr != LLDB_INVALID_ADDRESS)
                     {
                         m_kernel_load_addr = kernel_load_addr;
                         m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();

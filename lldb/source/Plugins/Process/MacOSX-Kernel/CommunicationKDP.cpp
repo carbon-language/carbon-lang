@@ -525,6 +525,17 @@ CommunicationKDP::GetUUID ()
     return uuid;
 }
 
+bool
+CommunicationKDP::RemoteIsEFI ()
+{
+    if (GetKernelVersion() == NULL)
+        return false;
+    if (strncmp (m_kernel_version.c_str(), "EFI", 3) == 0)
+        return true;
+    else
+        return false;
+}
+
 lldb::addr_t
 CommunicationKDP::GetLoadAddress ()
 {
