@@ -277,6 +277,7 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
       } else {
         SuggestedPredefines += "#define ";
         SuggestedPredefines += MacroName.str();
+        SuggestedPredefines += ' ';
         SuggestedPredefines += Existing.first.str();
         SuggestedPredefines += '\n';
       }
@@ -1026,16 +1027,6 @@ void ASTReader::Error(unsigned DiagID,
 
 /// \brief Tell the AST listener about the predefines buffers in the chain.
 bool ASTReader::CheckPredefinesBuffers(bool Complain) {
-  if (Listener) {
-    // We only care about the primary module.
-    ModuleFile &M = ModuleMgr.getPrimaryModule();
-    SuggestedPredefines.clear();
-    return Listener->ReadPredefinesBuffer(PCHPredefinesBuffers,
-                                          M.ActualOriginalSourceFileName,
-                                          SuggestedPredefines,
-                                          FileMgr,
-                                          Complain);
-  }
   return false;
 }
 
