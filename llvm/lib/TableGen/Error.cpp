@@ -16,6 +16,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <cstdlib>
+
 namespace llvm {
 
 SourceMgr SrcMgr;
@@ -61,6 +63,16 @@ void PrintError(const Twine &Msg) {
 
 void PrintError(const TGError &Error) {
   PrintError(Error.getLoc(), Error.getMessage());
+}
+
+void PrintFatalError(const std::string &Msg) {
+  PrintError(Twine(Msg));
+  std::exit(1);
+}
+
+void PrintFatalError(ArrayRef<SMLoc> ErrorLoc, const std::string &Msg) {
+  PrintError(ErrorLoc, Msg);
+  std::exit(1);
 }
 
 } // end namespace llvm

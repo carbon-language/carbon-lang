@@ -40,6 +40,9 @@ void PrintError(const char *Loc, const Twine &Msg);
 void PrintError(const Twine &Msg);
 void PrintError(const TGError &Error);
 
+LLVM_ATTRIBUTE_NORETURN void PrintFatalError(const std::string &Msg);
+LLVM_ATTRIBUTE_NORETURN void PrintFatalError(ArrayRef<SMLoc> ErrorLoc,
+                                             const std::string &Msg);
 
 extern SourceMgr SrcMgr;
 
