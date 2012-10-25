@@ -2050,14 +2050,22 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
+  // Function may lack declaration in source code if it is created by Clang
+  // CodeGen (examples: _GLOBAL__I_a, __cxx_global_array_dtor, thunk).
+  bool HasDecl = (D != 0);
   // Use the location of the declaration.
-  SourceLocation Loc = D->getLocation();
-  
+  SourceLocation Loc;
+  if (HasDecl)
+    Loc = D->getLocation();
+
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(Loc);
   llvm::DIDescriptor FDContext(Unit);
   llvm::DIArray TParamsArray;
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  if (!HasDecl) {
+    // Use llvm function name.
+    Name = Fn->getName();
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // If there is a DISubprogram for this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
       FI = SPCache.find(FD->getCanonicalDecl());
@@ -2104,12 +2112,13 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     Name = Name.substr(1);
 
   unsigned LineNo = getLineNumber(Loc);
-  if (D->isImplicit())
+  if (!HasDecl || D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
 
   llvm::DIType DIFnType;
   llvm::DISubprogram SPDecl;
-  if (CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo) {
+  if (HasDecl &&
+      CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo) {
     DIFnType = getOrCreateFunctionType(D, FnType, Unit);
     SPDecl = getFunctionDeclaration(D);
   } else {
@@ -2132,7 +2141,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   // Push function on region stack.
   llvm::MDNode *SPN = SP;
   LexicalBlockStack.push_back(SPN);
-  RegionMap[D] = llvm::WeakVH(SP);
+  if (HasDecl)
+    RegionMap[D] = llvm::WeakVH(SP);
 }
 
 /// EmitLocation - Emit metadata to indicate a change in line/column

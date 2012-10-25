@@ -1650,6 +1650,8 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
                                           SC_None,
                                           false, false);
 
+  // Initialize debug info if necessary.
+  CGF.maybeInitializeDebugInfo();
   CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
   if (byrefInfo.needsCopy()) {
@@ -1720,6 +1722,8 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
                                           SC_Static,
                                           SC_None,
                                           false, false);
+  // Initialize debug info if necessary.
+  CGF.maybeInitializeDebugInfo();
   CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
   if (byrefInfo.needsDispose()) {

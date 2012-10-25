@@ -333,7 +333,10 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
     
     FunctionArgs.push_back(Param);
   }
-  
+
+  // Initialize debug info if needed.
+  maybeInitializeDebugInfo();
+
   StartFunction(GlobalDecl(), ResultType, Fn, FnInfo, FunctionArgs,
                 SourceLocation());
 
