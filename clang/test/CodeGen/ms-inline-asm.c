@@ -179,3 +179,17 @@ int t18() {
 // CHECK: t18
 // CHECK: call void asm sideeffect inteldialect "lea ebx, foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
 }
+
+int t19() {
+  struct t18_type foo;
+  foo.a = 1;
+  foo.b = 2;
+  __asm {
+     lea ebx, foo
+     mov eax, [ebx].foo.a
+     mov [ebx].foo.b, ecx
+  }
+  return foo.b;
+// CHECK: t19
+// CHECK: call void asm sideeffect inteldialect "lea ebx, foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+}
