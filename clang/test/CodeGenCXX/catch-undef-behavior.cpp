@@ -26,9 +26,7 @@ struct S {
 
 // CHECK: @_Z13member_access
 void member_access(S *p) {
-  // (1) Check 'p' is appropriately sized and aligned for member access.
-
-  // FIXME: Check vptr is for 'S' or a class derived from 'S'.
+  // (1a) Check 'p' is appropriately sized and aligned for member access.
 
   // CHECK: icmp ne {{.*}}, null
 
@@ -38,6 +36,36 @@ void member_access(S *p) {
   // CHECK: %[[PTRINT:.*]] = ptrtoint
   // CHECK-NEXT: %[[MISALIGN:.*]] = and i64 %[[PTRINT]], 7
   // CHECK-NEXT: icmp eq i64 %[[MISALIGN]], 0
+
+  // (1b) Check that 'p' actually points to an 'S'.
+
+  // CHECK: %[[VPTRADDR:.*]] = bitcast {{.*}} to i64*
+  // CHECK-NEXT: %[[VPTR:.*]] = load i64* %[[VPTRADDR]]
+  //
+  // hash_16_bytes:
+  //
+  // If this number changes, it indicates that either the mangled name of ::S
+  // has changed, or that LLVM's hashing function has changed. The latter case
+  // is OK if the hashing function is still stable.
+  // CHECK-NEXT: xor i64 -4030275160588942838, %[[VPTR]]
+  // CHECK-NEXT: mul i64 {{.*}}, -7070675565921424023
+  // CHECK-NEXT: lshr i64 {{.*}}, 47
+  // CHECK-NEXT: xor i64
+  // CHECK-NEXT: xor i64 %[[VPTR]]
+  // CHECK-NEXT: mul i64 {{.*}}, -7070675565921424023
+  // CHECK-NEXT: lshr i64 {{.*}}, 47
+  // CHECK-NEXT: xor i64
+  // CHECK-NEXT: %[[HASH:.*]] = mul i64 {{.*}}, -7070675565921424023
+  //
+  // Check the hash against the table:
+  //
+  // CHECK-NEXT: %[[IDX:.*]] = and i64 %{{.*}}, 127
+  // CHECK-NEXT: getelementptr inbounds [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %[[IDX]]
+  // CHECK-NEXT: %[[CACHEVAL:.*]] = load i64*
+  // CHECK-NEXT: icmp eq i64 %[[CACHEVAL]], %[[HASH]]
+  // CHECK-NEXT: br i1
+
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss({{.*}}, i64 %{{.*}}, i64 %[[HASH]])
 
   // (2) Check 'p->b' is appropriately sized and aligned for a load.
 
@@ -52,9 +80,7 @@ void member_access(S *p) {
   // CHECK-NEXT: icmp eq i64 %[[MISALIGN]], 0
   int k = p->b;
 
-  // (3) Check 'p' is appropriately sized and aligned for member function call.
-
-  // FIXME: Check vptr is for 'S' or a class derived from 'S'.
+  // (3a) Check 'p' is appropriately sized and aligned for member function call.
 
   // CHECK: icmp ne {{.*}}, null
 
@@ -64,6 +90,16 @@ void member_access(S *p) {
   // CHECK: %[[PTRINT:.*]] = ptrtoint
   // CHECK-NEXT: %[[MISALIGN:.*]] = and i64 %[[PTRINT]], 7
   // CHECK-NEXT: icmp eq i64 %[[MISALIGN]], 0
+
+  // (3b) Check that 'p' actually points to an 'S'
+
+  // CHECK: load i64*
+  // CHECK-NEXT: xor i64 -4030275160588942838,
+  // [...]
+  // CHECK: getelementptr inbounds [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %
+  // CHECK: br i1
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss({{.*}}, i64 %{{.*}}, i64 %{{.*}})
+
   k = p->f();
 }
 
