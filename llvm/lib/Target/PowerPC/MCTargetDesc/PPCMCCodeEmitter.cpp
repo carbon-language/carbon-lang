@@ -75,11 +75,19 @@ public:
                                  SmallVectorImpl<MCFixup> &Fixups) const;
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const {
-    unsigned Bits = getBinaryCodeForInstr(MI, Fixups);
+    uint64_t Bits = getBinaryCodeForInstr(MI, Fixups);
+
+    // BL8_NOPELF and BLA8_NOP_ELF is both size of 8 bacause of the
+    // following 'nop'.
+    unsigned Size = 4; // FIXME: Have Desc.getSize() return the correct value!
+    unsigned Opcode = MI.getOpcode();
+    if (Opcode == PPC::BL8_NOP_ELF || Opcode == PPC::BLA8_NOP_ELF)
+      Size = 8;
     
     // Output the constant in big endian byte order.
-    for (unsigned i = 0; i != 4; ++i) {
-      OS << (char)(Bits >> 24);
+    int ShiftValue = (Size * 8) - 8;
+    for (unsigned i = 0; i != Size; ++i) {
+      OS << (char)(Bits >> ShiftValue);
       Bits <<= 8;
     }
     

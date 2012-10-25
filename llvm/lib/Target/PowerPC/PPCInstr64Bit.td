@@ -639,13 +639,13 @@ def LDtocCPT: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                      (PPCtoc_entry tconstpool:$disp, G8RC:$reg))]>, isPPC64;
 
 let hasSideEffects = 1 in { 
-let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.
-def LDinto_toc: DSForm_1<58, 0, (outs), (ins G8RC:$reg),
+let RST = 2, DS = 2 in
+def LDinto_toc: DSForm_1a<58, 0, (outs), (ins G8RC:$reg),
                     "ld 2, 8($reg)", LdStLD,
                     [(PPCload_toc G8RC:$reg)]>, isPPC64;
                     
-let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.
-def LDtoc_restore : DSForm_1<58, 0, (outs), (ins),
+let RST = 2, DS = 10, RA = 1 in
+def LDtoc_restore : DSForm_1a<58, 0, (outs), (ins),
                     "ld 2, 40(1)", LdStLD,
                     [(PPCtoc_restore)]>, isPPC64;
 }

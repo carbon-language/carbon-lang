@@ -146,6 +146,8 @@ adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset) {
   switch ((unsigned)Fixup.getKind()) {
     case PPC::fixup_ppc_ha16:
     case PPC::fixup_ppc_lo16:
+    case PPC::fixup_ppc_toc16:
+    case PPC::fixup_ppc_toc16_ds:
       RelocOffset += 2;
       break;
     default:
