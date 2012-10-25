@@ -2633,6 +2633,8 @@ public:
 
   NamedDecl *LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
                                        unsigned &Size);
+  bool LookupInlineAsmField(StringRef Base, StringRef Member,
+                            unsigned &Offset, SourceLocation AsmLoc);
   StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
                             ArrayRef<Token> AsmToks, SourceLocation EndLoc);
 

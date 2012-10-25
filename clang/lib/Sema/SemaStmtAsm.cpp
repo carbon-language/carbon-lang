@@ -16,6 +16,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
@@ -383,6 +384,11 @@ public:
     return static_cast<void *>(OpDecl);
   }
 
+  bool LookupInlineAsmField(StringRef Base, StringRef Member,
+                            unsigned &Offset) {
+    return SemaRef.LookupInlineAsmField(Base, Member, Offset, AsmLoc);
+  }
+
   static void MSAsmDiagHandlerCallback(const llvm::SMDiagnostic &D,
                                        void *Context) {
     ((MCAsmParserSemaCallbackImpl*)Context)->MSAsmDiagHandler(D);
@@ -444,6 +450,50 @@ NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
   // FIXME: Handle other kinds of results? (FieldDecl, etc.)
   // FIXME: Diagnose if we find something we can't handle, like a typedef.
   return 0;
+}
+
+bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
+                                unsigned &Offset, SourceLocation AsmLoc) {
+  Offset = 0;
+  LookupResult BaseResult(*this, &Context.Idents.get(Base), SourceLocation(),
+                          LookupOrdinaryName);
+
+  if (!LookupName(BaseResult, getCurScope()))
+    return true;
+
+  if (!BaseResult.isSingleResult())
+    return true;
+
+  NamedDecl *FoundDecl = BaseResult.getFoundDecl();
+  const RecordType *RT = 0;
+  if (VarDecl *VD = dyn_cast<VarDecl>(FoundDecl)) {
+    RT = VD->getType()->getAs<RecordType>();
+  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(FoundDecl)) {
+    RT = TD->getUnderlyingType()->getAs<RecordType>();
+  }
+  if (!RT)
+    return true;
+
+  if (RequireCompleteType(AsmLoc, QualType(RT, 0), 0))
+    return true;
+
+  LookupResult FieldResult(*this, &Context.Idents.get(Member), SourceLocation(),
+                           LookupMemberName);
+
+  if (!LookupQualifiedName(FieldResult, RT->getDecl()))
+    return true;
+
+  // FIXME: Handle IndirectFieldDecl?
+  FieldDecl *FD = dyn_cast<FieldDecl>(FieldResult.getFoundDecl());
+  if (!FD)
+    return true;
+
+  const ASTRecordLayout &RL = Context.getASTRecordLayout(RT->getDecl());
+  unsigned i = FD->getFieldIndex();
+  CharUnits Result = Context.toCharUnitsFromBits(RL.getFieldOffset(i));
+  Offset = (unsigned)Result.getQuantity();
+
+  return false;
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
