@@ -565,7 +565,7 @@ ClangASTContext::getDiagnosticsEngine()
     if (m_diagnostics_engine_ap.get() == NULL)
     {
         llvm::IntrusiveRefCntPtr<DiagnosticIDs> diag_id_sp(new DiagnosticIDs());
-        m_diagnostics_engine_ap.reset(new DiagnosticsEngine(diag_id_sp));
+        m_diagnostics_engine_ap.reset(new DiagnosticsEngine(diag_id_sp, new DiagnosticOptions()));
     }
     return m_diagnostics_engine_ap.get();
 }
