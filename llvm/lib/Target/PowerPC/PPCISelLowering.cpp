@@ -2084,25 +2084,42 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
       int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, true);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       InVals.push_back(FIN);
-      if (ObjSize==1 || ObjSize==2 || ObjSize==4) {
+
+      if (ObjSize < 8) {
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg;
-          VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
-          EVT ObjType = (ObjSize == 1 ? MVT::i8 :
-                         (ObjSize == 2 ? MVT::i16 : MVT::i32));
-          SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
-                                            MachinePointerInfo(FuncArg,
-                                              CurArgOffset),
-                                            ObjType, false, false, 0);
+          SDValue Store;
+
+          if (ObjSize==1 || ObjSize==2 || ObjSize==4) {
+            EVT ObjType = (ObjSize == 1 ? MVT::i8 :
+                           (ObjSize == 2 ? MVT::i16 : MVT::i32));
+            Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
+                                      MachinePointerInfo(FuncArg, CurArgOffset),
+                                      ObjType, false, false, 0);
+          } else {
+            // For sizes that don't fit a truncating store (3, 5, 6, 7),
+            // store the whole register as-is to the parameter save area
+            // slot.  The address of the parameter was already calculated
+            // above (InVals.push_back(FIN)) to be the right-justified
+            // offset within the slot.  For this store, we need a new
+            // frame index that points at the beginning of the slot.
+            int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
+            SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
+            Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                                 MachinePointerInfo(FuncArg, ArgOffset),
+                                 false, false, 0);
+          }
+
           MemOps.push_back(Store);
           ++GPR_idx;
         }
-
+        // Whether we copied from a register or not, advance the offset
+        // into the parameter save area by a full doubleword.
         ArgOffset += PtrByteSize;
-
         continue;
       }
+
       for (unsigned j = 0; j < ArgSize; j += PtrByteSize) {
         // Store whatever pieces of the object are in registers
         // to memory.  ArgOffset will be the address of the beginning
@@ -2113,16 +2130,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
-          SDValue Shifted = Val;
-
-          // For 64-bit SVR4, small structs come in right-adjusted.
-          // Shift them left so the following logic works as expected.
-          if (ObjSize < 8) {
-            SDValue ShiftAmt = DAG.getConstant(64 - 8 * ObjSize, PtrVT);
-            Shifted = DAG.getNode(ISD::SHL, dl, PtrVT, Val, ShiftAmt);
-          }
-
-          SDValue Store = DAG.getStore(Val.getValue(1), dl, Shifted, FIN,
+          SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
                                        MachinePointerInfo(FuncArg, ArgOffset),
                                        false, false, 0);
           MemOps.push_back(Store);

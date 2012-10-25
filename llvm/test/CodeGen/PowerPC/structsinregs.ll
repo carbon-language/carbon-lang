@@ -188,17 +188,13 @@ entry:
   %add13 = add nsw i32 %add11, %6
   ret i32 %add13
 
-; CHECK: sldi 9, 9, 8
-; CHECK: sldi 8, 8, 16
-; CHECK: sldi 7, 7, 24
-; CHECK: sldi 5, 5, 40
-; CHECK: stw 6, 76(1)
-; CHECK: sth 4, 62(1)
-; CHECK: stb 3, 55(1)
 ; CHECK: std 9, 96(1)
 ; CHECK: std 8, 88(1)
 ; CHECK: std 7, 80(1)
+; CHECK: stw 6, 76(1)
 ; CHECK: std 5, 64(1)
+; CHECK: sth 4, 62(1)
+; CHECK: stb 3, 55(1)
 ; CHECK: lbz {{[0-9]+}}, 85(1)
 ; CHECK: lbz {{[0-9]+}}, 86(1)
 ; CHECK: lbz {{[0-9]+}}, 83(1)
