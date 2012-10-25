@@ -142,6 +142,7 @@ struct VerifyEndCallback : public EndOfSourceFileCallback {
   bool Matched;
 };
 
+#if !defined(_WIN32)
 TEST(newFrontendActionFactory, InjectsEndOfSourceFileCallback) {
   VerifyEndCallback EndCallback;
 
@@ -159,6 +160,7 @@ TEST(newFrontendActionFactory, InjectsEndOfSourceFileCallback) {
   EXPECT_TRUE(EndCallback.Matched);
   EXPECT_EQ(2u, EndCallback.Called);
 }
+#endif
 
 } // end namespace tooling
 } // end namespace clang
