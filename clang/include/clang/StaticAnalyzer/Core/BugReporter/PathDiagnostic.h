@@ -320,6 +320,13 @@ private:
   const std::string str;
   const Kind kind;
   const DisplayHint Hint;
+  
+  /// A constant string that can be used to tag the PathDiagnosticPiece,
+  /// typically with the identification of the creator.  The actual pointer
+  /// value is meant to be an identifier; the string itself is useful for
+  /// debugging.
+  StringRef Tag;
+
   std::vector<SourceRange> ranges;
 
   PathDiagnosticPiece() LLVM_DELETED_FUNCTION;
@@ -336,6 +343,16 @@ public:
 
   llvm::StringRef getString() const { return str; }
 
+  /// Tag this PathDiagnosticPiece with the given C-string.
+  void setTag(const char *tag) { Tag = tag; }
+  
+  /// Return the opaque tag (if any) on the PathDiagnosticPiece.
+  const void *getTag() const { return Tag.data(); }
+  
+  /// Return the string representation of the tag.  This is useful
+  /// for debugging.
+  StringRef getTagStr() const { return Tag; }
+  
   /// getDisplayHint - Return a hint indicating where the diagnostic should
   ///  be displayed by the PathDiagnosticConsumer.
   DisplayHint getDisplayHint() const { return Hint; }

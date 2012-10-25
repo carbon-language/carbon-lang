@@ -467,6 +467,12 @@ void TrackConstraintBRVisitor::Profile(llvm::FoldingSetNodeID &ID) const {
   ID.Add(Constraint);
 }
 
+/// Return the tag associated with this visitor.  This tag will be used
+/// to make all PathDiagnosticPieces created by this visitor.
+const char *TrackConstraintBRVisitor::getTag() {
+  return "TrackConstraintBRVisitor";
+}
+
 PathDiagnosticPiece *
 TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
                                     const ExplodedNode *PrevN,
@@ -506,7 +512,10 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
       PathDiagnosticLocation::create(P, BRC.getSourceManager());
     if (!L.isValid())
       return NULL;
-    return new PathDiagnosticEventPiece(L, os.str());
+    
+    PathDiagnosticEventPiece *X = new PathDiagnosticEventPiece(L, os.str());
+    X->setTag(getTag());
+    return X;
   }
 
   return NULL;
@@ -689,14 +698,23 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
 //===----------------------------------------------------------------------===//
 // Visitor that tries to report interesting diagnostics from conditions.
 //===----------------------------------------------------------------------===//
+
+/// Return the tag associated with this visitor.  This tag will be used
+/// to make all PathDiagnosticPieces created by this visitor.
+const char *ConditionBRVisitor::getTag() {
+  return "ConditionBRVisitor";
+}
+
 PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
                                                    const ExplodedNode *Prev,
                                                    BugReporterContext &BRC,
                                                    BugReport &BR) {
   PathDiagnosticPiece *piece = VisitNodeImpl(N, Prev, BRC, BR);
-  if (PathDiagnosticEventPiece *ev =
-      dyn_cast_or_null<PathDiagnosticEventPiece>(piece))
-    ev->setPrunable(true, /* override */ false);
+  if (piece) {
+    piece->setTag(getTag());
+    if (PathDiagnosticEventPiece *ev=dyn_cast<PathDiagnosticEventPiece>(piece))
+      ev->setPrunable(true, /* override */ false);
+  }
   return piece;
 }
 

@@ -26,7 +26,7 @@ void test_ic_set_to_null() {
 }
 
 void test_ic_null(TestInstanceCall *p) {
-  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Assuming 'p' is null}} expected-note {{Taking true branch}}
+  if (!p) // expected-note {{Assuming 'p' is null}} expected-note {{Taking true branch}}
     p->foo(); // expected-warning {{Called C++ object pointer is null}} expected-note{{Called C++ object pointer is null}}
 }
 
@@ -38,7 +38,7 @@ void test_ic_member_ptr() {
 }
 
 void test_cast(const TestInstanceCall *p) {
-  if (!p) // expected-note {{Assuming pointer value is null}} expected-note {{Assuming 'p' is null}} expected-note {{Taking true branch}}
+  if (!p) // expected-note {{Assuming 'p' is null}} expected-note {{Taking true branch}}
     const_cast<TestInstanceCall *>(p)->foo(); // expected-warning {{Called C++ object pointer is null}} expected-note {{Called C++ object pointer is null}}
 }
 
@@ -74,7 +74,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; declared without an initial value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; declared without an initial value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -137,7 +137,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Called C++ object pointer is uninitialized</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Called C++ object pointer is uninitialized</string>
+// CHECK-NEXT:      <string>Called C++ object pointer is uninitialized</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is uninitialized</string>
@@ -183,7 +183,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -246,7 +246,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Called C++ object pointer is null</string>
+// CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
@@ -326,7 +326,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Null pointer value stored to &apos;p&apos;</string>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -389,7 +389,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Called C++ object pointer is null</string>
+// CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
@@ -469,36 +469,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>29</integer>
-// CHECK-NEXT:       <key>col</key><integer>7</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>29</integer>
-// CHECK-NEXT:          <key>col</key><integer>7</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>29</integer>
-// CHECK-NEXT:          <key>col</key><integer>8</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming pointer value is null</string>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -561,7 +532,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Called C++ object pointer is null</string>
+// CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
@@ -607,7 +578,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -670,7 +641,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Called C++ object pointer is null</string>
+// CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
@@ -750,36 +721,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>41</integer>
-// CHECK-NEXT:       <key>col</key><integer>7</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>41</integer>
-// CHECK-NEXT:          <key>col</key><integer>7</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>41</integer>
-// CHECK-NEXT:          <key>col</key><integer>8</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Assuming pointer value is null</string>
+// CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -842,7 +784,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Called C++ object pointer is null</string>
+// CHECK-NEXT:      <string>Called C++ object pointer is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>

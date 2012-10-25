@@ -118,6 +118,68 @@ GetCurrentOrNextStmt(const ExplodedNode *N) {
 // Diagnostic cleanup.
 //===----------------------------------------------------------------------===//
 
+static PathDiagnosticEventPiece *
+eventsDescribeSameCondition(PathDiagnosticEventPiece *X,
+                            PathDiagnosticEventPiece *Y) {
+  // Prefer diagnostics that come from ConditionBRVisitor over
+  // those that came from TrackConstraintBRVisitor.
+  const void *tagPreferred = ConditionBRVisitor::getTag();
+  const void *tagLesser = TrackConstraintBRVisitor::getTag();
+  
+  if (X->getLocation() != Y->getLocation())
+    return 0;
+  
+  if (X->getTag() == tagPreferred && Y->getTag() == tagLesser)
+    return X;
+  
+  if (Y->getTag() == tagPreferred && X->getTag() == tagLesser)
+    return Y;
+  
+  return 0;
+}
+
+static void RemoveRedundantMsgs(PathPieces &path) {
+  unsigned N = path.size();
+  if (N < 2)
+    return;
+  for (unsigned i = 0; i < N; ++i) {
+    IntrusiveRefCntPtr<PathDiagnosticPiece> piece(path.front());
+    path.pop_front();
+    
+    switch (piece->getKind()) {
+      case clang::ento::PathDiagnosticPiece::Call:
+        RemoveRedundantMsgs(cast<PathDiagnosticCallPiece>(piece)->path);
+        break;
+      case clang::ento::PathDiagnosticPiece::Macro:
+        RemoveRedundantMsgs(cast<PathDiagnosticMacroPiece>(piece)->subPieces);
+        break;
+      case clang::ento::PathDiagnosticPiece::ControlFlow:
+        break;
+      case clang::ento::PathDiagnosticPiece::Event: {
+        if (i == N-1)
+          break;
+        
+        if (PathDiagnosticEventPiece *nextEvent =
+            dyn_cast<PathDiagnosticEventPiece>(path.front().getPtr())) {
+          PathDiagnosticEventPiece *event =
+            cast<PathDiagnosticEventPiece>(piece);
+          // Check to see if we should keep one of the two pieces.  If we
+          // come up with a preference, record which piece to keep, and consume
+          // another piece from the path.
+          if (PathDiagnosticEventPiece *pieceToKeep =
+              eventsDescribeSameCondition(event, nextEvent)) {
+            piece = pieceToKeep;
+            path.pop_front();
+            ++i;
+          }
+        }
+        break;
+      }
+    }
+    path.push_back(piece);
+  }
+}
+
 /// Recursively scan through a path and prune out calls and macros pieces
 /// that aren't needed.  Return true if afterwards the path contains
 /// "interesting stuff" which means it should be pruned from the parent path.
@@ -2016,10 +2078,16 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   } while(finalReportConfigToken != originalReportConfigToken);
 
   // Finally, prune the diagnostic path of uninteresting stuff.
-  if (!PD.path.empty() && R->shouldPrunePath()) {
-    bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces(), R);
-    assert(hasSomethingInteresting);
-    (void) hasSomethingInteresting;
+  if (!PD.path.empty()) {
+    // Remove messages that are basically the same.
+    RemoveRedundantMsgs(PD.getMutablePieces());
+
+    if (R->shouldPrunePath()) {
+      bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces(),
+                                                        R);
+      assert(hasSomethingInteresting);
+      (void) hasSomethingInteresting;
+    }
   }
 
   return true;

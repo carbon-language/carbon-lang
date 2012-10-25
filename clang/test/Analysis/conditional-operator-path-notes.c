@@ -1,5 +1,6 @@
 // RUN: %clang --analyze %s -Xanalyzer -analyzer-output=text -Xclang -verify
-// RUN: %clang --analyze %s -o - | FileCheck %s
+// RUN: %clang --analyze %s -o %t
+// RUN: FileCheck --input-file=%t %s
 
 void testCondOp(int *p) {
   int *x = p ? p : p;
@@ -13,9 +14,7 @@ void testCondOp(int *p) {
 void testCondProblem(int *p) {
   if (p) return;
   // expected-note@-1 {{Assuming 'p' is null}}
-  // expected-note@-2 {{Assuming pointer value is null}}
-  // FIXME: The above path note is not necessary. <rdar://problem/12252783>
-  // expected-note@-4 {{Taking false branch}}
+  // expected-note@-2 {{Taking false branch}}
 
   int x = *p ? 0 : 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}}
   // expected-note@-1 {{Dereference of null pointer (loaded from variable 'p')}}
@@ -25,20 +24,16 @@ void testCondProblem(int *p) {
 void testLHSProblem(int *p) {
   int x = !p ? *p : 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}}
   // expected-note@-1 {{Assuming 'p' is null}}
-  // expected-note@-2 {{Assuming pointer value is null}}
-  // FIXME: The above path note is not necessary. <rdar://problem/12252783>
-  // expected-note@-4 {{'?' condition is true}}
-  // expected-note@-5 {{Dereference of null pointer (loaded from variable 'p')}}
+  // expected-note@-2 {{'?' condition is true}}
+  // expected-note@-3 {{Dereference of null pointer (loaded from variable 'p')}}
   (void)x;
 }
 
 void testRHSProblem(int *p) {
   int x = p ? 1 : *p; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}}
   // expected-note@-1 {{Assuming 'p' is null}}
-  // expected-note@-2 {{Assuming pointer value is null}}
-  // FIXME: The above path note is not necessary. <rdar://problem/12252783>
-  // expected-note@-4 {{'?' condition is false}}
-  // expected-note@-5 {{Dereference of null pointer (loaded from variable 'p')}}
+  // expected-note@-2 {{'?' condition is false}}
+  // expected-note@-3 {{Dereference of null pointer (loaded from variable 'p')}}
   (void)x;
 }
 
@@ -53,9 +48,7 @@ void testBinaryCondOp(int *p) {
 void testBinaryLHSProblem(int *p) {
   if (p) return;
   // expected-note@-1 {{Assuming 'p' is null}}
-  // expected-note@-2 {{Assuming pointer value is null}}
-  // FIXME: The above path note is not necessary. <rdar://problem/12252783>
-  // expected-note@-4 {{Taking false branch}}
+  // expected-note@-2 {{Taking false branch}}
 
   int x = *p ?: 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}}
   // expected-note@-1 {{Dereference of null pointer (loaded from variable 'p')}}
@@ -75,12 +68,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -88,12 +81,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -105,7 +98,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>5</integer>
+// CHECK-NEXT:       <key>line</key><integer>6</integer>
 // CHECK-NEXT:       <key>col</key><integer>12</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -113,12 +106,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>5</integer>
+// CHECK-NEXT:          <key>line</key><integer>6</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>5</integer>
+// CHECK-NEXT:          <key>line</key><integer>6</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -138,12 +131,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -151,12 +144,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -172,12 +165,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -185,12 +178,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -202,7 +195,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>5</integer>
+// CHECK-NEXT:       <key>line</key><integer>6</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -210,12 +203,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>5</integer>
+// CHECK-NEXT:          <key>line</key><integer>6</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>5</integer>
+// CHECK-NEXT:          <key>line</key><integer>6</integer>
 // CHECK-NEXT:          <key>col</key><integer>8</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -235,12 +228,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>5</integer>
+// CHECK-NEXT:            <key>line</key><integer>6</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -248,12 +241,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>9</integer>
+// CHECK-NEXT:            <key>line</key><integer>10</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>9</integer>
+// CHECK-NEXT:            <key>line</key><integer>10</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -265,7 +258,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>9</integer>
+// CHECK-NEXT:       <key>line</key><integer>10</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -273,12 +266,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>10</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>10</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -299,7 +292,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>9</integer>
+// CHECK-NEXT:    <key>line</key><integer>10</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -315,12 +308,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>line</key><integer>15</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>line</key><integer>15</integer>
 // CHECK-NEXT:            <key>col</key><integer>4</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -328,12 +321,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>line</key><integer>15</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>line</key><integer>15</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -345,7 +338,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>14</integer>
+// CHECK-NEXT:       <key>line</key><integer>15</integer>
 // CHECK-NEXT:       <key>col</key><integer>7</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -353,12 +346,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>14</integer>
+// CHECK-NEXT:          <key>line</key><integer>15</integer>
 // CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>14</integer>
+// CHECK-NEXT:          <key>line</key><integer>15</integer>
 // CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -369,35 +362,6 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>14</integer>
-// CHECK-NEXT:       <key>col</key><integer>7</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>14</integer>
-// CHECK-NEXT:          <key>col</key><integer>7</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>14</integer>
-// CHECK-NEXT:          <key>col</key><integer>7</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -407,12 +371,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>line</key><integer>15</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>14</integer>
+// CHECK-NEXT:            <key>line</key><integer>15</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -420,12 +384,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>20</integer>
+// CHECK-NEXT:            <key>line</key><integer>19</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>20</integer>
+// CHECK-NEXT:            <key>line</key><integer>19</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -437,7 +401,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>20</integer>
+// CHECK-NEXT:       <key>line</key><integer>19</integer>
 // CHECK-NEXT:       <key>col</key><integer>11</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -445,12 +409,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>20</integer>
+// CHECK-NEXT:          <key>line</key><integer>19</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>20</integer>
+// CHECK-NEXT:          <key>line</key><integer>19</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -468,10 +432,10 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testCondProblem</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>7</integer>
+// CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>20</integer>
+// CHECK-NEXT:    <key>line</key><integer>19</integer>
 // CHECK-NEXT:    <key>col</key><integer>11</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -487,12 +451,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -500,12 +464,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -517,7 +481,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>26</integer>
+// CHECK-NEXT:       <key>line</key><integer>25</integer>
 // CHECK-NEXT:       <key>col</key><integer>11</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -525,12 +489,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>26</integer>
+// CHECK-NEXT:          <key>line</key><integer>25</integer>
 // CHECK-NEXT:          <key>col</key><integer>11</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>26</integer>
+// CHECK-NEXT:          <key>line</key><integer>25</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -541,35 +505,6 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>26</integer>
-// CHECK-NEXT:       <key>col</key><integer>11</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>26</integer>
-// CHECK-NEXT:          <key>col</key><integer>11</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>26</integer>
-// CHECK-NEXT:          <key>col</key><integer>12</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -579,12 +514,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -592,12 +527,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>16</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>26</integer>
+// CHECK-NEXT:            <key>line</key><integer>25</integer>
 // CHECK-NEXT:            <key>col</key><integer>16</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -609,7 +544,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>26</integer>
+// CHECK-NEXT:       <key>line</key><integer>25</integer>
 // CHECK-NEXT:       <key>col</key><integer>16</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -617,12 +552,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>26</integer>
+// CHECK-NEXT:          <key>line</key><integer>25</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>26</integer>
+// CHECK-NEXT:          <key>line</key><integer>25</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -643,7 +578,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>26</integer>
+// CHECK-NEXT:    <key>line</key><integer>25</integer>
 // CHECK-NEXT:    <key>col</key><integer>16</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -659,12 +594,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -672,12 +607,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -689,7 +624,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>36</integer>
+// CHECK-NEXT:       <key>line</key><integer>33</integer>
 // CHECK-NEXT:       <key>col</key><integer>11</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -697,12 +632,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>36</integer>
+// CHECK-NEXT:          <key>line</key><integer>33</integer>
 // CHECK-NEXT:          <key>col</key><integer>11</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>36</integer>
+// CHECK-NEXT:          <key>line</key><integer>33</integer>
 // CHECK-NEXT:          <key>col</key><integer>11</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -713,35 +648,6 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>36</integer>
-// CHECK-NEXT:       <key>col</key><integer>11</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>36</integer>
-// CHECK-NEXT:          <key>col</key><integer>11</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>36</integer>
-// CHECK-NEXT:          <key>col</key><integer>11</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -751,12 +657,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -764,12 +670,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>19</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>36</integer>
+// CHECK-NEXT:            <key>line</key><integer>33</integer>
 // CHECK-NEXT:            <key>col</key><integer>19</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -781,7 +687,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>36</integer>
+// CHECK-NEXT:       <key>line</key><integer>33</integer>
 // CHECK-NEXT:       <key>col</key><integer>19</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -789,12 +695,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>36</integer>
+// CHECK-NEXT:          <key>line</key><integer>33</integer>
 // CHECK-NEXT:          <key>col</key><integer>20</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>36</integer>
+// CHECK-NEXT:          <key>line</key><integer>33</integer>
 // CHECK-NEXT:          <key>col</key><integer>20</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -815,7 +721,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>36</integer>
+// CHECK-NEXT:    <key>line</key><integer>33</integer>
 // CHECK-NEXT:    <key>col</key><integer>19</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -831,12 +737,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -844,12 +750,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -865,12 +771,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -878,12 +784,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>17</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>17</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -899,12 +805,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>17</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>17</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -912,12 +818,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -929,7 +835,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>46</integer>
+// CHECK-NEXT:       <key>line</key><integer>41</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -937,12 +843,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>46</integer>
+// CHECK-NEXT:          <key>line</key><integer>41</integer>
 // CHECK-NEXT:          <key>col</key><integer>3</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>46</integer>
+// CHECK-NEXT:          <key>line</key><integer>41</integer>
 // CHECK-NEXT:          <key>col</key><integer>8</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -962,12 +868,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>46</integer>
+// CHECK-NEXT:            <key>line</key><integer>41</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -975,12 +881,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>49</integer>
+// CHECK-NEXT:            <key>line</key><integer>44</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>49</integer>
+// CHECK-NEXT:            <key>line</key><integer>44</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -992,7 +898,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>49</integer>
+// CHECK-NEXT:       <key>line</key><integer>44</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1000,12 +906,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>49</integer>
+// CHECK-NEXT:          <key>line</key><integer>44</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>49</integer>
+// CHECK-NEXT:          <key>line</key><integer>44</integer>
 // CHECK-NEXT:          <key>col</key><integer>4</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1026,7 +932,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:   <key>issue_hash</key><integer>4</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>49</integer>
+// CHECK-NEXT:    <key>line</key><integer>44</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
@@ -1042,12 +948,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>54</integer>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>54</integer>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
 // CHECK-NEXT:            <key>col</key><integer>4</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1055,12 +961,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>54</integer>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>54</integer>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1072,7 +978,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>54</integer>
+// CHECK-NEXT:       <key>line</key><integer>49</integer>
 // CHECK-NEXT:       <key>col</key><integer>7</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1080,12 +986,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>54</integer>
+// CHECK-NEXT:          <key>line</key><integer>49</integer>
 // CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>54</integer>
+// CHECK-NEXT:          <key>line</key><integer>49</integer>
 // CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1096,35 +1002,6 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK-NEXT:      <key>message</key>
 // CHECK-NEXT:      <string>Assuming &apos;p&apos; is null</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>54</integer>
-// CHECK-NEXT:       <key>col</key><integer>7</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>54</integer>
-// CHECK-NEXT:          <key>col</key><integer>7</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>54</integer>
-// CHECK-NEXT:          <key>col</key><integer>7</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Assuming pointer value is null</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1134,12 +1011,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>54</integer>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>54</integer>
+// CHECK-NEXT:            <key>line</key><integer>49</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1147,12 +1024,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>60</integer>
+// CHECK-NEXT:            <key>line</key><integer>53</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>60</integer>
+// CHECK-NEXT:            <key>line</key><integer>53</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1164,7 +1041,7 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>60</integer>
+// CHECK-NEXT:       <key>line</key><integer>53</integer>
 // CHECK-NEXT:       <key>col</key><integer>11</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1172,12 +1049,12 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>60</integer>
+// CHECK-NEXT:          <key>line</key><integer>53</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>60</integer>
+// CHECK-NEXT:          <key>line</key><integer>53</integer>
 // CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1195,10 +1072,10 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testBinaryLHSProblem</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>7</integer>
+// CHECK-NEXT:   <key>issue_hash</key><integer>5</integer>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>60</integer>
+// CHECK-NEXT:    <key>line</key><integer>53</integer>
 // CHECK-NEXT:    <key>col</key><integer>11</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
