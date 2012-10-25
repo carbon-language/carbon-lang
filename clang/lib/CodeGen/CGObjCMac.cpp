@@ -755,6 +755,72 @@ public:
       : skip(_skip), scan(_scan) {}
   };
 
+  /// opcode for captured block variables layout 'instructions'.
+  /// In the following descriptions, 'I' is the value of the immediate field.
+  /// (field following the opcode).
+  ///
+  enum BLOCK_LAYOUT_OPCODE {
+    /// An operator which affects how the following layout should be
+    /// interpreted.
+    ///   I == 0: Halt interpretation and treat everything else as
+    ///           a non-pointer.  Note that this instruction is equal
+    ///           to '\0'.
+    ///   I != 0: Currently unused.
+    BLOCK_LAYOUT_OPERATOR            = 0,
+    
+    /// The next I+1 bytes do not contain a value of object pointer type.
+    /// Note that this can leave the stream unaligned, meaning that
+    /// subsequent word-size instructions do not begin at a multiple of
+    /// the pointer size.
+    BLOCK_LAYOUT_NON_OBJECT_BYTES    = 1,
+    
+    /// The next I+1 words do not contain a value of object pointer type.
+    /// This is simply an optimized version of BLOCK_LAYOUT_BYTES for
+    /// when the required skip quantity is a multiple of the pointer size.
+    BLOCK_LAYOUT_NON_OBJECT_WORDS    = 2,
+    
+    /// The next I+1 words are __strong pointers to Objective-C
+    /// objects or blocks.
+    BLOCK_LAYOUT_STRONG              = 3,
+    
+    /// The next I+1 words are pointers to __block variables.
+    BLOCK_LAYOUT_BYREF               = 4,
+    
+    /// The next I+1 words are __weak pointers to Objective-C
+    /// objects or blocks.
+    BLOCK_LAYOUT_WEAK                = 5,
+    
+    /// The next I+1 words are __unsafe_unretained pointers to
+    /// Objective-C objects or blocks.
+    BLOCK_LAYOUT_UNRETAINED          = 6
+    
+    /// The next I+1 words are block or object pointers with some
+    /// as-yet-unspecified ownership semantics.  If we add more
+    /// flavors of ownership semantics, values will be taken from
+    /// this range.
+    ///
+    /// This is included so that older tools can at least continue
+    /// processing the layout past such things.
+    //BLOCK_LAYOUT_OWNERSHIP_UNKNOWN = 7..10,
+    
+    /// All other opcodes are reserved.  Halt interpretation and
+    /// treat everything else as opaque.
+  };
+ 
+  class RUN_SKIP {
+  public:
+    enum BLOCK_LAYOUT_OPCODE opcode;
+    unsigned block_var_bytepos;
+    RUN_SKIP(enum BLOCK_LAYOUT_OPCODE Opcode = BLOCK_LAYOUT_OPERATOR,
+             unsigned BytePos = 0)
+    : opcode(Opcode), block_var_bytepos(BytePos) {}
+    
+    // Allow sorting based on byte pos.
+    bool operator<(const RUN_SKIP &b) const {
+      return block_var_bytepos < b.block_var_bytepos;
+    }
+  };
+  
 protected:
   llvm::LLVMContext &VMContext;
   // FIXME! May not be needing this after all.
@@ -763,6 +829,9 @@ protected:
   // gc ivar layout bitmap calculation helper caches.
   SmallVector<GC_IVAR, 16> SkipIvars;
   SmallVector<GC_IVAR, 16> IvarsInfo;
+  
+  // arc/mrr layout of captured block literal variables.
+  SmallVector<RUN_SKIP, 16> RunSkipBlockVars;
 
   /// LazySymbols - Symbols to generate a lazy reference for. See
   /// DefinedSymbols and FinishModule().
