@@ -247,7 +247,9 @@ static void collectMacroDefinitions(const PreprocessorOptions &PPOpts,
 /// \param Diags If non-null, produce diagnostics for any mismatches incurred.
 static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
                                      const PreprocessorOptions &ExistingPPOpts,
-                                     DiagnosticsEngine *Diags) {
+                                     DiagnosticsEngine *Diags,
+                                     FileManager &FileMgr,
+                                     std::string &SuggestedPredefines) {
   // Check macro definitions.
   MacroDefinitionsMap ASTFileMacros;
   collectMacroDefinitions(PPOpts, ASTFileMacros);
@@ -267,6 +269,17 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
       // FIXME: Check whether this identifier was referenced anywhere in the
       // AST file. If so, we should reject the AST file. Unfortunately, this
       // information isn't in the control block. What shall we do about it?
+
+      if (Existing.second) {
+        SuggestedPredefines += "#undef ";
+        SuggestedPredefines += MacroName.str();
+        SuggestedPredefines += '\n';
+      } else {
+        SuggestedPredefines += "#define ";
+        SuggestedPredefines += MacroName.str();
+        SuggestedPredefines += Existing.first.str();
+        SuggestedPredefines += '\n';
+      }
       continue;
     }
 
@@ -301,15 +314,47 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
     return true;
   }
 
+  // Compute the #include and #include_macros lines we need.
+  for (unsigned I = 0, N = ExistingPPOpts.Includes.size(); I != N; ++I) {
+    StringRef File = ExistingPPOpts.Includes[I];
+    if (File == ExistingPPOpts.ImplicitPCHInclude)
+      continue;
+
+    if (std::find(PPOpts.Includes.begin(), PPOpts.Includes.end(), File)
+          != PPOpts.Includes.end())
+      continue;
+
+    SuggestedPredefines += "#include \"";
+    SuggestedPredefines +=
+      HeaderSearch::NormalizeDashIncludePath(File, FileMgr);
+    SuggestedPredefines += "\"\n";
+  }
+
+  for (unsigned I = 0, N = ExistingPPOpts.MacroIncludes.size(); I != N; ++I) {
+    StringRef File = ExistingPPOpts.MacroIncludes[I];
+    if (std::find(PPOpts.MacroIncludes.begin(), PPOpts.MacroIncludes.end(),
+                  File)
+        != PPOpts.MacroIncludes.end())
+      continue;
+
+    SuggestedPredefines += "#__include_macros \"";
+    SuggestedPredefines +=
+      HeaderSearch::NormalizeDashIncludePath(File, FileMgr);
+    SuggestedPredefines += "\"\n##\n";
+  }
+
   return false;
 }
 
 bool PCHValidator::ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
-                                           bool Complain) {
+                                           bool Complain,
+                                           std::string &SuggestedPredefines) {
   const PreprocessorOptions &ExistingPPOpts = PP.getPreprocessorOpts();
 
   return checkPreprocessorOptions(PPOpts, ExistingPPOpts,
-                                  Complain? &Reader.Diags : 0);
+                                  Complain? &Reader.Diags : 0,
+                                  PP.getFileManager(),
+                                  SuggestedPredefines);
 }
 
 namespace {
@@ -984,6 +1029,7 @@ bool ASTReader::CheckPredefinesBuffers(bool Complain) {
   if (Listener) {
     // We only care about the primary module.
     ModuleFile &M = ModuleMgr.getPrimaryModule();
+    SuggestedPredefines.clear();
     return Listener->ReadPredefinesBuffer(PCHPredefinesBuffers,
                                           M.ActualOriginalSourceFileName,
                                           SuggestedPredefines,
@@ -2152,7 +2198,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case PREPROCESSOR_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
-          ParsePreprocessorOptions(Record, Complain, *Listener) &&
+          ParsePreprocessorOptions(Record, Complain, *Listener,
+                                   SuggestedPredefines) &&
           !DisableValidation)
         return ConfigurationMismatch;
       break;
@@ -3503,14 +3550,17 @@ namespace {
     const LangOptions &ExistingLangOpts;
     const TargetOptions &ExistingTargetOpts;
     const PreprocessorOptions &ExistingPPOpts;
-
+    FileManager &FileMgr;
+    
   public:
     SimplePCHValidator(const LangOptions &ExistingLangOpts,
                        const TargetOptions &ExistingTargetOpts,
-                       const PreprocessorOptions &ExistingPPOpts)
+                       const PreprocessorOptions &ExistingPPOpts,
+                       FileManager &FileMgr)
       : ExistingLangOpts(ExistingLangOpts),
         ExistingTargetOpts(ExistingTargetOpts),
-        ExistingPPOpts(ExistingPPOpts)
+        ExistingPPOpts(ExistingPPOpts),
+        FileMgr(FileMgr)
     {
     }
 
@@ -3523,8 +3573,10 @@ namespace {
       return checkTargetOptions(ExistingTargetOpts, TargetOpts, 0);
     }
     virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
-                                         bool Complain) {
-      return checkPreprocessorOptions(ExistingPPOpts, PPOpts, 0);
+                                         bool Complain,
+                                         std::string &SuggestedPredefines) {
+      return checkPreprocessorOptions(ExistingPPOpts, PPOpts, 0, FileMgr,
+                                      SuggestedPredefines);
     }
   };
 }
@@ -3557,7 +3609,7 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
     return false;
   }
 
-  SimplePCHValidator Validator(LangOpts, TargetOpts, PPOpts);
+  SimplePCHValidator Validator(LangOpts, TargetOpts, PPOpts, FileMgr);
   RecordData Record;
   bool InControlBlock = false;
   while (!Stream.AtEndOfStream()) {
@@ -3640,10 +3692,13 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
           return false;
         break;
 
-      case PREPROCESSOR_OPTIONS:
-        if (ParsePreprocessorOptions(Record, false, Validator))
+      case PREPROCESSOR_OPTIONS: {
+        std::string IgnoredSuggestedPredefines;
+        if (ParsePreprocessorOptions(Record, false, Validator,
+                                     IgnoredSuggestedPredefines))
           return false;
         break;
+      }
 
       default:
         // No other validation to perform.
@@ -4052,7 +4107,8 @@ bool ASTReader::ParseHeaderSearchOptions(const RecordData &Record,
 
 bool ASTReader::ParsePreprocessorOptions(const RecordData &Record,
                                          bool Complain,
-                                         ASTReaderListener &Listener) {
+                                         ASTReaderListener &Listener,
+                                         std::string &SuggestedPredefines) {
   PreprocessorOptions PPOpts;
   unsigned Idx = 0;
 
@@ -4078,7 +4134,9 @@ bool ASTReader::ParsePreprocessorOptions(const RecordData &Record,
   PPOpts.ImplicitPTHInclude = ReadString(Record, Idx);
   PPOpts.ObjCXXARCStandardLibrary =
     static_cast<ObjCXXARCStandardLibraryKind>(Record[Idx++]);
-  return Listener.ReadPreprocessorOptions(PPOpts, Complain);
+  SuggestedPredefines.clear();
+  return Listener.ReadPreprocessorOptions(PPOpts, Complain,
+                                          SuggestedPredefines);
 }
 
 std::pair<ModuleFile *, unsigned>

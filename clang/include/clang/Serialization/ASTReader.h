@@ -151,10 +151,15 @@ public:
 
   /// \brief Receives the preprocessor options.
   ///
+  /// \param SuggestedPredefines Can be filled in with the set of predefines
+  /// that are suggested by the preprocessor options. Typically only used when
+  /// loading a precompiled header.
+  ///
   /// \returns true to indicate the preprocessor options are invalid, or false
   /// otherwise.
   virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
-                                       bool Complain) {
+                                       bool Complain,
+                                       std::string &SuggestedPredefines) {
     return false;
   }
 
@@ -204,7 +209,8 @@ public:
   virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
                                  bool Complain);
   virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
-                                       bool Complain);
+                                       bool Complain,
+                                       std::string &SuggestedPredefines);
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     StringRef OriginalFileName,
                                     std::string &SuggestedPredefines,
@@ -960,7 +966,8 @@ private:
   static bool ParseHeaderSearchOptions(const RecordData &Record, bool Complain,
                                        ASTReaderListener &Listener);
   static bool ParsePreprocessorOptions(const RecordData &Record, bool Complain,
-                                       ASTReaderListener &Listener);
+                                       ASTReaderListener &Listener,
+                                       std::string &SuggestedPredefines);
 
   struct RecordLocation {
     RecordLocation(ModuleFile *M, uint64_t O)
