@@ -3077,7 +3077,7 @@ public:
       }
 
       // FIXME: Override "preferred align" for double and long long.
-    } else if (Name == "aapcs") {
+    } else if (Name == "aapcs" || Name == "aapcs-vfp") {
       IsAAPCS = true;
       // FIXME: Enumerated types are variable width in straight AAPCS.
     } else if (Name == "aapcs-linux") {
@@ -3212,13 +3212,13 @@ public:
     if ('5' <= CPUArch[0] && CPUArch[0] <= '7')
       Builder.defineMacro("__THUMB_INTERWORK__");
 
-    if (ABI == "aapcs" || ABI == "aapcs-linux") {
+    if (ABI == "aapcs" || ABI == "aapcs-linux" || ABI == "aapcs-vfp") {
       // M-class CPUs on Darwin follow AAPCS, but not EABI.
       if (!(getTriple().isOSDarwin() && CPUProfile == "M"))
         Builder.defineMacro("__ARM_EABI__");
       Builder.defineMacro("__ARM_PCS", "1");
 
-      if (!SoftFloat && !SoftFloatABI)
+      if ((!SoftFloat && !SoftFloatABI) || ABI == "aapcs-vfp")
         Builder.defineMacro("__ARM_PCS_VFP", "1");
     }
 

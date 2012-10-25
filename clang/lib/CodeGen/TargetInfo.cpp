@@ -2933,7 +2933,9 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  if (isEABI())
+  if (getContext().getTargetInfo().getTriple().getEnvironmentName()=="gnueabihf")
+    DefaultCC = llvm::CallingConv::ARM_AAPCS_VFP;
+  else if (isEABI())
     DefaultCC = llvm::CallingConv::ARM_AAPCS;
   else
     DefaultCC = llvm::CallingConv::ARM_APCS;
@@ -4187,10 +4189,10 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::thumb:
     {
       ARMABIInfo::ABIKind Kind = ARMABIInfo::AAPCS;
-
       if (strcmp(getContext().getTargetInfo().getABI(), "apcs-gnu") == 0)
         Kind = ARMABIInfo::APCS;
-      else if (CodeGenOpts.FloatABI == "hard")
+      else if (CodeGenOpts.FloatABI == "hard" ||
+               (CodeGenOpts.FloatABI != "soft" && Triple.getEnvironment()==llvm::Triple::GNUEABIHF))
         Kind = ARMABIInfo::AAPCS_VFP;
 
       switch (Triple.getOS()) {
