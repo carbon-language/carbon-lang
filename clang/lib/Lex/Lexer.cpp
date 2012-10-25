@@ -513,10 +513,13 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
   // "fake" file source location at offset 1 so that the lexer will track our
   // position within the file.
   const unsigned StartOffset = 1;
-  SourceLocation StartLoc = SourceLocation::getFromRawEncoding(StartOffset);
-  Lexer TheLexer(StartLoc, LangOpts, Buffer->getBufferStart(),
+  SourceLocation FileLoc = SourceLocation::getFromRawEncoding(StartOffset);
+  Lexer TheLexer(FileLoc, LangOpts, Buffer->getBufferStart(),
                  Buffer->getBufferStart(), Buffer->getBufferEnd());
-  
+
+  // StartLoc will differ from FileLoc if there is a BOM that was skipped.
+  SourceLocation StartLoc = TheLexer.getSourceLocation();
+
   bool InPreprocessorDirective = false;
   Token TheTok;
   Token IfStartTok;
