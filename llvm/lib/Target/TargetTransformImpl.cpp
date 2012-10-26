@@ -54,73 +54,74 @@ unsigned ScalarTargetTransformImpl::getJumpBufSize() const {
 // Calls used by the vectorizers.
 //
 //===----------------------------------------------------------------------===//
-int InstructionOpcodeToISD(unsigned Opcode) {
-  static const int OpToISDTbl[] = {
-    /*Instruction::Ret           */ 0, // Opcode numbering start at #1.
-    /*Instruction::Br            */ 0,
-    /*Instruction::Switch        */ 0,
-    /*Instruction::IndirectBr    */ 0,
-    /*Instruction::Invoke        */ 0,
-    /*Instruction::Resume        */ 0,
-    /*Instruction::Unreachable   */ 0,
-    /*Instruction::Add           */ ISD::ADD,
-    /*Instruction::FAdd          */ ISD::FADD,
-    /*Instruction::Sub           */ ISD::SUB,
-    /*Instruction::FSub          */ ISD::FSUB,
-    /*Instruction::Mul           */ ISD::MUL,
-    /*Instruction::FMul          */ ISD::FMUL,
-    /*Instruction::UDiv          */ ISD::UDIV,
-    /*Instruction::SDiv          */ ISD::UDIV,
-    /*Instruction::FDiv          */ ISD::FDIV,
-    /*Instruction::URem          */ ISD::UREM,
-    /*Instruction::SRem          */ ISD::SREM,
-    /*Instruction::FRem          */ ISD::FREM,
-    /*Instruction::Shl           */ ISD::SHL,
-    /*Instruction::LShr          */ ISD::SRL,
-    /*Instruction::AShr          */ ISD::SRA,
-    /*Instruction::And           */ ISD::AND,
-    /*Instruction::Or            */ ISD::OR,
-    /*Instruction::Xor           */ ISD::XOR,
-    /*Instruction::Alloca        */ 0,
-    /*Instruction::Load          */ ISD::LOAD,
-    /*Instruction::Store         */ ISD::STORE,
-    /*Instruction::GetElementPtr */ 0,
-    /*Instruction::Fence         */ 0,
-    /*Instruction::AtomicCmpXchg */ 0,
-    /*Instruction::AtomicRMW     */ 0,
-    /*Instruction::Trunc         */ ISD::TRUNCATE,
-    /*Instruction::ZExt          */ ISD::ZERO_EXTEND,
-    /*Instruction::SExt          */ ISD::SEXTLOAD,
-    /*Instruction::FPToUI        */ ISD::FP_TO_UINT,
-    /*Instruction::FPToSI        */ ISD::FP_TO_SINT,
-    /*Instruction::UIToFP        */ ISD::UINT_TO_FP,
-    /*Instruction::SIToFP        */ ISD::SINT_TO_FP,
-    /*Instruction::FPTrunc       */ ISD::FP_ROUND,
-    /*Instruction::FPExt         */ ISD::FP_EXTEND,
-    /*Instruction::PtrToInt      */ ISD::BITCAST,
-    /*Instruction::IntToPtr      */ ISD::BITCAST,
-    /*Instruction::BitCast       */ ISD::BITCAST,
-    /*Instruction::ICmp          */ ISD::SETCC,
-    /*Instruction::FCmp          */ ISD::SETCC,
-    /*Instruction::PHI           */ 0,
-    /*Instruction::Call          */ 0,
-    /*Instruction::Select        */ ISD::SELECT,
-    /*Instruction::UserOp1       */ 0,
-    /*Instruction::UserOp2       */ 0,
-    /*Instruction::VAArg         */ 0,
-    /*Instruction::ExtractElement*/ ISD::EXTRACT_VECTOR_ELT,
-    /*Instruction::InsertElement */ ISD::INSERT_VECTOR_ELT,
-    /*Instruction::ShuffleVector */ ISD::VECTOR_SHUFFLE,
-    /*Instruction::ExtractValue  */ ISD::MERGE_VALUES,
-    /*Instruction::InsertValue   */ ISD::MERGE_VALUES,
-    /*Instruction::LandingPad    */ 0};
+static int InstructionOpcodeToISD(unsigned Opcode) {
+  enum InstructionOpcodes {
+#define HANDLE_INST(NUM, OPCODE, CLASS) OPCODE = NUM,
+#define LAST_OTHER_INST(NUM) InstructionOpcodesCount = NUM
+#include "llvm/Instruction.def"
+  };
+  switch (static_cast<InstructionOpcodes>(Opcode)) {
+  case Ret:            return 0;
+  case Br:             return 0;
+  case Switch:         return 0;
+  case IndirectBr:     return 0;
+  case Invoke:         return 0;
+  case Resume:         return 0;
+  case Unreachable:    return 0;
+  case Add:            return ISD::ADD;
+  case FAdd:           return ISD::FADD;
+  case Sub:            return ISD::SUB;
+  case FSub:           return ISD::FSUB;
+  case Mul:            return ISD::MUL;
+  case FMul:           return ISD::FMUL;
+  case UDiv:           return ISD::UDIV;
+  case SDiv:           return ISD::UDIV;
+  case FDiv:           return ISD::FDIV;
+  case URem:           return ISD::UREM;
+  case SRem:           return ISD::SREM;
+  case FRem:           return ISD::FREM;
+  case Shl:            return ISD::SHL;
+  case LShr:           return ISD::SRL;
+  case AShr:           return ISD::SRA;
+  case And:            return ISD::AND;
+  case Or:             return ISD::OR;
+  case Xor:            return ISD::XOR;
+  case Alloca:         return 0;
+  case Load:           return ISD::LOAD;
+  case Store:          return ISD::STORE;
+  case GetElementPtr:  return 0;
+  case Fence:          return 0;
+  case AtomicCmpXchg:  return 0;
+  case AtomicRMW:      return 0;
+  case Trunc:          return ISD::TRUNCATE;
+  case ZExt:           return ISD::ZERO_EXTEND;
+  case SExt:           return ISD::SEXTLOAD;
+  case FPToUI:         return ISD::FP_TO_UINT;
+  case FPToSI:         return ISD::FP_TO_SINT;
+  case UIToFP:         return ISD::UINT_TO_FP;
+  case SIToFP:         return ISD::SINT_TO_FP;
+  case FPTrunc:        return ISD::FP_ROUND;
+  case FPExt:          return ISD::FP_EXTEND;
+  case PtrToInt:       return ISD::BITCAST;
+  case IntToPtr:       return ISD::BITCAST;
+  case BitCast:        return ISD::BITCAST;
+  case ICmp:           return ISD::SETCC;
+  case FCmp:           return ISD::SETCC;
+  case PHI:            return 0;
+  case Call:           return 0;
+  case Select:         return ISD::SELECT;
+  case UserOp1:        return 0;
+  case UserOp2:        return 0;
+  case VAArg:          return 0;
+  case ExtractElement: return ISD::EXTRACT_VECTOR_ELT;
+  case InsertElement:  return ISD::INSERT_VECTOR_ELT;
+  case ShuffleVector:  return ISD::VECTOR_SHUFFLE;
+  case ExtractValue:   return ISD::MERGE_VALUES;
+  case InsertValue:    return ISD::MERGE_VALUES;
+  case LandingPad:     return 0;
+  }
 
-  assert((Instruction::Ret == 1) && (Instruction::LandingPad == 58) &&
-         "Instruction order had changed");
-
-  // Opcode numbering starts at #1 but the table starts at #0, so we subtract
-  // one from the opcode number.
-  return OpToISDTbl[Opcode - 1];
+  llvm_unreachable("Unknown instruction type encountered!");
 }
 
 std::pair<unsigned, EVT>
