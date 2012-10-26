@@ -58,34 +58,34 @@ public:
                            ///< 0 means unaligned different from align 1
     AlwaysInline    = 3,   ///< inline=always
     ByVal           = 4,   ///< Pass structure by value
-    InlineHint      = 5,   ///< Source said inlining was desirable
-    InReg           = 6,   ///< Force argument to be passed in register
-    Naked           = 7,   ///< Naked function
-    Nest            = 8,   ///< Nested function static chain
-    NoAlias         = 9,   ///< Considered to not alias after call
-    NoCapture       = 10,  ///< Function creates no aliases of pointer
-    NoImplicitFloat = 11,  ///< Disable implicit floating point insts
-    NoInline        = 12,  ///< inline=never
-    NonLazyBind     = 13,  ///< Function is called early and/or
+    ForceSizeOpt    = 5,   ///< Function must be optimized for size first
+    InlineHint      = 6,   ///< Source said inlining was desirable
+    InReg           = 7,   ///< Force argument to be passed in register
+    Naked           = 8,   ///< Naked function
+    Nest            = 9,   ///< Nested function static chain
+    NoAlias         = 10,  ///< Considered to not alias after call
+    NoCapture       = 11,  ///< Function creates no aliases of pointer
+    NoImplicitFloat = 12,  ///< Disable implicit floating point insts
+    NoInline        = 13,  ///< inline=never
+    NonLazyBind     = 14,  ///< Function is called early and/or
                            ///< often, so lazy binding isn't worthwhile
-    NoRedZone       = 14,  ///< Disable redzone
-    NoReturn        = 15,  ///< Mark the function as not returning
-    NoUnwind        = 16,  ///< Function doesn't unwind stack
-    OptimizeForSize = 17,  ///< opt_size
-    ReadNone        = 18,  ///< Function does not access memory
-    ReadOnly        = 19,  ///< Function only reads from memory
-    ReturnsTwice    = 20,  ///< Function can return twice
-    SExt            = 21,  ///< Sign extended before/after call
-    StackAlignment  = 22,  ///< Alignment of stack for function (3 bits)
+    NoRedZone       = 15,  ///< Disable redzone
+    NoReturn        = 16,  ///< Mark the function as not returning
+    NoUnwind        = 17,  ///< Function doesn't unwind stack
+    OptimizeForSize = 18,  ///< opt_size
+    ReadNone        = 19,  ///< Function does not access memory
+    ReadOnly        = 20,  ///< Function only reads from memory
+    ReturnsTwice    = 21,  ///< Function can return twice
+    SExt            = 22,  ///< Sign extended before/after call
+    StackAlignment  = 23,  ///< Alignment of stack for function (3 bits)
                            ///< stored as log2 of alignment with +1 bias 0
                            ///< means unaligned (different from
                            ///< alignstack={1))
-    StackProtect    = 23,  ///< Stack protection.
-    StackProtectReq = 24,  ///< Stack protection required.
-    StructRet       = 25,  ///< Hidden pointer to structure to return
-    UWTable         = 26,  ///< Function must be in a unwind table
-    ZExt            = 27,  ///< Zero extended before/after call
-    ForceSizeOpt    = 28  ///< Function must be optimized for size first
+    StackProtect    = 24,  ///< Stack protection.
+    StackProtectReq = 25,  ///< Stack protection required.
+    StructRet       = 26,  ///< Hidden pointer to structure to return
+    UWTable         = 27,  ///< Function must be in a unwind table
+    ZExt            = 28   ///< Zero extended before/after call
   };
 private:
   AttributesImpl *Attrs;
