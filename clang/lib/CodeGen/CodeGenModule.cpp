@@ -2582,8 +2582,15 @@ void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
   }
 
   for (RecordDecl::decl_iterator I = LSD->decls_begin(), E = LSD->decls_end();
-       I != E; ++I)
+       I != E; ++I) {
+    if (ObjCImplDecl *OID = dyn_cast<ObjCImplDecl>(*I)) {
+      for (ObjCContainerDecl::method_iterator M = OID->meth_begin(),
+           MEnd = OID->meth_end();
+           M != MEnd; ++M)
+        EmitTopLevelDecl(*M);
+    }
     EmitTopLevelDecl(*I);
+  }
 }
 
 /// EmitTopLevelDecl - Emit code for a single top level declaration.
