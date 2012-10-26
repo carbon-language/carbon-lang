@@ -142,8 +142,6 @@ namespace {
     bool collectTiedOperands(MachineInstr *MI, TiedOperandMap&);
     void processTiedPairs(MachineInstr *MI, TiedPairList&, unsigned &Dist);
 
-    void CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs, unsigned DstReg);
-
     /// EliminateRegSequences - Eliminate REG_SEQUENCE instructions as part
     /// of the de-ssa process. This replaces sources of REG_SEQUENCE as
     /// sub-register references of the register defined by REG_SEQUENCE.
@@ -1514,127 +1512,6 @@ static MachineInstr *findFirstDef(unsigned Reg, MachineRegisterInfo *MRI) {
   return First;
 }
 
-/// CoalesceExtSubRegs - If a number of sources of the REG_SEQUENCE are
-/// EXTRACT_SUBREG from the same register and to the same virtual register
-/// with different sub-register indices, attempt to combine the
-/// EXTRACT_SUBREGs and pre-coalesce them. e.g.
-/// %reg1026<def> = VLDMQ %reg1025<kill>, 260, pred:14, pred:%reg0
-/// %reg1029:6<def> = EXTRACT_SUBREG %reg1026, 6
-/// %reg1029:5<def> = EXTRACT_SUBREG %reg1026<kill>, 5
-/// Since D subregs 5, 6 can combine to a Q register, we can coalesce
-/// reg1026 to reg1029.
-void
-TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
-                                              unsigned DstReg) {
-  SmallSet<unsigned, 4> Seen;
-  for (unsigned i = 0, e = Srcs.size(); i != e; ++i) {
-    unsigned SrcReg = Srcs[i];
-    if (!Seen.insert(SrcReg))
-      continue;
-
-    // Check that the instructions are all in the same basic block.
-    MachineInstr *SrcDefMI = MRI->getUniqueVRegDef(SrcReg);
-    MachineInstr *DstDefMI = MRI->getUniqueVRegDef(DstReg);
-    if (!SrcDefMI || !DstDefMI ||
-        SrcDefMI->getParent() != DstDefMI->getParent())
-      continue;
-
-    // If there are no other uses than copies which feed into
-    // the reg_sequence, then we might be able to coalesce them.
-    bool CanCoalesce = true;
-    SmallVector<unsigned, 4> SrcSubIndices, DstSubIndices;
-    for (MachineRegisterInfo::use_nodbg_iterator
-           UI = MRI->use_nodbg_begin(SrcReg),
-           UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-      MachineInstr *UseMI = &*UI;
-      if (!UseMI->isCopy() || UseMI->getOperand(0).getReg() != DstReg) {
-        CanCoalesce = false;
-        break;
-      }
-      SrcSubIndices.push_back(UseMI->getOperand(1).getSubReg());
-      DstSubIndices.push_back(UseMI->getOperand(0).getSubReg());
-    }
-
-    if (!CanCoalesce || SrcSubIndices.size() < 2)
-      continue;
-
-    // Check that the source subregisters can be combined.
-    std::sort(SrcSubIndices.begin(), SrcSubIndices.end());
-    unsigned NewSrcSubIdx = 0;
-    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(SrcReg), SrcSubIndices,
-                                      NewSrcSubIdx))
-      continue;
-
-    // Check that the destination subregisters can also be combined.
-    std::sort(DstSubIndices.begin(), DstSubIndices.end());
-    unsigned NewDstSubIdx = 0;
-    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(DstReg), DstSubIndices,
-                                      NewDstSubIdx))
-      continue;
-
-    // If neither source nor destination can be combined to the full register,
-    // just give up.  This could be improved if it ever matters.
-    if (NewSrcSubIdx != 0 && NewDstSubIdx != 0)
-      continue;
-
-    // Now that we know that all the uses are extract_subregs and that those
-    // subregs can somehow be combined, scan all the extract_subregs again to
-    // make sure the subregs are in the right order and can be composed.
-    MachineInstr *SomeMI = 0;
-    CanCoalesce = true;
-    for (MachineRegisterInfo::use_nodbg_iterator
-           UI = MRI->use_nodbg_begin(SrcReg),
-           UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-      MachineInstr *UseMI = &*UI;
-      assert(UseMI->isCopy());
-      unsigned DstSubIdx = UseMI->getOperand(0).getSubReg();
-      unsigned SrcSubIdx = UseMI->getOperand(1).getSubReg();
-      assert(DstSubIdx != 0 && "missing subreg from RegSequence elimination");
-      if ((NewDstSubIdx == 0 &&
-           TRI->composeSubRegIndices(NewSrcSubIdx, DstSubIdx) != SrcSubIdx) ||
-          (NewSrcSubIdx == 0 &&
-           TRI->composeSubRegIndices(NewDstSubIdx, SrcSubIdx) != DstSubIdx)) {
-        CanCoalesce = false;
-        break;
-      }
-      // Keep track of one of the uses.  Preferably the first one which has a
-      // <def,undef> flag.
-      if (!SomeMI || UseMI->getOperand(0).isUndef())
-        SomeMI = UseMI;
-    }
-    if (!CanCoalesce)
-      continue;
-
-    // Insert a copy to replace the original.
-    MachineInstr *CopyMI = BuildMI(*SomeMI->getParent(), SomeMI,
-                                   SomeMI->getDebugLoc(),
-                                   TII->get(TargetOpcode::COPY))
-      .addReg(DstReg, RegState::Define |
-                      getUndefRegState(SomeMI->getOperand(0).isUndef()),
-              NewDstSubIdx)
-      .addReg(SrcReg, 0, NewSrcSubIdx);
-
-    // Remove all the old extract instructions.
-    for (MachineRegisterInfo::use_nodbg_iterator
-           UI = MRI->use_nodbg_begin(SrcReg),
-           UE = MRI->use_nodbg_end(); UI != UE; ) {
-      MachineInstr *UseMI = &*UI;
-      ++UI;
-      if (UseMI == CopyMI)
-        continue;
-      assert(UseMI->isCopy());
-      // Move any kills to the new copy or extract instruction.
-      if (UseMI->getOperand(1).isKill()) {
-        CopyMI->getOperand(1).setIsKill();
-        if (LV)
-          // Update live variables
-          LV->replaceKillInstruction(SrcReg, UseMI, &*CopyMI);
-      }
-      UseMI->eraseFromParent();
-    }
-  }
-}
-
 static bool HasOtherRegSequenceUses(unsigned Reg, MachineInstr *RegSeq,
                                     MachineRegisterInfo *MRI) {
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
@@ -1770,12 +1647,6 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       DEBUG(dbgs() << "Eliminated: " << *MI);
       MI->eraseFromParent();
     }
-
-    // Try coalescing some EXTRACT_SUBREG instructions. This can create
-    // INSERT_SUBREG instructions that must have <undef> flags added by
-    // LiveIntervalAnalysis, so only run it when LiveVariables is available.
-    if (LV)
-      CoalesceExtSubRegs(RealSrcs, DstReg);
   }
 
   RegSequences.clear();

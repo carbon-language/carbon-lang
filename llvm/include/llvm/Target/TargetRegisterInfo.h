@@ -446,18 +446,6 @@ public:
     return MCRegisterInfo::getMatchingSuperReg(Reg, SubIdx, RC->MC);
   }
 
-  /// canCombineSubRegIndices - Given a register class and a list of
-  /// subregister indices, return true if it's possible to combine the
-  /// subregister indices into one that corresponds to a larger
-  /// subregister. Return the new subregister index by reference. Note the
-  /// new index may be zero if the given subregisters can be combined to
-  /// form the whole register.
-  virtual bool canCombineSubRegIndices(const TargetRegisterClass *RC,
-                                       SmallVectorImpl<unsigned> &SubIndices,
-                                       unsigned &NewSubIdx) const {
-    return 0;
-  }
-
   /// getMatchingSuperRegClass - Return a subclass of the specified register
   /// class A so that each register in it has a sub-register of the
   /// specified sub-register index which is in the specified register class B.
