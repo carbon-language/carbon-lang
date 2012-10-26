@@ -236,8 +236,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       for (; PrevVar; PrevVar = PrevVar->getPreviousDecl())
         if (PrevVar->getStorageClass() == SC_PrivateExtern)
           break;
-        if (PrevVar)
-          return PrevVar->getLinkageAndVisibility();
+      if (PrevVar)
+        return PrevVar->getLinkageAndVisibility();
     }
   } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
     // C++ [temp]p4:
