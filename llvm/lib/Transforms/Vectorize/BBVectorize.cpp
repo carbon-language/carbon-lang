@@ -819,12 +819,13 @@ namespace {
           if (VCost > ICost + JCost)
             return false;
 
-          // FIXME: We don't want to fuse to a type that will be split, even
+          // We don't want to fuse to a type that will be split, even
           // if the two input types will also be split and there is no other
-          // associated cost. This check depends on the fact
-          // that the current implementation of getMemoryOpCost returns only
-          // the type-splitting cost.
-          if (VCost > 1)
+          // associated cost.
+          unsigned VParts = VTTI->getNumberOfParts(VType);
+          if (VParts > 1)
+            return false;
+          else if (!VParts && VCost == ICost + JCost)
             return false;
 
           CostSavings = ICost + JCost - VCost;
@@ -842,13 +843,13 @@ namespace {
       if (VCost > ICost + JCost)
         return false;
 
-      // FIXME: We don't want to fuse to a type that will be split, even
+      // We don't want to fuse to a type that will be split, even
       // if the two input types will also be split and there is no other
-      // associated cost. This check depends on the fact
-      // that the current implementation of getMemoryOpCost returns only
-      // the type-splitting cost (and does nothing else).
-      unsigned VTypeCost = VTTI->getMemoryOpCost(I->getOpcode(), VT1, 0, 0);
-      if (VTypeCost > 1)
+      // associated cost.
+      unsigned VParts = VTTI->getNumberOfParts(VT1);
+      if (VParts > 1)
+        return false;
+      else if (!VParts && VCost == ICost + JCost)
         return false;
 
       CostSavings = ICost + JCost - VCost;
