@@ -2583,6 +2583,8 @@ void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
 
   for (RecordDecl::decl_iterator I = LSD->decls_begin(), E = LSD->decls_end();
        I != E; ++I) {
+    // Meta-data for ObjC class includes references to implemented methods.
+    // Generate class's method definitions first.
     if (ObjCImplDecl *OID = dyn_cast<ObjCImplDecl>(*I)) {
       for (ObjCContainerDecl::method_iterator M = OID->meth_begin(),
            MEnd = OID->meth_end();
