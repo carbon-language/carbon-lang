@@ -1,27 +1,54 @@
 ; No arguments means internalize all but main
-; RUN: opt < %s -internalize -S | grep internal | count 4
+; RUN: opt < %s -internalize -S | FileCheck --check-prefix=NOARGS %s
+
 ; Internalize all but foo and j
-; RUN: opt < %s -internalize -internalize-public-api-list foo -internalize-public-api-list j -S | grep internal | count 3
+; RUN: opt < %s -internalize -internalize-public-api-list foo -internalize-public-api-list j -S | FileCheck --check-prefix=LIST %s
+
 ; Non existent files should be treated as if they were empty (so internalize all but main)
-; RUN: opt < %s -internalize -internalize-public-api-file /nonexistent/file 2> /dev/null -S | grep internal | count 4
-; RUN: opt < %s -internalize -internalize-public-api-list bar -internalize-public-api-list foo -internalize-public-api-file /nonexistent/file 2> /dev/null -S | grep internal | count 3
+; RUN: opt < %s -internalize -internalize-public-api-file /nonexistent/file 2> /dev/null -S | FileCheck --check-prefix=EMPTYFILE %s
+
+; RUN: opt < %s -S -internalize -internalize-public-api-list bar -internalize-public-api-list foo -internalize-public-api-file /nonexistent/file  2> /dev/null | FileCheck --check-prefix=LIST2 %s
+
 ; -file and -list options should be merged, the .apifile contains foo and j
-; RUN: opt < %s -internalize -internalize-public-api-list bar -internalize-public-api-file %s.apifile -S | grep internal | count 2
+; RUN: opt < %s -internalize -internalize-public-api-list bar -internalize-public-api-file %s.apifile -S | FileCheck --check-prefix=MERGE %s
 
-@i = weak global i32 0          ; <i32*> [#uses=0]
-@j = weak global i32 0          ; <i32*> [#uses=0]
+; NOARGS: @i = internal global
+; LIST: @i = internal global
+; EMPTYFILE: @i = internal global
+; LIST2: @i = internal global
+; MERGE: @i = internal global
+@i = global i32 0
 
-define void @main(...) {
-entry:  
+; NOARGS: @j = internal global
+; LIST: @j = global
+; EMPTYFILE: @j = internal global
+; LIST2: @j = internal global
+; MERGE: @j = global
+@j = global i32 0
+
+; NOARGS: define void @main
+; LIST: define internal void @main
+; EMPTYFILE: define void @main
+; LIST2: define internal void @main
+; MERGE: define internal void @main
+define void @main() {
         ret void
 }
 
-define void @foo(...) {
-entry:  
+; NOARGS: define internal void @foo
+; LIST: define void @foo
+; EMPTYFILE: define internal void @foo
+; LIST2: define void @foo
+; MERGE: define void @foo
+define void @foo() {
         ret void
 }
 
-define void @bar(...) {
-entry:  
+; NOARGS: define internal void @bar
+; LIST: define internal void @bar
+; EMPTYFILE: define internal void @bar
+; LIST2: define void @bar
+; MERGE: define void @bar
+define void @bar() {
         ret void
 }
