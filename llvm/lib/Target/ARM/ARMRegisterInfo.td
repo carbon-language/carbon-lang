@@ -49,6 +49,9 @@ def ssub_0  : SubRegIndex;
 def ssub_1  : SubRegIndex;
 def ssub_2  : SubRegIndex<[dsub_1, ssub_0]>;
 def ssub_3  : SubRegIndex<[dsub_1, ssub_1]>;
+
+def gsub_0  : SubRegIndex;
+def gsub_1  : SubRegIndex;
 // Let TableGen synthesize the remaining 12 ssub_* indices.
 // We don't need to name them.
 }
@@ -311,6 +314,17 @@ def DPair : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
   // Prefer even-odd pairs as they are easier to copy.
   let AltOrders = [(add (rotl QPR, 8), (rotl DPair, 16))];
   let AltOrderSelect = [{ return 1; }];
+}
+
+// Pseudo-registers representing even-odd pairs of GPRs from R1 to R13/SP.
+// These are needed by instructions (e.g. ldrexd/strexd) requiring even-odd GPRs.
+def Tuples2R : RegisterTuples<[gsub_0, gsub_1],
+                              [(add R0, R2, R4, R6, R8, R10, R12),
+                               (add R1, R3, R5, R7, R9, R11, SP)]>;
+
+// Register class representing a pair of even-odd GPRs.
+def GPRPair : RegisterClass<"ARM", [untyped], 64, (add Tuples2R)> {
+  let Size = 64; // 2 x 32 bits, we have no predefined type of that size.
 }
 
 // Pseudo-registers representing 3 consecutive D registers.

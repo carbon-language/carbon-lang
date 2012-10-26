@@ -106,12 +106,23 @@ getReservedRegs(const MachineFunction &MF) const {
     for (unsigned i = 0; i != 16; ++i)
       Reserved.set(ARM::D16 + i);
   }
+  const TargetRegisterClass *RC  = &ARM::GPRPairRegClass;
+  for(TargetRegisterClass::iterator I = RC->begin(), E = RC->end(); I!=E; ++I)
+    for (MCSubRegIterator SI(*I, this); SI.isValid(); ++SI)
+      if (Reserved.test(*SI)) Reserved.set(*I);
+
   return Reserved;
 }
 
 bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
                                         unsigned Reg) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetRegisterClass *RC  = &ARM::GPRPairRegClass;
+  if (RC->contains(Reg)) {
+    for (MCSubRegIterator SI(Reg, this); SI.isValid(); ++SI)
+      if(isReservedReg(MF, *SI)) return true;
+    return false;
+  }
 
   switch (Reg) {
   default: break;
@@ -147,6 +158,7 @@ ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
     case ARM::QPRRegClassID:
     case ARM::QQPRRegClassID:
     case ARM::QQQQPRRegClassID:
+    case ARM::GPRPairRegClassID:
       return Super;
     }
     Super = *I++;

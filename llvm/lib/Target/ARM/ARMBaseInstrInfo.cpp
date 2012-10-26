@@ -702,6 +702,8 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 3;
   else if (ARM::DQuadRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 4;
+  else if (ARM::GPRPairRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::MOVr, BeginIdx = ARM::gsub_0, SubRegs = 2;
 
   else if (ARM::DPairSpcRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 2, Spacing = 2;
@@ -791,6 +793,13 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
         AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRD))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+      } else if (ARM::GPRPairRegClass.hasSubClassEq(RC)) {
+        MachineInstrBuilder MIB =
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STMIA))
+                       .addFrameIndex(FI))
+                       .addMemOperand(MMO);
+          MIB = AddDReg(MIB, SrcReg, ARM::gsub_0, getKillRegState(isKill), TRI);
+                AddDReg(MIB, SrcReg, ARM::gsub_1, 0, TRI);
       } else
         llvm_unreachable("Unknown reg class!");
       break;
@@ -938,6 +947,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
   MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
   MachineMemOperand *MMO =
@@ -963,6 +973,15 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     if (ARM::DPRRegClass.hasSubClassEq(RC)) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRD), DestReg)
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+    } else if (ARM::GPRPairRegClass.hasSubClassEq(RC)) {
+      unsigned LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA : ARM::LDMIA;
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, I, DL, get(LdmOpc))
+                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+      MIB = AddDReg(MIB, DestReg, ARM::gsub_0, RegState::DefineNoRead, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::gsub_1, RegState::DefineNoRead, TRI);
+      if (TargetRegisterInfo::isPhysicalRegister(DestReg))
+        MIB.addReg(DestReg, RegState::ImplicitDefine);
     } else
       llvm_unreachable("Unknown reg class!");
     break;
