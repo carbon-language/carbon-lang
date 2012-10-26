@@ -196,3 +196,11 @@ VectorTargetTransformImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
   // Assume that all loads of legal types cost 1.
   return LT.first;
 }
+
+unsigned
+VectorTargetTransformImpl::getNumberOfParts(Type *Tp) const {
+  std::pair<unsigned, EVT>  LT =
+  getTypeLegalizationCost(Tp->getContext(), TLI->getValueType(Tp));
+  return LT.first;
+}
+

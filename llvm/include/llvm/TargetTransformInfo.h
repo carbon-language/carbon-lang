@@ -156,6 +156,11 @@ public:
     return 1;
   }
 
+  /// Returns the number of pieces into which the provided type must be
+  /// split during legalization. Zero is returned when the answer is unknown.
+  virtual unsigned getNumberOfParts(Type *Tp) const {
+    return 0;
+  }
 };
 
 } // End llvm namespace

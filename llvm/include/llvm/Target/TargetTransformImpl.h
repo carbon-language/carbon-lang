@@ -68,6 +68,8 @@ public:
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
                                    unsigned AddressSpace) const;
+
+  virtual unsigned getNumberOfParts(Type *Tp) const;
 };
 
 } // end llvm namespace
