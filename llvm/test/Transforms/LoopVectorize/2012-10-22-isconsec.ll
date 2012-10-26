@@ -1,4 +1,4 @@
-; RUN: opt < %s  -loop-vectorize -dce
+; RUN: opt < %s  -loop-vectorize -dce -force-vector-width=4 
 
 ; Check that we don't crash.
 
