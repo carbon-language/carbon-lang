@@ -72,6 +72,9 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   AliasAnalysis *AA;
   CodeGenOpt::Level OptLevel;
 
+  // The current basic block being processed.
+  MachineBasicBlock *MBB;
+
   // DistanceMap - Keep track the distance of a MI from the start of the
   // current basic block.
   DenseMap<MachineInstr*, unsigned> DistanceMap;
@@ -93,49 +96,40 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   /// during the initial walk of the machine function.
   SmallVector<MachineInstr*, 16> RegSequences;
 
-  bool sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
-                            unsigned Reg,
+  bool sink3AddrInstruction(MachineInstr *MI, unsigned Reg,
                             MachineBasicBlock::iterator OldPos);
 
-  bool noUseAfterLastDef(unsigned Reg, MachineBasicBlock *MBB, unsigned Dist,
-                         unsigned &LastDef);
+  bool noUseAfterLastDef(unsigned Reg, unsigned Dist, unsigned &LastDef);
 
   bool isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
-                             MachineInstr *MI, MachineBasicBlock *MBB,
-                             unsigned Dist);
+                             MachineInstr *MI, unsigned Dist);
 
   bool commuteInstruction(MachineBasicBlock::iterator &mi,
-                          MachineFunction::iterator &mbbi,
                           unsigned RegB, unsigned RegC, unsigned Dist);
 
   bool isProfitableToConv3Addr(unsigned RegA, unsigned RegB);
 
   bool convertInstTo3Addr(MachineBasicBlock::iterator &mi,
                           MachineBasicBlock::iterator &nmi,
-                          MachineFunction::iterator &mbbi,
                           unsigned RegA, unsigned RegB, unsigned Dist);
 
-  bool isDefTooClose(unsigned Reg, unsigned Dist,
-                     MachineInstr *MI, MachineBasicBlock *MBB);
+  bool isDefTooClose(unsigned Reg, unsigned Dist, MachineInstr *MI);
 
-  bool rescheduleMIBelowKill(MachineBasicBlock *MBB,
-                             MachineBasicBlock::iterator &mi,
+  bool rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
                              MachineBasicBlock::iterator &nmi,
                              unsigned Reg);
-  bool rescheduleKillAboveMI(MachineBasicBlock *MBB,
-                             MachineBasicBlock::iterator &mi,
+  bool rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
                              MachineBasicBlock::iterator &nmi,
                              unsigned Reg);
 
   bool tryInstructionTransform(MachineBasicBlock::iterator &mi,
                                MachineBasicBlock::iterator &nmi,
-                               MachineFunction::iterator &mbbi,
                                unsigned SrcIdx, unsigned DstIdx,
                                unsigned Dist);
 
-  void scanUses(unsigned DstReg, MachineBasicBlock *MBB);
+  void scanUses(unsigned DstReg);
 
-  void processCopy(MachineInstr *MI, MachineBasicBlock *MBB);
+  void processCopy(MachineInstr *MI);
 
   typedef SmallVector<std::pair<unsigned, unsigned>, 4> TiedPairList;
   typedef SmallDenseMap<unsigned, TiedPairList> TiedOperandMap;
@@ -182,9 +176,9 @@ char &llvm::TwoAddressInstructionPassID = TwoAddressInstructionPass::ID;
 /// three-address instruction to avoid clobbering a register. Try to sink it
 /// past the instruction that would kill the above mentioned register to reduce
 /// register pressure.
-bool TwoAddressInstructionPass::sink3AddrInstruction(MachineBasicBlock *MBB,
-                                           MachineInstr *MI, unsigned SavedReg,
-                                           MachineBasicBlock::iterator OldPos) {
+bool TwoAddressInstructionPass::
+sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
+                     MachineBasicBlock::iterator OldPos) {
   // FIXME: Shouldn't we be trying to do this before we three-addressify the
   // instruction?  After this transformation is done, we no longer need
   // the instruction to be in three-address form.
@@ -301,9 +295,7 @@ bool TwoAddressInstructionPass::sink3AddrInstruction(MachineBasicBlock *MBB,
 /// last instruction in the MBB that defines the specified register and the
 /// two-address instruction which is being processed. It also returns the last
 /// def location by reference
-bool TwoAddressInstructionPass::noUseAfterLastDef(unsigned Reg,
-                                                  MachineBasicBlock *MBB,
-                                                  unsigned Dist,
+bool TwoAddressInstructionPass::noUseAfterLastDef(unsigned Reg, unsigned Dist,
                                                   unsigned &LastDef) {
   LastDef = 0;
   unsigned LastUse = Dist;
@@ -464,10 +456,9 @@ regsAreCompatible(unsigned RegA, unsigned RegB, const TargetRegisterInfo *TRI) {
 /// isProfitableToCommute - Return true if it's potentially profitable to commute
 /// the two-address instruction that's being processed.
 bool
-TwoAddressInstructionPass::isProfitableToCommute(unsigned regA, unsigned regB,
-                                       unsigned regC,
-                                       MachineInstr *MI, MachineBasicBlock *MBB,
-                                       unsigned Dist) {
+TwoAddressInstructionPass::
+isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
+                      MachineInstr *MI, unsigned Dist) {
   if (OptLevel == CodeGenOpt::None)
     return false;
 
@@ -515,13 +506,13 @@ TwoAddressInstructionPass::isProfitableToCommute(unsigned regA, unsigned regB,
   // If there is a use of regC between its last def (could be livein) and this
   // instruction, then bail.
   unsigned LastDefC = 0;
-  if (!noUseAfterLastDef(regC, MBB, Dist, LastDefC))
+  if (!noUseAfterLastDef(regC, Dist, LastDefC))
     return false;
 
   // If there is a use of regB between its last def (could be livein) and this
   // instruction, then go ahead and make this transformation.
   unsigned LastDefB = 0;
-  if (!noUseAfterLastDef(regB, MBB, Dist, LastDefB))
+  if (!noUseAfterLastDef(regB, Dist, LastDefB))
     return true;
 
   // Since there are no intervening uses for both registers, then commute
@@ -532,10 +523,9 @@ TwoAddressInstructionPass::isProfitableToCommute(unsigned regA, unsigned regB,
 /// commuteInstruction - Commute a two-address instruction and update the basic
 /// block, distance map, and live variables if needed. Return true if it is
 /// successful.
-bool
-TwoAddressInstructionPass::commuteInstruction(MachineBasicBlock::iterator &mi,
-                               MachineFunction::iterator &mbbi,
-                               unsigned RegB, unsigned RegC, unsigned Dist) {
+bool TwoAddressInstructionPass::
+commuteInstruction(MachineBasicBlock::iterator &mi,
+                   unsigned RegB, unsigned RegC, unsigned Dist) {
   MachineInstr *MI = mi;
   DEBUG(dbgs() << "2addr: COMMUTING  : " << *MI);
   MachineInstr *NewMI = TII->commuteInstruction(MI);
@@ -554,8 +544,8 @@ TwoAddressInstructionPass::commuteInstruction(MachineBasicBlock::iterator &mi,
     if (Indexes)
       Indexes->replaceMachineInstrInMaps(MI, NewMI);
 
-    mbbi->insert(mi, NewMI);           // Insert the new inst
-    mbbi->erase(mi);                   // Nuke the old inst.
+    MBB->insert(mi, NewMI);           // Insert the new inst
+    MBB->erase(mi);                   // Nuke the old inst.
     mi = NewMI;
     DistanceMap.insert(std::make_pair(NewMI, Dist));
   }
@@ -592,10 +582,12 @@ TwoAddressInstructionPass::isProfitableToConv3Addr(unsigned RegA,unsigned RegB){
 bool
 TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
                                               MachineBasicBlock::iterator &nmi,
-                                              MachineFunction::iterator &mbbi,
                                               unsigned RegA, unsigned RegB,
                                               unsigned Dist) {
-  MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, LV);
+  // FIXME: Why does convertToThreeAddress() need an iterator reference?
+  MachineFunction::iterator MFI = MBB;
+  MachineInstr *NewMI = TII->convertToThreeAddress(MFI, mi, LV);
+  assert(MBB == MFI && "convertToThreeAddress changed iterator reference");
   if (NewMI) {
     DEBUG(dbgs() << "2addr: CONVERTING 2-ADDR: " << *mi);
     DEBUG(dbgs() << "2addr:         TO 3-ADDR: " << *NewMI);
@@ -608,9 +600,9 @@ TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
       // FIXME: Temporary workaround. If the new instruction doesn't
       // uses RegB, convertToThreeAddress must have created more
       // then one instruction.
-      Sunk = sink3AddrInstruction(mbbi, NewMI, RegB, mi);
+      Sunk = sink3AddrInstruction(NewMI, RegB, mi);
 
-    mbbi->erase(mi); // Nuke the old inst.
+    MBB->erase(mi); // Nuke the old inst.
 
     if (!Sunk) {
       DistanceMap.insert(std::make_pair(NewMI, Dist));
@@ -630,7 +622,7 @@ TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
 /// scanUses - Scan forward recursively for only uses, update maps if the use
 /// is a copy or a two-address instruction.
 void
-TwoAddressInstructionPass::scanUses(unsigned DstReg, MachineBasicBlock *MBB) {
+TwoAddressInstructionPass::scanUses(unsigned DstReg) {
   SmallVector<unsigned, 4> VirtRegPairs;
   bool IsDstPhys;
   bool IsCopy = false;
@@ -686,8 +678,7 @@ TwoAddressInstructionPass::scanUses(unsigned DstReg, MachineBasicBlock *MBB) {
 /// coalesced to r0 (from the input side). v1025 is mapped to r1. v1026 is
 /// potentially joined with r1 on the output side. It's worthwhile to commute
 /// 'add' to eliminate a copy.
-void TwoAddressInstructionPass::processCopy(MachineInstr *MI,
-                                            MachineBasicBlock *MBB) {
+void TwoAddressInstructionPass::processCopy(MachineInstr *MI) {
   if (Processed.count(MI))
     return;
 
@@ -704,7 +695,7 @@ void TwoAddressInstructionPass::processCopy(MachineInstr *MI,
       assert(SrcRegMap[DstReg] == SrcReg &&
              "Can't map to two src physical registers!");
 
-    scanUses(DstReg, MBB);
+    scanUses(DstReg);
   }
 
   Processed.insert(MI);
@@ -715,8 +706,7 @@ void TwoAddressInstructionPass::processCopy(MachineInstr *MI,
 /// 'Reg' and it kills 'Reg, consider moving the instruction below the kill
 /// instruction in order to eliminate the need for the copy.
 bool TwoAddressInstructionPass::
-rescheduleMIBelowKill(MachineBasicBlock *MBB,
-                      MachineBasicBlock::iterator &mi,
+rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
                       MachineBasicBlock::iterator &nmi,
                       unsigned Reg) {
   // Bail immediately if we don't have LV available. We use it to find kills
@@ -850,8 +840,7 @@ rescheduleMIBelowKill(MachineBasicBlock *MBB,
 /// isDefTooClose - Return true if the re-scheduling will put the given
 /// instruction too close to the defs of its register dependencies.
 bool TwoAddressInstructionPass::isDefTooClose(unsigned Reg, unsigned Dist,
-                                              MachineInstr *MI,
-                                              MachineBasicBlock *MBB) {
+                                              MachineInstr *MI) {
   for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(Reg),
          DE = MRI->def_end(); DI != DE; ++DI) {
     MachineInstr *DefMI = &*DI;
@@ -875,8 +864,7 @@ bool TwoAddressInstructionPass::isDefTooClose(unsigned Reg, unsigned Dist,
 /// current two-address instruction in order to eliminate the need for the
 /// copy.
 bool TwoAddressInstructionPass::
-rescheduleKillAboveMI(MachineBasicBlock *MBB,
-                      MachineBasicBlock::iterator &mi,
+rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
                       MachineBasicBlock::iterator &nmi,
                       unsigned Reg) {
   // Bail immediately if we don't have LV available. We use it to find kills
@@ -915,7 +903,7 @@ rescheduleKillAboveMI(MachineBasicBlock *MBB,
     if (MO.isUse()) {
       if (!MOReg)
         continue;
-      if (isDefTooClose(MOReg, DI->second, MI, MBB))
+      if (isDefTooClose(MOReg, DI->second, MI))
         return false;
       if (MOReg == Reg && !MO.isKill())
         return false;
@@ -1012,7 +1000,6 @@ rescheduleKillAboveMI(MachineBasicBlock *MBB,
 bool TwoAddressInstructionPass::
 tryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineBasicBlock::iterator &nmi,
-                        MachineFunction::iterator &mbbi,
                         unsigned SrcIdx, unsigned DstIdx, unsigned Dist) {
   if (OptLevel == CodeGenOpt::None)
     return false;
@@ -1026,7 +1013,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
   bool regBKilled = isKilled(MI, regB, MRI, TII);
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
-    scanUses(regA, &*mbbi);
+    scanUses(regA);
 
   // Check if it is profitable to commute the operands.
   unsigned SrcOp1, SrcOp2;
@@ -1047,7 +1034,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
         // If C dies but B does not, swap the B and C operands.
         // This makes the live ranges of A and C joinable.
         TryCommute = true;
-      else if (isProfitableToCommute(regA, regB, regC, &MI, mbbi, Dist)) {
+      else if (isProfitableToCommute(regA, regB, regC, &MI, Dist)) {
         TryCommute = true;
         AggressiveCommute = true;
       }
@@ -1055,7 +1042,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
   }
 
   // If it's profitable to commute, try to do so.
-  if (TryCommute && commuteInstruction(mi, mbbi, regB, regC, Dist)) {
+  if (TryCommute && commuteInstruction(mi, regB, regC, Dist)) {
     ++NumCommuted;
     if (AggressiveCommute)
       ++NumAggrCommuted;
@@ -1064,7 +1051,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   // If there is one more use of regB later in the same MBB, consider
   // re-schedule this MI below it.
-  if (rescheduleMIBelowKill(mbbi, mi, nmi, regB)) {
+  if (rescheduleMIBelowKill(mi, nmi, regB)) {
     ++NumReSchedDowns;
     return true;
   }
@@ -1074,7 +1061,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
     // three-address instruction.  Check if it is profitable.
     if (!regBKilled || isProfitableToConv3Addr(regA, regB)) {
       // Try to convert it.
-      if (convertInstTo3Addr(mi, nmi, mbbi, regA, regB, Dist)) {
+      if (convertInstTo3Addr(mi, nmi, regA, regB, Dist)) {
         ++NumConvertedTo3Addr;
         return true; // Done with this instruction.
       }
@@ -1083,7 +1070,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   // If there is one more use of regB later in the same MBB, consider
   // re-schedule it before this MI if it's legal.
-  if (rescheduleKillAboveMI(mbbi, mi, nmi, regB)) {
+  if (rescheduleKillAboveMI(mi, nmi, regB)) {
     ++NumReSchedUps;
     return true;
   }
@@ -1127,8 +1114,8 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
         // Tentatively insert the instructions into the block so that they
         // look "normal" to the transformation logic.
-        mbbi->insert(mi, NewMIs[0]);
-        mbbi->insert(mi, NewMIs[1]);
+        MBB->insert(mi, NewMIs[0]);
+        MBB->insert(mi, NewMIs[1]);
 
         DEBUG(dbgs() << "2addr:    NEW LOAD: " << *NewMIs[0]
                      << "2addr:    NEW INST: " << *NewMIs[1]);
@@ -1138,7 +1125,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
         unsigned NewSrcIdx = NewMIs[1]->findRegisterUseOperandIdx(regB);
         MachineBasicBlock::iterator NewMI = NewMIs[1];
         bool TransformSuccess =
-          tryInstructionTransform(NewMI, mi, mbbi, NewSrcIdx, NewDstIdx, Dist);
+          tryInstructionTransform(NewMI, mi, NewSrcIdx, NewDstIdx, Dist);
         if (TransformSuccess ||
             NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
           // Success, or at least we made an improvement. Keep the unfolded
@@ -1373,14 +1360,15 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
   MRI->leaveSSA();
 
   TiedOperandMap TiedOperands;
-  for (MachineFunction::iterator mbbi = MF->begin(), mbbe = MF->end();
-       mbbi != mbbe; ++mbbi) {
+  for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
+       MBBI != MBBE; ++MBBI) {
+    MBB = MBBI;
     unsigned Dist = 0;
     DistanceMap.clear();
     SrcRegMap.clear();
     DstRegMap.clear();
     Processed.clear();
-    for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
+    for (MachineBasicBlock::iterator mi = MBB->begin(), me = MBB->end();
          mi != me; ) {
       MachineBasicBlock::iterator nmi = llvm::next(mi);
       if (mi->isDebugValue()) {
@@ -1394,7 +1382,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
 
       DistanceMap.insert(std::make_pair(mi, ++Dist));
 
-      processCopy(&*mi, &*mbbi);
+      processCopy(&*mi);
 
       // First scan through all the tied register uses in this instruction
       // and record a list of pairs of tied operands for each register.
@@ -1419,7 +1407,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
           unsigned SrcReg = mi->getOperand(SrcIdx).getReg();
           unsigned DstReg = mi->getOperand(DstIdx).getReg();
           if (SrcReg != DstReg &&
-              tryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist)) {
+              tryInstructionTransform(mi, nmi, SrcIdx, DstIdx, Dist)) {
             // The tied operands have been eliminated or shifted further down the
             // block to ease elimination. Continue processing with 'nmi'.
             TiedOperands.clear();
