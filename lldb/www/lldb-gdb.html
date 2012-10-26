@@ -668,6 +668,17 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Backtrace the first five frames of the current thread. (<i>NB: valid for lldb-169 and later</i>)</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> bt 5
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> thread backtrace -c 5<br>
+                            <b>(lldb)</b> bt 5
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Select a different stack frame by index for the current thread.</td></tr>
                     <tr>
                         <td class="content">
