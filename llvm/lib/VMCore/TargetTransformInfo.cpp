@@ -25,7 +25,7 @@ TargetTransformInfo::TargetTransformInfo() : ImmutablePass(ID) {
                      "Tool did not specify a TargetTransformInfo to use?");
 }
 
-INITIALIZE_PASS(TargetTransformInfo, "TargetTransformInfo",
+INITIALIZE_PASS(TargetTransformInfo, "targettransforminfo",
                 "Target Transform Info", false, true)
 char TargetTransformInfo::ID = 0;
 
