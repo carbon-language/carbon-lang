@@ -810,6 +810,10 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
   PropertyImplStrategy strategy(CGM, propImpl);
   switch (strategy.getKind()) {
   case PropertyImplStrategy::Native: {
+    // We don't need to do anything for a zero-size struct.
+    if (strategy.getIvarSize().isZero())
+      return;
+
     LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, 0);
 
     // Currently, all atomic accesses have to be through integer
@@ -1068,6 +1072,10 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
   PropertyImplStrategy strategy(CGM, propImpl);
   switch (strategy.getKind()) {
   case PropertyImplStrategy::Native: {
+    // We don't need to do anything for a zero-size struct.
+    if (strategy.getIvarSize().isZero())
+      return;
+
     llvm::Value *argAddr = LocalDeclMap[*setterMethod->param_begin()];
 
     LValue ivarLValue =
