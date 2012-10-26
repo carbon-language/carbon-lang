@@ -193,3 +193,10 @@ int t19() {
 // CHECK: t19
 // CHECK: call void asm sideeffect inteldialect "lea ebx, foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
 }
+
+void t20() {
+  int foo;
+  __asm mov eax, TYPE foo
+// CHECK: t20
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+}
