@@ -1071,6 +1071,26 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Remap source file pathnames for the debug session.  If your source files are no longer located in the same location as when the program was built --- maybe the program was built on a different computer --- you need to tell the debugger how to find the sources at their local file path instead of the build system's file path.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> set pathname-substitutions /buildbot/path /my/path<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> settings set target.source-map /buildbot/path /my/path<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Supply a catchall directory to search for source files in.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> directory /my/path<br>
+                        </td>
+                        <td class="content">
+                            (<i>No equivalent command yet.)<br>
+                        </td>
+                    </tr>
+
                     </table>
                     <p>
                 </div>
