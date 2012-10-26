@@ -879,12 +879,15 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
   Start = Parser.getTok().getLoc();
   assert (Parser.getTok().is(AsmToken::Identifier) && "Expected an identifier");
 
-  SMLoc End;  
+  SMLoc End;
   const MCExpr *Val;
   if (getParser().ParseExpression(Val, End))
     return 0;
 
   End = Parser.getTok().getLoc();
+
+  // Don't emit the offset operator.
+  InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, OffsetOfLoc, 7));
 
   // The offset operator will have an 'r' constraint, thus we need to create
   // register operand to ensure proper matching.  Just pick a GPR based on

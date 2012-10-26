@@ -3667,12 +3667,6 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
             AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
                                                 Operand->getStartLoc(), 0,
                                                 Operand->getMemSize()));
-
-          // Don't emit the offset directive.
-          if (Operand->isOffsetOf())
-            AsmStrRewrites.push_back(AsmRewrite(AOK_Skip,
-                                                Operand->getOffsetOfLoc(), 7));
-
           if (isOutput) {
             std::string Constraint = "=";
             ++InputIdx;
