@@ -42,23 +42,13 @@ class MipsFunctionInfo : public MachineFunctionInfo {
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex;
 
-  // Range of frame object indices.
-  // InArgFIRange: Range of indices of all frame objects created during call to
-  //               LowerFormalArguments.
-  std::pair<int, int> InArgFIRange;
-
   bool EmitNOAT;
 
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : MF(MF), SRetReturnReg(0), GlobalBaseReg(0),
-    VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)), EmitNOAT(false)
+    VarArgsFrameIndex(0), EmitNOAT(false)
   {}
-
-  bool isInArgFI(int FI) const {
-    return FI <= InArgFIRange.first && FI >= InArgFIRange.second;
-  }
-  void setLastInArgFI(int FI) { InArgFIRange.second = FI; }
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }

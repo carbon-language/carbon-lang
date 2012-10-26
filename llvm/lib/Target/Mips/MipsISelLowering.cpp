@@ -3459,8 +3459,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     }
   }
 
-  MipsFI->setLastInArgFI(LastFI);
-
   // All stores are grouped in one node to allow the matching between
   // the size of Ins and InVals. This only happens when on varg functions
   if (!OutChains.empty()) {
