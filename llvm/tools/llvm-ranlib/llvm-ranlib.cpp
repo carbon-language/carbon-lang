@@ -61,41 +61,38 @@ int main(int argc, char **argv) {
 
   int exitCode = 0;
 
-  // Make sure we don't exit with "unhandled exception".
-  try {
-
-    // Check the path name of the archive
-    sys::Path ArchivePath;
-    if (!ArchivePath.set(ArchiveName))
-      throw std::string("Archive name invalid: ") + ArchiveName;
-
-    // Make sure it exists, we don't create empty archives
-    bool Exists;
-    if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists)
-      throw std::string("Archive file does not exist");
-
-    std::string err_msg;
-    std::auto_ptr<Archive>
-      AutoArchive(Archive::OpenAndLoad(ArchivePath, Context, &err_msg));
-    Archive* TheArchive = AutoArchive.get();
-    if (!TheArchive)
-      throw err_msg;
-
-    if (TheArchive->writeToDisk(true, false, &err_msg ))
-      throw err_msg;
-
-    if (Verbose)
-      printSymbolTable(TheArchive);
-
-  } catch (const char* msg) {
-    errs() << argv[0] << ": " << msg << "\n\n";
-    exitCode = 1;
-  } catch (const std::string& msg) {
-    errs() << argv[0] << ": " << msg << "\n";
-    exitCode = 2;
-  } catch (...) {
-    errs() << argv[0] << ": An unexpected unknown exception occurred.\n";
-    exitCode = 3;
+  // Check the path name of the archive
+  sys::Path ArchivePath;
+  if (!ArchivePath.set(ArchiveName)) {
+    errs() << argv[0] << ": " << "Archive name invalid: " << ArchiveName <<
+      "\n";
+    return 1;
   }
+
+  // Make sure it exists, we don't create empty archives
+  bool Exists;
+  if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists) {
+    errs() << argv[0] << ": " << "Archive file does not exist" <<
+      ArchivePath.str() << "\n";
+    return 1;
+  }
+
+  std::string err_msg;
+  std::auto_ptr<Archive>
+    AutoArchive(Archive::OpenAndLoad(ArchivePath, Context, &err_msg));
+  Archive* TheArchive = AutoArchive.get();
+  if (!TheArchive) {
+    errs() << argv[0] << ": " << err_msg << "\n";
+    return 1;
+  }
+
+  if (TheArchive->writeToDisk(true, false, &err_msg )) {
+    errs() << argv[0] << ": " << err_msg << "\n";
+    return 1;
+  }
+
+  if (Verbose)
+    printSymbolTable(TheArchive);
+
   return exitCode;
 }

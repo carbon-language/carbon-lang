@@ -23,6 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <fstream>
 using namespace llvm;
@@ -126,40 +127,57 @@ std::set<sys::Path> Paths;
 // The Archive object to which all the editing operations will be sent.
 Archive* TheArchive = 0;
 
+// The name this program was invoked as.
+static const char *program_name;
+
+// show_help - Show the error message, the help message and exit.
+LLVM_ATTRIBUTE_NORETURN static void
+show_help(const std::string &msg) {
+  errs() << program_name << ": " << msg << "\n\n";
+  cl::PrintHelpMessage();
+  if (TheArchive)
+    delete TheArchive;
+  std::exit(1);
+}
+
+// fail - Show the error message and exit.
+LLVM_ATTRIBUTE_NORETURN static void
+fail(const std::string &msg) {
+  errs() << program_name << ": " << msg << "\n\n";
+  if (TheArchive)
+    delete TheArchive;
+  std::exit(1);
+}
+
 // getRelPos - Extract the member filename from the command line for
 // the [relpos] argument associated with a, b, and i modifiers
 void getRelPos() {
-  if(RestOfArgs.size() > 0) {
-    RelPos = RestOfArgs[0];
-    RestOfArgs.erase(RestOfArgs.begin());
-  }
-  else
-    throw "Expected [relpos] for a, b, or i modifier";
+  if(RestOfArgs.size() == 0)
+    show_help("Expected [relpos] for a, b, or i modifier");
+  RelPos = RestOfArgs[0];
+  RestOfArgs.erase(RestOfArgs.begin());
 }
 
 // getCount - Extract the [count] argument associated with the N modifier
 // from the command line and check its value.
 void getCount() {
-  if(RestOfArgs.size() > 0) {
-    Count = atoi(RestOfArgs[0].c_str());
-    RestOfArgs.erase(RestOfArgs.begin());
-  }
-  else
-    throw "Expected [count] value with N modifier";
+  if(RestOfArgs.size() == 0)
+    show_help("Expected [count] value with N modifier");
+
+  Count = atoi(RestOfArgs[0].c_str());
+  RestOfArgs.erase(RestOfArgs.begin());
 
   // Non-positive counts are not allowed
   if (Count < 1)
-    throw "Invalid [count] value (not a positive integer)";
+    show_help("Invalid [count] value (not a positive integer)");
 }
 
 // getArchive - Get the archive file name from the command line
 void getArchive() {
-  if(RestOfArgs.size() > 0) {
-    ArchiveName = RestOfArgs[0];
-    RestOfArgs.erase(RestOfArgs.begin());
-  }
-  else
-    throw "An archive name must be specified.";
+  if(RestOfArgs.size() == 0)
+    show_help("An archive name must be specified");
+  ArchiveName = RestOfArgs[0];
+  RestOfArgs.erase(RestOfArgs.begin());
 }
 
 // getMembers - Copy over remaining items in RestOfArgs to our Members vector
@@ -240,25 +258,27 @@ ArchiveOperation parseCommandLine() {
   // Perform various checks on the operation/modifier specification
   // to make sure we are dealing with a legal request.
   if (NumOperations == 0)
-    throw "You must specify at least one of the operations";
+    show_help("You must specify at least one of the operations");
   if (NumOperations > 1)
-    throw "Only one operation may be specified";
+    show_help("Only one operation may be specified");
   if (NumPositional > 1)
-    throw "You may only specify one of a, b, and i modifiers";
-  if (AddAfter || AddBefore || InsertBefore)
+    show_help("You may only specify one of a, b, and i modifiers");
+  if (AddAfter || AddBefore || InsertBefore) {
     if (Operation != Move && Operation != ReplaceOrInsert)
-      throw "The 'a', 'b' and 'i' modifiers can only be specified with "
-            "the 'm' or 'r' operations";
+      show_help("The 'a', 'b' and 'i' modifiers can only be specified with "
+            "the 'm' or 'r' operations");
+  }
   if (RecurseDirectories && Operation != ReplaceOrInsert)
-    throw "The 'R' modifiers is only applicabe to the 'r' operation";
+    show_help("The 'R' modifiers is only applicabe to the 'r' operation");
   if (OriginalDates && Operation != Extract)
-    throw "The 'o' modifier is only applicable to the 'x' operation";
+    show_help("The 'o' modifier is only applicable to the 'x' operation");
   if (TruncateNames && Operation!=QuickAppend && Operation!=ReplaceOrInsert)
-    throw "The 'f' modifier is only applicable to the 'q' and 'r' operations";
+    show_help("The 'f' modifier is only applicable to the 'q' and 'r' "
+              "operations");
   if (OnlyUpdate && Operation != ReplaceOrInsert)
-    throw "The 'u' modifier is only applicable to the 'r' operation";
+    show_help("The 'u' modifier is only applicable to the 'r' operation");
   if (Count > 1 && Members.size() > 1)
-    throw "Only one member name may be specified with the 'N' modifier";
+    show_help("Only one member name may be specified with the 'N' modifier");
 
   // Return the parsed operation to the caller
   return Operation;
@@ -304,16 +324,16 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
   for (unsigned i = 0; i < Members.size(); i++) {
     sys::Path aPath;
     if (!aPath.set(Members[i]))
-      throw std::string("File member name invalid: ") + Members[i];
+      fail(std::string("File member name invalid: ") + Members[i]);
     if (checkExistence) {
       bool Exists;
       if (sys::fs::exists(aPath.str(), Exists) || !Exists)
-        throw std::string("File does not exist: ") + Members[i];
+        fail(std::string("File does not exist: ") + Members[i]);
       std::string Err;
       sys::PathWithStatus PwS(aPath);
       const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
       if (!si)
-        throw Err;
+        fail(Err);
       if (si->isDir) {
         std::set<sys::Path> dirpaths;
         if (recurseDirectories(aPath, dirpaths, ErrMsg))
@@ -683,6 +703,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
 
 // main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
+  program_name = argv[0];
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
@@ -698,76 +719,60 @@ int main(int argc, char **argv) {
 
   int exitCode = 0;
 
-  // Make sure we don't exit with "unhandled exception".
-  try {
-    // Do our own parsing of the command line because the CommandLine utility
-    // can't handle the grouped positional parameters without a dash.
-    ArchiveOperation Operation = parseCommandLine();
+  // Do our own parsing of the command line because the CommandLine utility
+  // can't handle the grouped positional parameters without a dash.
+  ArchiveOperation Operation = parseCommandLine();
 
-    // Check the path name of the archive
-    sys::Path ArchivePath;
-    if (!ArchivePath.set(ArchiveName))
-      throw std::string("Archive name invalid: ") + ArchiveName;
+  // Check the path name of the archive
+  sys::Path ArchivePath;
+  if (!ArchivePath.set(ArchiveName)) {
+    errs() << argv[0] << ": Archive name invalid: " << ArchiveName << "\n";
+    return 1;
+  }
 
-    // Create or open the archive object.
-    bool Exists;
-    if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists) {
-      // Produce a warning if we should and we're creating the archive
-      if (!Create)
-        errs() << argv[0] << ": creating " << ArchivePath.str() << "\n";
-      TheArchive = Archive::CreateEmpty(ArchivePath, Context);
-      TheArchive->writeToDisk();
-    } else {
-      std::string Error;
-      TheArchive = Archive::OpenAndLoad(ArchivePath, Context, &Error);
-      if (TheArchive == 0) {
-        errs() << argv[0] << ": error loading '" << ArchivePath.str() << "': "
-               << Error << "!\n";
-        return 1;
-      }
-    }
-
-    // Make sure we're not fooling ourselves.
-    assert(TheArchive && "Unable to instantiate the archive");
-
-    // Make sure we clean up the archive even on failure.
-    std::auto_ptr<Archive> AutoArchive(TheArchive);
-
-    // Perform the operation
-    std::string ErrMsg;
-    bool haveError = false;
-    switch (Operation) {
-      case Print:           haveError = doPrint(&ErrMsg); break;
-      case Delete:          haveError = doDelete(&ErrMsg); break;
-      case Move:            haveError = doMove(&ErrMsg); break;
-      case QuickAppend:     haveError = doQuickAppend(&ErrMsg); break;
-      case ReplaceOrInsert: haveError = doReplaceOrInsert(&ErrMsg); break;
-      case DisplayTable:    haveError = doDisplayTable(&ErrMsg); break;
-      case Extract:         haveError = doExtract(&ErrMsg); break;
-      case NoOperation:
-        errs() << argv[0] << ": No operation was selected.\n";
-        break;
-    }
-    if (haveError) {
-      errs() << argv[0] << ": " << ErrMsg << "\n";
+  // Create or open the archive object.
+  bool Exists;
+  if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists) {
+    // Produce a warning if we should and we're creating the archive
+    if (!Create)
+      errs() << argv[0] << ": creating " << ArchivePath.str() << "\n";
+    TheArchive = Archive::CreateEmpty(ArchivePath, Context);
+    TheArchive->writeToDisk();
+  } else {
+    std::string Error;
+    TheArchive = Archive::OpenAndLoad(ArchivePath, Context, &Error);
+    if (TheArchive == 0) {
+      errs() << argv[0] << ": error loading '" << ArchivePath.str() << "': "
+             << Error << "!\n";
       return 1;
     }
-  } catch (const char*msg) {
-    // These errors are usage errors, thrown only by the various checks in the
-    // code above.
-    errs() << argv[0] << ": " << msg << "\n\n";
-    cl::PrintHelpMessage();
-    exitCode = 1;
-  } catch (const std::string& msg) {
-    // These errors are thrown by LLVM libraries (e.g. lib System) and represent
-    // a more serious error so we bump the exitCode and don't print the usage.
-    errs() << argv[0] << ": " << msg << "\n";
-    exitCode = 2;
-  } catch (...) {
-    // This really shouldn't happen, but just in case ....
-    errs() << argv[0] << ": An unexpected unknown exception occurred.\n";
-    exitCode = 3;
   }
+
+  // Make sure we're not fooling ourselves.
+  assert(TheArchive && "Unable to instantiate the archive");
+
+  // Perform the operation
+  std::string ErrMsg;
+  bool haveError = false;
+  switch (Operation) {
+    case Print:           haveError = doPrint(&ErrMsg); break;
+    case Delete:          haveError = doDelete(&ErrMsg); break;
+    case Move:            haveError = doMove(&ErrMsg); break;
+    case QuickAppend:     haveError = doQuickAppend(&ErrMsg); break;
+    case ReplaceOrInsert: haveError = doReplaceOrInsert(&ErrMsg); break;
+    case DisplayTable:    haveError = doDisplayTable(&ErrMsg); break;
+    case Extract:         haveError = doExtract(&ErrMsg); break;
+    case NoOperation:
+      errs() << argv[0] << ": No operation was selected.\n";
+      break;
+  }
+  if (haveError) {
+    errs() << argv[0] << ": " << ErrMsg << "\n";
+    return 1;
+  }
+
+  delete TheArchive;
+  TheArchive = 0;
 
   // Return result code back to operating system.
   return exitCode;
