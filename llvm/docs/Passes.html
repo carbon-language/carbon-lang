@@ -77,6 +77,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#basicaa">-basicaa</a></td><td>Basic Alias Analysis (stateless AA impl)</td></tr>
 <tr><td><a href="#basiccg">-basiccg</a></td><td>Basic CallGraph Construction</td></tr>
 <tr><td><a href="#count-aa">-count-aa</a></td><td>Count Alias Analysis Query Responses</td></tr>
+<tr><td><a href="#da">-da</a></td><td>Dependence Analysis</td></tr>
 <tr><td><a href="#debug-aa">-debug-aa</a></td><td>AA use debugger</td></tr>
 <tr><td><a href="#domfrontier">-domfrontier</a></td><td>Dominance Frontier Construction</td></tr>
 <tr><td><a href="#domtree">-domtree</a></td><td>Dominator Tree Construction</td></tr>
@@ -92,7 +93,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#intervals">-intervals</a></td><td>Interval Partition Construction</td></tr>
 <tr><td><a href="#iv-users">-iv-users</a></td><td>Induction Variable Users</td></tr>
 <tr><td><a href="#lazy-value-info">-lazy-value-info</a></td><td>Lazy Value Information Analysis</td></tr>
-<tr><td><a href="#lda">-lda</a></td><td>Loop Dependence Analysis</td></tr>
 <tr><td><a href="#libcall-aa">-libcall-aa</a></td><td>LibCall Alias Analysis</td></tr>
 <tr><td><a href="#lint">-lint</a></td><td>Statically lint-checks LLVM IR</td></tr>
 <tr><td><a href="#loops">-loops</a></td><td>Natural Loop Information</td></tr>
@@ -247,6 +247,15 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   A pass which can be used to count how many alias queries
   are being made and how the alias analysis implementation being used responds.
   </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<h3>
+  <a name="da">-da: Dependence Analysis</a>
+</h3>
+<div>
+  <p>Dependence analysis framework, which is used to detect dependences in
+  memory accesses.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -429,15 +438,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 </h3>
 <div>
   <p>Interface for lazy computation of value constraint information.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<h3>
-  <a name="lda">-lda: Loop Dependence Analysis</a>
-</h3>
-<div>
-  <p>Loop dependence analysis framework, which is used to detect dependences in
-  memory accesses in loops.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->

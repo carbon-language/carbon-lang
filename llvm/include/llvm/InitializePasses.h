@@ -147,7 +147,6 @@ void initializeProfileMetadataLoaderPassPass(PassRegistry&);
 void initializePathProfileLoaderPassPass(PassRegistry&);
 void initializeLocalStackSlotPassPass(PassRegistry&);
 void initializeLoopDeletionPass(PassRegistry&);
-void initializeLoopDependenceAnalysisPass(PassRegistry&);
 void initializeLoopExtractorPass(PassRegistry&);
 void initializeLoopInfoPass(PassRegistry&);
 void initializeLoopInstSimplifyPass(PassRegistry&);
