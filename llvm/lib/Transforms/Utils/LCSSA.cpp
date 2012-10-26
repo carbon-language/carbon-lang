@@ -53,6 +53,8 @@ namespace {
 
     // Cached analysis information for the current function.
     DominatorTree *DT;
+    LoopInfo *LI;
+    ScalarEvolution *SE;
     std::vector<BasicBlock*> LoopBlocks;
     PredIteratorCache PredCache;
     Loop *L;
@@ -117,6 +119,8 @@ bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
   L = TheLoop;
   
   DT = &getAnalysis<DominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
+  SE = getAnalysisIfAvailable<ScalarEvolution>();
 
   // Get the set of exiting blocks.
   SmallVector<BasicBlock*, 8> ExitBlocks;
@@ -244,6 +248,12 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     
     // Remember that this phi makes the value alive in this block.
     SSAUpdate.AddAvailableValue(ExitBB, PN);
+
+    // If the exiting block is part of a loop inserting a PHI may change its
+    // SCEV analysis. Conservatively drop any caches from it.
+    if (SE)
+      if (Loop *L = LI->getLoopFor(ExitBB))
+        SE->forgetLoop(L);
   }
   
   // Rewrite all uses outside the loop in terms of the new PHIs we just
@@ -257,6 +267,10 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     BasicBlock *UserBB = User->getParent();
     if (PHINode *PN = dyn_cast<PHINode>(User))
       UserBB = PN->getIncomingBlock(*UsesToRewrite[i]);
+
+    // Tell SCEV to reanalyze the value that's about to change.
+    if (SE)
+      SE->forgetValue(*UsesToRewrite[i]);
 
     if (isa<PHINode>(UserBB->begin()) &&
         isExitBlock(UserBB, ExitBlocks)) {

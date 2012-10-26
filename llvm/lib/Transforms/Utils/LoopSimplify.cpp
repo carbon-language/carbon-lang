@@ -194,6 +194,11 @@ ReprocessLoop:
 
           BI->setCondition(ConstantInt::get(Cond->getType(),
                                             !L->contains(BI->getSuccessor(0))));
+
+          // This may make the loop analyzable, force SCEV recomputation.
+          if (SE)
+            SE->forgetLoop(L);
+
           Changed = true;
         }
       }
