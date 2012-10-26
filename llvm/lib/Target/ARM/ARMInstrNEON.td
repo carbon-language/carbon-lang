@@ -5140,23 +5140,25 @@ def VSETLNi32 : NVSetLane<{1,1,1,0,0,0,?,0}, 0b1011, 0b00, (outs DPR:$V),
                                            GPR:$R, imm:$lane))]> {
   let Inst{21} = lane{0};
 }
-
-def VSETLNi8Q : PseudoNeonI<(outs QPR:$V),
-                             (ins QPR:$src1, GPR:$R, VectorIndex8:$lane),
-                             IIC_VMOVISL, "",
-                             [(set QPR:$V, (vector_insert (v16i8 QPR:$src1),
-                                           GPR:$R, imm:$lane))]>;
-def VSETLNi16Q : PseudoNeonI<(outs QPR:$V),
-                             (ins QPR:$src1, GPR:$R, VectorIndex16:$lane),
-                             IIC_VMOVISL, "",
-                             [(set QPR:$V, (vector_insert (v8i16 QPR:$src1),
-                                           GPR:$R, imm:$lane))]>;
 }
-
+def : Pat<(vector_insert (v16i8 QPR:$src1), GPR:$src2, imm:$lane),
+          (v16i8 (INSERT_SUBREG QPR:$src1,
+                  (v8i8 (VSETLNi8 (v8i8 (EXTRACT_SUBREG QPR:$src1,
+                                   (DSubReg_i8_reg imm:$lane))),
+                            GPR:$src2, (SubReg_i8_lane imm:$lane))),
+                  (DSubReg_i8_reg imm:$lane)))>;
+def : Pat<(vector_insert (v8i16 QPR:$src1), GPR:$src2, imm:$lane),
+          (v8i16 (INSERT_SUBREG QPR:$src1,
+                  (v4i16 (VSETLNi16 (v4i16 (EXTRACT_SUBREG QPR:$src1,
+                                     (DSubReg_i16_reg imm:$lane))),
+                             GPR:$src2, (SubReg_i16_lane imm:$lane))),
+                  (DSubReg_i16_reg imm:$lane)))>;
 def : Pat<(insertelt (v4i32 QPR:$src1), GPR:$src2, imm:$lane),
-         (v4i32 (INSERT_SUBREG QPR:$src1,
-                 GPR:$src2,
-                 (SSubReg_f32_reg imm:$lane)))>;
+          (v4i32 (INSERT_SUBREG QPR:$src1,
+                  (v2i32 (VSETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src1,
+                                     (DSubReg_i32_reg imm:$lane))),
+                             GPR:$src2, (SubReg_i32_lane imm:$lane))),
+                  (DSubReg_i32_reg imm:$lane)))>;
 
 def : Pat<(v2f32 (insertelt DPR:$src1, SPR:$src2, imm:$src3)),
           (INSERT_SUBREG (v2f32 (COPY_TO_REGCLASS DPR:$src1, DPR_VFP2)),

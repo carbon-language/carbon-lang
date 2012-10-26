@@ -6,7 +6,7 @@
 
 ; CHECK: @f
 ; CHECK-NOT: vorr d
-; CHECK: vmov s
+; CHECK: vmov.32 d
 ; CHECK-NOT: vorr d
 ; CHECK: mov pc, lr
 define <4 x i32> @f(<4 x i32> %in) {
