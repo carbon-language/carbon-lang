@@ -696,9 +696,22 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
                                                  0, /*IsDecltype=*/true);
     Result = ParseExpression();
     if (Result.isInvalid()) {
-      SkipUntil(tok::r_paren);
       DS.SetTypeSpecError();
-      return StartLoc;
+      if (SkipUntil(tok::r_paren, /*StopAtSemi=*/true, /*DontConsume=*/true)) {
+        EndLoc = ConsumeParen();
+      } else {
+        assert(Tok.is(tok::semi));
+        if (PP.isBacktrackEnabled()) {
+          // Backtrack to get the location of the last token before the semi.
+          PP.RevertCachedTokens(2);
+          ConsumeToken(); // the semi.
+          EndLoc = ConsumeAnyToken();
+          assert(Tok.is(tok::semi));
+        } else {
+          EndLoc = Tok.getLocation();
+        }
+      }
+      return EndLoc;
     }
 
     // Match the ')'

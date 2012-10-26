@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
-// expected-no-diagnostics
 
 // PR5290
 int const f0();
@@ -29,3 +28,11 @@ template<typename T> auto f(T t) -> decltype(S<int>(t)) {
   using U = S<int>;
   return S<int>(t);
 }
+
+struct B {
+  B(decltype(undeclared)); // expected-error {{undeclared identifier}}
+};
+struct C {
+  C(decltype(undeclared; // expected-error {{undeclared identifier}} \
+                         // expected-error {{expected ')'}} expected-note {{to match this '('}}
+};
