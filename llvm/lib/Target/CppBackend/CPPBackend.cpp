@@ -476,11 +476,11 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       unsigned index = PAL.getSlot(i).Index;
       AttrBuilder attrs(PAL.getSlot(i).Attrs);
       Out << "PAWI.Index = " << index << "U;\n";
-      Out << "   AttrBuilder B;\n";
+      Out << " {\n    AttrBuilder B;\n";
 
 #define HANDLE_ATTR(X)                                     \
       if (attrs.hasAttribute(Attributes::X))               \
-        Out << "   B.addAttribute(Attributes::" #X ");\n"; \
+        Out << "    B.addAttribute(Attributes::" #X ");\n"; \
       attrs.removeAttribute(Attributes::X);
 
       HANDLE_ATTR(SExt);
@@ -509,11 +509,10 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       HANDLE_ATTR(NonLazyBind);
 #undef HANDLE_ATTR
       if (attrs.hasAttribute(Attributes::StackAlignment))
-        Out << "B.addStackAlignmentAttr(" << attrs.getStackAlignment() << ")";
-      nl(Out);
+        Out << "    B.addStackAlignmentAttr(" << attrs.getStackAlignment() << ")\n";
       attrs.removeAttribute(Attributes::StackAlignment);
       assert(!attrs.hasAttributes() && "Unhandled attribute!");
-      Out << "PAWI.Attrs = Attributes::get(mod->getContext(), B);";
+      Out << "    PAWI.Attrs = Attributes::get(mod->getContext(), B);\n }";
       nl(Out);
       Out << "Attrs.push_back(PAWI);";
       nl(Out);
