@@ -460,25 +460,28 @@ static void DoLargeMallocForGetFreeBytesTestAndDie() {
 }
 
 TEST(AddressSanitizerInterface, GetFreeBytesTest) {
-  static const size_t kNumOfChunks = 100;
-  static const size_t kChunkSize = 100;
-  char *chunks[kNumOfChunks];
-  size_t i;
-  size_t old_free_bytes, new_free_bytes;
   // Allocate a small chunk. Now allocator probably has a lot of these
   // chunks to fulfill future requests. So, future requests will decrease
-  // the number of free bytes.
-  chunks[0] = Ident((char*)malloc(kChunkSize));
-  old_free_bytes = __asan_get_free_bytes();
-  for (i = 1; i < kNumOfChunks; i++) {
-    chunks[i] = Ident((char*)malloc(kChunkSize));
-    new_free_bytes = __asan_get_free_bytes();
-    EXPECT_LT(new_free_bytes, old_free_bytes);
-    old_free_bytes = new_free_bytes;
+  // the number of free bytes. Do this only on systems where there
+  // is enough memory for such assumptions.
+  if (__WORDSIZE == 64 && !ASAN_LOW_MEMORY) {
+    static const size_t kNumOfChunks = 100;
+    static const size_t kChunkSize = 100;
+    char *chunks[kNumOfChunks];
+    size_t i;
+    size_t old_free_bytes, new_free_bytes;
+    chunks[0] = Ident((char*)malloc(kChunkSize));
+    old_free_bytes = __asan_get_free_bytes();
+    for (i = 1; i < kNumOfChunks; i++) {
+      chunks[i] = Ident((char*)malloc(kChunkSize));
+      new_free_bytes = __asan_get_free_bytes();
+      EXPECT_LT(new_free_bytes, old_free_bytes);
+      old_free_bytes = new_free_bytes;
+    }
+    for (i = 0; i < kNumOfChunks; i++)
+      free(chunks[i]);
   }
   EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
-  for (i = 0; i < kNumOfChunks; i++)
-    free(chunks[i]);
 }
 
 static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<20, 357};
