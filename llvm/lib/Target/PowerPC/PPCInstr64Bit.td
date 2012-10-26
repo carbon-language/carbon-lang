@@ -494,16 +494,16 @@ def RLDIMI : MDForm_1<30, 3,
 
 // Rotate instructions.
 def RLDCL  : MDForm_1<30, 0,
-                      (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB, u6imm:$MB),
-                      "rldcl $rA, $rS, $rB, $MB", IntRotateD,
+                      (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB, u6imm:$MBE),
+                      "rldcl $rA, $rS, $rB, $MBE", IntRotateD,
                       []>, isPPC64;
 def RLDICL : MDForm_1<30, 0,
-                      (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH, u6imm:$MB),
-                      "rldicl $rA, $rS, $SH, $MB", IntRotateDI,
+                      (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH, u6imm:$MBE),
+                      "rldicl $rA, $rS, $SH, $MBE", IntRotateDI,
                       []>, isPPC64;
 def RLDICR : MDForm_1<30, 1,
-                      (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH, u6imm:$ME),
-                      "rldicr $rA, $rS, $SH, $ME", IntRotateDI,
+                      (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH, u6imm:$MBE),
+                      "rldicr $rA, $rS, $SH, $MBE", IntRotateDI,
                       []>, isPPC64;
 
 def RLWINM8 : MForm_2<21,
