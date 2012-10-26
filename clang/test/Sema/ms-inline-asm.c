@@ -1,3 +1,4 @@
+// REQUIRES: x86-64-registered-target
 // RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -fms-extensions -fenable-experimental-ms-inline-asm -Wno-microsoft -verify -fsyntax-only
 
 void t1(void) { 
