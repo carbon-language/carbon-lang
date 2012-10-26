@@ -153,7 +153,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   int FramePtrSpillFI = 0;
   int D8SpillFI = 0;
 
-  // All calls are tail calls in GHC calling conv, and functions have no prologue/epilogue.
+  // All calls are tail calls in GHC calling conv, and functions have no
+  // prologue/epilogue.
   if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
     return;
 
@@ -361,7 +362,8 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
   int NumBytes = (int)MFI->getStackSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
 
-  // All calls are tail calls in GHC calling conv, and functions have no prologue/epilogue.
+  // All calls are tail calls in GHC calling conv, and functions have no
+  // prologue/epilogue.
   if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
     return;
 
