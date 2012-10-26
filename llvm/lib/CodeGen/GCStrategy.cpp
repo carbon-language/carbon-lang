@@ -388,9 +388,16 @@ void GCMachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
   const TargetFrameLowering *TFI = TM->getFrameLowering();
   assert(TFI && "TargetRegisterInfo not available!");
 
-  for (GCFunctionInfo::roots_iterator RI = FI->roots_begin(),
-                                      RE = FI->roots_end(); RI != RE; ++RI)
-    RI->StackOffset = TFI->getFrameIndexOffset(MF, RI->Num);
+  for (GCFunctionInfo::roots_iterator RI = FI->roots_begin();
+       RI != FI->roots_end();) {
+    // If the root references a dead object, no need to keep it.
+    if (MF.getFrameInfo()->isDeadObjectIndex(RI->Num)) {
+      RI = FI->removeStackRoot(RI);
+    } else {
+      RI->StackOffset = TFI->getFrameIndexOffset(MF, RI->Num);
+      ++RI;
+    }
+  }
 }
 
 bool GCMachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {

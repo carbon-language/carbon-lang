@@ -122,6 +122,11 @@ namespace llvm {
       Roots.push_back(GCRoot(Num, Metadata));
     }
 
+    /// removeStackRoot - Removes a root.
+    roots_iterator removeStackRoot(roots_iterator position) {
+      return Roots.erase(position);
+    }
+
     /// addSafePoint - Notes the existence of a safe point. Num is the ID of the
     /// label just prior to the safe point (if the code generator is using
     /// MachineModuleInfo).
