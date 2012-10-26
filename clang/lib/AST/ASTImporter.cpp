@@ -1129,10 +1129,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      NonTypeTemplateParmDecl *D1,
                                      NonTypeTemplateParmDecl *D2) {
-  // FIXME: Enable once we have variadic templates.
-#if 0
   if (D1->isParameterPack() != D2->isParameterPack()) {
-    if (Context.omplain) {
+    if (Context.Complain) {
       Context.Diag2(D2->getLocation(), diag::err_odr_parameter_pack_non_pack)
         << D2->isParameterPack();
       Context.Diag1(D1->getLocation(), diag::note_odr_parameter_pack_non_pack)
@@ -1140,7 +1138,6 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     }
     return false;
   }
-#endif
   
   // Check types.
   if (!Context.IsStructurallyEquivalent(D1->getType(), D2->getType())) {
@@ -1160,8 +1157,6 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      TemplateTemplateParmDecl *D1,
                                      TemplateTemplateParmDecl *D2) {
-  // FIXME: Enable once we have variadic templates.
-#if 0
   if (D1->isParameterPack() != D2->isParameterPack()) {
     if (Context.Complain) {
       Context.Diag2(D2->getLocation(), diag::err_odr_parameter_pack_non_pack)
@@ -1171,8 +1166,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     }
     return false;
   }
-#endif
-  
+
   // Check template parameter lists.
   return IsStructurallyEquivalent(Context, D1->getTemplateParameters(),
                                   D2->getTemplateParameters());
