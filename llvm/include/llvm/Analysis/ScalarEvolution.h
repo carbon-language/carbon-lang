@@ -874,6 +874,7 @@ namespace llvm {
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void print(raw_ostream &OS, const Module* = 0) const;
+    virtual void verifyAnalysis() const;
 
   private:
     FoldingSet<SCEV> UniqueSCEVs;
