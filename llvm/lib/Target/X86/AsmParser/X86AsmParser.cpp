@@ -891,7 +891,7 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
   SMLoc End;
   const MCExpr *Val;
   if (getParser().ParseExpression(Val, End))
-    return 0;
+    return ErrorOperand(Start, "Unable to parse expression!");
 
   End = Parser.getTok().getLoc();
 
@@ -928,7 +928,7 @@ X86Operand *X86AsmParser::ParseIntelTypeOperator(SMLoc Start) {
     // identifier.
     // FIXME: Pass a valid SMLoc.
     if (!SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Size))
-      return ErrorOperand(Start, "Unable to lookup TYPE of expr.");
+      return ErrorOperand(Start, "Unable to lookup TYPE of expr!");
 
     Size /= 8; // Size is in terms of bits, but we want bytes in the context.
   }
@@ -946,15 +946,21 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
   SMLoc Start = Parser.getTok().getLoc(), End;
 
   // offset operator.
-  const AsmToken &Tok = Parser.getTok();
-  if ((Tok.getString() == "offset" || Tok.getString() == "OFFSET") &&
+  StringRef AsmTokStr = Parser.getTok().getString();
+  if ((AsmTokStr == "offset" || AsmTokStr == "OFFSET") &&
       isParsingInlineAsm())
     return ParseIntelOffsetOfOperator(Start);
 
   // Type directive.
-  if ((Tok.getString() == "type" || Tok.getString() == "TYPE") &&
+  if ((AsmTokStr == "type" || AsmTokStr == "TYPE") &&
       isParsingInlineAsm())
     return ParseIntelTypeOperator(Start);
+
+  // Unsupported directives.
+  if (isParsingIntelSyntax() &&
+      (AsmTokStr == "size" || AsmTokStr == "SIZE" ||
+       AsmTokStr == "length" || AsmTokStr == "LENGTH"))
+      return ErrorOperand(Start, "Unsupported directive!");
 
   // immediate.
   if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Real) ||
