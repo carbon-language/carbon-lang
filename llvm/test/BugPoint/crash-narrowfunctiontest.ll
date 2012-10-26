@@ -2,7 +2,7 @@
 ;
 ; RUN: bugpoint -load %llvmshlibdir/BugpointPasses%shlibext %s -output-prefix %t -bugpoint-crashcalls -silence-passes > /dev/null
 ; REQUIRES: loadable_module
-; XFAIL: lto
+; XFAIL: lto_on_osx
 
 define i32 @foo() { ret i32 1 }
 
