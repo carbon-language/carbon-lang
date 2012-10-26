@@ -2,6 +2,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_allocator_test.cc
   sanitizer_common_test.cc
   sanitizer_flags_test.cc
+  sanitizer_libc_test.cc
   sanitizer_list_test.cc
   sanitizer_stackdepot_test.cc
   sanitizer_test_main.cc
