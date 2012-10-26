@@ -51,41 +51,41 @@ public:
 
   enum AttrVal {
     // IR-Level Attributes
-    None            = 0,   ///< No attributes have been set
-    AddressSafety   = 1,   ///< Address safety checking is on.
-    Alignment       = 2,   ///< Alignment of parameter (5 bits)
+    None,                  ///< No attributes have been set
+    AddressSafety,         ///< Address safety checking is on.
+    Alignment,             ///< Alignment of parameter (5 bits)
                            ///< stored as log2 of alignment with +1 bias
                            ///< 0 means unaligned different from align 1
-    AlwaysInline    = 3,   ///< inline=always
-    ByVal           = 4,   ///< Pass structure by value
-    ForceSizeOpt    = 5,   ///< Function must be optimized for size first
-    InlineHint      = 6,   ///< Source said inlining was desirable
-    InReg           = 7,   ///< Force argument to be passed in register
-    Naked           = 8,   ///< Naked function
-    Nest            = 9,   ///< Nested function static chain
-    NoAlias         = 10,  ///< Considered to not alias after call
-    NoCapture       = 11,  ///< Function creates no aliases of pointer
-    NoImplicitFloat = 12,  ///< Disable implicit floating point insts
-    NoInline        = 13,  ///< inline=never
-    NonLazyBind     = 14,  ///< Function is called early and/or
+    AlwaysInline,          ///< inline=always
+    ByVal,                 ///< Pass structure by value
+    ForceSizeOpt,          ///< Function must be optimized for size first
+    InlineHint,            ///< Source said inlining was desirable
+    InReg,                 ///< Force argument to be passed in register
+    Naked,                 ///< Naked function
+    Nest,                  ///< Nested function static chain
+    NoAlias,               ///< Considered to not alias after call
+    NoCapture,             ///< Function creates no aliases of pointer
+    NoImplicitFloat,       ///< Disable implicit floating point insts
+    NoInline,              ///< inline=never
+    NonLazyBind,           ///< Function is called early and/or
                            ///< often, so lazy binding isn't worthwhile
-    NoRedZone       = 15,  ///< Disable redzone
-    NoReturn        = 16,  ///< Mark the function as not returning
-    NoUnwind        = 17,  ///< Function doesn't unwind stack
-    OptimizeForSize = 18,  ///< opt_size
-    ReadNone        = 19,  ///< Function does not access memory
-    ReadOnly        = 20,  ///< Function only reads from memory
-    ReturnsTwice    = 21,  ///< Function can return twice
-    SExt            = 22,  ///< Sign extended before/after call
-    StackAlignment  = 23,  ///< Alignment of stack for function (3 bits)
+    NoRedZone,             ///< Disable redzone
+    NoReturn,              ///< Mark the function as not returning
+    NoUnwind,              ///< Function doesn't unwind stack
+    OptimizeForSize,       ///< opt_size
+    ReadNone,              ///< Function does not access memory
+    ReadOnly,              ///< Function only reads from memory
+    ReturnsTwice,          ///< Function can return twice
+    SExt,                  ///< Sign extended before/after call
+    StackAlignment,        ///< Alignment of stack for function (3 bits)
                            ///< stored as log2 of alignment with +1 bias 0
                            ///< means unaligned (different from
                            ///< alignstack={1))
-    StackProtect    = 24,  ///< Stack protection.
-    StackProtectReq = 25,  ///< Stack protection required.
-    StructRet       = 26,  ///< Hidden pointer to structure to return
-    UWTable         = 27,  ///< Function must be in a unwind table
-    ZExt            = 28   ///< Zero extended before/after call
+    StackProtect,          ///< Stack protection.
+    StackProtectReq,       ///< Stack protection required.
+    StructRet,             ///< Hidden pointer to structure to return
+    UWTable,               ///< Function must be in a unwind table
+    ZExt                   ///< Zero extended before/after call
   };
 private:
   AttributesImpl *Attrs;
