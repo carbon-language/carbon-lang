@@ -27,8 +27,21 @@ on the ARMv6 and ARMv7 architectures and may be inapplicable to older chips.
 
 #. If you want to run ``make
    check-all`` after building LLVM/Clang, to avoid false alarms (eg, ARCMT
-   failure) please use the following configuration:
+   failure) please use at least the following configuration:
 
    .. code-block:: bash
 
-     $ ../$LLVM_SRC_DIR/configure --with-abi=aapcs
+     $ ../$LLVM_SRC_DIR/configure --with-abi=aapcs-vfp
+
+#. The most popular linaro/ubuntu OS's for ARM boards, eg, the
+   Pandaboard, have become hard-float platforms. The following set
+   of configuration options appears to be a good choice for this
+   platform:
+
+   .. code-block:: bash
+
+     ./configure --build=armv7l-unknown-linux-gnueabihf
+     --host=armv7l-unknown-linux-gnueabihf
+     --target=armv7l-unknown-linux-gnueabihf --with-cpu=cortex-a9
+     --with-float=hard --with-abi=aapcs-vfp --with-fpu=neon
+     --enable-targets=arm --disable-optimized --enable-assertions
