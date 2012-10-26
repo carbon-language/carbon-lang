@@ -370,7 +370,7 @@ public:
 
   /// getRegClass - Returns the register class associated with the enumeration
   /// value.  See class MCOperandInfo.
-  const MCRegisterClass getRegClass(unsigned i) const {
+  const MCRegisterClass& getRegClass(unsigned i) const {
     assert(i < getNumRegClasses() && "Register Class ID out of range");
     return Classes[i];
   }
