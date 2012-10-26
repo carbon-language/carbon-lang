@@ -71,6 +71,6 @@ void test6f(void);
 void test6() {
   do {
   } while (test6f(), 0);
-  // CHECK call void @test6f()
+  // CHECK: call void @test6f()
 }
 
