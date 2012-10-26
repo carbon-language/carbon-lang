@@ -382,6 +382,14 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
 
 #if ASAN_INTERCEPT_STRDUP
 INTERCEPTOR(char*, strdup, const char *s) {
+#if MAC_INTERPOSE_FUNCTIONS
+  // FIXME: because internal_strdup() uses InternalAlloc(), which currently
+  // just calls malloc() on Mac, we can't use internal_strdup() with the
+  // dynamic runtime. We can remove the call to REAL(strdup) once InternalAlloc
+  // starts using mmap() instead.
+  // See also http://code.google.com/p/address-sanitizer/issues/detail?id=123.
+  if (!asan_inited) return REAL(strdup)(s);
+#endif
   if (!asan_inited) return internal_strdup(s);
   ENSURE_ASAN_INITED();
   if (flags()->replace_str) {
