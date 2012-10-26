@@ -6,6 +6,7 @@ void t1(void) {
 }
 
 void f() {
+  int foo;
   __asm { 
     mov eax, eax
     .unknowndirective // expected-error {{unknown directive}}
@@ -18,4 +19,17 @@ void f() {
   __asm {
     mov eax, 1+++ // expected-error 2 {{unknown token in expression}}
   }
+  f();
+  __asm {
+    mov eax, TYPE cat // expected-error {{Unable to lookup TYPE of expr!}}
+  }
+  f();
+  __asm {
+    mov eax, SIZE foo // expected-error {{Unsupported directive!}}
+  }
+  f();
+  __asm {
+    mov eax, LENGTH foo // expected-error {{Unsupported directive!}}
+  }
+
 }
