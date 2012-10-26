@@ -1557,6 +1557,13 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
     bool Allowed = EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset);
     (void)Allowed;
     assert(Allowed && "Base subobject externally placed at overlapping offset");
+
+    if (InferAlignment && Offset < getDataSize().RoundUpToAlignment(BaseAlign)){
+      // The externally-supplied base offset is before the base offset we
+      // computed. Assume that the structure is packed.
+      Alignment = CharUnits::One();
+      InferAlignment = false;
+    }
   }
   
   if (!Base->Class->isEmpty()) {
@@ -1616,7 +1623,6 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
       if (ExternalLayout) {
         if (ExternalAlign > 0) {
           Alignment = Context.toCharUnitsFromBits(ExternalAlign);
-          UnpackedAlignment = Alignment;
         } else {
           // The external source didn't have alignment information; infer it.
           InferAlignment = true;
@@ -2166,11 +2172,6 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 }
 
 void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
-  if (ExternalLayout) {
-    setSize(ExternalSize);
-    return;
-  }
-  
   // In C++, records cannot be of size 0.
   if (Context.getLangOpts().CPlusPlus && getSizeInBits() == 0) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
@@ -2184,20 +2185,37 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
       setSize(CharUnits::One());
   }
 
+  // Finally, round the size of the record up to the alignment of the
+  // record itself.
+  uint64_t UnpaddedSize = getSizeInBits() - UnfilledBitsInLastByte;
+  uint64_t UnpackedSizeInBits =
+  llvm::RoundUpToAlignment(getSizeInBits(),
+                           Context.toBits(UnpackedAlignment));
+  CharUnits UnpackedSize = Context.toCharUnitsFromBits(UnpackedSizeInBits);
+  uint64_t RoundedSize
+    = llvm::RoundUpToAlignment(getSizeInBits(), Context.toBits(Alignment));
+
+  if (ExternalLayout) {
+    // If we're inferring alignment, and the external size is smaller than
+    // our size after we've rounded up to alignment, conservatively set the
+    // alignment to 1.
+    if (InferAlignment && ExternalSize < RoundedSize) {
+      Alignment = CharUnits::One();
+      InferAlignment = false;
+    }
+    setSize(ExternalSize);
+    return;
+  }
+
+
   // MSVC doesn't round up to the alignment of the record with virtual bases.
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     if (isMicrosoftCXXABI() && RD->getNumVBases())
       return;
   }
 
-  // Finally, round the size of the record up to the alignment of the
-  // record itself.
-  uint64_t UnpaddedSize = getSizeInBits() - UnfilledBitsInLastByte;
-  uint64_t UnpackedSizeInBits = 
-    llvm::RoundUpToAlignment(getSizeInBits(), 
-                             Context.toBits(UnpackedAlignment));
-  CharUnits UnpackedSize = Context.toCharUnitsFromBits(UnpackedSizeInBits);
-  setSize(llvm::RoundUpToAlignment(getSizeInBits(), Context.toBits(Alignment)));
+  // Set the size to the final size.
+  setSize(RoundedSize);
 
   unsigned CharBitNum = Context.getTargetInfo().getCharWidth();
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
@@ -2255,7 +2273,7 @@ RecordLayoutBuilder::updateExternalFieldOffset(const FieldDecl *Field,
   if (InferAlignment && ExternalFieldOffset < ComputedOffset) {
     // The externally-supplied field offset is before the field offset we
     // computed. Assume that the structure is packed.
-    Alignment = CharUnits::fromQuantity(1);
+    Alignment = CharUnits::One();
     InferAlignment = false;
   }
   
