@@ -3808,3 +3808,131 @@ unsigned MipsTargetLowering::getJumpTableEncoding() const {
 
   return TargetLowering::getJumpTableEncoding();
 }
+
+MipsTargetLowering::MipsCC::MipsCC(CallingConv::ID CallConv, bool IsVarArg,
+                                   bool IsO32, CCState &Info) : CCInfo(Info) {
+  UseRegsForByval = true;
+
+  if (IsO32) {
+    RegSize = 4;
+    NumIntArgRegs = array_lengthof(O32IntRegs);
+    ReservedArgArea = 16;
+    IntArgRegs = ShadowRegs = O32IntRegs;
+    FixedFn = VarFn = CC_MipsO32;
+  } else {
+    RegSize = 8;
+    NumIntArgRegs = array_lengthof(Mips64IntRegs);
+    ReservedArgArea = 0;
+    IntArgRegs = Mips64IntRegs;
+    ShadowRegs = Mips64DPRegs;
+    FixedFn = CC_MipsN;
+    VarFn = CC_MipsN_VarArg;
+  }
+
+  if (CallConv == CallingConv::Fast) {
+    assert(!IsVarArg);
+    UseRegsForByval = false;
+    ReservedArgArea = 0;
+    FixedFn = VarFn = CC_Mips_FastCC;
+  }
+
+  // Pre-allocate reserved argument area.
+  CCInfo.AllocateStack(ReservedArgArea, 1);
+}
+
+void MipsTargetLowering::MipsCC::
+analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args) {
+  unsigned NumOpnds = Args.size();
+
+  for (unsigned I = 0; I != NumOpnds; ++I) {
+    MVT ArgVT = Args[I].VT;
+    ISD::ArgFlagsTy ArgFlags = Args[I].Flags;
+    bool R;
+
+    if (ArgFlags.isByVal()) {
+      handleByValArg(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags);
+      continue;
+    }
+
+    if (Args[I].IsFixed)
+      R = FixedFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
+    else
+      R = VarFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
+
+    if (R) {
+#ifndef NDEBUG
+      dbgs() << "Call operand #" << I << " has unhandled type "
+             << EVT(ArgVT).getEVTString();
+#endif
+      llvm_unreachable(0);
+    }
+  }
+}
+
+void MipsTargetLowering::MipsCC::
+analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args) {
+  unsigned NumArgs = Args.size();
+
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    MVT ArgVT = Args[I].VT;
+    ISD::ArgFlagsTy ArgFlags = Args[I].Flags;
+
+    if (ArgFlags.isByVal()) {
+      handleByValArg(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags);
+      continue;
+    }
+
+    if (!FixedFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo))
+      continue;
+
+#ifndef NDEBUG
+    dbgs() << "Formal Arg #" << I << " has unhandled type "
+           << EVT(ArgVT).getEVTString();
+#endif
+    llvm_unreachable(0);
+  }
+}
+
+void
+MipsTargetLowering::MipsCC::handleByValArg(unsigned ValNo, MVT ValVT,
+                                           MVT LocVT,
+                                           CCValAssign::LocInfo LocInfo,
+                                           ISD::ArgFlagsTy ArgFlags) {
+  assert(ArgFlags.getByValSize() && "Byval argument's size shouldn't be 0.");
+
+  struct ByValArgInfo ByVal;
+  unsigned ByValSize = RoundUpToAlignment(ArgFlags.getByValSize(), RegSize);
+  unsigned Align = std::min(std::max(ArgFlags.getByValAlign(), RegSize),
+                            RegSize * 2);
+
+  if (UseRegsForByval)
+    allocateRegs(ByVal, ByValSize, Align);
+
+  // Allocate space on caller's stack.
+  ByVal.Address = CCInfo.AllocateStack(ByValSize - RegSize * ByVal.NumRegs,
+                                       Align);
+  CCInfo.addLoc(CCValAssign::getMem(ValNo, ValVT, ByVal.Address, LocVT,
+                                    LocInfo));
+  ByValArgs.push_back(ByVal);
+}
+
+void MipsTargetLowering::MipsCC::allocateRegs(ByValArgInfo &ByVal,
+                                              unsigned ByValSize,
+                                              unsigned Align) {
+  assert(!(ByValSize % RegSize) && !(Align % RegSize) &&
+         "Byval argument's size and alignment should be a multiple of"
+         "RegSize.");
+
+  ByVal.FirstIdx = CCInfo.getFirstUnallocated(IntArgRegs, NumIntArgRegs);
+
+  // If Align > RegSize, the first arg register must be even.
+  if ((Align > RegSize) && (ByVal.FirstIdx % 2)) {
+    CCInfo.AllocateReg(IntArgRegs[ByVal.FirstIdx], ShadowRegs[ByVal.FirstIdx]);
+    ++ByVal.FirstIdx;
+  }
+
+  // Mark the registers allocated.
+  for (unsigned I = ByVal.FirstIdx; ByValSize && (I < NumIntArgRegs);
+       ByValSize -= RegSize, ++I, ++ByVal.NumRegs)
+    CCInfo.AllocateReg(IntArgRegs[I], ShadowRegs[I]);
+}
