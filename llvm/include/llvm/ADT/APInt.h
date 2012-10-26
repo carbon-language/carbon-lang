@@ -760,7 +760,7 @@ public:
   APInt shl(unsigned shiftAmt) const {
     assert(shiftAmt <= BitWidth && "Invalid shift amount");
     if (isSingleWord()) {
-      if (shiftAmt == BitWidth)
+      if (shiftAmt >= BitWidth)
         return APInt(BitWidth, 0); // avoid undefined shift results
       return APInt(BitWidth, VAL << shiftAmt);
     }
