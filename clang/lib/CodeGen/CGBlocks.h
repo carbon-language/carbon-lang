@@ -47,6 +47,18 @@ namespace CodeGen {
 class CodeGenModule;
 class CGBlockInfo;
 
+// Flags stored in __block variables.
+enum BlockByrefFlags {
+  BLOCK_BYREF_HAS_COPY_DISPOSE         = (1   << 25), // compiler
+  BLOCK_BYREF_LAYOUT_MASK              = (0xF << 28), // compiler
+  BLOCK_BYREF_LAYOUT_EXTENDED          = (1   << 28),
+  BLOCK_BYREF_LAYOUT_NON_OBJECT        = (2   << 28),
+  BLOCK_BYREF_LAYOUT_STRONG            = (3   << 28),
+  BLOCK_BYREF_LAYOUT_BYREF             = (4   << 28),
+  BLOCK_BYREF_LAYOUT_WEAK              = (5   << 28),
+  BLOCK_BYREF_LAYOUT_UNRETAINED        = (6   << 28)
+};
+
 enum BlockLiteralFlags {
   BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
   BLOCK_HAS_CXX_OBJ =       (1 << 26),
