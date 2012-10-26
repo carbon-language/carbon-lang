@@ -1018,8 +1018,8 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
       if (CheckInputsExist && memcmp(Value, "-", 2) != 0) {
         SmallString<64> Path(Value);
         if (Arg *WorkDir = Args.getLastArg(options::OPT_working_directory)) {
-          SmallString<64> Directory(WorkDir->getValue(Args));
-          if (llvm::sys::path::is_absolute(Directory.str())) {
+          if (!llvm::sys::path::is_absolute(Path.str())) {
+            SmallString<64> Directory(WorkDir->getValue(Args));
             llvm::sys::path::append(Directory, Value);
             Path.assign(Directory);
           }
