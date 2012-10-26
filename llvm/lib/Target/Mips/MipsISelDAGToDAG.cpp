@@ -413,6 +413,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 
   case ISD::SUBE:
   case ISD::ADDE: {
+    bool inMips16Mode = Subtarget.inMips16Mode();
     SDValue InFlag = Node->getOperand(2), CmpLHS;
     unsigned Opc = InFlag.getOpcode(); (void)Opc;
     assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) ||
@@ -422,10 +423,16 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     unsigned MOp;
     if (Opcode == ISD::ADDE) {
       CmpLHS = InFlag.getValue(0);
-      MOp = Mips::ADDu;
+      if (inMips16Mode)
+        MOp = Mips::AdduRxRyRz16;
+      else
+        MOp = Mips::ADDu;
     } else {
       CmpLHS = InFlag.getOperand(0);
-      MOp = Mips::SUBu;
+      if (inMips16Mode)
+        MOp = Mips::SubuRxRyRz16;
+      else
+        MOp = Mips::SUBu;
     }
 
     SDValue Ops[] = { CmpLHS, InFlag.getOperand(1) };
@@ -434,8 +441,11 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     SDValue RHS = Node->getOperand(1);
 
     EVT VT = LHS.getValueType();
-    SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, dl, VT, Ops, 2);
-    SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, dl, VT,
+
+    unsigned Sltu_op = inMips16Mode? Mips::SltuRxRyRz16: Mips::SLTu;
+    SDNode *Carry = CurDAG->getMachineNode(Sltu_op, dl, VT, Ops, 2);
+    unsigned Addu_op = inMips16Mode? Mips::AdduRxRyRz16 : Mips::ADDu;
+    SDNode *AddCarry = CurDAG->getMachineNode(Addu_op, dl, VT,
                                               SDValue(Carry,0), RHS);
 
     return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue,
