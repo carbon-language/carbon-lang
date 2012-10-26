@@ -756,6 +756,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   Parser.Lex();
   End = Tok.getLoc();
 
+  // Parse the dot operator (e.g., [ebx].foo.bar).
   if (Tok.getString().startswith(".")) {
     SmallString<64> Err;
     const MCExpr *NewDisp;
