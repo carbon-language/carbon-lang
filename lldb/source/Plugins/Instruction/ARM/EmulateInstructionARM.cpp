@@ -13613,9 +13613,7 @@ EmulateInstructionARM::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     // All other registers are the same.
     
     unwind_plan.SetSourceName ("EmulateInstructionARM");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
     return true;
 }
-
-
-
-                                           

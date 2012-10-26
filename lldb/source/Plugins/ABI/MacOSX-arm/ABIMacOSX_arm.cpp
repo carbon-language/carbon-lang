@@ -628,6 +628,8 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     // All other registers are the same.
     
     unwind_plan.SetSourceName ("arm at-func-entry default");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+
     return true;
 }
 
@@ -651,8 +653,29 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("arm-apple-ios default unwind plan");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
+
     return true;
 }
+
+// ARMv7 on iOS general purpose reg rules:
+//    r0-r3 not preserved  (used for argument passing)
+//    r4-r6 preserved
+//    r7    preserved (frame pointer)
+//    r8    preserved
+//    r9    not preserved (usable as volatile scratch register with iOS 3.x and later)
+//    r10-r11 preserved
+//    r12   not presrved
+//    r13   preserved (stack pointer)
+//    r14   not preserved (link register)
+//    r15   preserved (pc)
+//    cpsr  not preserved (different rules for different bits)
+
+// ARMv7 on iOS floating point rules:
+//    d0-d7   not preserved   (aka s0-s15, q0-q3)
+//    d8-d15  preserved       (aka s16-s31, q4-q7)
+//    d16-d31 not preserved   (aka q8-q15)
 
 bool
 ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
@@ -691,28 +714,28 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
             switch (name[1])
             {
                 case '0': 
-                    return name[2] == '\0'; // d0
+                    return name[2] == '\0'; // d0 is volatile
 
                 case '1':
                     switch (name[2])
                     {
                     case '\0':
-                        return true; // d1;
+                        return true; // d1 is volatile
                     case '6':
                     case '7':
                     case '8':
                     case '9':
-                        return name[3] == '\0'; // d16 - d19
+                        return name[3] == '\0'; // d16 - d19 are volatile
                     default:
                         break;
                     }
                     break;
-                    
+
                 case '2':
                     switch (name[2])
                     {
                     case '\0':
-                        return true; // d2;
+                        return true; // d2 is volatile
                     case '0':
                     case '1':
                     case '2':
@@ -723,7 +746,7 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
                     case '7':
                     case '8':
                     case '9':
-                        return name[3] == '\0'; // d20 - d29
+                        return name[3] == '\0'; // d20 - d29 are volatile
                     default:
                         break;
                     }
@@ -733,10 +756,10 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
                     switch (name[2])
                     {
                     case '\0':
-                        return true; // d3;
+                        return true; // d3 is volatile
                     case '0':
                     case '1':
-                        return name[3] == '\0'; // d30 - d31
+                        return name[3] == '\0'; // d30 - d31 are volatile
                     default:
                         break;
                     }
@@ -744,7 +767,61 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
                 case '5':
                 case '6':
                 case '7':
-                    return name[2] == '\0'; // d4 - d7
+                    return name[2] == '\0'; // d4 - d7 are volatile
+
+                default:
+                    break;
+            }
+        }
+        else if (name[0] == 's')
+        {
+            switch (name[1])
+            {
+                case '0': 
+                    return name[2] == '\0'; // s0 is volatile
+
+                case '1':
+                    switch (name[2])
+                    {
+                    case '\0':
+                        return true; // s1 is volatile
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                        return name[3] == '\0'; // s10 - s15 are volatile
+                    default:
+                        break;
+                    }
+                    break;
+
+                case '2':
+                    switch (name[2])
+                    {
+                    case '\0':
+                        return true; // s2 is volatile
+                    default:
+                        break;
+                    }
+                    break;
+
+                case '3':
+                    switch (name[2])
+                    {
+                    case '\0':
+                        return true; // s3 is volatile
+                    default:
+                        break;
+                    }
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    return name[2] == '\0'; // s4 - s9 are volatile
 
                 default:
                     break;

@@ -738,6 +738,8 @@ loopnext:
     }
     
     unwind_plan.SetSourceName ("assembly insn profiling");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
 
     return true;
 }
@@ -822,6 +824,9 @@ AssemblyParse_x86::get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_
     row.reset(newrow);
 
     unwind_plan.SetPlanValidAddressRange (func);
+    unwind_plan.SetSourceName ("fast unwind assembly profiling");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
     return true;
 }
 

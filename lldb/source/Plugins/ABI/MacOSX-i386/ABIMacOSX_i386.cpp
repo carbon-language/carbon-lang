@@ -894,6 +894,7 @@ ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("i386 at-func-entry default");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     return true;
 }
 
@@ -919,6 +920,8 @@ ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("i386 default unwind plan");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
     return true;
 }
 

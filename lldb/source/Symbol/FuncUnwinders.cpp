@@ -236,3 +236,12 @@ FuncUnwinders::GetFunctionStartAddress () const
     return m_range.GetBaseAddress();
 }
 
+void
+FuncUnwinders::InvalidateNonCallSiteUnwindPlan (lldb_private::Thread& thread)
+{
+    UnwindPlanSP arch_default = GetUnwindPlanArchitectureDefault (thread);
+    if (arch_default && m_tried_unwind_at_call_site)
+    {
+        m_unwind_plan_call_site_sp = arch_default;
+    }
+}

@@ -1088,6 +1088,7 @@ ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("x86_64 at-func-entry default");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     return true;
 }
 
@@ -1139,6 +1140,8 @@ ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("x86_64 default unwind plan");
+    unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
     return true;
 }
 

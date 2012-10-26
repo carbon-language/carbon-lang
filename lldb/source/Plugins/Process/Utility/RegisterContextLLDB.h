@@ -59,7 +59,7 @@ public:
 
     virtual bool
     WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
-    
+
     virtual bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
 
@@ -96,14 +96,14 @@ private:
     friend class UnwindLLDB;
 
     // Indicates whether this frame is frame zero -- the currently
-    // executing frame -- or not.  
+    // executing frame -- or not.
     bool
     IsFrameZero () const;
 
-    void 
+    void
     InitializeZerothFrame ();
 
-    void 
+    void
     InitializeNonZerothFrame();
 
     SharedPtr
@@ -112,7 +112,7 @@ private:
     SharedPtr
     GetPrevFrame () const;
 
-    // A SkipFrame occurs when the unwind out of frame 0 didn't go right -- we've got one bogus frame at frame #1.  
+    // A SkipFrame occurs when the unwind out of frame 0 didn't go right -- we've got one bogus frame at frame #1.
     // There is a good chance we'll get back on track if we follow the frame pointer chain (or whatever is appropriate
     // on this ABI) so we allow one invalid frame to be in the stack.  Ideally we'll mark this frame specially at some
     // point and indicate to the user that the unwinder had a hiccup.  Often when this happens we will miss a frame of
@@ -124,32 +124,30 @@ private:
     // Or a frame "below" this one saved it, i.e. a function called by this one, preserved a register that this
     // function didn't modify/use.
     //
-    // The RegisterLocation type may be set to eRegisterNotAvailable -- this will happen for a volatile register 
+    // The RegisterLocation type may be set to eRegisterNotAvailable -- this will happen for a volatile register
     // being queried mid-stack.  Instead of floating frame 0's contents of that register up the stack (which may
     // or may not be the value of that reg when the function was executing), we won't return any value.
     //
     // If a non-volatile register (a "preserved" register) is requested mid-stack and no frames "below" the requested
     // stack have saved the register anywhere, it is safe to assume that frame 0's register values are still the same
     // as the requesting frame's.
-    //
-    // NB this function takes a "check_next_frame" boolean which indicates whether it should call back to the
-    // containing UnwindLLDB object to iterate the search down the stack (true) or if this call should look for
-    // a register save for that reg in the current frame only (false).  Allows UnwindLLDB to iterate through the
-    // RegisterContextLLDB's instead of using recursion to find saved register values.
     bool
-    SavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc, bool check_next_frame);
+    SavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc);
 
     bool
-    ReadRegisterValueFromRegisterLocation (lldb_private::UnwindLLDB::RegisterLocation regloc, 
+    ReadRegisterValueFromRegisterLocation (lldb_private::UnwindLLDB::RegisterLocation regloc,
                                            const lldb_private::RegisterInfo *reg_info,
                                            lldb_private::RegisterValue &value);
 
     bool
-    WriteRegisterValueToRegisterLocation (lldb_private::UnwindLLDB::RegisterLocation regloc, 
+    WriteRegisterValueToRegisterLocation (lldb_private::UnwindLLDB::RegisterLocation regloc,
                                           const lldb_private::RegisterInfo *reg_info,
                                           const lldb_private::RegisterValue &value);
 
-    // Get the contents of a general purpose (address-size) register for this frame 
+    void
+    InvalidateFullUnwindPlan ();
+
+    // Get the contents of a general purpose (address-size) register for this frame
     // (usually retrieved from the next frame)
     bool
     ReadGPRValue (int register_kind, uint32_t regnum, lldb::addr_t &value);
@@ -160,8 +158,14 @@ private:
     lldb::UnwindPlanSP
     GetFullUnwindPlanForFrame ();
 
+    void
+    UnwindLogMsg (const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+
+    void
+    UnwindLogMsgVerbose (const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+
     lldb_private::Thread& m_thread;
-    
+
     ///
     // The following tell us how to retrieve the CALLER's register values (ie the "previous" frame, aka the frame above)
     // i.e. where THIS frame saved them
@@ -182,7 +186,7 @@ private:
     int m_current_offset_backed_up_one;           // how far into the function we've executed; -1 if unknown
                                                   // 0 if no instructions have been executed yet.
                                                   // On architectures where the return address on the stack points
-                                                  // to the instruction after the CALL, this value will have 1 
+                                                  // to the instruction after the CALL, this value will have 1
                                                   // subtracted from it.  Else a function that ends in a CALL will
                                                   // have an offset pointing into the next function's address range.
                                                   // m_current_pc has the actual address of the "current" pc.

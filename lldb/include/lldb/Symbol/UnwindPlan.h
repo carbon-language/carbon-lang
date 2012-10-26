@@ -349,7 +349,9 @@ public:
         m_plan_valid_address_range (), 
         m_register_kind (reg_kind), 
         m_return_addr_register (LLDB_INVALID_REGNUM),
-        m_source_name ()
+        m_source_name (),
+        m_plan_is_sourced_from_compiler (eLazyBoolCalculate),
+        m_plan_is_valid_at_all_instruction_locations (eLazyBoolCalculate)
     {
     }
 
@@ -432,6 +434,36 @@ public:
     void
     SetSourceName (const char *);
 
+    // Was this UnwindPlan emitted by a compiler?
+    lldb_private::LazyBool
+    GetSourcedFromCompiler () const
+    {
+        return m_plan_is_sourced_from_compiler;
+    }
+
+    // Was this UnwindPlan emitted by a compiler?
+    void
+    SetSourcedFromCompiler (lldb_private::LazyBool from_compiler)
+    {
+        m_plan_is_sourced_from_compiler = from_compiler;
+    }
+
+    // Is this UnwindPlan valid at all instructions?  If not, then it is assumed valid at call sites,
+    // e.g. for exception handling.
+    lldb_private::LazyBool
+    GetUnwindPlanValidAtAllInstructions () const
+    {
+        return m_plan_is_valid_at_all_instruction_locations;
+    }
+
+    // Is this UnwindPlan valid at all instructions?  If not, then it is assumed valid at call sites,
+    // e.g. for exception handling.
+    void
+    SetUnwindPlanValidAtAllInstructions (lldb_private::LazyBool valid_at_all_insn)
+    {
+        m_plan_is_valid_at_all_instruction_locations = valid_at_all_insn;
+    }
+
     int
     GetRowCount () const;
 
@@ -458,6 +490,8 @@ private:
     uint32_t m_return_addr_register;      // The register that has the return address for the caller frame
                                           // e.g. the lr on arm
     lldb_private::ConstString m_source_name;  // for logging, where this UnwindPlan originated from
+    lldb_private::LazyBool m_plan_is_sourced_from_compiler;
+    lldb_private::LazyBool m_plan_is_valid_at_all_instruction_locations;
 }; // class UnwindPlan
 
 } // namespace lldb_private

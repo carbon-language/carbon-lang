@@ -153,7 +153,7 @@ void
 UnwindPlan::Row::Clear ()
 {
     m_offset = 0;
-    m_cfa_reg_num = 0;
+    m_cfa_reg_num = LLDB_INVALID_REGNUM;
     m_cfa_offset = 0;
     m_register_locations.clear();
 }
@@ -189,7 +189,7 @@ UnwindPlan::Row::Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread,
 
 UnwindPlan::Row::Row() :
     m_offset(0),
-    m_cfa_reg_num(0),
+    m_cfa_reg_num(LLDB_INVALID_REGNUM),
     m_cfa_offset(0),
     m_register_locations()
 {
