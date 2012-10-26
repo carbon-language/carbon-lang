@@ -245,8 +245,11 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   // Now that composite has been compiled, scan through the module, looking
   // for a main function.  If main is defined, mark all other functions
   // internal.
-  if (Internalize)
-    PM.add(createInternalizePass(true));
+  if (Internalize) {
+    std::vector<const char*> E;
+    E.push_back("main");
+    PM.add(createInternalizePass(E));
+  }
 
   // Propagate constants at call sites into the functions they call.  This
   // opens opportunities for globalopt (and inlining) by substituting function

@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass loops over all of the functions in the input module, looking for a
-// main function.  If a main function is found, all other functions and all
-// global variables with initializers are marked as internal.
+// This pass loops over all of the functions and variables in the input module.
+// If the function or variable is not in the list of external names given to
+// the pass it is marked as internal.
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,12 +45,9 @@ APIList("internalize-public-api-list", cl::value_desc("list"),
 namespace {
   class InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
-    /// If no api symbols were specified and a main function is defined,
-    /// assume the main function is the only API
-    bool AllButMain;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit InternalizePass(bool AllButMain = true);
+    explicit InternalizePass();
     explicit InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
@@ -66,8 +63,8 @@ char InternalizePass::ID = 0;
 INITIALIZE_PASS(InternalizePass, "internalize",
                 "Internalize Global Symbols", false, false)
 
-InternalizePass::InternalizePass(bool AllButMain)
-  : ModulePass(ID), AllButMain(AllButMain){
+InternalizePass::InternalizePass()
+  : ModulePass(ID) {
   initializeInternalizePassPass(*PassRegistry::getPassRegistry());
   if (!APIFile.empty())           // If a filename is specified, use it.
     LoadFile(APIFile.c_str());
@@ -76,7 +73,7 @@ InternalizePass::InternalizePass(bool AllButMain)
 }
 
 InternalizePass::InternalizePass(const std::vector<const char *>&exportList)
-  : ModulePass(ID), AllButMain(false){
+  : ModulePass(ID){
   initializeInternalizePassPass(*PassRegistry::getPassRegistry());
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
         itr != exportList.end(); itr++) {
@@ -103,23 +100,6 @@ void InternalizePass::LoadFile(const char *Filename) {
 bool InternalizePass::runOnModule(Module &M) {
   CallGraph *CG = getAnalysisIfAvailable<CallGraph>();
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
-  
-  if (ExternalNames.empty()) {
-    // Return if we're not in 'all but main' mode and have no external api
-    if (!AllButMain)
-      return false;
-    // If no list or file of symbols was specified, check to see if there is a
-    // "main" symbol defined in the module.  If so, use it, otherwise do not
-    // internalize the module, it must be a library or something.
-    //
-    Function *MainFunc = M.getFunction("main");
-    if (MainFunc == 0 || MainFunc->isDeclaration())
-      return false;  // No main found, must be a library...
-
-    // Preserve main, internalize all else.
-    ExternalNames.insert(MainFunc->getName());
-  }
-
   bool Changed = false;
 
   // Never internalize functions which code-gen might insert.
@@ -189,8 +169,8 @@ bool InternalizePass::runOnModule(Module &M) {
   return Changed;
 }
 
-ModulePass *llvm::createInternalizePass(bool AllButMain) {
-  return new InternalizePass(AllButMain);
+ModulePass *llvm::createInternalizePass() {
+  return new InternalizePass();
 }
 
 ModulePass *llvm::createInternalizePass(const std::vector <const char *> &el) {

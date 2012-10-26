@@ -1,4 +1,4 @@
-; RUN: opt < %s -internalize -S | grep internal | count 3
+; RUN: opt < %s -internalize -internalize-public-api-list main -S | grep internal | count 3
 
 @A = global i32 0
 @B = alias i32* @A
