@@ -193,6 +193,13 @@ public:
     /// logically set in \a m_value. If any bits are already set in
     /// \a m_value, this function will return without waiting.
     ///
+    /// It is possible for the value to be changed between the time
+    /// the bits are set and the time the waiting thread wakes up.
+    /// If the bits are no longer set when the waiting thread wakes
+    /// up, it will go back into a wait state.  It may be necessary
+    /// for the calling code to use additional thread synchronization
+    /// methods to detect transitory states.
+    ///
     /// @param[in] bits
     ///     The bits we are waiting to be set in \a m_value.
     ///
@@ -235,6 +242,13 @@ public:
     /// Waits in a thread safe way for any bits in \a bits to get
     /// logically reset in \a m_value. If all bits are already reset in
     /// \a m_value, this function will return without waiting.
+    ///
+    /// It is possible for the value to be changed between the time
+    /// the bits are reset and the time the waiting thread wakes up.
+    /// If the bits are no set when the waiting thread wakes up, it will
+    /// go back into a wait state.  It may be necessary for the calling
+    /// code to use additional thread synchronization methods to detect
+    /// transitory states.
     ///
     /// @param[in] bits
     ///     The bits we are waiting to be reset in \a m_value.
@@ -280,6 +294,13 @@ public:
     /// value. If \a m_value is already equal to \a value, this
     /// function will return without waiting.
     ///
+    /// It is possible for the value to be changed between the time
+    /// the value is set and the time the waiting thread wakes up.
+    /// If the value no longer matches the requested value when the
+    /// waiting thread wakes up, it will go back into a wait state.  It
+    /// may be necessary for the calling code to use additional thread
+    /// synchronization methods to detect transitory states.
+    ///
     /// @param[in] value
     ///     The value we want \a m_value to be equal to.
     ///
@@ -320,6 +341,41 @@ public:
         return m_value == value;
     }
 
+    //------------------------------------------------------------------
+    /// Wait for \a m_value to be equal to \a value and then set it to
+    /// a new value.
+    ///
+    /// Waits in a thread safe way for \a m_value to be equal to \a
+    /// value and then sets \a m_value to \a new_value. If \a m_value
+    /// is already equal to \a value, this function will immediately
+    /// set \a m_value to \a new_value and return without waiting.
+    ///
+    /// It is possible for the value to be changed between the time
+    /// the value is set and the time the waiting thread wakes up.
+    /// If the value no longer matches the requested value when the
+    /// waiting thread wakes up, it will go back into a wait state.  It
+    /// may be necessary for the calling code to use additional thread
+    /// synchronization methods to detect transitory states.
+    ///
+    /// @param[in] value
+    ///     The value we want \a m_value to be equal to.
+    ///
+    /// @param[in] new_value
+    ///     The value to which \a m_value will be set if \b true is
+    ///     returned.
+    ///
+    /// @param[in] abstime
+    ///     If non-NULL, the absolute time at which we should stop
+    ///     waiting, else wait an infinite amount of time.
+    ///
+    /// @param[out] timed_out
+    ///     If not null, set to true if we return because of a time out,
+    ///     and false if the value was set.
+    ///
+    /// @return
+    ///     @li \b true if the \a m_value became equal to \a value
+    ///     @li \b false otherwise
+    //------------------------------------------------------------------
     bool
     WaitForValueEqualToAndSetValueTo (T wait_value, T new_value, const TimeValue *abstime = NULL, bool *timed_out = NULL)
     {
@@ -358,6 +414,13 @@ public:
     /// Waits in a thread safe way for \a m_value to not be equal to \a
     /// value. If \a m_value is already not equal to \a value, this
     /// function will return without waiting.
+    ///
+    /// It is possible for the value to be changed between the time
+    /// the value is set and the time the waiting thread wakes up.
+    /// If the value is equal to the test value when the waiting thread
+    /// wakes up, it will go back into a wait state.  It may be
+    /// necessary for the calling code to use additional thread
+    /// synchronization methods to detect transitory states.
     ///
     /// @param[in] value
     ///     The value we want \a m_value to not be equal to.
