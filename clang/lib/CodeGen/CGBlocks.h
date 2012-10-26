@@ -54,9 +54,8 @@ enum BlockByrefFlags {
   BLOCK_BYREF_LAYOUT_EXTENDED          = (1   << 28),
   BLOCK_BYREF_LAYOUT_NON_OBJECT        = (2   << 28),
   BLOCK_BYREF_LAYOUT_STRONG            = (3   << 28),
-  BLOCK_BYREF_LAYOUT_BYREF             = (4   << 28),
-  BLOCK_BYREF_LAYOUT_WEAK              = (5   << 28),
-  BLOCK_BYREF_LAYOUT_UNRETAINED        = (6   << 28)
+  BLOCK_BYREF_LAYOUT_WEAK              = (4   << 28),
+  BLOCK_BYREF_LAYOUT_UNRETAINED        = (5   << 28)
 };
 
 enum BlockLiteralFlags {
