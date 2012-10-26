@@ -143,13 +143,43 @@ public:
     return 1;
   }
 
+  /// Returns the expected cost of arithmetic ops, such as mul, xor, fsub, etc.
+  virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
+    return 1;
+  }
+
   /// Returns the cost of a vector broadcast of a scalar at place zero to a
   /// vector of type 'Tp'.
   virtual unsigned getBroadcastCost(Type *Tp) const {
     return 1;
   }
 
-  /// Returns the cost of Load and Store instructions. 
+  /// Returns the expected cost of cast instructions, such as bitcast, trunc,
+  /// zext, etc.
+  virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
+                                    Type *Src) const {
+    return 1;
+  }
+
+  /// Returns the expected cost of control-flow related instrutctions such as
+  /// Phi, Ret, Br.
+  virtual unsigned getCFInstrCost(unsigned Opcode) const {
+    return 1;
+  }
+
+  /// Returns the expected cost of compare and select instructions.
+  virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                      Type *CondTy = 0) const {
+    return 1;
+  }
+
+  /// Returns the expected cost of vector Insert and Extract.
+  virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                                      unsigned Index = 0) const {
+    return 1;
+  }
+
+  /// Returns the cost of Load and Store instructions.
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
                                    unsigned AddressSpace) const {

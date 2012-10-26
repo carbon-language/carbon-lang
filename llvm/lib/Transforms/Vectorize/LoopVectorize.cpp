@@ -108,7 +108,7 @@ public:
     createEmptyLoop(Legal);
     /// Widen each instruction in the old loop to a new one in the new loop.
     /// Use the Legality module to find the induction and reduction variables.
-   vectorizeLoop(Legal);
+    vectorizeLoop(Legal);
     // register the new loop.
     cleanup();
  }
@@ -254,6 +254,9 @@ public:
   /// This check allows us to vectorize A[idx] into a wide load/store.
   bool isConsecutiveGep(Value *Ptr);
 
+  /// Returns true if this instruction will remain scalar after vectorization.
+  bool isUniformAfterVectorization(Instruction* I) {return Uniforms.count(I);}
+
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -291,6 +294,9 @@ private:
   /// Allowed outside users. This holds the reduction
   /// vars which can be accessed from outside the loop.
   SmallPtrSet<Value*, 4> AllowedExit;
+  /// This set holds the variables which are known to be uniform after
+  /// vectorization.
+  SmallPtrSet<Instruction*, 4> Uniforms;
 };
 
 /// LoopVectorizationCostModel - estimates the expected speedups due to
@@ -1177,9 +1183,40 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       return false;
   }
 
-  // If the memory dependencies do not prevent us from
-  // vectorizing, then vectorize.
-  return canVectorizeMemory(BB);
+  // Don't vectorize if the memory dependencies do not allow vectorization.
+  if (!canVectorizeMemory(BB))
+    return false;
+
+  // We now know that the loop is vectorizable!
+  // Collect variables that will remain uniform after vectorization.
+  std::vector<Value*> Worklist;
+
+  // Start with the conditional branch and walk up the block.
+  Worklist.push_back(BB.getTerminator()->getOperand(0));
+
+  while (Worklist.size()) {
+    Instruction *I = dyn_cast<Instruction>(Worklist.back());
+    Worklist.pop_back();
+    // Look at instructions inside this block.
+    if (!I) continue;
+    if (I->getParent() != &BB) continue;
+
+    // Stop when reaching PHI nodes.
+    if (isa<PHINode>(I)) {
+      assert(I == Induction && "Found a uniform PHI that is not the induction");
+      break;
+    }
+
+    // This is a known uniform.
+    Uniforms.insert(I);
+
+    // Insert all operands.
+    for (int i=0, Op = I->getNumOperands(); i < Op; ++i) {
+      Worklist.push_back(I->getOperand(i));
+    }
+  }
+
+  return true;
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
@@ -1484,8 +1521,14 @@ unsigned
 LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   assert(VTTI && "Invalid vector target transformation info");
 
+  // If we know that this instruction will remain uniform, check the cost of
+  // the scalar version.
+  if (Legal->isUniformAfterVectorization(I))
+    VF = 1;
+
   Type *RetTy = I->getType();
   Type *VectorTy = ToVectorTy(RetTy, VF);
+
 
   // TODO: We need to estimate the cost of intrinsic calls.
   switch (I->getOpcode()) {
@@ -1495,7 +1538,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       // generate vector geps.
       return 0;
     case Instruction::Br: {
-      return VTTI->getInstrCost(I->getOpcode());
+      return VTTI->getCFInstrCost(I->getOpcode());
     }
     case Instruction::PHI:
       return 0;
@@ -1517,7 +1560,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor: {
-      return VTTI->getInstrCost(I->getOpcode(), VectorTy);
+      return VTTI->getArithmeticInstrCost(I->getOpcode(), VectorTy);
     }
     case Instruction::Select: {
       SelectInst *SI = cast<SelectInst>(I);
@@ -1527,13 +1570,13 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       if (ScalarCond)
         CondTy = VectorType::get(CondTy, VF);
 
-      return VTTI->getInstrCost(I->getOpcode(), VectorTy, CondTy);
+      return VTTI->getCmpSelInstrCost(I->getOpcode(), VectorTy, CondTy);
     }
     case Instruction::ICmp:
     case Instruction::FCmp: {
       Type *ValTy = I->getOperand(0)->getType();
       VectorTy = ToVectorTy(ValTy, VF);
-      return VTTI->getInstrCost(I->getOpcode(), VectorTy);
+      return VTTI->getCmpSelInstrCost(I->getOpcode(), VectorTy);
     }
     case Instruction::Store: {
       StoreInst *SI = cast<StoreInst>(I);
@@ -1602,7 +1645,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::FPTrunc:
     case Instruction::BitCast: {
       Type *SrcVecTy = ToVectorTy(I->getOperand(0)->getType(), VF);
-      return VTTI->getInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
+      return VTTI->getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
     }
     default: {
       // We are scalarizing the instruction. Return the cost of the scalar

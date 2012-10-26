@@ -411,6 +411,13 @@ public:
        getOperationAction(Op, VT) == Custom);
   }
 
+  /// isOperationExpand - Return true if the specified operation is illegal on
+  /// this target or unlikely to be made legal with custom lowering. This is
+  /// used to help guide high-level lowering decisions.
+  bool isOperationExpand(unsigned Op, EVT VT) const {
+    return (!isTypeLegal(VT) || getOperationAction(Op, VT) == Expand);
+  }
+
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, EVT VT) const {

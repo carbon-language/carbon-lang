@@ -56,14 +56,31 @@ private:
   std::pair<unsigned, EVT>
   getTypeLegalizationCost(LLVMContext &C, EVT Ty) const;
 
+  /// Estimate the overhead of scalarizing an instruction. Insert and Extract
+  /// are set if the result needs to be inserted and/or extracted from vectors.
+  unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
+
 public:
   explicit VectorTargetTransformImpl(const TargetLowering *TL) : TLI(TL) {}
-  
+
   virtual ~VectorTargetTransformImpl() {}
 
   virtual unsigned getInstrCost(unsigned Opcode, Type *Ty1, Type *Ty2) const;
 
+  virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
+
   virtual unsigned getBroadcastCost(Type *Tp) const;
+
+  virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
+                                    Type *Src) const;
+
+  virtual unsigned getCFInstrCost(unsigned Opcode) const;
+
+  virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                      Type *CondTy) const;
+
+  virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                                      unsigned Index) const;
 
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
