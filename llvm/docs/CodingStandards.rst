@@ -862,23 +862,28 @@ Here are more examples:
 
 You get the idea.
 
-Please be aware that, when adding assert statements, not all compilers are aware
-of the semantics of the assert.  In some places, asserts are used to indicate a
-piece of code that should not be reached.  These are typically of the form:
+In the past, asserts were used to indicate a piece of code that should not be
+reached.  These were typically of the form:
 
 .. code-block:: c++
 
-  assert(0 && "Some helpful error message");
+  assert(0 && "Invalid radix for integer literal");
 
-When used in a function that returns a value, they should be followed with a
-return statement and a comment indicating that this line is never reached.  This
-will prevent a compiler which is unable to deduce that the assert statement
-never returns from generating a warning.
+This has a few issues, the main one being that some compilers might not
+understand the assertion, or warn about a missing return in builds where
+assertions are compiled out.
+
+Today, we have something much better: ``llvm_unreachable``:
 
 .. code-block:: c++
 
-  assert(0 && "Some helpful error message");
-  return 0;
+  llvm_unreachable("Invalid radix for integer literal");
+
+When assertions are enabled, this will print the message if it's ever reached
+and then exit the program. When assertions are disabled (i.e. in release
+builds), ``llvm_unreachable`` becomes a hint to compilers to skip generating
+code for this branch. If the compiler does not support this, it will fall back
+to the "abort" implementation.
 
 Another issue is that values used only by assertions will produce an "unused
 value" warning when assertions are disabled.  For example, this code will warn:
