@@ -205,6 +205,11 @@ class FRR16_div_ins<bits<5> f, string asmstr, InstrItinClass itin> :
   FRR16<f, (outs ), (ins CPU16Regs:$rx, CPU16Regs:$ry),
         !strconcat(asmstr, "\t$$zero, $rx, $ry"), [], itin> ;
 
+class FUnaryRR16_ins<bits<5> f, string asmstr, InstrItinClass itin> :
+  FRR16<f, (outs CPU16Regs:$rx), (ins CPU16Regs:$ry),
+        !strconcat(asmstr, "\t$rx, $ry"), [], itin> ;
+
+
 class FRR16_M_ins<bits<5> f, string asmstr,
                   InstrItinClass itin> :
   FRR16<f, (outs CPU16Regs:$rx), (ins),
@@ -600,14 +605,14 @@ def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIAlu> {
 // Purpose: Negate
 // To negate an integer value.
 //
-def NegRxRy16: FRR16_ins<0b11101, "neg", IIAlu>;
+def NegRxRy16: FUnaryRR16_ins<0b11101, "neg", IIAlu>;
 
 //
 // Format: NOT rx, ry MIPS16e
 // Purpose: Not
 // To complement an integer value
 //
-def NotRxRy16: FRR16_ins<0b01111, "not", IIAlu>;
+def NotRxRy16: FUnaryRR16_ins<0b01111, "not", IIAlu>;
 
 //
 // Format: OR rx, ry MIPS16e
