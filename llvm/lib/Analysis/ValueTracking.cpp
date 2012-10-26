@@ -430,15 +430,13 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   case Instruction::ZExt:
   case Instruction::Trunc: {
     Type *SrcTy = I->getOperand(0)->getType();
-    
+
     unsigned SrcBitWidth;
     // Note that we handle pointer operands here because of inttoptr/ptrtoint
     // which fall through here.
-    if (SrcTy->isPointerTy())
-      SrcBitWidth = TD->getTypeSizeInBits(SrcTy);
-    else
-      SrcBitWidth = SrcTy->getScalarSizeInBits();
-    
+    SrcBitWidth = TD->getTypeSizeInBits(SrcTy->getScalarType());
+
+    assert(SrcBitWidth && "SrcBitWidth can't be zero");
     KnownZero = KnownZero.zextOrTrunc(SrcBitWidth);
     KnownOne = KnownOne.zextOrTrunc(SrcBitWidth);
     ComputeMaskedBits(I->getOperand(0), KnownZero, KnownOne, TD, Depth+1);
