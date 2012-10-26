@@ -819,8 +819,18 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      FieldDecl *Field1, FieldDecl *Field2) {
   RecordDecl *Owner2 = cast<RecordDecl>(Field2->getDeclContext());
-  
-  if (!IsStructurallyEquivalent(Context, 
+
+  // For anonymous structs/unions, match up the anonymous struct/union type
+  // declarations directly, so that we don't go off searching for anonymous
+  // types
+  if (Field1->isAnonymousStructOrUnion() &&
+      Field2->isAnonymousStructOrUnion()) {
+    RecordDecl *D1 = Field1->getType()->castAs<RecordType>()->getDecl();
+    RecordDecl *D2 = Field2->getType()->castAs<RecordType>()->getDecl();
+    return IsStructurallyEquivalent(Context, D1, D2);
+  }
+
+  if (!IsStructurallyEquivalent(Context,
                                 Field1->getType(), Field2->getType())) {
     if (Context.Complain) {
       Context.Diag2(Owner2->getLocation(), diag::warn_odr_tag_type_inconsistent)
@@ -875,6 +885,39 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   return true;
 }
 
+/// \brief Find the index of the given anonymous struct/union within its
+/// context.
+///
+/// \returns Returns the index of this anonymous struct/union in its context,
+/// including the next assigned index (if none of them match). Returns an
+/// empty option if the context is not a record, i.e.. if the anonymous
+/// struct/union is at namespace or block scope.
+static llvm::Optional<unsigned>
+findAnonymousStructOrUnionIndex(RecordDecl *Anon) {
+  ASTContext &Context = Anon->getASTContext();
+  QualType AnonTy = Context.getRecordType(Anon);
+
+  RecordDecl *Owner = dyn_cast<RecordDecl>(Anon->getDeclContext());
+  if (!Owner)
+    return llvm::Optional<unsigned>();
+
+  unsigned Index = 0;
+  for (DeclContext::decl_iterator D = Owner->noload_decls_begin(),
+                               DEnd = Owner->noload_decls_end();
+       D != DEnd; ++D) {
+    FieldDecl *F = dyn_cast<FieldDecl>(*D);
+    if (!F || !F->isAnonymousStructOrUnion())
+      continue;
+
+    if (Context.hasSameType(F->getType(), AnonTy))
+      break;
+
+    ++Index;
+  }
+
+  return Index;
+}
+
 /// \brief Determine structural equivalence of two records.
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      RecordDecl *D1, RecordDecl *D2) {
@@ -887,7 +930,20 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     }
     return false;
   }
-  
+
+  if (D1->isAnonymousStructOrUnion() && D2->isAnonymousStructOrUnion()) {
+    // If both anonymous structs/unions are in a record context, make sure
+    // they occur in the same location in the context records.
+    if (llvm::Optional<unsigned> Index1
+          = findAnonymousStructOrUnionIndex(D1)) {
+      if (llvm::Optional<unsigned> Index2
+            = findAnonymousStructOrUnionIndex(D2)) {
+        if (*Index1 != *Index2)
+          return false;
+      }
+    }
+  }
+
   // If both declarations are class template specializations, we know
   // the ODR applies, so check the template and template arguments.
   ClassTemplateSpecializationDecl *Spec1
@@ -2371,6 +2427,20 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
       }
       
       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
+        if (D->isAnonymousStructOrUnion() && 
+            FoundRecord->isAnonymousStructOrUnion()) {
+          // If both anonymous structs/unions are in a record context, make sure
+          // they occur in the same location in the context records.
+          if (llvm::Optional<unsigned> Index1
+              = findAnonymousStructOrUnionIndex(D)) {
+            if (llvm::Optional<unsigned> Index2
+                = findAnonymousStructOrUnionIndex(FoundRecord)) {
+              if (*Index1 != *Index2)
+                continue;
+            }
+          }
+        }
+
         if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
           if ((SearchName && !D->isCompleteDefinition())
               || (D->isCompleteDefinition() &&
@@ -2679,6 +2749,25 @@ Decl *ASTNodeImporter::VisitCXXConversionDecl(CXXConversionDecl *D) {
   return VisitCXXMethodDecl(D);
 }
 
+static unsigned getFieldIndex(Decl *F) {
+  RecordDecl *Owner = dyn_cast<RecordDecl>(F->getDeclContext());
+  if (!Owner)
+    return 0;
+
+  unsigned Index = 1;
+  for (DeclContext::decl_iterator D = Owner->noload_decls_begin(),
+                               DEnd = Owner->noload_decls_end();
+       D != DEnd; ++D) {
+    if (*D == F)
+      return Index;
+
+    if (isa<FieldDecl>(*D) || isa<IndirectFieldDecl>(*D))
+      ++Index;
+  }
+
+  return Index;
+}
+
 Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   // Import the major distinguishing characteristics of a variable.
   DeclContext *DC, *LexicalDC;
@@ -2692,6 +2781,10 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   DC->localUncachedLookup(Name, FoundDecls);
   for (unsigned I = 0, N = FoundDecls.size(); I != N; ++I) {
     if (FieldDecl *FoundField = dyn_cast<FieldDecl>(FoundDecls[I])) {
+      // For anonymous fields, match up by index.
+      if (!Name && getFieldIndex(D) != getFieldIndex(FoundField))
+        continue;
+
       if (Importer.IsStructurallyEquivalent(D->getType(), 
                                             FoundField->getType())) {
         Importer.Imported(D, FoundField);
@@ -2725,6 +2818,7 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   ToField->setLexicalDeclContext(LexicalDC);
   if (ToField->hasInClassInitializer())
     ToField->setInClassInitializer(D->getInClassInitializer());
+  ToField->setImplicit(D->isImplicit());
   Importer.Imported(D, ToField);
   LexicalDC->addDeclInternal(ToField);
   return ToField;
@@ -2744,6 +2838,10 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   for (unsigned I = 0, N = FoundDecls.size(); I != N; ++I) {
     if (IndirectFieldDecl *FoundField 
                                 = dyn_cast<IndirectFieldDecl>(FoundDecls[I])) {
+      // For anonymous indirect fields, match up by index.
+      if (!Name && getFieldIndex(D) != getFieldIndex(FoundField))
+        continue;
+
       if (Importer.IsStructurallyEquivalent(D->getType(), 
                                             FoundField->getType(),
                                             Name)) {
