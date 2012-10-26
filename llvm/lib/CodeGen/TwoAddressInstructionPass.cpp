@@ -588,35 +588,34 @@ TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
   MachineFunction::iterator MFI = MBB;
   MachineInstr *NewMI = TII->convertToThreeAddress(MFI, mi, LV);
   assert(MBB == MFI && "convertToThreeAddress changed iterator reference");
-  if (NewMI) {
-    DEBUG(dbgs() << "2addr: CONVERTING 2-ADDR: " << *mi);
-    DEBUG(dbgs() << "2addr:         TO 3-ADDR: " << *NewMI);
-    bool Sunk = false;
+  if (!NewMI)
+    return false;
 
-    if (Indexes)
-      Indexes->replaceMachineInstrInMaps(mi, NewMI);
+  DEBUG(dbgs() << "2addr: CONVERTING 2-ADDR: " << *mi);
+  DEBUG(dbgs() << "2addr:         TO 3-ADDR: " << *NewMI);
+  bool Sunk = false;
 
-    if (NewMI->findRegisterUseOperand(RegB, false, TRI))
-      // FIXME: Temporary workaround. If the new instruction doesn't
-      // uses RegB, convertToThreeAddress must have created more
-      // then one instruction.
-      Sunk = sink3AddrInstruction(NewMI, RegB, mi);
+  if (Indexes)
+    Indexes->replaceMachineInstrInMaps(mi, NewMI);
 
-    MBB->erase(mi); // Nuke the old inst.
+  if (NewMI->findRegisterUseOperand(RegB, false, TRI))
+    // FIXME: Temporary workaround. If the new instruction doesn't
+    // uses RegB, convertToThreeAddress must have created more
+    // then one instruction.
+    Sunk = sink3AddrInstruction(NewMI, RegB, mi);
 
-    if (!Sunk) {
-      DistanceMap.insert(std::make_pair(NewMI, Dist));
-      mi = NewMI;
-      nmi = llvm::next(mi);
-    }
+  MBB->erase(mi); // Nuke the old inst.
 
-    // Update source and destination register maps.
-    SrcRegMap.erase(RegA);
-    DstRegMap.erase(RegB);
-    return true;
+  if (!Sunk) {
+    DistanceMap.insert(std::make_pair(NewMI, Dist));
+    mi = NewMI;
+    nmi = llvm::next(mi);
   }
 
-  return false;
+  // Update source and destination register maps.
+  SrcRegMap.erase(RegA);
+  DstRegMap.erase(RegB);
+  return true;
 }
 
 /// scanUses - Scan forward recursively for only uses, update maps if the use
