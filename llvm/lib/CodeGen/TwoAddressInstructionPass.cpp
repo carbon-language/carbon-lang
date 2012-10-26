@@ -76,6 +76,9 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   // current basic block.
   DenseMap<MachineInstr*, unsigned> DistanceMap;
 
+  // Set of already processed instructions in the current block.
+  SmallPtrSet<MachineInstr*, 8> Processed;
+
   // SrcRegMap - A map from virtual registers to physical registers which are
   // likely targets to be coalesced to due to copies from physical registers to
   // virtual registers. e.g. v1024 = move r0.
@@ -128,14 +131,11 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
                                MachineBasicBlock::iterator &nmi,
                                MachineFunction::iterator &mbbi,
                                unsigned SrcIdx, unsigned DstIdx,
-                               unsigned Dist,
-                               SmallPtrSet<MachineInstr*, 8> &Processed);
+                               unsigned Dist);
 
-  void scanUses(unsigned DstReg, MachineBasicBlock *MBB,
-                SmallPtrSet<MachineInstr*, 8> &Processed);
+  void scanUses(unsigned DstReg, MachineBasicBlock *MBB);
 
-  void processCopy(MachineInstr *MI, MachineBasicBlock *MBB,
-                   SmallPtrSet<MachineInstr*, 8> &Processed);
+  void processCopy(MachineInstr *MI, MachineBasicBlock *MBB);
 
   typedef SmallVector<std::pair<unsigned, unsigned>, 4> TiedPairList;
   typedef SmallDenseMap<unsigned, TiedPairList> TiedOperandMap;
@@ -630,8 +630,7 @@ TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
 /// scanUses - Scan forward recursively for only uses, update maps if the use
 /// is a copy or a two-address instruction.
 void
-TwoAddressInstructionPass::scanUses(unsigned DstReg, MachineBasicBlock *MBB,
-                                    SmallPtrSet<MachineInstr*, 8> &Processed) {
+TwoAddressInstructionPass::scanUses(unsigned DstReg, MachineBasicBlock *MBB) {
   SmallVector<unsigned, 4> VirtRegPairs;
   bool IsDstPhys;
   bool IsCopy = false;
@@ -688,8 +687,7 @@ TwoAddressInstructionPass::scanUses(unsigned DstReg, MachineBasicBlock *MBB,
 /// potentially joined with r1 on the output side. It's worthwhile to commute
 /// 'add' to eliminate a copy.
 void TwoAddressInstructionPass::processCopy(MachineInstr *MI,
-                                     MachineBasicBlock *MBB,
-                                     SmallPtrSet<MachineInstr*, 8> &Processed) {
+                                            MachineBasicBlock *MBB) {
   if (Processed.count(MI))
     return;
 
@@ -706,7 +704,7 @@ void TwoAddressInstructionPass::processCopy(MachineInstr *MI,
       assert(SrcRegMap[DstReg] == SrcReg &&
              "Can't map to two src physical registers!");
 
-    scanUses(DstReg, MBB, Processed);
+    scanUses(DstReg, MBB);
   }
 
   Processed.insert(MI);
@@ -1015,8 +1013,7 @@ bool TwoAddressInstructionPass::
 tryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineBasicBlock::iterator &nmi,
                         MachineFunction::iterator &mbbi,
-                        unsigned SrcIdx, unsigned DstIdx, unsigned Dist,
-                        SmallPtrSet<MachineInstr*, 8> &Processed) {
+                        unsigned SrcIdx, unsigned DstIdx, unsigned Dist) {
   if (OptLevel == CodeGenOpt::None)
     return false;
 
@@ -1029,7 +1026,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
   bool regBKilled = isKilled(MI, regB, MRI, TII);
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
-    scanUses(regA, &*mbbi, Processed);
+    scanUses(regA, &*mbbi);
 
   // Check if it is profitable to commute the operands.
   unsigned SrcOp1, SrcOp2;
@@ -1141,8 +1138,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
         unsigned NewSrcIdx = NewMIs[1]->findRegisterUseOperandIdx(regB);
         MachineBasicBlock::iterator NewMI = NewMIs[1];
         bool TransformSuccess =
-          tryInstructionTransform(NewMI, mi, mbbi,
-                                  NewSrcIdx, NewDstIdx, Dist, Processed);
+          tryInstructionTransform(NewMI, mi, mbbi, NewSrcIdx, NewDstIdx, Dist);
         if (TransformSuccess ||
             NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
           // Success, or at least we made an improvement. Keep the unfolded
@@ -1377,8 +1373,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
   MRI->leaveSSA();
 
   TiedOperandMap TiedOperands;
-
-  SmallPtrSet<MachineInstr*, 8> Processed;
   for (MachineFunction::iterator mbbi = MF->begin(), mbbe = MF->end();
        mbbi != mbbe; ++mbbi) {
     unsigned Dist = 0;
@@ -1400,7 +1394,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
 
       DistanceMap.insert(std::make_pair(mi, ++Dist));
 
-      processCopy(&*mi, &*mbbi, Processed);
+      processCopy(&*mi, &*mbbi);
 
       // First scan through all the tied register uses in this instruction
       // and record a list of pairs of tied operands for each register.
@@ -1425,8 +1419,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
           unsigned SrcReg = mi->getOperand(SrcIdx).getReg();
           unsigned DstReg = mi->getOperand(DstIdx).getReg();
           if (SrcReg != DstReg &&
-              tryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist,
-                                      Processed)) {
+              tryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist)) {
             // The tied operands have been eliminated or shifted further down the
             // block to ease elimination. Continue processing with 'nmi'.
             TiedOperands.clear();
