@@ -71,7 +71,7 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
       // object. We don't have to worry about the case where the
       // object address is somehow being computed by the multiply,
       // because our callers only care when the result is an
-      // identifibale object.
+      // identifiable object.
       if (U->getOpcode() != Instruction::Add ||
           (!isa<ConstantInt>(U->getOperand(1)) &&
            Operator::getOpcode(U->getOperand(1)) != Instruction::Mul))
