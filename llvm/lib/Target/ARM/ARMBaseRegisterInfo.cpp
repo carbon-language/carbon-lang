@@ -114,37 +114,6 @@ getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
-                                        unsigned Reg) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-  const TargetRegisterClass *RC  = &ARM::GPRPairRegClass;
-  if (RC->contains(Reg)) {
-    for (MCSubRegIterator SI(Reg, this); SI.isValid(); ++SI)
-      if(isReservedReg(MF, *SI)) return true;
-    return false;
-  }
-
-  switch (Reg) {
-  default: break;
-  case ARM::SP:
-  case ARM::PC:
-    return true;
-  case ARM::R6:
-    if (hasBasePointer(MF))
-      return true;
-    break;
-  case ARM::R7:
-  case ARM::R11:
-    if (FramePtr == Reg && TFI->hasFP(MF))
-      return true;
-    break;
-  case ARM::R9:
-    return STI.isR9Reserved();
-  }
-
-  return false;
-}
-
 const TargetRegisterClass*
 ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
                                                                          const {
@@ -492,6 +461,7 @@ unsigned ARMBaseRegisterInfo::getEHHandlerRegister() const {
 
 unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
                                               const MachineFunction &MF) const {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
   switch (Reg) {
   default: break;
   // Return 0 if either register of the pair is a special register.
@@ -500,10 +470,10 @@ unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
   case ARM::R3: return ARM::R2;
   case ARM::R5: return ARM::R4;
   case ARM::R7:
-    return (isReservedReg(MF, ARM::R7) || isReservedReg(MF, ARM::R6))
+    return (MRI.isReserved(ARM::R7) || MRI.isReserved(ARM::R6))
       ? 0 : ARM::R6;
-  case ARM::R9: return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R8;
-  case ARM::R11: return isReservedReg(MF, ARM::R11) ? 0 : ARM::R10;
+  case ARM::R9: return MRI.isReserved(ARM::R9)  ? 0 :ARM::R8;
+  case ARM::R11: return MRI.isReserved(ARM::R11) ? 0 : ARM::R10;
 
   case ARM::S1: return ARM::S0;
   case ARM::S3: return ARM::S2;
@@ -545,6 +515,7 @@ unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
 
 unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
                                              const MachineFunction &MF) const {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
   switch (Reg) {
   default: break;
   // Return 0 if either register of the pair is a special register.
@@ -553,10 +524,10 @@ unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
   case ARM::R2: return ARM::R3;
   case ARM::R4: return ARM::R5;
   case ARM::R6:
-    return (isReservedReg(MF, ARM::R7) || isReservedReg(MF, ARM::R6))
+    return (MRI.isReserved(ARM::R7) || MRI.isReserved(ARM::R6))
       ? 0 : ARM::R7;
-  case ARM::R8: return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R9;
-  case ARM::R10: return isReservedReg(MF, ARM::R11) ? 0 : ARM::R11;
+  case ARM::R8: return MRI.isReserved(ARM::R9)  ? 0 :ARM::R9;
+  case ARM::R10: return MRI.isReserved(ARM::R11) ? 0 : ARM::R11;
 
   case ARM::S0: return ARM::S1;
   case ARM::S2: return ARM::S3;

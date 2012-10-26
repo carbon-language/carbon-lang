@@ -348,6 +348,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
   const ARMBaseInstrInfo &TII =
@@ -399,7 +400,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
           // This is bad, if an interrupt is taken after the mov, sp is in an
           // inconsistent state.
           // Use the first callee-saved register as a scratch register.
-          assert(MF.getRegInfo().isPhysRegUsed(ARM::R4) &&
+          assert(MRI.isPhysRegUsed(ARM::R4) &&
                  "No scratch register to restore SP from FP!");
           emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::R4, FramePtr, -NumBytes,
                                  ARMCC::AL, 0, TII);
@@ -1209,6 +1210,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     *static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
 
   // Spill R4 if Thumb2 function requires stack realignment - it will be used as
@@ -1218,12 +1220,12 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // FIXME: It will be better just to find spare register here.
   if (AFI->isThumb2Function() &&
       (MFI->hasVarSizedObjects() || RegInfo->needsStackRealignment(MF)))
-    MF.getRegInfo().setPhysRegUsed(ARM::R4);
+    MRI.setPhysRegUsed(ARM::R4);
 
   if (AFI->isThumb1OnlyFunction()) {
     // Spill LR if Thumb1 function uses variable length argument lists.
     if (AFI->getVarArgsRegSaveSize() > 0)
-      MF.getRegInfo().setPhysRegUsed(ARM::LR);
+      MRI.setPhysRegUsed(ARM::LR);
 
     // Spill R4 if Thumb1 epilogue has to restore SP from FP. We don't know
     // for sure what the stack size will be, but for this, an estimate is good
@@ -1233,7 +1235,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // FIXME: It will be better just to find spare register here.
     unsigned StackSize = estimateStackSize(MF);
     if (MFI->hasVarSizedObjects() || StackSize > 508)
-      MF.getRegInfo().setPhysRegUsed(ARM::R4);
+      MRI.setPhysRegUsed(ARM::R4);
   }
 
   // See if we can spill vector registers to aligned stack.
@@ -1241,7 +1243,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Spill the BasePtr if it's used.
   if (RegInfo->hasBasePointer(MF))
-    MF.getRegInfo().setPhysRegUsed(RegInfo->getBaseRegister());
+    MRI.setPhysRegUsed(RegInfo->getBaseRegister());
 
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
@@ -1249,7 +1251,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
-    if (MF.getRegInfo().isPhysRegUsed(Reg)) {
+    if (MRI.isPhysRegUsed(Reg)) {
       Spilled = true;
       CanEliminateFrame = false;
     }
@@ -1338,7 +1340,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
-      MF.getRegInfo().setPhysRegUsed(ARM::LR);
+      MRI.setPhysRegUsed(ARM::LR);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
@@ -1347,7 +1349,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     }
 
     if (hasFP(MF)) {
-      MF.getRegInfo().setPhysRegUsed(FramePtr);
+      MRI.setPhysRegUsed(FramePtr);
       NumGPRSpills++;
     }
 
@@ -1362,16 +1364,16 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           // Don't spill high register if the function is thumb1
           if (!AFI->isThumb1OnlyFunction() ||
               isARMLowRegister(Reg) || Reg == ARM::LR) {
-            MF.getRegInfo().setPhysRegUsed(Reg);
-            if (!RegInfo->isReservedReg(MF, Reg))
+            MRI.setPhysRegUsed(Reg);
+            if (!MRI.isReserved(Reg))
               ExtraCSSpill = true;
             break;
           }
         }
       } else if (!UnspilledCS2GPRs.empty() && !AFI->isThumb1OnlyFunction()) {
         unsigned Reg = UnspilledCS2GPRs.front();
-        MF.getRegInfo().setPhysRegUsed(Reg);
-        if (!RegInfo->isReservedReg(MF, Reg))
+        MRI.setPhysRegUsed(Reg);
+        if (!MRI.isReserved(Reg))
           ExtraCSSpill = true;
       }
     }
@@ -1389,7 +1391,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       while (NumExtras && !UnspilledCS1GPRs.empty()) {
         unsigned Reg = UnspilledCS1GPRs.back();
         UnspilledCS1GPRs.pop_back();
-        if (!RegInfo->isReservedReg(MF, Reg) &&
+        if (!MRI.isReserved(Reg) &&
             (!AFI->isThumb1OnlyFunction() || isARMLowRegister(Reg) ||
              Reg == ARM::LR)) {
           Extras.push_back(Reg);
@@ -1401,7 +1403,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         while (NumExtras && !UnspilledCS2GPRs.empty()) {
           unsigned Reg = UnspilledCS2GPRs.back();
           UnspilledCS2GPRs.pop_back();
-          if (!RegInfo->isReservedReg(MF, Reg)) {
+          if (!MRI.isReserved(Reg)) {
             Extras.push_back(Reg);
             NumExtras--;
           }
@@ -1409,7 +1411,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       }
       if (Extras.size() && NumExtras == 0) {
         for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
-          MF.getRegInfo().setPhysRegUsed(Extras[i]);
+          MRI.setPhysRegUsed(Extras[i]);
         }
       } else if (!AFI->isThumb1OnlyFunction()) {
         // note: Thumb1 functions spill to R12, not the stack.  Reserve a slot
@@ -1423,7 +1425,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 
   if (ForceLRSpill) {
-    MF.getRegInfo().setPhysRegUsed(ARM::LR);
+    MRI.setPhysRegUsed(ARM::LR);
     AFI->setLRIsSpilledForFarJump(true);
   }
 }
