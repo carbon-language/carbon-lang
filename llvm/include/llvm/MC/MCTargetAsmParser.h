@@ -22,13 +22,15 @@ class MCInst;
 template <typename T> class SmallVectorImpl;
 
 enum AsmRewriteKind {
-   AOK_Imm,
-   AOK_Input,
-   AOK_Output,
-   AOK_SizeDirective,
-   AOK_Emit,
-   AOK_Skip,
-   AOK_DotOperator
+  AOK_DotOperator,    // Rewrite a dot operator expression as an immediate.
+                      // E.g., [eax].foo.bar -> [eax].8
+  AOK_Emit,           // Rewrite _emit as .byte.
+  AOK_Imm,            // Rewrite as $$N.
+  AOK_ImmPrefix,      // Add $$ before a parsed Imm.
+  AOK_Input,          // Rewrite in terms of $N.
+  AOK_Output,         // Rewrite in terms of $N.
+  AOK_SizeDirective,  // Add a sizing directive (e.g., dword ptr).
+  AOK_Skip            // Skip emission (e.g., offset/type operators).
 };
 
 struct AsmRewrite {
@@ -37,7 +39,7 @@ struct AsmRewrite {
   unsigned Len;
   unsigned Val;
 public:
-  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len, unsigned val = 0)
+  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len = 0, unsigned val = 0)
     : Kind(kind), Loc(loc), Len(len), Val(val) {}
 };
 

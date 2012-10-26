@@ -3638,9 +3638,9 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
         // Immediate.
         if (Operand->isImm()) {
-          AsmStrRewrites.push_back(AsmRewrite(AOK_Imm,
-                                              Operand->getStartLoc(),
-                                              Operand->getNameLen()));
+          if (Operand->needAsmRewrite())
+            AsmStrRewrites.push_back(AsmRewrite(AOK_ImmPrefix,
+                                                Operand->getStartLoc()));
           continue;
         }
 
@@ -3665,7 +3665,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
           bool isOutput = (i == 1) && Desc.mayStore();
           if (!Operand->isOffsetOf() && Operand->needSizeDirective())
             AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
-                                                Operand->getStartLoc(), 0,
+                                                Operand->getStartLoc(),
+                                                /*Len*/0,
                                                 Operand->getMemSize()));
           if (isOutput) {
             std::string Constraint = "=";
@@ -3743,7 +3744,11 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     switch (Kind) {
     default: break;
     case AOK_Imm:
-      OS << Twine("$$") + StringRef(Loc, (*I).Len);
+      OS << Twine("$$");
+      OS << (*I).Val;
+      break;
+    case AOK_ImmPrefix:
+      OS << Twine("$$");
       break;
     case AOK_Input:
       OS << '$';
