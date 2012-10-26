@@ -237,6 +237,10 @@ void CodeGenFunction::SimplifyForwardingBlocks(llvm::BasicBlock *BB) {
   if (!BI || !BI->isUnconditional())
     return;
 
+  // Can only simplify empty blocks.
+  if (BI != BB->begin())
+    return;
+
   BB->replaceAllUsesWith(BI->getSuccessor(0));
   BI->eraseFromParent();
   BB->eraseFromParent();
