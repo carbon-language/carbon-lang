@@ -81,6 +81,29 @@ SBProcess::GetBroadcasterClassName ()
     return Process::GetStaticBroadcasterClass().AsCString();
 }
 
+const char *
+SBProcess::GetPluginName ()
+{
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        return process_sp->GetPluginName();
+    }
+    return "<Unknown>";
+}
+
+const char *
+SBProcess::GetShortPluginName ()
+{
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        return process_sp->GetShortPluginName();
+    }
+    return "<Unknown>";
+}
+
+
 lldb::ProcessSP
 SBProcess::GetSP() const
 {

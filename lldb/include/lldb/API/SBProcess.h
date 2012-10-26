@@ -47,6 +47,12 @@ public:
     static const char *
     GetBroadcasterClassName ();
     
+    const char *
+    GetPluginName ();
+    
+    const char *
+    GetShortPluginName ();
+    
     void
     Clear ();
 
