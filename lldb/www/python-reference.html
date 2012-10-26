@@ -213,9 +213,9 @@ frame #0: 0x0000000100000bb6 a.out main + 54 at main.c:16
                     scripts to breakpoints provides a way to create complex breakpoint
                     conditions and also allows for smart logging and data gathering.</p>
                 <p>When your process hits a breakpoint to which you have attached some python code, the code is executed as the
-                   body of a function which takes two arguments:</p>
+                   body of a function which takes three arguments:</p>
                     <p>
-<code><pre><tt>def breakpoint_function_wrapper(<b>frame</b>, <b>bp_loc</b>):
+<code><pre><tt>def breakpoint_function_wrapper(<b>frame</b>, <b>bp_loc</b>, <b>dict</b>):
   <font color=green># Your code goes here</font>
 </tt></pre></code>
                     <p><table class="stats" width="620" cellspacing="0">
@@ -249,6 +249,17 @@ frame #0: 0x0000000100000bb6 a.out main + 54 at main.c:16
                             The breakpoint location that just got hit. Breakpoints are represented by <b>lldb.SBBreakpoint</b>
                             objects. These breakpoint objects can have one or more locations. These locations
                             are represented by <b>lldb.SBBreakpointLocation</b> objects.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content">
+                            <b>dict</b>
+                        </td>
+                        <td class="content">
+                            <b>dict</b>
+                        </td>
+                        <td class="content">
+                            The python session dictionary as a standard python dictionary object.
                         </td>
                     </tr>
                     </table>
