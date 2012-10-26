@@ -99,8 +99,9 @@ static cl::opt<bool>
 NoFloats("bb-vectorize-no-floats", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point values"));
 
+// FIXME: This should default to false once pointer vector support works.
 static cl::opt<bool>
-NoPointers("bb-vectorize-no-pointers", cl::init(false), cl::Hidden,
+NoPointers("bb-vectorize-no-pointers", cl::init(/*false*/ true), cl::Hidden,
   cl::desc("Don't try to vectorize pointer values"));
 
 static cl::opt<bool>
