@@ -177,7 +177,7 @@ namespace {
 
       struct {
         const MemberPointerType *MPT;
-        llvm::Value *Ptr;
+        Expr *RHS;
       } Ptr;
     };
 
@@ -193,10 +193,10 @@ namespace {
       this->Field = Field;
     }
 
-    SubobjectAdjustment(const MemberPointerType *MPT, llvm::Value *Ptr)
+    SubobjectAdjustment(const MemberPointerType *MPT, Expr *RHS)
       : Kind(MemberPointerAdjustment) {
       this->Ptr.MPT = MPT;
-      this->Ptr.Ptr = Ptr;
+      this->Ptr.RHS = RHS;
     }
   };
 }
@@ -371,8 +371,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
           E = BO->getLHS();
           const MemberPointerType *MPT =
               BO->getRHS()->getType()->getAs<MemberPointerType>();
-          llvm::Value *Ptr = CGF.EmitScalarExpr(BO->getRHS());
-          Adjustments.push_back(SubobjectAdjustment(MPT, Ptr));
+          Adjustments.push_back(SubobjectAdjustment(MPT, BO->getRHS()));
         }
       }
 
@@ -447,8 +446,9 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         }
 
         case SubobjectAdjustment::MemberPointerAdjustment: {
+          llvm::Value *Ptr = CGF.EmitScalarExpr(Adjustment.Ptr.RHS);
           Object = CGF.CGM.getCXXABI().EmitMemberDataPointerAddress(
-                        CGF, Object, Adjustment.Ptr.Ptr, Adjustment.Ptr.MPT);
+                        CGF, Object, Ptr, Adjustment.Ptr.MPT);
           break;
         }
         }
