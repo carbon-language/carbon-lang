@@ -227,6 +227,52 @@ CreateReferenceTemporary(CodeGenFunction &CGF, QualType Type,
   return CGF.CreateMemTemp(Type, "ref.tmp");
 }
 
+static const Expr *
+skipRValueSubobjectAdjustments(const Expr *E,
+                            SmallVectorImpl<SubobjectAdjustment> &Adjustments) {
+  while (true) {
+    E = E->IgnoreParens();
+
+    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
+      if ((CE->getCastKind() == CK_DerivedToBase ||
+           CE->getCastKind() == CK_UncheckedDerivedToBase) &&
+          E->getType()->isRecordType()) {
+        E = CE->getSubExpr();
+        CXXRecordDecl *Derived
+          = cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
+        Adjustments.push_back(SubobjectAdjustment(CE, Derived));
+        continue;
+      }
+
+      if (CE->getCastKind() == CK_NoOp) {
+        E = CE->getSubExpr();
+        continue;
+      }
+    } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+      if (!ME->isArrow() && ME->getBase()->isRValue()) {
+        assert(ME->getBase()->getType()->isRecordType());
+        if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+          E = ME->getBase();
+          Adjustments.push_back(SubobjectAdjustment(Field));
+          continue;
+        }
+      }
+    } else if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+      if (BO->isPtrMemOp()) {
+        assert(BO->getLHS()->isRValue());
+        E = BO->getLHS();
+        const MemberPointerType *MPT =
+          BO->getRHS()->getType()->getAs<MemberPointerType>();
+        Adjustments.push_back(SubobjectAdjustment(MPT, BO->getRHS()));
+      }
+    }
+
+    // Nothing changed.
+    break;
+  }
+  return E;
+}
+
 static llvm::Value *
 EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             llvm::Value *&ReferenceTemporary,
@@ -336,53 +382,13 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
       
       return ReferenceTemporary;
     }
-    
+
     SmallVector<SubobjectAdjustment, 2> Adjustments;
-    while (true) {
-      E = E->IgnoreParens();
+    E = skipRValueSubobjectAdjustments(E, Adjustments);
+    if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E))
+      if (opaque->getType()->isRecordType())
+        return CGF.EmitOpaqueValueLValue(opaque).getAddress();
 
-      if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
-        if ((CE->getCastKind() == CK_DerivedToBase ||
-             CE->getCastKind() == CK_UncheckedDerivedToBase) &&
-            E->getType()->isRecordType()) {
-          E = CE->getSubExpr();
-          CXXRecordDecl *Derived 
-            = cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
-          Adjustments.push_back(SubobjectAdjustment(CE, Derived));
-          continue;
-        }
-
-        if (CE->getCastKind() == CK_NoOp) {
-          E = CE->getSubExpr();
-          continue;
-        }
-      } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-        if (!ME->isArrow() && ME->getBase()->isRValue()) {
-          assert(ME->getBase()->getType()->isRecordType());
-          if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
-            E = ME->getBase();
-            Adjustments.push_back(SubobjectAdjustment(Field));
-            continue;
-          }
-        }
-      } else if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-        if (BO->isPtrMemOp()) {
-          assert(BO->getLHS()->isRValue());
-          E = BO->getLHS();
-          const MemberPointerType *MPT =
-              BO->getRHS()->getType()->getAs<MemberPointerType>();
-          Adjustments.push_back(SubobjectAdjustment(MPT, BO->getRHS()));
-        }
-      }
-
-      if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E))
-        if (opaque->getType()->isRecordType())
-          return CGF.EmitOpaqueValueLValue(opaque).getAddress();
-
-      // Nothing changed.
-      break;
-    }
-    
     // Create a reference temporary if necessary.
     AggValueSlot AggSlot = AggValueSlot::ignored();
     if (CGF.hasAggregateLLVMType(E->getType()) &&
