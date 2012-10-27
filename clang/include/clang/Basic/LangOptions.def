@@ -167,7 +167,6 @@ LANGOPT(ApplePragmaPack, 1, 0, "Apple gcc-compatible #pragma pack handling")
 BENIGN_LANGOPT(EmitMicrosoftInlineAsm , 1, 0, 
                "Enable emission of MS-style inline assembly.")
 
-LANGOPT(OpenMP, 1, 0, "Enables OpenMP support.")
 
 BENIGN_LANGOPT(RetainCommentsFromSystemHeaders, 1, 0, "retain documentation comments from system headers in the AST")
 

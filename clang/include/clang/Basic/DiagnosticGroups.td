@@ -251,7 +251,6 @@ def UninitializedMaybe : DiagGroup<"conditional-uninitialized">;
 def UninitializedSometimes : DiagGroup<"sometimes-uninitialized">;
 def Uninitialized  : DiagGroup<"uninitialized", [UninitializedSometimes]>;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
-def OpenMPPragmas  : DiagGroup<"openmp-pragmas">;
 def NSobjectAttribute : DiagGroup<"NSObject-attribute">;
 def UnknownAttributes : DiagGroup<"attributes">;
 def IgnoredAttributes : DiagGroup<"ignored-attributes">;

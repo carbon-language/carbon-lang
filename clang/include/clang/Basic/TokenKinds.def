@@ -637,42 +637,6 @@ ANNOTATION(pragma_fp_contract)
 // handles them.
 ANNOTATION(pragma_opencl_extension)
 
-// Annotations for OpenMP pragma directive statements - "\#pragam omp ..."
-// The lexer produces these so that they only take effect when the parser
-// handles them.
-//
-// Note that OpenMP pragma annotations below are listed in the same order
-// as listed in the OpenMP 3.1 standard specification document. Please do
-// *adhere* to the same order.
-
-// OpenMP parallel constructs.
-ANNOTATION(pragma_omp_parallel)
-
-// OpenMP work sharing constructs.
-ANNOTATION(pragma_omp_for)
-ANNOTATION(pragma_omp_sections)
-ANNOTATION(pragma_omp_single)
-ANNOTATION(pragma_omp_section)
-
-// OpenMP combined parallel work sharing constructs.
-// TODO
-
-// OpenMP tasking constructs.
-ANNOTATION(pragma_omp_task)
-ANNOTATION(pragma_omp_taskyield)
-
-// OpenMP master and synchronization constructs.
-ANNOTATION(pragma_omp_master)
-ANNOTATION(pragma_omp_critical)
-ANNOTATION(pragma_omp_barrier)
-ANNOTATION(pragma_omp_taskwait)
-ANNOTATION(pragma_omp_atomic)
-ANNOTATION(pragma_omp_flush)
-ANNOTATION(pragma_omp_ordered)
-
-// OpenMP data environment related constructs. 
-ANNOTATION(pragma_omp_threadprivate)
-
 #undef ANNOTATION
 #undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD
