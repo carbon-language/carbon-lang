@@ -4076,3 +4076,48 @@ passByValArg(SDValue Chain, DebugLoc DL,
                         MachinePointerInfo(0), MachinePointerInfo(0));
   MemOpChains.push_back(Chain);
 }
+
+void
+MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
+                                    const MipsCC &CC, SDValue Chain,
+                                    DebugLoc DL, SelectionDAG &DAG) const {
+  unsigned NumRegs = CC.numIntArgRegs();
+  const uint16_t *ArgRegs = CC.intArgRegs();
+  const CCState &CCInfo = CC.getCCInfo();
+  unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumRegs);
+  unsigned RegSize = CC.regSize();
+  EVT RegTy = MVT::getIntegerVT(RegSize * 8);
+  const TargetRegisterClass *RC = getRegClassFor(RegTy);
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+
+  // Offset of the first variable argument from stack pointer.
+  int VaArgOffset;
+
+  if (NumRegs == Idx)
+    VaArgOffset = RoundUpToAlignment(CCInfo.getNextStackOffset(), RegSize);
+  else
+    VaArgOffset =
+      (int)CC.reservedArgArea() - (int)(RegSize * (NumRegs - Idx));
+
+  // Record the frame index of the first variable argument
+  // which is a value necessary to VASTART.
+  int FI = MFI->CreateFixedObject(RegSize, VaArgOffset, true);
+  MipsFI->setVarArgsFrameIndex(FI);
+
+  // Copy the integer registers that have not been used for argument passing
+  // to the argument register save area. For O32, the save area is allocated
+  // in the caller's stack frame, while for N32/64, it is allocated in the
+  // callee's stack frame.
+  for (unsigned I = Idx; I < NumRegs; ++I, VaArgOffset += RegSize) {
+    unsigned Reg = AddLiveIn(MF, ArgRegs[I], RC);
+    SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, RegTy);
+    FI = MFI->CreateFixedObject(RegSize, VaArgOffset, true);
+    SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
+    SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff,
+                                 MachinePointerInfo(), false, false, 0);
+    cast<StoreSDNode>(Store.getNode())->getMemOperand()->setValue(0);
+    OutChains.push_back(Store);
+  }
+}
