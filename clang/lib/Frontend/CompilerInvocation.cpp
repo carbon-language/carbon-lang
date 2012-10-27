@@ -870,6 +870,8 @@ static void LangOptsToArgs(const LangOptions &Opts, ToArgsList &Res) {
     Res.push_back("-fapple-pragma-pack");
   if (!Opts.CurrentModule.empty())
     Res.push_back("-fmodule-name=" + Opts.CurrentModule);
+  if (Opts.OpenMP)
+    Res.push_back("-fopenmp");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
@@ -2143,6 +2145,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ThreadSanitizer = Args.hasArg(OPT_fthread_sanitizer);
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
+  Opts.OpenMP = Args.hasArg(OPT_fopenmp);
 
   // Record whether the __DEPRECATED define was requested.
   Opts.Deprecated = Args.hasFlag(OPT_fdeprecated_macro,
