@@ -1980,6 +1980,9 @@ public:
          ValueTypeActions.getTypeAction(NVT.getSimpleVT()) != TypePromoteInteger)
          && "Promote may not follow Expand or Promote");
 
+      if (LA == TypeSplitVector)
+        NVT = EVT::getVectorVT(Context, VT.getVectorElementType(),
+                               VT.getVectorNumElements() / 2);
       return LegalizeKind(LA, NVT);
     }
 

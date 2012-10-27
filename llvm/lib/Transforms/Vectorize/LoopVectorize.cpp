@@ -317,7 +317,7 @@ public:
   /// Returns the most profitable vectorization factor for the loop that is
   /// smaller or equal to the VF argument. This method checks every power
   /// of two up to VF.
-  unsigned findBestVectorizationFactor(unsigned VF = 4);
+  unsigned findBestVectorizationFactor(unsigned VF = 8);
 
 private:
   /// Returns the expected execution cost. The unit of the cost does
