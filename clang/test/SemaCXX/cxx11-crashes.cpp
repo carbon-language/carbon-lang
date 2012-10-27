@@ -36,3 +36,29 @@ S4 foo2() {
 }
 
 }
+
+// rdar://12542261 stack overflow.
+namespace rdar12542261 {
+
+template <class _Tp>
+struct check_complete
+{
+  static_assert(sizeof(_Tp) > 0, "Type must be complete.");
+};
+
+
+template<class _Rp>
+class function // expected-note 2 {{candidate}}
+{
+public:
+  template<class _Fp>
+  function(_Fp, typename check_complete<_Fp>::type* = 0);  // expected-note {{candidate}}
+};
+
+void foobar()
+{
+  auto LeftCanvas = new Canvas(); // expected-error {{unknown type name}}
+  function<void()> m_OnChange = [&, LeftCanvas]() { }; // expected-error {{no viable conversion}}
+}
+
+}
