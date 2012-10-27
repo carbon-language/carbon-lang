@@ -123,7 +123,7 @@ typedef std::pair<unsigned,unsigned> ScopePair;
 /// diagnostic that should be emitted if control goes over it. If not, return 0.
 static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    unsigned InDiag = 0;
+    unsigned InDiag = 0, OutDiag = 0;
     if (VD->getType()->isVariablyModifiedType())
       InDiag = diag::note_protected_by_vla;
 
@@ -164,53 +164,43 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       //   where it is in scope is ill-formed unless the variable has
       //   POD type and is declared without an initializer.
 
-      const Expr *Init = VD->getInit();
-      if (!Init)
-        return ScopePair(InDiag, 0);
+      if (const Expr *init = VD->getInit()) {
+        // We actually give variables of record type (or array thereof)
+        // an initializer even if that initializer only calls a trivial
+        // ctor.  Detect that case.
+        // FIXME: With generalized initializer lists, this may
+        // classify "X x{};" as having no initializer.
+        unsigned inDiagToUse = diag::note_protected_by_variable_init;
 
-      const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Init);
-      if (EWC)
-        Init = EWC->getSubExpr();
+        const CXXRecordDecl *record = 0;
 
-      const MaterializeTemporaryExpr *M = NULL;
-      Init = Init->findMaterializedTemporary(M);
+        if (const CXXConstructExpr *cce = dyn_cast<CXXConstructExpr>(init)) {
+          const CXXConstructorDecl *ctor = cce->getConstructor();
+          record = ctor->getParent();
 
-      SmallVector<SubobjectAdjustment, 2> Adjustments;
-      Init = Init->skipRValueSubobjectAdjustments(Adjustments);
-
-      QualType QT = Init->getType();
-      if (QT.isNull())
-        return ScopePair(diag::note_protected_by_variable_init, 0);
-
-      const Type *T = QT.getTypePtr();
-      if (T->isArrayType())
-        T = T->getBaseElementTypeUnsafe();
-
-      const CXXRecordDecl *Record = T->getAsCXXRecordDecl();
-      if (!Record)
-        return ScopePair(diag::note_protected_by_variable_init, 0);
-
-      // If we need to call a non trivial destructor for this variable,
-      // record an out diagnostic.
-      unsigned OutDiag = 0;
-      if (!Record->hasTrivialDestructor() && !Init->isGLValue())
-        OutDiag = diag::note_exits_dtor;
-
-      if (const CXXConstructExpr *cce = dyn_cast<CXXConstructExpr>(Init)) {
-        const CXXConstructorDecl *ctor = cce->getConstructor();
-        if (ctor->isTrivial() && ctor->isDefaultConstructor()) {
-          if (OutDiag)
-            InDiag = diag::note_protected_by_variable_nontriv_destructor;
-          else if (!Record->isPOD())
-            InDiag = diag::note_protected_by_variable_non_pod;
-          return ScopePair(InDiag, OutDiag);
+          if (ctor->isTrivial() && ctor->isDefaultConstructor()) {
+            if (!record->hasTrivialDestructor())
+              inDiagToUse = diag::note_protected_by_variable_nontriv_destructor;
+            else if (!record->isPOD())
+              inDiagToUse = diag::note_protected_by_variable_non_pod;
+            else
+              inDiagToUse = 0;
+          }
+        } else if (VD->getType()->isArrayType()) {
+          record = VD->getType()->getBaseElementTypeUnsafe()
+                                ->getAsCXXRecordDecl();
         }
+
+        if (inDiagToUse)
+          InDiag = inDiagToUse;
+
+        // Also object to indirect jumps which leave scopes with dtors.
+        if (record && !record->hasTrivialDestructor())
+          OutDiag = diag::note_exits_dtor;
       }
-
-      return ScopePair(diag::note_protected_by_variable_init, OutDiag);
     }
-
-    return ScopePair(InDiag, 0);
+    
+    return ScopePair(InDiag, OutDiag);    
   }
 
   if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
