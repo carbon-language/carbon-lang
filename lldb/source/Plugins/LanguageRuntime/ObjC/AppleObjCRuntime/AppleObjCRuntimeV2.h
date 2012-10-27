@@ -142,6 +142,7 @@ private:
     lldb::addr_t                        m_isa_hash_table_ptr;
     HashTableSignature                  m_hash_signature;
     bool                                m_has_object_getClass;
+    bool                                m_loaded_objc_opt;
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;

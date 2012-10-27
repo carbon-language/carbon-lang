@@ -113,7 +113,8 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
     m_type_vendor_ap (),
     m_isa_hash_table_ptr (LLDB_INVALID_ADDRESS),
     m_hash_signature (),
-    m_has_object_getClass (false)
+    m_has_object_getClass (false),
+    m_loaded_objc_opt (false)
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
@@ -736,6 +737,9 @@ public:
         m_version = m_process->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
         cursor += sizeof(uint32_t);
         
+        if (!IsValid())
+            return;
+        
         // int32_t selopt_offset;
         cursor += sizeof(int32_t);
         
@@ -749,9 +753,6 @@ public:
             m_clsopt_offset = clsopt_offset.SInt();
             cursor += sizeof(int32_t);
         }
-        
-        if (m_version != 12)
-            return;
         
         m_clsopt_ptr = load_addr + m_clsopt_offset;
         
@@ -913,7 +914,10 @@ public:
     
     const_iterator begin ()
     {
-        return const_iterator(*this, (int64_t)m_capacity + (int64_t)m_duplicateCount);
+        if (!IsValid())
+            return m_end_iterator;
+        else
+            return const_iterator(*this, (int64_t)m_capacity + (int64_t)m_duplicateCount);
     }
     
     const_iterator end ()
@@ -922,6 +926,11 @@ public:
     }
     
 private:
+    bool IsValid()
+    {
+        return (m_version == 12);
+    }
+    
     // contents of objc_opt struct
     uint32_t m_version;
     int32_t m_clsopt_offset;
@@ -1756,40 +1765,45 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                     m_isa_to_descriptor_cache[elt.second] = descriptor_sp;
                 }
                 
-                ObjectFile *objc_object = objc_module_sp->GetObjectFile();
-                
-                if (objc_object)
+                if (!m_loaded_objc_opt)
                 {
-                    SectionList *section_list = objc_object->GetSectionList();
-                
-                    if (section_list)
+                    m_loaded_objc_opt = true;
+                    
+                    ObjectFile *objc_object = objc_module_sp->GetObjectFile();
+                    
+                    if (objc_object)
                     {
-                        SectionSP text_segment_sp (section_list->FindSectionByName(ConstString("__TEXT")));
+                        SectionList *section_list = objc_object->GetSectionList();
                         
-                        if (text_segment_sp)
+                        if (section_list)
                         {
-                            SectionSP objc_opt_section_sp (text_segment_sp->GetChildren().FindSectionByName(ConstString("__objc_opt_ro")));
+                            SectionSP text_segment_sp (section_list->FindSectionByName(ConstString("__TEXT")));
                             
-                            if (objc_opt_section_sp)
+                            if (text_segment_sp)
                             {
-                                lldb::addr_t objc_opt_ptr = objc_opt_section_sp->GetLoadBaseAddress(&process->GetTarget());
+                                SectionSP objc_opt_section_sp (text_segment_sp->GetChildren().FindSectionByName(ConstString("__objc_opt_ro")));
                                 
-                                if (objc_opt_ptr != LLDB_INVALID_ADDRESS)
+                                if (objc_opt_section_sp)
                                 {
-                                    RemoteObjCOpt objc_opt(process, objc_opt_ptr);
+                                    lldb::addr_t objc_opt_ptr = objc_opt_section_sp->GetLoadBaseAddress(&process->GetTarget());
                                     
-                                    for (ObjCLanguageRuntime::ObjCISA objc_isa : objc_opt)
+                                    if (objc_opt_ptr != LLDB_INVALID_ADDRESS)
                                     {
-                                        ++num_objc_opt_ro_isas;
-                                        if (m_isa_to_descriptor_cache.count(objc_isa))
-                                            continue;
+                                        RemoteObjCOpt objc_opt(process, objc_opt_ptr);
                                         
-                                        ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
-                                        
-                                        if (log && log->GetVerbose())
-                                            log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
-                                        
-                                        m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
+                                        for (ObjCLanguageRuntime::ObjCISA objc_isa : objc_opt)
+                                        {
+                                            ++num_objc_opt_ro_isas;
+                                            if (m_isa_to_descriptor_cache.count(objc_isa))
+                                                continue;
+                                            
+                                            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
+                                            
+                                            if (log && log->GetVerbose())
+                                                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
+                                            
+                                            m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
+                                        }
                                     }
                                 }
                             }
