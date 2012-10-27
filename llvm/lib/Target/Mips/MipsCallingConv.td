@@ -35,9 +35,6 @@ def RetCC_MipsO32 : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_MipsN : CallingConv<[
-   // Handles byval parameters.
-  CCIfByVal<CCCustom<"CC_Mips64Byval">>,
-
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
@@ -72,9 +69,6 @@ def CC_MipsN : CallingConv<[
 // N32/64 variable arguments.
 // All arguments are passed in integer registers.
 def CC_MipsN_VarArg : CallingConv<[
-   // Handles byval parameters.
-  CCIfByVal<CCCustom<"CC_Mips64Byval">>,
-
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
@@ -210,12 +204,6 @@ def CC_Mips_FastCC : CallingConv<[
 //===----------------------------------------------------------------------===//
 // Mips Calling Convention Dispatch
 //===----------------------------------------------------------------------===//
-
-def CC_Mips : CallingConv<[
-  CCIfSubtarget<"isABI_EABI()", CCDelegateTo<CC_MipsEABI>>,
-  CCIfSubtarget<"isABI_N32()", CCDelegateTo<CC_MipsN>>,
-  CCIfSubtarget<"isABI_N64()", CCDelegateTo<CC_MipsN>>
-]>;
 
 def RetCC_Mips : CallingConv<[
   CCIfSubtarget<"isABI_EABI()", CCDelegateTo<RetCC_MipsEABI>>,
