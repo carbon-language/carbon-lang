@@ -192,7 +192,9 @@ AppleObjCTypeVendor::GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa)
                                                                                 &identifier_info,
                                                                                 NULL);
     
-    m_external_source->SetMetadata((uintptr_t)new_iface_decl, (uint64_t)isa);
+    ClangASTMetadata meta_data;
+    meta_data.SetISAPtr((uint64_t) isa);
+    m_external_source->SetMetadata((uintptr_t)new_iface_decl, meta_data);
     
     new_iface_decl->setHasExternalVisibleStorage();
     
@@ -488,7 +490,10 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
 {
     lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
     
-    ObjCLanguageRuntime::ObjCISA objc_isa = (ObjCLanguageRuntime::ObjCISA)m_external_source->GetMetadata((uintptr_t)interface_decl);
+    ClangASTMetadata *metadata = m_external_source->GetMetadata((uintptr_t)interface_decl);
+    ObjCLanguageRuntime::ObjCISA objc_isa = 0;
+    if (metadata)
+     objc_isa = metadata->GetISAPtr();
     
     if (!objc_isa)
         return false;
@@ -591,10 +596,16 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
                 if (log)
                 {
                     ASTDumper dumper(result_iface_type);
+                    
+                    uint64_t isa_value = LLDB_INVALID_ADDRESS;
+                    ClangASTMetadata *metadata = m_external_source->GetMetadata((uintptr_t)result_iface_decl);
+                    if (metadata)
+                        isa_value = metadata->GetISAPtr();
+                    
                     log->Printf("AOCTV::FT [%u] Found %s (isa 0x%llx) in the ASTContext",
                                 current_id,
                                 dumper.GetCString(),
-                                m_external_source->GetMetadata((uintptr_t)result_iface_decl));
+                                isa_value);
                 }
                     
                 types.push_back(ClangASTType(ast_ctx, result_iface_type.getAsOpaquePtr()));

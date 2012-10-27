@@ -144,23 +144,27 @@ public:
     GetCompleteDecl (clang::ASTContext *ast,
                      clang::Decl *decl);
 
+    void SetMetadataAsUserID (uintptr_t object,
+                              lldb::user_id_t user_id);
+
     void SetMetadata (uintptr_t object,
-                      uint64_t metadata)
+                      ClangASTMetadata &meta_data)
     {
-        SetMetadata(getASTContext(), object, metadata);
+        SetMetadata(getASTContext(), object, meta_data);
     }
     
     static void
     SetMetadata (clang::ASTContext *ast,
                  uintptr_t object,
-                 uint64_t metadata);
+                 ClangASTMetadata &meta_data);
     
-    uint64_t GetMetadata (uintptr_t object)
+    ClangASTMetadata *
+    GetMetadata (uintptr_t object)
     {
         return GetMetadata(getASTContext(), object);
     }
     
-    static uint64_t
+    static ClangASTMetadata *
     GetMetadata (clang::ASTContext *ast,
                  uintptr_t object);
     
@@ -300,7 +304,7 @@ public:
                       const char *name,
                       int kind,
                       lldb::LanguageType language,
-                      uint64_t metadata = 0);
+                      ClangASTMetadata *metadata = NULL);
 
     static clang::FieldDecl *
     AddFieldToRecordType (clang::ASTContext *ast,
@@ -459,7 +463,7 @@ public:
                      clang::DeclContext *decl_ctx, 
                      bool isForwardDecl, 
                      bool isInternal,
-                     uint64_t metadata = 0);
+                     ClangASTMetadata *metadata = NULL);
     
     static clang::FieldDecl *
     AddObjCClassIVar (clang::ASTContext *ast,
@@ -498,7 +502,7 @@ public:
         const char *property_setter_name,
         const char *property_getter_name,
         uint32_t property_attributes,
-        uint64_t metadata = 0
+        ClangASTMetadata *metadata = NULL
     );
 
     bool
@@ -511,7 +515,7 @@ public:
         const char *property_setter_name,
         const char *property_getter_name,
         uint32_t property_attributes,
-        uint64_t metadata = 0
+        ClangASTMetadata *metadata = NULL
     )
     {
         return ClangASTContext::AddObjCClassProperty (getASTContext(),

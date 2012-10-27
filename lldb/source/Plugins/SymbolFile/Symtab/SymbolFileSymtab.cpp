@@ -12,6 +12,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -403,11 +404,13 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
         
         ClangASTContext &ast = GetClangASTContext();
         
+        ClangASTMetadata metadata;
+        metadata.SetUserID(0xffaaffaaffaaffaall);
         lldb::clang_type_t objc_object_type = ast.CreateObjCClass (name.AsCString(), 
                                                                    ast.GetTranslationUnitDecl(), 
                                                                    isForwardDecl, 
                                                                    isInternal,
-                                                                   0xffaaffaaffaaffaall);
+                                                                   &metadata);
         
         Declaration decl;
         

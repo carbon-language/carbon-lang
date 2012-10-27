@@ -36,19 +36,107 @@
 #include <assert.h>
 #endif
 
+#include "lldb/lldb-defines.h"
+#include "lldb/Core/dwarf.h"
+
 namespace lldb_private {
+
+class ClangASTMetadata
+{
+public:
+    ClangASTMetadata () :
+        m_user_id(0),
+        m_union_is_user_id(false),
+        m_union_is_isa_ptr(false),
+        m_has_object_ptr(false),
+        m_is_self (false)
+    {
+    }
+    
+    void
+    SetUserID (lldb::user_id_t user_id)
+    {
+        m_user_id = user_id;
+        m_union_is_user_id = true;
+        m_union_is_isa_ptr = false;
+    }
+    lldb::user_id_t GetUserID () const
+    {
+        if (m_union_is_user_id)
+            return m_user_id;
+        else
+            return LLDB_INVALID_UID;
+    }
+
+    void
+    SetISAPtr (uint64_t isa_ptr)
+    {
+        m_isa_ptr = isa_ptr;
+        m_union_is_user_id = false;
+        m_union_is_isa_ptr = true;
+    }
+    
+    uint64_t GetISAPtr () const
+    {
+        if (m_union_is_isa_ptr)
+            return m_isa_ptr;
+        else
+            return 0;
+    }
+    
+    void SetObjectPtrName(const char *name)
+    {
+        m_has_object_ptr = true;
+        if (strcmp (name, "self") == 0)
+            m_is_self = true;
+        else if (strcmp (name, "this") == 0)
+            m_is_self = false;
+        else
+            m_has_object_ptr = false;
+    }
+    
+    const char *GetObjectPtrName() const
+    {
+        if (m_has_object_ptr)
+        {
+            if (m_is_self)
+                return "self";
+            else
+                return "this";
+        }
+        else
+            return NULL;
+    }
+    
+    bool HasObjectPtr() const
+    {
+        return m_has_object_ptr;
+    }
+    
+private:
+    union
+    {
+        lldb::user_id_t m_user_id;
+        uint64_t  m_isa_ptr;
+    };
+    bool m_union_is_user_id : 1,
+         m_union_is_isa_ptr : 1,
+         m_has_object_ptr : 1,
+         m_is_self : 1;
+    
+};
 
 class ClangExternalASTSourceCommon : public clang::ExternalASTSource 
 {
 public:
     ClangExternalASTSourceCommon();
     ~ClangExternalASTSourceCommon();
-    
-    virtual uint64_t GetMetadata(uintptr_t object);
-    virtual void SetMetadata(uintptr_t object, uint64_t metadata);
+
+    virtual ClangASTMetadata *GetMetadata(uintptr_t object);
+    virtual void SetMetadata(uintptr_t object, ClangASTMetadata &metadata);
     virtual bool HasMetadata(uintptr_t object);
 private:
-    typedef llvm::DenseMap<uintptr_t, uint64_t> MetadataMap;
+    typedef llvm::DenseMap<uintptr_t, ClangASTMetadata> MetadataMap;
     
     MetadataMap m_metadata;
     uint64_t    m_magic;        ///< Because we don't have RTTI, we must take it

@@ -60,15 +60,20 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
 
             if (log)
             {
+                lldb::user_id_t user_id;
+                ClangASTMetadata *metadata = GetDeclMetadata(decl);
+                if (metadata)
+                    user_id = metadata->GetUserID();
+                
                 if (NamedDecl *named_decl = dyn_cast<NamedDecl>(decl))
                     log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s', metadata 0x%llx",
                                 decl->getDeclKindName(),
                                 named_decl->getNameAsString().c_str(),
-                                GetDeclMetadata(decl));
+                                user_id);
                 else
                     log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s, metadata 0x%llx",
                                 decl->getDeclKindName(),
-                                GetDeclMetadata(decl));
+                                user_id);
             }
         }
         
@@ -243,7 +248,7 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     return true;
 }
 
-uint64_t
+ClangASTMetadata *
 ClangASTImporter::GetDeclMetadata (const clang::Decl *decl)
 {
     DeclOrigin decl_origin = GetDeclOrigin(decl);
@@ -450,6 +455,11 @@ clang::Decl
         
     if (log)
     {
+        lldb::user_id_t user_id;
+        ClangASTMetadata *metadata = m_master.GetDeclMetadata(from);
+        if (metadata)
+            user_id = metadata->GetUserID();
+        
         if (NamedDecl *from_named_decl = dyn_cast<clang::NamedDecl>(from))
         {
             std::string name_string;
@@ -462,7 +472,7 @@ clang::Decl
                         to,
                         name_string.c_str(),
                         from,
-                        m_master.GetDeclMetadata(from));
+                        user_id);
         }
         else
         {
@@ -470,7 +480,7 @@ clang::Decl
                         from->getDeclKindName(),
                         to,
                         from,
-                        m_master.GetDeclMetadata(from));
+                        user_id);
         }
     }
 

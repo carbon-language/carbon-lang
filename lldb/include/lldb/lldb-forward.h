@@ -62,6 +62,7 @@ class   BroadcasterManager;
 class   CPPLanguageRuntime;
 class   ClangASTContext;
 class   ClangASTImporter;
+class   ClangASTMetadata;
 class   ClangASTSource;
 class   ClangASTType;
 class   ClangNamespaceDecl;

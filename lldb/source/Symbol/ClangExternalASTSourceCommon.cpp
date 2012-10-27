@@ -27,14 +27,19 @@ ClangExternalASTSourceCommon::~ClangExternalASTSourceCommon()
     g_TotalSizeOfMetadata -= m_metadata.size();
 }
 
-uint64_t ClangExternalASTSourceCommon::GetMetadata (uintptr_t object)
+ClangASTMetadata *
+ClangExternalASTSourceCommon::GetMetadata (uintptr_t object)
 {
     assert (m_magic == ClangExternalASTSourceCommon_MAGIC);
     
-    return m_metadata[object];
+    if (HasMetadata (object))
+        return &m_metadata[object];
+    else
+        return NULL;
 }
 
-void ClangExternalASTSourceCommon::SetMetadata (uintptr_t object, uint64_t metadata)
+void
+ClangExternalASTSourceCommon::SetMetadata (uintptr_t object, ClangASTMetadata &metadata)
 {
     assert (m_magic == ClangExternalASTSourceCommon_MAGIC);
     
@@ -44,7 +49,8 @@ void ClangExternalASTSourceCommon::SetMetadata (uintptr_t object, uint64_t metad
     g_TotalSizeOfMetadata += (new_size - orig_size);
 }
 
-bool ClangExternalASTSourceCommon::HasMetadata (uintptr_t object)
+bool
+ClangExternalASTSourceCommon::HasMetadata (uintptr_t object)
 {
     assert (m_magic == ClangExternalASTSourceCommon_MAGIC);
 

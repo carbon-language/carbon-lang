@@ -2661,7 +2661,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         {
             valobj = frame->GetValueForVariableExpressionPath(name_unique_cstr, 
                                                               eNoDynamicValues, 
-                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember
+                                                              | StackFrame::eExpressionPathOptionsAllowDirectIVarAccess,
                                                               var,
                                                               err);
             
