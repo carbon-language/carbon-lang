@@ -66,9 +66,15 @@ declare i32 @callee4(i32, i32, i32, i32, i32, i32, i32, i32, i32)
 
 define i32 @caller5() nounwind readonly {
 entry:
+; PIC32: .ent caller5
 ; PIC32-NOT: jalr
+; PIC32: .end caller5
+; STATIC32: .ent caller5
 ; STATIC32-NOT: jal
+; STATIC32: .end caller5
+; N64: .ent caller5
 ; N64-NOT: jalr
+; N64: .end caller5
 
   %0 = load i32* @g0, align 4
   %1 = load i32* @g1, align 4
@@ -96,5 +102,57 @@ entry:
   %add7 = add nsw i32 %add6, %a8
   %add8 = add nsw i32 %add7, %a9
   ret i32 %add8
+}
+
+declare i32 @callee8(i32, ...)
+
+define i32 @caller8_0() nounwind {
+entry:
+  %call = tail call fastcc i32 @caller8_1()
+  ret i32 %call
+}
+
+define internal fastcc i32 @caller8_1() nounwind noinline {
+entry:
+; PIC32: .ent caller8_1
+; PIC32: jalr
+; PIC32: .end caller8_1
+; STATIC32: .ent caller8_1
+; STATIC32: jal
+; STATIC32: .end caller8_1
+; N64: .ent caller8_1
+; N64: jalr
+; N64: .end caller8_1
+
+  %call = tail call i32 (i32, ...)* @callee8(i32 2, i32 1) nounwind
+  ret i32 %call
+}
+
+%struct.S = type { [2 x i32] }
+
+@gs1 = external global %struct.S
+
+declare i32 @callee9(%struct.S* byval)
+
+define i32 @caller9_0() nounwind {
+entry:
+  %call = tail call fastcc i32 @caller9_1()
+  ret i32 %call
+}
+
+define internal fastcc i32 @caller9_1() nounwind noinline {
+entry:
+; PIC32: .ent caller9_1
+; PIC32: jalr
+; PIC32: .end caller9_1
+; STATIC32: .ent caller9_1
+; STATIC32: jal
+; STATIC32: .end caller9_1
+; N64: .ent caller9_1
+; N64: jalr
+; N64: .end caller9_1
+
+  %call = tail call i32 @callee9(%struct.S* byval @gs1) nounwind
+  ret i32 %call
 }
 

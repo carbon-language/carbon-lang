@@ -2639,19 +2639,16 @@ static unsigned getNextIntArgReg(unsigned Reg) {
 /// IsEligibleForTailCallOptimization - Check whether the call is eligible
 /// for tail call optimization.
 bool MipsTargetLowering::
-IsEligibleForTailCallOptimization(CallingConv::ID CalleeCC,
+IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo, bool IsVarArg,
                                   unsigned NextStackOffset) const {
   if (!EnableMipsTailCalls)
     return false;
 
-  // Do not tail-call optimize if there is an argument passed on stack.
-  if (IsO32 && (CalleeCC != CallingConv::Fast)) {
-    if (NextStackOffset > 16)
-      return false;
-  } else if (NextStackOffset)
+  if (MipsCCInfo.hasByValArg() || IsVarArg)
     return false;
 
-  return true;
+  // Return true if no arguments are passed on stack.
+  return MipsCCInfo.reservedArgArea() == NextStackOffset;
 }
 
 /// LowerCall - functions arguments are copied from virtual regs to
@@ -2690,7 +2687,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Check if it's really possible to do a tail call.
   if (isTailCall)
-    isTailCall = IsEligibleForTailCallOptimization(CallConv, NextStackOffset);
+    isTailCall = IsEligibleForTailCallOptimization(MipsCCInfo, isVarArg,
+                                                   NextStackOffset);
 
   if (isTailCall)
     ++NumTailCalls;

@@ -274,7 +274,8 @@ namespace llvm {
 
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization.
-    bool IsEligibleForTailCallOptimization(CallingConv::ID CalleeCC,
+    bool IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
+                                           bool IsVarArg,
                                            unsigned NextStackOffset) const;
 
     /// copyByValArg - Copy argument registers which were used to pass a byval
