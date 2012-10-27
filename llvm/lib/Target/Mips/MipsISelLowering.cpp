@@ -3936,3 +3936,46 @@ void MipsTargetLowering::MipsCC::allocateRegs(ByValArgInfo &ByVal,
        ByValSize -= RegSize, ++I, ++ByVal.NumRegs)
     CCInfo.AllocateReg(IntArgRegs[I], ShadowRegs[I]);
 }
+
+void MipsTargetLowering::
+copyByValRegs(SDValue Chain, DebugLoc DL, std::vector<SDValue> &OutChains,
+              SelectionDAG &DAG, const ISD::ArgFlagsTy &Flags,
+              SmallVectorImpl<SDValue> &InVals, const Argument *FuncArg,
+              const MipsCC &CC, const ByValArgInfo &ByVal) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned RegAreaSize = ByVal.NumRegs * CC.regSize();
+  unsigned FrameObjSize = std::max(Flags.getByValSize(), RegAreaSize);
+  int FrameObjOffset;
+
+  if (RegAreaSize)
+    FrameObjOffset = (int)CC.reservedArgArea() -
+      (int)((CC.numIntArgRegs() - ByVal.FirstIdx) * CC.regSize());
+  else
+    FrameObjOffset = ByVal.Address;
+
+  // Create frame object.
+  EVT PtrTy = getPointerTy();
+  int FI = MFI->CreateFixedObject(FrameObjSize, FrameObjOffset, true);
+  SDValue FIN = DAG.getFrameIndex(FI, PtrTy);
+  InVals.push_back(FIN);
+
+  if (!ByVal.NumRegs)
+    return;
+
+  // Copy arg registers.
+  EVT RegTy = MVT::getIntegerVT(CC.regSize() * 8);
+  const TargetRegisterClass *RC = getRegClassFor(RegTy);
+
+  for (unsigned I = 0; I < ByVal.NumRegs; ++I) {
+    unsigned ArgReg = CC.intArgRegs()[ByVal.FirstIdx + I];
+    unsigned VReg = AddLiveIn(MF, ArgReg, RC);
+    unsigned Offset = I * CC.regSize();
+    SDValue StorePtr = DAG.getNode(ISD::ADD, DL, PtrTy, FIN,
+                                   DAG.getConstant(Offset, PtrTy));
+    SDValue Store = DAG.getStore(Chain, DL, DAG.getRegister(VReg, RegTy),
+                                 StorePtr, MachinePointerInfo(FuncArg, Offset),
+                                 false, false, 0);
+    OutChains.push_back(Store);
+  }
+}

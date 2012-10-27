@@ -277,6 +277,16 @@ namespace llvm {
     bool IsEligibleForTailCallOptimization(CallingConv::ID CalleeCC,
                                            unsigned NextStackOffset) const;
 
+    /// copyByValArg - Copy argument registers which were used to pass a byval
+    /// argument to the stack. Create a stack frame object for the byval
+    /// argument.
+    void copyByValRegs(SDValue Chain, DebugLoc DL,
+                       std::vector<SDValue> &OutChains, SelectionDAG &DAG,
+                       const ISD::ArgFlagsTy &Flags,
+                       SmallVectorImpl<SDValue> &InVals,
+                       const Argument *FuncArg,
+                       const MipsCC &CC, const ByValArgInfo &ByVal) const;
+
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,
