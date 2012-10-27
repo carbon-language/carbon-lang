@@ -7005,15 +7005,18 @@ void ScalarEvolution::verifyAnalysis() const {
 
     // Compare the stringified SCEVs. We don't care if undef backedgetaken count
     // changes.
-    // FIXME: We currently ignore SCEV changes towards CouldNotCompute. This
+    // FIXME: We currently ignore SCEV changes from/to CouldNotCompute. This
     // means that a pass is buggy or SCEV has to learn a new pattern but is
     // usually not harmful.
     if (OldI->second != NewI->second &&
         OldI->second.find("undef") == std::string::npos &&
+        NewI->second.find("undef") == std::string::npos &&
+        OldI->second != "***COULDNOTCOMPUTE***" &&
         NewI->second != "***COULDNOTCOMPUTE***") {
-      dbgs() << "SCEVValidator: SCEV for Loop '"
+      dbgs() << "SCEVValidator: SCEV for loop '"
              << OldI->first->getHeader()->getName()
-             << "' from '" << OldI->second << "' to '" << NewI->second << "'!";
+             << "' changed from '" << OldI->second
+             << "' to '" << NewI->second << "'!\n";
       std::abort();
     }
   }
