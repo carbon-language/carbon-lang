@@ -580,3 +580,12 @@ bb28:                                             ; preds = %bb21
 bb29:                                             ; preds = %bb28, %bb26, %bb25, %bb21
   unreachable
 }
+
+define void @pr14194() nounwind uwtable {
+  %tmp = load i64* undef, align 16
+  %tmp1 = trunc i64 %tmp to i32
+  %tmp2 = lshr i64 %tmp, 32
+  %tmp3 = trunc i64 %tmp2 to i32
+  %tmp4 = call { i32, i32 } asm sideeffect "", "=&r,=&r,r,r,0,1,~{dirflag},~{fpsr},~{flags}"(i32 %tmp3, i32 undef, i32 %tmp3, i32 %tmp1) nounwind
+ ret void
+}

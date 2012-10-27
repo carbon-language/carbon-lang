@@ -1492,6 +1492,20 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   if ((V.WriteLanes & OtherV.ValidLanes) == 0)
     return CR_Replace;
 
+  // If the other live range is killed by DefMI and the live ranges are still
+  // overlapping, it must be because we're looking at an early clobber def:
+  //
+  //   %dst<def,early-clobber> = ASM %src<kill>
+  //
+  // In this case, it is illegal to merge the two live ranges since the early
+  // clobber def would clobber %src before it was read.
+  if (OtherLRQ.isKill()) {
+    // This case where the def doesn't overlap the kill is handled above.
+    assert(VNI->def.isEarlyClobber() &&
+           "Only early clobber defs can overlap a kill");
+    return CR_Impossible;
+  }
+
   // VNI is clobbering live lanes in OtherVNI, but there is still the
   // possibility that no instructions actually read the clobbered lanes.
   // If we're clobbering all the lanes in OtherVNI, at least one must be read.
