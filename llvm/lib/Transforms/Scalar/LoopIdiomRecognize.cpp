@@ -16,7 +16,7 @@
 // TODO List:
 //
 // Future loop memory idioms to recognize:
-//   memcmp, memmove, strlen, etc.
+//   memcmp, strlen, etc.
 // Future floating point idioms to recognize in -ffast-math mode:
 //   fpowi
 // Future integer operation idioms to recognize:
@@ -60,8 +60,9 @@
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
-STATISTIC(NumMemSet, "Number of memset's formed from loop stores");
-STATISTIC(NumMemCpy, "Number of memcpy's formed from loop load+stores");
+STATISTIC(NumMemSet, "Number of memsets formed from loop stores");
+STATISTIC(NumMemCpy, "Number of memcpys formed from loop load+stores");
+STATISTIC(NumMemMove, "Number of memmoves formed from loop load+stores");
 
 namespace {
   class LoopIdiomRecognize : public LoopPass {
@@ -532,6 +533,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // stores) in the loop. We ignore the direct dependency between SI and LI here
   // and check it later.
   DependenceAnalysis &DA = getAnalysis<DependenceAnalysis>();
+  bool isMemcpySafe = true;
   for (Loop::block_iterator BI = CurLoop->block_begin(),
        BE = CurLoop->block_end(); BI != BE; ++BI)
     for (BasicBlock::iterator I = (*BI)->begin(), E = (*BI)->end(); I != E; ++I)
@@ -552,8 +554,14 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // Now check the dependency between SI and LI. If there is no dependency we
   // can safely emit a memcpy.
   OwningPtr<Dependence> Dep(DA.depends(SI, LI, true));
-  if (Dep)
-    return false;
+  if (Dep) {
+    // If there is a dependence but the direction is positive we can still
+    // safely turn this into memmove.
+    if (Dep->getLevels() != 1 ||
+        Dep->getDirection(1) != Dependence::DVEntry::GT)
+      return false;
+    isMemcpySafe = false;
+  }
 
   // The trip count of the loop and the base pointer of the addrec SCEV is
   // guaranteed to be loop invariant, which means that it should dominate the
@@ -590,12 +598,19 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   Value *NumBytes =
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
 
-  CallInst *NewCall =
-    Builder.CreateMemCpy(StoreBasePtr, LoadBasePtr, NumBytes,
-                         std::min(SI->getAlignment(), LI->getAlignment()));
+  CallInst *NewCall;
+  unsigned Align = std::min(SI->getAlignment(), LI->getAlignment());
+  if (isMemcpySafe) {
+    NewCall = Builder.CreateMemCpy(StoreBasePtr, LoadBasePtr, NumBytes, Align);
+    ++NumMemCpy;
+  } else {
+    NewCall = Builder.CreateMemMove(StoreBasePtr, LoadBasePtr, NumBytes, Align);
+    ++NumMemMove;
+  }
   NewCall->setDebugLoc(SI->getDebugLoc());
 
-  DEBUG(dbgs() << "  Formed memcpy: " << *NewCall << "\n"
+  DEBUG(dbgs() << "  Formed " << (isMemcpySafe ? "memcpy: " : "memmove: ")
+               << *NewCall << "\n"
                << "    from load ptr=" << *LoadEv << " at: " << *LI << "\n"
                << "    from store ptr=" << *StoreEv << " at: " << *SI << "\n");
 
@@ -603,6 +618,5 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
   deleteDeadInstruction(SI, *SE, TLI);
-  ++NumMemCpy;
   return true;
 }
