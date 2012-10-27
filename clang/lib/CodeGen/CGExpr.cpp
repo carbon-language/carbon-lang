@@ -228,6 +228,27 @@ CreateReferenceTemporary(CodeGenFunction &CGF, QualType Type,
 }
 
 static const Expr *
+findMaterializedTemporary(const Expr *E, const MaterializeTemporaryExpr *&MTE) {
+  // Look through single-element init lists that claim to be lvalues. They're
+  // just syntactic wrappers in this case.
+  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
+    if (ILE->getNumInits() == 1 && ILE->isGLValue())
+      E = ILE->getInit(0);
+  }
+
+  // Look through expressions for materialized temporaries (for now).
+  if (const MaterializeTemporaryExpr *M
+      = dyn_cast<MaterializeTemporaryExpr>(E)) {
+    MTE = M;
+    E = M->GetTemporaryExpr();
+  }
+
+  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
+    E = DAE->getExpr();
+  return E;
+}
+
+static const Expr *
 skipRValueSubobjectAdjustments(const Expr *E,
                             SmallVectorImpl<SubobjectAdjustment> &Adjustments) {
   while (true) {
@@ -279,32 +300,18 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             const CXXDestructorDecl *&ReferenceTemporaryDtor,
                             QualType &ObjCARCReferenceLifetimeType,
                             const NamedDecl *InitializedDecl) {
-  // Look through single-element init lists that claim to be lvalues. They're
-  // just syntactic wrappers in this case.
-  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
-    if (ILE->getNumInits() == 1 && ILE->isGLValue())
-      E = ILE->getInit(0);
-  }
+  const MaterializeTemporaryExpr *M = NULL;
+  E = findMaterializedTemporary(E, M);
+  // Objective-C++ ARC:
+  //   If we are binding a reference to a temporary that has ownership, we
+  //   need to perform retain/release operations on the temporary.
+  if (M && CGF.getContext().getLangOpts().ObjCAutoRefCount &&
+      M->getType()->isObjCLifetimeType() &&
+      (M->getType().getObjCLifetime() == Qualifiers::OCL_Strong ||
+       M->getType().getObjCLifetime() == Qualifiers::OCL_Weak ||
+       M->getType().getObjCLifetime() == Qualifiers::OCL_Autoreleasing))
+    ObjCARCReferenceLifetimeType = M->getType();
 
-  // Look through expressions for materialized temporaries (for now).
-  if (const MaterializeTemporaryExpr *M 
-                                      = dyn_cast<MaterializeTemporaryExpr>(E)) {
-    // Objective-C++ ARC:
-    //   If we are binding a reference to a temporary that has ownership, we 
-    //   need to perform retain/release operations on the temporary.
-    if (CGF.getContext().getLangOpts().ObjCAutoRefCount &&        
-        E->getType()->isObjCLifetimeType() &&
-        (E->getType().getObjCLifetime() == Qualifiers::OCL_Strong ||
-         E->getType().getObjCLifetime() == Qualifiers::OCL_Weak ||
-         E->getType().getObjCLifetime() == Qualifiers::OCL_Autoreleasing))
-      ObjCARCReferenceLifetimeType = E->getType();
-    
-    E = M->GetTemporaryExpr();
-  }
-
-  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
-    E = DAE->getExpr();
-  
   if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(E)) {
     CGF.enterFullExpression(EWC);
     CodeGenFunction::RunCleanupsScope Scope(CGF);
