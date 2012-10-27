@@ -484,6 +484,61 @@ namespace {
       return 1;
     }
 
+    // Returns the cost of the provided instruction using VTTI.
+    // This does not handle loads and stores.
+    unsigned getInstrCost(unsigned Opcode, Type *T1, Type *T2) {
+      switch (Opcode) {
+      default: break;
+      case Instruction::GetElementPtr:
+        // We mark this instruction as zero-cost because scalar GEPs are usually
+        // lowered to the intruction addressing mode. At the moment we don't
+        // generate vector GEPs.
+        return 0;
+      case Instruction::Br:
+        return VTTI->getCFInstrCost(Opcode);
+      case Instruction::PHI:
+        return 0;
+      case Instruction::Add:
+      case Instruction::FAdd:
+      case Instruction::Sub:
+      case Instruction::FSub:
+      case Instruction::Mul:
+      case Instruction::FMul:
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::FDiv:
+      case Instruction::URem:
+      case Instruction::SRem:
+      case Instruction::FRem:
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor:
+        return VTTI->getArithmeticInstrCost(Opcode, T1);
+      case Instruction::Select:
+      case Instruction::ICmp:
+      case Instruction::FCmp:
+        return VTTI->getCmpSelInstrCost(Opcode, T1, T2);
+      case Instruction::ZExt:
+      case Instruction::SExt:
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::FPExt:
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+      case Instruction::Trunc:
+      case Instruction::FPTrunc:
+      case Instruction::BitCast:
+        return VTTI->getCastInstrCost(Opcode, T1, T2);
+      }
+
+      return 1;
+    }
+
     // This determines the relative offset of two loads or stores, returning
     // true if the offset could be determined to be some constant value.
     // For example, if OffsetInElmts == 1, then J accesses the memory directly
@@ -834,11 +889,11 @@ namespace {
         return false;
       }
     } else if (VTTI) {
-      unsigned ICost = VTTI->getInstrCost(I->getOpcode(), IT1, IT2);
-      unsigned JCost = VTTI->getInstrCost(J->getOpcode(), JT1, JT2);
+      unsigned ICost = getInstrCost(I->getOpcode(), IT1, IT2);
+      unsigned JCost = getInstrCost(J->getOpcode(), JT1, JT2);
       Type *VT1 = getVecTypeForPair(IT1, JT1),
            *VT2 = getVecTypeForPair(IT2, JT2);
-      unsigned VCost = VTTI->getInstrCost(I->getOpcode(), VT1, VT2);
+      unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2);
 
       if (VCost > ICost + JCost)
         return false;
