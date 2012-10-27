@@ -287,6 +287,14 @@ namespace llvm {
                        const Argument *FuncArg,
                        const MipsCC &CC, const ByValArgInfo &ByVal) const;
 
+    /// passByValArg - Pass a byval argument in registers or on stack.
+    void passByValArg(SDValue Chain, DebugLoc DL,
+                      SmallVector<std::pair<unsigned, SDValue>, 16> &RegsToPass,
+                      SmallVector<SDValue, 8> &MemOpChains, SDValue StackPtr,
+                      MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
+                      const MipsCC &CC, const ByValArgInfo &ByVal,
+                      const ISD::ArgFlagsTy &Flags, bool isLittle) const;
+
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,

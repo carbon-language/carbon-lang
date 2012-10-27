@@ -3979,3 +3979,100 @@ copyByValRegs(SDValue Chain, DebugLoc DL, std::vector<SDValue> &OutChains,
     OutChains.push_back(Store);
   }
 }
+
+// Copy byVal arg to registers and stack.
+void MipsTargetLowering::
+passByValArg(SDValue Chain, DebugLoc DL,
+             SmallVector<std::pair<unsigned, SDValue>, 16> &RegsToPass,
+             SmallVector<SDValue, 8> &MemOpChains, SDValue StackPtr,
+             MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
+             const MipsCC &CC, const ByValArgInfo &ByVal,
+             const ISD::ArgFlagsTy &Flags, bool isLittle) const {
+  unsigned ByValSize = Flags.getByValSize();
+  unsigned Offset = 0; // Offset in # of bytes from the beginning of struct.
+  unsigned RegSize = CC.regSize();
+  unsigned Alignment = std::min(Flags.getByValAlign(), RegSize);
+  EVT PtrTy = getPointerTy(), RegTy = MVT::getIntegerVT(RegSize * 8);
+
+  if (ByVal.NumRegs) {
+    const uint16_t *ArgRegs = CC.intArgRegs();
+    bool LeftoverBytes = (ByVal.NumRegs * RegSize > ByValSize);
+    unsigned I = 0;
+
+    // Copy words to registers.
+    for (; I < ByVal.NumRegs - LeftoverBytes; ++I, Offset += RegSize) {
+      SDValue LoadPtr = DAG.getNode(ISD::ADD, DL, PtrTy, Arg,
+                                    DAG.getConstant(Offset, PtrTy));
+      SDValue LoadVal = DAG.getLoad(RegTy, DL, Chain, LoadPtr,
+                                    MachinePointerInfo(), false, false, false,
+                                    Alignment);
+      MemOpChains.push_back(LoadVal.getValue(1));
+      unsigned ArgReg = ArgRegs[ByVal.FirstIdx + I];
+      RegsToPass.push_back(std::make_pair(ArgReg, LoadVal));
+    }
+
+    // Return if the struct has been fully copied.
+    if (ByValSize == Offset)
+      return;
+
+    // Copy the remainder of the byval argument with sub-word loads and shifts.
+    if (LeftoverBytes) {
+      assert((ByValSize > Offset) && (ByValSize < Offset + RegSize) &&
+             "Size of the remainder should be smaller than RegSize.");
+      SDValue Val;
+
+      for (unsigned LoadSize = RegSize / 2, TotalSizeLoaded = 0;
+           Offset < ByValSize; LoadSize /= 2) {
+        unsigned RemSize = ByValSize - Offset;
+
+        if (RemSize < LoadSize)
+          continue;
+
+        // Load subword.
+        SDValue LoadPtr = DAG.getNode(ISD::ADD, DL, PtrTy, Arg,
+                                      DAG.getConstant(Offset, PtrTy));
+        SDValue LoadVal =
+          DAG.getExtLoad(ISD::ZEXTLOAD, DL, RegTy, Chain, LoadPtr,
+                         MachinePointerInfo(), MVT::getIntegerVT(LoadSize * 8),
+                         false, false, Alignment);
+        MemOpChains.push_back(LoadVal.getValue(1));
+
+        // Shift the loaded value.
+        unsigned Shamt;
+
+        if (isLittle)
+          Shamt = TotalSizeLoaded;
+        else
+          Shamt = (RegSize - (TotalSizeLoaded + LoadSize)) * 8;
+
+        SDValue Shift = DAG.getNode(ISD::SHL, DL, RegTy, LoadVal,
+                                    DAG.getConstant(Shamt, MVT::i32));
+
+        if (Val.getNode())
+          Val = DAG.getNode(ISD::OR, DL, RegTy, Val, Shift);
+        else
+          Val = Shift;
+
+        Offset += LoadSize;
+        TotalSizeLoaded += LoadSize;
+        Alignment = std::min(Alignment, LoadSize);
+      }
+
+      unsigned ArgReg = ArgRegs[ByVal.FirstIdx + I];
+      RegsToPass.push_back(std::make_pair(ArgReg, Val));
+      return;
+    }
+  }
+
+  // Copy remainder of byval arg to it with memcpy.
+  unsigned MemCpySize = ByValSize - Offset;
+  SDValue Src = DAG.getNode(ISD::ADD, DL, PtrTy, Arg,
+                            DAG.getConstant(Offset, PtrTy));
+  SDValue Dst = DAG.getNode(ISD::ADD, DL, PtrTy, StackPtr,
+                            DAG.getIntPtrConstant(ByVal.Address));
+  Chain = DAG.getMemcpy(Chain, DL, Dst, Src,
+                        DAG.getConstant(MemCpySize, PtrTy), Alignment,
+                        /*isVolatile=*/false, /*AlwaysInline=*/false,
+                        MachinePointerInfo(0), MachinePointerInfo(0));
+  MemOpChains.push_back(Chain);
+}
