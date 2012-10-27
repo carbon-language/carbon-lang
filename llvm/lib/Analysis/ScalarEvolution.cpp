@@ -6941,6 +6941,16 @@ void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
 }
 
 typedef DenseMap<const Loop *, std::string> VerifyMap;
+
+/// replaceSubString - Replaces all occurences of From in Str with To.
+static void replaceSubString(std::string &Str, StringRef From, StringRef To) {
+  size_t Pos = 0;
+  while ((Pos = Str.find(From, Pos)) != std::string::npos) {
+    Str.replace(Pos, From.size(), To.data(), To.size());
+    Pos += To.size();
+  }
+}
+
 /// getLoopBackedgeTakenCounts - Helper method for verifyAnalysis.
 static void
 getLoopBackedgeTakenCounts(Loop *L, VerifyMap &Map, ScalarEvolution &SE) {
@@ -6951,6 +6961,14 @@ getLoopBackedgeTakenCounts(Loop *L, VerifyMap &Map, ScalarEvolution &SE) {
     if (S.empty()) {
       raw_string_ostream OS(S);
       SE.getBackedgeTakenCount(L)->print(OS);
+
+      // false and 0 are semantically equivalent. This can happen in dead loops.
+      replaceSubString(OS.str(), "false", "0");
+      // Remove wrap flags, their use in SCEV is highly fragile.
+      // FIXME: Remove this when SCEV gets smarter about them.
+      replaceSubString(OS.str(), "<nw>", "");
+      replaceSubString(OS.str(), "<nsw>", "");
+      replaceSubString(OS.str(), "<nuw>", "");
     }
   }
 }
