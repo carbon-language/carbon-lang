@@ -1437,6 +1437,14 @@ def: SetCC_R16<setult, SltuCCRxRy16>;
 
 def: SetCC_I16<setult, immSExt16, SltiuCCRxImmX16>;
 
+def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
+               (AddiuRxRxImmX16 CPU16Regs:$hi, tglobaladdr:$lo)>;
+
+// hi/lo relocs
+
+def : Mips16Pat<(MipsHi tglobaltlsaddr:$in), 
+                (SllX16 (LiRxImmX16 tglobaltlsaddr:$in), 16)>;
+
 // wrapper_pic
 class Wrapper16Pat<SDNode node, Instruction ADDiuOp, RegisterClass RC>:
   Mips16Pat<(MipsWrapper RC:$gp, node:$in),
@@ -1445,5 +1453,3 @@ class Wrapper16Pat<SDNode node, Instruction ADDiuOp, RegisterClass RC>:
 
 def : Wrapper16Pat<tglobaltlsaddr, AddiuRxRxImmX16, CPU16Regs>;
 
-def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
-               (AddiuRxRxImmX16 CPU16Regs:$hi, tglobaladdr:$lo)>;
