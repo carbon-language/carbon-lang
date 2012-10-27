@@ -178,7 +178,7 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Disable loop idiom recognition if the function's name is a common idiom.
   StringRef Name = L->getHeader()->getParent()->getName();
-  if (Name == "memset" || Name == "memcpy")
+  if (Name == "memset" || Name == "memcpy" || Name == "memmove")
     return false;
 
   // The trip count of the loop must be analyzable.
@@ -524,7 +524,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
                            const SCEVAddRecExpr *LoadEv,
                            const SCEV *BECount) {
   // If we're not allowed to form memcpy, we fail.
-  if (!TLI->has(LibFunc::memcpy))
+  if (!TLI->has(LibFunc::memcpy) || !TLI->has(LibFunc::memmove))
     return false;
 
   LoadInst *LI = cast<LoadInst>(SI->getValueOperand());
