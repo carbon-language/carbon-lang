@@ -2983,10 +2983,13 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   Function::const_arg_iterator FuncArg =
     DAG.getMachineFunction().getFunction()->arg_begin();
+  unsigned CurArgIdx = 0;
   MipsCC::byval_iterator ByValArg = MipsCCInfo.byval_begin();
 
-  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i, ++FuncArg) {
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
+    std::advance(FuncArg, Ins[i].OrigArgIndex - CurArgIdx);
+    CurArgIdx = Ins[i].OrigArgIndex;
     EVT ValVT = VA.getValVT();
     ISD::ArgFlagsTy Flags = Ins[i].Flags;
     bool IsRegLoc = VA.isRegLoc();

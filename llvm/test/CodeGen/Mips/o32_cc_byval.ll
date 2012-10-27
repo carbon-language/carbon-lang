@@ -119,6 +119,16 @@ entry:
   ret void
 }
 
+%struct.S4 = type { [4 x i32] }
+
+define void @f5(i64 %a0, %struct.S4* nocapture byval %a1) nounwind {
+entry:
+  tail call void @f6(%struct.S4* byval %a1, i64 %a0) nounwind
+  ret void
+}
+
+declare void @f6(%struct.S4* nocapture byval, i64)
+
 !0 = metadata !{metadata !"int", metadata !1}
 !1 = metadata !{metadata !"omnipotent char", metadata !2}
 !2 = metadata !{metadata !"Simple C/C++ TBAA", null}
