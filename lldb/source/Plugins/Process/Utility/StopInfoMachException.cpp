@@ -365,7 +365,8 @@ StopInfoMachException::CreateStopReasonWithMachException
                             return StopInfo::CreateStopReasonWithWatchpointID(thread, wp_sp->GetID());
                         }
                         // EXC_ARM_DA_DEBUG seems to be reused for EXC_BREAKPOINT as well as EXC_BAD_ACCESS
-                        return StopInfo::CreateStopReasonToTrace(thread);
+                        if (thread.GetTemporaryResumeState() == eStateStepping)
+                            return StopInfo::CreateStopReasonToTrace(thread);
                     }
                     else if (exc_code == 1)
                     {
@@ -405,7 +406,8 @@ StopInfoMachException::CreateStopReasonWithMachException
                             return StopInfoSP();
                     }
                     
-                    if (is_trace_if_software_breakpoint_missing)
+                    // Don't call this a trace if we weren't single stepping this thread.
+                    if (is_trace_if_software_breakpoint_missing && thread.GetTemporaryResumeState() == eStateStepping)
                     {
                         return StopInfo::CreateStopReasonToTrace (thread);
                     }

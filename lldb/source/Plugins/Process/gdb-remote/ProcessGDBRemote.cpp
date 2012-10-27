@@ -1588,9 +1588,13 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             }
                             else
                             {
-                                // TODO: check for breakpoint or trap opcode in case there is a hard 
-                                // coded software trap
-                                gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                                // If we were stepping then assume the stop was the result of the trace.  If we were
+                                // not stepping then report the SIGTRAP.
+                                // FIXME: We are still missing the case where we single step over a trap instruction.
+                                if (gdb_thread->GetTemporaryResumeState() == eStateStepping)
+                                    gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                                else
+                                    gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo));
                             }
                         }
                         if (!handled)
