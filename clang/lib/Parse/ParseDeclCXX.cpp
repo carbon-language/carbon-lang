@@ -88,6 +88,12 @@ Decl *Parser::ParseNamespace(unsigned Context,
   }
 
   if (Tok.is(tok::equal)) {
+    if (Ident == 0) {
+      Diag(Tok, diag::err_expected_ident);
+      // Skip to end of the definition and eat the ';'.
+      SkipUntil(tok::semi);
+      return 0;
+    }
     if (!attrs.empty())
       Diag(attrTok, diag::err_unexpected_namespace_attributes_alias);
     if (InlineLoc.isValid())
