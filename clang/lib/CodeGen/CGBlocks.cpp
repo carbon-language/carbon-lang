@@ -103,8 +103,12 @@ static llvm::Constant *buildBlockDescriptor(CodeGenModule &CGM,
                           CGM.GetAddrOfConstantCString(typeAtEncoding), i8p));
   
   // GC layout.
-  if (C.getLangOpts().ObjC1)
-    elements.push_back(CGM.getObjCRuntime().BuildGCBlockLayout(CGM, blockInfo));
+  if (C.getLangOpts().ObjC1) {
+    if (CGM.getLangOpts().getGC() != LangOptions::NonGC)
+      elements.push_back(CGM.getObjCRuntime().BuildGCBlockLayout(CGM, blockInfo));
+    else
+      elements.push_back(CGM.getObjCRuntime().BuildRCBlockLayout(CGM, blockInfo));
+  }
   else
     elements.push_back(llvm::Constant::getNullValue(i8p));
 
