@@ -513,6 +513,7 @@
 		4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CF52AF41428291E0051E832 /* SBFileSpecList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CF52AF7142829390051E832 /* SBFileSpecList.cpp */; };
 		94031A9E13CF486700DCFF3C /* InputReaderEZ.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94031A9D13CF486600DCFF3C /* InputReaderEZ.cpp */; };
+		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
 		9415F61813B2C0EF00A52B36 /* FormatManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9415F61713B2C0EF00A52B36 /* FormatManager.cpp */; };
 		941BCC7F14E48C4000BB969C /* SBTypeFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568614E355F2003A195C /* SBTypeFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568714E355F2003A195C /* SBTypeFormat.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1514,6 +1515,8 @@
 		94031A9B13CF484600DCFF3C /* InputReaderEZ.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InputReaderEZ.h; path = include/lldb/Core/InputReaderEZ.h; sourceTree = "<group>"; };
 		94031A9D13CF486600DCFF3C /* InputReaderEZ.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InputReaderEZ.cpp; path = source/Core/InputReaderEZ.cpp; sourceTree = "<group>"; };
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
+		94094C68163B6CCC0083A547 /* ValueObjectCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectCast.h; path = include/lldb/Core/ValueObjectCast.h; sourceTree = "<group>"; };
+		94094C69163B6CD90083A547 /* ValueObjectCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectCast.cpp; path = source/Core/ValueObjectCast.cpp; sourceTree = "<group>"; };
 		9415F61613B2C0DC00A52B36 /* FormatManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = FormatManager.h; path = include/lldb/Core/FormatManager.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		9415F61713B2C0EF00A52B36 /* FormatManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = FormatManager.cpp; path = source/Core/FormatManager.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
@@ -2599,6 +2602,8 @@
 				26BC7E9910F1B85900F91463 /* Value.cpp */,
 				26BC7D8210F1B77400F91463 /* ValueObject.h */,
 				26BC7E9A10F1B85900F91463 /* ValueObject.cpp */,
+				94094C68163B6CCC0083A547 /* ValueObjectCast.h */,
+				94094C69163B6CD90083A547 /* ValueObjectCast.cpp */,
 				26BC7D8310F1B77400F91463 /* ValueObjectChild.h */,
 				26BC7E9B10F1B85900F91463 /* ValueObjectChild.cpp */,
 				26424E3E125986D30016D82C /* ValueObjectConstResult.h */,
@@ -4161,6 +4166,7 @@
 				94CDEB9D15F0258500DD2A7A /* CXXFormatterFunctions.cpp in Sources */,
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
 				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
+				94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
