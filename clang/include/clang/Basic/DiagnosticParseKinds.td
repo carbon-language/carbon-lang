@@ -734,6 +734,11 @@ def err_pragma_fp_contract_scope : Error<
   "'#pragma fp_contract' should only appear at file scope or at the start of a "
   "compound expression">; 
 
+// OpenMP
+def warn_pragma_omp_ignored : Warning<
+  "pragma omp ignored; did you forget to add '-fopenmp' flag?">,
+  InGroup<OpenMPPragmas>;
+
 // OpenCL Section 6.8.g
 def err_not_opencl_storage_class_specifier : Error<
   "OpenCL does not support the '%0' storage class specifier">;

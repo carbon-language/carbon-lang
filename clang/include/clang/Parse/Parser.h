@@ -43,6 +43,7 @@ namespace clang {
   class InMessageExpressionRAIIObject;
   class PoisonSEHIdentifiersRAIIObject;
   class VersionTuple;
+  class OpenMP;
 
 /// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
 /// an entry is printed for it.
@@ -179,6 +180,8 @@ class Parser : public CodeCompletionHandler {
   OwningPtr<PragmaHandler> FPContractHandler;
   OwningPtr<PragmaHandler> OpenCLExtensionHandler;
   OwningPtr<CommentHandler> CommentSemaHandler;
+
+  OwningPtr<OpenMP> OpenMPHandler;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++
