@@ -48,6 +48,75 @@ const CXXRecordDecl *Expr::getBestDynamicClassType() const {
   return cast<CXXRecordDecl>(D);
 }
 
+const Expr *
+Expr::skipRValueSubobjectAdjustments(
+                     SmallVectorImpl<SubobjectAdjustment> &Adjustments) const  {
+  const Expr *E = this;
+  while (true) {
+    E = E->IgnoreParens();
+
+    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
+      if ((CE->getCastKind() == CK_DerivedToBase ||
+           CE->getCastKind() == CK_UncheckedDerivedToBase) &&
+          E->getType()->isRecordType()) {
+        E = CE->getSubExpr();
+        CXXRecordDecl *Derived
+          = cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
+        Adjustments.push_back(SubobjectAdjustment(CE, Derived));
+        continue;
+      }
+
+      if (CE->getCastKind() == CK_NoOp) {
+        E = CE->getSubExpr();
+        continue;
+      }
+    } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+      if (!ME->isArrow() && ME->getBase()->isRValue()) {
+        assert(ME->getBase()->getType()->isRecordType());
+        if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+          E = ME->getBase();
+          Adjustments.push_back(SubobjectAdjustment(Field));
+          continue;
+        }
+      }
+    } else if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+      if (BO->isPtrMemOp()) {
+        assert(BO->getLHS()->isRValue());
+        E = BO->getLHS();
+        const MemberPointerType *MPT =
+          BO->getRHS()->getType()->getAs<MemberPointerType>();
+        Adjustments.push_back(SubobjectAdjustment(MPT, BO->getRHS()));
+      }
+    }
+
+    // Nothing changed.
+    break;
+  }
+  return E;
+}
+
+const Expr *
+Expr::findMaterializedTemporary(const MaterializeTemporaryExpr *&MTE) const {
+  const Expr *E = this;
+  // Look through single-element init lists that claim to be lvalues. They're
+  // just syntactic wrappers in this case.
+  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
+    if (ILE->getNumInits() == 1 && ILE->isGLValue())
+      E = ILE->getInit(0);
+  }
+
+  // Look through expressions for materialized temporaries (for now).
+  if (const MaterializeTemporaryExpr *M
+      = dyn_cast<MaterializeTemporaryExpr>(E)) {
+    MTE = M;
+    E = M->GetTemporaryExpr();
+  }
+
+  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
+    E = DAE->getExpr();
+  return E;
+}
+
 /// isKnownToHaveBooleanValue - Return true if this is an integer expression
 /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
 /// but also int expressions which are produced by things like comparisons in

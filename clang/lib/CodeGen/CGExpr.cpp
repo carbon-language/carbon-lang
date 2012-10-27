@@ -157,50 +157,6 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   }
 }
 
-namespace {
-/// \brief An adjustment to be made to the temporary created when emitting a
-/// reference binding, which accesses a particular subobject of that temporary.
-  struct SubobjectAdjustment {
-    enum {
-      DerivedToBaseAdjustment,
-      FieldAdjustment,
-      MemberPointerAdjustment
-    } Kind;
-
-    union {
-      struct {
-        const CastExpr *BasePath;
-        const CXXRecordDecl *DerivedClass;
-      } DerivedToBase;
-
-      FieldDecl *Field;
-
-      struct {
-        const MemberPointerType *MPT;
-        Expr *RHS;
-      } Ptr;
-    };
-
-    SubobjectAdjustment(const CastExpr *BasePath,
-                        const CXXRecordDecl *DerivedClass)
-      : Kind(DerivedToBaseAdjustment) {
-      DerivedToBase.BasePath = BasePath;
-      DerivedToBase.DerivedClass = DerivedClass;
-    }
-
-    SubobjectAdjustment(FieldDecl *Field)
-      : Kind(FieldAdjustment) {
-      this->Field = Field;
-    }
-
-    SubobjectAdjustment(const MemberPointerType *MPT, Expr *RHS)
-      : Kind(MemberPointerAdjustment) {
-      this->Ptr.MPT = MPT;
-      this->Ptr.RHS = RHS;
-    }
-  };
-}
-
 static llvm::Value *
 CreateReferenceTemporary(CodeGenFunction &CGF, QualType Type,
                          const NamedDecl *InitializedDecl) {
@@ -227,73 +183,6 @@ CreateReferenceTemporary(CodeGenFunction &CGF, QualType Type,
   return CGF.CreateMemTemp(Type, "ref.tmp");
 }
 
-static const Expr *
-findMaterializedTemporary(const Expr *E, const MaterializeTemporaryExpr *&MTE) {
-  // Look through single-element init lists that claim to be lvalues. They're
-  // just syntactic wrappers in this case.
-  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
-    if (ILE->getNumInits() == 1 && ILE->isGLValue())
-      E = ILE->getInit(0);
-  }
-
-  // Look through expressions for materialized temporaries (for now).
-  if (const MaterializeTemporaryExpr *M
-      = dyn_cast<MaterializeTemporaryExpr>(E)) {
-    MTE = M;
-    E = M->GetTemporaryExpr();
-  }
-
-  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
-    E = DAE->getExpr();
-  return E;
-}
-
-static const Expr *
-skipRValueSubobjectAdjustments(const Expr *E,
-                            SmallVectorImpl<SubobjectAdjustment> &Adjustments) {
-  while (true) {
-    E = E->IgnoreParens();
-
-    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
-      if ((CE->getCastKind() == CK_DerivedToBase ||
-           CE->getCastKind() == CK_UncheckedDerivedToBase) &&
-          E->getType()->isRecordType()) {
-        E = CE->getSubExpr();
-        CXXRecordDecl *Derived
-          = cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
-        Adjustments.push_back(SubobjectAdjustment(CE, Derived));
-        continue;
-      }
-
-      if (CE->getCastKind() == CK_NoOp) {
-        E = CE->getSubExpr();
-        continue;
-      }
-    } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-      if (!ME->isArrow() && ME->getBase()->isRValue()) {
-        assert(ME->getBase()->getType()->isRecordType());
-        if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
-          E = ME->getBase();
-          Adjustments.push_back(SubobjectAdjustment(Field));
-          continue;
-        }
-      }
-    } else if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-      if (BO->isPtrMemOp()) {
-        assert(BO->getLHS()->isRValue());
-        E = BO->getLHS();
-        const MemberPointerType *MPT =
-          BO->getRHS()->getType()->getAs<MemberPointerType>();
-        Adjustments.push_back(SubobjectAdjustment(MPT, BO->getRHS()));
-      }
-    }
-
-    // Nothing changed.
-    break;
-  }
-  return E;
-}
-
 static llvm::Value *
 EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             llvm::Value *&ReferenceTemporary,
@@ -301,7 +190,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             QualType &ObjCARCReferenceLifetimeType,
                             const NamedDecl *InitializedDecl) {
   const MaterializeTemporaryExpr *M = NULL;
-  E = findMaterializedTemporary(E, M);
+  E = E->findMaterializedTemporary(M);
   // Objective-C++ ARC:
   //   If we are binding a reference to a temporary that has ownership, we
   //   need to perform retain/release operations on the temporary.
@@ -391,7 +280,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
     }
 
     SmallVector<SubobjectAdjustment, 2> Adjustments;
-    E = skipRValueSubobjectAdjustments(E, Adjustments);
+    E = E->skipRValueSubobjectAdjustments(Adjustments);
     if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E))
       if (opaque->getType()->isRecordType())
         return CGF.EmitOpaqueValueLValue(opaque).getAddress();

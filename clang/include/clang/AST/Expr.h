@@ -34,6 +34,7 @@
 namespace clang {
   class ASTContext;
   class APValue;
+  class CastExpr;
   class Decl;
   class IdentifierInfo;
   class ParmVarDecl;
@@ -42,12 +43,55 @@ namespace clang {
   class BlockDecl;
   class CXXBaseSpecifier;
   class CXXOperatorCallExpr;
+  class MaterializeTemporaryExpr;
   class CXXMemberCallExpr;
   class ObjCPropertyRefExpr;
   class OpaqueValueExpr;
 
 /// \brief A simple array of base specifiers.
 typedef SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
+
+/// \brief An adjustment to be made to the temporary created when emitting a
+/// reference binding, which accesses a particular subobject of that temporary.
+struct SubobjectAdjustment {
+  enum {
+    DerivedToBaseAdjustment,
+    FieldAdjustment,
+    MemberPointerAdjustment
+  } Kind;
+
+   union {
+    struct {
+      const CastExpr *BasePath;
+      const CXXRecordDecl *DerivedClass;
+    } DerivedToBase;
+
+    FieldDecl *Field;
+
+    struct {
+      const MemberPointerType *MPT;
+      Expr *RHS;
+    } Ptr;
+  };
+
+  SubobjectAdjustment(const CastExpr *BasePath,
+                      const CXXRecordDecl *DerivedClass)
+    : Kind(DerivedToBaseAdjustment) {
+    DerivedToBase.BasePath = BasePath;
+    DerivedToBase.DerivedClass = DerivedClass;
+  }
+
+  SubobjectAdjustment(FieldDecl *Field)
+    : Kind(FieldAdjustment) {
+    this->Field = Field;
+  }
+
+  SubobjectAdjustment(const MemberPointerType *MPT, Expr *RHS)
+    : Kind(MemberPointerAdjustment) {
+    this->Ptr.MPT = MPT;
+    this->Ptr.RHS = RHS;
+  }
+};
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -694,6 +738,18 @@ public:
   /// This is valid because derived-to-base conversions have undefined
   /// behavior if the object isn't dynamically of the derived type.
   const CXXRecordDecl *getBestDynamicClassType() const;
+
+  /// Walk outwards from an expression we want to bind a reference to and
+  /// find the expression whose lifetime needs to be extended. Record
+  /// the adjustments needed along the path.
+  const Expr *
+  skipRValueSubobjectAdjustments(
+                       SmallVectorImpl<SubobjectAdjustment> &Adjustments) const;
+
+  /// Skip irrelevant expressions to find what should be materialize for
+  /// binding with a reference.
+  const Expr *
+  findMaterializedTemporary(const MaterializeTemporaryExpr *&MTE) const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstExprConstant &&
