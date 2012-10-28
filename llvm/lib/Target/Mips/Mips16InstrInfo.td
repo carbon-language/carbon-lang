@@ -250,6 +250,12 @@ class FRR16_JALRC_RA_only_ins<bits<1> nd_, bits<1> l_,
   FRR16_JALRC<nd_, l_, 1, (outs), (ins), !strconcat(asmstr, "\t $$ra"),
               [], itin> ;
 
+
+class FRR16_JALRC_ins<bits<1> nd, bits<1> l, bits<1> ra,
+                      string asmstr, InstrItinClass itin>:
+  FRR16_JALRC<nd, l, ra, (outs), (ins CPU16Regs:$rx), 
+              !strconcat(asmstr, "\t $rx"), [], itin> ;
+
 //
 // RRR-type instruction format
 //
@@ -505,6 +511,13 @@ def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu> {
   let isBranch = 1;
   let isIndirectBranch = 1;
   let hasDelaySlot = 1;
+  let isTerminator=1;
+  let isBarrier=1;
+}
+
+def JrcRx16: FRR16_JALRC_ins<1, 1, 0, "jrc", IIAlu> {
+  let isBranch = 1;
+  let isIndirectBranch = 1;
   let isTerminator=1;
   let isBarrier=1;
 }
@@ -990,6 +1003,12 @@ class UncondBranch16_pat<SDNode OpNode, Instruction I>:
   Mips16Pat<(OpNode bb:$imm16), (I bb:$imm16)> {
     let Predicates = [RelocPIC, InMips16Mode];
   }
+
+// Indirect branch
+def: Mips16Pat<
+  (brind CPU16Regs:$rs), 
+  (JrcRx16 CPU16Regs:$rs)>;  
+
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1 in
