@@ -521,12 +521,19 @@ namespace DependentValues {
 
 struct I { int n; typedef I V[10]; };
 I::V x, y;
-template<bool B> struct S {
+int g(); // expected-note {{here}}
+template<bool B, typename T> struct S : T {
   int k;
   void f() {
     I::V &cells = B ? x : y;
     I &i = cells[k];
     switch (i.n) {}
+
+    constexpr int n = g(); // \
+    // expected-error {{must be initialized by a constant expression}} \
+    // expected-note {{non-constexpr function 'g'}}
+
+    constexpr int m = this->g(); // ok, could be constexpr
   }
 };
 
