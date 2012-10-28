@@ -1205,8 +1205,15 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
       return false;
   } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!VD->isFileVarDecl() ||
-        VD->getType().isConstant(Context) ||
         Context.DeclMustBeEmitted(VD))
+      return false;
+
+    // If a variable is usable in constant expressions and it's not odr-used,
+    // its value may still have been used. Conservatively suppress the warning
+    // in this case.
+    const VarDecl *VDWithInit = 0;
+    if (VD->isUsableInConstantExpressions(Context) &&
+        VD->getAnyInitializer(VDWithInit) && VDWithInit->checkInitIsICE())
       return false;
 
     if (VD->isStaticDataMember() &&
