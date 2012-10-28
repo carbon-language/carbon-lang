@@ -148,3 +148,14 @@ namespace test1 {
     }
   };
 }
+
+namespace test2 {
+  struct fltSemantics ;
+  const fltSemantics &foobar();
+  void VisitCastExpr(int x) {
+    switch (x) {
+    case 42:
+      const fltSemantics &Sem = foobar();
+    }
+  }
+}
