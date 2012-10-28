@@ -53,7 +53,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
     InstrInfo(MipsInstrInfo::create(*this)),
     FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
     TLInfo(*this), TSInfo(*this), JITInfo(),
-    ELFWriterInfo(false, isLittle), STTI(&TLInfo), VTTI(&TLInfo) {
+    STTI(&TLInfo), VTTI(&TLInfo) {
 }
 
 void MipsebTargetMachine::anchor() { }

@@ -15,7 +15,6 @@
 #define X86TARGETMACHINE_H
 
 #include "X86.h"
-#include "X86ELFWriterInfo.h"
 #include "X86InstrInfo.h"
 #include "X86ISelLowering.h"
 #include "X86FrameLowering.h"
@@ -34,7 +33,6 @@ class StringRef;
 class X86TargetMachine : public LLVMTargetMachine {
   X86Subtarget       Subtarget;
   X86FrameLowering   FrameLowering;
-  X86ELFWriterInfo   ELFWriterInfo;
   InstrItineraryData InstrItins;
 
 public:
@@ -62,9 +60,6 @@ public:
   }
   virtual const X86RegisterInfo  *getRegisterInfo() const {
     return &getInstrInfo()->getRegisterInfo();
-  }
-  virtual const X86ELFWriterInfo *getELFWriterInfo() const {
-    return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
   }
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return &InstrItins;

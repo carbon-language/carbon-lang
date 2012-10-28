@@ -34,7 +34,6 @@ class MCContext;
 class PassManagerBase;
 class Target;
 class DataLayout;
-class TargetELFWriterInfo;
 class TargetFrameLowering;
 class TargetInstrInfo;
 class TargetIntrinsicInfo;
@@ -147,11 +146,6 @@ public:
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return 0;
   }
-
-  /// getELFWriterInfo - If this target supports an ELF writer, return
-  /// information for it, otherwise return null.
-  ///
-  virtual const TargetELFWriterInfo *getELFWriterInfo() const { return 0; }
 
   /// hasMCRelaxAll - Check whether all machine code instructions should be
   /// relaxed.

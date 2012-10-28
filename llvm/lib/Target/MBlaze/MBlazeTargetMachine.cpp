@@ -41,7 +41,7 @@ MBlazeTargetMachine(const Target &T, StringRef TT,
     DL("E-p:32:32:32-i8:8:8-i16:16:16"),
     InstrInfo(*this),
     FrameLowering(Subtarget),
-    TLInfo(*this), TSInfo(*this), ELFWriterInfo(*this),
+    TLInfo(*this), TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()),
     STTI(&TLInfo), VTTI(&TLInfo) {
 }
