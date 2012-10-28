@@ -112,11 +112,14 @@ getReservedRegs(const MachineFunction &MF) const {
          EReg = Mips::FGR64RegClass.end(); Reg != EReg; ++Reg)
       Reserved.set(*Reg);
   }
-
   // Reserve FP if this function should have a dedicated frame pointer register.
   if (MF.getTarget().getFrameLowering()->hasFP(MF)) {
-    Reserved.set(Mips::FP);
-    Reserved.set(Mips::FP_64);
+    if (Subtarget.inMips16Mode())
+      Reserved.set(Mips::S0);
+    else {
+      Reserved.set(Mips::FP);
+      Reserved.set(Mips::FP_64);
+    }
   }
 
   // Reserve hardware registers.
@@ -186,8 +189,12 @@ getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   bool IsN64 = Subtarget.isABI_N64();
 
-  return TFI->hasFP(MF) ? (IsN64 ? Mips::FP_64 : Mips::FP) :
-                          (IsN64 ? Mips::SP_64 : Mips::SP);
+  if (Subtarget.inMips16Mode())
+    return TFI->hasFP(MF) ? Mips::S0 : Mips::SP;
+  else
+    return TFI->hasFP(MF) ? (IsN64 ? Mips::FP_64 : Mips::FP) :
+                            (IsN64 ? Mips::SP_64 : Mips::SP);
+
 }
 
 unsigned MipsRegisterInfo::

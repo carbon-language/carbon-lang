@@ -54,51 +54,60 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,
                                      uint64_t StackSize,
                                      int64_t SPOffset) const {
-      MachineInstr &MI = *II;
-      MachineFunction &MF = *MI.getParent()->getParent();
-      MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineInstr &MI = *II;
+  MachineFunction &MF = *MI.getParent()->getParent();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
-      const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-      int MinCSFI = 0;
-      int MaxCSFI = -1;
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  int MinCSFI = 0;
+  int MaxCSFI = -1;
 
-      if (CSI.size()) {
-        MinCSFI = CSI[0].getFrameIdx();
-        MaxCSFI = CSI[CSI.size() - 1].getFrameIdx();
-      }
+  if (CSI.size()) {
+    MinCSFI = CSI[0].getFrameIdx();
+    MaxCSFI = CSI[CSI.size() - 1].getFrameIdx();
+  }
 
-      // The following stack frame objects are always
-      // referenced relative to $sp:
-      //  1. Outgoing arguments.
-      //  2. Pointer to dynamically allocated stack space.
-      //  3. Locations for callee-saved registers.
-      // Everything else is referenced relative to whatever register
-      // getFrameRegister() returns.
-      unsigned FrameReg;
+  // The following stack frame objects are always
+  // referenced relative to $sp:
+  //  1. Outgoing arguments.
+  //  2. Pointer to dynamically allocated stack space.
+  //  3. Locations for callee-saved registers.
+  // Everything else is referenced relative to whatever register
+  // getFrameRegister() returns.
+  unsigned FrameReg;
 
-      if (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI)
-        FrameReg = Subtarget.isABI_N64() ? Mips::SP_64 : Mips::SP;
+  if (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI)
+    FrameReg = Mips::SP;
+  else {
+    const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+    if (TFI->hasFP(MF)) {
+      FrameReg = Mips::S0;
+    }
+    else {
+      if ((MI.getNumOperands()> OpNo+2) && MI.getOperand(OpNo+2).isReg())
+        FrameReg = MI.getOperand(OpNo+2).getReg();
       else
-        FrameReg = getFrameRegister(MF);
+        FrameReg = Mips::SP;
+    }
+  }
+  // Calculate final offset.
+  // - There is no need to change the offset if the frame object
+  //   is one of the
+  //   following: an outgoing argument, pointer to a dynamically allocated
+  //   stack space or a $gp restore location,
+  // - If the frame object is any of the following,
+  //   its offset must be adjusted
+  //   by adding the size of the stack:
+  //   incoming argument, callee-saved register location or local variable.
+  int64_t Offset;
+  Offset = SPOffset + (int64_t)StackSize;
+  Offset += MI.getOperand(OpNo + 1).getImm();
 
-      // Calculate final offset.
-      // - There is no need to change the offset if the frame object
-      //   is one of the
-      //   following: an outgoing argument, pointer to a dynamically allocated
-      //   stack space or a $gp restore location,
-      // - If the frame object is any of the following,
-      //   its offset must be adjusted
-      //   by adding the size of the stack:
-      //   incoming argument, callee-saved register location or local variable.
-      int64_t Offset;
 
-      Offset = SPOffset + (int64_t)StackSize;
-      Offset += MI.getOperand(OpNo + 1).getImm();
+  DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
-      DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
-
-      MI.getOperand(OpNo).ChangeToRegister(FrameReg, false);
-      MI.getOperand(OpNo + 1).ChangeToImmediate(Offset);
+  MI.getOperand(OpNo).ChangeToRegister(FrameReg, false);
+  MI.getOperand(OpNo + 1).ChangeToImmediate(Offset);
 
 
 }

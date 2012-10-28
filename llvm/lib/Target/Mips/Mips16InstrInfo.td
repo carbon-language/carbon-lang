@@ -11,11 +11,22 @@
 //
 //===----------------------------------------------------------------------===//
 //
+//
+// Mips Address
+//
+def addr16 :
+  ComplexPattern<iPTR, 3, "SelectAddr16", [frameindex], [SDNPWantParent]>;
 
 //
 // Address operand
 def mem16 : Operand<i32> {
   let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops CPU16Regs, simm16, CPU16Regs);
+  let EncoderMethod = "getMemEncoding";
+}
+
+def mem16_ea : Operand<i32> {
+  let PrintMethod = "printMemOperandEA";
   let MIOperandInfo = (ops CPU16Regs, simm16);
   let EncoderMethod = "getMemEncoding";
 }
@@ -117,6 +128,16 @@ class FEXT_RRI16_mem2_ins<bits<5> op, string asmstr, Operand MemOpnd,
                           InstrItinClass itin>:
   FEXT_RRI16<op, (outs ), (ins  CPU16Regs:$ry, MemOpnd:$addr),
              !strconcat(asmstr, "\t$ry, $addr"), [], itin>;
+
+//
+//
+// EXT-RRI-A instruction format
+//
+
+class FEXT_RRI_A16_mem_ins<bits<1> op, string asmstr, Operand MemOpnd,
+                           InstrItinClass itin>:
+  FEXT_RRI_A16<op, (outs CPU16Regs:$ry), (ins  MemOpnd:$addr),
+               !strconcat(asmstr, "\t$ry, $addr"), [], itin>;
 
 //
 // EXT-SHIFT instruction format
@@ -367,6 +388,9 @@ def AddiuRxImmX16: FEXT_RI16_ins<0b01001, "addiu", IIAlu>;
 def AddiuRxRxImmX16: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>,
   ArithLogic16Defs<0>;
 
+def AddiuRxRyOffMemX16:
+  FEXT_RRI_A16_mem_ins<0, "addiu", mem16_ea, IIAlu>;
+
 //
 
 // Format: ADDIU rx, pc, immediate MIPS16e
@@ -477,8 +501,13 @@ def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
 // address register.
 //
 
-def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu>;
-
+def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu> {
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+  let hasDelaySlot = 1;
+  let isTerminator=1;
+  let isBarrier=1;
+}
 //
 // Format: LB ry, offset(rx) MIPS16e
 // Purpose: Load Byte (Extended)
@@ -940,7 +969,7 @@ def: shift_rotate_reg16_pat<sra, SravRxRy16>;
 def: shift_rotate_reg16_pat<srl, SrlvRxRy16>;
 
 class LoadM16_pat<PatFrag OpNode, Instruction I> :
-  Mips16Pat<(OpNode addr:$addr), (I addr:$addr)>;
+  Mips16Pat<(OpNode addr16:$addr), (I addr16:$addr)>;
 
 def: LoadM16_pat<sextloadi8, LbRxRyOffMemX16>;
 def: LoadM16_pat<zextloadi8, LbuRxRyOffMemX16>;
@@ -949,7 +978,8 @@ def: LoadM16_pat<zextloadi16, LhuRxRyOffMemX16>;
 def: LoadM16_pat<load, LwRxRyOffMemX16>;
 
 class StoreM16_pat<PatFrag OpNode, Instruction I> :
-  Mips16Pat<(OpNode CPU16Regs:$r, addr:$addr), (I CPU16Regs:$r, addr:$addr)>;
+  Mips16Pat<(OpNode CPU16Regs:$r, addr16:$addr),
+            (I CPU16Regs:$r, addr16:$addr)>;
 
 def: StoreM16_pat<truncstorei8, SbRxRyOffMemX16>;
 def: StoreM16_pat<truncstorei16, ShRxRyOffMemX16>;
@@ -982,6 +1012,11 @@ class SetCC_R16<PatFrag cond_op, Instruction I>:
 class SetCC_I16<PatFrag cond_op, PatLeaf imm_type, Instruction I>:
   Mips16Pat<(cond_op CPU16Regs:$rx, imm_type:$imm16),
             (I CPU16Regs:$rx, imm_type:$imm16)>;
+
+
+def: Mips16Pat<(i32  addr16:$addr),
+               (AddiuRxRyOffMemX16  addr16:$addr)>;
+
 
 // Large (>16 bit) immediate loads
 def : Mips16Pat<(i32 imm:$imm),
@@ -1451,5 +1486,6 @@ class Wrapper16Pat<SDNode node, Instruction ADDiuOp, RegisterClass RC>:
             (ADDiuOp RC:$gp, node:$in)>;
 
 
+def : Wrapper16Pat<tglobaladdr, AddiuRxRxImmX16, CPU16Regs>;
 def : Wrapper16Pat<tglobaltlsaddr, AddiuRxRxImmX16, CPU16Regs>;
 

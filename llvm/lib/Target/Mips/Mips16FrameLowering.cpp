@@ -41,6 +41,11 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   // Adjust stack.
   if (isInt<16>(-StackSize))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SaveRaF16)).addImm(StackSize);
+
+  if (hasFP(MF))
+    BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)
+      .addReg(Mips::SP);
+
 }
 
 void Mips16FrameLowering::emitEpilogue(MachineFunction &MF,
@@ -54,6 +59,10 @@ void Mips16FrameLowering::emitEpilogue(MachineFunction &MF,
 
   if (!StackSize)
     return;
+
+  if (hasFP(MF))
+    BuildMI(MBB, MBBI, dl, TII.get(Mips::Move32R16), Mips::SP)
+      .addReg(Mips::S0);
 
   // Adjust stack.
   if (isInt<16>(StackSize))
