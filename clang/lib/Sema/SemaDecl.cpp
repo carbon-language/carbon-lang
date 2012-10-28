@@ -1204,16 +1204,15 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
         Context.DeclMustBeEmitted(FD))
       return false;
   } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    // Don't warn on variables of const-qualified or reference type, since their
+    // values can be used even if though they're not odr-used, and because const
+    // qualified variables can appear in headers in contexts where they're not
+    // intended to be used.
+    // FIXME: Use more principled rules for these exemptions.
     if (!VD->isFileVarDecl() ||
+        VD->getType().isConstQualified() ||
+        VD->getType()->isReferenceType() ||
         Context.DeclMustBeEmitted(VD))
-      return false;
-
-    // If a variable is usable in constant expressions and it's not odr-used,
-    // its value may still have been used. Conservatively suppress the warning
-    // in this case.
-    const VarDecl *VDWithInit = 0;
-    if (VD->isUsableInConstantExpressions(Context) &&
-        VD->getAnyInitializer(VDWithInit) && VDWithInit->checkInitIsICE())
       return false;
 
     if (VD->isStaticDataMember() &&

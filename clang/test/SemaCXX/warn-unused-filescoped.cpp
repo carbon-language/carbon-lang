@@ -95,8 +95,9 @@ namespace test5 {
   int f(int &);
   int k = f(r);
 
-  static const int m = n; // expected-warning {{not needed and will not be emitted}}
+  // FIXME: We should produce warnings for both of these.
+  static const int m = n;
   int x = sizeof(m);
-  static const double d = 0.0; // expected-warning {{not needed and will not be emitted}}
+  static const double d = 0.0;
   int y = sizeof(d);
 }
