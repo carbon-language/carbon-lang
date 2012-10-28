@@ -49,6 +49,20 @@ static unsigned getCharWidth(tok::TokenKind kind, const TargetInfo &Target) {
   }
 }
 
+static CharSourceRange MakeCharSourceRange(const LangOptions &Features,
+                                           FullSourceLoc TokLoc,
+                                           const char *TokBegin,
+                                           const char *TokRangeBegin,
+                                           const char *TokRangeEnd) {
+  SourceLocation Begin =
+    Lexer::AdvanceToTokenCharacter(TokLoc, TokRangeBegin - TokBegin,
+                                   TokLoc.getManager(), Features);
+  SourceLocation End =
+    Lexer::AdvanceToTokenCharacter(Begin, TokRangeEnd - TokRangeBegin,
+                                   TokLoc.getManager(), Features);
+  return CharSourceRange::getCharRange(Begin, End);
+}
+
 /// \brief Produce a diagnostic highlighting some portion of a literal.
 ///
 /// Emits the diagnostic \p DiagID, highlighting the range of characters from
@@ -61,11 +75,8 @@ static DiagnosticBuilder Diag(DiagnosticsEngine *Diags,
   SourceLocation Begin =
     Lexer::AdvanceToTokenCharacter(TokLoc, TokRangeBegin - TokBegin,
                                    TokLoc.getManager(), Features);
-  SourceLocation End =
-    Lexer::AdvanceToTokenCharacter(Begin, TokRangeEnd - TokRangeBegin,
-                                   TokLoc.getManager(), Features);
-  return Diags->Report(Begin, DiagID)
-      << CharSourceRange::getCharRange(Begin, End);
+  return Diags->Report(Begin, DiagID) <<
+    MakeCharSourceRange(Features, TokLoc, TokBegin, TokRangeBegin, TokRangeEnd);
 }
 
 /// ProcessCharEscape - Parse a standard C escape sequence, which can occur in
@@ -1372,6 +1383,15 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   }
 }
 
+static const char *resync_utf8(const char *err, const char *end) {
+    if (err==end)
+        return end;
+    end = err + std::min<unsigned>(getNumBytesForUTF8(*err), end-err);
+    while (++err!=end && (*err&0xC0)==0x80)
+      ;
+    return err;
+}
+
 /// \brief This function copies from Fragment, which is a sequence of bytes
 /// within Tok's contents (which begin at TokBegin) into ResultPtr.
 /// Performs widening for multi-byte characters.
@@ -1381,7 +1401,6 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
   const UTF8 *ErrorPtrTmp;
   if (ConvertUTF8toWide(CharByteWidth, Fragment, ResultPtr, ErrorPtrTmp))
     return false;
-  const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
 
   // If we see bad encoding for unprefixed string literals, warn and
   // simply copy the byte values, for compatibility with gcc and older
@@ -1391,12 +1410,31 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
     memcpy(ResultPtr, Fragment.data(), Fragment.size());
     ResultPtr += Fragment.size();
   }
+
   if (Diags) {
-    Diag(Diags, Features, FullSourceLoc(Tok.getLocation(), SM), TokBegin,
-         ErrorPtr, ErrorPtr + std::min<unsigned>(getNumBytesForUTF8(*ErrorPtr),
-                                                 Fragment.end() - ErrorPtr),
-         NoErrorOnBadEncoding ? diag::warn_bad_string_encoding
-                              : diag::err_bad_string_encoding);
+    const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
+
+    FullSourceLoc SourceLoc(Tok.getLocation(), SM);
+    const DiagnosticBuilder &Builder =
+      Diag(Diags, Features, SourceLoc, TokBegin,
+           ErrorPtr, resync_utf8(ErrorPtr, Fragment.end()),
+           NoErrorOnBadEncoding ? diag::warn_bad_string_encoding
+                                : diag::err_bad_string_encoding);
+
+    char *SavedResultPtr = ResultPtr;
+    const char *NextStart = resync_utf8(ErrorPtr, Fragment.end());
+    StringRef NextFragment(NextStart, Fragment.end()-NextStart);
+
+    while (!ConvertUTF8toWide(CharByteWidth, NextFragment, ResultPtr,
+                              ErrorPtrTmp)) {
+      const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
+      NextStart = resync_utf8(ErrorPtr, Fragment.end());
+      Builder << MakeCharSourceRange(Features, SourceLoc, TokBegin,
+                                     ErrorPtr, NextStart);
+      NextFragment = StringRef(NextStart, Fragment.end()-NextStart);
+    }
+
+    ResultPtr = SavedResultPtr;
   }
   return !NoErrorOnBadEncoding;
 }
