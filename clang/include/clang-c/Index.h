@@ -24,7 +24,7 @@
 #include "clang-c/CXString.h"
 
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 1
+#define CINDEX_VERSION_MINOR 5
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
