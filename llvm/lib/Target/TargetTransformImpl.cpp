@@ -270,7 +270,7 @@ unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,
     return getScalarizationOverhead(ValTy, true, false) + Num * Cost;
   }
 
-  // Unknown scalar opcode. 
+  // Unknown scalar opcode.
   return 1;
 }
 
@@ -300,6 +300,8 @@ VectorTargetTransformImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
 
 unsigned
 VectorTargetTransformImpl::getNumberOfParts(Type *Tp) const {
-  return TLI->getNumRegisters(Tp->getContext(), TLI->getValueType(Tp));
+  std::pair<unsigned, EVT> LT =
+    getTypeLegalizationCost(Tp->getContext(), TLI->getValueType(Tp));
+  return LT.first;
 }
 
