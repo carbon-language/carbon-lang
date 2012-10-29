@@ -118,7 +118,6 @@ private:
   typedef std::vector<AllowedSet> AllowedSetMap;
   typedef std::pair<unsigned, unsigned> RegPair;
   typedef std::map<RegPair, PBQP::PBQPNum> CoalesceMap;
-  typedef std::vector<PBQP::Graph::NodeItr> NodeVector;
   typedef std::set<unsigned> RegSet;
 
 
