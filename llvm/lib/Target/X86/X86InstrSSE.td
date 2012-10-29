@@ -5850,6 +5850,21 @@ let Predicates = [HasAVX2] in {
   def : Pat<(v4i64  (X86vzext (v8i16 VR128:$src))), (VPMOVZXWQYrr VR128:$src)>;
 
   def : Pat<(v4i64  (X86vzext (v4i32 VR128:$src))), (VPMOVZXDQYrr VR128:$src)>;
+
+  def : Pat<(v16i16 (X86vzext (v32i8 VR256:$src))),
+            (VPMOVZXBWYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v8i32 (X86vzext (v32i8 VR256:$src))),
+            (VPMOVZXBDYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v4i64 (X86vzext (v32i8 VR256:$src))),
+            (VPMOVZXBQYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  def : Pat<(v8i32 (X86vzext (v16i16 VR256:$src))),
+            (VPMOVZXWDYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v4i64 (X86vzext (v16i16 VR256:$src))),
+            (VPMOVZXWQYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  def : Pat<(v4i64 (X86vzext (v8i32 VR256:$src))),
+            (VPMOVZXDQYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
 }
 
 let Predicates = [HasAVX] in {
