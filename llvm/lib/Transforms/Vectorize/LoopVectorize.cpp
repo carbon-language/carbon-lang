@@ -55,6 +55,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -98,8 +99,9 @@ class SingleBlockLoopVectorizer {
 public:
   /// Ctor.
   SingleBlockLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
-                            LPPassManager *Lpm, unsigned VecWidth):
-  OrigLoop(Orig), SE(Se), LI(Li), LPM(Lpm), VF(VecWidth),
+                            DominatorTree *dt, LPPassManager *Lpm,
+                            unsigned VecWidth):
+  OrigLoop(Orig), SE(Se), LI(Li), DT(dt), LPM(Lpm), VF(VecWidth),
   Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
   // Perform the actual loop widening (vectorization).
@@ -110,7 +112,7 @@ public:
     /// Use the Legality module to find the induction and reduction variables.
     vectorizeLoop(Legal);
     // register the new loop.
-    cleanup();
+    updateAnalysis();
  }
 
 private:
@@ -119,7 +121,7 @@ private:
   /// Copy and widen the instructions from the old loop.
   void vectorizeLoop(LoopVectorizationLegality *Legal);
   /// Insert the new loop to the loop hierarchy and pass manager.
-  void cleanup();
+  void updateAnalysis();
 
   /// This instruction is un-vectorizable. Implement it as a sequence
   /// of scalars.
@@ -155,6 +157,8 @@ private:
   ScalarEvolution *SE;
   // Loop Info.
   LoopInfo *LI;
+  // Dominator Tree.
+  DominatorTree *DT;
   // Loop Pass Manager;
   LPPassManager *LPM;
   // The vectorization factor to use.
@@ -165,6 +169,10 @@ private:
 
   // --- Vectorization state ---
 
+  /// The vector-loop preheader.
+  BasicBlock *LoopVectorPreHeader;
+  /// The scalar-loop preheader.
+  BasicBlock *LoopScalarPreHeader;
   /// Middle Block between the vector and the scalar.
   BasicBlock *LoopMiddleBlock;
   ///The ExitBlock of the scalar loop.
@@ -357,6 +365,7 @@ struct LoopVectorize : public LoopPass {
   DataLayout *DL;
   LoopInfo *LI;
   TargetTransformInfo *TTI;
+  DominatorTree *DT;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -367,6 +376,7 @@ struct LoopVectorize : public LoopPass {
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
     TTI = getAnalysisIfAvailable<TargetTransformInfo>();
+    DT = &getAnalysis<DominatorTree>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
@@ -401,7 +411,7 @@ struct LoopVectorize : public LoopPass {
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ").\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
-    SingleBlockLoopVectorizer LB(L, SE, LI, &LPM, VF);
+    SingleBlockLoopVectorizer LB(L, SE, LI, DT, &LPM, VF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -414,6 +424,9 @@ struct LoopVectorize : public LoopPass {
     AU.addRequiredID(LCSSAID);
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
+    AU.addRequired<DominatorTree>();
+    AU.addPreserved<LoopInfo>();
+    AU.addPreserved<DominatorTree>();
   }
 
 };
@@ -725,6 +738,8 @@ void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal
   }
 
   // Save the state.
+  LoopVectorPreHeader = VectorPH;
+  LoopScalarPreHeader = ScalarPH;
   LoopMiddleBlock = MiddleBlock;
   LoopExitBlock = ExitBlock;
   LoopVectorBody = VecBody;
@@ -855,8 +870,8 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         // The last index does not have to be the induction. It can be
         // consecutive and be a function of the index. For example A[I+1];
         unsigned NumOperands = Gep->getNumOperands();
-        Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands -1));
-        LastIndex = Builder.CreateExtractElement(LastIndex, Builder.getInt32(0));
+        Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands - 1));
+        LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
 
         // Create the new GEP with the new induction variable.
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
@@ -885,7 +900,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         // consecutive and be a function of the index. For example A[I+1];
         unsigned NumOperands = Gep->getNumOperands();
         Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands -1));
-        LastIndex = Builder.CreateExtractElement(LastIndex, Builder.getInt32(0));
+        LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
 
         // Create the new GEP with the new induction variable.
         GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
@@ -1051,9 +1066,22 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   }// end of for each redux variable.
 }
 
-void SingleBlockLoopVectorizer::cleanup() {
+void SingleBlockLoopVectorizer::updateAnalysis() {
   // The original basic block.
   SE->forgetLoop(OrigLoop);
+
+  // Update the dominator tree information.
+  assert(DT->properlyDominates(LoopBypassBlock, LoopExitBlock) &&
+         "Entry does not dominate exit.");
+
+  DT->addNewBlock(LoopVectorPreHeader, LoopBypassBlock);
+  DT->addNewBlock(LoopVectorBody, LoopVectorPreHeader);
+  DT->addNewBlock(LoopMiddleBlock, LoopBypassBlock);
+  DT->addNewBlock(LoopScalarPreHeader, LoopMiddleBlock);
+  DT->changeImmediateDominator(LoopScalarBody, LoopScalarPreHeader);
+  DT->changeImmediateDominator(LoopExitBlock, LoopMiddleBlock);
+
+  DEBUG(DT->verifyAnalysis());
 }
 
 bool LoopVectorizationLegality::canVectorize() {
