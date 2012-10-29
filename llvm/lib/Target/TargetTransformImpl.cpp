@@ -28,7 +28,7 @@ bool ScalarTargetTransformImpl::isLegalICmpImmediate(int64_t imm) const {
 }
 
 bool ScalarTargetTransformImpl::isLegalAddressingMode(const AddrMode &AM,
-                                                    Type *Ty) const {
+                                                      Type *Ty) const {
   return TLI->isLegalAddressingMode(AM, Ty);
 }
 
@@ -150,7 +150,7 @@ VectorTargetTransformImpl::getScalarizationOverhead(Type *Ty,
                                                     bool Insert,
                                                     bool Extract) const {
   assert (Ty->isVectorTy() && "Can only scalarize vectors");
-   unsigned Cost = 0;
+  unsigned Cost = 0;
 
   for (int i = 0, e = Ty->getVectorNumElements(); i < e; ++i) {
     if (Insert)
@@ -240,7 +240,7 @@ unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,
                                                        Type *CondTy) const {
   int ISD = InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
-  
+
   // Selects on vectors are actually vector selects.
   if (ISD == ISD::SELECT) {
     assert(CondTy && "CondTy must exist");

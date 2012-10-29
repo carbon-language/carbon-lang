@@ -45,11 +45,11 @@ public:
   /// used.
   TargetTransformInfo();
 
-  explicit TargetTransformInfo(const ScalarTargetTransformInfo* S,
-                               const VectorTargetTransformInfo *V)
-    : ImmutablePass(ID), STTI(S), VTTI(V) {
-      initializeTargetTransformInfoPass(*PassRegistry::getPassRegistry());
-    }
+  TargetTransformInfo(const ScalarTargetTransformInfo* S,
+                      const VectorTargetTransformInfo *V)
+      : ImmutablePass(ID), STTI(S), VTTI(V) {
+    initializeTargetTransformInfoPass(*PassRegistry::getPassRegistry());
+  }
 
   TargetTransformInfo(const TargetTransformInfo &T) :
     ImmutablePass(ID), STTI(T.STTI), VTTI(T.VTTI) { }
@@ -102,7 +102,7 @@ public:
   /// isTruncateFree - Return true if it's free to truncate a value of
   /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
   /// register EAX to i16 by referencing its sub-register AX.
-  virtual bool isTruncateFree(Type * /*Ty1*/, Type * /*Ty2*/) const {
+  virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const {
     return false;
   }
   /// Is this type legal.
