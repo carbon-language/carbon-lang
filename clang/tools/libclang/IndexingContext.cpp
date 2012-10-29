@@ -1,4 +1,4 @@
-//===- CIndexHigh.cpp - Higher level API functions ------------------------===//
+//===- IndexingContext.cpp - Higher level API functions -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
