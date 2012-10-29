@@ -61,7 +61,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   //
   // (1) 1 predecessor (that has one successor)
   // (2) 1 successor (that has one predecessor)
-  // (3) The ProgramPoint is for a PostStmt.
+  // (3) The ProgramPoint is for a PostStmt, but not a PostStore.
   // (4) There is no 'tag' for the ProgramPoint.
   // (5) The 'store' is the same as the predecessor.
   // (6) The 'GDM' is the same as the predecessor.
@@ -85,7 +85,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
 
   // Condition 3.
   ProgramPoint progPoint = node->getLocation();
-  if (!isa<PostStmt>(progPoint))
+  if (!isa<PostStmt>(progPoint) || isa<PostStore>(progPoint))
     return false;
 
   // Condition 4.

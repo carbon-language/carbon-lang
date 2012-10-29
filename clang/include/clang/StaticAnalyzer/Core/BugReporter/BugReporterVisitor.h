@@ -258,7 +258,18 @@ public:
 
 namespace bugreporter {
 
-void trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S, BugReport &R);
+/// Attempts to add visitors to trace a null or undefined value back to its
+/// point of origin, whether it is a symbol constrained to null or an explicit
+/// assignment.
+///
+/// \param N A node "downstream" from the evaluation of the statement.
+/// \param S The statement whose value is null or undefined.
+/// \param R The bug report to which visitors should be attached.
+/// \param IsArg Whether the statement is an argument to an inlined function.
+///              If this is the case, \p N \em must be the CallEnter node for
+///              the function.
+void trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S, BugReport &R,
+                           bool IsArg = false);
 
 const Stmt *GetDerefExpr(const ExplodedNode *N);
 const Stmt *GetDenomExpr(const ExplodedNode *N);

@@ -283,6 +283,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
   const ExplodedNode *StoreSite = 0;
   const Expr *InitE = 0;
+  bool IsParam = false;
 
   // First see if we reached the declaration of the region.
   if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
@@ -327,6 +328,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
       CallEventRef<> Call = CallMgr.getCaller(CE->getCalleeContext(),
                                               Succ->getState());
       InitE = Call->getArgExpr(Param->getFunctionScopeIndex());
+      IsParam = true;
     }
   }
 
@@ -337,12 +339,14 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   // If we have an expression that provided the value, try to track where it
   // came from.
   if (InitE) {
-    InitE = InitE->IgnoreParenCasts();
-
-    if (V.isUndef() || isa<loc::ConcreteInt>(V))
-      bugreporter::trackNullOrUndefValue(StoreSite, InitE, BR);
-    else
-      ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE, BR);
+    if (V.isUndef() || isa<loc::ConcreteInt>(V)) {
+      if (!IsParam)
+        InitE = InitE->IgnoreParenCasts();
+      bugreporter::trackNullOrUndefValue(StoreSite, InitE, BR, IsParam);
+    } else {
+      ReturnVisitor::addVisitorIfNecessary(StoreSite, InitE->IgnoreParenCasts(),
+                                           BR);
+    }
   }
 
   if (!R->canPrintPretty())
@@ -522,30 +526,32 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
 }
 
 void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
-                                        BugReport &report) {
+                                        BugReport &report, bool IsArg) {
   if (!S || !N)
     return;
 
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
     S = OVE->getSourceExpr();
 
-  ProgramStateManager &StateMgr = N->getState()->getStateManager();
+  if (IsArg) {
+    assert(isa<CallEnter>(N->getLocation()) && "Tracking arg but not at call");
+  } else {
+    // Walk through nodes until we get one that matches the statement exactly.
+    do {
+      const ProgramPoint &pp = N->getLocation();
+      if (const PostStmt *ps = dyn_cast<PostStmt>(&pp)) {
+        if (ps->getStmt() == S)
+          break;
+      } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&pp)) {
+        if (CEE->getCalleeContext()->getCallSite() == S)
+          break;
+      }
+      N = N->getFirstPred();
+    } while (N);
 
-  // Walk through nodes until we get one that matches the statement exactly.
-  while (N) {
-    const ProgramPoint &pp = N->getLocation();
-    if (const PostStmt *ps = dyn_cast<PostStmt>(&pp)) {
-      if (ps->getStmt() == S)
-        break;
-    } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&pp)) {
-      if (CEE->getCalleeContext()->getCallSite() == S)
-        break;
-    }
-    N = N->getFirstPred();
+    if (!N)
+      return;
   }
-
-  if (!N)
-    return;
   
   ProgramStateRef state = N->getState();
 
@@ -560,11 +566,28 @@ void bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
       // FIXME: Right now we only track VarDecls because it's non-trivial to
       // get a MemRegion for any other DeclRefExprs. <rdar://problem/12114812>
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-        const VarRegion *R =
-          StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
+        ProgramStateManager &StateMgr = state->getStateManager();
+        MemRegionManager &MRMgr = StateMgr.getRegionManager();
+        const VarRegion *R = MRMgr.getVarRegion(VD, N->getLocationContext());
 
         // Mark both the variable region and its contents as interesting.
         SVal V = state->getRawSVal(loc::MemRegionVal(R));
+
+        // If the value matches the default for the variable region, that
+        // might mean that it's been cleared out of the state. Fall back to
+        // the full argument expression (with casts and such intact).
+        if (IsArg) {
+          bool UseArgValue = V.isUnknownOrUndef() || V.isZeroConstant();
+          if (!UseArgValue) {
+            const SymbolRegionValue *SRV =
+              dyn_cast_or_null<SymbolRegionValue>(V.getAsLocSymbol());
+            if (SRV)
+              UseArgValue = (SRV->getRegion() == R);
+          }
+          if (UseArgValue)
+            V = state->getSValAsScalarOrLoc(S, N->getLocationContext());
+        }
+
         report.markInteresting(R);
         report.markInteresting(V);
         report.addVisitor(new UndefOrNullArgVisitor(R));
