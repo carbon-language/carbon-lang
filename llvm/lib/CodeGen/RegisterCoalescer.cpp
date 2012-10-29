@@ -430,7 +430,8 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // If AValNo is defined as a copy from IntB, we can potentially process this.
   // Get the instruction that defines this value number.
   MachineInstr *ACopyMI = LIS->getInstructionFromIndex(AValNo->def);
-  if (!CP.isCoalescable(ACopyMI))
+  // Don't allow any partial copies, even if isCoalescable() allows them.
+  if (!CP.isCoalescable(ACopyMI) || !ACopyMI->isFullCopy())
     return false;
 
   // Get the LiveRange in IntB that this value number starts with.

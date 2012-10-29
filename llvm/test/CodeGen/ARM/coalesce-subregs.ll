@@ -289,3 +289,31 @@ bb:
   %tmp18 = insertvalue %struct.wombat.5 %tmp17, <4 x float> undef, 3, 0
   ret %struct.wombat.5 %tmp18
 }
+
+; CHECK: adjustCopiesBackFrom
+; The shuffle in if.else3 must be preserved even though adjustCopiesBackFrom
+; is tempted to remove it.
+; CHECK: %if.else3
+; CHECK: vorr d
+define internal void @adjustCopiesBackFrom(<2 x i64>* noalias nocapture sret %agg.result, <2 x i64> %in) {
+entry:
+  %0 = extractelement <2 x i64> %in, i32 0
+  %cmp = icmp slt i64 %0, 1
+  %.in = select i1 %cmp, <2 x i64> <i64 0, i64 undef>, <2 x i64> %in
+  %1 = extractelement <2 x i64> %in, i32 1
+  %cmp1 = icmp slt i64 %1, 1
+  br i1 %cmp1, label %if.then2, label %if.else3
+
+if.then2:                                         ; preds = %entry
+  %2 = insertelement <2 x i64> %.in, i64 0, i32 1
+  br label %if.end4
+
+if.else3:                                         ; preds = %entry
+  %3 = shufflevector <2 x i64> %.in, <2 x i64> %in, <2 x i32> <i32 0, i32 3>
+  br label %if.end4
+
+if.end4:                                          ; preds = %if.else3, %if.then2
+  %result.2 = phi <2 x i64> [ %2, %if.then2 ], [ %3, %if.else3 ]
+  store <2 x i64> %result.2, <2 x i64>* %agg.result, align 128
+  ret void
+}
