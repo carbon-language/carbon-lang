@@ -40,22 +40,27 @@
 #include "../Commands/CommandObjectVersion.h"
 #include "../Commands/CommandObjectWatchpoint.h"
 
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
+
 #include "lldb/Host/Host.h"
+
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/ScriptInterpreterNone.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
+
+
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/TargetList.h"
-#include "lldb/Utility/CleanUp.h"
 
-#include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/ScriptInterpreterNone.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
+#include "lldb/Utility/CleanUp.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -2547,8 +2552,14 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
 }
 
 ScriptInterpreter *
-CommandInterpreter::GetScriptInterpreter ()
+CommandInterpreter::GetScriptInterpreter (bool can_create)
 {
+    if (m_script_interpreter_ap.get() != NULL)
+        return m_script_interpreter_ap.get();
+    
+    if (!can_create)
+        return NULL;
+ 
     // <rdar://problem/11751427>
     // we need to protect the initialization of the script interpreter
     // otherwise we could end up with two threads both trying to create
@@ -2559,8 +2570,9 @@ CommandInterpreter::GetScriptInterpreter ()
     static Mutex g_interpreter_mutex(Mutex::eMutexTypeRecursive);
     Mutex::Locker interpreter_lock(g_interpreter_mutex);
     
-    if (m_script_interpreter_ap.get() != NULL)
-        return m_script_interpreter_ap.get();
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf("Initializing the ScriptInterpreter now\n");
     
     lldb::ScriptLanguage script_lang = GetDebugger().GetScriptLanguage();
     switch (script_lang)

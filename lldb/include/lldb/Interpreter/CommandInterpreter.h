@@ -365,7 +365,7 @@ public:
     GetOptionArgumentPosition (const char *in_string);
 
     ScriptInterpreter *
-    GetScriptInterpreter ();
+    GetScriptInterpreter (bool can_create = true);
 
     void
     SkipLLDBInitFiles (bool skip_lldbinit_files)

@@ -681,7 +681,12 @@ Debugger::SetOutputFileHandle (FILE *fh, bool tranfer_ownership)
     if (out_file.IsValid() == false)
         out_file.SetStream (stdout, false);
     
-    GetCommandInterpreter().GetScriptInterpreter()->ResetOutputFileHandle (fh);
+    // do not create the ScriptInterpreter just for setting the output file handle
+    // as the constructor will know how to do the right thing on its own
+    const bool can_create = false;
+    ScriptInterpreter* script_interpreter = GetCommandInterpreter().GetScriptInterpreter(can_create);
+    if (script_interpreter)
+        script_interpreter->ResetOutputFileHandle (fh);
 }
 
 void

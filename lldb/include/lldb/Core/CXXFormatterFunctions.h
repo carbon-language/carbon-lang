@@ -58,6 +58,13 @@ namespace lldb_private {
         NSStringSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
+        ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        template <bool is_sel_ptr>
+        bool
+        ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream);
         
         extern template bool
@@ -71,6 +78,12 @@ namespace lldb_private {
         
         extern template bool
         NSDataSummaryProvider<false> (ValueObject&, Stream&) ;
+        
+        extern template bool
+        ObjCSELSummaryProvider<true> (ValueObject&, Stream&);
+
+        extern template bool
+        ObjCSELSummaryProvider<false> (ValueObject&, Stream&);
         
         class NSArrayMSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {

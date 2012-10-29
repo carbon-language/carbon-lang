@@ -19,6 +19,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
@@ -684,6 +685,63 @@ bool
 lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     stream.Printf("%s",valobj.GetObjectDescription());
+    return true;
+}
+
+bool
+lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    const uint32_t type_info = ClangASTContext::GetTypeInfo(valobj.GetClangType(),
+                                                            valobj.GetClangAST(),
+                                                            NULL);
+    
+    ValueObjectSP real_guy_sp = valobj.GetSP();
+    
+    if (type_info & ClangASTContext::eTypeIsPointer)
+    {
+        Error err;
+        real_guy_sp = valobj.Dereference(err);
+        if (err.Fail() || !real_guy_sp)
+            return false;
+    }
+    else if (type_info & ClangASTContext::eTypeIsReference)
+    {
+        real_guy_sp =  valobj.GetChildAtIndex(0, true);
+        if (!real_guy_sp)
+            return false;
+    }
+    uint64_t value = real_guy_sp->GetValueAsUnsigned(0);
+    if (value == 0)
+    {
+        stream.Printf("NO");
+        return true;
+    }
+    stream.Printf("YES");
+    return true;
+}
+
+template <bool is_sel_ptr>
+bool
+lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    lldb::addr_t data_address = LLDB_INVALID_ADDRESS;
+    
+    if (is_sel_ptr)
+        data_address = valobj.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+    else
+        data_address = valobj.GetAddressOf();
+
+    if (data_address == LLDB_INVALID_ADDRESS)
+        return false;
+    
+    ExecutionContext exe_ctx(valobj.GetExecutionContextRef());
+    
+    void* char_opaque_type = valobj.GetClangAST()->CharTy.getAsOpaquePtr();
+    ClangASTType charstar(valobj.GetClangAST(),ClangASTType::GetPointerType(valobj.GetClangAST(), char_opaque_type));
+    
+    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromAddress("text", data_address, exe_ctx, charstar));
+    
+    stream.Printf("%s",valobj_sp->GetSummaryAsCString());
     return true;
 }
 
@@ -1417,3 +1475,9 @@ lldb_private::formatters::NSDataSummaryProvider<true> (ValueObject&, Stream&) ;
 
 template bool
 lldb_private::formatters::NSDataSummaryProvider<false> (ValueObject&, Stream&) ;
+
+template bool
+lldb_private::formatters::ObjCSELSummaryProvider<true> (ValueObject&, Stream&) ;
+
+template bool
+lldb_private::formatters::ObjCSELSummaryProvider<false> (ValueObject&, Stream&) ;

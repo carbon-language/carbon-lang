@@ -501,6 +501,11 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     {
         m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
     }
+    
+    // get the output file handle from the debugger (if any)
+    File& out_file = interpreter.GetDebugger().GetOutputFile();
+    if (out_file.IsValid())
+        ResetOutputFileHandle(out_file.GetStream());
 }
 
 ScriptInterpreterPython::~ScriptInterpreterPython ()
