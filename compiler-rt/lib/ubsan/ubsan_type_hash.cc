@@ -89,7 +89,7 @@ namespace abi = __cxxabiv1;
 //        (worst-case, we could miss a bug or see a slowdown) but we should
 //        avoid upsetting race detectors.
 
-// Find a bucket to store the given value in.
+/// Find a bucket to store the given hash value in.
 static __ubsan::HashValue *getTypeCacheHashTableBucket(__ubsan::HashValue V) {
   static const unsigned HashTableSize = 65537;
   static __ubsan::HashValue __ubsan_vptr_hash_set[HashTableSize] = { 1 };
@@ -107,10 +107,8 @@ static __ubsan::HashValue *getTypeCacheHashTableBucket(__ubsan::HashValue V) {
   return &__ubsan_vptr_hash_set[V];
 }
 
-// A cache of recently-checked hashes. Mini hash table with "random" evictions.
-// The bottom 7 bits of the hash are used as the key.
-static const unsigned CacheSize = 128;
-extern "C" __ubsan::HashValue __ubsan_vptr_type_cache[CacheSize] = { 1 };
+/// A cache of recently-checked hashes. Mini hash table with "random" evictions.
+__ubsan::HashValue __ubsan_vptr_type_cache[__ubsan::VptrTypeCacheSize] = { 1 };
 
 /// \brief Determine whether \p Derived has a \p Base base class subobject at
 /// offset \p Offset.
@@ -174,7 +172,7 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
   // Check whether this is something we've evicted from the cache.
   HashValue *Bucket = getTypeCacheHashTableBucket(Hash);
   if (*Bucket == Hash) {
-    __ubsan_vptr_type_cache[Hash % CacheSize] = Hash;
+    __ubsan_vptr_type_cache[Hash % VptrTypeCacheSize] = Hash;
     return true;
   }
 
@@ -194,7 +192,7 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
     return false;
 
   // Success. Cache this result.
-  __ubsan_vptr_type_cache[Hash % CacheSize] = Hash;
+  __ubsan_vptr_type_cache[Hash % VptrTypeCacheSize] = Hash;
   *Bucket = Hash;
   return true;
 }
