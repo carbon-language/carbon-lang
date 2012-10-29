@@ -3245,11 +3245,11 @@ def t2B   : T2I<(outs), (ins uncondbrtarget:$target), IIC_Br,
   let Inst{15-14} = 0b10;
   let Inst{12} = 1;
 
-  bits<20> target;
+  bits<24> target;
   let Inst{26} = target{19};
   let Inst{11} = target{18};
   let Inst{13} = target{17};
-  let Inst{21-16} = target{16-11};
+  let Inst{25-16} = target{20-11};
   let Inst{10-0} = target{10-0};
   let DecoderMethod = "DecodeT2BInstruction";
 }

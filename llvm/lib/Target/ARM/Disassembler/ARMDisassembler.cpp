@@ -2095,16 +2095,28 @@ static DecodeStatus DecodeAddrMode7Operand(MCInst &Inst, unsigned Val,
 static DecodeStatus
 DecodeT2BInstruction(MCInst &Inst, unsigned Insn,
                      uint64_t Address, const void *Decoder) {
-  DecodeStatus S = MCDisassembler::Success;
-  unsigned imm = (fieldFromInstruction(Insn, 0, 11) << 0) |
-                 (fieldFromInstruction(Insn, 11, 1) << 18) |
-                 (fieldFromInstruction(Insn, 13, 1) << 17) |
-                 (fieldFromInstruction(Insn, 16, 6) << 11) |
-                 (fieldFromInstruction(Insn, 26, 1) << 19);
-  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<20>(imm<<1) + 4,
+  DecodeStatus Status = MCDisassembler::Success;
+
+  // Note the J1 and J2 values are from the encoded instruction.  So here
+  // change them to I1 and I2 values via as documented:
+  // I1 = NOT(J1 EOR S);
+  // I2 = NOT(J2 EOR S);
+  // and build the imm32 with one trailing zero as documented:
+  // imm32 = SignExtend(S:I1:I2:imm10:imm11:'0', 32);
+  unsigned S = fieldFromInstruction(Insn, 26, 1);
+  unsigned J1 = fieldFromInstruction(Insn, 13, 1);
+  unsigned J2 = fieldFromInstruction(Insn, 11, 1);
+  unsigned I1 = !(J1 ^ S);
+  unsigned I2 = !(J2 ^ S);
+  unsigned imm10 = fieldFromInstruction(Insn, 16, 10);
+  unsigned imm11 = fieldFromInstruction(Insn, 0, 11);
+  unsigned tmp = (S << 23) | (I1 << 22) | (I2 << 21) | (imm10 << 11) | imm11;
+  int imm32 = SignExtend32<24>(tmp << 1);
+  if (!tryAddingSymbolicOperand(Address, Address + imm32 + 4,
                                 true, 4, Inst, Decoder))
-    Inst.addOperand(MCOperand::CreateImm(SignExtend32<20>(imm << 1)));
-  return S;
+    Inst.addOperand(MCOperand::CreateImm(imm32));
+
+  return Status;
 }
 
 static DecodeStatus
