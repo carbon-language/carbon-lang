@@ -24,8 +24,3 @@ int test2() {
 // OTHER-NOT: forcesizeopt
 // OTHER: ret
 }
-
-int test3() __attribute__((forcesizeopt)) {
-// Oz: @test3{{.*}}forcesizeopt
-// OTHER: @test3{{.*}}forcesizeopt
-}
