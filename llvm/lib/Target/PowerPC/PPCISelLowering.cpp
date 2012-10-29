@@ -3751,7 +3751,17 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
         RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
 
         if (isVarArg) {
-          SDValue Store = DAG.getStore(Chain, dl, Arg, PtrOff,
+          // A single float or an aggregate containing only a single float
+          // must be passed right-justified in the stack doubleword, and
+          // in the GPR, if one is available.
+          SDValue StoreOff;
+          if (Arg.getValueType().getSimpleVT().SimpleTy == MVT::f32) {
+            SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
+            StoreOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
+          } else
+            StoreOff = PtrOff;
+
+          SDValue Store = DAG.getStore(Chain, dl, Arg, StoreOff,
                                        MachinePointerInfo(), false, false, 0);
           MemOpChains.push_back(Store);
 
