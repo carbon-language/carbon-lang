@@ -230,3 +230,12 @@ void t27(void) {
 // CHECK-NOT: ia_nsdialect
 // CHECK: ret void
 }
+
+// Check handling of '*' and '#' constraint modifiers.
+void t28(void)
+{
+  asm volatile ("/* %0 */" : : "i#*X,*r" (1));
+// CHECK: @t28
+// CHECK: call void asm sideeffect "/* $0 */", "i|r,~{dirflag},~{fpsr},~{flags}"(i32 1)
+}
+

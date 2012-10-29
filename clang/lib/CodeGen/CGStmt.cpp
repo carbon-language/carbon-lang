@@ -1280,6 +1280,10 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
     case '=': // Will see this and the following in mult-alt constraints.
     case '+':
       break;
+    case '#': // Ignore the rest of the constraint alternative.
+      while (Constraint[1] && Constraint[1] != ',')
+	Constraint++;
+      break;
     case ',':
       Result += "|";
       break;
