@@ -678,20 +678,8 @@ IntegerType *DataLayout::getIntPtrType(LLVMContext &C,
 /// getIntPtrType - Return an integer type that is the same size or
 /// greater to the pointer size of the specific PointerType.
 IntegerType *DataLayout::getIntPtrType(Type *Ty) const {
-  LLVMContext &C = Ty->getContext();
-  // For pointers, we return the size for the specific address space.
-  if (Ty->isPointerTy()) return IntegerType::get(C, getTypeSizeInBits(Ty));
-  // For vector of pointers, we return the size of the address space
-  // of the pointer type.
-  if (Ty->isVectorTy() && cast<VectorType>(Ty)->getElementType()->isPointerTy())
-    return IntegerType::get(C,
-        getTypeSizeInBits(cast<VectorType>(Ty)->getElementType()));
-  // Otherwise return the address space for the default address space.
-  // An example of this occuring is that you want to get the IntPtr
-  // for all of the arguments in a function. However, the IntPtr
-  // for a non-pointer type cannot be determined by the type, so
-  // the default value is used.
-  return getIntPtrType(C, 0);
+  unsigned NumBits = getPointerTypeSizeInBits(Ty);
+  return IntegerType::get(Ty->getContext(), NumBits);
 }
 
 
