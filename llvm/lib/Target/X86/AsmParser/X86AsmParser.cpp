@@ -695,6 +695,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Start, "Expected ']' token!");
       Parser.Lex();
+      End = Tok.getLoc();
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
   } else if (getLexer().is(AsmToken::Integer)) {
@@ -704,6 +705,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().is(AsmToken::RBrac)) {
         // Handle '[' number ']'
         Parser.Lex();
+        End = Tok.getLoc();
         const MCExpr *Disp = MCConstantExpr::Create(Val, getContext());
         if (SegReg)
           return X86Operand::CreateMem(SegReg, Disp, 0, 0, Scale,
@@ -720,9 +722,20 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         return ErrorOperand(Loc, "Unexpected token");
   }
 
-  if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus)) {
-    bool isPlus = getLexer().is(AsmToken::Plus);
+  // Parse ][ as a plus.
+  bool ExpectRBrac = true;
+  if (getLexer().is(AsmToken::RBrac)) {
+    ExpectRBrac = false;
     Parser.Lex();
+    End = Tok.getLoc();
+  }
+
+  if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus) ||
+      getLexer().is(AsmToken::LBrac)) {
+    ExpectRBrac = true;
+    bool isPlus = getLexer().is(AsmToken::Plus) ||
+      getLexer().is(AsmToken::LBrac);
+    Parser.Lex(); 
     SMLoc PlusLoc = Tok.getLoc();
     if (getLexer().is(AsmToken::Integer)) {
       int64_t Val = Tok.getIntVal();
@@ -746,15 +759,29 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       else if (getParser().ParseExpression(Disp, End)) return 0;
     }
   }
+  
+  // Parse ][ as a plus.
+  if (getLexer().is(AsmToken::RBrac)) {
+    ExpectRBrac = false;
+    Parser.Lex();
+    End = Tok.getLoc();
+    if (getLexer().is(AsmToken::LBrac)) {
+      ExpectRBrac = true;
+      Parser.Lex();
+      if (getParser().ParseExpression(Disp, End))
+        return 0;
+    }
+  } else if (ExpectRBrac) {
+      if (getParser().ParseExpression(Disp, End))
+        return 0;
+  }
 
-  if (getLexer().isNot(AsmToken::RBrac))
-    if (getParser().ParseExpression(Disp, End)) return 0;
-
-  End = Tok.getLoc();
-  if (getLexer().isNot(AsmToken::RBrac))
-    return ErrorOperand(End, "expected ']' token!");
-  Parser.Lex();
-  End = Tok.getLoc();
+  if (ExpectRBrac) {
+    if (getLexer().isNot(AsmToken::RBrac))
+      return ErrorOperand(End, "expected ']' token!");
+    Parser.Lex();
+    End = Tok.getLoc();
+  }
 
   // Parse the dot operator (e.g., [ebx].foo.bar).
   if (Tok.getString().startswith(".")) {
