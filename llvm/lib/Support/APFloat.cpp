@@ -621,8 +621,6 @@ APFloat::assign(const APFloat &rhs)
   sign = rhs.sign;
   category = rhs.category;
   exponent = rhs.exponent;
-  sign2 = rhs.sign2;
-  exponent2 = rhs.exponent2;
   if (category == fcNormal || category == fcNaN)
     copySignificand(rhs);
 }
@@ -716,15 +714,9 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
       category != rhs.category ||
       sign != rhs.sign)
     return false;
-  if (semantics==(const llvm::fltSemantics*)&PPCDoubleDouble &&
-      sign2 != rhs.sign2)
-    return false;
   if (category==fcZero || category==fcInfinity)
     return true;
   else if (category==fcNormal && exponent!=rhs.exponent)
-    return false;
-  else if (semantics==(const llvm::fltSemantics*)&PPCDoubleDouble &&
-           exponent2!=rhs.exponent2)
     return false;
   else {
     int i= partCount();
@@ -738,8 +730,7 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
   }
 }
 
-APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
-  : exponent2(0), sign2(0) {
+APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value) {
   assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   sign = 0;
@@ -749,23 +740,21 @@ APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
   normalize(rmNearestTiesToEven, lfExactlyZero);
 }
 
-APFloat::APFloat(const fltSemantics &ourSemantics) : exponent2(0), sign2(0) {
+APFloat::APFloat(const fltSemantics &ourSemantics) {
   assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   category = fcZero;
   sign = false;
 }
 
-APFloat::APFloat(const fltSemantics &ourSemantics, uninitializedTag tag)
-  : exponent2(0), sign2(0) {
+APFloat::APFloat(const fltSemantics &ourSemantics, uninitializedTag tag) {
   assertArithmeticOK(ourSemantics);
   // Allocates storage if necessary but does not initialize it.
   initialize(&ourSemantics);
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics,
-                 fltCategory ourCategory, bool negative)
-  : exponent2(0), sign2(0) {
+                 fltCategory ourCategory, bool negative) {
   assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   category = ourCategory;
@@ -776,14 +765,13 @@ APFloat::APFloat(const fltSemantics &ourSemantics,
     makeNaN();
 }
 
-APFloat::APFloat(const fltSemantics &ourSemantics, StringRef text)
-  : exponent2(0), sign2(0) {
+APFloat::APFloat(const fltSemantics &ourSemantics, StringRef text) {
   assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   convertFromString(text, rmNearestTiesToEven);
 }
 
-APFloat::APFloat(const APFloat &rhs) : exponent2(0), sign2(0) {
+APFloat::APFloat(const APFloat &rhs) {
   initialize(rhs.semantics);
   assign(rhs);
 }
@@ -3300,15 +3288,15 @@ APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
   return Val;
 }
 
-APFloat::APFloat(const APInt& api, bool isIEEE) : exponent2(0), sign2(0) {
+APFloat::APFloat(const APInt& api, bool isIEEE) {
   initFromAPInt(api, isIEEE);
 }
 
-APFloat::APFloat(float f) : exponent2(0), sign2(0) {
+APFloat::APFloat(float f) {
   initFromAPInt(APInt::floatToBits(f));
 }
 
-APFloat::APFloat(double d) : exponent2(0), sign2(0) {
+APFloat::APFloat(double d) {
   initFromAPInt(APInt::doubleToBits(d));
 }
 
