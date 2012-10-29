@@ -46,17 +46,14 @@ namespace llvm {
     /* Number of bits in the significand.  This includes the integer
        bit.  */
     unsigned int precision;
-
-    /* True if arithmetic is supported.  */
-    unsigned int arithmeticOK;
   };
 
-  const fltSemantics APFloat::IEEEhalf = { 15, -14, 11, true };
-  const fltSemantics APFloat::IEEEsingle = { 127, -126, 24, true };
-  const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53, true };
-  const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113, true };
-  const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, true };
-  const fltSemantics APFloat::Bogus = { 0, 0, 0, true };
+  const fltSemantics APFloat::IEEEhalf = { 15, -14, 11 };
+  const fltSemantics APFloat::IEEEsingle = { 127, -126, 24 };
+  const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53 };
+  const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113 };
+  const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64 };
+  const fltSemantics APFloat::Bogus = { 0, 0, 0 };
 
   /* The PowerPC format consists of two doubles.  It does not map cleanly
      onto the usual format above.  It is approximated using twice the
@@ -69,8 +66,7 @@ namespace llvm {
      to represent all possible values held by a PPC double-double number,
      for example: (long double) 1.0 + (long double) 0x1p-106
      Should this be replaced by a full emulation of PPC double-double?  */
-  const fltSemantics APFloat::PPCDoubleDouble =
-    { 1023, -1022 + 53, 53 + 53, true };
+  const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022 + 53, 53 + 53 };
 
   /* A tight upper bound on number of parts required to hold the value
      pow(5, power) is
@@ -123,12 +119,6 @@ hexDigitValue(unsigned int c)
     return r + 10;
 
   return -1U;
-}
-
-static inline void
-assertArithmeticOK(const llvm::fltSemantics &semantics) {
-  assert(semantics.arithmeticOK &&
-         "Compile-time arithmetic does not support these semantics");
 }
 
 /* Return the value of a decimal exponent of the form
@@ -731,7 +721,6 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value) {
-  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   sign = 0;
   zeroSignificand();
@@ -741,21 +730,18 @@ APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value) {
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics) {
-  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   category = fcZero;
   sign = false;
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, uninitializedTag tag) {
-  assertArithmeticOK(ourSemantics);
   // Allocates storage if necessary but does not initialize it.
   initialize(&ourSemantics);
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics,
                  fltCategory ourCategory, bool negative) {
-  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   category = ourCategory;
   sign = negative;
@@ -766,7 +752,6 @@ APFloat::APFloat(const fltSemantics &ourSemantics,
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, StringRef text) {
-  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   convertFromString(text, rmNearestTiesToEven);
 }
@@ -1558,8 +1543,6 @@ APFloat::addOrSubtract(const APFloat &rhs, roundingMode rounding_mode,
 {
   opStatus fs;
 
-  assertArithmeticOK(*semantics);
-
   fs = addOrSubtractSpecials(rhs, subtract);
 
   /* This return code means it was not a simple case.  */
@@ -1604,7 +1587,6 @@ APFloat::multiply(const APFloat &rhs, roundingMode rounding_mode)
 {
   opStatus fs;
 
-  assertArithmeticOK(*semantics);
   sign ^= rhs.sign;
   fs = multiplySpecials(rhs);
 
@@ -1624,7 +1606,6 @@ APFloat::divide(const APFloat &rhs, roundingMode rounding_mode)
 {
   opStatus fs;
 
-  assertArithmeticOK(*semantics);
   sign ^= rhs.sign;
   fs = divideSpecials(rhs);
 
@@ -1646,7 +1627,6 @@ APFloat::remainder(const APFloat &rhs)
   APFloat V = *this;
   unsigned int origSign = sign;
 
-  assertArithmeticOK(*semantics);
   fs = V.divide(rhs, rmNearestTiesToEven);
   if (fs == opDivByZero)
     return fs;
@@ -1681,7 +1661,6 @@ APFloat::opStatus
 APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 {
   opStatus fs;
-  assertArithmeticOK(*semantics);
   fs = modSpecials(rhs);
 
   if (category == fcNormal && rhs.category == fcNormal) {
@@ -1725,8 +1704,6 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
 {
   opStatus fs;
 
-  assertArithmeticOK(*semantics);
-
   /* Post-multiplication sign, before addition.  */
   sign ^= multiplicand.sign;
 
@@ -1767,7 +1744,6 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
 /* Rounding-mode corrrect round to integral value.  */
 APFloat::opStatus APFloat::roundToIntegral(roundingMode rounding_mode) {
   opStatus fs;
-  assertArithmeticOK(*semantics);
 
   // If the exponent is large enough, we know that this value is already
   // integral, and the arithmetic below would potentially cause it to saturate
@@ -1814,7 +1790,6 @@ APFloat::compare(const APFloat &rhs) const
 {
   cmpResult result;
 
-  assertArithmeticOK(*semantics);
   assert(semantics == rhs.semantics);
 
   switch (convolve(category, rhs.category)) {
@@ -1899,8 +1874,6 @@ APFloat::convert(const fltSemantics &toSemantics,
   int shift;
   const fltSemantics &fromSemantics = *semantics;
 
-  assertArithmeticOK(fromSemantics);
-  assertArithmeticOK(toSemantics);
   lostFraction = lfExactlyZero;
   newPartCount = partCountForBits(toSemantics.precision + 1);
   oldPartCount = partCount();
@@ -1984,8 +1957,6 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
   lostFraction lost_fraction;
   const integerPart *src;
   unsigned int dstPartsCount, truncatedBits;
-
-  assertArithmeticOK(*semantics);
 
   *isExact = false;
 
@@ -2148,7 +2119,6 @@ APFloat::convertFromUnsignedParts(const integerPart *src,
   integerPart *dst;
   lostFraction lost_fraction;
 
-  assertArithmeticOK(*semantics);
   category = fcNormal;
   omsb = APInt::tcMSB(src, srcCount) + 1;
   dst = significandParts();
@@ -2199,7 +2169,6 @@ APFloat::convertFromSignExtendedInteger(const integerPart *src,
 {
   opStatus status;
 
-  assertArithmeticOK(*semantics);
   if (isSigned &&
       APInt::tcExtractBit(src, srcCount * integerPartWidth - 1)) {
     integerPart *copy;
@@ -2333,7 +2302,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
                                       roundingMode rounding_mode)
 {
   unsigned int parts, pow5PartCount;
-  fltSemantics calcSemantics = { 32767, -32767, 0, true };
+  fltSemantics calcSemantics = { 32767, -32767, 0 };
   integerPart pow5Parts[maxPowerOfFiveParts];
   bool isNearest;
 
@@ -2525,7 +2494,6 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
 APFloat::opStatus
 APFloat::convertFromString(StringRef str, roundingMode rounding_mode)
 {
-  assertArithmeticOK(*semantics);
   assert(!str.empty() && "Invalid string length");
 
   /* Handle a leading minus sign.  */
@@ -2576,8 +2544,6 @@ APFloat::convertToHexString(char *dst, unsigned int hexDigits,
                             bool upperCase, roundingMode rounding_mode) const
 {
   char *p;
-
-  assertArithmeticOK(*semantics);
 
   p = dst;
   if (sign)
