@@ -7200,7 +7200,8 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   Expr *Init = var->getInit();
   bool IsGlobal = var->hasGlobalStorage() && !var->isStaticLocal();
 
-  if (Init && !Init->isValueDependent()) {
+  if (!var->getDeclContext()->isDependentContext() &&
+      Init && !Init->isValueDependent()) {
     if (IsGlobal && !var->isConstexpr() &&
         getDiagnostics().getDiagnosticLevel(diag::warn_global_constructor,
                                             var->getLocation())

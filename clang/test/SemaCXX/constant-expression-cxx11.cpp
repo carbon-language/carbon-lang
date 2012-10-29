@@ -521,7 +521,7 @@ namespace DependentValues {
 
 struct I { int n; typedef I V[10]; };
 I::V x, y;
-int g(); // expected-note {{here}}
+int g();
 template<bool B, typename T> struct S : T {
   int k;
   void f() {
@@ -529,9 +529,8 @@ template<bool B, typename T> struct S : T {
     I &i = cells[k];
     switch (i.n) {}
 
-    constexpr int n = g(); // \
-    // expected-error {{must be initialized by a constant expression}} \
-    // expected-note {{non-constexpr function 'g'}}
+    // FIXME: We should be able to diagnose this.
+    constexpr int n = g();
 
     constexpr int m = this->g(); // ok, could be constexpr
   }
@@ -1434,4 +1433,24 @@ namespace TypeId {
   constexpr auto &x = typeid(f());
   constexpr auto &y = typeid(g()); // expected-error{{constant expression}} \
   // expected-note{{typeid applied to expression of polymorphic type 'TypeId::A' is not allowed in a constant expression}}
+}
+
+namespace PR14203 {
+  struct duration {
+    constexpr duration() {}
+    constexpr operator int() const { return 0; }
+  };
+  template<typename T> void f() {
+    // If we want to evaluate this at the point of the template definition, we
+    // need to trigger the implicit definition of the move constructor at that
+    // point.
+    // FIXME: C++ does not permit us to implicitly define it at the appropriate
+    // times, since it is only allowed to be implicitly defined when it is
+    // odr-used.
+    constexpr duration d = duration();
+  }
+  // FIXME: It's unclear whether this is valid. On the one hand, we're not
+  // allowed to generate a move constructor. On the other hand, if we did,
+  // this would be a constant expression.
+  int n = sizeof(short{duration(duration())}); // expected-error {{non-constant-expression cannot be narrowed}} expected-note {{override}}
 }
