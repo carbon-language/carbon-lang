@@ -17,6 +17,7 @@
 #include "RuntimeDyldELF.h"
 #include "RuntimeDyldMachO.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -26,16 +27,6 @@ RTDyldMemoryManager::~RTDyldMemoryManager() {}
 RuntimeDyldImpl::~RuntimeDyldImpl() {}
 
 namespace llvm {
-
-namespace {
-  // Helper for extensive error checking in debug builds.
-  error_code Check(error_code Err) {
-    if (Err) {
-      report_fatal_error(Err.message());
-    }
-    return Err;
-  }
-} // end anonymous namespace
 
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
@@ -78,9 +69,9 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
   // Used sections from the object file
   ObjSectionToIDMap LocalSections;
 
-  // Common symbols requiring allocation, and the total size required to
-  // allocate all common symbols.
+  // Common symbols requiring allocation, with their sizes and alignments
   CommonSymbolMap CommonSymbols;
+  // Maximum required total memory to allocate all common symbols
   uint64_t CommonSize = 0;
 
   error_code err;
@@ -100,10 +91,11 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
     bool isCommon = flags & SymbolRef::SF_Common;
     if (isCommon) {
       // Add the common symbols to a list.  We'll allocate them all below.
+      uint64_t Align = getCommonSymbolAlignment(*i);
       uint64_t Size = 0;
       Check(i->getSize(Size));
-      CommonSize += Size;
-      CommonSymbols[*i] = Size;
+      CommonSize += Size + Align;
+      CommonSymbols[*i] = CommonSymbolInfo(Size, Align);
     } else {
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data ||
@@ -201,11 +193,20 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
   // Assign the address of each symbol
   for (CommonSymbolMap::const_iterator it = CommonSymbols.begin(),
        itEnd = CommonSymbols.end(); it != itEnd; it++) {
+    uint64_t Size = it->second.first;
+    uint64_t Align = it->second.second;
     StringRef Name;
     it->first.getName(Name);
+    if (Align) {
+      // This symbol has an alignment requirement.
+      uint64_t AlignOffset = OffsetToAlignment((uint64_t)Addr, Align);
+      Addr += AlignOffset;
+      Offset += AlignOffset;
+      DEBUG(dbgs() << "Allocating common symbol " << Name << " address " <<
+                      format("0x%x\n", Addr));
+    }
     Obj.updateSymbolAddress(it->first, (uint64_t)Addr);
     SymbolTable[Name.data()] = SymbolLoc(SectionID, Offset);
-    uint64_t Size = it->second;
     Offset += Size;
     Addr += Size;
   }

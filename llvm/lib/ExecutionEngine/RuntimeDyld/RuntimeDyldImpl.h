@@ -140,8 +140,10 @@ protected:
   typedef StringMap<SymbolLoc> SymbolTableMap;
   SymbolTableMap GlobalSymbolTable;
 
-  // Keep a map of common symbols to their sizes
-  typedef std::map<SymbolRef, unsigned> CommonSymbolMap;
+  // Pair representing the size and alignment requirement for a common symbol.
+  typedef std::pair<unsigned, unsigned> CommonSymbolInfo;
+  // Keep a map of common symbols to their info pairs
+  typedef std::map<SymbolRef, CommonSymbolInfo> CommonSymbolMap;
 
   // For each symbol, keep a list of relocations based on it. Anytime
   // its address is reassigned (the JIT re-compiled the function, e.g.),
@@ -191,6 +193,13 @@ protected:
   uint8_t *getSectionAddress(unsigned SectionID) {
     return (uint8_t*)Sections[SectionID].Address;
   }
+
+  // Subclasses can override this method to get the alignment requirement of
+  // a common symbol. Returns no alignment requirement if not implemented.
+  virtual unsigned getCommonSymbolAlignment(const SymbolRef &Sym) {
+    return 0;
+  }
+
 
   void writeInt16BE(uint8_t *Addr, uint16_t Value) {
     if (sys::isLittleEndianHost())
