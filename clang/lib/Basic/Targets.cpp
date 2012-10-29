@@ -1054,13 +1054,18 @@ public:
     IntMaxType = SignedLong;
     UIntMaxType = UnsignedLong;
     Int64Type = SignedLong;
-    DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32:64";
 
     if (getTriple().getOS() == llvm::Triple::FreeBSD) {
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-    }
+      DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                          "i64:64:64-f32:32:32-f64:64:64-f128:64:64-"
+                          "v128:128:128-n32:64";
+    } else
+      DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                          "i64:64:64-f32:32:32-f64:64:64-f128:128:128-"
+                          "v128:128:128-n32:64";
+    
   }
   virtual BuiltinVaListKind getBuiltinVaListKind() const {
     return TargetInfo::CharPtrBuiltinVaList;
@@ -1094,6 +1099,8 @@ public:
     : DarwinTargetInfo<PPC64TargetInfo>(triple) {
     HasAlignMac68kSupport = true;
     SuitableAlign = 128;
+    DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32:64";
   }
 };
 } // end anonymous namespace.
