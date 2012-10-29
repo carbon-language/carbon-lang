@@ -16,6 +16,21 @@
 #define LLVM_CLANG_SA_CORE_PATHSENSITIVE_CHECKERCONTEXT
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "llvm/ADT/ImmutableMap.h"
+
+// Declare an immutable map suitable for placement into program states's GDM.
+#define REGISTER_MAP_WITH_GDM(Map, Key, Value) \
+  typedef llvm::ImmutableMap<Key, Value> Map; \
+  namespace clang { \
+  namespace ento { \
+    template <> \
+    struct ProgramStateTrait<Map> \
+      : public ProgramStatePartialTrait<Map> { \
+      static void *GDMIndex() { static int Index; return &Index; } \
+    }; \
+  } \
+  }
+
 
 namespace clang {
 namespace ento {
@@ -196,6 +211,15 @@ public:
 
   /// \brief Get the name of the called function (path-sensitive).
   StringRef getCalleeName(const FunctionDecl *FunDecl) const;
+
+  /// \brief Get the identifier of the called function (path-sensitive).
+  const IdentifierInfo *getCalleeIdentifier(const CallExpr *CE) const {
+    const FunctionDecl *FunDecl = getCalleeDecl(CE);
+    if (FunDecl)
+      return FunDecl->getIdentifier();
+    else
+      return 0;
+  }
 
   /// \brief Get the name of the called function (path-sensitive).
   StringRef getCalleeName(const CallExpr *CE) const {

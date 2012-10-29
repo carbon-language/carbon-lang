@@ -406,11 +406,13 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
 
 void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                      CheckerContext &C) const {
+  // TODO: Clean up the state.
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
          E = SymReaper.dead_end(); I != E; ++I) {
     SymbolRef Sym = *I;
     ProgramStateRef state = C.getState();
     const StreamState *SS = state->get<StreamState>(Sym);
+    // TODO: Shouldn't we have a continue here?
     if (!SS)
       return;
 
