@@ -220,8 +220,6 @@ static Instruction *getInsertPointForUses(Instruction *User, Value *Def,
 /// ConvertToSInt - Convert APF to an integer, if possible.
 static bool ConvertToSInt(const APFloat &APF, int64_t &IntVal) {
   bool isExact = false;
-  if (&APF.getSemantics() == &APFloat::PPCDoubleDouble)
-    return false;
   // See if we can convert this to an int64_t
   uint64_t UIntVal;
   if (APF.convertToInteger(&UIntVal, 64, true, APFloat::rmTowardZero,

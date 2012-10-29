@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=ppc64 | grep __floatditf
+; RUN: llc < %s -march=ppc64 | FileCheck %s
+; CHECK-NOT: __floatditf
 
 define i64 @__fixunstfdi(ppc_fp128 %a) nounwind  {
 entry:
