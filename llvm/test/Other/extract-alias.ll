@@ -1,5 +1,7 @@
 ; RUN: llvm-extract -func foo -S < %s | FileCheck %s
 ; RUN: llvm-extract -delete -func foo -S < %s | FileCheck --check-prefix=DELETE %s
+; RUN: llvm-extract -alias zeda0 -S < %s | FileCheck --check-prefix=ALIAS %s
+; RUN: llvm-extract -ralias .*bar -S < %s | FileCheck --check-prefix=ALIASRE %s
 
 ; Both aliases should be converted to declarations
 ; CHECK:      @zeda0 = external global i32
@@ -19,6 +21,13 @@
 ; DELETE-NEXT:  %c = call i32* @foo()
 ; DELETE-NEXT:  ret void
 ; DELETE-NEXT: }
+
+; ALIAS: @zed = external global i32
+; ALIAS: @zeda0 = alias i32* @zed
+
+; ALIASRE: @a0a0bar = alias void ()* @a0bar
+; ALIASRE: @a0bar = alias void ()* @bar
+; ALIASRE: declare void @bar()
 
 @zed = global i32 0
 @zeda0 = alias i32* @zed

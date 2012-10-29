@@ -59,6 +59,19 @@ ExtractRegExpFuncs("rfunc", cl::desc("Specify function(s) to extract using a "
                                      "regular expression"),
                    cl::ZeroOrMore, cl::value_desc("rfunction"));
 
+// ExtractAlias - The alias to extract from the module.
+static cl::list<std::string>
+ExtractAliases("alias", cl::desc("Specify alias to extract"),
+               cl::ZeroOrMore, cl::value_desc("alias"));
+
+
+// ExtractRegExpAliases - The aliases, matched via regular expression, to
+// extract from the module.
+static cl::list<std::string>
+ExtractRegExpAliases("ralias", cl::desc("Specify alias(es) to extract using a "
+                                        "regular expression"),
+                     cl::ZeroOrMore, cl::value_desc("ralias"));
+
 // ExtractGlobals - The globals to extract from the module.
 static cl::list<std::string>
 ExtractGlobals("glob", cl::desc("Specify global to extract"),
@@ -96,6 +109,40 @@ int main(int argc, char **argv) {
 
   // Use SetVector to avoid duplicates.
   SetVector<GlobalValue *> GVs;
+
+  // Figure out which aliases we should extract.
+  for (size_t i = 0, e = ExtractAliases.size(); i != e; ++i) {
+    GlobalAlias *GA = M->getNamedAlias(ExtractAliases[i]);
+    if (!GA) {
+      errs() << argv[0] << ": program doesn't contain alias named '"
+             << ExtractAliases[i] << "'!\n";
+      return 1;
+    }
+    GVs.insert(GA);
+  }
+
+  // Extract aliases via regular expression matching.
+  for (size_t i = 0, e = ExtractRegExpAliases.size(); i != e; ++i) {
+    std::string Error;
+    Regex RegEx(ExtractRegExpAliases[i]);
+    if (!RegEx.isValid(Error)) {
+      errs() << argv[0] << ": '" << ExtractRegExpAliases[i] << "' "
+        "invalid regex: " << Error;
+    }
+    bool match = false;
+    for (Module::alias_iterator GA = M->alias_begin(), E = M->alias_end();
+         GA != E; GA++) {
+      if (RegEx.match(GA->getName())) {
+        GVs.insert(&*GA);
+        match = true;
+      }
+    }
+    if (!match) {
+      errs() << argv[0] << ": program doesn't contain global named '"
+             << ExtractRegExpAliases[i] << "'!\n";
+      return 1;
+    }
+  }
 
   // Figure out which globals we should extract.
   for (size_t i = 0, e = ExtractGlobals.size(); i != e; ++i) {
