@@ -586,8 +586,8 @@ PathDiagnosticLocation
     const CFGBlock *BSrc = BE->getSrc();
     S = BSrc->getTerminatorCondition();
   }
-  else if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
-    S = PS->getStmt();
+  else if (const StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {
+    S = SP->getStmt();
   }
   else if (const PostImplicitCall *PIE = dyn_cast<PostImplicitCall>(&P)) {
     return PathDiagnosticLocation(PIE->getLocation(), SMng);
@@ -601,6 +601,9 @@ PathDiagnosticLocation
     return getLocationForCaller(CEE->getCalleeContext(),
                                 CEE->getLocationContext(),
                                 SMng);
+  }
+  else {
+    llvm_unreachable("Unexpected ProgramPoint");
   }
 
   return PathDiagnosticLocation(S, SMng, P.getLocationContext());

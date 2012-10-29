@@ -102,6 +102,12 @@ bool AnalyzerOptions::shouldPruneNullReturnPaths() {
                           /* Default = */ true);
 }
 
+bool AnalyzerOptions::shouldAvoidSuppressingNullArgumentPaths() {
+  return getBooleanOption(AvoidSuppressingNullArgumentPaths,
+                          "avoid-suppressing-null-argument-paths",
+                          /* Default = */ false);
+}
+
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   llvm::SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);

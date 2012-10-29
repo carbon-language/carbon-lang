@@ -268,7 +268,11 @@ namespace bugreporter {
 /// \param IsArg Whether the statement is an argument to an inlined function.
 ///              If this is the case, \p N \em must be the CallEnter node for
 ///              the function.
-void trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S, BugReport &R,
+///
+/// \return Whether or not the function was able to add visitors for this
+///         statement. Note that returning \c true does not actually imply
+///         that any visitors were added.
+bool trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S, BugReport &R,
                            bool IsArg = false);
 
 const Stmt *GetDerefExpr(const ExplodedNode *N);
