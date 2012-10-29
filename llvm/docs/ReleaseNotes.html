@@ -468,9 +468,10 @@ Release Notes</a>.</h1>
 
 <p> Loop Vectorizer - We've added a loop vectorizer and we are now able to
     vectorize small loops. The loop vectorizer is disabled by default and
-    can be enabled using the <b>-mllvm -vectorize</b> flag.
+    can be enabled using the <b>-mllvm -vectorize-loops</b> flag.
     The SIMD vector width can be specified using the flag
     <b>-mllvm -force-vector-width=4</b>.
+    The defaule value is <b>0</b> which means auto-select.
     <br/>
     We can now vectorize this code:
 

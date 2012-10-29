@@ -33,7 +33,10 @@
 using namespace llvm;
 
 static cl::opt<bool>
-RunVectorization("vectorize", cl::desc("Run vectorization passes"));
+RunLoopVectorization("vectorize-loops", cl::desc("Run the Loop vectorization passes"));
+
+static cl::opt<bool>
+RunBBVectorization("vectorize", cl::desc("Run the BB vectorization passes"));
 
 static cl::opt<bool>
 UseGVNAfterVectorization("use-gvn-after-vectorization",
@@ -52,7 +55,8 @@ PassManagerBuilder::PassManagerBuilder() {
     DisableSimplifyLibCalls = false;
     DisableUnitAtATime = false;
     DisableUnrollLoops = false;
-    Vectorize = RunVectorization;
+    BBVectorize = RunBBVectorization;
+    LoopVectorize = RunLoopVectorization;
 }
 
 PassManagerBuilder::~PassManagerBuilder() {
@@ -185,7 +189,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
   MPM.add(createLoopDeletionPass());          // Delete dead loops
 
-  if (Vectorize) {
+  if (LoopVectorize) {
     MPM.add(createLoopVectorizePass());
     MPM.add(createLICMPass());
   }
@@ -208,7 +212,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 
   addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
 
-  if (Vectorize) {
+  if (BBVectorize) {
     MPM.add(createBBVectorizePass());
     MPM.add(createInstructionCombiningPass());
     if (OptLevel > 1 && UseGVNAfterVectorization)
