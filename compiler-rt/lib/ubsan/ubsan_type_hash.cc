@@ -108,7 +108,8 @@ static __ubsan::HashValue *getTypeCacheHashTableBucket(__ubsan::HashValue V) {
 }
 
 /// A cache of recently-checked hashes. Mini hash table with "random" evictions.
-__ubsan::HashValue __ubsan_vptr_type_cache[__ubsan::VptrTypeCacheSize] = { 1 };
+__ubsan::HashValue
+__ubsan::__ubsan_vptr_type_cache[__ubsan::VptrTypeCacheSize] = { 1 };
 
 /// \brief Determine whether \p Derived has a \p Base base class subobject at
 /// offset \p Offset.
