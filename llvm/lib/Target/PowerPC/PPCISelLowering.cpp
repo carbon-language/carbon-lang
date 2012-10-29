@@ -6449,9 +6449,9 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         return std::make_pair(0U, &PPC::G8RCRegClass);
       return std::make_pair(0U, &PPC::GPRCRegClass);
     case 'f':
-      if (VT == MVT::f32)
+      if (VT == MVT::f32 || VT == MVT::i32)
         return std::make_pair(0U, &PPC::F4RCRegClass);
-      if (VT == MVT::f64)
+      if (VT == MVT::f64 || VT == MVT::i64)
         return std::make_pair(0U, &PPC::F8RCRegClass);
       break;
     case 'v':
