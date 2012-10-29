@@ -1508,3 +1508,7 @@ class Wrapper16Pat<SDNode node, Instruction ADDiuOp, RegisterClass RC>:
 def : Wrapper16Pat<tglobaladdr, AddiuRxRxImmX16, CPU16Regs>;
 def : Wrapper16Pat<tglobaltlsaddr, AddiuRxRxImmX16, CPU16Regs>;
 
+def : Mips16Pat<(i32 (extloadi8   addr16:$src)),
+                (LbuRxRyOffMemX16  addr16:$src)>;
+def : Mips16Pat<(i32 (extloadi16  addr16:$src)),
+                (LhuRxRyOffMemX16  addr16:$src)>;
