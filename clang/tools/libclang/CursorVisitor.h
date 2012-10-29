@@ -1,4 +1,4 @@
-//===- CursorVisitor.h - CursorVisitor interface --------------------------===//
+//===- CursorVisitor.h - CursorVisitor interface ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
