@@ -341,13 +341,14 @@ public:
   ///
   unsigned getPreferredTypeAlignmentShift(Type *Ty) const;
 
-  /// getIntPtrType - Return an integer type that is the same size or
-  /// greater to the pointer size based on the address space.
+  /// getIntPtrType - Return an integer type with size at least as big as that
+  /// of a pointer in the given address space.
   IntegerType *getIntPtrType(LLVMContext &C, unsigned AddressSpace) const;
 
-  /// getIntPtrType - Return an integer type that is the same size or
-  /// greater to the pointer size based on the Type.
-  IntegerType *getIntPtrType(Type *) const;
+  /// getIntPtrType - Return an integer (vector of integer) type with size at
+  /// least as big as that of a pointer of the given pointer (vector of pointer)
+  /// type.
+  Type *getIntPtrType(Type *) const;
 
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
