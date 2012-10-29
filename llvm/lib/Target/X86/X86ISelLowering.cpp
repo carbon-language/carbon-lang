@@ -6438,17 +6438,17 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
 }
 
 static bool MayFoldVectorLoad(SDValue V) {
-  while (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
+  if (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
     V = V.getOperand(0);
-
   if (V.hasOneUse() && V.getOpcode() == ISD::SCALAR_TO_VECTOR)
     V = V.getOperand(0);
   if (V.hasOneUse() && V.getOpcode() == ISD::BUILD_VECTOR &&
       V.getNumOperands() == 2 && V.getOperand(1).getOpcode() == ISD::UNDEF)
     // BUILD_VECTOR (load), undef
     V = V.getOperand(0);
-
-  return MayFoldLoad(V);
+  if (MayFoldLoad(V))
+    return true;
+  return false;
 }
 
 // FIXME: the version above should always be used. Since there's
