@@ -52,7 +52,25 @@ Event::~Event ()
 void
 Event::Dump (Stream *s) const
 {
-    s->Printf("%p Event: broadcaster = %p, type = 0x%8.8x, data = ", this, m_broadcaster, m_type);
+    if (m_broadcaster)
+    {
+        StreamString event_name;
+        if (m_broadcaster->GetEventNames (event_name, m_type, false))
+            s->Printf("%p Event: broadcaster = %p (%s), type = 0x%8.8x (%s), data = ",
+                      this,
+                      m_broadcaster,
+                      m_broadcaster->GetBroadcasterName().GetCString(),
+                      m_type,
+                      event_name.GetString().c_str());
+        else
+            s->Printf("%p Event: broadcaster = %p (%s), type = 0x%8.8x, data = ",
+                      this,
+                      m_broadcaster,
+                      m_broadcaster->GetBroadcasterName().GetCString(),
+                      m_type);
+    }
+    else
+        s->Printf("%p Event: broadcaster = NULL, type = 0x%8.8x, data = ", this, m_type);
 
     if (m_data_ap.get() == NULL)
         s->Printf ("<NULL>");
