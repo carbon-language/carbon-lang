@@ -257,6 +257,38 @@ void readOnlyLoop(Test *a) {
   }
 }
 
+void readInIterationLoop() {
+  for (Test *a in get())
+    use(a.weakProp); // no-warning
+}
+
+void readDoubleLevelAccessInLoop() {
+  for (Test *a in get()) {
+    use(a.strongProp.weakProp); // no-warning
+  }
+}
+
+void readParameterInLoop(Test *a) {
+  for (id unused in get()) {
+    use(a.weakProp); // expected-warning{{weak property 'weakProp' is accessed multiple times in this function}}
+    (void)unused;
+  }
+}
+
+void readGlobalInLoop() {
+  static __weak id a;
+  for (id unused in get()) {
+    use(a); // expected-warning{{weak variable 'a' is accessed multiple times in this function}}
+    (void)unused;
+  }
+}
+
+void doWhileLoop(Test *a) {
+  do {
+    use(a.weakProp); // no-warning
+  } while(0);
+}
+
 
 @interface Test (Methods)
 @end
@@ -351,3 +383,4 @@ void doubleLevelAccessIvar(Test *a, Test *b) {
 
   use(a.strongProp.weakProp); // no-warning
 }
+

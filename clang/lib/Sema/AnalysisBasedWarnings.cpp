@@ -904,17 +904,24 @@ public:
 };
 }
 
-static bool isInLoop(const ParentMap &PM, const Stmt *S) {
+static bool isInLoop(const ASTContext &Ctx, const ParentMap &PM,
+                     const Stmt *S) {
   assert(S);
 
   do {
     switch (S->getStmtClass()) {
-    case Stmt::DoStmtClass:
     case Stmt::ForStmtClass:
     case Stmt::WhileStmtClass:
     case Stmt::CXXForRangeStmtClass:
     case Stmt::ObjCForCollectionStmtClass:
       return true;
+    case Stmt::DoStmtClass: {
+      const Expr *Cond = cast<DoStmt>(S)->getCond();
+      llvm::APSInt Val;
+      if (!Cond->EvaluateAsInt(Val, Ctx))
+        return true;
+      return Val.getBoolValue();
+    }
     default:
       break;
     }
@@ -931,6 +938,8 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
   typedef sema::FunctionScopeInfo::WeakObjectProfileTy WeakObjectProfileTy;
   typedef sema::FunctionScopeInfo::WeakObjectUseMap WeakObjectUseMap;
   typedef sema::FunctionScopeInfo::WeakUseVector WeakUseVector;
+
+  ASTContext &Ctx = S.getASTContext();
 
   const WeakObjectUseMap &WeakMap = CurFn->getWeakObjectUses();
 
@@ -952,16 +961,32 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
       continue;
 
     // If there was only one read, followed by any number of writes, and the
-    // read is not within a loop, don't warn.
+    // read is not within a loop, don't warn. Additionally, don't warn in a
+    // loop if the base object is a local variable -- local variables are often
+    // changed in loops.
     if (UI == Uses.begin()) {
       WeakUseVector::const_iterator UI2 = UI;
       for (++UI2; UI2 != UE; ++UI2)
         if (UI2->isUnsafe())
           break;
 
-      if (UI2 == UE)
-        if (!isInLoop(PM, UI->getUseExpr()))
+      if (UI2 == UE) {
+        if (!isInLoop(Ctx, PM, UI->getUseExpr()))
           continue;
+
+        const WeakObjectProfileTy &Profile = I->first;
+        if (!Profile.isExactProfile())
+          continue;
+
+        const NamedDecl *Base = Profile.getBase();
+        if (!Base)
+          Base = Profile.getProperty();
+        assert(Base && "A profile always has a base or property.");
+
+        if (const VarDecl *BaseVar = dyn_cast<VarDecl>(Base))
+          if (BaseVar->hasLocalStorage() && !isa<ParmVarDecl>(Base))
+            continue;
+      }
     }
 
     UsesByStmt.push_back(StmtUsesPair(UI->getUseExpr(), I));

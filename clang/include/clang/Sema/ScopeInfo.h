@@ -169,6 +169,7 @@ public:
     WeakObjectProfileTy(const DeclRefExpr *RE);
     WeakObjectProfileTy(const ObjCIvarRefExpr *RE);
 
+    const NamedDecl *getBase() const { return Base.getPointer(); }
     const NamedDecl *getProperty() const { return Property; }
 
     /// Returns true if the object base specifies a known object in memory,
