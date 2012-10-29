@@ -178,6 +178,7 @@
     }
   } else if ($input == Py_None) {
     $1 =  NULL;
+    $2 = 0;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
@@ -208,6 +209,7 @@
     }
   } else if ($input == Py_None) {
     $1 =  NULL;
+    $2 = 0;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
@@ -238,6 +240,7 @@
     }
   } else if ($input == Py_None) {
     $1 =  NULL;
+    $2 = 0;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
@@ -268,6 +271,7 @@
     }
   } else if ($input == Py_None) {
     $1 =  NULL;
+    $2 = 0;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
@@ -298,6 +302,7 @@
     }
   } else if ($input == Py_None) {
     $1 =  NULL;
+    $2 = 0;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
