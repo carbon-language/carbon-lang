@@ -583,6 +583,9 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (D->hasAttr<ColdAttr>())
     F->addFnAttr(llvm::Attributes::OptimizeForSize);
 
+  if (D->hasAttr<ForceSizeOptAttr>())
+    F->addFnAttr(llvm::Attributes::ForceSizeOpt);
+
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
 

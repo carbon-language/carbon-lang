@@ -341,6 +341,11 @@ def Final : InheritableAttr {
   let SemaHandler = 0;
 }
 
+def ForceSizeOpt : InheritableAttr {
+  let Spellings = [GNU<"forcesizeopt">];
+  let Subjects = [Function];
+}
+
 def Format : InheritableAttr {
   let Spellings = [GNU<"format">];
   let Args = [StringArgument<"Type">, IntArgument<"FormatIdx">,
