@@ -51,13 +51,7 @@ static unsigned AddCounts(unsigned A, unsigned B) {
   if (A == ProfileDataLoader::Uncounted) return B;
   if (B == ProfileDataLoader::Uncounted) return A;
 
-  // Saturate to the maximum storable value.  This could change taken/nottaken
-  // ratios, but is presumably better than wrapping and thus potentially
-  // inverting ratios.
-  uint64_t tmp = (uint64_t)A + (uint64_t)B;
-  if (tmp > (uint64_t)ProfileDataLoader::MaxCount)
-    tmp = ProfileDataLoader::MaxCount;
-  return (unsigned)tmp;
+  return A + B;
 }
 
 /// ReadProfilingData - Load 'NumEntries' items of type 'T' from file 'F'
@@ -120,7 +114,6 @@ static void ReadProfilingArgBlock(const char *ToolName, FILE *F,
 }
 
 const unsigned ProfileDataLoader::Uncounted = ~0U;
-const unsigned ProfileDataLoader::MaxCount = ~0U - 1U;
 
 /// ProfileDataLoader ctor - Read the specified profiling data file, reporting
 /// a fatal error if the file is invalid or broken.

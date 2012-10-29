@@ -115,9 +115,6 @@ public:
   /// been counted yet.
   static const unsigned Uncounted;
 
-  /// The maximum value that can be stored in a profiling counter.
-  static const unsigned MaxCount;
-
   /// getNumExecutions - Return the number of times the target program was run
   /// to generate this profiling data.
   unsigned getNumExecutions() const { return CommandLines.size(); }
