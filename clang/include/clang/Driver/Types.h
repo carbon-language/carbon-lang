@@ -59,10 +59,6 @@ namespace types {
   /// isAcceptedByClang - Can clang handle this input type.
   bool isAcceptedByClang(ID Id);
 
-  /// isOnlyAcceptedByClang - Is clang the only compiler that can handle this
-  /// input type.
-  bool isOnlyAcceptedByClang(ID Id);
-
   /// isCXX - Is this a "C++" input (C++ and Obj-C++ sources and headers).
   bool isCXX(ID Id);
 
