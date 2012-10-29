@@ -1,4 +1,4 @@
-//===- IndexingContext.h - Higher level API functions ------------------------===//
+//===- IndexingContext.h - Higher level API functions -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
