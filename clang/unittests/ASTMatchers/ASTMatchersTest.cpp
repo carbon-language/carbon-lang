@@ -599,6 +599,10 @@ public:
     return false;
   }
 
+  virtual bool run(const BoundNodes *Nodes, ASTContext *Context) {
+    return run(Nodes);
+  }
+
 private:
   const std::string Id;
   const int ExpectedCount;
@@ -3238,6 +3242,11 @@ public:
   explicit VerifyRecursiveMatch(StringRef Id,
                                 const internal::Matcher<T> &InnerMatcher)
       : Id(Id), InnerMatcher(InnerMatcher) {}
+
+  virtual bool run(const BoundNodes *Nodes) {
+    return false;
+  }
+
   virtual bool run(const BoundNodes *Nodes, ASTContext *Context) {
     const T *Node = Nodes->getNodeAs<T>(Id);
     bool Found = false;
