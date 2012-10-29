@@ -256,11 +256,7 @@ public:
   }
   /// Layout pointer size, in bits
   unsigned getPointerSizeInBits(unsigned AS)    const {
-    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-    if (val == Pointers.end()) {
-      val = Pointers.find(0);
-    }
-    return 8*val->second.TypeBitWidth;
+    return getPointerSize(AS) * 8;
   }
   /// Layout pointer size, in bits, based on the type.
   /// If this function is called with a pointer type, then
