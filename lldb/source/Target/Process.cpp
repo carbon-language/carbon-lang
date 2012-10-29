@@ -973,6 +973,10 @@ Process::Process(Target &target, Listener &listener) :
     SetEventName (eBroadcastBitSTDOUT, "stdout-available");
     SetEventName (eBroadcastBitSTDERR, "stderr-available");
     
+    m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlStop  , "control-stop"  );
+    m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlPause , "control-pause" );
+    m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlResume, "control-resume");
+
     listener.StartListeningForEvents (this,
                                       eBroadcastBitStateChanged |
                                       eBroadcastBitInterrupt |
@@ -1055,6 +1059,19 @@ Process::Finalize()
     m_allocated_memory_cache.Clear();
     m_language_runtimes.clear();
     m_next_event_action_ap.reset();
+//#ifdef LLDB_CONFIGURATION_DEBUG
+//    StreamFile s(stdout, false);
+//    EventSP event_sp;
+//    while (m_private_state_listener.GetNextEvent(event_sp))
+//    {
+//        event_sp->Dump (&s);
+//        s.EOL();
+//    }
+//#endif
+    // We have to be very careful here as the m_private_state_listener might
+    // contain events that have ProcessSP values in them which can keep this
+    // process around forever. These events need to be cleared out.
+    m_private_state_listener.Clear();
     m_finalize_called = true;
 }
 
@@ -1550,7 +1567,10 @@ Process::SetPrivateState (StateType new_state)
                 log->Printf("Process::SetPrivateState (%s) stop_id = %u", StateAsCString(new_state), m_mod_id.GetStopID());
         }
         // Use our target to get a shared pointer to ourselves...
-        m_private_state_broadcaster.BroadcastEvent (eBroadcastBitStateChanged, new ProcessEventData (GetTarget().GetProcessSP(), new_state));
+        if (m_finalize_called && PrivateStateThreadIsValid() == false)
+            BroadcastEvent (eBroadcastBitStateChanged, new ProcessEventData (shared_from_this(), new_state));
+        else
+            m_private_state_broadcaster.BroadcastEvent (eBroadcastBitStateChanged, new ProcessEventData (shared_from_this(), new_state));
     }
     else
     {
@@ -3950,7 +3970,7 @@ Process::AppendSTDOUT (const char * s, size_t len)
 {
     Mutex::Locker locker (m_stdio_communication_mutex);
     m_stdout_data.append (s, len);
-    BroadcastEventIfUnique (eBroadcastBitSTDOUT, new ProcessEventData (GetTarget().GetProcessSP(), GetState()));
+    BroadcastEventIfUnique (eBroadcastBitSTDOUT, new ProcessEventData (shared_from_this(), GetState()));
 }
 
 void
@@ -3958,7 +3978,7 @@ Process::AppendSTDERR (const char * s, size_t len)
 {
     Mutex::Locker locker (m_stdio_communication_mutex);
     m_stderr_data.append (s, len);
-    BroadcastEventIfUnique (eBroadcastBitSTDERR, new ProcessEventData (GetTarget().GetProcessSP(), GetState()));
+    BroadcastEventIfUnique (eBroadcastBitSTDERR, new ProcessEventData (shared_from_this(), GetState()));
 }
 
 //------------------------------------------------------------------

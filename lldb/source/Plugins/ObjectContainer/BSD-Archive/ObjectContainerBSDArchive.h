@@ -108,7 +108,6 @@ protected:
         uint32_t        ar_size;        // size in bytes
         uint32_t        ar_file_offset; // file offset in bytes from the beginning of the file of the object data
         uint32_t        ar_file_size;   // length of the object data
-        lldb::ObjectFileSP object_file_sp;
 
         typedef std::vector<Object>         collection;
         typedef collection::iterator        iterator;
@@ -177,7 +176,7 @@ protected:
         //----------------------------------------------------------------------
         lldb_private::ArchSpec m_arch;
         lldb_private::TimeValue m_time;
-        Object::collection  m_objects;
+        Object::collection m_objects;
         lldb_private::UniqueCStringMap<uint32_t> m_object_name_to_index_map;
     };
 
