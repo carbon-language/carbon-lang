@@ -418,14 +418,15 @@ private:
 };
 
 /// \brief IsBaseType<T>::value is true if T is a "base" type in the AST
-/// node class hierarchies (i.e. if T is Decl, Stmt, QualType, or
-/// CXXCtorInitializer).
+/// node class hierarchies.
 template <typename T>
 struct IsBaseType {
   static const bool value =
       (llvm::is_same<T, Decl>::value ||
        llvm::is_same<T, Stmt>::value ||
        llvm::is_same<T, QualType>::value ||
+       llvm::is_same<T, Type>::value ||
+       llvm::is_same<T, TypeLoc>::value ||
        llvm::is_same<T, NestedNameSpecifier>::value ||
        llvm::is_same<T, NestedNameSpecifierLoc>::value ||
        llvm::is_same<T, CXXCtorInitializer>::value);
@@ -495,8 +496,10 @@ public:
                       TraversalKind Traverse,
                       BindKind Bind) {
     TOOLING_COMPILE_ASSERT((llvm::is_base_of<Decl, T>::value ||
-                            llvm::is_base_of<Stmt, T>::value),
-                           only_Decl_or_Stmt_allowed_for_recursive_matching);
+                            llvm::is_base_of<Stmt, T>::value ||
+                            llvm::is_base_of<TypeLoc, T>::value ||
+                            llvm::is_base_of<QualType, T>::value),
+                           unsupported_type_for_recursive_matching);
     return matchesChildOf(ast_type_traits::DynTypedNode::create(Node),
                           Matcher, Builder, Traverse, Bind);
   }
@@ -507,8 +510,10 @@ public:
                            BoundNodesTreeBuilder *Builder,
                            BindKind Bind) {
     TOOLING_COMPILE_ASSERT((llvm::is_base_of<Decl, T>::value ||
-                            llvm::is_base_of<Stmt, T>::value),
-                           only_Decl_or_Stmt_allowed_for_recursive_matching);
+                            llvm::is_base_of<Stmt, T>::value ||
+                            llvm::is_base_of<TypeLoc, T>::value ||
+                            llvm::is_base_of<QualType, T>::value),
+                           unsupported_type_for_recursive_matching);
     return matchesDescendantOf(ast_type_traits::DynTypedNode::create(Node),
                                Matcher, Builder, Bind);
   }

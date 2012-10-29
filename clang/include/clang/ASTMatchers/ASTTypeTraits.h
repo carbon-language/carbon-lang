@@ -74,10 +74,10 @@ private:
   enum NodeTypeTag {
     NT_Decl,
     NT_Stmt,
-    NT_Type,
     NT_NestedNameSpecifier,
     NT_NestedNameSpecifierLoc,
     NT_QualType,
+    NT_Type,
     NT_TypeLoc
   } Tag;
 
