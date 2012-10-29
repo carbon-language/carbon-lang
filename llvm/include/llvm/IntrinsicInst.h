@@ -268,6 +268,49 @@ namespace llvm {
     }
   };
 
+  /// VAStartInst - This represents the llvm.va_start intrinsic.
+  ///
+  class VAStartInst : public IntrinsicInst {
+  public:
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::vastart;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+
+    Value *getArgList() const { return const_cast<Value*>(getArgOperand(0)); }
+  };
+
+  /// VAEndInst - This represents the llvm.va_end intrinsic.
+  ///
+  class VAEndInst : public IntrinsicInst {
+  public:
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::vaend;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+
+    Value *getArgList() const { return const_cast<Value*>(getArgOperand(0)); }
+  };
+
+  /// VACopyInst - This represents the llvm.va_copy intrinsic.
+  ///
+  class VACopyInst : public IntrinsicInst {
+  public:
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::vacopy;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+
+    Value *getDest() const { return const_cast<Value*>(getArgOperand(0)); }
+    Value *getSrc() const { return const_cast<Value*>(getArgOperand(1)); }
+  };
+
 }
 
 #endif

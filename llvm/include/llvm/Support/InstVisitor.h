@@ -209,6 +209,9 @@ public:
   RetTy visitMemMoveInst(MemMoveInst &I)          { DELEGATE(MemTransferInst); }
   RetTy visitMemTransferInst(MemTransferInst &I)  { DELEGATE(MemIntrinsic); }
   RetTy visitMemIntrinsic(MemIntrinsic &I)        { DELEGATE(IntrinsicInst); }
+  RetTy visitVAStartInst(VAStartInst &I)          { DELEGATE(IntrinsicInst); }
+  RetTy visitVAEndInst(VAEndInst &I)              { DELEGATE(IntrinsicInst); }
+  RetTy visitVACopyInst(VACopyInst &I)            { DELEGATE(IntrinsicInst); }
   RetTy visitIntrinsicInst(IntrinsicInst &I)      { DELEGATE(CallInst); }
 
   // Call and Invoke are slightly different as they delegate first through
@@ -262,6 +265,9 @@ private:
       case Intrinsic::memcpy:      DELEGATE(MemCpyInst);
       case Intrinsic::memmove:     DELEGATE(MemMoveInst);
       case Intrinsic::memset:      DELEGATE(MemSetInst);
+      case Intrinsic::vastart:     DELEGATE(VAStartInst);
+      case Intrinsic::vaend:       DELEGATE(VAEndInst);
+      case Intrinsic::vacopy:      DELEGATE(VACopyInst);
       case Intrinsic::not_intrinsic: break;
       }
     }
