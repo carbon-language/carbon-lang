@@ -6598,8 +6598,8 @@ X86TargetLowering::lowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
 
   // Find the expansion ratio, e.g. expanding from i8 to i32 has a ratio of 4.
   unsigned Shift = 1; // Start from 2, i.e. 1 << 1.
-  while ((1 << Shift) < NumElems) {
-    if (SVOp->getMaskElt(1 << Shift) == 1)
+  while ((1U << Shift) < NumElems) {
+    if (SVOp->getMaskElt(1U << Shift) == 1)
       break;
     Shift += 1;
     // The maximal ratio is 8, i.e. from i8 to i64.
