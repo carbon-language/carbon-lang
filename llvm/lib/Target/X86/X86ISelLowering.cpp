@@ -4635,7 +4635,6 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
     MVT ShufVT = V.getValueType().getSimpleVT();
     unsigned NumElems = ShufVT.getVectorNumElements();
     SmallVector<int, 16> ShuffleMask;
-    SDValue ImmN;
     bool IsUnary;
 
     if (!getTargetShuffleMask(N, ShufVT, ShuffleMask, IsUnary))
