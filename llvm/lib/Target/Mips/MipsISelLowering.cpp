@@ -212,8 +212,14 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f32,   Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f64,   Custom);
-  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
-  setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
+  if (Subtarget->inMips16Mode()) {
+    setOperationAction(ISD::MEMBARRIER,         MVT::Other, Expand);
+    setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Expand);
+  }
+  else {
+    setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
+    setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
+  }
   if (!Subtarget->inMips16Mode()) {
     setOperationAction(ISD::LOAD,               MVT::i32, Custom);
     setOperationAction(ISD::STORE,              MVT::i32, Custom);
@@ -319,6 +325,21 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD,       MVT::i64,    Expand);
   setOperationAction(ISD::ATOMIC_STORE,      MVT::i32,    Expand);
   setOperationAction(ISD::ATOMIC_STORE,      MVT::i64,    Expand);
+
+  if (Subtarget->inMips16Mode()) {
+    setOperationAction(ISD::ATOMIC_CMP_SWAP,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_SWAP,           MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_ADD,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_AND,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_OR,        MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_NAND,      MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_MIN,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_MAX,       MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_UMIN,      MVT::i32,    Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_UMAX,      MVT::i32,    Expand);
+  }
 
   setInsertFencesForAtomic(true);
 
