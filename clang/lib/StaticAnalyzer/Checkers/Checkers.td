@@ -303,6 +303,10 @@ def StreamChecker : Checker<"Stream">,
   HelpText<"Check stream handling functions">,
   DescFile<"StreamChecker.cpp">;
 
+def SimpleStreamChecker : Checker<"SimpleStream">,
+  HelpText<"Check for misuses of stream APIs">,
+  DescFile<"SimpleStreamChecker.cpp">;
+
 } // end "alpha.unix"
 
 let ParentPackage = CString in {

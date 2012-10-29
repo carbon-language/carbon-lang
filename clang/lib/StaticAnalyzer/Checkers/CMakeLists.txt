@@ -31,6 +31,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   DivZeroChecker.cpp
   DynamicTypePropagation.cpp
   ExprInspectionChecker.cpp
+  SimpleStreamChecker.cpp
   FixedAddressChecker.cpp
   GenericTaintChecker.cpp
   IdempotentOperationChecker.cpp
