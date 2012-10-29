@@ -58,10 +58,19 @@ namespace llvm {
   const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, true };
   const fltSemantics APFloat::Bogus = { 0, 0, 0, true };
 
-  // The PowerPC format consists of two doubles.  It does not map cleanly
-  // onto the usual format above.  For now only storage of constants of
-  // this type is supported, no arithmetic.
-  const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022, 106, false };
+  /* The PowerPC format consists of two doubles.  It does not map cleanly
+     onto the usual format above.  It is approximated using twice the
+     mantissa bits.  Note that for exponents near the double minimum,
+     we no longer can represent the full 106 mantissa bits, so those
+     will be treated as denormal numbers.
+
+     FIXME: While this approximation is equivalent to what GCC uses for
+     compile-time arithmetic on PPC double-double numbers, it is not able
+     to represent all possible values held by a PPC double-double number,
+     for example: (long double) 1.0 + (long double) 0x1p-106
+     Should this be replaced by a full emulation of PPC double-double?  */
+  const fltSemantics APFloat::PPCDoubleDouble =
+    { 1023, -1022 + 53, 53 + 53, true };
 
   /* A tight upper bound on number of parts required to hold the value
      pow(5, power) is
@@ -2790,42 +2799,46 @@ APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
   assert(semantics == (const llvm::fltSemantics*)&PPCDoubleDouble);
   assert(partCount()==2);
 
-  uint64_t myexponent, mysignificand, myexponent2, mysignificand2;
+  uint64_t words[2];
+  opStatus fs;
+  bool losesInfo;
 
-  if (category==fcNormal) {
-    myexponent = exponent + 1023; //bias
-    myexponent2 = exponent2 + 1023;
-    mysignificand = significandParts()[0];
-    mysignificand2 = significandParts()[1];
-    if (myexponent==1 && !(mysignificand & 0x10000000000000LL))
-      myexponent = 0;   // denormal
-    if (myexponent2==1 && !(mysignificand2 & 0x10000000000000LL))
-      myexponent2 = 0;   // denormal
-  } else if (category==fcZero) {
-    myexponent = 0;
-    mysignificand = 0;
-    myexponent2 = 0;
-    mysignificand2 = 0;
-  } else if (category==fcInfinity) {
-    myexponent = 0x7ff;
-    myexponent2 = 0;
-    mysignificand = 0;
-    mysignificand2 = 0;
+  // Convert number to double.  To avoid spurious underflows, we re-
+  // normalize against the "double" minExponent first, and only *then*
+  // truncate the mantissa.  The result of that second conversion
+  // may be inexact, but should never underflow.
+  APFloat extended(*this);
+  fltSemantics extendedSemantics = *semantics;
+  extendedSemantics.minExponent = IEEEdouble.minExponent;
+  fs = extended.convert(extendedSemantics, rmNearestTiesToEven, &losesInfo);
+  assert(fs == opOK && !losesInfo);
+  (void)fs;
+
+  APFloat u(extended);
+  fs = u.convert(IEEEdouble, rmNearestTiesToEven, &losesInfo);
+  assert(fs == opOK || fs == opInexact);
+  (void)fs;
+  words[0] = *u.convertDoubleAPFloatToAPInt().getRawData();
+
+  // If conversion was exact or resulted in a special case, we're done;
+  // just set the second double to zero.  Otherwise, re-convert back to
+  // the extended format and compute the difference.  This now should
+  // convert exactly to double.
+  if (u.category == fcNormal && losesInfo) {
+    fs = u.convert(extendedSemantics, rmNearestTiesToEven, &losesInfo);
+    assert(fs == opOK && !losesInfo);
+    (void)fs;
+
+    APFloat v(extended);
+    v.subtract(u, rmNearestTiesToEven);
+    fs = v.convert(IEEEdouble, rmNearestTiesToEven, &losesInfo);
+    assert(fs == opOK && !losesInfo);
+    (void)fs;
+    words[1] = *v.convertDoubleAPFloatToAPInt().getRawData();
   } else {
-    assert(category == fcNaN && "Unknown category");
-    myexponent = 0x7ff;
-    mysignificand = significandParts()[0];
-    myexponent2 = exponent2;
-    mysignificand2 = significandParts()[1];
+    words[1] = 0;
   }
 
-  uint64_t words[2];
-  words[0] =  ((uint64_t)(sign & 1) << 63) |
-              ((myexponent & 0x7ff) <<  52) |
-              (mysignificand & 0xfffffffffffffLL);
-  words[1] =  ((uint64_t)(sign2 & 1) << 63) |
-              ((myexponent2 & 0x7ff) <<  52) |
-              (mysignificand2 & 0xfffffffffffffLL);
   return APInt(128, words);
 }
 
@@ -3045,47 +3058,23 @@ APFloat::initFromPPCDoubleDoubleAPInt(const APInt &api)
   assert(api.getBitWidth()==128);
   uint64_t i1 = api.getRawData()[0];
   uint64_t i2 = api.getRawData()[1];
-  uint64_t myexponent = (i1 >> 52) & 0x7ff;
-  uint64_t mysignificand = i1 & 0xfffffffffffffLL;
-  uint64_t myexponent2 = (i2 >> 52) & 0x7ff;
-  uint64_t mysignificand2 = i2 & 0xfffffffffffffLL;
+  opStatus fs;
+  bool losesInfo;
 
-  initialize(&APFloat::PPCDoubleDouble);
-  assert(partCount()==2);
+  // Get the first double and convert to our format.
+  initFromDoubleAPInt(APInt(64, i1));
+  fs = convert(PPCDoubleDouble, rmNearestTiesToEven, &losesInfo);
+  assert(fs == opOK && !losesInfo);
+  (void)fs;
 
-  sign = static_cast<unsigned int>(i1>>63);
-  sign2 = static_cast<unsigned int>(i2>>63);
-  if (myexponent==0 && mysignificand==0) {
-    // exponent, significand meaningless
-    // exponent2 and significand2 are required to be 0; we don't check
-    category = fcZero;
-  } else if (myexponent==0x7ff && mysignificand==0) {
-    // exponent, significand meaningless
-    // exponent2 and significand2 are required to be 0; we don't check
-    category = fcInfinity;
-  } else if (myexponent==0x7ff && mysignificand!=0) {
-    // exponent meaningless.  So is the whole second word, but keep it
-    // for determinism.
-    category = fcNaN;
-    exponent2 = myexponent2;
-    significandParts()[0] = mysignificand;
-    significandParts()[1] = mysignificand2;
-  } else {
-    category = fcNormal;
-    // Note there is no category2; the second word is treated as if it is
-    // fcNormal, although it might be something else considered by itself.
-    exponent = myexponent - 1023;
-    exponent2 = myexponent2 - 1023;
-    significandParts()[0] = mysignificand;
-    significandParts()[1] = mysignificand2;
-    if (myexponent==0)          // denormal
-      exponent = -1022;
-    else
-      significandParts()[0] |= 0x10000000000000LL;  // integer bit
-    if (myexponent2==0)
-      exponent2 = -1022;
-    else
-      significandParts()[1] |= 0x10000000000000LL;  // integer bit
+  // Unless we have a special case, add in second double.
+  if (category == fcNormal) {
+    APFloat v(APInt(64, i2));
+    fs = v.convert(PPCDoubleDouble, rmNearestTiesToEven, &losesInfo);
+    assert(fs == opOK && !losesInfo);
+    (void)fs;
+
+    add(v, rmNearestTiesToEven);
   }
 }
 

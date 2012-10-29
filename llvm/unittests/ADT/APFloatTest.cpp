@@ -737,4 +737,40 @@ TEST(APFloatTest, convert) {
   EXPECT_EQ(4294967295.0, test.convertToDouble());
   EXPECT_FALSE(losesInfo);
 }
+
+TEST(APFloatTest, PPCDoubleDouble) {
+  APFloat test(APFloat::PPCDoubleDouble, "1.0");
+  EXPECT_EQ(0x3ff0000000000000ull, test.bitcastToAPInt().getRawData()[0]);
+  EXPECT_EQ(0x0000000000000000ull, test.bitcastToAPInt().getRawData()[1]);
+
+  test.divide(APFloat(APFloat::PPCDoubleDouble, "3.0"), APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(0x3fd5555555555555ull, test.bitcastToAPInt().getRawData()[0]);
+  EXPECT_EQ(0x3c75555555555556ull, test.bitcastToAPInt().getRawData()[1]);
+
+  // LDBL_MAX
+  test = APFloat(APFloat::PPCDoubleDouble, "1.79769313486231580793728971405301e+308");
+  EXPECT_EQ(0x7fefffffffffffffull, test.bitcastToAPInt().getRawData()[0]);
+  EXPECT_EQ(0x7c8ffffffffffffeull, test.bitcastToAPInt().getRawData()[1]);
+
+  // LDBL_MIN
+  test = APFloat(APFloat::PPCDoubleDouble, "2.00416836000897277799610805135016e-292");
+  EXPECT_EQ(0x0360000000000000ull, test.bitcastToAPInt().getRawData()[0]);
+  EXPECT_EQ(0x0000000000000000ull, test.bitcastToAPInt().getRawData()[1]);
+
+  test = APFloat(APFloat::PPCDoubleDouble, "1.0");
+  test.add(APFloat(APFloat::PPCDoubleDouble, "0x1p-105"), APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(0x3ff0000000000000ull, test.bitcastToAPInt().getRawData()[0]);
+  EXPECT_EQ(0x3960000000000000ull, test.bitcastToAPInt().getRawData()[1]);
+
+  test = APFloat(APFloat::PPCDoubleDouble, "1.0");
+  test.add(APFloat(APFloat::PPCDoubleDouble, "0x1p-106"), APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(0x3ff0000000000000ull, test.bitcastToAPInt().getRawData()[0]);
+#if 0 // XFAIL
+  // This is what we would expect with a true double-double implementation
+  EXPECT_EQ(0x3950000000000000ull, test.bitcastToAPInt().getRawData()[1]);
+#else
+  // This is what we get with our 106-bit mantissa approximation
+  EXPECT_EQ(0x0000000000000000ull, test.bitcastToAPInt().getRawData()[1]);
+#endif
+}
 }
