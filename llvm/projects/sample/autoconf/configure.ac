@@ -304,8 +304,8 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   arm*-*)                 llvm_cv_target_arch="ARM" ;;
-  mips-*)                 llvm_cv_target_arch="Mips" ;;
-  mipsel-*)               llvm_cv_target_arch="Mips" ;;
+  mips-* | mips64-*)      llvm_cv_target_arch="Mips" ;;
+  mipsel-* | mips64el-*)  llvm_cv_target_arch="Mips" ;;
   xcore-*)                llvm_cv_target_arch="XCore" ;;
   msp430-*)               llvm_cv_target_arch="MSP430" ;;
   hexagon-*)              llvm_cv_target_arch="Hexagon" ;;
