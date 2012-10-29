@@ -620,6 +620,7 @@ protected:
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const;
+  virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const;
 
   friend class DynRefImpl<target_endianness, is64Bits>;
   virtual error_code getDynNext(DataRefImpl DynData, DynRef &Result) const;
@@ -1157,6 +1158,16 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     Sec.p = reinterpret_cast<intptr_t>(sec);
     Res = section_iterator(SectionRef(Sec, this));
   }
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolValue(DataRefImpl Symb,
+                                         uint64_t &Val) const {
+  validateSymbol(Symb);
+  const Elf_Sym *symb = getSymbol(Symb);
+  Val = symb->st_value;
   return object_error::success;
 }
 

@@ -363,6 +363,10 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
   return object_error::success;
 }
 
+error_code MachOObjectFile::getSymbolValue(DataRefImpl Symb,
+                                           uint64_t &Val) const {
+  report_fatal_error("getSymbolValue unimplemented in MachOObjectFile");
+}
 
 symbol_iterator MachOObjectFile::begin_symbols() const {
   // DRI.d.a = segment number; DRI.d.b = symbol index.

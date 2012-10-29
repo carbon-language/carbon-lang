@@ -61,6 +61,7 @@ protected:
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const;
+  virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
