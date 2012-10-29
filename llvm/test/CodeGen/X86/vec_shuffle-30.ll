@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s
 
 ; CHECK: test
 ; Test case when creating pshufhw, we incorrectly set the higher order bit
