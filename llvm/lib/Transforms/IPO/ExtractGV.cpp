@@ -51,32 +51,44 @@ namespace {
       // Visit the GlobalVariables.
       for (Module::global_iterator I = M.global_begin(), E = M.global_end();
            I != E; ++I) {
-        if (deleteStuff == (bool)Named.count(I) && !I->isDeclaration()) {
-          I->setInitializer(0);
-        } else {
+        bool Delete =
+          deleteStuff == (bool)Named.count(I) && !I->isDeclaration();
+        if (!Delete) {
           if (I->hasAvailableExternallyLinkage())
             continue;
           if (I->getName() == "llvm.global_ctors")
             continue;
         }
 
-        if (I->hasLocalLinkage())
+        bool Local = I->hasLocalLinkage();
+        if (Local)
           I->setVisibility(GlobalValue::HiddenVisibility);
-        I->setLinkage(GlobalValue::ExternalLinkage);
+
+        if (Local || Delete)
+          I->setLinkage(GlobalValue::ExternalLinkage);
+
+        if (Delete)
+          I->setInitializer(0);
       }
 
       // Visit the Functions.
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-        if (deleteStuff == (bool)Named.count(I) && !I->isDeclaration()) {
-          I->deleteBody();
-        } else {
+        bool Delete =
+          deleteStuff == (bool)Named.count(I) && !I->isDeclaration();
+        if (!Delete) {
           if (I->hasAvailableExternallyLinkage())
             continue;
         }
 
-        if (I->hasLocalLinkage())
+        bool Local = I->hasLocalLinkage();
+        if (Local)
           I->setVisibility(GlobalValue::HiddenVisibility);
-        I->setLinkage(GlobalValue::ExternalLinkage);
+
+        if (Local || Delete)
+          I->setLinkage(GlobalValue::ExternalLinkage);
+
+        if (Delete)
+          I->deleteBody();
       }
 
       // Visit the Aliases.
@@ -85,9 +97,10 @@ namespace {
         Module::alias_iterator CurI = I;
         ++I;
 
-        if (CurI->hasLocalLinkage())
+        if (CurI->hasLocalLinkage()) {
           CurI->setVisibility(GlobalValue::HiddenVisibility);
-        CurI->setLinkage(GlobalValue::ExternalLinkage);
+          CurI->setLinkage(GlobalValue::ExternalLinkage);
+        }
 
         if (deleteStuff == (bool)Named.count(CurI)) {
           Type *Ty =  CurI->getType()->getElementType();

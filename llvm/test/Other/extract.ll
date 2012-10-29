@@ -7,18 +7,19 @@
 ; llvm-extract uses lazy bitcode loading, so make sure it correctly reads
 ; from bitcode files in addition to assembly files.
 
-; CHECK: define void @foo() {
+; CHECK: define hidden void @foo() {
 ; CHECK:   ret void
 ; CHECK: }
 
-; The linkonce_odr linkage for foo() should be changed to external linkage.
-; DELETE: declare void @foo()
+; The private linkage for foo() should be changed to external linkage and
+; hidden visibility added.
+; DELETE: declare hidden void @foo()
 ; DELETE: define void @bar() {
 ; DELETE:   call void @foo()
 ; DELETE:   ret void
 ; DELETE: }
 
-define linkonce_odr void @foo() {
+define private void @foo() {
   ret void
 }
 define void @bar() {
