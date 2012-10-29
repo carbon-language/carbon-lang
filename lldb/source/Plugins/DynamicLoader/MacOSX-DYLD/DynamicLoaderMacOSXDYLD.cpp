@@ -1596,6 +1596,8 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                 // For now, just turn this off.
                 
                 // bool orig_is_resolver = (current_symbol->GetFlags() & MACH_O_N_SYMBOL_RESOLVER) == MACH_O_N_SYMBOL_RESOLVER;
+                // FIXME: Actually that isn't true, the N_SYMBOL_RESOLVER bit is only valid in .o files.  You can't use
+                // the symbol flags to tell whether something is a symbol resolver in a linked image.
                 bool orig_is_resolver = false;
                 
                 if (num_original_symbols > 0)
