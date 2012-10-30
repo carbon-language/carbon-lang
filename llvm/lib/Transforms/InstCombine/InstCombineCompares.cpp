@@ -2897,10 +2897,6 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         if (!RHSF)
           break;
 
-        // We can't convert a PPC double double.
-        if (RHSF->getType()->isPPC_FP128Ty())
-          break;
-
         const fltSemantics *Sem;
         // FIXME: This shouldn't be here.
         if (LHSExt->getSrcTy()->isHalfTy())
@@ -2913,6 +2909,8 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
           Sem = &APFloat::IEEEquad;
         else if (LHSExt->getSrcTy()->isX86_FP80Ty())
           Sem = &APFloat::x87DoubleExtended;
+        else if (LHSExt->getSrcTy()->isPPC_FP128Ty())
+          Sem = &APFloat::PPCDoubleDouble;
         else
           break;
 

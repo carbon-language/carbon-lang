@@ -514,10 +514,6 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
     return UndefValue::get(DestTy);
   }
 
-  // No compile-time operations on this type yet.
-  if (V->getType()->isPPC_FP128Ty() || DestTy->isPPC_FP128Ty())
-    return 0;
-
   if (V->isNullValue() && !DestTy->isX86_MMXTy())
     return Constant::getNullValue(DestTy);
 
@@ -576,6 +572,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
                   DestTy->isDoubleTy() ? APFloat::IEEEdouble :
                   DestTy->isX86_FP80Ty() ? APFloat::x87DoubleExtended :
                   DestTy->isFP128Ty() ? APFloat::IEEEquad :
+                  DestTy->isPPC_FP128Ty() ? APFloat::PPCDoubleDouble :
                   APFloat::Bogus,
                   APFloat::rmNearestTiesToEven, &ignored);
       return ConstantFP::get(V->getContext(), Val);
@@ -646,7 +643,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   case Instruction::SIToFP:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       APInt api = CI->getValue();
-      APFloat apf(APInt::getNullValue(DestTy->getPrimitiveSizeInBits()), true);
+      APFloat apf(APInt::getNullValue(DestTy->getPrimitiveSizeInBits()),
+                  !DestTy->isPPC_FP128Ty() /* isEEEE */);
       (void)apf.convertFromAPInt(api, 
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);
@@ -867,10 +865,6 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
 
 Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                                               Constant *C1, Constant *C2) {
-  // No compile-time operations on this type yet.
-  if (C1->getType()->isPPC_FP128Ty())
-    return 0;
-
   // Handle UndefValue up front.
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
     switch (Opcode) {
@@ -1273,10 +1267,6 @@ static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
   assert(V1->getType() == V2->getType() &&
          "Cannot compare values of different types!");
 
-  // No compile-time operations on this type yet.
-  if (V1->getType()->isPPC_FP128Ty())
-    return FCmpInst::BAD_FCMP_PREDICATE;
-
   // Handle degenerate case quickly
   if (V1 == V2) return FCmpInst::FCMP_OEQ;
 
@@ -1601,10 +1591,6 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     // it to true or false.
     return ConstantInt::get(ResultTy, CmpInst::isTrueWhenEqual(pred));
   }
-
-  // No compile-time operations on this type yet.
-  if (C1->getType()->isPPC_FP128Ty())
-    return 0;
 
   // icmp eq/ne(null,GV) -> false/true
   if (C1->isNullValue()) {
