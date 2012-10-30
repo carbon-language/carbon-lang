@@ -424,7 +424,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   DISubprogram InlinedSP = getDISubprogram(DS);
   DIE *OriginDIE = TheCU->getDIE(InlinedSP);
   if (!OriginDIE) {
-    DEBUG(dbgs() << "Unable to find original DIE for inlined subprogram.");
+    DEBUG(dbgs() << "Unable to find original DIE for an inlined subprogram.");
     return NULL;
   }
 
@@ -433,7 +433,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
   if (StartLabel == 0 || EndLabel == 0) {
-    llvm_unreachable("Unexpected Start and End labels for a inlined scope!");
+    llvm_unreachable("Unexpected Start and End labels for an inlined scope!");
   }
   assert(StartLabel->isDefined() &&
          "Invalid starting label for an inlined scope!");
