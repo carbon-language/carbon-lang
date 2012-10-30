@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IRBuilder.h"
@@ -39,7 +40,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/NoFolder.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DataLayout.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
 #include <set>
@@ -82,6 +83,7 @@ namespace {
 
 class SimplifyCFGOpt {
   const DataLayout *const TD;
+  const TargetTransformInfo *const TTI;
 
   Value *isValueEqualityComparison(TerminatorInst *TI);
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
@@ -101,7 +103,8 @@ class SimplifyCFGOpt {
   bool SimplifyCondBranch(BranchInst *BI, IRBuilder <>&Builder);
 
 public:
-  explicit SimplifyCFGOpt(const DataLayout *td) : TD(td) {}
+  SimplifyCFGOpt(const DataLayout *td, const TargetTransformInfo *tti)
+      : TD(td), TTI(tti) {}
   bool run(BasicBlock *BB);
 };
 }
@@ -3459,8 +3462,13 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
 /// replace the switch with lookup tables.
 static bool SwitchToLookupTable(SwitchInst *SI,
                                 IRBuilder<> &Builder,
-                                const DataLayout* TD) {
+                                const DataLayout* TD,
+                                const TargetTransformInfo *TTI) {
   assert(SI->getNumCases() > 1 && "Degenerate switch?");
+
+  if (TTI && !TTI->getScalarTargetTransformInfo()->shouldBuildLookupTables())
+    return false;
+
   // FIXME: Handle unreachable cases.
 
   // FIXME: If the switch is too sparse for a lookup table, perhaps we could
@@ -3619,7 +3627,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   if (ForwardSwitchConditionToPHI(SI))
     return SimplifyCFG(BB) | true;
 
-  if (SwitchToLookupTable(SI, Builder, TD))
+  if (SwitchToLookupTable(SI, Builder, TD, TTI))
     return SimplifyCFG(BB) | true;
 
   return false;
@@ -3916,6 +3924,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
 /// eliminates unreachable basic blocks, and does other "peephole" optimization
 /// of the CFG.  It returns true if a modification was made.
 ///
-bool llvm::SimplifyCFG(BasicBlock *BB, const DataLayout *TD) {
-  return SimplifyCFGOpt(TD).run(BB);
+bool llvm::SimplifyCFG(BasicBlock *BB, const DataLayout *TD,
+                       const TargetTransformInfo *TTI) {
+  return SimplifyCFGOpt(TD, TTI).run(BB);
 }

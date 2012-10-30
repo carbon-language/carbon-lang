@@ -49,6 +49,12 @@ unsigned ScalarTargetTransformImpl::getJumpBufSize() const {
   return TLI->getJumpBufSize();
 }
 
+bool ScalarTargetTransformImpl::shouldBuildLookupTables() const {
+  return TLI->supportJumpTables() &&
+      (TLI->isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
+       TLI->isOperationLegalOrCustom(ISD::BRIND, MVT::Other));
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Calls used by the vectorizers.
@@ -313,4 +319,3 @@ VectorTargetTransformImpl::getNumberOfParts(Type *Tp) const {
     getTypeLegalizationCost(Tp->getContext(), TLI->getValueType(Tp));
   return LT.first;
 }
-

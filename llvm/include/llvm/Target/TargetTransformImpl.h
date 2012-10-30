@@ -46,6 +46,8 @@ public:
   virtual unsigned getJumpBufAlignment() const;
 
   virtual unsigned getJumpBufSize() const;
+
+  virtual bool shouldBuildLookupTables() const;
 };
 
 class VectorTargetTransformImpl : public VectorTargetTransformInfo {

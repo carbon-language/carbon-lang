@@ -117,6 +117,11 @@ public:
   virtual unsigned getJumpBufSize() const {
     return 0;
   }
+  /// shouldBuildLookupTables - Return true if switches should be turned into
+  /// lookup tables for the target.
+  virtual bool shouldBuildLookupTables() const {
+    return true;
+  }
 };
 
 /// VectorTargetTransformInfo - This interface is used by the vectorizers
