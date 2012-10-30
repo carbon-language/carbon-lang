@@ -205,3 +205,18 @@ define i64 @test6(<4 x i64> %x, <4 x i64> %y, i64 %n) {
   %res = load i64* %addr, align 4
   ret i64 %res
 }
+
+define i32 @PR14212() {
+; CHECK: @PR14212
+; This caused a crash when "splitting" the load of the i32 in order to promote
+; the store of <3 x i8> properly. Heavily reduced from an OpenCL test case.
+entry:
+  %retval = alloca <3 x i8>, align 4
+; CHECK-NOT: alloca
+
+  store <3 x i8> undef, <3 x i8>* %retval, align 4
+  %cast = bitcast <3 x i8>* %retval to i32*
+  %load = load i32* %cast, align 4
+  ret i32 %load
+; CHECK: ret i32
+}

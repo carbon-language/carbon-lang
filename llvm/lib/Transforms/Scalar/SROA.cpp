@@ -2490,9 +2490,6 @@ private:
     assert(OldOp == OldPtr);
     IRBuilder<> IRB(&LI);
 
-    if (VecTy)
-      return rewriteVectorizedLoadInst(IRB, LI, OldOp);
-
     uint64_t Size = EndOffset - BeginOffset;
     if (Size < TD.getTypeStoreSize(LI.getType())) {
       assert(!LI.isVolatile());
@@ -2502,7 +2499,7 @@ private:
              TD.getTypeStoreSizeInBits(LI.getType()) &&
              "Non-byte-multiple bit width");
       assert(LI.getType()->getIntegerBitWidth() ==
-             TD.getTypeSizeInBits(OldAI.getAllocatedType()) &&
+             TD.getTypeAllocSizeInBits(OldAI.getAllocatedType()) &&
              "Only alloca-wide loads can be split and recomposed");
       IntegerType *NarrowTy = Type::getIntNTy(LI.getContext(), Size * 8);
       bool IsConvertable = (BeginOffset - NewAllocaBeginOffset == 0) &&
@@ -2536,6 +2533,8 @@ private:
       return IsConvertable;
     }
 
+    if (VecTy)
+      return rewriteVectorizedLoadInst(IRB, LI, OldOp);
     if (IntTy && LI.getType()->isIntegerTy())
       return rewriteIntegerLoad(IRB, LI);
 
