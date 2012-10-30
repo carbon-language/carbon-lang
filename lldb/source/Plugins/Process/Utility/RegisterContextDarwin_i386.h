@@ -230,40 +230,22 @@ protected:
 
     // Subclasses override these to do the actual reading.
     virtual int
-    DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
-    {
-        return -1;
-    }
+    DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr) = 0;
     
-    int
-    DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
-    {
-        return -1;
-    }
+    virtual int
+    DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu) = 0;
 
-    int
-    DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
-    {
-        return -1;
-    }
+    virtual int
+    DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc) = 0;
 
-    int
-    DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
-    {
-        return -1;
-    }
+    virtual int
+    DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr) = 0;
     
-    int
-    DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
-    {
-        return -1;
-    }
+    virtual int
+    DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu) = 0;
     
-    int
-    DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
-    {
-        return -1;
-    }
+    virtual int
+    DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc) = 0;
 
     int
     ReadRegisterSet (uint32_t set, bool force);
