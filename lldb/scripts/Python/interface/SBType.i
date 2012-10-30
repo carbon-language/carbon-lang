@@ -161,6 +161,9 @@ public:
 
     bool
     IsReferenceType();
+    
+    bool
+    IsFunctionType ();
 
     lldb::SBType
     GetPointerType();
@@ -216,6 +219,12 @@ public:
     lldb::TemplateArgumentKind
     GetTemplateArgumentKind (uint32_t idx);
     
+    lldb::SBType
+    GetFunctionReturnType ();
+    
+    lldb::SBTypeList
+    GetFunctionArgumentTypes ();
+
     bool
     IsTypeComplete ();
 
@@ -240,7 +249,10 @@ public:
         
         __swig_getmethods__["is_reference"] = IsReferenceType
         if _newclass: is_reference = property(IsReferenceType, None, doc='''A read only property that returns a boolean value that indicates if this type is a reference type.''')
-
+        
+        __swig_getmethods__["is_function"] = IsFunctionType
+        if _newclass: is_reference = property(IsReferenceType, None, doc='''A read only property that returns a boolean value that indicates if this type is a function type.''')
+        
         __swig_getmethods__["num_fields"] = GetNumberOfFields
         if _newclass: num_fields = property(GetNumberOfFields, None, doc='''A read only property that returns number of fields in this type as an integer.''')
         

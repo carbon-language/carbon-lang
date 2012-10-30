@@ -219,6 +219,51 @@ SBType::GetDereferencedType()
     return SBType(ClangASTType(m_opaque_sp->GetASTContext(),qt.getNonReferenceType().getAsOpaquePtr()));
 }
 
+bool 
+SBType::IsFunctionType ()
+{
+    if (IsValid())
+    {
+        QualType qual_type(QualType::getFromOpaquePtr(m_opaque_sp->GetOpaqueQualType()));
+        const FunctionProtoType* func = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
+        return func != NULL;
+    }
+    return false;
+}
+
+lldb::SBType
+SBType::GetFunctionReturnType ()
+{
+    if (IsValid())
+    {
+        QualType qual_type(QualType::getFromOpaquePtr(m_opaque_sp->GetOpaqueQualType()));
+        const FunctionProtoType* func = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
+        
+        if (func)
+            return SBType(ClangASTType(m_opaque_sp->GetASTContext(),
+                                       func->getResultType().getAsOpaquePtr()));
+    }
+    return lldb::SBType();
+}
+
+lldb::SBTypeList
+SBType::GetFunctionArgumentTypes ()
+{
+    SBTypeList sb_type_list;
+    if (IsValid())
+    {
+        QualType qual_type(QualType::getFromOpaquePtr(m_opaque_sp->GetOpaqueQualType()));
+        const FunctionProtoType* func = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
+        if (func)
+        {
+            const uint32_t num_args = func->getNumArgs();
+            for (uint32_t i=0; i<num_args; ++i)
+                sb_type_list.Append (SBType(ClangASTType(m_opaque_sp->GetASTContext(), func->getArgType(i).getAsOpaquePtr())));
+        }
+    }
+    return sb_type_list;
+}
+
 lldb::SBType
 SBType::GetUnqualifiedType()
 {

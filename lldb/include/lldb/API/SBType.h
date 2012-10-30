@@ -90,6 +90,9 @@ public:
     bool
     IsReferenceType();
     
+    bool
+    IsFunctionType ();
+    
     lldb::SBType
     GetPointerType();
     
@@ -140,6 +143,12 @@ public:
 
     lldb::TemplateArgumentKind
     GetTemplateArgumentKind (uint32_t idx);
+
+    lldb::SBType
+    GetFunctionReturnType ();
+
+    lldb::SBTypeList
+    GetFunctionArgumentTypes ();
 
     const char*
     GetName();
