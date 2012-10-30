@@ -6145,6 +6145,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, SDValue());
 
+    // Ideally, we would only check against memory constraints.  However, the
+    // meaning of an other constraint can be target-specific and we can't easily
+    // reason about it.  Therefore, be conservative and set MayLoad/MayStore
+    // for other constriants as well.
     if (OpInfo.ConstraintType == TargetLowering::C_Memory ||
         OpInfo.ConstraintType == TargetLowering::C_Other) {
       if (OpInfo.Type == InlineAsm::isInput)
