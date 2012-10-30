@@ -2665,6 +2665,10 @@ IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo, bool IsVarArg,
   if (!EnableMipsTailCalls)
     return false;
 
+  // No tail call optimization for mips16.
+  if (Subtarget->inMips16Mode())
+    return false;
+
   if (MipsCCInfo.hasByValArg() || IsVarArg)
     return false;
 
