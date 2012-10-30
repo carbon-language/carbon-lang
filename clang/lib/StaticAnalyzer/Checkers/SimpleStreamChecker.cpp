@@ -81,8 +81,8 @@ public:
 } // end anonymous namespace
 
 /// The state of the checker is a map from tracked stream symbols to their
-/// state. Let's store it in the GDM.
-REGISTER_MAP_WITH_GDM(StreamMap, SymbolRef, StreamState)
+/// state. Let's store it in the ProgramState.
+REGISTER_MAP_WITH_PROGRAMSTATE(StreamMap, SymbolRef, StreamState)
 
 void SimpleStreamChecker::checkPostStmt(const CallExpr *Call,
                                         CheckerContext &C) const {

@@ -18,8 +18,8 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "llvm/ADT/ImmutableMap.h"
 
-// Declare an immutable map suitable for placement into program states's GDM.
-#define REGISTER_MAP_WITH_GDM(Map, Key, Value) \
+/// Declare an immutable map suitable for placement into the ProgramState.
+#define REGISTER_MAP_WITH_PROGRAMSTATE(Map, Key, Value) \
   typedef llvm::ImmutableMap<Key, Value> Map; \
   namespace clang { \
   namespace ento { \
