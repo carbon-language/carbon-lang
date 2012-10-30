@@ -296,7 +296,7 @@ namespace {
                       bool UseCycleCheck);
 
     Value *getReplacementPointerInput(LLVMContext& Context, Instruction *I,
-                     Instruction *J, unsigned o, bool FlipMemInputs);
+                     Instruction *J, unsigned o);
 
     void fillNewShuffleMask(LLVMContext& Context, Instruction *J,
                      unsigned MaskOffset, unsigned NumInElem,
@@ -312,16 +312,15 @@ namespace {
                        unsigned IdxOff = 0);
 
     Value *getReplacementInput(LLVMContext& Context, Instruction *I,
-                     Instruction *J, unsigned o, bool FlipMemInputs);
+                     Instruction *J, unsigned o);
 
     void getReplacementInputsForPair(LLVMContext& Context, Instruction *I,
-                     Instruction *J, SmallVector<Value *, 3> &ReplacedOperands,
-                     bool FlipMemInputs);
+                     Instruction *J, SmallVector<Value *, 3> &ReplacedOperands);
 
     void replaceOutputsOfPair(LLVMContext& Context, Instruction *I,
                      Instruction *J, Instruction *K,
                      Instruction *&InsertionPt, Instruction *&K1,
-                     Instruction *&K2, bool FlipMemInputs);
+                     Instruction *&K2);
 
     void collectPairLoadMoveSet(BasicBlock &BB,
                      DenseMap<Value *, Value *> &ChosenPairs,
@@ -1670,25 +1669,19 @@ namespace {
   // Returns the value that is to be used as the pointer input to the vector
   // instruction that fuses I with J.
   Value *BBVectorize::getReplacementPointerInput(LLVMContext& Context,
-                     Instruction *I, Instruction *J, unsigned o,
-                     bool FlipMemInputs) {
+                     Instruction *I, Instruction *J, unsigned o) {
     Value *IPtr, *JPtr;
     unsigned IAlignment, JAlignment, IAddressSpace, JAddressSpace;
     int64_t OffsetInElmts;
 
-    // Note: the analysis might fail here, that is why FlipMemInputs has
+    // Note: the analysis might fail here, that is why the pair order has
     // been precomputed (OffsetInElmts must be unused here).
     (void) getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
                           IAddressSpace, JAddressSpace,
                           OffsetInElmts, false);
 
     // The pointer value is taken to be the one with the lowest offset.
-    Value *VPtr;
-    if (!FlipMemInputs) {
-      VPtr = IPtr;
-    } else {
-      VPtr = JPtr;
-    }
+    Value *VPtr = IPtr;
 
     Type *ArgTypeI = cast<PointerType>(IPtr->getType())->getElementType();
     Type *ArgTypeJ = cast<PointerType>(JPtr->getType())->getElementType();
@@ -1696,7 +1689,7 @@ namespace {
     Type *VArgPtrType = PointerType::get(VArgType,
       cast<PointerType>(IPtr->getType())->getAddressSpace());
     return new BitCastInst(VPtr, VArgPtrType, getReplacementName(I, true, o),
-                        /* insert before */ FlipMemInputs ? J : I);
+                        /* insert before */ I);
   }
 
   void BBVectorize::fillNewShuffleMask(LLVMContext& Context, Instruction *J,
@@ -1816,7 +1809,7 @@ namespace {
   // Returns the value to be used as the specified operand of the vector
   // instruction that fuses I with J.
   Value *BBVectorize::getReplacementInput(LLVMContext& Context, Instruction *I,
-                     Instruction *J, unsigned o, bool FlipMemInputs) {
+                     Instruction *J, unsigned o) {
     Value *CV0 = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Value *CV1 = ConstantInt::get(Type::getInt32Ty(Context), 1);
 
@@ -1827,12 +1820,6 @@ namespace {
 
     Instruction *L = I, *H = J;
     Type *ArgTypeL = ArgTypeI, *ArgTypeH = ArgTypeJ;
-    if (FlipMemInputs) {
-      L = J;
-      H = I;
-      ArgTypeL = ArgTypeJ;
-      ArgTypeH = ArgTypeI;
-    }
 
     unsigned numElemL;
     if (ArgTypeL->isVectorTy())
@@ -2156,8 +2143,7 @@ namespace {
   // to the vector instruction that fuses I with J.
   void BBVectorize::getReplacementInputsForPair(LLVMContext& Context,
                      Instruction *I, Instruction *J,
-                     SmallVector<Value *, 3> &ReplacedOperands,
-                     bool FlipMemInputs) {
+                     SmallVector<Value *, 3> &ReplacedOperands) {
     unsigned NumOperands = I->getNumOperands();
 
     for (unsigned p = 0, o = NumOperands-1; p < NumOperands; ++p, --o) {
@@ -2166,8 +2152,7 @@ namespace {
 
       if (isa<LoadInst>(I) || (o == 1 && isa<StoreInst>(I))) {
         // This is the pointer for a load/store instruction.
-        ReplacedOperands[o] = getReplacementPointerInput(Context, I, J, o,
-                                FlipMemInputs);
+        ReplacedOperands[o] = getReplacementPointerInput(Context, I, J, o);
         continue;
       } else if (isa<CallInst>(I)) {
         Function *F = cast<CallInst>(I)->getCalledFunction();
@@ -2195,8 +2180,7 @@ namespace {
         continue;
       }
 
-      ReplacedOperands[o] =
-        getReplacementInput(Context, I, J, o, FlipMemInputs);
+      ReplacedOperands[o] = getReplacementInput(Context, I, J, o);
     }
   }
 
@@ -2207,8 +2191,7 @@ namespace {
   void BBVectorize::replaceOutputsOfPair(LLVMContext& Context, Instruction *I,
                      Instruction *J, Instruction *K,
                      Instruction *&InsertionPt,
-                     Instruction *&K1, Instruction *&K2,
-                     bool FlipMemInputs) {
+                     Instruction *&K1, Instruction *&K2) {
     if (isa<StoreInst>(I)) {
       AA->replaceWithNewValue(I, K);
       AA->replaceWithNewValue(J, K);
@@ -2238,13 +2221,11 @@ namespace {
         }
 
         K1 = new ShuffleVectorInst(K, UndefValue::get(VType),
-                                   ConstantVector::get(
-                                     FlipMemInputs ? Mask2 : Mask1),
+                                   ConstantVector::get( Mask1),
                                    getReplacementName(K, false, 1));
       } else {
         Value *CV0 = ConstantInt::get(Type::getInt32Ty(Context), 0);
-        Value *CV1 = ConstantInt::get(Type::getInt32Ty(Context), numElem-1);
-        K1 = ExtractElementInst::Create(K, FlipMemInputs ? CV1 : CV0,
+        K1 = ExtractElementInst::Create(K, CV0,
                                           getReplacementName(K, false, 1));
       }
 
@@ -2256,13 +2237,11 @@ namespace {
         }
 
         K2 = new ShuffleVectorInst(K, UndefValue::get(VType),
-                                   ConstantVector::get(
-                                     FlipMemInputs ? Mask1 : Mask2),
+                                   ConstantVector::get( Mask2),
                                    getReplacementName(K, false, 2));
       } else {
-        Value *CV0 = ConstantInt::get(Type::getInt32Ty(Context), 0);
         Value *CV1 = ConstantInt::get(Type::getInt32Ty(Context), numElem-1);
-        K2 = ExtractElementInst::Create(K, FlipMemInputs ? CV0 : CV1,
+        K2 = ExtractElementInst::Create(K, CV1,
                                           getReplacementName(K, false, 2));
       }
 
@@ -2490,10 +2469,14 @@ namespace {
       if (isa<LoadInst>(I) || isa<StoreInst>(I))
         FlipMemInputs = (LowPtrInsts.find(I) == LowPtrInsts.end());
 
+      Instruction *L = I, *H = J;
+      if (FlipMemInputs)
+        std::swap(H, L);
+      FlipMemInputs = false;
+
       unsigned NumOperands = I->getNumOperands();
       SmallVector<Value *, 3> ReplacedOperands(NumOperands);
-      getReplacementInputsForPair(Context, I, J, ReplacedOperands,
-        FlipMemInputs);
+      getReplacementInputsForPair(Context, L, H, ReplacedOperands);
 
       // Make a copy of the original operation, change its type to the vector
       // type and replace its operands with the vector operands.
@@ -2501,7 +2484,7 @@ namespace {
       if (I->hasName()) K->takeName(I);
 
       if (!isa<StoreInst>(K))
-        K->mutateType(getVecTypeForPair(I->getType(), J->getType()));
+        K->mutateType(getVecTypeForPair(L->getType(), H->getType()));
 
       combineMetadata(K, J);
 
@@ -2522,8 +2505,7 @@ namespace {
       // Instruction insertion point:
       Instruction *InsertionPt = K;
       Instruction *K1 = 0, *K2 = 0;
-      replaceOutputsOfPair(Context, I, J, K, InsertionPt, K1, K2,
-        FlipMemInputs);
+      replaceOutputsOfPair(Context, L, H, K, InsertionPt, K1, K2);
 
       // The use tree of the first original instruction must be moved to after
       // the location of the second instruction. The entire use tree of the
