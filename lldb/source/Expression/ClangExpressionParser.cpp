@@ -52,7 +52,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetSelect.h"
 
-#if !defined(__APPLE__)
+#if defined(__FreeBSD__)
 #define USE_STANDARD_JIT
 #endif
 
