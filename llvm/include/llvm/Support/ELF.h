@@ -689,8 +689,36 @@ enum {
   R_MIPS_NUM               = 218
 };
 
+// Hexagon Specific e_flags
+// Release 5 ABI
+enum {
+  // Object processor version flags, bits[3:0]
+  EF_HEXAGON_MACH_V2      = 0x00000001,   // Hexagon V2
+  EF_HEXAGON_MACH_V3      = 0x00000002,   // Hexagon V3
+  EF_HEXAGON_MACH_V4      = 0x00000003,   // Hexagon V4
+  EF_HEXAGON_MACH_V5      = 0x00000004,   // Hexagon V5
+
+  // Highest ISA version flags
+  EF_HEXAGON_ISA_MACH     = 0x00000000,   // Same as specified in bits[3:0]
+                                          // of e_flags
+  EF_HEXAGON_ISA_V2       = 0x00000010,   // Hexagon V2 ISA
+  EF_HEXAGON_ISA_V3       = 0x00000020,   // Hexagon V3 ISA
+  EF_HEXAGON_ISA_V4       = 0x00000030,   // Hexagon V4 ISA
+  EF_HEXAGON_ISA_V5       = 0x00000040    // Hexagon V5 ISA
+};
+
+// Hexagon specific Section indexes for common small data
+// Release 5 ABI 
+enum {
+  SHN_HEXAGON_SCOMMON     = 0xff00,       // Other access sizes
+  SHN_HEXAGON_SCOMMON_1   = 0xff01,       // Byte-sized access
+  SHN_HEXAGON_SCOMMON_2   = 0xff02,       // Half-word-sized access
+  SHN_HEXAGON_SCOMMON_4   = 0xff03,       // Word-sized access
+  SHN_HEXAGON_SCOMMON_8   = 0xff04        // Double-word-size access
+};   
+
 // ELF Relocation types for Hexagon
-// Release 5 ABI - Document: 80-V9418-3 Rev. J
+// Release 5 ABI
 enum {
   R_HEX_NONE              =  0,
   R_HEX_B22_PCREL         =  1,
