@@ -897,18 +897,12 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
     const char *AsmStr = cast<ExternalSymbolSDNode>(AsmStrV)->getSymbol();
     MI->addOperand(MachineOperand::CreateES(AsmStr));
 
-    // Add the HasSideEffect and isAlignStack bits.
+    // Add the HasSideEffect, isAlignStack, AsmDialect, MayLoad and MayStore
+    // bits.
     int64_t ExtraInfo =
       cast<ConstantSDNode>(Node->getOperand(InlineAsm::Op_ExtraInfo))->
                           getZExtValue();
     MI->addOperand(MachineOperand::CreateImm(ExtraInfo));
-
-    // Set the MayLoad and MayStore flags.
-    if (ExtraInfo & InlineAsm::Extra_MayLoad)
-      MI->setFlag(MachineInstr::MayLoad);
-
-    if (ExtraInfo & InlineAsm::Extra_MayStore)
-      MI->setFlag(MachineInstr::MayStore);
 
     // Remember to operand index of the group flags.
     SmallVector<unsigned, 8> GroupIdx;

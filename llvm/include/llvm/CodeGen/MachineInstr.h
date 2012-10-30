@@ -58,10 +58,8 @@ public:
     NoFlags      = 0,
     FrameSetup   = 1 << 0,              // Instruction is used as a part of
                                         // function frame setup code.
-    InsideBundle = 1 << 1,              // Instruction is inside a bundle (not
+    InsideBundle = 1 << 1               // Instruction is inside a bundle (not
                                         // the first MI in a bundle)
-    MayLoad      = 1 << 2,              // Instruction could possibly read memory.
-    MayStore     = 1 << 3               // Instruction could possibly modify memory.
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
@@ -447,7 +445,12 @@ public:
   /// Instructions with this flag set are not necessarily simple load
   /// instructions, they may load a value and modify it, for example.
   bool mayLoad(QueryType Type = AnyInBundle) const {
-    return hasProperty(MCID::MayLoad, Type) || (Flags & MayLoad);
+    if (isInlineAsm()) {
+      unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
+      if (ExtraInfo & InlineAsm::Extra_MayLoad)
+        return true;
+    }
+    return hasProperty(MCID::MayLoad, Type);
   }
 
 
@@ -456,7 +459,12 @@ public:
   /// instructions, they may store a modified value based on their operands, or
   /// may not actually modify anything, for example.
   bool mayStore(QueryType Type = AnyInBundle) const {
-    return hasProperty(MCID::MayStore, Type) || (Flags & MayStore);
+    if (isInlineAsm()) {
+      unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
+      if (ExtraInfo & InlineAsm::Extra_MayStore)
+        return true;
+    }
+    return hasProperty(MCID::MayStore, Type);
   }
 
   //===--------------------------------------------------------------------===//
