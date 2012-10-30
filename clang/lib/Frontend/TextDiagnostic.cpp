@@ -113,18 +113,6 @@ printableTextForNextCharacter(StringRef SourceLine, size_t *i,
     return std::make_pair(expandedTab, true);
   }
 
-  // FIXME: this data is copied from the private implementation of ConvertUTF.h
-  static const char trailingBytesForUTF8[256] = {
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
-  };
-
   unsigned char const *begin, *end;
   begin = reinterpret_cast<unsigned char const *>(&*(SourceLine.begin() + *i));
   end = begin + (SourceLine.size() - *i);
@@ -133,8 +121,7 @@ printableTextForNextCharacter(StringRef SourceLine, size_t *i,
     UTF32 c;
     UTF32 *cptr = &c;
     unsigned char const *original_begin = begin;
-    char trailingBytes = trailingBytesForUTF8[(unsigned char)SourceLine[*i]];
-    unsigned char const *cp_end = begin+trailingBytes+1;
+    unsigned char const *cp_end = begin+getNumBytesForUTF8(SourceLine[*i]);
 
     ConversionResult res = ConvertUTF8toUTF32(&begin, cp_end, &cptr, cptr+1,
                                               strictConversion);
