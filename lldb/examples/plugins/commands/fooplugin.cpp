@@ -35,7 +35,7 @@ public:
             const char* arg = *command;
             while (arg)
             {
-                printf("%s\n",arg);
+                result.Printf("%s\n",arg);
                 arg = *(++command);
             }
             return true;
