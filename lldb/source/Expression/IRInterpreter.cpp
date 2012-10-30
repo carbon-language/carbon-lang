@@ -676,7 +676,11 @@ public:
                     if (bare_register)
                         indirect_variable = false;
                     
-                    Memory::Region data_region = m_memory.Malloc(value->getType());
+                    lldb_private::RegisterInfo *reg_info = resolved_value.GetRegisterInfo();
+                    Memory::Region data_region = (reg_info->encoding == lldb::eEncodingVector) ?
+                        m_memory.Malloc(reg_info->byte_size, m_target_data.getPrefTypeAlignment(value->getType())) :
+                        m_memory.Malloc(value->getType());
+
                     data_region.m_allocation->m_origin = resolved_value;
                     Memory::Region ref_region = m_memory.Malloc(value->getType());
                     Memory::Region pointer_region;

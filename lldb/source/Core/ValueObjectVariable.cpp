@@ -176,6 +176,7 @@ ValueObjectVariable::UpdateValue ()
                     break;
                 case Value::eValueTypeLoadAddress:
                 case Value::eValueTypeScalar:
+                case Value::eValueTypeVector:
                     SetAddressTypeOfChildren(eAddressTypeLoad);
                     break;
             }

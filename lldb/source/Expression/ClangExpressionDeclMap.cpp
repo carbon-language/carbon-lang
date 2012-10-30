@@ -1083,8 +1083,13 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl, ClangExpressionVaria
             Value ret;
             
             ret.SetContext(Value::eContextTypeRegisterInfo, reg_info);
-            if (!reg_value.GetScalarValue(ret.GetScalar()))
-                return Value();
+            if (reg_info->encoding == eEncodingVector) 
+			{
+                if (ret.SetVectorBytes((uint8_t *)reg_value.GetBytes(), reg_value.GetByteSize(), reg_value.GetByteOrder()))
+                    ret.SetScalarFromVector();
+            }
+            else if (!reg_value.GetScalarValue(ret.GetScalar()))
+				return Value();
             
             return ret;
         }

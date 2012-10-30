@@ -422,6 +422,7 @@ ValueObject::GetLocationAsCString ()
                 break;
 
             case Value::eValueTypeScalar:
+            case Value::eValueTypeVector:
                 if (m_value.GetContextType() == Value::eContextTypeRegisterInfo)
                 {
                     RegisterInfo *reg_info = m_value.GetRegisterInfo();
@@ -431,10 +432,10 @@ ValueObject::GetLocationAsCString ()
                             m_location_str = reg_info->name;
                         else if (reg_info->alt_name)
                             m_location_str = reg_info->alt_name;
-                        break;
+
+                        m_location_str = (reg_info->encoding == lldb::eEncodingVector) ? "vector" : "scalar";
                     }
                 }
-                m_location_str = "scalar";
                 break;
 
             case Value::eValueTypeLoadAddress:
@@ -1585,6 +1586,7 @@ ValueObject::GetAddressOf (bool scalar_is_load_address, AddressType *address_typ
     switch (m_value.GetValueType())
     {
     case Value::eValueTypeScalar:
+    case Value::eValueTypeVector:
         if (scalar_is_load_address)
         {
             if(address_type)
@@ -1621,6 +1623,7 @@ ValueObject::GetPointerValue (AddressType *address_type)
     switch (m_value.GetValueType())
     {
     case Value::eValueTypeScalar:
+    case Value::eValueTypeVector:
         address = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
         break;
 
@@ -1720,7 +1723,8 @@ ValueObject::SetValueFromCString (const char *value_str, Error& error)
                 break;
             case Value::eValueTypeFileAddress:
             case Value::eValueTypeScalar:
-                break;    
+            case Value::eValueTypeVector:
+                break;
             }
         }
         else
