@@ -408,7 +408,9 @@ struct LoopVectorize : public LoopPass {
       VF = VectorizationFactor;
     }
 
-    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ").\n");
+    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ") in "<<
+          L->getHeader()->getParent()->getParent()->getModuleIdentifier()<<
+          "\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
     SingleBlockLoopVectorizer LB(L, SE, LI, DT, &LPM, VF);
@@ -597,7 +599,8 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
     WidenMap[Instr] = VecResults;
 }
 
-void SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
+void
+SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   /*
    In this function we generate a new loop. The new loop will contain
    the vectorized instructions while the old loop will continue to run the
@@ -1178,8 +1181,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
     // We still don't handle functions.
     CallInst *CI = dyn_cast<CallInst>(I);
     if (CI) {
-      DEBUG(dbgs() << "LV: Found a call site:"<<
-            CI->getCalledFunction()->getName() << "\n");
+      DEBUG(dbgs() << "LV: Found a call site.\n");
       return false;
     }
 
