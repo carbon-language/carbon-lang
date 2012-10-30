@@ -126,7 +126,7 @@ bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   default:
     return false;
   case Mips::RetRA16:
-    ExpandRetRA16(MBB, MI, Mips::JrRa16);
+    ExpandRetRA16(MBB, MI, Mips::JrcRa16);
     break;
   }
 

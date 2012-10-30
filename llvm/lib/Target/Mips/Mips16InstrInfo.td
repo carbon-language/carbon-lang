@@ -515,6 +515,13 @@ def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu> {
   let isBarrier=1;
 }
 
+def JrcRa16: FRR16_JALRC_RA_only_ins<0, 0, "jrc", IIAlu> {
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+  let isTerminator=1;
+  let isBarrier=1;
+}
+
 def JrcRx16: FRR16_JALRC_ins<1, 1, 0, "jrc", IIAlu> {
   let isBranch = 1;
   let isIndirectBranch = 1;
@@ -1011,10 +1018,10 @@ def: Mips16Pat<
 
 
 // Jump and Link (Call)
-let isCall=1, hasDelaySlot=1 in
+let isCall=1, hasDelaySlot=0 in
 def JumpLinkReg16:
   FRR16_JALRC<0, 0, 0, (outs), (ins CPU16Regs:$rs),
-              "jalr \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch>;
+              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch>;
 
 // Mips16 pseudos
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,

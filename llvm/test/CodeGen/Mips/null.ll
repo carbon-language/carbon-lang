@@ -8,6 +8,6 @@ entry:
 ; 16: 	.set	mips16                  # @main
 
 
-; 16:	jr	$ra
+; 16:	jrc	$ra
 
 }

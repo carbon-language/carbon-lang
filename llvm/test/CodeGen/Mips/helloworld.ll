@@ -24,10 +24,10 @@ entry:
 ; C1:	addiu	${{[0-9]+}}, %lo($.str)
 ; C2:	move	$25, ${{[0-9]+}}
 ; C1:	move 	$gp, ${{[0-9]+}}
-; C1:	jalr 	${{[0-9]+}}
+; C1:	jalrc 	${{[0-9]+}}
 ; SR:	restore 	$ra, [[FS]]
 ; PE:	li	$2, 0
-; PE:	jr 	$ra
+; PE:	jrc 	$ra
 
 }
 
