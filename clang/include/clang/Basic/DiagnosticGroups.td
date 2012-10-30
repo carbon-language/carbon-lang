@@ -209,7 +209,7 @@ def TautologicalCompare : DiagGroup<"tautological-compare",
                                     [TautologicalOutOfRangeCompare]>;
 def HeaderHygiene : DiagGroup<"header-hygiene">;
 def DuplicateDeclSpecifier : DiagGroup<"duplicate-decl-specifier">;
-def CompareDistinctPointerType : DiagGroup<"compare-distinct-pointer-type">;
+def CompareDistinctPointerType : DiagGroup<"compare-distinct-pointer-types">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
