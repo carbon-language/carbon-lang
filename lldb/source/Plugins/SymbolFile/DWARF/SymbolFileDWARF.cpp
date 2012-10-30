@@ -6127,7 +6127,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                     if (!object_pointer_name.empty())
                                                     {
                                                         metadata.SetObjectPtrName(object_pointer_name.c_str());
-                                                        printf ("Setting object pointer name: %s on method object 0x%ld.\n", object_pointer_name.c_str(), (uintptr_t) cxx_method_decl);
+                                                        if (log)
+                                                            log->Printf ("Setting object pointer name: %s on method object 0x%ld.\n",
+                                                                         object_pointer_name.c_str(),
+                                                                         (uintptr_t) cxx_method_decl);
                                                     }
                                                     GetClangASTContext().SetMetadata ((uintptr_t)cxx_method_decl, metadata);
                                                 }
@@ -6201,7 +6204,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             if (!object_pointer_name.empty())
                             {
                                 metadata.SetObjectPtrName(object_pointer_name.c_str());
-                                printf ("Setting object pointer name: %s on function object 0x%ld.\n", object_pointer_name.c_str(), (uintptr_t) function_decl);
+                                if (log)
+                                    log->Printf ("Setting object pointer name: %s on function object 0x%ld.\n",
+                                                 object_pointer_name.c_str(),
+                                                 (uintptr_t) function_decl);
                             }
                             GetClangASTContext().SetMetadata ((uintptr_t)function_decl, metadata);
                         }
