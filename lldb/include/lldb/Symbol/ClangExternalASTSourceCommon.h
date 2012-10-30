@@ -37,6 +37,7 @@
 #endif
 
 #include "lldb/lldb-defines.h"
+#include "lldb/lldb-enumerations.h"
 #include "lldb/Core/dwarf.h"
 
 namespace lldb_private {
@@ -95,6 +96,19 @@ public:
             m_has_object_ptr = false;
     }
     
+    lldb::LanguageType
+    GetObjectPtrLanguage () const
+    {
+        if (m_has_object_ptr)
+        {
+            if (m_is_self)
+                return lldb::eLanguageTypeObjC;
+            else
+                return lldb::eLanguageTypeC_plus_plus;
+        }
+        return lldb::eLanguageTypeUnknown;
+            
+    }
     const char *GetObjectPtrName() const
     {
         if (m_has_object_ptr)

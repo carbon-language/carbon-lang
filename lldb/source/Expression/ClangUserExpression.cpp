@@ -31,6 +31,10 @@
 #include "lldb/Expression/ExpressionSourceCode.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/Type.h"
+#include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -190,6 +194,29 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
             
             if (!method_decl->isInstanceMethod())
                 m_static_method = true;
+        }
+    }
+    else if (clang::FunctionDecl *function_decl = llvm::dyn_cast<clang::FunctionDecl>(decl_context))
+    {
+        // We might also have a function that said in the debug information that it captured an
+        // object pointer.  The best way to deal with getting to the ivars at present it by pretending
+        // that this is a method of a class in whatever runtime the debug info says the object pointer
+        // belongs to.  Do that here.
+        
+        ClangASTMetadata *metadata = ClangASTContext::GetMetadata (&decl_context->getParentASTContext(), (uintptr_t) function_decl);
+        if (metadata && metadata->HasObjectPtr())
+        {
+            lldb::LanguageType language = metadata->GetObjectPtrLanguage();
+            if (language == lldb::eLanguageTypeC_plus_plus)
+            {
+                m_cplusplus = true;
+                m_needs_object_ptr = true;
+            }
+            else if (language == lldb::eLanguageTypeObjC)
+            {
+                m_objectivec = true;
+                m_needs_object_ptr = true;
+            }
         }
     }
 }

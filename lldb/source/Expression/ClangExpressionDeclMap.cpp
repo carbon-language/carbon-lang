@@ -2470,34 +2470,83 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context);
             
-            if (!method_decl)
-                return;
-            
-            clang::CXXRecordDecl *class_decl = method_decl->getParent();
-            
-            QualType class_qual_type(class_decl->getTypeForDecl(), 0);
-            
-            TypeFromUser class_user_type (class_qual_type.getAsOpaquePtr(),
-                                          &class_decl->getASTContext());
-            
-            if (log)
+            if (method_decl)
             {
-                ASTDumper ast_dumper(class_qual_type);
-                log->Printf("  CEDM::FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
+            
+                clang::CXXRecordDecl *class_decl = method_decl->getParent();
+                
+                QualType class_qual_type(class_decl->getTypeForDecl(), 0);
+                
+                TypeFromUser class_user_type (class_qual_type.getAsOpaquePtr(),
+                                              &class_decl->getASTContext());
+                
+                if (log)
+                {
+                    ASTDumper ast_dumper(class_qual_type);
+                    log->Printf("  CEDM::FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
+                }
+                
+                AddOneType(context, class_user_type, current_id, true);
+                
+                if (method_decl->isInstance())
+                {
+                    // self is a pointer to the object
+                    
+                    QualType class_pointer_type = method_decl->getASTContext().getPointerType(class_qual_type);
+                    
+                    TypeFromUser self_user_type(class_pointer_type.getAsOpaquePtr(),
+                                                &method_decl->getASTContext());
+                    
+                    m_struct_vars->m_object_pointer_type = self_user_type;
+                }
             }
-            
-            AddOneType(context, class_user_type, current_id, true);
-            
-            if (method_decl->isInstance())
+            else
             {
-                // self is a pointer to the object
+                // This branch will get hit if we are executing code in the context of a function that
+                // claims to have an object pointer (through DW_AT_object_pointer?) but is not formally a
+                // method of the class.  In that case, just look up the "this" variable in the the current
+                // scope and use its type.
+                // FIXME: This code is formally correct, but clang doesn't currently emit DW_AT_object_pointer
+                // for C++ so it hasn't actually been tested.
                 
-                QualType class_pointer_type = method_decl->getASTContext().getPointerType(class_qual_type);
+                VariableList *vars = frame->GetVariableList(false);
                 
-                TypeFromUser self_user_type(class_pointer_type.getAsOpaquePtr(),
-                                            &method_decl->getASTContext());
+                lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
                 
-                m_struct_vars->m_object_pointer_type = self_user_type;
+                if (this_var &&
+                    this_var->IsInScope(frame) &&
+                    this_var->LocationIsValidForFrame (frame))
+                {
+                    Type *this_type = this_var->GetType();
+                    
+                    if (!this_type)
+                        return;
+                    
+                    QualType this_qual_type = QualType::getFromOpaquePtr(this_type->GetClangFullType());
+                    const PointerType *class_pointer_type = this_qual_type->getAs<PointerType>();
+                    
+                    if (class_pointer_type)
+                    {
+                        QualType class_type = class_pointer_type->getPointeeType();
+                        
+                        if (log)
+                        {
+                            ASTDumper ast_dumper(this_type->GetClangFullType());
+                            log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
+                        }
+                        
+                        TypeFromUser class_user_type (class_type.getAsOpaquePtr(),
+                                                        this_type->GetClangAST());
+                        AddOneType(context, class_user_type, current_id, false);
+                                    
+                                    
+                        TypeFromUser this_user_type(this_type->GetClangFullType(),
+                                                    this_type->GetClangAST());
+                        
+                        m_struct_vars->m_object_pointer_type = this_user_type;
+                        return;
+                    }
+                }
             }
             
             return;
@@ -2529,65 +2578,96 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context);
             
-            if (!method_decl)
-                return;
-
-            ObjCInterfaceDecl* self_interface = method_decl->getClassInterface();
-            
-            if (!self_interface)
-                return;
-            
-            const clang::Type *interface_type = self_interface->getTypeForDecl();
-                    
-            TypeFromUser class_user_type(QualType(interface_type, 0).getAsOpaquePtr(),
-                                         &method_decl->getASTContext());
-            
-            if (log)
+            if (method_decl)
             {
-                ASTDumper ast_dumper(interface_type);
-                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
-            }
+
+                ObjCInterfaceDecl* self_interface = method_decl->getClassInterface();
                 
-            AddOneType(context, class_user_type, current_id, false);
-            
-#if 0
-            VariableList *vars = frame->GetVariableList(false);
-            
-            lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
-            
-            if (self_var &&
-                self_var->IsInScope(frame) && 
-                self_var->LocationIsValidForFrame (frame)) {
-                Type *self_type = self_var->GetType();
-                
-                if (!self_type)
+                if (!self_interface)
                     return;
                 
-                TypeFromUser self_user_type(self_type->GetClangFullType(),
-                                            self_type->GetClangAST());
-            }
-#endif
-            
-            if (method_decl->isInstanceMethod())
-            {
-                // self is a pointer to the object
+                const clang::Type *interface_type = self_interface->getTypeForDecl();
+                        
+                TypeFromUser class_user_type(QualType(interface_type, 0).getAsOpaquePtr(),
+                                             &method_decl->getASTContext());
                 
-                QualType class_pointer_type = method_decl->getASTContext().getObjCObjectPointerType(QualType(interface_type, 0));
-            
-                TypeFromUser self_user_type(class_pointer_type.getAsOpaquePtr(),
-                                            &method_decl->getASTContext());
-            
-                m_struct_vars->m_object_pointer_type = self_user_type;
+                if (log)
+                {
+                    ASTDumper ast_dumper(interface_type);
+                    log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
+                }
+                    
+                AddOneType(context, class_user_type, current_id, false);
+                                
+                if (method_decl->isInstanceMethod())
+                {
+                    // self is a pointer to the object
+                    
+                    QualType class_pointer_type = method_decl->getASTContext().getObjCObjectPointerType(QualType(interface_type, 0));
+                
+                    TypeFromUser self_user_type(class_pointer_type.getAsOpaquePtr(),
+                                                &method_decl->getASTContext());
+                
+                    m_struct_vars->m_object_pointer_type = self_user_type;
+                }
+                else
+                {
+                    // self is a Class pointer
+                    QualType class_type = method_decl->getASTContext().getObjCClassType();
+                    
+                    TypeFromUser self_user_type(class_type.getAsOpaquePtr(),
+                                                &method_decl->getASTContext());
+                    
+                    m_struct_vars->m_object_pointer_type = self_user_type;
+                }
+
+                return;
             }
             else
             {
-                // self is a Class pointer
-                QualType class_type = method_decl->getASTContext().getObjCClassType();
+                // This branch will get hit if we are executing code in the context of a function that
+                // claims to have an object pointer (through DW_AT_object_pointer?) but is not formally a
+                // method of the class.  In that case, just look up the "self" variable in the the current
+                // scope and use its type.
                 
-                TypeFromUser self_user_type(class_type.getAsOpaquePtr(),
-                                            &method_decl->getASTContext());
+                VariableList *vars = frame->GetVariableList(false);
                 
-                m_struct_vars->m_object_pointer_type = self_user_type;
+                lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
+                
+                if (self_var &&
+                    self_var->IsInScope(frame) && 
+                    self_var->LocationIsValidForFrame (frame))
+                {
+                    Type *self_type = self_var->GetType();
+                    
+                    if (!self_type)
+                        return;
+                    
+                    QualType self_qual_type = QualType::getFromOpaquePtr(self_type->GetClangFullType());
+                    const ObjCObjectPointerType *class_pointer_type = self_qual_type->getAs<ObjCObjectPointerType>();
+                    
+                    if (class_pointer_type)
+                    {
+                        QualType class_type = class_pointer_type->getPointeeType();
+                        
+                        if (log)
+                        {
+                            ASTDumper ast_dumper(self_type->GetClangFullType());
+                            log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
+                        }
+                        
+                        TypeFromUser class_user_type (class_type.getAsOpaquePtr(),
+                                                        self_type->GetClangAST());
+                        AddOneType(context, class_user_type, current_id, false);
+                                    
+                                    
+                        TypeFromUser self_user_type(self_type->GetClangFullType(),
+                                                    self_type->GetClangAST());
+                        
+                        m_struct_vars->m_object_pointer_type = self_user_type;
+                        return;
+                    }
+                }
             }
 
             return;

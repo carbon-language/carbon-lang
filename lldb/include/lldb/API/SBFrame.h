@@ -185,6 +185,9 @@ public:
     /// Find variables, register sets, registers, or persistent variables using
     /// the frame as the scope.
     ///
+    /// NB. This function does not look up ivars in the function object pointer.
+    /// To do that use GetValueForVariablePath.
+    ///
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
     lldb::SBValue
