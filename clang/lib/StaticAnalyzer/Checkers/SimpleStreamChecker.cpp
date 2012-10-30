@@ -106,9 +106,7 @@ void SimpleStreamChecker::checkPreStmt(const CallExpr *Call,
                                        CheckerContext &C) const {
   initIdentifierInfo(C.getASTContext());
 
-  if (C.getCalleeIdentifier(Call) != IIfclose)
-    return;
-  if (Call->getNumArgs() != 1)
+  if (C.getCalleeIdentifier(Call) != IIfclose || Call->getNumArgs() != 1)
     return;
 
   // Get the symbolic value corresponding to the file handle.
@@ -130,9 +128,9 @@ void SimpleStreamChecker::checkPreStmt(const CallExpr *Call,
 void SimpleStreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                            CheckerContext &C) const {
   ProgramStateRef State = C.getState();
-  StreamMap TrackedStreams = State->get<StreamMap>();
+  StreamMapTy TrackedStreams = State->get<StreamMap>();
   SymbolVector LeakedStreams;
-  for (StreamMap::iterator I = TrackedStreams.begin(),
+  for (StreamMapTy::iterator I = TrackedStreams.begin(),
                            E = TrackedStreams.end(); I != E; ++I) {
     SymbolRef Sym = I->first;
     if (SymReaper.isDead(Sym)) {
@@ -154,9 +152,9 @@ void SimpleStreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 ProgramStateRef SimpleStreamChecker::evalAssume(ProgramStateRef State,
                                                 SVal Cond,
                                                 bool Assumption) const {
-  StreamMap TrackedStreams = State->get<StreamMap>();
+  StreamMapTy TrackedStreams = State->get<StreamMap>();
   SymbolVector LeakedStreams;
-  for (StreamMap::iterator I = TrackedStreams.begin(),
+  for (StreamMapTy::iterator I = TrackedStreams.begin(),
                            E = TrackedStreams.end(); I != E; ++I) {
     SymbolRef Sym = I->first;
     if (State->getConstraintManager().isNull(State, Sym).isTrue())

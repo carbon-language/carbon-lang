@@ -18,19 +18,20 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "llvm/ADT/ImmutableMap.h"
 
-/// Declare an immutable map suitable for placement into the ProgramState.
-#define REGISTER_MAP_WITH_PROGRAMSTATE(Map, Key, Value) \
-  typedef llvm::ImmutableMap<Key, Value> Map; \
+/// Declares an immutable map of type NameTy, suitable for placement into
+/// the ProgramState. The macro should not be used inside namespaces.
+#define REGISTER_MAP_WITH_PROGRAMSTATE(Name, Key, Value) \
+  class Name {}; \
+  typedef llvm::ImmutableMap<Key, Value> Name ## Ty; \
   namespace clang { \
   namespace ento { \
     template <> \
-    struct ProgramStateTrait<Map> \
-      : public ProgramStatePartialTrait<Map> { \
+    struct ProgramStateTrait<Name> \
+      : public ProgramStatePartialTrait<Name ## Ty> { \
       static void *GDMIndex() { static int Index; return &Index; } \
     }; \
   } \
   }
-
 
 namespace clang {
 namespace ento {
