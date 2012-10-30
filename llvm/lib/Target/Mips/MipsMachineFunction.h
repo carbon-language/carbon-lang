@@ -47,6 +47,10 @@ class MipsFunctionInfo : public MachineFunctionInfo {
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex;
 
+  // Formal argument information obtained during call to LowerFormalArguments.
+  unsigned NextStackOffset;
+  bool HasByvalArg;
+
   bool EmitNOAT;
 
 public:
@@ -66,6 +70,13 @@ public:
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
+
+  unsigned nextStackOffset() const { return NextStackOffset; }
+  bool hasByvalArg() const { return HasByvalArg; }
+  void setFormalArgInfo(unsigned Offset, bool HasByval) {
+    NextStackOffset = Offset;
+    HasByvalArg = HasByval;
+  }
 
   bool getEmitNOAT() const { return EmitNOAT; }
   void setEmitNOAT() { EmitNOAT = true; }
