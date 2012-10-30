@@ -216,6 +216,7 @@ namespace {
     bool getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
+                       DenseSet<ValuePair> &FixedOrderPairs,
                        DenseMap<ValuePair, int> &CandidatePairCostSavings,
                        std::vector<Value *> &PairableInsts, bool NonPow2Len);
 
@@ -237,13 +238,14 @@ namespace {
 
     void fuseChosenPairs(BasicBlock &BB,
                      std::vector<Value *> &PairableInsts,
-                     DenseMap<Value *, Value *>& ChosenPairs);
+                     DenseMap<Value *, Value *>& ChosenPairs,
+                     DenseSet<ValuePair> &FixedOrderPairs);
 
     bool isInstVectorizable(Instruction *I, bool &IsSimpleLoadStore);
 
     bool areInstsCompatible(Instruction *I, Instruction *J,
                        bool IsSimpleLoadStore, bool NonPow2Len,
-                       int &CostSavings);
+                       int &CostSavings, int &FixedOrder);
 
     bool trackUsesOfI(DenseSet<Value *> &Users,
                       AliasSetTracker &WriteSet, Instruction *I,
@@ -331,10 +333,6 @@ namespace {
                      std::vector<Value *> &PairableInsts,
                      DenseMap<Value *, Value *> &ChosenPairs,
                      std::multimap<Value *, Value *> &LoadMoveSet);
-
-    void collectPtrInfo(std::vector<Value *> &PairableInsts,
-                        DenseMap<Value *, Value *> &ChosenPairs,
-                        DenseSet<Value *> &LowPtrInsts);
 
     bool canMoveUsesOfIAfterJ(BasicBlock &BB,
                      std::multimap<Value *, Value *> &LoadMoveSet,
@@ -648,12 +646,15 @@ namespace {
 
     std::vector<Value *> AllPairableInsts;
     DenseMap<Value *, Value *> AllChosenPairs;
+    DenseSet<ValuePair> AllFixedOrderPairs;
 
     do {
       std::vector<Value *> PairableInsts;
       std::multimap<Value *, Value *> CandidatePairs;
+      DenseSet<ValuePair> FixedOrderPairs;
       DenseMap<ValuePair, int> CandidatePairCostSavings;
       ShouldContinue = getCandidatePairs(BB, Start, CandidatePairs,
+                                         FixedOrderPairs,
                                          CandidatePairCostSavings,
                                          PairableInsts, NonPow2Len);
       if (PairableInsts.empty()) continue;
@@ -690,6 +691,14 @@ namespace {
       AllPairableInsts.insert(AllPairableInsts.end(), PairableInsts.begin(),
                               PairableInsts.end());
       AllChosenPairs.insert(ChosenPairs.begin(), ChosenPairs.end());
+
+      for (DenseMap<Value *, Value *>::iterator I = ChosenPairs.begin(),
+           IE = ChosenPairs.end(); I != IE; ++I) {
+        if (FixedOrderPairs.count(*I))
+          AllFixedOrderPairs.insert(*I);
+        else if (FixedOrderPairs.count(ValuePair(I->second, I->first)))
+          AllFixedOrderPairs.insert(ValuePair(I->second, I->first));
+      }
     } while (ShouldContinue);
 
     if (AllChosenPairs.empty()) return false;
@@ -702,7 +711,7 @@ namespace {
     // replaced with a vector_extract on the result.  Subsequent optimization
     // passes should coalesce the build/extract combinations.
 
-    fuseChosenPairs(BB, AllPairableInsts, AllChosenPairs);
+    fuseChosenPairs(BB, AllPairableInsts, AllChosenPairs, AllFixedOrderPairs);
 
     // It is important to cleanup here so that future iterations of this
     // function have less work to do.
@@ -816,11 +825,12 @@ namespace {
   // in the use tree of I.
   bool BBVectorize::areInstsCompatible(Instruction *I, Instruction *J,
                        bool IsSimpleLoadStore, bool NonPow2Len,
-                       int &CostSavings) {
+                       int &CostSavings, int &FixedOrder) {
     DEBUG(if (DebugInstructionExamination) dbgs() << "BBV: looking at " << *I <<
                      " <-> " << *J << "\n");
 
     CostSavings = 0;
+    FixedOrder = 0;
 
     // Loads and stores can be merged if they have different alignments,
     // but are otherwise the same.
@@ -846,6 +856,7 @@ namespace {
       if (getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
             IAddressSpace, JAddressSpace,
             OffsetInElmts) && abs64(OffsetInElmts) == 1) {
+        FixedOrder = (int) OffsetInElmts;
         unsigned BottomAlignment = IAlignment;
         if (OffsetInElmts < 0) BottomAlignment = JAlignment;
 
@@ -992,6 +1003,7 @@ namespace {
   bool BBVectorize::getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
+                       DenseSet<ValuePair> &FixedOrderPairs,
                        DenseMap<ValuePair, int> &CandidatePairCostSavings,
                        std::vector<Value *> &PairableInsts, bool NonPow2Len) {
     BasicBlock::iterator E = BB.end();
@@ -1029,9 +1041,9 @@ namespace {
 
         // J does not use I, and comes before the first use of I, so it can be
         // merged with I if the instructions are compatible.
-        int CostSavings;
+        int CostSavings, FixedOrder;
         if (!areInstsCompatible(I, J, IsSimpleLoadStore, NonPow2Len,
-            CostSavings)) continue;
+            CostSavings, FixedOrder)) continue;
 
         // J is a candidate for merging with I.
         if (!PairableInsts.size() ||
@@ -1043,6 +1055,11 @@ namespace {
         if (VTTI)
           CandidatePairCostSavings.insert(ValuePairWithCost(ValuePair(I, J),
                                                             CostSavings));
+
+        if (FixedOrder == 1)
+          FixedOrderPairs.insert(ValuePair(I, J));
+        else if (FixedOrder == -1)
+          FixedOrderPairs.insert(ValuePair(J, I));
 
         // The next call to this function must start after the last instruction
         // selected during this invocation.
@@ -2341,37 +2358,6 @@ namespace {
     }
   }
 
-  // As with the aliasing information, SCEV can also change because of
-  // vectorization. This information is used to compute relative pointer
-  // offsets; the necessary information will be cached here prior to
-  // fusion.
-  void BBVectorize::collectPtrInfo(std::vector<Value *> &PairableInsts,
-                                   DenseMap<Value *, Value *> &ChosenPairs,
-                                   DenseSet<Value *> &LowPtrInsts) {
-    for (std::vector<Value *>::iterator PI = PairableInsts.begin(),
-      PIE = PairableInsts.end(); PI != PIE; ++PI) {
-      DenseMap<Value *, Value *>::iterator P = ChosenPairs.find(*PI);
-      if (P == ChosenPairs.end()) continue;
-
-      Instruction *I = cast<Instruction>(P->first);
-      Instruction *J = cast<Instruction>(P->second);
-
-      if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
-        continue;
-
-      Value *IPtr, *JPtr;
-      unsigned IAlignment, JAlignment, IAddressSpace, JAddressSpace;
-      int64_t OffsetInElmts;
-      if (!getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
-                          IAddressSpace, JAddressSpace,
-                          OffsetInElmts) || abs64(OffsetInElmts) != 1)
-        llvm_unreachable("Pre-fusion pointer analysis failed");
-
-      Value *LowPI = (OffsetInElmts > 0) ? I : J;
-      LowPtrInsts.insert(LowPI);
-    }
-  }
-
   // When the first instruction in each pair is cloned, it will inherit its
   // parent's metadata. This metadata must be combined with that of the other
   // instruction in a safe way.
@@ -2405,7 +2391,8 @@ namespace {
   // second member).
   void BBVectorize::fuseChosenPairs(BasicBlock &BB,
                      std::vector<Value *> &PairableInsts,
-                     DenseMap<Value *, Value *> &ChosenPairs) {
+                     DenseMap<Value *, Value *> &ChosenPairs,
+                     DenseSet<ValuePair> &FixedOrderPairs) {
     LLVMContext& Context = BB.getContext();
 
     // During the vectorization process, the order of the pairs to be fused
@@ -2422,9 +2409,6 @@ namespace {
 
     std::multimap<Value *, Value *> LoadMoveSet;
     collectLoadMoveSet(BB, PairableInsts, ChosenPairs, LoadMoveSet);
-
-    DenseSet<Value *> LowPtrInsts;
-    collectPtrInfo(PairableInsts, ChosenPairs, LowPtrInsts);
 
     DEBUG(dbgs() << "BBV: initial: \n" << BB << "\n");
 
@@ -2465,12 +2449,11 @@ namespace {
         continue;
       }
 
-      bool FlipMemInputs = false;
-      if (isa<LoadInst>(I) || isa<StoreInst>(I))
-        FlipMemInputs = (LowPtrInsts.find(I) == LowPtrInsts.end());
+      // If the pair must have the other order, then flip it.
+      bool FlipPairOrder = FixedOrderPairs.count(ValuePair(J, I));
 
       Instruction *L = I, *H = J;
-      if (FlipMemInputs)
+      if (FlipPairOrder)
         std::swap(H, L);
 
       unsigned NumOperands = I->getNumOperands();
@@ -2492,10 +2475,10 @@ namespace {
 
       // If we've flipped the memory inputs, make sure that we take the correct
       // alignment.
-      if (FlipMemInputs) {
+      if (FlipPairOrder) {
         if (isa<StoreInst>(K))
           cast<StoreInst>(K)->setAlignment(cast<StoreInst>(J)->getAlignment());
-        else
+        else if (isa<LoadInst>(K))
           cast<LoadInst>(K)->setAlignment(cast<LoadInst>(J)->getAlignment());
       }
 
