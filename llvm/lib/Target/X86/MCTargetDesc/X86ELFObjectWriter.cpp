@@ -20,7 +20,7 @@ using namespace llvm;
 namespace {
   class X86ELFObjectWriter : public MCELFObjectTargetWriter {
   public:
-    X86ELFObjectWriter(bool is64Bit, uint8_t OSABI);
+    X86ELFObjectWriter(bool IsELF64, uint8_t OSABI, uint16_t EMachine);
 
     virtual ~X86ELFObjectWriter();
   protected:
@@ -30,10 +30,11 @@ namespace {
   };
 }
 
-X86ELFObjectWriter::X86ELFObjectWriter(bool Is64Bit, uint8_t OSABI)
-  : MCELFObjectTargetWriter(Is64Bit, OSABI,
-                            Is64Bit ?  ELF::EM_X86_64 : ELF::EM_386,
-                            /*HasRelocationAddend*/ Is64Bit) {}
+X86ELFObjectWriter::X86ELFObjectWriter(bool IsELF64, uint8_t OSABI,
+                                       uint16_t EMachine)
+  : MCELFObjectTargetWriter(IsELF64, OSABI, EMachine,
+                            // Only i386 uses Rel instead of RelA.
+                            /*HasRelocationAddend*/ EMachine != ELF::EM_386) {}
 
 X86ELFObjectWriter::~X86ELFObjectWriter()
 {}
@@ -48,7 +49,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
   MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
     MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
   unsigned Type;
-  if (is64Bit()) {
+  if (getEMachine() == ELF::EM_X86_64) {
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
@@ -130,7 +131,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       case FK_Data_1: Type = ELF::R_X86_64_8; break;
       }
     }
-  } else {
+  } else if (getEMachine() == ELF::EM_386) {
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
@@ -210,15 +211,17 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       case FK_Data_1: Type = ELF::R_386_8; break;
       }
     }
-  }
+  } else
+    llvm_unreachable("Unsupported ELF machine type.");
 
   return Type;
 }
 
 MCObjectWriter *llvm::createX86ELFObjectWriter(raw_ostream &OS,
-                                               bool Is64Bit,
-                                               uint8_t OSABI) {
+                                               bool IsELF64,
+                                               uint8_t OSABI,
+                                               uint16_t EMachine) {
   MCELFObjectTargetWriter *MOTW =
-    new X86ELFObjectWriter(Is64Bit, OSABI);
+    new X86ELFObjectWriter(IsELF64, OSABI, EMachine);
   return createELFObjectWriter(MOTW, OS,  /*IsLittleEndian=*/true);
 }

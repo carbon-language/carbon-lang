@@ -89,8 +89,9 @@ MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
 
 /// createX86ELFObjectWriter - Construct an X86 ELF object writer.
 MCObjectWriter *createX86ELFObjectWriter(raw_ostream &OS,
-                                         bool Is64Bit,
-                                         uint8_t OSABI);
+                                         bool IsELF64,
+                                         uint8_t OSABI,
+                                         uint16_t EMachine);
 /// createX86WinCOFFObjectWriter - Construct an X86 Win COFF object writer.
 MCObjectWriter *createX86WinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
 } // End llvm namespace

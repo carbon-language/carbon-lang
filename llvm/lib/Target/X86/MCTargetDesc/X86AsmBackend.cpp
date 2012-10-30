@@ -354,7 +354,7 @@ public:
     : ELFX86AsmBackend(T, OSABI, CPU) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createX86ELFObjectWriter(OS, /*Is64Bit*/ false, OSABI);
+    return createX86ELFObjectWriter(OS, /*IsELF64*/ false, OSABI, ELF::EM_386);
   }
 };
 
@@ -364,7 +364,7 @@ public:
     : ELFX86AsmBackend(T, OSABI, CPU) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createX86ELFObjectWriter(OS, /*Is64Bit*/ true, OSABI);
+    return createX86ELFObjectWriter(OS, /*IsELF64*/ true, OSABI, ELF::EM_X86_64);
   }
 };
 
