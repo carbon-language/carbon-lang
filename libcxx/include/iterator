@@ -337,7 +337,7 @@ template <class _Tp>
 struct __has_iterator_category
 {
 private:
-    struct __two {char _; char __;};
+    struct __two {char __lx; char __lxx;};
     template <class _Up> static __two __test(...);
     template <class _Up> static char __test(typename _Up::iterator_category* = 0);
 public:

@@ -391,7 +391,7 @@ struct _LIBCPP_VISIBLE is_error_code_enum<future_errc> : public true_type {};
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
-struct _LIBCPP_VISIBLE is_error_code_enum<future_errc::_> : public true_type { };
+struct _LIBCPP_VISIBLE is_error_code_enum<future_errc::__lx> : public true_type { };
 #endif
 
 //enum class launch

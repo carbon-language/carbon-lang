@@ -350,7 +350,7 @@ struct _LIBCPP_VISIBLE is_error_condition_enum<errc>
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
-struct _LIBCPP_VISIBLE is_error_condition_enum<errc::_>
+struct _LIBCPP_VISIBLE is_error_condition_enum<errc::__lx>
     : true_type { };
 #endif
 

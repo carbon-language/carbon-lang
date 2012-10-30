@@ -156,7 +156,7 @@ template <class _If, class _Then>
 template <bool, class _Tp = void> struct _LIBCPP_VISIBLE enable_if {};
 template <class _Tp> struct _LIBCPP_VISIBLE enable_if<true, _Tp> {typedef _Tp type;};
 
-struct __two {char _[2];};
+struct __two {char __lx[2];};
 
 // helper class:
 
@@ -754,12 +754,12 @@ template <class _Tp>
 struct __is_empty1
     : public _Tp
 {
-    double _;
+    double __lx;
 };
 
 struct __is_empty2
 {
-    double _;
+    double __lx;
 };
 
 template <class _Tp, bool = is_class<_Tp>::value>
@@ -811,7 +811,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
 
 // alignment_of
 
-template <class _Tp> struct __alignment_of {_Tp _;};
+template <class _Tp> struct __alignment_of {_Tp __lx;};
 
 template <class _Tp> struct _LIBCPP_VISIBLE alignment_of
     : public integral_constant<size_t, __alignof__(__alignment_of<typename remove_all_extents<_Tp>::type>)> {};
@@ -842,8 +842,8 @@ struct __align_type
     typedef _Tp type;
 };
 
-struct __struct_double {long double _;};
-struct __struct_double4 {double _[4];};
+struct __struct_double {long double __lx;};
+struct __struct_double4 {double __lx[4];};
 
 typedef
     __type_list<__align_type<unsigned char>,
@@ -918,7 +918,7 @@ struct _LIBCPP_VISIBLE aligned_storage<_Len, n>\
 {\
     struct _ALIGNAS(n) type\
     {\
-        unsigned char _[_Len];\
+        unsigned char __lx[_Len];\
     };\
 }
 
@@ -1809,15 +1809,15 @@ struct __is_constructible<true, _Tp>
 template <class _Tp>
 struct __is_constructible_ref
 {
-    true_type static __(_Tp);
-    false_type static __(...);
+    true_type static __lxx(_Tp);
+    false_type static __lxx(...);
 };
 
 template <class _Tp, class _A0>
 struct __is_constructible<true, _Tp, _A0>
     : public common_type
              <
-                 decltype(__is_constructible_ref<_Tp>::__(declval<_A0>()))
+                 decltype(__is_constructible_ref<_Tp>::__lxx(declval<_A0>()))
              >::type
     {};
 

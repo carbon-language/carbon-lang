@@ -19,7 +19,7 @@ template <class _Tp>
 struct __derives_from_unary_function
 {
 private:
-    struct __two {char _; char __;};
+    struct __two {char __lx; char __lxx;};
     static __two __test(...);
     template <class _Ap, class _Rp>
         static unary_function<_Ap, _Rp>
@@ -33,7 +33,7 @@ template <class _Tp>
 struct __derives_from_binary_function
 {
 private:
-    struct __two {char _; char __;};
+    struct __two {char __lx; char __lxx;};
     static __two __test(...);
     template <class _A1, class _A2, class _Rp>
         static binary_function<_A1, _A2, _Rp>
@@ -943,7 +943,7 @@ template <class _Tp>
 struct __has_type
 {
 private:
-    struct __two {char _; char __;};
+    struct __two {char __lx; char __lxx;};
     template <class _Up> static __two __test(...);
     template <class _Up> static char __test(typename _Up::type* = 0);
 public:

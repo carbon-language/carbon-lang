@@ -142,7 +142,7 @@ template <class _Tp>
 struct __has_allocator_type
 {
 private:
-    struct __two {char _; char __;};
+    struct __two {char __lx; char __lxx;};
     template <class _Up> static __two __test(...);
     template <class _Up> static char __test(typename _Up::allocator_type* = 0);
 public:

@@ -125,14 +125,14 @@ static const std::size_t __sp_mut_count = 16;
 static mutex mut_back[__sp_mut_count];
 
 _LIBCPP_CONSTEXPR __sp_mut::__sp_mut(void* p) _NOEXCEPT
-   : _(p)
+   : __lx(p)
 {
 }
 
 void
 __sp_mut::lock() _NOEXCEPT
 {
-    mutex& m = *static_cast<mutex*>(_);
+    mutex& m = *static_cast<mutex*>(__lx);
     unsigned count = 0;
     while (!m.try_lock())
     {
@@ -148,7 +148,7 @@ __sp_mut::lock() _NOEXCEPT
 void
 __sp_mut::unlock() _NOEXCEPT
 {
-    static_cast<mutex*>(_)->unlock();
+    static_cast<mutex*>(__lx)->unlock();
 }
 
 __sp_mut&

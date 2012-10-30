@@ -287,14 +287,14 @@ swap(unique_lock<_Mutex>& __x, unique_lock<_Mutex>& __y) _NOEXCEPT
 
 struct _LIBCPP_VISIBLE cv_status
 {
-    enum _ {
+    enum __lx {
         no_timeout,
         timeout
     };
 
-    _ __v_;
+    __lx __v_;
 
-    _LIBCPP_INLINE_VISIBILITY cv_status(_ __v) : __v_(__v) {}
+    _LIBCPP_INLINE_VISIBILITY cv_status(__lx __v) : __v_(__v) {}
     _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
 
 };

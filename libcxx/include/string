@@ -1094,14 +1094,14 @@ private:
         union
         {
             unsigned char __size_;
-            value_type _;
+            value_type __lx;
         };
         value_type __data_[__min_cap];
     };
 
-    union _{__long _; __short __;};
+    union __lx{__long __lx; __short __lxx;};
 
-    enum {__n_words = sizeof(_) / sizeof(size_type)};
+    enum {__n_words = sizeof(__lx) / sizeof(size_type)};
 
     struct __raw
     {

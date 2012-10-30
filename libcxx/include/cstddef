@@ -58,12 +58,12 @@ typedef long double max_align_t;
 
 struct _LIBCPP_VISIBLE nullptr_t
 {
-    void* _;
+    void* __lx;
 
     struct __nat {int __for_bool_;};
 
-    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t() : _(0) {}
-    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t(int __nat::*) : _(0) {}
+    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t() : __lx(0) {}
+    _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR nullptr_t(int __nat::*) : __lx(0) {}
 
     _LIBCPP_ALWAYS_INLINE _LIBCPP_CONSTEXPR operator int __nat::*() const {return 0;}
 
