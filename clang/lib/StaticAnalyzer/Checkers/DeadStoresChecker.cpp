@@ -13,17 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/Checker.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
-#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/SaveAndRestore.h"
 
