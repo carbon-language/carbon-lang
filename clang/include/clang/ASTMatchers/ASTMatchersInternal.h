@@ -495,12 +495,15 @@ public:
                       BoundNodesTreeBuilder *Builder,
                       TraversalKind Traverse,
                       BindKind Bind) {
-    TOOLING_COMPILE_ASSERT((llvm::is_base_of<Decl, T>::value ||
-                            llvm::is_base_of<Stmt, T>::value ||
-                            llvm::is_base_of<TypeLoc, T>::value ||
-                            llvm::is_base_of<QualType, T>::value),
-                           unsupported_type_for_recursive_matching);
-    return matchesChildOf(ast_type_traits::DynTypedNode::create(Node),
+    TOOLING_COMPILE_ASSERT(
+        (llvm::is_base_of<Decl, T>::value ||
+         llvm::is_base_of<Stmt, T>::value ||
+         llvm::is_base_of<NestedNameSpecifier, T>::value ||
+         llvm::is_base_of<NestedNameSpecifierLoc, T>::value ||
+         llvm::is_base_of<TypeLoc, T>::value ||
+         llvm::is_base_of<QualType, T>::value),
+        unsupported_type_for_recursive_matching);
+   return matchesChildOf(ast_type_traits::DynTypedNode::create(Node),
                           Matcher, Builder, Traverse, Bind);
   }
 
@@ -509,11 +512,14 @@ public:
                            const DynTypedMatcher &Matcher,
                            BoundNodesTreeBuilder *Builder,
                            BindKind Bind) {
-    TOOLING_COMPILE_ASSERT((llvm::is_base_of<Decl, T>::value ||
-                            llvm::is_base_of<Stmt, T>::value ||
-                            llvm::is_base_of<TypeLoc, T>::value ||
-                            llvm::is_base_of<QualType, T>::value),
-                           unsupported_type_for_recursive_matching);
+    TOOLING_COMPILE_ASSERT(
+        (llvm::is_base_of<Decl, T>::value ||
+         llvm::is_base_of<Stmt, T>::value ||
+         llvm::is_base_of<NestedNameSpecifier, T>::value ||
+         llvm::is_base_of<NestedNameSpecifierLoc, T>::value ||
+         llvm::is_base_of<TypeLoc, T>::value ||
+         llvm::is_base_of<QualType, T>::value),
+        unsupported_type_for_recursive_matching);
     return matchesDescendantOf(ast_type_traits::DynTypedNode::create(Node),
                                Matcher, Builder, Bind);
   }
