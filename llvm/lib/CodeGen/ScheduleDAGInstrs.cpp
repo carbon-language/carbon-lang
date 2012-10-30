@@ -420,11 +420,6 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 /// Return true if MI is an instruction we are unable to reason about
 /// (like a call or something with unmodeled side effects).
 static inline bool isGlobalMemoryObject(AliasAnalysis *AA, MachineInstr *MI) {
-  if (MI->isInlineAsm()) {
-    // Until we can tell if an inline assembly instruction accesses
-    // memory, we must assume all such instructions do so.
-    return true;
-  }
   if (MI->isCall() || MI->hasUnmodeledSideEffects() ||
       (MI->hasOrderedMemoryRef() &&
        (!MI->mayLoad() || !MI->isInvariantLoad(AA))))

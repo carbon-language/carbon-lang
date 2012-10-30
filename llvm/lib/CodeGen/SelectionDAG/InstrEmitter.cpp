@@ -903,6 +903,13 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
                           getZExtValue();
     MI->addOperand(MachineOperand::CreateImm(ExtraInfo));
 
+    // Set the MayLoad and MayStore flags.
+    if (ExtraInfo & InlineAsm::Extra_MayLoad)
+      MI->setFlag(MachineInstr::MayLoad);
+
+    if (ExtraInfo & InlineAsm::Extra_MayStore)
+      MI->setFlag(MachineInstr::MayStore);
+
     // Remember to operand index of the group flags.
     SmallVector<unsigned, 8> GroupIdx;
 

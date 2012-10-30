@@ -707,8 +707,9 @@ void MachineVerifier::verifyInlineAsm(const MachineInstr *MI) {
     report("Asm string must be an external symbol", MI);
   if (!MI->getOperand(1).isImm())
     report("Asm flags must be an immediate", MI);
-  // Allowed flags are Extra_HasSideEffects = 1, and Extra_IsAlignStack = 2.
-  if (!isUInt<2>(MI->getOperand(1).getImm()))
+  // Allowed flags are Extra_HasSideEffects = 1, Extra_IsAlignStack = 2,
+  // Extra_AsmDialect = 4, Extra_MayLoad = 8, and Extra_MayStore = 16.
+  if (!isUInt<5>(MI->getOperand(1).getImm()))
     report("Unknown asm flags", &MI->getOperand(1), 1);
 
   assert(InlineAsm::MIOp_FirstOperand == 2 && "Asm format changed");
