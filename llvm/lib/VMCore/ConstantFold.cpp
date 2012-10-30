@@ -87,9 +87,13 @@ foldConstantCastPair(
   Instruction::CastOps firstOp = Instruction::CastOps(Op->getOpcode());
   Instruction::CastOps secondOp = Instruction::CastOps(opc);
 
+  // Assume that pointers are never more than 64 bits wide.
+  IntegerType *FakeIntPtrTy = Type::getInt64Ty(DstTy->getContext());
+
   // Let CastInst::isEliminableCastPair do the heavy lifting.
   return CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy, DstTy,
-                                        Type::getInt64Ty(DstTy->getContext()));
+                                        FakeIntPtrTy, FakeIntPtrTy,
+                                        FakeIntPtrTy);
 }
 
 static Constant *FoldBitCast(Constant *V, Type *DestTy) {

@@ -238,16 +238,20 @@ isEliminableCastPair(
   // Get the opcodes of the two Cast instructions
   Instruction::CastOps firstOp = Instruction::CastOps(CI->getOpcode());
   Instruction::CastOps secondOp = Instruction::CastOps(opcode);
+  Type *SrcIntPtrTy = TD && SrcTy->isPtrOrPtrVectorTy() ?
+    TD->getIntPtrType(SrcTy) : 0;
+  Type *MidIntPtrTy = TD && MidTy->isPtrOrPtrVectorTy() ?
+    TD->getIntPtrType(MidTy) : 0;
+  Type *DstIntPtrTy = TD && DstTy->isPtrOrPtrVectorTy() ?
+    TD->getIntPtrType(DstTy) : 0;
   unsigned Res = CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
-                                                DstTy,
-                                  TD ? TD->getIntPtrType(DstTy) : 0);
+                                                DstTy, SrcIntPtrTy, MidIntPtrTy,
+                                                DstIntPtrTy);
 
   // We don't want to form an inttoptr or ptrtoint that converts to an integer
   // type that differs from the pointer size.
-  if ((Res == Instruction::IntToPtr &&
-          (!TD || SrcTy != TD->getIntPtrType(DstTy))) ||
-      (Res == Instruction::PtrToInt &&
-          (!TD || DstTy != TD->getIntPtrType(SrcTy))))
+  if ((Res == Instruction::IntToPtr && SrcTy != DstIntPtrTy) ||
+      (Res == Instruction::PtrToInt && DstTy != SrcIntPtrTy))
     Res = 0;
 
   return Instruction::CastOps(Res);

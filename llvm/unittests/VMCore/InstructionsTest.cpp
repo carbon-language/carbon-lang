@@ -243,5 +243,42 @@ TEST(InstructionsTest, FPMathOperator) {
   delete I;
 }
 
+
+TEST(InstructionsTest, isEliminableCastPair) {
+  LLVMContext &C(getGlobalContext());
+
+  Type* Int32Ty = Type::getInt32Ty(C);
+  Type* Int64Ty = Type::getInt64Ty(C);
+  Type* Int64PtrTy = Type::getInt64PtrTy(C);
+
+  // Source and destination pointers have same size -> bitcast.
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
+                                           CastInst::IntToPtr,
+                                           Int64PtrTy, Int64Ty, Int64PtrTy,
+                                           Int32Ty, 0, Int32Ty),
+            CastInst::BitCast);
+
+  // Source and destination pointers have different sizes -> fail.
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
+                                           CastInst::IntToPtr,
+                                           Int64PtrTy, Int64Ty, Int64PtrTy,
+                                           Int32Ty, 0, Int64Ty),
+            0U);
+
+  // Middle pointer big enough -> bitcast.
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
+                                           CastInst::PtrToInt,
+                                           Int64Ty, Int64PtrTy, Int64Ty,
+                                           0, Int64Ty, 0),
+            CastInst::BitCast);
+
+  // Middle pointer too small -> fail.
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
+                                           CastInst::PtrToInt,
+                                           Int64Ty, Int64PtrTy, Int64Ty,
+                                           0, Int32Ty, 0),
+            0U);
+}
+
 }  // end anonymous namespace
 }  // end namespace llvm
