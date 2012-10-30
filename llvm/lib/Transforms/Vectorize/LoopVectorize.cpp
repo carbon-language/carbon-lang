@@ -749,16 +749,21 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 }
 
 
+/// This function returns the identity element (or neutral element) for
+/// the operation K.
 static unsigned
 getReductionIdentity(LoopVectorizationLegality::ReductionKind K) {
   switch (K) {
   case LoopVectorizationLegality::IntegerXor:
   case LoopVectorizationLegality::IntegerAdd:
   case LoopVectorizationLegality::IntegerOr:
+    // Adding, Xoring, Oring zero to a number does not change it.
     return 0;
   case LoopVectorizationLegality::IntegerMult:
+    // Multiplying a number by 1 does not change it.
     return 1;
   case LoopVectorizationLegality::IntegerAnd:
+    // AND-ing a number with an all-1 value does not change it.
     return -1;
   default:
     llvm_unreachable("Unknown reduction kind");
