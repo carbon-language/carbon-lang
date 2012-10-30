@@ -900,7 +900,7 @@ private:
   /// into account all the necessary relocations.
   const FileEntry *getFileEntry(StringRef filename);
 
-  StringRef MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
+  void MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
 
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
                             ModuleFile *ImportedBy,
@@ -1163,7 +1163,7 @@ public:
 
   /// \brief Retrieve the name of the original source file name for the primary
   /// module file.
-  const std::string &getOriginalSourceFile() { 
+  StringRef getOriginalSourceFile() {
     return ModuleMgr.getPrimaryModule().OriginalSourceFileName; 
   }
 

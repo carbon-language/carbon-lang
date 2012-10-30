@@ -1679,19 +1679,19 @@ const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
 /// \brief If we are loading a relocatable PCH file, and the filename is
 /// not an absolute path, add the system root to the beginning of the file
 /// name.
-StringRef ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M, 
-                                                  std::string &Filename) {
+void ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M,
+                                             std::string &Filename) {
   // If this is not a relocatable PCH file, there's nothing to do.
   if (!M.RelocatablePCH)
-    return Filename;
+    return;
 
   if (Filename.empty() || llvm::sys::path::is_absolute(Filename))
-    return Filename;
+    return;
 
   if (isysroot.empty()) {
     // If no system root was given, default to '/'
     Filename.insert(Filename.begin(), '/');
-    return Filename;
+    return;
   }
 
   unsigned Length = isysroot.size();
@@ -1699,7 +1699,6 @@ StringRef ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M,
     Filename.insert(Filename.begin(), '/');
 
   Filename.insert(Filename.begin(), isysroot.begin(), isysroot.end());
-  return Filename;
 }
 
 ASTReader::ASTReadResult

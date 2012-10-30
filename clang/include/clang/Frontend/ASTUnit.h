@@ -467,7 +467,7 @@ public:
 
   const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
 
-  const std::string &getOriginalSourceFileName() {
+  const StringRef getOriginalSourceFileName() {
     return OriginalSourceFile;
   }
 
