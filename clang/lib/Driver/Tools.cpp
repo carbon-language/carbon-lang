@@ -93,8 +93,14 @@ static void addDirectoryList(const ArgList &Args,
                              const char *ArgName,
                              const char *EnvVar) {
   const char *DirList = ::getenv(EnvVar);
+  bool CombinedArg = false;
+
   if (!DirList)
     return; // Nothing to do.
+
+  StringRef Name(ArgName);
+  if (Name.equals("-I") || Name.equals("-L"))
+    CombinedArg = true;
 
   StringRef Dirs(DirList);
   if (Dirs.empty()) // Empty string should not add '.'.
@@ -103,21 +109,37 @@ static void addDirectoryList(const ArgList &Args,
   StringRef::size_type Delim;
   while ((Delim = Dirs.find(llvm::sys::PathSeparator)) != StringRef::npos) {
     if (Delim == 0) { // Leading colon.
-      CmdArgs.push_back(ArgName);
-      CmdArgs.push_back(".");
+      if (CombinedArg) {
+        CmdArgs.push_back(Args.MakeArgString(std::string(ArgName) + "."));
+      } else {
+        CmdArgs.push_back(ArgName);
+        CmdArgs.push_back(".");
+      }
     } else {
-      CmdArgs.push_back(ArgName);
-      CmdArgs.push_back(Args.MakeArgString(Dirs.substr(0, Delim)));
+      if (CombinedArg) {
+        CmdArgs.push_back(Args.MakeArgString(std::string(ArgName) + Dirs.substr(0, Delim)));
+      } else {
+        CmdArgs.push_back(ArgName);
+        CmdArgs.push_back(Args.MakeArgString(Dirs.substr(0, Delim)));
+      }
     }
     Dirs = Dirs.substr(Delim + 1);
   }
 
   if (Dirs.empty()) { // Trailing colon.
-    CmdArgs.push_back(ArgName);
-    CmdArgs.push_back(".");
+    if (CombinedArg) {
+      CmdArgs.push_back(Args.MakeArgString(std::string(ArgName) + "."));
+    } else {
+      CmdArgs.push_back(ArgName);
+      CmdArgs.push_back(".");
+    }
   } else { // Add the last path.
-    CmdArgs.push_back(ArgName);
-    CmdArgs.push_back(Args.MakeArgString(Dirs));
+    if (CombinedArg) {
+      CmdArgs.push_back(Args.MakeArgString(std::string(ArgName) + Dirs));
+    } else {
+      CmdArgs.push_back(ArgName);
+      CmdArgs.push_back(Args.MakeArgString(Dirs));
+    }
   }
 }
 
