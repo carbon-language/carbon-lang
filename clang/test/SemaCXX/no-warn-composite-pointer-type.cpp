@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wno-compare-distinct-pointer-type -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-compare-distinct-pointer-types -verify %s
 // expected-no-diagnostics
 // rdar://12501960
 
