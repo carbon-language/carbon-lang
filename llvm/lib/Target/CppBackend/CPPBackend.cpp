@@ -507,6 +507,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       HANDLE_ATTR(ReturnsTwice);
       HANDLE_ATTR(UWTable);
       HANDLE_ATTR(NonLazyBind);
+      HANDLE_ATTR(MinSize);
 #undef HANDLE_ATTR
       if (attrs.hasAttribute(Attributes::StackAlignment))
         Out << "    B.addStackAlignmentAttr(" << attrs.getStackAlignment() << ")\n";

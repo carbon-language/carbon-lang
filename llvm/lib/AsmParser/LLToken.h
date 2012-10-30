@@ -110,7 +110,7 @@ namespace lltok {
     kw_naked,
     kw_nonlazybind,
     kw_address_safety,
-    kw_forcesizeopt,
+    kw_minsize,
 
     kw_type,
     kw_opaque,

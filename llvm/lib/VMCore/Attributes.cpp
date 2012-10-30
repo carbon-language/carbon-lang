@@ -201,8 +201,8 @@ std::string Attributes::getAsString() const {
     Result += "nonlazybind ";
   if (hasAttribute(Attributes::AddressSafety))
     Result += "address_safety ";
-  if (hasAttribute(Attributes::ForceSizeOpt))
-    Result += "forcesizeopt ";
+  if (hasAttribute(Attributes::MinSize))
+    Result += "minsize ";
   if (hasAttribute(Attributes::StackAlignment)) {
     Result += "alignstack(";
     Result += utostr(getStackAlignment());
@@ -326,7 +326,7 @@ uint64_t AttributesImpl::getAttrMask(uint64_t Val) {
   case Attributes::UWTable:         return 1 << 30;
   case Attributes::NonLazyBind:     return 1U << 31;
   case Attributes::AddressSafety:   return 1ULL << 32;
-  case Attributes::ForceSizeOpt:    return 1ULL << 33;
+  case Attributes::MinSize:         return 1ULL << 33;
   }
   llvm_unreachable("Unsupported attribute type");
 }

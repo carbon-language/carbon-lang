@@ -58,9 +58,9 @@ public:
                            ///< 0 means unaligned different from align 1
     AlwaysInline,          ///< inline=always
     ByVal,                 ///< Pass structure by value
-    ForceSizeOpt,          ///< Function must be optimized for size first
     InlineHint,            ///< Source said inlining was desirable
     InReg,                 ///< Force argument to be passed in register
+    MinSize,               ///< Function must be optimized for size first
     Naked,                 ///< Naked function
     Nest,                  ///< Nested function static chain
     NoAlias,               ///< Considered to not alias after call
@@ -154,7 +154,7 @@ public:
       hasAttribute(Attributes::NonLazyBind) ||
       hasAttribute(Attributes::ReturnsTwice) ||
       hasAttribute(Attributes::AddressSafety) ||
-      hasAttribute(Attributes::ForceSizeOpt);
+      hasAttribute(Attributes::MinSize);
   }
 
   bool operator==(const Attributes &A) const {
@@ -266,7 +266,7 @@ public:
       .removeAttribute(Attributes::NonLazyBind)
       .removeAttribute(Attributes::ReturnsTwice)
       .removeAttribute(Attributes::AddressSafety)
-      .removeAttribute(Attributes::ForceSizeOpt);
+      .removeAttribute(Attributes::MinSize);
   }
 
   uint64_t Raw() const { return Bits; }

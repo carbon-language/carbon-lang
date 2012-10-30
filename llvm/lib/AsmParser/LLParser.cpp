@@ -953,7 +953,7 @@ bool LLParser::ParseOptionalAttrs(AttrBuilder &B, unsigned AttrKind) {
     case lltok::kw_naked:           B.addAttribute(Attributes::Naked); break;
     case lltok::kw_nonlazybind:     B.addAttribute(Attributes::NonLazyBind); break;
     case lltok::kw_address_safety:  B.addAttribute(Attributes::AddressSafety); break;
-    case lltok::kw_forcesizeopt:    B.addAttribute(Attributes::ForceSizeOpt); break;
+    case lltok::kw_minsize:         B.addAttribute(Attributes::MinSize); break;
 
     case lltok::kw_alignstack: {
       unsigned Alignment;
@@ -1012,7 +1012,7 @@ bool LLParser::ParseOptionalAttrs(AttrBuilder &B, unsigned AttrKind) {
     case lltok::kw_nonlazybind:
     case lltok::kw_returns_twice:
     case lltok::kw_address_safety:
-    case lltok::kw_forcesizeopt:
+    case lltok::kw_minsize:
       if (AttrKind != 2)
         HaveError |= Error(AttrLoc, "invalid use of function-only attribute");
       break;

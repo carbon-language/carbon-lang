@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 | FileCheck %s -check-prefix=T2
 ; rdar://12348580
 
-define void @t1() noreturn forcesizeopt nounwind ssp {
+define void @t1() noreturn minsize nounwind ssp {
 entry:
 ; ARM: t1:
 ; ARM: bl _bar
@@ -17,7 +17,7 @@ entry:
   unreachable
 }
 
-define void @t2() noreturn forcesizeopt nounwind ssp {
+define void @t2() noreturn minsize nounwind ssp {
 entry:
 ; ARM: t2:
 ; ARM: bl _t1

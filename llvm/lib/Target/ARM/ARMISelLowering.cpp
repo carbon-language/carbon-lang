@@ -1594,15 +1594,15 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // FIXME: handle tail calls differently.
   unsigned CallOpc;
-  bool HasForceSizeAttr = MF.getFunction()->getFnAttributes().
-                          hasAttribute(Attributes::ForceSizeOpt);
+  bool HasMinSizeAttr = MF.getFunction()->getFnAttributes().
+    hasAttribute(Attributes::MinSize);
   if (Subtarget->isThumb()) {
     if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
     else if (doesNotRet && isDirect && !isARMFunc &&
              Subtarget->hasRAS() && !Subtarget->isThumb1Only() &&
 	     // Emit regular call when code size is the priority
-	     !HasForceSizeAttr)
+	     !HasMinSizeAttr)
       // "mov lr, pc; b _foo" to avoid confusing the RSP
       CallOpc = ARMISD::CALL_NOLINK;
     else
@@ -1612,7 +1612,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       CallOpc = ARMISD::CALL_NOLINK;
     } else if (doesNotRet && isDirect && Subtarget->hasRAS() &&
 	       // Emit regular call when code size is the priority
-	       !HasForceSizeAttr)
+	       !HasMinSizeAttr)
       // "mov lr, pc; b _foo" to avoid confusing the RSP
       CallOpc = ARMISD::CALL_NOLINK;
     else
