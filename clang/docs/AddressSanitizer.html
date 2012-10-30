@@ -105,6 +105,13 @@ previously allocated by thread T0 here:
 ==9442== ABORTING
 </pre>
 
+AddressSanitizer exits on the first detected error. This is by design.
+One reason: it makes the generated code smaller and faster (both by ~5%).
+Another reason: this makes fixing bugs unavoidable. With Valgrind, it is often
+the case that users treat Valgrind warnings as false positives
+(which they are not) and don't fix them.
+
+
 <h3 id="has_feature">__has_feature(address_sanitizer)</h3>
 In some cases one may need to execute different code depending on whether
 AddressSanitizer is enabled.
