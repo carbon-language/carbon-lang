@@ -2472,7 +2472,6 @@ namespace {
       Instruction *L = I, *H = J;
       if (FlipMemInputs)
         std::swap(H, L);
-      FlipMemInputs = false;
 
       unsigned NumOperands = I->getNumOperands();
       SmallVector<Value *, 3> ReplacedOperands(NumOperands);
