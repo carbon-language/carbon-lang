@@ -30,7 +30,7 @@
 # CHECK:	ldm	r0!, {r1}
 0x02 0xc8
 
-# CHECK:	ldr	r5, #432
+# CHECK:	ldr	r5, [pc, #432]
 0x6c 0x4d
 
 # CHECK:	str	r0, [r3]

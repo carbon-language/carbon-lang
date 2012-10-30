@@ -283,8 +283,8 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-void ARMInstPrinter::printT2LdrLabelOperand(const MCInst *MI, unsigned OpNum,
-                                       raw_ostream &O) {
+void ARMInstPrinter::printThumbLdrLabelOperand(const MCInst *MI, unsigned OpNum,
+                                               raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   if (MO1.isExpr())
     O << *MO1.getExpr();
