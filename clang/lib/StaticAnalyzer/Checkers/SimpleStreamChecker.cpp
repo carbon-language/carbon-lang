@@ -205,10 +205,12 @@ ExplodedNode *SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
   }
 
   // Attach bug reports to the leak node.
+  // TODO: Identify the leaked file descriptor.
   for (llvm::SmallVector<SymbolRef, 2>::iterator
       I = LeakedStreams.begin(), E = LeakedStreams.end(); I != E; ++I) {
     BugReport *R = new BugReport(*LeakBugType,
         "Opened file is never closed; potential resource leak", ErrNode);
+    R->markInteresting(*I);
     C.EmitReport(R);
   }
 
