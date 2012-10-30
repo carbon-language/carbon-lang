@@ -121,7 +121,7 @@ entry:
 ; STATIC32: jal
 ; STATIC32: .end caller8_1
 ; N64: .ent caller8_1
-; N64: jalr
+; N64-NOT: jalr
 ; N64: .end caller8_1
 
   %call = tail call i32 (i32, ...)* @callee8(i32 2, i32 1) nounwind
@@ -153,6 +153,70 @@ entry:
 ; N64: .end caller9_1
 
   %call = tail call i32 @callee9(%struct.S* byval @gs1) nounwind
+  ret i32 %call
+}
+
+declare i32 @callee10(i32, i32, i32, i32, i32, i32, i32, i32, i32)
+
+define i32 @caller10(i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7, i32 %a8) nounwind {
+entry:
+; PIC32: .ent caller10
+; PIC32-NOT: jalr
+; STATIC32: .ent caller10
+; STATIC32-NOT: jal
+; N64: .ent caller10
+; N64-NOT: jalr
+
+  %call = tail call i32 @callee10(i32 %a8, i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7) nounwind
+  ret i32 %call
+}
+
+declare i32 @callee11(%struct.S* byval)
+
+define i32 @caller11() nounwind noinline {
+entry:
+; PIC32: .ent caller11
+; PIC32: jalr
+; STATIC32: .ent caller11
+; STATIC32: jal
+; N64: .ent caller11
+; N64: jalr
+
+  %call = tail call i32 @callee11(%struct.S* byval @gs1) nounwind
+  ret i32 %call
+}
+
+declare i32 @callee12()
+
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+
+define i32 @caller12(%struct.S* nocapture byval %a0) nounwind {
+entry:
+; PIC32: .ent caller12
+; PIC32: jalr
+; STATIC32: .ent caller12
+; STATIC32: jal
+; N64: .ent caller12
+; N64: jalr
+
+  %0 = bitcast %struct.S* %a0 to i8*
+  tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* bitcast (%struct.S* @gs1 to i8*), i8* %0, i32 8, i32 4, i1 false)
+  %call = tail call i32 @callee12() nounwind
+  ret i32 %call
+}
+
+declare i32 @callee13(i32, ...)
+
+define i32 @caller13() nounwind {
+entry:
+; PIC32: .ent caller13
+; PIC32-NOT: jalr
+; STATIC32: .ent caller13
+; STATIC32-NOT: jal
+; N64: .ent caller13
+; N64-NOT: jalr
+
+  %call = tail call i32 (i32, ...)* @callee13(i32 1, i32 2) nounwind
   ret i32 %call
 }
 

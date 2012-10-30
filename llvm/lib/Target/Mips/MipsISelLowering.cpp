@@ -2660,8 +2660,9 @@ static unsigned getNextIntArgReg(unsigned Reg) {
 /// IsEligibleForTailCallOptimization - Check whether the call is eligible
 /// for tail call optimization.
 bool MipsTargetLowering::
-IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo, bool IsVarArg,
-                                  unsigned NextStackOffset) const {
+IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
+                                  unsigned NextStackOffset,
+                                  const MipsFunctionInfo& FI) const {
   if (!EnableMipsTailCalls)
     return false;
 
@@ -2669,11 +2670,13 @@ IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo, bool IsVarArg,
   if (Subtarget->inMips16Mode())
     return false;
 
-  if (MipsCCInfo.hasByValArg() || IsVarArg)
+  // Return false if either the callee or caller has a byval argument.
+  if (MipsCCInfo.hasByValArg() || FI.hasByvalArg())
     return false;
 
-  // Return true if no arguments are passed on stack.
-  return MipsCCInfo.reservedArgArea() == NextStackOffset;
+  // Return true if the callee's next stack offset is no larger than the
+  // caller's.
+  return NextStackOffset <= FI.nextStackOffset();
 }
 
 SDValue
@@ -2725,13 +2728,12 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NextStackOffset = CCInfo.getNextStackOffset();
-  unsigned StackAlignment = TFL->getStackAlignment();
-  NextStackOffset = RoundUpToAlignment(NextStackOffset, StackAlignment);
 
   // Check if it's really possible to do a tail call.
   if (isTailCall)
-    isTailCall = IsEligibleForTailCallOptimization(MipsCCInfo, isVarArg,
-                                                   NextStackOffset);
+    isTailCall =
+      IsEligibleForTailCallOptimization(MipsCCInfo, NextStackOffset,
+                                        *MF.getInfo<MipsFunctionInfo>());
 
   if (isTailCall)
     ++NumTailCalls;
@@ -2739,6 +2741,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Chain is the output chain of the last Load/Store or CopyToReg node.
   // ByValChain is the output chain of the last Memcpy node created for copying
   // byval arguments to the stack.
+  unsigned StackAlignment = TFL->getStackAlignment();
+  NextStackOffset = RoundUpToAlignment(NextStackOffset, StackAlignment);
   SDValue NextStackOffsetVal = DAG.getIntPtrConstant(NextStackOffset, true);
 
   if (!isTailCall)
@@ -2765,6 +2769,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(Flags.getByValSize() &&
              "ByVal args of size 0 should have been ignored by front-end.");
       assert(ByValArg != MipsCCInfo.byval_end());
+      assert(!isTailCall &&
+             "Do not tail-call optimize if there is a byval argument.");
       passByValArg(Chain, dl, RegsToPass, MemOpChains, StackPtr, MFI, DAG, Arg,
                    MipsCCInfo, *ByValArg, Flags, Subtarget->isLittle());
       ++ByValArg;
@@ -2817,10 +2823,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     // emit ISD::STORE whichs stores the
     // parameter value to a stack Location
-    SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
-                                 DAG.getIntPtrConstant(VA.getLocMemOffset()));
-    MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                       MachinePointerInfo(), false, false, 0));
+    MemOpChains.push_back(passArgOnStack(StackPtr, VA.getLocMemOffset(),
+                                         Chain, Arg, dl, isTailCall, DAG));
   }
 
   // Transform all store nodes into one single node because all store
