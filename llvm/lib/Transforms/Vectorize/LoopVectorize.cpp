@@ -1348,6 +1348,13 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
       Reads.push_back(Ptr);
   }
 
+  // If we write (or read-write) to a single destination and there are no
+  // other reads in this loop then is it safe to vectorize.
+  if (ReadWrites.size() == 1 && Reads.size() == 0) {
+    DEBUG(dbgs() << "LV: Found a write-only loop!\n");
+    return true;
+  }
+
   // Now that the pointers are in two lists (Reads and ReadWrites), we
   // can check that there are no conflicts between each of the writes and
   // between the writes to the reads.
