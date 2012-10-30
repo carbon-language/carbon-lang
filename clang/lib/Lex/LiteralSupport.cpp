@@ -1425,7 +1425,8 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
     const char *NextStart = resync_utf8(ErrorPtr, Fragment.end());
     StringRef NextFragment(NextStart, Fragment.end()-NextStart);
 
-    while (!ConvertUTF8toWide(CharByteWidth, NextFragment, ResultPtr,
+    while (!Builder.hasMaxRanges() &&
+           !ConvertUTF8toWide(CharByteWidth, NextFragment, ResultPtr,
                               ErrorPtrTmp)) {
       const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
       NextStart = resync_utf8(ErrorPtr, Fragment.end());

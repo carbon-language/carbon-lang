@@ -964,6 +964,10 @@ public:
            "Too many arguments to diagnostic!");
     DiagObj->DiagFixItHints[NumFixits++] = Hint;
   }
+
+  bool hasMaxRanges() const {
+    return NumRanges == DiagnosticsEngine::MaxRanges;
+  }
 };
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,

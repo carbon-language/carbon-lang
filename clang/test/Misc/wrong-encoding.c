@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -Wno-unused-value %s 2>&1 | FileCheck -strict-whitespace %s
+// REQUIRES: asserts
 
 void foo() {
 
@@ -30,4 +31,7 @@ void foo() {
   "xxé¿xxxxxxxxxxxxxxxxxxxxxé¿xx";
 // CHECK: {{^  "xx<E9><BF>xxxxxxxxxxxxxxxxxxxxx<E9><BF>xx";}}
 // CHECK: {{^     \^~~~~~~~                     ~~~~~~~~}}
+
+  "xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿x";
 }
+// CHECK-NOT:Assertion
