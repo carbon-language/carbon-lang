@@ -41,6 +41,7 @@ public:
   void CheckCallocZero(CheckerContext &C, const CallExpr *CE) const;
   void CheckMallocZero(CheckerContext &C, const CallExpr *CE) const;
   void CheckReallocZero(CheckerContext &C, const CallExpr *CE) const;
+  void CheckReallocfZero(CheckerContext &C, const CallExpr *CE) const;
   void CheckAllocaZero(CheckerContext &C, const CallExpr *CE) const;
   void CheckVallocZero(CheckerContext &C, const CallExpr *CE) const;
 
@@ -187,7 +188,8 @@ void UnixAPIChecker::CheckPthreadOnce(CheckerContext &C,
 }
 
 //===----------------------------------------------------------------------===//
-// "calloc", "malloc", "realloc", "alloca" and "valloc" with allocation size 0
+// "calloc", "malloc", "realloc", "reallocf", "alloca" and "valloc"
+// with allocation size 0
 //===----------------------------------------------------------------------===//
 // FIXME: Eventually these should be rolled into the MallocChecker, but right now
 // they're more basic and valuable for widespread use.
@@ -307,6 +309,11 @@ void UnixAPIChecker::CheckReallocZero(CheckerContext &C,
   BasicAllocationCheck(C, CE, 2, 1, "realloc");
 }
 
+void UnixAPIChecker::CheckReallocfZero(CheckerContext &C,
+                                       const CallExpr *CE) const {
+  BasicAllocationCheck(C, CE, 2, 1, "reallocf");
+}
+
 void UnixAPIChecker::CheckAllocaZero(CheckerContext &C,
                                      const CallExpr *CE) const {
   BasicAllocationCheck(C, CE, 1, 0, "alloca");
@@ -339,6 +346,7 @@ void UnixAPIChecker::checkPreStmt(const CallExpr *CE,
       .Case("calloc", &UnixAPIChecker::CheckCallocZero)
       .Case("malloc", &UnixAPIChecker::CheckMallocZero)
       .Case("realloc", &UnixAPIChecker::CheckReallocZero)
+      .Case("reallocf", &UnixAPIChecker::CheckReallocfZero)
       .Cases("alloca", "__builtin_alloca", &UnixAPIChecker::CheckAllocaZero)
       .Case("valloc", &UnixAPIChecker::CheckVallocZero)
       .Default(NULL);
