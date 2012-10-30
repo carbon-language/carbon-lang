@@ -33,7 +33,8 @@
 using namespace llvm;
 
 static cl::opt<bool>
-RunLoopVectorization("vectorize-loops", cl::desc("Run the Loop vectorization passes"));
+RunLoopVectorization("vectorize-loops",
+                     cl::desc("Run the Loop vectorization passes"));
 
 static cl::opt<bool>
 RunBBVectorization("vectorize", cl::desc("Run the BB vectorization passes"));
