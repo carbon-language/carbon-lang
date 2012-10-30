@@ -5941,7 +5941,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     // clang_type will get the function prototype clang type after this call
                     clang_type = ast.CreateFunctionType (return_clang_type, 
-                                                         &function_param_types[0], 
+                                                         function_param_types.data(),
                                                          function_param_types.size(), 
                                                          is_variadic, 
                                                          type_quals);
