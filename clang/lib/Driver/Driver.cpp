@@ -58,7 +58,7 @@ Driver::Driver(StringRef ClangExecutable,
     CCCIsCPP(false),CCCEcho(false), CCCPrintBindings(false),
     CCPrintOptions(false), CCPrintHeaders(false), CCLogDiagnostics(false),
     CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
-    CCCUseClang(true), CCCUseClangCPP(true),
+    CCCUseClang(true),
     ForcedClangUse(false), CCCUsePCH(true), SuppressMissingInputWarning(false) {
 
   Name = llvm::sys::path::stem(ClangExecutable);
@@ -278,7 +278,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   CCCUsePCH = Args->hasFlag(options::OPT_ccc_pch_is_pch,
                             options::OPT_ccc_pch_is_pth);
   CCCUseClang = !Args->hasArg(options::OPT_ccc_no_clang);
-  CCCUseClangCPP = !Args->hasArg(options::OPT_ccc_no_clang_cpp);
   // FIXME: DefaultTargetTriple is used by the target-prefixed calls to as/ld
   // and getToolChain is const.
   if (const Arg *A = Args->getLastArg(options::OPT_target))
@@ -1786,12 +1785,8 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
     return false;
 
   // Otherwise make sure this is an action clang understands.
-  if (isa<PreprocessJobAction>(JA)) {
-    if (!CCCUseClangCPP) {
-      Diag(clang::diag::warn_drv_not_using_clang_cpp);
-      return false;
-    }
-  } else if (!isa<PrecompileJobAction>(JA) && !isa<CompileJobAction>(JA))
+  if (!isa<PreprocessJobAction>(JA) && !isa<PrecompileJobAction>(JA) &&
+      !isa<CompileJobAction>(JA))
     return false;
 
   return true;

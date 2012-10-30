@@ -93,8 +93,6 @@ def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, CCCDriverOpt,
   MetaVarName<"<gcc-path>">;
 def ccc_no_clang : Flag<["-"], "ccc-no-clang">, CCCDriverOpt,
   HelpText<"Disable the clang compiler">;
-def ccc_no_clang_cpp : Flag<["-"], "ccc-no-clang-cpp">, CCCDriverOpt,
-  HelpText<"Disable the clang preprocessor">;
 def ccc_clang_archs : Separate<["-"], "ccc-clang-archs">, CCCDriverOpt,
   HelpText<"Comma separate list of architectures to use the clang compiler for">,
   MetaVarName<"<arch-list>">;
