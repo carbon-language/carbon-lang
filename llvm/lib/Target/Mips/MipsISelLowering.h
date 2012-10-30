@@ -309,6 +309,10 @@ namespace llvm {
                            DebugLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
 
+    SDValue passArgOnStack(SDValue StackPtr, unsigned Offset, SDValue Chain,
+                           SDValue Arg, DebugLoc DL, bool IsTailCall,
+                           SelectionDAG &DAG) const;
+
     virtual SDValue
       LowerCall(TargetLowering::CallLoweringInfo &CLI,
                 SmallVectorImpl<SDValue> &InVals) const;

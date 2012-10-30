@@ -2676,6 +2676,24 @@ IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo, bool IsVarArg,
   return MipsCCInfo.reservedArgArea() == NextStackOffset;
 }
 
+SDValue
+MipsTargetLowering::passArgOnStack(SDValue StackPtr, unsigned Offset,
+                                   SDValue Chain, SDValue Arg, DebugLoc DL,
+                                   bool IsTailCall, SelectionDAG &DAG) const {
+  if (!IsTailCall) {
+    SDValue PtrOff = DAG.getNode(ISD::ADD, DL, getPointerTy(), StackPtr,
+                                 DAG.getIntPtrConstant(Offset));
+    return DAG.getStore(Chain, DL, Arg, PtrOff, MachinePointerInfo(), false,
+                        false, 0);
+  }
+
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  int FI = MFI->CreateFixedObject(Arg.getValueSizeInBits() / 8, Offset, false);
+  SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+  return DAG.getStore(Chain, DL, Arg, FIN, MachinePointerInfo(),
+                      /*isVolatile=*/ true, false, 0);
+}
+
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 SDValue
