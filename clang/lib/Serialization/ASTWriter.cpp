@@ -2272,24 +2272,35 @@ ASTWriter::inferSubmoduleIDFromLocation(SourceLocation Loc) {
 }
 
 void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag) {
+  // FIXME: Make it work properly with modules.
+  llvm::SmallDenseMap<const DiagnosticsEngine::DiagState *, unsigned, 64>
+      DiagStateIDMap;
+  unsigned CurrID = 0;
+  DiagStateIDMap[&Diag.DiagStates.front()] = ++CurrID; // the command-line one.
   RecordData Record;
   for (DiagnosticsEngine::DiagStatePointsTy::const_iterator
          I = Diag.DiagStatePoints.begin(), E = Diag.DiagStatePoints.end();
          I != E; ++I) {
-    const DiagnosticsEngine::DiagStatePoint &point = *I; 
+    const DiagnosticsEngine::DiagStatePoint &point = *I;
     if (point.Loc.isInvalid())
       continue;
 
     Record.push_back(point.Loc.getRawEncoding());
-    for (DiagnosticsEngine::DiagState::const_iterator
-           I = point.State->begin(), E = point.State->end(); I != E; ++I) {
-      if (I->second.isPragma()) {
-        Record.push_back(I->first);
-        Record.push_back(I->second.getMapping());
+    unsigned &DiagStateID = DiagStateIDMap[point.State];
+    Record.push_back(DiagStateID);
+    
+    if (DiagStateID == 0) {
+      DiagStateID = ++CurrID;
+      for (DiagnosticsEngine::DiagState::const_iterator
+             I = point.State->begin(), E = point.State->end(); I != E; ++I) {
+        if (I->second.isPragma()) {
+          Record.push_back(I->first);
+          Record.push_back(I->second.getMapping());
+        }
       }
+      Record.push_back(-1); // mark the end of the diag/map pairs for this
+                            // location.
     }
-    Record.push_back(-1); // mark the end of the diag/map pairs for this
-                          // location.
   }
 
   if (!Record.empty())

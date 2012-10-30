@@ -2512,11 +2512,6 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
     }
 
     case DIAG_PRAGMA_MAPPINGS:
-      if (Record.size() % 2 != 0) {
-        Error("invalid DIAG_USER_MAPPINGS block in AST file");
-        return true;
-      }
-        
       if (F.PragmaDiagMappings.empty())
         F.PragmaDiagMappings.swap(Record);
       else
@@ -4143,14 +4138,31 @@ HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
 }
 
 void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
+  // FIXME: Make it work properly with modules.
+  llvm::SmallVector<DiagnosticsEngine::DiagState *, 32> DiagStates;
   for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
     ModuleFile &F = *(*I);
     unsigned Idx = 0;
+    DiagStates.clear();
+    assert(!Diag.DiagStates.empty());
+    DiagStates.push_back(&Diag.DiagStates.front()); // the command-line one.
     while (Idx < F.PragmaDiagMappings.size()) {
       SourceLocation Loc = ReadSourceLocation(F, F.PragmaDiagMappings[Idx++]);
+      unsigned DiagStateID = F.PragmaDiagMappings[Idx++];
+      if (DiagStateID != 0) {
+        Diag.DiagStatePoints.push_back(
+                    DiagnosticsEngine::DiagStatePoint(DiagStates[DiagStateID-1],
+                    FullSourceLoc(Loc, SourceMgr)));
+        continue;
+      }
+      
+      assert(DiagStateID == 0);
+      // A new DiagState was created here.
       Diag.DiagStates.push_back(*Diag.GetCurDiagState());
+      DiagnosticsEngine::DiagState *NewState = &Diag.DiagStates.back();
+      DiagStates.push_back(NewState);
       Diag.DiagStatePoints.push_back(
-          DiagnosticsEngine::DiagStatePoint(&Diag.DiagStates.back(),
+          DiagnosticsEngine::DiagStatePoint(NewState,
                                             FullSourceLoc(Loc, SourceMgr)));
       while (1) {
         assert(Idx < F.PragmaDiagMappings.size() &&
