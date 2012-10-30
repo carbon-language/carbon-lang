@@ -47,33 +47,15 @@ Type *Type::getScalarType() {
   return this;
 }
 
+const Type *Type::getScalarType() const {
+  if (const VectorType *VTy = dyn_cast<VectorType>(this))
+    return VTy->getElementType();
+  return this;
+}
+
 /// isIntegerTy - Return true if this is an IntegerType of the specified width.
 bool Type::isIntegerTy(unsigned Bitwidth) const {
   return isIntegerTy() && cast<IntegerType>(this)->getBitWidth() == Bitwidth;
-}
-
-/// isIntOrIntVectorTy - Return true if this is an integer type or a vector of
-/// integer types.
-///
-bool Type::isIntOrIntVectorTy() const {
-  if (isIntegerTy())
-    return true;
-  if (getTypeID() != Type::VectorTyID) return false;
-  
-  return cast<VectorType>(this)->getElementType()->isIntegerTy();
-}
-
-/// isFPOrFPVectorTy - Return true if this is a FP type or a vector of FP types.
-///
-bool Type::isFPOrFPVectorTy() const {
-  if (getTypeID() == Type::HalfTyID || getTypeID() == Type::FloatTyID ||
-      getTypeID() == Type::DoubleTyID ||
-      getTypeID() == Type::FP128TyID || getTypeID() == Type::X86_FP80TyID || 
-      getTypeID() == Type::PPC_FP128TyID)
-    return true;
-  if (getTypeID() != Type::VectorTyID) return false;
-  
-  return cast<VectorType>(this)->getElementType()->isFloatingPointTy();
 }
 
 // canLosslesslyBitCastTo - Return true if this type can be converted to

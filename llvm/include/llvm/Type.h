@@ -153,7 +153,7 @@ public:
   /// isPPC_FP128Ty - Return true if this is powerpc long double.
   bool isPPC_FP128Ty() const { return getTypeID() == PPC_FP128TyID; }
 
-  /// isFloatingPointTy - Return true if this is one of the five floating point
+  /// isFloatingPointTy - Return true if this is one of the six floating point
   /// types
   bool isFloatingPointTy() const {
     return getTypeID() == HalfTyID || getTypeID() == FloatTyID ||
@@ -167,7 +167,7 @@ public:
 
   /// isFPOrFPVectorTy - Return true if this is a FP type or a vector of FP.
   ///
-  bool isFPOrFPVectorTy() const;
+  bool isFPOrFPVectorTy() const { return getScalarType()->isFloatingPointTy(); }
  
   /// isLabelTy - Return true if this is 'label'.
   bool isLabelTy() const { return getTypeID() == LabelTyID; }
@@ -185,7 +185,7 @@ public:
   /// isIntOrIntVectorTy - Return true if this is an integer type or a vector of
   /// integer types.
   ///
-  bool isIntOrIntVectorTy() const;
+  bool isIntOrIntVectorTy() const { return getScalarType()->isIntegerTy(); }
   
   /// isFunctionTy - True if this is an instance of FunctionType.
   ///
@@ -203,6 +203,11 @@ public:
   ///
   bool isPointerTy() const { return getTypeID() == PointerTyID; }
 
+  /// isPtrOrPtrVectorTy - Return true if this is a pointer type or a vector of
+  /// pointer types.
+  ///
+  bool isPtrOrPtrVectorTy() const { return getScalarType()->isPointerTy(); }
+ 
   /// isVectorTy - True if this is an instance of VectorType.
   ///
   bool isVectorTy() const { return getTypeID() == VectorTyID; }
@@ -293,6 +298,7 @@ public:
 
   /// getScalarType - If this is a vector type, return the element type,
   /// otherwise return 'this'.
+  const Type *getScalarType() const;
   Type *getScalarType();
 
   //===--------------------------------------------------------------------===//
