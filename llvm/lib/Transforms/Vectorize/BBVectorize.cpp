@@ -547,7 +547,7 @@ namespace {
     bool getPairPtrInfo(Instruction *I, Instruction *J,
         Value *&IPtr, Value *&JPtr, unsigned &IAlignment, unsigned &JAlignment,
         unsigned &IAddressSpace, unsigned &JAddressSpace,
-        int64_t &OffsetInElmts) {
+        int64_t &OffsetInElmts, bool ComputeOffset = true) {
       OffsetInElmts = 0;
       if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         LoadInst *LJ = cast<LoadInst>(J);
@@ -566,6 +566,9 @@ namespace {
         IAddressSpace = SI->getPointerAddressSpace();
         JAddressSpace = SJ->getPointerAddressSpace();
       }
+
+      if (!ComputeOffset)
+        return true;
 
       const SCEV *IPtrSCEV = SE->getSCEV(IPtr);
       const SCEV *JPtrSCEV = SE->getSCEV(JPtr);
@@ -1677,7 +1680,7 @@ namespace {
     // been precomputed (OffsetInElmts must be unused here).
     (void) getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
                           IAddressSpace, JAddressSpace,
-                          OffsetInElmts);
+                          OffsetInElmts, false);
 
     // The pointer value is taken to be the one with the lowest offset.
     Value *VPtr;
