@@ -149,9 +149,6 @@ private:
   /// Use the clang compiler where possible.
   unsigned CCCUseClang : 1;
 
-  /// Use clang for handling C++ and Objective-C++ inputs.
-  unsigned CCCUseClangCXX : 1;
-
   /// Use clang as a preprocessor (clang's preprocessor will still be
   /// used where an integrated CPP would).
   unsigned CCCUseClangCPP : 1;

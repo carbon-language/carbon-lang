@@ -26,10 +26,7 @@
 // RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -ccc-no-clang -fsyntax-only %s 2>&1 | FileCheck %s --check-prefix=CHECK06
 // CHECK06: "gcc::Compile", inputs: ["{{.*}}bindings.c"], output: (nothing)
 
-// RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -ccc-no-clang-cxx -fsyntax-only -x c++ %s 2>&1 | FileCheck %s --check-prefix=CHECK07
-// CHECK07: "gcc::Compile", inputs: ["{{.*}}bindings.c"], output: (nothing)
-
-// RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -ccc-clang-cxx -fsyntax-only -x c++ %s 2>&1 | FileCheck %s --check-prefix=CHECK08
+// RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -fsyntax-only -x c++ %s 2>&1 | FileCheck %s --check-prefix=CHECK08
 // CHECK08: "clang", inputs: ["{{.*}}bindings.c"], output: (nothing)
 
 // RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -ccc-no-clang-cpp -fsyntax-only -no-integrated-cpp %s 2>&1 | FileCheck %s --check-prefix=CHECK09

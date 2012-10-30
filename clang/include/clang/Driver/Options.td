@@ -91,10 +91,6 @@ def ccc_echo : Flag<["-"], "ccc-echo">, CCCDriverOpt,
 def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, CCCDriverOpt,
   HelpText<"Name for native GCC compiler">,
   MetaVarName<"<gcc-path>">;
-def ccc_clang_cxx : Flag<["-"], "ccc-clang-cxx">, CCCDriverOpt,
-  HelpText<"Enable the clang compiler for C++">;
-def ccc_no_clang_cxx : Flag<["-"], "ccc-no-clang-cxx">, CCCDriverOpt,
-  HelpText<"Disable the clang compiler for C++">;
 def ccc_no_clang : Flag<["-"], "ccc-no-clang">, CCCDriverOpt,
   HelpText<"Disable the clang compiler">;
 def ccc_no_clang_cpp : Flag<["-"], "ccc-no-clang-cpp">, CCCDriverOpt,
