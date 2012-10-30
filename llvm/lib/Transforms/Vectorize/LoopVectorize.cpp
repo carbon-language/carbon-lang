@@ -211,8 +211,6 @@ public:
   TheLoop(Lp), SE(Se), DL(Dl), Induction(0) { }
 
   /// This represents the kinds of reductions that we support.
-  /// We use the enum values to hold the 'identity' value for
-  /// each operand. This value does not change the result if applied.
   enum ReductionKind {
     NoReduction = -1, /// Not a reduction.
     IntegerAdd  = 0,  /// Sum of numbers.
@@ -523,7 +521,7 @@ SingleBlockLoopVectorizer::getUniformVector(unsigned Val, Type* ScalarTy) {
   SmallVector<Constant*, 8> Indices;
   // Create a vector of consecutive numbers from zero to VF.
   for (unsigned i = 0; i < VF; ++i)
-    Indices.push_back(ConstantInt::get(ScalarTy, Val));
+    Indices.push_back(ConstantInt::get(ScalarTy, Val, true));
 
   // Add the consecutive indices to the vector value.
   return ConstantVector::get(Indices);
@@ -750,6 +748,23 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   LoopBypassBlock = BypassBlock;
 }
 
+
+static unsigned
+getReductionIdentity(LoopVectorizationLegality::ReductionKind K) {
+  switch (K) {
+  case LoopVectorizationLegality::IntegerXor:
+  case LoopVectorizationLegality::IntegerAdd:
+  case LoopVectorizationLegality::IntegerOr:
+    return 0;
+  case LoopVectorizationLegality::IntegerMult:
+    return 1;
+  case LoopVectorizationLegality::IntegerAnd:
+    return -1;
+  default:
+    llvm_unreachable("Unknown reduction kind");
+  }
+}
+
 void
 SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   //===------------------------------------------------===//
@@ -974,10 +989,9 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     Value *VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
     Type *VecTy = VectorExit->getType();
 
-    // Find the reduction identity variable. The value of the enum is the
-    // identity. Zero for addition. One for Multiplication.
-    unsigned IdentitySclr =  RdxDesc.Kind;
-    Constant *Identity = getUniformVector(IdentitySclr,
+    // Find the reduction identity variable. Zero for addition, or, xor,
+    // one for multiplication, -1 for And.
+    Constant *Identity = getUniformVector(getReductionIdentity(RdxDesc.Kind),
                                           VecTy->getScalarType());
 
     // This vector is the Identity vector where the first element is the

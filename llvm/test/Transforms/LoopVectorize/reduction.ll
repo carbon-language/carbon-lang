@@ -151,6 +151,7 @@ for.end:                                          ; preds = %for.body, %entry
 
 ;CHECK: @reduction_and
 ;CHECK: and <4 x i32>
+;CHECK: <i32 -1, i32 -1, i32 -1, i32 -1>
 ;CHECK: ret i32
 define i32 @reduction_and(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
 entry:
