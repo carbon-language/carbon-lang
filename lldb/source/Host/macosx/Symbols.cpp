@@ -11,6 +11,7 @@
 
 // C Includes
 #include <dirent.h>
+#include <pwd.h>
 #include "llvm/Support/MachO.h"
 
 // C++ Includes
@@ -696,12 +697,27 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup
             
             if (!g_dsym_for_uuid_exe_exists)
             {
-                dsym_for_uuid_exe_spec.SetFile("~rc/bin/dsymForUUID", true);
+                dsym_for_uuid_exe_spec.SetFile("/usr/local/bin/dsymForUUID", false);
                 g_dsym_for_uuid_exe_exists = dsym_for_uuid_exe_spec.Exists();
                 if (!g_dsym_for_uuid_exe_exists)
                 {
-                    dsym_for_uuid_exe_spec.SetFile("/usr/local/bin/dsymForUUID", false);
-                    g_dsym_for_uuid_exe_exists = dsym_for_uuid_exe_spec.Exists();
+                    int bufsize;
+                    if ((bufsize = sysconf(_SC_GETPW_R_SIZE_MAX)) != -1)
+                    {
+                        char buffer[bufsize];
+                        struct passwd pwd;
+                        struct passwd *tilde_rc = NULL;
+                        // we are a library so we need to use the reentrant version of getpwnam()
+                        if (getpwnam_r ("rc", &pwd, buffer, bufsize, &tilde_rc) == 0 
+                            && tilde_rc 
+                            && tilde_rc->pw_dir)
+                        {
+                            std::string dsymforuuid_path(tilde_rc->pw_dir);
+                            dsymforuuid_path += "/bin/dsymForUUID";
+                            dsym_for_uuid_exe_spec.SetFile(dsymforuuid_path.c_str(), false);
+                            g_dsym_for_uuid_exe_exists = dsym_for_uuid_exe_spec.Exists();
+                        }
+                    }
                 }
             }
             if (!g_dsym_for_uuid_exe_exists && g_dbgshell_command != NULL)
