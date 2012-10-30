@@ -623,6 +623,88 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   }
 }
 
+// getVCmpInst: return the vector compare instruction for the specified
+// vector type and condition code. Since this is for altivec specific code,
+// only support the altivec types (v16i8, v8i16, v4i32, and v4f32).
+static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC) {
+  switch (CC) {
+    case ISD::SETEQ:
+    case ISD::SETUEQ:
+    case ISD::SETNE:
+    case ISD::SETUNE:
+      if (VecVT == MVT::v16i8)
+        return PPC::VCMPEQUB;
+      else if (VecVT == MVT::v8i16)
+        return PPC::VCMPEQUH;
+      else if (VecVT == MVT::v4i32)
+        return PPC::VCMPEQUW;
+      // v4f32 != v4f32 could be translate to unordered not equal
+      else if (VecVT == MVT::v4f32)
+        return PPC::VCMPEQFP;
+      break;
+    case ISD::SETLT:
+    case ISD::SETGT:
+    case ISD::SETLE:
+    case ISD::SETGE:
+      if (VecVT == MVT::v16i8)
+        return PPC::VCMPGTSB;
+      else if (VecVT == MVT::v8i16)
+        return PPC::VCMPGTSH;
+      else if (VecVT == MVT::v4i32)
+        return PPC::VCMPGTSW;
+      else if (VecVT == MVT::v4f32)
+        return PPC::VCMPGTFP;
+      break;
+    case ISD::SETULT:
+    case ISD::SETUGT:
+    case ISD::SETUGE:
+    case ISD::SETULE:
+      if (VecVT == MVT::v16i8)
+        return PPC::VCMPGTUB;
+      else if (VecVT == MVT::v8i16)
+        return PPC::VCMPGTUH;
+      else if (VecVT == MVT::v4i32)
+        return PPC::VCMPGTUW;
+      break;
+    case ISD::SETOEQ:
+      if (VecVT == MVT::v4f32)
+        return PPC::VCMPEQFP;
+      break;
+    case ISD::SETOLT:
+    case ISD::SETOGT:
+    case ISD::SETOLE:
+      if (VecVT == MVT::v4f32)
+        return PPC::VCMPGTFP;
+      break;
+    case ISD::SETOGE:
+      if (VecVT == MVT::v4f32)
+        return PPC::VCMPGEFP;
+      break;
+    default:
+      break;
+  }
+  llvm_unreachable("Invalid integer vector compare condition");
+}
+
+// getVCmpEQInst: return the equal compare instruction for the specified vector
+// type. Since this is for altivec specific code, only support the altivec
+// types (v16i8, v8i16, v4i32, and v4f32).
+static unsigned int getVCmpEQInst(MVT::SimpleValueType VecVT) {
+  switch (VecVT) {
+    case MVT::v16i8:
+      return PPC::VCMPEQUB;
+    case MVT::v8i16:
+      return PPC::VCMPEQUH;
+    case MVT::v4i32:
+      return PPC::VCMPEQUW;
+    case MVT::v4f32:
+      return PPC::VCMPEQFP;
+    default:
+      llvm_unreachable("Invalid integer vector compare condition");
+  }
+}
+
+
 SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
   unsigned Imm;
@@ -706,20 +788,58 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
 
-  // Altivec Vector compare instructions do not set any CR register by default
+  // Altivec Vector compare instructions do not set any CR register by default and
+  // vector compare operations return the same type as the operands.
   if (LHS.getValueType().isVector()) {
-    unsigned int Opc;
-    if (LHS.getValueType() == MVT::v16i8)
-      Opc = PPC::VCMPEQUB;
-    else if (LHS.getValueType() == MVT::v4i32)
-      Opc = PPC::VCMPEQUW;
-    else if (LHS.getValueType() == MVT::v8i16)
-      Opc = PPC::VCMPEQUH;
-    else if (LHS.getValueType() == MVT::v4f32)
-      Opc = PPC::VCMPEQFP;
-    else
-      llvm_unreachable("Invalid vector compare type: should be expanded by legalize");
-    return CurDAG->SelectNodeTo(N, Opc, LHS.getValueType(), LHS, RHS);
+    EVT VecVT = LHS.getValueType();
+    MVT::SimpleValueType VT = VecVT.getSimpleVT().SimpleTy;
+    unsigned int VCmpInst = getVCmpInst(VT, CC);
+
+    switch (CC) {
+      case ISD::SETEQ:
+      case ISD::SETOEQ:
+      case ISD::SETUEQ:
+        return CurDAG->SelectNodeTo(N, VCmpInst, VecVT, LHS, RHS);
+      case ISD::SETNE:
+      case ISD::SETONE:
+      case ISD::SETUNE: {
+        SDValue VCmp(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
+        return CurDAG->SelectNodeTo(N, PPC::VNOR, VecVT, VCmp, VCmp);
+      } 
+      case ISD::SETLT:
+      case ISD::SETOLT:
+      case ISD::SETULT:
+        return CurDAG->SelectNodeTo(N, VCmpInst, VecVT, RHS, LHS);
+      case ISD::SETGT:
+      case ISD::SETOGT:
+      case ISD::SETUGT:
+        return CurDAG->SelectNodeTo(N, VCmpInst, VecVT, LHS, RHS);
+      case ISD::SETGE:
+      case ISD::SETOGE:
+      case ISD::SETUGE: {
+        // Small optimization: Altivec provides a 'Vector Compare Greater Than
+        // or Equal To' instruction (vcmpgefp), so in this case there is no
+        // need for extra logic for the equal compare.
+        if (VecVT.getSimpleVT().isFloatingPoint()) {
+          return CurDAG->SelectNodeTo(N, VCmpInst, VecVT, LHS, RHS);
+        } else {
+          SDValue VCmpGT(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
+          unsigned int VCmpEQInst = getVCmpEQInst(VT);
+          SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
+          return CurDAG->SelectNodeTo(N, PPC::VOR, VecVT, VCmpGT, VCmpEQ);
+        }
+      }
+      case ISD::SETLE:
+      case ISD::SETOLE:
+      case ISD::SETULE: {
+        SDValue VCmpLE(CurDAG->getMachineNode(VCmpInst, dl, VecVT, RHS, LHS), 0);
+        unsigned int VCmpEQInst = getVCmpEQInst(VT);
+        SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
+        return CurDAG->SelectNodeTo(N, PPC::VOR, VecVT, VCmpLE, VCmpEQ);
+      }
+      default:
+        llvm_unreachable("Invalid vector compare type: should be expanded by legalize");
+    }
   }
 
   bool Inv;

@@ -396,6 +396,14 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v8i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
+
+    // Altivec does not contain unordered floating-point compare instructions
+    setCondCodeAction(ISD::SETUO, MVT::v4f32, Expand);
+    setCondCodeAction(ISD::SETUEQ, MVT::v4f32, Expand);
+    setCondCodeAction(ISD::SETUGT, MVT::v4f32, Expand);
+    setCondCodeAction(ISD::SETUGE, MVT::v4f32, Expand);
+    setCondCodeAction(ISD::SETULT, MVT::v4f32, Expand);
+    setCondCodeAction(ISD::SETULE, MVT::v4f32, Expand);
   }
 
   if (Subtarget->has64BitSupport()) {
