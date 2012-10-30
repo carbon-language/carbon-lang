@@ -467,7 +467,7 @@ public:
 
   const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
 
-  const StringRef getOriginalSourceFileName() {
+  StringRef getOriginalSourceFileName() {
     return OriginalSourceFile;
   }
 
