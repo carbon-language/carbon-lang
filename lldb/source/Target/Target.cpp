@@ -1711,6 +1711,7 @@ Target::EvaluateExpression
             // we don't do anything with these for now
             break;
         case Value::eValueTypeScalar:
+        case Value::eValueTypeVector:
             clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
             clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
             break;

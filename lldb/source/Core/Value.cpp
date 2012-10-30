@@ -662,6 +662,7 @@ Value::GetValueTypeAsCString (ValueType value_type)
     switch (value_type)
     {
     case eValueTypeScalar:      return "scalar";
+    case eValueTypeVector:      return "vector";
     case eValueTypeFileAddress: return "file address";
     case eValueTypeLoadAddress: return "load address";
     case eValueTypeHostAddress: return "host address";
