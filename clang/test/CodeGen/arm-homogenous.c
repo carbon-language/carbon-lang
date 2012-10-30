@@ -156,6 +156,40 @@ void test_return_union_with_struct_with_fundamental_elems(void) {
 }
 // CHECK: declare arm_aapcs_vfpcc %union.union_with_struct_with_fundamental_elems @returns_union_with_struct_with_fundamental_elems()
 
+// Make sure HAs that can be partially fit into VFP registers will be allocated
+// on stack and that later VFP candidates will go on stack as well.
+typedef struct {
+  double x;
+  double a2;
+  double a3;
+  double a4;
+} struct_of_four_doubles;
+extern void takes_struct_of_four_doubles(double a, struct_of_four_doubles b, struct_of_four_doubles c, double d);
+struct_of_four_doubles g_s4d;
+
+void test_struct_of_four_doubles(void) {
+// CHECK: test_struct_of_four_doubles
+// CHECK: call arm_aapcs_vfpcc void @takes_struct_of_four_doubles(double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, [6 x float] undef, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}})
+  takes_struct_of_four_doubles(3.0, g_s4d, g_s4d, 4.0);
+}
+
+typedef __attribute__(( ext_vector_type(8) )) char __char8;
+typedef __attribute__(( ext_vector_type(4) ))  short __short4;
+typedef struct {
+  __char8  a1;
+  __short4 a2;
+  __char8  a3;
+  __short4 a4;
+} struct_of_vecs;
+extern void takes_struct_of_vecs(double a, struct_of_vecs b, struct_of_vecs c, double d);
+struct_of_vecs g_vec;
+
+void test_struct_of_vecs(void) {
+// CHECK: test_struct_of_vecs
+// CHECK: call arm_aapcs_vfpcc void @takes_struct_of_vecs(double {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, [6 x float] undef, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, double {{.*}})
+  takes_struct_of_vecs(3.0, g_vec, g_vec, 4.0);
+}
+
 // FIXME: Tests necessary:
 //         - Vectors
 //         - C++ stuff

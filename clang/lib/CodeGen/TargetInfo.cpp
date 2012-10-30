@@ -2863,7 +2863,8 @@ private:
   ABIKind getABIKind() const { return Kind; }
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &AllocatedVFP,
+                                  bool &IsHA) const;
   bool isIllegalVectorType(QualType Ty) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const;
@@ -2907,10 +2908,32 @@ public:
 }
 
 void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  // To correctly handle Homogeneous Aggregate, we need to keep track of the
+  // number of VFP registers allocated so far.
+  // C.1.vfp If the argument is a VFP CPRC and there are sufficient consecutive
+  // VFP registers of the appropriate type unallocated then the argument is
+  // allocated to the lowest-numbered sequence of such registers.
+  // C.2.vfp If the argument is a VFP CPRC then any VFP registers that are
+  // unallocated are marked as unavailable. 
+  unsigned AllocatedVFP = 0;
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-       it != ie; ++it)
-    it->info = classifyArgumentType(it->type);
+       it != ie; ++it) {
+    unsigned PreAllocation = AllocatedVFP;
+    bool IsHA = false;
+    // 6.1.2.3 There is one VFP co-processor register class using registers
+    // s0-s15 (d0-d7) for passing arguments.
+    const unsigned NumVFPs = 16;
+    it->info = classifyArgumentType(it->type, AllocatedVFP, IsHA);
+    // If we do not have enough VFP registers for the HA, any VFP registers
+    // that are unallocated are marked as unavailable. To achieve this, we add
+    // padding of (NumVFPs - PreAllocation) floats.
+    if (IsHA && AllocatedVFP > NumVFPs && PreAllocation < NumVFPs) {
+      llvm::Type *PaddingTy = llvm::ArrayType::get(
+          llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocation);
+      it->info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
+    }
+  }
 
   // Always honor user-specified calling convention.
   if (FI.getCallingConvention() != llvm::CallingConv::C)
@@ -3012,7 +3035,17 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
   return (Members > 0 && Members <= 4);
 }
 
-ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
+ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, unsigned &AllocatedVFP,
+                                            bool &IsHA) const {
+  // We update number of allocated VFPs according to
+  // 6.1.2.1 The following argument types are VFP CPRCs:
+  //   A single-precision floating-point type (including promoted
+  //   half-precision types); A double-precision floating-point type;
+  //   A 64-bit or 128-bit containerized vector type; Homogeneous Aggregate
+  //   with a Base Type of a single- or double-precision floating-point type,
+  //   64-bit containerized vectors or 128-bit containerized vectors with one
+  //   to four Elements.
+
   // Handle illegal vector types here.
   if (isIllegalVectorType(Ty)) {
     uint64_t Size = getContext().getTypeSize(Ty);
@@ -3024,14 +3057,37 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     if (Size == 64) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 2);
+      // Align AllocatedVFP to an even number to use a D register.
+      AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 2);
+      AllocatedVFP += 2; // 1 D register = 2 S registers
       return ABIArgInfo::getDirect(ResType);
     }
     if (Size == 128) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 4);
+      AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 4);
+      AllocatedVFP += 4; // 1 Q register = 4 S registers
       return ABIArgInfo::getDirect(ResType);
     }
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
+  // Update AllocatedVFP for legal vector types.
+  if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    uint64_t Size = getContext().getTypeSize(VT);
+    // Size of a legal vector should be power of 2 and above 64.
+    AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, Size >= 128 ? 4 : 2);
+    AllocatedVFP += (Size / 32);
+  }
+  // Update AllocatedVFP for floating point types.
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+    if (BT->getKind() == BuiltinType::Half ||
+        BT->getKind() == BuiltinType::Float)
+      AllocatedVFP += 1;
+    if (BT->getKind() == BuiltinType::Double ||
+        BT->getKind() == BuiltinType::LongDouble) {
+      AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 2);
+      AllocatedVFP += 2;
+    }
   }
 
   if (!isAggregateTypeForABI(Ty)) {
@@ -3053,10 +3109,28 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
   if (getABIKind() == ARMABIInfo::AAPCS_VFP) {
-    // Homogeneous Aggregates need to be expanded.
+    // Homogeneous Aggregates need to be expanded when we can fit the aggregate
+    // into VFP registers.
     const Type *Base = 0;
-    if (isHomogeneousAggregate(Ty, Base, getContext())) {
+    uint64_t Members = 0;
+    if (isHomogeneousAggregate(Ty, Base, getContext(), &Members)) {
       assert(Base && "Base class should be set for homogeneous aggregate");
+      // Base can be a floating-point or a vector.
+      if (Base->isVectorType()) {
+        // ElementSize is in number of floats.
+        unsigned ElementSize = getContext().getTypeSize(Base) == 64 ? 2 : 4;
+        AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP,
+                       ElementSize);
+        AllocatedVFP += Members * ElementSize;
+      } else if (Base->isSpecificBuiltinType(BuiltinType::Float))
+        AllocatedVFP += Members;
+      else {
+        assert(Base->isSpecificBuiltinType(BuiltinType::Double) ||
+               Base->isSpecificBuiltinType(BuiltinType::LongDouble));
+        AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 2);
+        AllocatedVFP += Members * 2; // Base type is double.
+      }
+      IsHA = true;
       return ABIArgInfo::getExpand();
     }
   }
