@@ -196,7 +196,6 @@ unsigned VectorTargetTransformImpl::getBroadcastCost(Type *Tp) const {
 
 unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
                                   Type *Src) const {
-  assert(Src->isVectorTy() == Dst->isVectorTy() && "Invalid input types");
   int ISD = InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -217,6 +216,8 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
     }
   }
 
+  unsigned ScalarizationCost = 1;
+
   // Otherwise, assume that the cast is scalarized.
   if (Dst->isVectorTy()) {
     unsigned Num = Dst->getVectorNumElements();
@@ -224,11 +225,19 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
                                      Dst->getScalarType());
     // return the cost of multiple scalar invocation plus the cost of inserting
     // and extracting the values.
-    return getScalarizationOverhead(Dst, true, true) + Num * Cost;
+    ScalarizationCost *= getScalarizationOverhead(Dst, true, true) + Num * Cost;
   }
 
-  // Unknown scalar opcode.
-  return 1;
+  if (Src->isVectorTy()) {
+    unsigned Num = Src->getVectorNumElements();
+    unsigned Cost = getCastInstrCost(Opcode, Dst->getScalarType(),
+                                     Src->getScalarType());
+    // return the cost of multiple scalar invocation plus the cost of inserting
+    // and extracting the values.
+    ScalarizationCost *= getScalarizationOverhead(Src, true, true) + Num * Cost;
+  }
+
+  return ScalarizationCost;
 }
 
 unsigned VectorTargetTransformImpl::getCFInstrCost(unsigned Opcode) const {
