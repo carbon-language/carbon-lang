@@ -363,6 +363,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Expand);
     }
 
+    for (unsigned i = (unsigned)MVT::FIRST_FP_VECTOR_VALUETYPE;
+         i <= (unsigned)MVT::LAST_FP_VECTOR_VALUETYPE; ++i) {
+      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
+      setOperationAction(ISD::FSQRT, VT, Expand);
+    }
+
     // We can custom expand all VECTOR_SHUFFLEs to VPERM, others we can handle
     // with merges, splats, etc.
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16i8, Custom);
