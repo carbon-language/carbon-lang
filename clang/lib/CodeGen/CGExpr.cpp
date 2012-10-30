@@ -3362,6 +3362,13 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     return ConvertTempToRValue(*this, E->getType(), Dest);
   }
 
+  bool IsStore = E->getOp() == AtomicExpr::AO__c11_atomic_store ||
+                 E->getOp() == AtomicExpr::AO__atomic_store ||
+                 E->getOp() == AtomicExpr::AO__atomic_store_n;
+  bool IsLoad = E->getOp() == AtomicExpr::AO__c11_atomic_load ||
+                E->getOp() == AtomicExpr::AO__atomic_load ||
+                E->getOp() == AtomicExpr::AO__atomic_load_n;
+
   llvm::Type *IPtrTy =
       llvm::IntegerType::get(getLLVMContext(), Size * 8)->getPointerTo();
   llvm::Value *OrigDest = Dest;
@@ -3379,14 +3386,20 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       break;
     case 1:  // memory_order_consume
     case 2:  // memory_order_acquire
+      if (IsStore)
+        break; // Avoid crashing on code with undefined behavior
       EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
                    llvm::Acquire);
       break;
     case 3:  // memory_order_release
+      if (IsLoad)
+        break; // Avoid crashing on code with undefined behavior
       EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
                    llvm::Release);
       break;
     case 4:  // memory_order_acq_rel
+      if (IsLoad || IsStore)
+        break; // Avoid crashing on code with undefined behavior
       EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
                    llvm::AcquireRelease);
       break;
@@ -3405,13 +3418,6 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   }
 
   // Long case, when Order isn't obviously constant.
-
-  bool IsStore = E->getOp() == AtomicExpr::AO__c11_atomic_store ||
-                 E->getOp() == AtomicExpr::AO__atomic_store ||
-                 E->getOp() == AtomicExpr::AO__atomic_store_n;
-  bool IsLoad = E->getOp() == AtomicExpr::AO__c11_atomic_load ||
-                E->getOp() == AtomicExpr::AO__atomic_load ||
-                E->getOp() == AtomicExpr::AO__atomic_load_n;
 
   // Create all the relevant BB's
   llvm::BasicBlock *MonotonicBB = 0, *AcquireBB = 0, *ReleaseBB = 0,
