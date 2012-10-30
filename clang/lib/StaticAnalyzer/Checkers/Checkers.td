@@ -420,6 +420,10 @@ def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
   HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
   DescFile<"DirectIvarAssignment.cpp">;
 
+def ObjCSuperCallChecker : Checker<"MissingSuperCall">,
+  HelpText<"Warn about Objective-C methods that lack a necessary call to super">,
+  DescFile<"ObjCMissingSuperCallChecker.cpp">;
+
 } // end "alpha.osx.cocoa"
 
 let ParentPackage = CoreFoundation in {
