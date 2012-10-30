@@ -127,7 +127,7 @@ printableTextForNextCharacter(StringRef SourceLine, size_t *i,
 
   unsigned char const *begin, *end;
   begin = reinterpret_cast<unsigned char const *>(&*(SourceLine.begin() + *i));
-  end = begin + SourceLine.size();
+  end = begin + (SourceLine.size() - *i);
   
   if (isLegalUTF8Sequence(begin, end)) {
     UTF32 c;
