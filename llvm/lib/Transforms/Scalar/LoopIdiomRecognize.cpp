@@ -555,10 +555,11 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // can safely emit a memcpy.
   OwningPtr<Dependence> Dep(DA.depends(SI, LI, true));
   if (Dep) {
-    // If there is a dependence but the direction is positive we can still
-    // safely turn this into memmove.
-    if (Dep->getLevels() != 1 ||
-        Dep->getDirection(1) != Dependence::DVEntry::GT)
+    // If there is a dependence but the direction is positive (or none) we can
+    // still safely turn this into memmove.
+    unsigned Direction = Dep->getDirection(Dep->getLevels());
+    if (Direction != Dependence::DVEntry::NONE &&
+        Direction != Dependence::DVEntry::GT)
       return false;
     isMemcpySafe = false;
   }
