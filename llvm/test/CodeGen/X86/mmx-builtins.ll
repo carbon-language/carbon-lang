@@ -1043,6 +1043,20 @@ entry:
   ret i64 %5
 }
 
+define i32 @test21_2(<1 x i64> %a) nounwind readnone optsize ssp {
+; CHECK: test21_2
+; CHECK: pshufw
+; CHECK: movd
+entry:
+  %0 = bitcast <1 x i64> %a to <4 x i16>
+  %1 = bitcast <4 x i16> %0 to x86_mmx
+  %2 = tail call x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx %1, i8 3) nounwind readnone
+  %3 = bitcast x86_mmx %2 to <4 x i16>
+  %4 = bitcast <4 x i16> %3 to <2 x i32>
+  %5 = extractelement <2 x i32> %4, i32 0
+  ret i32 %5
+}
+
 declare x86_mmx @llvm.x86.mmx.pmulu.dq(x86_mmx, x86_mmx) nounwind readnone
 
 define i64 @test20(<1 x i64> %a, <1 x i64> %b) nounwind readnone optsize ssp {

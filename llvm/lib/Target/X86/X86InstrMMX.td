@@ -207,8 +207,14 @@ def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
 let mayStore = 1 in
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", [], IIC_MMX_MOV_MM_RM>;
-def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs), (ins GR32:$dst, VR64:$src),
-                        "movd\t{$src, $dst|$dst, $src}", [], IIC_MMX_MOV_REG_MM>;
+
+// Low word of MMX to GPR.
+def MMX_X86movd2w : SDNode<"X86ISD::MMX_MOVD2W", SDTypeProfile<1, 1,
+                            [SDTCisVT<0, i32>, SDTCisVT<1, x86mmx>]>>;
+def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR64:$src),
+                         "movd\t{$src, $dst|$dst, $src}",
+                         [(set GR32:$dst,
+                          (MMX_X86movd2w (x86mmx VR64:$src)))], IIC_MMX_MOV_REG_MM>;
 
 let neverHasSideEffects = 1 in
 def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),

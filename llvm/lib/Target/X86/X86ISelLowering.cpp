@@ -14399,6 +14399,14 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
     return NewOp;
 
   SDValue InputVector = N->getOperand(0);
+  // Detect whether we are trying to convert from mmx to i32 and the bitcast
+  // from mmx to v2i32 has a single usage.
+  if (InputVector.getNode()->getOpcode() == llvm::ISD::BITCAST &&
+      InputVector.getNode()->getOperand(0).getValueType() == MVT::x86mmx &&
+      InputVector.hasOneUse() && N->getValueType(0) == MVT::i32)
+    return DAG.getNode(X86ISD::MMX_MOVD2W, InputVector.getDebugLoc(),
+                       N->getValueType(0),
+                       InputVector.getNode()->getOperand(0));
 
   // Only operate on vectors of 4 elements, where the alternative shuffling
   // gets to be more expensive.

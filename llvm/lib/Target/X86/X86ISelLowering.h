@@ -142,6 +142,10 @@ namespace llvm {
       /// mnemonic, so do I; blame Intel.
       MOVDQ2Q,
 
+      /// MMX_MOVD2W - Copies a 32-bit value from the low word of a MMX
+      /// vector to a GPR.
+      MMX_MOVD2W,
+
       /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRB.
       PEXTRB,
