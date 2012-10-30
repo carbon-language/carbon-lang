@@ -359,7 +359,7 @@ static Boolean isLegalUTF8(const UTF8 *source, int length) {
         /* Everything else falls through when "true"... */
     case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
     case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-    case 2: if ((a = (*--srcptr)) > 0xBF) return false;
+    case 2: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
 
         switch (*source) {
             /* no fall-through in this inner switch */
