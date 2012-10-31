@@ -633,6 +633,10 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   BasicBlock *ExitBlock = OrigLoop->getExitBlock();
   assert(ExitBlock && "Must have an exit block");
 
+  // The loop index does not have to start at Zero. It starts with this value.
+  OldInduction = Legal->getInduction();
+  Value *StartIdx = OldInduction->getIncomingValueForBlock(BypassBlock);
+
   assert(OrigLoop->getNumBlocks() == 1 && "Invalid loop");
   assert(BypassBlock && "Invalid loop structure");
 
@@ -648,7 +652,6 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
                                  "scalar.preheader");
   // Find the induction variable.
   BasicBlock *OldBasicBlock = OrigLoop->getHeader();
-  OldInduction = Legal->getInduction();
   assert(OldInduction && "We must have a single phi node.");
   Type *IdxTy = OldInduction->getType();
 
@@ -658,7 +661,6 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Generate the induction variable.
   Induction = Builder.CreatePHI(IdxTy, 2, "index");
-  Constant *Zero = ConstantInt::get(IdxTy, 0);
   Constant *Step = ConstantInt::get(IdxTy, VF);
 
   // Find the loop boundaries.
@@ -682,15 +684,22 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Count holds the overall loop count (N).
   Value *Count = Exp.expandCodeFor(ExitCount, Induction->getType(), Loc);
+
+  // Add the start index to the loop count to get the new end index.
+  Value *IdxEnd = BinaryOperator::CreateAdd(Count, StartIdx, "end.idx", Loc);
+
   // Now we need to generate the expression for N - (N % VF), which is
   // the part that the vectorized body will execute.
   Constant *CIVF = ConstantInt::get(IdxTy, VF);
   Value *R = BinaryOperator::CreateURem(Count, CIVF, "n.mod.vf", Loc);
   Value *CountRoundDown = BinaryOperator::CreateSub(Count, R, "n.vec", Loc);
+  Value *IdxEndRoundDown = BinaryOperator::CreateAdd(CountRoundDown, StartIdx,
+                                                     "end.idx.rnd.down", Loc);
 
   // Now, compare the new count to zero. If it is zero, jump to the scalar part.
   Value *Cmp = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ,
-                               CountRoundDown, ConstantInt::getNullValue(IdxTy),
+                               IdxEndRoundDown,
+                               StartIdx,
                                "cmp.zero", Loc);
   BranchInst::Create(MiddleBlock, VectorPH, Cmp, Loc);
   // Remove the old terminator.
@@ -699,8 +708,8 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   // Add a check in the middle block to see if we have completed
   // all of the iterations in the first vector loop.
   // If (N - N%VF) == N, then we *don't* need to run the remainder.
-  Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, Count,
-                                CountRoundDown, "cmp.n",
+  Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, IdxEnd,
+                                IdxEndRoundDown, "cmp.n",
                                 MiddleBlock->getTerminator());
 
   BranchInst::Create(ExitBlock, ScalarPH, CmpN, MiddleBlock->getTerminator());
@@ -709,10 +718,10 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Create i+1 and fill the PHINode.
   Value *NextIdx = Builder.CreateAdd(Induction, Step, "index.next");
-  Induction->addIncoming(Zero, VectorPH);
+  Induction->addIncoming(StartIdx, VectorPH);
   Induction->addIncoming(NextIdx, VecBody);
   // Create the compare.
-  Value *ICmp = Builder.CreateICmpEQ(NextIdx, CountRoundDown);
+  Value *ICmp = Builder.CreateICmpEQ(NextIdx, IdxEndRoundDown);
   Builder.CreateCondBr(ICmp, MiddleBlock, VecBody);
 
   // Now we have two terminators. Remove the old one from the block.
@@ -720,7 +729,7 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Fix the scalar body iteration count.
   unsigned BlockIdx = OldInduction->getBasicBlockIndex(ScalarPH);
-  OldInduction->setIncomingValue(BlockIdx, CountRoundDown);
+  OldInduction->setIncomingValue(BlockIdx, IdxEndRoundDown);
 
   // Get ready to start creating new instructions into the vectorized body.
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
@@ -747,7 +756,6 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   LoopScalarBody = OldBasicBlock;
   LoopBypassBlock = BypassBlock;
 }
-
 
 /// This function returns the identity element (or neutral element) for
 /// the operation K.
@@ -1518,10 +1526,9 @@ bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
     return false;
   }
   const SCEV *Step = AR->getStepRecurrence(*SE);
-  const SCEV *Start = AR->getStart();
 
-  if (!Step->isOne() || !Start->isZero()) {
-    DEBUG(dbgs() << "LV: PHI does not start at zero or steps by one.\n");
+  if (!Step->isOne()) {
+    DEBUG(dbgs() << "LV: PHI stride does not equal one.\n");
     return false;
   }
   return true;
