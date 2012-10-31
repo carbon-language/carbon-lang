@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;  }
 ;CHECK: @inc
 ;CHECK: load <4 x i32>
-;CHECK: add <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: ret void
 define void @inc(i32 %n) nounwind uwtable noinline ssp {

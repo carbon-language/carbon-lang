@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-macosx10.8.0"
 
 ;CHECK: @start_at_nonzero
-;CHECK: mul <4 x i32>
+;CHECK: mul nuw <4 x i32>
 ;CHECK: ret i32
 define i32 @start_at_nonzero(i32* nocapture %a, i32 %start, i32 %end) nounwind uwtable ssp {
 entry:
@@ -19,7 +19,7 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %indvars.iv = phi i64 [ %0, %for.body.lr.ph ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
   %1 = load i32* %arrayidx, align 4, !tbaa !0
-  %mul = mul nsw i32 %1, 333
+  %mul = mul nuw i32 %1, 333
   store i32 %mul, i32* %arrayidx, align 4, !tbaa !0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %2 = trunc i64 %indvars.iv.next to i32

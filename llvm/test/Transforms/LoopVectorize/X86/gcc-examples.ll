@@ -10,7 +10,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; Select VF = 8;
 ;CHECK: @example1
 ;CHECK: load <8 x i32>
-;CHECK: add <8 x i32>
+;CHECK: add nsw <8 x i32>
 ;CHECK: store <8 x i32>
 ;CHECK: ret void
 define void @example1() nounwind uwtable ssp {

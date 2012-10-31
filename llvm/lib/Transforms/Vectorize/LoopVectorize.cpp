@@ -849,8 +849,19 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Inst);
         Value *A = getVectorValue(Inst->getOperand(0));
         Value *B = getVectorValue(Inst->getOperand(1));
+
         // Use this vector value for all users of the original instruction.
-        WidenMap[Inst] = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
+        Value *V = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
+        WidenMap[Inst] = V;
+
+        // Update the NSW, NUW and Exact flags.
+        BinaryOperator *VecOp = cast<BinaryOperator>(V);
+        if (isa<OverflowingBinaryOperator>(BinOp)) {
+          VecOp->setHasNoSignedWrap(BinOp->hasNoSignedWrap());
+          VecOp->setHasNoUnsignedWrap(BinOp->hasNoUnsignedWrap());
+        }
+        if (isa<PossiblyExactOperator>(VecOp))
+          VecOp->setIsExact(BinOp->isExact());
         break;
       }
       case Instruction::Select: {

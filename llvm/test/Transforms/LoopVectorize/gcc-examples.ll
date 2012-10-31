@@ -21,7 +21,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 ;CHECK: @example1
 ;CHECK: load <4 x i32>
-;CHECK: add <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: ret void
 define void @example1() nounwind uwtable ssp {
@@ -227,6 +227,8 @@ define i32 @example9() nounwind uwtable readonly ssp {
 }
 
 ;CHECK: @example10a
+;CHECK: load <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: load <4 x i16>
 ;CHECK: add <4 x i16>
 ;CHECK: store <4 x i16>
