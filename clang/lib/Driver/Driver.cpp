@@ -362,11 +362,11 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   std::string Cmd;
   llvm::raw_string_ostream OS(Cmd);
   if (FailingCommand)
-    C.PrintJob(OS, *FailingCommand, "\n", false);
+    C.PrintDiagnosticJob(OS, *FailingCommand);
   else
     // Crash triggered by FORCE_CLANG_DIAGNOSTICS_CRASH, which doesn't have an
     // associated FailingCommand, so just pass all jobs.
-    C.PrintJob(OS, C.getJobs(), "\n", false);
+    C.PrintDiagnosticJob(OS, C.getJobs());
   OS.flush();
 
   // Clear stale state and suppress tool output.
@@ -464,57 +464,6 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Diag(clang::diag::note_drv_command_failed_diag_msg)
           << "Error generating run script: " + Script + " " + Err;
       } else {
-        // Strip away options not necessary to reproduce the crash.
-        // FIXME: This doesn't work with quotes (e.g., -D "foo bar").
-        SmallVector<std::string, 16> Flag;
-        Flag.push_back("-D ");
-        Flag.push_back("-F");
-        Flag.push_back("-I ");
-        Flag.push_back("-M ");
-        Flag.push_back("-MD ");
-        Flag.push_back("-MF ");
-        Flag.push_back("-MG ");
-        Flag.push_back("-MM ");
-        Flag.push_back("-MMD ");
-        Flag.push_back("-MP ");
-        Flag.push_back("-MQ ");
-        Flag.push_back("-MT ");
-        Flag.push_back("-o ");
-        Flag.push_back("-coverage-file ");
-        Flag.push_back("-dependency-file ");
-        Flag.push_back("-fdebug-compilation-dir ");
-        Flag.push_back("-fmodule-cache-path ");
-        Flag.push_back("-idirafter ");
-        Flag.push_back("-include ");
-        Flag.push_back("-include-pch ");
-        Flag.push_back("-internal-isystem ");
-        Flag.push_back("-internal-externc-isystem ");
-        Flag.push_back("-iprefix ");
-        Flag.push_back("-iwithprefix ");
-        Flag.push_back("-iwithprefixbefore ");
-        Flag.push_back("-isysroot ");
-        Flag.push_back("-isystem ");
-        Flag.push_back("-iquote ");
-        Flag.push_back("-resource-dir ");
-        Flag.push_back("-serialize-diagnostic-file ");
-        for (unsigned i = 0, e = Flag.size(); i < e; ++i) {
-          size_t I = 0, E = 0;
-          do {
-            I = Cmd.find(Flag[i], I);
-            if (I == std::string::npos) break;
-
-            E = Cmd.find(" ", I + Flag[i].length());
-            if (E == std::string::npos) break;
-            // The -D option is not removed.  Instead, the argument is quoted.
-            if (Flag[i] != "-D ") {
-              Cmd.erase(I, E - I + 1);
-            } else {
-              Cmd.insert(I+3, "\"");
-              Cmd.insert(++E, "\"");
-              I = E;
-            }
-          } while(1);
-        }
         // Append the new filename with correct preprocessed suffix.
         size_t I, E;
         I = Cmd.find("-main-file-name ");

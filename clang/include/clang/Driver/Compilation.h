@@ -141,6 +141,14 @@ public:
   void PrintJob(raw_ostream &OS, const Job &J,
                 const char *Terminator, bool Quote) const;
 
+  /// PrintDiagnosticJob - Print one job in -### format, but with the 
+  /// superfluous options removed, which are not necessary for 
+  /// reproducing the crash.
+  ///
+  /// \param OS - The stream to print on.
+  /// \param J - The job to print.
+  void PrintDiagnosticJob(raw_ostream &OS, const Job &J) const;
+
   /// ExecuteCommand - Execute an actual command.
   ///
   /// \param FailingCommand - For non-zero results, this will be set to the
