@@ -752,6 +752,26 @@ struct StrPBrkOpt : public LibCallOptimization {
   }
 };
 
+struct StrToOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    if ((FT->getNumParams() != 2 && FT->getNumParams() != 3) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy())
+      return 0;
+
+    Value *EndPtr = CI->getArgOperand(1);
+    if (isa<ConstantPointerNull>(EndPtr)) {
+      // With a null EndPtr, this function won't capture the main argument.
+      // It would be readonly too, except that it still may write to errno.
+      CI->addAttribute(1, Attributes::get(Callee->getContext(),
+                                          Attributes::NoCapture));
+    }
+
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -781,6 +801,7 @@ class LibCallSimplifierImpl {
   StrNCpyOpt StrNCpy;
   StrLenOpt StrLen;
   StrPBrkOpt StrPBrk;
+  StrToOpt StrTo;
 
   void initOptimizations();
 public:
@@ -814,6 +835,13 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["strncpy"] = &StrNCpy;
   Optimizations["strlen"] = &StrLen;
   Optimizations["strpbrk"] = &StrPBrk;
+  Optimizations["strtol"] = &StrTo;
+  Optimizations["strtod"] = &StrTo;
+  Optimizations["strtof"] = &StrTo;
+  Optimizations["strtoul"] = &StrTo;
+  Optimizations["strtoll"] = &StrTo;
+  Optimizations["strtold"] = &StrTo;
+  Optimizations["strtoull"] = &StrTo;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {

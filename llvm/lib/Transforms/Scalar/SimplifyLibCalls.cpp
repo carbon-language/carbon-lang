@@ -119,29 +119,6 @@ static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
 
 namespace {
 //===---------------------------------------===//
-// 'strto*' Optimizations.  This handles strtol, strtod, strtof, strtoul, etc.
-
-struct StrToOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    if ((FT->getNumParams() != 2 && FT->getNumParams() != 3) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy())
-      return 0;
-
-    Value *EndPtr = CI->getArgOperand(1);
-    if (isa<ConstantPointerNull>(EndPtr)) {
-      // With a null EndPtr, this function won't capture the main argument.
-      // It would be readonly too, except that it still may write to errno.
-      CI->addAttribute(1, Attributes::get(Callee->getContext(),
-                                          Attributes::NoCapture));
-    }
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
 // 'strspn' Optimizations
 
 struct StrSpnOpt : public LibCallOptimization {
@@ -1066,7 +1043,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
+    StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
     CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
@@ -1134,13 +1111,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // String and Memory LibCall Optimizations
-  Optimizations["strtol"] = &StrTo;
-  Optimizations["strtod"] = &StrTo;
-  Optimizations["strtof"] = &StrTo;
-  Optimizations["strtoul"] = &StrTo;
-  Optimizations["strtoll"] = &StrTo;
-  Optimizations["strtold"] = &StrTo;
-  Optimizations["strtoull"] = &StrTo;
   Optimizations["strspn"] = &StrSpn;
   Optimizations["strcspn"] = &StrCSpn;
   Optimizations["strstr"] = &StrStr;
