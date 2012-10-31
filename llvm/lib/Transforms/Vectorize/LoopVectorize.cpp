@@ -1145,6 +1145,14 @@ bool LoopVectorizationLegality::canVectorize() {
     return false;
   }
 
+  // Do not loop-vectorize loops with a tiny trip count.
+  unsigned TC = SE->getSmallConstantTripCount(TheLoop, BB);
+  if (TC > 0 && TC < 16) {
+    DEBUG(dbgs() << "LV: Found a loop with a very small trip count. " <<
+          "This loop is not worth vectorizing.\n");
+    return false;
+  }
+
   DEBUG(dbgs() << "LV: We can vectorize this loop!\n");
 
   // Okay! We can vectorize. At this point we don't have any other mem analysis
