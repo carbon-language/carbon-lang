@@ -211,40 +211,55 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
   std::pair<unsigned, EVT> DstLT =
   getTypeLegalizationCost(Dst->getContext(), TLI->getValueType(Dst));
 
-  // If the cast is between same-sized registers, then the check is simple.
-  if (SrcLT.first == DstLT.first &&
-      SrcLT.second.getSizeInBits() == DstLT.second.getSizeInBits()) {
-    // Just check the op cost:
-    if (!TLI->isOperationExpand(ISD, DstLT.second)) {
-      // The operation is legal. Assume it costs 1. Multiply
-      // by the type-legalization overhead.
-      return SrcLT.first * 1;
+  // Handle scalar conversions.
+  if (!Src->isVectorTy() && !Dst->isVectorTy()) {
+    // Just check the op cost. If the operation is legal then assume it costs 1.
+    if (!TLI->isOperationExpand(ISD, DstLT.second))
+      return  1;
+
+    // Assume that illegal scalar instruction are expensive.
+    return 4;
+  }
+
+  // Check vector-to-vector casts.
+  if (Dst->isVectorTy() && Src->isVectorTy()) {
+
+    // If the cast is between same-sized registers, then the check is simple.
+    if (SrcLT.first == DstLT.first &&
+        SrcLT.second.getSizeInBits() == DstLT.second.getSizeInBits()) {
+
+      // Bitcast between types that are legalized to the same type are free.
+      if (Opcode == Instruction::BitCast)
+        return 0;
+
+      // Just check the op cost. If the operation is legal then assume it costs
+      // 1 and multiply by the type-legalization overhead.
+      if (!TLI->isOperationExpand(ISD, DstLT.second))
+        return SrcLT.first * 1;
     }
-  }
 
-  unsigned ScalarizationCost = 1;
-
-  // Otherwise, assume that the cast is scalarized.
-  if (Dst->isVectorTy()) {
+    // If we are converting vectors and the operation is illegal, or
+    // if the vectors are legalized to different types, estimate the
+    // scalarization costs.
     unsigned Num = Dst->getVectorNumElements();
-    unsigned Cost = getCastInstrCost(Opcode, Src->getScalarType(),
-                                     Dst->getScalarType());
-    // return the cost of multiple scalar invocation plus the cost of inserting
-    // and extracting the values.
-    ScalarizationCost *= getScalarizationOverhead(Dst, true, true) + Num * Cost;
-  }
-
-  if (Src->isVectorTy()) {
-    unsigned Num = Src->getVectorNumElements();
     unsigned Cost = getCastInstrCost(Opcode, Dst->getScalarType(),
                                      Src->getScalarType());
-    // return the cost of multiple scalar invocation plus the cost of inserting
-    // and extracting the values.
-    ScalarizationCost *= getScalarizationOverhead(Src, true, true) + Num * Cost;
+
+    // Return the cost of multiple scalar invocation plus the cost of
+    // inserting and extracting the values.
+    return getScalarizationOverhead(Dst, true, true) + Num * Cost;
   }
 
-  return ScalarizationCost;
-}
+  // We already handled vector-to-vector and scalar-to-scalar conversions. This 
+  // is where we handle bitcast between vectors and scalars. We need to assume
+  //  that the conversion is scalarized in one way or another.
+  if (Opcode == Instruction::BitCast)
+    // Illegal bitcasts are done by storing and loading from a stack slot.
+    return (Src->isVectorTy()? getScalarizationOverhead(Src, false, true):0) +
+           (Dst->isVectorTy()? getScalarizationOverhead(Dst, true, false):0);
+
+  llvm_unreachable("Unhandled cast");
+ }
 
 unsigned VectorTargetTransformImpl::getCFInstrCost(unsigned Opcode) const {
   return 1;
