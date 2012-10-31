@@ -321,7 +321,7 @@ bool AnyFunctionCall::argumentsMayEscape() const {
 
   const IdentifierInfo *II = D->getIdentifier();
   if (!II)
-    return true;
+    return false;
 
   // This set of "escaping" APIs is 
 

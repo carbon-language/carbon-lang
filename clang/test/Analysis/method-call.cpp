@@ -9,6 +9,10 @@ struct A {
   int getx() const { return x; }
 };
 
+struct B{
+  int x;
+};
+
 void testNullObject(A *a) {
   clang_analyzer_eval(a); // expected-warning{{UNKNOWN}}
   (void)a->getx(); // assume we know what we're doing
@@ -33,4 +37,11 @@ void f3() {
 void f4() {
   A x = 3;
   clang_analyzer_eval(x.getx() == 3); // expected-warning{{TRUE}}
+}
+
+void checkThatCopyConstructorDoesNotInvalidateObjectBeingCopied() {
+  B t;
+  t.x = 0;
+  B t2(t);
+  clang_analyzer_eval(t.x == 0); // expected-warning{{TRUE}}
 }
