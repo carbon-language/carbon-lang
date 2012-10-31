@@ -982,8 +982,6 @@ def target : Separate<["-"], "target">, Flags<[DriverOption]>,
   HelpText<"Generate code for the given target">;
 def gcc_toolchain : Separate<["-"], "gcc-toolchain">, Flags<[DriverOption]>,
   HelpText<"Use the gcc toolchain at the given directory">;
-// We should deprecate the use of -ccc-host-triple, and then remove.
-def ccc_host_triple : Separate<["-"], "ccc-host-triple">, Alias<target>;
 def time : Flag<["-"], "time">,
   HelpText<"Time individual commands">;
 def traditional_cpp : Flag<["-", "--"], "traditional-cpp">, Flags<[CC1Option]>,
