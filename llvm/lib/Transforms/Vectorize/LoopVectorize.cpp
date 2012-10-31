@@ -212,12 +212,12 @@ public:
 
   /// This represents the kinds of reductions that we support.
   enum ReductionKind {
-    NoReduction = -1, /// Not a reduction.
-    IntegerAdd  = 0,  /// Sum of numbers.
-    IntegerMult = 1,  /// Product of numbers.
-    IntegerOr   = 2,  /// Bitwise or logical OR of numbers.
-    IntegerAnd  = 3,  /// Bitwise or logical AND of numbers.
-    IntegerXor  = 4   /// Bitwise or logical XOR of numbers.
+    NoReduction, /// Not a reduction.
+    IntegerAdd,  /// Sum of numbers.
+    IntegerMult, /// Product of numbers.
+    IntegerOr,   /// Bitwise or logical OR of numbers.
+    IntegerAnd,  /// Bitwise or logical AND of numbers.
+    IntegerXor   /// Bitwise or logical XOR of numbers.
   };
 
   /// This POD struct holds information about reduction variables.
