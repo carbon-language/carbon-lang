@@ -190,7 +190,7 @@ ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
   return 0;
 }
 
-void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap& PM) const {
+void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM) const {
   for (ObjCContainerDecl::prop_iterator P = prop_begin(),
       E = prop_end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = *P;
@@ -200,6 +200,9 @@ void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap& PM) const {
       PI = all_referenced_protocol_begin(),
       E = all_referenced_protocol_end(); PI != E; ++PI)
     (*PI)->collectPropertiesToImplement(PM);
+  // Note, the properties declared only in class extensions are still copied
+  // into the main @interface's property list, and therefore we don't
+  // explicitly, have to search class extension properties.
 }
 
 void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
@@ -1325,7 +1328,7 @@ void ObjCProtocolDecl::startDefinition() {
     RD->Data = this->Data;
 }
 
-void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap& PM) const {
+void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM) const {
   for (ObjCProtocolDecl::prop_iterator P = prop_begin(),
       E = prop_end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = *P;

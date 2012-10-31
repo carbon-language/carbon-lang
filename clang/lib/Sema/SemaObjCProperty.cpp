@@ -1440,8 +1440,8 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
 /// CollectImmediateProperties - This routine collects all properties in
 /// the class and its conforming protocols; but not those it its super class.
 void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
-            ObjCContainerDecl::PropertyMap& PropMap,
-            ObjCContainerDecl::PropertyMap& SuperPropMap) {
+            ObjCContainerDecl::PropertyMap &PropMap,
+            ObjCContainerDecl::PropertyMap &SuperPropMap) {
   if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
     for (ObjCContainerDecl::prop_iterator P = IDecl->prop_begin(),
          E = IDecl->prop_end(); P != E; ++P) {
@@ -1491,7 +1491,7 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
 /// properties to be implemented in super class(s) and also coming from their
 /// conforming protocols.
 static void CollectSuperClassPropertyImplementations(ObjCInterfaceDecl *CDecl,
-                                    ObjCInterfaceDecl::PropertyMap& PropMap) {
+                                    ObjCInterfaceDecl::PropertyMap &PropMap) {
   if (ObjCInterfaceDecl *SDecl = CDecl->getSuperClass()) {
     while (SDecl) {
       SDecl->collectPropertiesToImplement(PropMap);
