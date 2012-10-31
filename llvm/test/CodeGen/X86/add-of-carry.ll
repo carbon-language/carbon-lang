@@ -30,4 +30,17 @@ entry:
   ret i32 %z.0
 }
 
+; <rdar://problem/12579915>
+define i32 @test3(i32 %x, i32 %y, i32 %res) nounwind uwtable readnone ssp {
+entry:
+  %cmp = icmp ugt i32 %x, %y
+  %dec = sext i1 %cmp to i32
+  %dec.res = add nsw i32 %dec, %res
+  ret i32 %dec.res
+; CHECK: test3:
+; CHECK: cmpl
+; CHECK: sbbl
+; CHECK: ret
+}
+
 declare { i32, i1 } @llvm.uadd.with.overflow.i32(i32, i32) nounwind readnone

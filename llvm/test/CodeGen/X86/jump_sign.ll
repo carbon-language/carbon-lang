@@ -219,7 +219,6 @@ entry:
 ; by sbb, we should not optimize cmp away.
 define i32 @q(i32 %j.4, i32 %w, i32 %el) {
 ; CHECK: q:
-; CHECK: sub
 ; CHECK: cmp
 ; CHECK-NEXT: sbb
   %tmp532 = add i32 %j.4, %w

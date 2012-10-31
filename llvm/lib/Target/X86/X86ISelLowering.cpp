@@ -16476,6 +16476,16 @@ static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+// Helper function of PerformSETCCCombine. It is to materialize "setb reg" 
+// as "sbb reg,reg", since it can be extended without zext and produces 
+// an all-ones bit which is more useful than 0/1 in some cases.
+static SDValue MaterializeSETB(DebugLoc DL, SDValue EFLAGS, SelectionDAG &DAG) {
+  return DAG.getNode(ISD::AND, DL, MVT::i8,
+                     DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
+                                 DAG.getConstant(X86::COND_B, MVT::i8), EFLAGS),
+                     DAG.getConstant(1, MVT::i8));
+}
+
 // Optimize  RES = X86ISD::SETCC CONDCODE, EFLAG_INPUT
 static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
@@ -16484,14 +16494,29 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
   X86::CondCode CC = X86::CondCode(N->getConstantOperandVal(0));
   SDValue EFLAGS = N->getOperand(1);
 
+  if (CC == X86::COND_A) {
+    // Try to convert COND_A into COND_B in an attempt to facilitate 
+    // materializing "setb reg".
+    //
+    // Do not flip "e > c", where "c" is a constant, because Cmp instruction
+    // cannot take an immediate as its first operand.
+    //
+    if (EFLAGS.getOpcode() == X86ISD::SUB && EFLAGS.hasOneUse() && 
+        EFLAGS.getValueType().isInteger() &&
+        !isa<ConstantSDNode>(EFLAGS.getOperand(1))) {
+      SDValue NewSub = DAG.getNode(X86ISD::SUB, EFLAGS.getDebugLoc(),
+                                   EFLAGS.getNode()->getVTList(),
+                                   EFLAGS.getOperand(1), EFLAGS.getOperand(0));
+      SDValue NewEFLAGS = SDValue(NewSub.getNode(), EFLAGS.getResNo());
+      return MaterializeSETB(DL, NewEFLAGS, DAG);
+    }
+  }
+
   // Materialize "setb reg" as "sbb reg,reg", since it can be extended without
   // a zext and produces an all-ones bit which is more useful than 0/1 in some
   // cases.
   if (CC == X86::COND_B)
-    return DAG.getNode(ISD::AND, DL, MVT::i8,
-                       DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
-                                   DAG.getConstant(CC, MVT::i8), EFLAGS),
-                       DAG.getConstant(1, MVT::i8));
+    return MaterializeSETB(DL, EFLAGS, DAG);
 
   SDValue Flags;
 
