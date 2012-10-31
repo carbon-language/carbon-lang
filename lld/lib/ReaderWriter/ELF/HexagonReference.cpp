@@ -46,7 +46,7 @@ int relocB22PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   if ((result < 0x200000) && (result > -0x200000)) {
     result = ((result<<1) & 0x3ffe) | ((result<<3) & 0x01ff0000);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-                     *reinterpret_cast<llvm::support::ulittle32_t *>(location);
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
     return HexagonKindHandler::NoError;
   }
   return HexagonKindHandler::Overflow;
@@ -58,7 +58,7 @@ int relocB15PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   if ((result < 0x8000) && (result > -0x8000)) {
     result = ((result<<1) & 0x20fe) | ((result<<7) & 0x00df0000);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-                      *reinterpret_cast<llvm::support::ulittle32_t *>(location);
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
     return HexagonKindHandler::NoError;
   }
   return HexagonKindHandler::Overflow;
@@ -69,7 +69,7 @@ int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
   result = ((result & 0x3fff) | ((result << 2) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-                    *reinterpret_cast<llvm::support::ulittle32_t *>(location);
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return HexagonKindHandler::NoError;
 }
 
@@ -78,7 +78,7 @@ int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A)>>16);
   result = ((result & 0x3fff) | ((result << 2) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-                    *reinterpret_cast<llvm::support::ulittle32_t *>(location);
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return HexagonKindHandler::NoError;
 }
 
@@ -86,7 +86,7 @@ int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-                    *reinterpret_cast<llvm::support::ulittle32_t *>(location);
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return HexagonKindHandler::NoError;
 }
 } // namespace hexagon
