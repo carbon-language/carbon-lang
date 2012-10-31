@@ -18,6 +18,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; The table for @large.
 ; CHECK: @switch.table4 = private unnamed_addr constant [199 x i32] [i32 1, i32 4, i32 9,
 
+; The table for @cprop
+; CHECK: @switch.table5 = private unnamed_addr constant [7 x i32] [i32 5, i32 42, i32 126, i32 -452, i32 128, i32 6, i32 7]
+
 ; A simple int-to-int selection switch.
 ; It is dense enough to be replaced by table lookup.
 ; The result is directly by a ret from an otherwise empty bb,
@@ -703,4 +706,42 @@ sw.bb203: br label %return
 return:
   %retval.0 = phi i32 [ 39204, %sw.bb202 ], [ 38809, %sw.bb201 ], [ 38416, %sw.bb200 ], [ 38025, %sw.bb199 ], [ 37636, %sw.bb198 ], [ 37249, %sw.bb197 ], [ 36864, %sw.bb196 ], [ 36481, %sw.bb195 ], [ 36100, %sw.bb194 ], [ 35721, %sw.bb193 ], [ 35344, %sw.bb192 ], [ 34969, %sw.bb191 ], [ 34596, %sw.bb190 ], [ 34225, %sw.bb189 ], [ 33856, %sw.bb188 ], [ 33489, %sw.bb187 ], [ 33124, %sw.bb186 ], [ 32761, %sw.bb185 ], [ 32400, %sw.bb184 ], [ 32041, %sw.bb183 ], [ 31684, %sw.bb182 ], [ 31329, %sw.bb181 ], [ 30976, %sw.bb180 ], [ 30625, %sw.bb179 ], [ 30276, %sw.bb178 ], [ 29929, %sw.bb177 ], [ 29584, %sw.bb176 ], [ 29241, %sw.bb175 ], [ 28900, %sw.bb174 ], [ 28561, %sw.bb173 ], [ 28224, %sw.bb172 ], [ 27889, %sw.bb171 ], [ 27556, %sw.bb170 ], [ 27225, %sw.bb169 ], [ 26896, %sw.bb168 ], [ 26569, %sw.bb167 ], [ 26244, %sw.bb166 ], [ 25921, %sw.bb165 ], [ 25600, %sw.bb164 ], [ 25281, %sw.bb163 ], [ 24964, %sw.bb162 ], [ 24649, %sw.bb161 ], [ 24336, %sw.bb160 ], [ 24025, %sw.bb159 ], [ 23716, %sw.bb158 ], [ 23409, %sw.bb157 ], [ 23104, %sw.bb156 ], [ 22801, %sw.bb155 ], [ 22500, %sw.bb154 ], [ 22201, %sw.bb153 ], [ 21904, %sw.bb152 ], [ 21609, %sw.bb151 ], [ 21316, %sw.bb150 ], [ 21025, %sw.bb149 ], [ 20736, %sw.bb148 ], [ 20449, %sw.bb147 ], [ 20164, %sw.bb146 ], [ 19881, %sw.bb145 ], [ 19600, %sw.bb144 ], [ 19321, %sw.bb143 ], [ 19044, %sw.bb142 ], [ 18769, %sw.bb141 ], [ 18496, %sw.bb140 ], [ 18225, %sw.bb139 ], [ 17956, %sw.bb138 ], [ 17689, %sw.bb137 ], [ 17424, %sw.bb136 ], [ 17161, %sw.bb135 ], [ 16900, %sw.bb134 ], [ 16641, %sw.bb133 ], [ 16384, %sw.bb132 ], [ 16129, %sw.bb131 ], [ 15876, %sw.bb130 ], [ 15625, %sw.bb129 ], [ 15376, %sw.bb128 ], [ 15129, %sw.bb127 ], [ 14884, %sw.bb126 ], [ 14641, %sw.bb125 ], [ 14400, %sw.bb124 ], [ 14161, %sw.bb123 ], [ 13924, %sw.bb122 ], [ 13689, %sw.bb121 ], [ 13456, %sw.bb120 ], [ 13225, %sw.bb119 ], [ 12996, %sw.bb118 ], [ 12769, %sw.bb117 ], [ 12544, %sw.bb116 ], [ 12321, %sw.bb115 ], [ 12100, %sw.bb114 ], [ 11881, %sw.bb113 ], [ 11664, %sw.bb112 ], [ 11449, %sw.bb111 ], [ 11236, %sw.bb110 ], [ 11025, %sw.bb109 ], [ 10816, %sw.bb108 ], [ 10609, %sw.bb107 ], [ 10404, %sw.bb106 ], [ 10201, %sw.bb105 ], [ 10000, %sw.bb104 ], [ 9801, %sw.bb103 ], [ 9604, %sw.bb102 ], [ 9409, %sw.bb101 ], [ 9216, %sw.bb100 ], [ 9025, %sw.bb99 ], [ 8836, %sw.bb98 ], [ 8649, %sw.bb97 ], [ 8464, %sw.bb96 ], [ 8281, %sw.bb95 ], [ 8100, %sw.bb94 ], [ 7921, %sw.bb93 ], [ 7744, %sw.bb92 ], [ 7569, %sw.bb91 ], [ 7396, %sw.bb90 ], [ 7225, %sw.bb89 ], [ 7056, %sw.bb88 ], [ 6889, %sw.bb87 ], [ 6724, %sw.bb86 ], [ 6561, %sw.bb85 ], [ 6400, %sw.bb84 ], [ 6241, %sw.bb83 ], [ 6084, %sw.bb82 ], [ 5929, %sw.bb81 ], [ 5776, %sw.bb80 ], [ 5625, %sw.bb79 ], [ 5476, %sw.bb78 ], [ 5329, %sw.bb77 ], [ 5184, %sw.bb76 ], [ 5112, %sw.bb74 ], [ 4900, %sw.bb73 ], [ 4761, %sw.bb72 ], [ 4624, %sw.bb71 ], [ 4489, %sw.bb70 ], [ 4356, %sw.bb69 ], [ 4225, %sw.bb68 ], [ 4096, %sw.bb67 ], [ 3969, %sw.bb66 ], [ 3844, %sw.bb65 ], [ 3721, %sw.bb64 ], [ 3600, %sw.bb63 ], [ 3481, %sw.bb62 ], [ 3364, %sw.bb61 ], [ 3249, %sw.bb60 ], [ 3136, %sw.bb59 ], [ 3025, %sw.bb58 ], [ 2970, %sw.bb56 ], [ 2809, %sw.bb55 ], [ 2704, %sw.bb54 ], [ 2601, %sw.bb53 ], [ 2500, %sw.bb52 ], [ 2401, %sw.bb51 ], [ 2304, %sw.bb50 ], [ 2209, %sw.bb49 ], [ 2116, %sw.bb48 ], [ 2025, %sw.bb47 ], [ 1980, %sw.bb45 ], [ 1849, %sw.bb44 ], [ 1764, %sw.bb43 ], [ 1681, %sw.bb42 ], [ 1600, %sw.bb41 ], [ 1521, %sw.bb40 ], [ 1444, %sw.bb39 ], [ 1369, %sw.bb38 ], [ 1296, %sw.bb37 ], [ 1260, %sw.bb35 ], [ 1156, %sw.bb34 ], [ 1089, %sw.bb33 ], [ 1024, %sw.bb32 ], [ 961, %sw.bb31 ], [ 900, %sw.bb30 ], [ 841, %sw.bb29 ], [ 784, %sw.bb28 ], [ 729, %sw.bb27 ], [ 676, %sw.bb26 ], [ 625, %sw.bb25 ], [ 576, %sw.bb24 ], [ 529, %sw.bb23 ], [ 484, %sw.bb22 ], [ 441, %sw.bb21 ], [ 400, %sw.bb20 ], [ 361, %sw.bb19 ], [ 342, %sw.bb18 ], [ 289, %sw.bb17 ], [ 256, %sw.bb16 ], [ 225, %sw.bb15 ], [ 196, %sw.bb14 ], [ 169, %sw.bb13 ], [ 144, %sw.bb12 ], [ 121, %sw.bb11 ], [ 100, %sw.bb10 ], [ 81, %sw.bb9 ], [ 64, %sw.bb8 ], [ 49, %sw.bb7 ], [ 36, %sw.bb6 ], [ 25, %sw.bb5 ], [ 16, %sw.bb4 ], [ 9, %sw.bb3 ], [ 4, %sw.bb2 ], [ 1, %sw.bb1 ], [ 39601, %sw.bb203 ], [ 0, %if.end ]
   ret i32 %retval.0
+}
+
+define i32 @cprop(i32 %x) {
+entry:
+  switch i32 %x, label %sw.default [
+    i32 1, label %return
+    i32 2, label %sw.bb1
+    i32 3, label %sw.bb2
+    i32 4, label %sw.bb2
+    i32 5, label %sw.bb2
+    i32 6, label %sw.bb3
+    i32 7, label %sw.bb3
+  ]
+
+sw.bb1: br label %return
+
+sw.bb2:
+  %and = and i32 %x, 1
+  %tobool = icmp ne i32 %and, 0
+  %cond = select i1 %tobool, i32 -123, i32 456
+  %sub = sub nsw i32 %x, %cond
+  br label %return
+
+sw.bb3:
+  %trunc = trunc i32 %x to i8
+  %sext = sext i8 %trunc to i32
+  br label %return
+
+sw.default:
+  br label %return
+
+return:
+  %retval.0 = phi i32 [ 123, %sw.default ], [ %sext, %sw.bb3 ], [ %sub, %sw.bb2 ], [ 42, %sw.bb1 ], [ 5, %entry ]
+  ret i32 %retval.0
+
+; CHECK: @cprop
+; CHECK: switch.lookup:
+; CHECK: %switch.gep = getelementptr inbounds [7 x i32]* @switch.table5, i32 0, i32 %switch.tableidx
 }
