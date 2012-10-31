@@ -3200,64 +3200,59 @@ static bool ValidLookupTableConstant(Constant *C) {
       isa<UndefValue>(C);
 }
 
+/// LookupConstant - If V is a Constant, return it. Otherwise, try to look up
+/// its constant value in ConstantPool, returning NULL if it's not there.
+static Constant *LookupConstant(Value *V,
+                         const SmallDenseMap<Value*, Constant*>& ConstantPool) {
+  if (Constant *C = dyn_cast<Constant>(V))
+    return C;
+  return ConstantPool.lookup(V);
+}
+
 /// ConstantFold - Try to fold instruction I into a constant. This works for
 /// simple instructions such as binary operations where both operands are
 /// constant or can be replaced by constants from the ConstantPool. Returns the
 /// resulting constant on success, NULL otherwise.
-static Constant* ConstantFold(Instruction *I,
+static Constant *ConstantFold(Instruction *I,
                          const SmallDenseMap<Value*, Constant*>& ConstantPool) {
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
-    Constant *A = dyn_cast<Constant>(BO->getOperand(0));
-    if (!A) A = ConstantPool.lookup(BO->getOperand(0));
-    if (!A) return NULL;
-
-    Constant *B = dyn_cast<Constant>(BO->getOperand(1));
-    if (!B) B = ConstantPool.lookup(BO->getOperand(1));
-    if (!B) return NULL;
-
-    Constant *C = ConstantExpr::get(BO->getOpcode(), A, B);
-    return C;
+    Constant *A = LookupConstant(BO->getOperand(0), ConstantPool);
+    if (!A)
+      return 0;
+    Constant *B = LookupConstant(BO->getOperand(1), ConstantPool);
+    if (!B)
+      return 0;
+    return ConstantExpr::get(BO->getOpcode(), A, B);
   }
 
   if (CmpInst *Cmp = dyn_cast<CmpInst>(I)) {
-    Constant *A = dyn_cast<Constant>(I->getOperand(0));
-    if (!A) A = ConstantPool.lookup(I->getOperand(0));
-    if (!A) return NULL;
-
-    Constant *B = dyn_cast<Constant>(I->getOperand(1));
-    if (!B) B = ConstantPool.lookup(I->getOperand(1));
-    if (!B) return NULL;
-
-    Constant *C = ConstantExpr::getCompare(Cmp->getPredicate(), A, B);
-    return C;
+    Constant *A = LookupConstant(I->getOperand(0), ConstantPool);
+    if (!A)
+      return 0;
+    Constant *B = LookupConstant(I->getOperand(1), ConstantPool);
+    if (!B)
+      return 0;
+    return ConstantExpr::getCompare(Cmp->getPredicate(), A, B);
   }
 
   if (SelectInst *Select = dyn_cast<SelectInst>(I)) {
-    Constant *A = dyn_cast<Constant>(Select->getCondition());
-    if (!A) A = ConstantPool.lookup(Select->getCondition());
-    if (!A) return NULL;
-
-    Value *Res;
-    if (A->isAllOnesValue()) Res = Select->getTrueValue();
-    else if (A->isNullValue()) Res = Select->getFalseValue();
-    else return NULL;
-
-    Constant *C = dyn_cast<Constant>(Res);
-    if (!C) C = ConstantPool.lookup(Res);
-    if (!C) return NULL;
-    return C;
+    Constant *A = LookupConstant(Select->getCondition(), ConstantPool);
+    if (!A)
+      return 0;
+    if (A->isAllOnesValue())
+      return LookupConstant(Select->getTrueValue(), ConstantPool);
+    if (A->isNullValue())
+      return LookupConstant(Select->getFalseValue(), ConstantPool);
   }
 
   if (CastInst *Cast = dyn_cast<CastInst>(I)) {
-    Constant *A = dyn_cast<Constant>(I->getOperand(0));
-    if (!A) A = ConstantPool.lookup(I->getOperand(0));
-    if (!A) return NULL;
-
-    Constant *C = ConstantExpr::getCast(Cast->getOpcode(), A, Cast->getDestTy());
-    return C;
+    Constant *A = LookupConstant(I->getOperand(0), ConstantPool);
+    if (!A)
+      return 0;
+    return ConstantExpr::getCast(Cast->getOpcode(), A, Cast->getDestTy());
   }
 
-  return NULL;
+  return 0;
 }
 
 /// GetCaseResults - Try to determine the resulting constant values in phi nodes
@@ -3309,9 +3304,8 @@ static bool GetCaseResults(SwitchInst *SI,
     if (Idx == -1)
       continue;
 
-    Constant *ConstVal = dyn_cast<Constant>(PHI->getIncomingValue(Idx));
-    if (!ConstVal)
-      ConstVal = ConstantPool.lookup(PHI->getIncomingValue(Idx));
+    Constant *ConstVal = LookupConstant(PHI->getIncomingValue(Idx),
+                                        ConstantPool);
     if (!ConstVal)
       return false;
 
@@ -3410,7 +3404,7 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
     TableContents[Idx] = CaseRes;
 
     if (CaseRes != SingleValue)
-      SingleValue = NULL;
+      SingleValue = 0;
   }
 
   // Fill in any holes in the table with the default result.
@@ -3421,7 +3415,7 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
     }
 
     if (DefaultValue != SingleValue)
-      SingleValue = NULL;
+      SingleValue = 0;
   }
 
   // If each element in the table contains the same value, we only need to store
@@ -3573,7 +3567,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   ConstantInt *MinCaseVal = CI.getCaseValue();
   ConstantInt *MaxCaseVal = CI.getCaseValue();
 
-  BasicBlock *CommonDest = NULL;
+  BasicBlock *CommonDest = 0;
   typedef SmallVector<std::pair<ConstantInt*, Constant*>, 4> ResultListTy;
   SmallDenseMap<PHINode*, ResultListTy> ResultLists;
   SmallDenseMap<PHINode*, Constant*> DefaultResults;
@@ -3604,7 +3598,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
 
   // Get the resulting values for the default case.
   SmallVector<std::pair<PHINode*, Constant*>, 4> DefaultResultsList;
-  if (!GetCaseResults(SI, NULL, SI->getDefaultDest(), &CommonDest,
+  if (!GetCaseResults(SI, 0, SI->getDefaultDest(), &CommonDest,
                       DefaultResultsList))
     return false;
   for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
