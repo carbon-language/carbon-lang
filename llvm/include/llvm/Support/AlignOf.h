@@ -78,7 +78,7 @@ template <size_t Alignment> struct AlignedCharArrayImpl;
   template <> struct AlignedCharArrayImpl<x> { \
     char alignas(x) aligned; \
   }
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__IBM_ATTRIBUTES)
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
   template <> struct AlignedCharArrayImpl<x> { \
     char aligned __attribute__((aligned(x))); \
