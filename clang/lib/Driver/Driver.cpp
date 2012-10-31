@@ -1591,12 +1591,19 @@ std::string Driver::GetProgramPath(const char *Name,
   // attempting to use this prefix when looking for program paths.
   for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
        ie = PrefixDirs.end(); it != ie; ++it) {
-    llvm::sys::Path P(*it);
-    P.appendComponent(TargetSpecificExecutable);
-    if (P.canExecute()) return P.str();
-    P.eraseComponent();
-    P.appendComponent(Name);
-    if (P.canExecute()) return P.str();
+    bool IsDirectory;
+    if (!llvm::sys::fs::is_directory(*it, IsDirectory) && IsDirectory) {
+      llvm::sys::Path P(*it);
+      P.appendComponent(TargetSpecificExecutable);
+      if (P.canExecute()) return P.str();
+      P.eraseComponent();
+      P.appendComponent(Name);
+      if (P.canExecute()) return P.str();
+    }
+    else {
+      llvm::sys::Path P(*it + Name);
+      if (P.canExecute()) return P.str();
+    }
   }
 
   const ToolChain::path_list &List = TC.getProgramPaths();
