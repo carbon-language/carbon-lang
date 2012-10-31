@@ -31,6 +31,8 @@
 #include "DNBDataRef.h"
 #include "DNBThreadResumeActions.h"
 #include "DNBTimer.h"
+#include "CFBundle.h"
+
 
 typedef STD_SHARED_PTR(MachProcess) MachProcessSP;
 typedef std::map<nub_process_t, MachProcessSP> ProcessMap;
@@ -2097,6 +2099,21 @@ DNBResolveExecutablePath (const char *path, char *resolved_path, size_t resolved
 
     if (result.empty())
         result = path;
+    
+    struct stat path_stat;
+    if (::stat(path, &path_stat) == 0)
+    {
+        if ((path_stat.st_mode & S_IFMT) == S_IFDIR)
+        {
+            CFBundle bundle (path);
+            CFReleaser<CFURLRef> url(bundle.CopyExecutableURL ());
+            if (url.get())
+            {
+                if (::CFURLGetFileSystemRepresentation (url.get(), true, (UInt8*)resolved_path, resolved_path_size))
+                    return true;
+            }
+        }
+    }
 
     if (realpath(path, max_path))
     {

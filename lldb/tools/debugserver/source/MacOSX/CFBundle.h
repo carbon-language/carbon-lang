@@ -25,11 +25,17 @@ public:
     CFBundle(const char *path = NULL);
     CFBundle(const CFBundle& rhs);
     CFBundle& operator=(const CFBundle& rhs);
-    virtual ~CFBundle();
+    virtual
+    ~CFBundle();
+    bool
+    SetPath (const char *path);
 
-        bool SetPath (const char *path);
-        CFStringRef GetIdentifier () const;
+    CFStringRef
+    GetIdentifier () const;
 
+    CFURLRef
+    CopyExecutableURL () const;
+    
 protected:
         CFReleaser<CFURLRef> m_bundle_url;
 };

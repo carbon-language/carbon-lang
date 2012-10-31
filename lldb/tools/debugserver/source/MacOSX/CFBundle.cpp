@@ -85,3 +85,13 @@ CFBundle::GetIdentifier () const
         return ::CFBundleGetIdentifier (bundle);
     return NULL;
 }
+
+
+CFURLRef
+CFBundle::CopyExecutableURL () const
+{
+    CFBundleRef bundle = get();
+    if (bundle != NULL)
+        return CFBundleCopyExecutableURL(bundle);
+    return NULL;
+}
