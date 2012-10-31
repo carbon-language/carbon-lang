@@ -119,44 +119,6 @@ static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
 
 namespace {
 //===---------------------------------------===//
-// 'strpbrk' Optimizations
-
-struct StrPBrkOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 ||
-        FT->getParamType(0) != B.getInt8PtrTy() ||
-        FT->getParamType(1) != FT->getParamType(0) ||
-        FT->getReturnType() != FT->getParamType(0))
-      return 0;
-
-    StringRef S1, S2;
-    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
-    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
-
-    // strpbrk(s, "") -> NULL
-    // strpbrk("", s) -> NULL
-    if ((HasS1 && S1.empty()) || (HasS2 && S2.empty()))
-      return Constant::getNullValue(CI->getType());
-
-    // Constant folding.
-    if (HasS1 && HasS2) {
-      size_t I = S1.find_first_of(S2);
-      if (I == std::string::npos) // No match.
-        return Constant::getNullValue(CI->getType());
-
-      return B.CreateGEP(CI->getArgOperand(0), B.getInt64(I), "strpbrk");
-    }
-
-    // strpbrk(s, "a") -> strchr(s, 'a')
-    if (TD && HasS2 && S2.size() == 1)
-      return EmitStrChr(CI->getArgOperand(0), S2[0], B, TD, TLI);
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
 // 'strto*' Optimizations.  This handles strtol, strtod, strtof, strtoul, etc.
 
 struct StrToOpt : public LibCallOptimization {
@@ -1104,7 +1066,6 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StrPBrkOpt StrPBrk;
     StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
@@ -1173,7 +1134,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // String and Memory LibCall Optimizations
-  Optimizations["strpbrk"] = &StrPBrk;
   Optimizations["strtol"] = &StrTo;
   Optimizations["strtod"] = &StrTo;
   Optimizations["strtof"] = &StrTo;

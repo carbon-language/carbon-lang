@@ -717,6 +717,41 @@ struct StrLenOpt : public LibCallOptimization {
   }
 };
 
+struct StrPBrkOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getParamType(0) != B.getInt8PtrTy() ||
+        FT->getParamType(1) != FT->getParamType(0) ||
+        FT->getReturnType() != FT->getParamType(0))
+      return 0;
+
+    StringRef S1, S2;
+    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
+
+    // strpbrk(s, "") -> NULL
+    // strpbrk("", s) -> NULL
+    if ((HasS1 && S1.empty()) || (HasS2 && S2.empty()))
+      return Constant::getNullValue(CI->getType());
+
+    // Constant folding.
+    if (HasS1 && HasS2) {
+      size_t I = S1.find_first_of(S2);
+      if (I == std::string::npos) // No match.
+        return Constant::getNullValue(CI->getType());
+
+      return B.CreateGEP(CI->getArgOperand(0), B.getInt64(I), "strpbrk");
+    }
+
+    // strpbrk(s, "a") -> strchr(s, 'a')
+    if (TD && HasS2 && S2.size() == 1)
+      return EmitStrChr(CI->getArgOperand(0), S2[0], B, TD, TLI);
+
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -745,6 +780,7 @@ class LibCallSimplifierImpl {
   StpCpyOpt StpCpy;
   StrNCpyOpt StrNCpy;
   StrLenOpt StrLen;
+  StrPBrkOpt StrPBrk;
 
   void initOptimizations();
 public:
@@ -777,6 +813,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["stpcpy"] = &StpCpy;
   Optimizations["strncpy"] = &StrNCpy;
   Optimizations["strlen"] = &StrLen;
+  Optimizations["strpbrk"] = &StrPBrk;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
