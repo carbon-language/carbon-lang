@@ -419,12 +419,6 @@ SBProcess::SetSelectedThread (const SBThread &thread)
 }
 
 bool
-SBProcess::SetSelectedThreadByID (uint32_t tid)
-{
-    return SetSelectedThreadByID ((lldb::tid_t)tid);
-}
-
-bool
 SBProcess::SetSelectedThreadByID (lldb::tid_t tid)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

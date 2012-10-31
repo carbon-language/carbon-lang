@@ -122,9 +122,6 @@ public:
     SetSelectedThread (const lldb::SBThread &thread);
 
     bool
-    SetSelectedThreadByID (uint32_t tid); // DEPRECATED
-
-    bool
     SetSelectedThreadByID (lldb::tid_t tid);
     
     bool
