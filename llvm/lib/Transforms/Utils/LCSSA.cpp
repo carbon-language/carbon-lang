@@ -160,6 +160,12 @@ bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
       MadeChange |= ProcessInstruction(I, ExitBlocks);
     }
   }
+
+  // If we modified the code, remove any caches about the loop from SCEV to
+  // avoid dangling entries.
+  // FIXME: This is a big hammer, can we clear the cache more selectively?
+  if (SE && MadeChange)
+    SE->forgetLoop(L);
   
   assert(L->isLCSSAForm(*DT));
   PredCache.clear();
@@ -248,19 +254,8 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     
     // Remember that this phi makes the value alive in this block.
     SSAUpdate.AddAvailableValue(ExitBB, PN);
-
-    // If the exiting block is part of a loop inserting a PHI may change its
-    // SCEV analysis. Conservatively drop any caches from it.
-    if (SE)
-      if (Loop *L = LI->getLoopFor(ExitBB))
-        SE->forgetLoop(L);
   }
 
-  // If we added a PHI, drop the cache to avoid invalidating SCEV caches.
-  // FIXME: This is a big hammer, can we clear the cache more selectively?
-  if (SE && !AddedPHIs.empty())
-    SE->forgetLoop(L);
-  
   // Rewrite all uses outside the loop in terms of the new PHIs we just
   // inserted.
   for (unsigned i = 0, e = UsesToRewrite.size(); i != e; ++i) {
@@ -273,12 +268,11 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     if (PHINode *PN = dyn_cast<PHINode>(User))
       UserBB = PN->getIncomingBlock(*UsesToRewrite[i]);
 
-    // Tell SCEV to reanalyze the value that's about to change.
-    if (SE)
-      SE->forgetValue(*UsesToRewrite[i]);
-
     if (isa<PHINode>(UserBB->begin()) &&
         isExitBlock(UserBB, ExitBlocks)) {
+      // Tell the VHs that the uses changed. This updates SCEV's caches.
+      if (UsesToRewrite[i]->get()->hasValueHandle())
+        ValueHandleBase::ValueIsRAUWd(*UsesToRewrite[i], UserBB->begin());
       UsesToRewrite[i]->set(UserBB->begin());
       continue;
     }
