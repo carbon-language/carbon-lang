@@ -628,6 +628,53 @@ struct StpCpyOpt: public LibCallOptimization {
   }
 };
 
+struct StrNCpyOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != B.getInt8PtrTy() ||
+        !FT->getParamType(2)->isIntegerTy())
+      return 0;
+
+    Value *Dst = CI->getArgOperand(0);
+    Value *Src = CI->getArgOperand(1);
+    Value *LenOp = CI->getArgOperand(2);
+
+    // See if we can get the length of the input string.
+    uint64_t SrcLen = GetStringLength(Src);
+    if (SrcLen == 0) return 0;
+    --SrcLen;
+
+    if (SrcLen == 0) {
+      // strncpy(x, "", y) -> memset(x, '\0', y, 1)
+      B.CreateMemSet(Dst, B.getInt8('\0'), LenOp, 1);
+      return Dst;
+    }
+
+    uint64_t Len;
+    if (ConstantInt *LengthArg = dyn_cast<ConstantInt>(LenOp))
+      Len = LengthArg->getZExtValue();
+    else
+      return 0;
+
+    if (Len == 0) return Dst; // strncpy(x, y, 0) -> x
+
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    // Let strncpy handle the zero padding
+    if (Len > SrcLen+1) return 0;
+
+    Type *PT = FT->getParamType(0);
+    // strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant]
+    B.CreateMemCpy(Dst, Src,
+                   ConstantInt::get(TD->getIntPtrType(PT), Len), 1);
+
+    return Dst;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -654,6 +701,7 @@ class LibCallSimplifierImpl {
   StrNCmpOpt StrNCmp;
   StrCpyOpt StrCpy;
   StpCpyOpt StpCpy;
+  StrNCpyOpt StrNCpy;
 
   void initOptimizations();
 public:
@@ -684,6 +732,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
   Optimizations["stpcpy"] = &StpCpy;
+  Optimizations["strncpy"] = &StrNCpy;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
