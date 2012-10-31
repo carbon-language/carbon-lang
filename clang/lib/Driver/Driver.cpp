@@ -1599,8 +1599,7 @@ std::string Driver::GetProgramPath(const char *Name,
       P.eraseComponent();
       P.appendComponent(Name);
       if (P.canExecute()) return P.str();
-    }
-    else {
+    } else {
       llvm::sys::Path P(*it + Name);
       if (P.canExecute()) return P.str();
     }
