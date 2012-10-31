@@ -314,7 +314,6 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       CI.createPCHExternalASTSource(
                                 CI.getPreprocessorOpts().ImplicitPCHInclude,
                                 CI.getPreprocessorOpts().DisablePCHValidation,
-                                CI.getPreprocessorOpts().DisableStatCache,
                             CI.getPreprocessorOpts().AllowPCHWithCompilerErrors,
                                 DeserialListener);
       if (!CI.getASTContext().getExternalSource())

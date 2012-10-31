@@ -308,14 +308,12 @@ void CompilerInstance::createASTContext() {
 
 void CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                                   bool DisablePCHValidation,
-                                                  bool DisableStatCache,
                                                 bool AllowPCHWithCompilerErrors,
                                                  void *DeserializationListener){
   OwningPtr<ExternalASTSource> Source;
   bool Preamble = getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
                                           DisablePCHValidation,
-                                          DisableStatCache,
                                           AllowPCHWithCompilerErrors,
                                           getPreprocessor(), getASTContext(),
                                           DeserializationListener,
@@ -328,7 +326,6 @@ ExternalASTSource *
 CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              const std::string &Sysroot,
                                              bool DisablePCHValidation,
-                                             bool DisableStatCache,
                                              bool AllowPCHWithCompilerErrors,
                                              Preprocessor &PP,
                                              ASTContext &Context,
@@ -337,7 +334,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
   OwningPtr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, Context,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
-                             DisablePCHValidation, DisableStatCache,
+                             DisablePCHValidation,
                              AllowPCHWithCompilerErrors));
 
   Reader->setDeserializationListener(
@@ -946,8 +943,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       const PreprocessorOptions &PPOpts = getPreprocessorOpts();
       ModuleManager = new ASTReader(getPreprocessor(), *Context,
                                     Sysroot.empty() ? "" : Sysroot.c_str(),
-                                    PPOpts.DisablePCHValidation,
-                                    PPOpts.DisableStatCache);
+                                    PPOpts.DisablePCHValidation);
       if (hasASTConsumer()) {
         ModuleManager->setDeserializationListener(
           getASTConsumer().GetASTDeserializationListener());

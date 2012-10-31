@@ -531,7 +531,6 @@ public:
   /// context.
   void createPCHExternalASTSource(StringRef Path,
                                   bool DisablePCHValidation,
-                                  bool DisableStatCache,
                                   bool AllowPCHWithCompilerErrors,
                                   void *DeserializationListener);
 
@@ -541,7 +540,6 @@ public:
   static ExternalASTSource *
   createPCHExternalASTSource(StringRef Path, const std::string &Sysroot,
                              bool DisablePCHValidation,
-                             bool DisableStatCache,
                              bool AllowPCHWithCompilerErrors,
                              Preprocessor &PP, ASTContext &Context,
                              void *DeserializationListener, bool Preamble);

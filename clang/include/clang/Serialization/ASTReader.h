@@ -690,9 +690,6 @@ private:
   /// headers when they are loaded.
   bool DisableValidation;
 
-  /// \brief Whether to disable the use of stat caches in AST files.
-  bool DisableStatCache;
-
   /// \brief Whether to accept an AST file with compiler errors.
   bool AllowASTWithCompilerErrors;
 
@@ -708,10 +705,6 @@ private:
   SwitchCaseMapTy SwitchCaseStmts;
 
   SwitchCaseMapTy *CurrSwitchCaseStmts;
-
-  /// \brief The number of stat() calls that hit/missed the stat
-  /// cache.
-  unsigned NumStatHits, NumStatMisses;
 
   /// \brief The number of source location entries de-serialized from
   /// the PCH file.
@@ -1069,17 +1062,11 @@ public:
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
   ///
-  /// \param DisableStatCache If true, the AST reader will ignore the
-  /// stat cache in the AST files. This performance pessimization can
-  /// help when an AST file is being used in cases where the
-  /// underlying files in the file system may have changed, but
-  /// parsing should still continue.
-  ///
   /// \param AllowASTWithCompilerErrors If true, the AST reader will accept an
   /// AST file the was created out of an AST with compiler errors,
   /// otherwise it will reject it.
   ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot = "",
-            bool DisableValidation = false, bool DisableStatCache = false,
+            bool DisableValidation = false,
             bool AllowASTWithCompilerErrors = false);
 
   ~ASTReader();

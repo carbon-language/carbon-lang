@@ -18,7 +18,6 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/FileSystemStatCache.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
@@ -32,11 +31,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            raw_ostream *OS)
   : PP(PP), OutputFile(OutputFile), Module(Module), 
     isysroot(isysroot.str()), Out(OS), 
-    SemaPtr(0), StatCalls(0), Stream(Buffer), Writer(Stream) {
-  // Install a stat() listener to keep track of all of the stat()
-  // calls.
-  StatCalls = new MemorizeStatCalls();
-  PP.getFileManager().addStatCache(StatCalls, /*AtBeginning=*/false);
+    SemaPtr(0), Stream(Buffer), Writer(Stream) {
 }
 
 PCHGenerator::~PCHGenerator() {
@@ -48,7 +43,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
-  Writer.WriteAST(*SemaPtr, StatCalls, OutputFile, Module, isysroot);
+  Writer.WriteAST(*SemaPtr, OutputFile, Module, isysroot);
 
   // Write the generated bitstream to "Out".
   Out->write((char *)&Buffer.front(), Buffer.size());

@@ -386,9 +386,6 @@ namespace clang {
       /// preloaded.
       SOURCE_LOCATION_PRELOADS = 14,
 
-      /// \brief Record code for the stat() cache.
-      STAT_CACHE = 15,
-
       /// \brief Record code for the set of ext_vector type names.
       EXT_VECTOR_DECLS = 16,
       

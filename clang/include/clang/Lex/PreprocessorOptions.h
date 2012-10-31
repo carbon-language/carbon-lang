@@ -66,10 +66,6 @@ public:
   /// precompiled headers.
   bool DisablePCHValidation;
 
-  /// \brief When true, disables the use of the stat cache within a
-  /// precompiled header or AST file.
-  bool DisableStatCache;
-
   /// \brief When true, a PCH with compiler errors will not be rejected.
   bool AllowPCHWithCompilerErrors;
 
@@ -168,7 +164,7 @@ public:
 public:
   PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
                           DetailedRecordConditionalDirectives(false),
-                          DisablePCHValidation(false), DisableStatCache(false),
+                          DisablePCHValidation(false),
                           AllowPCHWithCompilerErrors(false),
                           DumpDeserializedPCHDecls(false),
                           PrecompiledPreambleBytes(0, true),

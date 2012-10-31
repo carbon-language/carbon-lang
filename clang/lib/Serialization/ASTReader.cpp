@@ -769,104 +769,6 @@ bool ASTReader::ParseLineTable(ModuleFile &F,
   return false;
 }
 
-namespace {
-
-class ASTStatData {
-public:
-  const ino_t ino;
-  const dev_t dev;
-  const mode_t mode;
-  const time_t mtime;
-  const off_t size;
-
-  ASTStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
-    : ino(i), dev(d), mode(mo), mtime(m), size(s) {}
-};
-
-class ASTStatLookupTrait {
- public:
-  typedef const char *external_key_type;
-  typedef const char *internal_key_type;
-
-  typedef ASTStatData data_type;
-
-  static unsigned ComputeHash(const char *path) {
-    return llvm::HashString(path);
-  }
-
-  static internal_key_type GetInternalKey(const char *path) { return path; }
-
-  static bool EqualKey(internal_key_type a, internal_key_type b) {
-    return strcmp(a, b) == 0;
-  }
-
-  static std::pair<unsigned, unsigned>
-  ReadKeyDataLength(const unsigned char*& d) {
-    unsigned KeyLen = (unsigned) clang::io::ReadUnalignedLE16(d);
-    unsigned DataLen = (unsigned) *d++;
-    return std::make_pair(KeyLen + 1, DataLen);
-  }
-
-  static internal_key_type ReadKey(const unsigned char *d, unsigned) {
-    return (const char *)d;
-  }
-
-  static data_type ReadData(const internal_key_type, const unsigned char *d,
-                            unsigned /*DataLen*/) {
-    using namespace clang::io;
-
-    ino_t ino = (ino_t) ReadUnalignedLE32(d);
-    dev_t dev = (dev_t) ReadUnalignedLE32(d);
-    mode_t mode = (mode_t) ReadUnalignedLE16(d);
-    time_t mtime = (time_t) ReadUnalignedLE64(d);
-    off_t size = (off_t) ReadUnalignedLE64(d);
-    return data_type(ino, dev, mode, mtime, size);
-  }
-};
-
-/// \brief stat() cache for precompiled headers.
-///
-/// This cache is very similar to the stat cache used by pretokenized
-/// headers.
-class ASTStatCache : public FileSystemStatCache {
-  typedef OnDiskChainedHashTable<ASTStatLookupTrait> CacheTy;
-  CacheTy *Cache;
-
-  unsigned &NumStatHits, &NumStatMisses;
-public:
-  ASTStatCache(const unsigned char *Buckets, const unsigned char *Base,
-               unsigned &NumStatHits, unsigned &NumStatMisses)
-    : Cache(0), NumStatHits(NumStatHits), NumStatMisses(NumStatMisses) {
-    Cache = CacheTy::Create(Buckets, Base);
-  }
-
-  ~ASTStatCache() { delete Cache; }
-
-  LookupResult getStat(const char *Path, struct stat &StatBuf,
-                       int *FileDescriptor) {
-    // Do the lookup for the file's data in the AST file.
-    CacheTy::iterator I = Cache->find(Path);
-
-    // If we don't get a hit in the AST file just forward to 'stat'.
-    if (I == Cache->end()) {
-      ++NumStatMisses;
-      return statChained(Path, StatBuf, FileDescriptor);
-    }
-
-    ++NumStatHits;
-    ASTStatData Data = *I;
-
-    StatBuf.st_ino = Data.ino;
-    StatBuf.st_dev = Data.dev;
-    StatBuf.st_mtime = Data.mtime;
-    StatBuf.st_mode = Data.mode;
-    StatBuf.st_size = Data.size;
-    return CacheExists;
-  }
-};
-} // end anonymous namespace
-
-
 /// \brief Read a source manager block
 bool ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
   using namespace SrcMgr;
@@ -2359,18 +2261,6 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       }
       
       F.PreloadSLocEntries.swap(Record);
-      break;
-    }
-
-    case STAT_CACHE: {
-      if (!DisableStatCache) {
-        ASTStatCache *MyStatCache =
-          new ASTStatCache((const unsigned char *)BlobStart + Record[0],
-                           (const unsigned char *)BlobStart,
-                           NumStatHits, NumStatMisses);
-        FileMgr.addStatCache(MyStatCache);
-        F.StatCache = MyStatCache;
-      }
       break;
     }
 
@@ -5624,8 +5514,6 @@ void ASTReader::PrintStats() {
                                           SelectorsLoaded.end(),
                                           Selector());
 
-  std::fprintf(stderr, "  %u stat cache hits\n", NumStatHits);
-  std::fprintf(stderr, "  %u stat cache misses\n", NumStatMisses);
   if (unsigned TotalNumSLocEntries = getTotalNumSLocs())
     std::fprintf(stderr, "  %u/%u source location entries read (%f%%)\n",
                  NumSLocEntriesRead, TotalNumSLocEntries,
@@ -7005,16 +6893,14 @@ void ASTReader::FinishedDeserializing() {
 
 ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
                      StringRef isysroot, bool DisableValidation,
-                     bool DisableStatCache, bool AllowASTWithCompilerErrors)
+                     bool AllowASTWithCompilerErrors)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
     Consumer(0), ModuleMgr(PP.getFileManager()),
     isysroot(isysroot), DisableValidation(DisableValidation),
-    DisableStatCache(DisableStatCache),
     AllowASTWithCompilerErrors(AllowASTWithCompilerErrors), 
     CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
-    NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0), 
     TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 
