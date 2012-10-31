@@ -47,6 +47,7 @@ TEST_F(MCJITTest, global_variable) {
   GlobalValue *Global = insertGlobalInt32(M.get(), "test_global", initialValue);
   createJIT(M.take());
   void *globalPtr =  TheJIT->getPointerToGlobal(Global);
+  static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != globalPtr)
     << "Unable to get pointer to global value from JIT";
 
@@ -60,6 +61,7 @@ TEST_F(MCJITTest, add_function) {
   Function *F = insertAddFunction(M.get());
   createJIT(M.take());
   void *addPtr = TheJIT->getPointerToFunction(F);
+  static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != addPtr)
     << "Unable to get pointer to function from JIT";
 
@@ -76,6 +78,7 @@ TEST_F(MCJITTest, run_main) {
   Function *Main = insertMainFunction(M.get(), 6);
   createJIT(M.take());
   void *vPtr = TheJIT->getPointerToFunction(Main);
+  static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != vPtr)
     << "Unable to get pointer to main() from JIT";
 
@@ -97,6 +100,7 @@ TEST_F(MCJITTest, return_global) {
 
   createJIT(M.take());
   void *rgvPtr = TheJIT->getPointerToFunction(ReturnGlobal);
+  static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != rgvPtr);
 
   int32_t(*FuncPtr)(void) = (int32_t(*)(void))(intptr_t)rgvPtr;
@@ -165,6 +169,7 @@ TEST_F(MCJITTest, multiple_functions) {
 
   createJIT(M.take());
   void *vPtr = TheJIT->getPointerToFunction(Outer);
+  static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != vPtr)
     << "Unable to get pointer to outer function from JIT";
 
