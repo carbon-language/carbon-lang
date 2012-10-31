@@ -64,6 +64,10 @@ public:
 
   virtual unsigned GetOppositeBranchOpc(unsigned Opc) const;
 
+  /// Adjust SP by Amount bytes.
+  void adjustStackPtr(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
+                      MachineBasicBlock::iterator I) const;
+
 private:
   virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const;
 

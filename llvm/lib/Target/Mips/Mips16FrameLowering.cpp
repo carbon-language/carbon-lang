@@ -115,8 +115,10 @@ bool Mips16FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
 bool
 Mips16FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
-  // FIXME: implement.
-  return true;
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  // Reserve call frame if the size of the maximum call frame fits into 15-bit
+  // immediate field and there are no variable sized objects on the stack.
+  return isInt<15>(MFI->getMaxCallFrameSize()) && !MFI->hasVarSizedObjects();
 }
 
 void Mips16FrameLowering::

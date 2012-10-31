@@ -26,7 +26,7 @@ using namespace llvm;
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm, Mips::BimmX16),
-    RI(*tm.getSubtargetImpl()) {}
+    RI(*tm.getSubtargetImpl(), *this) {}
 
 const MipsRegisterInfo &Mips16InstrInfo::getRegisterInfo() const {
   return RI;
@@ -158,6 +158,22 @@ unsigned Mips16InstrInfo::GetOppositeBranchOpc(unsigned Opc) const {
   }
   assert(false && "Implement this function.");
   return 0;
+}
+
+/// Adjust SP by Amount bytes.
+void Mips16InstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const {
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
+  if (isInt<16>(Amount)) {
+    if (Amount < 0)
+      BuildMI(MBB, I, DL, get(Mips::SaveDecSpF16)). addImm(-Amount);
+    else if (Amount > 0)
+      BuildMI(MBB, I, DL, get(Mips::RestoreIncSpF16)).addImm(Amount);
+  }
+  else
+    // not implemented for large values yet
+    assert(false && "adjust stack pointer amount exceeded");
 }
 
 unsigned Mips16InstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {

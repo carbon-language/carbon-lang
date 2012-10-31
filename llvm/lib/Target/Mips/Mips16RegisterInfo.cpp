@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips16RegisterInfo.h"
+#include "Mips16InstrInfo.h"
 #include "Mips.h"
 #include "MipsAnalyzeImmediate.h"
 #include "MipsInstrInfo.h"
@@ -38,15 +39,28 @@
 
 using namespace llvm;
 
-Mips16RegisterInfo::Mips16RegisterInfo(const MipsSubtarget &ST)
-  : MipsRegisterInfo(ST) {}
+Mips16RegisterInfo::Mips16RegisterInfo(const MipsSubtarget &ST,
+    const Mips16InstrInfo &I)
+  : MipsRegisterInfo(ST), TII(I) {}
 
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void Mips16RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  // Simply discard ADJCALLSTACKDOWN, ADJCALLSTACKUP instructions.
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
+    int64_t Amount = I->getOperand(0).getImm();
+
+    if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
+      Amount = -Amount;
+
+    const Mips16InstrInfo *II = static_cast<const Mips16InstrInfo*>(&TII);
+
+    II->adjustStackPtr(Mips::SP, Amount, MBB, I);
+  }
+
   MBB.erase(I);
 }
 

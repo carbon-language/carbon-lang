@@ -686,7 +686,17 @@ def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
 let ra=1, s=0,s0=1,s1=1 in
 def RestoreRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore \t$$ra,  $$s0, $$s1, $frame_size", [], IILoad >, MayLoad {
+             "restore\t$$ra,  $$s0, $$s1, $frame_size", [], IILoad >, MayLoad {
+  let isCodeGenOnly = 1;
+}
+
+// Use Restore to increment SP since SP is not a Mip 16 register, this
+// is an easy way to do that which does not require a register.
+//
+let ra=0, s=0,s0=0,s1=0 in
+def RestoreIncSpF16:
+  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
+             "restore\t$frame_size", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
 }
 
@@ -700,7 +710,18 @@ def RestoreRaF16:
 let ra=1, s=1,s0=1,s1=1 in
 def SaveRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save \t$$ra, $$s0, $$s1, $frame_size", [], IIStore >, MayStore {
+             "save\t$$ra, $$s0, $$s1, $frame_size", [], IIStore >, MayStore {
+  let isCodeGenOnly = 1;
+}
+
+//
+// Use Save to decrement the SP by a constant since SP is not
+// a Mips16 register.
+//
+let ra=0, s=0,s0=0,s1=0 in
+def SaveDecSpF16:
+  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
+             "save\t$frame_size", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
 }
 //
