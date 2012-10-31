@@ -687,6 +687,9 @@ inline raw_ostream &operator<<(raw_ostream &OS, const MachineOperand& MO) {
   return OS;
 }
 
+  // See friend declaration above. This additional declaration is required in
+  // order to compile LLVM with IBM xlC compiler.
+  hash_code hash_value(const MachineOperand &MO);
 } // End llvm namespace
 
 #endif

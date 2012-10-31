@@ -456,6 +456,10 @@ namespace llvm {
     /* The sign bit of this number.  */
     unsigned int sign: 1;
   };
+
+  // See friend declaration above. This additional declaration is required in
+  // order to compile LLVM with IBM xlC compiler.
+  hash_code hash_value(const APFloat &Arg);
 } /* namespace llvm */
 
 #endif /* LLVM_FLOAT_H */
