@@ -126,8 +126,10 @@ void SimpleStreamChecker::checkPreStmt(const CallExpr *Call,
   // Check if the stream has already been closed.
   ProgramStateRef State = C.getState();
   const StreamState *SS = State->get<StreamMap>(FileDesc);
-  if (SS && SS->isClosed())
+  if (SS && SS->isClosed()) {
     reportDoubleClose(FileDesc, Call, C);
+    return;
+  }
 
   // Generate the next transition, in which the stream is closed.
   State = State->set<StreamMap>(FileDesc, StreamState::getClosed());
