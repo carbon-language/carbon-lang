@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
-#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace ento;
@@ -26,13 +25,8 @@ static DefinedSVal getLocFromSymbol(const ProgramStateRef &State,
   return loc::MemRegionVal(R);
 }
 
-/// Convenience method to query the state to see if a symbol is null or
-/// not null, or neither assumption can be made.
-ConditionTruthVal ConstraintManager::isNull(ProgramStateRef State,
-                                            SymbolRef Sym) {
-  // Disable recursive notification of clients.
-  llvm::SaveAndRestore<bool> DisableNotify(NotifyAssumeClients, false);
-  
+ConditionTruthVal ConstraintManager::checkNull(ProgramStateRef State,
+                                               SymbolRef Sym) {  
   QualType Ty = Sym->getType();
   DefinedSVal V = Loc::isLocType(Ty) ? getLocFromSymbol(State, Sym)
                                      : nonloc::SymbolVal(Sym);

@@ -16,6 +16,7 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 namespace llvm {
 class APSInt;
@@ -97,8 +98,12 @@ public:
   virtual void EndPath(ProgramStateRef state) {}
   
   /// Convenience method to query the state to see if a symbol is null or
-  /// not null, or neither assumption can be made.
-  ConditionTruthVal isNull(ProgramStateRef State, SymbolRef Sym);
+  /// not null, or if neither assumption can be made.
+  ConditionTruthVal isNull(ProgramStateRef State, SymbolRef Sym) {
+    llvm::SaveAndRestore<bool> DisableNotify(NotifyAssumeClients, false);
+
+    return checkNull(State, Sym);
+  }
 
 protected:
   /// A flag to indicate that clients should be notified of assumptions.
@@ -115,6 +120,10 @@ protected:
   ///  ExprEngine to determine if the value should be replaced with a
   ///  conjured symbolic value in order to recover some precision.
   virtual bool canReasonAbout(SVal X) const = 0;
+
+  /// Returns whether or not a symbol is known to be null ("true"), known to be
+  /// non-null ("false"), or may be either ("underconstrained"). 
+  virtual ConditionTruthVal checkNull(ProgramStateRef State, SymbolRef Sym);
 };
 
 ConstraintManager* CreateRangeConstraintManager(ProgramStateManager& statemgr,

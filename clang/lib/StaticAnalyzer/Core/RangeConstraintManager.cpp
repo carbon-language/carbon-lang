@@ -324,6 +324,7 @@ public:
                              const llvm::APSInt& Adjustment);
 
   const llvm::APSInt* getSymVal(ProgramStateRef St, SymbolRef sym) const;
+  ConditionTruthVal checkNull(ProgramStateRef State, SymbolRef Sym);
 
   ProgramStateRef removeDeadBindings(ProgramStateRef St, SymbolReaper& SymReaper);
 
@@ -345,6 +346,30 @@ const llvm::APSInt* RangeConstraintManager::getSymVal(ProgramStateRef St,
                                                       SymbolRef sym) const {
   const ConstraintRangeTy::data_type *T = St->get<ConstraintRange>(sym);
   return T ? T->getConcreteValue() : NULL;
+}
+
+ConditionTruthVal RangeConstraintManager::checkNull(ProgramStateRef State,
+                                                    SymbolRef Sym) {
+  const RangeSet *Ranges = State->get<ConstraintRange>(Sym);
+
+  // If we don't have any information about this symbol, it's underconstrained.
+  if (!Ranges)
+    return ConditionTruthVal();
+
+  // If we have a concrete value, see if it's zero.
+  if (const llvm::APSInt *Value = Ranges->getConcreteValue())
+    return *Value == 0;
+
+  BasicValueFactory &BV = getBasicVals();
+  APSIntType IntType = BV.getAPSIntType(Sym->getType());
+  llvm::APSInt Zero = IntType.getZeroValue();
+
+  // Check if zero is in the set of possible values.
+  if (Ranges->Intersect(BV, F, Zero, Zero).isEmpty())
+    return false;
+
+  // Zero is a possible value, but it is not the /only/ possible value.
+  return ConditionTruthVal();
 }
 
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
