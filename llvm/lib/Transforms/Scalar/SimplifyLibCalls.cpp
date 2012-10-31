@@ -90,22 +90,6 @@ public:
 // Helper Functions
 //===----------------------------------------------------------------------===//
 
-/// IsOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
-/// value is equal or not-equal to zero.
-static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
-      if (IC->isEquality())
-        if (Constant *C = dyn_cast<Constant>(IC->getOperand(1)))
-          if (C->isNullValue())
-            continue;
-    // Unknown instruction.
-    return false;
-  }
-  return true;
-}
-
 static bool CallHasFloatingPointArgument(const CallInst *CI) {
   for (CallInst::const_op_iterator it = CI->op_begin(), e = CI->op_end();
        it != e; ++it) {
@@ -134,32 +118,6 @@ static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-//===---------------------------------------===//
-// 'strlen' Optimizations
-
-struct StrLenOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 1 ||
-        FT->getParamType(0) != B.getInt8PtrTy() ||
-        !FT->getReturnType()->isIntegerTy())
-      return 0;
-
-    Value *Src = CI->getArgOperand(0);
-
-    // Constant folding: strlen("xyz") -> 3
-    if (uint64_t Len = GetStringLength(Src))
-      return ConstantInt::get(CI->getType(), Len-1);
-
-    // strlen(x) != 0 --> *x != 0
-    // strlen(x) == 0 --> *x == 0
-    if (IsOnlyUsedInZeroEqualityComparison(CI))
-      return B.CreateZExt(B.CreateLoad(Src, "strlenfirst"), CI->getType());
-    return 0;
-  }
-};
-
-
 //===---------------------------------------===//
 // 'strpbrk' Optimizations
 
@@ -1146,7 +1104,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StrLenOpt StrLen; StrPBrkOpt StrPBrk;
+    StrPBrkOpt StrPBrk;
     StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
@@ -1215,7 +1173,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // String and Memory LibCall Optimizations
-  Optimizations["strlen"] = &StrLen;
   Optimizations["strpbrk"] = &StrPBrk;
   Optimizations["strtol"] = &StrTo;
   Optimizations["strtod"] = &StrTo;

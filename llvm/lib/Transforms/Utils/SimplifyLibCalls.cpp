@@ -64,6 +64,26 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+// Helper Functions
+//===----------------------------------------------------------------------===//
+
+/// isOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
+/// value is equal or not-equal to zero.
+static bool isOnlyUsedInZeroEqualityComparison(Value *V) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E; ++UI) {
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+      if (IC->isEquality())
+        if (Constant *C = dyn_cast<Constant>(IC->getOperand(1)))
+          if (C->isNullValue())
+            continue;
+    // Unknown instruction.
+    return false;
+  }
+  return true;
+}
+
+//===----------------------------------------------------------------------===//
 // Fortified Library Call Optimizations
 //===----------------------------------------------------------------------===//
 
@@ -675,6 +695,28 @@ struct StrNCpyOpt : public LibCallOptimization {
   }
 };
 
+struct StrLenOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 1 ||
+        FT->getParamType(0) != B.getInt8PtrTy() ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    Value *Src = CI->getArgOperand(0);
+
+    // Constant folding: strlen("xyz") -> 3
+    if (uint64_t Len = GetStringLength(Src))
+      return ConstantInt::get(CI->getType(), Len-1);
+
+    // strlen(x) != 0 --> *x != 0
+    // strlen(x) == 0 --> *x == 0
+    if (isOnlyUsedInZeroEqualityComparison(CI))
+      return B.CreateZExt(B.CreateLoad(Src, "strlenfirst"), CI->getType());
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -702,6 +744,7 @@ class LibCallSimplifierImpl {
   StrCpyOpt StrCpy;
   StpCpyOpt StpCpy;
   StrNCpyOpt StrNCpy;
+  StrLenOpt StrLen;
 
   void initOptimizations();
 public:
@@ -733,6 +776,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["strcpy"] = &StrCpy;
   Optimizations["stpcpy"] = &StpCpy;
   Optimizations["strncpy"] = &StrNCpy;
+  Optimizations["strlen"] = &StrLen;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
