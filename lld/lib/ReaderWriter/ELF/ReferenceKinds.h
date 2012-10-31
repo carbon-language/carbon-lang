@@ -13,6 +13,7 @@
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/WriterELF.h"
 
+#include <functional>
 #include <map>
 #include <memory>
 
