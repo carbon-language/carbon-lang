@@ -1015,9 +1015,10 @@ MachineInstr::getRegClassConstraint(unsigned OpIdx,
 unsigned MachineInstr::getBundleSize() const {
   assert(isBundle() && "Expecting a bundle");
 
-  MachineBasicBlock::const_instr_iterator I = *this;
+  const MachineBasicBlock *MBB = getParent();
+  MachineBasicBlock::const_instr_iterator I = *this, E = MBB->instr_end();
   unsigned Size = 0;
-  while ((++I)->isInsideBundle()) {
+  while ((++I != E) && I->isInsideBundle()) {
     ++Size;
   }
   assert(Size > 1 && "Malformed bundle");
