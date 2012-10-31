@@ -175,7 +175,7 @@ namespace {
                                        unsigned VirtReg, unsigned Hint);
     LiveRegMap::iterator reloadVirtReg(MachineInstr *MI, unsigned OpNum,
                                        unsigned VirtReg, unsigned Hint);
-    void spillAll(MachineInstr *MI);
+    void spillAll(MachineBasicBlock::iterator MI);
     bool setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg);
     void addRetOperands(MachineBasicBlock *MBB);
   };
@@ -314,7 +314,7 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
 }
 
 /// spillAll - Spill all dirty virtregs without killing them.
-void RAFast::spillAll(MachineInstr *MI) {
+void RAFast::spillAll(MachineBasicBlock::iterator MI) {
   if (LiveVirtRegs.empty()) return;
   isBulkSpilling = true;
   // The LiveRegMap is keyed by an unsigned (the virtreg number), so the order
