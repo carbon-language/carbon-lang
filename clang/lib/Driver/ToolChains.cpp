@@ -714,10 +714,10 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       // Skip this argument unless the architecture matches either the toolchain
       // triple arch, or the arch being bound.
       llvm::Triple::ArchType XarchArch =
-        llvm::Triple::getArchTypeForDarwinArchName(A->getValue(Args, 0));
+        tools::darwin::getArchTypeForDarwinArchName(A->getValue(Args, 0));
       if (!(XarchArch == getArch()  ||
             (BoundArch && XarchArch ==
-             llvm::Triple::getArchTypeForDarwinArchName(BoundArch))))
+             tools::darwin::getArchTypeForDarwinArchName(BoundArch))))
         continue;
 
       Arg *OriginalArg = A;

@@ -790,7 +790,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       // Validate the option here; we don't save the type here because its
       // particular spelling may participate in other driver choices.
       llvm::Triple::ArchType Arch =
-        llvm::Triple::getArchTypeForDarwinArchName(A->getValue(Args));
+        tools::darwin::getArchTypeForDarwinArchName(A->getValue(Args));
       if (Arch == llvm::Triple::UnknownArch) {
         Diag(clang::diag::err_drv_invalid_arch_name)
           << A->getAsString(Args);
@@ -1623,14 +1623,14 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
     // If an explict Darwin arch name is given, that trumps all.
     if (!DarwinArchName.empty()) {
       Target.setArch(
-        llvm::Triple::getArchTypeForDarwinArchName(DarwinArchName));
+        tools::darwin::getArchTypeForDarwinArchName(DarwinArchName));
       return Target;
     }
 
     // Handle the Darwin '-arch' flag.
     if (Arg *A = Args.getLastArg(options::OPT_arch)) {
       llvm::Triple::ArchType DarwinArch
-        = llvm::Triple::getArchTypeForDarwinArchName(A->getValue(Args));
+        = tools::darwin::getArchTypeForDarwinArchName(A->getValue(Args));
       if (DarwinArch != llvm::Triple::UnknownArch)
         Target.setArch(DarwinArch);
     }

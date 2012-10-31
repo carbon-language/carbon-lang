@@ -3526,6 +3526,37 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
 }
 // Hexagon tools end.
 
+llvm::Triple::ArchType darwin::getArchTypeForDarwinArchName(StringRef Str) {
+  // See arch(3) and llvm-gcc's driver-driver.c. We don't implement support for
+  // archs which Darwin doesn't use.
+
+  // The matching this routine does is fairly pointless, since it is neither the
+  // complete architecture list, nor a reasonable subset. The problem is that
+  // historically the driver driver accepts this and also ties its -march=
+  // handling to the architecture name, so we need to be careful before removing
+  // support for it.
+
+  // This code must be kept in sync with Clang's Darwin specific argument
+  // translation.
+
+  return llvm::StringSwitch<llvm::Triple::ArchType>(Str)
+    .Cases("ppc", "ppc601", "ppc603", "ppc604", "ppc604e", llvm::Triple::ppc)
+    .Cases("ppc750", "ppc7400", "ppc7450", "ppc970", llvm::Triple::ppc)
+    .Case("ppc64", llvm::Triple::ppc64)
+    .Cases("i386", "i486", "i486SX", "i586", "i686", llvm::Triple::x86)
+    .Cases("pentium", "pentpro", "pentIIm3", "pentIIm5", "pentium4",
+           llvm::Triple::x86)
+    .Case("x86_64", llvm::Triple::x86_64)
+    // This is derived from the driver driver.
+    .Cases("arm", "armv4t", "armv5", "armv6", llvm::Triple::arm)
+    .Cases("armv7", "armv7f", "armv7k", "armv7s", "xscale", llvm::Triple::arm)
+    .Case("r600", llvm::Triple::r600)
+    .Case("nvptx", llvm::Triple::nvptx)
+    .Case("nvptx64", llvm::Triple::nvptx64)
+    .Case("amdil", llvm::Triple::amdil)
+    .Case("spir", llvm::Triple::spir)
+    .Default(llvm::Triple::UnknownArch);
+}
 
 const char *darwin::CC1::getCC1Name(types::ID Type) const {
   switch (Type) {
