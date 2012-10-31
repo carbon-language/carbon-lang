@@ -256,10 +256,10 @@ The ``TargetRegisterInfo`` class
 The ``TargetRegisterInfo`` class is used to describe the register file of the
 target and any interactions between the registers.
 
-Registers in the code generator are represented in the code generator by
-unsigned integers.  Physical registers (those that actually exist in the target
-description) are unique small numbers, and virtual registers are generally
-large.  Note that register ``#0`` is reserved as a flag value.
+Registers are represented in the code generator by unsigned integers.  Physical
+registers (those that actually exist in the target description) are unique
+small numbers, and virtual registers are generally large.  Note that
+register ``#0`` is reserved as a flag value.
 
 Each register in the processor description has an associated
 ``TargetRegisterDesc`` entry, which provides a textual name for the register
