@@ -1713,9 +1713,7 @@ AppleObjCRuntimeV2::GetISAHashTablePointer ()
             if (gdb_objc_realized_classes_ptr != LLDB_INVALID_ADDRESS)
             {
                 Error error;
-                lldb::addr_t ptr = process->ReadPointerFromMemory(gdb_objc_realized_classes_ptr, error);
-                if (ptr != LLDB_INVALID_ADDRESS);
-                    m_isa_hash_table_ptr = ptr;
+                m_isa_hash_table_ptr = process->ReadPointerFromMemory(gdb_objc_realized_classes_ptr, error);
             }
         }
     }
