@@ -717,10 +717,10 @@ DataExtractor::GetMaxS64Bitfield (uint32_t *offset_ptr, uint32_t size, uint32_t 
     {
         if (bitfield_bit_offset > 0)
             sval64 >>= bitfield_bit_offset;
-        uint64_t bitfield_mask = ((1 << bitfield_bit_size) - 1);
+        uint64_t bitfield_mask = (((uint64_t)1) << bitfield_bit_size) - 1;
         sval64 &= bitfield_mask;
         // sign extend if needed
-        if (sval64 & (1 << (bitfield_bit_size - 1)))
+        if (sval64 & (((uint64_t)1) << (bitfield_bit_size - 1)))
             sval64 |= ~bitfield_mask;
     }
     return sval64;
