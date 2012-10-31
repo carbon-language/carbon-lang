@@ -185,8 +185,8 @@ struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
       return Src;
 
     // If a) we don't have any length information, or b) we know this will
-    // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
-    // st[rp]cpy_chk call which may fail at runtime if the size is too long.
+    // fit then just lower to a plain strcpy. Otherwise we'll keep our
+    // strcpy_chk call which may fail at runtime if the size is too long.
     // TODO: It might be nice to get a maximum length out of the possible
     // string lengths for varying.
     if (isFoldable(2, 1, true)) {
@@ -205,6 +205,56 @@ struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
                       ConstantInt::get(TD->getIntPtrType(Dst->getType()),
                       Len), CI->getArgOperand(2), B, TD, TLI);
       return Ret;
+    }
+    return 0;
+  }
+};
+
+struct StpCpyChkOpt : public InstFortifiedLibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    this->CI = CI;
+    StringRef Name = Callee->getName();
+    FunctionType *FT = Callee->getFunctionType();
+    LLVMContext &Context = CI->getParent()->getContext();
+
+    // Check if this has the right signature.
+    if (FT->getNumParams() != 3 ||
+        FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
+        FT->getParamType(2) != TD->getIntPtrType(FT->getParamType(0)))
+      return 0;
+
+    Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
+    if (Dst == Src) {  // stpcpy(x,x)  -> x+strlen(x)
+      Value *StrLen = EmitStrLen(Src, B, TD, TLI);
+      return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : 0;
+    }
+
+    // If a) we don't have any length information, or b) we know this will
+    // fit then just lower to a plain stpcpy. Otherwise we'll keep our
+    // stpcpy_chk call which may fail at runtime if the size is too long.
+    // TODO: It might be nice to get a maximum length out of the possible
+    // string lengths for varying.
+    if (isFoldable(2, 1, true)) {
+      Value *Ret = EmitStrCpy(Dst, Src, B, TD, TLI, Name.substr(2, 6));
+      return Ret;
+    } else {
+      // Maybe we can stil fold __stpcpy_chk to __memcpy_chk.
+      uint64_t Len = GetStringLength(Src);
+      if (Len == 0) return 0;
+
+      // This optimization require DataLayout.
+      if (!TD) return 0;
+
+      Type *PT = FT->getParamType(0);
+      Value *LenV = ConstantInt::get(TD->getIntPtrType(PT), Len);
+      Value *DstEnd = B.CreateGEP(Dst,
+                                  ConstantInt::get(TD->getIntPtrType(PT),
+                                                   Len - 1));
+      if (!EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B, TD, TLI))
+        return 0;
+      return DstEnd;
     }
     return 0;
   }
@@ -556,6 +606,7 @@ class LibCallSimplifierImpl {
   MemMoveChkOpt MemMoveChk;
   MemSetChkOpt MemSetChk;
   StrCpyChkOpt StrCpyChk;
+  StpCpyChkOpt StpCpyChk;
   StrNCpyChkOpt StrNCpyChk;
 
   // String and memory library call optimizations.
@@ -583,7 +634,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["__memmove_chk"] = &MemMoveChk;
   Optimizations["__memset_chk"] = &MemSetChk;
   Optimizations["__strcpy_chk"] = &StrCpyChk;
-  Optimizations["__stpcpy_chk"] = &StrCpyChk;
+  Optimizations["__stpcpy_chk"] = &StpCpyChk;
   Optimizations["__strncpy_chk"] = &StrNCpyChk;
   Optimizations["__stpncpy_chk"] = &StrNCpyChk;
 
