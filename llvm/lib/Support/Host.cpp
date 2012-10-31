@@ -503,6 +503,7 @@ std::string sys::getHostCPUName() {
           .Case("0xb76", "arm1176jz-s")
           .Case("0xc08", "cortex-a8")
           .Case("0xc09", "cortex-a9")
+          .Case("0xc0f", "cortex-a15")
           .Case("0xc20", "cortex-m0")
           .Case("0xc23", "cortex-m3")
           .Case("0xc24", "cortex-m4")
