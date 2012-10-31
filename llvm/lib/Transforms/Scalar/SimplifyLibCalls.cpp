@@ -135,52 +135,6 @@ static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
 
 namespace {
 //===---------------------------------------===//
-// 'stpcpy' Optimizations
-
-struct StpCpyOpt: public LibCallOptimization {
-  bool OptChkCall;  // True if it's optimizing a __stpcpy_chk libcall.
-
-  StpCpyOpt(bool c) : OptChkCall(c) {}
-
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Verify the "stpcpy" function prototype.
-    unsigned NumParams = OptChkCall ? 3 : 2;
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != NumParams ||
-        FT->getReturnType() != FT->getParamType(0) ||
-        FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != B.getInt8PtrTy())
-      return 0;
-
-    // These optimizations require DataLayout.
-    if (!TD) return 0;
-
-    Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
-    if (Dst == Src) {  // stpcpy(x,x)  -> x+strlen(x)
-      Value *StrLen = EmitStrLen(Src, B, TD, TLI);
-      return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : 0;
-    }
-
-    // See if we can get the length of the input string.
-    uint64_t Len = GetStringLength(Src);
-    if (Len == 0) return 0;
-
-    Type *PT = FT->getParamType(0);
-    Value *LenV = ConstantInt::get(TD->getIntPtrType(PT), Len);
-    Value *DstEnd = B.CreateGEP(Dst,
-                                ConstantInt::get(TD->getIntPtrType(PT),
-                                                 Len - 1));
-
-    // We have enough information to now generate the memcpy call to do the
-    // copy for us.  Make a memcpy to copy the nul byte with align = 1.
-    if (!OptChkCall || !EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B,
-                                      TD, TLI))
-      B.CreateMemCpy(Dst, Src, LenV, 1);
-    return DstEnd;
-  }
-};
-
-//===---------------------------------------===//
 // 'strncpy' Optimizations
 
 struct StrNCpyOpt : public LibCallOptimization {
@@ -1242,7 +1196,6 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StpCpyOpt StpCpy; StpCpyOpt StpCpyChk;
     StrNCpyOpt StrNCpy;
     StrLenOpt StrLen; StrPBrkOpt StrPBrk;
     StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
@@ -1261,8 +1214,8 @@ namespace {
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
-    SimplifyLibCalls() : FunctionPass(ID), StpCpy(false), StpCpyChk(true),
-                         UnaryDoubleFP(false), UnsafeUnaryDoubleFP(true) {
+    SimplifyLibCalls() : FunctionPass(ID), UnaryDoubleFP(false),
+                         UnsafeUnaryDoubleFP(true) {
       initializeSimplifyLibCallsPass(*PassRegistry::getPassRegistry());
     }
     void AddOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1314,7 +1267,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 void SimplifyLibCalls::InitOptimizations() {
   // String and Memory LibCall Optimizations
   Optimizations["strncpy"] = &StrNCpy;
-  Optimizations["stpcpy"] = &StpCpy;
   Optimizations["strlen"] = &StrLen;
   Optimizations["strpbrk"] = &StrPBrk;
   Optimizations["strtol"] = &StrTo;
@@ -1331,9 +1283,6 @@ void SimplifyLibCalls::InitOptimizations() {
   AddOpt(LibFunc::memcpy, &MemCpy);
   Optimizations["memmove"] = &MemMove;
   AddOpt(LibFunc::memset, &MemSet);
-
-  // _chk variants of String and Memory LibCall Optimizations.
-  Optimizations["__stpcpy_chk"] = &StpCpyChk;
 
   // Math Library Optimizations
   Optimizations["cosf"] = &Cos;

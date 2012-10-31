@@ -592,6 +592,42 @@ struct StrCpyOpt : public LibCallOptimization {
   }
 };
 
+struct StpCpyOpt: public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "stpcpy" function prototype.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != B.getInt8PtrTy())
+      return 0;
+
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
+    if (Dst == Src) {  // stpcpy(x,x)  -> x+strlen(x)
+      Value *StrLen = EmitStrLen(Src, B, TD, TLI);
+      return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : 0;
+    }
+
+    // See if we can get the length of the input string.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0) return 0;
+
+    Type *PT = FT->getParamType(0);
+    Value *LenV = ConstantInt::get(TD->getIntPtrType(PT), Len);
+    Value *DstEnd = B.CreateGEP(Dst,
+                                ConstantInt::get(TD->getIntPtrType(PT),
+                                                 Len - 1));
+
+    // We have enough information to now generate the memcpy call to do the
+    // copy for us.  Make a memcpy to copy the nul byte with align = 1.
+    B.CreateMemCpy(Dst, Src, LenV, 1);
+    return DstEnd;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -617,6 +653,7 @@ class LibCallSimplifierImpl {
   StrCmpOpt StrCmp;
   StrNCmpOpt StrNCmp;
   StrCpyOpt StrCpy;
+  StpCpyOpt StpCpy;
 
   void initOptimizations();
 public:
@@ -646,6 +683,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["strcmp"] = &StrCmp;
   Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
+  Optimizations["stpcpy"] = &StpCpy;
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
