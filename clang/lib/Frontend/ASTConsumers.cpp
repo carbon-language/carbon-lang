@@ -58,9 +58,7 @@ namespace {
     bool shouldWalkTypesOfTypeLocs() const { return false; }
 
     bool TraverseDecl(Decl *D) {
-      if (D == NULL)
-        return false;
-      if (filterMatches(D)) {
+      if (D != NULL && filterMatches(D)) {
         Out.changeColor(llvm::raw_ostream::BLUE) <<
             (Dump ? "Dumping " : "Printing ") << getName(D) << ":\n";
         Out.resetColor();

@@ -26,6 +26,9 @@
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::TheClass::n "%s" -- 2>&1 | FileCheck -check-prefix CHECK-ATTR %s
 // CHECK-ATTR: test_namespace
 // CHECK-ATTR-NEXT: int n __attribute__((aligned((BinaryOperator
+//
+// RUN: clang-check -ast-dump -ast-dump-filter test_namespace::AfterNullNode "%s" -- 2>&1 | FileCheck -check-prefix CHECK-AFTER-NULL %s
+// CHECK-AFTER-NULL: class AfterNullNode
 
 namespace test_namespace {
 
@@ -39,5 +42,8 @@ public:
 
 // Used to fail with -ast-dump-filter X
 template<template<typename T> class C> class Z {};
+
+// Check that traversal continues after the previous construct.
+class AfterNullNode {};
 
 }
