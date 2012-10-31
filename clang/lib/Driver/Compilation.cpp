@@ -115,7 +115,7 @@ static bool skipArg(const char *Flag, bool &SkipNextArg) {
     .Cases("-o", "-coverage-file", "-dependency-file", true)
     .Cases("-fdebug-compilation-dir", "-fmodule-cache-path", "-idirafter", true)
     .Cases("-include", "-include-pch", "-internal-isystem", true)
-    .Cases("-internal-externc-isystem", "-iprefix ", "-iwithprefix", true)
+    .Cases("-internal-externc-isystem", "-iprefix", "-iwithprefix", true)
     .Cases("-iwithprefixbefore", "-isysroot", "-isystem", "-iquote", true)
     .Cases("-resource-dir", "-serialize-diagnostic-file", true)
     .Case("-dwarf-debug-flags", true)
