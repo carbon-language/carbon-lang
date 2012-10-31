@@ -4363,14 +4363,14 @@ vec_perm(vector float a, vector float b, vector unsigned char c)
 
 /* vec_vperm */
 
-vector signed char __ATTRS_o_ai
+static vector signed char __ATTRS_o_ai
 vec_vperm(vector signed char a, vector signed char b, vector unsigned char c)
 {
   return (vector signed char)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector unsigned char __ATTRS_o_ai
+static vector unsigned char __ATTRS_o_ai
 vec_vperm(vector unsigned char a,
           vector unsigned char b,
           vector unsigned char c)
@@ -4379,21 +4379,21 @@ vec_vperm(vector unsigned char a,
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector bool char __ATTRS_o_ai
+static vector bool char __ATTRS_o_ai
 vec_vperm(vector bool char a, vector bool char b, vector unsigned char c)
 {
   return (vector bool char)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector short __ATTRS_o_ai
+static vector short __ATTRS_o_ai
 vec_vperm(vector short a, vector short b, vector unsigned char c)
 {
   return (vector short)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector unsigned short __ATTRS_o_ai
+static vector unsigned short __ATTRS_o_ai
 vec_vperm(vector unsigned short a,
           vector unsigned short b,
           vector unsigned char c)
@@ -4402,41 +4402,41 @@ vec_vperm(vector unsigned short a,
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector bool short __ATTRS_o_ai
+static vector bool short __ATTRS_o_ai
 vec_vperm(vector bool short a, vector bool short b, vector unsigned char c)
 {
   return (vector bool short)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector pixel __ATTRS_o_ai
+static vector pixel __ATTRS_o_ai
 vec_vperm(vector pixel a, vector pixel b, vector unsigned char c)
 {
   return (vector pixel)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector int __ATTRS_o_ai
+static vector int __ATTRS_o_ai
 vec_vperm(vector int a, vector int b, vector unsigned char c)
 {
   return (vector int)__builtin_altivec_vperm_4si(a, b, c);
 }
 
-vector unsigned int __ATTRS_o_ai
+static vector unsigned int __ATTRS_o_ai
 vec_vperm(vector unsigned int a, vector unsigned int b, vector unsigned char c)
 {
   return (vector unsigned int)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector bool int __ATTRS_o_ai
+static vector bool int __ATTRS_o_ai
 vec_vperm(vector bool int a, vector bool int b, vector unsigned char c)
 {
   return (vector bool int)
            __builtin_altivec_vperm_4si((vector int)a, (vector int)b, c);
 }
 
-vector float __ATTRS_o_ai
+static vector float __ATTRS_o_ai
 vec_vperm(vector float a, vector float b, vector unsigned char c)
 {
   return (vector float)
@@ -4445,7 +4445,7 @@ vec_vperm(vector float a, vector float b, vector unsigned char c)
 
 /* vec_re */
 
-vector float __attribute__((__always_inline__))
+static vector float __attribute__((__always_inline__))
 vec_re(vector float a)
 {
   return __builtin_altivec_vrefp(a);
@@ -4453,7 +4453,7 @@ vec_re(vector float a)
 
 /* vec_vrefp */
 
-vector float __attribute__((__always_inline__))
+static vector float __attribute__((__always_inline__))
 vec_vrefp(vector float a)
 {
   return __builtin_altivec_vrefp(a);
