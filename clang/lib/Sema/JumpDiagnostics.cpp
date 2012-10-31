@@ -332,6 +332,29 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     Jumps.push_back(S);
     break;
 
+  case Stmt::CXXTryStmtClass: {
+    CXXTryStmt *TS = cast<CXXTryStmt>(S);
+    unsigned newParentScope;
+    Scopes.push_back(GotoScope(ParentScope,
+                               diag::note_protected_by_cxx_try,
+                               diag::note_exits_cxx_try,
+                               TS->getSourceRange().getBegin()));
+    if (Stmt *TryBlock = TS->getTryBlock())
+      BuildScopeInformation(TryBlock, (newParentScope = Scopes.size()-1));
+
+    // Jump from the catch into the try is not allowed either.
+    for (unsigned I = 0, E = TS->getNumHandlers(); I != E; ++I) {
+      CXXCatchStmt *CS = TS->getHandler(I);
+      Scopes.push_back(GotoScope(ParentScope,
+                                 diag::note_protected_by_cxx_catch,
+                                 diag::note_exits_cxx_catch,
+                                 CS->getSourceRange().getBegin()));
+      BuildScopeInformation(CS->getHandlerBlock(), 
+                            (newParentScope = Scopes.size()-1));
+    }
+    return;
+  }
+
   default:
     break;
   }
@@ -425,30 +448,6 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
                                  AS->getAtSynchronizedLoc()));
       BuildScopeInformation(AS->getSynchBody(), 
                             (newParentScope = Scopes.size()-1));
-      continue;
-    }
-
-    // Disallow jumps into any part of a C++ try statement. This is pretty
-    // much the same as for Obj-C.
-    if (CXXTryStmt *TS = dyn_cast<CXXTryStmt>(SubStmt)) {
-      Scopes.push_back(GotoScope(ParentScope,
-                                 diag::note_protected_by_cxx_try,
-                                 diag::note_exits_cxx_try,
-                                 TS->getSourceRange().getBegin()));
-      if (Stmt *TryBlock = TS->getTryBlock())
-        BuildScopeInformation(TryBlock, (newParentScope = Scopes.size()-1));
-
-      // Jump from the catch into the try is not allowed either.
-      for (unsigned I = 0, E = TS->getNumHandlers(); I != E; ++I) {
-        CXXCatchStmt *CS = TS->getHandler(I);
-        Scopes.push_back(GotoScope(ParentScope,
-                                   diag::note_protected_by_cxx_catch,
-                                   diag::note_exits_cxx_catch,
-                                   CS->getSourceRange().getBegin()));
-        BuildScopeInformation(CS->getHandlerBlock(), 
-                              (newParentScope = Scopes.size()-1));
-      }
-
       continue;
     }
 

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s -Wno-unreachable-code
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu++11 %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -std=gnu++11 %s -Wno-unreachable-code
 
 namespace test0 {
   struct D { ~D(); };
@@ -258,5 +258,19 @@ namespace test14 {
     // no warning since the C temporary is destructed before the goto.
     const int &c1 = C(1);
     goto *ip;
+  }
+}
+
+// PR14225
+namespace test15 {
+  void f1() try {
+    goto x; // expected-error {{goto into protected scope}}
+  } catch(...) {  // expected-note {{jump bypasses initialization of catch block}}
+    x: ;
+  }
+  void f2() try {  // expected-note {{jump bypasses initialization of try block}}
+    x: ;
+  } catch(...) {
+    goto x; // expected-error {{goto into protected scope}}
   }
 }
