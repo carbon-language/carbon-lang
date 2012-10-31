@@ -42,6 +42,7 @@ CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Utility
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/POSIX
 ifeq ($(HOST_OS),Darwin)
 CPP.Flags += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
+CPP.Flags += -I/usr/include/libxml2
 endif
 ifdef LLDB_VENDOR
 CPP.Flags += -DLLDB_VENDOR='"$(LLDB_VENDOR) "'
