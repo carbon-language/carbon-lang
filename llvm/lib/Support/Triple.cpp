@@ -180,38 +180,6 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Default(UnknownArch);
 }
 
-Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
-  // See arch(3) and llvm-gcc's driver-driver.c. We don't implement support for
-  // archs which Darwin doesn't use.
-
-  // The matching this routine does is fairly pointless, since it is neither the
-  // complete architecture list, nor a reasonable subset. The problem is that
-  // historically the driver driver accepts this and also ties its -march=
-  // handling to the architecture name, so we need to be careful before removing
-  // support for it.
-
-  // This code must be kept in sync with Clang's Darwin specific argument
-  // translation.
-
-  return StringSwitch<ArchType>(Str)
-    .Cases("ppc", "ppc601", "ppc603", "ppc604", "ppc604e", Triple::ppc)
-    .Cases("ppc750", "ppc7400", "ppc7450", "ppc970", Triple::ppc)
-    .Case("ppc64", Triple::ppc64)
-    .Cases("i386", "i486", "i486SX", "i586", "i686", Triple::x86)
-    .Cases("pentium", "pentpro", "pentIIm3", "pentIIm5", "pentium4",
-           Triple::x86)
-    .Case("x86_64", Triple::x86_64)
-    // This is derived from the driver driver.
-    .Cases("arm", "armv4t", "armv5", "armv6", Triple::arm)
-    .Cases("armv7", "armv7f", "armv7k", "armv7s", "xscale", Triple::arm)
-    .Case("r600", Triple::r600)
-    .Case("nvptx", Triple::nvptx)
-    .Case("nvptx64", Triple::nvptx64)
-    .Case("amdil", Triple::amdil)
-    .Case("spir", Triple::spir)
-    .Default(Triple::UnknownArch);
-}
-
 // Returns architecture name that is understood by the target assembler.
 const char *Triple::getArchNameForAssembler() {
   if (!isOSDarwin() && getVendor() != Triple::Apple)
