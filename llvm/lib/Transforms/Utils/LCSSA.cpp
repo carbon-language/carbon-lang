@@ -255,6 +255,11 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
       if (Loop *L = LI->getLoopFor(ExitBB))
         SE->forgetLoop(L);
   }
+
+  // If we added a PHI, drop the cache to avoid invalidating SCEV caches.
+  // FIXME: This is a big hammer, can we clear the cache more selectively?
+  if (SE && !AddedPHIs.empty())
+    SE->forgetLoop(L);
   
   // Rewrite all uses outside the loop in terms of the new PHIs we just
   // inserted.
