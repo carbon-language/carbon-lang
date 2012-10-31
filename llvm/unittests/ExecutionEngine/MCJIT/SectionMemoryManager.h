@@ -52,6 +52,7 @@ private:
   SmallVector<sys::MemoryBlock, 16> FreeCodeMem;
 
 public:
+
   ///
   /// Functions below are not used by MCJIT, but must be implemented because
   /// they are declared as pure virtuals in the base class.
