@@ -21,6 +21,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; The table for @cprop
 ; CHECK: @switch.table5 = private unnamed_addr constant [7 x i32] [i32 5, i32 42, i32 126, i32 -452, i32 128, i32 6, i32 7]
 
+; The table for @unreachable
+; CHECK: @switch.table6 = private unnamed_addr constant [5 x i32] [i32 0, i32 0, i32 0, i32 1, i32 -1]
+
 ; A simple int-to-int selection switch.
 ; It is dense enough to be replaced by table lookup.
 ; The result is directly by a ret from an otherwise empty bb,
@@ -744,4 +747,33 @@ return:
 ; CHECK: @cprop
 ; CHECK: switch.lookup:
 ; CHECK: %switch.gep = getelementptr inbounds [7 x i32]* @switch.table5, i32 0, i32 %switch.tableidx
+}
+
+define i32 @unreachable(i32 %x)  {
+entry:
+  switch i32 %x, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb
+    i32 2, label %sw.bb
+    i32 3, label %sw.bb1
+    i32 4, label %sw.bb2
+    i32 5, label %sw.bb3
+    i32 6, label %sw.bb3
+    i32 7, label %sw.bb3
+    i32 8, label %sw.bb3
+  ]
+
+sw.bb: br label %return
+sw.bb1: unreachable
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: unreachable
+
+return:
+  %retval.0 = phi i32 [ 1, %sw.bb3 ], [ -1, %sw.bb2 ], [ 1, %sw.bb1 ], [ 0, %sw.bb ]
+  ret i32 %retval.0
+
+; CHECK: @unreachable
+; CHECK: switch.lookup:
+; CHECK: getelementptr inbounds [5 x i32]* @switch.table6, i32 0, i32 %switch.tableidx
 }

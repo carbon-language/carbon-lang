@@ -3545,8 +3545,6 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   if (TTI && !TTI->getScalarTargetTransformInfo()->shouldBuildLookupTables())
     return false;
 
-  // FIXME: Handle unreachable cases.
-
   // FIXME: If the switch is too sparse for a lookup table, perhaps we could
   // split off a dense part and build a lookup table for that.
 
