@@ -173,6 +173,13 @@ void test_struct_of_four_doubles(void) {
   takes_struct_of_four_doubles(3.0, g_s4d, g_s4d, 4.0);
 }
 
+extern void takes_struct_with_backfill(float f1, double a, float f2, struct_of_four_doubles b, struct_of_four_doubles c, double d);
+void test_struct_with_backfill(void) {
+// CHECK: test_struct_with_backfill
+// CHECK: call arm_aapcs_vfpcc void @takes_struct_with_backfill(float {{.*}}, double {{.*}}, float {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, [4 x float] undef, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}})
+  takes_struct_with_backfill(3.0, 3.1, 3.2, g_s4d, g_s4d, 4.0);
+}
+
 typedef __attribute__(( ext_vector_type(8) )) char __char8;
 typedef __attribute__(( ext_vector_type(4) ))  short __short4;
 typedef struct {

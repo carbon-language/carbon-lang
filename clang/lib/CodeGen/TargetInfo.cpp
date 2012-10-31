@@ -2863,7 +2863,8 @@ private:
   ABIKind getABIKind() const { return Kind; }
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &AllocatedVFP,
+  ABIArgInfo classifyArgumentType(QualType RetTy, int *VFPRegs,
+                                  unsigned &AllocatedVFP,
                                   bool &IsHA) const;
   bool isIllegalVectorType(QualType Ty) const;
 
@@ -2909,13 +2910,14 @@ public:
 
 void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // To correctly handle Homogeneous Aggregate, we need to keep track of the
-  // number of VFP registers allocated so far.
+  // VFP registers allocated so far.
   // C.1.vfp If the argument is a VFP CPRC and there are sufficient consecutive
   // VFP registers of the appropriate type unallocated then the argument is
   // allocated to the lowest-numbered sequence of such registers.
   // C.2.vfp If the argument is a VFP CPRC then any VFP registers that are
   // unallocated are marked as unavailable. 
   unsigned AllocatedVFP = 0;
+  int VFPRegs[16] = { 0 };
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
@@ -2924,7 +2926,7 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
     // 6.1.2.3 There is one VFP co-processor register class using registers
     // s0-s15 (d0-d7) for passing arguments.
     const unsigned NumVFPs = 16;
-    it->info = classifyArgumentType(it->type, AllocatedVFP, IsHA);
+    it->info = classifyArgumentType(it->type, VFPRegs, AllocatedVFP, IsHA);
     // If we do not have enough VFP registers for the HA, any VFP registers
     // that are unallocated are marked as unavailable. To achieve this, we add
     // padding of (NumVFPs - PreAllocation) floats.
@@ -3035,7 +3037,40 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
   return (Members > 0 && Members <= 4);
 }
 
-ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, unsigned &AllocatedVFP,
+/// markAllocatedVFPs - update VFPRegs according to the alignment and
+/// number of VFP registers (unit is S register) requested.
+static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
+                              unsigned Alignment,
+                              unsigned NumRequired) {
+  // Early Exit.
+  if (AllocatedVFP >= 16)
+    return;
+  // C.1.vfp If the argument is a VFP CPRC and there are sufficient consecutive
+  // VFP registers of the appropriate type unallocated then the argument is
+  // allocated to the lowest-numbered sequence of such registers.
+  for (unsigned I = 0; I < 16; I += Alignment) {
+    bool FoundSlot = true;
+    for (unsigned J = I, JEnd = I + NumRequired; J < JEnd; J++)
+      if (J >= 16 || VFPRegs[J]) {
+         FoundSlot = false;
+         break;
+      }
+    if (FoundSlot) {
+      for (unsigned J = I, JEnd = I + NumRequired; J < JEnd; J++)
+        VFPRegs[J] = 1;
+      AllocatedVFP += NumRequired;
+      return;
+    }
+  }
+  // C.2.vfp If the argument is a VFP CPRC then any VFP registers that are
+  // unallocated are marked as unavailable.
+  for (unsigned I = 0; I < 16; I++)
+    VFPRegs[I] = 1;
+  AllocatedVFP = 17; // We do not have enough VFP registers.
+}
+
+ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
+                                            unsigned &AllocatedVFP,
                                             bool &IsHA) const {
   // We update number of allocated VFPs according to
   // 6.1.2.1 The following argument types are VFP CPRCs:
@@ -3057,37 +3092,31 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, unsigned &AllocatedVFP,
     if (Size == 64) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 2);
-      // Align AllocatedVFP to an even number to use a D register.
-      AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 2);
-      AllocatedVFP += 2; // 1 D register = 2 S registers
+      markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, 2);
       return ABIArgInfo::getDirect(ResType);
     }
     if (Size == 128) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 4);
-      AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 4);
-      AllocatedVFP += 4; // 1 Q register = 4 S registers
+      markAllocatedVFPs(VFPRegs, AllocatedVFP, 4, 4);
       return ABIArgInfo::getDirect(ResType);
     }
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
   }
-  // Update AllocatedVFP for legal vector types.
+  // Update VFPRegs for legal vector types.
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
     uint64_t Size = getContext().getTypeSize(VT);
     // Size of a legal vector should be power of 2 and above 64.
-    AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, Size >= 128 ? 4 : 2);
-    AllocatedVFP += (Size / 32);
+    markAllocatedVFPs(VFPRegs, AllocatedVFP, Size >= 128 ? 4 : 2, Size / 32);
   }
-  // Update AllocatedVFP for floating point types.
+  // Update VFPRegs for floating point types.
   if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
     if (BT->getKind() == BuiltinType::Half ||
         BT->getKind() == BuiltinType::Float)
-      AllocatedVFP += 1;
+      markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, 1);
     if (BT->getKind() == BuiltinType::Double ||
-        BT->getKind() == BuiltinType::LongDouble) {
-      AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 2);
-      AllocatedVFP += 2;
-    }
+        BT->getKind() == BuiltinType::LongDouble)
+      markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, 2);
   }
 
   if (!isAggregateTypeForABI(Ty)) {
@@ -3119,16 +3148,13 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, unsigned &AllocatedVFP,
       if (Base->isVectorType()) {
         // ElementSize is in number of floats.
         unsigned ElementSize = getContext().getTypeSize(Base) == 64 ? 2 : 4;
-        AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP,
-                       ElementSize);
-        AllocatedVFP += Members * ElementSize;
+        markAllocatedVFPs(VFPRegs, AllocatedVFP, ElementSize, Members * ElementSize);
       } else if (Base->isSpecificBuiltinType(BuiltinType::Float))
-        AllocatedVFP += Members;
+        markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, Members);
       else {
         assert(Base->isSpecificBuiltinType(BuiltinType::Double) ||
                Base->isSpecificBuiltinType(BuiltinType::LongDouble));
-        AllocatedVFP = llvm::RoundUpToAlignment(AllocatedVFP, 2);
-        AllocatedVFP += Members * 2; // Base type is double.
+        markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, Members * 2);
       }
       IsHA = true;
       return ABIArgInfo::getExpand();
