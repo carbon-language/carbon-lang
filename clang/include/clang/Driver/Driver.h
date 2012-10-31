@@ -146,9 +146,6 @@ private:
   /// jobs.
   unsigned CheckInputsExist : 1;
 
-  /// Use the clang compiler where possible.
-  unsigned CCCUseClang : 1;
-
   /// \brief Force use of clang frontend.
   unsigned ForcedClangUse : 1;
 
