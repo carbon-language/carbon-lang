@@ -1,4 +1,4 @@
-;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===;
+;===- ./tools/llvm-mcmarkup/LLVMBuild.txt ----------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = bugpoint llc lli llvm-ar llvm-as llvm-bcanalyzer llvm-cov llvm-diff llvm-dis llvm-dwarfdump llvm-extract llvm-link llvm-mc llvm-nm llvm-objdump llvm-prof llvm-ranlib llvm-rtdyld llvm-size macho-dump opt llvm-mcmarkup
-
 [component_0]
-type = Group
-name = Tools
-parent = $ROOT
+type = Tool
+name = llvm-mcmarkup
+parent = Tools
+required_libraries = Support
