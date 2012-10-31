@@ -484,10 +484,6 @@ namespace llvm {
     getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
                                  unsigned JTI, MCContext &Ctx) const;
 
-    /// getStackPtrReg - Return the stack pointer register we are using: either
-    /// ESP or RSP.
-    unsigned getStackPtrReg() const { return X86StackPtr; }
-
     /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
     /// function arguments in the caller parameter area. For X86, aggregates
     /// that contains are placed at 16-byte boundaries while the rest are at
@@ -721,9 +717,6 @@ namespace llvm {
     const X86Subtarget *Subtarget;
     const X86RegisterInfo *RegInfo;
     const DataLayout *TD;
-
-    /// X86StackPtr - X86 physical register used as stack ptr.
-    unsigned X86StackPtr;
 
     /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87
     /// floating point ops.
