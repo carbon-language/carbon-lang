@@ -709,7 +709,7 @@ GenerateUniqueName (const char* base_name_wanted,
 }
 
 bool
-ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io, bool set_lldb_globals)
+ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result, const ExecuteScriptOptions &options)
 {
     if (!m_valid_session)
         return false;
@@ -720,8 +720,8 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
     // method to pass the command string directly down to Python.
 
     Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::InitSession : 0),
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::TearDownSession : 0));
+                  ScriptInterpreterPython::Locker::AcquireLock | (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitSession : 0),
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::TearDownSession : 0));
 
     bool success = false;
 
@@ -764,7 +764,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                         {
                             PyObject *pvalue = NULL;
                             { // scope for PythonInputReaderManager
-                                PythonInputReaderManager py_input(enable_io ? this : NULL);
+                                PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
                                 pvalue = PyObject_CallObject (pfunc, pargs);
                             }
                             Py_DECREF (pargs);
@@ -773,7 +773,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                                 Py_DECREF (pvalue);
                                 success = true;
                             }
-                            else if (PyErr_Occurred ())
+                            else if (options.GetMaskoutErrors() && PyErr_Occurred ())
                             {
                                 PyErr_Print();
                                 PyErr_Clear();
@@ -988,13 +988,12 @@ bool
 ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                                                    ScriptInterpreter::ScriptReturnType return_type,
                                                    void *ret_value,
-                                                   bool enable_io,
-                                                   bool set_lldb_globals)
+                                                   const ExecuteScriptOptions &options)
 {
 
     Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::InitSession : 0),
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::TearDownSession : 0));
+                  ScriptInterpreterPython::Locker::AcquireLock | (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitSession : 0),
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::TearDownSession : 0));
 
     PyObject *py_return = NULL;
     PyObject *mainmod = PyImport_AddModule ("__main__");
@@ -1026,7 +1025,7 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
     if (in_string != NULL)
     {
         { // scope for PythonInputReaderManager
-            PythonInputReaderManager py_input(enable_io ? this : NULL);
+            PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
             py_return = PyRun_String (in_string, Py_eval_input, globals, locals);
             if (py_return == NULL)
             { 
@@ -1144,23 +1143,26 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
     py_error = PyErr_Occurred();
     if (py_error != NULL)
     {
-        if (PyErr_GivenExceptionMatches (py_error, PyExc_SyntaxError))
-            PyErr_Print ();
-        PyErr_Clear();
         ret_success = false;
+        if (options.GetMaskoutErrors())
+        {
+            if (PyErr_GivenExceptionMatches (py_error, PyExc_SyntaxError))
+                PyErr_Print ();
+            PyErr_Clear();
+        }
     }
 
     return ret_success;
 }
 
 bool
-ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, bool enable_io, bool set_lldb_globals)
+ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const ExecuteScriptOptions &options)
 {
     
     
     Locker locker(this,
-                  ScriptInterpreterPython::Locker::AcquireLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::InitSession : 0),
-                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (set_lldb_globals ? ScriptInterpreterPython::Locker::TearDownSession : 0));
+                  ScriptInterpreterPython::Locker::AcquireLock | (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitSession : 0),
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::TearDownSession : 0));
 
     bool success = false;
     PyObject *py_return = NULL;
@@ -1197,7 +1199,7 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, bool enabl
             if (compiled_code)
             {
                 { // scope for PythonInputReaderManager
-                    PythonInputReaderManager py_input(enable_io ? this : NULL);
+                    PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
                     py_return = PyEval_EvalCode (compiled_code, globals, locals);
                 }
                 if (py_return != NULL)
@@ -1214,10 +1216,13 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, bool enabl
     py_error = PyErr_Occurred ();
     if (py_error != NULL)
     {
-        if (PyErr_GivenExceptionMatches (py_error, PyExc_SyntaxError))
-            PyErr_Print ();
-        PyErr_Clear();
         success = false;
+        if (options.GetMaskoutErrors())
+        {
+            if (PyErr_GivenExceptionMatches (py_error, PyExc_SyntaxError))
+                PyErr_Print ();
+            PyErr_Clear();
+        }
     }
 
     return success;
@@ -1555,7 +1560,7 @@ ScriptInterpreterPython::ExportFunctionDefinitionToInterpreter (StringList &func
     // Convert StringList to one long, newline delimited, const char *.
     std::string function_def_string(function_def.CopyList());
 
-    return ExecuteMultipleLines (function_def_string.c_str(), false);
+    return ExecuteMultipleLines (function_def_string.c_str(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false));
 }
 
 bool
@@ -2422,7 +2427,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.append('%s');\n\n",
                               directory,
                               directory);
-        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), false, false);
+        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false));
         if (!syspath_retval)
         {
             error.SetErrorString("Python sys.path handling failed");
@@ -2445,8 +2450,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         bool was_imported = (ExecuteOneLineWithReturn(command_stream.GetData(),
                                                       ScriptInterpreterPython::eScriptReturnTypeInt,
                                                       &refcount,
-                                                      false,
-                                                      false) && refcount > 0);
+                                                      ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false)) && refcount > 0);
         if (was_imported == true && can_reload == false)
         {
             error.SetErrorString("module already imported");
@@ -2456,13 +2460,43 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         // now actually do the import
         command_stream.Clear();
         command_stream.Printf("import %s",basename.c_str());
-        bool import_retval = ExecuteOneLine(command_stream.GetData(), NULL, false, false);
-        if (!import_retval)
+        bool import_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false).SetMaskoutErrors(false));
+        PyObject* py_error = PyErr_Occurred(); // per Python docs: "you do not need to Py_DECREF()" the return of this function
+        
+        if (py_error || !import_retval) // check for failure of the import
         {
-            error.SetErrorString("Python import statement failed");
+            if (py_error) // if we have a Python error..
+            {
+                if (PyErr_GivenExceptionMatches (py_error, PyExc_ImportError)) // and it is an ImportError
+                {
+                    PyObject *type,*value,*traceback;
+                    PyErr_Fetch (&type,&value,&traceback);
+                    
+                    if (value && value != Py_None)
+                        error.SetErrorString(PyString_AsString(PyObject_Str(value)));
+                    else
+                        error.SetErrorString("ImportError raised by imported module");
+                    
+                    Py_XDECREF(type);
+                    Py_XDECREF(value);
+                    Py_XDECREF(traceback);
+                }
+                else // any other error
+                {
+                    error.SetErrorString("Python raised an error while importing module");
+                }
+            }
+            else // we failed but have no error to explain why
+            {
+                error.SetErrorString("unknown error while importing module");
+            }
+            
+            // anyway, clear the error indicator and return false
+            PyErr_Clear();
             return false;
         }
         
+        // if we are here, everything worked
         // call __lldb_init_module(debugger,dict)
         if (!g_swig_call_module_init (basename,
                                         m_dictionary_name.c_str(),
@@ -2569,7 +2603,7 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item, std::string& 
     
     if (ExecuteOneLineWithReturn (command.c_str(),
                                  ScriptInterpreter::eScriptReturnTypeCharStrOrNone,
-                                 &result_ptr, false))
+                                  &result_ptr, ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false) /*.SetSetLLDBGlobals(false)*/))
     {
         if (result_ptr)
             dest.assign(result_ptr);

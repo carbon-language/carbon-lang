@@ -41,8 +41,7 @@ public:
     bool
     ExecuteOneLine (const char *command,
                     CommandReturnObject *result,
-                    bool enable_io,
-                    bool set_lldb_globals = true);
+                    const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
     void
     ExecuteInterpreterLoop ();
@@ -51,13 +50,11 @@ public:
     ExecuteOneLineWithReturn (const char *in_string, 
                               ScriptInterpreter::ScriptReturnType return_type,
                               void *ret_value,
-                              bool enable_io,
-                              bool set_lldb_globals = true);
+                              const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
     bool
     ExecuteMultipleLines (const char *in_string,
-                          bool enable_io,
-                          bool set_lldb_globals = true);
+                          const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
     bool
     ExportFunctionDefinitionToInterpreter (StringList &function_def);

@@ -23,7 +23,7 @@ public:
     ~ScriptInterpreterNone ();
 
     bool
-    ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io, bool set_lldb_globals = true);
+    ExecuteOneLine (const char *command, CommandReturnObject *result, const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
     void
     ExecuteInterpreterLoop ();
