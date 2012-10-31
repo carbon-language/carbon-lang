@@ -269,7 +269,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         if (!implicit_cast)
             break;
         
-        if (!implicit_cast->getCastKind() == CK_LValueToRValue)
+        if (implicit_cast->getCastKind() != CK_LValueToRValue)
             break;
         
         last_expr = implicit_cast->getSubExpr();
