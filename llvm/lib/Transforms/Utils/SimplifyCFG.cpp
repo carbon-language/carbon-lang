@@ -3251,7 +3251,7 @@ static Constant* ConstantFold(Instruction *I,
   if (CastInst *Cast = dyn_cast<CastInst>(I)) {
     Constant *A = dyn_cast<Constant>(I->getOperand(0));
     if (!A) A = ConstantPool.lookup(I->getOperand(0));
-    if (!A) return false;
+    if (!A) return NULL;
 
     Constant *C = ConstantExpr::getCast(Cast->getOpcode(), A, Cast->getDestTy());
     return C;
