@@ -65,8 +65,8 @@ void createModule2(LLVMContext &Context2, Module *&M2, Function *&FooF2) {
   FooF2 = M2->getFunction("foo2");
 }
 
-// ARM tests disabled pending fix for PR10783.
-#if !defined(__arm__)
+// ARM and PowerPC tests disabled pending fix for PR10783.
+#if !defined(__arm__) && !defined(__powerpc__)
 
 TEST(MultiJitTest, EagerMode) {
   LLVMContext Context1;
@@ -176,6 +176,6 @@ TEST(MultiJitTest, JitPool) {
 #endif
   EXPECT_TRUE(sa == fa);
 }
-#endif  // !defined(__arm__)
+#endif  // !defined(__arm__) && !defined(__powerpc__)
 
 }  // anonymous namespace
