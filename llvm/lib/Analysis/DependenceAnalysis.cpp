@@ -1773,7 +1773,7 @@ bool DependenceAnalysis::weakZeroDstSIVtest(const SCEV *SrcCoeff,
 // where i and j are induction variable, c1 and c2 are loop invariant,
 // and a and b are constants.
 // Returns true if any possible dependence is disproved.
-// Marks the result as inconsistant.
+// Marks the result as inconsistent.
 // Works in some cases that symbolicRDIVtest doesn't, and vice versa.
 bool DependenceAnalysis::exactRDIVtest(const SCEV *SrcCoeff,
                                        const SCEV *DstCoeff,
@@ -2202,7 +2202,7 @@ const SCEVConstant *getConstantPart(const SCEVMulExpr *Product) {
 // gcdMIVtest -
 // Tests an MIV subscript pair for dependence.
 // Returns true if any possible dependence is disproved.
-// Marks the result as inconsistant.
+// Marks the result as inconsistent.
 // Can sometimes disprove the equal direction for 1 or more loops,
 // as discussed in Michael Wolfe's book,
 // High Performance Compilers for Parallel Computing, page 235.

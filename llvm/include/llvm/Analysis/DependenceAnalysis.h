@@ -49,7 +49,7 @@ namespace llvm {
   /// determine anything beyond the existence of a dependence; that is, it
   /// represents a confused dependence (see also FullDependence). In most
   /// cases (for output, flow, and anti dependences), the dependence implies
-  /// an ordering, where the source must preceed the destination; in contrast,
+  /// an ordering, where the source must precede the destination; in contrast,
   /// input dependences are unordered.
   class Dependence {
   public:
@@ -126,7 +126,7 @@ namespace llvm {
     virtual bool isConsistent() const { return false; }
 
     /// getLevels - Returns the number of common loops surrounding the
-    /// souce and destination of the dependence.
+    /// source and destination of the dependence.
     virtual unsigned getLevels() const { return 0; }
 
     /// getDirection - Returns the direction associated with a particular
@@ -169,7 +169,7 @@ namespace llvm {
   /// able to accurately analyze the interaction of the references; that is,
   /// it is not a confused dependence (see Dependence). In most cases
   /// (for output, flow, and anti dependences), the dependence implies an
-  /// ordering, where the source must preceed the destination; in contrast,
+  /// ordering, where the source must precede the destination; in contrast,
   /// input dependences are unordered.
   class FullDependence : public Dependence {
   public:
@@ -195,7 +195,7 @@ namespace llvm {
     bool isConsistent() const { return Consistent; }
 
     /// getLevels - Returns the number of common loops surrounding the
-    /// souce and destination of the dependence.
+    /// source and destination of the dependence.
     unsigned getLevels() const { return Levels; }
 
     /// getDirection - Returns the direction associated with a particular
@@ -505,7 +505,7 @@ namespace llvm {
 
     /// isKnownPredicate - Compare X and Y using the predicate Pred.
     /// Basically a wrapper for SCEV::isKnownPredicate,
-    /// but tries harder, especially in the presense of sign and zero
+    /// but tries harder, especially in the presence of sign and zero
     /// extensions and symbolics.
     bool isKnownPredicate(ICmpInst::Predicate Pred,
                           const SCEV *X,
@@ -673,7 +673,7 @@ namespace llvm {
     /// where i and j are induction variable, c1 and c2 are loop invariant,
     /// and a and b are constants.
     /// Returns true if any possible dependence is disproved.
-    /// Marks the result as inconsistant.
+    /// Marks the result as inconsistent.
     /// Works in some cases that symbolicRDIVtest doesn't,
     /// and vice versa.
     bool exactRDIVtest(const SCEV *SrcCoeff,
@@ -689,7 +689,7 @@ namespace llvm {
     /// where i and j are induction variable, c1 and c2 are loop invariant,
     /// and a and b are constants.
     /// Returns true if any possible dependence is disproved.
-    /// Marks the result as inconsistant.
+    /// Marks the result as inconsistent.
     /// Works in some cases that exactRDIVtest doesn't,
     /// and vice versa. Can also be used as a backup for
     /// ordinary SIV tests.
@@ -702,7 +702,7 @@ namespace llvm {
 
     /// gcdMIVtest - Tests an MIV subscript pair for dependence.
     /// Returns true if any possible dependence is disproved.
-    /// Marks the result as inconsistant.
+    /// Marks the result as inconsistent.
     /// Can sometimes disprove the equal direction for 1 or more loops.
     //  Can handle some symbolics that even the SIV tests don't get,
     /// so we use it as a backup for everything.
@@ -712,7 +712,7 @@ namespace llvm {
 
     /// banerjeeMIVtest - Tests an MIV subscript pair for dependence.
     /// Returns true if any possible dependence is disproved.
-    /// Marks the result as inconsistant.
+    /// Marks the result as inconsistent.
     /// Computes directions.
     bool banerjeeMIVtest(const SCEV *Src,
                          const SCEV *Dst,
