@@ -27,10 +27,11 @@ namespace {
 typedef llvm::SmallVector<SymbolRef, 2> SymbolVector;
 
 struct StreamState {
+private:
   enum Kind { Opened, Closed } K;
-
   StreamState(Kind InK) : K(InK) { }
 
+public:
   bool isOpened() const { return K == Opened; }
   bool isClosed() const { return K == Closed; }
 
@@ -47,8 +48,7 @@ struct StreamState {
 
 class SimpleStreamChecker: public Checker<check::PostStmt<CallExpr>,
                                           check::PreStmt<CallExpr>,
-                                          check::DeadSymbols,
-                                          eval::Assume > {
+                                          check::DeadSymbols > {
 
   mutable IdentifierInfo *IIfopen, *IIfclose;
 
@@ -61,11 +61,12 @@ class SimpleStreamChecker: public Checker<check::PostStmt<CallExpr>,
                          const CallExpr *Call,
                          CheckerContext &C) const;
 
-  ExplodedNode *reportLeaks(SymbolVector LeakedStreams,
-                            CheckerContext &C) const;
+   void reportLeaks(SymbolVector LeakedStreams,
+                    CheckerContext &C,
+                    ExplodedNode *ErrNode) const;
 
 public:
-  SimpleStreamChecker() : IIfopen(0), IIfclose(0) {}
+  SimpleStreamChecker();
 
   /// Process fopen.
   void checkPostStmt(const CallExpr *Call, CheckerContext &C) const;
@@ -73,9 +74,6 @@ public:
   void checkPreStmt(const CallExpr *Call, CheckerContext &C) const;
 
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
-  ProgramStateRef evalAssume(ProgramStateRef state, SVal Cond,
-                             bool Assumption) const;
-
 };
 
 } // end anonymous namespace
@@ -83,6 +81,17 @@ public:
 /// The state of the checker is a map from tracked stream symbols to their
 /// state. Let's store it in the ProgramState.
 REGISTER_MAP_WITH_PROGRAMSTATE(StreamMap, SymbolRef, StreamState)
+
+SimpleStreamChecker::SimpleStreamChecker() : IIfopen(0), IIfclose(0) {
+  // Initialize the bug types.
+  DoubleCloseBugType.reset(new BugType("Double fclose",
+                                       "Unix Stream API Error"));
+
+  LeakBugType.reset(new BugType("Resource Leak",
+                                "Unix Stream API Error"));
+  // Sinks are higher importance bugs as well as calls to assert() or exit(0).
+  LeakBugType->setSuppressOnSink(true);
+}
 
 void SimpleStreamChecker::checkPostStmt(const CallExpr *Call,
                                         CheckerContext &C) const {
@@ -135,32 +144,20 @@ void SimpleStreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     SymbolRef Sym = I->first;
     if (SymReaper.isDead(Sym)) {
       const StreamState &SS = I->second;
-      if (SS.isOpened())
-        LeakedStreams.push_back(Sym);
+      if (SS.isOpened()) {
+        // If a symbolic region is NULL, assume that allocation failed on
+        // this path and do not report a leak.
+        if (!State->getConstraintManager().isNull(State, Sym).isTrue())
+          LeakedStreams.push_back(Sym);
+      }
 
       // Remove the dead symbol from the streams map.
       State = State->remove<StreamMap>(Sym);
     }
   }
 
-  ExplodedNode *N = reportLeaks(LeakedStreams, C);
-  C.addTransition(State, N);
-}
-
-// If a symbolic region is assumed to NULL (or another constant), stop tracking
-// it - assuming that allocation failed on this path.
-ProgramStateRef SimpleStreamChecker::evalAssume(ProgramStateRef State,
-                                                SVal Cond,
-                                                bool Assumption) const {
-  StreamMapTy TrackedStreams = State->get<StreamMap>();
-  SymbolVector LeakedStreams;
-  for (StreamMapTy::iterator I = TrackedStreams.begin(),
-                           E = TrackedStreams.end(); I != E; ++I) {
-    SymbolRef Sym = I->first;
-    if (State->getConstraintManager().isNull(State, Sym).isTrue())
-      State = State->remove<StreamMap>(Sym);
-  }
-  return State;
+  ExplodedNode *N = C.addTransition(State);
+  reportLeaks(LeakedStreams, C, N);
 }
 
 void SimpleStreamChecker::reportDoubleClose(SymbolRef FileDescSym,
@@ -168,14 +165,10 @@ void SimpleStreamChecker::reportDoubleClose(SymbolRef FileDescSym,
                                             CheckerContext &C) const {
   // We reached a bug, stop exploring the path here by generating a sink.
   ExplodedNode *ErrNode = C.generateSink();
-  // If this error node already exists, return.
+  // If we've already reached this node on another path, return.
   if (!ErrNode)
     return;
 
-  // Initialize the bug type.
-  if (!DoubleCloseBugType)
-    DoubleCloseBugType.reset(new BugType("Double fclose",
-                             "Unix Stream API Error"));
   // Generate the report.
   BugReport *R = new BugReport(*DoubleCloseBugType,
       "Closing a previously closed file stream", ErrNode);
@@ -184,26 +177,9 @@ void SimpleStreamChecker::reportDoubleClose(SymbolRef FileDescSym,
   C.EmitReport(R);
 }
 
-ExplodedNode *SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
-                                               CheckerContext &C) const {
-  ExplodedNode *Pred = C.getPredecessor();
-  if (LeakedStreams.empty())
-    return Pred;
-
-  // Generate an intermediate node representing the leak point.
-  static SimpleProgramPointTag Tag("StreamChecker : Leak");
-  ExplodedNode *ErrNode = C.addTransition(Pred->getState(), Pred, &Tag);
-  if (!ErrNode)
-    return Pred;
-
-  // Initialize the bug type.
-  if (!LeakBugType) {
-    LeakBugType.reset(new BuiltinBug("Resource Leak",
-                                     "Unix Stream API Error"));
-    // Sinks are higher importance bugs as well as calls to assert() or exit(0).
-    LeakBugType->setSuppressOnSink(true);
-  }
-
+void SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
+                                               CheckerContext &C,
+                                               ExplodedNode *ErrNode) const {
   // Attach bug reports to the leak node.
   // TODO: Identify the leaked file descriptor.
   for (llvm::SmallVector<SymbolRef, 2>::iterator
@@ -213,8 +189,6 @@ ExplodedNode *SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
     R->markInteresting(*I);
     C.EmitReport(R);
   }
-
-  return ErrNode;
 }
 
 void SimpleStreamChecker::initIdentifierInfo(ASTContext &Ctx) const {

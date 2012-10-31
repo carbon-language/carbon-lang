@@ -42,3 +42,10 @@ void checkLeakFollowedByAssert(int *Data) {
     fclose(F);
   }
 }
+
+void CloseOnlyOnValidFileHandle() {
+  FILE *F = fopen("myfile.txt", "w");
+  if (F)
+    fclose(F);
+  int x = 0; // no warning
+}
