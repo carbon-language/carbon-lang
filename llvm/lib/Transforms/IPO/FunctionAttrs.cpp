@@ -28,9 +28,9 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/UniqueVector.h"
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
 
@@ -486,13 +486,13 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
 /// or a pointer that doesn't alias any other pointer visible to the caller.
 bool FunctionAttrs::IsFunctionMallocLike(Function *F,
                               SmallPtrSet<Function*, 8> &SCCNodes) const {
-  UniqueVector<Value *> FlowsToReturn;
+  SmallSetVector<Value *, 8> FlowsToReturn;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(I->getTerminator()))
       FlowsToReturn.insert(Ret->getReturnValue());
 
   for (unsigned i = 0; i != FlowsToReturn.size(); ++i) {
-    Value *RetVal = FlowsToReturn[i+1];   // UniqueVector[0] is reserved.
+    Value *RetVal = FlowsToReturn[i];
 
     if (Constant *C = dyn_cast<Constant>(RetVal)) {
       if (!C->isNullValue() && !isa<UndefValue>(C))

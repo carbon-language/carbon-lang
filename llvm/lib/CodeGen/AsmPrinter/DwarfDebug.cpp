@@ -850,9 +850,9 @@ void DwarfDebug::endModule() {
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("data_end"));
 
   // End text sections.
-  for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
-    Asm->OutStreamer.SwitchSection(SectionMap[i]);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_end", i));
+  for (unsigned I = 0, E = SectionMap.size(); I != E; ++I) {
+    Asm->OutStreamer.SwitchSection(SectionMap[I]);
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_end", I+1));
   }
 
   // Compute DIE offsets and sizes.

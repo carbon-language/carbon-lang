@@ -21,9 +21,9 @@
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/UniqueVector.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DebugLoc.h"
 
@@ -231,7 +231,7 @@ class DwarfDebug {
   
   /// SectionMap - Provides a unique id per text section.
   ///
-  UniqueVector<const MCSection*> SectionMap;
+  SetVector<const MCSection*> SectionMap;
 
   /// CurrentFnArguments - List of Arguments (DbgValues) for current function.
   SmallVector<DbgVariable *, 8> CurrentFnArguments;
