@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.apple.debugserver</string>
+	<string>com.apple.debugserver.internal</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/Developer/usr/bin/debugserver</string>

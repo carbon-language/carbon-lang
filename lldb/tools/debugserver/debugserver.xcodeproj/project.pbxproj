@@ -49,6 +49,8 @@
 		260E7331114BFFE600D1DFB3 /* DNBThreadResumeActions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DNBThreadResumeActions.cpp; sourceTree = "<group>"; };
 		260E7332114BFFE600D1DFB3 /* DNBThreadResumeActions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DNBThreadResumeActions.h; sourceTree = "<group>"; };
 		260FC7320E5B290400043FC9 /* debugnub-exports */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "debugnub-exports"; sourceTree = SOURCE_ROOT; };
+		26203D1C1641EFB200A662F7 /* com.apple.debugserver.applist.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.applist.internal.plist; sourceTree = "<group>"; };
+		26203D1D1641EFB200A662F7 /* com.apple.debugserver.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.internal.plist; sourceTree = "<group>"; };
 		26242C390DDBD33C0054A4CC /* debugserver-entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "debugserver-entitlements.plist"; sourceTree = "<group>"; };
 		264D5D571293835600ED4C01 /* DNBArch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DNBArch.cpp; sourceTree = "<group>"; };
 		26593A060D4931CC001C9FE3 /* ChangeLog */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
@@ -182,6 +184,8 @@
 		26A028FE114AB6A60029C479 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				26203D1C1641EFB200A662F7 /* com.apple.debugserver.applist.internal.plist */,
+				26203D1D1641EFB200A662F7 /* com.apple.debugserver.internal.plist */,
 				260FC7320E5B290400043FC9 /* debugnub-exports */,
 				26242C390DDBD33C0054A4CC /* debugserver-entitlements.plist */,
 				26A4BAED0D498B7D00A9BEAB /* com.apple.debugserver.plist */,
