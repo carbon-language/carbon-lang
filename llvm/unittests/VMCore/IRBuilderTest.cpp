@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BasicBlock.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/IntrinsicInst.h"
@@ -94,6 +95,17 @@ TEST_F(IRBuilderTest, CreateCondBr) {
   EXPECT_EQ(TBB, TI->getSuccessor(0));
   EXPECT_EQ(FBB, TI->getSuccessor(1));
   EXPECT_EQ(Weights, TI->getMetadata(LLVMContext::MD_prof));
+}
+
+TEST_F(IRBuilderTest, GetIntTy) {
+  IRBuilder<> Builder(BB);
+  IntegerType *Ty1 = Builder.getInt1Ty();
+  EXPECT_EQ(Ty1, IntegerType::get(getGlobalContext(), 1));
+
+  DataLayout* DL = new DataLayout(M.get());
+  IntegerType *IntPtrTy = Builder.getIntPtrTy(DL);
+  unsigned IntPtrBitSize =  DL->getPointerSizeInBits(0);
+  EXPECT_EQ(IntPtrTy, IntegerType::get(getGlobalContext(), IntPtrBitSize));
 }
 
 }

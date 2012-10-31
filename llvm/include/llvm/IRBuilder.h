@@ -17,6 +17,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/DataLayout.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
@@ -264,6 +265,10 @@ public:
 
   PointerType *getInt8PtrTy(unsigned AddrSpace = 0) {
     return Type::getInt8PtrTy(Context, AddrSpace);
+  }
+
+  IntegerType* getIntPtrTy(DataLayout *DL, unsigned AddrSpace = 0) {
+    return DL->getIntPtrType(Context, AddrSpace);
   }
 
   //===--------------------------------------------------------------------===//
