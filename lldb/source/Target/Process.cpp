@@ -1630,7 +1630,16 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 expr.Printf("dlopen (\"%s\", 2)", path);
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
                 lldb::ValueObjectSP result_valobj_sp;
-                ClangUserExpression::Evaluate (exe_ctx, eExecutionPolicyAlways, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
+                ClangUserExpression::Evaluate (exe_ctx,
+                                               eExecutionPolicyAlways,
+                                               lldb::eLanguageTypeUnknown,
+                                               ClangUserExpression::eResultTypeAny,
+                                               unwind_on_error,
+                                               expr.GetData(),
+                                               prefix,
+                                               result_valobj_sp,
+                                               true,
+                                               ClangUserExpression::kDefaultTimeout);
                 error = result_valobj_sp->GetError();
                 if (error.Success())
                 {
@@ -1696,7 +1705,16 @@ Process::UnloadImage (uint32_t image_token)
                         expr.Printf("dlclose ((void *)0x%llx)", image_addr);
                         const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
                         lldb::ValueObjectSP result_valobj_sp;
-                        ClangUserExpression::Evaluate (exe_ctx, eExecutionPolicyAlways, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
+                        ClangUserExpression::Evaluate (exe_ctx,
+                                                       eExecutionPolicyAlways,
+                                                       lldb::eLanguageTypeUnknown,
+                                                       ClangUserExpression::eResultTypeAny,
+                                                       unwind_on_error,
+                                                       expr.GetData(),
+                                                       prefix,
+                                                       result_valobj_sp,
+                                                       true,
+                                                       ClangUserExpression::kDefaultTimeout);
                         if (result_valobj_sp->GetError().Success())
                         {
                             Scalar scalar;

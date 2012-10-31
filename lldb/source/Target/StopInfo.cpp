@@ -246,7 +246,9 @@ public:
                                                                               bp_loc_sp->GetConditionText(),
                                                                               NULL,
                                                                               result_value_sp,
-                                                                              error);
+                                                                              error,
+                                                                              true,
+                                                                              ClangUserExpression::kDefaultTimeout);
                         if (result_code == eExecutionCompleted)
                         {
                             if (result_value_sp)
@@ -567,7 +569,8 @@ public:
                                                                       NULL,
                                                                       result_value_sp,
                                                                       error,
-                                                                      500000);
+                                                                      true,
+                                                                      ClangUserExpression::kDefaultTimeout);
                 if (result_code == eExecutionCompleted)
                 {
                     if (result_value_sp)

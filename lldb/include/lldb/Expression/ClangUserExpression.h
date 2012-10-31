@@ -49,6 +49,7 @@ class ClangUserExpression : public ClangExpression
 public:
     typedef STD_SHARED_PTR(ClangUserExpression) ClangUserExpressionSP;
     
+    enum { kDefaultTimeout = 500000u };
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -152,8 +153,8 @@ public:
              bool discard_on_error,
              ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result,
-             bool try_all_threads = true,
-             uint32_t timeout_usec = 500000);
+             bool try_all_threads,
+             uint32_t timeout_usec);
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
@@ -344,8 +345,8 @@ public:
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
-              bool try_all_threads = true,
-              uint32_t timeout_usec = 500000);
+              bool try_all_threads,
+              uint32_t timeout_usec);
               
     static ExecutionResults
     EvaluateWithError (ExecutionContext &exe_ctx,
@@ -357,8 +358,8 @@ public:
                        const char *expr_prefix,
                        lldb::ValueObjectSP &result_valobj_sp,
                        Error &error,
-                       bool try_all_threads = true,
-                       uint32_t timeout_usec = 500000);
+                       bool try_all_threads,
+                       uint32_t timeout_usec);
     
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:
