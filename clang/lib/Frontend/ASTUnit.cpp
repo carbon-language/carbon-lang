@@ -2416,8 +2416,6 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
     = new AugmentedCodeCompleteConsumer(*this, Consumer, CodeCompleteOpts);
   Clang->setCodeCompletionConsumer(AugmentedConsumer);
 
-  Clang->getFrontendOpts().SkipFunctionBodies = true;
-
   // If we have a precompiled preamble, try to use it. We only allow
   // the use of the precompiled preamble if we're if the completion
   // point is within the main file, after the end of the precompiled
