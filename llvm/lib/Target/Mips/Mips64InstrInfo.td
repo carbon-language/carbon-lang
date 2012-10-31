@@ -86,7 +86,7 @@ let DecoderNamespace = "Mips64" in {
 def DADDi    : ArithOverflowI<0x18, "daddi", add, simm16_64, immSExt16,
                            CPU64Regs>;
 def DADDiu   : ArithLogicI<0x19, "daddiu", add, simm16_64, immSExt16,
-                           CPU64Regs>;
+                           CPU64Regs>, IsAsCheapAsAMove;
 def DANDi    : ArithLogicI<0x0c, "andi", and, uimm16_64, immZExt16, CPU64Regs>;
 def SLTi64   : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
 def SLTiu64  : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
