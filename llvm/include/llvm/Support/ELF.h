@@ -1146,6 +1146,9 @@ enum {
   PT_PHDR    = 6, // The program header table itself.
   PT_TLS     = 7, // The thread-local storage template.
   PT_LOOS    = 0x60000000, // Lowest operating system-specific pt entry type.
+  PT_HIOS    = 0x6fffffff, // Highest operating system-specific pt entry type.
+  PT_LOPROC  = 0x70000000, // Lowest processor-specific program hdr entry type.
+  PT_HIPROC  = 0x7fffffff, // Highest processor-specific program hdr entry type.
 
   // x86-64 program header types.
   // These all contain stack unwind tables.
@@ -1156,9 +1159,11 @@ enum {
   PT_GNU_STACK  = 0x6474e551, // Indicates stack executability.
   PT_GNU_RELRO  = 0x6474e552, // Read-only after relocation.
 
-  PT_HIOS    = 0x6fffffff, // Highest operating system-specific pt entry type.
-  PT_LOPROC  = 0x70000000, // Lowest processor-specific program hdr entry type.
-  PT_HIPROC  = 0x7fffffff  // Highest processor-specific program hdr entry type.
+  // ARM program header types.
+  PT_ARM_ARCHEXT = 0x70000000, // Platform architecture compatibility information
+  // These all contain stack unwind tables.
+  PT_ARM_EXIDX   = 0x70000001,
+  PT_ARM_UNWIND  = 0x70000001
 };
 
 // Segment flag bits.
