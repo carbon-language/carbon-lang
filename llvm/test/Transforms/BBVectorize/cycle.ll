@@ -107,6 +107,6 @@ done:
   ret void
 ; CHECK: @test1
 ; CHECK: go:
-; CHECK-NEXT: %conv.v.i0.1 = insertelement <2 x i32> undef, i32 %n.0, i32 0
+; CHECK: %conv.v.i0.1 = insertelement <2 x i32> undef, i32 %n.0, i32 0
 ; FIXME: When tree pruning is deterministic, include the entire output.
 }

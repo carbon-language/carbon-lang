@@ -94,13 +94,13 @@ entry:
 ; CHECK-AO: @test3
 ; CHECK-AO: %i0 = load double* %a, align 8
 ; CHECK-AO: %i1 = load double* %b, align 8
-; CHECK-AO: %mul.v.i1.1 = insertelement <2 x double> undef, double %i1, i32 0
-; CHECK-AO: %mul.v.i0.1 = insertelement <2 x double> undef, double %i0, i32 0
 ; CHECK-AO: %arrayidx3 = getelementptr inbounds double* %a, i64 1
 ; CHECK-AO: %i3 = load double* %arrayidx3, align 8
 ; CHECK-AO: %arrayidx4 = getelementptr inbounds double* %b, i64 1
 ; CHECK-AO: %i4 = load double* %arrayidx4, align 8
+; CHECK-AO: %mul.v.i1.1 = insertelement <2 x double> undef, double %i1, i32 0
 ; CHECK-AO: %mul.v.i1.2 = insertelement <2 x double> %mul.v.i1.1, double %i4, i32 1
+; CHECK-AO: %mul.v.i0.1 = insertelement <2 x double> undef, double %i0, i32 0
 ; CHECK-AO: %mul.v.i0.2 = insertelement <2 x double> %mul.v.i0.1, double %i3, i32 1
 ; CHECK-AO: %mul = fmul <2 x double> %mul.v.i0.2, %mul.v.i1.2
 ; CHECK-AO: %mulf = fptrunc <2 x double> %mul to <2 x float>

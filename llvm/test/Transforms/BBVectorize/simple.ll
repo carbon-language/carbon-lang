@@ -5,8 +5,8 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define double @test1(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK: @test1
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 	%X1 = fsub double %A1, %B1
 	%X2 = fsub double %A2, %B2
@@ -29,8 +29,8 @@ define double @test1(double %A1, double %A2, double %B1, double %B2) {
 define double @test2(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK: @test2
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 	%X1 = fsub double %A1, %B1
 	%X2 = fsub double %A2, %B2
@@ -40,12 +40,13 @@ define double @test2(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK: %Y1 = fmul <2 x double> %X1, %X1.v.i0.2
 	%Z1 = fadd double %Y2, %B1
 	%Z2 = fadd double %Y1, %B2
-; CHECK: %Z1.v.i0 = shufflevector <2 x double> %Y1, <2 x double> undef, <2 x i32> <i32 1, i32 0>
-; CHECK: %Z1 = fadd <2 x double> %Z1.v.i0, %X1.v.i1.2
+; CHECK: %Z1.v.i1.1 = insertelement <2 x double> undef, double %B2, i32 0
+; CHECK: %Z1.v.i1.2 = insertelement <2 x double> %Z1.v.i1.1, double %B1, i32 1
+; CHECK: %Z2 = fadd <2 x double> %Y1, %Z1.v.i1.2
 	%R  = fmul double %Z1, %Z2
-; CHECK: %Z1.v.r1 = extractelement <2 x double> %Z1, i32 0
-; CHECK: %Z1.v.r2 = extractelement <2 x double> %Z1, i32 1
-; CHECK: %R = fmul double %Z1.v.r1, %Z1.v.r2
+; CHECK: %Z2.v.r1 = extractelement <2 x double> %Z2, i32 0
+; CHECK: %Z2.v.r2 = extractelement <2 x double> %Z2, i32 1
+; CHECK: %R = fmul double %Z2.v.r2, %Z2.v.r1
 	ret double %R
 ; CHECK: ret double %R
 }
@@ -54,8 +55,8 @@ define double @test2(double %A1, double %A2, double %B1, double %B2) {
 define double @test3(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK: @test3
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 	%X1 = fsub double %A1, %B1
 	%X2 = fsub double %A2, %B2
@@ -79,8 +80,8 @@ define double @test3(double %A1, double %A2, double %B1, double %B2) {
 define double @test4(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK: @test4
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 	%X1 = fsub double %A1, %B1
 	%X2 = fsub double %A2, %B2
@@ -146,5 +147,29 @@ define <8 x i8> @test6(<8 x i8> %A1, <8 x i8> %A2, <8 x i8> %B1, <8 x i8> %B2) {
 ; CHECK: %R = mul <8 x i8> %Q1.v.r1, %Q1.v.r2
 	ret <8 x i8> %R
 ; CHECK: ret <8 x i8> %R
+}
+
+; Basic depth-3 chain (flipped order)
+define double @test7(double %A1, double %A2, double %B1, double %B2) {
+; CHECK: @test7
+; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
+; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
+; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
+	%X1 = fsub double %A1, %B1
+	%X2 = fsub double %A2, %B2
+; CHECK: %X1 = fsub <2 x double> %X1.v.i0.2, %X1.v.i1.2
+	%Y1 = fmul double %X1, %A1
+	%Y2 = fmul double %X2, %A2
+; CHECK: %Y1 = fmul <2 x double> %X1, %X1.v.i0.2
+	%Z2 = fadd double %Y2, %B2
+	%Z1 = fadd double %Y1, %B1
+; CHECK: %Z1 = fadd <2 x double> %Y1, %X1.v.i1.2
+	%R  = fmul double %Z1, %Z2
+; CHECK: %Z1.v.r1 = extractelement <2 x double> %Z1, i32 0
+; CHECK: %Z1.v.r2 = extractelement <2 x double> %Z1, i32 1
+; CHECK: %R = fmul double %Z1.v.r1, %Z1.v.r2
+	ret double %R
+; CHECK: ret double %R
 }
 

@@ -7,8 +7,8 @@ define double @test1(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK-SL4: @test1
 ; CHECK-SL4-NOT: <2 x double>
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 	%X1 = fsub double %A1, %B1
 	%X2 = fsub double %A2, %B2

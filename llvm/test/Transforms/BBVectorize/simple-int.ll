@@ -17,8 +17,8 @@ define double @test1(double %A1, double %A2, double %B1, double %B2, double %C1,
 	ret double %R
 ; CHECK: @test1
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 ; CHECK: %X1 = fsub <2 x double> %X1.v.i0.2, %X1.v.i1.2
 ; CHECK: %Y1.v.i2.1 = insertelement <2 x double> undef, double %C1, i32 0
@@ -43,8 +43,8 @@ define double @test2(double %A1, double %A2, double %B1, double %B2) {
 	ret double %R
 ; CHECK: @test2
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 ; CHECK: %X1 = fsub <2 x double> %X1.v.i0.2, %X1.v.i1.2
 ; CHECK: %Y1 = call <2 x double> @llvm.cos.v2f64(<2 x double> %X1)
@@ -68,8 +68,8 @@ define double @test3(double %A1, double %A2, double %B1, double %B2, i32 %P) {
 	ret double %R
 ; CHECK: @test3
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
-; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x double> undef, double %A1, i32 0
 ; CHECK: %X1.v.i0.2 = insertelement <2 x double> %X1.v.i0.1, double %A2, i32 1
 ; CHECK: %X1 = fsub <2 x double> %X1.v.i0.2, %X1.v.i1.2
 ; CHECK: %Y1 = call <2 x double> @llvm.powi.v2f64(<2 x double> %X1, i32 %P)
