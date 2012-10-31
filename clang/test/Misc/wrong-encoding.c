@@ -32,6 +32,8 @@ void foo() {
 // CHECK: {{^  "xx<E9><BF>xxxxxxxxxxxxxxxxxxxxx<E9><BF>xx";}}
 // CHECK: {{^     \^~~~~~~~                     ~~~~~~~~}}
 
+  "?kÍ›S¥ÇØg7†,	2,Díu„†*É,pûäÚ&”‰(K§:Ñ'1á‹ÎjOÅ°<:";
+
   "xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿xé¿x";
 }
 // CHECK-NOT:Assertion
