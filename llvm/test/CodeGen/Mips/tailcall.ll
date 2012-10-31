@@ -4,6 +4,8 @@
 ; RUN: -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=STATIC32
 ; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=+n64 -enable-mips-tail-calls \
 ; RUN: < %s | FileCheck %s -check-prefix=N64
+; RUN: llc -march=mipsel -mcpu=mips16 -relocation-model=pic \
+; RUN: -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=PIC16
 
 @g0 = common global i32 0, align 4
 @g1 = common global i32 0, align 4
@@ -21,6 +23,7 @@ entry:
 ; PIC32-NOT: jalr
 ; STATIC32-NOT: jal
 ; N64-NOT: jalr
+; PIC16: jalrc
 
   %call = tail call i32 @callee1(i32 1, i32 1, i32 1, i32 %a0) nounwind
   ret i32 %call
@@ -33,6 +36,7 @@ entry:
 ; PIC32: jalr
 ; STATIC32: jal
 ; N64-NOT: jalr
+; PIC16: jalrc
 
   %call = tail call i32 @callee2(i32 1, i32 %a0, i32 %a1, i32 %a2, i32 %a3) nounwind
   ret i32 %call
@@ -45,6 +49,7 @@ entry:
 ; PIC32: jalr
 ; STATIC32: jal
 ; N64-NOT: jalr
+; PIC16: jalrc
 
   %call = tail call i32 @callee3(i32 1, i32 1, i32 1, i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4) nounwind
   ret i32 %call
@@ -57,6 +62,7 @@ entry:
 ; PIC32: jalr
 ; STATIC32: jal
 ; N64: jalr
+; PIC16: jalrc
 
   %call = tail call i32 @callee4(i32 1, i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7) nounwind
   ret i32 %call
@@ -75,6 +81,9 @@ entry:
 ; N64: .ent caller5
 ; N64-NOT: jalr
 ; N64: .end caller5
+; PIC16: .ent caller5
+; PIC16: jalrc
+; PIC16: .end caller5
 
   %0 = load i32* @g0, align 4
   %1 = load i32* @g1, align 4
@@ -123,6 +132,9 @@ entry:
 ; N64: .ent caller8_1
 ; N64-NOT: jalr
 ; N64: .end caller8_1
+; PIC16: .ent caller8_1
+; PIC16: jalrc
+; PIC16: .end caller8_1
 
   %call = tail call i32 (i32, ...)* @callee8(i32 2, i32 1) nounwind
   ret i32 %call
@@ -151,6 +163,9 @@ entry:
 ; N64: .ent caller9_1
 ; N64: jalr
 ; N64: .end caller9_1
+; PIC16: .ent caller9_1
+; PIC16: jalrc
+; PIC16: .end caller9_1
 
   %call = tail call i32 @callee9(%struct.S* byval @gs1) nounwind
   ret i32 %call
@@ -166,6 +181,8 @@ entry:
 ; STATIC32-NOT: jal
 ; N64: .ent caller10
 ; N64-NOT: jalr
+; PIC16: .ent caller10
+; PIC16: jalrc
 
   %call = tail call i32 @callee10(i32 %a8, i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7) nounwind
   ret i32 %call
@@ -181,6 +198,8 @@ entry:
 ; STATIC32: jal
 ; N64: .ent caller11
 ; N64: jalr
+; PIC16: .ent caller11
+; PIC16: jalrc
 
   %call = tail call i32 @callee11(%struct.S* byval @gs1) nounwind
   ret i32 %call
@@ -198,6 +217,8 @@ entry:
 ; STATIC32: jal
 ; N64: .ent caller12
 ; N64: jalr
+; PIC16: .ent caller12
+; PIC16: jalrc
 
   %0 = bitcast %struct.S* %a0 to i8*
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* bitcast (%struct.S* @gs1 to i8*), i8* %0, i32 8, i32 4, i1 false)
@@ -215,6 +236,8 @@ entry:
 ; STATIC32-NOT: jal
 ; N64: .ent caller13
 ; N64-NOT: jalr
+; PIC16: .ent caller13
+; PIC16: jalrc
 
   %call = tail call i32 (i32, ...)* @callee13(i32 1, i32 2) nounwind
   ret i32 %call
