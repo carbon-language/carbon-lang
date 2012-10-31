@@ -6115,24 +6115,29 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                     is_explicit,
                                                                                                     is_attr_used,
                                                                                                     is_artificial);
-                                                    LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
-
-                                                    Host::SetCrashDescription (NULL);
-
+                                                    
                                                     type_handled = cxx_method_decl != NULL;
-                                                    
-                                                    ClangASTMetadata metadata;
-                                                    metadata.SetUserID(MakeUserID(die->GetOffset()));
-                                                    
-                                                    if (!object_pointer_name.empty())
+
+                                                    if (type_handled)
                                                     {
-                                                        metadata.SetObjectPtrName(object_pointer_name.c_str());
-                                                        if (log)
-                                                            log->Printf ("Setting object pointer name: %s on method object 0x%ld.\n",
-                                                                         object_pointer_name.c_str(),
-                                                                         (uintptr_t) cxx_method_decl);
+                                                        LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+
+                                                        Host::SetCrashDescription (NULL);
+
+                                                        
+                                                        ClangASTMetadata metadata;
+                                                        metadata.SetUserID(MakeUserID(die->GetOffset()));
+                                                        
+                                                        if (!object_pointer_name.empty())
+                                                        {
+                                                            metadata.SetObjectPtrName(object_pointer_name.c_str());
+                                                            if (log)
+                                                                log->Printf ("Setting object pointer name: %s on method object 0x%ld.\n",
+                                                                             object_pointer_name.c_str(),
+                                                                             (uintptr_t) cxx_method_decl);
+                                                        }
+                                                        GetClangASTContext().SetMetadata ((uintptr_t)cxx_method_decl, metadata);
                                                     }
-                                                    GetClangASTContext().SetMetadata ((uintptr_t)cxx_method_decl, metadata);
                                                 }
                                             }
                                             else
