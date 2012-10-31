@@ -416,9 +416,7 @@
 		2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A39215E404B1003E682C /* OptionValueArch.cpp */; };
 		2697A39515E404BA003E682C /* OptionValueArch.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A39415E404BA003E682C /* OptionValueArch.h */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
-		2698699A15E6CBD0002415FF /* OperatingSystemPython.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2698699815E6CBD0002415FF /* OperatingSystemPython.cpp */; };
 		2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2698699815E6CBD0002415FF /* OperatingSystemPython.cpp */; };
-		2698699C15E6CBD0002415FF /* OperatingSystemPython.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2698699915E6CBD0002415FF /* OperatingSystemPython.h */; };
 		2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */ = {isa = PBXBuildFile; fileRef = 2698699915E6CBD0002415FF /* OperatingSystemPython.h */; };
 		26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */; };
 		26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */; };
@@ -693,8 +691,6 @@
 			dstSubfolderSpec = 0;
 			files = (
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
-				2698699A15E6CBD0002415FF /* OperatingSystemPython.cpp in CopyFiles */,
-				2698699C15E6CBD0002415FF /* OperatingSystemPython.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
