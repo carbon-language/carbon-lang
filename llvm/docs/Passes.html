@@ -182,7 +182,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#strip-debug-declare">-strip-debug-declare</a></td><td>Strip all llvm.dbg.declare intrinsics</td></tr>
 <tr><td><a href="#strip-nondebug">-strip-nondebug</a></td><td>Strip all symbols, except dbg symbols, from a module</td></tr>
 <tr><td><a href="#tailcallelim">-tailcallelim</a></td><td>Tail Call Elimination</td></tr>
-<tr><td><a href="#tailduplicate">-tailduplicate</a></td><td>Tail Duplication</td></tr>
 
 
 <tr><th colspan="2"><b>UTILITY PASSES</b></th></tr>
@@ -1860,22 +1859,6 @@ if (X &lt; 3) {</pre>
       they are marked as eligible for tail call elimination (by the code
       generator).
   </ul>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<h3>
-  <a name="tailduplicate">-tailduplicate: Tail Duplication</a>
-</h3>
-<div>
-  <p>
-  This pass performs a limited form of tail duplication, intended to simplify
-  CFGs by removing some unconditional branches.  This pass is necessary to
-  straighten out loops created by the C front-end, but also is capable of
-  making other code nicer.  After this pass is run, the CFG simplify pass
-  should be run to clean up the mess.
-  </p>
-</div>
-
 </div>
 
 <!-- ======================================================================= -->
