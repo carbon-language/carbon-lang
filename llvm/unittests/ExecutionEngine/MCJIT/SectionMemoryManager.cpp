@@ -14,6 +14,7 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/MathExtras.h"
 
 #include "SectionMemoryManager.h"
 
@@ -34,9 +35,16 @@ uint8_t *SectionMemoryManager::allocateDataSection(uintptr_t Size,
                                                     unsigned SectionID) {
   if (!Alignment)
     Alignment = 16;
-  uint8_t *Addr = (uint8_t*)calloc((Size + Alignment - 1)/Alignment, Alignment);
-  AllocatedDataMem.push_back(sys::MemoryBlock(Addr, Size));
-  return Addr;
+  // Ensure that enough memory is requested to allow aligning.
+  size_t NumElementsAligned = 1 + (Size + Alignment - 1)/Alignment;
+  uint8_t *Addr = (uint8_t*)calloc(NumElementsAligned, Alignment);
+
+  // Honour the alignment requirement.
+  uint8_t *AlignedAddr = (uint8_t*)RoundUpToAlignment((uint64_t)Addr, Alignment);
+
+  // Store the original address from calloc so we can free it later.
+  AllocatedDataMem.push_back(sys::MemoryBlock(Addr, NumElementsAligned*Alignment));
+  return AlignedAddr;
 }
 
 uint8_t *SectionMemoryManager::allocateCodeSection(uintptr_t Size,
