@@ -2278,11 +2278,12 @@ bool DependenceAnalysis::gcdMIVtest(const SCEV *Src,
         assert(!Constant && "Surprised to find multiple constants");
         Constant = cast<SCEVConstant>(Operand);
       }
-      else if (isa<SCEVMulExpr>(Operand)) {
+      else if (const SCEVMulExpr *Product = dyn_cast<SCEVMulExpr>(Operand)) {
         // Search for constant operand to participate in GCD;
         // If none found; return false.
-        const SCEVConstant *ConstOp =
-          getConstantPart(cast<SCEVMulExpr>(Operand));
+        const SCEVConstant *ConstOp = getConstantPart(Product);
+        if (!ConstOp)
+          return false;
         APInt ConstOpValue = ConstOp->getValue()->getValue();
         ExtraGCD = APIntOps::GreatestCommonDivisor(ExtraGCD,
                                                    ConstOpValue.abs());
