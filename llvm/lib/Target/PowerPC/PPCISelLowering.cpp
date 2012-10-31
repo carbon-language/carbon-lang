@@ -2091,6 +2091,19 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
       // ObjSize is the true size, ArgSize rounded up to multiple of registers.
       ObjSize = Flags.getByValSize();
       ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
+      // Empty aggregate parameters do not take up registers.  Examples:
+      //   struct { } a;
+      //   union  { } b;
+      //   int c[0];
+      // etc.  However, we have to provide a place-holder in InVals, so
+      // pretend we have an 8-byte item at the current address for that
+      // purpose.
+      if (!ObjSize) {
+        int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
+        SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
+        InVals.push_back(FIN);
+        continue;
+      }
       // All aggregates smaller than 8 bytes must be passed right-justified.
       if (ObjSize < PtrByteSize)
         CurArgOffset = CurArgOffset + (PtrByteSize - ObjSize);
@@ -3655,6 +3668,12 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       // These are the proper values we need for right-justifying the
       // aggregate in a parameter register.
       unsigned Size = Flags.getByValSize();
+
+      // An empty aggregate parameter takes up no storage and no
+      // registers.
+      if (Size == 0)
+        continue;
+
       // All aggregates smaller than 8 bytes must be passed right-justified.
       if (Size==1 || Size==2 || Size==4) {
         EVT VT = (Size==1) ? MVT::i8 : ((Size==2) ? MVT::i16 : MVT::i32);
