@@ -3201,7 +3201,7 @@ static bool ValidLookupTableConstant(Constant *C) {
 }
 
 /// LookupConstant - If V is a Constant, return it. Otherwise, try to look up
-/// its constant value in ConstantPool, returning NULL if it's not there.
+/// its constant value in ConstantPool, returning 0 if it's not there.
 static Constant *LookupConstant(Value *V,
                          const SmallDenseMap<Value*, Constant*>& ConstantPool) {
   if (Constant *C = dyn_cast<Constant>(V))
@@ -3212,7 +3212,7 @@ static Constant *LookupConstant(Value *V,
 /// ConstantFold - Try to fold instruction I into a constant. This works for
 /// simple instructions such as binary operations where both operands are
 /// constant or can be replaced by constants from the ConstantPool. Returns the
-/// resulting constant on success, NULL otherwise.
+/// resulting constant on success, 0 otherwise.
 static Constant *ConstantFold(Instruction *I,
                          const SmallDenseMap<Value*, Constant*>& ConstantPool) {
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
@@ -3243,6 +3243,7 @@ static Constant *ConstantFold(Instruction *I,
       return LookupConstant(Select->getTrueValue(), ConstantPool);
     if (A->isNullValue())
       return LookupConstant(Select->getFalseValue(), ConstantPool);
+    return 0;
   }
 
   if (CastInst *Cast = dyn_cast<CastInst>(I)) {
@@ -3257,7 +3258,7 @@ static Constant *ConstantFold(Instruction *I,
 
 /// GetCaseResults - Try to determine the resulting constant values in phi nodes
 /// at the common destination basic block, *CommonDest, for one of the case
-/// destionations CaseDest corresponding to value CaseVal (NULL for the default
+/// destionations CaseDest corresponding to value CaseVal (0 for the default
 /// case), of a switch instruction SI.
 static bool GetCaseResults(SwitchInst *SI,
                            ConstantInt *CaseVal,
