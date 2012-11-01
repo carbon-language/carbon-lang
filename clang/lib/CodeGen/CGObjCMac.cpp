@@ -2353,7 +2353,7 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
     // Block variable layout instruction has been inlined.
     if (CGM.getLangOpts().ObjCGCBitmapPrint) {
       printf("\n Inline instruction for block variable layout: ");
-      printf("0x0%llx\n", Result);
+      printf("0x0%llx\n", (unsigned long long)Result);
     }
     if (WordSizeInBytes == 8) {
       const llvm::APInt Instruction(64, Result);
