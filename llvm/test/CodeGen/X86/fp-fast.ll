@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 -mattr=-fma4 -mtriple=x86_64-apple-darwin -enable-unsafe-fp-math < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mattr=+avx,-fma4 -mtriple=x86_64-apple-darwin -enable-unsafe-fp-math < %s | FileCheck %s
 
 ; CHECK: test1
 define float @test1(float %a) {
