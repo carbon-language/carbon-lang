@@ -511,3 +511,56 @@ lbl_260:                                          ; preds = %for.cond, %entry
 if.end:                                           ; preds = %for.cond
   ret void
 }
+
+define void @PR14233(i1 %cmp, i1 %cmp2, i1 %cmp3, i1 %cmp4) {
+entry:
+  br i1 %cmp, label %cond.true, label %cond.false
+
+cond.true:
+  br label %if.end
+
+cond.false:
+  br label %if.end
+
+if.end:
+  %A = phi i64 [ 0, %cond.true ], [ 1, %cond.false ]
+  br i1 %cmp2, label %bb, label %if.end2
+
+bb:
+  br label %if.end2
+
+if.end2:
+  %B = phi i64 [ ptrtoint (i8* ()* @PR14233.f1 to i64), %bb ], [ %A, %if.end ]
+  %cmp.ptr = icmp eq i64 %B, ptrtoint (i8* ()* @PR14233.f2 to i64)
+  br i1 %cmp.ptr, label %cond.true2, label %if.end3
+
+cond.true2:
+  br i1 %cmp3, label %bb2, label %ur
+
+bb2:
+  br i1 %cmp4, label %if.end4, label %if.end3
+
+if.end4:
+  unreachable
+
+if.end3:
+  %cmp.ptr2 = icmp eq i64 %B, ptrtoint (i8* ()* @PR14233.f2 to i64)
+  br i1 %cmp.ptr2, label %ur, label %if.then601
+
+if.then601:
+  %C = icmp eq i64 %B, 0
+  br i1 %C, label %bb3, label %bb4
+
+bb3:
+  unreachable
+
+bb4:
+  unreachable
+
+ur:
+  unreachable
+}
+
+declare i8* @PR14233.f1()
+
+declare i8* @PR14233.f2()
