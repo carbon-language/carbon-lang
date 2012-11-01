@@ -4,7 +4,6 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze %s | FileCheck -check-prefix=REVERSE %s > /dev/null
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen %s | lli | diff %s.result -  %EatErrOnX86
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen -S %s | FileCheck -check-prefix=CODEGEN %s
 
 

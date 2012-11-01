@@ -29,7 +29,6 @@ config.substitutions.append(('%loadPolly', '-load '
                              + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
 config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare -polly-region-simplify'))
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
-config.substitutions.append(('%EatErrOnX86', EAT_ERR_ON_X86))
 config.substitutions.append(('%vector-opt', '-polly-vectorizer=polly'))
 
 # Let the main config do the real work.
