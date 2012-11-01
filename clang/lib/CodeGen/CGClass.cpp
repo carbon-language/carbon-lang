@@ -952,7 +952,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     }
     // -fapple-kext must inline any call to this dtor into
     // the caller's body.
-    if (getContext().getLangOpts().AppleKext)
+    if (getLangOpts().AppleKext)
       CurFn->addFnAttr(llvm::Attributes::AlwaysInline);
     break;
   }
@@ -1415,7 +1415,7 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(DD, Type), 
                                      ForVirtualBase);
   llvm::Value *Callee = 0;
-  if (getContext().getLangOpts().AppleKext)
+  if (getLangOpts().AppleKext)
     Callee = BuildAppleKextVirtualDestructorCall(DD, Type, 
                                                  DD->getParent());
     

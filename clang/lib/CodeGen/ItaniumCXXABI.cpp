@@ -1173,7 +1173,7 @@ void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
 
   // In Apple kexts, we want to add a global destructor entry.
   // FIXME: shouldn't this be guarded by some variable?
-  if (CGM.getContext().getLangOpts().AppleKext) {
+  if (CGM.getLangOpts().AppleKext) {
     // Generate a global destructor entry.
     return CGM.AddCXXDtorEntry(dtor, addr);
   }
