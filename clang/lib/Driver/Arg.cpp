@@ -85,14 +85,14 @@ void Arg::renderAsInput(const ArgList &Args, ArgStringList &Output) const {
   }
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i)
-    Output.push_back(getValue(Args, i));
+    Output.push_back(getValue(i));
 }
 
 void Arg::render(const ArgList &Args, ArgStringList &Output) const {
   switch (getOption().getRenderStyle()) {
   case Option::RenderValuesStyle:
     for (unsigned i = 0, e = getNumValues(); i != e; ++i)
-      Output.push_back(getValue(Args, i));
+      Output.push_back(getValue(i));
     break;
 
   case Option::RenderCommaJoinedStyle: {
@@ -101,7 +101,7 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
     OS << getSpelling();
     for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
       if (i) OS << ',';
-      OS << getValue(Args, i);
+      OS << getValue(i);
     }
     Output.push_back(Args.MakeArgString(OS.str()));
     break;
@@ -109,15 +109,15 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
 
  case Option::RenderJoinedStyle:
     Output.push_back(Args.GetOrMakeJoinedArgString(
-                       getIndex(), getSpelling(), getValue(Args, 0)));
+                       getIndex(), getSpelling(), getValue(0)));
     for (unsigned i = 1, e = getNumValues(); i != e; ++i)
-      Output.push_back(getValue(Args, i));
+      Output.push_back(getValue(i));
     break;
 
   case Option::RenderSeparateStyle:
     Output.push_back(Args.MakeArgString(getSpelling()));
     for (unsigned i = 0, e = getNumValues(); i != e; ++i)
-      Output.push_back(getValue(Args, i));
+      Output.push_back(getValue(i));
     break;
   }
 }

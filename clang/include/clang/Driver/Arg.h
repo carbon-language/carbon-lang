@@ -96,7 +96,7 @@ namespace driver {
     void claim() const { getBaseArg().Claimed = true; }
 
     unsigned getNumValues() const { return Values.size(); }
-    const char *getValue(const ArgList &Args, unsigned N=0) const {
+    const char *getValue(unsigned N = 0) const {
       return Values[N];
     }
 

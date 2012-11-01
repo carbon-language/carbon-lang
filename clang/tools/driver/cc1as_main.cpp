@@ -189,7 +189,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
            ie = Args->filtered_end(); it != ie; ++it, First=false) {
       const Arg *A = it;
       if (First)
-        Opts.InputFile = A->getValue(*Args);
+        Opts.InputFile = A->getValue();
       else {
         Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
         Success = false;
@@ -201,7 +201,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
     Opts.LLVMArgs.push_back("-fatal-assembler-warnings");
   Opts.OutputPath = Args->getLastArgValue(OPT_o);
   if (Arg *A = Args->getLastArg(OPT_filetype)) {
-    StringRef Name = A->getValue(*Args);
+    StringRef Name = A->getValue();
     unsigned OutputType = StringSwitch<unsigned>(Name)
       .Case("asm", FT_Asm)
       .Case("null", FT_Null)

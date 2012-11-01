@@ -71,13 +71,13 @@ static const char *getARMTargetCPU(const ArgList &Args,
     // FIXME: Warn on inconsistent use of -mcpu and -march.
     // If we have -mcpu=, use that.
     if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
-      return A->getValue(Args);
+      return A->getValue();
   }
 
   StringRef MArch;
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     // Otherwise, if we have -march= choose the base CPU for that arch.
-    MArch = A->getValue(Args);
+    MArch = A->getValue();
   } else {
     // Otherwise, use the Arch from the triple.
     MArch = Triple.getArchName();
@@ -189,7 +189,7 @@ ToolChain::RuntimeLibType ToolChain::GetRuntimeLibType(
   const ArgList &Args) const
 {
   if (Arg *A = Args.getLastArg(options::OPT_rtlib_EQ)) {
-    StringRef Value = A->getValue(Args);
+    StringRef Value = A->getValue();
     if (Value == "compiler-rt")
       return ToolChain::RLT_CompilerRT;
     if (Value == "libgcc")
@@ -203,7 +203,7 @@ ToolChain::RuntimeLibType ToolChain::GetRuntimeLibType(
 
 ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{
   if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
-    StringRef Value = A->getValue(Args);
+    StringRef Value = A->getValue();
     if (Value == "libc++")
       return ToolChain::CST_Libcxx;
     if (Value == "libstdc++")

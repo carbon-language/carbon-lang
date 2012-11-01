@@ -174,9 +174,9 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
 
       // Add the remaining values as Xlinker arguments.
       for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-        if (StringRef(A->getValue(Args, i)) != "--no-demangle")
+        if (StringRef(A->getValue(i)) != "--no-demangle")
           DAL->AddSeparateArg(A, Opts->getOption(options::OPT_Xlinker),
-                              A->getValue(Args, i));
+                              A->getValue(i));
 
       continue;
     }
@@ -186,21 +186,21 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     // care to encourage this usage model.
     if (A->getOption().matches(options::OPT_Wp_COMMA) &&
         A->getNumValues() == 2 &&
-        (A->getValue(Args, 0) == StringRef("-MD") ||
-         A->getValue(Args, 0) == StringRef("-MMD"))) {
+        (A->getValue(0) == StringRef("-MD") ||
+         A->getValue(0) == StringRef("-MMD"))) {
       // Rewrite to -MD/-MMD along with -MF.
-      if (A->getValue(Args, 0) == StringRef("-MD"))
+      if (A->getValue(0) == StringRef("-MD"))
         DAL->AddFlagArg(A, Opts->getOption(options::OPT_MD));
       else
         DAL->AddFlagArg(A, Opts->getOption(options::OPT_MMD));
       DAL->AddSeparateArg(A, Opts->getOption(options::OPT_MF),
-                          A->getValue(Args, 1));
+                          A->getValue(1));
       continue;
     }
 
     // Rewrite reserved library names.
     if (A->getOption().matches(options::OPT_l)) {
-      StringRef Value = A->getValue(Args);
+      StringRef Value = A->getValue();
 
       // Rewrite unless -nostdlib is present.
       if (!HasNostdlib && Value == "stdc++") {
@@ -273,23 +273,23 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   CCCIsCXX = Args->hasArg(options::OPT_ccc_cxx) || CCCIsCXX;
   CCCEcho = Args->hasArg(options::OPT_ccc_echo);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_gcc_name))
-    CCCGenericGCCName = A->getValue(*Args);
+    CCCGenericGCCName = A->getValue();
   CCCUsePCH = Args->hasFlag(options::OPT_ccc_pch_is_pch,
                             options::OPT_ccc_pch_is_pth);
   // FIXME: DefaultTargetTriple is used by the target-prefixed calls to as/ld
   // and getToolChain is const.
   if (const Arg *A = Args->getLastArg(options::OPT_target))
-    DefaultTargetTriple = A->getValue(*Args);
+    DefaultTargetTriple = A->getValue();
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
-    Dir = InstalledDir = A->getValue(*Args);
+    Dir = InstalledDir = A->getValue();
   for (arg_iterator it = Args->filtered_begin(options::OPT_B),
          ie = Args->filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
     A->claim();
-    PrefixDirs.push_back(A->getValue(*Args, 0));
+    PrefixDirs.push_back(A->getValue(0));
   }
   if (const Arg *A = Args->getLastArg(options::OPT__sysroot_EQ))
-    SysRoot = A->getValue(*Args);
+    SysRoot = A->getValue();
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
 
@@ -381,7 +381,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     bool IgnoreInput = false;
 
     // Ignore input from stdin or any inputs that cannot be preprocessed.
-    if (!strcmp(it->second->getValue(C.getArgs()), "-")) {
+    if (!strcmp(it->second->getValue(), "-")) {
       Diag(clang::diag::note_drv_command_failed_diag_msg)
         << "Error generating preprocessed source(s) - ignoring input from stdin"
         ".";
@@ -405,7 +405,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
        it != ie; ++it) {
     Arg *A = *it;
     if (A->getOption().matches(options::OPT_arch)) {
-      StringRef ArchName = A->getValue(C.getArgs());
+      StringRef ArchName = A->getValue();
       ArchNames.insert(ArchName);
     }
   }
@@ -556,7 +556,7 @@ void Driver::PrintOptions(const ArgList &Args) const {
     for (unsigned j = 0; j < A->getNumValues(); ++j) {
       if (j)
         llvm::errs() << ", ";
-      llvm::errs() << '"' << A->getValue(Args, j) << '"';
+      llvm::errs() << '"' << A->getValue(j) << '"';
     }
     llvm::errs() << "}\n";
   }
@@ -662,12 +662,12 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // FIXME: The following handlers should use a callback mechanism, we don't
   // know what the client would like to do.
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_file_name_EQ)) {
-    llvm::outs() << GetFilePath(A->getValue(C.getArgs()), TC) << "\n";
+    llvm::outs() << GetFilePath(A->getValue(), TC) << "\n";
     return false;
   }
 
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_prog_name_EQ)) {
-    llvm::outs() << GetProgramPath(A->getValue(C.getArgs()), TC) << "\n";
+    llvm::outs() << GetProgramPath(A->getValue(), TC) << "\n";
     return false;
   }
 
@@ -730,7 +730,7 @@ static unsigned PrintActions1(const Compilation &C, Action *A,
 
   os << Action::getClassName(A->getKind()) << ", ";
   if (InputAction *IA = dyn_cast<InputAction>(A)) {
-    os << "\"" << IA->getInputArg().getValue(C.getArgs()) << "\"";
+    os << "\"" << IA->getInputArg().getValue() << "\"";
   } else if (BindArchAction *BIA = dyn_cast<BindArchAction>(A)) {
     os << '"' << BIA->getArchName() << '"'
        << ", {" << PrintActions1(C, *BIA->begin(), Ids) << "}";
@@ -790,7 +790,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       // Validate the option here; we don't save the type here because its
       // particular spelling may participate in other driver choices.
       llvm::Triple::ArchType Arch =
-        tools::darwin::getArchTypeForDarwinArchName(A->getValue(Args));
+        tools::darwin::getArchTypeForDarwinArchName(A->getValue());
       if (Arch == llvm::Triple::UnknownArch) {
         Diag(clang::diag::err_drv_invalid_arch_name)
           << A->getAsString(Args);
@@ -798,8 +798,8 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       }
 
       A->claim();
-      if (ArchNames.insert(A->getValue(Args)))
-        Archs.push_back(A->getValue(Args));
+      if (ArchNames.insert(A->getValue()))
+        Archs.push_back(A->getValue());
     }
   }
 
@@ -894,7 +894,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
     Arg *A = *it;
 
     if (A->getOption().getKind() == Option::InputClass) {
-      const char *Value = A->getValue(Args);
+      const char *Value = A->getValue();
       types::ID Ty = types::TY_INVALID;
 
       // Infer the input type if necessary.
@@ -962,7 +962,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
         SmallString<64> Path(Value);
         if (Arg *WorkDir = Args.getLastArg(options::OPT_working_directory)) {
           if (!llvm::sys::path::is_absolute(Path.str())) {
-            SmallString<64> Directory(WorkDir->getValue(Args));
+            SmallString<64> Directory(WorkDir->getValue());
             llvm::sys::path::append(Directory, Value);
             Path.assign(Directory);
           }
@@ -983,14 +983,14 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
 
     } else if (A->getOption().matches(options::OPT_x)) {
       InputTypeArg = A;
-      InputType = types::lookupTypeForTypeSpecifier(A->getValue(Args));
+      InputType = types::lookupTypeForTypeSpecifier(A->getValue());
       A->claim();
 
       // Follow gcc behavior and treat as linker input for invalid -x
       // options. Its not clear why we shouldn't just revert to unknown; but
       // this isn't very important, we might as well be bug compatible.
       if (!InputType) {
-        Diag(clang::diag::err_drv_unknown_language) << A->getValue(Args);
+        Diag(clang::diag::err_drv_unknown_language) << A->getValue();
         InputType = types::TY_Object;
       }
     }
@@ -1213,7 +1213,7 @@ void Driver::BuildJobs(Compilation &C) const {
     const char *LinkingOutput = 0;
     if (isa<LipoJobAction>(A)) {
       if (FinalOutput)
-        LinkingOutput = FinalOutput->getValue(C.getArgs());
+        LinkingOutput = FinalOutput->getValue();
       else
         LinkingOutput = DefaultImageName.c_str();
     }
@@ -1326,7 +1326,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     const Arg &Input = IA->getInputArg();
     Input.claim();
     if (Input.getOption().matches(options::OPT_INPUT)) {
-      const char *Name = Input.getValue(C.getArgs());
+      const char *Name = Input.getValue();
       Result = InputInfo(Name, A->getType(), Name);
     } else
       Result = InputInfo(&Input, A->getType(), "");
@@ -1415,7 +1415,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if (AtTopLevel && !isa<DsymutilJobAction>(JA) &&
       !isa<VerifyJobAction>(JA)) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
-      return C.addResultFile(FinalOutput->getValue(C.getArgs()));
+      return C.addResultFile(FinalOutput->getValue());
   }
 
   // Default to writing to stdout?
@@ -1614,7 +1614,7 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
                                         StringRef DarwinArchName) {
   // FIXME: Already done in Compilation *Driver::BuildCompilation
   if (const Arg *A = Args.getLastArg(options::OPT_target))
-    DefaultTargetTriple = A->getValue(Args);
+    DefaultTargetTriple = A->getValue();
 
   llvm::Triple Target(llvm::Triple::normalize(DefaultTargetTriple));
 
@@ -1630,7 +1630,7 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
     // Handle the Darwin '-arch' flag.
     if (Arg *A = Args.getLastArg(options::OPT_arch)) {
       llvm::Triple::ArchType DarwinArch
-        = tools::darwin::getArchTypeForDarwinArchName(A->getValue(Args));
+        = tools::darwin::getArchTypeForDarwinArchName(A->getValue());
       if (DarwinArch != llvm::Triple::UnknownArch)
         Target.setArch(DarwinArch);
     }
