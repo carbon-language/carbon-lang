@@ -145,10 +145,6 @@ public:
   /// executable), for finding the builtin compiler path.
   static std::string GetResourcesPath(const char *Argv0, void *MainAddr);
 
-  /// \brief Convert the CompilerInvocation to a list of strings suitable for
-  /// passing to CreateFromArgs.
-  void toArgs(std::vector<std::string> &Res) const;
-
   /// \brief Set language defaults for the given input language and
   /// language standard in the given LangOptions object.
   ///

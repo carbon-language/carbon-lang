@@ -47,87 +47,10 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-// FIXME: Define the need for this testing away.
-static int cc1_test(DiagnosticsEngine &Diags,
-                    const char **ArgBegin, const char **ArgEnd) {
-  using namespace clang::driver;
-
-  llvm::errs() << "cc1 argv:";
-  for (const char **i = ArgBegin; i != ArgEnd; ++i)
-    llvm::errs() << " \"" << *i << '"';
-  llvm::errs() << "\n";
-
-  // Parse the arguments.
-  OptTable *Opts = createDriverOptTable();
-  unsigned MissingArgIndex, MissingArgCount;
-  InputArgList *Args = Opts->ParseArgs(ArgBegin, ArgEnd,
-                                       MissingArgIndex, MissingArgCount);
-
-  // Check for missing argument error.
-  if (MissingArgCount)
-    Diags.Report(clang::diag::err_drv_missing_argument)
-      << Args->getArgString(MissingArgIndex) << MissingArgCount;
-
-  // Dump the parsed arguments.
-  llvm::errs() << "cc1 parsed options:\n";
-  for (ArgList::const_iterator it = Args->begin(), ie = Args->end();
-       it != ie; ++it)
-    (*it)->dump();
-
-  // Create a compiler invocation.
-  llvm::errs() << "cc1 creating invocation.\n";
-  CompilerInvocation Invocation;
-  if (!CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd, Diags))
-    return 1;
-
-  // Convert the invocation back to argument strings.
-  std::vector<std::string> InvocationArgs;
-  Invocation.toArgs(InvocationArgs);
-
-  // Dump the converted arguments.
-  SmallVector<const char*, 32> Invocation2Args;
-  llvm::errs() << "invocation argv :";
-  for (unsigned i = 0, e = InvocationArgs.size(); i != e; ++i) {
-    Invocation2Args.push_back(InvocationArgs[i].c_str());
-    llvm::errs() << " \"" << InvocationArgs[i] << '"';
-  }
-  llvm::errs() << "\n";
-
-  // Convert those arguments to another invocation, and check that we got the
-  // same thing.
-  CompilerInvocation Invocation2;
-  if (!CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
-                                          Invocation2Args.end(), Diags))
-    return 1;
-
-  // FIXME: Implement CompilerInvocation comparison.
-  if (true) {
-    //llvm::errs() << "warning: Invocations differ!\n";
-
-    std::vector<std::string> Invocation2Args;
-    Invocation2.toArgs(Invocation2Args);
-    llvm::errs() << "invocation2 argv:";
-    for (unsigned i = 0, e = Invocation2Args.size(); i != e; ++i)
-      llvm::errs() << " \"" << Invocation2Args[i] << '"';
-    llvm::errs() << "\n";
-  }
-
-  return 0;
-}
-
 int cc1_main(const char **ArgBegin, const char **ArgEnd,
              const char *Argv0, void *MainAddr) {
   OwningPtr<CompilerInstance> Clang(new CompilerInstance());
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-
-  // Run clang -cc1 test.
-  if (ArgBegin != ArgEnd && StringRef(ArgBegin[0]) == "-cc1test") {
-    IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-    DiagnosticsEngine Diags(DiagID, &*DiagOpts,
-                            new TextDiagnosticPrinter(llvm::errs(),
-                                                      &*DiagOpts));
-    return cc1_test(Diags, ArgBegin + 1, ArgEnd);
-  }
 
   // Initialize targets first, so that --version shows registered targets.
   llvm::InitializeAllTargets();
