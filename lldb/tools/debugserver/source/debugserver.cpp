@@ -787,6 +787,8 @@ static struct option g_long_options[] =
 int
 main (int argc, char *argv[])
 {
+    const char *argv_sub_zero = argv[0]; // save a copy of argv[0] for error reporting post-launch
+
     g_isatty = ::isatty (STDIN_FILENO);
 
     //  ::printf ("uid=%u euid=%u gid=%u egid=%u\n",
@@ -1426,7 +1428,7 @@ main (int argc, char *argv[])
                     else
                     {
                         const char *error_str = remote->Context().LaunchStatus().AsString();
-                        RNBLogSTDERR ("error: failed to launch process %s: %s\n", argv[0], error_str ? error_str : "unknown error.");
+                        RNBLogSTDERR ("error: failed to launch process %s: %s\n", argv_sub_zero, error_str ? error_str : "unknown error.");
                     }
                 }
                 break;
