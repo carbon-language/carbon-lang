@@ -72,6 +72,6 @@ entry:
 
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
-; CHECK: %omp.userContext = alloca { [5 x float]*, [5 x float]* }
-; CHECK: %omp.userContext1 = alloca { i32, [5 x float]*, [5 x float]* }
+; CHECK: %omp.userContext = alloca {}
+; CHECK: %omp.userContext1 = alloca { i32 }
 

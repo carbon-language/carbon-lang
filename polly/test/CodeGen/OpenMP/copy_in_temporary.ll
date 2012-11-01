@@ -32,4 +32,4 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-; CHECK: %omp.userContext = alloca { [100 x float]*, float }
+; CHECK: %omp.userContext = alloca { float }

@@ -504,16 +504,6 @@ SetVector<Value*> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
        I != E; I++)
     Values.insert(I->second);
 
-  // The memory reference base addresses
-  for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-    for (SmallVector<MemoryAccess*, 8>::iterator I = Stmt->memacc_begin(),
-         E = Stmt->memacc_end(); I != E; ++I) {
-      Value *BaseAddr = const_cast<Value*>((*I)->getBaseAddr());
-      Values.insert((BaseAddr));
-    }
-  }
-
   // Find the temporaries that are referenced in the clast statements'
   // basic blocks but are not defined by these blocks (e.g., references
   // to function arguments or temporaries defined before the start of
