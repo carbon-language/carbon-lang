@@ -38,12 +38,12 @@ public:
   ConditionTruthVal() {}
   
   /// Return true if the constraint is perfectly constrained to 'true'.
-  bool isTrue() const {
+  bool isConstrainedTrue() const {
     return Val.hasValue() && Val.getValue();
   }
 
   /// Return true if the constraint is perfectly constrained to 'false'.
-  bool isFalse() const {
+  bool isConstrainedFalse() const {
     return Val.hasValue() && !Val.getValue();
   }
 

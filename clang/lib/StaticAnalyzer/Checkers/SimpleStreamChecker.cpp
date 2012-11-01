@@ -140,16 +140,19 @@ void SimpleStreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                            CheckerContext &C) const {
   ProgramStateRef State = C.getState();
   StreamMapTy TrackedStreams = State->get<StreamMap>();
+
   SymbolVector LeakedStreams;
   for (StreamMapTy::iterator I = TrackedStreams.begin(),
-                           E = TrackedStreams.end(); I != E; ++I) {
+                             E = TrackedStreams.end(); I != E; ++I) {
     SymbolRef Sym = I->first;
     if (SymReaper.isDead(Sym)) {
       const StreamState &SS = I->second;
       if (SS.isOpened()) {
-        // If a symbolic region is NULL, assume that allocation failed on
-        // this path and do not report a leak.
-        if (!State->getConstraintManager().isNull(State, Sym).isTrue())
+        // If a symbol is NULL, assume that fopen failed on this path
+        // and do not report a leak.
+        ConstraintManager &CMgr = State->getConstraintManager();
+        ConditionTruthVal OpenFailed = CMgr.isNull(State, Sym);
+        if (!OpenFailed.isConstrainedTrue())
           LeakedStreams.push_back(Sym);
       }
 

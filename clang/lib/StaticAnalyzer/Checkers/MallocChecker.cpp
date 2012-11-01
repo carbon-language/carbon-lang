@@ -1292,7 +1292,9 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   RegionStateTy RS = state->get<RegionState>();
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
     // If the symbol is assumed to be NULL, remove it from consideration.
-    if (state->getConstraintManager().isNull(state, I.getKey()).isTrue())
+    ConstraintManager &CMgr = state->getConstraintManager();
+    ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
+    if (AllocFailed.isConstrainedTrue())
       state = state->remove<RegionState>(I.getKey());
   }
 
@@ -1301,8 +1303,11 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   ReallocMap RP = state->get<ReallocPairs>();
   for (ReallocMap::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
     // If the symbol is assumed to be NULL, remove it from consideration.
-    if (!state->getConstraintManager().isNull(state, I.getKey()).isTrue())
+    ConstraintManager &CMgr = state->getConstraintManager();
+    ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
+    if (AllocFailed.isConstrainedTrue())
       continue;
+
     SymbolRef ReallocSym = I.getData().ReallocatedSym;
     if (const RefState *RS = state->get<RegionState>(ReallocSym)) {
       if (RS->isReleased()) {

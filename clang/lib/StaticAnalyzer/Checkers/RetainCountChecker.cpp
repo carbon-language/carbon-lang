@@ -3448,7 +3448,9 @@ ProgramStateRef RetainCountChecker::evalAssume(ProgramStateRef state,
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     // Check if the symbol is null stop tracking the symbol.
-    if (state->getConstraintManager().isNull(state, I.getKey()).isTrue()) {
+    ConstraintManager &CMgr = state->getConstraintManager();
+    ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
+    if (AllocFailed.isConstrainedTrue()) {
       changed = true;
       B = RefBFactory.remove(B, I.getKey());
     }
