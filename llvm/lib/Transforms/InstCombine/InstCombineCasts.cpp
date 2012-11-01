@@ -1296,16 +1296,15 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // If the source integer type is not the intptr_t type for this target, do a
   // trunc or zext to the intptr_t type, then inttoptr of it.  This allows the
   // cast to be exposed to other transforms.
-  unsigned AS = CI.getAddressSpace();
   if (TD) {
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() >
-        TD->getPointerSizeInBits(AS)) {
+        TD->getPointerSizeInBits()) {
       Value *P = Builder->CreateTrunc(CI.getOperand(0),
                                       TD->getIntPtrType(CI.getContext()));
       return new IntToPtrInst(P, CI.getType());
     }
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() <
-        TD->getPointerSizeInBits(AS)) {
+        TD->getPointerSizeInBits()) {
       Value *P = Builder->CreateZExt(CI.getOperand(0),
                                      TD->getIntPtrType(CI.getContext()));
       return new IntToPtrInst(P, CI.getType());
@@ -1372,14 +1371,13 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   // If the destination integer type is not the intptr_t type for this target,
   // do a ptrtoint to intptr_t then do a trunc or zext.  This allows the cast
   // to be exposed to other transforms.
-  unsigned AS = CI.getPointerAddressSpace();
   if (TD) {
-    if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits(AS)) {
+    if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
       Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
                                          TD->getIntPtrType(CI.getContext()));
       return new TruncInst(P, CI.getType());
     }
-    if (CI.getType()->getScalarSizeInBits() > TD->getPointerSizeInBits(AS)) {
+    if (CI.getType()->getScalarSizeInBits() > TD->getPointerSizeInBits()) {
       Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
                                          TD->getIntPtrType(CI.getContext()));
       return new ZExtInst(P, CI.getType());

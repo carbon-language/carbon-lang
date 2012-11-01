@@ -174,11 +174,10 @@ bool MemsetRange::isProfitableToUseMemset(const DataLayout &TD) const {
   // this width can be stored.  If so, check to see whether we will end up
   // actually reducing the number of stores used.
   unsigned Bytes = unsigned(End-Start);
-  unsigned AS = cast<StoreInst>(TheStores[0])->getPointerAddressSpace();
-  unsigned NumPointerStores = Bytes/TD.getPointerSize(AS);
+  unsigned NumPointerStores = Bytes/TD.getPointerSize();
 
   // Assume the remaining bytes if any are done a byte at a time.
-  unsigned NumByteStores = Bytes - NumPointerStores*TD.getPointerSize(AS);
+  unsigned NumByteStores = Bytes - NumPointerStores*TD.getPointerSize();
 
   // If we will reduce the # stores (according to this heuristic), do the
   // transformation.  This encourages merging 4 x i8 -> i32 and 2 x i16 -> i32

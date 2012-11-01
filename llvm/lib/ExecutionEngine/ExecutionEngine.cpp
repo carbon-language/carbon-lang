@@ -17,7 +17,6 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ADT/SmallString.h"
@@ -268,7 +267,7 @@ public:
 void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
                        const std::vector<std::string> &InputArgv) {
   clear();  // Free the old contents.
-  unsigned PtrSize = EE->getDataLayout()->getPointerSize(0);
+  unsigned PtrSize = EE->getDataLayout()->getPointerSize();
   Array = new char[(InputArgv.size()+1)*PtrSize];
 
   DEBUG(dbgs() << "JIT: ARGV = " << (void*)Array << "\n");
@@ -343,7 +342,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
 #ifndef NDEBUG
 /// isTargetNullPtr - Return whether the target pointer stored at Loc is null.
 static bool isTargetNullPtr(ExecutionEngine *EE, void *Loc) {
-  unsigned PtrSize = EE->getDataLayout()->getPointerSize(0);
+  unsigned PtrSize = EE->getDataLayout()->getPointerSize();
   for (unsigned i = 0; i < PtrSize; ++i)
     if (*(i + (uint8_t*)Loc))
       return false;

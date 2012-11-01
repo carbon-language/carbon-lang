@@ -7824,7 +7824,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
       IDX = DAG.getLoad(getPointerTy(), dl, Chain, IDX, MachinePointerInfo(),
                         false, false, false, 0);
 
-    SDValue Scale = DAG.getConstant(Log2_64_Ceil(TD->getPointerSize(0)),
+    SDValue Scale = DAG.getConstant(Log2_64_Ceil(TD->getPointerSize()),
                                     getPointerTy());
     IDX = DAG.getNode(ISD::SHL, dl, getPointerTy(), IDX, Scale);
 

@@ -243,8 +243,7 @@ bool CallAnalyzer::accumulateGEPOffset(GEPOperator &GEP, APInt &Offset) {
   if (!TD)
     return false;
 
-  unsigned AS = GEP.getPointerAddressSpace();
-  unsigned IntPtrWidth = TD->getPointerSizeInBits(AS);
+  unsigned IntPtrWidth = TD->getPointerSizeInBits();
   assert(IntPtrWidth == Offset.getBitWidth());
 
   for (gep_type_iterator GTI = gep_type_begin(GEP), GTE = gep_type_end(GEP);
@@ -392,8 +391,7 @@ bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
   // Track base/offset pairs when converted to a plain integer provided the
   // integer is large enough to represent the pointer.
   unsigned IntegerSize = I.getType()->getScalarSizeInBits();
-  unsigned AS = I.getPointerAddressSpace();
-  if (TD && IntegerSize >= TD->getPointerSizeInBits(AS)) {
+  if (TD && IntegerSize >= TD->getPointerSizeInBits()) {
     std::pair<Value *, APInt> BaseAndOffset
       = ConstantOffsetPtrs.lookup(I.getOperand(0));
     if (BaseAndOffset.first)
@@ -427,8 +425,7 @@ bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
   // modifications provided the integer is not too large.
   Value *Op = I.getOperand(0);
   unsigned IntegerSize = Op->getType()->getScalarSizeInBits();
-  unsigned AS = I.getAddressSpace();
-  if (TD && IntegerSize <= TD->getPointerSizeInBits(AS)) {
+  if (TD && IntegerSize <= TD->getPointerSizeInBits()) {
     std::pair<Value *, APInt> BaseAndOffset = ConstantOffsetPtrs.lookup(Op);
     if (BaseAndOffset.first)
       ConstantOffsetPtrs[&I] = BaseAndOffset;
@@ -763,8 +760,7 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
   if (!TD || !V->getType()->isPointerTy())
     return 0;
 
-  unsigned AS = cast<PointerType>(V->getType())->getAddressSpace();;
-  unsigned IntPtrWidth = TD->getPointerSizeInBits(AS);
+  unsigned IntPtrWidth = TD->getPointerSizeInBits();
   APInt Offset = APInt::getNullValue(IntPtrWidth);
 
   // Even though we don't look through PHI nodes, we could be called on an
@@ -828,8 +824,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
         // size of the byval type by the target's pointer size.
         PointerType *PTy = cast<PointerType>(CS.getArgument(I)->getType());
         unsigned TypeSize = TD->getTypeSizeInBits(PTy->getElementType());
-        unsigned AS = PTy->getAddressSpace();
-        unsigned PointerSize = TD->getPointerSizeInBits(AS);
+        unsigned PointerSize = TD->getPointerSizeInBits();
         // Ceiling division.
         unsigned NumStores = (TypeSize + PointerSize - 1) / PointerSize;
 

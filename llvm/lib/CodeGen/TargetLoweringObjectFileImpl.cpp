@@ -77,9 +77,9 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
                                                     Flags,
                                                     SectionKind::getDataRel(),
                                                     0, Label->getName());
-  unsigned Size = TM.getDataLayout()->getPointerSize(0);
+  unsigned Size = TM.getDataLayout()->getPointerSize();
   Streamer.SwitchSection(Sec);
-  Streamer.EmitValueToAlignment(TM.getDataLayout()->getPointerABIAlignment(0));
+  Streamer.EmitValueToAlignment(TM.getDataLayout()->getPointerABIAlignment());
   Streamer.EmitSymbolAttribute(Label, MCSA_ELF_TypeObject);
   const MCExpr *E = MCConstantExpr::Create(Size, getContext());
   Streamer.EmitELFSize(Label, E);

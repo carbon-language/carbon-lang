@@ -443,7 +443,7 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
 bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   const DataLayout *TD = TM.getDataLayout();
 
-  bool isPPC64 = TD->getPointerSizeInBits(0) == 64;
+  bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
   if (isPPC64 && !TOC.empty()) {
     const MCSectionELF *Section = OutStreamer.getContext().getELFSection(".toc",
@@ -549,7 +549,7 @@ static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
 
 void PPCDarwinAsmPrinter::
 EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
-  bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits(0) == 64;
+  bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
   
   const TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
@@ -644,7 +644,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
 
 
 bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
-  bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits(0) == 64;
+  bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
 
   // Darwin/PPC always uses mach-o.
   const TargetLoweringObjectFileMachO &TLOFMacho = 
