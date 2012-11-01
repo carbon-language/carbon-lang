@@ -5729,6 +5729,18 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                        DAG.getNode(ISD::FADD, N->getDebugLoc(), VT,
                                    N0.getOperand(1), N1));
 
+  // If allow, fold (fadd (fneg x), x) -> 0.0
+  if (DAG.getTarget().Options.UnsafeFPMath &&
+      N0.getOpcode() == ISD::FNEG && N0.getOperand(0) == N1) {
+    return DAG.getConstantFP(0.0, VT);
+  }
+
+    // If allow, fold (fadd x, (fneg x)) -> 0.0
+  if (DAG.getTarget().Options.UnsafeFPMath &&
+      N1.getOpcode() == ISD::FNEG && N1.getOperand(0) == N0) {
+    return DAG.getConstantFP(0.0, VT);
+  }
+
   // In unsafe math mode, we can fold chains of FADD's of the same value
   // into multiplications.  This transform is not safe in general because
   // we are reducing the number of rounding steps.
@@ -6038,6 +6050,12 @@ SDValue DAGCombiner::visitFMA(SDNode *N) {
   EVT VT = N->getValueType(0);
   DebugLoc dl = N->getDebugLoc();
 
+  if (DAG.getTarget().Options.UnsafeFPMath) {
+    if (N0CFP && N0CFP->isZero())
+      return N2;
+    if (N1CFP && N1CFP->isZero())
+      return N2;
+  }
   if (N0CFP && N0CFP->isExactlyValue(1.0))
     return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N1, N2);
   if (N1CFP && N1CFP->isExactlyValue(1.0))

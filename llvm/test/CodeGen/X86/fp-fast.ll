@@ -35,3 +35,23 @@ define float @test3(float %a) {
   ret float %r
 }
 
+; CHECK: test4
+define float @test4(float %a) {
+; CHECK-NOT: fma
+; CHECK-NOT mul
+; CHECK-NOT: add
+; CHECK: ret
+  %t1 = fmul float %a, 0.0
+  %t2 = fadd float %a, %t1
+  ret float %t2
+}
+
+; CHECK: test5
+define float @test5(float %a) {
+; CHECK-NOT: add
+; CHECK: vxorps
+; CHECK: ret
+  %t1 = fsub float -0.0, %a
+  %t2 = fadd float %a, %t1
+  ret float %t2
+}
