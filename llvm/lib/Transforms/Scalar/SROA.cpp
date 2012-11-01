@@ -2521,12 +2521,12 @@ private:
       // the computed value, and then replace the placeholder with LI, leaving
       // LI only used for this computation.
       Value *Placeholder
-        = IRB.CreateLoad(UndefValue::get(LI.getType()->getPointerTo()));
+        = new LoadInst(UndefValue::get(LI.getType()->getPointerTo()));
       V = insertInteger(TD, IRB, Placeholder, V, BeginOffset,
                         getName(".insert"));
       LI.replaceAllUsesWith(V);
       Placeholder->replaceAllUsesWith(&LI);
-      cast<Instruction>(Placeholder)->eraseFromParent();
+      delete Placeholder;
       if (Pass.DeadSplitInsts.insert(&LI))
         Pass.DeadInsts.push_back(&LI);
       DEBUG(dbgs() << "          to: " << *V << "\n");
