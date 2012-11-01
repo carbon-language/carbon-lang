@@ -198,12 +198,6 @@ INITIALIZE_PASS_END(RegisterCoalescer, "simple-register-coalescing",
 
 char RegisterCoalescer::ID = 0;
 
-static unsigned compose(const TargetRegisterInfo &tri, unsigned a, unsigned b) {
-  if (!a) return b;
-  if (!b) return a;
-  return tri.composeSubRegIndices(a, b);
-}
-
 static bool isMoveInstr(const TargetRegisterInfo &tri, const MachineInstr *MI,
                         unsigned &Src, unsigned &Dst,
                         unsigned &SrcSub, unsigned &DstSub) {
@@ -214,8 +208,8 @@ static bool isMoveInstr(const TargetRegisterInfo &tri, const MachineInstr *MI,
     SrcSub = MI->getOperand(1).getSubReg();
   } else if (MI->isSubregToReg()) {
     Dst = MI->getOperand(0).getReg();
-    DstSub = compose(tri, MI->getOperand(0).getSubReg(),
-                     MI->getOperand(3).getImm());
+    DstSub = tri.composeSubRegIndices(MI->getOperand(0).getSubReg(),
+                                      MI->getOperand(3).getImm());
     Src = MI->getOperand(2).getReg();
     SrcSub = MI->getOperand(2).getSubReg();
   } else
@@ -354,7 +348,8 @@ bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
     if (DstReg != Dst)
       return false;
     // Registers match, do the subregisters line up?
-    return compose(TRI, SrcIdx, SrcSub) == compose(TRI, DstIdx, DstSub);
+    return TRI.composeSubRegIndices(SrcIdx, SrcSub) ==
+           TRI.composeSubRegIndices(DstIdx, DstSub);
   }
 }
 
@@ -1315,7 +1310,8 @@ unsigned JoinVals::computeWriteLanes(const MachineInstr *DefMI, bool &Redef) {
   for (ConstMIOperands MO(DefMI); MO.isValid(); ++MO) {
     if (!MO->isReg() || MO->getReg() != LI.reg || !MO->isDef())
       continue;
-    L |= TRI->getSubRegIndexLaneMask(compose(*TRI, SubIdx, MO->getSubReg()));
+    L |= TRI->getSubRegIndexLaneMask(
+           TRI->composeSubRegIndices(SubIdx, MO->getSubReg()));
     if (MO->readsReg())
       Redef = true;
   }
@@ -1647,8 +1643,8 @@ bool JoinVals::usesLanes(MachineInstr *MI, unsigned Reg, unsigned SubIdx,
       continue;
     if (!MO->readsReg())
       continue;
-    if (Lanes &
-        TRI->getSubRegIndexLaneMask(compose(*TRI, SubIdx, MO->getSubReg())))
+    if (Lanes & TRI->getSubRegIndexLaneMask(
+                  TRI->composeSubRegIndices(SubIdx, MO->getSubReg())))
       return true;
   }
   return false;
