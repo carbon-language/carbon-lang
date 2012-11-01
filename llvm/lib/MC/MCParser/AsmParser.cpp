@@ -1389,9 +1389,26 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   // the instruction.
   if (!HadError && getContext().getGenDwarfForAssembly() &&
       getContext().getGenDwarfSection() == getStreamer().getCurrentSection() ) {
+
+     unsigned Line = SrcMgr.FindLineNumber(IDLoc, CurBuffer);
+
+     // If we previously parsed a cpp hash file line comment then make sure the
+     // current Dwarf File is for the CppHashFilename if not then emit the
+     // Dwarf File table for it and adjust the line number for the .loc.
+     const std::vector<MCDwarfFile *> &MCDwarfFiles =
+       getContext().getMCDwarfFiles();
+     if (CppHashFilename.size() != 0) {
+       if(MCDwarfFiles[getContext().getGenDwarfFileNumber()]->getName() !=
+          CppHashFilename)
+	 getStreamer().EmitDwarfFileDirective(
+	   getContext().nextGenDwarfFileNumber(), StringRef(), CppHashFilename);
+
+       unsigned CppHashLocLineNo = SrcMgr.FindLineNumber(CppHashLoc, CurBuffer);
+       Line = CppHashLineNumber - 1 + (Line - CppHashLocLineNo);
+     }
+
     getStreamer().EmitDwarfLocDirective(getContext().getGenDwarfFileNumber(),
-                                        SrcMgr.FindLineNumber(IDLoc, CurBuffer),
-                                        0, DWARF2_LINE_DEFAULT_IS_STMT ?
+                                        Line, 0, DWARF2_LINE_DEFAULT_IS_STMT ?
                                         DWARF2_FLAG_IS_STMT : 0, 0, 0,
                                         StringRef());
   }
