@@ -772,10 +772,6 @@ public:
   static Type *getIndexedType(Type *Ptr, ArrayRef<Constant *> IdxList);
   static Type *getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList);
 
-  /// getAddressSpace - Returns the address space used by the GEP pointer.
-  ///
-  static unsigned getAddressSpace(Value *Ptr);
-
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
   inline op_iterator       idx_end()         { return op_end(); }
@@ -791,14 +787,14 @@ public:
     return 0U;    // get index for modifying correct operand.
   }
 
-  unsigned getPointerAddressSpace() const {
-    return getPointerOperand()->getType()->getPointerAddressSpace();
-  }
-
   /// getPointerOperandType - Method to return the pointer operand as a
   /// PointerType.
   Type *getPointerOperandType() const {
     return getPointerOperand()->getType();
+  }
+
+  unsigned getPointerAddressSpace() const {
+    return getPointerOperandType()->getPointerAddressSpace();
   }
 
   /// GetGEPReturnType - Returns the pointer type returned by the GEP
@@ -806,7 +802,7 @@ public:
   static Type *getGEPReturnType(Value *Ptr, ArrayRef<Value *> IdxList) {
     Type *PtrTy = PointerType::get(checkGEPType(
                                    getIndexedType(Ptr->getType(), IdxList)),
-                                   getAddressSpace(Ptr));
+                                   Ptr->getType()->getPointerAddressSpace());
     // Vector GEP
     if (Ptr->getType()->isVectorTy()) {
       unsigned NumElem = cast<VectorType>(Ptr->getType())->getNumElements();

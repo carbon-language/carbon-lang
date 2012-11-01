@@ -1399,18 +1399,6 @@ Type *GetElementPtrInst::getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList) {
   return getIndexedTypeInternal(Ptr, IdxList);
 }
 
-unsigned GetElementPtrInst::getAddressSpace(Value *Ptr) {
-  Type *Ty = Ptr->getType();
-
-  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    Ty = VTy->getElementType();
-
-  if (PointerType *PTy = dyn_cast<PointerType>(Ty))
-    return PTy->getAddressSpace();
-
-  llvm_unreachable("Invalid GEP pointer type");
-}
-
 /// hasAllZeroIndices - Return true if all of the indices of this GEP are
 /// zeros.  If so, the result pointer and the first operand have the same
 /// value, just potentially different types.
