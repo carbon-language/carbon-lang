@@ -159,3 +159,15 @@ namespace test2 {
     }
   }
 }
+
+namespace test3 {
+  struct nsCSSRect {
+  };
+  static int nsCSSRect::* sides;
+  nsCSSRect dimenX;
+  void ParseBoxCornerRadii(int y) {
+    switch (y) {
+    }
+    int& x = dimenX.*sides;
+  }
+}
