@@ -242,7 +242,7 @@ public:
   // the data cache but not to the instruction cache.
   virtual void invalidateInstructionCache();
 
-  // The MCJITMemoryManager doesn't use the following functions, so we don't
+  // The RTDyldMemoryManager doesn't use the following functions, so we don't
   // need implement them.
   virtual void setMemoryWritable() {
     llvm_unreachable("Unexpected call!");

@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCJIT.h"
-#include "MCJITMemoryManager.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -46,7 +45,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
 
-  return new MCJIT(M, TM, new MCJITMemoryManager(JMM), GVsWithCode);
+  return new MCJIT(M, TM, JMM, GVsWithCode);
 }
 
 MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,

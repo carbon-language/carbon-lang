@@ -24,9 +24,9 @@ class RuntimeDyldImpl;
 class ObjectImage;
 
 // RuntimeDyld clients often want to handle the memory management of
-// what gets placed where. For JIT clients, this is an abstraction layer
-// over the JITMemoryManager, which references objects by their source
-// representations in LLVM IR.
+// what gets placed where. For JIT clients, this is the subset of
+// JITMemoryManager required for dynamic loading of binaries.
+//
 // FIXME: As the RuntimeDyld fills out, additional routines will be needed
 //        for the varying types of objects to be allocated.
 class RTDyldMemoryManager {
@@ -37,15 +37,26 @@ public:
   virtual ~RTDyldMemoryManager();
 
   /// allocateCodeSection - Allocate a memory block of (at least) the given
-  /// size suitable for executable code.
+  /// size suitable for executable code. The SectionID is a unique identifier
+  /// assigned by the JIT engine, and optionally recorded by the memory manager
+  /// to access a loaded section.
   virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID) = 0;
 
   /// allocateDataSection - Allocate a memory block of (at least) the given
-  /// size suitable for data.
+  /// size suitable for data. The SectionID is a unique identifier
+  /// assigned by the JIT engine, and optionally recorded by the memory manager
+  /// to access a loaded section.
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID) = 0;
 
+  /// getPointerToNamedFunction - This method returns the address of the
+  /// specified function. As such it is only useful for resolving library
+  /// symbols, not code generated symbols.
+  ///
+  /// If AbortOnFailure is false and no function with the given name is
+  /// found, this function returns a null pointer. Otherwise, it prints a
+  /// message to stderr and aborts.
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) = 0;
 };
