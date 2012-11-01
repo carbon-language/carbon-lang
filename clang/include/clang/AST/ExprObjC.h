@@ -1195,6 +1195,17 @@ public:
     return SourceLocation();
   }
 
+  /// \brief Retrieve the receiver type to which this message is being directed.
+  ///
+  /// This routine cross-cuts all of the different kinds of message
+  /// sends to determine what the underlying (statically known) type
+  /// of the receiver will be; use \c getReceiverKind() to determine
+  /// whether the message is a class or an instance method, whether it
+  /// is a send to super or not, etc.
+  ///
+  /// \returns The type of the receiver.
+  QualType getReceiverType() const;
+
   /// \brief Retrieve the Objective-C interface to which this message
   /// is being directed, if known.
   ///

@@ -50,10 +50,12 @@ void foo(SS *ss, IS* is, Class cls) {
 
 // CHECK:     8:11 MemberRefExpr=meth:3:16 {{.*}} Dynamic-call
 // CHECK-NOT: 9:9 {{.*}} Dynamic-call
-// CHECK:     25:3 ObjCMessageExpr=meth:14:8 {{.*}} Dynamic-call
+// CHECK:     25:3 ObjCMessageExpr=meth:14:8 {{.*}} Dynamic-call Receiver-type=ObjCObjectPointer
 // CHECK-NOT: 26:3 {{.*}} Dynamic-call
 // CHECK-NOT: 29:3 {{.*}} Dynamic-call
+// CHECK:     29:3 {{.*}} Receiver-type=ObjCInterface
 // CHECK:     34:7 MemberRefExpr=meth:3:16 {{.*}} Dynamic-call
-// CHECK:     35:3 ObjCMessageExpr=meth:14:8 {{.*}} Dynamic-call
+// CHECK:     35:3 ObjCMessageExpr=meth:14:8 {{.*}} Dynamic-call Receiver-type=ObjCObjectPointer
 // CHECK-NOT: 36:3 {{.*}} Dynamic-call
-// CHECK:     37:3 ObjCMessageExpr=ClsMeth:15:8 {{.*}} Dynamic-call
+// CHECK:     36:3 {{.*}} Receiver-type=ObjCInterface
+// CHECK:     37:3 ObjCMessageExpr=ClsMeth:15:8 {{.*}} Dynamic-call Receiver-type=ObjCClass

@@ -15,6 +15,7 @@
 
 #include "CXTranslationUnit.h"
 #include "CXCursor.h"
+#include "CXType.h"
 #include "CXString.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/AST/Decl.h"
@@ -1170,6 +1171,18 @@ int clang_Cursor_isDynamicCall(CXCursor C) {
   }
 
   return 0;
+}
+
+CXType clang_Cursor_getReceiverType(CXCursor C) {
+  CXTranslationUnit TU = cxcursor::getCursorTU(C);
+  const Expr *E = 0;
+  if (clang_isExpression(C.kind))
+    E = getCursorExpr(C);
+
+  if (const ObjCMessageExpr *MsgE = dyn_cast_or_null<ObjCMessageExpr>(E))
+    return cxtype::MakeCXType(MsgE->getReceiverType(), TU);
+
+  return cxtype::MakeCXType(QualType(), TU);
 }
 
 } // end: extern "C"

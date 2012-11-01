@@ -1955,6 +1955,12 @@ static int inspect_cursor_at(int argc, const char **argv) {
           printf(" Selector index=%d",clang_Cursor_getObjCSelectorIndex(Cursor));
         if (clang_Cursor_isDynamicCall(Cursor))
           printf(" Dynamic-call");
+        if (Cursor.kind == CXCursor_ObjCMessageExpr) {
+          CXType T = clang_Cursor_getReceiverType(Cursor);
+          CXString S = clang_getTypeKindSpelling(T.kind);
+          printf(" Receiver-type=%s", clang_getCString(S));
+          clang_disposeString(S);
+        }
 
         {
           CXModule mod = clang_Cursor_getModule(Cursor);
