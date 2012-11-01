@@ -188,6 +188,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_register_info (),
     m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
+    m_async_thread_state(eAsyncThreadNotStarted),
+    m_async_thread_state_mutex(Mutex::eMutexTypeRecursive),
     m_thread_ids (),
     m_continue_c_tids (),
     m_continue_C_tids (),
@@ -220,6 +222,12 @@ ProcessGDBRemote::~ProcessGDBRemote()
     // destruct this class, then Process::~Process() might have problems
     // trying to fully destroy the broadcaster.
     Finalize();
+    
+    // The general Finalize is going to try to destroy the process and that SHOULD
+    // shut down the async thread.  However, if we don't kill it it will get stranded and
+    // its connection will go away so when it wakes up it will crash.  So kill it for sure here.
+    StopAsyncThread();
+    KillDebugserverProcess();
 }
 
 //----------------------------------------------------------------------
@@ -2713,11 +2721,32 @@ ProcessGDBRemote::StartAsyncThread ()
 
     if (log)
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
-
-    // Create a thread that watches our internal state and controls which
-    // events make it to clients (into the DCProcess event queue).
-    m_async_thread = Host::ThreadCreate ("<lldb.process.gdb-remote.async>", ProcessGDBRemote::AsyncThread, this, NULL);
-    return IS_VALID_LLDB_HOST_THREAD(m_async_thread);
+    
+    Mutex::Locker start_locker(m_async_thread_state_mutex);
+    if (m_async_thread_state == eAsyncThreadNotStarted)
+    {
+        // Create a thread that watches our internal state and controls which
+        // events make it to clients (into the DCProcess event queue).
+        m_async_thread = Host::ThreadCreate ("<lldb.process.gdb-remote.async>", ProcessGDBRemote::AsyncThread, this, NULL);
+        if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
+        {
+            m_async_thread_state = eAsyncThreadRunning;
+            return true;
+        }
+        else
+            return false;
+    }
+    else
+    {
+        // Somebody tried to start the async thread while it was either being started or stopped.  If the former, and
+        // it started up successfully, then say all's well.  Otherwise it is an error, since we aren't going to restart it.
+        if (log)
+            log->Printf ("ProcessGDBRemote::%s () - Called when Async thread was in state: %d.", __FUNCTION__, m_async_thread_state);
+        if (m_async_thread_state == eAsyncThreadRunning)
+            return true;
+        else
+            return false;
+    }
 }
 
 void
@@ -2728,15 +2757,25 @@ ProcessGDBRemote::StopAsyncThread ()
     if (log)
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
 
-    m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
-    
-    //  This will shut down the async thread.
-    m_gdb_comm.Disconnect();    // Disconnect from the debug server.
-
-    // Stop the stdio thread
-    if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
+    Mutex::Locker start_locker(m_async_thread_state_mutex);
+    if (m_async_thread_state == eAsyncThreadRunning)
     {
-        Host::ThreadJoin (m_async_thread, NULL, NULL);
+        m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
+        
+        //  This will shut down the async thread.
+        m_gdb_comm.Disconnect();    // Disconnect from the debug server.
+
+        // Stop the stdio thread
+        if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
+        {
+            Host::ThreadJoin (m_async_thread, NULL, NULL);
+        }
+        m_async_thread_state = eAsyncThreadDone;
+    }
+    else
+    {
+        if (log)
+            log->Printf ("ProcessGDBRemote::%s () - Called when Async thread was in state: %d.", __FUNCTION__, m_async_thread_state);
     }
 }
 
