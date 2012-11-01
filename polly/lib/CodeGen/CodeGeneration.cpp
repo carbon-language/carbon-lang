@@ -285,12 +285,10 @@ private:
   /// structure.
   SetVector<Value*> getOMPValues();
 
-  /// @brief Update the internal structures according to a Value Map.
+  /// @brief Update ClastVars and ValueMap according to a value map.
   ///
-  /// @param VMap     A map from old to new values.
-  /// @param Reverse  If true, we assume the update should be reversed.
-  void updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
-                          bool Reverse);
+  /// @param VMap A map from old to new values.
+  void updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap);
 
   /// @brief Create an OpenMP parallel for loop.
   ///
@@ -484,28 +482,9 @@ SetVector<Value*> ClastStmtCodeGen::getOMPValues() {
   return Values;
 }
 
-void ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
-                                          bool Reverse) {
+void ClastStmtCodeGen::updateWithValueMap(
+  OMPGenerator::ValueToValueMapTy &VMap) {
   std::set<Value*> Inserted;
-
-  if (Reverse) {
-    OMPGenerator::ValueToValueMapTy ReverseMap;
-
-    for (std::map<Value*, Value*>::iterator I = VMap.begin(), E = VMap.end();
-         I != E; ++I)
-       ReverseMap.insert(std::make_pair(I->second, I->first));
-
-    for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
-         I != E; I++) {
-      ClastVars[I->first] = ReverseMap[I->second];
-      Inserted.insert(I->second);
-    }
-
-    /// FIXME: At the moment we do not reverse the update of the ValueMap.
-    ///        This is incomplet, but the failure should be obvious, such that
-    ///        we can fix this later.
-    return;
-  }
 
   for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
        I != E; I++) {
@@ -513,8 +492,8 @@ void ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
     Inserted.insert(I->second);
   }
 
-  for (std::map<Value*, Value*>::iterator I = VMap.begin(), E = VMap.end();
-       I != E; ++I) {
+  for (OMPGenerator::ValueToValueMapTy::iterator I = VMap.begin(),
+       E = VMap.end(); I != E; ++I) {
     if (Inserted.count(I->first))
       continue;
 
@@ -552,14 +531,19 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
   Builder.SetInsertPoint(LoopBody);
 
-  updateWithValueMap(VMap, /* reverse */ false);
+  // Save the current values.
+  const ValueMapT ValueMapCopy = ValueMap;
+  const CharMapT ClastVarsCopy = ClastVars;
+
+  updateWithValueMap(VMap);
   ClastVars[For->iterator] = IV;
 
   if (For->body)
     codegen(For->body);
 
-  ClastVars.erase(For->iterator);
-  updateWithValueMap(VMap, /* reverse */ true);
+  // Restore the original values.
+  ValueMap = ValueMapCopy;
+  ClastVars = ClastVarsCopy;
 
   clearDomtree((*LoopBody).getParent()->getParent(),
                P->getAnalysis<DominatorTree>());
@@ -698,9 +682,16 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
     VMap.insert(std::make_pair<Value*, Value*>(OldIV, IV));
   }
 
-  updateWithValueMap(VMap, /* reverse */ false);
+  // Preserve the current values.
+  const ValueMapT ValueMapCopy = ValueMap;
+  const CharMapT ClastVarsCopy = ClastVars;
+  updateWithVMap(VMap);
+
   BlockGenerator::generate(Builder, *Statement, ValueMap, P);
-  updateWithValueMap(VMap, /* reverse */ true);
+
+  // Restore the original values.
+  ValueMap = ValueMapCopy;
+  ClastVars = ClastVarsCopy;
 
   if (AfterBB)
     Builder.SetInsertPoint(AfterBB->begin());
