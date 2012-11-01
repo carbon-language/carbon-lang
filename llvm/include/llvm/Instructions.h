@@ -766,6 +766,13 @@ public:
     return reinterpret_cast<PointerType*>(Instruction::getType());
   }
 
+  /// \brief Returns the address space of this instruction's pointer type.
+  unsigned getAddressSpace() const {
+    // Note that this is always the same as the pointer operand's address space
+    // and that is cheaper to compute, so cheat here.
+    return getPointerAddressSpace();
+  }
+
   /// getIndexedType - Returns the type of the element that would be loaded with
   /// a load instruction with the specified parameters.
   ///
@@ -3606,7 +3613,7 @@ public:
   /// \brief Clone an identical IntToPtrInst
   virtual IntToPtrInst *clone_impl() const;
 
-  /// \brief return the address space of the pointer.
+  /// \brief Returns the address space of this instruction's pointer type.
   unsigned getAddressSpace() const {
     return getType()->getPointerAddressSpace();
   }
