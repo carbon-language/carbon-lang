@@ -476,6 +476,8 @@ public:
   /// composeSubRegIndices - Return the subregister index you get from composing
   /// two subregister indices.
   ///
+  /// The special null sub-register index composes as the identity.
+  ///
   /// If R:a:b is the same register as R:c, then composeSubRegIndices(a, b)
   /// returns c. Note that composeSubRegIndices does not tell you about illegal
   /// compositions. If R does not have a subreg a, or R:a does not have a subreg
@@ -485,11 +487,19 @@ public:
   /// ssub_0:S0 - ssub_3:S3 subregs.
   /// If you compose subreg indices dsub_1, ssub_0 you get ssub_2.
   ///
-  virtual unsigned composeSubRegIndices(unsigned a, unsigned b) const {
-    // This default implementation is correct for most targets.
-    return b;
+  unsigned composeSubRegIndices(unsigned a, unsigned b) const {
+    if (!a) return b;
+    if (!b) return a;
+    return composeSubRegIndicesImpl(a, b);
   }
 
+protected:
+  /// Overridden by TableGen in targets that have sub-registers.
+  virtual unsigned composeSubRegIndicesImpl(unsigned, unsigned) const {
+    llvm_unreachable("Target has no sub-registers");
+  }
+
+public:
   /// getCommonSuperRegClass - Find a common super-register class if it exists.
   ///
   /// Find a register class, SuperRC and two sub-register indices, PreA and
