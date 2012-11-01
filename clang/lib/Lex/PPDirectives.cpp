@@ -1296,7 +1296,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   case tok::string_literal:
     Filename = getSpelling(FilenameTok, FilenameBuffer);
     End = FilenameTok.getLocation();
-    CharEnd = End.getLocWithOffset(Filename.size());
+    CharEnd = End.getLocWithOffset(FilenameTok.getLength());
     break;
 
   case tok::less:
@@ -1306,7 +1306,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     if (ConcatenateIncludeName(FilenameBuffer, End))
       return;   // Found <eod> but no ">"?  Diagnostic already emitted.
     Filename = FilenameBuffer.str();
-    CharEnd = getLocForEndOfToken(End);
+    CharEnd = End.getLocWithOffset(1);
     break;
   default:
     Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
