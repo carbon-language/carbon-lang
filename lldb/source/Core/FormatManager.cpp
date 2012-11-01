@@ -955,7 +955,7 @@ FormatManager::LoadObjCFormatters()
     objc_category_sp->GetSummaryNavigator()->Add(ConstString("BOOL *"),
                                                  ObjC_BOOL_summary);
 
-
+#ifndef LLDB_DISABLE_PYTHON
     // we need to skip pointers here since we are special casing a SEL* when retrieving its value
     objc_flags.SetSkipPointers(true);
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary", ConstString("SEL"), objc_flags);
@@ -963,7 +963,6 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary", ConstString("objc_selector"), objc_flags);
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<true>, "SEL summary", ConstString("objc_selector *"), objc_flags);
     
-#ifndef LLDB_DISABLE_PYTHON
     AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Class.Class_Summary", ConstString("Class"), objc_flags);
 #endif // LLDB_DISABLE_PYTHON
 

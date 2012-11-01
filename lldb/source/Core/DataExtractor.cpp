@@ -1710,23 +1710,25 @@ DataExtractor::Dump (Stream *s,
         case eFormatFloat:
             {
                 std::ostringstream ss;
-                switch (item_byte_size)
+                if (item_byte_size == sizeof(float))
                 {
-                default:
-                    s->Printf("error: unsupported byte size (%u) for float format", item_byte_size);
-                    return offset;
-                case sizeof(float):
                     ss.precision(std::numeric_limits<float>::digits10);
                     ss << GetFloat(&offset);
-                    break;
-                case sizeof(double):
+                } 
+                else if (item_byte_size == sizeof(double))
+                {
                     ss.precision(std::numeric_limits<double>::digits10);
                     ss << GetDouble(&offset);
-                    break;
-                case sizeof(long double):
+                }
+                else if (item_byte_size == sizeof(long double))
+                {
                     ss.precision(std::numeric_limits<long double>::digits10);
                     ss << GetLongDouble(&offset);
-                    break;
+                }
+                else
+                {
+                    s->Printf("error: unsupported byte size (%u) for float format", item_byte_size);
+                    return offset;
                 }
                 ss.flush();
                 s->Printf("%s", ss.str().c_str());
