@@ -43,6 +43,11 @@ static cl::opt<bool>
        cl::desc("Disable polly legality check"), cl::Hidden,
        cl::init(false));
 
+static cl::opt<bool>
+  ValueDependences("polly-value-dependences",
+       cl::desc("Use value instead of memory based dependences"), cl::Hidden,
+       cl::init(true));
+
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) {
   RAW = WAR = WAW = NULL;
@@ -82,19 +87,48 @@ void Dependences::calculateDependences(Scop &S) {
 
   collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
 
-  isl_union_map_compute_flow(isl_union_map_copy(Read),
-                              isl_union_map_copy(Write),
-                              isl_union_map_copy(MayWrite),
-                              isl_union_map_copy(Schedule),
-                              &RAW, NULL, NULL, NULL);
+  if (ValueDependences) {
+    isl_union_map_compute_flow(isl_union_map_copy(Read),
+                               isl_union_map_copy(Write),
+                               isl_union_map_copy(MayWrite),
+                               isl_union_map_copy(Schedule),
+                               &RAW, NULL, NULL, NULL);
 
-  isl_union_map_compute_flow(isl_union_map_copy(Write),
-                             isl_union_map_copy(Write),
-                             Read, Schedule,
-                             &WAW, &WAR, NULL, NULL);
+    isl_union_map_compute_flow(isl_union_map_copy(Write),
+                               isl_union_map_copy(Write),
+                               isl_union_map_copy(Read),
+                               isl_union_map_copy(Schedule),
+                               &WAW, &WAR, NULL, NULL);
+  } else {
+    isl_union_map *Empty;
+
+    Empty = isl_union_map_empty(isl_union_map_get_space(Write));
+    Write = isl_union_map_union(Write, isl_union_map_copy(MayWrite));
+
+    isl_union_map_compute_flow(isl_union_map_copy(Read),
+                               isl_union_map_copy(Empty),
+                               isl_union_map_copy(Write),
+                               isl_union_map_copy(Schedule),
+                               NULL, &RAW, NULL, NULL);
+
+    isl_union_map_compute_flow(isl_union_map_copy(Write),
+                               isl_union_map_copy(Empty),
+                               isl_union_map_copy(Read),
+                               isl_union_map_copy(Schedule),
+                               NULL, &WAR, NULL, NULL);
+
+    isl_union_map_compute_flow(isl_union_map_copy(Write),
+                               isl_union_map_copy(Empty),
+                               isl_union_map_copy(Write),
+                               isl_union_map_copy(Schedule),
+                               NULL, &WAW, NULL, NULL);
+    isl_union_map_free(Empty);
+  }
 
   isl_union_map_free(MayWrite);
   isl_union_map_free(Write);
+  isl_union_map_free(Read);
+  isl_union_map_free(Schedule);
 
   RAW = isl_union_map_coalesce(RAW);
   WAW = isl_union_map_coalesce(WAW);
