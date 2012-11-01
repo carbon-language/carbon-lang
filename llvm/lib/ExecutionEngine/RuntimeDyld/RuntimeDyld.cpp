@@ -203,7 +203,7 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
       Addr += AlignOffset;
       Offset += AlignOffset;
       DEBUG(dbgs() << "Allocating common symbol " << Name << " address " <<
-                      format("0x%x\n", Addr));
+                      format("%p\n", Addr));
     }
     Obj.updateSymbolAddress(it->first, (uint64_t)Addr);
     SymbolTable[Name.data()] = SymbolLoc(SectionID, Offset);
@@ -375,7 +375,7 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     writeInt32BE(Addr+32, 0x7D6903A6); // mtctr r11
     writeInt32BE(Addr+36, 0xE96C0010); // ld    r11, 16(r2)
     writeInt32BE(Addr+40, 0x4E800420); // bctr
-    
+
     return Addr;
   }
   return Addr;
