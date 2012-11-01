@@ -2027,7 +2027,6 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
       EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
     else
       CGF.EmitTrapvCheck(Builder.CreateNot(overflow));
-    EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
     return result;
   }
 
