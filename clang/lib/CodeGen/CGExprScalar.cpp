@@ -2021,6 +2021,12 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   const std::string *handlerName =
     &CGF.getContext().getLangOpts().OverflowHandler;
   if (handlerName->empty()) {
+    // If -fcatch-undefined-behavior is enabled, emit a call to its
+    // runtime. Otherwise, this is a -ftrapv check, so just emit a trap.
+    if (CGF.CatchUndefined)
+      EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
+    else
+      CGF.EmitTrapvCheck(Builder.CreateNot(overflow));
     EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
     return result;
   }

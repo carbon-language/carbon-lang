@@ -2017,29 +2017,6 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                                 bool Recoverable) {
   llvm::BasicBlock *Cont = createBasicBlock("cont");
 
-  // If -fcatch-undefined-behavior is not enabled, just emit a trap. This
-  // happens when using -ftrapv.
-  // FIXME: Should -ftrapv require the ubsan runtime library?
-  if (!CatchUndefined) {
-    // If we're optimizing, collapse all calls to trap down to just one per
-    // function to save on code size.
-    if (!CGM.getCodeGenOpts().OptimizationLevel || !TrapBB) {
-      TrapBB = createBasicBlock("trap");
-      Builder.CreateCondBr(Checked, Cont, TrapBB);
-      EmitBlock(TrapBB);
-      llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
-      llvm::CallInst *TrapCall = Builder.CreateCall(F);
-      TrapCall->setDoesNotReturn();
-      TrapCall->setDoesNotThrow();
-      Builder.CreateUnreachable();
-    } else {
-      Builder.CreateCondBr(Checked, Cont, TrapBB);
-    }
-
-    EmitBlock(Cont);
-    return;
-  }
-
   llvm::BasicBlock *Handler = createBasicBlock("handler." + CheckName);
   Builder.CreateCondBr(Checked, Cont, Handler);
   EmitBlock(Handler);
@@ -2084,6 +2061,27 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
     HandlerCall->setDoesNotReturn();
     HandlerCall->setDoesNotThrow();
     Builder.CreateUnreachable();
+  }
+
+  EmitBlock(Cont);
+}
+
+void CodeGenFunction::EmitTrapvCheck(llvm::Value *Checked) {
+  llvm::BasicBlock *Cont = createBasicBlock("cont");
+
+  // If we're optimizing, collapse all calls to trap down to just one per
+  // function to save on code size.
+  if (!CGM.getCodeGenOpts().OptimizationLevel || !TrapBB) {
+    TrapBB = createBasicBlock("trap");
+    Builder.CreateCondBr(Checked, Cont, TrapBB);
+    EmitBlock(TrapBB);
+    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
+    llvm::CallInst *TrapCall = Builder.CreateCall(F);
+    TrapCall->setDoesNotReturn();
+    TrapCall->setDoesNotThrow();
+    Builder.CreateUnreachable();
+  } else {
+    Builder.CreateCondBr(Checked, Cont, TrapBB);
   }
 
   EmitBlock(Cont);

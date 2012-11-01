@@ -2574,12 +2574,17 @@ public:
   /// passing to a runtime sanitizer handler.
   llvm::Constant *EmitCheckSourceLocation(SourceLocation Loc);
 
-  /// \brief Create a basic block that will call the trap intrinsic, and emit a
-  /// conditional branch to it.
+  /// \brief Create a basic block that will call a handler function in a
+  /// sanitizer runtime with the provided arguments, and create a conditional
+  /// branch to it.
   void EmitCheck(llvm::Value *Checked, StringRef CheckName,
                  llvm::ArrayRef<llvm::Constant *> StaticArgs,
                  llvm::ArrayRef<llvm::Value *> DynamicArgs,
                  bool Recoverable = false);
+
+  /// \brief Create a basic block that will call the trap intrinsic, and emit a
+  /// conditional branch to it, for the -ftrapv checks.
+  void EmitTrapvCheck(llvm::Value *Checked);
 
   /// EmitCallArg - Emit a single call argument.
   void EmitCallArg(CallArgList &args, const Expr *E, QualType ArgType);
