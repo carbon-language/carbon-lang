@@ -1771,8 +1771,10 @@ class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1, _A2)>
 
 //      main is_constructible test
 
+template<typename, typename T> struct __select_2nd { typedef T type; };
+
 template <class _Tp, class ..._Args>
-decltype(_VSTD::move(_Tp(_VSTD::declval<_Args>()...)), true_type())
+typename __select_2nd<decltype(_VSTD::move(_Tp(_VSTD::declval<_Args>()...))), true_type>::type
 __is_constructible_test(_Tp&&, _Args&& ...);
 
 template <class ..._Args>
