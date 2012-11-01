@@ -1189,7 +1189,11 @@ basic_istream<_CharT, _Traits>::peek()
 #endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
+        {
             __r = this->rdbuf()->sgetc();
+            if (traits_type::eq_int_type(__r, traits_type::eof()))
+                this->setstate(ios_base::eofbit);
+        }
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
