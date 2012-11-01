@@ -21,14 +21,18 @@
 // CHECK: @foo
 void foo() {
   union { int i; } u;
-  // CHECK:      %[[SIZE:.*]] = call i64 @llvm.objectsize.i64({{.*}} %[[PTR:.*]], i1 false)
-  // CHECK-NEXT: %[[CHECK1:.*]] = icmp uge i64 %[[SIZE]], 4
+  // CHECK:      %[[CHECK0:.*]] = icmp ne {{.*}}* %[[PTR:.*]], null
 
-  // CHECK:      %[[PTRTOINT:.*]] = ptrtoint {{.*}} %[[PTR]] to i64
+  // CHECK:      %[[I8PTR:.*]] = bitcast i32* %[[PTR]] to i8*
+  // CHECK-NEXT: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(i8* %[[I8PTR]], i1 false)
+  // CHECK-NEXT: %[[CHECK1:.*]] = icmp uge i64 %[[SIZE]], 4
+  // CHECK-NEXT: %[[CHECK01:.*]] = and i1 %[[CHECK0]], %[[CHECK1]]
+
+  // CHECK:      %[[PTRTOINT:.*]] = ptrtoint {{.*}}* %[[PTR]] to i64
   // CHECK-NEXT: %[[MISALIGN:.*]] = and i64 %[[PTRTOINT]], 3
   // CHECK-NEXT: %[[CHECK2:.*]] = icmp eq i64 %[[MISALIGN]], 0
 
-  // CHECK:      %[[OK:.*]] = and i1 %[[CHECK1]], %[[CHECK2]]
+  // CHECK:      %[[OK:.*]] = and i1 %[[CHECK01]], %[[CHECK2]]
   // CHECK-NEXT: br i1 %[[OK]]
 
   // CHECK:      %[[ARG:.*]] = ptrtoint {{.*}} %[[PTR]] to i64
@@ -49,6 +53,12 @@ int bar(int *a) {
   // CHECK:      %[[ARG:.*]] = ptrtoint
   // CHECK-NEXT: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_200]] to i8*), i64 %[[ARG]]) noreturn nounwind
 #line 200
+  return *a;
+}
+
+// CHECK: @addr_space
+int addr_space(int __attribute__((address_space(256))) *a) {
+  // CHECK-NOT: __ubsan
   return *a;
 }
 

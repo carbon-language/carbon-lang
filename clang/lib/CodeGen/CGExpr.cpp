@@ -479,15 +479,17 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   if (!CatchUndefined)
     return;
 
+  // Don't check pointers outside the default address space. The null check
+  // isn't correct, the object-size check isn't supported by LLVM, and we can't
+  // communicate the addresses to the runtime handler for the vptr check.
+  if (Address->getType()->getPointerAddressSpace())
+    return;
+
   llvm::Value *Cond = 0;
 
-  if (TCK != TCK_Load && TCK != TCK_Store) {
-    // The glvalue must not be an empty glvalue. Don't bother checking this for
-    // loads and stores, because we will get a segfault anyway (if the operation
-    // isn't optimized out).
-    Cond = Builder.CreateICmpNE(
-        Address, llvm::Constant::getNullValue(Address->getType()));
-  }
+  // The glvalue must not be an empty glvalue.
+  Cond = Builder.CreateICmpNE(
+    Address, llvm::Constant::getNullValue(Address->getType()));
 
   uint64_t AlignVal = Alignment.getQuantity();
 
@@ -496,16 +498,14 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     if (!AlignVal)
       AlignVal = getContext().getTypeAlignInChars(Ty).getQuantity();
 
-    // This needs to be to the standard address space.
-    Address = Builder.CreateBitCast(Address, Int8PtrTy);
-
     // The glvalue must refer to a large enough storage region.
     // FIXME: If -faddress-sanitizer is enabled, insert dynamic instrumentation
     //        to check this.
     llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, IntPtrTy);
     llvm::Value *Min = Builder.getFalse();
+    llvm::Value *CastAddr = Builder.CreateBitCast(Address, Int8PtrTy);
     llvm::Value *LargeEnough =
-        Builder.CreateICmpUGE(Builder.CreateCall2(F, Address, Min),
+        Builder.CreateICmpUGE(Builder.CreateCall2(F, CastAddr, Min),
                               llvm::ConstantInt::get(IntPtrTy, Size));
     Cond = Cond ? Builder.CreateAnd(Cond, LargeEnough) : LargeEnough;
   }
