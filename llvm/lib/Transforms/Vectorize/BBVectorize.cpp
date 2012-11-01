@@ -246,7 +246,10 @@ namespace {
     void choosePairs(std::multimap<Value *, Value *> &CandidatePairs,
                         DenseMap<ValuePair, int> &CandidatePairCostSavings,
                         std::vector<Value *> &PairableInsts,
+                        DenseSet<ValuePair> &FixedOrderPairs,
+                        DenseMap<VPPair, unsigned> &PairConnectionTypes,
                         std::multimap<ValuePair, ValuePair> &ConnectedPairs,
+                        std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
                         DenseSet<ValuePair> &PairableInstUsers,
                         DenseMap<Value *, Value *>& ChosenPairs);
 
@@ -308,7 +311,10 @@ namespace {
                       std::multimap<Value *, Value *> &CandidatePairs,
                       DenseMap<ValuePair, int> &CandidatePairCostSavings,
                       std::vector<Value *> &PairableInsts,
+                      DenseSet<ValuePair> &FixedOrderPairs,
+                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
+                      std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
                       DenseSet<ValuePair> &PairableInstUsers,
                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
                       DenseMap<Value *, Value *> &ChosenPairs,
@@ -550,6 +556,7 @@ namespace {
       case Instruction::Trunc:
       case Instruction::FPTrunc:
       case Instruction::BitCast:
+      case Instruction::ShuffleVector:
         return VTTI->getCastInstrCost(Opcode, T1, T2);
       }
 
@@ -714,7 +721,8 @@ namespace {
 
       DenseMap<Value *, Value *> ChosenPairs;
       choosePairs(CandidatePairs, CandidatePairCostSavings,
-        PairableInsts, ConnectedPairs,
+        PairableInsts, FixedOrderPairs, PairConnectionTypes,
+        ConnectedPairs, ConnectedPairDeps,
         PairableInstUsers, ChosenPairs);
 
       if (ChosenPairs.empty()) continue;
@@ -1597,7 +1605,10 @@ namespace {
                       std::multimap<Value *, Value *> &CandidatePairs,
                       DenseMap<ValuePair, int> &CandidatePairCostSavings,
                       std::vector<Value *> &PairableInsts,
+                      DenseSet<ValuePair> &FixedOrderPairs,
+                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
+                      std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
                       DenseSet<ValuePair> &PairableInstUsers,
                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
                       DenseMap<Value *, Value *> &ChosenPairs,
@@ -1654,10 +1665,53 @@ namespace {
 
       int EffSize = 0;
       if (VTTI) {
+        // The node weights represent the cost savings associated with
+        // fusing the pair of instructions.
         for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
              E = PrunedTree.end(); S != E; ++S) {
           if (getDepthFactor(S->first))
             EffSize += CandidatePairCostSavings.find(*S)->second;
+
+        // The edge weights contribute in a negative sense: they represent
+        // the cost of shuffles.
+          VPPIteratorPair IP = ConnectedPairDeps.equal_range(*S);
+          if (IP.first != ConnectedPairDeps.end()) {
+            unsigned NumDepsDirect = 0, NumDepsSwap = 0;
+            for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
+                 Q != IP.second; ++Q) {
+              DenseMap<VPPair, unsigned>::iterator R =
+                PairConnectionTypes.find(VPPair(Q->second, Q->first));
+              assert(R != PairConnectionTypes.end() &&
+                     "Cannot find pair connection type");
+              if (R->second == PairConnectionDirect)
+                ++NumDepsDirect;
+              else if (R->second == PairConnectionSwap)
+                ++NumDepsSwap;
+            }
+
+            // If there are more swaps than direct connections, then
+            // the pair order will be flipped during fusion. So the real
+            // number of swaps is the minimum number.
+            bool FlipOrder = !FixedOrderPairs.count(*S) &&
+              ((NumDepsSwap > NumDepsDirect) ||
+                FixedOrderPairs.count(ValuePair(S->second, S->first)));
+
+            for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
+                 Q != IP.second; ++Q) {
+              DenseMap<VPPair, unsigned>::iterator R =
+                PairConnectionTypes.find(VPPair(Q->second, Q->first));
+              assert(R != PairConnectionTypes.end() &&
+                     "Cannot find pair connection type");
+              Type *Ty1 = Q->second.first->getType(),
+                   *Ty2 = Q->second.second->getType();
+              Type *VTy = getVecTypeForPair(Ty1, Ty2);
+              if ((R->second == PairConnectionDirect && FlipOrder) ||
+                  (R->second == PairConnectionSwap && !FlipOrder)  ||
+                  R->second == PairConnectionSplat)
+                EffSize -= (int) getInstrCost(Instruction::ShuffleVector,
+                                              VTy, VTy);
+            }
+          }
         }
       } else {
         for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
@@ -1685,7 +1739,10 @@ namespace {
                       std::multimap<Value *, Value *> &CandidatePairs,
                       DenseMap<ValuePair, int> &CandidatePairCostSavings,
                       std::vector<Value *> &PairableInsts,
+                      DenseSet<ValuePair> &FixedOrderPairs,
+                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
+                      std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
                       DenseSet<ValuePair> &PairableInstUsers,
                       DenseMap<Value *, Value *>& ChosenPairs) {
     bool UseCycleCheck =
@@ -1704,7 +1761,8 @@ namespace {
       int BestEffSize = 0;
       DenseSet<ValuePair> BestTree;
       findBestTreeFor(CandidatePairs, CandidatePairCostSavings,
-                      PairableInsts, ConnectedPairs,
+                      PairableInsts, FixedOrderPairs, PairConnectionTypes,
+                      ConnectedPairs, ConnectedPairDeps,
                       PairableInstUsers, PairableInstUserMap, ChosenPairs,
                       BestTree, BestMaxDepth, BestEffSize, ChoiceRange,
                       UseCycleCheck);
