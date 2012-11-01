@@ -215,6 +215,7 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
   InlineAsm *EmptyAsm;
   SmallSet<GlobalValue*, 32> DynamicallyInitializedGlobals;
+  SmallSet<GlobalValue*, 32> GlobalsCreatedByAsan;
 };
 
 }  // namespace
@@ -508,6 +509,7 @@ bool AddressSanitizer::ShouldInstrumentGlobal(GlobalVariable *G) {
   if (BL->isIn(*G)) return false;
   if (!Ty->isSized()) return false;
   if (!G->hasInitializer()) return false;
+  if (GlobalsCreatedByAsan.count(G)) return false; // Our own global.
   // Touch only those globals that will not be defined in other modules.
   // Don't handle ODR type linkages since other modules may be built w/o asan.
   if (G->getLinkage() != GlobalVariable::ExternalLinkage &&
@@ -1090,9 +1092,10 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
   Value *BasePlus1 = IRB.CreateAdd(LocalStackBase,
                                    ConstantInt::get(IntptrTy, LongSize/8));
   BasePlus1 = IRB.CreateIntToPtr(BasePlus1, IntptrPtrTy);
-  Value *Description = IRB.CreatePointerCast(
-      createPrivateGlobalForString(*F.getParent(), StackDescription.str()),
-      IntptrTy);
+  GlobalVariable *StackDescriptionGlobal = 
+      createPrivateGlobalForString(*F.getParent(), StackDescription.str());
+  GlobalsCreatedByAsan.insert(StackDescriptionGlobal);
+  Value *Description = IRB.CreatePointerCast(StackDescriptionGlobal, IntptrTy);
   IRB.CreateStore(Description, BasePlus1);
 
   // Poison the stack redzones at the entry.
