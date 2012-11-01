@@ -386,7 +386,7 @@ for line in content.splitlines():
                 new_content.add_line(section_iter % d[cls+'-section'])
                 new_content.add_line(compile_unit_iter % d[cls+'-compile-unit'])
                 new_content.add_line(d[cls+'-symbol-in-section'])
-            
+
             # This special purpose iterator is for SBValue only!!!
             if cls == "SBValue":
                 new_content.add_line(linked_list_iter_def)

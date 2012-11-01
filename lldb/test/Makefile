@@ -31,8 +31,8 @@ clean::
 check-local::
 	rm -rf ../test-rdir
 	env PATH="$(ToolDir):$(PATH)" \
-	    PYTHONPATH=$(LibDir)/python \
+	    PYTHONPATH="$(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True, False, \"$(LibDir)/..\")" )" \
 	    LLDB_EXEC=$(ToolDir)/lldb \
-		LLDB_BUILD_TYPE=Makefile \
+	    LLDB_BUILD_TYPE=Makefile \
 	    $(SHLIBPATH_VAR)=$(LibDir):$($(SHLIBPATH_VAR)) \
 	     python $(PROJ_SRC_DIR)/dotest.py -i -v -r ../test-rdir

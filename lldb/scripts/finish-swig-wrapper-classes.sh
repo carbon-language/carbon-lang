@@ -3,9 +3,9 @@
 # finish-swig-wrapper-classes.sh
 #
 # For each scripting language liblldb supports, we need to create the
-# appropriate Script Bridge wrapper classes for that language so that 
+# appropriate Script Bridge wrapper classes for that language so that
 # users can call Script Bridge functions from within the script interpreter.
-# 
+#
 # We use SWIG to create a C++ file containing the appropriate wrapper classes
 # and funcitons for each scripting language, before liblldb is built (thus
 # the C++ file can be compiled into liblldb.  In some cases, additional work
@@ -26,18 +26,29 @@ SRC_ROOT=$1
 TARGET_DIR=$2
 CONFIG_BUILD_DIR=$3
 PREFIX=$4
-debug_flag=$5
 
-if [ -n "$debug_flag" -a "$debug_flag" = "-debug" ]
+shift 4
+
+if [ -n "$1" -a "$1" = "-debug" ]
 then
+    debug_flag=$1
     Debug=1
+    shift
 else
+    debug_flag=""
     Debug=0
 fi
 
+if [ -n "$1" -a "$1" = "-m" ]
+then
+    makefile_flag="$1"
+    shift
+else
+    makefile_flag=""
+fi
 
 #
-# For each scripting language, see if a post-processing script for that 
+# For each scripting language, see if a post-processing script for that
 # language exists, and if so, call it.
 #
 # For now the only language we support is Python, but we expect this to
@@ -76,8 +87,8 @@ do
                 echo "Executing $curlang post-processing script..."
             fi
 
-            
-            ./finish-swig-${curlang}-LLDB.sh $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}"
+
+            ./finish-swig-${curlang}-LLDB.sh $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}" "${makefile_flag}"
         fi
     fi
 done

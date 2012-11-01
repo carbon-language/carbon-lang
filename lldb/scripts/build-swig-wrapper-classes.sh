@@ -26,17 +26,42 @@ SRC_ROOT=$1
 TARGET_DIR=$2
 CONFIG_BUILD_DIR=$3
 PREFIX=$4
-debug_flag=$5
+
+shift 4
 
 #
 # Check to see if we are in debug-mode or not.
 #
 
-if [ -n "$debug_flag" -a "$debug_flag" = "-debug" ]
+if [ -n "$1" -a "$1" = "-debug" ]
 then
+    debug_flag="$1"
     Debug=1
+    shift
 else
+    debug_flag=""
     Debug=0
+fi
+
+#
+# Check to see if we were called from the Makefile system. If we were, check
+# if the caller wants swig to generate a dependency file.
+#
+
+if [ -n "$1" -a "$1" = "-m" ]
+then
+    makefile_flag="$1"
+    shift
+    if [ -n "$1" -a "$1" = "-M" ]
+    then
+        dependency_flag="$1"
+        shift
+    else
+        dependency_flag=""
+    fi
+else
+    makefile_flag=""
+    dependency_flag=""
 fi
 
 #
@@ -119,7 +144,7 @@ do
                 echo "Executing $curlang build script..."
             fi
 
-            ./build-swig-${curlang}.sh  "$SRC_ROOT" "$TARGET_DIR" "$CONFIG_BUILD_DIR" "${PREFIX}" "${debug_flag}" "${SWIG}"
+            ./build-swig-${curlang}.sh  "$SRC_ROOT" "$TARGET_DIR" "$CONFIG_BUILD_DIR" "${PREFIX}" "${debug_flag}" "${SWIG}" "${makefile_flag}" "${dependency_flag}" || exit $?
         fi
     fi
 done

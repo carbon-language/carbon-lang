@@ -4,22 +4,39 @@
 
 # SRC_ROOT is the root of the lldb source tree.
 # TARGET_DIR is where the lldb framework/shared library gets put.
-# CONFIG_BUILD_DIR is where the build-swig-Python-LLDB.sh  shell script 
+# CONFIG_BUILD_DIR is where the build-swig-Python-LLDB.sh  shell script
 #           put the lldb.py file it was generated from running SWIG.
 # PREFIX is the root directory used to determine where third-party modules
 #         for scripting languages should be installed.
-# debug_flag (optional) determines whether or not this script outputs 
+# debug_flag (optional) determines whether or not this script outputs
 #           additional information when running.
 
 SRC_ROOT=$1
 TARGET_DIR=$2
 CONFIG_BUILD_DIR=$3
 PYTHON_INSTALL_DIR=$4
-debug_flag=$5 
+debug_flag=$5
 SWIG=$6
+makefile_flag=$7
+dependency_flag=$8
 
-os_name=`uname -s`
-if [ "$os_name" = "Darwin" ]
+if [ -n "$makefile_flag" -a "$makefile_flag" = "-m" ]
+then
+    MakefileCalled=1
+    if [ -n "$dependency_flag" -a "$dependency_flag" = "-M" ]
+    then
+        GenerateDependencies=1
+        swig_depend_file="${TARGET_DIR}/LLDBWrapPython.cpp.d"
+        SWIG_DEPEND_OPTIONS="-MMD -MF \"${swig_depend_file}.tmp\""
+    else
+        GenerateDependencies=0
+    fi
+else
+    MakefileCalled=0
+    GenerateDependencies=0
+fi
+
+if [ $MakefileCalled -eq 0 ]
 then
   swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
 else
@@ -263,20 +280,26 @@ fi
 
 python_version=`/usr/bin/env python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
 
-if [ "$os_name" = "Darwin" ]
+if [ $MakefileCalled -eq 0 ]
 then
-    framework_python_dir="${TARGET_DIR}/LLDB.framework/Resources/Python"
+    framework_python_dir="${TARGET_DIR}/LLDB.framework/Resources/Python/lldb"
 else
-    framework_python_dir="${PYTHON_INSTALL_DIR}/python${python_version}"
+    if [ -n "${PYTHON_INSTALL_DIR}" ]
+    then
+        framework_python_dir=`/usr/bin/env python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True, False, \"${PYTHON_INSTALL_DIR}\");"`/lldb
+    else
+        framework_python_dir=`/usr/bin/env python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True, False);"`/lldb
+    fi
 fi
 
+[ -n "${CONFIG_BUILD_DIR}" ] || CONFIG_BUILD_DIR=${framework_python_dir}
 
 if [ ! -L "${framework_python_dir}/_lldb.so" ]
 then
     NeedToUpdate=1
 fi
 
-if [ ! -f "${framework_python_dir}/lldb.py" ]
+if [ ! -f "${framework_python_dir}/__init__.py" ]
 then
     NeedToUpdate=1
 fi
@@ -297,7 +320,18 @@ fi
 
 # Build the SWIG C++ wrapper file for Python.
 
-$SWIG -c++ -shadow -python -threads -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
+if [ $GenerateDependencies -eq 1 ]
+then
+    if $SWIG -c++ -shadow -python -threads -I"${SRC_ROOT}/include" -I./. -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -MMD -MF "${swig_depend_file}.tmp" -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
+    then
+        mv -f "${swig_depend_file}.tmp" "${swig_depend_file}"
+    else
+        rm -f "${swig_depend_file}.tmp"
+        exit 1
+    fi
+else
+    $SWIG -c++ -shadow -python -threads -I"${SRC_ROOT}/include" -I./. -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}" || exit $?
+fi
 
 # Implement the iterator protocol and/or eq/ne operators for some lldb objects.
 # Append global variable to lldb Python module.
@@ -312,7 +346,12 @@ fi
 
 if [ -f "${current_dir}/edit-swig-python-wrapper-file.py" ]
 then
-    python ${current_dir}/edit-swig-python-wrapper-file.py
+    if [ $MakefileCalled -eq 1 ]
+    then
+        python ${current_dir}/edit-swig-python-wrapper-file.py "${TARGET_DIR}"
+    else
+        python ${current_dir}/edit-swig-python-wrapper-file.py
+    fi
     if [ -f "${swig_output_file}.edited" ]
     then
         mv "${swig_output_file}.edited" ${swig_output_file}
