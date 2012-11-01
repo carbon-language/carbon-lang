@@ -1032,7 +1032,7 @@ void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
       Flags.setZExt();
 
     for (unsigned i = 0; i < NumParts; ++i)
-      Outs.push_back(ISD::OutputArg(Flags, PartVT, /*isFixed=*/true));
+      Outs.push_back(ISD::OutputArg(Flags, PartVT, /*isFixed=*/true, 0, 0));
   }
 }
 
