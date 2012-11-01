@@ -131,7 +131,7 @@ protected:
 template<support::endianness target_endianness, bool is64Bits>
 class StockSectionChunk : public SectionChunk<target_endianness, is64Bits> {
 public:
-  virtual StringRef   segmentName() { return this->_segmentName; }
+  virtual StringRef segmentName() const { return this->_segmentName; }
   void                appendAtom(const DefinedAtom*);
   virtual void        write(uint8_t *filebuffer);
   const               ArrayRef<AtomInfo> atoms() const;
