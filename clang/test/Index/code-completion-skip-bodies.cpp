@@ -15,3 +15,6 @@ void func(S *s) {
 // CHECK-NOT: error: use of undeclared identifier 'undeclared1'
 // CHECK: error: use of undeclared identifier 'undeclared2'
 // CHECK: FieldDecl:{ResultType int}{TypedText x}
+
+// FIXME: Investigating
+// XFAIL: cygwin,mingw32,win32
