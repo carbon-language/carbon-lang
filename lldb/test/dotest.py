@@ -749,6 +749,7 @@ def setupSysPath():
     if lldbExecutablePath:
         if is_exe(lldbExecutablePath):
             lldbExec = lldbExecutablePath
+            lldbHere = lldbExec
         else:
             print lldbExecutablePath + " is not an executable"
             sys.exit(-1)
@@ -790,20 +791,19 @@ def setupSysPath():
             lldbHere = baiExec2
         elif lldbExec:
             lldbHere = lldbExec
-    
-        if lldbHere:
-            os.environ["LLDB_HERE"] = lldbHere
-            os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbHere)[0]
-            if not noHeaders:
-                print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
-                os.system('%s -v' % lldbHere)
-    
+
         # One last chance to locate the 'lldb' executable.
         if not lldbExec:
             lldbExec = which('lldb')
             if lldbHere and not lldbExec:
                 lldbExec = lldbHere
-
+    
+    if lldbHere:
+        os.environ["LLDB_HERE"] = lldbHere
+        os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbHere)[0]
+        if not noHeaders:
+            print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
+            os.system('%s -v' % lldbHere)
 
     if not lldbExec:
         print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
