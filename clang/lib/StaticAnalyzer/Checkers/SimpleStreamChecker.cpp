@@ -46,14 +46,14 @@ public:
   }
 };
 
-class SimpleStreamChecker: public Checker<check::PostStmt<CallExpr>,
-                                          check::PreStmt<CallExpr>,
-                                          check::DeadSymbols > {
+class SimpleStreamChecker : public Checker<check::PostStmt<CallExpr>,
+                                           check::PreStmt<CallExpr>,
+                                           check::DeadSymbols > {
 
   mutable IdentifierInfo *IIfopen, *IIfclose;
 
-  mutable OwningPtr<BugType> DoubleCloseBugType;
-  mutable OwningPtr<BugType> LeakBugType;
+  OwningPtr<BugType> DoubleCloseBugType;
+  OwningPtr<BugType> LeakBugType;
 
   void initIdentifierInfo(ASTContext &Ctx) const;
 
@@ -61,9 +61,9 @@ class SimpleStreamChecker: public Checker<check::PostStmt<CallExpr>,
                          const CallExpr *Call,
                          CheckerContext &C) const;
 
-   void reportLeaks(SymbolVector LeakedStreams,
-                    CheckerContext &C,
-                    ExplodedNode *ErrNode) const;
+  void reportLeaks(SymbolVector LeakedStreams,
+                   CheckerContext &C,
+                   ExplodedNode *ErrNode) const;
 
 public:
   SimpleStreamChecker();
