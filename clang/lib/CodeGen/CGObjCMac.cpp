@@ -955,6 +955,8 @@ protected:
                            ArrayRef<const FieldDecl*> RecFields,
                            unsigned int BytePos, bool &HasUnion);
   
+  uint64_t InlineLayoutInstruction(SmallVectorImpl<unsigned char> &Layout);
+  
 
   /// GetIvarLayoutName - Returns a unique constant for the given
   /// ivar layout bitmap.
@@ -2124,11 +2126,114 @@ void CGObjCCommonMac::BuildRCBlockVarRecordLayout(const RecordType *RT,
   BuildRCRecordLayout(RecLayout, RD, Fields, BytePos, HasUnion);
 }
 
+/// InlineLayoutInstruction - This routine produce an inline instruction for the
+/// block variable layout if it can. If not, it returns 0. Rules are as follow:
+/// If ((uintptr_t) layout) < (1 << 12), the layout is inline. In the 64bit world,
+/// an inline layout of value 0x0000000000000xyz is interpreted as follows:
+/// x captured object pointers of BLOCK_LAYOUT_STRONG. Followed by
+/// y captured object of BLOCK_LAYOUT_BYREF. Followed by
+/// z captured object of BLOCK_LAYOUT_WEAK. If any of the above is missing, zero
+/// replaces it. For example, 0x00000x00 means x BLOCK_LAYOUT_STRONG and no
+/// BLOCK_LAYOUT_BYREF and no BLOCK_LAYOUT_WEAK objects are captured.
+uint64_t CGObjCCommonMac::InlineLayoutInstruction(
+                                    SmallVectorImpl<unsigned char> &Layout) {
+  uint64_t Result = 0;
+  if (Layout.size() <= 3) {
+    unsigned size = Layout.size();
+    unsigned strong_word_count = 0, byref_word_count=0, weak_word_count=0;
+    unsigned char inst;
+    enum BLOCK_LAYOUT_OPCODE opcode ;
+    switch (size) {
+      case 3:
+        inst = Layout[0];
+        opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+        if (opcode == BLOCK_LAYOUT_STRONG)
+          strong_word_count = (inst & 0xF)+1;
+        else
+          return 0;
+        inst = Layout[1];
+        opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+        if (opcode == BLOCK_LAYOUT_BYREF)
+          byref_word_count = (inst & 0xF)+1;
+        else
+          return 0;
+        inst = Layout[2];
+        opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+        if (opcode == BLOCK_LAYOUT_WEAK)
+          weak_word_count = (inst & 0xF)+1;
+        else
+          return 0;
+        break;
+        
+      case 2:
+        inst = Layout[0];
+        opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+        if (opcode == BLOCK_LAYOUT_STRONG) {
+          strong_word_count = (inst & 0xF)+1;
+          inst = Layout[1];
+          opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+          if (opcode == BLOCK_LAYOUT_BYREF)
+            byref_word_count = (inst & 0xF)+1;
+          else if (opcode == BLOCK_LAYOUT_WEAK)
+            weak_word_count = (inst & 0xF)+1;
+          else
+            return 0;
+        }
+        else if (opcode == BLOCK_LAYOUT_BYREF) {
+          byref_word_count = (inst & 0xF)+1;
+          inst = Layout[1];
+          opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+          if (opcode == BLOCK_LAYOUT_WEAK)
+            weak_word_count = (inst & 0xF)+1;
+          else
+            return 0;
+        }
+        else
+          return 0;
+        break;
+        
+      case 1:
+        inst = Layout[0];
+        opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+        if (opcode == BLOCK_LAYOUT_STRONG)
+          strong_word_count = (inst & 0xF)+1;
+        else if (opcode == BLOCK_LAYOUT_BYREF)
+          byref_word_count = (inst & 0xF)+1;
+        else if (opcode == BLOCK_LAYOUT_WEAK)
+          weak_word_count = (inst & 0xF)+1;
+        else
+          return 0;
+        break;
+        
+      default:
+        return 0;
+    }
+    
+    // Cannot inline when any of the word counts is 15. Because this is one less
+    // than the actual work count (so 15 means 16 actual word counts),
+    // and we can only display 0 thru 15 word counts.
+    if (strong_word_count == 16 || byref_word_count == 16 || weak_word_count == 16)
+      return 0;
+    
+    unsigned count =
+      (strong_word_count != 0) + (byref_word_count != 0) + (weak_word_count != 0);
+    
+    if (size == count) {
+      if (strong_word_count)
+        Result = strong_word_count;
+      Result <<= 4;
+      if (byref_word_count)
+        Result += byref_word_count;
+      Result <<= 4;
+      if (weak_word_count)
+        Result += weak_word_count;
+    }
+  }
+  return Result;
+}
+
 llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
                                                     const CGBlockInfo &blockInfo) {
-  // FIXME. Temporary call the GC layout routine.
-  return BuildGCBlockLayout(CGM, blockInfo);
-  
   assert(CGM.getLangOpts().getGC() == LangOptions::NonGC);
   
   llvm::Constant *nullPtr = llvm::Constant::getNullValue(CGM.Int8PtrTy);
@@ -2167,7 +2272,8 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
       BuildRCBlockVarRecordLayout(record, fieldOffset, hasUnion);
       continue;
     }
-    unsigned fieldSize = CGM.getContext().getTypeSize(type);
+    unsigned fieldSize = ci->isByRef() ? WordSizeInBits
+                                       : CGM.getContext().getTypeSize(type);
     UpdateRunSkipBlockVars(ci->isByRef(), type.getObjCLifetime(),
                            fieldOffset, fieldSize);
   }
@@ -2178,7 +2284,7 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
   // Sort on byte position; captures might not be allocated in order,
   // and unions can do funny things.
   llvm::array_pod_sort(RunSkipBlockVars.begin(), RunSkipBlockVars.end());
-  std::string Layout;
+  SmallVector<unsigned char, 16> Layout;
 
   unsigned size = RunSkipBlockVars.size();
   unsigned int shift = (WordSizeInBytes == 8) ? 3 : 2;
@@ -2214,35 +2320,70 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
     unsigned size_in_words = size_in_bytes >> shift;
     while (size_in_words >= 16) {
       // Note that value in imm. is one less that the actual
-      // value. So, 0xff means 16 words follow!
-      unsigned char inst = (opcode << 4) | 0xff;
-      Layout += inst;
+      // value. So, 0xf means 16 words follow!
+      unsigned char inst = (opcode << 4) | 0xf;
+      Layout.push_back(inst);
       size_in_words -= 16;
     }
     if (size_in_words > 0) {
       // Note that value in imm. is one less that the actual
       // value. So, we subtract 1 away!
       unsigned char inst = (opcode << 4) | (size_in_words-1);
-      Layout += inst;
+      Layout.push_back(inst);
     }
     if (residue_in_bytes > 0) {
-      unsigned char inst = (BLOCK_LAYOUT_NON_OBJECT_BYTES << 4) | residue_in_bytes;
-      Layout += inst;
+      unsigned char inst =
+        (BLOCK_LAYOUT_NON_OBJECT_BYTES << 4) | (residue_in_bytes-1);
+      Layout.push_back(inst);
     }
   }
+  
+  int e = Layout.size()-1;
+  while (e >= 0) {
+    unsigned char inst = Layout[e--];
+    enum BLOCK_LAYOUT_OPCODE opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+    if (opcode == BLOCK_LAYOUT_NON_OBJECT_BYTES || opcode == BLOCK_LAYOUT_NON_OBJECT_WORDS)
+      Layout.pop_back();
+    else
+      break;
+  }
+  
+  uint64_t Result = InlineLayoutInstruction(Layout);
+  if (Result != 0) {
+    // Block variable layout instruction has been inlined.
+    if (CGM.getLangOpts().ObjCGCBitmapPrint) {
+      printf("\n Inline instruction for block variable layout: ");
+      printf("0x0%llx\n", Result);
+    }
+    if (WordSizeInBytes == 8) {
+      const llvm::APInt Instruction(64, Result);
+      return llvm::Constant::getIntegerValue(CGM.Int64Ty, Instruction);
+    }
+    else {
+      const llvm::APInt Instruction(32, Result);
+      return llvm::Constant::getIntegerValue(CGM.Int32Ty, Instruction);
+    }
+  }
+  
+  unsigned char inst = (BLOCK_LAYOUT_OPERATOR << 4) | 0;
+  Layout.push_back(inst);
+  std::string BitMap;
+  for (unsigned i = 0, e = Layout.size(); i != e; i++)
+    BitMap += Layout[i];
+  
   if (CGM.getLangOpts().ObjCGCBitmapPrint) {
     printf("\n block variable layout: ");
-    for (unsigned i = 0, e = Layout.size(); i != e; i++) {
-      unsigned char inst = Layout[i];
+    for (unsigned i = 0, e = BitMap.size(); i != e; i++) {
+      unsigned char inst = BitMap[i];
       enum BLOCK_LAYOUT_OPCODE opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
       unsigned delta = 1;
       switch (opcode) {
         case BLOCK_LAYOUT_OPERATOR:
           printf("BL_OPERATOR:");
+          delta = 0;
           break;
         case BLOCK_LAYOUT_NON_OBJECT_BYTES:
           printf("BL_NON_OBJECT_BYTES:");
-          delta = 0;
           break;
         case BLOCK_LAYOUT_NON_OBJECT_WORDS:
           printf("BL_NON_OBJECT_WORD:");
@@ -2257,7 +2398,7 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
           printf("BL_WEAK:");
           break;
         case BLOCK_LAYOUT_UNRETAINED:
-          printf("BL_UNRETAINE:");
+          printf("BL_UNRETAINED:");
           break;
       } 
       // Actual value of word count is one more that what is in the imm.
@@ -2269,7 +2410,12 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
         printf("\n");
     }
   }
-  return nullPtr;
+  
+  llvm::GlobalVariable * Entry =
+    CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
+                    llvm::ConstantDataArray::getString(VMContext, BitMap,false),
+                    "__TEXT,__objc_classname,cstring_literals", 1, true);
+  return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,

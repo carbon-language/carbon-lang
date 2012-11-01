@@ -27,7 +27,8 @@ using namespace CodeGen;
 
 CGBlockInfo::CGBlockInfo(const BlockDecl *block, StringRef name)
   : Name(name), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
-    HasCXXObject(false), UsesStret(false), StructureType(0), Block(block),
+    HasCXXObject(false), UsesStret(false), HasCapturedVariableLayout(false),
+    StructureType(0), Block(block),
     DominatingIP(0) {
     
   // Skip asm prefix, if any.  'name' is usually taken directly from
@@ -308,7 +309,10 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
     info.CanBeGlobal = true;
     return;
   }
-
+  else if (C.getLangOpts().ObjC1 &&
+           CGM.getLangOpts().getGC() == LangOptions::NonGC)
+    info.HasCapturedVariableLayout = true;
+  
   // Collect the layout chunks.
   SmallVector<BlockLayoutChunk, 16> layout;
   layout.reserve(block->capturesCXXThis() +
@@ -667,6 +671,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
   // Compute the initial on-stack block flags.
   BlockFlags flags = BLOCK_HAS_SIGNATURE;
+  if (blockInfo.HasCapturedVariableLayout) flags |= BLOCK_HAS_EXTENDED_LAYOUT;
   if (blockInfo.NeedsCopyDispose) flags |= BLOCK_HAS_COPY_DISPOSE;
   if (blockInfo.HasCXXObject) flags |= BLOCK_HAS_CXX_OBJ;
   if (blockInfo.UsesStret) flags |= BLOCK_USE_STRET;

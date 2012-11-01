@@ -59,6 +59,7 @@ enum BlockByrefFlags {
 };
 
 enum BlockLiteralFlags {
+  BLOCK_HAS_EXTENDED_LAYOUT = (1 << 23),
   BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
   BLOCK_HAS_CXX_OBJ =       (1 << 26),
   BLOCK_IS_GLOBAL =         (1 << 28),
@@ -193,6 +194,10 @@ public:
   /// UsesStret : True if the block uses an stret return.  Mutable
   /// because it gets set later in the block-creation process.
   mutable bool UsesStret : 1;
+  
+  /// HasCapturedVariableLayout : True if block has captured variables
+  /// and their layout meta-data has been generated.
+  bool HasCapturedVariableLayout : 1;
 
   /// The mapping of allocated indexes within the block.
   llvm::DenseMap<const VarDecl*, Capture> Captures;  
