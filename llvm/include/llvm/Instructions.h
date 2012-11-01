@@ -3642,9 +3642,16 @@ public:
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
-  /// \brief return the address space of the pointer.
+  /// \brief Gets the pointer operand.
+  Value *getPointerOperand() { return getOperand(0); }
+  /// \brief Gets the pointer operand.
+  const Value *getPointerOperand() const { return getOperand(0); }
+  /// \brief Gets the operand index of the pointer operand.
+  static unsigned getPointerOperandIndex() { return 0U; }
+
+  /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
-    return getOperand(0)->getType()->getPointerAddressSpace();
+    return getPointerOperand()->getType()->getPointerAddressSpace();
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
