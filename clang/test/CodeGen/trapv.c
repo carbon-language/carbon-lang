@@ -50,3 +50,12 @@ void test2() {
   // CHECK-NEXT: br i1 [[T5]]
   // CHECK:      call void @llvm.trap()
 }
+
+// CHECK: define void @test3(
+void test3(int a, int b, float c, float d) {
+  // CHECK-NOT:  @llvm.trap
+  (void)(a / b);
+  (void)(a % b);
+  (void)(c / d);
+  // CHECK: }
+}

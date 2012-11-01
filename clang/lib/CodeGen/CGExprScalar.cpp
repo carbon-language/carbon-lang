@@ -418,10 +418,6 @@ public:
       return Builder.CreateFMul(Ops.LHS, Ops.RHS, "mul");
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
   }
-  bool isTrapvOverflowBehavior() {
-    return CGF.getContext().getLangOpts().getSignedOverflowBehavior()
-               == LangOptions::SOB_Trapping || CGF.CatchUndefined;
-  }
   /// Create a binary op that checks for overflow.
   /// Currently only supports +, - and *.
   Value *EmitOverflowCheckedBinOp(const BinOpInfo &Ops);
@@ -1946,7 +1942,7 @@ void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
 }
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
-  if (isTrapvOverflowBehavior()) {
+  if (CGF.CatchUndefined) {
     llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
 
     if (Ops.Ty->isIntegerType())
@@ -1974,7 +1970,7 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
   // Rem in C can't be a floating point type: C99 6.5.5p2.
-  if (isTrapvOverflowBehavior()) {
+  if (CGF.CatchUndefined) {
     llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
 
     if (Ops.Ty->isIntegerType()) 
