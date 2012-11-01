@@ -56,6 +56,16 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   bits<1> isPredicated = 0;
   let TSFlags{6} = isPredicated;
 
+  // Dot new value store instructions.
+  bits<1> isNVStore = 0;
+  let TSFlags{8} = isNVStore;
+
+  // Fields used for relation models.
+  string BaseOpcode = "";
+  string CextOpcode = "";
+  string PredSense = "";
+  string PNewValue = "";
+  string InputType = "";    // Input is "imm" or "reg" type.
   // *** The code above must match HexagonBaseInfo.h ***
 }
 

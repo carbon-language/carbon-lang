@@ -15,6 +15,18 @@ include "HexagonInstrFormats.td"
 include "HexagonImmediates.td"
 
 //===----------------------------------------------------------------------===//
+// Classes used for relation maps.
+//===----------------------------------------------------------------------===//
+// PredRel - Filter class used to relate non-predicated instructions with their
+// predicated forms.
+class PredRel;
+// PredNewRel - Filter class used to relate predicated instructions with their
+// predicate-new forms.
+class PredNewRel: PredRel;
+// ImmRegRel - Filter class used to relate instructions having reg-reg form
+// with their reg-imm counterparts.
+class ImmRegRel;
+//===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
 def HasV2T                      : Predicate<"Subtarget.hasV2TOps()">;
@@ -148,37 +160,91 @@ multiclass CMP32_ri_s8<string OpcStr, PatFrag OpNode> {
 }
 
 //===----------------------------------------------------------------------===//
-// ALU32/ALU +
+// ALU32/ALU (Instructions with register-register form)
 //===----------------------------------------------------------------------===//
-// Add.
-let isCommutable = 1, isPredicable = 1 in
-def ADD_rr : ALU32_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = add($src1, $src2)",
-            [(set (i32 IntRegs:$dst), (add (i32 IntRegs:$src1),
-                                           (i32 IntRegs:$src2)))]>;
+multiclass ALU32_Pbase<string mnemonic, bit isNot,
+                       bit isPredNew> {
 
-let isPredicable = 1 in
-def ADD_ri : ALU32_ri<(outs IntRegs:$dst),
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME# : ALU32_rr<(outs IntRegs:$dst),
+            (ins PredRegs:$src1, IntRegs:$src2, IntRegs: $src3),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
+            ") $dst = ")#mnemonic#"($src2, $src3)",
+            []>;
+}
+
+multiclass ALU32_Pred<string mnemonic, bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    defm _c#NAME# : ALU32_Pbase<mnemonic, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME# : ALU32_Pbase<mnemonic, PredNot, 1>;
+  }
+}
+
+let InputType = "reg" in
+multiclass ALU32_base<string mnemonic, string CextOp, SDNode OpNode> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_rr in {
+    let isPredicable = 1 in
+    def #NAME# : ALU32_rr<(outs IntRegs:$dst),
+            (ins IntRegs:$src1, IntRegs:$src2),
+            "$dst = "#mnemonic#"($src1, $src2)",
+            [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
+                                              (i32 IntRegs:$src2)))]>;
+
+    let neverHasSideEffects = 1, isPredicated = 1 in {
+      defm Pt : ALU32_Pred<mnemonic, 0>;
+      defm NotPt : ALU32_Pred<mnemonic, 1>;
+    }
+  }
+}
+
+let isCommutable = 1 in {
+  defm ADD_rr : ALU32_base<"add", "ADD", add>, ImmRegRel, PredNewRel;
+  defm AND_rr : ALU32_base<"and", "AND", and>, ImmRegRel, PredNewRel;
+  defm XOR_rr : ALU32_base<"xor", "XOR", xor>, ImmRegRel, PredNewRel;
+  defm OR_rr  : ALU32_base<"or", "OR", or>, ImmRegRel, PredNewRel;
+}
+
+defm SUB_rr : ALU32_base<"sub", "SUB", sub>, ImmRegRel, PredNewRel;
+
+//===----------------------------------------------------------------------===//
+// ALU32/ALU (ADD with register-immediate form)
+//===----------------------------------------------------------------------===//
+multiclass ALU32ri_Pbase<string mnemonic, bit isNot, bit isPredNew> {
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME# : ALU32_ri<(outs IntRegs:$dst),
+            (ins PredRegs:$src1, IntRegs:$src2, s8Imm: $src3),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
+            ") $dst = ")#mnemonic#"($src2, #$src3)",
+            []>;
+}
+
+multiclass ALU32ri_Pred<string mnemonic, bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    defm _c#NAME# : ALU32ri_Pbase<mnemonic, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME# : ALU32ri_Pbase<mnemonic, PredNot, 1>;
+  }
+}
+
+let InputType = "imm" in
+multiclass ALU32ri_base<string mnemonic, string CextOp, SDNode OpNode> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_ri in {
+    let isPredicable = 1 in
+    def #NAME# : ALU32_ri<(outs IntRegs:$dst),
             (ins IntRegs:$src1, s16Imm:$src2),
-            "$dst = add($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (add (i32 IntRegs:$src1),
-                                           s16ImmPred:$src2))]>;
+            "$dst = "#mnemonic#"($src1, #$src2)",
+            [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
+                                              (s16ImmPred:$src2)))]>;
 
-// Logical operations.
-let isPredicable = 1 in
-def XOR_rr : ALU32_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = xor($src1, $src2)",
-            [(set (i32 IntRegs:$dst), (xor (i32 IntRegs:$src1),
-                                           (i32 IntRegs:$src2)))]>;
+    let neverHasSideEffects = 1, isPredicated = 1 in {
+      defm Pt : ALU32ri_Pred<mnemonic, 0>;
+      defm NotPt : ALU32ri_Pred<mnemonic, 1>;
+    }
+  }
+}
 
-let isCommutable = 1, isPredicable = 1 in
-def AND_rr : ALU32_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = and($src1, $src2)",
-            [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
-                                           (i32 IntRegs:$src2)))]>;
+defm ADD_ri : ALU32ri_base<"add", "ADD", add>, ImmRegRel, PredNewRel;
 
 def OR_ri : ALU32_ri<(outs IntRegs:$dst),
             (ins IntRegs:$src1, s10Imm:$src2),
@@ -197,13 +263,6 @@ def AND_ri : ALU32_ri<(outs IntRegs:$dst),
             [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
                                            s10ImmPred:$src2))]>;
 
-let isCommutable = 1, isPredicable = 1 in
-def OR_rr : ALU32_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = or($src1, $src2)",
-            [(set (i32 IntRegs:$dst), (or (i32 IntRegs:$src1),
-                                          (i32 IntRegs:$src2)))]>;
-
 // Negate.
 def NEG : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
           "$dst = neg($src1)",
@@ -213,14 +272,6 @@ let neverHasSideEffects = 1 in
 def NOP : ALU32_rr<(outs), (ins),
           "nop",
           []>;
-
-// Subtract.
-let isPredicable = 1 in
-def SUB_rr : ALU32_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = sub($src1, $src2)",
-            [(set (i32 IntRegs:$dst), (sub (i32 IntRegs:$src1),
-                                           (i32 IntRegs:$src2)))]>;
 
 // Rd32=sub(#s10,Rs32)
 def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
@@ -348,56 +399,6 @@ def ZXTH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
 // ALU32/PRED +
 //===----------------------------------------------------------------------===//
 
-// Conditional add.
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_ri_cPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
-            "if ($src1) $dst = add($src2, #$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_ri_cNotPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
-            "if (!$src1) $dst = add($src2, #$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_ri_cdnPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
-            "if ($src1.new) $dst = add($src2, #$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_ri_cdnNotPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
-            "if (!$src1.new) $dst = add($src2, #$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1) $dst = add($src2, $src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1) $dst = add($src2, $src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1.new) $dst = add($src2, $src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def ADD_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1.new) $dst = add($src2, $src3)",
-            []>;
-
-
 // Conditional combine.
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -423,108 +424,6 @@ def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = combine($src2, $src3)",
             []>;
-
-// Conditional logical operations.
-
-let isPredicated = 1 in
-def XOR_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1) $dst = xor($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def XOR_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1) $dst = xor($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def XOR_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1.new) $dst = xor($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def XOR_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1.new) $dst = xor($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def AND_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1) $dst = and($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def AND_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1) $dst = and($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def AND_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1.new) $dst = and($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def AND_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1.new) $dst = and($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def OR_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1) $dst = or($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def OR_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1) $dst = or($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def OR_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1.new) $dst = or($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def OR_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1.new) $dst = or($src2, $src3)",
-            []>;
-
-
-// Conditional subtract.
-
-let isPredicated = 1 in
-def SUB_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1) $dst = sub($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def SUB_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1) $dst = sub($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def SUB_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1.new) $dst = sub($src2, $src3)",
-            []>;
-
-let isPredicated = 1 in
-def SUB_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1.new) $dst = sub($src2, $src3)",
-            []>;
-
 
 // Conditional transfer.
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -3546,4 +3445,31 @@ include "HexagonInstrInfoV5.td"
 // V5 Instructions -
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// Generate mapping table to relate non-predicate instructions with their
+// predicated formats - true and false.
+//
 
+def getPredOpcode : InstrMapping {
+  let FilterClass = "PredRel";
+  // Instructions with the same BaseOpcode and isNVStore values form a row.
+  let RowFields = ["BaseOpcode", "isNVStore", "PNewValue"];
+  // Instructions with the same predicate sense form a column.
+  let ColFields = ["PredSense"];
+  // The key column is the unpredicated instructions.
+  let KeyCol = [""];
+  // Value columns are PredSense=true and PredSense=false
+  let ValueCols = [["true"], ["false"]];
+}
+
+//===----------------------------------------------------------------------===//
+// Generate mapping table to relate predicated instructions with their .new
+// format.
+//
+def getPredNewOpcode : InstrMapping {
+  let FilterClass = "PredNewRel";
+  let RowFields = ["BaseOpcode", "PredSense", "isNVStore"];
+  let ColFields = ["PNewValue"];
+  let KeyCol = [""];
+  let ValueCols = [["new"]];
+}

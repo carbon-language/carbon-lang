@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/MathExtras.h"
 #define GET_INSTRINFO_CTOR
+#define GET_INSTRMAP_INFO
 #include "HexagonGenInstrInfo.inc"
 #include "HexagonGenDFAPacketizer.inc"
 
@@ -1915,6 +1916,15 @@ unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
 
 int HexagonInstrInfo::
 getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
+  enum Hexagon::PredSense inPredSense;
+  inPredSense = invertPredicate ? Hexagon::PredSense_false :
+                                  Hexagon::PredSense_true;
+  int CondOpcode = Hexagon::getPredOpcode(Opc, inPredSense);
+  if (CondOpcode >= 0) // Valid Conditional opcode/instruction
+    return CondOpcode;
+
+  // This switch case will be removed once all the instructions have been
+  // modified to use relation maps.
   switch(Opc) {
   case Hexagon::TFR:
     return !invertPredicate ? Hexagon::TFR_cPt :
@@ -1934,24 +1944,6 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::JMP_EQriPt_nv_V4:
     return !invertPredicate ? Hexagon::JMP_EQriPt_nv_V4 :
                               Hexagon::JMP_EQriNotPt_nv_V4;
-  case Hexagon::ADD_ri:
-    return !invertPredicate ? Hexagon::ADD_ri_cPt :
-                              Hexagon::ADD_ri_cNotPt;
-  case Hexagon::ADD_rr:
-    return !invertPredicate ? Hexagon::ADD_rr_cPt :
-                              Hexagon::ADD_rr_cNotPt;
-  case Hexagon::XOR_rr:
-    return !invertPredicate ? Hexagon::XOR_rr_cPt :
-                              Hexagon::XOR_rr_cNotPt;
-  case Hexagon::AND_rr:
-    return !invertPredicate ? Hexagon::AND_rr_cPt :
-                              Hexagon::AND_rr_cNotPt;
-  case Hexagon::OR_rr:
-    return !invertPredicate ? Hexagon::OR_rr_cPt :
-                              Hexagon::OR_rr_cNotPt;
-  case Hexagon::SUB_rr:
-    return !invertPredicate ? Hexagon::SUB_rr_cPt :
-                              Hexagon::SUB_rr_cNotPt;
   case Hexagon::COMBINE_rr:
     return !invertPredicate ? Hexagon::COMBINE_rr_cPt :
                               Hexagon::COMBINE_rr_cNotPt;
