@@ -204,6 +204,18 @@ class ScopDetection : public FunctionPass {
   /// @return True if the function is not an OpenMP subfunction.
   bool isValidFunction(llvm::Function &F);
 
+  /// @brief Get the location of a region from the debug info.
+  ///
+  /// @param R The region to get debug info for.
+  /// @param LineBegin The first line in the region.
+  /// @param LineEnd The last line in the region.
+  /// @param FileName The filename where the region was defined.
+  void getDebugLocation(const Region *R, unsigned &LineBegin, unsigned &LineEnd,
+                        std::string &FileName);
+
+  /// @brief Print the locations of all detected scops.
+  void printLocations();
+
 public:
   static char ID;
   explicit ScopDetection() : FunctionPass(ID) {}

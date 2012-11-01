@@ -57,6 +57,7 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Assembly/Writer.h"
 
@@ -78,6 +79,11 @@ static cl::opt<bool>
 IgnoreAliasing("polly-ignore-aliasing",
                cl::desc("Ignore possible aliasing of the array bases"),
                cl::Hidden, cl::init(false));
+
+static cl::opt<bool>
+ReportLevel("polly-report",
+            cl::desc("Print information about Polly"),
+            cl::Hidden, cl::init(false));
 
 static cl::opt<bool>
 AllowNonAffine("polly-allow-nonaffine",
@@ -532,6 +538,50 @@ bool ScopDetection::isValidFunction(llvm::Function &F) {
   return !InvalidFunctions.count(&F);
 }
 
+void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
+                                     unsigned &LineEnd, std::string &FileName) {
+  LineBegin = -1;
+  LineEnd = 0;
+
+  for (Region::const_block_iterator RI = R->block_begin(), RE = R->block_end();
+       RI != RE; ++RI)
+    for (BasicBlock::iterator BI = (*RI)->begin(), BE = (*RI)->end(); BI != BE;
+         ++BI) {
+      DebugLoc DL = BI->getDebugLoc();
+      if (DL.isUnknown())
+        continue;
+
+      DIScope Scope(DL.getScope(BI->getContext()));
+
+      if (FileName.empty())
+        FileName = Scope.getFilename();
+
+      unsigned NewLine = DL.getLine();
+
+      LineBegin = std::min(LineBegin, NewLine);
+      LineEnd = std::max(LineEnd, NewLine);
+      break;
+  }
+}
+
+void ScopDetection::printLocations() {
+  for (iterator RI = begin(), RE = end(); RI != RE; ++RI) {
+    unsigned LineEntry, LineExit;
+    std::string FileName;
+
+    getDebugLocation(*RI, LineEntry, LineExit, FileName);
+
+    if (FileName.empty()) {
+      outs() << "Scop detected at unknown location. Compile with debug info "
+        "(-g) to get more precise information. \n";
+      return;
+    }
+
+    outs() << FileName << ":" << LineEntry << ": Scop start\n";
+    outs() << FileName << ":" << LineExit << ": Scop end\n";
+  }
+}
+
 bool ScopDetection::runOnFunction(llvm::Function &F) {
   AA = &getAnalysis<AliasAnalysis>();
   SE = &getAnalysis<ScalarEvolution>();
@@ -548,6 +598,10 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
     return false;
 
   findScops(*TopRegion);
+
+  if (ReportLevel >= 1)
+    printLocations();
+
   return false;
 }
 
