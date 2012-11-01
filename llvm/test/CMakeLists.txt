@@ -21,7 +21,12 @@ add_lit_testsuite(check-llvm "Running the LLVM regression tests"
           llc lli llvm-ar llvm-as
           llvm-bcanalyzer llvm-diff
           llvm-dis llvm-extract llvm-dwarfdump
-          llvm-link llvm-mc llvm-nm llvm-objdump llvm-readobj
+          llvm-link
+          llvm-mc
+          llvm-mcmarkup
+          llvm-nm
+          llvm-objdump
+          llvm-readobj
           macho-dump opt
           profile_rt-shared
           FileCheck count not
