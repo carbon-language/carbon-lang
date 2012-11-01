@@ -2300,7 +2300,7 @@ ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP&
             if (value_sb == NULL)
                 Py_XDECREF(child_ptr);
             else
-                ret_val = value_sb->get_sp();
+                ret_val = value_sb->GetSP();
         }
         else
         {

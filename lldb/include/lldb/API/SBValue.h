@@ -413,15 +413,8 @@ public:
     lldb::SBWatchpoint
     WatchPointee (bool resolve_location, bool read, bool write, SBError &error);
 
-    // this must be defined in the .h file because synthetic children as implemented in the core
-    // currently rely on being able to extract the SharedPointer out of an SBValue. if the implementation
-    // is deferred to the .cpp file instead of being inlined here, the platform will fail to link
-    // correctly. however, this is temporary till a better general solution is found. FIXME
     lldb::ValueObjectSP
-    get_sp()
-    {
-        return GetSP();
-    }
+    GetSP () const;
 
 protected:
     friend class SBBlock;
@@ -429,9 +422,6 @@ protected:
     friend class SBThread;
     friend class SBValueList;
 
-    lldb::ValueObjectSP
-    GetSP () const;
-    
     // these calls do the right thing WRT adjusting their settings according to the target's preferences
     void
     SetSP (const lldb::ValueObjectSP &sp);
