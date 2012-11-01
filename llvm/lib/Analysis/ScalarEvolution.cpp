@@ -2586,12 +2586,13 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
   return getNotSCEV(getUMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
 }
 
-const SCEV *ScalarEvolution::getSizeOfExpr(Type *AllocTy, Type *IntPtrTy) {
+const SCEV *ScalarEvolution::getSizeOfExpr(Type *AllocTy) {
   // If we have DataLayout, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
   if (TD)
-    return getConstant(IntPtrTy, TD->getTypeAllocSize(AllocTy));
+    return getConstant(TD->getIntPtrType(getContext()),
+                       TD->getTypeAllocSize(AllocTy));
 
   Constant *C = ConstantExpr::getSizeOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
@@ -2610,13 +2611,13 @@ const SCEV *ScalarEvolution::getAlignOfExpr(Type *AllocTy) {
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
-const SCEV *ScalarEvolution::getOffsetOfExpr(StructType *STy, Type *IntPtrTy,
+const SCEV *ScalarEvolution::getOffsetOfExpr(StructType *STy,
                                              unsigned FieldNo) {
   // If we have DataLayout, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
   if (TD)
-    return getConstant(IntPtrTy,
+    return getConstant(TD->getIntPtrType(getContext()),
                        TD->getStructLayout(STy)->getElementOffset(FieldNo));
 
   Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
@@ -2703,7 +2704,7 @@ Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
 
   // The only other support type is pointer.
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
-  if (TD) return TD->getIntPtrType(Ty);
+  if (TD) return TD->getIntPtrType(getContext());
 
   // Without DataLayout, conservatively assume pointers are 64-bit.
   return Type::getInt64Ty(getContext());
@@ -3156,13 +3157,13 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
     if (StructType *STy = dyn_cast<StructType>(*GTI++)) {
       // For a struct, add the member offset.
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
-      const SCEV *FieldOffset = getOffsetOfExpr(STy, IntPtrTy, FieldNo);
+      const SCEV *FieldOffset = getOffsetOfExpr(STy, FieldNo);
 
       // Add the field offset to the running total offset.
       TotalOffset = getAddExpr(TotalOffset, FieldOffset);
     } else {
       // For an array, add the element offset, explicitly scaled.
-      const SCEV *ElementSize = getSizeOfExpr(*GTI, IntPtrTy);
+      const SCEV *ElementSize = getSizeOfExpr(*GTI);
       const SCEV *IndexS = getSCEV(Index);
       // Getelementptr indices are signed.
       IndexS = getTruncateOrSignExtend(IndexS, IntPtrTy);

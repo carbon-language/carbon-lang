@@ -477,8 +477,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Lower to a call to __misaligned_load(BasePtr).
-  unsigned AS = LD->getAddressSpace();
-  Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext(), AS);
+  Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 
@@ -537,8 +536,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   }
 
   // Lower to a call to __misaligned_store(BasePtr, Value).
-  unsigned AS = ST->getAddressSpace();
-  Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext(), AS);
+  Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 

@@ -376,10 +376,9 @@ APInt ObjectSizeOffsetVisitor::align(APInt Size, uint64_t Align) {
 ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *TD,
                                                  const TargetLibraryInfo *TLI,
                                                  LLVMContext &Context,
-                                                 bool RoundToAlign,
-                                                 unsigned AS)
+                                                 bool RoundToAlign)
 : TD(TD), TLI(TLI), RoundToAlign(RoundToAlign) {
-  IntegerType *IntTy = TD->getIntPtrType(Context, AS);
+  IntegerType *IntTy = TD->getIntPtrType(Context);
   IntTyBits = IntTy->getBitWidth();
   Zero = APInt::getNullValue(IntTyBits);
 }
@@ -562,10 +561,9 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitInstruction(Instruction &I) {
 
 ObjectSizeOffsetEvaluator::ObjectSizeOffsetEvaluator(const DataLayout *TD,
                                                    const TargetLibraryInfo *TLI,
-                                                     LLVMContext &Context,
-                                                     unsigned AS)
+                                                     LLVMContext &Context)
 : TD(TD), TLI(TLI), Context(Context), Builder(Context, TargetFolder(TD)) {
-  IntTy = TD->getIntPtrType(Context, AS);
+  IntTy = TD->getIntPtrType(Context);
   Zero = ConstantInt::get(IntTy, 0);
 }
 

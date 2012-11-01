@@ -524,14 +524,6 @@ std::string DataLayout::getStringRepresentation() const {
   return OS.str();
 }
 
-unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const
-{
-    if (Ty->isPointerTy()) return getTypeSizeInBits(Ty);
-    if (Ty->isVectorTy()
-        && cast<VectorType>(Ty)->getElementType()->isPointerTy())
-      return getTypeSizeInBits(cast<VectorType>(Ty)->getElementType());
-    return getPointerSizeInBits(0);
-}
 
 uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
@@ -679,13 +671,19 @@ IntegerType *DataLayout::getIntPtrType(LLVMContext &C,
 /// least as big as that of a pointer of the given pointer (vector of pointer)
 /// type.
 Type *DataLayout::getIntPtrType(Type *Ty) const {
-  unsigned NumBits = getPointerTypeSizeInBits(Ty);
+#if 0
+  // FIXME: This assert should always have been here, but the review comments
+  // weren't addressed in time, and now there is lots of code "depending" on
+  // this. Uncomment once this is cleaned up.
+  assert(Ty->isPtrOrPtrVectorTy() &&
+         "Expected a pointer or pointer vector type.");
+#endif
+  unsigned NumBits = getTypeSizeInBits(Ty->getScalarType());
   IntegerType *IntTy = IntegerType::get(Ty->getContext(), NumBits);
   if (VectorType *VecTy = dyn_cast<VectorType>(Ty))
     return VectorType::get(IntTy, VecTy->getNumElements());
   return IntTy;
 }
-
 
 uint64_t DataLayout::getIndexedOffset(Type *ptrTy,
                                       ArrayRef<Value *> Indices) const {

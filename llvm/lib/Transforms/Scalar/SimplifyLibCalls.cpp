@@ -311,11 +311,10 @@ struct MemCpyOpt : public LibCallOptimization {
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
-    Type *PT = FT->getParamType(0);
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(PT))
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
     // memcpy(x, y, n) -> llvm.memcpy(x, y, n, 1)
@@ -334,11 +333,10 @@ struct MemMoveOpt : public LibCallOptimization {
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
-    Type *PT = FT->getParamType(0);
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(PT))
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
     // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
@@ -357,11 +355,10 @@ struct MemSetOpt : public LibCallOptimization {
     if (!TD) return 0;
 
     FunctionType *FT = Callee->getFunctionType();
-    Type *PT = FT->getParamType(0);
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(PT))
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
@@ -786,9 +783,8 @@ struct SPrintFOpt : public LibCallOptimization {
       if (!TD) return 0;
 
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
-      Type *AT = CI->getArgOperand(0)->getType();
       B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
-                     ConstantInt::get(TD->getIntPtrType(AT), // Copy the
+                     ConstantInt::get(TD->getIntPtrType(*Context), // Copy the
                                       FormatStr.size() + 1), 1);   // nul byte.
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
@@ -915,9 +911,8 @@ struct FPutsOpt : public LibCallOptimization {
     uint64_t Len = GetStringLength(CI->getArgOperand(0));
     if (!Len) return 0;
     // Known to have no uses (see above).
-    Type *PT = FT->getParamType(0);
     return EmitFWrite(CI->getArgOperand(0),
-                      ConstantInt::get(TD->getIntPtrType(PT), Len-1),
+                      ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
                       CI->getArgOperand(1), B, TD, TLI);
   }
 };
@@ -942,9 +937,8 @@ struct FPrintFOpt : public LibCallOptimization {
       // These optimizations require DataLayout.
       if (!TD) return 0;
 
-      Type *AT = CI->getArgOperand(1)->getType();
       Value *NewCI = EmitFWrite(CI->getArgOperand(1),
-                                ConstantInt::get(TD->getIntPtrType(AT),
+                                ConstantInt::get(TD->getIntPtrType(*Context),
                                                  FormatStr.size()),
                                 CI->getArgOperand(0), B, TD, TLI);
       return NewCI ? ConstantInt::get(CI->getType(), FormatStr.size()) : 0;

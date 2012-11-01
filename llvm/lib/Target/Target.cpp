@@ -64,7 +64,7 @@ unsigned LLVMPointerSizeForAS(LLVMTargetDataRef TD, unsigned AS) {
 }
 
 LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef TD) {
-  return wrap(unwrap(TD)->getIntPtrType(getGlobalContext(), 0));
+  return wrap(unwrap(TD)->getIntPtrType(getGlobalContext()));
 }
 
 LLVMTypeRef LLVMIntPtrTypeForAS(LLVMTargetDataRef TD, unsigned AS) {

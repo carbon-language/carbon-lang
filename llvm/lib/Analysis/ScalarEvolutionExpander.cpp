@@ -417,9 +417,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     // array indexing.
     SmallVector<const SCEV *, 8> ScaledOps;
     if (ElTy->isSized()) {
-      Type *IntPtrTy = SE.TD ? SE.TD->getIntPtrType(PTy) :
-        IntegerType::getInt64Ty(PTy->getContext());
-      const SCEV *ElSize = SE.getSizeOfExpr(ElTy, IntPtrTy);
+      const SCEV *ElSize = SE.getSizeOfExpr(ElTy);
       if (!ElSize->isZero()) {
         SmallVector<const SCEV *, 8> NewOps;
         for (unsigned i = 0, e = Ops.size(); i != e; ++i) {

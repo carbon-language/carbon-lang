@@ -371,7 +371,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // an inbounds GEP because the index can't be out of range.
   if (!GEP->isInBounds() &&
       Idx->getType()->getPrimitiveSizeInBits() > TD->getPointerSizeInBits(AS))
-    Idx = Builder->CreateTrunc(Idx, TD->getIntPtrType(Idx->getContext(), AS));
+    Idx = Builder->CreateTrunc(Idx, TD->getIntPtrType(Idx->getContext()));
 
   // If the comparison is only true for one or two elements, emit direct
   // comparisons.
@@ -539,7 +539,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
     // we don't need to bother extending: the extension won't affect where the
     // computation crosses zero.
     if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth) {
-      Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext(), AS);
+      Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
       VariableIdx = IC.Builder->CreateTrunc(VariableIdx, IntPtrTy);
     }
     return VariableIdx;
@@ -561,7 +561,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
     return 0;
 
   // Okay, we can do this evaluation.  Start by converting the index to intptr.
-  Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext(), AS);
+  Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
   if (VariableIdx->getType() != IntPtrTy)
     VariableIdx = IC.Builder->CreateIntCast(VariableIdx, IntPtrTy,
                                             true /*Signed*/);
@@ -1554,7 +1554,8 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   // Turn icmp (ptrtoint x), (ptrtoint/c) into a compare of the input if the
   // integer type is the same size as the pointer type.
   if (TD && LHSCI->getOpcode() == Instruction::PtrToInt &&
-      TD->getTypeSizeInBits(DestTy) ==
+      TD->getPointerSizeInBits(
+        cast<PtrToIntInst>(LHSCI)->getPointerAddressSpace()) ==
          cast<IntegerType>(DestTy)->getBitWidth()) {
     Value *RHSOp = 0;
     if (Constant *RHSC = dyn_cast<Constant>(ICI.getOperand(1))) {
@@ -2250,7 +2251,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       case Instruction::IntToPtr:
         // icmp pred inttoptr(X), null -> icmp pred X, 0
         if (RHSC->isNullValue() && TD &&
-            TD->getIntPtrType(LHSI->getType()) ==
+            TD->getIntPtrType(RHSC->getContext()) ==
                LHSI->getOperand(0)->getType())
           return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
                         Constant::getNullValue(LHSI->getOperand(0)->getType()));

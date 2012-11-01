@@ -626,7 +626,8 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       if (W != V)
         return findValueImpl(W, OffsetOk, Visited);
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
-    if (CI->isNoopCast(*TD))
+    if (CI->isNoopCast(TD ? TD->getIntPtrType(V->getContext()) :
+                            Type::getInt64Ty(V->getContext())))
       return findValueImpl(CI->getOperand(0), OffsetOk, Visited);
   } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
     if (Value *W = FindInsertedValue(Ex->getAggregateOperand(),
@@ -639,7 +640,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       if (CastInst::isNoopCast(Instruction::CastOps(CE->getOpcode()),
                                CE->getOperand(0)->getType(),
                                CE->getType(),
-                               TD ? TD->getIntPtrType(CE->getType()) :
+                               TD ? TD->getIntPtrType(V->getContext()) :
                                     Type::getInt64Ty(V->getContext())))
         return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {

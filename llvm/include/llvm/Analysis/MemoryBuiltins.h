@@ -168,8 +168,7 @@ class ObjectSizeOffsetVisitor
 
 public:
   ObjectSizeOffsetVisitor(const DataLayout *TD, const TargetLibraryInfo *TLI,
-                          LLVMContext &Context, bool RoundToAlign = false,
-                          unsigned AS = 0);
+                          LLVMContext &Context, bool RoundToAlign = false);
 
   SizeOffsetType compute(Value *V);
 
@@ -230,7 +229,7 @@ class ObjectSizeOffsetEvaluator
 
 public:
   ObjectSizeOffsetEvaluator(const DataLayout *TD, const TargetLibraryInfo *TLI,
-                            LLVMContext &Context, unsigned AS = 0);
+                            LLVMContext &Context);
   SizeOffsetEvalType compute(Value *V);
 
   bool knownSize(SizeOffsetEvalType SizeOffset) {

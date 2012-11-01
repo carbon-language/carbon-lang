@@ -122,13 +122,14 @@ struct MemCpyChkOpt : public InstFortifiedLibCallOptimization {
   virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     this->CI = CI;
     FunctionType *FT = Callee->getFunctionType();
+    LLVMContext &Context = CI->getParent()->getContext();
 
     // Check if this has the right signature.
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(FT->getParamType(0)) ||
-        FT->getParamType(3) != TD->getIntPtrType(FT->getParamType(1)))
+        FT->getParamType(2) != TD->getIntPtrType(Context) ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
       return 0;
 
     if (isFoldable(3, 2, false)) {
@@ -144,13 +145,14 @@ struct MemMoveChkOpt : public InstFortifiedLibCallOptimization {
   virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     this->CI = CI;
     FunctionType *FT = Callee->getFunctionType();
+    LLVMContext &Context = CI->getParent()->getContext();
 
     // Check if this has the right signature.
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(FT->getParamType(0)) ||
-        FT->getParamType(3) != TD->getIntPtrType(FT->getParamType(1)))
+        FT->getParamType(2) != TD->getIntPtrType(Context) ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
       return 0;
 
     if (isFoldable(3, 2, false)) {
@@ -166,13 +168,14 @@ struct MemSetChkOpt : public InstFortifiedLibCallOptimization {
   virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     this->CI = CI;
     FunctionType *FT = Callee->getFunctionType();
+    LLVMContext &Context = CI->getParent()->getContext();
 
     // Check if this has the right signature.
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
         !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(FT->getParamType(0)) ||
-        FT->getParamType(3) != TD->getIntPtrType(FT->getParamType(0)))
+        FT->getParamType(2) != TD->getIntPtrType(Context) ||
+        FT->getParamType(3) != TD->getIntPtrType(Context))
       return 0;
 
     if (isFoldable(3, 2, false)) {
@@ -197,7 +200,7 @@ struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
         FT->getReturnType() != FT->getParamType(0) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
-        FT->getParamType(2) != TD->getIntPtrType(FT->getParamType(0)))
+        FT->getParamType(2) != TD->getIntPtrType(Context))
       return 0;
 
     Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
@@ -222,8 +225,8 @@ struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
 
       Value *Ret =
 	EmitMemCpyChk(Dst, Src,
-                      ConstantInt::get(TD->getIntPtrType(Dst->getType()),
-                      Len), CI->getArgOperand(2), B, TD, TLI);
+                      ConstantInt::get(TD->getIntPtrType(Context), Len),
+                      CI->getArgOperand(2), B, TD, TLI);
       return Ret;
     }
     return 0;
@@ -292,7 +295,7 @@ struct StrNCpyChkOpt : public InstFortifiedLibCallOptimization {
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
         !FT->getParamType(2)->isIntegerTy() ||
-        FT->getParamType(3) != TD->getIntPtrType(FT->getParamType(0)))
+        FT->getParamType(3) != TD->getIntPtrType(Context))
       return 0;
 
     if (isFoldable(3, 2, false)) {
@@ -354,8 +357,7 @@ struct StrCatOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     B.CreateMemCpy(CpyDst, Src,
-                   ConstantInt::get(TD->getIntPtrType(Src->getType()),
-                   Len + 1), 1);
+                   ConstantInt::get(TD->getIntPtrType(*Context), Len + 1), 1);
     return Dst;
   }
 };
@@ -427,9 +429,8 @@ struct StrChrOpt : public LibCallOptimization {
       if (Len == 0 || !FT->getParamType(1)->isIntegerTy(32))// memchr needs i32.
         return 0;
 
-      Type *PT = FT->getParamType(0);
       return EmitMemChr(SrcStr, CI->getArgOperand(1), // include nul.
-                        ConstantInt::get(TD->getIntPtrType(PT), Len),
+                        ConstantInt::get(TD->getIntPtrType(*Context), Len),
                         B, TD, TLI);
     }
 
@@ -523,9 +524,8 @@ struct StrCmpOpt : public LibCallOptimization {
       // These optimizations require DataLayout.
       if (!TD) return 0;
 
-      Type *PT = FT->getParamType(0);
       return EmitMemCmp(Str1P, Str2P,
-                        ConstantInt::get(TD->getIntPtrType(PT),
+                        ConstantInt::get(TD->getIntPtrType(*Context),
                         std::min(Len1, Len2)), B, TD, TLI);
     }
 
@@ -607,7 +607,7 @@ struct StrCpyOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // copy for us.  Make a memcpy to copy the nul byte with align = 1.
     B.CreateMemCpy(Dst, Src,
-		   ConstantInt::get(TD->getIntPtrType(Dst->getType()), Len), 1);
+		   ConstantInt::get(TD->getIntPtrType(*Context), Len), 1);
     return Dst;
   }
 };

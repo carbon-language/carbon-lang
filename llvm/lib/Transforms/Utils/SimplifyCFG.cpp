@@ -535,13 +535,9 @@ Value *SimplifyCFGOpt::isValueEqualityComparison(TerminatorInst *TI) {
           CV = ICI->getOperand(0);
 
   // Unwrap any lossless ptrtoint cast.
-  if (TD && CV) {
-    PtrToIntInst *PTII = NULL;
-    if ((PTII = dyn_cast<PtrToIntInst>(CV)) &&
-        CV->getType() == TD->getIntPtrType(CV->getContext(),
-          PTII->getPointerAddressSpace()))
+  if (TD && CV && CV->getType() == TD->getIntPtrType(CV->getContext()))
+    if (PtrToIntInst *PTII = dyn_cast<PtrToIntInst>(CV))
       CV = PTII->getOperand(0);
-  }
   return CV;
 }
 
@@ -988,7 +984,7 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
       // Convert pointer to int before we switch.
       if (CV->getType()->isPointerTy()) {
         assert(TD && "Cannot switch on pointer without DataLayout");
-        CV = Builder.CreatePtrToInt(CV, TD->getIntPtrType(CV->getType()),
+        CV = Builder.CreatePtrToInt(CV, TD->getIntPtrType(CV->getContext()),
                                     "magicptr");
       }
 
@@ -2716,7 +2712,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *TD,
   if (CompVal->getType()->isPointerTy()) {
     assert(TD && "Cannot switch on pointer without DataLayout");
     CompVal = Builder.CreatePtrToInt(CompVal,
-                                     TD->getIntPtrType(CompVal->getType()),
+                                     TD->getIntPtrType(CompVal->getContext()),
                                      "magicptr");
   }
 

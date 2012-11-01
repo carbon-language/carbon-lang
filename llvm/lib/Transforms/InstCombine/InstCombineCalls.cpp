@@ -996,9 +996,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // Conversion is ok if changing from one pointer type to another or from
         // a pointer to an integer of the same size.
         !((OldRetTy->isPointerTy() || !TD ||
-           OldRetTy == TD->getIntPtrType(NewRetTy)) &&
+           OldRetTy == TD->getIntPtrType(Caller->getContext())) &&
           (NewRetTy->isPointerTy() || !TD ||
-           NewRetTy == TD->getIntPtrType(OldRetTy))))
+           NewRetTy == TD->getIntPtrType(Caller->getContext()))))
       return false;   // Cannot transform this return value.
 
     if (!Caller->use_empty() &&
@@ -1057,13 +1057,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     // Converting from one pointer type to another or between a pointer and an
     // integer of the same size is safe even if we do not have a body.
-    // FIXME: Not sure what to do here, so setting AS to 0.
-    // How can the AS for a function call be outside the default?
     bool isConvertible = ActTy == ParamTy ||
       (TD && ((ParamTy->isPointerTy() ||
-      ParamTy == TD->getIntPtrType(ActTy)) &&
+      ParamTy == TD->getIntPtrType(Caller->getContext())) &&
               (ActTy->isPointerTy() ||
-              ActTy == TD->getIntPtrType(ParamTy))));
+              ActTy == TD->getIntPtrType(Caller->getContext()))));
     if (Callee->isDeclaration() && !isConvertible) return false;
   }
 

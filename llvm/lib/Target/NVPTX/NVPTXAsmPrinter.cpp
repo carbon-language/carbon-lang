@@ -126,9 +126,10 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
       return Base;
 
     // Truncate/sext the offset to the pointer size.
-    unsigned PtrSize = TD.getPointerTypeSizeInBits(PtrVal->getType());
-    if (PtrSize != 64) {
-      int SExtAmount = 64-PtrSize;
+    unsigned AS = PtrVal->getType()->isPointerTy() ?
+      cast<PointerType>(PtrVal->getType())->getAddressSpace() : 0;
+    if (TD.getPointerSizeInBits(AS) != 64) {
+      int SExtAmount = 64-TD.getPointerSizeInBits(AS);
       Offset = (Offset << SExtAmount) >> SExtAmount;
     }
 
@@ -150,7 +151,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
     // Handle casts to pointers by changing them into casts to the appropriate
     // integer type.  This promotes constant folding and simplifies this code.
     Constant *Op = CE->getOperand(0);
-    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CE->getType()),
+    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CV->getContext()),
                                       false/*ZExt*/);
     return LowerConstant(Op, AP);
   }

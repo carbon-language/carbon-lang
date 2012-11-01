@@ -258,14 +258,6 @@ public:
   unsigned getPointerSizeInBits(unsigned AS)    const {
     return getPointerSize(AS) * 8;
   }
-  /// Layout pointer size, in bits, based on the type.
-  /// If this function is called with a pointer type, then
-  /// the type size of the pointer is returned.
-  /// If this function is called with a vector of pointers,
-  /// then the type size of the pointer is returned.
-  /// Otherwise the type sizeo f a default pointer is returned.
-  unsigned getPointerTypeSizeInBits(Type* Ty)    const;
-
   /// Size examples:
   ///
   /// Type        SizeInBits  StoreSizeInBits  AllocSizeInBits[*]
@@ -343,7 +335,7 @@ public:
 
   /// getIntPtrType - Return an integer type with size at least as big as that
   /// of a pointer in the given address space.
-  IntegerType *getIntPtrType(LLVMContext &C, unsigned AddressSpace) const;
+  IntegerType *getIntPtrType(LLVMContext &C, unsigned AddressSpace = 0) const;
 
   /// getIntPtrType - Return an integer (vector of integer) type with size at
   /// least as big as that of a pointer of the given pointer (vector of pointer)

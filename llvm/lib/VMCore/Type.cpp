@@ -215,12 +215,7 @@ unsigned Type::getVectorNumElements() const {
 }
 
 unsigned Type::getPointerAddressSpace() const {
-  if (isPointerTy())
-    return cast<PointerType>(this)->getAddressSpace();
-  if (isVectorTy())
-    return getSequentialElementType()->getPointerAddressSpace();
-  llvm_unreachable("Should never reach here!");
-  return 0;
+  return cast<PointerType>(this)->getAddressSpace();
 }
 
 

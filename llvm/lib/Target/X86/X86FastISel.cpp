@@ -282,9 +282,8 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
 bool X86FastISel::X86FastEmitStore(EVT VT, const Value *Val,
                                    const X86AddressMode &AM) {
   // Handle 'null' like i32/i64 0.
-  if (isa<ConstantPointerNull>(Val)) {
-    Val = Constant::getNullValue(TD.getIntPtrType(Val->getType()));
-  }
+  if (isa<ConstantPointerNull>(Val))
+    Val = Constant::getNullValue(TD.getIntPtrType(Val->getContext()));
 
   // If this is a store of a simple constant, fold the constant into the store.
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
@@ -895,9 +894,8 @@ bool X86FastISel::X86FastEmitCompare(const Value *Op0, const Value *Op1,
   if (Op0Reg == 0) return false;
 
   // Handle 'null' like i32/i64 0.
-  if (isa<ConstantPointerNull>(Op1)) {
-    Op1 = Constant::getNullValue(TD.getIntPtrType(Op0->getType()));
-  }
+  if (isa<ConstantPointerNull>(Op1))
+    Op1 = Constant::getNullValue(TD.getIntPtrType(Op0->getContext()));
 
   // We have two options: compare with register or immediate.  If the RHS of
   // the compare is an immediate that we can fold into this compare, use

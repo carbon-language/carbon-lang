@@ -788,7 +788,7 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   } while (Visited.insert(V));
 
-  Type *IntPtrTy = TD->getIntPtrType(V->getType());
+  Type *IntPtrTy = TD->getIntPtrType(V->getContext());
   return cast<ConstantInt>(ConstantInt::get(IntPtrTy, Offset));
 }
 
@@ -828,7 +828,8 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
         // size of the byval type by the target's pointer size.
         PointerType *PTy = cast<PointerType>(CS.getArgument(I)->getType());
         unsigned TypeSize = TD->getTypeSizeInBits(PTy->getElementType());
-        unsigned PointerSize = TD->getTypeSizeInBits(PTy);
+        unsigned AS = PTy->getAddressSpace();
+        unsigned PointerSize = TD->getPointerSizeInBits(AS);
         // Ceiling division.
         unsigned NumStores = (TypeSize + PointerSize - 1) / PointerSize;
 

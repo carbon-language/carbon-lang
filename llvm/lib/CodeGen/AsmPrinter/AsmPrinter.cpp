@@ -385,8 +385,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - __tlv_bootstrap - used to make sure support exists
     //   - spare pointer, used when mapped by the runtime
     //   - pointer to mangled symbol above with initializer
-    assert(GV->getType()->isPointerTy() && "GV must be a pointer type!");
-    unsigned PtrSize = TD->getTypeSizeInBits(GV->getType())/8;
+    unsigned AS = GV->getType()->getAddressSpace();
+    unsigned PtrSize = TD->getPointerSizeInBits(AS)/8;
     OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
                           PtrSize, 0);
     OutStreamer.EmitIntValue(0, PtrSize, 0);
@@ -1481,9 +1481,9 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     if (Offset == 0)
       return Base;
 
-    assert(CE->getType()->isPointerTy() && "We must have a pointer type!");
+    unsigned AS = cast<PointerType>(CE->getType())->getAddressSpace();
     // Truncate/sext the offset to the pointer size.
-    unsigned Width = TD.getTypeSizeInBits(CE->getType());
+    unsigned Width = TD.getPointerSizeInBits(AS);
     if (Width < 64)
       Offset = SignExtend64(Offset, Width);
 
@@ -1505,7 +1505,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     // Handle casts to pointers by changing them into casts to the appropriate
     // integer type.  This promotes constant folding and simplifies this code.
     Constant *Op = CE->getOperand(0);
-    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CE->getType()),
+    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CV->getContext()),
                                       false/*ZExt*/);
     return lowerConstant(Op, AP);
   }

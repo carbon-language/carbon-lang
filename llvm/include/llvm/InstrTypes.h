@@ -17,7 +17,6 @@
 #define LLVM_INSTRUCTION_TYPES_H
 
 #include "llvm/Instruction.h"
-#include "llvm/DataLayout.h"
 #include "llvm/OperandTraits.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Twine.h"
@@ -576,11 +575,6 @@ public:
   bool isNoopCast(
     Type *IntPtrTy ///< Integer type corresponding to pointer
   ) const;
-
-  /// @brief Determine if this cast is a no-op cast.
-  bool isNoopCast(
-      const DataLayout &DL ///< DataLayout to get the Int Ptr type from.
-      ) const;
 
   /// Determine how a pair of casts can be eliminated, if they can be at all.
   /// This is a helper function for both CastInst and ConstantExpr.
