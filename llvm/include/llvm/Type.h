@@ -346,8 +346,10 @@ public:
   unsigned getVectorNumElements() const;
   Type *getVectorElementType() const { return getSequentialElementType(); }
 
-  unsigned getPointerAddressSpace() const;
   Type *getPointerElementType() const { return getSequentialElementType(); }
+
+  /// \brief Get the address space of this pointer or pointer vector type.
+  unsigned getPointerAddressSpace() const;
   
   //===--------------------------------------------------------------------===//
   // Static members exported by the Type class itself.  Useful for getting

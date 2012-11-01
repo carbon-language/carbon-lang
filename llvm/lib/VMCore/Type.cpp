@@ -215,7 +215,7 @@ unsigned Type::getVectorNumElements() const {
 }
 
 unsigned Type::getPointerAddressSpace() const {
-  return cast<PointerType>(this)->getAddressSpace();
+  return cast<PointerType>(getScalarType())->getAddressSpace();
 }
 
 
