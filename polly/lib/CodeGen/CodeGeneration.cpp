@@ -283,7 +283,7 @@ private:
   ///
   /// Create a list of values that has to be stored into the OpenMP subfuncition
   /// structure.
-  SetVector<Value*> getOMPValues();
+  SetVector<Value*> getOMPValues(const clast_stmt *Body);
 
   /// @brief Update ClastVars and ValueMap according to a value map.
   ///
@@ -461,7 +461,42 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
   Builder.SetInsertPoint(AfterBB->begin());
 }
 
-SetVector<Value*> ClastStmtCodeGen::getOMPValues() {
+// Helper class to determine all scalar parameters used in the basic blocks of a
+// clast. Scalar parameters are scalar variables defined outside of the SCoP.
+class ParameterVisitor : public ClastVisitor {
+  std::set<Value *> Values;
+public:
+  ParameterVisitor() : ClastVisitor(), Values() { }
+
+  void visitUser(const clast_user_stmt *Stmt) {
+    const ScopStmt *S = static_cast<const ScopStmt *>(Stmt->statement->usr);
+    const BasicBlock *BB = S->getBasicBlock();
+
+    // Check all the operands of instructions in the basic block.
+    for (BasicBlock::const_iterator BI = BB->begin(), BE = BB->end(); BI != BE;
+         ++BI) {
+      const Instruction &Inst = *BI;
+      for (Instruction::const_op_iterator II = Inst.op_begin(),
+           IE = Inst.op_end(); II != IE; ++II) {
+        Value *SrcVal = *II;
+
+        if (Instruction *OpInst = dyn_cast<Instruction>(SrcVal))
+          if (S->getParent()->getRegion().contains(OpInst))
+            continue;
+
+        if (isa<Instruction>(SrcVal) || isa<Argument>(SrcVal))
+          Values.insert(SrcVal);
+      }
+    }
+  }
+
+  // Iterator to iterate over the values found.
+  typedef std::set<Value *>::const_iterator const_iterator;
+  inline const_iterator begin() const { return Values.begin(); }
+  inline const_iterator end()   const { return Values.end();   }
+};
+
+SetVector<Value*> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
   SetVector<Value*> Values;
 
   // The clast variables
@@ -477,6 +512,20 @@ SetVector<Value*> ClastStmtCodeGen::getOMPValues() {
       Value *BaseAddr = const_cast<Value*>((*I)->getBaseAddr());
       Values.insert((BaseAddr));
     }
+  }
+
+  // Find the temporaries that are referenced in the clast statements'
+  // basic blocks but are not defined by these blocks (e.g., references
+  // to function arguments or temporaries defined before the start of
+  // the SCoP).
+  ParameterVisitor Params;
+  Params.visit(Body);
+
+  for (ParameterVisitor::const_iterator PI = Params.begin(), PE = Params.end();
+       PI != PE; ++PI) {
+    Value *V = *PI;
+    Values.insert(V);
+    DEBUG(dbgs() << "Adding temporary for OMP copy-in: " << *V << "\n");
   }
 
   return Values;
@@ -525,7 +574,7 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   LB = ExpGen.codegen(For->LB, IntPtrTy);
   UB = ExpGen.codegen(For->UB, IntPtrTy);
 
-  Values = getOMPValues();
+  Values = getOMPValues(For->body);
 
   IV = OMPGen.createParallelLoop(LB, UB, Stride, Values, VMap, &LoopBody);
   BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();

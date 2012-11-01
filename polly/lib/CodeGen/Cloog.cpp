@@ -217,6 +217,40 @@ CloogInput *Cloog::buildCloogInput() {
   CloogInput *Input = cloog_input_alloc(Context, Statements);
   return Input;
 }
+
+void ClastVisitor::visit(const clast_stmt *stmt) {
+  if      (CLAST_STMT_IS_A(stmt, stmt_root))
+    assert(false && "No second root statement expected");
+  else if (CLAST_STMT_IS_A(stmt, stmt_ass))
+    return visitAssignment((const clast_assignment *)stmt);
+  else if (CLAST_STMT_IS_A(stmt, stmt_user))
+    return visitUser((const clast_user_stmt *)stmt);
+  else if (CLAST_STMT_IS_A(stmt, stmt_block))
+    return visitBlock((const clast_block *)stmt);
+  else if (CLAST_STMT_IS_A(stmt, stmt_for))
+    return visitFor((const clast_for *)stmt);
+  else if (CLAST_STMT_IS_A(stmt, stmt_guard))
+    return visitGuard((const clast_guard *)stmt);
+
+  if (stmt->next)
+    visit(stmt->next);
+}
+
+void ClastVisitor::visitAssignment(const clast_assignment *stmt) {
+}
+
+void ClastVisitor::visitBlock(const clast_block *stmt) {
+  visit(stmt->body);
+}
+
+void ClastVisitor::visitFor(const clast_for *stmt) {
+  visit(stmt->body);
+}
+
+void ClastVisitor::visitGuard(const clast_guard *stmt) {
+  visit(stmt->then);
+}
+
 } // End namespace polly.
 
 namespace {

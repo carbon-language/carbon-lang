@@ -64,6 +64,21 @@ namespace polly {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void releaseMemory();
   };
+
+  // Visitor class for clasts.
+  // Only 'visitUser' has to be implemented by subclasses; the default
+  // implementations of the other methods traverse the clast recursively.
+  class ClastVisitor {
+  public:
+    virtual void visit(const clast_stmt *stmt);
+
+    virtual void visitAssignment(const clast_assignment *stmt);
+    virtual void visitBlock(const clast_block *stmt);
+    virtual void visitFor(const clast_for *stmt);
+    virtual void visitGuard(const clast_guard *stmt);
+
+    virtual void visitUser(const clast_user_stmt *stmt) = 0;
+  };
 }
 
 namespace llvm {
