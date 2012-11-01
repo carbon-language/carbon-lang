@@ -58,6 +58,11 @@ static cl::opt<unsigned>
 ReqChainDepth("bb-vectorize-req-chain-depth", cl::init(6), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
+static cl::opt<bool>
+UseChainDepthWithTI("bb-vectorize-use-chain-depth",  cl::init(false),
+  cl::Hidden, cl::desc("Use the chain depth requirement with"
+                       " target information"));
+
 static cl::opt<unsigned>
 SearchLimit("bb-vectorize-search-limit", cl::init(400), cl::Hidden,
   cl::desc("The maximum search distance for instruction pairs"));
@@ -227,6 +232,9 @@ namespace {
                        DenseMap<ValuePair, int> &CandidatePairCostSavings,
                        std::vector<Value *> &PairableInsts, bool NonPow2Len);
 
+    // FIXME: The current implementation does not account for pairs that
+    // are connected in multiple ways. For example:
+    //   C1 = A1 / A2; C2 = A2 / A1 (which may be both direct and a swap)
     enum PairConnectionType {
       PairConnectionDirect,
       PairConnectionSwap,
@@ -1665,20 +1673,39 @@ namespace {
 
       int EffSize = 0;
       if (VTTI) {
+        DenseSet<Value *> PrunedTreeInstrs;
+        for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
+             E = PrunedTree.end(); S != E; ++S) {
+          PrunedTreeInstrs.insert(S->first);
+          PrunedTreeInstrs.insert(S->second);
+        }
+
+        // The set of pairs that have already contributed to the total cost.
+        DenseSet<ValuePair> IncomingPairs;
+
         // The node weights represent the cost savings associated with
         // fusing the pair of instructions.
         for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
              E = PrunedTree.end(); S != E; ++S) {
-          if (getDepthFactor(S->first))
-            EffSize += CandidatePairCostSavings.find(*S)->second;
+          bool FlipOrder = false;
 
-        // The edge weights contribute in a negative sense: they represent
-        // the cost of shuffles.
+          if (getDepthFactor(S->first)) {
+            int ESContrib = CandidatePairCostSavings.find(*S)->second;
+            DEBUG(if (DebugPairSelection) dbgs() << "\tweight {"
+                   << *S->first << " <-> " << *S->second << "} = " <<
+                   ESContrib << "\n");
+            EffSize += ESContrib;
+          }
+
+          // The edge weights contribute in a negative sense: they represent
+          // the cost of shuffles.
           VPPIteratorPair IP = ConnectedPairDeps.equal_range(*S);
           if (IP.first != ConnectedPairDeps.end()) {
             unsigned NumDepsDirect = 0, NumDepsSwap = 0;
             for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
                  Q != IP.second; ++Q) {
+              if (!PrunedTree.count(Q->second))
+                continue;
               DenseMap<VPPair, unsigned>::iterator R =
                 PairConnectionTypes.find(VPPair(Q->second, Q->first));
               assert(R != PairConnectionTypes.end() &&
@@ -1692,12 +1719,14 @@ namespace {
             // If there are more swaps than direct connections, then
             // the pair order will be flipped during fusion. So the real
             // number of swaps is the minimum number.
-            bool FlipOrder = !FixedOrderPairs.count(*S) &&
+            FlipOrder = !FixedOrderPairs.count(*S) &&
               ((NumDepsSwap > NumDepsDirect) ||
                 FixedOrderPairs.count(ValuePair(S->second, S->first)));
 
             for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
                  Q != IP.second; ++Q) {
+              if (!PrunedTree.count(Q->second))
+                continue;
               DenseMap<VPPair, unsigned>::iterator R =
                 PairConnectionTypes.find(VPPair(Q->second, Q->first));
               assert(R != PairConnectionTypes.end() &&
@@ -1707,9 +1736,161 @@ namespace {
               Type *VTy = getVecTypeForPair(Ty1, Ty2);
               if ((R->second == PairConnectionDirect && FlipOrder) ||
                   (R->second == PairConnectionSwap && !FlipOrder)  ||
-                  R->second == PairConnectionSplat)
-                EffSize -= (int) getInstrCost(Instruction::ShuffleVector,
-                                              VTy, VTy);
+                  R->second == PairConnectionSplat) {
+                int ESContrib = (int) getInstrCost(Instruction::ShuffleVector,
+                                                   VTy, VTy);
+                DEBUG(if (DebugPairSelection) dbgs() << "\tcost {" <<
+                  *Q->second.first << " <-> " << *Q->second.second <<
+                    "} -> {" <<
+                  *S->first << " <-> " << *S->second << "} = " <<
+                   ESContrib << "\n");
+                EffSize -= ESContrib;
+              }
+            }
+          }
+
+          // Compute the cost of outgoing edges. We assume that edges outgoing
+          // to shuffles, inserts or extracts can be merged, and so contribute
+          // no additional cost.
+          if (!S->first->getType()->isVoidTy()) {
+            Type *Ty1 = S->first->getType(),
+                 *Ty2 = S->second->getType();
+            Type *VTy = getVecTypeForPair(Ty1, Ty2);
+
+            bool NeedsExtraction = false;
+            for (Value::use_iterator I = S->first->use_begin(),
+                 IE = S->first->use_end(); I != IE; ++I) {
+              if (isa<ShuffleVectorInst>(*I) ||
+                  isa<InsertElementInst>(*I) ||
+                  isa<ExtractElementInst>(*I))
+                continue;
+              if (PrunedTreeInstrs.count(*I))
+                continue;
+              NeedsExtraction = true;
+              break;
+            }
+
+            if (NeedsExtraction) {
+              int ESContrib;
+              if (Ty1->isVectorTy())
+                ESContrib = (int) getInstrCost(Instruction::ShuffleVector,
+                                               Ty1, VTy);
+              else
+                ESContrib = (int) VTTI->getVectorInstrCost(
+                                    Instruction::ExtractElement, VTy, 0);
+
+              DEBUG(if (DebugPairSelection) dbgs() << "\tcost {" <<
+                *S->first << "} = " << ESContrib << "\n");
+              EffSize -= ESContrib;
+            }
+
+            NeedsExtraction = false;
+            for (Value::use_iterator I = S->second->use_begin(),
+                 IE = S->second->use_end(); I != IE; ++I) {
+              if (isa<ShuffleVectorInst>(*I) ||
+                  isa<InsertElementInst>(*I) ||
+                  isa<ExtractElementInst>(*I))
+                continue;
+              if (PrunedTreeInstrs.count(*I))
+                continue;
+              NeedsExtraction = true;
+              break;
+            }
+
+            if (NeedsExtraction) {
+              int ESContrib;
+              if (Ty2->isVectorTy())
+                ESContrib = (int) getInstrCost(Instruction::ShuffleVector,
+                                               Ty2, VTy);
+              else
+                ESContrib = (int) VTTI->getVectorInstrCost(
+                                    Instruction::ExtractElement, VTy, 1);
+              DEBUG(if (DebugPairSelection) dbgs() << "\tcost {" <<
+                *S->second << "} = " << ESContrib << "\n");
+              EffSize -= ESContrib;
+            }
+          }
+
+          // Compute the cost of incoming edges.
+          if (!isa<LoadInst>(S->first) && !isa<StoreInst>(S->first)) {
+            Instruction *S1 = cast<Instruction>(S->first),
+                        *S2 = cast<Instruction>(S->second);
+            for (unsigned o = 0; o < S1->getNumOperands(); ++o) {
+              Value *O1 = S1->getOperand(o), *O2 = S2->getOperand(o);
+
+              // Combining constants into vector constants (or small vector
+              // constants into larger ones are assumed free).
+              if (isa<Constant>(O1) && isa<Constant>(O2))
+                continue;
+
+              if (FlipOrder)
+                std::swap(O1, O2);
+
+              ValuePair VP  = ValuePair(O1, O2);
+              ValuePair VPR = ValuePair(O2, O1);
+
+              // Internal edges are not handled here.
+              if (PrunedTree.count(VP) || PrunedTree.count(VPR))
+                continue;
+
+              Type *Ty1 = O1->getType(),
+                   *Ty2 = O2->getType();
+              Type *VTy = getVecTypeForPair(Ty1, Ty2);
+
+              // Combining vector operations of the same type is also assumed
+              // folded with other operations.
+              if (Ty1 == Ty2 &&
+                  (isa<ShuffleVectorInst>(O1) ||
+                   isa<InsertElementInst>(O1) ||
+                   isa<InsertElementInst>(O1)) &&
+                  (isa<ShuffleVectorInst>(O2) ||
+                   isa<InsertElementInst>(O2) ||
+                   isa<InsertElementInst>(O2)))
+                continue;
+
+              int ESContrib;
+              // This pair has already been formed.
+              if (IncomingPairs.count(VP)) {
+                continue;
+              } else if (IncomingPairs.count(VPR)) {
+                ESContrib = (int) getInstrCost(Instruction::ShuffleVector,
+                                               VTy, VTy);
+              } else if (!Ty1->isVectorTy() && !Ty2->isVectorTy()) {
+                ESContrib = (int) VTTI->getVectorInstrCost(
+                                    Instruction::InsertElement, VTy, 0);
+                ESContrib += (int) VTTI->getVectorInstrCost(
+                                     Instruction::InsertElement, VTy, 1);
+              } else if (!Ty1->isVectorTy()) {
+                // O1 needs to be inserted into a vector of size O2, and then
+                // both need to be shuffled together.
+                ESContrib = (int) VTTI->getVectorInstrCost(
+                                    Instruction::InsertElement, Ty2, 0);
+                ESContrib += (int) getInstrCost(Instruction::ShuffleVector,
+                                                VTy, Ty2);
+              } else if (!Ty2->isVectorTy()) {
+                // O2 needs to be inserted into a vector of size O1, and then
+                // both need to be shuffled together.
+                ESContrib = (int) VTTI->getVectorInstrCost(
+                                    Instruction::InsertElement, Ty1, 0);
+                ESContrib += (int) getInstrCost(Instruction::ShuffleVector,
+                                                VTy, Ty1);
+              } else {
+                Type *TyBig = Ty1, *TySmall = Ty2;
+                if (Ty2->getVectorNumElements() > Ty1->getVectorNumElements())
+                  std::swap(TyBig, TySmall);
+
+                ESContrib = (int) getInstrCost(Instruction::ShuffleVector,
+                                               VTy, TyBig);
+                if (TyBig != TySmall)
+                  ESContrib += (int) getInstrCost(Instruction::ShuffleVector,
+                                                  TyBig, TySmall);
+              }
+
+              DEBUG(if (DebugPairSelection) dbgs() << "\tcost {"
+                     << *O1 << " <-> " << *O2 << "} = " <<
+                     ESContrib << "\n");
+              EffSize -= ESContrib;
+              IncomingPairs.insert(VP);
             }
           }
         }
@@ -1724,7 +1905,8 @@ namespace {
              << *J->first << " <-> " << *J->second << "} of depth " <<
              MaxDepth << " and size " << PrunedTree.size() <<
             " (effective size: " << EffSize << ")\n");
-      if (MaxDepth >= Config.ReqChainDepth &&
+      if (((VTTI && !UseChainDepthWithTI) ||
+            MaxDepth >= Config.ReqChainDepth) &&
           EffSize > 0 && EffSize > BestEffSize) {
         BestMaxDepth = MaxDepth;
         BestEffSize = EffSize;
