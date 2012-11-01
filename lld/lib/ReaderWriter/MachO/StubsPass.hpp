@@ -30,7 +30,10 @@ class StubsPass : public lld::StubsPass {
 public:
   StubsPass(const WriterOptionsMachO &options) 
     : _options(options), 
-      _kindHandler(KindHandler::makeHandler(options.architecture())) {
+      _kindHandler(KindHandler::makeHandler(options.architecture())),
+      _helperCommonAtom(nullptr),
+      _helperCacheAtom(nullptr),
+      _helperBinderAtom(nullptr) {
   }
 
   virtual bool noTextRelocs() {
