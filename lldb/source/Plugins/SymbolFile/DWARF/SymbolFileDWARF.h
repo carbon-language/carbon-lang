@@ -166,16 +166,16 @@ public:
         LayoutInfo () :
             bit_size(0),
             alignment(0),
-            field_offsets()//,
-            //base_offsets(), // We don't need to fill in the base classes, this can be done automatically
-            //vbase_offsets() // We don't need to fill in the virtual base classes, this can be done automatically
+            field_offsets(),
+            base_offsets(),
+            vbase_offsets()
         {
         }
         uint64_t bit_size;
         uint64_t alignment;
         llvm::DenseMap <const clang::FieldDecl *, uint64_t> field_offsets;
-//        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> base_offsets;
-//        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> vbase_offsets;
+        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> base_offsets;
+        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> vbase_offsets;
     };
     //------------------------------------------------------------------
     // PluginInterface protocol

@@ -1873,7 +1873,7 @@ SymbolFileDWARF::ParseChildMembers
                     AccessType accessibility = default_accessibility;
                     bool is_virtual = false;
                     bool is_base_of_class = true;
-                    //off_t member_offset = 0;
+                    off_t member_byte_offset = 0;
                     uint32_t i;
                     for (i=0; i<num_attributes; ++i)
                     {
@@ -1887,31 +1887,31 @@ SymbolFileDWARF::ParseChildMembers
                             case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                             case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                             case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
-//                            case DW_AT_data_member_location:
-//                                if (form_value.BlockData())
-//                                {
-//                                    Value initialValue(0);
-//                                    Value memberOffset(0);
-//                                    const DataExtractor& debug_info_data = get_debug_info_data();
-//                                    uint32_t block_length = form_value.Unsigned();
-//                                    uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
-//                                    if (DWARFExpression::Evaluate (NULL, 
-//                                                                   NULL, 
-//                                                                   NULL, 
-//                                                                   NULL, 
-//                                                                   NULL,
-//                                                                   debug_info_data, 
-//                                                                   block_offset, 
-//                                                                   block_length, 
-//                                                                   eRegisterKindDWARF, 
-//                                                                   &initialValue, 
-//                                                                   memberOffset, 
-//                                                                   NULL))
-//                                    {
-//                                        member_offset = memberOffset.ResolveValue(NULL, NULL).UInt();
-//                                    }
-//                                }
-//                                break;
+                            case DW_AT_data_member_location:
+                                if (form_value.BlockData())
+                                {
+                                    Value initialValue(0);
+                                    Value memberOffset(0);
+                                    const DataExtractor& debug_info_data = get_debug_info_data();
+                                    uint32_t block_length = form_value.Unsigned();
+                                    uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
+                                    if (DWARFExpression::Evaluate (NULL, 
+                                                                   NULL, 
+                                                                   NULL, 
+                                                                   NULL, 
+                                                                   NULL,
+                                                                   debug_info_data, 
+                                                                   block_offset, 
+                                                                   block_length, 
+                                                                   eRegisterKindDWARF, 
+                                                                   &initialValue, 
+                                                                   memberOffset, 
+                                                                   NULL))
+                                    {
+                                        member_byte_offset = memberOffset.ResolveValue(NULL, NULL).UInt();
+                                    }
+                                }
+                                break;
 
                             case DW_AT_accessibility:
                                 accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned());
@@ -1940,6 +1940,17 @@ SymbolFileDWARF::ParseChildMembers
                                                                                                accessibility, 
                                                                                                is_virtual, 
                                                                                                is_base_of_class));
+                        
+                        if (is_virtual)
+                        {
+                            layout_info.vbase_offsets.insert(std::make_pair(ClangASTType::GetAsCXXRecordDecl(class_clang_type),
+                                                                            clang::CharUnits::fromQuantity(member_byte_offset)));
+                        }
+                        else
+                        {
+                            layout_info.base_offsets.insert(std::make_pair(ClangASTType::GetAsCXXRecordDecl(class_clang_type),
+                                                                           clang::CharUnits::fromQuantity(member_byte_offset)));
+                        }
                     }
                 }
             }
@@ -2278,36 +2289,67 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
             
             ast.CompleteTagDeclarationDefinition (clang_type);
             
-            if (!layout_info.field_offsets.empty())
+            if (!layout_info.field_offsets.empty() ||
+                !layout_info.base_offsets.empty()  ||
+                !layout_info.vbase_offsets.empty() )
             {
                 if (type)
                     layout_info.bit_size = type->GetByteSize() * 8;
                 if (layout_info.bit_size == 0)
                     layout_info.bit_size = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_byte_size, 0) * 8;
-                clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-                const clang::RecordType *record_type = clang::dyn_cast<clang::RecordType>(qual_type.getTypePtr());
-                if (record_type)
+                
+                clang::CXXRecordDecl *record_decl = ClangASTType::GetAsCXXRecordDecl(clang_type);
+                if (record_decl)
                 {
-                    const clang::RecordDecl *record_decl = record_type->getDecl();
-                    
                     if (log)
                     {
                         GetObjectFile()->GetModule()->LogMessage (log.get(), 
-                                                                  "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) caching layout info for record_decl = %p, bit_size = %llu, alignment = %llu, field_offsets[%u], base_offsets[0], vbase_offsets[0])",
+                                                                  "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) caching layout info for record_decl = %p, bit_size = %llu, alignment = %llu, field_offsets[%u], base_offsets[%u], vbase_offsets[%u])",
                                                                   clang_type,
                                                                   record_decl,
                                                                   layout_info.bit_size,
                                                                   layout_info.alignment,
-                                                                  (uint32_t)layout_info.field_offsets.size());
+                                                                  (uint32_t)layout_info.field_offsets.size(),
+                                                                  (uint32_t)layout_info.base_offsets.size(),
+                                                                  (uint32_t)layout_info.vbase_offsets.size());
                         
+                        uint32_t idx;
+                        {
                         llvm::DenseMap <const clang::FieldDecl *, uint64_t>::const_iterator pos, end = layout_info.field_offsets.end();
-                        for (pos = layout_info.field_offsets.begin(); pos != end; ++pos)
+                        for (idx = 0, pos = layout_info.field_offsets.begin(); pos != end; ++pos, ++idx)
                         {
                             GetObjectFile()->GetModule()->LogMessage (log.get(), 
-                                                                      "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) field = { bit_offset=%u, name='%s' }",
+                                                                      "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) field[%u] = { bit_offset=%u, name='%s' }",
                                                                       clang_type,
+                                                                      idx,
                                                                       (uint32_t)pos->second,
                                                                       pos->first->getNameAsString().c_str());
+                        }
+                        }
+                        
+                        {
+                        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits>::const_iterator base_pos, base_end = layout_info.base_offsets.end();
+                        for (idx = 0, base_pos = layout_info.base_offsets.begin(); base_pos != base_end; ++base_pos, ++idx)
+                        {
+                            GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                                      "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) base[%u] = { byte_offset=%u, name='%s' }",
+                                                                      clang_type,
+                                                                      idx,
+                                                                      (uint32_t)base_pos->second.getQuantity(),
+                                                                      base_pos->first->getNameAsString().c_str());
+                        }
+                        }
+                        {
+                        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits>::const_iterator vbase_pos, vbase_end = layout_info.vbase_offsets.end();
+                        for (idx = 0, vbase_pos = layout_info.vbase_offsets.begin(); vbase_pos != vbase_end; ++vbase_pos, ++idx)
+                        {
+                            GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                                      "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) vbase[%u] = { byte_offset=%u, name='%s' }",
+                                                                      clang_type,
+                                                                      idx,
+                                                                      (uint32_t)vbase_pos->second.getQuantity(),
+                                                                      vbase_pos->first->getNameAsString().c_str());
+                        }
                         }
                     }
                     m_record_decl_to_layout_map.insert(std::make_pair(record_decl, layout_info));
@@ -7259,6 +7301,8 @@ SymbolFileDWARF::LayoutRecordType (const clang::RecordDecl *record_decl,
         bit_size = pos->second.bit_size;
         alignment = pos->second.alignment;
         field_offsets.swap(pos->second.field_offsets);
+        base_offsets.swap (pos->second.base_offsets);
+        vbase_offsets.swap (pos->second.vbase_offsets);
         m_record_decl_to_layout_map.erase(pos);
         success = true;
     }

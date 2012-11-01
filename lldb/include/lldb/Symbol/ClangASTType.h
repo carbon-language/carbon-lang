@@ -320,6 +320,9 @@ public:
     static lldb::clang_type_t
     RemoveFastQualifiers (lldb::clang_type_t);
 
+    static clang::CXXRecordDecl *
+    GetAsCXXRecordDecl (lldb::clang_type_t opaque_clang_qual_type);
+
     void
     Clear()
     {

@@ -1765,6 +1765,13 @@ ClangASTType::RemoveFastQualifiers (lldb::clang_type_t clang_type)
     return qual_type.getAsOpaquePtr();
 }
 
+clang::CXXRecordDecl *
+ClangASTType::GetAsCXXRecordDecl (lldb::clang_type_t opaque_clang_qual_type)
+{
+    if (opaque_clang_qual_type)
+        return clang::QualType::getFromOpaquePtr(opaque_clang_qual_type)->getAsCXXRecordDecl();
+    return NULL;
+}
 
 bool
 lldb_private::operator == (const lldb_private::ClangASTType &lhs, const lldb_private::ClangASTType &rhs)
