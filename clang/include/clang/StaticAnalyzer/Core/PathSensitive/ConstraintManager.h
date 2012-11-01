@@ -81,7 +81,7 @@ public:
       // FIXME: This is fairly expensive and should be disabled even in
       // Release+Asserts builds.
       assert(assume(State, Cond, false) && "System is over constrained.");
-      return ProgramStatePair(NULL, State);
+      return ProgramStatePair((ProgramStateRef)NULL, State);
     }
 
     ProgramStateRef StFalse = assume(State, Cond, false);
@@ -89,7 +89,7 @@ public:
       // We are careful to return the original state, /not/ StTrue,
       // because we want to avoid having callers generate a new node
       // in the ExplodedGraph.
-      return ProgramStatePair(State, NULL);
+      return ProgramStatePair(State, (ProgramStateRef)NULL);
     }
 
     return ProgramStatePair(StTrue, StFalse);
