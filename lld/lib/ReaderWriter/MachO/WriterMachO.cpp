@@ -206,7 +206,7 @@ private:
   dyld_info_command           *_dyldInfoLoadCommand;
   std::vector<load_command*>   _loadCmds;
   std::vector<ChunkSegInfo>    _sectionInfo;
-  llvm::StringMap<uint32_t> dylibNamesToOrdinal;
+  llvm::StringMap<uint32_t>    _dylibNamesToOrdinal;
 };
 
 
@@ -777,13 +777,13 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
   // Add dylib load commands.
   for (const SharedLibraryAtom* shlibAtom : file.sharedLibrary() ) {
     StringRef installName = shlibAtom->loadName();
-    if ( dylibNamesToOrdinal.count(installName) == 0 ) {
-      uint32_t ord = dylibNamesToOrdinal.size();
-      dylibNamesToOrdinal[installName] = ord;
+    if ( _dylibNamesToOrdinal.count(installName) == 0 ) {
+      uint32_t ord = _dylibNamesToOrdinal.size();
+      _dylibNamesToOrdinal[installName] = ord;
     }
   }
-  for (llvm::StringMap<uint32_t>::iterator it=dylibNamesToOrdinal.begin(),
-                            end=dylibNamesToOrdinal.end(); it != end; ++it) {
+  for (llvm::StringMap<uint32_t>::iterator it=_dylibNamesToOrdinal.begin(),
+                            end=_dylibNamesToOrdinal.end(); it != end; ++it) {
     this->addLoadCommand(new dylib_command(it->first(), is64));
   }
 
