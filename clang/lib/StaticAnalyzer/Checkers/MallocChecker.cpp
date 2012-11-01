@@ -1305,7 +1305,7 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
     // If the symbol is assumed to be NULL, remove it from consideration.
     ConstraintManager &CMgr = state->getConstraintManager();
     ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
-    if (AllocFailed.isConstrainedTrue())
+    if (!AllocFailed.isConstrainedTrue())
       continue;
 
     SymbolRef ReallocSym = I.getData().ReallocatedSym;
