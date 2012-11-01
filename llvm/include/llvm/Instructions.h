@@ -225,6 +225,7 @@ public:
   const Value *getPointerOperand() const { return getOperand(0); }
   static unsigned getPointerOperandIndex() { return 0U; }
 
+  /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
   }
@@ -347,6 +348,7 @@ public:
   const Value *getPointerOperand() const { return getOperand(1); }
   static unsigned getPointerOperandIndex() { return 1U; }
 
+  /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
   }
@@ -517,6 +519,7 @@ public:
   Value *getNewValOperand() { return getOperand(2); }
   const Value *getNewValOperand() const { return getOperand(2); }
   
+  /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
   }
@@ -660,6 +663,7 @@ public:
   Value *getValOperand() { return getOperand(1); }
   const Value *getValOperand() const { return getOperand(1); }
 
+  /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
   }
@@ -793,6 +797,7 @@ public:
     return getPointerOperand()->getType();
   }
 
+  /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperandType()->getPointerAddressSpace();
   }
