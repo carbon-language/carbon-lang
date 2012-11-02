@@ -22,6 +22,8 @@ namespace ento {
 /// The GDM component containing the tainted root symbols. We lazily infer the
 /// taint of the dependent symbols. Currently, this is a map from a symbol to
 /// tag kind. TODO: Should support multiple tag kinds.
+// FIXME: This does not use the nice trait macros because it must be accessible
+// from multiple translation units.
 struct TaintMap {};
 typedef llvm::ImmutableMap<SymbolRef, TaintTagType> TaintMapImpl;
 template<> struct ProgramStateTrait<TaintMap>

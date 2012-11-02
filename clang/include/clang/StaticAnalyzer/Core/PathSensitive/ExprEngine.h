@@ -515,6 +515,8 @@ private:
 
 /// Traits for storing the call processing policy inside GDM.
 /// The GDM stores the corresponding CallExpr pointer.
+// FIXME: This does not use the nice trait macros because it must be accessible
+// from multiple translation units.
 struct ReplayWithoutInlining{};
 template <>
 struct ProgramStateTrait<ReplayWithoutInlining> :

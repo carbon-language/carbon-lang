@@ -104,15 +104,8 @@ private:
 
 } // end anonymous namespace
 
-namespace clang {
-namespace ento {
-  template <>
-  struct ProgramStateTrait<StreamState> 
-    : public ProgramStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
-    static void *GDMIndex() { static int x; return &x; }
-  };
-}
-}
+REGISTER_MAP_WITH_PROGRAMSTATE(StreamMap, SymbolRef, StreamState)
+
 
 bool StreamChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   const FunctionDecl *FD = C.getCalleeDecl(CE);
@@ -235,9 +228,9 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   if (SymbolRef Sym = RetVal.getAsSymbol()) {
     // if RetVal is not NULL, set the symbol's state to Opened.
     stateNotNull =
-      stateNotNull->set<StreamState>(Sym,StreamState::getOpened(CE));
+      stateNotNull->set<StreamMap>(Sym,StreamState::getOpened(CE));
     stateNull =
-      stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
+      stateNull->set<StreamMap>(Sym, StreamState::getOpenFailed(CE));
 
     C.addTransition(stateNotNull);
     C.addTransition(stateNull);
@@ -378,7 +371,7 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
   if (!Sym)
     return state;
   
-  const StreamState *SS = state->get<StreamState>(Sym);
+  const StreamState *SS = state->get<StreamMap>(Sym);
 
   // If the file stream is not tracked, return.
   if (!SS)
@@ -401,7 +394,7 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
   }
   
   // Close the File Descriptor.
-  return state->set<StreamState>(Sym, StreamState::getClosed(CE));
+  return state->set<StreamMap>(Sym, StreamState::getClosed(CE));
 }
 
 void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
@@ -411,7 +404,7 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
          E = SymReaper.dead_end(); I != E; ++I) {
     SymbolRef Sym = *I;
     ProgramStateRef state = C.getState();
-    const StreamState *SS = state->get<StreamState>(Sym);
+    const StreamState *SS = state->get<StreamMap>(Sym);
     // TODO: Shouldn't we have a continue here?
     if (!SS)
       return;
@@ -432,10 +425,9 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 
 void StreamChecker::checkEndPath(CheckerContext &Ctx) const {
   ProgramStateRef state = Ctx.getState();
-  typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
-  SymMap M = state->get<StreamState>();
+  StreamMapTy M = state->get<StreamMap>();
   
-  for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+  for (StreamMapTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     StreamState SS = I->second;
     if (SS.isOpened()) {
       ExplodedNode *N = Ctx.addTransition(state);
@@ -462,12 +454,12 @@ void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   if (!Sym)
     return;
   
-  const StreamState *SS = state->get<StreamState>(Sym);
+  const StreamState *SS = state->get<StreamMap>(Sym);
   if(!SS)
     return;
 
   if (SS->isOpened())
-    state = state->set<StreamState>(Sym, StreamState::getEscaped(S));
+    state = state->set<StreamMap>(Sym, StreamState::getEscaped(S));
 
   C.addTransition(state);
 }
