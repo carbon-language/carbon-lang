@@ -43,15 +43,7 @@ public:
 } // end anonymous namespace
 
 // GDM Entry for tracking lock state.
-namespace { class LockSet {}; }
-namespace clang {
-namespace ento {
-template <> struct ProgramStateTrait<LockSet> :
-  public ProgramStatePartialTrait<llvm::ImmutableList<const MemRegion*> > {
-    static void *GDMIndex() { static int x = 0; return &x; }
-};
-} // end of ento (ProgramState) namespace
-} // end clang namespace
+REGISTER_LIST_WITH_PROGRAMSTATE(LockSet, const MemRegion *)
 
 
 void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
@@ -163,7 +155,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
     return;
   
   ProgramStateRef state = C.getState();
-  llvm::ImmutableList<const MemRegion*> LS = state->get<LockSet>();
+  LockSetTy LS = state->get<LockSet>();
 
   // FIXME: Better analysis requires IPA for wrappers.
   // FIXME: check for double unlocks

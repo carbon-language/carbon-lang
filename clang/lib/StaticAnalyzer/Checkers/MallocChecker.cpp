@@ -338,25 +338,8 @@ private:
 };
 } // end anonymous namespace
 
-typedef llvm::ImmutableMap<SymbolRef, RefState> RegionStateTy;
-typedef llvm::ImmutableMap<SymbolRef, ReallocPair > ReallocMap;
-class RegionState {};
-class ReallocPairs {};
-namespace clang {
-namespace ento {
-  template <>
-  struct ProgramStateTrait<RegionState> 
-    : public ProgramStatePartialTrait<RegionStateTy> {
-    static void *GDMIndex() { static int x; return &x; }
-  };
-
-  template <>
-  struct ProgramStateTrait<ReallocPairs>
-    : public ProgramStatePartialTrait<ReallocMap> {
-    static void *GDMIndex() { static int x; return &x; }
-  };
-}
-}
+REGISTER_MAP_WITH_PROGRAMSTATE(RegionState, SymbolRef, RefState)
+REGISTER_MAP_WITH_PROGRAMSTATE(ReallocPairs, SymbolRef, ReallocPair)
 
 namespace {
 class StopTrackingCallback : public SymbolVisitor {
@@ -1073,8 +1056,8 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   }
   
   // Cleanup the Realloc Pairs Map.
-  ReallocMap RP = state->get<ReallocPairs>();
-  for (ReallocMap::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
+  ReallocPairsTy RP = state->get<ReallocPairs>();
+  for (ReallocPairsTy::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
     if (SymReaper.isDead(I->first) ||
         SymReaper.isDead(I->second.ReallocatedSym)) {
       state = state->remove<ReallocPairs>(I->first);
@@ -1300,8 +1283,8 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
 
   // Realloc returns 0 when reallocation fails, which means that we should
   // restore the state of the pointer being reallocated.
-  ReallocMap RP = state->get<ReallocPairs>();
-  for (ReallocMap::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
+  ReallocPairsTy RP = state->get<ReallocPairs>();
+  for (ReallocPairsTy::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
     // If the symbol is assumed to be NULL, remove it from consideration.
     ConstraintManager &CMgr = state->getConstraintManager();
     ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
@@ -1513,10 +1496,10 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
 
 static SymbolRef findFailedReallocSymbol(ProgramStateRef currState,
                                          ProgramStateRef prevState) {
-  ReallocMap currMap = currState->get<ReallocPairs>();
-  ReallocMap prevMap = prevState->get<ReallocPairs>();
+  ReallocPairsTy currMap = currState->get<ReallocPairs>();
+  ReallocPairsTy prevMap = prevState->get<ReallocPairs>();
 
-  for (ReallocMap::iterator I = prevMap.begin(), E = prevMap.end();
+  for (ReallocPairsTy::iterator I = prevMap.begin(), E = prevMap.end();
        I != E; ++I) {
     SymbolRef sym = I.getKey();
     if (!currMap.lookup(sym))

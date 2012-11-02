@@ -55,16 +55,8 @@ public:
 };
 } // end anonymous namespace
 
-// ProgramState trait - a map from array symbol to it's state.
-typedef llvm::ImmutableMap<SymbolRef, DefinedSVal> ArraySizeM;
-
-namespace { struct ArraySizeMap {}; }
-namespace clang { namespace ento {
-template<> struct ProgramStateTrait<ArraySizeMap>
-    :  public ProgramStatePartialTrait<ArraySizeM > {
-  static void *GDMIndex() { return ObjCContainersChecker::getTag(); }
-};
-}}
+// ProgramState trait - a map from array symbol to its state.
+REGISTER_MAP_WITH_PROGRAMSTATE(ArraySizeMap, SymbolRef, DefinedSVal)
 
 void ObjCContainersChecker::addSizeInfo(const Expr *Array, const Expr *Size,
                                         CheckerContext &C) const {

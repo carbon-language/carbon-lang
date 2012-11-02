@@ -713,15 +713,10 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
 }
 
 /// The GDM component containing the dynamic type info. This is a map from a
-/// symbol to it's most likely type.
-namespace clang {
-namespace ento {
-typedef llvm::ImmutableMap<const MemRegion *, DynamicTypeInfo> DynamicTypeMap;
-template<> struct ProgramStateTrait<DynamicTypeMap>
-    : public ProgramStatePartialTrait<DynamicTypeMap> {
-  static void *GDMIndex() { static int index; return &index; }
-};
-}}
+/// symbol to its most likely type.
+REGISTER_MAP_WITH_PROGRAMSTATE(DynamicTypeMap,
+                               const MemRegion *,
+                               DynamicTypeInfo)
 
 DynamicTypeInfo ProgramState::getDynamicTypeInfo(const MemRegion *Reg) const {
   Reg = Reg->StripCasts();

@@ -24,9 +24,6 @@
 using namespace clang;
 using namespace ento;
 
-namespace { class ConstraintRange {}; }
-static int ConstraintRangeIndex = 0;
-
 /// A Range represents the closed range [from, to].  The caller must
 /// guarantee that from <= to.  Note that Range is immutable, so as not
 /// to subvert RangeSet's immutability.
@@ -280,17 +277,7 @@ public:
 };
 } // end anonymous namespace
 
-typedef llvm::ImmutableMap<SymbolRef,RangeSet> ConstraintRangeTy;
-
-namespace clang {
-namespace ento {
-template<>
-struct ProgramStateTrait<ConstraintRange>
-  : public ProgramStatePartialTrait<ConstraintRangeTy> {
-  static inline void *GDMIndex() { return &ConstraintRangeIndex; }
-};
-}
-}
+REGISTER_MAP_WITH_PROGRAMSTATE(ConstraintRange, SymbolRef, RangeSet)
 
 namespace {
 class RangeConstraintManager : public SimpleConstraintManager{

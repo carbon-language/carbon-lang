@@ -31,6 +31,26 @@ namespace clang {
 namespace ento {
   template <typename T> struct ProgramStatePartialTrait;
 
+  /// Declares a program state trait for type \p Type called \p Name, and
+  /// introduce a typedef named \c NameTy.
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, Type) \
+    namespace { \
+      class Name {}; \
+      typedef Type Name ## Ty; \
+    } \
+    namespace clang { \
+    namespace ento { \
+      template <> \
+      struct ProgramStateTrait<Name> \
+        : public ProgramStatePartialTrait<Name ## Ty> { \
+        static void *GDMIndex() { static int Index; return &Index; } \
+      }; \
+    } \
+    }
+
+
   // Partial-specialization for ImmutableMap.
 
   template <typename Key, typename Data, typename Info>
@@ -70,6 +90,17 @@ namespace ento {
       delete (typename data_type::Factory*) Ctx;
     }
   };
+
+  /// Helper for REGISTER_MAP_WITH_PROGRAMSTATE.
+  #define CLANG_ENTO_PROGRAMSTATE_MAP(Key, Value) llvm::ImmutableMap<Key, Value>
+
+  /// Declares an immutable map of type \p NameTy, suitable for placement into
+  /// the ProgramState.
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_MAP_WITH_PROGRAMSTATE(Name, Key, Value) \
+    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, \
+                                     CLANG_ENTO_PROGRAMSTATE_MAP(Key, Value))
 
 
   // Partial-specialization for ImmutableSet.
@@ -113,6 +144,14 @@ namespace ento {
     }
   };
 
+  /// Declares an immutable list of type \p NameTy, suitable for placement into
+  /// the ProgramState.
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_SET_WITH_PROGRAMSTATE(Name, Elem) \
+    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableSet<Elem>)
+
+
   // Partial-specialization for ImmutableList.
 
   template <typename T>
@@ -150,6 +189,14 @@ namespace ento {
       delete (typename data_type::Factory*) Ctx;
     }
   };
+  
+  /// Declares an immutable list of type \p NameTy, suitable for placement into
+  /// the ProgramState.
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_LIST_WITH_PROGRAMSTATE(Name, Elem) \
+    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableList<Elem>)
+
   
   // Partial specialization for bool.
   template <> struct ProgramStatePartialTrait<bool> {

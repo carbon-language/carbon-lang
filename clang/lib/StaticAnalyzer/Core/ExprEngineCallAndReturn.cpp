@@ -406,26 +406,20 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   return true;
 }
 
-/// The GDM component containing the dynamic dispatch bifurcation info. When
-/// the exact type of the receiver is not known, we want to explore both paths -
-/// one on which we do inline it and the other one on which we don't. This is
-/// done to ensure we do not drop coverage.
-/// This is the map from the receiver region to a bool, specifying either we
-/// consider this region's information precise or not along the given path.
-namespace clang {
-namespace ento {
-enum DynamicDispatchMode { DynamicDispatchModeInlined = 1,
-                           DynamicDispatchModeConservative };
-
-struct DynamicDispatchBifurcationMap {};
-typedef llvm::ImmutableMap<const MemRegion*,
-                           unsigned int> DynamicDispatchBifur;
-template<> struct ProgramStateTrait<DynamicDispatchBifurcationMap>
-    :  public ProgramStatePartialTrait<DynamicDispatchBifur> {
-  static void *GDMIndex() { static int index; return &index; }
-};
-
-}}
+// The GDM component containing the dynamic dispatch bifurcation info. When
+// the exact type of the receiver is not known, we want to explore both paths -
+// one on which we do inline it and the other one on which we don't. This is
+// done to ensure we do not drop coverage.
+// This is the map from the receiver region to a bool, specifying either we
+// consider this region's information precise or not along the given path.
+namespace {
+  enum DynamicDispatchMode {
+    DynamicDispatchModeInlined = 1,
+    DynamicDispatchModeConservative
+  };
+}
+REGISTER_MAP_WITH_PROGRAMSTATE(DynamicDispatchBifurcationMap,
+                               const MemRegion *, unsigned)
 
 bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
                             NodeBuilder &Bldr, ExplodedNode *Pred,
@@ -734,7 +728,7 @@ void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
   // Check if we've performed the split already - note, we only want
   // to split the path once per memory region.
   ProgramStateRef State = Pred->getState();
-  const unsigned int *BState =
+  const unsigned *BState =
                         State->get<DynamicDispatchBifurcationMap>(BifurReg);
   if (BState) {
     // If we are on "inline path", keep inlining if possible.

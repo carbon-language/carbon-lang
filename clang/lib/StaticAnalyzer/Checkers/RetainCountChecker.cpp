@@ -342,20 +342,7 @@ void RefVal::print(raw_ostream &Out) const {
 // RefBindings - State used to track object reference counts.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
-
-namespace clang {
-namespace ento {
-template<>
-struct ProgramStateTrait<RefBindings>
-  : public ProgramStatePartialTrait<RefBindings> {
-  static void *GDMIndex() {
-    static int RefBIndex = 0;
-    return &RefBIndex;
-  }
-};
-}
-}
+REGISTER_MAP_WITH_PROGRAMSTATE(RefBindings, SymbolRef, RefVal)
 
 static inline const RefVal *getRefBinding(ProgramStateRef State,
                                           SymbolRef Sym) {
@@ -3438,15 +3425,15 @@ ProgramStateRef RetainCountChecker::evalAssume(ProgramStateRef state,
   //  too bad since the number of symbols we will track in practice are
   //  probably small and evalAssume is only called at branches and a few
   //  other places.
-  RefBindings B = state->get<RefBindings>();
+  RefBindingsTy B = state->get<RefBindings>();
 
   if (B.isEmpty())
     return state;
 
   bool changed = false;
-  RefBindings::Factory &RefBFactory = state->get_context<RefBindings>();
+  RefBindingsTy::Factory &RefBFactory = state->get_context<RefBindings>();
 
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+  for (RefBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     // Check if the symbol is null stop tracking the symbol.
     ConstraintManager &CMgr = state->getConstraintManager();
     ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
@@ -3607,10 +3594,10 @@ RetainCountChecker::processLeaks(ProgramStateRef state,
 
 void RetainCountChecker::checkEndPath(CheckerContext &Ctx) const {
   ProgramStateRef state = Ctx.getState();
-  RefBindings B = state->get<RefBindings>();
+  RefBindingsTy B = state->get<RefBindings>();
   ExplodedNode *Pred = Ctx.getPredecessor();
 
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+  for (RefBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Pred, /*Tag=*/0,
                                                      Ctx, I->first, I->second);
     if (!state)
@@ -3627,7 +3614,7 @@ void RetainCountChecker::checkEndPath(CheckerContext &Ctx) const {
   B = state->get<RefBindings>();
   SmallVector<SymbolRef, 10> Leaked;
 
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
+  for (RefBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I)
     state = handleSymbolDeath(state, I->first, I->second, Leaked);
 
   processLeaks(state, Leaked, Ctx, Pred);
@@ -3651,7 +3638,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   ExplodedNode *Pred = C.getPredecessor();
 
   ProgramStateRef state = C.getState();
-  RefBindings B = state->get<RefBindings>();
+  RefBindingsTy B = state->get<RefBindings>();
 
   // Update counts from autorelease pools
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
@@ -3684,7 +3671,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     return;
 
   // Now generate a new node that nukes the old bindings.
-  RefBindings::Factory &F = state->get_context<RefBindings>();
+  RefBindingsTy::Factory &F = state->get_context<RefBindings>();
 
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
        E = SymReaper.dead_end(); I != E; ++I)
@@ -3697,12 +3684,12 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 void RetainCountChecker::printState(raw_ostream &Out, ProgramStateRef State,
                                     const char *NL, const char *Sep) const {
 
-  RefBindings B = State->get<RefBindings>();
+  RefBindingsTy B = State->get<RefBindings>();
 
   if (!B.isEmpty())
     Out << Sep << NL;
 
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+  for (RefBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     Out << I->first << " : ";
     I->second.print(Out);
     Out << NL;

@@ -188,21 +188,9 @@ public:
                                             NonLoc right) const;
 };
 
-class CStringLength {
-public:
-  typedef llvm::ImmutableMap<const MemRegion *, SVal> EntryMap;
-};
 } //end anonymous namespace
 
-namespace clang {
-namespace ento {
-  template <>
-  struct ProgramStateTrait<CStringLength> 
-    : public ProgramStatePartialTrait<CStringLength::EntryMap> {
-    static void *GDMIndex() { return CStringChecker::getTag(); }
-  };
-}
-}
+REGISTER_MAP_WITH_PROGRAMSTATE(CStringLength, const MemRegion *, SVal)
 
 //===----------------------------------------------------------------------===//
 // Individual checks and utility methods.
@@ -1878,7 +1866,7 @@ void CStringChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
 }
 
 bool CStringChecker::wantsRegionChangeUpdate(ProgramStateRef state) const {
-  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  CStringLengthTy Entries = state->get<CStringLength>();
   return !Entries.isEmpty();
 }
 
@@ -1888,7 +1876,7 @@ CStringChecker::checkRegionChanges(ProgramStateRef state,
                                    ArrayRef<const MemRegion *> ExplicitRegions,
                                    ArrayRef<const MemRegion *> Regions,
                                    const CallEvent *Call) const {
-  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  CStringLengthTy Entries = state->get<CStringLength>();
   if (Entries.isEmpty())
     return state;
 
@@ -1908,10 +1896,10 @@ CStringChecker::checkRegionChanges(ProgramStateRef state,
     }
   }
 
-  CStringLength::EntryMap::Factory &F = state->get_context<CStringLength>();
+  CStringLengthTy::Factory &F = state->get_context<CStringLength>();
 
   // Then loop over the entries in the current state.
-  for (CStringLength::EntryMap::iterator I = Entries.begin(),
+  for (CStringLengthTy::iterator I = Entries.begin(),
        E = Entries.end(); I != E; ++I) {
     const MemRegion *MR = I.getKey();
 
@@ -1938,9 +1926,9 @@ CStringChecker::checkRegionChanges(ProgramStateRef state,
 void CStringChecker::checkLiveSymbols(ProgramStateRef state,
                                       SymbolReaper &SR) const {
   // Mark all symbols in our string length map as valid.
-  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  CStringLengthTy Entries = state->get<CStringLength>();
 
-  for (CStringLength::EntryMap::iterator I = Entries.begin(), E = Entries.end();
+  for (CStringLengthTy::iterator I = Entries.begin(), E = Entries.end();
        I != E; ++I) {
     SVal Len = I.getData();
 
@@ -1956,12 +1944,12 @@ void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
     return;
 
   ProgramStateRef state = C.getState();
-  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  CStringLengthTy Entries = state->get<CStringLength>();
   if (Entries.isEmpty())
     return;
 
-  CStringLength::EntryMap::Factory &F = state->get_context<CStringLength>();
-  for (CStringLength::EntryMap::iterator I = Entries.begin(), E = Entries.end();
+  CStringLengthTy::Factory &F = state->get_context<CStringLength>();
+  for (CStringLengthTy::iterator I = Entries.begin(), E = Entries.end();
        I != E; ++I) {
     SVal Len = I.getData();
     if (SymbolRef Sym = Len.getAsSymbol()) {
