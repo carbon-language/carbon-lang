@@ -213,6 +213,11 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
 
   // Handle scalar conversions.
   if (!Src->isVectorTy() && !Dst->isVectorTy()) {
+
+    // Scalar bitcasts and truncs are usually free.
+    if (Opcode == Instruction::BitCast || Opcode == Instruction::Trunc)
+      return 0;
+
     // Just check the op cost. If the operation is legal then assume it costs 1.
     if (!TLI->isOperationExpand(ISD, DstLT.second))
       return  1;
