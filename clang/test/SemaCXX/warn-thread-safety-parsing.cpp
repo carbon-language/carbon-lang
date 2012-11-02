@@ -1464,4 +1464,26 @@ class Foo {
 } // end namespace StaticScopeTest
 
 
+namespace FunctionAttributesInsideClass_ICE_Test {
+
+class Foo {
+public:
+  /*  Originally found when parsing foo() as an ordinary method after the
+   *  the following:
+
+  template <class T>
+  void syntaxErrorMethod(int i) {
+    if (i) {
+      foo(
+    }
+  }
+  */
+
+  void method() {
+    void foo() EXCLUSIVE_LOCKS_REQUIRED(mu); // \
+      // expected-error {{use of undeclared identifier 'mu'}}
+  }
+};
+
+}  // end namespace FunctionAttributesInsideClass_ICE_Test
 

@@ -143,7 +143,7 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
 
           // Attributes in a class are parsed at the end of the class, along
           // with other late-parsed declarations.
-          if (!ClassStack.empty())
+          if (!ClassStack.empty() && !LateAttrs->parseSoon())
             getCurrentClass().LateParsedDeclarations.push_back(LA);
 
           // consume everything up to and including the matching right parens
@@ -871,6 +871,8 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
 /// \brief Parse all attributes in LAs, and attach them to Decl D.
 void Parser::ParseLexedAttributeList(LateParsedAttrList &LAs, Decl *D,
                                      bool EnterScope, bool OnDefinition) {
+  assert(LAs.parseSoon() &&
+         "Attribute list should be marked for immediate parsing.");
   for (unsigned i = 0, ni = LAs.size(); i < ni; ++i) {
     if (D)
       LAs[i]->addDecl(D);
@@ -1413,7 +1415,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
   // Save late-parsed attributes for now; they need to be parsed in the
   // appropriate function scope after the function Decl has been constructed.
-  LateParsedAttrList LateParsedAttrs;
+  // These will be parsed in ParseFunctionDefinition or ParseLexedAttrList.
+  LateParsedAttrList LateParsedAttrs(true);
   if (D.isFunctionDeclarator())
     MaybeParseGNUAttributes(D, &LateParsedAttrs);
 

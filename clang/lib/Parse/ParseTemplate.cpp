@@ -246,7 +246,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return 0;
   }
 
-  LateParsedAttrList LateParsedAttrs;
+  LateParsedAttrList LateParsedAttrs(true);
   if (DeclaratorInfo.isFunctionDeclarator())
     MaybeParseGNUAttributes(DeclaratorInfo, &LateParsedAttrs);
 

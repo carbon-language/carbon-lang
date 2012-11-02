@@ -848,9 +848,16 @@ private:
     void addDecl(Decl *D) { Decls.push_back(D); }
   };
 
-  /// A list of late parsed attributes.  Used by ParseGNUAttributes.
-  typedef llvm::SmallVector<LateParsedAttribute*, 2> LateParsedAttrList;
+  // A list of late-parsed attributes.  Used by ParseGNUAttributes.
+  class LateParsedAttrList: public llvm::SmallVector<LateParsedAttribute*, 2> {
+  public:
+    LateParsedAttrList(bool PSoon = false) : ParseSoon(PSoon) { }
 
+    bool parseSoon() { return ParseSoon; }
+
+  private:
+    bool ParseSoon;  // Are we planning to parse these shortly after creation?
+  };
 
   /// Contains the lexed tokens of a member function definition
   /// which needs to be parsed at the end of the class declaration
