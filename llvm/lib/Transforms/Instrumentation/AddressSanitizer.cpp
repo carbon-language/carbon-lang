@@ -509,7 +509,7 @@ bool AddressSanitizer::ShouldInstrumentGlobal(GlobalVariable *G) {
   if (BL->isIn(*G)) return false;
   if (!Ty->isSized()) return false;
   if (!G->hasInitializer()) return false;
-  if (GlobalsCreatedByAsan.count(G)) return false; // Our own global.
+  if (GlobalsCreatedByAsan.count(G)) return false;  // Our own global.
   // Touch only those globals that will not be defined in other modules.
   // Don't handle ODR type linkages since other modules may be built w/o asan.
   if (G->getLinkage() != GlobalVariable::ExternalLinkage &&
@@ -1092,7 +1092,7 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
   Value *BasePlus1 = IRB.CreateAdd(LocalStackBase,
                                    ConstantInt::get(IntptrTy, LongSize/8));
   BasePlus1 = IRB.CreateIntToPtr(BasePlus1, IntptrPtrTy);
-  GlobalVariable *StackDescriptionGlobal = 
+  GlobalVariable *StackDescriptionGlobal =
       createPrivateGlobalForString(*F.getParent(), StackDescription.str());
   GlobalsCreatedByAsan.insert(StackDescriptionGlobal);
   Value *Description = IRB.CreatePointerCast(StackDescriptionGlobal, IntptrTy);
