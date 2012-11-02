@@ -3822,7 +3822,7 @@ PreprocessedEntityID ASTReader::findNextPreprocessedEntity(
          EndI = GlobalSLocOffsetMap.end(); SLocMapI != EndI; ++SLocMapI) {
     ModuleFile &M = *SLocMapI->second;
     if (M.NumPreprocessedEntities)
-      return getGlobalPreprocessedEntityID(M, M.BasePreprocessedEntityID);
+      return M.BasePreprocessedEntityID;
   }
 
   return getTotalNumPreprocessedEntities();
@@ -3905,8 +3905,7 @@ ASTReader::findBeginPreprocessedEntity(SourceLocation BLoc) const {
   if (PPI == pp_end)
     return findNextPreprocessedEntity(SLocMapI);
 
-  return getGlobalPreprocessedEntityID(M,
-                                 M.BasePreprocessedEntityID + (PPI - pp_begin));
+  return M.BasePreprocessedEntityID + (PPI - pp_begin);
 }
 
 /// \brief Returns the first preprocessed entity ID that begins after \arg ELoc.
@@ -3935,8 +3934,7 @@ ASTReader::findEndPreprocessedEntity(SourceLocation ELoc) const {
   if (PPI == pp_end)
     return findNextPreprocessedEntity(SLocMapI);
 
-  return getGlobalPreprocessedEntityID(M,
-                                 M.BasePreprocessedEntityID + (PPI - pp_begin));
+  return M.BasePreprocessedEntityID + (PPI - pp_begin);
 }
 
 /// \brief Returns a pair of [Begin, End) indices of preallocated
