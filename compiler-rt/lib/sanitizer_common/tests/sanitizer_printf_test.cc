@@ -28,8 +28,14 @@ TEST(Printf, Basic) {
       (unsigned)10, (unsigned long)11, // NOLINT
       (void*)0x123, "_string_");
   EXPECT_EQ(len, strlen(buf));
-  EXPECT_STREQ("a-1b-2c4294967292e5fahbq"
-               "0x000000000123e_string_r", buf);
+  void *ptr;
+  if (sizeof(ptr) == 4) {
+    EXPECT_STREQ("a-1b-2c4294967292e5fahbq"
+                 "0x00000123e_string_r", buf);
+  } else {
+    EXPECT_STREQ("a-1b-2c4294967292e5fahbq"
+                 "0x000000000123e_string_r", buf);
+  }
 }
 
 TEST(Printf, OverflowStr) {
@@ -61,7 +67,13 @@ TEST(Printf, OverflowInt) {
 
 TEST(Printf, OverflowUint) {
   char buf[] = "123456789";
-  internal_snprintf(buf, 4, "a%zx", (unsigned long)0x123456789);  // NOLINT
+  uptr val;
+  if (sizeof(val) == 4) {
+    val = (uptr)0x12345678;
+  } else {
+    val = (uptr)0x123456789ULL;
+  }
+  internal_snprintf(buf, 4, "a%zx", val);  // NOLINT
   EXPECT_STREQ("a12", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -74,7 +86,13 @@ TEST(Printf, OverflowUint) {
 
 TEST(Printf, OverflowPtr) {
   char buf[] = "123456789";
-  internal_snprintf(buf, 4, "%p", (void*)0x123456789);  // NOLINT
+  void *p;
+  if (sizeof(p) == 4) {
+    p = (void*)0x1234567;
+  } else {
+    p = (void*)0x123456789ULL;
+  }
+  internal_snprintf(buf, 4, "%p", p);  // NOLINT
   EXPECT_STREQ("0x0", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
