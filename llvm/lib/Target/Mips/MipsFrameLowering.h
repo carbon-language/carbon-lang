@@ -34,6 +34,9 @@ public:
                                          const MipsSubtarget &ST);
 
   bool hasFP(const MachineFunction &MF) const;
+
+protected:
+  uint64_t estimateStackSize(const MachineFunction &MF) const;
 };
 
 /// Create MipsInstrInfo objects.
