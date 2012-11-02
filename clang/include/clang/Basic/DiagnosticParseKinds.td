@@ -352,7 +352,7 @@ def warn_cxx98_compat_static_assert : Warning<
   "static_assert declarations are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_paren_after_colon_colon : Error<
-  "unexpected parentheses after '::'">;
+  "unexpected parenthesis after '::'">;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<
