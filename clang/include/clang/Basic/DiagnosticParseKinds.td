@@ -50,7 +50,7 @@ def warn_duplicate_declspec : Warning<"duplicate '%0' declaration specifier">,
 def ext_plain_complex : ExtWarn<
   "plain '_Complex' requires a type specifier; assuming '_Complex double'">;
 def ext_integer_complex : Extension<
-  "complex integer types are an extension">;
+  "complex integer types are a GNU extension">, InGroup<GNU>;
 def ext_thread_before : Extension<"'__thread' before '%0'">;
 
 def ext_empty_struct_union : Extension<
@@ -445,7 +445,8 @@ def err_expected_member_or_base_name : Error<
 def err_expected_lbrace_after_base_specifiers : Error<
   "expected '{' after base class list">;
 def ext_ellipsis_exception_spec : Extension<
-  "exception specification of '...' is a Microsoft extension">;
+  "exception specification of '...' is a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_dynamic_and_noexcept_specification : Error<
   "cannot have both throw() and noexcept() clause on the same function">;
 def warn_cxx98_compat_noexcept_decl : Warning<

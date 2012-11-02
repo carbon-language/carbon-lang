@@ -40,7 +40,7 @@ _Complex double test1() {
 }
 
 _Complex double test2() {
-  return 1.0if;    // expected-warning {{imaginary constants are an extension}}
+  return 1.0if;    // expected-warning {{imaginary constants are a GNU extension}}
 }
 
 // rdar://6097308

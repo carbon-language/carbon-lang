@@ -127,15 +127,16 @@ def warn_char_constant_too_large : Warning<
 def err_multichar_utf_character_literal : Error<
   "Unicode character literals may not contain multiple characters">;
 def err_exponent_has_no_digits : Error<"exponent has no digits">;
-def ext_imaginary_constant : Extension<"imaginary constants are an extension">;
+def ext_imaginary_constant : Extension<
+  "imaginary constants are a GNU extension">, InGroup<GNU>;
 def err_hexconstant_requires_exponent : Error<
   "hexadecimal floating constants require an exponent">;
 def err_hexconstant_requires_digits : Error<
   "hexadecimal floating constants require a significand">;
 def ext_hexconstant_invalid : Extension<
-  "hexadecimal floating constants are a C99 feature">;
+  "hexadecimal floating constants are a C99 feature">, InGroup<C99>;
 def ext_binary_literal : Extension<
-  "binary integer literals are an extension">;
+  "binary integer literals are a GNU extension">, InGroup<GNU>;
 def err_pascal_string_too_long : Error<"Pascal string is too long">;
 def warn_octal_escape_too_large : ExtWarn<"octal escape sequence out of range">;
 def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
