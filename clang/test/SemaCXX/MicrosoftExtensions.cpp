@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -Wmicrosoft -verify -fms-extensions -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -Wmicrosoft -Wc++11-extensions -Wno-long-long -verify -fms-extensions -fexceptions -fcxx-exceptions
 
 
 // ::type_info is predeclared with forward class declartion
@@ -112,11 +112,11 @@ const int seventeen = 17;
 typedef int Int;
 
 struct X0 {
-  enum E1 : Int { SomeOtherValue } field; // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
+  enum E1 : Int { SomeOtherValue } field; // expected-warning{{enumeration types with a fixed underlying type are a C++11 extension}}
   enum E1 : seventeen;
 };
 
-enum : long long {  // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
+enum : long long {  // expected-warning{{enumeration types with a fixed underlying type are a C++11 extension}}
   SomeValue = 0x100000000
 };
 

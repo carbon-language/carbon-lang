@@ -3233,11 +3233,14 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       SourceRange Range;
       BaseType = ParseTypeName(&Range);
 
-      if (!getLangOpts().CPlusPlus0x && !getLangOpts().ObjC2)
-        Diag(StartLoc, diag::ext_ms_enum_fixed_underlying_type)
-          << Range;
-      if (getLangOpts().CPlusPlus0x)
+      if (getLangOpts().CPlusPlus0x) {
         Diag(StartLoc, diag::warn_cxx98_compat_enum_fixed_underlying_type);
+      } else if (!getLangOpts().ObjC2) {
+        if (getLangOpts().CPlusPlus)
+          Diag(StartLoc, diag::ext_cxx11_enum_fixed_underlying_type) << Range;
+        else
+          Diag(StartLoc, diag::ext_c_enum_fixed_underlying_type) << Range;
+      }
     }
   }
 

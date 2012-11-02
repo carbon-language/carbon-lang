@@ -86,8 +86,11 @@ def err_enumerator_list_missing_comma : Error<
   "missing ',' between enumerators">;
 def err_enumerator_unnamed_no_def : Error<
   "unnamed enumeration must be a definition">;
-def ext_ms_enum_fixed_underlying_type : Extension<
-  "enumeration types with a fixed underlying type are a Microsoft extension">, 
+def ext_cxx11_enum_fixed_underlying_type : Extension<
+  "enumeration types with a fixed underlying type are a C++11 extension">, 
+  InGroup<CXX11>;
+def ext_c_enum_fixed_underlying_type : Extension<
+  "enumeration types with a fixed underlying type are a Microsoft extension">,
   InGroup<Microsoft>;
 def warn_cxx98_compat_enum_fixed_underlying_type : Warning<
   "enumeration types with a fixed underlying type are incompatible with C++98">,
