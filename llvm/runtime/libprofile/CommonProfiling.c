@@ -28,14 +28,35 @@
 
 static char *SavedArgs = 0;
 static unsigned SavedArgsLength = 0;
+static const char *SavedEnvVar = 0;
 
 static const char *OutputFilename = "llvmprof.out";
 
+/* check_environment_variable - Check to see if the LLVMPROF_OUTPUT environment
+ * variable is set.  If it is then save it and set OutputFilename.
+ */
+static void check_environment_variable(void) {
+  if (SavedEnvVar) return; /* Guarantee that we can't leak memory. */
+
+  const char *EnvVar = getenv("LLVMPROF_OUTPUT");
+  if (EnvVar) {
+    /* The string that getenv returns is allowed to be statically allocated,
+     * which means it may be changed by future calls to getenv, so copy it.
+     */
+    SavedEnvVar = strdup(EnvVar);
+    OutputFilename = SavedEnvVar;
+  }
+}
+
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
+ * If either the LLVMPROF_OUTPUT environment variable or the -llvmprof-output
+ * command line argument are set then change OutputFilename to the provided
+ * value.  The command line argument value overrides the environment variable.
  */
 int save_arguments(int argc, const char **argv) {
   unsigned Length, i;
+  if (!SavedEnvVar && !SavedArgs) check_environment_variable();
   if (SavedArgs || !argv) return argc;  /* This can be called multiple times */
 
   /* Check to see if there are any arguments passed into the program for the
@@ -54,6 +75,7 @@ int save_arguments(int argc, const char **argv) {
         puts("-llvmprof-output requires a filename argument!");
       else {
         OutputFilename = strdup(argv[1]);
+        if (SavedEnvVar) { free((void *)SavedEnvVar); SavedEnvVar = 0; }
         memmove((char**)&argv[1], &argv[2], (argc-1)*sizeof(char*));
         --argc;
       }
