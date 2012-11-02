@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s
-; ModuleID = '20100720-MultipleConditions.s'
 
 ;int bar1();
 ;int bar2();
