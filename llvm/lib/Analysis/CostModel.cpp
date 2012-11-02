@@ -150,6 +150,24 @@ unsigned CostModelAnalysis::getInstructionCost(Instruction *I) const {
     Type *SrcTy = I->getOperand(0)->getType();
     return VTTI->getCastInstrCost(I->getOpcode(), I->getType(), SrcTy);
   }
+  case Instruction::ExtractElement: {
+    ExtractElementInst * EEI = cast<ExtractElementInst>(I);
+    ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1));
+    unsigned Idx = -1;
+    if (CI)
+      Idx = CI->getZExtValue();
+    return VTTI->getVectorInstrCost(I->getOpcode(),
+                                    EEI->getOperand(0)->getType(), Idx);
+  }
+  case Instruction::InsertElement: {
+      InsertElementInst * IE = cast<InsertElementInst>(I);
+      ConstantInt *CI = dyn_cast<ConstantInt>(IE->getOperand(2));
+      unsigned Idx = -1;
+      if (CI)
+        Idx = CI->getZExtValue();
+      return VTTI->getVectorInstrCost(I->getOpcode(),
+                                      IE->getType(), Idx);
+    }
   default:
     // We don't have any information on this instruction.
     return -1;

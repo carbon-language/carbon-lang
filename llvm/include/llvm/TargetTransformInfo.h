@@ -179,8 +179,9 @@ public:
   }
 
   /// Returns the expected cost of vector Insert and Extract.
+  /// Use -1 to indicate that there is no information on the index value.
   virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index = 0) const {
+                                      unsigned Index = -1) const {
     return 1;
   }
 
