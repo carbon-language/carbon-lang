@@ -22,8 +22,6 @@ def : DiagGroup<"address">;
 def AddressOfTemporary : DiagGroup<"address-of-temporary">;
 def : DiagGroup<"aggregate-return">;
 def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
-def : DiagGroup<"attributes">;
-def : DiagGroup<"bad-function-cast">;
 def Availability : DiagGroup<"availability">;
 def Section : DiagGroup<"section">;
 def AutoImport : DiagGroup<"auto-import">;
@@ -45,7 +43,6 @@ def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
-def : DiagGroup<"declaration-after-statement">;
 def DefaultArgSpecialMember : DiagGroup<"default-arg-special-member">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 
@@ -117,7 +114,6 @@ def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
 def FlexibleArrayExtensions : DiagGroup<"flexible-array-extensions">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def GlobalConstructors : DiagGroup<"global-constructors">;
-def : DiagGroup<"idiomatic-parentheses">;
 def BitwiseOpParentheses: DiagGroup<"bitwise-op-parentheses">;
 def LogicalOpParentheses: DiagGroup<"logical-op-parentheses">;
 def ShiftOpParentheses: DiagGroup<"shift-op-parentheses">;
@@ -129,7 +125,6 @@ def IncompleteUmbrella : DiagGroup<"incomplete-umbrella">;
 def KNRPromotedParameter : DiagGroup<"knr-promoted-parameter">;
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
-def : DiagGroup<"int-to-pointer-cast">;
 def : DiagGroup<"invalid-pch">;
 def LiteralRange : DiagGroup<"literal-range">;
 def LocalTypeTemplateArgs : DiagGroup<"local-type-template-args",
@@ -141,10 +136,8 @@ def MissingBraces : DiagGroup<"missing-braces">;
 def MissingDeclarations: DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
 def : DiagGroup<"missing-include-dirs">;
-def : DiagGroup<"missing-noreturn">;
 def MultiChar : DiagGroup<"multichar">;
 def : DiagGroup<"nested-externs">;
-def : DiagGroup<"newline-eof">;
 def CXX11LongLong : DiagGroup<"c++11-long-long">;
 def LongLong : DiagGroup<"long-long", [CXX11LongLong]>;
 def MismatchedTags : DiagGroup<"mismatched-tags">;
@@ -212,7 +205,6 @@ def DuplicateDeclSpecifier : DiagGroup<"duplicate-decl-specifier">;
 def CompareDistinctPointerType : DiagGroup<"compare-distinct-pointer-types">;
 
 // Preprocessor warnings.
-def : DiagGroup<"builtin-macro-redefined">;
 def AmbiguousMacro : DiagGroup<"ambiguous-macro">;
 
 // Just silence warnings about -Wstrict-aliasing for now.
@@ -295,7 +287,6 @@ def Selector : DiagGroup<"selector">;
 def Protocol : DiagGroup<"protocol">;
 def SuperSubClassMismatch : DiagGroup<"super-class-method-mismatch">;
 def OverridingMethodMismatch : DiagGroup<"overriding-method-mismatch">;
-def : DiagGroup<"variadic-macros">;
 def VariadicMacros : DiagGroup<"variadic-macros">;
 def VectorConversion : DiagGroup<"vector-conversion">;      // clang specific
 def VexingParse : DiagGroup<"vexing-parse">;
