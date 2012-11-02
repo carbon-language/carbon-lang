@@ -1053,7 +1053,7 @@ void SubtargetEmitter::EmitSchedClassTables(SchedClassTables &SchedTables,
       continue;
 
     std::vector<MCSchedClassDesc> &SCTab =
-      SchedTables.ProcSchedClasses[1 + PI - SchedModels.procModelBegin()];
+      SchedTables.ProcSchedClasses[1 + (PI - SchedModels.procModelBegin())];
 
     OS << "\n// {Name, NumMicroOps, BeginGroup, EndGroup,"
        << " WriteProcResIdx,#, WriteLatencyIdx,#, ReadAdvanceIdx,#}\n";
