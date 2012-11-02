@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-unk-unk -o %t -emit-llvm -g %s
-// RUN: FileCheck --input-file=%t %s
+// RUN: %clang_cc1 -triple x86_64-unk-unk -o - -emit-llvm -g %s | FileCheck %s
 
 // PR3023
 void convert(void) {
@@ -8,7 +7,7 @@ void convert(void) {
 
 
 // PR2784
-struct OPAQUE;
+struct OPAQUE; // CHECK: DW_TAG_structure_type
 typedef struct OPAQUE *PTR;
 PTR p;
 

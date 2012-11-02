@@ -518,21 +518,17 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
                                               llvm::DIDescriptor Ctx) {
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
-  StringRef RDName = RD->getName();
+  StringRef RDName = getClassName(RD);
 
-  // Get the tag.
-  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
   unsigned Tag = 0;
-  if (CXXDecl) {
-    RDName = getClassName(RD);
-    Tag = llvm::dwarf::DW_TAG_class_type;
-  }
-  else if (RD->isStruct() || RD->isInterface())
+  if (RD->isStruct() || RD->isInterface())
     Tag = llvm::dwarf::DW_TAG_structure_type;
   else if (RD->isUnion())
     Tag = llvm::dwarf::DW_TAG_union_type;
-  else
-    llvm_unreachable("Unknown RecordDecl type!");
+  else {
+    assert(RD->isClass());
+    Tag = llvm::dwarf::DW_TAG_class_type;
+  }
 
   // Create the type.
   return DBuilder.createForwardDecl(Tag, RDName, Ctx, DefUnit, Line);
