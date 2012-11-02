@@ -5499,7 +5499,8 @@ def warn_format_string_is_wide_literal : Warning<
 def warn_printf_format_string_contains_null_char : Warning<
   "format string contains '\\0' within the string body">, InGroup<Format>;
 def warn_printf_asterisk_missing_arg : Warning<
-  "'%select{*|.*}0' specified field %select{width|precision}0 is missing a matching 'int' argument">;
+  "'%select{*|.*}0' specified field %select{width|precision}0 is missing a matching 'int' argument">,
+  InGroup<Format>;
 def warn_printf_asterisk_wrong_type : Warning<
   "field %select{width|precision}0 should have type %1, but argument has type %2">,
   InGroup<Format>;
