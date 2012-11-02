@@ -671,13 +671,8 @@ IntegerType *DataLayout::getIntPtrType(LLVMContext &C,
 /// least as big as that of a pointer of the given pointer (vector of pointer)
 /// type.
 Type *DataLayout::getIntPtrType(Type *Ty) const {
-#if 0
-  // FIXME: This assert should always have been here, but the review comments
-  // weren't addressed in time, and now there is lots of code "depending" on
-  // this. Uncomment once this is cleaned up.
   assert(Ty->isPtrOrPtrVectorTy() &&
          "Expected a pointer or pointer vector type.");
-#endif
   unsigned NumBits = getTypeSizeInBits(Ty->getScalarType());
   IntegerType *IntTy = IntegerType::get(Ty->getContext(), NumBits);
   if (VectorType *VecTy = dyn_cast<VectorType>(Ty))
