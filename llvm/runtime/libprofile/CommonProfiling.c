@@ -36,10 +36,10 @@ static const char *OutputFilename = "llvmprof.out";
  * variable is set.  If it is then save it and set OutputFilename.
  */
 static void check_environment_variable(void) {
+  const char *EnvVar;
   if (SavedEnvVar) return; /* Guarantee that we can't leak memory. */
 
-  const char *EnvVar = getenv("LLVMPROF_OUTPUT");
-  if (EnvVar) {
+  if ((EnvVar = getenv("LLVMPROF_OUTPUT")) != NULL) {
     /* The string that getenv returns is allowed to be statically allocated,
      * which means it may be changed by future calls to getenv, so copy it.
      */
