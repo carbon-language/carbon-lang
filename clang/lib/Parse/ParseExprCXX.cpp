@@ -96,6 +96,45 @@ void Parser::CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectType,
              /*AtDigraph*/false);
 }
 
+/// \brief Emits an error for a left parentheses after a double colon.
+///
+/// When a '(' is found after a '::', emit an error.  Attempt to fix the token
+/// stream by removing the '(', and the matching ')' if it found.
+void Parser::CheckForLParenAfterColonColon() {
+  if (!Tok.is(tok::l_paren))
+    return;
+
+  SourceLocation l_parenLoc = ConsumeParen(), r_parenLoc;
+  Token Tok1 = getCurToken();
+  if (!Tok1.is(tok::identifier) && !Tok1.is(tok::star))
+    return;
+
+  if (Tok1.is(tok::identifier)) {
+    Token Tok2 = GetLookAheadToken(1);
+    if (Tok2.is(tok::r_paren)) {
+      ConsumeToken();
+      PP.EnterToken(Tok1);
+      r_parenLoc = ConsumeParen();
+    }
+  } else if (Tok1.is(tok::star)) {
+    Token Tok2 = GetLookAheadToken(1);
+    if (Tok2.is(tok::identifier)) {
+      Token Tok3 = GetLookAheadToken(2);
+      if (Tok3.is(tok::r_paren)) {
+        ConsumeToken();
+        ConsumeToken();
+        PP.EnterToken(Tok2);
+        PP.EnterToken(Tok1);
+        r_parenLoc = ConsumeParen();
+      }
+    }
+  }
+
+  Diag(l_parenLoc, diag::err_paren_after_colon_colon)
+      << FixItHint::CreateRemoval(l_parenLoc)
+      << FixItHint::CreateRemoval(r_parenLoc);
+}
+
 /// \brief Parse global scope or nested-name-specifier if present.
 ///
 /// Parses a C++ global scope specifier ('::') or nested-name-specifier (which
@@ -160,7 +199,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     // '::' - Global scope qualifier.
     if (Actions.ActOnCXXGlobalScopeSpecifier(getCurScope(), ConsumeToken(), SS))
       return true;
-    
+
+    CheckForLParenAfterColonColon();
+
     HasScopeSpecifier = true;
   }
 
@@ -370,6 +411,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       assert((Tok.is(tok::coloncolon) || Tok.is(tok::colon)) &&
              "NextToken() not working properly!");
       SourceLocation CCLoc = ConsumeToken();
+
+      CheckForLParenAfterColonColon();
 
       HasScopeSpecifier = true;
       if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(), II, IdLoc, CCLoc,

@@ -1327,6 +1327,8 @@ private:
                                       bool *MayBePseudoDestructor = 0,
                                       bool IsTypename = false);
 
+  void CheckForLParenAfterColonColon();
+
   //===--------------------------------------------------------------------===//
   // C++0x 5.1.2: Lambda expressions
 
