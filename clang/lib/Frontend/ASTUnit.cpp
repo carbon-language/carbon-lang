@@ -2451,8 +2451,9 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   }
 
-  // Disable the preprocessing record
-  PreprocessorOpts.DetailedRecord = false;
+  // Disable the preprocessing record if modules are not enabled.
+  if (!Clang->getLangOpts().Modules)
+    PreprocessorOpts.DetailedRecord = false;
   
   OwningPtr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
