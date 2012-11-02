@@ -272,16 +272,14 @@ protected:
   void resolveRelocationEntry(const RelocationEntry &RE, uint64_t Value);
 
   /// \brief A object file specific relocation resolver
-  /// \param LocalAddress The address to apply the relocation action
-  /// \param FinalAddress If the linker prepare code for remote executon then
-  ///                     FinalAddress has the remote address to apply the
-  ///                     relocation action, otherwise is same as LocalAddress
+  /// \param Section The section where the relocation is being applied
+  /// \param Offset The offset into the section for this relocation
   /// \param Value Target symbol address to apply the relocation action
   /// \param Type object file specific relocation type
   /// \param Addend A constant addend used to compute the value to be stored
   ///        into the relocatable field
-  virtual void resolveRelocation(uint8_t *LocalAddress,
-                                 uint64_t FinalAddress,
+  virtual void resolveRelocation(const SectionEntry &Section,
+                                 uint64_t Offset,
                                  uint64_t Value,
                                  uint32_t Type,
                                  int64_t Addend) = 0;

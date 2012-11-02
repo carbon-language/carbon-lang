@@ -32,38 +32,38 @@ namespace {
 
 class RuntimeDyldELF : public RuntimeDyldImpl {
 protected:
-  void resolveX86_64Relocation(uint8_t *LocalAddress,
-                               uint64_t FinalAddress,
+  void resolveX86_64Relocation(const SectionEntry &Section,
+                               uint64_t Offset,
                                uint64_t Value,
                                uint32_t Type,
                                int64_t Addend);
 
-  void resolveX86Relocation(uint8_t *LocalAddress,
-                            uint32_t FinalAddress,
+  void resolveX86Relocation(const SectionEntry &Section,
+                            uint64_t Offset,
                             uint32_t Value,
                             uint32_t Type,
                             int32_t Addend);
 
-  void resolveARMRelocation(uint8_t *LocalAddress,
-                            uint32_t FinalAddress,
+  void resolveARMRelocation(const SectionEntry &Section,
+                            uint64_t Offset,
                             uint32_t Value,
                             uint32_t Type,
                             int32_t Addend);
 
-  void resolveMIPSRelocation(uint8_t *LocalAddress,
-                             uint32_t FinalAddress,
+  void resolveMIPSRelocation(const SectionEntry &Section,
+                             uint64_t Offset,
                              uint32_t Value,
                              uint32_t Type,
                              int32_t Addend);
 
-  void resolvePPC64Relocation(uint8_t *LocalAddress,
-                              uint64_t FinalAddress,
+  void resolvePPC64Relocation(const SectionEntry &Section,
+                              uint64_t Offset,
                               uint64_t Value,
                               uint32_t Type,
                               int64_t Addend);
 
-  virtual void resolveRelocation(uint8_t *LocalAddress,
-                                 uint64_t FinalAddress,
+  virtual void resolveRelocation(const SectionEntry &Section,
+                                 uint64_t Offset,
                                  uint64_t Value,
                                  uint32_t Type,
                                  int64_t Addend);
