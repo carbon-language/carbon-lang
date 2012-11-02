@@ -99,3 +99,9 @@
 // AMD64-MINGW: "-triple"
 // AMD64-MINGW: "amd64--mingw32"
 // AMD64-MINGW: "-munwind-tables"
+
+// RUN: %clang -target i386-linux-android -### -S %s 2>&1 \
+// RUN:        --sysroot=%S/Inputs/basic_android_tree/sysroot \
+// RUN:   | FileCheck --check-prefix=ANDROID-X86 %s
+// ANDROID-X86: clang
+// ANDROID-X86: "-target-cpu" "core2"
