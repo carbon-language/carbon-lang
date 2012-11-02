@@ -40,7 +40,9 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "num-per-line" ,'l', required_argument, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
     { LLDB_OPT_SET_2, false, "binary"       ,'b', no_argument      , NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
     { LLDB_OPT_SET_3, true , "type"         ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."}, 
-    { LLDB_OPT_SET_4, false, "force"        ,'r', no_argument,       NULL, 0, eArgTypeNone          ,"Necessary if reading over 1024 bytes of memory."},
+    { LLDB_OPT_SET_1|
+      LLDB_OPT_SET_2|
+      LLDB_OPT_SET_3, false, "force"        ,'r', no_argument,       NULL, 0, eArgTypeNone          ,"Necessary if reading over 1024 bytes of memory."},
 };
 
 
