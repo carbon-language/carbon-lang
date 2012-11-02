@@ -76,7 +76,7 @@ VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
           cl::desc("Set the default vectorization width. Zero is autoselect."));
 
 /// We don't vectorize loops with a known constant trip count below this number.
-const int TinyTripCountThreshold = 16;
+const unsigned TinyTripCountThreshold = 16;
 
 namespace {
 
@@ -1161,7 +1161,7 @@ bool LoopVectorizationLegality::canVectorize() {
 
   // Do not loop-vectorize loops with a tiny trip count.
   unsigned TC = SE->getSmallConstantTripCount(TheLoop, BB);
-  if (TC > 0 && TC < TinyTripCountThreshold) {
+  if (TC > 0u && TC < TinyTripCountThreshold) {
     DEBUG(dbgs() << "LV: Found a loop with a very small trip count. " <<
           "This loop is not worth vectorizing.\n");
     return false;
