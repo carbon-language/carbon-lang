@@ -72,7 +72,6 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   int MinCSFI = 0;
@@ -119,7 +118,6 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
     unsigned ATReg = Subtarget.isABI_N64() ? Mips::AT_64 : Mips::AT;
     unsigned NewImm;
 
-    MipsFI->setEmitNOAT();
     unsigned Reg = TII.loadImmediate(Offset, MBB, II, DL, &NewImm);
     BuildMI(MBB, II, DL, TII.get(ADDu), ATReg).addReg(FrameReg).addReg(Reg);
 

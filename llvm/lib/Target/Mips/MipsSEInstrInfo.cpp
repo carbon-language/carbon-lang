@@ -260,7 +260,6 @@ void MipsSEInstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
   if (isInt<16>(Amount))// addi sp, sp, amount
     BuildMI(MBB, I, DL, get(ADDiu), SP).addReg(SP).addImm(Amount);
   else { // Expand immediate that doesn't fit in 16-bit.
-    MBB.getParent()->getInfo<MipsFunctionInfo>()->setEmitNOAT();
     unsigned Reg = loadImmediate(Amount, MBB, I, DL, 0);
     BuildMI(MBB, I, DL, get(ADDu), SP).addReg(SP).addReg(Reg);
   }

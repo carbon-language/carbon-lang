@@ -424,8 +424,6 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
 
   // Compute basic block addresses.
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    MF->getInfo<MipsFunctionInfo>()->setEmitNOAT();
-
     uint64_t Address = 0;
 
     for (I = MBBInfos.begin(); I != E; Address += I->Size, ++I)

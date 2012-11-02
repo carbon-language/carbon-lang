@@ -51,12 +51,10 @@ class MipsFunctionInfo : public MachineFunctionInfo {
   unsigned NextStackOffset;
   bool HasByvalArg;
 
-  bool EmitNOAT;
-
 public:
   MipsFunctionInfo(MachineFunction& MF)
    : MF(MF), SRetReturnReg(0), GlobalBaseReg(0), Mips16SPAliasReg(0),
-     VarArgsFrameIndex(0), EmitNOAT(false)
+     VarArgsFrameIndex(0)
   {}
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
@@ -77,9 +75,6 @@ public:
     NextStackOffset = Offset;
     HasByvalArg = HasByval;
   }
-
-  bool getEmitNOAT() const { return EmitNOAT; }
-  void setEmitNOAT() { EmitNOAT = true; }
 };
 
 } // end of namespace llvm
