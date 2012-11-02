@@ -51,6 +51,9 @@ class MipsFunctionInfo : public MachineFunctionInfo {
   unsigned NextStackOffset;
   bool HasByvalArg;
 
+  // Size of incoming argument area.
+  unsigned IncomingArgSize;
+
 public:
   MipsFunctionInfo(MachineFunction& MF)
    : MF(MF), SRetReturnReg(0), GlobalBaseReg(0), Mips16SPAliasReg(0),
@@ -75,6 +78,9 @@ public:
     NextStackOffset = Offset;
     HasByvalArg = HasByval;
   }
+
+  unsigned getIncomingArgSize() const { return IncomingArgSize; }
+  void setIncomingArgSize(unsigned S) { IncomingArgSize = S; }
 };
 
 } // end of namespace llvm

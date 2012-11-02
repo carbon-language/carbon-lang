@@ -3027,6 +3027,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   MipsCCInfo.analyzeFormalArguments(Ins);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
                            MipsCCInfo.hasByValArg());
+  MipsFI->setIncomingArgSize(CCInfo.getNextStackOffset());
 
   Function::const_arg_iterator FuncArg =
     DAG.getMachineFunction().getFunction()->arg_begin();
