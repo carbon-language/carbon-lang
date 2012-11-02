@@ -85,7 +85,14 @@ public:
   class MatchCallback {
   public:
     virtual ~MatchCallback();
+
+    /// \brief Called on every match by the \c MatchFinder.
     virtual void run(const MatchResult &Result) = 0;
+
+    /// \brief Called at the start of each translation unit.
+    ///
+    /// Optionally override to do per translation unit tasks.
+    virtual void onStartOfTranslationUnit() {}
   };
 
   /// \brief Called when parsing is finished. Intended for testing only.

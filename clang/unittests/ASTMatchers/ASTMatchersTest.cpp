@@ -3366,5 +3366,26 @@ TEST(MatchFinder, CanMatchStatementsRecursively) {
     new VerifyRecursiveMatch<clang::Stmt>("if", declStmt())));
 }
 
+class VerifyStartOfTranslationUnit : public MatchFinder::MatchCallback {
+public:
+  VerifyStartOfTranslationUnit() : Called(false) {}
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    EXPECT_TRUE(Called);
+  }
+  virtual void onStartOfTranslationUnit() {
+    Called = true;
+  }
+  bool Called;
+};
+
+TEST(MatchFinder, InterceptsStartOfTranslationUnit) {
+  MatchFinder Finder;
+  VerifyStartOfTranslationUnit VerifyCallback;
+  Finder.addMatcher(decl(), &VerifyCallback);
+  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), "int x;"));
+  EXPECT_TRUE(VerifyCallback.Called);
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
