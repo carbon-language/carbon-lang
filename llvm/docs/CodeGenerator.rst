@@ -224,7 +224,7 @@ The ``DataLayout`` class
 ------------------------
 
 The ``DataLayout`` class is the only required target description class, and it
-is the only class that is not extensible (you cannot derived a new class from
+is the only class that is not extensible (you cannot derive a new class from
 it).  ``DataLayout`` specifies information about how the target lays out memory
 for structures, the alignment requirements for various data types, the size of
 pointers in the target, and whether the target is little-endian or
@@ -248,7 +248,7 @@ operations.  Among other things, this class indicates:
 * the type to use for shift amounts, and
 
 * various high-level characteristics, like whether it is profitable to turn
-  division by a constant into a multiplication sequence
+  division by a constant into a multiplication sequence.
 
 The ``TargetRegisterInfo`` class
 --------------------------------
