@@ -241,9 +241,9 @@ void StatOutput(u64 *stat) {
   name[StatMtxAtExit]                    = "  Atexit                          ";
   name[StatMtxAnnotations]               = "  Annotations                     ";
 
-  TsanPrintf("Statistics:\n");
+  Printf("Statistics:\n");
   for (int i = 0; i < StatCnt; i++)
-    TsanPrintf("%s: %zu\n", name[i], (uptr)stat[i]);
+    Printf("%s: %zu\n", name[i], (uptr)stat[i]);
 }
 
 }  // namespace __tsan

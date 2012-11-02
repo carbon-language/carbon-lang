@@ -83,8 +83,8 @@ static void ProtectRange(uptr beg, uptr end) {
   if (beg == end)
     return;
   if (beg != (uptr)Mprotect(beg, end - beg)) {
-    TsanPrintf("FATAL: ThreadSanitizer can not protect [%zx,%zx]\n", beg, end);
-    TsanPrintf("FATAL: Make sure you are not using unlimited stack\n");
+    Printf("FATAL: ThreadSanitizer can not protect [%zx,%zx]\n", beg, end);
+    Printf("FATAL: Make sure you are not using unlimited stack\n");
     Die();
   }
 }
@@ -94,8 +94,8 @@ void InitializeShadowMemory() {
   uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
     kLinuxShadowEnd - kLinuxShadowBeg);
   if (shadow != kLinuxShadowBeg) {
-    TsanPrintf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
-    TsanPrintf("FATAL: Make sure to compile with -fPIE and "
+    Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
+    Printf("FATAL: Make sure to compile with -fPIE and "
                "to link with -pie (%p, %p).\n", shadow, kLinuxShadowBeg);
     Die();
   }
@@ -135,10 +135,10 @@ static void CheckPIE() {
   if (proc_maps.Next(&start, &end,
                      /*offset*/0, /*filename*/0, /*filename_size*/0)) {
     if ((u64)start < kLinuxAppMemBeg) {
-      TsanPrintf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
+      Printf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
              "something is mapped at 0x%zx < 0x%zx)\n",
              start, kLinuxAppMemBeg);
-      TsanPrintf("FATAL: Make sure to compile with -fPIE"
+      Printf("FATAL: Make sure to compile with -fPIE"
              " and to link with -pie.\n");
       Die();
     }

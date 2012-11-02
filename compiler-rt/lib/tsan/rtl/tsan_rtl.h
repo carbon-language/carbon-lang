@@ -67,7 +67,6 @@ Allocator *allocator();
 
 void TsanCheckFailed(const char *file, int line, const char *cond,
                      u64 v1, u64 v2);
-void TsanPrintf(const char *format, ...);
 
 // FastState (from most significant bit):
 //   unused          : 1
@@ -454,13 +453,13 @@ bool IsFiredSuppression(Context *ctx,
 bool IsExpectedReport(uptr addr, uptr size);
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 1
-# define DPrintf TsanPrintf
+# define DPrintf Printf
 #else
 # define DPrintf(...)
 #endif
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 2
-# define DPrintf2 TsanPrintf
+# define DPrintf2 Printf
 #else
 # define DPrintf2(...)
 #endif

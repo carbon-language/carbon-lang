@@ -139,7 +139,7 @@ static void InitializeMemoryProfile() {
       flags()->profile_memory, GetPid());
   fd_t fd = internal_open(filename.data(), true);
   if (fd == kInvalidFd) {
-    TsanPrintf("Failed to open memory profile file '%s'\n", &filename[0]);
+    Printf("Failed to open memory profile file '%s'\n", &filename[0]);
     Die();
   }
   internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
@@ -184,6 +184,8 @@ void Initialize(ThreadState *thr) {
   ctx->dead_list_head = 0;
   ctx->dead_list_tail = 0;
   InitializeFlags(&ctx->flags, env);
+  // Setup correct file descriptor for error reports.
+  __sanitizer_set_report_fd(flags()->log_fileno);
   InitializeSuppressions();
 #ifndef TSAN_GO
   // Initialize external symbolizer before internal threads are started.
@@ -196,7 +198,7 @@ void Initialize(ThreadState *thr) {
   InitializeMemoryFlush();
 
   if (ctx->flags.verbosity)
-    TsanPrintf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",
+    Printf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",
                GetPid());
 
   // Initialize thread 0.
@@ -208,7 +210,7 @@ void Initialize(ThreadState *thr) {
   ctx->initialized = true;
 
   if (flags()->stop_on_start) {
-    TsanPrintf("ThreadSanitizer is suspended at startup (pid %d)."
+    Printf("ThreadSanitizer is suspended at startup (pid %d)."
            " Call __tsan_resume().\n",
            GetPid());
     while (__tsan_resumed == 0);
@@ -229,15 +231,15 @@ int Finalize(ThreadState *thr) {
   if (ctx->nreported) {
     failed = true;
 #ifndef TSAN_GO
-    TsanPrintf("ThreadSanitizer: reported %d warnings\n", ctx->nreported);
+    Printf("ThreadSanitizer: reported %d warnings\n", ctx->nreported);
 #else
-    TsanPrintf("Found %d data race(s)\n", ctx->nreported);
+    Printf("Found %d data race(s)\n", ctx->nreported);
 #endif
   }
 
   if (ctx->nmissed_expected) {
     failed = true;
-    TsanPrintf("ThreadSanitizer: missed %d expected races\n",
+    Printf("ThreadSanitizer: missed %d expected races\n",
         ctx->nmissed_expected);
   }
 
@@ -417,11 +419,11 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
       (uptr)shadow_mem[2], (uptr)shadow_mem[3]);
 #if TSAN_DEBUG
   if (!IsAppMem(addr)) {
-    TsanPrintf("Access to non app mem %zx\n", addr);
+    Printf("Access to non app mem %zx\n", addr);
     DCHECK(IsAppMem(addr));
   }
   if (!IsShadowMem((uptr)shadow_mem)) {
-    TsanPrintf("Bad shadow addr %p (%zx)\n", shadow_mem, addr);
+    Printf("Bad shadow addr %p (%zx)\n", shadow_mem, addr);
     DCHECK(IsShadowMem((uptr)shadow_mem));
   }
 #endif

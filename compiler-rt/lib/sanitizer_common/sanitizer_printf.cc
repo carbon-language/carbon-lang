@@ -153,7 +153,7 @@ void SetPrintfAndReportCallback(void (*callback)(const char *)) {
 }
 
 void Printf(const char *format, ...) {
-  const int kLen = 1024 * 4;
+  const int kLen = 16 * 1024;
   InternalScopedBuffer<char> buffer(kLen);
   va_list args;
   va_start(args, format);
@@ -179,7 +179,7 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
 
 // Like Printf, but prints the current PID before the output string.
 void Report(const char *format, ...) {
-  const int kLen = 1024 * 4;
+  const int kLen = 16 * 1024;
   InternalScopedBuffer<char> buffer(kLen);
   int needed_length = internal_snprintf(buffer.data(),
                                         kLen, "==%d== ", GetPid());
