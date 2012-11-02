@@ -383,26 +383,4 @@ for.end:                                          ; preds = %for.inc
 
 }
 
-@p = common global [1024 x i8] zeroinitializer, align 16
 
-define void @test15(i32 %n) nounwind {
-entry:
-  %cmp6 = icmp eq i32 %n, 0
-  br i1 %cmp6, label %for.end, label %for.body
-
-for.body:                                         ; preds = %entry, %for.body
-  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %indvars.iv.next = add i64 %indvars.iv, 1
-  %arrayidx = getelementptr inbounds [1024 x i8]* @p, i64 0, i64 %indvars.iv.next
-  %0 = load i8* %arrayidx, align 1
-  %arrayidx2 = getelementptr inbounds [1024 x i8]* @p, i64 0, i64 %indvars.iv
-  store i8 %0, i8* %arrayidx2, align 1
-  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
-  %exitcond = icmp eq i32 %lftr.wideiv, %n
-  br i1 %exitcond, label %for.end, label %for.body
-
-for.end:                                          ; preds = %for.body, %entry
-  ret void
-; CHECK: @test15
-; CHECK: call void @llvm.memmove.p0i8.p0i8.i64(i8* getelementptr inbounds ([1024 x i8]* @p, i32 0, i32 0), i8* getelementptr inbounds ([1024 x i8]* @p, i64 0, i64 1),
-}
