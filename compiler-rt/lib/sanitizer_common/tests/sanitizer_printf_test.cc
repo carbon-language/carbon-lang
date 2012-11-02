@@ -1,4 +1,4 @@
-//===-- tsan_printf_test.cc -----------------------------------------------===//
+//===-- sanitizer_printf_test.cc ------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file is a part of ThreadSanitizer (TSan), a race detector.
+// Tests for sanitizer_printf.cc
 //
 //===----------------------------------------------------------------------===//
-#include "tsan_rtl.h"
+#include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include "gtest/gtest.h"
 
 #include <string.h>
 #include <limits.h>
 
-namespace __tsan {
+namespace __sanitizer {
 
 TEST(Printf, Basic) {
   char buf[1024];
@@ -27,15 +28,15 @@ TEST(Printf, Basic) {
       (unsigned)10, (unsigned long)11, // NOLINT
       (void*)0x123, "_string_");
   EXPECT_EQ(len, strlen(buf));
-  EXPECT_EQ(0, strcmp(buf, "a-1b-2c4294967292e5fahbq"
-                           "0x000000000123e_string_r"));
+  EXPECT_STREQ("a-1b-2c4294967292e5fahbq"
+               "0x000000000123e_string_r", buf);
 }
 
 TEST(Printf, OverflowStr) {
   char buf[] = "123456789";
   uptr len = internal_snprintf(buf, 4, "%s", "abcdef");  // NOLINT
   EXPECT_EQ(len, (uptr)6);
-  EXPECT_EQ(0, strcmp(buf, "abc"));
+  EXPECT_STREQ("abc", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
   EXPECT_EQ(buf[5], '6');
@@ -48,7 +49,7 @@ TEST(Printf, OverflowStr) {
 TEST(Printf, OverflowInt) {
   char buf[] = "123456789";
   internal_snprintf(buf, 4, "%d", -123456789);  // NOLINT
-  EXPECT_EQ(0, strcmp(buf, "-12"));
+  EXPECT_STREQ("-12", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
   EXPECT_EQ(buf[5], '6');
@@ -61,7 +62,7 @@ TEST(Printf, OverflowInt) {
 TEST(Printf, OverflowUint) {
   char buf[] = "123456789";
   internal_snprintf(buf, 4, "a%zx", (unsigned long)0x123456789);  // NOLINT
-  EXPECT_EQ(0, strcmp(buf, "a12"));
+  EXPECT_STREQ("a12", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
   EXPECT_EQ(buf[5], '6');
@@ -74,7 +75,7 @@ TEST(Printf, OverflowUint) {
 TEST(Printf, OverflowPtr) {
   char buf[] = "123456789";
   internal_snprintf(buf, 4, "%p", (void*)0x123456789);  // NOLINT
-  EXPECT_EQ(0, strcmp(buf, "0x0"));
+  EXPECT_STREQ("0x0", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
   EXPECT_EQ(buf[5], '6');
@@ -91,7 +92,7 @@ static void TestMinMax(const char *fmt, T min, T max) {
   char buf2[1024];
   snprintf(buf2, sizeof(buf2), fmt, min, max);
   EXPECT_EQ(len, strlen(buf));
-  EXPECT_EQ(0, strcmp(buf, buf2));
+  EXPECT_STREQ(buf2, buf);
 }
 
 TEST(Printf, MinMax) {
@@ -103,4 +104,4 @@ TEST(Printf, MinMax) {
   TestMinMax<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
 }
 
-}  // namespace __tsan
+}  // namespace __sanitizer

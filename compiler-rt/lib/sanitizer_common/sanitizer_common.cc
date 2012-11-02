@@ -143,7 +143,6 @@ void SortArray(uptr *array, uptr size) {
 using namespace __sanitizer;  // NOLINT
 
 extern "C" {
-
 void __sanitizer_set_report_path(const char *path) {
   if (!path) return;
   uptr len = internal_strlen(path);
@@ -164,5 +163,4 @@ void __sanitizer_set_report_fd(int fd) {
     internal_close(report_fd);
   report_fd = fd;
 }
-
 }  // extern "C"
