@@ -163,7 +163,7 @@ uptr internal_read(fd_t fd, void *buf, uptr count) {
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
-  if (fd != 2)
+  if (fd != kStderrFd)
     UNIMPLEMENTED();
   HANDLE err = GetStdHandle(STD_ERROR_HANDLE);
   if (err == 0)

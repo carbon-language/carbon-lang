@@ -47,7 +47,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->strip_path_prefix = "";
   f->suppressions = "";
   f->exitcode = 66;
-  f->log_fileno = 2;
+  f->log_fileno = kStderrFd;
   f->atexit_sleep_ms = 1000;
   f->verbosity = 0;
   f->profile_memory = "";

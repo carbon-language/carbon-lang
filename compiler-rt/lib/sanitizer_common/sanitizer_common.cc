@@ -18,7 +18,7 @@ namespace __sanitizer {
 
 // By default, dump to stderr. If report_fd is kInvalidFd, try to obtain file
 // descriptor by opening file in report_path.
-static fd_t report_fd = 2;
+static fd_t report_fd = kStderrFd;
 static char report_path[4096];  // Set via __sanitizer_set_report_path.
 
 static void (*DieCallback)(void);
@@ -54,7 +54,7 @@ void RawWrite(const char *buffer) {
   if (report_fd == kInvalidFd) {
     fd_t fd = internal_open(report_path, true);
     if (fd == kInvalidFd) {
-      report_fd = 2;
+      report_fd = kStderrFd;
       Report("ERROR: Can't open file: %s\n", report_path);
       Die();
     }
@@ -147,21 +147,22 @@ extern "C" {
 void __sanitizer_set_report_path(const char *path) {
   if (!path) return;
   uptr len = internal_strlen(path);
-  if (len > sizeof(__sanitizer::report_path) - 100) {
+  if (len > sizeof(report_path) - 100) {
     Report("ERROR: Path is too long: %c%c%c%c%c%c%c%c...\n",
            path[0], path[1], path[2], path[3],
            path[4], path[5], path[6], path[7]);
     Die();
   }
-  internal_snprintf(__sanitizer::report_path,
-                    sizeof(__sanitizer::report_path), "%s.%d", path, GetPid());
-  __sanitizer::report_fd = kInvalidFd;
+  internal_snprintf(report_path, sizeof(report_path), "%s.%d", path, GetPid());
+  report_fd = kInvalidFd;
 }
 
 void __sanitizer_set_report_fd(int fd) {
-  if (__sanitizer::report_fd > 2 && __sanitizer::report_fd != kInvalidFd)
-    internal_close(__sanitizer::report_fd);
-  __sanitizer::report_fd = fd;
+  if (report_fd != kStdoutFd &&
+      report_fd != kStderrFd &&
+      report_fd != kInvalidFd)
+    internal_close(report_fd);
+  report_fd = fd;
 }
 
 }  // extern "C"

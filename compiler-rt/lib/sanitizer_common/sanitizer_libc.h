@@ -55,6 +55,9 @@ int internal_munmap(void *addr, uptr length);
 // I/O
 typedef int fd_t;
 const fd_t kInvalidFd = -1;
+const fd_t kStdinFd = 0;
+const fd_t kStdoutFd = 1;
+const fd_t kStderrFd = 2;
 int internal_close(fd_t fd);
 fd_t internal_open(const char *filename, bool write);
 uptr internal_read(fd_t fd, void *buf, uptr count);
