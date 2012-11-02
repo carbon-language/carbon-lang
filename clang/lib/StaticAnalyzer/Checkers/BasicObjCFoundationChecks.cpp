@@ -117,7 +117,7 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
 
     BugReport *R = new BugReport(*BT, os.str(), N);
     R->addRange(msg.getArgSourceRange(Arg));
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 
@@ -358,7 +358,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
     
     BugReport *report = new BugReport(*BT, os.str(), N);
     report->addRange(CE->getArg(2)->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
   }
 }
 
@@ -433,7 +433,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     BugReport *report = new BugReport(*BT, description, N);
     report->addRange(Arg->getSourceRange());
     bugreporter::trackNullOrUndefValue(N, Arg, *report);
-    C.EmitReport(report);
+    C.emitReport(report);
     return;
   }
 
@@ -491,7 +491,7 @@ void ClassReleaseChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   
     BugReport *report = new BugReport(*BT, os.str(), N);
     report->addRange(msg.getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
   }
 }
 
@@ -644,7 +644,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 
     BugReport *R = new BugReport(*BT, os.str(), errorNode.getValue());
     R->addRange(msg.getArgSourceRange(I));
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 

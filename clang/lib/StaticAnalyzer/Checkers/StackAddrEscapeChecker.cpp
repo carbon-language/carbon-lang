@@ -109,7 +109,7 @@ void StackAddrEscapeChecker::EmitStackError(CheckerContext &C, const MemRegion *
   if (range.isValid())
     report->addRange(range);
 
-  C.EmitReport(report);
+  C.emitReport(report);
 }
 
 void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
@@ -232,7 +232,7 @@ void StackAddrEscapeChecker::checkEndPath(CheckerContext &Ctx) const {
     if (range.isValid())
       report->addRange(range);
 
-    Ctx.EmitReport(report);
+    Ctx.emitReport(report);
   }
 }
 

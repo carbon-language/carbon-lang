@@ -81,7 +81,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     else
       bugreporter::trackNullOrUndefValue(N, B, *report);
     
-    C.EmitReport(report);
+    C.emitReport(report);
   }
 }
 

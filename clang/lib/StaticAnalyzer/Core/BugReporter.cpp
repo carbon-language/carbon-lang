@@ -2106,7 +2106,7 @@ void BugReporter::Register(BugType *BT) {
   BugTypes = F.add(BugTypes, BT);
 }
 
-void BugReporter::EmitReport(BugReport* R) {
+void BugReporter::emitReport(BugReport* R) {
   // Compute the bug report's hash to determine its equivalence class.
   llvm::FoldingSetNodeID ID;
   R->Profile(ID);
@@ -2309,7 +2309,7 @@ void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
   BugReport *R = new BugReport(*BT, str, Loc);
   R->setDeclWithIssue(DeclWithIssue);
   for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
-  EmitReport(R);
+  emitReport(R);
 }
 
 BugType *BugReporter::getBugTypeForName(StringRef name,

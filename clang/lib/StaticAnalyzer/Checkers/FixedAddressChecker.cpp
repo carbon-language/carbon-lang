@@ -58,7 +58,7 @@ void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
                           "environments or platforms."));
     BugReport *R = new BugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getRHS()->getSourceRange());
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 

@@ -70,7 +70,7 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
   report->addRange(RetE->getSourceRange());
   bugreporter::trackNullOrUndefValue(N, RetE, *report);
 
-  C.EmitReport(report);
+  C.emitReport(report);
 }
 
 void ento::registerReturnUndefChecker(CheckerManager &mgr) {

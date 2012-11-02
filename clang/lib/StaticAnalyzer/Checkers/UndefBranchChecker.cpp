@@ -102,7 +102,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       bugreporter::trackNullOrUndefValue(N, Ex, *R);
       R->addRange(Ex->getSourceRange());
 
-      Ctx.EmitReport(R);
+      Ctx.emitReport(R);
     }
   }
 }

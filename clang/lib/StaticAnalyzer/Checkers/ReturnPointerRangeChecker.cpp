@@ -82,7 +82,7 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
       new BugReport(*BT, BT->getDescription(), N);
 
     report->addRange(RetE->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
   }
 }
 

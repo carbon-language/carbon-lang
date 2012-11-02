@@ -282,7 +282,7 @@ void MacOSKeychainAPIChecker::
   Report->addVisitor(new SecKeychainBugVisitor(AP.first));
   Report->addRange(ArgExpr->getSourceRange());
   markInteresting(Report, AP);
-  C.EmitReport(Report);
+  C.emitReport(Report);
 }
 
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
@@ -323,7 +323,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
           Report->addVisitor(new SecKeychainBugVisitor(V));
           Report->addRange(ArgExpr->getSourceRange());
           Report->markInteresting(AS->Region);
-          C.EmitReport(Report);
+          C.emitReport(Report);
         }
       }
     return;
@@ -376,7 +376,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     Report->addRange(ArgExpr->getSourceRange());
     if (AS)
       Report->markInteresting(AS->Region);
-    C.EmitReport(Report);
+    C.emitReport(Report);
     return;
   }
 
@@ -440,7 +440,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     Report->addVisitor(new SecKeychainBugVisitor(ArgSM));
     Report->addRange(ArgExpr->getSourceRange());
     Report->markInteresting(AS->Region);
-    C.EmitReport(Report);
+    C.emitReport(Report);
     return;
   }
 
@@ -604,7 +604,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
   // Generate the error reports.
   for (AllocationPairVec::iterator I = Errors.begin(), E = Errors.end();
                                                        I != E; ++I) {
-    C.EmitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
+    C.emitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
   }
 
   // Generate the new, cleaned up state.
@@ -654,7 +654,7 @@ void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &C) const {
   // Generate the error reports.
   for (AllocationPairVec::iterator I = Errors.begin(), E = Errors.end();
                                                        I != E; ++I) {
-    C.EmitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
+    C.emitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
   }
 
   C.addTransition(state, N);

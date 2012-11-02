@@ -3121,7 +3121,7 @@ void RetainCountChecker::processNonLeakError(ProgramStateRef St,
                                         C.isObjCGCEnabled(), SummaryLog,
                                         N, Sym);
   report->addRange(ErrorRange);
-  C.EmitReport(report);
+  C.emitReport(report);
 }
 
 //===----------------------------------------------------------------------===//
@@ -3351,7 +3351,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
             new CFRefLeakReport(*getLeakAtReturnBug(LOpts, GCEnabled),
                                 LOpts, GCEnabled, SummaryLog,
                                 N, Sym, C);
-          C.EmitReport(report);
+          C.emitReport(report);
         }
       }
     }
@@ -3372,7 +3372,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
             new CFRefReport(*returnNotOwnedForOwned,
                             C.getASTContext().getLangOpts(), 
                             C.isObjCGCEnabled(), SummaryLog, N, Sym);
-        C.EmitReport(report);
+        C.emitReport(report);
       }
     }
   }
@@ -3552,7 +3552,7 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
     CFRefReport *report =
       new CFRefReport(*overAutorelease, LOpts, /* GCEnabled = */ false,
                       SummaryLog, N, Sym, os.str());
-    Ctx.EmitReport(report);
+    Ctx.emitReport(report);
   }
 
   return std::make_pair((ExplodedNode *)0, (ProgramStateRef )0);
@@ -3598,7 +3598,7 @@ RetainCountChecker::processLeaks(ProgramStateRef state,
 
       CFRefLeakReport *report = new CFRefLeakReport(*BT, LOpts, GCEnabled, 
                                                     SummaryLog, N, *I, Ctx);
-      Ctx.EmitReport(report);
+      Ctx.emitReport(report);
     }
   }
 

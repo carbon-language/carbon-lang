@@ -67,7 +67,7 @@ void PointerSubChecker::checkPreStmt(const BinaryOperator *B,
                           "the same memory chunk may cause incorrect result."));
     BugReport *R = new BugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getSourceRange());
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 

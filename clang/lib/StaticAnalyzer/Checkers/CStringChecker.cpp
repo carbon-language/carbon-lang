@@ -253,7 +253,7 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
 
     report->addRange(S->getSourceRange());
     bugreporter::trackNullOrUndefValue(N, S, *report);
-    C.EmitReport(report);
+    C.emitReport(report);
     return NULL;
   }
 
@@ -327,7 +327,7 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
     // reference is outside the range.
 
     report->addRange(S->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
     return NULL;
   }
   
@@ -544,7 +544,7 @@ void CStringChecker::emitOverlapBug(CheckerContext &C, ProgramStateRef state,
   report->addRange(First->getSourceRange());
   report->addRange(Second->getSourceRange());
 
-  C.EmitReport(report);
+  C.emitReport(report);
 }
 
 ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
@@ -607,7 +607,7 @@ ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
 
       // Generate a report for this bug.
       BugReport *report = new BugReport(*BT_AdditionOverflow, warning, N);
-      C.EmitReport(report);        
+      C.emitReport(report);        
 
       return NULL;
     }
@@ -714,7 +714,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
                                                           os.str(), N);
 
         report->addRange(Ex->getSourceRange());
-        C.EmitReport(report);        
+        C.emitReport(report);        
       }
       return UndefinedVal();
 
@@ -778,7 +778,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
                                                         os.str(), N);
 
       report->addRange(Ex->getSourceRange());
-      C.EmitReport(report);        
+      C.emitReport(report);        
     }
 
     return UndefinedVal();

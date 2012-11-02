@@ -41,7 +41,7 @@ void DivZeroChecker::reportBug(const char *Msg,
 
     BugReport *R = new BugReport(*BT, Msg, N);
     bugreporter::trackNullOrUndefValue(N, bugreporter::GetDenomExpr(N), *R);
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 

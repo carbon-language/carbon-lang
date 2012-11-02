@@ -59,7 +59,7 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
                             "dangerous."));
       BugReport *R = new BugReport(*BT, BT->getDescription(), N);
       R->addRange(B->getSourceRange());
-      C.EmitReport(R);
+      C.emitReport(R);
     }
   }
 }

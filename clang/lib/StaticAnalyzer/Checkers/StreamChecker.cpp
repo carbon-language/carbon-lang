@@ -287,7 +287,7 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
 					"SEEK_SET, SEEK_END, or SEEK_CUR."));
     BugReport *R = new BugReport(*BT_illegalwhence, 
 				 BT_illegalwhence->getDescription(), N);
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 
@@ -363,7 +363,7 @@ ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
         BT_nullfp.reset(new BuiltinBug("NULL stream pointer",
                                      "Stream pointer might be NULL."));
       BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
-      C.EmitReport(R);
+      C.emitReport(R);
     }
     return 0;
   }
@@ -395,7 +395,7 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
                                         " closed. Cause undefined behaviour."));
       BugReport *R = new BugReport(*BT_doubleclose,
                                    BT_doubleclose->getDescription(), N);
-      C.EmitReport(R);
+      C.emitReport(R);
     }
     return NULL;
   }
@@ -424,7 +424,7 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                          "Opened File never closed. Potential Resource leak."));
         BugReport *R = new BugReport(*BT_ResourceLeak, 
                                      BT_ResourceLeak->getDescription(), N);
-        C.EmitReport(R);
+        C.emitReport(R);
       }
     }
   }
@@ -445,7 +445,7 @@ void StreamChecker::checkEndPath(CheckerContext &Ctx) const {
                          "Opened File never closed. Potential Resource leak."));
         BugReport *R = new BugReport(*BT_ResourceLeak, 
                                      BT_ResourceLeak->getDescription(), N);
-        Ctx.EmitReport(R);
+        Ctx.emitReport(R);
       }
     }
   }

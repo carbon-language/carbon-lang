@@ -75,7 +75,7 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
       BugReport *R = new BugReport(*BT, BT->getDescription(),
                                                errorNode);
       R->addRange(CE->getSourceRange());
-      C.EmitReport(R);
+      C.emitReport(R);
     }
   }
 }

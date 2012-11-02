@@ -146,7 +146,7 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
       initBugType();
       BugReport *R = new BugReport(*BT, "Index is out of bounds", N);
       R->addRange(IdxExpr->getSourceRange());
-      C.EmitReport(R);
+      C.emitReport(R);
       return;
     }
   }

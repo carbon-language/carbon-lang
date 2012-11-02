@@ -179,7 +179,7 @@ static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
 
   BugReport *report =
     new BugReport(*new InitSelfBug(), errorStr, N);
-  C.EmitReport(report);
+  C.emitReport(report);
 }
 
 void ObjCSelfInitChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,

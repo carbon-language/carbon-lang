@@ -179,7 +179,7 @@ void SimpleStreamChecker::reportDoubleClose(SymbolRef FileDescSym,
       "Closing a previously closed file stream", ErrNode);
   R->addRange(CallExpr->getSourceRange());
   R->markInteresting(FileDescSym);
-  C.EmitReport(R);
+  C.emitReport(R);
 }
 
 void SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
@@ -192,7 +192,7 @@ void SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
     BugReport *R = new BugReport(*LeakBugType,
         "Opened file is never closed; potential resource leak", ErrNode);
     R->markInteresting(*I);
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 

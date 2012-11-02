@@ -202,9 +202,9 @@ public:
   }
 
   /// \brief Emit the diagnostics report.
-  void EmitReport(BugReport *R) {
+  void emitReport(BugReport *R) {
     Changed = true;
-    Eng.getBugReporter().EmitReport(R);
+    Eng.getBugReporter().emitReport(R);
   }
 
   /// \brief Get the declaration of the called function (path-sensitive).

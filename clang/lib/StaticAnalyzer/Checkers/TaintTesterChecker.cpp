@@ -52,7 +52,7 @@ void TaintTesterChecker::checkPostStmt(const Expr *E,
       initBugType();
       BugReport *report = new BugReport(*BT, "tainted",N);
       report->addRange(E->getSourceRange());
-      C.EmitReport(report);
+      C.emitReport(report);
     }
   }
 }

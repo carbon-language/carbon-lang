@@ -71,7 +71,7 @@ void NSAutoreleasePoolChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   BugReport *Report = new BugReport(*BT, "Use -drain instead of -release when "
     "using NSAutoreleasePool and garbage collection", N);
   Report->addRange(msg.getSourceRange());
-  C.EmitReport(Report);
+  C.emitReport(Report);
 }
 
 void ento::registerNSAutoreleasePoolChecker(CheckerManager &mgr) {

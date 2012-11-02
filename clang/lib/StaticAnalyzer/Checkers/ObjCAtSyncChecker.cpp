@@ -50,7 +50,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
       BugReport *report =
         new BugReport(*BT_undef, BT_undef->getDescription(), N);
       bugreporter::trackNullOrUndefValue(N, Ex, *report);
-      C.EmitReport(report);
+      C.emitReport(report);
     }
     return;
   }
@@ -74,7 +74,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
           new BugReport(*BT_null, BT_null->getDescription(), N);
         bugreporter::trackNullOrUndefValue(N, Ex, *report);
 
-        C.EmitReport(report);
+        C.emitReport(report);
         return;
       }
     }

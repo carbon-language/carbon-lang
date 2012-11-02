@@ -64,7 +64,7 @@ void CastToStructChecker::checkPreStmt(const CastExpr *CE,
                             "errors or data corruption."));
       BugReport *R = new BugReport(*BT,BT->getDescription(), N);
       R->addRange(CE->getSourceRange());
-      C.EmitReport(R);
+      C.emitReport(R);
     }
   }
 }

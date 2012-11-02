@@ -118,7 +118,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
                                                       "This lock has already "
                                                       "been acquired", N);
     report->addRange(CE->getArg(0)->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
     return;
   }
 
@@ -183,7 +183,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
                                                       "Possible lock order "
                                                       "reversal", N);
     report->addRange(CE->getArg(0)->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
     return;
   }
 

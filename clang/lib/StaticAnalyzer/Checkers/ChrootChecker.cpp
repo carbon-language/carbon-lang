@@ -147,7 +147,7 @@ void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
                                         "after chroot"));
         BugReport *R = new BugReport(*BT_BreakJail, 
                                      BT_BreakJail->getDescription(), N);
-        C.EmitReport(R);
+        C.emitReport(R);
       }
   
   return;

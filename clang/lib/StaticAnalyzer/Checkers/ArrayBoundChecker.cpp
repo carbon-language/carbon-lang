@@ -78,7 +78,7 @@ void ArrayBoundChecker::checkLocation(SVal l, bool isLoad, const Stmt* LoadS,
       new BugReport(*BT, BT->getDescription(), N);
 
     report->addRange(LoadS->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
     return;
   }
   

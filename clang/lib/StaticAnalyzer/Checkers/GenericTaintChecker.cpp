@@ -653,7 +653,7 @@ bool GenericTaintChecker::generateReportIfTainted(const Expr *E,
     initBugType();
     BugReport *report = new BugReport(*BT, Msg, N);
     report->addRange(E->getSourceRange());
-    C.EmitReport(report);
+    C.emitReport(report);
     return true;
   }
   return false;

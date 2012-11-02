@@ -430,7 +430,7 @@ void IdempotentOperationChecker::checkEndAnalysis(ExplodedGraph &G,
         FindLastStoreBRVisitor::registerStatementVarDecls(*report, RHS);
       }
 
-      BR.EmitReport(report);
+      BR.emitReport(report);
     }
   }
 

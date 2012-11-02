@@ -96,7 +96,7 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
         R->addVisitor(new FindLastStoreBRVisitor(VRVal, VR));
         R->disablePathPruning();
         // need location of block
-        C.EmitReport(R);
+        C.emitReport(R);
       }
   }
 }

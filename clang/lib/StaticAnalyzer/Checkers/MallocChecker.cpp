@@ -714,7 +714,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
       R->addRange(ArgExpr->getSourceRange());
       R->markInteresting(Sym);
       R->addVisitor(new MallocBugVisitor(Sym));
-      C.EmitReport(R);
+      C.emitReport(R);
     }
     return 0;
   }
@@ -849,7 +849,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
     BugReport *R = new BugReport(*BT_BadFree, os.str(), N);
     R->markInteresting(MR);
     R->addRange(range);
-    C.EmitReport(R);
+    C.emitReport(R);
   }
 }
 
@@ -1048,7 +1048,7 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   BugReport *R = new BugReport(*BT_Leak, os.str(), N, LocUsedForUniqueing);
   R->markInteresting(Sym);
   R->addVisitor(new MallocBugVisitor(Sym, true));
-  C.EmitReport(R);
+  C.emitReport(R);
 }
 
 void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
@@ -1224,7 +1224,7 @@ bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
         R->addRange(S->getSourceRange());
       R->markInteresting(Sym);
       R->addVisitor(new MallocBugVisitor(Sym));
-      C.EmitReport(R);
+      C.emitReport(R);
       return true;
     }
   }
