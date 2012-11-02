@@ -63,6 +63,11 @@ extern "C" {
   // Tell the tools to write their reports to "path.<pid>" instead of stderr.
   void __sanitizer_set_report_path(const char *path)
       SANITIZER_INTERFACE_ATTRIBUTE;
+
+  // Tell the tools to write their reports to given file descriptor instead of
+  // stderr.
+  void __sanitizer_set_report_fd(int fd)
+      SANITIZER_INTERFACE_ATTRIBUTE;
 }  // extern "C"
 
 #endif  // SANITIZER_COMMON_INTERFACE_DEFS_H

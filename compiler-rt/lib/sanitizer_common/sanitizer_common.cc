@@ -16,7 +16,9 @@
 
 namespace __sanitizer {
 
-static fd_t report_fd = 2;  // By default, dump to stderr.
+// By default, dump to stderr. If report_fd is kInvalidFd, try to obtain file
+// descriptor by opening file in report_path.
+static fd_t report_fd = 2;
 static char report_path[4096];  // Set via __sanitizer_set_report_path.
 
 static void (*DieCallback)(void);
@@ -138,6 +140,10 @@ void SortArray(uptr *array, uptr size) {
 
 }  // namespace __sanitizer
 
+using namespace __sanitizer;  // NOLINT
+
+extern "C" {
+
 void __sanitizer_set_report_path(const char *path) {
   if (!path) return;
   uptr len = internal_strlen(path);
@@ -151,3 +157,11 @@ void __sanitizer_set_report_path(const char *path) {
                     sizeof(__sanitizer::report_path), "%s.%d", path, GetPid());
   __sanitizer::report_fd = kInvalidFd;
 }
+
+void __sanitizer_set_report_fd(int fd) {
+  if (__sanitizer::report_fd > 2 && __sanitizer::report_fd != kInvalidFd)
+    internal_close(__sanitizer::report_fd);
+  __sanitizer::report_fd = fd;
+}
+
+}  // extern "C"
