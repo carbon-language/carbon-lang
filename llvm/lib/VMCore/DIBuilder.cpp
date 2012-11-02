@@ -492,7 +492,8 @@ DIType DIBuilder::createStructType(DIDescriptor Context, StringRef Name,
     NULL,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
-    Constant::getNullValue(Type::getInt32Ty(VMContext))
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
