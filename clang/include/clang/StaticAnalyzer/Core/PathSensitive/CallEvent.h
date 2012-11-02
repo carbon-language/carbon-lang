@@ -249,6 +249,12 @@ public:
   /// \brief Returns the result type, adjusted for references.
   QualType getResultType() const;
 
+  /// \brief Returns the return value of the call.
+  ///
+  /// This should only be called if the CallEvent was created using a state in
+  /// which the return value has already been bound to the origin expression.
+  SVal getReturnValue() const;
+
   /// \brief Returns true if any of the arguments appear to represent callbacks.
   bool hasNonZeroCallbackArg() const;
 
@@ -259,6 +265,38 @@ public:
   // but we don't want duplicated lists of known APIs in the short term either.
   virtual bool argumentsMayEscape() const {
     return hasNonZeroCallbackArg();
+  }
+
+  /// \brief Returns true if the callee is an externally-visible function in the
+  /// top-level namespace, such as \c malloc.
+  ///
+  /// You can use this call to determine that a particular function really is
+  /// a library function and not, say, a C++ member function with the same name.
+  ///
+  /// If a name is provided, the function must additionally match the given
+  /// name.
+  ///
+  /// Note that this deliberately excludes C++ library functions in the \c std
+  /// namespace, but will include C library functions accessed through the
+  /// \c std namespace. This also does not check if the function is declared
+  /// as 'extern "C"', or if it uses C++ name mangling.
+  // FIXME: Add a helper for checking namespaces.
+  // FIXME: Move this down to AnyFunctionCall once checkers have more
+  // precise callbacks.
+  bool isGlobalCFunction(StringRef SpecificName = StringRef()) const;
+
+  /// \brief Returns the name of the callee, if its name is a simple identifier.
+  ///
+  /// Note that this will fail for Objective-C methods, blocks, and C++
+  /// overloaded operators. The former is named by a Selector rather than a
+  /// simple identifier, and the latter two do not have names.
+  // FIXME: Move this down to AnyFunctionCall once checkers have more
+  // precise callbacks.
+  const IdentifierInfo *getCalleeIdentifier() const {
+    const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getDecl());
+    if (!ND)
+      return 0;
+    return ND->getIdentifier();
   }
 
   /// \brief Returns an appropriate ProgramPoint for this call.

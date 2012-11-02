@@ -2783,8 +2783,7 @@ void RetainCountChecker::processSummaryOfInlined(const RetainSummary &Summ,
   // Consult the summary for the return value.
   RetEffect RE = Summ.getRetEffect();
   if (RE.getKind() == RetEffect::NoRetHard) {
-    SymbolRef Sym = state->getSVal(CallOrMsg.getOriginExpr(),
-        C.getLocationContext()).getAsSymbol();
+    SymbolRef Sym = CallOrMsg.getReturnValue().getAsSymbol();
     if (Sym)
       state = removeRefBinding(state, Sym);
   }
@@ -2863,8 +2862,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
 
     case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol: {
-      SymbolRef Sym = state->getSVal(CallOrMsg.getOriginExpr(),
-                                     C.getLocationContext()).getAsSymbol();
+      SymbolRef Sym = CallOrMsg.getReturnValue().getAsSymbol();
       if (!Sym)
         break;
 
@@ -2883,7 +2881,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
     case RetEffect::ARCNotOwnedSymbol:
     case RetEffect::NotOwnedSymbol: {
       const Expr *Ex = CallOrMsg.getOriginExpr();
-      SymbolRef Sym = state->getSVal(Ex, C.getLocationContext()).getAsSymbol();
+      SymbolRef Sym = CallOrMsg.getReturnValue().getAsSymbol();
       if (!Sym)
         break;
       assert(Ex);

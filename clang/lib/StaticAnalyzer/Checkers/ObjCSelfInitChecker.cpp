@@ -291,13 +291,12 @@ void ObjCSelfInitChecker::checkPostCall(const CallEvent &CE,
       // returns 'self'. So assign the flags, which were set on 'self' to the
       // return value.
       // EX: self = performMoreInitialization(self)
-      const Expr *CallExpr = CE.getOriginExpr();
-      if (CallExpr)
-        addSelfFlag(state, state->getSVal(CallExpr, C.getLocationContext()),
-                    prevFlags, C);
+      addSelfFlag(state, CE.getReturnValue(), prevFlags, C);
       return;
     }
   }
+
+  C.addTransition(state);
 }
 
 void ObjCSelfInitChecker::checkLocation(SVal location, bool isLoad,

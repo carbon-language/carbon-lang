@@ -43,6 +43,8 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
   // Using a string compare is slow, we might want to switch on BuiltinID here.
   unsigned BId = FD->getBuiltinID();
   if (BId != 0) {
+    if (Name.empty())
+      return true;
     StringRef BName = FD->getASTContext().BuiltinInfo.GetName(BId);
     if (BName.find(Name) != StringRef::npos)
       return true;
@@ -64,8 +66,13 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
     return false;
 
   // If this function is not externally visible, it is not a C library function.
-  if (FD->getLinkage() != ExternalLinkage)
+  // Note that we make an exception for inline functions, which may be
+  // declared in header files without external linkage.
+  if (!FD->isInlined() && FD->getLinkage() != ExternalLinkage)
     return false;
+
+  if (Name.empty())
+    return true;
 
   StringRef FName = II->getName();
   if (FName.equals(Name))

@@ -212,9 +212,18 @@ public:
     return getCalleeName(FunDecl);
   }
 
-  /// \brief Returns true if the given function is the specified built-in or
-  /// system library C function.
-  static bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name);
+  /// \brief Returns true if the callee is an externally-visible function in the
+  /// top-level namespace, such as \c malloc.
+  ///
+  /// If a name is provided, the function must additionally match the given
+  /// name.
+  ///
+  /// Note that this deliberately excludes C++ library functions in the \c std
+  /// namespace, but will include C library functions accessed through the
+  /// \c std namespace. This also does not check if the function is declared
+  /// as 'extern "C"', or if it uses C++ name mangling.
+  static bool isCLibraryFunction(const FunctionDecl *FD,
+                                 StringRef Name = StringRef());
 
   /// \brief Depending on wither the location corresponds to a macro, return 
   /// either the macro name or the token spelling.

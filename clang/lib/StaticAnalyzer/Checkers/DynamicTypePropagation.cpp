@@ -105,8 +105,7 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
   if (const ObjCMethodCall *Msg = dyn_cast<ObjCMethodCall>(&Call)) {
 
     // Get the returned value if it's a region.
-    SVal Result = C.getSVal(Call.getOriginExpr());
-    const MemRegion *RetReg = Result.getAsRegion();
+    const MemRegion *RetReg = Call.getReturnValue().getAsRegion();
     if (!RetReg)
       return;
 
