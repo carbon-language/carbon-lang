@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c -fobjc-arc -fblocks -verify %s
+// RUN: %clang_cc1 -x objective-c -fobjc-arc -fblocks -Wimplicit-retain-self -verify %s
 // rdar://11194874
 
 @interface Root @end
