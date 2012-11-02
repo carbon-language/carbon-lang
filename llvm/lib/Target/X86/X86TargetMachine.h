@@ -82,7 +82,7 @@ class X86_32TargetMachine : public X86TargetMachine {
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
   ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
+  X86VectorTargetTransformInfo VTTI;
 public:
   X86_32TargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -119,7 +119,7 @@ class X86_64TargetMachine : public X86TargetMachine {
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
   ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
+  X86VectorTargetTransformInfo VTTI;
 public:
   X86_64TargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS, const TargetOptions &Options,

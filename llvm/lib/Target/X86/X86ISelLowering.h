@@ -19,6 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetTransformImpl.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -946,6 +947,21 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo);
   }
+
+  class X86VectorTargetTransformInfo : public VectorTargetTransformImpl {
+  public:
+    explicit X86VectorTargetTransformInfo(const TargetLowering *TL) :
+    VectorTargetTransformImpl(TL) {}
+
+    virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                                        unsigned Index) const {
+      // Floating point scalars are already located in index #0.
+      if (Val->getScalarType()->isFloatingPointTy() && Index == 0)
+        return 0;
+      return VectorTargetTransformImpl::getVectorInstrCost(Opcode, Val, Index);
+    }
+  };
+
 }
 
 #endif    // X86ISELLOWERING_H
