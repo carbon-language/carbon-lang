@@ -4322,7 +4322,7 @@
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Release+Asserts";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
-				MACOSX_DEPLOYMENT_TARGET = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
@@ -4381,7 +4381,7 @@
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = Release;
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
-				MACOSX_DEPLOYMENT_TARGET = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
@@ -5231,7 +5231,7 @@
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Debug+Asserts";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
-				MACOSX_DEPLOYMENT_TARGET = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
