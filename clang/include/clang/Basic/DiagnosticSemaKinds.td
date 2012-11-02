@@ -718,7 +718,7 @@ def warn_arc_repeated_use_of_weak : Warning <
 def warn_implicitly_retains_self : Warning <
   "block implicitly retains 'self'; explicitly mention 'self' to indicate "
   "this is intended behavior">,
-  InGroup<DiagGroup<"implicit-retain-self">>;
+  InGroup<DiagGroup<"implicit-retain-self">>, DefaultIgnore;
 def warn_arc_possible_repeated_use_of_weak : Warning <
   "weak %select{variable|property|implicit property|instance variable}0 %1 may "
   "be accessed multiple times in this %select{function|method|block|lambda}2 "
