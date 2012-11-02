@@ -548,7 +548,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         const char *value_name = result_name_str.c_str();
         
         if (strstr(value_name, "$__lldb_expr_result_ptr") &&
-            !strstr(value_name, "GV"))
+            strncmp(value_name, "_ZGV", 4))
         {
             result_name = value_name;
             m_result_is_pointer = true;
@@ -556,7 +556,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         }
         
         if (strstr(value_name, "$__lldb_expr_result") &&
-            !strstr(value_name, "GV")) 
+            strncmp(value_name, "_ZGV", 4))
         {
             result_name = value_name;
             m_result_is_pointer = false;
