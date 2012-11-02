@@ -187,6 +187,13 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createCostModelAnalysisPass - This creates an instance of the
+  // CostModelAnalysis pass.
+  //
+  FunctionPass *createCostModelAnalysisPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // Minor pass prototypes, allowing us to expose them through bugpoint and
   // analyze.
   FunctionPass *createInstCountPass();

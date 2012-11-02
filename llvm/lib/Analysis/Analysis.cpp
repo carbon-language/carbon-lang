@@ -26,6 +26,7 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializeBasicAliasAnalysisPass(Registry);
   initializeBlockFrequencyInfoPass(Registry);
   initializeBranchProbabilityInfoPass(Registry);
+  initializeCostModelAnalysisPass(Registry);
   initializeCFGViewerPass(Registry);
   initializeCFGPrinterPass(Registry);
   initializeCFGOnlyViewerPass(Registry);

@@ -88,6 +88,7 @@ void initializeCodePlacementOptPass(PassRegistry&);
 void initializeConstantMergePass(PassRegistry&);
 void initializeConstantPropagationPass(PassRegistry&);
 void initializeMachineCopyPropagationPass(PassRegistry&);
+void initializeCostModelAnalysisPass(PassRegistry&);
 void initializeCorrelatedValuePropagationPass(PassRegistry&);
 void initializeDAEPass(PassRegistry&);
 void initializeDAHPass(PassRegistry&);

@@ -10,6 +10,7 @@ add_llvm_library(LLVMAnalysis
   BranchProbabilityInfo.cpp
   CFGPrinter.cpp
   CaptureTracking.cpp
+  CostModel.cpp
   CodeMetrics.cpp
   ConstantFolding.cpp
   DbgInfoPrinter.cpp
