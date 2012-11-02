@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel < %s | FileCheck %s
+; RUN: llc -march=mipsel --disable-machine-licm < %s | FileCheck %s
 
 @x = common global i32 0, align 4
 
@@ -181,8 +181,9 @@ entry:
 
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R10:[0-9]+]], 0($[[R2]])
+; CHECK:   and     $[[R18:[0-9]+]], $[[R9]], $[[R6]]
 ; CHECK:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK:   or      $[[R14:[0-9]+]], $[[R13]], $[[R9]]
+; CHECK:   or      $[[R14:[0-9]+]], $[[R13]], $[[R18]]
 ; CHECK:   sc      $[[R14]], 0($[[R2]])
 ; CHECK:   beq     $[[R14]], $zero, $[[BB0]]
 
