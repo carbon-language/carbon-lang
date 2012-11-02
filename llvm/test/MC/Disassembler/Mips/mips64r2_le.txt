@@ -3,7 +3,7 @@
 # CHECK: daddiu $11, $26, 31949
 0xcd 0x7c 0x4b 0x67
 
-# CHECK: daddu $26, $at, $11
+# CHECK: daddu $26, $1, $11
 0x2d 0xd0 0x2b 0x00
 
 # CHECK: ddiv $zero, $26, $22
@@ -30,10 +30,10 @@
 # CHECK: dsllv $gp, $27, $24
 0x14 0xe0 0x1b 0x03
 
-# CHECK: dsra $at, $at, 30
+# CHECK: dsra $1, $1, 30
 0xbb 0x0f 0x01 0x00
 
-# CHECK: dsrav $at, $at, $fp
+# CHECK: dsrav $1, $1, $fp
 0x17 0x08 0xc1 0x03
 
 # CHECK: dsrl $10, $gp, 24
@@ -45,10 +45,10 @@
 # CHECK: dsubu $gp, $27, $24
 0x2f 0xe0 0x78 0x03
 
-# CHECK: lw $27, -15155($at)
+# CHECK: lw $27, -15155($1)
 0xcd 0xc4 0x3b 0x8c
 
-# CHECK: lui $at, 1
+# CHECK: lui $1, 1
 0x01 0x00 0x01 0x3c
 
 # CHECK: lwu $3, -1746($3)
@@ -57,7 +57,7 @@
 # CHECK: lui $ra, 1
 0x01 0x00 0x1f 0x3c
 
-# CHECK: sw $26, -15159($at)
+# CHECK: sw $26, -15159($1)
 0xc9 0xc4 0x3a 0xac
 
 # CHECK: ld $26, 3958($zero)
