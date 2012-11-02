@@ -212,11 +212,9 @@ public:
     return getCalleeName(FunDecl);
   }
 
-  /// Given a function declaration and a name checks if this is a C lib
-  /// function with the given name.
-  bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name);
-  static bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name,
-                                 ASTContext &Context);
+  /// \brief Returns true if the given function is the specified built-in or
+  /// system library C function.
+  static bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name);
 
   /// \brief Depending on wither the location corresponds to a macro, return 
   /// either the macro name or the token spelling.

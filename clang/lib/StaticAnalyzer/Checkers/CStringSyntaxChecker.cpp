@@ -33,7 +33,6 @@ namespace {
 class WalkAST: public StmtVisitor<WalkAST> {
   BugReporter &BR;
   AnalysisDeclContext* AC;
-  ASTContext &ASTC;
 
   /// Check if two expressions refer to the same declaration.
   inline bool sameDecl(const Expr *A1, const Expr *A2) {
@@ -58,8 +57,8 @@ class WalkAST: public StmtVisitor<WalkAST> {
       const FunctionDecl *FD = CE->getDirectCallee();
       if (!FD)
         return false;
-      return (CheckerContext::isCLibraryFunction(FD, "strlen", ASTC)
-          && sameDecl(CE->getArg(0), WithArg));
+      return (CheckerContext::isCLibraryFunction(FD, "strlen") &&
+              sameDecl(CE->getArg(0), WithArg));
     }
     return false;
   }
@@ -83,7 +82,7 @@ class WalkAST: public StmtVisitor<WalkAST> {
 
 public:
   WalkAST(BugReporter &br, AnalysisDeclContext* ac) :
-      BR(br), AC(ac), ASTC(AC->getASTContext()) {
+      BR(br), AC(ac) {
   }
 
   // Statement visitor methods.
@@ -136,7 +135,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   if (!FD)
     return;
 
-  if (CheckerContext::isCLibraryFunction(FD, "strncat", ASTC)) {
+  if (CheckerContext::isCLibraryFunction(FD, "strncat")) {
     if (containsBadStrncatPattern(CE)) {
       const Expr *DstArg = CE->getArg(0);
       const Expr *LenArg = CE->getArg(2);
