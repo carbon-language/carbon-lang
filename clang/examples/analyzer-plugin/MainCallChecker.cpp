@@ -39,7 +39,7 @@ void MainCallChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const 
 
     BugReport *report = new BugReport(*BT, BT->getName(), N);
     report->addRange(Callee->getSourceRange());
-    C.EmitReport(report);    
+    C.emitReport(report);
   }
 }
 
