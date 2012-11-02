@@ -184,6 +184,10 @@ int Atexit(void (*function)(void)) {
 #endif
 }
 
+int internal_isatty(fd_t fd) {
+  return isatty(fd);
+}
+
 }  // namespace __sanitizer
 
 #endif  // __linux__ || __APPLE_

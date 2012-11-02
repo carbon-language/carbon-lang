@@ -59,6 +59,7 @@ const fd_t kStdinFd = 0;
 const fd_t kStdoutFd = 1;
 const fd_t kStderrFd = 2;
 int internal_close(fd_t fd);
+int internal_isatty(fd_t fd);
 fd_t internal_open(const char *filename, bool write);
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);

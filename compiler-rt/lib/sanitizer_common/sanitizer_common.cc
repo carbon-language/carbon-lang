@@ -48,18 +48,27 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   Die();
 }
 
+static void MaybeOpenReportFile() {
+  if (report_fd != kInvalidFd)
+    return;
+  fd_t fd = internal_open(report_path, true);
+  if (fd == kInvalidFd) {
+    report_fd = kStderrFd;
+    Report("ERROR: Can't open file: %s\n", report_path);
+    Die();
+  }
+  report_fd = fd;
+}
+
+bool PrintsToTty() {
+  MaybeOpenReportFile();
+  return internal_isatty(report_fd);
+}
+
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
   uptr length = (uptr)internal_strlen(buffer);
-  if (report_fd == kInvalidFd) {
-    fd_t fd = internal_open(report_path, true);
-    if (fd == kInvalidFd) {
-      report_fd = kStderrFd;
-      Report("ERROR: Can't open file: %s\n", report_path);
-      Die();
-    }
-    report_fd = fd;
-  }
+  MaybeOpenReportFile();
   if (length != internal_write(report_fd, buffer, length)) {
     internal_write(report_fd, kRawWriteError, internal_strlen(kRawWriteError));
     Die();

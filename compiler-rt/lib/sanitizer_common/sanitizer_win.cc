@@ -154,6 +154,10 @@ int internal_close(fd_t fd) {
   UNIMPLEMENTED();
 }
 
+int internal_isatty(fd_t fd) {
+  UNIMPLEMENTED();
+}
+
 fd_t internal_open(const char *filename, bool write) {
   UNIMPLEMENTED();
 }
