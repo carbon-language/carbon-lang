@@ -6,9 +6,9 @@
 
 define void @f() nounwind {
 entry:
-; CHECK:  lui $at, 65535
-; CHECK:  addiu $at, $at, -16
-; CHECK:  addu  $sp, $sp, $at
+; CHECK:  lui $[[R0:[0-9]+]], 65535
+; CHECK:  addiu $[[R0]], $[[R0]], -16
+; CHECK:  addu $sp, $sp, $[[R0]]
 
   %agg.tmp = alloca %struct.S1, align 1
   %tmp = getelementptr inbounds %struct.S1* %agg.tmp, i32 0, i32 0, i32 0

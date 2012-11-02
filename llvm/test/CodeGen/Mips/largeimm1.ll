@@ -1,7 +1,7 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
 
-; CHECK: lui $at, 49152
-; CHECK: lui $at, 16384
+; CHECK: lui ${{[0-9]+}}, 49152
+; CHECK: lui ${{[0-9]+}}, 16384
 define void @f() nounwind {
 entry:
   %a1 = alloca [1073741824 x i8], align 1
