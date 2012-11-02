@@ -8,7 +8,7 @@ void func(bar *f) { // CHECK: DW_TAG_class_type
 union baz;
 void func(baz *f) { // CHECK: DW_TAG_union_type
 }
-struct A { // FIXME: we're still emitting this as DW_TAG_class_type
+struct A { // CHECK: DW_TAG_structure_type
   int one;
   static const int HdrSize = 52; // CHECK: HdrSize
   int two;

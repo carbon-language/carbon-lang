@@ -1875,7 +1875,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
-  StringRef RDName = RD->getName();
+  StringRef RDName = getClassName(RD);
 
   llvm::DIDescriptor RDContext;
   if (CGM.getCodeGenOpts().getDebugInfo() == CodeGenOptions::LimitedDebugInfo)
@@ -1896,9 +1896,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   if (RD->isUnion())
     RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
 					Size, Align, 0, llvm::DIArray());
-  else if (CXXDecl) {
-    RDName = getClassName(RD);
-    
+  else if (RD->isClass()) {
     // FIXME: This could be a struct type giving a default visibility different
     // than C++ class type, but needs llvm metadata changes first.
     RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
