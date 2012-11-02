@@ -780,7 +780,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
 
     Type *TypeToCastTo = LoadedTy;
     if (TypeToCastTo->getScalarType()->isPointerTy())
-      TypeToCastTo = TD.getIntPtrType(StoredValTy);
+      TypeToCastTo = TD.getIntPtrType(TypeToCastTo);
 
     if (StoredValTy != TypeToCastTo)
       StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", InsertPt);
