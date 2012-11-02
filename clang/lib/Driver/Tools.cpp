@@ -1517,6 +1517,7 @@ static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
                             (Twine("libclang_rt.ubsan-") +
                              TC.getArchName() + ".a"));
     CmdArgs.push_back(Args.MakeArgString(LibUbsan));
+    CmdArgs.push_back("-lpthread");
   }
 }
 
