@@ -136,29 +136,35 @@ void SimpleStreamChecker::checkPreStmt(const CallExpr *Call,
   C.addTransition(State);
 }
 
+static bool isLeaked(SymbolRef Sym, const StreamState &SS,
+                     bool IsSymDead, ProgramStateRef State) {
+  if (IsSymDead && SS.isOpened()) {
+    // If a symbol is NULL, assume that fopen failed on this path.
+    // A symbol should only be considered leaked if it is non-null.
+    ConstraintManager &CMgr = State->getConstraintManager();
+    ConditionTruthVal OpenFailed = CMgr.isNull(State, Sym);
+    return !OpenFailed.isConstrainedTrue();
+  }
+  return false;
+}
+
 void SimpleStreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                            CheckerContext &C) const {
   ProgramStateRef State = C.getState();
-  StreamMapTy TrackedStreams = State->get<StreamMap>();
-
   SymbolVector LeakedStreams;
+  StreamMapTy TrackedStreams = State->get<StreamMap>();
   for (StreamMapTy::iterator I = TrackedStreams.begin(),
                              E = TrackedStreams.end(); I != E; ++I) {
     SymbolRef Sym = I->first;
-    if (SymReaper.isDead(Sym)) {
-      const StreamState &SS = I->second;
-      if (SS.isOpened()) {
-        // If a symbol is NULL, assume that fopen failed on this path
-        // and do not report a leak.
-        ConstraintManager &CMgr = State->getConstraintManager();
-        ConditionTruthVal OpenFailed = CMgr.isNull(State, Sym);
-        if (!OpenFailed.isConstrainedTrue())
-          LeakedStreams.push_back(Sym);
-      }
+    bool IsSymDead = SymReaper.isDead(Sym);
 
-      // Remove the dead symbol from the streams map.
+    // Collect leaked symbols.
+    if (isLeaked(Sym, I->second, IsSymDead, State))
+      LeakedStreams.push_back(Sym);
+
+    // Remove the dead symbol from the streams map.
+    if (IsSymDead)
       State = State->remove<StreamMap>(Sym);
-    }
   }
 
   ExplodedNode *N = C.addTransition(State);
