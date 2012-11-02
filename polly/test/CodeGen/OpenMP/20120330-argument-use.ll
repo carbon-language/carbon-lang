@@ -1,5 +1,34 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp %s -S | FileCheck %s
-; ModuleID = '20120330-argument-lookup.s'
+
+;/*
+; * =============================================================================
+; *
+; *       Filename:  20120330-argument-use.c
+; *
+; *    Description:  Polly OpenMP test case
+; *
+; *                  Test if the OpenMP subfunction uses the argument copy in
+; *                  the OpenMP struct not the original one only available in
+; *                  the original function.
+; *
+; *                  Run with -polly-codegen -enable-polly-openmp
+; *
+; *         Author:  Johannes Doerfert johannes@jdoerfert.de
+; *
+; *        Created:  2012-03-30
+; *       Modified:  2012-03-30
+; *
+; * =============================================================================
+; */
+;
+;void f(int * restrict A, int * restrict B, int n) {
+;  int i;
+;
+;  for (i = 0; i < n; i++) {
+;    A[i] = B[i] * 2;
+;  }
+;}
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 

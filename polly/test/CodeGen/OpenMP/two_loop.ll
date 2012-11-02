@@ -1,5 +1,30 @@
-; ModuleID = 'two_loop.s'
 ; RUN: opt %loadPolly %defaultOpts -mem2reg -polly-codegen -enable-polly-openmp -S < %s
+
+;#include <string.h>
+;#define N 10240000
+;
+;float A[N];
+;float B[N];
+;
+;void loop1_openmp() {
+;	for (int i = 0; i <= N; i++)
+;		A[i] = 0;
+;	for (int j = 0; j <= N; j++)
+;		B[j] = 0;
+;}
+;
+;
+;int main () {
+;  int i;
+;  memset(A, 0, sizeof(float) * N);
+;  memset(B, 1, sizeof(float) * N);
+;
+;  loop1_openmp();
+;
+;  return 0;
+;}
+;
+
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
 target triple = "i386-pc-linux-gnu"
 

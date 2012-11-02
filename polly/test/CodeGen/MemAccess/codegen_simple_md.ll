@@ -1,6 +1,16 @@
 ;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen %s -S | FileCheck -check-prefix=WITHCONST %s
 ;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen %s -S | FileCheck -check-prefix=WITHOUTCONST %s
-; ModuleID = 'codegen_simple_md.s'
+
+;int A[1040];
+;
+;int codegen_simple_md() {
+;  for (int i = 0; i < 32; ++i)
+;    for (int j = 0; j < 32; ++j)
+;      A[32*i+j] = 100;
+;
+;  return 0;
+;}
+
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128"
 target triple = "i386-pc-linux-gnu"
 

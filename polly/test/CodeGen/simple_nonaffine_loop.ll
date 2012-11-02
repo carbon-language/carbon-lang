@@ -1,4 +1,21 @@
 ; RUN: opt %loadPolly %defaultOpts -O3 -polly-cloog -polly-allow-nonaffine -analyze %s | FileCheck %s
+
+;#include <stdio.h>
+;#include <stdlib.h>
+;#include <math.h>
+;
+;int main()
+;{
+;	int A[1024*1024];
+;	int i;
+;	for (i = 0; i < 1024; i++)
+;		A[i*i] = 2*i;
+;
+;	printf("Random Value: %d", A[rand() % 1024*1024]);
+;
+;	return 0;
+;}
+
 ; ModuleID = 'simple_nonaffine_loop.c'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.7.2"

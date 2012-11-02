@@ -1,5 +1,30 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s
 ; ModuleID = '20100720-MultipleConditions.s'
+
+;int bar1();
+;int bar2();
+;int bar3();
+;int k;
+;#define N 100
+;int A[N];
+;
+;int main() {
+;  int i, j, z;
+;
+;  __sync_synchronize();
+;  for (i = 0; i < N; i++) {
+;    if (i < 50)
+;      A[i] = 8;
+;    if (i < 4)
+;      A[i] = 9;
+;    if (i < 3)
+;      A[i] = 10;
+;  }
+;  __sync_synchronize();
+;
+;  return A[z];
+;}
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-pc-linux-gnu"
 

@@ -1,7 +1,27 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze  -S %s | FileCheck %s
 
-; ModuleID = 'single_loop_ll_max_iterations.s'
+;#include "limits.h"
+;#define N 20
 ;
+;int main () {
+;  long long i;
+;  long long A[N];
+;
+;  A[0] = 0;
+;
+;  __sync_synchronize();
+;
+;  for (i = 0; i < LLONG_MAX; i++)
+;    A[0] = i;
+;
+;  __sync_synchronize();
+;
+;  if (A[0] == LLONG_MAX - 1)
+;    return 0;
+;  else
+;    return 1;
+;}
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
 

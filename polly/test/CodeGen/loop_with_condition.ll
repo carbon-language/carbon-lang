@@ -1,5 +1,44 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s | FileCheck %s
 
+;#include <string.h>
+;#define N 1024
+;int A[N];
+;int B[N];
+;
+;void loop_with_condition() {
+;  int i;
+;
+;  __sync_synchronize();
+;  for (i = 0; i < N; i++) {
+;    if (i <= N / 2)
+;      A[i] = 1;
+;    else
+;      A[i] = 2;
+;    B[i] = 3;
+;  }
+;  __sync_synchronize();
+;}
+;
+;int main () {
+;  int i;
+;
+;  memset(A, 0, sizeof(int) * N);
+;  memset(B, 0, sizeof(int) * N);
+;
+;  loop_with_condition();
+;
+;  for (i = 0; i < N; i++)
+;    if (B[i] != 3)
+;      return 1;
+;
+;  for (i = 0; i < N; i++)
+;    if (i <= N / 2 && A[i] != 1)
+;      return 1;
+;    else if (i > N / 2 && A[i] != 2)
+;      return 1;
+;  return 0;
+;}
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-pc-linux-gnu"
 

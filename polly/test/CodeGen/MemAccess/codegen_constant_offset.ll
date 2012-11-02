@@ -1,5 +1,14 @@
 ;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -polly-codegen -instnamer %s -S | FileCheck %s
-; ModuleID = 'codegen_constant_offset.ll'
+
+;int A[100];
+;
+;int codegen_constant_offset() {
+;  for (int i = 0; i < 12; i++)
+;    A[13] = A[i] + A[i-1];
+;
+;  return 0;
+;}
+
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
 target triple = "i386-pc-linux-gnu"
 
