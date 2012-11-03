@@ -298,7 +298,7 @@ struct SourceColumnMap {
   /// \brief Map from a byte index to the previous byte which starts a column.
   int startOfPreviousColumn(int N) const {
     assert(0 < N && N < static_cast<int>(m_columnToByte.size()));
-    while (byteToColumn(N--) == -1) {}
+    while (byteToColumn(--N) == -1) {}
     return N;
   }
 
