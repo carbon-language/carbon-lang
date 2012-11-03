@@ -524,10 +524,13 @@ FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full)
 void
 FileSpec::Dump(Stream *s) const
 {
-    m_directory.Dump(s);
-    if (m_directory)
-        s->PutChar('/');
-    m_filename.Dump(s);
+    if (s)
+    {
+        m_directory.Dump(s);
+        if (m_directory)
+            s->PutChar('/');
+        m_filename.Dump(s);
+    }
 }
 
 //------------------------------------------------------------------

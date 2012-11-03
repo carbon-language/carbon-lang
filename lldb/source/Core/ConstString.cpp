@@ -279,9 +279,12 @@ ConstString::Compare (const ConstString& lhs, const ConstString& rhs)
 void
 ConstString::Dump(Stream *s, const char *fail_value) const
 {
-    const char *cstr = AsCString (fail_value);
-    if (cstr)
-        s->PutCString (cstr);
+    if (s)
+    {
+        const char *cstr = AsCString (fail_value);
+        if (cstr)
+            s->PutCString (cstr);
+    }
 }
 
 void
