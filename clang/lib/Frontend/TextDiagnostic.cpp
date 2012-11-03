@@ -494,7 +494,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
 
   // The line needs some trunctiona, and we'd prefer to keep the front
   //  if possible, so remove the back
-  if (BackColumnsRemoved)
+  if (BackColumnsRemoved > strlen(back_ellipse))
     SourceLine.replace(SourceEnd, std::string::npos, back_ellipse);
 
   // If that's enough then we're done
@@ -502,7 +502,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
     return;
 
   // Otherwise remove the front as well
-  if (FrontColumnsRemoved) {
+  if (FrontColumnsRemoved > strlen(front_ellipse)) {
     SourceLine.replace(0, SourceStart, front_ellipse);
     CaretLine.replace(0, CaretStart, front_space);
     if (!FixItInsertionLine.empty())
