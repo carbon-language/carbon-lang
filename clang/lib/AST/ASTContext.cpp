@@ -411,13 +411,12 @@ comments::FullComment *ASTContext::getCommentForDecl(
   const RawComment *RC = getRawCommentForAnyRedecl(D, &OriginalDecl);
   if (!RC) {
     if (isa<ObjCMethodDecl>(D) || isa<FunctionDecl>(D)) {
-      SmallVector<const NamedDecl*, 8> overridden;
+      SmallVector<const NamedDecl*, 8> Overridden;
       if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))
-        addRedeclaredMethods(OMD, overridden);
-      const_cast<ASTContext *>(this)->getOverriddenMethods(dyn_cast<NamedDecl>(D),
-                                                           overridden);
-      for (unsigned i = 0, e = overridden.size(); i < e; i++) {
-        if (comments::FullComment *FC = getCommentForDecl(overridden[i], PP)) {
+        addRedeclaredMethods(OMD, Overridden);
+      getOverriddenMethods(dyn_cast<NamedDecl>(D), Overridden);
+      for (unsigned i = 0, e = Overridden.size(); i < e; i++) {
+        if (comments::FullComment *FC = getCommentForDecl(Overridden[i], PP)) {
           comments::FullComment *CFC = cloneFullComment(FC, D);
           return CFC;
         }
@@ -1082,8 +1081,9 @@ void ASTContext::addOverriddenMethod(const CXXMethodDecl *Method,
   OverriddenMethods[Method].push_back(Overridden);
 }
 
-void ASTContext::getOverriddenMethods(const NamedDecl *D,
-                               SmallVectorImpl<const NamedDecl *> &Overridden) {
+void ASTContext::getOverriddenMethods(
+                      const NamedDecl *D,
+                      SmallVectorImpl<const NamedDecl *> &Overridden) const {
   assert(D);
 
   if (const CXXMethodDecl *CXXMethod = dyn_cast<CXXMethodDecl>(D)) {
