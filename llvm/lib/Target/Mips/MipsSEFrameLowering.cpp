@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -202,6 +203,19 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Mark $fp as used if function has dedicated frame pointer.
   if (hasFP(MF))
     MRI.setPhysRegUsed(FP);
+
+  // Set scavenging frame index if necessary.
+  uint64_t MaxSPOffset = MF.getInfo<MipsFunctionInfo>()->getIncomingArgSize() +
+    estimateStackSize(MF);
+
+  if (isInt<16>(MaxSPOffset))
+    return;
+
+  const TargetRegisterClass *RC = STI.isABI_N64() ?
+    &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+  int FI = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                RC->getAlignment(), false);
+  RS->setScavengingFrameIndex(FI);
 }
 
 const MipsFrameLowering *

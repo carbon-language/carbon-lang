@@ -27,6 +27,10 @@ public:
   MipsSERegisterInfo(const MipsSubtarget &Subtarget,
                      const MipsSEInstrInfo &TII);
 
+  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
+  bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

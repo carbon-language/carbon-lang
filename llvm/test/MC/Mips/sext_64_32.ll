@@ -2,7 +2,7 @@
 
 ; Sign extend from 32 to 64 was creating nonsense opcodes
 
-; CHECK: sll ${{[0-9]+}}, ${{[0-9]+}}, 0
+; CHECK: sll ${{[a-z0-9]+}}, ${{[a-z0-9]+}}, 0
 
 define i64 @foo(i32 %ival) nounwind readnone {
 entry:
@@ -10,7 +10,7 @@ entry:
   ret i64 %conv
 }
 
-; CHECK: dsll32 ${{[0-9]+}}, ${{[0-9]+}}, 0
+; CHECK: dsll32 ${{[a-z0-9]+}}, ${{[a-z0-9]+}}, 0
 
 define i64 @foo_2(i32 %ival_2) nounwind readnone {
 entry:

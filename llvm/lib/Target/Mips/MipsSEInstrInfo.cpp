@@ -261,7 +261,7 @@ void MipsSEInstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
     BuildMI(MBB, I, DL, get(ADDiu), SP).addReg(SP).addImm(Amount);
   else { // Expand immediate that doesn't fit in 16-bit.
     unsigned Reg = loadImmediate(Amount, MBB, I, DL, 0);
-    BuildMI(MBB, I, DL, get(ADDu), SP).addReg(SP).addReg(Reg);
+    BuildMI(MBB, I, DL, get(ADDu), SP).addReg(SP).addReg(Reg, RegState::Kill);
   }
 }
 
@@ -273,10 +273,12 @@ MipsSEInstrInfo::loadImmediate(int64_t Imm, MachineBasicBlock &MBB,
                                unsigned *NewImm) const {
   MipsAnalyzeImmediate AnalyzeImm;
   const MipsSubtarget &STI = TM.getSubtarget<MipsSubtarget>();
+  MachineRegisterInfo &RegInfo = MBB.getParent()->getRegInfo();
   unsigned Size = STI.isABI_N64() ? 64 : 32;
   unsigned LUi = STI.isABI_N64() ? Mips::LUi64 : Mips::LUi;
   unsigned ZEROReg = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
-  unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
+  const TargetRegisterClass *RC = STI.isABI_N64() ?
+    &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
   bool LastInstrIsADDiu = NewImm;
 
   const MipsAnalyzeImmediate::InstSeq &Seq =
@@ -288,22 +290,23 @@ MipsSEInstrInfo::loadImmediate(int64_t Imm, MachineBasicBlock &MBB,
   // The first instruction can be a LUi, which is different from other
   // instructions (ADDiu, ORI and SLL) in that it does not have a register
   // operand.
+  unsigned Reg = RegInfo.createVirtualRegister(RC);
+
   if (Inst->Opc == LUi)
-    BuildMI(MBB, II, DL, get(LUi), ATReg)
-      .addImm(SignExtend64<16>(Inst->ImmOpnd));
+    BuildMI(MBB, II, DL, get(LUi), Reg).addImm(SignExtend64<16>(Inst->ImmOpnd));
   else
-    BuildMI(MBB, II, DL, get(Inst->Opc), ATReg).addReg(ZEROReg)
+    BuildMI(MBB, II, DL, get(Inst->Opc), Reg).addReg(ZEROReg)
       .addImm(SignExtend64<16>(Inst->ImmOpnd));
 
   // Build the remaining instructions in Seq.
   for (++Inst; Inst != Seq.end() - LastInstrIsADDiu; ++Inst)
-    BuildMI(MBB, II, DL, get(Inst->Opc), ATReg).addReg(ATReg)
+    BuildMI(MBB, II, DL, get(Inst->Opc), Reg).addReg(Reg, RegState::Kill)
       .addImm(SignExtend64<16>(Inst->ImmOpnd));
 
   if (LastInstrIsADDiu)
     *NewImm = Inst->ImmOpnd;
 
-  return ATReg;
+  return Reg;
 }
 
 unsigned MipsSEInstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {
