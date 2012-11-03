@@ -953,13 +953,10 @@ namespace llvm {
     explicit X86VectorTargetTransformInfo(const TargetLowering *TL) :
     VectorTargetTransformImpl(TL) {}
 
+    virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
+
     virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                        unsigned Index) const {
-      // Floating point scalars are already located in index #0.
-      if (Val->getScalarType()->isFloatingPointTy() && Index == 0)
-        return 0;
-      return VectorTargetTransformImpl::getVectorInstrCost(Opcode, Val, Index);
-    }
+                                        unsigned Index) const;
   };
 
 }

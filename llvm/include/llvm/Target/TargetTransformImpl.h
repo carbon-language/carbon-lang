@@ -51,7 +51,7 @@ public:
 };
 
 class VectorTargetTransformImpl : public VectorTargetTransformInfo {
-private:
+protected:
   const TargetLowering *TLI;
 
   /// Estimate the cost of type-legalization and the legalized type.

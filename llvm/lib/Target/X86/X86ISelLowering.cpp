@@ -17504,3 +17504,73 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 
   return Res;
 }
+
+unsigned
+X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
+                                                     Type *Ty) const {
+  const X86Subtarget &ST =
+  TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+
+  // Fix some of the inaccuracies of the target independent estimation.
+  if (Ty->isVectorTy() && ST.hasSSE41()) {
+    unsigned NumElem = Ty->getVectorNumElements();
+    unsigned SizeInBits = Ty->getScalarType()->getScalarSizeInBits();
+
+    bool Is2 = (NumElem == 2);
+    bool Is4 = (NumElem == 4);
+    bool Is8 = (NumElem == 8);
+    bool Is32bits = (SizeInBits == 32);
+    bool Is64bits = (SizeInBits == 64);
+    bool HasAvx = ST.hasAVX();
+    bool HasAvx2 = ST.hasAVX2();
+
+    switch (Opcode) {
+      case Instruction::Add:
+      case Instruction::Sub:
+      case Instruction::Mul: {
+        // Only AVX2 has support for 8-wide integer operations.
+        if (Is32bits && (Is4 || (Is8 && HasAvx2))) return 1;
+        if (Is64bits && (Is2 || (Is4 && HasAvx2))) return 1;
+
+        // We don't have to completly scalarize unsupported ops. We can
+        // issue two half-sized operations (with some overhead).
+        // We don't need to extract the lower part of the YMM to the XMM.
+        // Extract the upper, two ops, insert the upper = 4.
+        if (Is32bits && Is8 && HasAvx) return 4;
+        if (Is64bits && Is4 && HasAvx) return 4;
+        break;
+      }
+      case Instruction::FAdd:
+      case Instruction::FSub:
+      case Instruction::FMul: {
+        // AVX has support for 8-wide float operations.
+        if (Is32bits && (Is4 || (Is8 && HasAvx))) return 1;
+        if (Is64bits && (Is2 || (Is4 && HasAvx))) return 1;
+        break;
+      }
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor: {
+        // AVX has support for 8-wide integer bitwise operations.
+        if (Is32bits && (Is4 || (Is8 && HasAvx))) return 1;
+        if (Is64bits && (Is2 || (Is4 && HasAvx))) return 1;
+        break;
+      }
+    }
+  }
+
+  return VectorTargetTransformImpl::getArithmeticInstrCost(Opcode, Ty);
+}
+
+unsigned
+X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
+                                    unsigned Index) const {
+  // Floating point scalars are already located in index #0.
+  if (Val->getScalarType()->isFloatingPointTy() && Index == 0)
+    return 0;
+  return VectorTargetTransformImpl::getVectorInstrCost(Opcode, Val, Index);
+}
+
