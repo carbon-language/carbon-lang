@@ -411,8 +411,8 @@ public:
   unsigned getSize() const {
     APInt sz(((const APInt&)getItem(0).getLow()).getBitWidth(), 0);
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
-      const APInt &Low = getItem(i).getLow();
-      const APInt &High = getItem(i).getHigh();
+      const APInt Low = getItem(i).getLow();
+      const APInt High = getItem(i).getHigh();
       APInt S = High - Low + 1;
       sz += S;
     }
@@ -426,8 +426,8 @@ public:
   APInt getSingleValue(unsigned idx) const {
     APInt sz(((const APInt&)getItem(0).getLow()).getBitWidth(), 0);
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
-      const APInt &Low = getItem(i).getLow();
-      const APInt &High = getItem(i).getHigh();
+      const APInt Low = getItem(i).getLow();
+      const APInt High = getItem(i).getHigh();
       APInt S = High - Low + 1;
       APInt oldSz = sz;
       sz += S;
