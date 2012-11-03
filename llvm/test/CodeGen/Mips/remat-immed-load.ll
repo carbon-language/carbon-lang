@@ -24,3 +24,28 @@ entry:
 }
 
 declare void @foo2(i64)
+
+define void @f5() nounwind {
+entry:
+; 32:  lui $4, 1
+; 32:  lui $4, 1
+
+  tail call void @f6(i32 65536) nounwind
+  tail call void @f6(i32 65536) nounwind
+  ret void
+}
+
+declare void @f6(i32)
+
+define void @f7() nounwind {
+entry:
+; 64:  lui $4, 1
+; 64:  lui $4, 1
+
+  tail call void @f8(i64 65536) nounwind
+  tail call void @f8(i64 65536) nounwind
+  ret void
+}
+
+declare void @f8(i64)
+

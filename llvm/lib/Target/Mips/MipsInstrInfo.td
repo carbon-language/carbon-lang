@@ -421,7 +421,7 @@ class shift_rotate_reg<bits<6> func, bits<5> isRotate, string instr_asm,
 // Load Upper Imediate
 class LoadUpper<bits<6> op, string instr_asm, RegisterClass RC, Operand Imm>:
   FI<op, (outs RC:$rt), (ins Imm:$imm16),
-     !strconcat(instr_asm, "\t$rt, $imm16"), [], IIAlu> {
+     !strconcat(instr_asm, "\t$rt, $imm16"), [], IIAlu>, IsAsCheapAsAMove {
   let rs = 0;
   let neverHasSideEffects = 1;
   let isReMaterializable = 1;
