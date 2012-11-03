@@ -99,7 +99,7 @@ static std::pair<const Stmt*,
     }
 
     if (Node->pred_empty())
-      return std::pair<const Stmt*, const CFGBlock*>(0, 0);
+      return std::pair<const Stmt*, const CFGBlock*>((Stmt*)0, (CFGBlock*)0);
 
     Node = *Node->pred_begin();
   }
@@ -116,7 +116,7 @@ static std::pair<const Stmt*,
         break;
       }
       if (Node->pred_empty())
-        return std::pair<const Stmt*, const CFGBlock*>(S, 0);
+        return std::pair<const Stmt*, const CFGBlock*>(S, (CFGBlock*)0);
 
       Node = *Node->pred_begin();
     }
