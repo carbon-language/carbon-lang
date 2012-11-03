@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 typedef struct ompi_datatype_t *MPI_Datatype;
 
@@ -52,6 +52,8 @@ void test1(C *c, int *int_buf)
 {
   c->MPI_Send(int_buf, 1, MPI_INT); // no-warning
   c->MPI_Send(int_buf, 1, MPI_FLOAT); // expected-warning {{argument type 'int *' doesn't match specified 'mpi' type tag that requires 'float *'}}
+  c->MPI_Send(0, 0, MPI_INT); // no-warning
+  c->MPI_Send(nullptr, 0, MPI_INT); // no-warning
 
   OperatorIntStar i;
   c->MPI_Send(i, 1, MPI_INT); // no-warning

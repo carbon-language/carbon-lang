@@ -147,6 +147,10 @@ void test_mpi_predefined_types(
   // Layout-compatible scalar types.
   MPI_Send(int_buf,   1, MPI_INT); // no-warning
 
+  // Null pointer constant.
+  MPI_Send(0,         0, MPI_INT); // no-warning
+  MPI_Send(NULL,      0, MPI_INT); // no-warning
+
   // Layout-compatible class types.
   MPI_Send(pfi, 1, MPI_FLOAT_INT); // no-warning
   MPI_Send(pii, 1, MPI_2INT); // no-warning

@@ -80,6 +80,14 @@ void test_tag_mismatch(int *ptr)
   C_func(ptr, 20); // should warn, but may cause false positives
 }
 
+void test_null_pointer()
+{
+  C_func(0, C_tag); // no-warning
+  C_func((void *) 0, C_tag); // no-warning
+  C_func((int *) 0, C_tag); // no-warning
+  C_func((long *) 0, C_tag); // expected-warning {{argument type 'long *' doesn't match specified 'c' type tag that requires 'int *'}}
+}
+
 // Check that we look through typedefs in the special case of allowing 'char'
 // to be matched with 'signed char' or 'unsigned char'.
 void E_func(void *ptr, int tag) __attribute__(( pointer_with_type_tag(e,1,2) ));
