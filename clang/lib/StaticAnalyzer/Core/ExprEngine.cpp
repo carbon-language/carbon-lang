@@ -1055,19 +1055,18 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
 
 /// Block entrance.  (Update counters).
 void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
-                                         NodeBuilderWithSinks &nodeBuilder) {
+                                         NodeBuilderWithSinks &nodeBuilder, 
+                                         ExplodedNode *Pred) {
   
   // FIXME: Refactor this into a checker.
-  ExplodedNode *pred = nodeBuilder.getContext().getPred();
-  
   if (nodeBuilder.getContext().blockCount() >= AMgr.options.maxBlockVisitOnPath) {
     static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
     const ExplodedNode *Sink =
-                   nodeBuilder.generateSink(pred->getState(), pred, &tag);
+                   nodeBuilder.generateSink(Pred->getState(), Pred, &tag);
 
     // Check if we stopped at the top level function or not.
     // Root node should have the location context of the top most function.
-    const LocationContext *CalleeLC = pred->getLocation().getLocationContext();
+    const LocationContext *CalleeLC = Pred->getLocation().getLocationContext();
     const LocationContext *CalleeSF = CalleeLC->getCurrentStackFrame();
     const LocationContext *RootLC =
                         (*G.roots_begin())->getLocation().getLocationContext();
@@ -1079,7 +1078,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
       // the list. Replay should almost never fail. Use the stats to catch it
       // if it does.
       if ((!AMgr.options.NoRetryExhausted &&
-           replayWithoutInlining(pred, CalleeLC)))
+           replayWithoutInlining(Pred, CalleeLC)))
         return;
       NumMaxBlockCountReachedInInlined++;
     } else
@@ -1313,10 +1312,11 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
 
 /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
 ///  nodes when the control reaches the end of a function.
-void ExprEngine::processEndOfFunction(NodeBuilderContext& BC) {
-  StateMgr.EndPath(BC.Pred->getState());
+void ExprEngine::processEndOfFunction(NodeBuilderContext& BC,
+                                      ExplodedNode *Pred) {
+  StateMgr.EndPath(Pred->getState());
   ExplodedNodeSet Dst;
-  getCheckerManager().runCheckersForEndPath(BC, Dst, *this);
+  getCheckerManager().runCheckersForEndPath(BC, Dst, Pred, *this);
   Engine.enqueueEndOfFunction(Dst);
 }
 

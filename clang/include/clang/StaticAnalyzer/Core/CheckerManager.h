@@ -267,6 +267,7 @@ public:
   /// \brief Run checkers for end of path.
   void runCheckersForEndPath(NodeBuilderContext &BC,
                              ExplodedNodeSet &Dst,
+                             ExplodedNode *Pred,
                              ExprEngine &Eng);
 
   /// \brief Run checkers for branch condition.

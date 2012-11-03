@@ -180,11 +180,9 @@ public:
 struct NodeBuilderContext {
   const CoreEngine &Eng;
   const CFGBlock *Block;
-  ExplodedNode *Pred;
+  const LocationContext *LC;
   NodeBuilderContext(const CoreEngine &E, const CFGBlock *B, ExplodedNode *N)
-    : Eng(E), Block(B), Pred(N) { assert(B); assert(!N->isSink()); }
-
-  ExplodedNode *getPred() const { return Pred; }
+    : Eng(E), Block(B), LC(N->getLocationContext()) { assert(B); }
 
   /// \brief Return the CFGBlock associated with this builder.
   const CFGBlock *getBlock() const { return Block; }
@@ -193,7 +191,7 @@ struct NodeBuilderContext {
   /// visited on the exploded graph path.
   unsigned blockCount() const {
     return Eng.WList->getBlockCounter().getNumVisited(
-                    Pred->getLocationContext()->getCurrentStackFrame(),
+                    LC->getCurrentStackFrame(),
                     Block->getBlockID());
   }
 };
