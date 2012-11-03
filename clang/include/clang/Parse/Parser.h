@@ -1498,6 +1498,7 @@ private:
   StmtResult ParseCompoundStatement(bool isStmtExpr = false);
   StmtResult ParseCompoundStatement(bool isStmtExpr,
                                     unsigned ScopeFlags);
+  void ParseCompoundStatementLeadingPragmas();
   StmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(ExprResult &ExprResult,
                                  Decl *&DeclResult,

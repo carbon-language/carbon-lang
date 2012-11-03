@@ -706,6 +706,48 @@ StmtResult Parser::ParseCompoundStatement(bool isStmtExpr,
   return ParseCompoundStatementBody(isStmtExpr);
 }
 
+/// Parse any pragmas at the start of the compound expression. We handle these
+/// separately since some pragmas (FP_CONTRACT) must appear before any C
+/// statement in the compound, but may be intermingled with other pragmas.
+void Parser::ParseCompoundStatementLeadingPragmas() {
+  bool checkForPragmas = true;
+  while (checkForPragmas) {
+    switch (Tok.getKind()) {
+    case tok::annot_pragma_vis:
+      HandlePragmaVisibility();
+      break;
+    case tok::annot_pragma_pack:
+      HandlePragmaPack();
+      break;
+    case tok::annot_pragma_msstruct:
+      HandlePragmaMSStruct();
+      break;
+    case tok::annot_pragma_align:
+      HandlePragmaAlign();
+      break;
+    case tok::annot_pragma_weak:
+      HandlePragmaWeak();
+      break;
+    case tok::annot_pragma_weakalias:
+      HandlePragmaWeakAlias();
+      break;
+    case tok::annot_pragma_redefine_extname:
+      HandlePragmaRedefineExtname();
+      break;
+    case tok::annot_pragma_opencl_extension:
+      HandlePragmaOpenCLExtension();
+      break;
+    case tok::annot_pragma_fp_contract:
+      HandlePragmaFPContract();
+      break;
+    default:
+      checkForPragmas = false;
+      break;
+    }
+  }
+
+}
+
 /// ParseCompoundStatementBody - Parse a sequence of statements and invoke the
 /// ActOnCompoundStmt action.  This expects the '{' to be the current token, and
 /// consume the '}' at the end of the block.  It does not manipulate the scope
@@ -726,11 +768,10 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
   Sema::CompoundScopeRAII CompoundScope(Actions);
 
-  StmtVector Stmts;
+  // Parse any pragmas at the beginning of the compound statement.
+  ParseCompoundStatementLeadingPragmas();
 
-  // Parse FP_CONTRACT if present.
-  if (Tok.is(tok::annot_pragma_fp_contract))
-    HandlePragmaFPContract();
+  StmtVector Stmts;
 
   // "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
   // only allowed at the start of a compound stmt regardless of the language.
