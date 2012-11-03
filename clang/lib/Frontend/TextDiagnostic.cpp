@@ -418,7 +418,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
     bool ExpandedRegion = false;
 
     if (SourceStart>0) {
-      unsigned NewStart = SourceStart-1;
+      unsigned NewStart = map.startOfPreviousColumn(SourceStart);
 
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
@@ -445,7 +445,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
     }
 
     if (SourceEnd<SourceLine.size()) {
-      unsigned NewEnd = SourceEnd+1;
+      unsigned NewEnd = map.startOfNextColumn(SourceEnd);
 
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
