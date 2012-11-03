@@ -355,6 +355,10 @@ const StackFrameContext *LocationContext::getCurrentStackFrame() const {
   return NULL;
 }
 
+bool LocationContext::inTopFrame() const {
+  return getCurrentStackFrame()->inTopFrame();
+}
+
 bool LocationContext::isParentOf(const LocationContext *LC) const {
   do {
     const LocationContext *Parent = LC->getParent();

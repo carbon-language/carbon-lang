@@ -237,6 +237,9 @@ public:
 
   const StackFrameContext *getCurrentStackFrame() const;
 
+  /// Return true if the current LocationContext has no caller context.
+  virtual bool inTopFrame() const;
+
   virtual void Profile(llvm::FoldingSetNodeID &ID) = 0;
 
 public:
@@ -270,6 +273,9 @@ public:
   const Stmt *getCallSite() const { return CallSite; }
 
   const CFGBlock *getCallSiteBlock() const { return Block; }
+
+  /// Return true if the current LocationContext has no caller context.
+  virtual bool inTopFrame() const { return getParent() == 0;  }
 
   unsigned getIndex() const { return Index; }
 
