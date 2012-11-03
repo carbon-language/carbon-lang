@@ -204,6 +204,10 @@ class IsAsCheapAsAMove {
   bit isAsCheapAsAMove = 1;
 }
 
+class NeverHasSideEffects {
+  bit neverHasSideEffects = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
 //===----------------------------------------------------------------------===//

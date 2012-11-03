@@ -19,3 +19,19 @@ entry:
 }
 
 declare void @foo2(i32)
+
+; Check that cvt.d.w goes into jalr's delay slot.
+;
+define void @foo3(i32 %a) nounwind {
+entry:
+; Default:     foo3:
+; Default:     jalr
+; Default:     cvt.d.w
+
+  %conv = sitofp i32 %a to double
+  tail call void @foo4(double %conv) nounwind
+  ret void
+}
+
+declare void @foo4(double)
+
