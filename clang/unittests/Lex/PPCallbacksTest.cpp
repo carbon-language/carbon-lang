@@ -222,27 +222,25 @@ TEST_F(PPCallbacksTest, ConcatenatedMacroArgument) {
   ASSERT_EQ("<angled.h>", GetSourceString(Range));
 }
 
-#pragma clang diagnostic ignored "-Wtrigraphs"
-
 TEST_F(PPCallbacksTest, TrigraphFilename) {
   const char* Source =
-    "#include \"tri??-graph.h\"\n";
+    "#include \"tri\?\?-graph.h\"\n";
 
   CharSourceRange Range =
     InclusionDirectiveFilenameRange(Source, "/tri~graph.h", false);
 
-  ASSERT_EQ("\"tri??-graph.h\"", GetSourceString(Range));
+  ASSERT_EQ("\"tri\?\?-graph.h\"", GetSourceString(Range));
 }
 
 TEST_F(PPCallbacksTest, TrigraphInMacro) {
   const char* Source =
-    "#define MACRO_TRIGRAPH \"tri??-graph.h\"\n"
+    "#define MACRO_TRIGRAPH \"tri\?\?-graph.h\"\n"
     "#include MACRO_TRIGRAPH\n";
 
   CharSourceRange Range =
     InclusionDirectiveFilenameRange(Source, "/tri~graph.h", false);
 
-  ASSERT_EQ("\"tri??-graph.h\"", GetSourceString(Range));
+  ASSERT_EQ("\"tri\?\?-graph.h\"", GetSourceString(Range));
 }
 
 } // anonoymous namespace
