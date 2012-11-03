@@ -571,7 +571,7 @@ public:
     CommandObjectTargetVariable (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "target variable",
-                             "Read global variable(s) prior to running your binary.",
+                             "Read global variable(s) prior to, or while running your binary.",
                              NULL,
                              0),
         m_option_group (interpreter),
