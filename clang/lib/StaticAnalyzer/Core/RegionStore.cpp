@@ -1805,7 +1805,8 @@ void removeDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
     const StackArgumentsSpaceRegion *StackReg =
       cast<StackArgumentsSpaceRegion>(TR->getSuperRegion());
     const StackFrameContext *RegCtx = StackReg->getStackFrame();
-    if (RegCtx == CurrentLCtx || RegCtx->isParentOf(CurrentLCtx))
+    if (CurrentLCtx &&
+        (RegCtx == CurrentLCtx || RegCtx->isParentOf(CurrentLCtx)))
       AddToWorkList(TR, &C);
   }
 }

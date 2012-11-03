@@ -268,12 +268,12 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
 
 void ExprEngine::removeDead(ExplodedNode *Pred, ExplodedNodeSet &Out,
                             const Stmt *ReferenceStmt,
-                            const LocationContext *LC,
+                            const StackFrameContext *LC,
                             const Stmt *DiagnosticStmt,
                             ProgramPoint::Kind K) {
   assert((K == ProgramPoint::PreStmtPurgeDeadSymbolsKind ||
-          ReferenceStmt == 0) && "PreStmt is not generally supported by "
-                                 "the SymbolReaper yet");
+          ReferenceStmt == 0)
+          && "PostStmt is not generally supported by the SymbolReaper yet");
   NumRemoveDeadBindings++;
   CleanedState = Pred->getState();
   SymbolReaper SymReaper(LC, ReferenceStmt, SymMgr, getStoreManager());
@@ -346,7 +346,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
   ExplodedNodeSet CleanedStates;
   if (shouldRemoveDeadBindings(AMgr, S, Pred, EntryNode->getLocationContext())){
     removeDead(EntryNode, CleanedStates, currStmt,
-               Pred->getLocationContext(), currStmt);
+               Pred->getStackFrame(), currStmt);
   } else
     CleanedStates.Add(EntryNode);
 
@@ -1315,8 +1315,22 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
 void ExprEngine::processEndOfFunction(NodeBuilderContext& BC,
                                       ExplodedNode *Pred) {
   StateMgr.EndPath(Pred->getState());
+
   ExplodedNodeSet Dst;
-  getCheckerManager().runCheckersForEndPath(BC, Dst, Pred, *this);
+  if (Pred->getLocationContext()->inTopFrame()) {
+    // Remove dead symbols.
+    ExplodedNodeSet AfterRemovedDead;
+    removeDeadOnEndOfFunction(BC, Pred, AfterRemovedDead);
+
+    // Notify checkers.
+    for (ExplodedNodeSet::iterator I = AfterRemovedDead.begin(),
+        E = AfterRemovedDead.end(); I != E; ++I) {
+      getCheckerManager().runCheckersForEndPath(BC, Dst, *I, *this);
+    }
+  } else {
+    getCheckerManager().runCheckersForEndPath(BC, Dst, Pred, *this);
+  }
+
   Engine.enqueueEndOfFunction(Dst);
 }
 

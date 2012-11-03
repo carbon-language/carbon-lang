@@ -510,6 +510,9 @@ bool SymbolReaper::isLive(SymbolRef sym) {
 
 bool
 SymbolReaper::isLive(const Stmt *ExprVal, const LocationContext *ELCtx) const {
+  if (LCtx == 0)
+    return false;
+
   if (LCtx != ELCtx) {
     // If the reaper's location context is a parent of the expression's
     // location context, then the expression value is now "out of scope".
@@ -517,6 +520,7 @@ SymbolReaper::isLive(const Stmt *ExprVal, const LocationContext *ELCtx) const {
       return false;
     return true;
   }
+
   // If no statement is provided, everything is this and parent contexts is live.
   if (!Loc)
     return true;
@@ -526,6 +530,12 @@ SymbolReaper::isLive(const Stmt *ExprVal, const LocationContext *ELCtx) const {
 
 bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
   const StackFrameContext *VarContext = VR->getStackFrame();
+
+  if (!VarContext)
+    return true;
+
+  if (!LCtx)
+    return false;
   const StackFrameContext *CurrentContext = LCtx->getCurrentStackFrame();
 
   if (VarContext == CurrentContext) {
@@ -557,7 +567,7 @@ bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
     return false;
   }
 
-  return !VarContext || VarContext->isParentOf(CurrentContext);
+  return VarContext->isParentOf(CurrentContext);
 }
 
 SymbolVisitor::~SymbolVisitor() {}

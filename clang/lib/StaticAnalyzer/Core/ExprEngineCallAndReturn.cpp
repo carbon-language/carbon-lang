@@ -98,13 +98,16 @@ static std::pair<const Stmt*,
         break;
     }
 
+    if (Node->pred_empty())
+      return std::pair<const Stmt*, const CFGBlock*>(0, 0);
+
     Node = *Node->pred_begin();
   }
 
   const CFGBlock *Blk = 0;
   if (S) {
     // Now, get the enclosing basic block.
-    while (Node && Node->pred_size() >=1 ) {
+    while (Node) {
       const ProgramPoint &PP = Node->getLocation();
       if (isa<BlockEdge>(PP) &&
           (PP.getLocationContext()->getCurrentStackFrame() == SF)) {
@@ -112,6 +115,9 @@ static std::pair<const Stmt*,
         Blk = EPP.getDst();
         break;
       }
+      if (Node->pred_empty())
+        return std::pair<const Stmt*, const CFGBlock*>(S, 0);
+
       Node = *Node->pred_begin();
     }
   }
@@ -155,6 +161,32 @@ static SVal adjustReturnValue(SVal V, QualType ExpectedTy, QualType ActualTy,
   // covariant return types, so we can't assert that that never happens.
   // Be safe and return UnknownVal().
   return UnknownVal();
+}
+
+void ExprEngine::removeDeadOnEndOfFunction(NodeBuilderContext& BC,
+                                           ExplodedNode *Pred,
+                                           ExplodedNodeSet &Dst) {
+  NodeBuilder Bldr(Pred, Dst, BC);
+
+  // Find the last statement in the function and the corresponding basic block.
+  const Stmt *LastSt = 0;
+  const CFGBlock *Blk = 0;
+  llvm::tie(LastSt, Blk) = getLastStmt(Pred);
+  if (!Blk || !LastSt) {
+    return;
+  }
+  
+  // If the last statement is return, everything it references should stay live.
+  if (isa<ReturnStmt>(LastSt))
+    return;
+
+  // Here, we call the Symbol Reaper with 0 stack context telling it to clean up
+  // everything on the stack. We use LastStmt as a diagnostic statement, with 
+  // which the PreStmtPurgeDead point will be associated.
+  currBldrCtx = &BC;
+  removeDead(Pred, Dst, 0, 0, LastSt,
+             ProgramPoint::PostStmtPurgeDeadSymbolsKind);
+  currBldrCtx = 0;
 }
 
 /// The call exit is simulated with a sequence of nodes, which occur between 
