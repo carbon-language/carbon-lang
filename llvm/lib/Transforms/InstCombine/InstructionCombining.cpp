@@ -1055,7 +1055,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // by multiples of a zero size type with zero.
   if (TD) {
     bool MadeChange = false;
-    Type *IntPtrTy = TD->getIntPtrType(GEP.getContext());
+    Type *IntPtrTy = TD->getIntPtrType(GEP.getPointerOperandType());
 
     gep_type_iterator GTI = gep_type_begin(GEP);
     for (User::op_iterator I = GEP.op_begin() + 1, E = GEP.op_end();
@@ -1074,7 +1074,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         }
 
       Type *IndexTy = (*I)->getType();
-      if (IndexTy != IntPtrTy && !IndexTy->isVectorTy()) {
+      if (IndexTy != IntPtrTy) {
         // If we are using a wider index than needed for this platform, shrink
         // it to what we need.  If narrower, sign-extend it to what we need.
         // This explicit cast can make subsequent optimizations more obvious.
