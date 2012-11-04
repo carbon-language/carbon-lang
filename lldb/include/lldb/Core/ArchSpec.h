@@ -367,7 +367,30 @@ public:
     lldb::ByteOrder
     GetDefaultEndian () const;
 
+    //------------------------------------------------------------------
+    /// Compare an ArchSpec to another ArchSpec, requiring an exact cpu 
+    /// type match between them.  
+    /// e.g. armv7s is not an exact match with armv7 - this would return false
+    ///
+    /// @return true if the two ArchSpecs match.
+    //------------------------------------------------------------------
+    bool
+    IsExactMatch (const ArchSpec& rhs) const;
+
+    //------------------------------------------------------------------
+    /// Compare an ArchSpec to another ArchSpec, requiring a compatible
+    /// cpu type match between them.  
+    /// e.g. armv7s is compatible with armv7 - this method would return true
+    ///
+    /// @return true if the two ArchSpecs are compatible
+    //------------------------------------------------------------------
+    bool
+    IsCompatibleMatch (const ArchSpec& rhs) const;
+
 protected:
+    bool
+    Compare (const ArchSpec& rhs, bool exact_match) const;
+
     llvm::Triple m_triple;
     Core m_core;
     lldb::ByteOrder m_byte_order;
@@ -387,6 +410,8 @@ protected:
 ///
 /// @param[in] lhs The Left Hand Side ArchSpec object to compare.
 /// @param[in] rhs The Left Hand Side ArchSpec object to compare.
+///
+/// Uses the IsExactMatch() method for comparing the cpu types.
 ///
 /// @return true if \a lhs is equal to \a rhs
 //------------------------------------------------------------------

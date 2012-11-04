@@ -27,6 +27,9 @@ using namespace lldb_private;
 
 #define ARCH_SPEC_SEPARATOR_CHAR '-'
 
+
+static bool cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_inverse, bool enforce_exact_match);
+
 namespace lldb_private {
 
     struct CoreDefinition
@@ -711,6 +714,82 @@ ArchSpec::GetMaximumOpcodeByteSize() const
     return 0;
 }
 
+bool
+ArchSpec::IsExactMatch (const ArchSpec& rhs) const
+{
+    return Compare (rhs, true);
+}
+
+bool
+ArchSpec::IsCompatibleMatch (const ArchSpec& rhs) const
+{
+    return Compare (rhs, false);
+}
+
+bool
+ArchSpec::Compare (const ArchSpec& rhs, bool exact_match) const
+{
+    if (GetByteOrder() != rhs.GetByteOrder())
+        return false;
+        
+    const ArchSpec::Core lhs_core = GetCore ();
+    const ArchSpec::Core rhs_core = rhs.GetCore ();
+
+    const bool core_match = cores_match (lhs_core, rhs_core, true, exact_match);
+
+    if (core_match)
+    {
+        const llvm::Triple &lhs_triple = GetTriple();
+        const llvm::Triple &rhs_triple = rhs.GetTriple();
+
+        const llvm::Triple::VendorType lhs_triple_vendor = lhs_triple.getVendor();
+        const llvm::Triple::VendorType rhs_triple_vendor = rhs_triple.getVendor();
+        if (lhs_triple_vendor != rhs_triple_vendor)
+        {
+            const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
+            const bool lhs_vendor_specified = TripleVendorWasSpecified();
+            // Both architectures had the vendor specified, so if they aren't
+            // equal then we return false
+            if (rhs_vendor_specified && lhs_vendor_specified)
+                return false;
+            
+            // Only fail if both vendor types are not unknown
+            if (lhs_triple_vendor != llvm::Triple::UnknownVendor &&
+                rhs_triple_vendor != llvm::Triple::UnknownVendor)
+                return false;
+        }
+        
+        const llvm::Triple::OSType lhs_triple_os = lhs_triple.getOS();
+        const llvm::Triple::OSType rhs_triple_os = rhs_triple.getOS();
+        if (lhs_triple_os != rhs_triple_os)
+        {
+            const bool rhs_os_specified = rhs.TripleOSWasSpecified();
+            const bool lhs_os_specified = TripleOSWasSpecified();
+            // Both architectures had the OS specified, so if they aren't
+            // equal then we return false
+            if (rhs_os_specified && lhs_os_specified)
+                return false;
+            // Only fail if both os types are not unknown
+            if (lhs_triple_os != llvm::Triple::UnknownOS &&
+                rhs_triple_os != llvm::Triple::UnknownOS)
+                return false;
+        }
+
+        const llvm::Triple::EnvironmentType lhs_triple_env = lhs_triple.getEnvironment();
+        const llvm::Triple::EnvironmentType rhs_triple_env = rhs_triple.getEnvironment();
+            
+        if (lhs_triple_env != rhs_triple_env)
+        {
+            // Only fail if both environment types are not unknown
+            if (lhs_triple_env != llvm::Triple::UnknownEnvironment &&
+                rhs_triple_env != llvm::Triple::UnknownEnvironment)
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Helper methods.
 
@@ -736,119 +815,13 @@ ArchSpec::CoreUpdated (bool update_triple)
 // Operators.
 
 static bool
-cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_inverse)
+cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_inverse, bool enforce_exact_match)
 {
+    if (core1 == core2)
+        return true;
+
     switch (core1)
     {
-//    case ArchSpec::eCore_arm_armv4:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumb)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv4t:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv4t)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv5:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv5)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv5t:
-//    case ArchSpec::eCore_arm_armv5e:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv5e)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv6:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv6)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv7:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv7)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv7f:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv7f)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv7k:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv7k)
-//            return true;
-//        break;
-//        
-//    case ArchSpec::eCore_arm_armv7s:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_thumbv7s)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumb:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv4)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv4t:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv4t)
-//            return true;
-//        break;
-//    
-//    case ArchSpec::eCore_thumbv5:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv5)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv5e:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv5t || core2 == ArchSpec::eCore_arm_armv5e)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv6:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv6)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv7:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv7)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv7f:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv7f)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv7k:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv7k)
-//            return true;
-//        break;
-//
-//    case ArchSpec::eCore_thumbv7s:
-//        try_inverse = false;
-//        if (core2 == ArchSpec::eCore_arm_armv7s)
-//            return true;
-//        break;
-    
     case ArchSpec::kCore_any:
         return true;
 
@@ -876,87 +849,29 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
             return true;
         break;
 
-    case ArchSpec::eCore_arm_armv7:
     case ArchSpec::eCore_arm_armv7f:
     case ArchSpec::eCore_arm_armv7k:
     case ArchSpec::eCore_arm_armv7s:
-        try_inverse = false;
-        if (core2 == ArchSpec::eCore_arm_armv7)
-            return true;
+        if (!enforce_exact_match)
+        {
+            try_inverse = false;
+            if (core2 == ArchSpec::eCore_arm_armv7)
+                return true;
+        }
         break;
 
     default:
         break;
     }
     if (try_inverse)
-        return cores_match (core2, core1, false);
+        return cores_match (core2, core1, false, enforce_exact_match);
     return false;
 }
 
 bool
 lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
 {
-    if (lhs.GetByteOrder() != rhs.GetByteOrder())
-        return false;
-        
-    const ArchSpec::Core lhs_core = lhs.GetCore ();
-    const ArchSpec::Core rhs_core = rhs.GetCore ();
-
-    // Check if the cores match, or check a little closer watching for wildcard
-    // and equivalent cores
-    const bool core_match = (lhs_core == rhs_core) || cores_match (lhs_core, rhs_core, true);
-
-    if (core_match)
-    {
-        const llvm::Triple &lhs_triple = lhs.GetTriple();
-        const llvm::Triple &rhs_triple = rhs.GetTriple();
-
-        const llvm::Triple::VendorType lhs_triple_vendor = lhs_triple.getVendor();
-        const llvm::Triple::VendorType rhs_triple_vendor = rhs_triple.getVendor();
-        if (lhs_triple_vendor != rhs_triple_vendor)
-        {
-            const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
-            const bool lhs_vendor_specified = lhs.TripleVendorWasSpecified();
-            // Both architectures had the vendor specified, so if they aren't
-            // equal then we return false
-            if (rhs_vendor_specified && lhs_vendor_specified)
-                return false;
-            
-            // Only fail if both vendor types are not unknown
-            if (lhs_triple_vendor != llvm::Triple::UnknownVendor &&
-                rhs_triple_vendor != llvm::Triple::UnknownVendor)
-                return false;
-        }
-        
-        const llvm::Triple::OSType lhs_triple_os = lhs_triple.getOS();
-        const llvm::Triple::OSType rhs_triple_os = rhs_triple.getOS();
-        if (lhs_triple_os != rhs_triple_os)
-        {
-            const bool rhs_os_specified = rhs.TripleOSWasSpecified();
-            const bool lhs_os_specified = lhs.TripleOSWasSpecified();
-            // Both architectures had the OS specified, so if they aren't
-            // equal then we return false
-            if (rhs_os_specified && lhs_os_specified)
-                return false;
-            // Only fail if both os types are not unknown
-            if (lhs_triple_os != llvm::Triple::UnknownOS &&
-                rhs_triple_os != llvm::Triple::UnknownOS)
-                return false;
-        }
-
-        const llvm::Triple::EnvironmentType lhs_triple_env = lhs_triple.getEnvironment();
-        const llvm::Triple::EnvironmentType rhs_triple_env = rhs_triple.getEnvironment();
-            
-        if (lhs_triple_env != rhs_triple_env)
-        {
-            // Only fail if both environment types are not unknown
-            if (lhs_triple_env != llvm::Triple::UnknownEnvironment &&
-                rhs_triple_env != llvm::Triple::UnknownEnvironment)
-                return false;
-        }
-        return true;
-    }
-    return false;
+    return lhs.IsExactMatch (rhs);
 }
 
 bool

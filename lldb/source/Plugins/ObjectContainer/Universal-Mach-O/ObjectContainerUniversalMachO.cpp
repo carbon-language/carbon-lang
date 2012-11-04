@@ -203,11 +203,12 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
             arch = module_sp->GetArchitecture();
             
         ArchSpec curr_arch;
+        // First, try to find an exact match for the Arch of the Target.
         for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
         {
             if (GetArchitectureAtIndex (arch_idx, curr_arch))
             {
-                if (arch == curr_arch)
+                if (arch.IsExactMatch(curr_arch))
                 {
                     return ObjectFile::FindPlugin (module_sp, 
                                                    file, 
@@ -217,6 +218,23 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
                 }
             }
         }
+
+        // Failing an exact match, try to find a compatible Arch of the Target.
+        for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
+        {
+            if (GetArchitectureAtIndex (arch_idx, curr_arch))
+            {
+                if (arch.IsCompatibleMatch(curr_arch))
+                {
+                    return ObjectFile::FindPlugin (module_sp, 
+                                                   file, 
+                                                   m_offset + m_fat_archs[arch_idx].offset, 
+                                                   m_fat_archs[arch_idx].size,
+                                                   m_data.GetSharedDataBuffer());
+                }
+            }
+        }
+
     }
     return ObjectFileSP();
 }
