@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp %s -S | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp < %s -S | FileCheck %s
 
 ;/*
 ; * =============================================================================

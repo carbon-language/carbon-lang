@@ -1,7 +1,7 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen %vector-opt -dce -S %s | FileCheck %s
-; RUN: opt %loadPolly -basicaa -polly-codegen -polly-vectorizer=unroll-only -S %s | FileCheck -check-prefix=UNROLL %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze   %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen  %s -S  %vector-opt | FileCheck -check-prefix=CODEGEN %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen %vector-opt -dce -S < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-codegen -polly-vectorizer=unroll-only -S < %s | FileCheck -check-prefix=UNROLL %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze   < %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen  < %s -S  %vector-opt | FileCheck -check-prefix=CODEGEN %s
 
 ;#define N 1024
 ;float A[N];

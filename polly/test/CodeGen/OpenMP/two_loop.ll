@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -mem2reg -polly-codegen -enable-polly-openmp -S < %s
+; RUN: opt %loadPolly %defaultOpts -mem2reg -polly-codegen -enable-polly-openmp -S %s
 
 ;#include <string.h>
 ;#define N 10240000

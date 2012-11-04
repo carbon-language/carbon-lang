@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -S %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -S < %s | FileCheck %s
 ;
 ; 'arg' is converted to float before the loop, so the corresponding temporary
 ; has to be copied to the function generated for the loop.

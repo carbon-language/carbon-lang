@@ -1,6 +1,6 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s | FileCheck %s
-; RUN: opt %loadPolly %defaultOpts -polly-codegen %s > /dev/null
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  -S %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen < %s > /dev/null
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  -S < %s | FileCheck -check-prefix=IMPORT %s
 
 ;#define M 2048
 ;#define N 2048

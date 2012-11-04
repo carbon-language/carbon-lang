@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -S %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -S < %s | FileCheck %s
 ;
 ; 'arg' has the same type as A[i], i.e., the function argument has to be
 ; copied to the function generated for the loop.

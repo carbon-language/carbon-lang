@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -verify-dom-info -S %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -verify-dom-info -S < %s | FileCheck %s
 
 ;#include <string.h>
 ;#define N 10

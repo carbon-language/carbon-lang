@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -O3 -polly-cloog -polly-allow-nonaffine -analyze %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -O3 -polly-cloog -polly-allow-nonaffine -analyze < %s | FileCheck %s
 
 ;#include <stdio.h>
 ;#include <stdlib.h>

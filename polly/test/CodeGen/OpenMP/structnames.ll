@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -S  %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -S  < %s | FileCheck %s
 
 ;#include <string.h>
 ;#include <stdio.h>

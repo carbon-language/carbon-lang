@@ -1,4 +1,4 @@
-;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -stats %s 2>&1  | FileCheck %s
+;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -stats < %s 2>&1  | FileCheck %s
 
 ;int A[100];
 ;int B[100];

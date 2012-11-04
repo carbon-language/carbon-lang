@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze  -S %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze  -S < %s | FileCheck %s
 
 ;#include "limits.h"
 ;#define N 20

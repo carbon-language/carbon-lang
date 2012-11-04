@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly %defaultOpts  -polly-analyze-ir  -analyze %s | FileCheck %s  -check-prefix=INDVAR
-; RUN: opt %loadPolly %defaultOpts -polly-analyze-ir  -analyze %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts  -polly-analyze-ir  -analyze < %s | FileCheck %s  -check-prefix=INDVAR
+; RUN: opt %loadPolly %defaultOpts -polly-analyze-ir  -analyze < %s | FileCheck %s
 ; XFAIL: *
 ;From pollybench.
 ;void f(long A[][128], long n) {

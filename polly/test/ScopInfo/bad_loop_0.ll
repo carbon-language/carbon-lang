@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze   -analyze %s | not FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze   -analyze < %s | not FileCheck %s
 
 ;void f(long a[][128], long N, long M) {
 ;  long i, j;

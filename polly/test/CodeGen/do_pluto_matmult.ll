@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
 
 ;#define M 36
 ;#define N 36
@@ -76,11 +76,11 @@
 ;}
 
 ; RUN: opt %loadPolly %defaultOpts -polly-codegen -disable-output %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze %s | FileCheck -check-prefix=REVERSE %s > /dev/null
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen -S %s | FileCheck -check-prefix=CODEGEN %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze < %s | FileCheck -check-prefix=REVERSE %s > /dev/null
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze < %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen -S < %s | FileCheck -check-prefix=CODEGEN %s
 
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-analyze-ir  -analyze %s | not FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-analyze-ir  -analyze < %s | not FileCheck %s
 
 ;void f(long a[], long N, long M) {
 ;  long i, j, k;

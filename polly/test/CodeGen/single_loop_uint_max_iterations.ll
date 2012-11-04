@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog-scop -S -analyze  %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog-scop -S -analyze  < %s | FileCheck %s
 ; XFAIL: *
 
 ;#include "limits.h"

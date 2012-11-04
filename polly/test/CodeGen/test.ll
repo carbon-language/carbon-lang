@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -O3 -polly-cloog -analyze  -S %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -O3 -polly-cloog -analyze  -S < %s | FileCheck %s
 ; XFAIL: *
 
 ;int bar1();

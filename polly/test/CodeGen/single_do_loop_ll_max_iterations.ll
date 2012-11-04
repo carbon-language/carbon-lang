@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze  -S %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze  -S < %s | FileCheck %s
 ; RUN: opt %loadPolly %defaultOpts -polly-codegen -O3 %s
 
 ;#define N 20

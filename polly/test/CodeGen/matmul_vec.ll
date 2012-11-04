@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen %vector-opt -S -dce %s | FileCheck %s 
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen %vector-opt -S -dce < %s | FileCheck %s
 
 ;#define M 1024
 ;#define N 1024

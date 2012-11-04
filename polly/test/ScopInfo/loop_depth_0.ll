@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts  -polly-analyze-ir  -analyze %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts  -polly-analyze-ir  -analyze < %s | FileCheck %s
 ; XFAIL: *
 ;void f(long a[][128], long N, long M) {
 ;  long i, j, k;
