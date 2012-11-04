@@ -1245,6 +1245,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
     std::swap(O1, O2);
+    std::swap(V1TBAAInfo, V2TBAAInfo);
   }
   if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1)) {
     AliasResult Result = aliasGEP(GV1, V1Size, V1TBAAInfo, V2, V2Size, V2TBAAInfo, O1, O2);
@@ -1254,6 +1255,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
+    std::swap(V1TBAAInfo, V2TBAAInfo);
   }
   if (const PHINode *PN = dyn_cast<PHINode>(V1)) {
     AliasResult Result = aliasPHI(PN, V1Size, V1TBAAInfo,
@@ -1264,6 +1266,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   if (isa<SelectInst>(V2) && !isa<SelectInst>(V1)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
+    std::swap(V1TBAAInfo, V2TBAAInfo);
   }
   if (const SelectInst *S1 = dyn_cast<SelectInst>(V1)) {
     AliasResult Result = aliasSelect(S1, V1Size, V1TBAAInfo,
