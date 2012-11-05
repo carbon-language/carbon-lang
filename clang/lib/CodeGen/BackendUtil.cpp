@@ -205,14 +205,14 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
                            addBoundsCheckingPass);
   }
 
-  if (LangOpts.AddressSanitizer) {
+  if (LangOpts.SanitizeAddress) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addAddressSanitizerPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addAddressSanitizerPass);
   }
 
-  if (LangOpts.ThreadSanitizer) {
+  if (LangOpts.SanitizeThread) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addThreadSanitizerPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,

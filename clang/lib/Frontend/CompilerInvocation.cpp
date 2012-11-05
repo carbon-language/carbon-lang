@@ -1234,8 +1234,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.DebuggerSupport = Args.hasArg(OPT_fdebugger_support);
   Opts.DebuggerCastResultToId = Args.hasArg(OPT_fdebugger_cast_result_to_id);
   Opts.DebuggerObjCLiteral = Args.hasArg(OPT_fdebugger_objc_literal);
-  Opts.AddressSanitizer = Args.hasArg(OPT_faddress_sanitizer);
-  Opts.ThreadSanitizer = Args.hasArg(OPT_fthread_sanitizer);
+  Opts.SanitizeAddress = Args.hasArg(OPT_faddress_sanitizer);
+  Opts.SanitizeThread = Args.hasArg(OPT_fthread_sanitizer);
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
 
