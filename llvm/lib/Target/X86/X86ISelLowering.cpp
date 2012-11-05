@@ -17556,9 +17556,26 @@ X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
 unsigned
 X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
                                     unsigned Index) const {
-  // Floating point scalars are already located in index #0.
-  if (Val->getScalarType()->isFloatingPointTy() && Index == 0)
-    return 0;
+  assert(Val->isVectorTy() && "This must be a vector type");
+
+  if (Index != -1) {
+    // Legalize the type.
+    std::pair<unsigned, MVT> LT =
+    getTypeLegalizationCost(Val->getContext(), TLI->getValueType(Val));
+
+    // This type is legalized to a scalar type.
+    if (!LT.second.isVector())
+      return 0;
+
+    // The type may be split. Normalize the index to the new type.
+    unsigned Width = LT.second.getVectorNumElements();
+    Index = Index % Width;
+
+    // Floating point scalars are already located in index #0.
+    if (Val->getScalarType()->isFloatingPointTy() && Index == 0)
+      return 0;
+  }
+
   return VectorTargetTransformImpl::getVectorInstrCost(Opcode, Val, Index);
 }
 

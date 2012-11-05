@@ -29,5 +29,12 @@ define i32 @insert-extract-at-zero-idx(i32 %arg, float %fl) {
   ;CHECK: cost of 0 {{.*}} insert
   %J = insertelement <4 x double> undef, double undef, i32 0
 
+  ;CHECK: cost of 0 {{.*}} insert
+  %K = insertelement <8 x double> undef, double undef, i32 4
+  ;CHECK: cost of 0 {{.*}} insert
+  %L = insertelement <16 x double> undef, double undef, i32 8
+  ;CHECK: cost of 1 {{.*}} insert
+  %M = insertelement <16 x double> undef, double undef, i32 9
   ret i32 0
 }
+
