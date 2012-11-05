@@ -17517,6 +17517,15 @@ struct X86CostTblEntry {
   unsigned Cost;
 };
 
+int FindInTable(const X86CostTblEntry *Tbl, unsigned len, int ISD, MVT Ty) {
+  for (unsigned int i = 0; i < len; ++i)
+    if (Tbl[i].ISD == ISD && Tbl[i].Type == Ty)
+      return i;
+
+  // Could not find an entry.
+  return -1;
+}
+
 unsigned
 X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {
@@ -17543,12 +17552,12 @@ X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
     };
 
   // Look for AVX1 lowering tricks.
-  if (ST.hasAVX())
-    for (unsigned int i = 0, e = array_lengthof(AVX1CostTable); i < e; ++i) {
-      if (AVX1CostTable[i].ISD == ISD && AVX1CostTable[i].Type == LT.second)
-        return LT.first * AVX1CostTable[i].Cost;
-    }
-
+  if (ST.hasAVX()) {
+    int Idx = FindInTable(AVX1CostTable, array_lengthof(AVX1CostTable), ISD,
+                          LT.second);
+    if (Idx != -1)
+      return LT.first * AVX1CostTable[Idx].Cost;
+  }
   // Fallback to the default implementation.
   return VectorTargetTransformImpl::getArithmeticInstrCost(Opcode, Ty);
 }
@@ -17558,7 +17567,7 @@ X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
                                                  unsigned Index) const {
   assert(Val->isVectorTy() && "This must be a vector type");
 
-  if (Index != -1u) {
+  if (Index != -1U) {
     // Legalize the type.
     std::pair<unsigned, MVT> LT =
     getTypeLegalizationCost(Val->getContext(), TLI->getValueType(Val));
@@ -17578,4 +17587,68 @@ X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
 
   return VectorTargetTransformImpl::getVectorInstrCost(Opcode, Val, Index);
 }
+
+unsigned X86VectorTargetTransformInfo::getCmpSelInstrCost(unsigned Opcode,
+                                                          Type *ValTy,
+                                                          Type *CondTy) const {
+  // Legalize the type.
+  std::pair<unsigned, MVT> LT =
+  getTypeLegalizationCost(ValTy->getContext(), TLI->getValueType(ValTy));
+
+  MVT MTy = LT.second;
+
+  int ISD = InstructionOpcodeToISD(Opcode);
+  assert(ISD && "Invalid opcode");
+
+  const X86Subtarget &ST =
+  TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+
+  static const X86CostTblEntry SSE42CostTbl[] = {
+    { ISD::SETCC,   MVT::v2f64,   1 },
+    { ISD::SETCC,   MVT::v4f32,   1 },
+    { ISD::SETCC,   MVT::v2i64,   1 },
+    { ISD::SETCC,   MVT::v4i32,   1 },
+    { ISD::SETCC,   MVT::v8i16,   1 },
+    { ISD::SETCC,   MVT::v16i8,   1 },
+  };
+
+  static const X86CostTblEntry AVX1CostTbl[] = {
+    { ISD::SETCC,   MVT::v4f64,   1 },
+    { ISD::SETCC,   MVT::v8f32,   1 },
+    // AVX1 does not support 8-wide integer compare.
+    { ISD::SETCC,   MVT::v4i64,   4 },
+    { ISD::SETCC,   MVT::v8i32,   4 },
+    { ISD::SETCC,   MVT::v16i16,  4 },
+    { ISD::SETCC,   MVT::v32i8,   4 },
+  };
+
+  static const X86CostTblEntry AVX2CostTbl[] = {
+    { ISD::SETCC,   MVT::v4i64,   1 },
+    { ISD::SETCC,   MVT::v8i32,   1 },
+    { ISD::SETCC,   MVT::v16i16,  1 },
+    { ISD::SETCC,   MVT::v32i8,   1 },
+  };
+
+  if (ST.hasSSE42()) {
+    int Idx = FindInTable(SSE42CostTbl, array_lengthof(SSE42CostTbl), ISD, MTy);
+    if (Idx != -1)
+      return LT.first * SSE42CostTbl[Idx].Cost;
+  }
+
+  if (ST.hasAVX()) {
+    int Idx = FindInTable(AVX1CostTbl, array_lengthof(AVX1CostTbl), ISD, MTy);
+    if (Idx != -1)
+      return LT.first * AVX1CostTbl[Idx].Cost;
+  }
+
+  if (ST.hasAVX2()) {
+    int Idx = FindInTable(AVX2CostTbl, array_lengthof(AVX2CostTbl), ISD, MTy);
+    if (Idx != -1)
+      return LT.first * AVX2CostTbl[Idx].Cost;
+  }
+
+  return VectorTargetTransformImpl::getCmpSelInstrCost(Opcode, ValTy, CondTy);
+}
+
+
 

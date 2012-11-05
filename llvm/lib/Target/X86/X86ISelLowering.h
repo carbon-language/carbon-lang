@@ -957,8 +957,10 @@ namespace llvm {
 
     virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
                                         unsigned Index) const;
-  };
 
+    unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                Type *CondTy) const;
+  };
 }
 
 #endif    // X86ISELLOWERING_H
