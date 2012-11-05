@@ -55,7 +55,7 @@ how Keychain Access makes certificates.
 - Switch to Terminal, and run the following:
 
 sudo security add-trust -d -r trustRoot -p basic -p codeSign -k /Library/Keychains/System.keychain ~/Desktop/lldb_codesign.cer
-rm -rf ~/Desktop/lldb_codesign.cer
+rm -f ~/Desktop/lldb_codesign.cer
 
 - Right click on the "lldb_codesign" certificate in the "System" keychain (NOT
   "login", but the one in "System"), and select "Delete" to delete it from
