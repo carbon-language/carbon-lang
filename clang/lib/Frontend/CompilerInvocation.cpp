@@ -11,6 +11,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/Version.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Options.h"
@@ -20,6 +21,7 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/LangStandard.h"
 #include "clang/Serialization/ASTReader.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1511,54 +1513,49 @@ llvm::APInt ModuleSignature::getAsInteger() const {
 }
 
 std::string CompilerInvocation::getModuleHash() const {
-  ModuleSignature Signature;
-  
+  using llvm::hash_code;
+  using llvm::hash_value;
+  using llvm::hash_combine;
+
   // Start the signature with the compiler version.
-  // FIXME: The full version string can be quite long.  Omit it from the
-  // module hash for now to avoid failures where the path name becomes too
-  // long.  An MD5 or similar checksum would work well here.
-  // Signature.add(getClangFullRepositoryVersion());
-  
+  // FIXME: We'd rather use something more cryptographically sound that
+  // CityHash, but this will do for now.
+  hash_code code = hash_value(getClangFullRepositoryVersion());
+
   // Extend the signature with the language options
 #define LANGOPT(Name, Bits, Default, Description) \
-  Signature.add(LangOpts->Name, Bits);
+   code = hash_combine(code, LangOpts->Name);
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
-  Signature.add(static_cast<unsigned>(LangOpts->get##Name()), Bits);
+  code = hash_combine(code, static_cast<unsigned>(LangOpts->get##Name()));
 #define BENIGN_LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
   
-  // Extend the signature with the target triple
-  // FIXME: Add target options.
-  llvm::Triple T(TargetOpts->Triple);
-  Signature.add((unsigned)T.getArch(), 5);
-  Signature.add((unsigned)T.getVendor(), 4);
-  Signature.add((unsigned)T.getOS(), 5);
-  Signature.add((unsigned)T.getEnvironment(), 4);
+  // Extend the signature with the target options.
+  code = hash_combine(code, TargetOpts->Triple, TargetOpts->CPU,
+                      TargetOpts->ABI, TargetOpts->CXXABI,
+                      TargetOpts->LinkerVersion);
+  for (unsigned i = 0, n = TargetOpts->FeaturesAsWritten.size(); i != n; ++i)
+    code = hash_combine(code, TargetOpts->FeaturesAsWritten[i]);
 
   // Extend the signature with preprocessor options.
-  Signature.add(getPreprocessorOpts().UsePredefines, 1);
-  Signature.add(getPreprocessorOpts().DetailedRecord, 1);
-  
-  // Hash the preprocessor defines.
-  // FIXME: This is terrible. Use an MD5 sum of the preprocessor defines.
+  const PreprocessorOptions &ppOpts = getPreprocessorOpts();
+  code = hash_combine(code, ppOpts.UsePredefines, ppOpts.DetailedRecord);
+
   std::vector<StringRef> MacroDefs;
   for (std::vector<std::pair<std::string, bool/*isUndef*/> >::const_iterator 
             I = getPreprocessorOpts().Macros.begin(),
          IEnd = getPreprocessorOpts().Macros.end();
        I != IEnd; ++I) {
-    if (!I->second)
-      MacroDefs.push_back(I->first);
+    code = hash_combine(code, I->first, I->second);
   }
-  llvm::array_pod_sort(MacroDefs.begin(), MacroDefs.end());
-       
-  unsigned PPHashResult = 0;
-  for (unsigned I = 0, N = MacroDefs.size(); I != N; ++I)
-    PPHashResult = llvm::HashString(MacroDefs[I], PPHashResult);
-  Signature.add(PPHashResult, 32);
-  
-  // We've generated the signature. Treat it as one large APInt that we'll
-  // encode in base-36 and return.
-  Signature.flush();
-  return Signature.getAsInteger().toString(36, /*Signed=*/false);
+
+  // Extend the signature with the sysroot.
+  const HeaderSearchOptions &hsOpts = getHeaderSearchOpts();
+  code = hash_combine(code, hsOpts.Sysroot, hsOpts.UseBuiltinIncludes,
+                      hsOpts.UseStandardSystemIncludes,
+                      hsOpts.UseStandardCXXIncludes,
+                      hsOpts.UseLibcxx);
+
+  return llvm::APInt(64, code).toString(36, /*Signed=*/false);
 }
