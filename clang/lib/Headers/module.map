@@ -70,7 +70,7 @@ module _Builtin_intrinsics [system] {
     explicit module sse4a {
       requires sse4a
       export sse3
-      header "nmmintrin.h"
+      header "ammintrin.h"
     }
 
     explicit module avx {
