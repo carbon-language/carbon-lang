@@ -24,7 +24,7 @@ def warn_unsupported_msasm : Warning<
 let CategoryName = "Parse Issue" in {
 
 def ext_empty_translation_unit : Extension<
-  "ISO C requires a translation unit to contain at least one declaration.">,
+  "ISO C requires a translation unit to contain at least one declaration">,
   InGroup<DiagGroup<"empty-translation-unit">>;
 def warn_cxx98_compat_top_level_semi : Warning<
   "extra ';' outside of a function is incompatible with C++98">,

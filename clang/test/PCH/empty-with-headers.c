@@ -24,4 +24,4 @@ typedef int my_int;
 
 // This should only fire if the header is not included,
 // either explicitly or as a prefix header.
-// expected-error{{ISO C requires a translation unit to contain at least one declaration.}}
+// expected-error{{ISO C requires a translation unit to contain at least one declaration}}

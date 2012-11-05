@@ -7,4 +7,4 @@
 #define A_MACRO_IS_NOT_GOOD_ENOUGH 1
 
 // In C we should get this warning, but in C++ we shouldn't.
-// expected-warning{{ISO C requires a translation unit to contain at least one declaration.}}
+// expected-warning{{ISO C requires a translation unit to contain at least one declaration}}
