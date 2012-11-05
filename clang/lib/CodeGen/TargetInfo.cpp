@@ -2684,6 +2684,11 @@ class PPC64_SVR4_ABIInfo : public DefaultABIInfo {
 public:
   PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT) : DefaultABIInfo(CGT) {}
 
+  bool isPromotableTypeForABI(QualType Ty) const;
+
+  ABIArgInfo classifyReturnType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType Ty) const;
+
   // TODO: We can add more logic to computeInfo to improve performance.
   // Example: For aggregate arguments that fit in a register, we could
   // use getDirectInReg (as is done below for structs containing a single
@@ -2742,6 +2747,59 @@ public:
                                llvm::Value *Address) const;
 };
 
+}
+
+// Return true if the ABI requires Ty to be passed sign- or zero-
+// extended to 64 bits.
+bool
+PPC64_SVR4_ABIInfo::isPromotableTypeForABI(QualType Ty) const {
+  // Treat an enum type as its underlying type.
+  if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+    Ty = EnumTy->getDecl()->getIntegerType();
+
+  // Promotable integer types are required to be promoted by the ABI.
+  if (Ty->isPromotableIntegerType())
+    return true;
+
+  // In addition to the usual promotable integer types, we also need to
+  // extend all 32-bit types, since the ABI requires promotion to 64 bits.
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
+    switch (BT->getKind()) {
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+      return true;
+    default:
+      break;
+    }
+
+  return false;
+}
+
+ABIArgInfo
+PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
+  if (isAggregateTypeForABI(Ty)) {
+    // Records with non trivial destructors/constructors should not be passed
+    // by value.
+    if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
+    return ABIArgInfo::getIndirect(0);
+  }
+
+  return (isPromotableTypeForABI(Ty) ?
+          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+}
+
+ABIArgInfo
+PPC64_SVR4_ABIInfo::classifyReturnType(QualType RetTy) const {
+  if (RetTy->isVoidType())
+    return ABIArgInfo::getIgnore();
+
+  if (isAggregateTypeForABI(RetTy))
+    return ABIArgInfo::getIndirect(0);
+
+  return (isPromotableTypeForABI(RetTy) ?
+          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
 // Based on ARMABIInfo::EmitVAArg, adjusted for 64-bit machine.
