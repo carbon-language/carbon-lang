@@ -1546,7 +1546,7 @@ std::string CompilerInvocation::getModuleHash() const {
   using llvm::hash_combine;
 
   // Start the signature with the compiler version.
-  // FIXME: We'd rather use something more cryptographically sound that
+  // FIXME: We'd rather use something more cryptographically sound than
   // CityHash, but this will do for now.
   hash_code code = hash_value(getClangFullRepositoryVersion());
 

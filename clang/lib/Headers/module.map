@@ -126,5 +126,20 @@ module _Builtin_intrinsics [system] {
       export fma4
       header "xopintrin.h"
     }
+
+    explicit module aes_pclmul {
+      requires aes, pclmul
+      header "wmmintrin.h"
+    }
+
+    explicit module aes {
+      requires aes
+      header "__wmmintrin_aes.h"
+    }
+
+    explicit module pclmul {
+      requires pclmul
+      header "__wmmintrin_pclmul.h"
+    }
   }
 }

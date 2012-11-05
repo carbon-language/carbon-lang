@@ -1,4 +1,4 @@
-/*===---- wmmintrin.h - AES intrinsics ------------------------------------===
+/*===---- __wmmintrin_pclmul.h - AES intrinsics ----------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,23 +20,15 @@
  *
  *===-----------------------------------------------------------------------===
  */
+#ifndef _WMMINTRIN_PCLMUL_H
+#define _WMMINTRIN_PCLMUL_H
 
-#ifndef _WMMINTRIN_H
-#define _WMMINTRIN_H
-
-#include <emmintrin.h>
-
-#if !defined (__AES__) && !defined (__PCLMUL__)
-# error "AES/PCLMUL instructions not enabled"
+#if !defined (__PCLMUL__)
+# error "PCLMUL instruction is not enabled"
 #else
+#define _mm_clmulepi64_si128(__X, __Y, __I) \
+  ((__m128i)__builtin_ia32_pclmulqdq128((__v2di)(__m128i)(__X), \
+                                        (__v2di)(__m128i)(__Y), (char)(__I)))
+#endif
 
-#ifdef __AES__
-#include <__wmmintrin_aes.h>
-#endif /* __AES__ */
-
-#ifdef __PCLMUL__
-#include <__wmmintrin_pclmul.h>
-#endif /* __PCLMUL__ */
-
-#endif /* __AES__ || __PCLMUL__ */
-#endif /* _WMMINTRIN_H */
+#endif /* _WMMINTRIN_PCLMUL_H */
