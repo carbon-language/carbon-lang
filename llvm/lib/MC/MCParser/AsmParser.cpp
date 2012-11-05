@@ -154,6 +154,7 @@ private:
   StringRef CppHashFilename;
   int64_t CppHashLineNumber;
   SMLoc CppHashLoc;
+  int CppHashBuf;
 
   /// AssemblerDialect. ~OU means unset value and use value provided by MAI.
   unsigned AssemblerDialect;
@@ -1403,7 +1404,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
 	 getStreamer().EmitDwarfFileDirective(
 	   getContext().nextGenDwarfFileNumber(), StringRef(), CppHashFilename);
 
-       unsigned CppHashLocLineNo = SrcMgr.FindLineNumber(CppHashLoc, CurBuffer);
+       unsigned CppHashLocLineNo = SrcMgr.FindLineNumber(CppHashLoc,CppHashBuf);
        Line = CppHashLineNumber - 1 + (Line - CppHashLocLineNo);
      }
 
@@ -1465,6 +1466,7 @@ bool AsmParser::ParseCppHashLineFilenameComment(const SMLoc &L) {
   CppHashLoc = L;
   CppHashFilename = Filename;
   CppHashLineNumber = LineNumber;
+  CppHashBuf = CurBuffer;
 
   // Ignore any trailing characters, they're just comment.
   EatToEndOfLine();
