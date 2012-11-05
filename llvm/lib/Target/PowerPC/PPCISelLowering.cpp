@@ -6443,6 +6443,14 @@ PPCTargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'v':
     case 'y':
       return C_RegisterClass;
+    case 'Z':
+      // FIXME: While Z does indicate a memory constraint, it specifically
+      // indicates an r+r address (used in conjunction with the 'y' modifier
+      // in the replacement string). Currently, we're forcing the base
+      // register to be r0 in the asm printer (which is interpreted as zero)
+      // and forming the complete address in the second register. This is
+      // suboptimal.
+      return C_Memory;
     }
   }
   return TargetLowering::getConstraintType(Constraint);
@@ -6484,6 +6492,9 @@ PPCTargetLowering::getSingleConstraintMatchWeight(
     break;
   case 'y':
     weight = CW_Register;
+    break;
+  case 'Z':
+    weight = CW_Memory;
     break;
   }
   return weight;
