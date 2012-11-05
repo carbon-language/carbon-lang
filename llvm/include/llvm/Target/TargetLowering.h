@@ -1264,7 +1264,7 @@ protected:
 public:
   //===--------------------------------------------------------------------===//
   // Lowering methods - These methods must be implemented by targets so that
-  // the SelectionDAGLowering code knows how to lower these.
+  // the SelectionDAGBuilder code knows how to lower these.
   //
 
   /// LowerFormalArguments - This hook must be implemented to lower the

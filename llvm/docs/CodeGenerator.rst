@@ -838,8 +838,7 @@ Initial SelectionDAG Construction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The initial SelectionDAG is na\ :raw-html:`&iuml;`\ vely peephole expanded from
-the LLVM input by the ``SelectionDAGLowering`` class in the
-``lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp`` file.  The intent of this pass
+the LLVM input by the ``SelectionDAGBuilder`` class.  The intent of this pass
 is to expose as much low-level, target-specific details to the SelectionDAG as
 possible.  This pass is mostly hard-coded (e.g. an LLVM ``add`` turns into an
 ``SDNode add`` while a ``getelementptr`` is expanded into the obvious
