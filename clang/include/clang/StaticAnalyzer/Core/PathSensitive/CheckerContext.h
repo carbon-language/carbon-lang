@@ -16,9 +16,36 @@
 #define LLVM_CLANG_SA_CORE_PATHSENSITIVE_CHECKERCONTEXT
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 
 namespace clang {
 namespace ento {
+
+  /// Declares an immutable map of type \p NameTy, suitable for placement into
+  /// the ProgramState.
+  ///
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_MAP_WITH_PROGRAMSTATE(Name, Key, Value) \
+    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, \
+                                     CLANG_ENTO_PROGRAMSTATE_MAP(Key, Value))
+
+  /// Declares an immutable list of type \p NameTy, suitable for placement into
+  /// the ProgramState.
+  ///
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_SET_WITH_PROGRAMSTATE(Name, Elem) \
+    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableSet<Elem>)
+  
+  /// Declares an immutable list of type \p NameTy, suitable for placement into
+  /// the ProgramState.
+  ///
+  /// The macro should not be used inside namespaces, or for traits that must
+  /// be accessible from more than one translation unit.
+  #define REGISTER_LIST_WITH_PROGRAMSTATE(Name, Elem) \
+    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableList<Elem>)
+
 
 class CheckerContext {
   ExprEngine &Eng;

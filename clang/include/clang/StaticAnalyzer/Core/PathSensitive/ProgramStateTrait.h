@@ -91,16 +91,14 @@ namespace ento {
     }
   };
 
-  /// Helper for REGISTER_MAP_WITH_PROGRAMSTATE.
+  /// Helper for registering a map trait.
+  ///
+  /// If the map type were written directly in the invocation of
+  /// REGISTER_TRAIT_WITH_PROGRAMSTATE, the comma in the template arguments
+  /// would be treated as a macro argument separator, which is wrong.
+  /// This allows the user to specify a map type in a way that the preprocessor
+  /// can deal with.
   #define CLANG_ENTO_PROGRAMSTATE_MAP(Key, Value) llvm::ImmutableMap<Key, Value>
-
-  /// Declares an immutable map of type \p NameTy, suitable for placement into
-  /// the ProgramState.
-  /// The macro should not be used inside namespaces, or for traits that must
-  /// be accessible from more than one translation unit.
-  #define REGISTER_MAP_WITH_PROGRAMSTATE(Name, Key, Value) \
-    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, \
-                                     CLANG_ENTO_PROGRAMSTATE_MAP(Key, Value))
 
 
   // Partial-specialization for ImmutableSet.
@@ -144,13 +142,6 @@ namespace ento {
     }
   };
 
-  /// Declares an immutable list of type \p NameTy, suitable for placement into
-  /// the ProgramState.
-  /// The macro should not be used inside namespaces, or for traits that must
-  /// be accessible from more than one translation unit.
-  #define REGISTER_SET_WITH_PROGRAMSTATE(Name, Elem) \
-    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableSet<Elem>)
-
 
   // Partial-specialization for ImmutableList.
 
@@ -189,13 +180,6 @@ namespace ento {
       delete (typename data_type::Factory*) Ctx;
     }
   };
-  
-  /// Declares an immutable list of type \p NameTy, suitable for placement into
-  /// the ProgramState.
-  /// The macro should not be used inside namespaces, or for traits that must
-  /// be accessible from more than one translation unit.
-  #define REGISTER_LIST_WITH_PROGRAMSTATE(Name, Elem) \
-    REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableList<Elem>)
 
   
   // Partial specialization for bool.

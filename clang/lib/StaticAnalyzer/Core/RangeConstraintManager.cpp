@@ -277,7 +277,9 @@ public:
 };
 } // end anonymous namespace
 
-REGISTER_MAP_WITH_PROGRAMSTATE(ConstraintRange, SymbolRef, RangeSet)
+REGISTER_TRAIT_WITH_PROGRAMSTATE(ConstraintRange,
+                                 CLANG_ENTO_PROGRAMSTATE_MAP(SymbolRef,
+                                                             RangeSet))
 
 namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
