@@ -201,6 +201,27 @@ public:
 };
 }
 
+static error_code getMemoryBufferForStream(int FD, 
+                                           StringRef BufferName,
+                                           OwningPtr<MemoryBuffer> &result) {
+  const ssize_t ChunkSize = 4096*4;
+  SmallString<ChunkSize> Buffer;
+  ssize_t ReadBytes;
+  // Read into Buffer until we hit EOF.
+  do {
+    Buffer.reserve(Buffer.size() + ChunkSize);
+    ReadBytes = read(FD, Buffer.end(), ChunkSize);
+    if (ReadBytes == -1) {
+      if (errno == EINTR) continue;
+      return error_code(errno, posix_category());
+    }
+    Buffer.set_size(Buffer.size() + ReadBytes);
+  } while (ReadBytes != 0);
+
+  result.reset(MemoryBuffer::getMemBufferCopy(Buffer, BufferName));
+  return error_code::success();
+}
+
 error_code MemoryBuffer::getFile(StringRef Filename,
                                  OwningPtr<MemoryBuffer> &result,
                                  int64_t FileSize,
@@ -297,6 +318,13 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
       if (fstat(FD, &FileInfo) == -1) {
         return error_code(errno, posix_category());
       }
+
+      // If this is a named pipe, we can't trust the size. Create the memory
+      // buffer by copying off the stream.
+      if (FileInfo.st_mode & S_IFIFO) {
+        return getMemoryBufferForStream(FD, Filename, result);
+      }
+
       FileSize = FileInfo.st_size;
     }
     MapSize = FileSize;
@@ -370,20 +398,5 @@ error_code MemoryBuffer::getSTDIN(OwningPtr<MemoryBuffer> &result) {
   // fallback if it fails.
   sys::Program::ChangeStdinToBinary();
 
-  const ssize_t ChunkSize = 4096*4;
-  SmallString<ChunkSize> Buffer;
-  ssize_t ReadBytes;
-  // Read into Buffer until we hit EOF.
-  do {
-    Buffer.reserve(Buffer.size() + ChunkSize);
-    ReadBytes = read(0, Buffer.end(), ChunkSize);
-    if (ReadBytes == -1) {
-      if (errno == EINTR) continue;
-      return error_code(errno, posix_category());
-    }
-    Buffer.set_size(Buffer.size() + ReadBytes);
-  } while (ReadBytes != 0);
-
-  result.reset(getMemBufferCopy(Buffer, "<stdin>"));
-  return error_code::success();
+  return getMemoryBufferForStream(0, "<stdin>", result);
 }
