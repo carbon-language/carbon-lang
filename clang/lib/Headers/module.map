@@ -25,6 +25,11 @@ module _Builtin_intrinsics [system] {
       header "mmintrin.h"
     }
 
+    explicit module f16c {
+      requires f16c
+      header "f16cintrin.h"
+    }
+
     explicit module sse {
       requires sse
       export mmx
@@ -62,6 +67,12 @@ module _Builtin_intrinsics [system] {
       header "nmmintrin.h"
     }
 
+    explicit module sse4a {
+      requires sse4a
+      export sse3
+      header "nmmintrin.h"
+    }
+
     explicit module avx {
       requires avx
       export sse4_2
@@ -84,6 +95,11 @@ module _Builtin_intrinsics [system] {
       header "bmi2intrin.h"
     }
 
+    explicit module fma {
+      requires fma
+      header "fmaintrin.h"
+    }
+
     explicit module fma4 {
       requires fma4
       export sse3
@@ -103,6 +119,12 @@ module _Builtin_intrinsics [system] {
     explicit module mm3dnow {
       requires mm3dnow
       header "mm3dnow.h"
+    }
+
+    explicit module xop {
+      requires xop
+      export fma4
+      header "xopintrin.h"
     }
   }
 }
