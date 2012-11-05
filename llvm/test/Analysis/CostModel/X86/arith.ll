@@ -12,6 +12,8 @@ define i32 @add(i32 %arg) {
   %C = add <2 x i64> undef, undef
   ;CHECK: cost of 4 {{.*}} add
   %D = add <4 x i64> undef, undef
+  ;CHECK: cost of 8 {{.*}} add
+  %E = add <8 x i64> undef, undef
   ;CHECK: cost of 1 {{.*}} ret
   ret i32 undef
 }

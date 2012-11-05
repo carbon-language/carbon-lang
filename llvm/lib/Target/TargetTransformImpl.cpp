@@ -60,7 +60,7 @@ bool ScalarTargetTransformImpl::shouldBuildLookupTables() const {
 // Calls used by the vectorizers.
 //
 //===----------------------------------------------------------------------===//
-static int InstructionOpcodeToISD(unsigned Opcode) {
+int VectorTargetTransformImpl::InstructionOpcodeToISD(unsigned Opcode) const {
   enum InstructionOpcodes {
 #define HANDLE_INST(NUM, OPCODE, CLASS) OPCODE = NUM,
 #define LAST_OTHER_INST(NUM) InstructionOpcodesCount = NUM
@@ -130,7 +130,7 @@ static int InstructionOpcodeToISD(unsigned Opcode) {
   llvm_unreachable("Unknown instruction type encountered!");
 }
 
-std::pair<unsigned, EVT>
+std::pair<unsigned, MVT>
 VectorTargetTransformImpl::getTypeLegalizationCost(LLVMContext &C,
                                                    EVT Ty) const {
   unsigned Cost = 1;
@@ -141,7 +141,7 @@ VectorTargetTransformImpl::getTypeLegalizationCost(LLVMContext &C,
     TargetLowering::LegalizeKind LK = TLI->getTypeConversion(C, Ty);
 
     if (LK.first == TargetLowering::TypeLegal)
-      return std::make_pair(Cost, Ty);
+      return std::make_pair(Cost, Ty.getSimpleVT());
 
     if (LK.first == TargetLowering::TypeSplitVector)
       Cost *= 2;
@@ -174,7 +174,7 @@ unsigned VectorTargetTransformImpl::getArithmeticInstrCost(unsigned Opcode,
   int ISD = InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  std::pair<unsigned, EVT> LT =
+  std::pair<unsigned, MVT> LT =
   getTypeLegalizationCost(Ty->getContext(), TLI->getValueType(Ty));
 
   if (!TLI->isOperationExpand(ISD, LT.second)) {
@@ -205,10 +205,10 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
   int ISD = InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  std::pair<unsigned, EVT> SrcLT =
+  std::pair<unsigned, MVT> SrcLT =
   getTypeLegalizationCost(Src->getContext(), TLI->getValueType(Src));
 
-  std::pair<unsigned, EVT> DstLT =
+  std::pair<unsigned, MVT> DstLT =
   getTypeLegalizationCost(Dst->getContext(), TLI->getValueType(Dst));
 
   // Handle scalar conversions.
@@ -283,7 +283,7 @@ unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,
       ISD = ISD::VSELECT;
   }
 
-  std::pair<unsigned, EVT> LT =
+  std::pair<unsigned, MVT> LT =
   getTypeLegalizationCost(ValTy->getContext(), TLI->getValueType(ValTy));
 
   if (!TLI->isOperationExpand(ISD, LT.second)) {
@@ -326,7 +326,7 @@ unsigned
 VectorTargetTransformImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                            unsigned Alignment,
                                            unsigned AddressSpace) const {
-  std::pair<unsigned, EVT> LT =
+  std::pair<unsigned, MVT> LT =
   getTypeLegalizationCost(Src->getContext(), TLI->getValueType(Src));
 
   // Assume that all loads of legal types cost 1.
@@ -335,7 +335,7 @@ VectorTargetTransformImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
 
 unsigned
 VectorTargetTransformImpl::getNumberOfParts(Type *Tp) const {
-  std::pair<unsigned, EVT> LT =
+  std::pair<unsigned, MVT> LT =
     getTypeLegalizationCost(Tp->getContext(), TLI->getValueType(Tp));
   return LT.first;
 }

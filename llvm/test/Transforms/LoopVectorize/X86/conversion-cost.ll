@@ -25,7 +25,7 @@ define i32 @conversion_cost1(i32 %n, i8* nocapture %A, float* nocapture %B) noun
 }
 
 ;CHECK: @conversion_cost2
-;CHECK: store <8 x float>
+;CHECK-NOT: <8 x float>
 ;CHECK: ret
 define i32 @conversion_cost2(i32 %n, i8* nocapture %A, float* nocapture %B) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 9

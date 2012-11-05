@@ -17505,63 +17505,51 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   return Res;
 }
 
+//===----------------------------------------------------------------------===//
+//
+// X86 cost model.
+//
+//===----------------------------------------------------------------------===//
+
+struct X86CostTblEntry {
+  int ISD;
+  MVT Type;
+  unsigned Cost;
+};
+
 unsigned
 X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {
+  // Legalize the type.
+  std::pair<unsigned, MVT> LT =
+  getTypeLegalizationCost(Ty->getContext(), TLI->getValueType(Ty));
+
+  int ISD = InstructionOpcodeToISD(Opcode);
+  assert(ISD && "Invalid opcode");
+
   const X86Subtarget &ST =
   TLI->getTargetMachine().getSubtarget<X86Subtarget>();
 
-  // Fix some of the inaccuracies of the target independent estimation.
-  if (Ty->isVectorTy() && ST.hasSSE41()) {
-    unsigned NumElem = Ty->getVectorNumElements();
-    unsigned SizeInBits = Ty->getScalarType()->getScalarSizeInBits();
+  static const X86CostTblEntry AVX1CostTable[] = {
+    // We don't have to scalarize unsupported ops. We can issue two half-sized
+    // operations and we only need to extract the upper YMM half.
+    // Two ops + 1 extract + 1 insert = 4.
+    { ISD::MUL,     MVT::v8i32,    4 },
+    { ISD::SUB,     MVT::v8i32,    4 },
+    { ISD::ADD,     MVT::v8i32,    4 },
+    { ISD::MUL,     MVT::v4i64,    4 },
+    { ISD::SUB,     MVT::v4i64,    4 },
+    { ISD::ADD,     MVT::v4i64,    4 },
+    };
 
-    bool Is2 = (NumElem == 2);
-    bool Is4 = (NumElem == 4);
-    bool Is8 = (NumElem == 8);
-    bool Is32bits = (SizeInBits == 32);
-    bool Is64bits = (SizeInBits == 64);
-    bool HasAvx = ST.hasAVX();
-    bool HasAvx2 = ST.hasAVX2();
-
-    switch (Opcode) {
-      case Instruction::Add:
-      case Instruction::Sub:
-      case Instruction::Mul: {
-        // Only AVX2 has support for 8-wide integer operations.
-        if (Is32bits && (Is4 || (Is8 && HasAvx2))) return 1;
-        if (Is64bits && (Is2 || (Is4 && HasAvx2))) return 1;
-
-        // We don't have to completly scalarize unsupported ops. We can
-        // issue two half-sized operations (with some overhead).
-        // We don't need to extract the lower part of the YMM to the XMM.
-        // Extract the upper, two ops, insert the upper = 4.
-        if (Is32bits && Is8 && HasAvx) return 4;
-        if (Is64bits && Is4 && HasAvx) return 4;
-        break;
-      }
-      case Instruction::FAdd:
-      case Instruction::FSub:
-      case Instruction::FMul: {
-        // AVX has support for 8-wide float operations.
-        if (Is32bits && (Is4 || (Is8 && HasAvx))) return 1;
-        if (Is64bits && (Is2 || (Is4 && HasAvx))) return 1;
-        break;
-      }
-      case Instruction::Shl:
-      case Instruction::LShr:
-      case Instruction::AShr:
-      case Instruction::And:
-      case Instruction::Or:
-      case Instruction::Xor: {
-        // AVX has support for 8-wide integer bitwise operations.
-        if (Is32bits && (Is4 || (Is8 && HasAvx))) return 1;
-        if (Is64bits && (Is2 || (Is4 && HasAvx))) return 1;
-        break;
-      }
+  // Look for AVX1 lowering tricks.
+  if (ST.hasAVX())
+    for (unsigned int i = 0, e = array_lengthof(AVX1CostTable); i < e; ++i) {
+      if (AVX1CostTable[i].ISD == ISD && AVX1CostTable[i].Type == LT.second)
+        return LT.first * AVX1CostTable[i].Cost;
     }
-  }
 
+  // Fallback to the default implementation.
   return VectorTargetTransformImpl::getArithmeticInstrCost(Opcode, Ty);
 }
 
