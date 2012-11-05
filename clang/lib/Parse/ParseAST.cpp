@@ -78,7 +78,6 @@ void clang::ParseAST(Sema &S, bool PrintStats, bool SkipFunctionBodies) {
 
   S.getPreprocessor().EnterMainSourceFile();
   P.Initialize();
-  S.Initialize();
 
   // C11 6.9p1 says translation units must have at least one top-level
   // declaration. C++ doesn't have this restriction. We also don't want to

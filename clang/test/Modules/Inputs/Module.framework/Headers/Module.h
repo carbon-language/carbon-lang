@@ -23,4 +23,6 @@ const char *getModuleVersion(void);
 #include <Module/Sub.h>
 #include <Module/Buried/Treasure.h>
 
+__asm("foo");
+
 #endif // MODULE_H

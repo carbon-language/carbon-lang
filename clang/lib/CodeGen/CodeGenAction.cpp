@@ -65,9 +65,11 @@ namespace clang {
       TargetOpts(targetopts),
       LangOpts(langopts),
       AsmOutStream(OS),
+      Context(), 
       LLVMIRGeneration("LLVM IR Generation Time"),
       Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
-      LinkModule(LinkModule) {
+      LinkModule(LinkModule)
+    {
       llvm::TimePassesIsEnabled = TimePasses;
     }
 
