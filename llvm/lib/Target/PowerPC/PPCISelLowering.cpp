@@ -361,6 +361,16 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Expand);
       setOperationAction(ISD::CTTZ, VT, Expand);
       setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Expand);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
+
+      for (unsigned j = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+           j <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++j) {
+        MVT::SimpleValueType InnerVT = (MVT::SimpleValueType)j;
+        setTruncStoreAction(VT, InnerVT, Expand);
+      }
+      setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT, Expand);
     }
 
     for (unsigned i = (unsigned)MVT::FIRST_FP_VECTOR_VALUETYPE;
