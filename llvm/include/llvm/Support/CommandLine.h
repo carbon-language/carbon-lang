@@ -1507,7 +1507,7 @@ class bits : public Option, public bits_storage<DataType, Storage> {
       typename ParserClass::parser_data_type();
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;  // Parse Error!
-    addValue(Val);
+    this->addValue(Val);
     setPosition(pos);
     Positions.push_back(pos);
     return false;
