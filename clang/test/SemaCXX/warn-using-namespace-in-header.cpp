@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -Wheader-hygiene -verify %s
 
 #ifdef BE_THE_HEADER
-// Lots of vertical space to make the error line match up with the line of the
-// expected line in the source file.
 namespace warn_in_header_in_global_context {}
 using namespace warn_in_header_in_global_context; // expected-warning {{using namespace directive in global context in header}}
 
