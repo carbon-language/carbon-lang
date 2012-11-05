@@ -3220,8 +3220,16 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
   }
 
   // Support byval for ARM.
-  if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64) ||
-      getContext().getTypeAlign(Ty) > 64) {
+  // The ABI alignment for APCS is 4-byte and for AAPCS at least 4-byte and at most 8-byte.
+  // Byval can't handle the case where type alignment is bigger than ABI alignment.
+  // We also increase the threshold for byval due to its overhead.
+  uint64_t ABIAlign = 4;
+  uint64_t TyAlign = getContext().getTypeAlign(Ty) / 8;
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP ||
+      getABIKind() == ARMABIInfo::AAPCS)
+    ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
+  if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64*8) &&
+      TyAlign <= ABIAlign) {
     return ABIArgInfo::getIndirect(0, /*ByVal=*/true);
   }
 
