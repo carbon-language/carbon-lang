@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -o - %s -faddress-sanitizer | FileCheck -check-prefix ASAN %s
+// RUN: %clang_cc1 -emit-llvm -o - %s -fsanitize=address | FileCheck -check-prefix ASAN %s
 
 @interface MyClass
 + (int) addressSafety:(int*)a;

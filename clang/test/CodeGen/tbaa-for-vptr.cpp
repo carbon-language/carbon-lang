@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -emit-llvm -o - -O0 -fthread-sanitizer %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -O0 -fsanitize=thread %s | FileCheck %s
 // RUN: %clang_cc1 -emit-llvm -o - -O1 %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -o - -O1  -relaxed-aliasing -fthread-sanitizer %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -O1  -relaxed-aliasing -fsanitize=thread %s | FileCheck %s
 //
 // RUN: %clang_cc1 -emit-llvm -o - -O0 %s | FileCheck %s --check-prefix=NOTBAA
 // RUN: %clang_cc1 -emit-llvm -o - -O2  -relaxed-aliasing %s | FileCheck %s --check-prefix=NOTBAA

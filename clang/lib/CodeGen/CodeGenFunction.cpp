@@ -32,6 +32,10 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
   : CodeGenTypeCache(cgm), CGM(cgm),
     Target(CGM.getContext().getTargetInfo()),
     Builder(cgm.getModule().getContext()),
+    SanitizePerformTypeCheck(CGM.getLangOpts().SanitizeNull |
+                             CGM.getLangOpts().SanitizeAlignment |
+                             CGM.getLangOpts().SanitizeObjectSize |
+                             CGM.getLangOpts().SanitizeVptr),
     AutoreleaseResult(false), BlockInfo(0), BlockPointer(0),
     LambdaThisCaptureField(0), NormalCleanupDest(0), NextCleanupDestIndex(1),
     FirstBlockInfo(0), EHResumeBlock(0), ExceptionSlot(0), EHSelectorSlot(0),
@@ -40,8 +44,6 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     CXXABIThisDecl(0), CXXABIThisValue(0), CXXThisValue(0), CXXVTTDecl(0),
     CXXVTTValue(0), OutermostConditional(0), TerminateLandingPad(0),
     TerminateHandler(0), TrapBB(0) {
-
-  CatchUndefined = getLangOpts().CatchUndefined;
   if (!suppressNewContext)
     CGM.getCXXABI().getMangleContext().startNewFunction();
 }
@@ -543,7 +545,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   //   function call is used by the caller, the behavior is undefined.
   if (getLangOpts().CPlusPlus && !FD->hasImplicitReturnZero() &&
       !FD->getResultType()->isVoidType() && Builder.GetInsertBlock()) {
-    if (CatchUndefined)
+    if (getLangOpts().SanitizeReturn)
       EmitCheck(Builder.getFalse(), "missing_return",
                 EmitCheckSourceLocation(FD->getLocation()),
                 llvm::ArrayRef<llvm::Value*>());
@@ -1128,7 +1130,8 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
           //   If the size is an expression that is not an integer constant
           //   expression [...] each time it is evaluated it shall have a value
           //   greater than zero.
-          if (CatchUndefined && size->getType()->isSignedIntegerType()) {
+          if (getLangOpts().SanitizeVLABound &&
+              size->getType()->isSignedIntegerType()) {
             llvm::Value *Zero = llvm::Constant::getNullValue(Size->getType());
             llvm::Constant *StaticArgs[] = {
               EmitCheckSourceLocation(size->getLocStart()),

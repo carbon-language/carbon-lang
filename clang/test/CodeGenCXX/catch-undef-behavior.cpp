@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcatch-undefined-behavior -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -fsanitize=signed-integer-overflow,divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
 
 // CHECK: @_Z17reference_binding
 void reference_binding(int *p) {

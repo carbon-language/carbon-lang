@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -o - %s -faddress-sanitizer | FileCheck -check-prefix ASAN %s
+// RUN: %clang_cc1 -emit-llvm -o - %s -fsanitize=address | FileCheck -check-prefix ASAN %s
 
 // The address_safety attribute should be attached to functions
 // when AddressSanitizer is enabled, unless no_address_safety_analysis attribute

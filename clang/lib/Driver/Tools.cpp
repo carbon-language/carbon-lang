@@ -1506,12 +1506,6 @@ struct SanitizerArgs {
   }
 
   void addArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
-    if (Kind & Address)
-      CmdArgs.push_back("-faddress-sanitizer");
-    if (Kind & Thread)
-      CmdArgs.push_back("-fthread-sanitizer");
-    if (Kind & Undefined)
-      CmdArgs.push_back("-fcatch-undefined-behavior");
     if (!Kind)
       return;
     llvm::SmallString<256> SanitizeOpt("-fsanitize=");

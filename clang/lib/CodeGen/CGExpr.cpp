@@ -389,7 +389,7 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
                                                    ReferenceTemporaryDtor,
                                                    ObjCARCReferenceLifetimeType,
                                                    InitializedDecl);
-  if (CatchUndefined && !E->getType()->isFunctionType()) {
+  if (SanitizePerformTypeCheck && !E->getType()->isFunctionType()) {
     // C++11 [dcl.ref]p5 (as amended by core issue 453):
     //   If a glvalue to which a reference is directly bound designates neither
     //   an existing object or function of an appropriate type nor a region of
@@ -476,7 +476,7 @@ static llvm::Value *emitHash16Bytes(CGBuilderTy &Builder, llvm::Value *Low,
 void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
                                     llvm::Value *Address,
                                     QualType Ty, CharUnits Alignment) {
-  if (!CatchUndefined)
+  if (!SanitizePerformTypeCheck)
     return;
 
   // Don't check pointers outside the default address space. The null check
@@ -487,19 +487,17 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   llvm::Value *Cond = 0;
 
-  // The glvalue must not be an empty glvalue.
-  Cond = Builder.CreateICmpNE(
-    Address, llvm::Constant::getNullValue(Address->getType()));
+  if (getLangOpts().SanitizeNull) {
+    // The glvalue must not be an empty glvalue.
+    Cond = Builder.CreateICmpNE(
+        Address, llvm::Constant::getNullValue(Address->getType()));
+  }
 
-  uint64_t AlignVal = Alignment.getQuantity();
-
-  if (!Ty->isIncompleteType()) {
+  if (getLangOpts().SanitizeObjectSize && !Ty->isIncompleteType()) {
     uint64_t Size = getContext().getTypeSizeInChars(Ty).getQuantity();
-    if (!AlignVal)
-      AlignVal = getContext().getTypeAlignInChars(Ty).getQuantity();
 
     // The glvalue must refer to a large enough storage region.
-    // FIXME: If -faddress-sanitizer is enabled, insert dynamic instrumentation
+    // FIXME: If Address Sanitizer is enabled, insert dynamic instrumentation
     //        to check this.
     llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, IntPtrTy);
     llvm::Value *Min = Builder.getFalse();
@@ -510,13 +508,22 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     Cond = Cond ? Builder.CreateAnd(Cond, LargeEnough) : LargeEnough;
   }
 
-  if (AlignVal) {
+  uint64_t AlignVal = 0;
+
+  if (getLangOpts().SanitizeAlignment) {
+    AlignVal = Alignment.getQuantity();
+    if (!Ty->isIncompleteType() && !AlignVal)
+      AlignVal = getContext().getTypeAlignInChars(Ty).getQuantity();
+
     // The glvalue must be suitably aligned.
-    llvm::Value *Align =
-        Builder.CreateAnd(Builder.CreatePtrToInt(Address, IntPtrTy),
-                          llvm::ConstantInt::get(IntPtrTy, AlignVal - 1));
-    Cond = Builder.CreateAnd(Cond,
-        Builder.CreateICmpEQ(Align, llvm::ConstantInt::get(IntPtrTy, 0)));
+    if (AlignVal) {
+      llvm::Value *Align =
+          Builder.CreateAnd(Builder.CreatePtrToInt(Address, IntPtrTy),
+                            llvm::ConstantInt::get(IntPtrTy, AlignVal - 1));
+      llvm::Value *Aligned =
+        Builder.CreateICmpEQ(Align, llvm::ConstantInt::get(IntPtrTy, 0));
+      Cond = Cond ? Builder.CreateAnd(Cond, Aligned) : Aligned;
+    }
   }
 
   if (Cond) {
@@ -529,14 +536,11 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     EmitCheck(Cond, "type_mismatch", StaticData, Address);
   }
 
+  // If possible, check that the vptr indicates that there is a subobject of
+  // type Ty at offset zero within this object.
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  if (TCK != TCK_ConstructorCall &&
+  if (getLangOpts().SanitizeVptr && TCK != TCK_ConstructorCall &&
       RD && RD->hasDefinition() && RD->isDynamicClass()) {
-    // Check that the vptr indicates that there is a subobject of type Ty at
-    // offset zero within this object.
-    // FIXME: Produce a diagnostic if the user tries to combine this check with
-    //        -fno-rtti.
-
     // Compute a hash of the mangled name of the type.
     //
     // FIXME: This is not guaranteed to be deterministic! Move to a

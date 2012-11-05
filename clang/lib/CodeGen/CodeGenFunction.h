@@ -594,8 +594,9 @@ public:
   /// potentially higher performance penalties.
   unsigned char BoundsChecking;
 
-  /// CatchUndefined - Emit run-time checks to catch undefined behaviors.
-  bool CatchUndefined;
+  /// \brief Whether any type-checking sanitizers are enabled. If \c false,
+  /// calls to EmitTypeCheck can be skipped.
+  bool SanitizePerformTypeCheck;
 
   /// In ARC, whether we should autorelease the return value.
   bool AutoreleaseResult;
