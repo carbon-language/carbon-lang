@@ -475,6 +475,10 @@ void layoutRemoteTargetMemory(RemoteTarget *T, RecordingMemoryManager *JMM) {
                  << " to remote: " << format("%p", Addr) << "\n");
 
   }
+
+  // Trigger application of relocations
+  EE->finalizeObject();
+
   // Now load it all to the target.
   for (unsigned i = 0, e = Offsets.size(); i != e; ++i) {
     uint64_t Addr = RemoteAddr + Offsets[i].second;

@@ -111,6 +111,21 @@ void MCJIT::emitObject(Module *m) {
   isCompiled = true;
 }
 
+// FIXME: Add a parameter to identify which object is being finalized when
+// MCJIT supports multiple modules.
+void MCJIT::finalizeObject() {
+  // If the module hasn't been compiled, just do that.
+  if (!isCompiled) {
+    // If the call to Dyld.resolveRelocations() is removed from emitObject()
+    // we'll need to do that here.
+    emitObject(M);
+    return;
+  }
+
+  // Resolve any relocations.
+  Dyld.resolveRelocations();
+}
+
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
   report_fatal_error("not yet implemented");
 }

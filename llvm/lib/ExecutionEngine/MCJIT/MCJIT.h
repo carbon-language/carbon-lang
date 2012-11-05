@@ -42,6 +42,8 @@ public:
   /// @name ExecutionEngine interface implementation
   /// @{
 
+  virtual void finalizeObject();
+
   virtual void *getPointerToBasicBlock(BasicBlock *BB);
 
   virtual void *getPointerToFunction(Function *F);

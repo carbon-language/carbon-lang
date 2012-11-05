@@ -36,7 +36,11 @@ void RuntimeDyldImpl::resolveRelocations() {
   // Just iterate over the sections we have and resolve all the relocations
   // in them. Gross overkill, but it gets the job done.
   for (int i = 0, e = Sections.size(); i != e; ++i) {
-    reassignSectionAddress(i, Sections[i].LoadAddress);
+    uint64_t Addr = Sections[i].LoadAddress;
+    DEBUG(dbgs() << "Resolving relocations Section #" << i
+            << "\t" << format("%p", (uint8_t *)Addr)
+            << "\n");
+    resolveRelocationList(Relocations[i], Addr);
   }
 }
 
@@ -387,17 +391,15 @@ void RuntimeDyldImpl::reassignSectionAddress(unsigned SectionID,
                                              uint64_t Addr) {
   // The address to use for relocation resolution is not
   // the address of the local section buffer. We must be doing
-  // a remote execution environment of some sort. Re-apply any
-  // relocations referencing this section with the given address.
+  // a remote execution environment of some sort. Relocations can't
+  // be applied until all the sections have been moved.  The client must
+  // trigger this with a call to MCJIT::finalize() or
+  // RuntimeDyld::resolveRelocations().
   //
   // Addr is a uint64_t because we can't assume the pointer width
   // of the target is the same as that of the host. Just use a generic
   // "big enough" type.
   Sections[SectionID].LoadAddress = Addr;
-  DEBUG(dbgs() << "Resolving relocations Section #" << SectionID
-          << "\t" << format("%p", (uint8_t *)Addr)
-          << "\n");
-  resolveRelocationList(Relocations[SectionID], Addr);
 }
 
 void RuntimeDyldImpl::resolveRelocationEntry(const RelocationEntry &RE,
