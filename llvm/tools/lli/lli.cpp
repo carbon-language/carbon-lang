@@ -508,6 +508,7 @@ int main(int argc, char **argv, char * const *envp) {
   // usable by the JIT.
   InitializeNativeTarget();
   InitializeNativeTargetAsmPrinter();
+  InitializeNativeTargetAsmParser();
 
   cl::ParseCommandLineOptions(argc, argv,
                               "llvm interpreter & dynamic compiler\n");
