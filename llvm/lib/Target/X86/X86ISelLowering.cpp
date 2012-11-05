@@ -17555,10 +17555,10 @@ X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
 
 unsigned
 X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
-                                    unsigned Index) const {
+                                                 unsigned Index) const {
   assert(Val->isVectorTy() && "This must be a vector type");
 
-  if (Index != -1) {
+  if (Index != -1u) {
     // Legalize the type.
     std::pair<unsigned, MVT> LT =
     getTypeLegalizationCost(Val->getContext(), TLI->getValueType(Val));
