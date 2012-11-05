@@ -151,7 +151,9 @@ void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
   _atoms.push_back(&atom);
 
   // tell symbol table
-  _symbolTable.add(atom);
+  if (atom.scope() != Atom::scopeTranslationUnit) {
+    _symbolTable.add(atom);
+  }
 }
 
 
