@@ -103,6 +103,10 @@ public:
   bool operator<(const FileEntry &RHS) const {
     return Device < RHS.Device || (Device == RHS.Device && Inode < RHS.Inode);
   }
+
+  /// \brief Check whether the file is a named pipe (and thus can't be opened by
+  /// the native FileManager methods).
+  bool isNamedPipe() const;
 };
 
 /// \brief Implements support for file system lookup, file system caching,
