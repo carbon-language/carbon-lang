@@ -1452,13 +1452,149 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
     RelaxDefault);
 }
 
+namespace {
+struct SanitizerArgs {
+  /// Assign ordinals to sanitizer flags. We'll use the ordinal values as
+  /// bit positions within \c Kind.
+  enum SanitizeOrdinal {
+#define SANITIZER(NAME, ID) SO_##ID,
+#include "clang/Basic/Sanitizers.def"
+    SO_Count
+  };
+
+  /// Bugs to catch at runtime.
+  enum SanitizeKind {
+#define SANITIZER(NAME, ID) ID = 1 << SO_##ID,
+#define SANITIZER_GROUP(NAME, ID, ALIAS) ID = ALIAS,
+#include "clang/Basic/Sanitizers.def"
+
+    NeedsAsanRt = Address,
+    NeedsTsanRt = Thread,
+    NeedsUbsanRt = Undefined
+  };
+  unsigned Kind;
+
+  SanitizerArgs() : Kind(0) {}
+
+  bool needsAsanRt() const { return Kind & NeedsAsanRt; }
+  bool needsTsanRt() const { return Kind & NeedsTsanRt; }
+  bool needsUbsanRt() const { return Kind & NeedsUbsanRt; }
+
+  /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
+  /// Returns a member of the \c SanitizeKind enumeration, or \c 0 if \p Value
+  /// is not known.
+  static unsigned parse(const char *Value) {
+    return llvm::StringSwitch<SanitizeKind>(Value)
+#define SANITIZER(NAME, ID) .Case(NAME, ID)
+#define SANITIZER_GROUP(NAME, ID, ALIAS) .Case(NAME, ID)
+#include "clang/Basic/Sanitizers.def"
+      .Default(SanitizeKind());
+  }
+
+  /// Parse a -fsanitize= or -fno-sanitize= argument's values, diagnosing any
+  /// invalid components.
+  static unsigned parse(const Driver &D, const Arg *A) {
+    unsigned Kind = 0;
+    for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
+      if (unsigned K = parse(A->getValue(I)))
+        Kind |= K;
+      else
+        D.Diag(diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << A->getValue(I);
+    }
+    return Kind;
+  }
+
+  void addArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
+    if (Kind & Address)
+      CmdArgs.push_back("-faddress-sanitizer");
+    if (Kind & Thread)
+      CmdArgs.push_back("-fthread-sanitizer");
+    if (Kind & Undefined)
+      CmdArgs.push_back("-fcatch-undefined-behavior");
+    if (!Kind)
+      return;
+    llvm::SmallString<256> SanitizeOpt("-fsanitize=");
+#define SANITIZER(NAME, ID) \
+    if (Kind & ID) \
+      SanitizeOpt += NAME ",";
+#include "clang/Basic/Sanitizers.def"
+    SanitizeOpt.pop_back();
+    CmdArgs.push_back(Args.MakeArgString(SanitizeOpt));
+  }
+};
+}
+
+/// Produce an argument string from argument \p A, which shows how it provides a
+/// value in \p Mask. For instance, the argument "-fsanitize=address,alignment"
+/// with mask \c NeedsUbsanRt would produce "-fsanitize=alignment".
+static std::string describeSanitizeArg(const Arg *A, unsigned Mask) {
+  if (!A->getOption().matches(options::OPT_fsanitize_EQ))
+    return A->getOption().getName();
+
+  for (unsigned I = 0, N = A->getNumValues(); I != N; ++I)
+    if (SanitizerArgs::parse(A->getValue(I)) & Mask)
+      return std::string("-fsanitize=") + A->getValue(I);
+
+  llvm_unreachable("arg didn't provide expected value");
+}
+
+/// Parse the sanitizer arguments from an argument list.
+static SanitizerArgs getSanitizerArgs(const Driver &D, const ArgList &Args) {
+  SanitizerArgs Sanitize;
+
+  const Arg *AsanArg, *TsanArg, *UbsanArg;
+
+  for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
+    unsigned Add = 0, Remove = 0;
+    if ((*I)->getOption().matches(options::OPT_faddress_sanitizer))
+      Add = SanitizerArgs::Address;
+    else if ((*I)->getOption().matches(options::OPT_fno_address_sanitizer))
+      Remove = SanitizerArgs::Address;
+    else if ((*I)->getOption().matches(options::OPT_fthread_sanitizer))
+      Add = SanitizerArgs::Thread;
+    else if ((*I)->getOption().matches(options::OPT_fno_thread_sanitizer))
+      Remove = SanitizerArgs::Thread;
+    else if ((*I)->getOption().matches(options::OPT_fcatch_undefined_behavior))
+      Add = SanitizerArgs::Undefined;
+    else if ((*I)->getOption().matches(options::OPT_fsanitize_EQ))
+      Add = SanitizerArgs::parse(D, *I);
+    else if ((*I)->getOption().matches(options::OPT_fno_sanitize_EQ))
+      Remove = SanitizerArgs::parse(D, *I);
+    else
+      continue;
+
+    (*I)->claim();
+
+    Sanitize.Kind |= Add;
+    Sanitize.Kind &= ~Remove;
+
+    if (Add & SanitizerArgs::NeedsAsanRt) AsanArg = *I;
+    if (Add & SanitizerArgs::NeedsTsanRt) TsanArg = *I;
+    if (Add & SanitizerArgs::NeedsUbsanRt) UbsanArg = *I;
+  }
+
+  // Only one runtime library can be used at once.
+  // FIXME: Allow Ubsan to be combined with the other two.
+  bool NeedsAsan = Sanitize.needsAsanRt();
+  bool NeedsTsan = Sanitize.needsTsanRt();
+  bool NeedsUbsan = Sanitize.needsUbsanRt();
+  if (NeedsAsan + NeedsTsan + NeedsUbsan > 1)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << describeSanitizeArg(NeedsAsan ? AsanArg : TsanArg,
+                             NeedsAsan ? SanitizerArgs::NeedsAsanRt
+                                       : SanitizerArgs::NeedsTsanRt)
+      << describeSanitizeArg(NeedsUbsan ? UbsanArg : TsanArg,
+                             NeedsUbsan ? SanitizerArgs::NeedsUbsanRt
+                                        : SanitizerArgs::NeedsTsanRt);
+
+  return Sanitize;
+}
+
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
-  if (!Args.hasFlag(options::OPT_faddress_sanitizer,
-                    options::OPT_fno_address_sanitizer, false))
-    return;
   if(TC.getTriple().getEnvironment() == llvm::Triple::Android) {
     if (!Args.hasArg(options::OPT_shared)) {
       if (!Args.hasArg(options::OPT_pie))
@@ -1490,9 +1626,6 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
-  if (!Args.hasFlag(options::OPT_fthread_sanitizer,
-                    options::OPT_fno_thread_sanitizer, false))
-    return;
   if (!Args.hasArg(options::OPT_shared)) {
     // LibTsan is "libclang_rt.tsan-<ArchName>.a" in the Linux library
     // resource directory.
@@ -1511,8 +1644,6 @@ static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
 /// (Linux).
 static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
                             ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_fcatch_undefined_behavior))
-    return;
   if (!Args.hasArg(options::OPT_shared)) {
     // LibUbsan is "libclang_rt.ubsan-<ArchName>.a" in the Linux library
     // resource directory.
@@ -2370,7 +2501,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-ffreestanding");
 
   // Forward -f (flag) options which we can pass directly.
-  Args.AddLastArg(CmdArgs, options::OPT_fcatch_undefined_behavior);
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_flimit_debug_info);
@@ -2379,6 +2509,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_faltivec);
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_show_template_tree);
   Args.AddLastArg(CmdArgs, options::OPT_fno_elide_type);
+
+  SanitizerArgs Sanitize = getSanitizerArgs(D, Args);
+  Sanitize.addArgs(Args, CmdArgs);
 
   // Report and error for -faltivec on anything other then PowerPC.
   if (const Arg *A = Args.getLastArg(options::OPT_faltivec))
@@ -2389,14 +2522,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (getToolChain().SupportsProfiling())
     Args.AddLastArg(CmdArgs, options::OPT_pg);
-
-  if (Args.hasFlag(options::OPT_faddress_sanitizer,
-                   options::OPT_fno_address_sanitizer, false))
-    CmdArgs.push_back("-faddress-sanitizer");
-
-  if (Args.hasFlag(options::OPT_fthread_sanitizer,
-                   options::OPT_fno_thread_sanitizer, false))
-    CmdArgs.push_back("-fthread-sanitizer");
 
   // -flax-vector-conversions is default.
   if (!Args.hasFlag(options::OPT_flax_vector_conversions,
@@ -2544,8 +2669,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -frtti is default.
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti) ||
-      KernelOrKext)
+      KernelOrKext) {
     CmdArgs.push_back("-fno-rtti");
+
+    // -fno-rtti cannot usefully be combined with -fsanitize=vptr.
+    if (Sanitize.Kind & SanitizerArgs::Vptr) {
+      llvm::StringRef NoRttiArg =
+        Args.getLastArg(options::OPT_mkernel,
+                        options::OPT_fapple_kext,
+                        options::OPT_fno_rtti)->getOption().getName();
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+        << "-fsanitize=vptr" << NoRttiArg;
+    }
+  }
 
   // -fshort-enums=0 is default for all architectures except Hexagon.
   if (Args.hasFlag(options::OPT_fshort_enums,
@@ -5972,8 +6108,11 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
 
+  SanitizerArgs Sanitize = getSanitizerArgs(D, Args);
+
   // Call this before we add the C++ ABI library.
-  addUbsanRTLinux(getToolChain(), Args, CmdArgs);
+  if (Sanitize.needsUbsanRt())
+    addUbsanRTLinux(getToolChain(), Args, CmdArgs);
 
   if (D.CCCIsCXX &&
       !Args.hasArg(options::OPT_nostdlib) &&
@@ -5989,8 +6128,10 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Call this before we add the C run-time.
-  addAsanRTLinux(getToolChain(), Args, CmdArgs);
-  addTsanRTLinux(getToolChain(), Args, CmdArgs);
+  if (Sanitize.needsAsanRt())
+    addAsanRTLinux(getToolChain(), Args, CmdArgs);
+  if (Sanitize.needsTsanRt())
+    addTsanRTLinux(getToolChain(), Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib)) {
     if (!Args.hasArg(options::OPT_nodefaultlibs)) {

@@ -127,8 +127,6 @@ BENIGN_LANGOPT(ParseUnknownAnytype, 1, 0, "__unknown_anytype")
 BENIGN_LANGOPT(DebuggerSupport , 1, 0, "debugger support")
 BENIGN_LANGOPT(DebuggerCastResultToId, 1, 0, "for 'po' in the debugger, cast the result to id if it is of unknown type")
 BENIGN_LANGOPT(DebuggerObjCLiteral , 1, 0, "debugger Objective-C literals and subscripting support")
-BENIGN_LANGOPT(SanitizeAddress , 1, 0, "AddressSanitizer enabled")
-BENIGN_LANGOPT(SanitizeThread , 1, 0, "ThreadSanitizer enabled")
 
 BENIGN_LANGOPT(SpellChecking , 1, 1, "spell-checking")
 LANGOPT(SinglePrecisionConstants , 1, 0, "treating double-precision floating point constants as single precision constants")
@@ -169,6 +167,11 @@ BENIGN_LANGOPT(EmitMicrosoftInlineAsm , 1, 0,
 
 
 BENIGN_LANGOPT(RetainCommentsFromSystemHeaders, 1, 0, "retain documentation comments from system headers in the AST")
+
+/// Runtime sanitizers.
+#define SANITIZER(NAME, ID) \
+BENIGN_LANGOPT(Sanitize##ID, 1, 0, NAME " sanitizer")
+#include "clang/Basic/Sanitizers.def"
 
 #undef LANGOPT
 #undef VALUE_LANGOPT
