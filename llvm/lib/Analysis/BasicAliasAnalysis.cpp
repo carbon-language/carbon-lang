@@ -58,12 +58,12 @@ static bool isNonEscapingLocalObject(const Value *V) {
   // then it has not escaped before entering the function.  Check if it escapes
   // inside the function.
   if (const Argument *A = dyn_cast<Argument>(V))
-    if (A->hasByValAttr() || A->hasNoAliasAttr()) {
-      // Don't bother analyzing arguments already known not to escape.
-      if (A->hasNoCaptureAttr())
-        return true;
+    if (A->hasByValAttr() || A->hasNoAliasAttr())
+      // Note even if the argument is marked nocapture we still need to check
+      // for copies made inside the function. The nocapture attribute only
+      // specifies that there are no copies made that outlive the function.
       return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
-    }
+
   return false;
 }
 
