@@ -101,7 +101,7 @@ int VectorTargetTransformImpl::InstructionOpcodeToISD(unsigned Opcode) const {
   case AtomicRMW:      return 0;
   case Trunc:          return ISD::TRUNCATE;
   case ZExt:           return ISD::ZERO_EXTEND;
-  case SExt:           return ISD::SEXTLOAD;
+  case SExt:           return ISD::SIGN_EXTEND;
   case FPToUI:         return ISD::FP_TO_UINT;
   case FPToSI:         return ISD::FP_TO_SINT;
   case UIToFP:         return ISD::UINT_TO_FP;
@@ -235,8 +235,16 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
         SrcLT.second.getSizeInBits() == DstLT.second.getSizeInBits()) {
 
       // Bitcast between types that are legalized to the same type are free.
-      if (Opcode == Instruction::BitCast)
+      if (Opcode == Instruction::BitCast || Opcode == Instruction::Trunc)
         return 0;
+
+      // Assume that Zext is done using AND.
+      if (Opcode == Instruction::ZExt)
+        return 1;
+
+      // Assume that sext is done using SHL and SRA.
+      if (Opcode == Instruction::SExt)
+        return 2;
 
       // Just check the op cost. If the operation is legal then assume it costs
       // 1 and multiply by the type-legalization overhead.
@@ -310,7 +318,6 @@ unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,
   return 1;
 }
 
-/// Returns the expected cost of Vector Insert and Extract.
 unsigned VectorTargetTransformImpl::getVectorInstrCost(unsigned Opcode,
                                                        Type *Val,
                                                        unsigned Index) const {
