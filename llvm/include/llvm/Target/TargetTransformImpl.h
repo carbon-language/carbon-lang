@@ -55,8 +55,7 @@ protected:
   const TargetLowering *TLI;
 
   /// Estimate the cost of type-legalization and the legalized type.
-  std::pair<unsigned, MVT>
-  getTypeLegalizationCost(LLVMContext &C, EVT Ty) const;
+  std::pair<unsigned, MVT> getTypeLegalizationCost(Type *Ty) const;
 
   /// Estimate the overhead of scalarizing an instruction. Insert and Extract
   /// are set if the result needs to be inserted and/or extracted from vectors.

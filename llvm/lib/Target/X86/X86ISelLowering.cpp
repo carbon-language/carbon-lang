@@ -17530,8 +17530,7 @@ unsigned
 X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT =
-  getTypeLegalizationCost(Ty->getContext(), TLI->getValueType(Ty));
+  std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Ty);
 
   int ISD = InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
@@ -17569,8 +17568,7 @@ X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
 
   if (Index != -1U) {
     // Legalize the type.
-    std::pair<unsigned, MVT> LT =
-    getTypeLegalizationCost(Val->getContext(), TLI->getValueType(Val));
+    std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Val);
 
     // This type is legalized to a scalar type.
     if (!LT.second.isVector())
@@ -17592,8 +17590,7 @@ unsigned X86VectorTargetTransformInfo::getCmpSelInstrCost(unsigned Opcode,
                                                           Type *ValTy,
                                                           Type *CondTy) const {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT =
-  getTypeLegalizationCost(ValTy->getContext(), TLI->getValueType(ValTy));
+  std::pair<unsigned, MVT> LT = getTypeLegalizationCost(ValTy);
 
   MVT MTy = LT.second;
 
