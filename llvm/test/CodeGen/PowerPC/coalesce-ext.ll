@@ -13,5 +13,6 @@ define i32 @test1sext(i64 %A, i64 %B, i32* %P, i64 *%P2) nounwind {
   store volatile i32 %D, i32* %P
   ; Reuse low bits of extended register, don't extend live range of SUM.
   ; CHECK: stw [[EXT]]
-  ret i32 %D
+  %R = add i32 %D, %D
+  ret i32 %R
 }
