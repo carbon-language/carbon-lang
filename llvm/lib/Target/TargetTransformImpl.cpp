@@ -143,7 +143,8 @@ VectorTargetTransformImpl::getTypeLegalizationCost(LLVMContext &C,
     if (LK.first == TargetLowering::TypeLegal)
       return std::make_pair(Cost, Ty.getSimpleVT());
 
-    if (LK.first == TargetLowering::TypeSplitVector)
+    if (LK.first == TargetLowering::TypeSplitVector ||
+        LK.first == TargetLowering::TypeExpandInteger)
       Cost *= 2;
 
     // Keep legalizing the type.
@@ -300,7 +301,7 @@ unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,
     unsigned Cost = getCmpSelInstrCost(Opcode, ValTy->getScalarType(),
                                        CondTy);
 
-    // return the cost of multiple scalar invocation plus the cost of inserting
+    // Return the cost of multiple scalar invocation plus the cost of inserting
     // and extracting the values.
     return getScalarizationOverhead(ValTy, true, false) + Num * Cost;
   }
