@@ -162,15 +162,7 @@ static void InitializeMemoryFlush() {
 }
 
 void MapShadow(uptr addr, uptr size) {
-  uptr saddr = MemToShadow(addr);
-  uptr ssize = size * kShadowMultiplier;
-  void *p = MmapFixedNoReserve(saddr, ssize);
-  if ((uptr)p != saddr) {
-    Printf("FATAL: ThreadSanitizer failed to mmap shadow memory"
-        " %p(%p) -> %p(%p) = %p\n",
-        addr, size, saddr, ssize, p);
-    Die();
-  }
+  MmapFixedNoReserve(MemToShadow(addr), size * kShadowMultiplier);
 }
 
 void Initialize(ThreadState *thr) {

@@ -36,7 +36,7 @@ char buf[10];
 
 int main(void) {
   __tsan_init();
-  __tsan_map_shadow((unsigned long)buf & ~(4096-1), 4096);
+  __tsan_map_shadow(buf, sizeof(buf));
   __tsan_func_enter(0, &main);
   __tsan_malloc(0, buf, 10, 0);
   __tsan_release(0, buf);
