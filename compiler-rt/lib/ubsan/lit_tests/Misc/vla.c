@@ -1,4 +1,4 @@
-// RUN: %clang -fcatch-undefined-behavior %s -O3 -o %t
+// RUN: %clang -fsanitize=vla-bound %s -O3 -o %t
 // RUN: %t 2>&1 | FileCheck %s --check-prefix=CHECK-MINUS-ONE
 // RUN: %t a 2>&1 | FileCheck %s --check-prefix=CHECK-ZERO
 // RUN: %t a b

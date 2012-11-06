@@ -1,4 +1,4 @@
-// RUN: %clang -fcatch-undefined-behavior %s -o %t
+// RUN: %clang -fsanitize=float-cast-overflow %s -o %t
 // RUN: %t _
 // RUN: %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
 // RUN: %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1

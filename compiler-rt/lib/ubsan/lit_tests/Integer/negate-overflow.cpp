@@ -1,4 +1,4 @@
-// RUN: %clang -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clang -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
 
 int main() {
   -unsigned(-0x7fffffff - 1); // ok

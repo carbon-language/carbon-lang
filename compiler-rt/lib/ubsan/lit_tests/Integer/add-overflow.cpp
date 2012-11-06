@@ -1,6 +1,6 @@
-// RUN: %clang -DADD_I32 -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I32
-// RUN: %clang -DADD_I64 -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I64
-// RUN: %clang -DADD_I128 -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I128
+// RUN: %clang -DADD_I32 -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I32
+// RUN: %clang -DADD_I64 -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I64
+// RUN: %clang -DADD_I128 -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I128
 
 #include <stdint.h>
 

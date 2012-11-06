@@ -1,13 +1,13 @@
-// RUN: %clang -DLSH_OVERFLOW -DOP='<<' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=LSH_OVERFLOW
-// RUN: %clang -DLSH_OVERFLOW -DOP='<<=' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=LSH_OVERFLOW
-// RUN: %clang -DTOO_LOW -DOP='<<' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
-// RUN: %clang -DTOO_LOW -DOP='>>' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
-// RUN: %clang -DTOO_LOW -DOP='<<=' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
-// RUN: %clang -DTOO_LOW -DOP='>>=' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
-// RUN: %clang -DTOO_HIGH -DOP='<<' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
-// RUN: %clang -DTOO_HIGH -DOP='>>' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
-// RUN: %clang -DTOO_HIGH -DOP='<<=' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
-// RUN: %clang -DTOO_HIGH -DOP='>>=' -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
+// RUN: %clang -DLSH_OVERFLOW -DOP='<<' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=LSH_OVERFLOW
+// RUN: %clang -DLSH_OVERFLOW -DOP='<<=' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=LSH_OVERFLOW
+// RUN: %clang -DTOO_LOW -DOP='<<' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
+// RUN: %clang -DTOO_LOW -DOP='>>' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
+// RUN: %clang -DTOO_LOW -DOP='<<=' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
+// RUN: %clang -DTOO_LOW -DOP='>>=' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_LOW
+// RUN: %clang -DTOO_HIGH -DOP='<<' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
+// RUN: %clang -DTOO_HIGH -DOP='>>' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
+// RUN: %clang -DTOO_HIGH -DOP='<<=' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
+// RUN: %clang -DTOO_HIGH -DOP='>>=' -fsanitize=shift %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=TOO_HIGH
 
 #include <stdint.h>
 

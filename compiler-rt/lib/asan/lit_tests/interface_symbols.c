@@ -1,6 +1,6 @@
 // Check the presense of interface symbols in compiled file.
 
-// RUN: %clang -faddress-sanitizer -dead_strip -O2 %s -o %t.exe
+// RUN: %clang -fsanitize=address -dead_strip -O2 %s -o %t.exe
 // RUN: nm %t.exe | egrep " [TW] " | sed "s/.* T //" | sed "s/.* W //" \
 // RUN:    | grep "__asan_" | sed "s/___asan_/__asan_/" > %t.symbols
 // RUN: cat %p/../../../include/sanitizer/asan_interface.h \

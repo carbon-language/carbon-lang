@@ -1,7 +1,7 @@
-// RUN: %clang -DOP=n++ -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clang -DOP=++n -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clang -DOP=m-- -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clang -DOP=--m -fcatch-undefined-behavior %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clang -DOP=n++ -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clang -DOP=++n -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clang -DOP=m-- -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clang -DOP=--m -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
 
 #include <stdint.h>
 

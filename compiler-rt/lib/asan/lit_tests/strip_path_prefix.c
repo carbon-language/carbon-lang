@@ -1,4 +1,4 @@
-// RUN: %clang -g -faddress-sanitizer -O2 %s -o %t
+// RUN: %clang -g -fsanitize=address -O2 %s -o %t
 // RUN: ASAN_OPTIONS="strip_path_prefix='/'" %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-// RUN: %clang -fcatch-undefined-behavior %s -O3 -o %t
+// RUN: %clang -fsanitize=null %s -O3 -o %t
 // RUN: %t l 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD
 // RUN: %t s 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
 // RUN: %t r 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE

@@ -1,4 +1,4 @@
-// RUN: %clang -ccc-cxx -fcatch-undefined-behavior %s -O3 -o %t
+// RUN: %clang -ccc-cxx -fsanitize=vptr %s -O3 -o %t
 // RUN: %t rT && %t mT && %t fT
 // RUN: %t rU && %t mU && %t fU
 // RUN: %t rS 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
