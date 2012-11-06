@@ -130,11 +130,6 @@ public:
   /// Return true if the current LocationContext has no caller context.
   bool inTopFrame() const { return getLocationContext()->inTopFrame();  }
 
-  /// Returns true if the predecessor is within an inlined function/method.
-  bool isWithinInlined() {
-    return (getStackFrame()->getParent() != 0);
-  }
-
   BugReporter &getBugReporter() {
     return Eng.getBugReporter();
   }

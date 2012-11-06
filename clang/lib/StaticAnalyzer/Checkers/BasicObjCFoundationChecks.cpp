@@ -763,7 +763,7 @@ void ObjCNonNilReturnValueChecker::checkPostObjCMessage(const ObjCMethodCall &M,
     // since 'nil' is rarely returned in practice, we should not warn when the
     // caller to the defensive constructor uses the object in contexts where
     // 'nil' is not accepted.
-    if (C.isWithinInlined() && M.getDecl() &&
+    if (!C.inTopFrame() && M.getDecl() &&
         M.getDecl()->getMethodFamily() == OMF_init &&
         M.isReceiverSelfOrSuper()) {
       State = assumeExprIsNonNull(M.getOriginExpr(), State, C);
