@@ -12,6 +12,8 @@
 // sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOGDI
 #include <windows.h>
 
 #include "sanitizer_common.h"
@@ -41,7 +43,6 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   *stack_bottom = (uptr)mbi.AllocationBase;
 }
 
-
 void *MmapOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (rv == 0) {
@@ -61,8 +62,12 @@ void UnmapOrDie(void *addr, uptr size) {
 }
 
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
-  return VirtualAlloc((LPVOID)fixed_addr, size,
-                      MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  void *p = VirtualAlloc((LPVOID)fixed_addr, size,
+      MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  if (p == 0)
+    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes at %p (%d)\n",
+           size, size, fixed_addr, GetLastError());
+  return p;
 }
 
 void *Mprotect(uptr fixed_addr, uptr size) {
@@ -136,9 +141,11 @@ void Abort() {
   _exit(-1);  // abort is not NORETURN on Windows.
 }
 
+#ifndef SANITIZER_GO
 int Atexit(void (*function)(void)) {
   return atexit(function);
 }
+#endif
 
 // ------------------ sanitizer_libc.h
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
@@ -191,7 +198,8 @@ uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
 }
 
 int internal_sched_yield() {
-  UNIMPLEMENTED();
+  Sleep(0);
+  return 0;
 }
 
 }  // namespace __sanitizer
