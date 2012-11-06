@@ -956,6 +956,11 @@ void RAFast::AllocateBasicBlock() {
     bool hasPhysDefs = false;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
+      // Make sure MRI knows about registers clobbered by regmasks.
+      if (MO.isRegMask()) {
+        MRI->addPhysRegsUsedFromRegMask(MO.getRegMask());
+        continue;
+      }
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
       if (!Reg) continue;
