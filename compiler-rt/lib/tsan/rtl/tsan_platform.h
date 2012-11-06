@@ -17,13 +17,17 @@
 
 #include "tsan_rtl.h"
 
-#if __LP64__
+#if defined(__LP64__) || defined(_WIN64)
 namespace __tsan {
 
 #if defined(TSAN_GO)
 static const uptr kLinuxAppMemBeg = 0x000000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x00fcffffffffULL;
+# if defined(_WIN32)
+static const uptr kLinuxShadowMsk = 0x010000000000ULL;
+# else
 static const uptr kLinuxShadowMsk = 0x100000000000ULL;
+# endif
 // TSAN_COMPAT_SHADOW is intended for COMPAT virtual memory layout,
 // when memory addresses are of the 0x2axxxxxxxxxx form.
 // The option is enabled with 'setarch x86_64 -L'.
@@ -95,7 +99,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 
 }  // namespace __tsan
 
-#else  // __LP64__
+#else  // defined(__LP64__) || defined(_WIN64)
 # error "Only 64-bit is supported"
 #endif
 
