@@ -79,7 +79,7 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                       -1, 0);
   if (p != (void*)fixed_addr)
-    Report("ERROR: Failed to deallocate 0x%zx (%zd) bytes at address %p (%d)\n",
+    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
            size, size, fixed_addr, errno);
   return p;
 }
