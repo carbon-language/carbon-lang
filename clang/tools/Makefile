@@ -18,7 +18,7 @@ DIRS := driver libclang c-index-test arcmt-test c-arcmt-test diagtool \
 OPTIONAL_DIRS := extra
 
 ifeq ($(BUILD_CLANG_ONLY),YES)
-  DIRS := driver libclang
+  DIRS := driver libclang c-index-test
   OPTIONAL_DIRS :=
 endif
 
