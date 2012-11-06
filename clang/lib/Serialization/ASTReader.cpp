@@ -961,6 +961,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
   case SM_SLOC_BUFFER_ENTRY: {
     const char *Name = BlobStart;
     unsigned Offset = Record[0];
+    SourceLocation IncludeLoc = ReadSourceLocation(*F, Record[1]);
     unsigned Code = SLocEntryCursor.ReadCode();
     Record.clear();
     unsigned RecCode
@@ -974,7 +975,8 @@ bool ASTReader::ReadSLocEntry(int ID) {
     llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBuffer(StringRef(BlobStart, BlobLen - 1),
                                          Name);
-    SourceMgr.createFileIDForMemBuffer(Buffer, ID, BaseOffset + Offset);
+    SourceMgr.createFileIDForMemBuffer(Buffer, ID, BaseOffset + Offset,
+                                       IncludeLoc);
     break;
   }
 
