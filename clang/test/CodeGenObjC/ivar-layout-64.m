@@ -1,15 +1,5 @@
-// RUNX: llvm-gcc -m64 -fobjc-gc -emit-llvm -S -o %t %s &&
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"A\\00"' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\11q\\10\\00"' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"!q\\00"' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\01\\14\\00"' %t
-// RUNX: llvm-gcc -ObjC++ -m64 -fobjc-gc -emit-llvm -S -o %t %s &&
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"A\\00"' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\11q\\10\\00"' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"!q\\00"' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\01\\14\\00"' %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o - %s | FileCheck %s
 
 /*
 
@@ -43,6 +33,11 @@ __weak B *f2;
 @property int p3;
 @end
 
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"C\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"\11p\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"!`\00"
+
+
 @implementation C
 @synthesize p3 = _p3;
 @end
@@ -53,8 +48,10 @@ __weak B *f2;
 @property (assign) __weak id p2;
 @end
 
-// FIXME: Check layout for this class, once it is clear what the right
-// answer is.
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"A\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"\11q\10\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"!q\00"
+
 @implementation A
 @synthesize p0 = _p0;
 @synthesize p1 = _p1;
@@ -65,8 +62,10 @@ __weak B *f2;
 @property int p3;
 @end
 
-// FIXME: Check layout for this class, once it is clear what the right
-// answer is.
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"D\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"\11p\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"!`\00"
+
 @implementation D
 @synthesize p3 = _p3;
 @end
@@ -90,5 +89,26 @@ typedef unsigned int FSCatalogInfoBitmap;
 }
 @end
 
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"NSFileLocationComponent\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"\01\14\00"
+
 @implementation NSFileLocationComponent @end
 
+@interface NSObject {
+  id isa;
+}
+@end
+
+@interface Foo : NSObject {
+    id ivar;
+
+    unsigned long bitfield  :31;
+    unsigned long bitfield2 :1;
+    unsigned long bitfield3 :32;
+}
+@end
+
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"Foo\00"
+// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global {{.*}} c"\02\10\00"
+
+@implementation Foo @end

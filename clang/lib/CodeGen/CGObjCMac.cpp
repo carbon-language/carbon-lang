@@ -2102,7 +2102,7 @@ void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
         = LastFieldBitfieldOrUnnamed->getBitWidthValue(CGM.getContext());
       CharUnits Size =
           CharUnits::fromQuantity(
-            (BitFieldSize + ByteSizeInBits) / ByteSizeInBits);
+            (BitFieldSize + ByteSizeInBits - 1) / ByteSizeInBits);
       Size += LastBitfieldOrUnnamedOffset;
       UpdateRunSkipBlockVars(false,
                              getBlockCaptureLifetime(LastFieldBitfieldOrUnnamed->getType()),
@@ -4552,7 +4552,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
       GC_IVAR skivar;
       skivar.ivar_bytepos = BytePos + LastBitfieldOrUnnamedOffset;
       skivar.ivar_size = CharUnits::fromQuantity(
-        (BitFieldSize + ByteSizeInBits) / ByteSizeInBits);
+        (BitFieldSize + ByteSizeInBits - 1) / ByteSizeInBits);
       SkipIvars.push_back(skivar);
     } else {
       assert(!LastFieldBitfieldOrUnnamed->getIdentifier() &&"Expected unnamed");
