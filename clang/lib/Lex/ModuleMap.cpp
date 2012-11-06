@@ -1507,7 +1507,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
     case MMToken::ExcludeKeyword: {
       if (ActiveModule) {
         Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
-          << (ActiveModule != nullptr);
+          << (ActiveModule != 0);
         consumeToken();
         break;
       }
@@ -1527,7 +1527,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
     case MMToken::ExportKeyword:
       if (!ActiveModule) {
         Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
-          << (ActiveModule != nullptr);
+          << (ActiveModule != 0);
         consumeToken();
         break;
       }
@@ -1547,7 +1547,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
     case MMToken::UmbrellaKeyword:
     default:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
-          << (ActiveModule != nullptr);
+          << (ActiveModule != 0);
       consumeToken();
       break;        
     }
