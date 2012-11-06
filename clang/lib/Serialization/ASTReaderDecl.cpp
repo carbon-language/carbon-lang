@@ -1353,10 +1353,10 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     for (unsigned I = 0; I != Size; ++I)
       SpecIDs.push_back(ReadDeclID(Record, Idx));
 
+    ClassTemplateDecl::Common *CommonPtr = D->getCommonPtr();
     if (SpecIDs[0]) {
       typedef serialization::DeclID DeclID;
       
-      ClassTemplateDecl::Common *CommonPtr = D->getCommonPtr();
       // FIXME: Append specializations!
       CommonPtr->LazySpecializations
         = new (Reader.getContext()) DeclID [SpecIDs.size()];
@@ -1364,7 +1364,7 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
              SpecIDs.size() * sizeof(DeclID));
     }
     
-    // InjectedClassNameType is computed.
+    CommonPtr->InjectedClassNameType = Reader.readType(F, Record, Idx);
   }
 }
 

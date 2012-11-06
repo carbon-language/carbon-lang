@@ -1084,7 +1084,7 @@ void ASTDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
       Writer.AddDeclRef(&*I, Record); 
     }
 
-    // InjectedClassNameType is computed, no need to write it.
+    Writer.AddTypeRef(D->getCommonPtr()->InjectedClassNameType, Record);
   }
   Code = serialization::DECL_CLASS_TEMPLATE;
 }
