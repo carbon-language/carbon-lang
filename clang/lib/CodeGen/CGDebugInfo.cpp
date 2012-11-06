@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "CGBlocks.h"
+#include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"
@@ -1412,12 +1413,21 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       FieldAlign = CGM.getContext().getTypeAlign(FType);
     }
 
-    // We can't know the offset of our ivar in the structure if we're using
-    // the non-fragile abi and the debugger should ignore the value anyways.
-    // Call it the FieldNo+1 due to how debuggers use the information,
-    // e.g. negating the value when it needs a lookup in the dynamic table.
-    uint64_t FieldOffset = CGM.getLangOpts().ObjCRuntime.isNonFragile()
-                             ? FieldNo+1 : RL.getFieldOffset(FieldNo);
+    uint64_t FieldOffset;
+    if (CGM.getLangOpts().ObjCRuntime.isNonFragile()) {
+      // We don't know the runtime offset of an ivar if we're using the
+      // non-fragile ABI.  For bitfields, use the bit offset into the first
+      // byte of storage of the bitfield.  For other fields, use zero.
+      if (Field->isBitField()) {
+        FieldOffset = CGM.getObjCRuntime().ComputeBitfieldBitOffset(
+            CGM, ID, Field);
+        FieldOffset %= CGM.getContext().getCharWidth();
+      } else {
+        FieldOffset = 0;
+      }
+    } else {
+      FieldOffset = RL.getFieldOffset(FieldNo);
+    }
 
     unsigned Flags = 0;
     if (Field->getAccessControl() == ObjCIvarDecl::Protected)

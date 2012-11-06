@@ -78,6 +78,13 @@ uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
     CGM.getContext().getCharWidth();
 }
 
+unsigned CGObjCRuntime::ComputeBitfieldBitOffset(
+    CodeGen::CodeGenModule &CGM,
+    const ObjCInterfaceDecl *ID,
+    const ObjCIvarDecl *Ivar) {
+  return LookupFieldBitOffset(CGM, ID, ID->getImplementation(), Ivar);
+}
+
 LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                const ObjCInterfaceDecl *OID,
                                                llvm::Value *BaseValue,
