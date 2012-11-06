@@ -52,6 +52,13 @@ namespace llvm {
       Order        ///< Any other ordering dependency.
     };
 
+    enum OrderKind {
+      Barrier,      ///< An unknown scheduling barrier.
+      MayAliasMem,  ///< Nonvolatile load/Store instructions that may alias.
+      MustAliasMem, ///< Nonvolatile load/Store instructions that must alias.
+      Artificial    ///< Arbitrary weak DAG edge (no actual dependence).
+    };
+
   private:
     /// Dep - A pointer to the depending/depended-on SUnit, and an enum
     /// indicating the kind of the dependency.
@@ -65,20 +72,7 @@ namespace llvm {
       unsigned Reg;
 
       /// Order - Additional information about Order dependencies.
-      struct {
-        /// isNormalMemory - True if both sides of the dependence
-        /// access memory in non-volatile and fully modeled ways.
-        bool isNormalMemory : 1;
-
-        /// isMustAlias - True if both sides of the dependence are known to
-        /// access the same memory.
-        bool isMustAlias : 1;
-
-        /// isArtificial - True if this is an artificial dependency, meaning
-        /// it is not necessary for program correctness, and may be safely
-        /// deleted if necessary.
-        bool isArtificial : 1;
-      } Order;
+      unsigned OrdKind; // enum OrderKind
     } Contents;
 
     /// Latency - The time associated with this edge. Often this is just
@@ -86,6 +80,9 @@ namespace llvm {
     /// models may provide additional information about specific edges.
     unsigned Latency;
     /// Record MinLatency seperately from "expected" Latency.
+    ///
+    /// FIXME: this field is not packed on LP64. Convert to 16-bit DAG edge
+    /// latency after introducing saturating truncation.
     unsigned MinLatency;
 
   public:
@@ -95,28 +92,28 @@ namespace llvm {
     SDep() : Dep(0, Data) {}
 
     /// SDep - Construct an SDep with the specified values.
-    SDep(SUnit *S, Kind kind, unsigned latency = 1, unsigned Reg = 0,
-         bool isNormalMemory = false, bool isMustAlias = false,
-         bool isArtificial = false)
-      : Dep(S, kind), Contents(), Latency(latency), MinLatency(latency) {
+    SDep(SUnit *S, Kind kind, unsigned Reg)
+      : Dep(S, kind), Contents() {
       switch (kind) {
+      default:
+        llvm_unreachable("Reg given for non-register dependence!");
       case Anti:
       case Output:
         assert(Reg != 0 &&
                "SDep::Anti and SDep::Output must use a non-zero Reg!");
-        // fall through
-      case Data:
-        assert(!isMustAlias && "isMustAlias only applies with SDep::Order!");
-        assert(!isArtificial && "isArtificial only applies with SDep::Order!");
         Contents.Reg = Reg;
+        Latency = 0;
         break;
-      case Order:
-        assert(Reg == 0 && "Reg given for non-register dependence!");
-        Contents.Order.isNormalMemory = isNormalMemory;
-        Contents.Order.isMustAlias = isMustAlias;
-        Contents.Order.isArtificial = isArtificial;
+      case Data:
+        Contents.Reg = Reg;
+        Latency = 1;
         break;
       }
+      MinLatency = Latency;
+    }
+    SDep(SUnit *S, OrderKind kind)
+      : Dep(S, Order), Contents(), Latency(0), MinLatency(0) {
+      Contents.OrdKind = kind;
     }
 
     /// Return true if the specified SDep is equivalent except for latency.
@@ -128,10 +125,7 @@ namespace llvm {
       case Output:
         return Contents.Reg == Other.Contents.Reg;
       case Order:
-        return Contents.Order.isNormalMemory ==
-                 Other.Contents.Order.isNormalMemory &&
-               Contents.Order.isMustAlias == Other.Contents.Order.isMustAlias &&
-               Contents.Order.isArtificial == Other.Contents.Order.isArtificial;
+        return Contents.OrdKind == Other.Contents.OrdKind;
       }
       llvm_unreachable("Invalid dependency kind!");
     }
@@ -194,20 +188,21 @@ namespace llvm {
     /// memory accesses where both sides of the dependence access memory
     /// in non-volatile and fully modeled ways.
     bool isNormalMemory() const {
-      return getKind() == Order && Contents.Order.isNormalMemory;
+      return getKind() == Order && (Contents.OrdKind == MayAliasMem
+                                    || Contents.OrdKind == MustAliasMem);
     }
 
     /// isMustAlias - Test if this is an Order dependence that is marked
     /// as "must alias", meaning that the SUnits at either end of the edge
     /// have a memory dependence on a known memory location.
     bool isMustAlias() const {
-      return getKind() == Order && Contents.Order.isMustAlias;
+      return getKind() == Order && Contents.OrdKind == MustAliasMem;
     }
 
     /// isArtificial - Test if this is an Order dependence that is marked
     /// as "artificial", meaning it isn't necessary for correctness.
     bool isArtificial() const {
-      return getKind() == Order && Contents.Order.isArtificial;
+      return getKind() == Order && Contents.OrdKind == Artificial;
     }
 
     /// isAssignedRegDep - Test if this is a Data dependence that is

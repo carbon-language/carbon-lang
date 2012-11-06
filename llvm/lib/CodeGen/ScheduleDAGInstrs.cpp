@@ -245,7 +245,7 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       if (UseSU == SU)
         continue;
 
-      SDep dep(SU, SDep::Data, 1, *Alias);
+      SDep dep(SU, SDep::Data, *Alias);
 
       // Adjust the dependence latency using operand def/use information,
       // then allow the target to perform its own adjustments.
@@ -291,11 +291,14 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
           (Kind != SDep::Output || !MO.isDead() ||
            !DefSU->getInstr()->registerDefIsDead(*Alias))) {
         if (Kind == SDep::Anti)
-          DefSU->addPred(SDep(SU, Kind, 0, /*Reg=*/*Alias));
+          DefSU->addPred(SDep(SU, Kind, /*Reg=*/*Alias));
         else {
-          unsigned AOLat =
+          SDep Dep(SU, Kind, /*Reg=*/*Alias);
+          unsigned OutLatency =
             SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr());
-          DefSU->addPred(SDep(SU, Kind, AOLat, /*Reg=*/*Alias));
+          Dep.setMinLatency(OutLatency);
+          Dep.setLatency(OutLatency);
+          DefSU->addPred(Dep);
         }
       }
     }
@@ -364,9 +367,12 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   else {
     SUnit *DefSU = DefI->SU;
     if (DefSU != SU && DefSU != &ExitSU) {
+      SDep Dep(SU, SDep::Output, Reg);
       unsigned OutLatency =
         SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr());
-      DefSU->addPred(SDep(SU, SDep::Output, OutLatency, Reg));
+      Dep.setMinLatency(OutLatency);
+      Dep.setLatency(OutLatency);
+      DefSU->addPred(Dep);
     }
     DefI->SU = SU;
   }
@@ -396,7 +402,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
     if (DefSU) {
       // The reaching Def lives within this scheduling region.
       // Create a data dependence.
-      SDep dep(DefSU, SDep::Data, 1, Reg);
+      SDep dep(DefSU, SDep::Data, Reg);
       // Adjust the dependence latency using operand def/use information, then
       // allow the target to perform its own adjustments.
       int DefOp = Def->findRegisterDefOperandIdx(Reg);
@@ -414,7 +420,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
   // Add antidependence to the following def of the vreg it uses.
   VReg2SUnitMap::iterator DefI = VRegDefs.find(Reg);
   if (DefI != VRegDefs.end() && DefI->SU != SU)
-    DefI->SU->addPred(SDep(SU, SDep::Anti, 0, Reg));
+    DefI->SU->addPred(SDep(SU, SDep::Anti, Reg));
 }
 
 /// Return true if MI is an instruction we are unable to reason about
@@ -554,8 +560,7 @@ iterateChainSucc(AliasAnalysis *AA, const MachineFrameInfo *MFI,
   // and stop descending.
   if (*Depth > 200 ||
       MIsNeedChainEdge(AA, MFI, SUa->getInstr(), SUb->getInstr())) {
-    SUb->addPred(SDep(SUa, SDep::Order, /*Latency=*/0, /*Reg=*/0,
-                      /*isNormalMemory=*/true));
+    SUb->addPred(SDep(SUa, SDep::MayAliasMem));
     return *Depth;
   }
   // Track current depth.
@@ -586,9 +591,9 @@ static void adjustChainDeps(AliasAnalysis *AA, const MachineFrameInfo *MFI,
     if (SU == *I)
       continue;
     if (MIsNeedChainEdge(AA, MFI, SU->getInstr(), (*I)->getInstr())) {
-      unsigned Latency = ((*I)->getInstr()->mayLoad()) ? LatencyToLoad : 0;
-      (*I)->addPred(SDep(SU, SDep::Order, Latency, /*Reg=*/0,
-                         /*isNormalMemory=*/true));
+      SDep Dep(SU, SDep::MayAliasMem);
+      Dep.setLatency(((*I)->getInstr()->mayLoad()) ? LatencyToLoad : 0);
+      (*I)->addPred(Dep);
     }
     // Now go through all the chain successors and iterate from them.
     // Keep track of visited nodes.
@@ -611,9 +616,11 @@ void addChainDependency (AliasAnalysis *AA, const MachineFrameInfo *MFI,
   // If this is a false dependency,
   // do not add the edge, but rememeber the rejected node.
   if (!EnableAASchedMI ||
-      MIsNeedChainEdge(AA, MFI, SUa->getInstr(), SUb->getInstr()))
-    SUb->addPred(SDep(SUa, SDep::Order, TrueMemOrderLatency, /*Reg=*/0,
-                      isNormalMemory));
+      MIsNeedChainEdge(AA, MFI, SUa->getInstr(), SUb->getInstr())) {
+    SDep Dep(SUa, isNormalMemory ? SDep::MayAliasMem : SDep::Barrier);
+    Dep.setLatency(TrueMemOrderLatency);
+    SUb->addPred(Dep);
+  }
   else {
     // Duplicate entries should be ignored.
     RejectList.insert(SUb);
@@ -755,16 +762,19 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       // references, even those that are known to not alias.
       for (std::map<const Value *, SUnit *>::iterator I =
              NonAliasMemDefs.begin(), E = NonAliasMemDefs.end(); I != E; ++I) {
-        I->second->addPred(SDep(SU, SDep::Order, /*Latency=*/0));
+        I->second->addPred(SDep(SU, SDep::Barrier));
       }
       for (std::map<const Value *, std::vector<SUnit *> >::iterator I =
              NonAliasMemUses.begin(), E = NonAliasMemUses.end(); I != E; ++I) {
-        for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-          I->second[i]->addPred(SDep(SU, SDep::Order, TrueMemOrderLatency));
+        for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
+          SDep Dep(SU, SDep::Barrier);
+          Dep.setLatency(TrueMemOrderLatency);
+          I->second[i]->addPred(Dep);
+        }
       }
       // Add SU to the barrier chain.
       if (BarrierChain)
-        BarrierChain->addPred(SDep(SU, SDep::Order, /*Latency=*/0));
+        BarrierChain->addPred(SDep(SU, SDep::Barrier));
       BarrierChain = SU;
       // This is a barrier event that acts as a pivotal node in the DAG,
       // so it is safe to clear list of exposed nodes.
@@ -852,7 +862,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         // SU and barrier _could_ be reordered, they should not. In addition,
         // we have lost all RejectMemNodes below barrier.
         if (BarrierChain)
-          BarrierChain->addPred(SDep(SU, SDep::Order, /*Latency=*/0));
+          BarrierChain->addPred(SDep(SU, SDep::Barrier));
       } else {
         // Treat all other stores conservatively.
         goto new_alias_chain;
@@ -861,10 +871,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       if (!ExitSU.isPred(SU))
         // Push store's up a bit to avoid them getting in between cmp
         // and branches.
-        ExitSU.addPred(SDep(SU, SDep::Order, 0,
-                            /*Reg=*/0, /*isNormalMemory=*/false,
-                            /*isMustAlias=*/false,
-                            /*isArtificial=*/true));
+        ExitSU.addPred(SDep(SU, SDep::Artificial));
     } else if (MI->mayLoad()) {
       bool MayAlias = true;
       if (MI->isInvariantLoad(AA)) {
@@ -899,7 +906,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         if (MayAlias && AliasChain)
           addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes);
         if (BarrierChain)
-          BarrierChain->addPred(SDep(SU, SDep::Order, /*Latency=*/0));
+          BarrierChain->addPred(SDep(SU, SDep::Barrier));
       }
     }
   }

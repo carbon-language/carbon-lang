@@ -485,14 +485,15 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         if(isChain && OpN->getOpcode() == ISD::TokenFactor)
           OpLatency = 0;
 
-        const SDep &dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
-                               OpLatency, PhysReg);
+        SDep Dep = isChain ? SDep(OpSU, SDep::Barrier)
+          : SDep(OpSU, SDep::Data, PhysReg);
+        Dep.setLatency(OpLatency);
         if (!isChain && !UnitLatencies) {
-          computeOperandLatency(OpN, N, i, const_cast<SDep &>(dep));
-          ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
+          computeOperandLatency(OpN, N, i, Dep);
+          ST.adjustSchedDependency(OpSU, SU, Dep);
         }
 
-        if (!SU->addPred(dep) && !dep.isCtrl() && OpSU->NumRegDefsLeft > 1) {
+        if (!SU->addPred(Dep) && !Dep.isCtrl() && OpSU->NumRegDefsLeft > 1) {
           // Multiple register uses are combined in the same SUnit. For example,
           // we could have a set of glued nodes with all their defs consumed by
           // another set of glued nodes. Register pressure tracking sees this as

@@ -1058,7 +1058,9 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
     // Add a data dependency to reflect that NewSU reads the value defined
     // by LoadSU.
-    AddPred(NewSU, SDep(LoadSU, SDep::Data, LoadSU->Latency));
+    SDep D(LoadSU, SDep::Data, 0);
+    D.setLatency(LoadSU->Latency);
+    AddPred(NewSU, D);
 
     if (isNewLoad)
       AvailableQueue->addNode(LoadSU);
@@ -1140,17 +1142,18 @@ void ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
       // Avoid scheduling the def-side copy before other successors. Otherwise
       // we could introduce another physreg interference on the copy and
       // continue inserting copies indefinitely.
-      SDep D(CopyFromSU, SDep::Order, /*Latency=*/0,
-             /*Reg=*/0, /*isNormalMemory=*/false,
-             /*isMustAlias=*/false, /*isArtificial=*/true);
-      AddPred(SuccSU, D);
+      AddPred(SuccSU, SDep(CopyFromSU, SDep::Artificial));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i)
     RemovePred(DelDeps[i].first, DelDeps[i].second);
 
-  AddPred(CopyFromSU, SDep(SU, SDep::Data, SU->Latency, Reg));
-  AddPred(CopyToSU, SDep(CopyFromSU, SDep::Data, CopyFromSU->Latency, 0));
+  SDep FromDep(SU, SDep::Data, Reg);
+  FromDep.setLatency(SU->Latency);
+  AddPred(CopyFromSU, FromDep);
+  SDep ToDep(CopyFromSU, SDep::Data, 0);
+  ToDep.setLatency(CopyFromSU->Latency);
+  AddPred(CopyToSU, ToDep);
 
   AvailableQueue->updateNode(SU);
   AvailableQueue->addNode(CopyFromSU);
@@ -1359,9 +1362,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
         if (!BtSU->isPending)
           AvailableQueue->remove(BtSU);
       }
-      AddPred(TrySU, SDep(BtSU, SDep::Order, /*Latency=*/1,
-                          /*Reg=*/0, /*isNormalMemory=*/false,
-                          /*isMustAlias=*/false, /*isArtificial=*/true));
+      AddPred(TrySU, SDep(BtSU, SDep::Artificial));
 
       // If one or more successors has been unscheduled, then the current
       // node is no longer avaialable. Schedule a successor that's now
@@ -1413,20 +1414,14 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
       InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
       DEBUG(dbgs() << "    Adding an edge from SU #" << TrySU->NodeNum
             << " to SU #" << Copies.front()->NodeNum << "\n");
-      AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
-                          /*Reg=*/0, /*isNormalMemory=*/false,
-                          /*isMustAlias=*/false,
-                          /*isArtificial=*/true));
+      AddPred(TrySU, SDep(Copies.front(), SDep::Artificial));
       NewDef = Copies.back();
     }
 
     DEBUG(dbgs() << "    Adding an edge from SU #" << NewDef->NodeNum
           << " to SU #" << TrySU->NodeNum << "\n");
     LiveRegDefs[Reg] = NewDef;
-    AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
-                         /*Reg=*/0, /*isNormalMemory=*/false,
-                         /*isMustAlias=*/false,
-                         /*isArtificial=*/true));
+    AddPred(NewDef, SDep(TrySU, SDep::Artificial));
     TrySU->isAvailable = false;
     CurSU = NewDef;
   }
@@ -2936,10 +2931,7 @@ void RegReductionPQBase::AddPseudoTwoAddrDeps() {
             !scheduleDAG->IsReachable(SuccSU, SU)) {
           DEBUG(dbgs() << "    Adding a pseudo-two-addr edge from SU #"
                        << SU->NodeNum << " to SU #" << SuccSU->NodeNum << "\n");
-          scheduleDAG->AddPred(SU, SDep(SuccSU, SDep::Order, /*Latency=*/0,
-                                        /*Reg=*/0, /*isNormalMemory=*/false,
-                                        /*isMustAlias=*/false,
-                                        /*isArtificial=*/true));
+          scheduleDAG->AddPred(SU, SDep(SuccSU, SDep::Artificial));
         }
       }
     }

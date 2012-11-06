@@ -336,7 +336,9 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       }
     }
     if (isNewLoad) {
-      AddPred(NewSU, SDep(LoadSU, SDep::Order, LoadSU->Latency));
+      SDep D(LoadSU, SDep::Barrier);
+      D.setLatency(LoadSU->Latency);
+      AddPred(NewSU, D);
     }
 
     ++NumUnfolds;
@@ -412,9 +414,12 @@ void ScheduleDAGFast::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
     RemovePred(DelDeps[i].first, DelDeps[i].second);
   }
-
-  AddPred(CopyFromSU, SDep(SU, SDep::Data, SU->Latency, Reg));
-  AddPred(CopyToSU, SDep(CopyFromSU, SDep::Data, CopyFromSU->Latency, 0));
+  SDep FromDep(SU, SDep::Data, Reg);
+  FromDep.setLatency(SU->Latency);
+  AddPred(CopyFromSU, FromDep);
+  SDep ToDep(CopyFromSU, SDep::Data, 0);
+  ToDep.setLatency(CopyFromSU->Latency);
+  AddPred(CopyToSU, ToDep);
 
   Copies.push_back(CopyFromSU);
   Copies.push_back(CopyToSU);
@@ -591,18 +596,14 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
           InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
           DEBUG(dbgs() << "Adding an edge from SU # " << TrySU->NodeNum
                        << " to SU #" << Copies.front()->NodeNum << "\n");
-          AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
-                              /*Reg=*/0, /*isNormalMemory=*/false,
-                              /*isMustAlias=*/false, /*isArtificial=*/true));
+          AddPred(TrySU, SDep(Copies.front(), SDep::Artificial));
           NewDef = Copies.back();
         }
 
         DEBUG(dbgs() << "Adding an edge from SU # " << NewDef->NodeNum
                      << " to SU #" << TrySU->NodeNum << "\n");
         LiveRegDefs[Reg] = NewDef;
-        AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
-                             /*Reg=*/0, /*isNormalMemory=*/false,
-                             /*isMustAlias=*/false, /*isArtificial=*/true));
+        AddPred(NewDef, SDep(TrySU, SDep::Artificial));
         TrySU->isAvailable = false;
         CurSU = NewDef;
       }
