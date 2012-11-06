@@ -36,6 +36,9 @@
 #include <sys/uio.h>
 #else
 #include <io.h>
+#ifndef S_ISFIFO
+#define S_ISFIFO(x) (0)
+#endif
 #endif
 using namespace clang;
 
@@ -58,7 +61,7 @@ FileEntry::~FileEntry() {
 }
 
 bool FileEntry::isNamedPipe() const {
-  return FileMode & S_IFIFO;
+  return S_ISFIFO(FileMode);
 }
 
 //===----------------------------------------------------------------------===//
