@@ -43,4 +43,4 @@ template <> struct _LIBCPP_VISIBLE hash<char *>
 };
 }
 
-#endif _LIBCPP_EXT_HASH
+#endif  // _LIBCPP_EXT_HASH
