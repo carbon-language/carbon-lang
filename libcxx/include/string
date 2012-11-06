@@ -1031,7 +1031,7 @@ __basic_string_common<__b>::__throw_out_of_range() const
 #pragma warning( push )
 #pragma warning( disable: 4231 )
 #endif // _MSC_VER
-extern template class __basic_string_common<true>;
+_LIBCPP_EXTERN_TEMPLATE(class __basic_string_common<true>)
 #ifdef _MSC_VER
 #pragma warning( pop )
 #endif // _MSC_VER
@@ -3975,8 +3975,8 @@ getline(basic_istream<_CharT, _Traits>&& __is,
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-extern template class basic_string<char>;
-extern template class basic_string<wchar_t>;
+_LIBCPP_EXTERN_TEMPLATE(class basic_string<char>)
+_LIBCPP_EXTERN_TEMPLATE(class basic_string<wchar_t>)
 
 extern template
     string

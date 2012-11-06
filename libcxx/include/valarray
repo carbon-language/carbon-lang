@@ -4770,9 +4770,9 @@ end(const valarray<_Tp>& __v)
     return __v.__end_;
 }
 
-extern template valarray<size_t>::valarray(size_t);
-extern template valarray<size_t>::~valarray();
-extern template void valarray<size_t>::resize(size_t, size_t);
+_LIBCPP_EXTERN_TEMPLATE(valarray<size_t>::valarray(size_t))
+_LIBCPP_EXTERN_TEMPLATE(valarray<size_t>::~valarray())
+_LIBCPP_EXTERN_TEMPLATE(void valarray<size_t>::resize(size_t, size_t))
 
 _LIBCPP_END_NAMESPACE_STD
 

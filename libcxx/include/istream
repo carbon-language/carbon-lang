@@ -1710,9 +1710,9 @@ operator>>(basic_istream<_CharT, _Traits>& __is, bitset<_Size>& __x)
     return __is;
 }
 
-extern template class basic_istream<char>;
-extern template class basic_istream<wchar_t>;
-extern template class basic_iostream<char>;
+_LIBCPP_EXTERN_TEMPLATE(class basic_istream<char>)
+_LIBCPP_EXTERN_TEMPLATE(class basic_istream<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class basic_iostream<char>)
 
 _LIBCPP_END_NAMESPACE_STD
 

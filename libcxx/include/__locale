@@ -254,8 +254,8 @@ collate<_CharT>::do_hash(const char_type* __lo, const char_type* __hi) const
     return static_cast<long>(__h);
 }
 
-extern template class _LIBCPP_VISIBLE collate<char>;
-extern template class _LIBCPP_VISIBLE collate<wchar_t>;
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_VISIBLE collate<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_VISIBLE collate<wchar_t>)
 
 // template <class CharT> class collate_byname;
 
@@ -1135,10 +1135,10 @@ codecvt_byname<_InternT, _ExternT, _StateT>::~codecvt_byname()
 {
 }
 
-extern template class codecvt_byname<char, char, mbstate_t>;
-extern template class codecvt_byname<wchar_t, char, mbstate_t>;
-extern template class codecvt_byname<char16_t, char, mbstate_t>;
-extern template class codecvt_byname<char32_t, char, mbstate_t>;
+_LIBCPP_EXTERN_TEMPLATE(class codecvt_byname<char, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE(class codecvt_byname<wchar_t, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE(class codecvt_byname<char16_t, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE(class codecvt_byname<char32_t, char, mbstate_t>)
 
 _LIBCPP_VISIBLE void __throw_runtime_error(const char*);
 

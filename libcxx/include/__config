@@ -427,6 +427,10 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x)
 #endif  // _LIBCPP_HAS_NO_STRONG_ENUMS
 
+#ifndef _LIBCPP_EXTERN_TEMPLATE
+#define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
+#endif
+
 #if __APPLE__ || __FreeBSD__ || _WIN32 || __sun__
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
