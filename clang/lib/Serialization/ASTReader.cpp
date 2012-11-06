@@ -3127,17 +3127,15 @@ namespace {
   };
 }
 
-bool ASTReader::isAcceptableASTFile(StringRef Filename,
-                                    FileManager &FileMgr,
-                                    const LangOptions &LangOpts,
-                                    const TargetOptions &TargetOpts,
-                                    const PreprocessorOptions &PPOpts) {
+bool ASTReader::readASTFileControlBlock(StringRef Filename,
+                                        FileManager &FileMgr,
+                                        ASTReaderListener &Listener) {
   // Open the AST file.
   std::string ErrStr;
   OwningPtr<llvm::MemoryBuffer> Buffer;
   Buffer.reset(FileMgr.getBufferForFile(Filename, &ErrStr));
   if (!Buffer) {
-    return false;
+    return true;
   }
 
   // Initialize the stream
@@ -3152,10 +3150,9 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
       Stream.Read(8) != 'P' ||
       Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'H') {
-    return false;
+    return true;
   }
 
-  SimplePCHValidator Validator(LangOpts, TargetOpts, PPOpts, FileMgr);
   RecordData Record;
   bool InControlBlock = false;
   while (!Stream.AtEndOfStream()) {
@@ -3168,7 +3165,7 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
       switch (BlockID) {
       case CONTROL_BLOCK_ID:
         if (Stream.EnterSubBlock(CONTROL_BLOCK_ID)) {
-          return false;
+          return true;
         } else {
           InControlBlock = true;
         }
@@ -3176,7 +3173,7 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
 
       default:
         if (Stream.SkipBlock())
-          return false;
+          return true;
         break;
       }
       continue;
@@ -3184,8 +3181,9 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
 
     if (Code == llvm::bitc::END_BLOCK) {
       if (Stream.ReadBlockEnd()) {
-        return false;
+        return true;
       }
+
       InControlBlock = false;
       continue;
     }
@@ -3203,46 +3201,46 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
       switch ((ControlRecordTypes)RecCode) {
       case METADATA: {
         if (Record[0] != VERSION_MAJOR) {
-          return false;
+          return true;
         }
 
         const std::string &CurBranch = getClangFullRepositoryVersion();
         StringRef ASTBranch(BlobStart, BlobLen);
         if (StringRef(CurBranch) != ASTBranch)
-          return false;
+          return true;
 
         break;
       }
       case LANGUAGE_OPTIONS:
-        if (ParseLanguageOptions(Record, false, Validator))
-          return false;
+        if (ParseLanguageOptions(Record, false, Listener))
+          return true;
         break;
 
       case TARGET_OPTIONS:
-        if (ParseTargetOptions(Record, false, Validator))
-          return false;
+        if (ParseTargetOptions(Record, false, Listener))
+          return true;
         break;
 
       case DIAGNOSTIC_OPTIONS:
-        if (ParseDiagnosticOptions(Record, false, Validator))
-          return false;
+        if (ParseDiagnosticOptions(Record, false, Listener))
+          return true;
         break;
 
       case FILE_SYSTEM_OPTIONS:
-        if (ParseFileSystemOptions(Record, false, Validator))
-          return false;
+        if (ParseFileSystemOptions(Record, false, Listener))
+          return true;
         break;
 
       case HEADER_SEARCH_OPTIONS:
-        if (ParseHeaderSearchOptions(Record, false, Validator))
-          return false;
+        if (ParseHeaderSearchOptions(Record, false, Listener))
+          return true;
         break;
 
       case PREPROCESSOR_OPTIONS: {
         std::string IgnoredSuggestedPredefines;
-        if (ParsePreprocessorOptions(Record, false, Validator,
+        if (ParsePreprocessorOptions(Record, false, Listener,
                                      IgnoredSuggestedPredefines))
-          return false;
+          return true;
         break;
       }
 
@@ -3253,7 +3251,17 @@ bool ASTReader::isAcceptableASTFile(StringRef Filename,
     }
   }
   
-  return true;
+  return false;
+}
+
+
+bool ASTReader::isAcceptableASTFile(StringRef Filename,
+                                    FileManager &FileMgr,
+                                    const LangOptions &LangOpts,
+                                    const TargetOptions &TargetOpts,
+                                    const PreprocessorOptions &PPOpts) {
+  SimplePCHValidator validator(LangOpts, TargetOpts, PPOpts, FileMgr);
+  return !readASTFileControlBlock(Filename, FileMgr, validator);
 }
 
 bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
