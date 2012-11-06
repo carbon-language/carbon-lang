@@ -223,3 +223,10 @@ namespace arguments {
   void f(const char*, ...) [[gnu::format(printf, 1, 2)]]; // expected-warning {{unknown attribute 'format' ignored}}
   void g() [[unknown::foo(currently arguments of attributes from unknown namespace other than 'gnu' namespace are ignored... blah...)]]; // expected-warning {{unknown attribute 'foo' ignored}}
 }
+
+// forbid attributes on decl specifiers
+unsigned [[gnu::used]] static int [[gnu::unused]] v1; // expected-warning {{attribute 'unused' ignored, because it is not attached to a declaration}} \
+           expected-error {{an attribute list cannot appear here}}
+typedef [[gnu::used]] unsigned long [[gnu::unused]] v2; // expected-warning {{attribute 'unused' ignored, because it is not attached to a declaration}} \
+          expected-error {{an attribute list cannot appear here}}
+int [[carries_dependency]] foo(int [[carries_dependency]] x); // expected-warning 2{{attribute 'carries_dependency' ignored, because it is not attached to a declaration}}

@@ -61,10 +61,10 @@ enum NotFixed {
 // [dcl.align]p2: When the alignment-specifier is of the form
 // alignas(assignment-expression), the assignment-expression shall be an
 // integral constant expression
-int alignas(ok) alignas1;
-int alignas(incomplete) alignas2; // expected-error {{incomplete}}
-int alignas(expl) alignas3; // expected-error {{explicit conversion}}
-int alignas(ambig) alignas4; // expected-error {{ambiguous conversion}}
+alignas(ok) int alignas1;
+alignas(incomplete) int alignas2; // expected-error {{incomplete}}
+alignas(expl) int alignas3; // expected-error {{explicit conversion}}
+alignas(ambig) int alignas4; // expected-error {{ambiguous conversion}}
 
 // [dcl.array]p1: If the constant-expression is present, it shall be an integral
 // constant expression

@@ -34,7 +34,7 @@ void f() {
 void g() throw (struct Ex {}) { // expected-error {{'Ex' can not be defined in a type specifier}}
 }
 
-int alignas(struct Aa {}) x; // expected-error {{'Aa' can not be defined in a type specifier}}
+alignas(struct Aa {}) int x; // expected-error {{'Aa' can not be defined in a type specifier}}
 
 int a = sizeof(struct So {}); // expected-error {{'So' can not be defined in a type specifier}}
 int b = alignof(struct Ao {}); // expected-error {{'Ao' can not be defined in a type specifier}}

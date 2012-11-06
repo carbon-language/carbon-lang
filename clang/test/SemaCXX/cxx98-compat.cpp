@@ -20,7 +20,7 @@ class Variadic2 {};
 template<int ...I>  // expected-warning {{variadic templates are incompatible with C++98}}
 class Variadic3 {};
 
-int alignas(8) with_alignas; // expected-warning {{'alignas' is incompatible with C++98}}
+alignas(8) int with_alignas; // expected-warning {{'alignas' is incompatible with C++98}}
 int with_attribute [[ ]]; // expected-warning {{attributes are incompatible with C++98}}
 
 void Literals() {

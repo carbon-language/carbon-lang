@@ -1142,6 +1142,18 @@ void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
     << attrs.Range;
 }
 
+void Parser::ProhibitCXX11Attributes(ParsedAttributesWithRange &attrs) {
+  AttributeList *AttrList = attrs.getList();
+  while (AttrList) {
+    if (AttrList->isCXX0XAttribute()) {
+      Diag(AttrList->getLoc(), diag::warn_attribute_no_decl) 
+        << AttrList->getName();
+      AttrList->setInvalid();
+    }
+    AttrList = AttrList->getNext();
+  }
+}
+
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.  This returns the
@@ -2148,8 +2160,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     DoneWithDeclSpec:
       if (!AttrsLastTime)
         ProhibitAttributes(attrs);
-      else
+      else {
+        // Reject C++11 attributes that appertain to decl specifiers as
+        // we don't support any C++11 attributes that appertain to decl
+        // specifiers. This also conforms to what g++ 4.8 is doing.
+        ProhibitCXX11Attributes(attrs);
+
         DS.takeAttributesFrom(attrs);
+      }
 
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
