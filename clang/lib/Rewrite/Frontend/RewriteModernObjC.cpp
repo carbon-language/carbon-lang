@@ -3085,7 +3085,7 @@ void RewriteModernObjC::RewriteLineDirective(const Decl *D) {
     PresumedLoc PLoc = SM->getPresumedLoc(Location);
     LineString += utostr(PLoc.getLine());
     LineString += " \"";
-    LineString += PLoc.getFilename();
+    LineString += Lexer::Stringify(PLoc.getFilename());
     if (isa<ObjCMethodDecl>(D))
       LineString += "\"";
     else LineString += "\"\n";
