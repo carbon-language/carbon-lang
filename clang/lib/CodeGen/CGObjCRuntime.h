@@ -76,12 +76,12 @@ protected:
   ///
   /// The latter overload is suitable for computing the offset of a
   /// sythesized ivar.
-  uint64_t ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                 const ObjCInterfaceDecl *OID,
-                                 const ObjCIvarDecl *Ivar);
-  uint64_t ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                 const ObjCImplementationDecl *OID,
-                                 const ObjCIvarDecl *Ivar);
+  CharUnits ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                  const ObjCInterfaceDecl *OID,
+                                  const ObjCIvarDecl *Ivar);
+  CharUnits ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                  const ObjCImplementationDecl *OID,
+                                  const ObjCIvarDecl *Ivar);
 
   LValue EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                   const ObjCInterfaceDecl *OID,

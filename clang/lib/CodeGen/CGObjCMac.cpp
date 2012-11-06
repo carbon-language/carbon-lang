@@ -736,9 +736,9 @@ public:
   // FIXME - accessibility
   class GC_IVAR {
   public:
-    unsigned ivar_bytepos;
+    CharUnits ivar_bytepos;
     unsigned ivar_size;
-    GC_IVAR(unsigned bytepos = 0, unsigned size = 0)
+    GC_IVAR(CharUnits bytepos = CharUnits::Zero(), unsigned size = 0)
       : ivar_bytepos(bytepos), ivar_size(size) {}
 
     // Allow sorting based on byte pos.
@@ -933,13 +933,13 @@ protected:
   llvm::Constant *BuildIvarLayoutBitmap(std::string &BitMap);
 
   void BuildAggrIvarRecordLayout(const RecordType *RT,
-                                 unsigned int BytePos, bool ForStrongLayout,
+                                 CharUnits BytePos, bool ForStrongLayout,
                                  bool &HasUnion);
   void BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
                            ArrayRef<const FieldDecl*> RecFields,
-                           unsigned int BytePos, bool ForStrongLayout,
+                           CharUnits BytePos, bool ForStrongLayout,
                            bool &HasUnion);
   
   Qualifiers::ObjCLifetime getBlockCaptureLifetime(QualType QT);
@@ -1324,7 +1324,7 @@ private:
 
   llvm::Constant *EmitIvarOffsetVar(const ObjCInterfaceDecl *ID,
                                     const ObjCIvarDecl *Ivar,
-                                    unsigned long int offset);
+                                    CharUnits offset);
 
   /// GetOrEmitProtocol - Get the protocol object for the given
   /// declaration, emitting it if necessary. The return value has type
@@ -1893,7 +1893,7 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
   
   // __isa is the first field in block descriptor and must assume by runtime's
   // convention that it is GC'able.
-  IvarsInfo.push_back(GC_IVAR(0, 1));
+  IvarsInfo.push_back(GC_IVAR(CharUnits::Zero(), 1));
 
   const BlockDecl *blockDecl = blockInfo.getBlockDecl();
 
@@ -1915,7 +1915,8 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
     // Ignore constant captures.
     if (capture.isConstant()) continue;
 
-    uint64_t fieldOffset = layout->getElementOffset(capture.getIndex());
+    CharUnits fieldOffset =
+        CharUnits::fromQuantity(layout->getElementOffset(capture.getIndex()));
 
     // __block variables are passed by their descriptor address.
     if (ci->isByRef()) {
@@ -3226,7 +3227,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
       GetMethodVarName(IVD->getIdentifier()),
       GetMethodVarType(IVD),
       llvm::ConstantInt::get(ObjCTypes.IntTy,
-                             ComputeIvarBaseOffset(CGM, OID, IVD))
+                             ComputeIvarBaseOffset(CGM, OID, IVD).getQuantity())
     };
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
   }
@@ -4172,10 +4173,8 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
 llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                        const ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
-  uint64_t Offset = ComputeIvarBaseOffset(CGM, Interface, Ivar);
-  return llvm::ConstantInt::get(
-    CGM.getTypes().ConvertType(CGM.getContext().LongTy),
-    Offset);
+  CharUnits Offset = ComputeIvarBaseOffset(CGM, Interface, Ivar);
+  return llvm::ConstantInt::get(ObjCTypes.LongTy, Offset.getQuantity());
 }
 
 /* *** Private Interface *** */
@@ -4397,7 +4396,7 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
 }
 
 void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
-                                                unsigned int BytePos,
+                                                CharUnits BytePos,
                                                 bool ForStrongLayout,
                                                 bool &HasUnion) {
   const RecordDecl *RD = RT->getDecl();
@@ -4418,7 +4417,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                              const llvm::StructLayout *Layout,
                              const RecordDecl *RD,
                              ArrayRef<const FieldDecl*> RecFields,
-                             unsigned int BytePos, bool ForStrongLayout,
+                             CharUnits BytePos, bool ForStrongLayout,
                              bool &HasUnion) {
   bool IsUnion = (RD && RD->isUnion());
   uint64_t MaxUnionIvarSize = 0;
@@ -4426,29 +4425,29 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   const FieldDecl *MaxField = 0;
   const FieldDecl *MaxSkippedField = 0;
   const FieldDecl *LastFieldBitfieldOrUnnamed = 0;
-  uint64_t MaxFieldOffset = 0;
-  uint64_t MaxSkippedFieldOffset = 0;
-  uint64_t LastBitfieldOrUnnamedOffset = 0;
-  uint64_t FirstFieldDelta = 0;
+  CharUnits MaxFieldOffset = CharUnits::Zero();
+  CharUnits MaxSkippedFieldOffset = CharUnits::Zero();
+  CharUnits LastBitfieldOrUnnamedOffset = CharUnits::Zero();
+  CharUnits FirstFieldDelta = CharUnits::Zero();
 
   if (RecFields.empty())
     return;
   unsigned WordSizeInBits = CGM.getContext().getTargetInfo().getPointerWidth(0);
   unsigned ByteSizeInBits = CGM.getContext().getTargetInfo().getCharWidth();
   if (!RD && CGM.getLangOpts().ObjCAutoRefCount) {
-    const FieldDecl *FirstField = RecFields[0];
-    FirstFieldDelta = 
-      ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(FirstField));
+    const ObjCIvarDecl *FirstField = cast<ObjCIvarDecl>(RecFields[0]);
+    FirstFieldDelta = ComputeIvarBaseOffset(CGM, OI, FirstField);
   }
   
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     const FieldDecl *Field = RecFields[i];
-    uint64_t FieldOffset;
+    CharUnits FieldOffset;
     if (RD) {
       // Note that 'i' here is actually the field index inside RD of Field,
       // although this dependency is hidden.
       const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
-      FieldOffset = (RL.getFieldOffset(i) / ByteSizeInBits) - FirstFieldDelta;
+      FieldOffset = CGM.getContext().toCharUnitsFromBits(RL.getFieldOffset(i)) -
+                    FirstFieldDelta;
     } else
       FieldOffset = 
         ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field)) - FirstFieldDelta;
@@ -4500,7 +4499,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
         uint64_t ElIx = 1;
         for (int FirstIndex = IvarsInfo.size() - 1,
                FirstSkIndex = SkipIvars.size() - 1 ;ElIx < ElCount; ElIx++) {
-          uint64_t Size = CGM.getContext().getTypeSize(RT)/ByteSizeInBits;
+          CharUnits Size = CGM.getContext().getTypeSizeInChars(RT);
           for (int i = OldIndex+1; i <= FirstIndex; ++i)
             IvarsInfo.push_back(GC_IVAR(IvarsInfo[i].ivar_bytepos + Size*ElIx,
                                         IvarsInfo[i].ivar_size));
@@ -4583,23 +4582,18 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 /// two containers, IvarsInfo and SkipIvars which are assumed to be
 /// filled already by the caller.
 llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string &BitMap) {
-  unsigned int WordsToScan, WordsToSkip;
   llvm::Type *PtrTy = CGM.Int8PtrTy;
   
   // Build the string of skip/scan nibbles
   SmallVector<SKIP_SCAN, 32> SkipScanIvars;
-  unsigned int WordSize =
-  CGM.getTypes().getDataLayout().getTypeAllocSize(PtrTy);
-  if (IvarsInfo[0].ivar_bytepos == 0) {
-    WordsToSkip = 0;
-    WordsToScan = IvarsInfo[0].ivar_size;
-  } else {
-    WordsToSkip = IvarsInfo[0].ivar_bytepos/WordSize;
-    WordsToScan = IvarsInfo[0].ivar_size;
-  }
+  CharUnits WordSize = CharUnits::fromQuantity(
+      CGM.getTypes().getDataLayout().getTypeAllocSize(PtrTy));
+  unsigned WordsToSkip = IvarsInfo[0].ivar_bytepos/WordSize;
+  unsigned WordsToScan = IvarsInfo[0].ivar_size;
+
   for (unsigned int i=1, Last=IvarsInfo.size(); i != Last; i++) {
-    unsigned int TailPrevGCObjC =
-    IvarsInfo[i-1].ivar_bytepos + IvarsInfo[i-1].ivar_size * WordSize;
+    CharUnits TailPrevGCObjC =
+        IvarsInfo[i-1].ivar_bytepos + IvarsInfo[i-1].ivar_size * WordSize;
     if (IvarsInfo[i].ivar_bytepos == TailPrevGCObjC) {
       // consecutive 'scanned' object pointers.
       WordsToScan += IvarsInfo[i].ivar_size;
@@ -4631,17 +4625,21 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string &BitMap) {
   
   if (!SkipIvars.empty()) {
     unsigned int LastIndex = SkipIvars.size()-1;
-    int LastByteSkipped =
-    SkipIvars[LastIndex].ivar_bytepos + SkipIvars[LastIndex].ivar_size;
+    // FIXME: Shouldn't be using CharUnits::One here; what are the units of
+    // ivar_size?
+    CharUnits LastByteSkipped =
+        SkipIvars[LastIndex].ivar_bytepos +
+        SkipIvars[LastIndex].ivar_size * CharUnits::One();
     LastIndex = IvarsInfo.size()-1;
-    int LastByteScanned =
-    IvarsInfo[LastIndex].ivar_bytepos +
-    IvarsInfo[LastIndex].ivar_size * WordSize;
+    CharUnits LastByteScanned =
+        IvarsInfo[LastIndex].ivar_bytepos +
+        IvarsInfo[LastIndex].ivar_size * WordSize;
     // Compute number of bytes to skip at the tail end of the last ivar scanned.
     if (LastByteSkipped > LastByteScanned) {
-      unsigned int TotalWords = (LastByteSkipped + (WordSize -1)) / WordSize;
+      unsigned int TotalWords =
+          (LastByteSkipped + (WordSize - CharUnits::One())) / WordSize;
       SKIP_SCAN SkScan;
-      SkScan.skip = TotalWords - (LastByteScanned/WordSize);
+      SkScan.skip = TotalWords - LastByteScanned / WordSize;
       SkScan.scan = 0;
       SkipScanIvars.push_back(SkScan);
     }
@@ -4754,7 +4752,8 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   SkipIvars.clear();
   IvarsInfo.clear();
 
-  BuildAggrIvarLayout(OMD, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
+  BuildAggrIvarLayout(OMD, 0, 0, RecFields, CharUnits::Zero(),
+                      ForStrongLayout, hasUnion);
   if (IvarsInfo.empty())
     return llvm::Constant::getNullValue(PtrTy);
   // Sort on byte position in case we encounterred a union nested in
@@ -6022,10 +6021,10 @@ CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
 llvm::Constant *
 CGObjCNonFragileABIMac::EmitIvarOffsetVar(const ObjCInterfaceDecl *ID,
                                           const ObjCIvarDecl *Ivar,
-                                          unsigned long int Offset) {
+                                          CharUnits Offset) {
   llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
   IvarOffsetGV->setInitializer(llvm::ConstantInt::get(ObjCTypes.LongTy,
-                                                      Offset));
+                                                      Offset.getQuantity()));
   IvarOffsetGV->setAlignment(
     CGM.getDataLayout().getABITypeAlignment(ObjCTypes.LongTy));
 

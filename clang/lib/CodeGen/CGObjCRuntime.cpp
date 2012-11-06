@@ -64,18 +64,18 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
   return RL->getFieldOffset(Index);
 }
 
-uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                              const ObjCInterfaceDecl *OID,
-                                              const ObjCIvarDecl *Ivar) {
-  return LookupFieldBitOffset(CGM, OID, 0, Ivar) / 
-    CGM.getContext().getCharWidth();
+CharUnits CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                               const ObjCInterfaceDecl *OID,
+                                               const ObjCIvarDecl *Ivar) {
+  return CGM.getContext().toCharUnitsFromBits(
+      LookupFieldBitOffset(CGM, OID, 0, Ivar));
 }
 
-uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                              const ObjCImplementationDecl *OID,
-                                              const ObjCIvarDecl *Ivar) {
-  return LookupFieldBitOffset(CGM, OID->getClassInterface(), OID, Ivar) / 
-    CGM.getContext().getCharWidth();
+CharUnits CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                               const ObjCImplementationDecl *OID,
+                                               const ObjCIvarDecl *Ivar) {
+  return CGM.getContext().toCharUnitsFromBits(
+      LookupFieldBitOffset(CGM, OID->getClassInterface(), OID, Ivar));
 }
 
 LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
