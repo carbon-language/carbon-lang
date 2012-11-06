@@ -2876,9 +2876,9 @@ protected:
     virtual string_type do_negative_sign() const {return string_type(1, '-');}
     virtual int         do_frac_digits()   const {return 0;}
     virtual pattern     do_pos_format()    const
-        {pattern __p = {symbol, sign, none, value}; return __p;}
+        {pattern __p = {{symbol, sign, none, value}}; return __p;}
     virtual pattern     do_neg_format()    const
-        {pattern __p = {symbol, sign, none, value}; return __p;}
+        {pattern __p = {{symbol, sign, none, value}}; return __p;}
 };
 
 template <class _CharT, bool _International>
@@ -3192,7 +3192,6 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
             bool __sb = __flags & ios_base::showbase;
             if (__sb || __more_needed)
             {
-                ios_base::iostate __et = ios_base::goodbit;
                 typename string_type::const_iterator __sym_space_end = __sym.begin();
                 if (__p > 0 && (__pat.field[__p - 1] == money_base::none ||
                                 __pat.field[__p - 1] == money_base::space)) {
