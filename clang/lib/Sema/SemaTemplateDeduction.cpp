@@ -3649,9 +3649,10 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
       return DAR_Failed;
   }
 
-  QualType DeducedType = Deduced[0].getAsType();
-  if (DeducedType.isNull())
+  if (Deduced[0].getKind() != TemplateArgument::Type)
     return DAR_Failed;
+
+  QualType DeducedType = Deduced[0].getAsType();
 
   if (InitList) {
     DeducedType = BuildStdInitializerList(DeducedType, Loc);

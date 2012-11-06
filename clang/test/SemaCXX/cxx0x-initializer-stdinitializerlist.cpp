@@ -187,3 +187,7 @@ namespace rdar11948732 {
     XCtorInit xc = { xi, xi };
   }
 }
+
+namespace PR14272 {
+  auto x { { 0, 0 } }; // expected-error {{cannot deduce actual type for variable 'x' with type 'auto' from initializer list}}
+}
