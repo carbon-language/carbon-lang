@@ -48,8 +48,8 @@ Support for 32-bit platforms is problematic and not yet planned.
 
 
 <h2 id="usage">Usage</h2>
-Simply compile your program with <tt>-fthread-sanitizer -fPIE</tt> and link it
-with <tt>-fthread-sanitizer -pie</tt>.<BR>
+Simply compile your program with <tt>-fsanitize=thread -fPIE</tt> and link it
+with <tt>-fsanitize=thread -pie</tt>.<BR>
 To get a reasonable performance add <tt>-O1</tt> or higher. <BR>
 Use <tt>-g</tt> to get file names and line numbers in the warning messages. <BR>
 
@@ -72,7 +72,7 @@ int main() {
 </pre>
 
 <pre>
-% clang -fthread-sanitizer -g -O1 tiny_race.c -fPIE -pie
+% clang -fsanitize=thread -g -O1 tiny_race.c -fPIE -pie
 </pre>
 
 If a bug is detected, the program will print an error message to stderr.

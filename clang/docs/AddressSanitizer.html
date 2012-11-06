@@ -49,7 +49,7 @@ Follow the <a href="../get_started.html">clang build instructions</a>.
 CMake build is supported.<BR>
 
 <h2 id="usage">Usage</h2>
-Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
+Simply compile and link your program with <tt>-fsanitize=address</tt> flag. <BR>
 The AddressSanitizer run-time library should be linked to the final executable,
 so make sure to use <tt>clang</tt> (not <tt>ld</tt>) for the final link step.<BR>
 When linking shared libraries, the AddressSanitizer run-time is not linked,
@@ -72,14 +72,14 @@ int main(int argc, char **argv) {
 
 <pre>
 # Compile and link
-% clang -O1 -g -faddress-sanitizer -fno-omit-frame-pointer example_UseAfterFree.cc
+% clang -O1 -g -fsanitize=address -fno-omit-frame-pointer example_UseAfterFree.cc
 </pre>
 OR
 <pre>
 # Compile
-% clang -O1 -g -faddress-sanitizer -fno-omit-frame-pointer -c example_UseAfterFree.cc
+% clang -O1 -g -fsanitize=address -fno-omit-frame-pointer -c example_UseAfterFree.cc
 # Link
-% clang -g -faddress-sanitizer example_UseAfterFree.o
+% clang -g -fsanitize=address example_UseAfterFree.o
 </pre>
 
 If a bug is detected, the program will print an error message to stderr and exit with a
