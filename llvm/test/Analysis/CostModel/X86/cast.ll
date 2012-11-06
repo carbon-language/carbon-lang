@@ -53,6 +53,9 @@ define i32 @zext_sext(<8 x i1> %in) {
   ;CHECK: cost of 1 {{.*}} trunc
   %F = trunc <8 x i32> undef to <8 x i16>
 
+  ;CHECK: cost of 3 {{.*}} trunc
+  %G = trunc <8 x i64> undef to <8 x i32>
+
   ret i32 undef
 }
 
