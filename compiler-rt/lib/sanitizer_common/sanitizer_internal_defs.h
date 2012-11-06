@@ -34,6 +34,10 @@ using namespace __sanitizer;  // NOLINT
 # define NORETURN __declspec(noreturn)
 # define THREADLOCAL   __declspec(thread)
 # define NOTHROW
+# define LIKELY(x) (x)
+# define UNLIKELY(x) (x)
+# define UNUSED
+# define USED
 #else  // _MSC_VER
 # define ALWAYS_INLINE __attribute__((always_inline))
 # define ALIAS(x) __attribute__((alias(x)))
@@ -43,16 +47,11 @@ using namespace __sanitizer;  // NOLINT
 # define NORETURN  __attribute__((noreturn))
 # define THREADLOCAL   __thread
 # define NOTHROW throw()
-#endif
-#endif  // _MSC_VER
-
-// We have no equivalent of these on Windows.
-#ifndef _WIN32
 # define LIKELY(x)     __builtin_expect(!!(x), 1)
 # define UNLIKELY(x)   __builtin_expect(!!(x), 0)
 # define UNUSED __attribute__((unused))
 # define USED __attribute__((used))
-#endif
+#endif  // _MSC_VER
 
 #if defined(_WIN32)
 typedef unsigned long DWORD;  // NOLINT
