@@ -220,7 +220,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     // The Scheduler may insert instructions during either schedule() or
     // exitRegion(), even for empty regions. So the local iterators 'I' and
     // 'RegionEnd' are invalid across these calls.
-    unsigned RemainingCount = MBB->size();
+    unsigned RemainingInstrs = MBB->size();
     for(MachineBasicBlock::iterator RegionEnd = MBB->end();
         RegionEnd != MBB->begin(); RegionEnd = Scheduler->begin()) {
 
@@ -229,19 +229,19 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
           || TII->isSchedulingBoundary(llvm::prior(RegionEnd), MBB, *MF)) {
         --RegionEnd;
         // Count the boundary instruction.
-        --RemainingCount;
+        --RemainingInstrs;
       }
 
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
-      for(;I != MBB->begin(); --I, --RemainingCount) {
+      for(;I != MBB->begin(); --I, --RemainingInstrs) {
         if (TII->isSchedulingBoundary(llvm::prior(I), MBB, *MF))
           break;
       }
       // Notify the scheduler of the region, even if we may skip scheduling
       // it. Perhaps it still needs to be bundled.
-      Scheduler->enterRegion(MBB, I, RegionEnd, RemainingCount);
+      Scheduler->enterRegion(MBB, I, RegionEnd, RemainingInstrs);
 
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
       if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
@@ -255,7 +255,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
             << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: ";
             if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
             else dbgs() << "End";
-            dbgs() << " Remaining: " << RemainingCount << "\n");
+            dbgs() << " Remaining: " << RemainingInstrs << "\n");
 
       // Schedule a region: possibly reorder instructions.
       // This invalidates 'RegionEnd' and 'I'.
@@ -268,7 +268,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
       // scheduler for the top of it's scheduled region.
       RegionEnd = Scheduler->begin();
     }
-    assert(RemainingCount == 0 && "Instruction count mismatch!");
+    assert(RemainingInstrs == 0 && "Instruction count mismatch!");
     Scheduler->finishBlock();
   }
   Scheduler->finalizeSchedule();
