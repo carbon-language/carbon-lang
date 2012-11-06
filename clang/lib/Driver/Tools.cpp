@@ -2595,7 +2595,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     // -fno-rtti cannot usefully be combined with -fsanitize=vptr.
     if (Sanitize.sanitizesVptr()) {
-      llvm::StringRef NoRttiArg =
+      std::string NoRttiArg =
         Args.getLastArg(options::OPT_mkernel,
                         options::OPT_fapple_kext,
                         options::OPT_fno_rtti)->getAsString(Args);
