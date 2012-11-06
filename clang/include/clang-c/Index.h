@@ -23,6 +23,14 @@
 #include "clang-c/Platform.h"
 #include "clang-c/CXString.h"
 
+/**
+ * \brief The version constants for the libclang API.
+ * CINDEX_VERSION_MINOR should increase when there are API additions.
+ * CINDEX_VERSION_MAJOR is intended for "major" source/ABI breaking changes.
+ *
+ * The policy about the libclang API was always to keep it source and ABI
+ * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
+ */
 #define CINDEX_VERSION_MAJOR 0
 #define CINDEX_VERSION_MINOR 6
 
