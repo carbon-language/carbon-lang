@@ -59,7 +59,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
 
 MCJIT::~MCJIT() {
   if (LoadedObject)
-    NotifyFreeingObject(LoadedObject.get());
+    NotifyFreeingObject(*LoadedObject.get());
   delete MemMgr;
   delete TM;
 }
