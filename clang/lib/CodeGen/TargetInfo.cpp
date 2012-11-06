@@ -3206,7 +3206,8 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
       if (Base->isVectorType()) {
         // ElementSize is in number of floats.
         unsigned ElementSize = getContext().getTypeSize(Base) == 64 ? 2 : 4;
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, ElementSize, Members * ElementSize);
+        markAllocatedVFPs(VFPRegs, AllocatedVFP, ElementSize,
+                          Members * ElementSize);
       } else if (Base->isSpecificBuiltinType(BuiltinType::Float))
         markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, Members);
       else {
@@ -3220,8 +3221,9 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
   }
 
   // Support byval for ARM.
-  // The ABI alignment for APCS is 4-byte and for AAPCS at least 4-byte and at most 8-byte.
-  // We realign the indirect argument if type alignment is bigger than ABI alignment.
+  // The ABI alignment for APCS is 4-byte and for AAPCS at least 4-byte and at
+  // most 8-byte. We realign the indirect argument if type alignment is bigger
+  // than ABI alignment.
   uint64_t ABIAlign = 4;
   uint64_t TyAlign = getContext().getTypeAlign(Ty) / 8;
   if (getABIKind() == ARMABIInfo::AAPCS_VFP ||
@@ -3229,7 +3231,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
     ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
     return ABIArgInfo::getIndirect(0, /*ByVal=*/true,
-           /*Realign=*/TyAlign <= ABIAlign ? false : true);
+           /*Realign=*/TyAlign > ABIAlign);
   }
 
   // Otherwise, pass by coercing to a structure of the appropriate size.
