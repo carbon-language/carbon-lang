@@ -2083,7 +2083,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType(IVD->getType(), TypeStr);
       IvarTypes.push_back(MakeConstantString(TypeStr));
       // Get the offset
-      uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, OID, IVD).getQuantity();
+      uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, OID, IVD);
       uint64_t Offset = BaseOffset;
       if (CGM.getLangOpts().ObjCRuntime.isNonFragile()) {
         Offset = BaseOffset - superInstanceSize;
@@ -2655,7 +2655,7 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
     // description.
     if (!CGM.getContext().getObjCImplementation(
               const_cast<ObjCInterfaceDecl *>(ID)))
-      Offset = ComputeIvarBaseOffset(CGM, ID, Ivar).getQuantity();
+      Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
 
     llvm::ConstantInt *OffsetGuess = llvm::ConstantInt::get(Int32Ty, Offset,
                              /*isSigned*/true);
@@ -2728,9 +2728,8 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
       Offset = CGF.Builder.CreateZExtOrBitCast(Offset, PtrDiffTy);
     return Offset;
   }
-  CharUnits Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
-  return llvm::ConstantInt::get(PtrDiffTy, Offset.getQuantity(),
-                                /*isSigned*/true);
+  uint64_t Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
+  return llvm::ConstantInt::get(PtrDiffTy, Offset, /*isSigned*/true);
 }
 
 CGObjCRuntime *
