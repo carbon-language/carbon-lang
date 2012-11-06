@@ -17526,6 +17526,23 @@ int FindInTable(const X86CostTblEntry *Tbl, unsigned len, int ISD, MVT Ty) {
   return -1;
 }
 
+struct X86TypeConversionCostTblEntry {
+  int ISD;
+  MVT Dst;
+  MVT Src;
+  unsigned Cost;
+};
+
+int FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
+                       int ISD, MVT Dst, MVT Src) {
+  for (unsigned int i = 0; i < len; ++i)
+    if (Tbl[i].ISD == ISD && Tbl[i].Src == Src && Tbl[i].Dst == Dst)
+      return i;
+
+  // Could not find an entry.
+  return -1;
+}
+
 unsigned
 X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {
@@ -17535,8 +17552,7 @@ X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
   int ISD = InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  const X86Subtarget &ST =
-  TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+  const X86Subtarget &ST = TLI->getTargetMachine().getSubtarget<X86Subtarget>();
 
   static const X86CostTblEntry AVX1CostTable[] = {
     // We don't have to scalarize unsupported ops. We can issue two half-sized
@@ -17647,5 +17663,45 @@ unsigned X86VectorTargetTransformInfo::getCmpSelInstrCost(unsigned Opcode,
   return VectorTargetTransformImpl::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
+unsigned X86VectorTargetTransformInfo::getCastInstrCost(unsigned Opcode,
+                                                        Type *Dst,
+                                                        Type *Src) const {
+  int ISD = InstructionOpcodeToISD(Opcode);
+  assert(ISD && "Invalid opcode");
 
+  EVT SrcTy = TLI->getValueType(Src);
+  EVT DstTy = TLI->getValueType(Dst);
+
+  if (!SrcTy.isSimple() || !DstTy.isSimple())
+    return VectorTargetTransformImpl::getCastInstrCost(Opcode, Dst, Src);
+
+  const X86Subtarget &ST = TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+
+  static const X86TypeConversionCostTblEntry AVXConversionTbl[] = {
+    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
+    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
+    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
+    { ISD::ZERO_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
+    { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64, 1 },
+    { ISD::TRUNCATE,    MVT::v8i16, MVT::v8i32, 1 },
+    { ISD::SINT_TO_FP,  MVT::v8f32, MVT::v8i8,  1 },
+    { ISD::SINT_TO_FP,  MVT::v4f32, MVT::v4i8,  1 },
+    { ISD::UINT_TO_FP,  MVT::v8f32, MVT::v8i8,  1 },
+    { ISD::UINT_TO_FP,  MVT::v4f32, MVT::v4i8,  1 },
+    { ISD::FP_TO_SINT,  MVT::v8i8, MVT::v8f32,  1 },
+    { ISD::FP_TO_SINT,  MVT::v4i8, MVT::v4f32,  1 },
+    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i1,  6 },
+    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i1,  9 },
+  };
+
+  if (ST.hasAVX()) {
+    int Idx = FindInConvertTable(AVXConversionTbl,
+                                 array_lengthof(AVXConversionTbl),
+                                 ISD, DstTy.getSimpleVT(), SrcTy.getSimpleVT());
+    if (Idx != -1)
+      return AVXConversionTbl[Idx].Cost;
+  }
+
+  return VectorTargetTransformImpl::getCastInstrCost(Opcode, Dst, Src);
+}
 

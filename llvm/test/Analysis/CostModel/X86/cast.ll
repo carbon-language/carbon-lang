@@ -32,3 +32,35 @@ define i32 @add(i32 %arg) {
   ret i32 undef
 }
 
+define i32 @zext_sext(<8 x i1> %in) {
+  ;CHECK: cost of 6 {{.*}} zext
+  %Z = zext <8 x i1> %in to <8 x i32>
+  ;CHECK: cost of 9 {{.*}} sext
+  %S = sext <8 x i1> %in to <8 x i32>
+
+  ;CHECK: cost of 1 {{.*}} sext
+  %A = sext <8 x i16> undef to <8 x i32>
+  ;CHECK: cost of 1 {{.*}} zext
+  %B = zext <8 x i16> undef to <8 x i32>
+  ;CHECK: cost of 1 {{.*}} sext
+  %C = sext <4 x i32> undef to <4 x i64>
+
+  ;CHECK: cost of 1 {{.*}} zext
+  %D = zext <4 x i32> undef to <4 x i64>
+  ;CHECK: cost of 1 {{.*}} trunc
+
+  %E = trunc <4 x i64> undef to <4 x i32>
+  ;CHECK: cost of 1 {{.*}} trunc
+  %F = trunc <8 x i32> undef to <8 x i16>
+
+  ret i32 undef
+}
+
+define i32 @masks(<8 x i1> %in) {
+  ;CHECK: cost of 6 {{.*}} zext
+  %Z = zext <8 x i1> %in to <8 x i32>
+  ;CHECK: cost of 9 {{.*}} sext
+  %S = sext <8 x i1> %in to <8 x i32>
+  ret i32 undef
+}
+
