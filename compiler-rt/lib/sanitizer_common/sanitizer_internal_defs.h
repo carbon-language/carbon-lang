@@ -24,7 +24,7 @@ using namespace __sanitizer;  // NOLINT
 #define WEAK SANITIZER_WEAK_ATTRIBUTE
 
 // Platform-specific defs.
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 typedef unsigned long    DWORD;  // NOLINT
 # define ALWAYS_INLINE __declspec(forceinline)
 // FIXME(timurrrr): do we need this on Windows?
@@ -35,7 +35,7 @@ typedef unsigned long    DWORD;  // NOLINT
 # define NORETURN __declspec(noreturn)
 # define THREADLOCAL   __declspec(thread)
 # define NOTHROW
-#else  // _WIN32
+#else  // _MSC_VER
 # define ALWAYS_INLINE __attribute__((always_inline))
 # define ALIAS(x) __attribute__((alias(x)))
 # define ALIGNED(x) __attribute__((aligned(x)))
@@ -48,7 +48,7 @@ typedef unsigned long    DWORD;  // NOLINT
 # else
 #   define NOTHROW __attribute__((__nothrow__))
 #endif
-#endif  // _WIN32
+#endif  // _MSC_VER
 
 // We have no equivalent of these on Windows.
 #ifndef _WIN32
