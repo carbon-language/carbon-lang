@@ -1522,9 +1522,10 @@ struct SanitizerArgs {
 /// Produce an argument string from argument \p A, which shows how it provides a
 /// value in \p Mask. For instance, the argument "-fsanitize=address,alignment"
 /// with mask \c NeedsUbsanRt would produce "-fsanitize=alignment".
-static std::string describeSanitizeArg(const Arg *A, unsigned Mask) {
+static std::string describeSanitizeArg(const ArgList &Args, const Arg *A,
+                                       unsigned Mask) {
   if (!A->getOption().matches(options::OPT_fsanitize_EQ))
-    return A->getOption().getName();
+    return A->getAsString(Args);
 
   for (unsigned I = 0, N = A->getNumValues(); I != N; ++I)
     if (SanitizerArgs::parse(A->getValue(I)) & Mask)
@@ -1541,22 +1542,29 @@ static SanitizerArgs getSanitizerArgs(const Driver &D, const ArgList &Args) {
 
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add = 0, Remove = 0;
-    if ((*I)->getOption().matches(options::OPT_faddress_sanitizer))
+    const char *DeprecatedReplacement = 0;
+    if ((*I)->getOption().matches(options::OPT_faddress_sanitizer)) {
       Add = SanitizerArgs::Address;
-    else if ((*I)->getOption().matches(options::OPT_fno_address_sanitizer))
+      DeprecatedReplacement = "-fsanitize=address";
+    } else if ((*I)->getOption().matches(options::OPT_fno_address_sanitizer)) {
       Remove = SanitizerArgs::Address;
-    else if ((*I)->getOption().matches(options::OPT_fthread_sanitizer))
+      DeprecatedReplacement = "-fno-sanitize=address";
+    } else if ((*I)->getOption().matches(options::OPT_fthread_sanitizer)) {
       Add = SanitizerArgs::Thread;
-    else if ((*I)->getOption().matches(options::OPT_fno_thread_sanitizer))
+      DeprecatedReplacement = "-fsanitize=thread";
+    } else if ((*I)->getOption().matches(options::OPT_fno_thread_sanitizer)) {
       Remove = SanitizerArgs::Thread;
-    else if ((*I)->getOption().matches(options::OPT_fcatch_undefined_behavior))
+      DeprecatedReplacement = "-fno-sanitize=thread";
+    } else if ((*I)->getOption().matches(options::OPT_fcatch_undefined_behavior)) {
       Add = SanitizerArgs::Undefined;
-    else if ((*I)->getOption().matches(options::OPT_fsanitize_EQ))
+      DeprecatedReplacement = "-fsanitize=undefined";
+    } else if ((*I)->getOption().matches(options::OPT_fsanitize_EQ)) {
       Add = SanitizerArgs::parse(D, *I);
-    else if ((*I)->getOption().matches(options::OPT_fno_sanitize_EQ))
+    } else if ((*I)->getOption().matches(options::OPT_fno_sanitize_EQ)) {
       Remove = SanitizerArgs::parse(D, *I);
-    else
+    } else {
       continue;
+    }
 
     (*I)->claim();
 
@@ -1566,6 +1574,12 @@ static SanitizerArgs getSanitizerArgs(const Driver &D, const ArgList &Args) {
     if (Add & SanitizerArgs::NeedsAsanRt) AsanArg = *I;
     if (Add & SanitizerArgs::NeedsTsanRt) TsanArg = *I;
     if (Add & SanitizerArgs::NeedsUbsanRt) UbsanArg = *I;
+
+    // If this is a deprecated synonym, produce a warning directing users
+    // towards the new spelling.
+    if (DeprecatedReplacement)
+      D.Diag(diag::warn_drv_deprecated_arg)
+        << (*I)->getAsString(Args) << DeprecatedReplacement;
   }
 
   // Only one runtime library can be used at once.
@@ -1575,10 +1589,10 @@ static SanitizerArgs getSanitizerArgs(const Driver &D, const ArgList &Args) {
   bool NeedsUbsan = Sanitize.needsUbsanRt();
   if (NeedsAsan + NeedsTsan + NeedsUbsan > 1)
     D.Diag(diag::err_drv_argument_not_allowed_with)
-      << describeSanitizeArg(NeedsAsan ? AsanArg : TsanArg,
+      << describeSanitizeArg(Args, NeedsAsan ? AsanArg : TsanArg,
                              NeedsAsan ? SanitizerArgs::NeedsAsanRt
                                        : SanitizerArgs::NeedsTsanRt)
-      << describeSanitizeArg(NeedsUbsan ? UbsanArg : TsanArg,
+      << describeSanitizeArg(Args, NeedsUbsan ? UbsanArg : TsanArg,
                              NeedsUbsan ? SanitizerArgs::NeedsUbsanRt
                                         : SanitizerArgs::NeedsTsanRt);
 
@@ -2671,7 +2685,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       llvm::StringRef NoRttiArg =
         Args.getLastArg(options::OPT_mkernel,
                         options::OPT_fapple_kext,
-                        options::OPT_fno_rtti)->getOption().getName();
+                        options::OPT_fno_rtti)->getAsString(Args);
       D.Diag(diag::err_drv_argument_not_allowed_with)
         << "-fsanitize=vptr" << NoRttiArg;
     }
