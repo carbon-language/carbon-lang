@@ -4534,7 +4534,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
       if (IsUnion) {
         // FIXME: Why the asymmetry? We divide by word size in bits on other
         // side.
-        uint64_t UnionIvarSize = FieldSize;
+        uint64_t UnionIvarSize = FieldSize / ByteSizeInBits;
         if (UnionIvarSize > MaxSkippedUnionIvarSize) {
           MaxSkippedUnionIvarSize = UnionIvarSize;
           MaxSkippedField = Field;
