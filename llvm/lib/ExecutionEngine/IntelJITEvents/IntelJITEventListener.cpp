@@ -54,6 +54,10 @@ public:
                                      const EmittedFunctionDetails &Details);
 
   virtual void NotifyFreeingMachineCode(void *OldPtr);
+
+  virtual void NotifyObjectEmitted(const ObjectImage &Obj);
+
+  virtual void NotifyFreeingObject(const ObjectImage &Obj);
 };
 
 static LineNumberInfo LineStartToIntelJITFormat(
@@ -162,6 +166,12 @@ void IntelJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
     Wrapper->iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_UNLOAD_START, &I->second);
     MethodIDs.erase(I);
   }
+}
+
+void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
+}
+
+void IntelJITEventListener::NotifyFreeingObject(const ObjectImage &Obj) {
 }
 
 }  // anonymous namespace.

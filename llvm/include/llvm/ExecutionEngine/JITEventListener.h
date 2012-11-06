@@ -26,6 +26,7 @@ class Function;
 class MachineFunction;
 class OProfileWrapper;
 class IntelJITEventsWrapper;
+class ObjectImage;
 
 /// JITEvent_EmittedFunctionDetails - Helper struct for containing information
 /// about a generated machine code function.
@@ -75,6 +76,20 @@ public:
   /// to NotifyFunctionEmitted may have been destroyed by the time of the
   /// matching NotifyFreeingMachineCode call.
   virtual void NotifyFreeingMachineCode(void *) {}
+
+  /// NotifyObjectEmitted - Called after an object has been successfully
+  /// emitted to memory.  NotifyFunctionEmitted will not be called for
+  /// individual functions in the object.
+  ///
+  /// ELF-specific information
+  /// The ObjectImage contains the generated object image
+  /// with section headers updated to reflect the address at which sections
+  /// were loaded and with relocations performed in-place on debug sections.
+  virtual void NotifyObjectEmitted(const ObjectImage &Obj) {}
+
+  /// NotifyFreeingObject - Called just before the memory associated with
+  /// a previously emitted object is released.
+  virtual void NotifyFreeingObject(const ObjectImage &Obj) {}
 
 #if LLVM_USE_INTEL_JITEVENTS
   // Construct an IntelJITEventListener

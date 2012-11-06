@@ -11,6 +11,7 @@
 #define LLVM_LIB_EXECUTIONENGINE_MCJIT_H
 
 #include "llvm/PassManager.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 
@@ -30,6 +31,7 @@ class MCJIT : public ExecutionEngine {
   MCContext *Ctx;
   RTDyldMemoryManager *MemMgr;
   RuntimeDyld Dyld;
+  SmallVector<JITEventListener*, 2> EventListeners;
 
   // FIXME: Add support for multiple modules
   bool isCompiled;
@@ -75,6 +77,9 @@ public:
     Dyld.mapSectionAddress(LocalAddress, TargetAddress);
   }
 
+  virtual void RegisterJITEventListener(JITEventListener *L);
+  virtual void UnregisterJITEventListener(JITEventListener *L);
+
   /// @}
   /// @name (Private) Registration Interfaces
   /// @{
@@ -98,6 +103,9 @@ protected:
   /// is passed as a parameter here to prepare for multiple module support in 
   /// the future.
   void emitObject(Module *M);
+
+  void NotifyObjectEmitted(const ObjectImage& Obj);
+  void NotifyFreeingObject(const ObjectImage& Obj);
 };
 
 } // End llvm namespace
