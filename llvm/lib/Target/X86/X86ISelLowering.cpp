@@ -17517,7 +17517,8 @@ struct X86CostTblEntry {
   unsigned Cost;
 };
 
-int FindInTable(const X86CostTblEntry *Tbl, unsigned len, int ISD, MVT Ty) {
+static int
+FindInTable(const X86CostTblEntry *Tbl, unsigned len, int ISD, MVT Ty) {
   for (unsigned int i = 0; i < len; ++i)
     if (Tbl[i].ISD == ISD && Tbl[i].Type == Ty)
       return i;
@@ -17533,8 +17534,9 @@ struct X86TypeConversionCostTblEntry {
   unsigned Cost;
 };
 
-int FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
-                       int ISD, MVT Dst, MVT Src) {
+static int
+FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
+                   int ISD, MVT Dst, MVT Src) {
   for (unsigned int i = 0; i < len; ++i)
     if (Tbl[i].ISD == ISD && Tbl[i].Src == Src && Tbl[i].Dst == Dst)
       return i;
