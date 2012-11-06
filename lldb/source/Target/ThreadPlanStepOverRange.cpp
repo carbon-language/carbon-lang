@@ -18,7 +18,9 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/LineTable.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -172,6 +174,99 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             // likely going to be hard to get out from here.  It is probably easiest to step into the
             // stub, and then it will be straight-forward to step out.        
             new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+        }
+        else
+        {
+            // The current clang (at least through 424) doesn't always get the address range for the 
+            // DW_TAG_inlined_subroutines right, so that when you leave the inlined range the line table says 
+            // you are still in the source file of the inlining function.  This is bad, because now you are missing 
+            // the stack frame for the function containing the inlining, and if you sensibly do "finish" to get
+            // out of this function you will instead exit the containing function.
+            // To work around this, we check whether we are still in the source file we started in, and if not assume
+            // it is an error, and push a plan to get us out of this line and back to the containing file.
+
+            if (m_addr_context.line_entry.IsValid())
+            {
+                SymbolContext sc;
+                StackFrameSP frame_sp = m_thread.GetStackFrameAtIndex(0);
+                sc = frame_sp->GetSymbolContext (eSymbolContextEverything);
+                if (sc.line_entry.IsValid())
+                {
+                    if (sc.line_entry.file != m_addr_context.line_entry.file
+                         && sc.comp_unit == m_addr_context.comp_unit
+                         && sc.function == m_addr_context.function)
+                    {
+                        // Okay, find the next occurance of this file in the line table:
+                        LineTable *line_table = m_addr_context.comp_unit->GetLineTable();
+                        if (line_table)
+                        {
+                            Address cur_address = frame_sp->GetFrameCodeAddress();
+                            uint32_t entry_idx;
+                            LineEntry line_entry;
+                            if (line_table->FindLineEntryByAddress (cur_address, line_entry, &entry_idx))
+                            {
+                                LineEntry next_line_entry;
+                                bool step_past_remaining_inline = false;
+                                if (entry_idx > 0)
+                                {
+                                    // We require the the previous line entry and the current line entry come
+                                    // from the same file.
+                                    // The other requirement is that the previous line table entry be part of an
+                                    // inlined block, we don't want to step past cases where people have inlined
+                                    // some code fragment by using #include <source-fragment.c> directly.
+                                    LineEntry prev_line_entry;
+                                    if (line_table->GetLineEntryAtIndex(entry_idx - 1, prev_line_entry)
+                                        && prev_line_entry.file == line_entry.file)
+                                    {
+                                        SymbolContext prev_sc;
+                                        Address prev_address = prev_line_entry.range.GetBaseAddress();
+                                        prev_address.CalculateSymbolContext(&prev_sc);
+                                        if (prev_sc.block)
+                                        {
+                                            Block *inlined_block = prev_sc.block->GetContainingInlinedBlock();
+                                            if (inlined_block)
+                                            {
+                                                AddressRange inline_range;
+                                                inlined_block->GetRangeContainingAddress(prev_address, inline_range);
+                                                if (!inline_range.ContainsFileAddress(cur_address))
+                                                {
+                                                    
+                                                    step_past_remaining_inline = true;
+                                                }
+                                                
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (step_past_remaining_inline)
+                                {
+                                    uint32_t look_ahead_step = 1;
+                                    while (line_table->GetLineEntryAtIndex(entry_idx + look_ahead_step, next_line_entry))
+                                    {
+                                        // Make sure we haven't wandered out of the function we started from...
+                                        Address next_line_address = next_line_entry.range.GetBaseAddress();
+                                        Function *next_line_function = next_line_address.CalculateSymbolContextFunction();
+                                        if (next_line_function != m_addr_context.function)
+                                            break;
+                                        
+                                        if (next_line_entry.file == m_addr_context.line_entry.file)
+                                        {
+                                            const bool abort_other_plans = false;
+                                            const bool stop_other_threads = false;
+                                            new_plan = m_thread.QueueThreadPlanForRunToAddress(abort_other_plans,
+                                                                                               next_line_address,
+                                                                                               stop_other_threads);
+                                            break;
+                                        }
+                                        look_ahead_step++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
