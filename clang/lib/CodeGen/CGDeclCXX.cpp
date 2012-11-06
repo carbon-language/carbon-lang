@@ -16,6 +16,7 @@
 #include "CGCXXABI.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -255,8 +256,7 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     OrderGlobalInits Key(order, PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
     DelayedCXXInitPosition.erase(D);
-  }
-  else {
+  }  else {
     llvm::DenseMap<const Decl *, unsigned>::iterator I =
       DelayedCXXInitPosition.find(D);
     if (I == DelayedCXXInitPosition.end()) {
@@ -279,28 +279,50 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
 
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
-  // Create our global initialization function.
-  llvm::Function *Fn = 
-    CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
 
+  // Create our global initialization function.
   if (!PrioritizedCXXGlobalInits.empty()) {
     SmallVector<llvm::Constant*, 8> LocalCXXGlobalInits;
     llvm::array_pod_sort(PrioritizedCXXGlobalInits.begin(), 
-                         PrioritizedCXXGlobalInits.end()); 
-    for (unsigned i = 0; i < PrioritizedCXXGlobalInits.size(); i++) {
-      llvm::Function *Fn = PrioritizedCXXGlobalInits[i].second;
-      LocalCXXGlobalInits.push_back(Fn);
-    }
-    LocalCXXGlobalInits.append(CXXGlobalInits.begin(), CXXGlobalInits.end());
-    CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
+                         PrioritizedCXXGlobalInits.end());
+    // Iterate over "chunks" of ctors with same priority and emit each chunk
+    // into separate function. Note - everything is sorted first by priority,
+    // second - by lex order, so we emit ctor functions in proper order.
+    for (SmallVectorImpl<GlobalInitData >::iterator
+           I = PrioritizedCXXGlobalInits.begin(),
+           E = PrioritizedCXXGlobalInits.end(); I != E; ) {
+      SmallVectorImpl<GlobalInitData >::iterator
+        PrioE = std::upper_bound(I + 1, E, *I, GlobalInitPriorityCmp());
+
+      LocalCXXGlobalInits.clear();
+      unsigned Priority = I->first.priority;
+      // Compute the function suffix from priority. Prepend with zeroes to make
+      // sure the function names are also ordered as priorities.
+      std::string PrioritySuffix = llvm::utostr(Priority);
+      // Priority is always <= 65535 (enforced by sema)..
+      PrioritySuffix = std::string(6-PrioritySuffix.size(), '0')+PrioritySuffix;
+      llvm::Function *Fn = 
+        CreateGlobalInitOrDestructFunction(*this, FTy,
+                                           "_GLOBAL__I_" + PrioritySuffix);
+      
+      for (; I < PrioE; ++I)
+        LocalCXXGlobalInits.push_back(I->second);
+
+      CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
                                                     &LocalCXXGlobalInits[0],
                                                     LocalCXXGlobalInits.size());
+      AddGlobalCtor(Fn, Priority);
+    }
   }
-  else
-    CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
-                                                     &CXXGlobalInits[0],
-                                                     CXXGlobalInits.size());
+  
+  llvm::Function *Fn = 
+    CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
+
+  CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
+                                                   &CXXGlobalInits[0],
+                                                   CXXGlobalInits.size());
   AddGlobalCtor(Fn);
+
   CXXGlobalInits.clear();
   PrioritizedCXXGlobalInits.clear();
 }
