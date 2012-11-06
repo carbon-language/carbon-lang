@@ -2366,7 +2366,7 @@ ClangASTContext::AddObjCClassIVar
                                               class_interface_decl,
                                               SourceLocation(),
                                               SourceLocation(),
-                                              &identifier_table->get(name), // Identifier
+                                              name ? &identifier_table->get(name) : NULL, // Identifier
                                               QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
                                               NULL, // TypeSourceInfo *
                                               ConvertAccessTypeToObjCIvarAccessControl (access),
