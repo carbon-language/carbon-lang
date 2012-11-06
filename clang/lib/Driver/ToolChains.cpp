@@ -31,6 +31,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 
+#include "SanitizerArgs.h"
+
 #include <cstdlib> // ::getenv
 
 #include "clang/Config/config.h" // for GCC_INSTALL_PREFIX
@@ -359,15 +361,16 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     }
   }
 
+  SanitizerArgs Sanitize(getDriver(), Args);
+
   // Add ASAN runtime library, if required. Dynamic libraries and bundles
   // should not be linked with the runtime library.
-  if (Args.hasFlag(options::OPT_faddress_sanitizer,
-                   options::OPT_fno_address_sanitizer, false)) {
+  if (Sanitize.needsAsanRt()) {
     if (Args.hasArg(options::OPT_dynamiclib) ||
         Args.hasArg(options::OPT_bundle)) return;
     if (isTargetIPhoneOS()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
-        << "-faddress-sanitizer";
+        << "-fsanitize=address";
     } else {
       AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.asan_osx.a");
 
