@@ -50,8 +50,8 @@ reviewer understand your code.
 To get a full diff, use one of the following commands (or just use Arcanist
 to upload your patch):
 
-* git diff -U999999 other-branch
-* svn diff --diff-cmd=diff -x -U999999
+* ``git diff -U999999 other-branch``
+* ``svn diff --diff-cmd=diff -x -U999999``
 
 To upload a new patch:
 
