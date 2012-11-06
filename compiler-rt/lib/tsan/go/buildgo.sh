@@ -18,7 +18,6 @@ SRCS="
 	../rtl/tsan_flags.cc
 	../rtl/tsan_md5.cc
 	../rtl/tsan_mutex.cc
-	../rtl/tsan_printf.cc
 	../rtl/tsan_report.cc
 	../rtl/tsan_rtl.cc
 	../rtl/tsan_rtl_mutex.cc
