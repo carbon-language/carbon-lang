@@ -40,8 +40,8 @@ typedef std::map<nub_process_t, MachProcessSP> ProcessMap;
 typedef ProcessMap::iterator ProcessMapIter;
 typedef ProcessMap::const_iterator ProcessMapConstIter;
 
-static size_t          GetAllInfos                  (std::vector<struct kinfo_proc>& proc_infos);
-static size_t          GetAllInfosMatchingName      (const char *process_name, std::vector<struct kinfo_proc>& matching_proc_infos);
+size_t GetAllInfos (std::vector<struct kinfo_proc>& proc_infos);
+static size_t GetAllInfosMatchingName (const char *process_name, std::vector<struct kinfo_proc>& matching_proc_infos);
 
 //----------------------------------------------------------------------
 // A Thread safe singleton to get a process map pointer.
@@ -391,10 +391,10 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
     return INVALID_NUB_PROCESS;
 }
 
-static size_t
+size_t
 GetAllInfos (std::vector<struct kinfo_proc>& proc_infos)
 {
-    size_t size;
+    size_t size = 0;
     int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
     u_int namelen = sizeof(name)/sizeof(int);
     int err;
