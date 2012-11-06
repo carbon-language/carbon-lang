@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,divide-by-zero -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
 // RUN: %clang_cc1 -fsanitize=null -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-NULL
+// RUN: %clang_cc1 -fsanitize=signed-integer-overflow -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-OVERFLOW
 
 // CHECK: @[[INT:.*]] = private unnamed_addr constant { i16, i16, [6 x i8] } { i16 0, i16 11, [6 x i8] c"'int'\00" }
 
@@ -220,4 +221,28 @@ float float_float_overflow(double f) {
   // CHECK: and i1 %[[GE]], %[[LE]]
   // CHECK: call void @__ubsan_handle_float_cast_overflow(
   return f;
+}
+
+// CHECK:          @int_divide_overflow
+// CHECK-OVERFLOW: @int_divide_overflow
+int int_divide_overflow(int a, int b) {
+  // CHECK:               %[[ZERO:.*]] = icmp ne i32 %[[B:.*]], 0
+  // CHECK-OVERFLOW-NOT:  icmp ne i32 %{{.*}}, 0
+
+  // CHECK:               %[[AOK:.*]] = icmp ne i32 %[[A:.*]], -2147483648
+  // CHECK-NEXT:          %[[BOK:.*]] = icmp ne i32 %[[B]], -1
+  // CHECK-NEXT:          %[[OVER:.*]] = or i1 %[[AOK]], %[[BOK]]
+
+  // CHECK-OVERFLOW:      %[[AOK:.*]] = icmp ne i32 %[[A:.*]], -2147483648
+  // CHECK-OVERFLOW-NEXT: %[[BOK:.*]] = icmp ne i32 %[[B:.*]], -1
+  // CHECK-OVERFLOW-NEXT: %[[OK:.*]] = or i1 %[[AOK]], %[[BOK]]
+
+  // CHECK:               %[[OK:.*]] = and i1 %[[ZERO]], %[[OVER]]
+
+  // CHECK:               br i1 %[[OK]]
+  // CHECK-OVERFLOW:      br i1 %[[OK]]
+  return a / b;
+
+  // CHECK:          }
+  // CHECK-OVERFLOW: }
 }

@@ -1924,30 +1924,38 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 
 void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
     const BinOpInfo &Ops, llvm::Value *Zero, bool isDiv) {
-  llvm::IntegerType *Ty = cast<llvm::IntegerType>(Zero->getType());
+  llvm::Value *Cond = 0;
 
-  if (Ops.Ty->hasSignedIntegerRepresentation()) {
+  if (CGF.getLangOpts().SanitizeDivideByZero)
+    Cond = Builder.CreateICmpNE(Ops.RHS, Zero);
+
+  if (CGF.getLangOpts().SanitizeSignedIntegerOverflow &&
+      Ops.Ty->hasSignedIntegerRepresentation()) {
+    llvm::IntegerType *Ty = cast<llvm::IntegerType>(Zero->getType());
+
     llvm::Value *IntMin =
       Builder.getInt(llvm::APInt::getSignedMinValue(Ty->getBitWidth()));
     llvm::Value *NegOne = llvm::ConstantInt::get(Ty, -1ULL);
 
-    llvm::Value *Cond1 = Builder.CreateICmpNE(Ops.RHS, Zero);
     llvm::Value *LHSCmp = Builder.CreateICmpNE(Ops.LHS, IntMin);
     llvm::Value *RHSCmp = Builder.CreateICmpNE(Ops.RHS, NegOne);
-    llvm::Value *Cond2 = Builder.CreateOr(LHSCmp, RHSCmp, "or");
-    EmitBinOpCheck(Builder.CreateAnd(Cond1, Cond2, "and"), Ops);
-  } else {
-    EmitBinOpCheck(Builder.CreateICmpNE(Ops.RHS, Zero), Ops);
+    llvm::Value *Overflow = Builder.CreateOr(LHSCmp, RHSCmp, "or");
+    Cond = Cond ? Builder.CreateAnd(Cond, Overflow, "and") : Overflow;
   }
+
+  if (Cond)
+    EmitBinOpCheck(Cond, Ops);
 }
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
-  if (CGF.getLangOpts().SanitizeDivideByZero) {
+  if (CGF.getLangOpts().SanitizeDivideByZero ||
+      CGF.getLangOpts().SanitizeSignedIntegerOverflow) {
     llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
 
     if (Ops.Ty->isIntegerType())
       EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
-    else if (Ops.Ty->isRealFloatingType())
+    else if (CGF.getLangOpts().SanitizeDivideByZero &&
+             Ops.Ty->isRealFloatingType())
       EmitBinOpCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero), Ops);
   }
   if (Ops.LHS->getType()->isFPOrFPVectorTy()) {
