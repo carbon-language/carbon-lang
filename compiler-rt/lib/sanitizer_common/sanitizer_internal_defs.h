@@ -43,10 +43,7 @@ typedef unsigned long    DWORD;  // NOLINT
 # define NOINLINE __attribute__((noinline))
 # define NORETURN  __attribute__((noreturn))
 # define THREADLOCAL   __thread
-# ifdef __cplusplus
-#   define NOTHROW throw()
-# else
-#   define NOTHROW __attribute__((__nothrow__))
+# define NOTHROW throw()
 #endif
 #endif  // _MSC_VER
 
