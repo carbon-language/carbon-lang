@@ -74,10 +74,14 @@ void UnmapOrDie(void *addr, uptr size) {
 }
 
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
-  return internal_mmap((void*)fixed_addr, size,
+  void *p = internal_mmap((void*)fixed_addr, size,
                       PROT_READ | PROT_WRITE,
                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                       -1, 0);
+  if (p != (void*)fixed_addr)
+    Report("ERROR: Failed to deallocate 0x%zx (%zd) bytes at address %p (%d)\n",
+           size, size, fixed_addr, errno);
+  return p;
 }
 
 void *Mprotect(uptr fixed_addr, uptr size) {
