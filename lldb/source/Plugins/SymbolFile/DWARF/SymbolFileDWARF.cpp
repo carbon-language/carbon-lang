@@ -1813,7 +1813,6 @@ SymbolFileDWARF::ParseChildMembers
                                         
                                         if (unnamed_bit_size > 0)
                                         {
-                                            //printf ("0x%8.8x: Unnamed bitfield added bit_size = 0x%x, bit_offset = 0x%x\n", die->GetOffset(), unnamed_bit_size, unnamed_bit_offset);
                                             clang::FieldDecl *unnamed_bitfield_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type,
                                                                                                                                  NULL,
                                                                                                                                  member_type->GetClangLayoutType(),

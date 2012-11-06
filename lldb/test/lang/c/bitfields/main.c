@@ -12,9 +12,12 @@ int main (int argc, char const *argv[])
 {
     struct Bits
     {
-        uint32_t    b1 : 1,
+        uint32_t    : 1, // Unnamed bitfield
+                    b1 : 1,
                     b2 : 2,
+                    : 2, // Unnamed bitfield
                     b3 : 3,
+                    : 2, // Unnamed bitfield (this will get removed)
                     b4 __attribute__ ((align(16))),
                     b5 : 5,
                     b6 : 6,
