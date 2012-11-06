@@ -460,8 +460,6 @@ make_pair(_T1 __x, _T2 __y)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-#ifndef _LIBCPP_HAS_NO_VARIADICS
-
 template <class _T1, class _T2>
   class _LIBCPP_VISIBLE tuple_size<pair<_T1, _T2> >
     : public integral_constant<size_t, 2> {};
@@ -579,8 +577,6 @@ get(pair<_T1, _T2>&& __p) _NOEXCEPT
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 _LIBCPP_END_NAMESPACE_STD
 
