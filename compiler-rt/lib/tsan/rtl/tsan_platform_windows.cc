@@ -33,30 +33,6 @@ uptr GetShadowMemoryConsumption() {
 void FlushShadowMemory() {
 }
 
-void InitializeShadowMemory() {
-/*
-  uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
-    kLinuxShadowEnd - kLinuxShadowBeg);
-  if (shadow != kLinuxShadowBeg) {
-    Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
-    Printf("FATAL: Make sure to compile with -fPIE and "
-           "to link with -pie.\n");
-    Die();
-  }
-*/
-
-  MmapFixedNoReserve(MemToShadow(kLinuxAppMemBeg), (1ull<<20) * 16 * 4);
-  MmapCommit(MemToShadow(kLinuxAppMemBeg), (1ull<<20) * 16 * 4);
-  MmapFixedNoReserve(MemToShadow(0xf840000000ull), (1ull<<20) * 4096 * 4);
-  MmapCommit(MemToShadow(0xf840000000ull), (1ull<<20) * 256 * 4);
-  DPrintf("kLinuxShadow %zx-%zx (%zuGB)\n",
-      kLinuxShadowBeg, kLinuxShadowEnd,
-      (kLinuxShadowEnd - kLinuxShadowBeg) >> 30);
-  DPrintf("kLinuxAppMem %zx-%zx (%zuGB)\n",
-      kLinuxAppMemBeg, kLinuxAppMemEnd,
-      (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
-}
-
 const char *InitializePlatform() {
   return getenv("TSAN_OPTIONS");
 }

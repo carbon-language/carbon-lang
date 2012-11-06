@@ -90,6 +90,7 @@ static void ProtectRange(uptr beg, uptr end) {
 }
 #endif
 
+#ifndef TSAN_GO
 void InitializeShadowMemory() {
   uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
     kLinuxShadowEnd - kLinuxShadowBeg);
@@ -99,30 +100,25 @@ void InitializeShadowMemory() {
                "to link with -pie (%p, %p).\n", shadow, kLinuxShadowBeg);
     Die();
   }
-#ifndef TSAN_GO
   const uptr kClosedLowBeg  = 0x200000;
   const uptr kClosedLowEnd  = kLinuxShadowBeg - 1;
   const uptr kClosedMidBeg = kLinuxShadowEnd + 1;
   const uptr kClosedMidEnd = kLinuxAppMemBeg - 1;
   ProtectRange(kClosedLowBeg, kClosedLowEnd);
   ProtectRange(kClosedMidBeg, kClosedMidEnd);
-#endif
-#ifndef TSAN_GO
   DPrintf("kClosedLow   %zx-%zx (%zuGB)\n",
       kClosedLowBeg, kClosedLowEnd, (kClosedLowEnd - kClosedLowBeg) >> 30);
-#endif
   DPrintf("kLinuxShadow %zx-%zx (%zuGB)\n",
       kLinuxShadowBeg, kLinuxShadowEnd,
       (kLinuxShadowEnd - kLinuxShadowBeg) >> 30);
-#ifndef TSAN_GO
   DPrintf("kClosedMid   %zx-%zx (%zuGB)\n",
       kClosedMidBeg, kClosedMidEnd, (kClosedMidEnd - kClosedMidBeg) >> 30);
-#endif
   DPrintf("kLinuxAppMem %zx-%zx (%zuGB)\n",
       kLinuxAppMemBeg, kLinuxAppMemEnd,
       (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
   DPrintf("stack        %zx\n", (uptr)&shadow);
 }
+#endif
 
 static uptr g_data_start;
 static uptr g_data_end;

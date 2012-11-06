@@ -52,6 +52,7 @@ uptr GetShadowMemoryConsumption() {
 void FlushShadowMemory() {
 }
 
+#ifndef TSAN_GO
 void InitializeShadowMemory() {
   uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
     kLinuxShadowEnd - kLinuxShadowBeg);
@@ -68,6 +69,7 @@ void InitializeShadowMemory() {
       kLinuxAppMemBeg, kLinuxAppMemEnd,
       (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
 }
+#endif
 
 const char *InitializePlatform() {
   void *p = 0;

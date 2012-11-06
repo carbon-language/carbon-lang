@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 SRCS="
 	tsan_go.cc
@@ -25,7 +26,7 @@ SRCS="
 if [ "`uname -a | grep Linux`" != "" ]; then
 	SUFFIX="linux_amd64"
 	OSCFLAGS="-fPIC -ffreestanding"
-	OSLDFLAGS="-lpthread"
+	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS+="
 		../rtl/tsan_platform_linux.cc
 		../../sanitizer_common/sanitizer_posix.cc
@@ -34,7 +35,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 elif [ "`uname -a | grep Darwin`" != "" ]; then
 	SUFFIX="darwin_amd64"
 	OSCFLAGS="-fPIC"
-	OSLDFLAGS="-lpthread"
+	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS+="
 		../rtl/tsan_platform_mac.cc
 		../../sanitizer_common/sanitizer_posix.cc
@@ -74,4 +75,4 @@ echo as gotsan.s -o race_$SUFFIX.syso
 as gotsan.s -o race_$SUFFIX.syso
 
 gcc test.c race_$SUFFIX.syso -m64 -o test $OSLDFLAGS
-TSAN_OPTIONS="exitcode=0" ./test
+TSAN_OPTIONS="exitcode=0 atexit_sleep_ms=0" ./test

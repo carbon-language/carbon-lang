@@ -108,6 +108,10 @@ void __tsan_fini() {
   exit(res);
 }
 
+void __tsan_map_shadow(uptr addr, uptr size) {
+  MapShadow(addr, size);
+}
+
 void __tsan_read(int goid, void *addr, void *pc) {
   ThreadState *thr = goroutines[goid];
   MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, false);

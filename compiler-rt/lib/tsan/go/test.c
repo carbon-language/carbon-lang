@@ -15,6 +15,7 @@
 
 void __tsan_init();
 void __tsan_fini();
+void __tsan_map_shadow(void *addr, unsigned long size);
 void __tsan_go_start(int pgoid, int chgoid, void *pc);
 void __tsan_go_end(int goid);
 void __tsan_read(int goid, void *addr, void *pc);
@@ -35,6 +36,7 @@ char buf[10];
 
 int main(void) {
   __tsan_init();
+  __tsan_map_shadow((unsigned long)buf & ~(4096-1), 4096);
   __tsan_func_enter(0, &main);
   __tsan_malloc(0, buf, 10, 0);
   __tsan_release(0, buf);

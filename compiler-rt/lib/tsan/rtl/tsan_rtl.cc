@@ -161,6 +161,18 @@ static void InitializeMemoryFlush() {
   internal_start_thread(&MemoryFlushThread, 0);
 }
 
+void MapShadow(uptr addr, uptr size) {
+  uptr saddr = MemToShadow(addr);
+  uptr ssize = size * kShadowMultiplier;
+  void *p = MmapFixedNoReserve(saddr, ssize);
+  if ((uptr)p != saddr) {
+    Printf("FATAL: ThreadSanitizer failed to mmap shadow memory"
+        " %p(%p) -> %p(%p) = %p\n",
+        addr, size, saddr, ssize, p);
+    Die();
+  }
+}
+
 void Initialize(ThreadState *thr) {
   // Thread safe because done before all threads exist.
   static bool is_initialized = false;
@@ -179,7 +191,9 @@ void Initialize(ThreadState *thr) {
   InitializeMutex();
   InitializeDynamicAnnotations();
   ctx = new(ctx_placeholder) Context;
+#ifndef TSAN_GO
   InitializeShadowMemory();
+#endif
   ctx->dead_list_size = 0;
   ctx->dead_list_head = 0;
   ctx->dead_list_tail = 0;
