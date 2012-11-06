@@ -777,9 +777,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
-    case ARM::Int_eh_sjlj_dispatchsetup:
-    case ARM::Int_eh_sjlj_dispatchsetup_nofp:
-    case ARM::tInt_eh_sjlj_dispatchsetup: {
+    case ARM::Int_eh_sjlj_dispatchsetup: {
       MachineFunction &MF = *MI.getParent()->getParent();
       const ARMBaseInstrInfo *AII =
         static_cast<const ARMBaseInstrInfo*>(TII);

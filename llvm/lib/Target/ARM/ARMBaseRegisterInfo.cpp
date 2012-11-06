@@ -84,6 +84,11 @@ ARMBaseRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
     ? CSR_iOS_RegMask : CSR_AAPCS_RegMask;
 }
 
+const uint32_t*
+ARMBaseRegisterInfo::getNoPreservedMask() const {
+  return CSR_NoRegs_RegMask;
+}
+
 BitVector ARMBaseRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();

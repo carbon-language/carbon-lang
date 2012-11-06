@@ -1247,10 +1247,6 @@ def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                               [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
                              Requires<[IsThumb, IsIOS]>;
 
-let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12, CPSR ],
-    isBarrier = 1 in
-def tInt_eh_sjlj_dispatchsetup : PseudoInst<(outs), (ins), NoItinerary, []>;
-
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
