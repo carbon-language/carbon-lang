@@ -191,3 +191,35 @@ void g34(struct s34 *s) { f34(*s); }
 // AAPCS: %[[a:.*]] = alloca { [1 x i32] }
 // AAPCS: %[[gep:.*]] = getelementptr { [1 x i32] }* %[[a]], i32 0, i32 0
 // AAPCS: load [1 x i32]* %[[gep]]
+
+// rdar://12596507
+struct s35
+{
+   float v[18]; //make sure byval is on.
+} __attribute__((aligned(16)));
+typedef struct s35 s35_with_align;
+
+typedef __attribute__((neon_vector_type(4))) float float32x4_t;
+static __attribute__((__always_inline__, __nodebug__)) float32x4_t vaddq_f32(
+       float32x4_t __a, float32x4_t __b) {
+ return __a + __b;
+}
+float32x4_t f35(int i, s35_with_align s1, s35_with_align s2) {
+  float32x4_t v = vaddq_f32(*(float32x4_t *)&s1,
+                            *(float32x4_t *)&s2);
+  return v;
+}
+// APCS-GNU: define <4 x float> @f35(i32 %i, %struct.s35* byval, %struct.s35* byval)
+// APCS-GNU: %[[a:.*]] = alloca %struct.s35, align 16
+// APCS-GNU: %[[b:.*]] = bitcast %struct.s35* %[[a]] to i8*
+// APCS-GNU: %[[c:.*]] = bitcast %struct.s35* %0 to i8*
+// APCS-GNU: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[b]], i8* %[[c]]
+// APCS-GNU: %[[d:.*]] = bitcast %struct.s35* %[[a]] to <4 x float>*
+// APCS-GNU: load <4 x float>* %[[d]], align 16
+// AAPCS: define arm_aapcscc <4 x float> @f35(i32 %i, %struct.s35* byval, %struct.s35* byval)
+// AAPCS: %[[a:.*]] = alloca %struct.s35, align 16
+// AAPCS: %[[b:.*]] = bitcast %struct.s35* %[[a]] to i8*
+// AAPCS: %[[c:.*]] = bitcast %struct.s35* %0 to i8*
+// AAPCS: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[b]], i8* %[[c]]
+// AAPCS: %[[d:.*]] = bitcast %struct.s35* %[[a]] to <4 x float>*
+// AAPCS: load <4 x float>* %[[d]], align 16
