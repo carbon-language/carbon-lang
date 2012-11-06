@@ -25,7 +25,6 @@ using namespace __sanitizer;  // NOLINT
 
 // Platform-specific defs.
 #if defined(_MSC_VER)
-typedef unsigned long    DWORD;  // NOLINT
 # define ALWAYS_INLINE __declspec(forceinline)
 // FIXME(timurrrr): do we need this on Windows?
 # define ALIAS(x)
@@ -56,6 +55,7 @@ typedef unsigned long    DWORD;  // NOLINT
 #endif
 
 #if defined(_WIN32)
+typedef unsigned long DWORD;  // NOLINT
 typedef DWORD thread_return_t;
 # define THREAD_CALLING_CONV __stdcall
 #else  // _WIN32
