@@ -17,7 +17,7 @@ void *AsyncInit(void *p) {
 
 Cache *CreateCache() {
   pthread_t t;
-  pthread_create(&t, 0, AsyncInit, (void*)rand());
+  pthread_create(&t, 0, AsyncInit, (void*)(long)rand());
   void *res;
   pthread_join(t, &res);
   return (Cache*)res;
