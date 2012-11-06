@@ -31,6 +31,7 @@ namespace llvm {
   class MachineFunction;
   class MachineRegisterInfo;
   class MachineInstr;
+  struct MCSchedClassDesc;
   class TargetRegisterInfo;
   class ScheduleDAG;
   class SDNode;
@@ -249,6 +250,8 @@ namespace llvm {
                                         // this node was cloned.
                                         // (SD scheduling only)
 
+    const MCSchedClassDesc *SchedClass; // NULL or resolved SchedClass.
+
     // Preds/Succs - The SUnits before/after us in the graph.
     SmallVector<SDep, 4> Preds;  // All sunit predecessors.
     SmallVector<SDep, 4> Succs;  // All sunit successors.
@@ -296,7 +299,7 @@ namespace llvm {
     /// SUnit - Construct an SUnit for pre-regalloc scheduling to represent
     /// an SDNode and any nodes flagged to it.
     SUnit(SDNode *node, unsigned nodenum)
-      : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum),
+      : Node(node), Instr(0), OrigNode(0), SchedClass(0), NodeNum(nodenum),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
         isVRegCycle(false), isCall(false), isCallOp(false), isTwoAddress(false),
@@ -310,7 +313,7 @@ namespace llvm {
     /// SUnit - Construct an SUnit for post-regalloc scheduling to represent
     /// a MachineInstr.
     SUnit(MachineInstr *instr, unsigned nodenum)
-      : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum),
+      : Node(0), Instr(instr), OrigNode(0), SchedClass(0), NodeNum(nodenum),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
         isVRegCycle(false), isCall(false), isCallOp(false), isTwoAddress(false),
@@ -323,7 +326,7 @@ namespace llvm {
 
     /// SUnit - Construct a placeholder SUnit.
     SUnit()
-      : Node(0), Instr(0), OrigNode(0), NodeNum(~0u),
+      : Node(0), Instr(0), OrigNode(0), SchedClass(0), NodeNum(~0u),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
         isVRegCycle(false), isCall(false), isCallOp(false), isTwoAddress(false),

@@ -36,6 +36,21 @@ bool TargetSchedModel::hasInstrItineraries() const {
   return EnableSchedItins && !InstrItins.isEmpty();
 }
 
+static unsigned gcd(unsigned Dividend, unsigned Divisor) {
+  // Dividend and Divisor will be naturally swapped as needed.
+  while(Divisor) {
+    unsigned Rem = Dividend % Divisor;
+    Dividend = Divisor;
+    Divisor = Rem;
+  };
+  return Dividend;
+}
+static unsigned lcm(unsigned A, unsigned B) {
+  unsigned LCM = (uint64_t(A) * B) / gcd(A, B);
+  assert((LCM >= A && LCM >= B) && "LCM overflow");
+  return LCM;
+}
+
 void TargetSchedModel::init(const MCSchedModel &sm,
                             const TargetSubtargetInfo *sti,
                             const TargetInstrInfo *tii) {
@@ -43,17 +58,33 @@ void TargetSchedModel::init(const MCSchedModel &sm,
   STI = sti;
   TII = tii;
   STI->initInstrItins(InstrItins);
+
+  unsigned NumRes = SchedModel.getNumProcResourceKinds();
+  ResourceFactors.resize(NumRes);
+  ResourceLCM = SchedModel.IssueWidth;
+  for (unsigned Idx = 0; Idx < NumRes; ++Idx) {
+    unsigned NumUnits = SchedModel.getProcResource(Idx)->NumUnits;
+    if (NumUnits > 0)
+      ResourceLCM = lcm(ResourceLCM, NumUnits);
+  }
+  MicroOpFactor = ResourceLCM / SchedModel.IssueWidth;
+  for (unsigned Idx = 0; Idx < NumRes; ++Idx) {
+    unsigned NumUnits = SchedModel.getProcResource(Idx)->NumUnits;
+    ResourceFactors[Idx] = NumUnits ? (ResourceLCM / NumUnits) : 0;
+  }
 }
 
-unsigned TargetSchedModel::getNumMicroOps(MachineInstr *MI) const {
+unsigned TargetSchedModel::getNumMicroOps(const MachineInstr *MI,
+                                          const MCSchedClassDesc *SC) const {
   if (hasInstrItineraries()) {
     int UOps = InstrItins.getNumMicroOps(MI->getDesc().getSchedClass());
     return (UOps >= 0) ? UOps : TII->getNumMicroOps(&InstrItins, MI);
   }
   if (hasInstrSchedModel()) {
-    const MCSchedClassDesc *SCDesc = resolveSchedClass(MI);
-    if (SCDesc->isValid())
-      return SCDesc->NumMicroOps;
+    if (!SC)
+      SC = resolveSchedClass(MI);
+    if (SC->isValid())
+      return SC->NumMicroOps;
   }
   return MI->isTransient() ? 0 : 1;
 }

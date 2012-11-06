@@ -189,6 +189,13 @@ namespace llvm {
     /// \brief Get the machine model for instruction scheduling.
     const TargetSchedModel *getSchedModel() const { return &SchedModel; }
 
+    /// \brief Resolve and cache a resolved scheduling class for an SUnit.
+    const MCSchedClassDesc *getSchedClass(SUnit *SU) const {
+      if (!SU->SchedClass)
+        SU->SchedClass = SchedModel.resolveSchedClass(SU->getInstr());
+      return SU->SchedClass;
+    }
+
     /// begin - Return an iterator to the top of the current scheduling region.
     MachineBasicBlock::iterator begin() const { return RegionBegin; }
 

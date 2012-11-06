@@ -219,6 +219,10 @@ public:
   /// Does this machine model include instruction-level scheduling.
   bool hasInstrSchedModel() const { return SchedClassTable; }
 
+  unsigned getNumProcResourceKinds() const {
+    return NumProcResourceKinds;
+  }
+
   const MCProcResourceDesc *getProcResource(unsigned ProcResourceIdx) const {
     assert(hasInstrSchedModel() && "No scheduling machine model");
 

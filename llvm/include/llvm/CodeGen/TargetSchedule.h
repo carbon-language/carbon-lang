@@ -16,8 +16,10 @@
 #ifndef LLVM_TARGET_TARGETSCHEDMODEL_H
 #define LLVM_TARGET_TARGETSCHEDMODEL_H
 
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/MC/MCSchedule.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -34,6 +36,10 @@ class TargetSchedModel {
   InstrItineraryData InstrItins;
   const TargetSubtargetInfo *STI;
   const TargetInstrInfo *TII;
+
+  SmallVector<unsigned, 16> ResourceFactors;
+  unsigned MicroOpFactor; // Multiply to normalize microops to resource units.
+  unsigned ResourceLCM;   // Resource units per cycle. Latency normalization factor.
 public:
   TargetSchedModel(): STI(0), TII(0) {}
 
@@ -44,6 +50,9 @@ public:
   /// dynamic properties.
   void init(const MCSchedModel &sm, const TargetSubtargetInfo *sti,
             const TargetInstrInfo *tii);
+
+  /// Return the MCSchedClassDesc for this instruction.
+  const MCSchedClassDesc *resolveSchedClass(const MachineInstr *MI) const;
 
   /// \brief TargetInstrInfo getter.
   const TargetInstrInfo *getInstrInfo() const { return TII; }
@@ -76,7 +85,48 @@ public:
   unsigned getIssueWidth() const { return SchedModel.IssueWidth; }
 
   /// \brief Return the number of issue slots required for this MI.
-  unsigned getNumMicroOps(MachineInstr *MI) const;
+  unsigned getNumMicroOps(const MachineInstr *MI,
+                          const MCSchedClassDesc *SC = 0) const;
+
+  /// \brief Get the number of kinds of resources for this target.
+  unsigned getNumProcResourceKinds() const {
+    return SchedModel.getNumProcResourceKinds();
+  }
+
+  /// \brief Get a processor resource by ID for convenience.
+  const MCProcResourceDesc *getProcResource(unsigned PIdx) const {
+    return SchedModel.getProcResource(PIdx);
+  }
+
+  typedef const MCWriteProcResEntry *ProcResIter;
+
+  // \brief Get an iterator into the processor resources consumed by this
+  // scheduling class.
+  ProcResIter getWriteProcResBegin(const MCSchedClassDesc *SC) const {
+    // The subtarget holds a single resource table for all processors.
+    return STI->getWriteProcResBegin(SC);
+  }
+  ProcResIter getWriteProcResEnd(const MCSchedClassDesc *SC) const {
+    return STI->getWriteProcResEnd(SC);
+  }
+
+  /// \brief Multiply the number of units consumed for a resource by this factor
+  /// to normalize it relative to other resources.
+  unsigned getResourceFactor(unsigned ResIdx) const {
+    return ResourceFactors[ResIdx];
+  }
+
+  /// \brief Multiply number of micro-ops by this factor to normalize it
+  /// relative to other resources.
+  unsigned getMicroOpFactor() const {
+    return MicroOpFactor;
+  }
+
+  /// \brief Multiply cycle count by this factor to normalize it relative to
+  /// other resources. This is the number of resource units per cycle.
+  unsigned getLatencyFactor() const {
+    return ResourceLCM;
+  }
 
   /// \brief Compute operand latency based on the available machine model.
   ///
@@ -105,15 +155,11 @@ public:
   unsigned computeOutputLatency(const MachineInstr *DefMI, unsigned DefIdx,
                                 const MachineInstr *DepMI) const;
 
-
 private:
   /// getDefLatency is a helper for computeOperandLatency. Return the
   /// instruction's latency if operand lookup is not required.
   /// Otherwise return -1.
   int getDefLatency(const MachineInstr *DefMI, bool FindMin) const;
-
-  /// Return the MCSchedClassDesc for this instruction.
-  const MCSchedClassDesc *resolveSchedClass(const MachineInstr *MI) const;
 };
 
 } // namespace llvm
