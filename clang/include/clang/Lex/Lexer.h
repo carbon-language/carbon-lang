@@ -128,9 +128,7 @@ public:
   SourceLocation getFileLoc() const { return FileLoc; }
 
   /// Lex - Return the next token in the file.  If this is the end of file, it
-  /// return the tok::eof token.  Return true if an error occurred and
-  /// compilation should terminate, false if normal.  This implicitly involves
-  /// the preprocessor.
+  /// return the tok::eof token.  This implicitly involves the preprocessor.
   void Lex(Token &Result) {
     // Start a new token.
     Result.startToken();
