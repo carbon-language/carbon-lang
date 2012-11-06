@@ -33,6 +33,9 @@
 #include <unistd.h>
 #else
 #include <io.h>
+#ifndef S_ISFIFO
+#define S_ISFIFO(x) (0)
+#endif
 #endif
 #include <fcntl.h>
 using namespace llvm;
@@ -321,7 +324,7 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
 
       // If this is a named pipe, we can't trust the size. Create the memory
       // buffer by copying off the stream.
-      if (FileInfo.st_mode & S_IFIFO) {
+      if (S_ISFIFO(FileInfo.st_mode)) {
         return getMemoryBufferForStream(FD, Filename, result);
       }
 
