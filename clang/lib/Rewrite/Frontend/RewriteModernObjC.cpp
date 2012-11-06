@@ -278,6 +278,7 @@ namespace {
     // Syntactic Rewriting.
     void RewriteRecordBody(RecordDecl *RD);
     void RewriteInclude();
+    void RewriteLineDirective(const Decl *D);
     void RewriteForwardClassDecl(DeclGroupRef D);
     void RewriteForwardClassDecl(const llvm::SmallVector<Decl*, 8> &DG);
     void RewriteForwardClassEpilogue(ObjCInterfaceDecl *ClassDecl, 
@@ -3075,6 +3076,34 @@ static SourceLocation getFunctionSourceLocation (RewriteModernObjC &R,
   return FD->getTypeSpecStartLoc();
 }
 
+void RewriteModernObjC::RewriteLineDirective(const Decl *D) {
+  
+  SourceLocation Location = D->getLocation();
+  
+  if (Location.isFileID()) {
+    std::string LineString("#line ");
+    PresumedLoc PLoc = SM->getPresumedLoc(Location);
+    LineString += utostr(PLoc.getLine());
+    LineString += " \"";
+    LineString += PLoc.getFilename();
+    if (isa<ObjCMethodDecl>(D))
+      LineString += "\"";
+    else LineString += "\"\n";
+    
+    Location = D->getLocStart();
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      if (FD->isExternC()  && !FD->isMain()) {
+        const DeclContext *DC = FD->getDeclContext();
+        if (const LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(DC))
+          // if it is extern "C" {...}, return function decl's own location.
+          if (!LSD->getRBraceLoc().isValid())
+            Location = LSD->getExternLoc();
+      }
+    }
+    InsertText(Location, LineString);
+  }
+}
+
 /// SynthMsgSendStretCallExpr - This routine translates message expression
 /// into a call to objc_msgSend_stret() entry point. Tricky part is that
 /// nil check on receiver must be performed before calling objc_msgSend_stret.
@@ -5664,6 +5693,7 @@ void RewriteModernObjC::HandleDeclInMainFile(Decl *D) {
         // This synthesizes and inserts the block "impl" struct, invoke function,
         // and any copy/dispose helper functions.
         InsertBlockLiteralsWithinFunction(FD);
+        RewriteLineDirective(D);
         CurFunctionDef = 0;
       }
       break;
@@ -5682,6 +5712,7 @@ void RewriteModernObjC::HandleDeclInMainFile(Decl *D) {
           PropParentMap = 0;
         }
         InsertBlockLiteralsWithinMethod(MD);
+        RewriteLineDirective(D);
         CurMethodDef = 0;
       }
       break;
