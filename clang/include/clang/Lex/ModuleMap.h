@@ -91,7 +91,26 @@ class ModuleMap {
   /// in the module map over to the module that includes them via its umbrella
   /// header.
   llvm::DenseMap<const DirectoryEntry *, Module *> UmbrellaDirs;
-  
+
+  /// \brief A directory for which framework modules can be inferred.
+  struct InferredDirectory {
+    InferredDirectory() : InferModules(), InferSystemModules() { }
+
+    /// \brief Whether to infer modules from this directory.
+    unsigned InferModules : 1;
+
+    /// \brief Whether the modules we infer are [system] modules.
+    unsigned InferSystemModules : 1;
+
+    /// \brief The names of modules that cannot be inferred within this
+    /// directory.
+    llvm::SmallVector<std::string, 2> ExcludedModules;
+  };
+
+  /// \brief A mapping from directories to information about inferring
+  /// framework modules from within those directories.
+  llvm::DenseMap<const DirectoryEntry *, InferredDirectory> InferredDirectories;
+
   friend class ModuleMapParser;
   
   /// \brief Resolve the given export declaration into an actual export
@@ -197,7 +216,23 @@ public:
   std::pair<Module *, bool> findOrCreateModule(StringRef Name, Module *Parent, 
                                                bool IsFramework,
                                                bool IsExplicit);
-                       
+
+  /// \brief Determine whether we can infer a framework module a framework
+  /// with the given name in the given
+  ///
+  /// \param ParentDir The directory that is the parent of the framework
+  /// directory.
+  ///
+  /// \param Name The name of the module.
+  ///
+  /// \param IsSystem Will be set to 'true' if the inferred module must be a
+  /// system module.
+  ///
+  /// \returns true if we are allowed to infer a framework module, and false
+  /// otherwise.
+  bool canInferFrameworkModule(const DirectoryEntry *ParentDir,
+                               StringRef Name, bool &IsSystem);
+
   /// \brief Infer the contents of a framework module map from the given
   /// framework directory.
   Module *inferFrameworkModule(StringRef ModuleName, 

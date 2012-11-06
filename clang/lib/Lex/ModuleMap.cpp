@@ -346,8 +346,32 @@ ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
   return std::make_pair(Result, true);
 }
 
+bool ModuleMap::canInferFrameworkModule(const DirectoryEntry *ParentDir,
+                                        StringRef Name, bool &IsSystem) {
+  // Check whether we have already looked into the parent directory
+  // for a module map.
+  llvm::DenseMap<const DirectoryEntry *, InferredDirectory>::iterator
+    inferred = InferredDirectories.find(ParentDir);
+  if (inferred == InferredDirectories.end())
+    return false;
+
+  if (!inferred->second.InferModules)
+    return false;
+
+  // We're allowed to infer for this directory, but make sure it's okay
+  // to infer this particular module.
+  bool canInfer = std::find(inferred->second.ExcludedModules.begin(),
+                            inferred->second.ExcludedModules.end(),
+                            Name) == inferred->second.ExcludedModules.end();
+
+  if (canInfer && inferred->second.InferSystemModules)
+    IsSystem = true;
+
+  return canInfer;
+}
+
 Module *
-ModuleMap::inferFrameworkModule(StringRef ModuleName, 
+ModuleMap::inferFrameworkModule(StringRef ModuleName,
                                 const DirectoryEntry *FrameworkDir,
                                 bool IsSystem,
                                 Module *Parent) {
@@ -356,7 +380,54 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
     return Mod;
   
   FileManager &FileMgr = SourceMgr->getFileManager();
-  
+
+  // If the framework has a parent path from which we're allowed to infer
+  // a framework module, do so.
+  if (!Parent) {
+    bool canInfer = false;
+    if (llvm::sys::path::has_parent_path(FrameworkDir->getName())) {
+      // Figure out the parent path.
+      StringRef Parent = llvm::sys::path::parent_path(FrameworkDir->getName());
+      if (const DirectoryEntry *ParentDir = FileMgr.getDirectory(Parent)) {
+        // Check whether we have already looked into the parent directory
+        // for a module map.
+        llvm::DenseMap<const DirectoryEntry *, InferredDirectory>::iterator
+          inferred = InferredDirectories.find(ParentDir);
+        if (inferred == InferredDirectories.end()) {
+          // We haven't looked here before. Load a module map, if there is
+          // one.
+          SmallString<128> ModMapPath = Parent;
+          llvm::sys::path::append(ModMapPath, "module.map");
+          if (const FileEntry *ModMapFile = FileMgr.getFile(ModMapPath)) {
+            parseModuleMapFile(ModMapFile);
+            inferred = InferredDirectories.find(ParentDir);
+          }
+
+          if (inferred == InferredDirectories.end())
+            inferred = InferredDirectories.insert(
+                         std::make_pair(ParentDir, InferredDirectory())).first;
+        }
+
+        if (inferred->second.InferModules) {
+          // We're allowed to infer for this directory, but make sure it's okay
+          // to infer this particular module.
+          StringRef Name = llvm::sys::path::filename(FrameworkDir->getName());
+          canInfer = std::find(inferred->second.ExcludedModules.begin(),
+                               inferred->second.ExcludedModules.end(),
+                               Name) == inferred->second.ExcludedModules.end();
+
+          if (inferred->second.InferSystemModules)
+            IsSystem = true;
+        }
+      }
+    }
+
+    // If we're not allowed to infer a framework module, don't.
+    if (!canInfer)
+      return 0;
+  }
+
+
   // Look for an umbrella header.
   SmallString<128> UmbrellaName = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(UmbrellaName, "Headers");
@@ -582,7 +653,16 @@ namespace clang {
       return StringRef(StringData, StringLength);
     }
   };
+
+  /// \brief The set of attributes that can be attached to a module.
+  struct Attributes {
+    Attributes() : IsSystem() { }
+
+    /// \brief Whether this is a system module.
+    unsigned IsSystem : 1;
+  };
   
+
   class ModuleMapParser {
     Lexer &L;
     SourceManager &SourceMgr;
@@ -628,8 +708,9 @@ namespace clang {
     void parseHeaderDecl(SourceLocation UmbrellaLoc, SourceLocation ExcludeLoc);
     void parseUmbrellaDirDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
-    void parseInferredSubmoduleDecl(bool Explicit);
-    
+    void parseInferredModuleDecl(bool Framework, bool Explicit);
+    bool parseOptionalAttributes(Attributes &Attrs);
+
     const DirectoryEntry *getOverriddenHeaderSearchDir();
     
   public:
@@ -834,13 +915,6 @@ namespace {
 ///     'explicit'[opt] 'framework'[opt] 'module' module-id attributes[opt] 
 ///       { module-member* }
 ///
-///   attributes:
-///     attribute attributes
-///     attribute
-///
-///   attribute:
-///     [ identifier ]
-///
 ///   module-member:
 ///     requires-declaration
 ///     header-declaration
@@ -882,7 +956,7 @@ void ModuleMapParser::parseModuleDecl() {
   // If we have a wildcard for the module name, this is an inferred submodule.
   // Parse it. 
   if (Tok.is(MMToken::Star))
-    return parseInferredSubmoduleDecl(Explicit);
+    return parseInferredModuleDecl(Framework, Explicit);
   
   // Parse the module name.
   ModuleId Id;
@@ -890,7 +964,7 @@ void ModuleMapParser::parseModuleDecl() {
     HadError = true;
     return;
   }
-  
+
   if (ActiveModule) {
     if (Id.size() > 1) {
       Diags.Report(Id.front().second, diag::err_mmap_nested_submodule_id)
@@ -933,47 +1007,8 @@ void ModuleMapParser::parseModuleDecl() {
   SourceLocation ModuleNameLoc = Id.back().second;
   
   // Parse the optional attribute list.
-  bool IsSystem = false;
-  while (Tok.is(MMToken::LSquare)) {
-    // Consume the '['.
-    SourceLocation LSquareLoc = consumeToken();
-    
-    // Check whether we have an attribute name here.
-    if (!Tok.is(MMToken::Identifier)) {
-      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_attribute);
-      skipUntil(MMToken::RSquare);
-      if (Tok.is(MMToken::RSquare))
-        consumeToken();
-      continue;
-    }
-    
-    // Decode the attribute name.
-    AttributeKind Attribute 
-      = llvm::StringSwitch<AttributeKind>(Tok.getString())
-        .Case("system", AT_system)
-        .Default(AT_unknown);
-    switch (Attribute) {
-    case AT_unknown:
-      Diags.Report(Tok.getLocation(), diag::warn_mmap_unknown_attribute)
-        << Tok.getString();
-      break;
-        
-    case AT_system:
-      IsSystem = true;
-      break;
-    }
-    consumeToken();
-    
-    // Consume the ']'.
-    if (!Tok.is(MMToken::RSquare)) {
-      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_rsquare);
-      Diags.Report(LSquareLoc, diag::note_mmap_lsquare_match);
-      skipUntil(MMToken::RSquare);
-    }
-
-    if (Tok.is(MMToken::RSquare))
-      consumeToken();
-  }
+  Attributes Attrs;
+  parseOptionalAttributes(Attrs);
   
   // Parse the opening brace.
   if (!Tok.is(MMToken::LBrace)) {
@@ -1016,7 +1051,7 @@ void ModuleMapParser::parseModuleDecl() {
   ActiveModule = Map.findOrCreateModule(ModuleName, ActiveModule, Framework,
                                         Explicit).first;
   ActiveModule->DefinitionLoc = ModuleNameLoc;
-  if (IsSystem)
+  if (Attrs.IsSystem)
     ActiveModule->IsSystem = true;
   
   bool Done = false;
@@ -1379,32 +1414,52 @@ void ModuleMapParser::parseExportDecl() {
   ActiveModule->UnresolvedExports.push_back(Unresolved);
 }
 
-void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
+/// \brief Parse an inferried module declaration (wildcard modules).
+///
+///   module-declaration:
+///     'explicit'[opt] 'framework'[opt] 'module' * attributes[opt]
+///       { inferred-module-member* }
+///
+///   inferred-module-member:
+///     'export' '*'
+///     'exclude' identifier
+void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
   assert(Tok.is(MMToken::Star));
   SourceLocation StarLoc = consumeToken();
   bool Failed = false;
-  
+
   // Inferred modules must be submodules.
-  if (!ActiveModule) {
+  if (!ActiveModule && !Framework) {
     Diags.Report(StarLoc, diag::err_mmap_top_level_inferred_submodule);
     Failed = true;
   }
-  
-  // Inferred modules must have umbrella directories.
-  if (!Failed && !ActiveModule->getUmbrellaDir()) {
-    Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
-    Failed = true;
+
+  if (ActiveModule) {
+    // Inferred modules must have umbrella directories.
+    if (!Failed && !ActiveModule->getUmbrellaDir()) {
+      Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
+      Failed = true;
+    }
+    
+    // Check for redefinition of an inferred module.
+    if (!Failed && ActiveModule->InferSubmodules) {
+      Diags.Report(StarLoc, diag::err_mmap_inferred_redef);
+      if (ActiveModule->InferredSubmoduleLoc.isValid())
+        Diags.Report(ActiveModule->InferredSubmoduleLoc,
+                     diag::note_mmap_prev_definition);
+      Failed = true;
+    }
+
+    // Check for the 'framework' keyword, which is not permitted here.
+    if (Framework) {
+      Diags.Report(StarLoc, diag::err_mmap_inferred_framework_submodule);
+      Framework = false;
+    }
+  } else if (Explicit) {
+    Diags.Report(StarLoc, diag::err_mmap_explicit_inferred_framework);
+    Explicit = false;
   }
-  
-  // Check for redefinition of an inferred module.
-  if (!Failed && ActiveModule->InferSubmodules) {
-    Diags.Report(StarLoc, diag::err_mmap_inferred_redef);
-    if (ActiveModule->InferredSubmoduleLoc.isValid())
-      Diags.Report(ActiveModule->InferredSubmoduleLoc,
-                   diag::note_mmap_prev_definition);
-    Failed = true;
-  }
-  
+
   // If there were any problems with this inferred submodule, skip its body.
   if (Failed) {
     if (Tok.is(MMToken::LBrace)) {
@@ -1416,12 +1471,22 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
     HadError = true;
     return;
   }
-  
-  // Note that we have an inferred submodule.
-  ActiveModule->InferSubmodules = true;
-  ActiveModule->InferredSubmoduleLoc = StarLoc;
-  ActiveModule->InferExplicitSubmodules = Explicit;
-  
+
+  // Parse optional attributes.
+  Attributes Attrs;
+  parseOptionalAttributes(Attrs);
+
+  if (ActiveModule) {
+    // Note that we have an inferred submodule.
+    ActiveModule->InferSubmodules = true;
+    ActiveModule->InferredSubmoduleLoc = StarLoc;
+    ActiveModule->InferExplicitSubmodules = Explicit;
+  } else {
+    // We'll be inferring framework modules for this directory.
+    Map.InferredDirectories[Directory].InferModules = true;
+    Map.InferredDirectories[Directory].InferSystemModules = Attrs.IsSystem;
+  }
+
   // Parse the opening brace.
   if (!Tok.is(MMToken::LBrace)) {
     Diags.Report(Tok.getLocation(), diag::err_mmap_expected_lbrace_wildcard);
@@ -1438,8 +1503,35 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
     case MMToken::RBrace:
       Done = true;
       break;
-      
-    case MMToken::ExportKeyword: {
+
+    case MMToken::ExcludeKeyword: {
+      if (ActiveModule) {
+        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
+          << (ActiveModule != nullptr);
+        consumeToken();
+        break;
+      }
+
+      consumeToken();
+      if (!Tok.is(MMToken::Identifier)) {
+        Diags.Report(Tok.getLocation(), diag::err_mmap_missing_exclude_name);
+        break;
+      }
+
+      Map.InferredDirectories[Directory].ExcludedModules
+        .push_back(Tok.getString());
+      consumeToken();
+      break;
+    }
+
+    case MMToken::ExportKeyword:
+      if (!ActiveModule) {
+        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
+          << (ActiveModule != nullptr);
+        consumeToken();
+        break;
+      }
+
       consumeToken();
       if (Tok.is(MMToken::Star)) 
         ActiveModule->InferExportWildcard = true;
@@ -1448,14 +1540,14 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
                      diag::err_mmap_expected_export_wildcard);
       consumeToken();
       break;
-    }
-      
+
     case MMToken::ExplicitKeyword:
     case MMToken::ModuleKeyword:
     case MMToken::HeaderKeyword:
     case MMToken::UmbrellaKeyword:
     default:
-      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_wildcard_member);
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
+          << (ActiveModule != nullptr);
       consumeToken();
       break;        
     }
@@ -1468,6 +1560,66 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
     Diags.Report(LBraceLoc, diag::note_mmap_lbrace_match);
     HadError = true;
   }
+}
+
+/// \brief Parse optional attributes.
+///
+///   attributes:
+///     attribute attributes
+///     attribute
+///
+///   attribute:
+///     [ identifier ]
+///
+/// \param Attrs Will be filled in with the parsed attributes.
+///
+/// \returns true if an error occurred, false otherwise.
+bool ModuleMapParser::parseOptionalAttributes(Attributes &Attrs) {
+  bool HadError = false;
+  
+  while (Tok.is(MMToken::LSquare)) {
+    // Consume the '['.
+    SourceLocation LSquareLoc = consumeToken();
+
+    // Check whether we have an attribute name here.
+    if (!Tok.is(MMToken::Identifier)) {
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_attribute);
+      skipUntil(MMToken::RSquare);
+      if (Tok.is(MMToken::RSquare))
+        consumeToken();
+      HadError = true;
+    }
+
+    // Decode the attribute name.
+    AttributeKind Attribute
+      = llvm::StringSwitch<AttributeKind>(Tok.getString())
+          .Case("system", AT_system)
+          .Default(AT_unknown);
+    switch (Attribute) {
+    case AT_unknown:
+      Diags.Report(Tok.getLocation(), diag::warn_mmap_unknown_attribute)
+        << Tok.getString();
+      break;
+
+    case AT_system:
+      Attrs.IsSystem = true;
+      break;
+    }
+    consumeToken();
+
+    // Consume the ']'.
+    if (!Tok.is(MMToken::RSquare)) {
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_rsquare);
+      Diags.Report(LSquareLoc, diag::note_mmap_lsquare_match);
+      skipUntil(MMToken::RSquare);
+      HadError = true;
+    }
+
+    if (Tok.is(MMToken::RSquare))
+      consumeToken();
+  }
+
+  return HadError;
 }
 
 /// \brief If there is a specific header search directory due the presence

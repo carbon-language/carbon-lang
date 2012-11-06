@@ -113,3 +113,7 @@ module MethodPoolB {
 module import_decl {
   header "import-decl.h"
 }
+
+framework module * { 
+  exclude NotAModule
+}

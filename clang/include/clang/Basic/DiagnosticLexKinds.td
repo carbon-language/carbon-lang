@@ -491,15 +491,21 @@ def err_mmap_missing_module_unqualified : Error<
 def err_mmap_missing_module_qualified : Error<
   "no module named '%0' in '%1'">;
 def err_mmap_top_level_inferred_submodule : Error<
-  "only submodules may be inferred with wildcard syntax">;
+  "only submodules and framework modules may be inferred with wildcard syntax">;
 def err_mmap_inferred_no_umbrella : Error<
   "inferred submodules require a module with an umbrella">;
+def err_mmap_inferred_framework_submodule : Error<
+  "inferred submodule cannot be a framework submodule">;
+def err_mmap_explicit_inferred_framework : Error<
+  "inferred framework modules cannot be 'explicit'">;
+def err_mmap_missing_exclude_name : Error<
+  "expected excluded module name">;
 def err_mmap_inferred_redef : Error<
   "redefinition of inferred submodule">;
 def err_mmap_expected_lbrace_wildcard : Error<
   "expected '{' to start inferred submodule">;
-def err_mmap_expected_wildcard_member : Error<
-  "expected module export wildcard">;
+def err_mmap_expected_inferred_member : Error<
+  "expected %select{module exclusion with 'exclude'|'export *'}0">;
 def err_mmap_expected_export_wildcard : Error<
   "only '*' can be exported from an inferred submodule">;
 def err_mmap_explicit_top_level : Error<
