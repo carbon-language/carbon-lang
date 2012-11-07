@@ -45,6 +45,11 @@ OPTIONS
 
 
 
+**--input-file** *filename*
+
+  File to check (defaults to stdin).
+
+
 **--strict-whitespace**
 
  By default, FileCheck canonicalizes input horizontal whitespace (spaces and
