@@ -731,8 +731,9 @@ bool AddressSanitizer::doInitialization(Module &M) {
       std::string FunctionName = std::string(kAsanReportErrorTemplate) +
           (AccessIsWrite ? "store" : "load") + itostr(1 << AccessSizeIndex);
       // If we are merging crash callbacks, they have two parameters.
-      AsanErrorCallback[AccessIsWrite][AccessSizeIndex] = cast<Function>(
-          M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
+      AsanErrorCallback[AccessIsWrite][AccessSizeIndex] =
+          checkInterfaceFunction(M.getOrInsertFunction(
+              FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
     }
   }
 
