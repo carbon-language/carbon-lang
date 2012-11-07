@@ -4203,19 +4203,21 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.MicrosoftExt) {
-    AttributeList::Kind Kind = Attr.getKind();
-    if (Kind == AttributeList::AT_SingleInheritance)
-      D->addAttr(
-          ::new (S.Context) SingleInheritanceAttr(Attr.getRange(), S.Context));
-    else if (Kind == AttributeList::AT_MultipleInheritance)
-      D->addAttr(
-          ::new (S.Context) MultipleInheritanceAttr(Attr.getRange(), S.Context));
-    else if (Kind == AttributeList::AT_VirtualInheritance)
-      D->addAttr(
-          ::new (S.Context) VirtualInheritanceAttr(Attr.getRange(), S.Context));
-  } else
+  if (!S.LangOpts.MicrosoftExt) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    return;
+  }
+
+  AttributeList::Kind Kind = Attr.getKind();
+  if (Kind == AttributeList::AT_SingleInheritance)
+    D->addAttr(
+        ::new (S.Context) SingleInheritanceAttr(Attr.getRange(), S.Context));
+  else if (Kind == AttributeList::AT_MultipleInheritance)
+    D->addAttr(
+        ::new (S.Context) MultipleInheritanceAttr(Attr.getRange(), S.Context));
+  else if (Kind == AttributeList::AT_VirtualInheritance)
+    D->addAttr(
+        ::new (S.Context) VirtualInheritanceAttr(Attr.getRange(), S.Context));
 }
 
 static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
