@@ -3538,7 +3538,8 @@ static bool SwitchToLookupTable(SwitchInst *SI,
                                 const TargetTransformInfo *TTI) {
   assert(SI->getNumCases() > 1 && "Degenerate switch?");
 
-  if (TTI && !TTI->getScalarTargetTransformInfo()->shouldBuildLookupTables())
+  // Only build lookup table when we have a target that supports it.
+  if (!TTI || !TTI->getScalarTargetTransformInfo()->shouldBuildLookupTables())
     return false;
 
   // FIXME: If the switch is too sparse for a lookup table, perhaps we could

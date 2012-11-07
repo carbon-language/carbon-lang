@@ -141,9 +141,8 @@ UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
         ret i1 %UnifiedRetVal
         
 ; CHECK: @test6
-; CHECK: %switch.tableidx = sub i32 %tmp.2.i, 14
-; CHECK: %0 = icmp ult i32 %switch.tableidx, 6
-; CHECK: select i1 %0, i1 true, i1 false
+; CHECK: %tmp.2.i.off = add i32 %tmp.2.i, -14
+; CHECK: %switch = icmp ult i32 %tmp.2.i.off, 6
 }
 
 define void @test7(i8 zeroext %c, i32 %x) nounwind ssp noredzone {
