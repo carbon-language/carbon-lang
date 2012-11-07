@@ -770,7 +770,7 @@ sw.bb3: br label %return
 sw.default: unreachable
 
 return:
-  %retval.0 = phi i32 [ 1, %sw.bb3 ], [ -1, %sw.bb2 ], [ 1, %sw.bb1 ], [ 0, %sw.bb ]
+  %retval.0 = phi i32 [ 1, %sw.bb3 ], [ -1, %sw.bb2 ], [ 0, %sw.bb ]
   ret i32 %retval.0
 
 ; CHECK: @unreachable
