@@ -148,7 +148,7 @@ public:
 
             case eFormatInstruction:
                 if (count_option_set)
-                    byte_size_value = target->GetArchitecture().GetMaximumOpcodeByteSize() * format_options.GetCountValue().GetCurrentValue();
+                    byte_size_value = target->GetArchitecture().GetMaximumOpcodeByteSize();
                 m_num_per_line = 1;
                 break;
 
