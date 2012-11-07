@@ -154,6 +154,8 @@ public:
 
   bool empty() const { return Queue.empty(); }
 
+  void clear() { Queue.clear(); }
+
   unsigned size() const { return Queue.size(); }
 
   typedef std::vector<SUnit*>::iterator iterator;
@@ -171,10 +173,12 @@ public:
     SU->NodeQueueId |= ID;
   }
 
-  void remove(iterator I) {
+  iterator remove(iterator I) {
     (*I)->NodeQueueId &= ~ID;
     *I = Queue.back();
+    unsigned idx = I - Queue.begin();
     Queue.pop_back();
+    return Queue.begin() + idx;
   }
 
 #ifndef NDEBUG
@@ -305,6 +309,9 @@ protected:
 
   /// Reinsert debug_values recorded in ScheduleDAGInstrs::DbgValues.
   void placeDebugValues();
+
+  /// \brief dump the scheduled Sequence.
+  void dumpSchedule() const;
 
   // Lesser helpers...
 
