@@ -5076,18 +5076,32 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
     {
         if (src_die->Tag() == DW_TAG_subprogram)
         {
-            const char *src_name = src_die->GetMangledName (this, src_cu);
-            if (src_name)
-                src_name_to_die.Append(ConstString(src_name).GetCString(), src_die);
+            // Make sure this is a declaration and not a concrete instance by looking
+            // for DW_AT_declaration set to 1. Sometimes concrete function instances
+            // are placed inside the class definitions and shouldn't be included in
+            // the list of things are are tracking here.
+            if (src_die->GetAttributeValueAsUnsigned(this, src_cu, DW_AT_declaration, 0) == 1)
+            {
+                const char *src_name = src_die->GetMangledName (this, src_cu);
+                if (src_name)
+                    src_name_to_die.Append(ConstString(src_name).GetCString(), src_die);
+            }
         }
     }
     for (dst_die = dst_class_die->GetFirstChild(); dst_die != NULL; dst_die = dst_die->GetSibling())
     {
         if (dst_die->Tag() == DW_TAG_subprogram)
         {
-            const char *dst_name = dst_die->GetMangledName (this, dst_cu);
-            if (dst_name)
-                dst_name_to_die.Append(ConstString(dst_name).GetCString(), dst_die);
+            // Make sure this is a declaration and not a concrete instance by looking
+            // for DW_AT_declaration set to 1. Sometimes concrete function instances
+            // are placed inside the class definitions and shouldn't be included in
+            // the list of things are are tracking here.
+            if (dst_die->GetAttributeValueAsUnsigned(this, dst_cu, DW_AT_declaration, 0) == 1)
+            {
+                const char *dst_name = dst_die->GetMangledName (this, dst_cu);
+                if (dst_name)
+                    dst_name_to_die.Append(ConstString(dst_name).GetCString(), dst_die);
+            }
         }
     }
     const uint32_t src_size = src_name_to_die.GetSize ();
@@ -6495,7 +6509,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     break;
                 }
             default:
-                assert(false && "Unhandled type tag!");
+                GetObjectFile()->GetModule()->ReportError ("{0x%8.8x}: unhandled type tag 0x%4.4x (%s), please file a bug and attach the file at the start of this error message",
+                                                           die->GetOffset(),
+                                                           tag,
+                                                           DW_TAG_value_to_name(tag));
                 break;
             }
 
