@@ -2674,9 +2674,9 @@ IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
   if (MipsCCInfo.hasByValArg() || FI.hasByvalArg())
     return false;
 
-  // Return true if the callee's next stack offset is no larger than the
+  // Return true if the callee's argument area is no larger than the
   // caller's.
-  return NextStackOffset <= FI.nextStackOffset();
+  return NextStackOffset <= FI.getIncomingArgSize();
 }
 
 SDValue
@@ -3027,7 +3027,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   MipsCCInfo.analyzeFormalArguments(Ins);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
                            MipsCCInfo.hasByValArg());
-  MipsFI->setIncomingArgSize(CCInfo.getNextStackOffset());
 
   Function::const_arg_iterator FuncArg =
     DAG.getMachineFunction().getFunction()->arg_begin();
