@@ -10340,15 +10340,44 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
 
   Func->setReferenced();
 
-  // Don't mark this function as used multiple times, unless it's a constexpr
-  // function which we need to instantiate.
-  if (Func->isUsed(false) &&
-      !(Func->isConstexpr() && !Func->getBody() &&
-        Func->isImplicitlyInstantiable()))
-    return;
-
-  if (!IsPotentiallyEvaluatedContext(*this))
-    return;
+  // C++11 [basic.def.odr]p3:
+  //   A function whose name appears as a potentially-evaluated expression is
+  //   odr-used if it is the unique lookup result or the selected member of a
+  //   set of overloaded functions [...].
+  //
+  // We (incorrectly) mark overload resolution as an unevaluated context, so we
+  // can just check that here. Skip the rest of this function if we've already
+  // marked the function as used.
+  if (Func->isUsed(false) || !IsPotentiallyEvaluatedContext(*this)) {
+    // C++11 [temp.inst]p3:
+    //   Unless a function template specialization has been explicitly
+    //   instantiated or explicitly specialized, the function template
+    //   specialization is implicitly instantiated when the specialization is
+    //   referenced in a context that requires a function definition to exist.
+    //
+    // We consider constexpr function templates to be referenced in a context
+    // that requires a definition to exist whenever they are referenced.
+    //
+    // FIXME: This instantiates constexpr functions too frequently. If this is
+    // really an unevaluated context (and we're not just in the definition of a
+    // function template or overload resolution or other cases which we
+    // incorrectly consider to be unevaluated contexts), and we're not in a
+    // subexpression which we actually need to evaluate (for instance, a
+    // template argument, array bound or an expression in a braced-init-list),
+    // we are not permitted to instantiate this constexpr function definition.
+    //
+    // FIXME: This also implicitly defines special members too frequently. They
+    // are only supposed to be implicitly defined if they are odr-used, but they
+    // are not odr-used from constant expressions in unevaluated contexts.
+    // However, they cannot be referenced if they are deleted, and they are
+    // deleted whenever the implicit definition of the special member would
+    // fail.
+    if (!Func->isConstexpr() || Func->getBody())
+      return;
+    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Func);
+    if (!Func->isImplicitlyInstantiable() && (!MD || MD->isUserProvided()))
+      return;
+  }
 
   // Note that this declaration has been used.
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Func)) {

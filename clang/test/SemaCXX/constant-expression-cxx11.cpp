@@ -1451,6 +1451,7 @@ namespace PR14203 {
   }
   // FIXME: It's unclear whether this is valid. On the one hand, we're not
   // allowed to generate a move constructor. On the other hand, if we did,
-  // this would be a constant expression.
-  int n = sizeof(short{duration(duration())}); // expected-error {{non-constant-expression cannot be narrowed}} expected-note {{override}}
+  // this would be a constant expression. For now, we generate a move
+  // constructor here.
+  int n = sizeof(short{duration(duration())});
 }

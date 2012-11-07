@@ -30,20 +30,17 @@ namespace InClassInitializers {
   bool x = noexcept(TemplateArg());
 
   // And within a nested class.
-  // FIXME: The diagnostic location is terrible here.
-  struct Nested {
+  struct Nested { // expected-error {{cannot be used by non-static data member initializer}}
     struct Inner {
-      int n = ExceptionIf<noexcept(Nested())>::f();
-    } inner; // expected-error {{cannot be used by non-static data member initializer}}
+      int n = ExceptionIf<noexcept(Nested())>::f(); // expected-note {{implicit default constructor for 'InClassInitializers::Nested' first required here}}
+    } inner;
   };
-  bool y = noexcept(Nested());
-  bool z = noexcept(Nested::Inner());
 
   struct Nested2 {
     struct Inner;
     int n = Inner().n; // expected-error {{cannot be used by non-static data member initializer}}
     struct Inner {
-      int n = ExceptionIf<noexcept(Nested())>::f();
+      int n = ExceptionIf<noexcept(Nested2())>::f();
     } inner;
   };
 }
