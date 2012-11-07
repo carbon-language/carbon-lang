@@ -22,7 +22,14 @@ namespace clang {
 namespace ento {
 
   /// Declares an immutable map of type \p NameTy, suitable for placement into
-  /// the ProgramState.
+  /// the ProgramState. This is implementing using llvm::ImmutableMap.
+  ///
+  /// \code
+  /// State = State->set<Name>(K, V);
+  /// const Value *V = State->get<Name>(K); // Returns NULL if not in the map.
+  /// State = State->remove<Name>(K);
+  /// NameTy Map = State->get<Name>();
+  /// \endcode
   ///
   /// The macro should not be used inside namespaces, or for traits that must
   /// be accessible from more than one translation unit.
@@ -30,8 +37,15 @@ namespace ento {
     REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, \
                                      CLANG_ENTO_PROGRAMSTATE_MAP(Key, Value))
 
-  /// Declares an immutable list of type \p NameTy, suitable for placement into
-  /// the ProgramState.
+  /// Declares an immutable set of type \p NameTy, suitable for placement into
+  /// the ProgramState. This is implementing using llvm::ImmutableSet.
+  ///
+  /// \code
+  /// State = State->add<Name>(E);
+  /// State = State->remove<Name>(E);
+  /// bool Present = State->contains<Name>(E);
+  /// NameTy Set = State->get<Name>();
+  /// \endcode
   ///
   /// The macro should not be used inside namespaces, or for traits that must
   /// be accessible from more than one translation unit.
@@ -39,7 +53,13 @@ namespace ento {
     REGISTER_TRAIT_WITH_PROGRAMSTATE(Name, llvm::ImmutableSet<Elem>)
   
   /// Declares an immutable list of type \p NameTy, suitable for placement into
-  /// the ProgramState.
+  /// the ProgramState. This is implementing using llvm::ImmutableList.
+  ///
+  /// \code
+  /// State = State->add<Name>(E); // Adds to the /end/ of the list.
+  /// bool Present = State->contains<Name>(E);
+  /// NameTy List = State->get<Name>();
+  /// \endcode
   ///
   /// The macro should not be used inside namespaces, or for traits that must
   /// be accessible from more than one translation unit.
