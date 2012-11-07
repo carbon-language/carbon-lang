@@ -1855,7 +1855,9 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   assert((*startBuf == '@') && "bogus @synchronized location");
 
   std::string buf;
-  buf = "{ id _rethrow = 0; id _sync_obj = ";
+  SourceLocation SynchLoc = S->getAtSynchronizedLoc();
+  ConvertSourceLocationToLineDirective(SynchLoc, buf);
+  buf += "{ id _rethrow = 0; id _sync_obj = ";
   
   const char *lparenBuf = startBuf;
   while (*lparenBuf != '(') lparenBuf++;
