@@ -908,7 +908,7 @@ public:
   /// themselves).
   void popCatchScope();
 
-  llvm::BasicBlock *getEHResumeBlock();
+  llvm::BasicBlock *getEHResumeBlock(bool isCleanup);
   llvm::BasicBlock *getEHDispatchBlock(EHScopeStack::stable_iterator scope);
 
   /// An object to manage conditionally-evaluated expressions.

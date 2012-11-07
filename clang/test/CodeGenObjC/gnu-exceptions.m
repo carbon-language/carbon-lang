@@ -20,7 +20,7 @@ void test0() {
 
     // CHECK: call void @log(i32 0)
 
-    // CHECK: call void @objc_exception_throw
+    // CHECK: resume
 
     log(0);
   }

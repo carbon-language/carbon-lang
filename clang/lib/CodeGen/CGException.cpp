@@ -534,7 +534,7 @@ static void emitFilterDispatchBlock(CodeGenFunction &CGF,
     llvm::Value *zero = CGF.Builder.getInt32(0);
     llvm::Value *failsFilter =
       CGF.Builder.CreateICmpSLT(selector, zero, "ehspec.fails");
-    CGF.Builder.CreateCondBr(failsFilter, unexpectedBB, CGF.getEHResumeBlock());
+    CGF.Builder.CreateCondBr(failsFilter, unexpectedBB, CGF.getEHResumeBlock(false));
 
     CGF.EmitBlock(unexpectedBB);
   }
@@ -614,7 +614,7 @@ CodeGenFunction::getEHDispatchBlock(EHScopeStack::stable_iterator si) {
   // The dispatch block for the end of the scope chain is a block that
   // just resumes unwinding.
   if (si == EHStack.stable_end())
-    return getEHResumeBlock();
+    return getEHResumeBlock(true);
 
   // Otherwise, we should look at the actual scope.
   EHScope &scope = *EHStack.find(si);
@@ -1546,7 +1546,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   return TerminateHandler;
 }
 
-llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
+llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
   if (EHResumeBlock) return EHResumeBlock;
 
   CGBuilderTy::InsertPoint SavedIP = Builder.saveIP();
@@ -1560,7 +1560,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
   // This can always be a call because we necessarily didn't find
   // anything on the EH stack which needs our help.
   const char *RethrowName = Personality.CatchallRethrowFn;
-  if (RethrowName != 0) {
+  if (RethrowName != 0 && !isCleanup) {
     Builder.CreateCall(getCatchallRethrowFn(*this, RethrowName),
                        getExceptionFromSlot())
       ->setDoesNotReturn();

@@ -2547,7 +2547,7 @@ void CGObjCGNU::EmitTryStmt(CodeGenFunction &CGF,
   // Unlike the Apple non-fragile runtimes, which also uses
   // unwind-based zero cost exceptions, the GNU Objective C runtime's
   // EH support isn't a veneer over C++ EH.  Instead, exception
-  // objects are created by __objc_exception_throw and destroyed by
+  // objects are created by objc_exception_throw and destroyed by
   // the personality function; this avoids the need for bracketing
   // catch handlers with calls to __blah_begin_catch/__blah_end_catch
   // (or even _Unwind_DeleteException), but probably doesn't
@@ -2572,7 +2572,9 @@ void CGObjCGNU::EmitThrowStmt(CodeGenFunction &CGF,
     ExceptionAsObject = CGF.ObjCEHValueStack.back();
   }
   ExceptionAsObject = CGF.Builder.CreateBitCast(ExceptionAsObject, IdTy);
-  CGF.EmitCallOrInvoke(ExceptionThrowFn, ExceptionAsObject);
+  llvm::CallSite Throw =
+      CGF.EmitCallOrInvoke(ExceptionThrowFn, ExceptionAsObject);
+  Throw.setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
   CGF.Builder.ClearInsertionPoint();
 }
