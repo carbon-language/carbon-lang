@@ -248,5 +248,11 @@ TEST(ParmVarDecl, KNRRange) {
   EXPECT_TRUE(Verifier.match("void f(i) {}", varDecl(), Lang_C));
 }
 
+TEST(CXXNewExpr, ArrayRange) {
+  RangeVerifier<CXXNewExpr> Verifier;
+  Verifier.expectRange(1, 12, 1, 22);
+  EXPECT_TRUE(Verifier.match("void f() { new int[10]; }", newExpr()));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
