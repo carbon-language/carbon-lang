@@ -64,7 +64,7 @@ void RegisterPressure::decrease(const TargetRegisterClass *RC,
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-void RegisterPressure::dump(const TargetRegisterInfo *TRI) {
+void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dbgs() << "Live In: ";
   for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
     dbgs() << PrintReg(LiveInRegs[i], TRI) << " ";
@@ -322,10 +322,8 @@ struct RegisterOperands {
         if (findReg(MO.getReg(), isVReg, DeadDefs, TRI) == DeadDefs.end())
           DeadDefs.push_back(MO.getReg());
       }
-      else {
-        if (findReg(MO.getReg(), isVReg, Defs, TRI) == Defs.end())
-          Defs.push_back(MO.getReg());
-      }
+      else if (findReg(MO.getReg(), isVReg, Defs, TRI) == Defs.end())
+        Defs.push_back(MO.getReg());
     }
   }
 };
@@ -676,9 +674,16 @@ void RegPressureTracker::bumpUpwardPressure(const MachineInstr *MI) {
   decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
 
   // Kill liveness at live defs.
-  decreasePhysRegPressure(PhysRegOpers.Defs);
-  decreaseVirtRegPressure(VirtRegOpers.Defs);
-
+  for (unsigned i = 0, e = PhysRegOpers.Defs.size(); i < e; ++i) {
+    unsigned Reg = PhysRegOpers.Defs[i];
+    if (!findReg(Reg, false, PhysRegOpers.Uses, TRI))
+      decreasePhysRegPressure(PhysRegOpers.Defs);
+  }
+  for (unsigned i = 0, e = VirtRegOpers.Defs.size(); i < e; ++i) {
+    unsigned Reg = VirtRegOpers.Defs[i];
+    if (!findReg(Reg, true, VirtRegOpers.Uses, TRI))
+      decreaseVirtRegPressure(VirtRegOpers.Defs);
+  }
   // Generate liveness for uses.
   for (unsigned i = 0, e = PhysRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Uses[i];

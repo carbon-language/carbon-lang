@@ -43,7 +43,7 @@ struct RegisterPressure {
   /// class. This is only useful to account for spilling or rematerialization.
   void decrease(const TargetRegisterClass *RC, const TargetRegisterInfo *TRI);
 
-  void dump(const TargetRegisterInfo *TRI);
+  void dump(const TargetRegisterInfo *TRI) const;
 };
 
 /// RegisterPressure computed within a region of instructions delimited by
@@ -197,6 +197,7 @@ public:
   /// This result is complete if either advance() or recede() has returned true,
   /// or if closeRegion() was explicitly invoked.
   RegisterPressure &getPressure() { return P; }
+  const RegisterPressure &getPressure() const { return P; }
 
   /// Get the register set pressure at the current position, which may be less
   /// than the pressure across the traversed region.
