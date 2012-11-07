@@ -11,3 +11,11 @@
 // CHECK: "-MT"
 //
 // PR4062
+
+// RUN: %clang --target i386-pc-linux-gnu -### \
+// RUN:   -Wp,-MMD -fsyntax-only %s 2> %t
+// RUN: FileCheck -check-prefix MMD < %t %s
+
+// MMD: "-cc1"
+// MMD-NOT: -MMD
+// MMD: "-dependency-file" "Wp-args.d"

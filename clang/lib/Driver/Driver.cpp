@@ -185,7 +185,6 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     // some build systems. We don't try to be complete here because we don't
     // care to encourage this usage model.
     if (A->getOption().matches(options::OPT_Wp_COMMA) &&
-        A->getNumValues() == 2 &&
         (A->getValue(0) == StringRef("-MD") ||
          A->getValue(0) == StringRef("-MMD"))) {
       // Rewrite to -MD/-MMD along with -MF.
@@ -193,8 +192,9 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
         DAL->AddFlagArg(A, Opts->getOption(options::OPT_MD));
       else
         DAL->AddFlagArg(A, Opts->getOption(options::OPT_MMD));
-      DAL->AddSeparateArg(A, Opts->getOption(options::OPT_MF),
-                          A->getValue(1));
+      if (A->getNumValues() == 2)
+        DAL->AddSeparateArg(A, Opts->getOption(options::OPT_MF),
+                            A->getValue(1));
       continue;
     }
 
