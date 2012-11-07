@@ -3112,7 +3112,7 @@ void RewriteModernObjC::RewriteLineDirective(const Decl *D) {
   SourceLocation Location = D->getLocation();
   
   if (Location.isFileID()) {
-    std::string LineString("#line ");
+    std::string LineString("\n#line ");
     PresumedLoc PLoc = SM->getPresumedLoc(Location);
     LineString += utostr(PLoc.getLine());
     LineString += " \"";
