@@ -497,7 +497,6 @@ int ThreadTid(ThreadState *thr, uptr pc, uptr uid);
 void ThreadJoin(ThreadState *thr, uptr pc, int tid);
 void ThreadDetach(ThreadState *thr, uptr pc, int tid);
 void ThreadFinalize(ThreadState *thr);
-void ThreadFinalizerGoroutine(ThreadState *thr);
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init);
@@ -509,6 +508,7 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr);
 void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr);
 
 void Acquire(ThreadState *thr, uptr pc, uptr addr);
+void AcquireGlobal(ThreadState *thr, uptr pc);
 void Release(ThreadState *thr, uptr pc, uptr addr);
 void ReleaseStore(ThreadState *thr, uptr pc, uptr addr);
 void AfterSleep(ThreadState *thr, uptr pc);

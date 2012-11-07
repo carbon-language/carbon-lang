@@ -231,6 +231,20 @@ void Acquire(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.ReadUnlock();
 }
 
+void AcquireGlobal(ThreadState *thr, uptr pc) {
+  Context *ctx = CTX();
+  Lock l(&ctx->thread_mtx);
+  for (unsigned i = 0; i < kMaxTid; i++) {
+    ThreadContext *tctx = ctx->threads[i];
+    if (tctx == 0)
+      continue;
+    if (tctx->status == ThreadStatusRunning)
+      thr->clock.set(i, tctx->thr->fast_state.epoch());
+    else
+      thr->clock.set(i, tctx->epoch1);
+  }
+}
+
 void Release(ThreadState *thr, uptr pc, uptr addr) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: Release %zx\n", thr->tid, addr);

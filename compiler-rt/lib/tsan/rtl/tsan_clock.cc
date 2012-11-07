@@ -58,7 +58,6 @@ namespace __tsan {
 
 ThreadClock::ThreadClock() {
   nclk_ = 0;
-  disabled_ = false;
   for (uptr i = 0; i < (uptr)kMaxTidInClock; i++)
     clk_[i] = 0;
 }
@@ -81,8 +80,6 @@ void ThreadClock::release(SyncClock *dst) const {
   DCHECK(nclk_ <= kMaxTid);
   DCHECK(dst->clk_.Size() <= kMaxTid);
 
-  if (disabled_)
-    return;
   if (dst->clk_.Size() < nclk_)
     dst->clk_.Resize(nclk_);
   for (uptr i = 0; i < nclk_; i++) {
@@ -95,8 +92,6 @@ void ThreadClock::ReleaseStore(SyncClock *dst) const {
   DCHECK(nclk_ <= kMaxTid);
   DCHECK(dst->clk_.Size() <= kMaxTid);
 
-  if (disabled_)
-    return;
   if (dst->clk_.Size() < nclk_)
     dst->clk_.Resize(nclk_);
   for (uptr i = 0; i < nclk_; i++)
@@ -108,14 +103,6 @@ void ThreadClock::ReleaseStore(SyncClock *dst) const {
 void ThreadClock::acq_rel(SyncClock *dst) {
   acquire(dst);
   release(dst);
-}
-
-void ThreadClock::Disable(unsigned tid) {
-  disabled_ = true;
-  u64 c0 = clk_[tid];
-  for (uptr i = 0; i < kMaxTidInClock; i++)
-    clk_[i] = (u64)-1;
-  clk_[tid] = c0;
 }
 
 SyncClock::SyncClock()

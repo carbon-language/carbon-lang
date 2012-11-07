@@ -192,7 +192,7 @@ void __tsan_release_merge(int goid, void *addr) {
 
 void __tsan_finalizer_goroutine(int goid) {
   ThreadState *thr = goroutines[goid];
-  ThreadFinalizerGoroutine(thr);
+  AcquireGlobal(thr, 0);
 }
 
 #ifdef _WIN32

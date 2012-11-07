@@ -303,10 +303,6 @@ void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
   }
 }
 
-void ThreadFinalizerGoroutine(ThreadState *thr) {
-  thr->clock.Disable(thr->tid);
-}
-
 void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
                        uptr size, bool is_write) {
   if (size == 0)

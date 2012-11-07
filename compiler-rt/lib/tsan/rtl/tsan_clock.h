@@ -48,7 +48,7 @@ struct ThreadClock {
 
   void set(unsigned tid, u64 v) {
     DCHECK_LT(tid, kMaxTid);
-    DCHECK(v >= clk_[tid] || disabled_);
+    DCHECK_GE(v, clk_[tid]);
     clk_[tid] = v;
     if (nclk_ <= tid)
       nclk_ = tid + 1;
@@ -61,8 +61,6 @@ struct ThreadClock {
       nclk_ = tid + 1;
   }
 
-  void Disable(unsigned tid);
-
   uptr size() const {
     return nclk_;
   }
@@ -74,7 +72,6 @@ struct ThreadClock {
 
  private:
   uptr nclk_;
-  bool disabled_;
   u64 clk_[kMaxTidInClock];
 };
 
