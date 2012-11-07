@@ -62,6 +62,7 @@ typedef const struct __CFAllocator * CFAllocatorRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
 extern void CFRelease(CFTypeRef cf);
+extern CFTypeRef CFMakeCollectable(CFTypeRef cf);
 typedef struct {
 }
 CFArrayCallBacks;
@@ -508,30 +509,38 @@ void f15() {
   CFRelease(*B);  // no-warning
 }
 
-// Test when we pass NULL to CFRetain/CFRelease.
+// Test when we pass NULL to CFRetain/CFRelease/CFMakeCollectable.
 void f16(int x, CFTypeRef p) {
   if (p)
     return;
 
-  if (x) {
+  if (x > 0) {
     CFRelease(p); // expected-warning{{Null pointer argument in call to CFRelease}}
   }
-  else {
+  else if (x < 0) {
     CFRetain(p); // expected-warning{{Null pointer argument in call to CFRetain}}
+  }
+  else {
+    CFMakeCollectable(p); // expected-warning{{Null pointer argument in call to CFMakeCollectable}}
   }
 }
 
 // Test that an object is non-null after being CFRetained/CFReleased.
 void f17(int x, CFTypeRef p) {
-  if (x) {
+  if (x > 0) {
     CFRelease(p);
     if (!p)
       CFRelease(0); // no-warning
   }
-  else {
+  else if (x < 0) {
     CFRetain(p);
     if (!p)
       CFRetain(0); // no-warning
+  }
+  else {
+    CFMakeCollectable(p);
+    if (!p)
+      CFMakeCollectable(0); // no-warning
   }
 }
 

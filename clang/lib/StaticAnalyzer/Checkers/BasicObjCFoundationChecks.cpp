@@ -363,15 +363,15 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 }
 
 //===----------------------------------------------------------------------===//
-// CFRetain/CFRelease checking for null arguments.
+// CFRetain/CFRelease/CFMakeCollectable checking for null arguments.
 //===----------------------------------------------------------------------===//
 
 namespace {
 class CFRetainReleaseChecker : public Checker< check::PreStmt<CallExpr> > {
   mutable OwningPtr<APIMisuse> BT;
-  mutable IdentifierInfo *Retain, *Release;
+  mutable IdentifierInfo *Retain, *Release, *MakeCollectable;
 public:
-  CFRetainReleaseChecker(): Retain(0), Release(0) {}
+  CFRetainReleaseChecker(): Retain(0), Release(0), MakeCollectable(0) {}
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 } // end anonymous namespace
@@ -392,12 +392,14 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     ASTContext &Ctx = C.getASTContext();
     Retain = &Ctx.Idents.get("CFRetain");
     Release = &Ctx.Idents.get("CFRelease");
-    BT.reset(new APIMisuse("null passed to CFRetain/CFRelease"));
+    MakeCollectable = &Ctx.Idents.get("CFMakeCollectable");
+    BT.reset(
+      new APIMisuse("null passed to CFRetain/CFRelease/CFMakeCollectable"));
   }
 
-  // Check if we called CFRetain/CFRelease.
+  // Check if we called CFRetain/CFRelease/CFMakeCollectable.
   const IdentifierInfo *FuncII = FD->getIdentifier();
-  if (!(FuncII == Retain || FuncII == Release))
+  if (!(FuncII == Retain || FuncII == Release || FuncII == MakeCollectable))
     return;
 
   // FIXME: The rest of this just checks that the argument is non-null.
@@ -426,9 +428,15 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     if (!N)
       return;
 
-    const char *description = (FuncII == Retain)
-                            ? "Null pointer argument in call to CFRetain"
-                            : "Null pointer argument in call to CFRelease";
+    const char *description;
+    if (FuncII == Retain)
+      description = "Null pointer argument in call to CFRetain";
+    else if (FuncII == Release)
+      description = "Null pointer argument in call to CFRelease";
+    else if (FuncII == MakeCollectable)
+      description = "Null pointer argument in call to CFMakeCollectable";
+    else
+      llvm_unreachable("impossible case");
 
     BugReport *report = new BugReport(*BT, description, N);
     report->addRange(Arg->getSourceRange());

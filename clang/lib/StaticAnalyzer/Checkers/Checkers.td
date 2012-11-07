@@ -433,7 +433,7 @@ def CFNumberCreateChecker : Checker<"CFNumber">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
 def CFRetainReleaseChecker : Checker<"CFRetainRelease">,
-  HelpText<"Check for null arguments to CFRetain/CFRelease">,
+  HelpText<"Check for null arguments to CFRetain/CFRelease/CFMakeCollectable">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
 def CFErrorChecker : Checker<"CFError">,

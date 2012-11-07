@@ -270,9 +270,10 @@ Check for proper uses of
 .Fn CFNumberCreate .
 .It osx.coreFoundation.CFRetainRelease
 Check for null arguments to
-.Fn CFRetain
+.Fn CFRetain ,
+.Fn CFRelease ,
 and
-.Fn CFRelease .
+.Fn CFMakeCollectable .
 .It osx.coreFoundation.containers.OutOfBounds
 Checks for index out-of-bounds when using the
 .Vt CFArray
