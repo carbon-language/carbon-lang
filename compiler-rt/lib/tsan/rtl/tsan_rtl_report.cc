@@ -385,6 +385,8 @@ bool IsFiredSuppression(Context *ctx,
 }
 
 void ReportRace(ThreadState *thr) {
+  if (!flags()->report_bugs)
+    return;
   ScopedInRtl in_rtl;
 
   bool freed = false;

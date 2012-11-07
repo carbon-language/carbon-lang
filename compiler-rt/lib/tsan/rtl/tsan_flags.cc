@@ -40,6 +40,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->enable_annotations = true;
   f->suppress_equal_stacks = true;
   f->suppress_equal_addresses = true;
+  f->report_bugs = true;
   f->report_thread_leaks = true;
   f->report_destroy_locked = true;
   f->report_signal_unsafe = true;
@@ -63,6 +64,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->enable_annotations, "enable_annotations");
   ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
   ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
+  ParseFlag(env, &f->report_bugs, "report_bugs");
   ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
   ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked");
   ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe");
@@ -77,6 +79,12 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
   ParseFlag(env, &f->stop_on_start, "stop_on_start");
   ParseFlag(env, &f->external_symbolizer_path, "external_symbolizer_path");
+
+  if (!f->report_bugs) {
+    f->report_thread_leaks = false;
+    f->report_destroy_locked = false;
+    f->report_signal_unsafe = false;
+  }
 }
 
 }  // namespace __tsan

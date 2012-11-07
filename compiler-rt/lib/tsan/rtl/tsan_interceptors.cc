@@ -1344,7 +1344,7 @@ static void process_pending_signals(ThreadState *thr) {
           sigactions[sig].sa_sigaction(sig, &signal->siginfo, &signal->ctx);
         else
           sigactions[sig].sa_handler(sig);
-        if (errno != 0) {
+        if (flags()->report_bugs && errno != 0) {
           ScopedInRtl in_rtl;
           __tsan::StackTrace stack;
           uptr pc = signal->sigaction ?

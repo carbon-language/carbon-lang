@@ -31,6 +31,8 @@ struct Flags {
   // Supress a race report if we've already output another race report
   // on the same address.
   bool suppress_equal_addresses;
+  // Turns off bug reporting entirely (useful for benchmarking).
+  bool report_bugs;
   // Report thread leaks at exit?
   bool report_thread_leaks;
   // Report destruction of a locked mutex?
