@@ -16,10 +16,14 @@
 #include "llvm/Support/GCOV.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
+
+static cl::opt<std::string>
+InputFilename(cl::Positional, cl::desc("source filename"), cl::init(""));
 
 static cl::opt<bool>
 DumpGCOV("dump", cl::init(false), cl::desc("dump gcov file"));
@@ -39,6 +43,23 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argc, argv, "llvm cov\n");
+
+  if (InputFilename.empty()) {
+    // FIXME: Error out here.
+  }
+
+  sys::Path SrcFile(InputFilename);
+
+  sys::Path GCNOFile(SrcFile);
+  GCNOFile.eraseSuffix();
+  GCNOFile.appendSuffix(".gcno");
+
+  sys::Path GCDAFile(SrcFile);
+  GCDAFile.eraseSuffix();
+  GCDAFile.appendSuffix(".gcda");
+
+  sys::Path OutputFile(SrcFile);
+  OutputFile.appendSuffix(".gcov");
 
   GCOVFile GF;
   if (InputGCNO.empty())

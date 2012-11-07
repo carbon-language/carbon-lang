@@ -307,8 +307,11 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   assert(SPDie && "Unable to find subprogram DIE!");
   DISubprogram SP(SPNode);
 
-  // Pick up abstract subprogram DIE.
+  // If we're updating an abstract DIE, then we will be adding the children and
+  // object pointer later on. But what we don't want to do is process the
+  // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode)) {
+    // Pick up abstract subprogram DIE.
     SPDie = new DIE(dwarf::DW_TAG_subprogram);
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin,
                       dwarf::DW_FORM_ref4, AbsSPDIE);
