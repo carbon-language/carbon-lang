@@ -52,6 +52,23 @@ void ThreadFinalize(ThreadState *thr) {
   }
 }
 
+int ThreadCount(ThreadState *thr) {
+  CHECK_GT(thr->in_rtl, 0);
+  Context *ctx = CTX();
+  Lock l(&ctx->thread_mtx);
+  int cnt = 0;
+  for (unsigned i = 0; i < kMaxTid; i++) {
+    ThreadContext *tctx = ctx->threads[i];
+    if (tctx == 0)
+      continue;
+    if (tctx->status != ThreadStatusCreated
+        && tctx->status != ThreadStatusRunning)
+      continue;
+    cnt++;
+  }
+  return cnt;
+}
+
 static void ThreadDead(ThreadState *thr, ThreadContext *tctx) {
   Context *ctx = CTX();
   CHECK_GT(thr->in_rtl, 0);

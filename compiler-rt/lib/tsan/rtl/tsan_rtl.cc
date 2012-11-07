@@ -228,6 +228,9 @@ int Finalize(ThreadState *thr) {
   Context *ctx = __tsan::ctx;
   bool failed = false;
 
+  if (flags()->atexit_sleep_ms > 0 && ThreadCount(thr) > 1)
+    SleepForMillis(flags()->atexit_sleep_ms);
+
   // Wait for pending reports.
   ctx->report_mtx.Lock();
   ctx->report_mtx.Unlock();
