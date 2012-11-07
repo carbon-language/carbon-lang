@@ -542,12 +542,6 @@ namespace {
   };
 }
 
-static bool hasTrivialCopyOrMoveConstructor(const CXXRecordDecl *Record,
-                                            bool Moving) {
-  return Moving ? Record->hasTrivialMoveConstructor() :
-                  Record->hasTrivialCopyConstructor();
-}
-
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
                                   CXXCtorInitializer *MemberInit,
@@ -588,12 +582,11 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   if (Array && Constructor->isImplicitlyDefined() &&
       Constructor->isCopyOrMoveConstructor()) {
     QualType BaseElementTy = CGF.getContext().getBaseElementType(Array);
-    const CXXRecordDecl *Record = BaseElementTy->getAsCXXRecordDecl();
+    CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(MemberInit->getInit());
     if (BaseElementTy.isPODType(CGF.getContext()) ||
-        (Record && hasTrivialCopyOrMoveConstructor(Record,
-                       Constructor->isMoveConstructor()))) {
-      // Find the source pointer. We knows it's the last argument because
-      // we know we're in a copy constructor.
+        (CE && CE->getConstructor()->isTrivial())) {
+      // Find the source pointer. We know it's the last argument because
+      // we know we're in an implicit copy constructor.
       unsigned SrcArgIndex = Args.size() - 1;
       llvm::Value *SrcPtr
         = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(Args[SrcArgIndex]));
