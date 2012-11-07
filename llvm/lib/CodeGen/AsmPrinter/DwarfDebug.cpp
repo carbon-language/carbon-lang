@@ -307,47 +307,48 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   assert(SPDie && "Unable to find subprogram DIE!");
   DISubprogram SP(SPNode);
 
-  DISubprogram SPDecl = SP.getFunctionDeclaration();
-  if (!SPDecl.isSubprogram()) {
-    // There is not any need to generate specification DIE for a function
-    // defined at compile unit level. If a function is defined inside another
-    // function then gdb prefers the definition at top level and but does not
-    // expect specification DIE in parent function. So avoid creating
-    // specification DIE for a function defined inside a function.
-    if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
-        !SP.getContext().isFile() &&
-        !isSubprogramContext(SP.getContext())) {
-      SPCU->addFlag(SPDie, dwarf::DW_AT_declaration);
-      
-      // Add arguments.
-      DICompositeType SPTy = SP.getType();
-      DIArray Args = SPTy.getTypeArray();
-      unsigned SPTag = SPTy.getTag();
-      if (SPTag == dwarf::DW_TAG_subroutine_type)
-        for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-          DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-          DIType ATy = DIType(Args.getElement(i));
-          SPCU->addType(Arg, ATy);
-          if (ATy.isArtificial())
-            SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
-          if (ATy.isObjectPointer())
-            SPCU->addDIEEntry(SPDie, dwarf::DW_AT_object_pointer,
-                              dwarf::DW_FORM_ref4, Arg);
-          SPDie->addChild(Arg);
-        }
-      DIE *SPDeclDie = SPDie;
-      SPDie = new DIE(dwarf::DW_TAG_subprogram);
-      SPCU->addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
-                        SPDeclDie);
-      SPCU->addDie(SPDie);
-    }
-  }
   // Pick up abstract subprogram DIE.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode)) {
     SPDie = new DIE(dwarf::DW_TAG_subprogram);
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin,
                       dwarf::DW_FORM_ref4, AbsSPDIE);
     SPCU->addDie(SPDie);
+  } else {
+    DISubprogram SPDecl = SP.getFunctionDeclaration();
+    if (!SPDecl.isSubprogram()) {
+      // There is not any need to generate specification DIE for a function
+      // defined at compile unit level. If a function is defined inside another
+      // function then gdb prefers the definition at top level and but does not
+      // expect specification DIE in parent function. So avoid creating
+      // specification DIE for a function defined inside a function.
+      if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
+          !SP.getContext().isFile() &&
+          !isSubprogramContext(SP.getContext())) {
+        SPCU->addFlag(SPDie, dwarf::DW_AT_declaration);
+
+        // Add arguments.
+        DICompositeType SPTy = SP.getType();
+        DIArray Args = SPTy.getTypeArray();
+        unsigned SPTag = SPTy.getTag();
+        if (SPTag == dwarf::DW_TAG_subroutine_type)
+          for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
+            DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+            DIType ATy = DIType(Args.getElement(i));
+            SPCU->addType(Arg, ATy);
+            if (ATy.isArtificial())
+              SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
+            if (ATy.isObjectPointer())
+              SPCU->addDIEEntry(SPDie, dwarf::DW_AT_object_pointer,
+                                dwarf::DW_FORM_ref4, Arg);
+            SPDie->addChild(Arg);
+          }
+        DIE *SPDeclDie = SPDie;
+        SPDie = new DIE(dwarf::DW_TAG_subprogram);
+        SPCU->addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
+                          SPDeclDie);
+        SPCU->addDie(SPDie);
+      }
+    }
   }
 
   SPCU->addLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
@@ -803,7 +804,7 @@ void DwarfDebug::endModule() {
         LexicalScope *Scope = 
           new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
         DeadFnScopeMap[SP] = Scope;
-        
+
         // Construct subprogram DIE and add variables DIEs.
         CompileUnit *SPCU = CUMap.lookup(TheCU);
         assert(SPCU && "Unable to find Compile Unit!");
