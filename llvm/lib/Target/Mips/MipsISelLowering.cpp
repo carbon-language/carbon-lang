@@ -247,6 +247,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::SRL_PARTS,          MVT::i32,   Custom);
   }
 
+  setOperationAction(ISD::ADD,                MVT::i32,   Custom);
+  if (HasMips64)
+    setOperationAction(ISD::ADD,                MVT::i64,   Custom);
+
   setOperationAction(ISD::SDIV, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i32, Expand);
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
@@ -914,6 +918,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::STORE:              return LowerSTORE(Op, DAG);
     case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
     case ISD::INTRINSIC_W_CHAIN:  return LowerINTRINSIC_W_CHAIN(Op, DAG);
+    case ISD::ADD:                return LowerADD(Op, DAG);
   }
   return SDValue();
 }
@@ -2539,6 +2544,27 @@ SDValue MipsTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
   case Intrinsic::mips_dpsqx_sa_w_ph:
     return LowerDSPIntr(Op, DAG, MipsISD::DPSQX_SA_W_PH, true, true);
   }
+}
+
+SDValue MipsTargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) const {
+  if (Op->getOperand(0).getOpcode() != ISD::FRAMEADDR
+      || cast<ConstantSDNode>
+        (Op->getOperand(0).getOperand(0))->getZExtValue() != 0
+      || Op->getOperand(1).getOpcode() != ISD::FRAME_TO_ARGS_OFFSET)
+    return SDValue();
+
+  // The pattern
+  //   (add (frameaddr 0), (frame_to_args_offset))
+  // results from lowering llvm.eh.dwarf.cfa intrinsic. Transform it to
+  //   (add FrameObject, 0)
+  // where FrameObject is a fixed StackObject with offset 0 which points to
+  // the old stack pointer.
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  EVT ValTy = Op->getValueType(0);
+  int FI = MFI->CreateFixedObject(Op.getValueSizeInBits() / 8, 0, false);
+  SDValue InArgsAddr = DAG.getFrameIndex(FI, ValTy);
+  return DAG.getNode(ISD::ADD, Op->getDebugLoc(), ValTy, InArgsAddr,
+                     DAG.getConstant(0, ValTy));
 }
 
 //===----------------------------------------------------------------------===//
