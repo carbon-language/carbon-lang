@@ -524,6 +524,9 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         
         clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, true);
         
+        if (log)
+            log->Printf("[  AOTV::FD] Instance method [%s] [%s]", name, types);
+        
         if (method_decl)
             interface_decl->addDecl(method_decl);
     };
@@ -534,9 +537,20 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         
         clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, false);
         
+        if (log)
+            log->Printf("[  AOTV::FD] Class method [%s] [%s]", name, types);
+        
         if (method_decl)
             interface_decl->addDecl(method_decl);
     };
+    
+    if (log)
+    {
+        ASTDumper method_dumper ((clang::Decl*)interface_decl);
+        
+        log->Printf("[AppleObjCTypeVendor::FinishDecl] Finishing Objective-C interface for %s", descriptor->GetClassName().AsCString());
+    }
+    
     
     if (!descriptor->Describe(superclass_func, instance_method_func, class_method_func))
         return false;
@@ -661,8 +675,6 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
                         current_id,
                         dumper.GetCString(),
                         (uint64_t)isa);
-            
-            break;
         }
         
         types.push_back(ClangASTType(ast_ctx, new_iface_type.getAsOpaquePtr()));
