@@ -7,6 +7,13 @@ add_clang_executable(c-index-test
   c-index-test.c
   )
 
+if(NOT MSVC)
+  set_property(
+    SOURCE c-index-test.c
+    PROPERTY COMPILE_FLAGS "-std=c89"
+    )
+endif()
+
 target_link_libraries(c-index-test
   libclang
   )
