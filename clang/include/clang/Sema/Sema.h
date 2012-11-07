@@ -3762,7 +3762,7 @@ public:
                          SourceLocation PlacementRParen,
                          SourceRange TypeIdParens, Declarator &D,
                          Expr *Initializer);
-  ExprResult BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
+  ExprResult BuildCXXNew(SourceRange Range, bool UseGlobal,
                          SourceLocation PlacementLParen,
                          MultiExprArg PlacementArgs,
                          SourceLocation PlacementRParen,

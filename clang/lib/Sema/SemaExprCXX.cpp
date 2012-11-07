@@ -987,7 +987,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (ParenListExpr *List = dyn_cast_or_null<ParenListExpr>(Initializer))
     DirectInitRange = List->getSourceRange();
 
-  return BuildCXXNew(StartLoc, UseGlobal,
+  return BuildCXXNew(SourceRange(StartLoc, D.getLocEnd()), UseGlobal,
                      PlacementLParen,
                      PlacementArgs,
                      PlacementRParen,
@@ -1020,7 +1020,7 @@ static bool isLegalArrayNewInitializer(CXXNewExpr::InitializationStyle Style,
 }
 
 ExprResult
-Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
+Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
                   SourceLocation PlacementLParen,
                   MultiExprArg PlacementArgs,
                   SourceLocation PlacementRParen,
@@ -1032,6 +1032,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   Expr *Initializer,
                   bool TypeMayContainAuto) {
   SourceRange TypeRange = AllocTypeInfo->getTypeLoc().getSourceRange();
+  SourceLocation StartLoc = Range.getBegin();
 
   CXXNewExpr::InitializationStyle initStyle;
   if (DirectInitRange.isValid()) {
@@ -1407,7 +1408,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                         TypeIdParens,
                                         ArraySize, initStyle, Initializer,
                                         ResultType, AllocTypeInfo,
-                                        StartLoc, DirectInitRange));
+                                        Range, DirectInitRange));
 }
 
 /// \brief Checks that a type is suitable as the allocated type

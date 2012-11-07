@@ -88,14 +88,14 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        InitializationStyle initializationStyle,
                        Expr *initializer, QualType ty,
                        TypeSourceInfo *allocatedTypeInfo,
-                       SourceLocation startLoc, SourceRange directInitRange)
+                       SourceRange Range, SourceRange directInitRange)
   : Expr(CXXNewExprClass, ty, VK_RValue, OK_Ordinary,
          ty->isDependentType(), ty->isDependentType(),
          ty->isInstantiationDependentType(),
          ty->containsUnexpandedParameterPack()),
     SubExprs(0), OperatorNew(operatorNew), OperatorDelete(operatorDelete),
     AllocatedTypeInfo(allocatedTypeInfo), TypeIdParens(typeIdParens),
-    StartLoc(startLoc), DirectInitRange(directInitRange),
+    Range(Range), DirectInitRange(directInitRange),
     GlobalNew(globalNew), UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize) {
   assert((initializer != 0 || initializationStyle == NoInit) &&
          "Only NoInit can have no initializer.");
@@ -145,18 +145,6 @@ void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
 bool CXXNewExpr::shouldNullCheckAllocation(ASTContext &Ctx) const {
   return getOperatorNew()->getType()->
     castAs<FunctionProtoType>()->isNothrow(Ctx);
-}
-
-SourceLocation CXXNewExpr::getEndLoc() const {
-  switch (getInitializationStyle()) {
-  case NoInit:
-    return AllocatedTypeInfo->getTypeLoc().getEndLoc();
-  case CallInit:
-    return DirectInitRange.getEnd();
-  case ListInit:
-    return getInitializer()->getSourceRange().getEnd();
-  }
-  llvm_unreachable("bogus initialization style");
 }
 
 // CXXDeleteExpr

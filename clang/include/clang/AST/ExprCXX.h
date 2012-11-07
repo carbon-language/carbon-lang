@@ -1463,8 +1463,8 @@ class CXXNewExpr : public Expr {
   /// the source range covering the parenthesized type-id.
   SourceRange TypeIdParens;
 
-  /// \brief Location of the first token.
-  SourceLocation StartLoc;
+  /// \brief Range of the entire new expression.
+  SourceRange Range;
 
   /// \brief Source-range of a paren-delimited initializer.
   SourceRange DirectInitRange;
@@ -1498,7 +1498,7 @@ public:
              SourceRange typeIdParens, Expr *arraySize,
              InitializationStyle initializationStyle, Expr *initializer,
              QualType ty, TypeSourceInfo *AllocatedTypeInfo,
-             SourceLocation startLoc, SourceRange directInitRange);
+             SourceRange Range, SourceRange directInitRange);
   explicit CXXNewExpr(EmptyShell Shell)
     : Expr(CXXNewExprClass, Shell), SubExprs(0) { }
 
@@ -1613,13 +1613,13 @@ public:
     return SubExprs + Array + hasInitializer() + getNumPlacementArgs();
   }
 
-  SourceLocation getStartLoc() const { return StartLoc; }
-  SourceLocation getEndLoc() const;
+  SourceLocation getStartLoc() const { return Range.getBegin(); }
+  SourceLocation getEndLoc() const { return Range.getEnd(); }
 
   SourceRange getDirectInitRange() const { return DirectInitRange; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getStartLoc(), getEndLoc());
+    return Range;
   }
 
   static bool classof(const Stmt *T) {
