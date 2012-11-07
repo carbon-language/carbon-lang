@@ -276,8 +276,9 @@ simple example:
 The first check line matches a regex (**%[a-z]+**) and captures it into
 the variable "REGISTER".  The second line verifies that whatever is in REGISTER
 occurs later in the file after an "andw".  FileCheck variable references are
-always contained in **[[ ]]** pairs, are named, and their names can be
-name, then it is a definition of the variable, if not, it is a use.
+always contained in **[[ ]]** pairs, and their names can be formed with the
+regex **[a-zA-Z][a-zA-Z0-9]***.  If a colon follows the name, then it is a
+definition of the variable; otherwise, it is a use.
 
 FileCheck variables can be defined multiple times, and uses always get the
 latest value.  Note that variables are all read at the start of a "CHECK" line
