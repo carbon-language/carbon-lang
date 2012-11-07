@@ -105,7 +105,10 @@ public:
   std::pair<ModuleFile *, bool> 
   addModule(StringRef FileName, ModuleKind Type, ModuleFile *ImportedBy,
             unsigned Generation, std::string &ErrorStr);
-  
+
+  /// \brief Remove the given set of modules.
+  void removeModules(ModuleIterator first, ModuleIterator last);
+
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
   

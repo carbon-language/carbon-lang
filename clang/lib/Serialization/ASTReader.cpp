@@ -2675,16 +2675,21 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // Bump the generation number.
   unsigned PreviousGeneration = CurrentGeneration++;
 
-  // Load the core of the AST files.
+  unsigned NumModules = ModuleMgr.size();
   llvm::SmallVector<ModuleFile *, 4> Loaded;
-  switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0, Loaded,
-                     ClientLoadCapabilities)) {
-  case Failure: return Failure;
-  case OutOfDate: return OutOfDate;
-  case VersionMismatch: return VersionMismatch;
-  case ConfigurationMismatch: return ConfigurationMismatch;
-  case HadErrors: return HadErrors;
-  case Success: break;
+  switch(ASTReadResult ReadResult = ReadASTCore(FileName, Type,
+                                                /*ImportedBy=*/0, Loaded,
+                                                ClientLoadCapabilities)) {
+  case Failure:
+  case OutOfDate:
+  case VersionMismatch:
+  case ConfigurationMismatch:
+  case HadErrors:
+    ModuleMgr.removeModules(ModuleMgr.begin() + NumModules, ModuleMgr.end());
+    return ReadResult;
+
+  case Success:
+    break;
   }
 
   // Here comes stuff that we only do once the entire chain is loaded.

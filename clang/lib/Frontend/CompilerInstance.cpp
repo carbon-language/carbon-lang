@@ -762,7 +762,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
     // Someone else is responsible for building the module. Wait for them to
     // finish.
     Locked.waitForUnlock();
-    break;
+    return;
   }
 
   ModuleMap &ModMap 
@@ -975,13 +975,36 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     }
 
     // Try to load the module we found.
+    unsigned ARRFlags = ASTReader::ARR_None;
+    if (Module)
+      ARRFlags |= ASTReader::ARR_OutOfDate;
     switch (ModuleManager->ReadAST(ModuleFile->getName(),
                                    serialization::MK_Module,
-                                   ASTReader::ARR_None)) {
+                                   ARRFlags)) {
     case ASTReader::Success:
       break;
 
-    case ASTReader::OutOfDate:
+    case ASTReader::OutOfDate: {
+      // The module file is out-of-date. Rebuild it.
+      getFileManager().invalidateCache(ModuleFile);
+      bool Existed;
+      llvm::sys::fs::remove(ModuleFileName, Existed);
+      compileModule(*this, Module, ModuleFileName);
+
+      // Try loading the module again.
+      ModuleFile = FileMgr->getFile(ModuleFileName);
+      if (!ModuleFile ||
+          ModuleManager->ReadAST(ModuleFileName,
+                                 serialization::MK_Module,
+                                 ASTReader::ARR_None) != ASTReader::Success) {
+        KnownModules[Path[0].first] = 0;
+        return 0;
+      }
+
+      // Okay, we've rebuilt and now loaded the module.
+      break;
+    }
+
     case ASTReader::VersionMismatch:
     case ASTReader::ConfigurationMismatch:
     case ASTReader::HadErrors:
