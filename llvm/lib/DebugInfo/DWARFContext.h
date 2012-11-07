@@ -26,6 +26,7 @@ namespace llvm {
 /// methods that a concrete implementation provides.
 class DWARFContext : public DIContext {
   bool IsLittleEndian;
+  const RelocAddrMap &RelocMap;
 
   SmallVector<DWARFCompileUnit, 1> CUs;
   OwningPtr<DWARFDebugAbbrev> Abbrev;
@@ -38,9 +39,11 @@ class DWARFContext : public DIContext {
   /// Read compile units from the debug_info section and store them in CUs.
   void parseCompileUnits();
 protected:
-  DWARFContext(bool isLittleEndian) : IsLittleEndian(isLittleEndian) {}
+  DWARFContext(bool isLittleEndian, const RelocAddrMap &Map) :
+    IsLittleEndian(isLittleEndian), RelocMap(Map) {}
 public:
   virtual void dump(raw_ostream &OS);
+
   /// Get the number of compile units in this context.
   unsigned getNumCompileUnits() {
     if (CUs.empty())
@@ -70,6 +73,7 @@ public:
       DILineInfoSpecifier Specifier = DILineInfoSpecifier());
 
   bool isLittleEndian() const { return IsLittleEndian; }
+  const RelocAddrMap &relocMap() const { return RelocMap; }
 
   virtual StringRef getInfoSection() = 0;
   virtual StringRef getAbbrevSection() = 0;
@@ -108,8 +112,9 @@ public:
                        StringRef aRangeSection,
                        StringRef lineSection,
                        StringRef stringSection,
-                       StringRef rangeSection)
-    : DWARFContext(isLittleEndian),
+                       StringRef rangeSection,
+                       const RelocAddrMap &Map = RelocAddrMap())
+    : DWARFContext(isLittleEndian, Map),
       InfoSection(infoSection),
       AbbrevSection(abbrevSection),
       ARangeSection(aRangeSection),

@@ -15,6 +15,7 @@
 #ifndef LLVM_DEBUGINFO_DICONTEXT_H
 #define LLVM_DEBUGINFO_DICONTEXT_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -89,6 +90,13 @@ public:
   }
 };
 
+// In place of applying the relocations to the data we've read from disk we use
+// a separate mapping table to the side and checking that at locations in the dwarf
+// we expec relocated values. This adds a bit of complexity to the dwarf
+// parsing/extraction at the benefit of not allocating memory for the entire
+// size of the debug info sections.
+typedef DenseMap<uint64_t, std::pair<uint8_t, int64_t> > RelocAddrMap;
+
 class DIContext {
 public:
   virtual ~DIContext();
@@ -100,7 +108,8 @@ public:
                                     StringRef aRangeSection = StringRef(),
                                     StringRef lineSection = StringRef(),
                                     StringRef stringSection = StringRef(),
-                                    StringRef rangeSection = StringRef());
+                                    StringRef rangeSection = StringRef(),
+                                    const RelocAddrMap &Map = RelocAddrMap());
 
   virtual void dump(raw_ostream &OS) = 0;
 

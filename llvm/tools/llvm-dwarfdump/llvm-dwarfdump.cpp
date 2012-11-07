@@ -15,6 +15,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/RelocVisitor.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -28,6 +29,9 @@
 #include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cstring>
+#include <list>
+#include <string>
+
 using namespace llvm;
 using namespace object;
 
@@ -67,6 +71,7 @@ static void DumpInput(const StringRef &Filename) {
   OwningPtr<ObjectFile> Obj(ObjectFile::createObjectFile(Buff.take()));
 
   StringRef DebugInfoSection;
+  RelocAddrMap RelocMap;
   StringRef DebugAbbrevSection;
   StringRef DebugLineSection;
   StringRef DebugArangesSection;
@@ -97,6 +102,57 @@ static void DumpInput(const StringRef &Filename) {
       DebugStringSection = data;
     else if (name == "debug_ranges")
       DebugRangesSection = data;
+    // Any more debug info sections go here.
+    else
+      continue;
+
+    // TODO: For now only handle relocations for the debug_info section.
+    if (name != "debug_info")
+      continue;
+
+    if (i->begin_relocations() != i->end_relocations()) {
+      uint64_t SectionSize;
+      i->getSize(SectionSize);
+      for (relocation_iterator reloc_i = i->begin_relocations(),
+                               reloc_e = i->end_relocations();
+                               reloc_i != reloc_e; reloc_i.increment(ec)) {
+        uint64_t Address;
+        reloc_i->getAddress(Address);
+        uint64_t Type;
+        reloc_i->getType(Type);
+
+        RelocVisitor V(Obj->getFileFormatName());
+        // The section address is always 0 for debug sections.
+        RelocToApply R(V.visit(Type, *reloc_i));
+        if (V.error()) {
+          SmallString<32> Name;
+          error_code ec(reloc_i->getTypeName(Name));
+          if (ec) {
+            errs() << "Aaaaaa! Nameless relocation! Aaaaaa!\n";
+          }
+          errs() << "error: failed to compute relocation: "
+                 << Name << "\n";
+          continue;
+        }
+
+        if (Address + R.Width > SectionSize) {
+          errs() << "error: " << R.Width << "-byte relocation starting "
+                 << Address << " bytes into section " << name << " which is "
+                 << SectionSize << " bytes long.\n";
+          continue;
+        }
+        if (R.Width > 8) {
+          errs() << "error: can't handle a relocation of more than 8 bytes at "
+                    "a time.\n";
+          continue;
+        }
+        DEBUG(dbgs() << "Writing " << format("%p", R.Value)
+                     << " at " << format("%p", Address)
+                     << " with width " << format("%d", R.Width)
+                     << "\n");
+        RelocMap[Address] = std::make_pair(R.Width, R.Value);
+      }
+    }
   }
 
   OwningPtr<DIContext> dictx(DIContext::getDWARFContext(/*FIXME*/true,
@@ -105,7 +161,8 @@ static void DumpInput(const StringRef &Filename) {
                                                         DebugArangesSection,
                                                         DebugLineSection,
                                                         DebugStringSection,
-                                                        DebugRangesSection));
+                                                        DebugRangesSection,
+                                                        RelocMap));
   if (Address == -1ULL) {
     outs() << Filename
            << ":\tfile format " << Obj->getFileFormatName() << "\n\n";

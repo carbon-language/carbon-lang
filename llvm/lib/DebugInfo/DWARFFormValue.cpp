@@ -10,6 +10,7 @@
 #include "DWARFFormValue.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFContext.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -98,8 +99,16 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
     indirect = false;
     switch (Form) {
     case DW_FORM_addr:
-    case DW_FORM_ref_addr:
-      Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
+    case DW_FORM_ref_addr: {
+      RelocAddrMap::const_iterator AI
+        = cu->getContext().relocMap().find(*offset_ptr);
+      if (AI != cu->getContext().relocMap().end()) {
+        const std::pair<uint8_t, int64_t> &R = AI->second;
+        Value.uval = R.second;
+        *offset_ptr += R.first;
+      } else
+        Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
+    }
       break;
     case DW_FORM_exprloc:
     case DW_FORM_block:
@@ -138,9 +147,17 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
     case DW_FORM_sdata:
       Value.sval = data.getSLEB128(offset_ptr);
       break;
-    case DW_FORM_strp:
-      Value.uval = data.getU32(offset_ptr);
+    case DW_FORM_strp: {
+      RelocAddrMap::const_iterator AI
+        = cu->getContext().relocMap().find(*offset_ptr);
+      if (AI != cu->getContext().relocMap().end()) {
+        const std::pair<uint8_t, int64_t> &R = AI->second;
+        Value.uval = R.second;
+        *offset_ptr += R.first;
+      } else
+        Value.uval = data.getU32(offset_ptr);
       break;
+    }
     case DW_FORM_udata:
     case DW_FORM_ref_udata:
       Value.uval = data.getULEB128(offset_ptr);
