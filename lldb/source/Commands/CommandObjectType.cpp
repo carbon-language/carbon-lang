@@ -3821,7 +3821,7 @@ public:
                     "    int i;\n"
                     "} \n"
                     "Typing:\n"
-                    "type filter add --child a -- child g Foo\n"
+                    "type filter add --child a --child g Foo\n"
                     "frame variable a_foo\n"
                     "will produce an output where only a and g are displayed\n"
                     "Other children of a_foo (b,c,d,e,f,h and i) are available by asking for them, as in:\n"
