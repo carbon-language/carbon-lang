@@ -122,6 +122,18 @@ void __tsan_write(int goid, void *addr, void *pc) {
   MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, true);
 }
 
+void __tsan_read_range(int goid, void *addr, uptr size, uptr step, void *pc) {
+  ThreadState *thr = goroutines[goid];
+  for (uptr i = 0; i < size; i += step)
+	  MemoryAccess(thr, (uptr)pc, (uptr)addr + i, 0, false);
+}
+
+void __tsan_write_range(int goid, void *addr, uptr size, uptr step, void *pc) {
+  ThreadState *thr = goroutines[goid];
+  for (uptr i = 0; i < size; i += step)
+	  MemoryAccess(thr, (uptr)pc, (uptr)addr + i, 0, true);
+}
+
 void __tsan_func_enter(int goid, void *pc) {
   ThreadState *thr = goroutines[goid];
   FuncEntry(thr, (uptr)pc);
