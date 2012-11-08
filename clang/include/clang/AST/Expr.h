@@ -3539,21 +3539,32 @@ public:
 /// initializer lists may still have fewer initializers than there are
 /// elements to initialize within the object.
 ///
+/// After semantic analysis has completed, given an initializer list,
+/// method isSemanticForm() returns true if and only if this is the
+/// semantic form of the initializer list (note: the same AST node
+/// may at the same time be the syntactic form).
 /// Given the semantic form of the initializer list, one can retrieve
-/// the original syntactic form of that initializer list (if it
-/// exists) using getSyntacticForm(). Since many initializer lists
-/// have the same syntactic and semantic forms, getSyntacticForm() may
-/// return NULL, indicating that the current initializer list also
-/// serves as its syntactic form.
+/// the syntactic form of that initializer list (when different)
+/// using method getSyntacticForm(); the method returns null if applied
+/// to a initializer list which is already in syntactic form.
+/// Similarly, given the syntactic form (i.e., an initializer list such
+/// that isSemanticForm() returns false), one can retrieve the semantic
+/// form using method getSemanticForm().
+/// Since many initializer lists have the same syntactic and semantic forms,
+/// getSyntacticForm() may return NULL, indicating that the current
+/// semantic initializer list also serves as its syntactic form.
 class InitListExpr : public Expr {
   // FIXME: Eliminate this vector in favor of ASTContext allocation
   typedef ASTVector<Stmt *> InitExprsTy;
   InitExprsTy InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
 
-  /// Contains the initializer list that describes the syntactic form
-  /// written in the source code.
-  InitListExpr *SyntacticForm;
+  /// The alternative form of the initializer list (if it exists).
+  /// The int part of the pair stores whether this initalizer list is
+  /// in semantic form. If not null, the pointer points to:
+  ///   - the syntactic form, if this is in semantic form;
+  ///   - the semantic form, if this is in syntactic form.
+  llvm::PointerIntPair<InitListExpr *, 1, bool> AltForm;
 
   /// \brief Either:
   ///  If this initializer list initializes an array with more elements than
@@ -3658,12 +3669,20 @@ public:
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation Loc) { RBraceLoc = Loc; }
 
-  /// @brief Retrieve the initializer list that describes the
-  /// syntactic form of the initializer.
-  ///
-  ///
-  InitListExpr *getSyntacticForm() const { return SyntacticForm; }
-  void setSyntacticForm(InitListExpr *Init) { SyntacticForm = Init; }
+  bool isSemanticForm() const { return AltForm.getInt(); }
+  InitListExpr *getSemanticForm() const {
+    return isSemanticForm() ? 0 : AltForm.getPointer();
+  }
+  InitListExpr *getSyntacticForm() const {
+    return isSemanticForm() ? AltForm.getPointer() : 0;
+  }
+
+  void setSyntacticForm(InitListExpr *Init) {
+    AltForm.setPointer(Init);
+    AltForm.setInt(true);
+    Init->AltForm.setPointer(this);
+    Init->AltForm.setInt(false);
+  }
 
   bool hadArrayRangeDesignator() const {
     return InitListExprBits.HadArrayRangeDesignator != 0;
