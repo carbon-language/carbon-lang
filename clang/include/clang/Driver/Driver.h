@@ -146,9 +146,6 @@ private:
   /// jobs.
   unsigned CheckInputsExist : 1;
 
-  /// \brief Force use of clang frontend.
-  unsigned ForcedClangUse : 1;
-
 public:
   /// Use lazy precompiled headers for PCH support.
   unsigned CCCUsePCH : 1;
@@ -217,9 +214,6 @@ public:
   void setInstalledDir(StringRef Value) {
     InstalledDir = Value;
   }
-
-  bool shouldForceClangUse() const { return ForcedClangUse; }
-  void setForcedClangUse(bool V = true) { ForcedClangUse = V; }
 
   /// @}
   /// @name Primary Functionality
