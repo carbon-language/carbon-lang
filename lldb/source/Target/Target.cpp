@@ -1059,31 +1059,31 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
 }
 
 void
-Target::WillClearList ()
+Target::WillClearList (const ModuleList& module_list)
 {
 }
 
 void
-Target::ModuleAdded (const ModuleSP &module_sp)
+Target::ModuleAdded (const ModuleList& module_list, const ModuleSP &module_sp)
 {
     // A module is being added to this target for the first time
-    ModuleList module_list;
-    module_list.Append(module_sp);
+    ModuleList my_module_list;
+    my_module_list.Append(module_sp);
     LoadScriptingResourceForModule(module_sp, this);
-    ModulesDidLoad (module_list);
+    ModulesDidLoad (my_module_list);
 }
 
 void
-Target::ModuleRemoved (const ModuleSP &module_sp)
+Target::ModuleRemoved (const ModuleList& module_list, const ModuleSP &module_sp)
 {
     // A module is being added to this target for the first time
-    ModuleList module_list;
-    module_list.Append(module_sp);
-    ModulesDidUnload (module_list);
+    ModuleList my_module_list;
+    my_module_list.Append(module_sp);
+    ModulesDidUnload (my_module_list);
 }
 
 void
-Target::ModuleUpdated (const ModuleSP &old_module_sp, const ModuleSP &new_module_sp)
+Target::ModuleUpdated (const ModuleList& module_list, const ModuleSP &old_module_sp, const ModuleSP &new_module_sp)
 {
     // A module is replacing an already added module
     m_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);

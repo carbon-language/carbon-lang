@@ -45,7 +45,6 @@ ModuleList::ModuleList(const ModuleList& rhs) :
     Mutex::Locker lhs_locker(m_modules_mutex);
     Mutex::Locker rhs_locker(rhs.m_modules_mutex);
     m_modules = rhs.m_modules;
-    m_notifier = rhs.m_notifier;
 }
 
 ModuleList::ModuleList (ModuleList::Notifier* notifier) :
@@ -66,7 +65,6 @@ ModuleList::operator= (const ModuleList& rhs)
         Mutex::Locker lhs_locker(m_modules_mutex);
         Mutex::Locker rhs_locker(rhs.m_modules_mutex);
         m_modules = rhs.m_modules;
-        m_notifier = rhs.m_notifier;
     }
     return *this;
 }
@@ -86,7 +84,7 @@ ModuleList::AppendImpl (const ModuleSP &module_sp, bool use_notifier)
         Mutex::Locker locker(m_modules_mutex);
         m_modules.push_back(module_sp);
         if (use_notifier && m_notifier)
-            m_notifier->ModuleAdded(module_sp);
+            m_notifier->ModuleAdded(*this, module_sp);
     }
 }
 
@@ -170,7 +168,7 @@ ModuleList::RemoveImpl (const ModuleSP &module_sp, bool use_notifier)
             {
                 m_modules.erase (pos);
                 if (use_notifier && m_notifier)
-                    m_notifier->ModuleRemoved(module_sp);
+                    m_notifier->ModuleRemoved(*this, module_sp);
                 return true;
             }
         }
@@ -184,7 +182,7 @@ ModuleList::RemoveImpl (ModuleList::collection::iterator pos, bool use_notifier)
     ModuleSP module_sp(*pos);
     collection::iterator retval = m_modules.erase(pos);
     if (use_notifier && m_notifier)
-        m_notifier->ModuleRemoved(module_sp);
+        m_notifier->ModuleRemoved(*this, module_sp);
     return retval;
 }
 
@@ -201,7 +199,7 @@ ModuleList::ReplaceModule (const lldb::ModuleSP &old_module_sp, const lldb::Modu
         return false;
     AppendImpl (new_module_sp, false);
     if (m_notifier)
-        m_notifier->ModuleUpdated(old_module_sp,new_module_sp);
+        m_notifier->ModuleUpdated(*this, old_module_sp,new_module_sp);
     return true;
 }
 
@@ -293,7 +291,7 @@ ModuleList::ClearImpl (bool use_notifier)
 {
     Mutex::Locker locker(m_modules_mutex);
     if (use_notifier && m_notifier)
-        m_notifier->WillClearList();
+        m_notifier->WillClearList(*this);
     m_modules.clear();
 }
 

@@ -32,14 +32,14 @@ public:
     {
     public:
         virtual void
-        ModuleAdded (const lldb::ModuleSP& module_sp) = 0;
+        ModuleAdded (const ModuleList& module_list, const lldb::ModuleSP& module_sp) = 0;
         virtual void
-        ModuleRemoved (const lldb::ModuleSP& module_sp) = 0;
+        ModuleRemoved (const ModuleList& module_list, const lldb::ModuleSP& module_sp) = 0;
         virtual void
-        ModuleUpdated (const lldb::ModuleSP& old_module_sp,
+        ModuleUpdated (const ModuleList& module_list, const lldb::ModuleSP& old_module_sp,
                        const lldb::ModuleSP& new_module_sp) = 0;
         virtual void
-        WillClearList () = 0;
+        WillClearList (const ModuleList& module_list) = 0;
         
         virtual
         ~Notifier ()
