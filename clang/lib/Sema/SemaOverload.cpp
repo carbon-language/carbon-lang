@@ -7992,10 +7992,20 @@ void ImplicitConversionSequence::DiagnoseAmbiguousConversion(
                                  const PartialDiagnostic &PDiag) const {
   S.Diag(CaretLoc, PDiag)
     << Ambiguous.getFromType() << Ambiguous.getToType();
-  for (AmbiguousConversionSequence::const_iterator
-         I = Ambiguous.begin(), E = Ambiguous.end(); I != E; ++I) {
+  // FIXME: The note limiting machinery is borrowed from
+  // OverloadCandidateSet::NoteCandidates; there's an opportunity for
+  // refactoring here.
+  const OverloadsShown ShowOverloads = S.Diags.getShowOverloads();
+  unsigned CandsShown = 0;
+  AmbiguousConversionSequence::const_iterator I, E;
+  for (I = Ambiguous.begin(), E = Ambiguous.end(); I != E; ++I) {
+    if (CandsShown >= 4 && ShowOverloads == Ovl_Best)
+      break;
+    ++CandsShown;
     S.NoteOverloadCandidate(*I);
   }
+  if (I != E)
+    S.Diag(SourceLocation(), diag::note_ovl_too_many_candidates) << int(E - I);
 }
 
 namespace {
