@@ -4703,6 +4703,7 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
     }
 
     Diag(NewVD->getLocation(), diag::warn_illegal_constant_array_size);
+    NewVD->setType(FixedTInfo->getType());
     NewVD->setTypeSourceInfo(FixedTInfo);
   }
 
