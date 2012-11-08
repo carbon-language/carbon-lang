@@ -1421,21 +1421,22 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
            NoErrorOnBadEncoding ? diag::warn_bad_string_encoding
                                 : diag::err_bad_string_encoding);
 
-    char *SavedResultPtr = ResultPtr;
     const char *NextStart = resyncUTF8(ErrorPtr, Fragment.end());
     StringRef NextFragment(NextStart, Fragment.end()-NextStart);
 
+    // Decode into a dummy buffer.
+    SmallString<512> Dummy;
+    Dummy.reserve(Fragment.size() * CharByteWidth);
+    char *Ptr = Dummy.data();
+
     while (!Builder.hasMaxRanges() &&
-           !ConvertUTF8toWide(CharByteWidth, NextFragment, ResultPtr,
-                              ErrorPtrTmp)) {
+           !ConvertUTF8toWide(CharByteWidth, NextFragment, Ptr, ErrorPtrTmp)) {
       const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
       NextStart = resyncUTF8(ErrorPtr, Fragment.end());
       Builder << MakeCharSourceRange(Features, SourceLoc, TokBegin,
                                      ErrorPtr, NextStart);
       NextFragment = StringRef(NextStart, Fragment.end()-NextStart);
     }
-
-    ResultPtr = SavedResultPtr;
   }
   return !NoErrorOnBadEncoding;
 }
