@@ -749,13 +749,28 @@ void ARMAsmPrinter::emitAttributes() {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
                                ARMBuildAttrs::Allowed);
   } else if (CPUString == "generic") {
-    // FIXME: Why these defaults?
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
+    // For a generic CPU, we assume a standard v7a architecture in Subtarget.
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v7);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                               ARMBuildAttrs::ApplicationProfile);
     AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
                                ARMBuildAttrs::Allowed);
     AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
-                               ARMBuildAttrs::Allowed);
-  }
+                               ARMBuildAttrs::AllowThumb32);
+  } else if (Subtarget->hasV7Ops()) {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v7);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
+                               ARMBuildAttrs::AllowThumb32);
+  } else if (Subtarget->hasV6T2Ops())
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v6T2);
+  else if (Subtarget->hasV6Ops())
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v6);
+  else if (Subtarget->hasV5TEOps())
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v5TE);
+  else if (Subtarget->hasV5TOps())
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v5T);
+  else if (Subtarget->hasV4TOps())
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
 
   if (Subtarget->hasNEON() && emitFPU) {
     /* NEON is not exactly a VFP architecture, but GAS emit one of
