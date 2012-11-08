@@ -37,12 +37,7 @@ Windows::Windows(const Driver &D, const llvm::Triple& Triple)
 
 Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
                           const ActionList &Inputs) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
+  Action::ActionClass Key = JA.getKind();
   bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
                                              options::OPT_no_integrated_as,
                                              IsIntegratedAssemblerDefault());

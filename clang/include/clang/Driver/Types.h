@@ -56,9 +56,6 @@ namespace types {
   /// types).
   bool canLipoType(ID Id);
 
-  /// isAcceptedByClang - Can clang handle this input type.
-  bool isAcceptedByClang(ID Id);
-
   /// isCXX - Is this a "C++" input (C++ and Obj-C++ sources and headers).
   bool isCXX(ID Id);
 
