@@ -75,4 +75,4 @@ echo as gotsan.s -o race_$SUFFIX.syso
 as gotsan.s -o race_$SUFFIX.syso
 
 gcc test.c race_$SUFFIX.syso -m64 -o test $OSLDFLAGS
-TSAN_OPTIONS="exitcode=0 atexit_sleep_ms=0" ./test
+GORACE="exitcode=0 atexit_sleep_ms=0" ./test
