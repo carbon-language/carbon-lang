@@ -67,6 +67,7 @@
 		2695DE2E0D3EE55B007E4CA2 /* CFData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFData.cpp; sourceTree = "<group>"; };
 		269DE5C50CB5B723008989F0 /* ProfileObjectiveC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileObjectiveC.h; sourceTree = "<group>"; };
 		269DE5C60CB5B723008989F0 /* ProfileObjectiveC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProfileObjectiveC.cpp; sourceTree = "<group>"; };
+		269E8DF8164B2ED200AD65F6 /* com.apple.debugserver.posix.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.posix.plist; sourceTree = "<group>"; };
 		26A02918114AB9240029C479 /* debugserver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = debugserver.cpp; sourceTree = "<group>"; };
 		26A4BAED0D498B7D00A9BEAB /* com.apple.debugserver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.plist; sourceTree = "<group>"; };
 		26A68F7D0D104EC800665A9E /* RNBContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNBContext.h; sourceTree = "<group>"; };
@@ -184,6 +185,7 @@
 		26A028FE114AB6A60029C479 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				269E8DF8164B2ED200AD65F6 /* com.apple.debugserver.posix.plist */,
 				26203D1C1641EFB200A662F7 /* com.apple.debugserver.applist.internal.plist */,
 				26203D1D1641EFB200A662F7 /* com.apple.debugserver.internal.plist */,
 				260FC7320E5B290400043FC9 /* debugnub-exports */,
