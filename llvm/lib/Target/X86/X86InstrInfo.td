@@ -589,6 +589,7 @@ def HasFSGSBase  : Predicate<"Subtarget->hasFSGSBase()">;
 def HasLZCNT     : Predicate<"Subtarget->hasLZCNT()">;
 def HasBMI       : Predicate<"Subtarget->hasBMI()">;
 def HasBMI2      : Predicate<"Subtarget->hasBMI2()">;
+def HasRTM       : Predicate<"Subtarget->hasRTM()">;
 def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
@@ -1705,6 +1706,8 @@ include "X86Instr3DNow.td"
 
 include "X86InstrVMX.td"
 include "X86InstrSVM.td"
+
+include "X86InstrTSX.td"
 
 // System instructions.
 include "X86InstrSystem.td"

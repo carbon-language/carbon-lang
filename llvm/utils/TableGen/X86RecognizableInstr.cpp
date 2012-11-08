@@ -38,14 +38,15 @@ using namespace llvm;
   MAP(D0, 45)           \
   MAP(D1, 46)           \
   MAP(D4, 47)           \
-  MAP(D8, 48)           \
-  MAP(D9, 49)           \
-  MAP(DA, 50)           \
-  MAP(DB, 51)           \
-  MAP(DC, 52)           \
-  MAP(DD, 53)           \
-  MAP(DE, 54)           \
-  MAP(DF, 55)
+  MAP(D5, 48)           \
+  MAP(D8, 49)           \
+  MAP(D9, 50)           \
+  MAP(DA, 51)           \
+  MAP(DB, 52)           \
+  MAP(DC, 53)           \
+  MAP(DD, 54)           \
+  MAP(DE, 55)           \
+  MAP(DF, 56)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {

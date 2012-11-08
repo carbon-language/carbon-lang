@@ -118,6 +118,8 @@ def FeatureBMI     : SubtargetFeature<"bmi", "HasBMI", "true",
                                       "Support BMI instructions">;
 def FeatureBMI2    : SubtargetFeature<"bmi2", "HasBMI2", "true",
                                       "Support BMI2 instructions">;
+def FeatureRTM     : SubtargetFeature<"rtm", "HasRTM", "true",
+                                      "Support RTM instructions">;
 def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
 def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",
@@ -192,7 +194,8 @@ def : Proc<"core-avx2",       [FeatureAVX2, FeatureCMPXCHG16B, FeaturePOPCNT,
                                FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                                FeatureF16C, FeatureFSGSBase,
                                FeatureMOVBE, FeatureLZCNT, FeatureBMI,
-                               FeatureBMI2, FeatureFMA]>;
+                               FeatureBMI2, FeatureFMA,
+                               FeatureRTM]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;

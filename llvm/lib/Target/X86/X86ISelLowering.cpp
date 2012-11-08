@@ -12195,6 +12195,63 @@ X86TargetLowering::isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
 
 // private utility function
 
+/// Utility function to emit xbegin specifying the start of an RTM region.
+MachineBasicBlock *
+X86TargetLowering::EmitXBegin(MachineInstr *MI, MachineBasicBlock *MBB) const {
+  DebugLoc DL = MI->getDebugLoc();
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+
+  const BasicBlock *BB = MBB->getBasicBlock();
+  MachineFunction::iterator I = MBB;
+  ++I;
+
+  // For the v = xbegin(), we generate
+  //
+  // thisMBB:
+  //  xbegin sinkMBB
+  //
+  // mainMBB:
+  //  eax = -1
+  //
+  // sinkMBB:
+  //  v = eax
+
+  MachineBasicBlock *thisMBB = MBB;
+  MachineFunction *MF = MBB->getParent();
+  MachineBasicBlock *mainMBB = MF->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *sinkMBB = MF->CreateMachineBasicBlock(BB);
+  MF->insert(I, mainMBB);
+  MF->insert(I, sinkMBB);
+
+  // Transfer the remainder of BB and its successor edges to sinkMBB.
+  sinkMBB->splice(sinkMBB->begin(), MBB,
+                  llvm::next(MachineBasicBlock::iterator(MI)), MBB->end());
+  sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
+
+  // thisMBB:
+  //  xbegin sinkMBB
+  //  # fallthrough to mainMBB
+  //  # abortion to sinkMBB
+  BuildMI(thisMBB, DL, TII->get(X86::XBEGIN_4)).addMBB(sinkMBB);
+  thisMBB->addSuccessor(mainMBB);
+  thisMBB->addSuccessor(sinkMBB);
+
+  // mainMBB:
+  //  EAX = -1
+  BuildMI(mainMBB, DL, TII->get(X86::MOV32ri), X86::EAX).addImm(-1);
+  mainMBB->addSuccessor(sinkMBB);
+
+  // sinkMBB:
+  // EAX is live into the sinkMBB
+  sinkMBB->addLiveIn(X86::EAX);
+  BuildMI(*sinkMBB, sinkMBB->begin(), DL,
+          TII->get(TargetOpcode::COPY), MI->getOperand(0).getReg())
+    .addReg(X86::EAX);
+
+  MI->eraseFromParent();
+  return sinkMBB;
+}
+
 // Get CMPXCHG opcode for the specified data type.
 static unsigned getCmpXChgOpcode(EVT VT) {
   switch (VT.getSimpleVT().SimpleTy) {
@@ -13857,6 +13914,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // Thread synchronization.
   case X86::MONITOR:
     return EmitMonitor(MI, BB);
+
+  // xbegin
+  case X86::XBEGIN:
+    return EmitXBegin(MI, BB);
 
     // Atomic Lowering.
   case X86::ATOMAND8:

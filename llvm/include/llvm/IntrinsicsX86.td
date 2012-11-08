@@ -2559,3 +2559,15 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_rdrand_32 : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [], []>;
   def int_x86_rdrand_64 : Intrinsic<[llvm_i64_ty, llvm_i32_ty], [], []>;
 }
+
+//===----------------------------------------------------------------------===//
+// RTM intrinsics. Transactional Memory support.
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_xbegin : GCCBuiltin<"__builtin_ia32_xbegin">,
+              Intrinsic<[llvm_i32_ty], [], []>;
+  def int_x86_xend : GCCBuiltin<"__builtin_ia32_xend">,
+              Intrinsic<[], [], []>;
+  def int_x86_xabort : GCCBuiltin<"__builtin_ia32_xabort">,
+              Intrinsic<[], [llvm_i8_ty], [IntrNoReturn]>;
+}

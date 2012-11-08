@@ -898,6 +898,10 @@ namespace llvm {
     MachineBasicBlock *EmitAtomicLoadArith6432(MachineInstr *MI,
                                                MachineBasicBlock *MBB) const;
 
+    /// Utility function to emit xbegin specifying the start of an RTM region.
+    MachineBasicBlock *EmitXBegin(MachineInstr *MI,
+                                  MachineBasicBlock *MBB) const;
+
     // Utility function to emit the low-level va_arg code for X86-64.
     MachineBasicBlock *EmitVAARG64WithCustomInserter(
                        MachineInstr *MI,
