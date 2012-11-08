@@ -3805,9 +3805,9 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   return New;
 }
 
-/// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
-/// types into constant array types in certain situations which would otherwise
-/// be errors (for GCC compatibility).
+/// Helper method to turn variable array types into constant array
+/// types in certain situations which would otherwise be errors (for
+/// GCC compatibility).
 static QualType TryToFixInvalidVariablyModifiedType(QualType T,
                                                     ASTContext &Context,
                                                     bool &SizeIsNegative,
@@ -3875,7 +3875,6 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
                                       Res, ArrayType::Normal, 0);
 }
 
-/// FixInvalidVariablyModifiedTypeLoc
 static void
 FixInvalidVariablyModifiedTypeLoc(TypeLoc SrcTL, TypeLoc DstTL) {
   if (PointerTypeLoc* SrcPTL = dyn_cast<PointerTypeLoc>(&SrcTL)) {
@@ -3903,9 +3902,9 @@ FixInvalidVariablyModifiedTypeLoc(TypeLoc SrcTL, TypeLoc DstTL) {
   DstATL->setRBracketLoc(SrcATL->getRBracketLoc());
 }
 
-/// TryToFixInvalidVariablyModifiedTypeSourceInfo - Helper method to turn
-/// variable array types into constant array types in certain situations
-/// which would otherwise be errors (for GCC compatibility).
+/// Helper method to turn variable array types into constant array
+/// types in certain situations which would otherwise be errors (for
+/// GCC compatibility).
 static TypeSourceInfo*
 TryToFixInvalidVariablyModifiedTypeSourceInfo(TypeSourceInfo *TInfo,
                                               ASTContext &Context,
