@@ -17,7 +17,6 @@
 #include "asan_stack.h"
 
 #include <stddef.h>
-#include <new>
 
 namespace __asan {
 // This function is a no-op. We need it to make sure that object file
@@ -31,34 +30,37 @@ using namespace __asan;  // NOLINT
 // On Android new() goes through malloc interceptors.
 #if !ASAN_ANDROID
 
+// Fake std::nothrow_t to avoid including <new>.
+namespace std {
+struct nothrow_t {};
+}  // namespace std
+
 #define OPERATOR_NEW_BODY \
   GET_STACK_TRACE_HERE_FOR_MALLOC;\
   return asan_memalign(0, size, &stack);
 
 INTERCEPTOR_ATTRIBUTE
-void *operator new(size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
+void *operator new(size_t size) { OPERATOR_NEW_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void *operator new[](size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
+void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void *operator new(size_t size, std::nothrow_t const&) throw()
-{ OPERATOR_NEW_BODY; }
+void *operator new(size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void *operator new[](size_t size, std::nothrow_t const&) throw()
-{ OPERATOR_NEW_BODY; }
+void *operator new[](size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
 
 #define OPERATOR_DELETE_BODY \
   GET_STACK_TRACE_HERE_FOR_FREE(ptr);\
   asan_free(ptr, &stack);
 
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr) throw() { OPERATOR_DELETE_BODY; }
+void operator delete(void *ptr) { OPERATOR_DELETE_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr) throw() { OPERATOR_DELETE_BODY; }
+void operator delete[](void *ptr) { OPERATOR_DELETE_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr, std::nothrow_t const&) throw()
+void operator delete(void *ptr, std::nothrow_t const&)
 { OPERATOR_DELETE_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr, std::nothrow_t const&) throw()
+void operator delete[](void *ptr, std::nothrow_t const&)
 { OPERATOR_DELETE_BODY; }
 
 #endif
