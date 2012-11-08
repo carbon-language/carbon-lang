@@ -406,10 +406,10 @@ static void EncodeUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
   // Finally, we write the bytes into ResultBuf.
   ResultBuf += bytesToWrite;
   switch (bytesToWrite) { // note: everything falls through.
-    case 4: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
-    case 3: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
-    case 2: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
-    case 1: *--ResultBuf = (UTF8) (UcnVal | firstByteMark[bytesToWrite]);
+  case 4: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
+  case 3: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
+  case 2: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
+  case 1: *--ResultBuf = (UTF8) (UcnVal | firstByteMark[bytesToWrite]);
   }
   // Update the buffer.
   ResultBuf += bytesToWrite;
@@ -1372,7 +1372,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   } else if (Diags) {
     // Complain if this string literal has too many characters.
     unsigned MaxChars = Features.CPlusPlus? 65536 : Features.C99 ? 4095 : 509;
-    
+
     if (GetNumStringChars() > MaxChars)
       Diags->Report(StringToks[0].getLocation(),
                     diag::ext_string_too_long)
@@ -1383,13 +1383,13 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   }
 }
 
-static const char *resync_utf8(const char *err, const char *end) {
-    if (err==end)
-        return end;
-    end = err + std::min<unsigned>(getNumBytesForUTF8(*err), end-err);
-    while (++err!=end && (*err&0xC0)==0x80)
-      ;
-    return err;
+static const char *resyncUTF8(const char *Err, const char *End) {
+  if (Err == End)
+    return End;
+  End = Err + std::min<unsigned>(getNumBytesForUTF8(*Err), End-Err);
+  while (++Err != End && (*Err & 0xC0) == 0x80)
+    ;
+  return Err;
 }
 
 /// \brief This function copies from Fragment, which is a sequence of bytes
@@ -1417,19 +1417,19 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
     FullSourceLoc SourceLoc(Tok.getLocation(), SM);
     const DiagnosticBuilder &Builder =
       Diag(Diags, Features, SourceLoc, TokBegin,
-           ErrorPtr, resync_utf8(ErrorPtr, Fragment.end()),
+           ErrorPtr, resyncUTF8(ErrorPtr, Fragment.end()),
            NoErrorOnBadEncoding ? diag::warn_bad_string_encoding
                                 : diag::err_bad_string_encoding);
 
     char *SavedResultPtr = ResultPtr;
-    const char *NextStart = resync_utf8(ErrorPtr, Fragment.end());
+    const char *NextStart = resyncUTF8(ErrorPtr, Fragment.end());
     StringRef NextFragment(NextStart, Fragment.end()-NextStart);
 
     while (!Builder.hasMaxRanges() &&
            !ConvertUTF8toWide(CharByteWidth, NextFragment, ResultPtr,
                               ErrorPtrTmp)) {
       const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
-      NextStart = resync_utf8(ErrorPtr, Fragment.end());
+      NextStart = resyncUTF8(ErrorPtr, Fragment.end());
       Builder << MakeCharSourceRange(Features, SourceLoc, TokBegin,
                                      ErrorPtr, NextStart);
       NextFragment = StringRef(NextStart, Fragment.end()-NextStart);
