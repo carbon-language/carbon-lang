@@ -292,7 +292,10 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     unsigned IntBytes = unsigned(CI->getBitWidth()/8);
 
     for (unsigned i = 0; i != BytesLeft && ByteOffset != IntBytes; ++i) {
-      CurPtr[i] = (unsigned char)(Val >> (ByteOffset * 8));
+      int n = ByteOffset;
+      if (!TD.isLittleEndian())
+        n = IntBytes - n - 1;
+      CurPtr[i] = (unsigned char)(Val >> (n * 8));
       ++ByteOffset;
     }
     return true;
@@ -442,10 +445,19 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
                           BytesLoaded, TD))
     return 0;
 
-  APInt ResultVal = APInt(IntType->getBitWidth(), RawBytes[BytesLoaded-1]);
-  for (unsigned i = 1; i != BytesLoaded; ++i) {
-    ResultVal <<= 8;
-    ResultVal |= RawBytes[BytesLoaded-1-i];
+  APInt ResultVal = APInt(IntType->getBitWidth(), 0);
+  if (TD.isLittleEndian()) {
+    ResultVal = RawBytes[BytesLoaded - 1];
+    for (unsigned i = 1; i != BytesLoaded; ++i) {
+      ResultVal <<= 8;
+      ResultVal |= RawBytes[BytesLoaded-1-i];
+    }
+  } else {
+    ResultVal = RawBytes[0];
+    for (unsigned i = 1; i != BytesLoaded; ++i) {
+      ResultVal <<= 8;
+      ResultVal |= RawBytes[i];
+    }
   }
 
   return ConstantInt::get(IntType->getContext(), ResultVal);
@@ -521,10 +533,8 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
     }
   }
 
-  // Try hard to fold loads from bitcasted strange and non-type-safe things.  We
-  // currently don't do any of this for big endian systems.  It can be
-  // generalized in the future if someone is interested.
-  if (TD && TD->isLittleEndian())
+  // Try hard to fold loads from bitcasted strange and non-type-safe things.
+  if (TD)
     return FoldReinterpretLoadFromConstPtr(CE, *TD);
   return 0;
 }

@@ -1,4 +1,4 @@
-// RUN: %clang -target i686-unknown-unknown -O3 -emit-llvm -S -o - %s | FileCheck %s
+// RUN: %clang -O3 -emit-llvm -S -o - %s | FileCheck %s
 
 long long f0(void) {
  struct { unsigned f0 : 32; } x = { 18 };
