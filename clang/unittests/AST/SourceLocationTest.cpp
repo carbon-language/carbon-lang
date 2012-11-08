@@ -254,5 +254,13 @@ TEST(CXXNewExpr, ArrayRange) {
   EXPECT_TRUE(Verifier.match("void f() { new int[10]; }", newExpr()));
 }
 
+TEST(MemberExpr, ImplicitMemberRange) {
+  RangeVerifier<MemberExpr> Verifier;
+  Verifier.expectRange(2, 30, 2, 30);
+  EXPECT_TRUE(Verifier.match("struct S { operator int() const; };\n"
+                             "int foo(const S& s) { return s; }",
+                             memberExpr()));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
