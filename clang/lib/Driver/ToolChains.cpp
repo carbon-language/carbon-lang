@@ -232,30 +232,6 @@ DarwinClang::DarwinClang(const Driver &D, const llvm::Triple& Triple)
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
-
-  // For fallback, we need to know how to find the GCC cc1 executables, so we
-  // also add the GCC libexec paths. This is legacy code that can be removed
-  // once fallback is no longer useful.
-  AddGCCLibexecPath(DarwinVersion[0]);
-  AddGCCLibexecPath(DarwinVersion[0] - 2);
-  AddGCCLibexecPath(DarwinVersion[0] - 1);
-  AddGCCLibexecPath(DarwinVersion[0] + 1);
-  AddGCCLibexecPath(DarwinVersion[0] + 2);
-}
-
-void DarwinClang::AddGCCLibexecPath(unsigned darwinVersion) {
-  std::string ToolChainDir = "i686-apple-darwin";
-  ToolChainDir += llvm::utostr(darwinVersion);
-  ToolChainDir += "/4.2.1";
-
-  std::string Path = getDriver().Dir;
-  Path += "/../llvm-gcc-4.2/libexec/gcc/";
-  Path += ToolChainDir;
-  getProgramPaths().push_back(Path);
-
-  Path = "/usr/llvm-gcc-4.2/libexec/gcc/";
-  Path += ToolChainDir;
-  getProgramPaths().push_back(Path);
 }
 
 void DarwinClang::AddLinkARCArgs(const ArgList &Args,
