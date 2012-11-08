@@ -2424,7 +2424,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         // now make sure that Python has "directory" in the search path
         StreamString command_stream;
-        command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.append('%s');\n\n",
+        command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.insert(1,'%s');\n\n",
                               directory,
                               directory);
         bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false));
