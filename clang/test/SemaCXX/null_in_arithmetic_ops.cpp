@@ -90,4 +90,6 @@ void f() {
   b = e == NULL || NULL == e || e != NULL || NULL != e;
   b = f == NULL || NULL == f || f != NULL || NULL != f;
   b = "f" == NULL || NULL == "f" || "f" != NULL || NULL != "f";
+
+  return NULL; // expected-error{{void function 'f' should not return a value}}
 }
