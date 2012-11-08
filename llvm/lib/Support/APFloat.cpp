@@ -3553,11 +3553,6 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
 }
 
 bool APFloat::getExactInverse(APFloat *inv) const {
-  // We can only guarantee the existence of an exact inverse for IEEE floats.
-  if (semantics != &IEEEhalf && semantics != &IEEEsingle &&
-      semantics != &IEEEdouble && semantics != &IEEEquad)
-    return false;
-
   // Special floats and denormals have no exact inverse.
   if (category != fcNormal)
     return false;

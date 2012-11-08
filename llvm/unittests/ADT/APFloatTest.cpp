@@ -635,6 +635,12 @@ TEST(APFloatTest, exactInverse) {
   EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(0.5)));
   EXPECT_TRUE(APFloat(2.0f).getExactInverse(&inv));
   EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(0.5f)));
+  EXPECT_TRUE(APFloat(APFloat::IEEEquad, "2.0").getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(APFloat::IEEEquad, "0.5")));
+  EXPECT_TRUE(APFloat(APFloat::PPCDoubleDouble, "2.0").getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(APFloat::PPCDoubleDouble, "0.5")));
+  EXPECT_TRUE(APFloat(APFloat::x87DoubleExtended, "2.0").getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(APFloat::x87DoubleExtended, "0.5")));
 
   // FLT_MIN
   EXPECT_TRUE(APFloat(1.17549435e-38f).getExactInverse(&inv));
