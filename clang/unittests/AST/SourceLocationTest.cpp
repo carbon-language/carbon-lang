@@ -258,6 +258,12 @@ TEST(CXXNewExpr, ArrayRange) {
   EXPECT_TRUE(Verifier.match("void f() { new int[10]; }", newExpr()));
 }
 
+TEST(CXXNewExpr, ParenRange) {
+  RangeVerifier<CXXNewExpr> Verifier;
+  Verifier.expectRange(1, 12, 1, 20);
+  EXPECT_TRUE(Verifier.match("void f() { new int(); }", newExpr()));
+}
+
 TEST(MemberExpr, ImplicitMemberRange) {
   RangeVerifier<MemberExpr> Verifier;
   Verifier.expectRange(2, 30, 2, 30);
