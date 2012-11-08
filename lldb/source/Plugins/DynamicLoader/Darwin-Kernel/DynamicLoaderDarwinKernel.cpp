@@ -264,7 +264,8 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
             uuid = memory_module_sp->GetUUID();
             uuid_is_valid = uuid.IsValid();
         }
-        if (memory_module_sp->GetObjectFile() 
+        if (memory_module_sp 
+            && memory_module_sp->GetObjectFile() 
             && memory_module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeExecutable
             && memory_module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
         {

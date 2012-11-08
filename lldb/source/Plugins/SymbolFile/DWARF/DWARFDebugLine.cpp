@@ -804,8 +804,8 @@ DWARFDebugLine::ParseStatementTable
             // field in the header, plus the value of the line_range field,
             // minus 1 (line base + line range - 1). If the desired line
             // increment is greater than the maximum line increment, a standard
-            // opcode must be used instead of a special opcode. The “address
-            // advance” is calculated by dividing the desired address increment
+            // opcode must be used instead of a special opcode. The "address
+            // advance" is calculated by dividing the desired address increment
             // by the minimum_instruction_length field from the header. The
             // special opcode is then calculated using the following formula:
             //
