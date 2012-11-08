@@ -72,6 +72,14 @@ set(SANITIZER_COMMON_CFLAGS
 if(NOT WIN32)
   list(APPEND SANITIZER_COMMON_CFLAGS -fvisibility=hidden)
 endif()
+# Build sanitizer runtimes with debug info.
+check_cxx_compiler_flag(-gline-tables-only SUPPORTS_GLINE_TABLES_ONLY_FLAG)
+if(SUPPORTS_GLINE_TABLES_ONLY_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -gline-tables-only)
+else()
+  list(APPEND SANITIZER_COMMON_CFLAGS -g)
+endif()
+# Warnings suppressions.
 check_cxx_compiler_flag(-Wno-variadic-macros SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-variadic-macros)
