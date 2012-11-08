@@ -2980,7 +2980,7 @@ Process::CompleteAttach ()
 
     m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
     // Figure out which one is the executable, and set that in our target:
-    ModuleList &target_modules = m_target.GetImages();
+    const ModuleList &target_modules = m_target.GetImages();
     Mutex::Locker modules_locker(target_modules.GetMutex());
     size_t num_modules = target_modules.GetSize();
     ModuleSP new_executable_module_sp;

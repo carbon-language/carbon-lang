@@ -532,6 +532,9 @@ public:
     bool
     IsLoadedInTarget (Target *target);
 
+    bool
+    LoadScriptingResourceInTarget (Target *target, Error& error);
+    
     //------------------------------------------------------------------
     /// Get the number of compile units for this module.
     ///

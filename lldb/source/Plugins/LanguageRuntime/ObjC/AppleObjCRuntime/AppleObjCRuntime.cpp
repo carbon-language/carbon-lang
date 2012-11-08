@@ -178,7 +178,7 @@ AppleObjCRuntime::GetObjCModule ()
     Process *process = GetProcess();
     if (process)
     {
-        ModuleList& modules = process->GetTarget().GetImages();
+        const ModuleList& modules = process->GetTarget().GetImages();
         for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
         {
             module_sp = modules.GetModuleAtIndex(idx);
@@ -197,7 +197,7 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
 {
     if (!m_PrintForDebugger_addr.get())
     {
-        ModuleList &modules = m_process->GetTarget().GetImages();
+        const ModuleList &modules = m_process->GetTarget().GetImages();
         
         SymbolContextList contexts;
         SymbolContext context;
@@ -289,7 +289,7 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
         return eObjC_VersionUnknown;
         
     Target &target = process->GetTarget();
-    ModuleList &target_modules = target.GetImages();
+    const ModuleList &target_modules = target.GetImages();
     Mutex::Locker modules_locker(target_modules.GetMutex());
     
     size_t num_images = target_modules.GetSize();

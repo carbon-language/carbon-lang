@@ -38,6 +38,9 @@ public:
                        const lldb_private::ModuleSpec &sym_spec,
                        lldb_private::FileSpec &sym_file);
 
+    lldb_private::FileSpec
+    LocateExecutableScriptingResource (const lldb_private::ModuleSpec &module_spec);
+    
     virtual lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,
                      lldb::ModuleSP &module_sp,

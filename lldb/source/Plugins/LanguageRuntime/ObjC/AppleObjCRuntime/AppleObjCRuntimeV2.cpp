@@ -1617,7 +1617,7 @@ protected:
     {
         if (!target_sp)
             return eLazyBoolCalculate;
-        ModuleList& modules = target_sp->GetImages();
+        const ModuleList& modules = target_sp->GetImages();
         for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
         {
             lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);

@@ -41,7 +41,7 @@ public:
     //----------------------------------------------------------------------
     static FileSpec
     LocateExecutableSymbolFile (const ModuleSpec &module_spec);
-    
+        
     static FileSpec
     FindSymbolFileInBundle (const FileSpec& dsym_bundle_fspec,
                             const lldb_private::UUID *uuid,

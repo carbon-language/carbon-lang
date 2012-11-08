@@ -291,6 +291,15 @@ namespace lldb_private {
                  const UUID *uuid_ptr,
                  FileSpec &local_file);
 
+        //----------------------------------------------------------------------
+        // Locate the scripting resource given a module specification.
+        //
+        // Locating the file should happen only on the local computer or using
+        // the current computers global settings.
+        //----------------------------------------------------------------------
+        virtual FileSpec
+        LocateExecutableScriptingResource (const ModuleSpec &module_spec);
+        
         virtual Error
         GetSharedModule (const ModuleSpec &module_spec, 
                          lldb::ModuleSP &module_sp,

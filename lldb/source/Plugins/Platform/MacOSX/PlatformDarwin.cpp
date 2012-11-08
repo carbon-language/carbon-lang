@@ -18,6 +18,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -47,6 +48,37 @@ PlatformDarwin::~PlatformDarwin()
 {
 }
 
+FileSpec
+PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec)
+{
+    const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
+    const ArchSpec *arch = module_spec.GetArchitecturePtr();
+    const UUID *uuid = module_spec.GetUUIDPtr();
+    
+    Timer scoped_timer (__PRETTY_FUNCTION__,
+                        "LocateExecutableScriptingResource (file = %s, arch = %s, uuid = %p)",
+                        exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
+                        arch ? arch->GetArchitectureName() : "<NULL>",
+                        uuid);
+    
+    
+    FileSpec symbol_fspec (Symbols::LocateExecutableSymbolFile(module_spec));
+    
+    FileSpec script_fspec;
+    
+    if (symbol_fspec && symbol_fspec.Exists())
+    {
+        // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
+        // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
+        StreamString path_string;
+        path_string.Printf("%s/../Python/%s.py",symbol_fspec.GetDirectory().GetCString(),module_spec.GetFileSpec().GetFileNameStrippingExtension().GetCString());
+        script_fspec.SetFile(path_string.GetData(), true);
+        if (!script_fspec.Exists())
+            script_fspec.Clear();
+    }
+    
+    return script_fspec;
+}
 
 Error
 PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,

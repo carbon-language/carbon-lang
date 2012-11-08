@@ -250,7 +250,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
             ConstString name(tag_decl->getName().str().c_str());
             ClangNamespaceDecl namespace_decl;
             
-            ModuleList &module_list = m_target->GetImages();
+            const ModuleList &module_list = m_target->GetImages();
 
             bool exact_match = false;
             module_list.FindTypes (null_sc, name, exact_match, UINT32_MAX, types);
@@ -612,7 +612,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
     }
     else 
     {
-        ModuleList &target_images = m_target->GetImages();
+        const ModuleList &target_images = m_target->GetImages();
         Mutex::Locker modules_locker (target_images.GetMutex());
         
         for (uint32_t i = 0, e = target_images.GetSize();
@@ -1536,7 +1536,7 @@ ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespac
     }
     else
     {
-        ModuleList &target_images = m_target->GetImages();
+        const ModuleList &target_images = m_target->GetImages();
         Mutex::Locker modules_locker(target_images.GetMutex());
         
         ClangNamespaceDecl null_namespace_decl;

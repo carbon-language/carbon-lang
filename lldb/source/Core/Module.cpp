@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -18,6 +19,9 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/Symbols.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -1132,7 +1136,48 @@ Module::IsLoadedInTarget (Target *target)
     }
     return false;
 }
-bool 
+
+bool
+Module::LoadScriptingResourceInTarget (Target *target, Error& error)
+{
+    if (!target)
+    {
+        error.SetErrorString("invalid destination Target");
+        return false;
+    }
+    
+    PlatformSP platform_sp(target->GetPlatform());
+    
+    if (!platform_sp)
+    {
+        error.SetErrorString("invalid Platform");
+        return false;
+    }
+
+    ModuleSpec module_spec(GetFileSpec());
+    FileSpec scripting_fspec = platform_sp->LocateExecutableScriptingResource(module_spec);
+    Debugger &debugger(target->GetDebugger());
+    if (scripting_fspec && scripting_fspec.Exists())
+    {
+        ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
+        if (script_interpreter)
+        {
+            StreamString scripting_stream;
+            scripting_fspec.Dump(&scripting_stream);
+            bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(), false, true, error);
+            if (!did_load)
+                return false;
+        }
+        else
+        {
+            error.SetErrorString("invalid ScriptInterpreter");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
 Module::SetArchitecture (const ArchSpec &new_arch)
 {
     if (!m_arch.IsValid())

@@ -95,7 +95,7 @@ DynamicLoaderStatic::DidLaunch ()
 void
 DynamicLoaderStatic::LoadAllImagesAtFileAddresses ()
 {
-    ModuleList &module_list = m_process->GetTarget().GetImages();
+    const ModuleList &module_list = m_process->GetTarget().GetImages();
     
     ModuleList loaded_module_list;
 
@@ -143,8 +143,7 @@ DynamicLoaderStatic::LoadAllImagesAtFileAddresses ()
         }
     }
 
-    if (loaded_module_list.GetSize())
-        m_process->GetTarget().ModulesDidLoad (loaded_module_list);
+    m_process->GetTarget().ModulesDidLoad (loaded_module_list);
 }
 
 ThreadPlanSP

@@ -30,7 +30,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 ModuleList::ModuleList() :
     m_modules(),
-    m_modules_mutex (Mutex::eMutexTypeRecursive)
+    m_modules_mutex (Mutex::eMutexTypeRecursive),
+    m_notifier(NULL)
 {
 }
 
@@ -44,6 +45,14 @@ ModuleList::ModuleList(const ModuleList& rhs) :
     Mutex::Locker lhs_locker(m_modules_mutex);
     Mutex::Locker rhs_locker(rhs.m_modules_mutex);
     m_modules = rhs.m_modules;
+    m_notifier = rhs.m_notifier;
+}
+
+ModuleList::ModuleList (ModuleList::Notifier* notifier) :
+    m_modules(),
+    m_modules_mutex (Mutex::eMutexTypeRecursive),
+    m_notifier(notifier)
+{
 }
 
 //----------------------------------------------------------------------
@@ -57,6 +66,7 @@ ModuleList::operator= (const ModuleList& rhs)
         Mutex::Locker lhs_locker(m_modules_mutex);
         Mutex::Locker rhs_locker(rhs.m_modules_mutex);
         m_modules = rhs.m_modules;
+        m_notifier = rhs.m_notifier;
     }
     return *this;
 }
@@ -69,13 +79,21 @@ ModuleList::~ModuleList()
 }
 
 void
-ModuleList::Append (const ModuleSP &module_sp)
+ModuleList::AppendImpl (const ModuleSP &module_sp, bool use_notifier)
 {
     if (module_sp)
     {
         Mutex::Locker locker(m_modules_mutex);
         m_modules.push_back(module_sp);
+        if (use_notifier && m_notifier)
+            m_notifier->ModuleAdded(module_sp);
     }
+}
+
+void
+ModuleList::Append (const ModuleSP &module_sp)
+{
+    AppendImpl (module_sp);
 }
 
 void
@@ -95,12 +113,12 @@ ModuleList::ReplaceEquivalent (const ModuleSP &module_sp)
         {
             ModuleSP module_sp (m_modules[idx]);
             if (module_sp->MatchesModuleSpec (equivalent_module_spec))
-                m_modules.erase(m_modules.begin() + idx);
+                RemoveImpl(m_modules.begin() + idx);
             else
                 ++idx;
         }
         // Now add the new module to the list
-        m_modules.push_back(module_sp);
+        Append(module_sp);
     }
 }
 
@@ -117,14 +135,30 @@ ModuleList::AppendIfNeeded (const ModuleSP &module_sp)
                 return false; // Already in the list
         }
         // Only push module_sp on the list if it wasn't already in there.
-        m_modules.push_back(module_sp);
+        Append(module_sp);
         return true;
     }
     return false;
 }
 
+void
+ModuleList::Append (const ModuleList& module_list)
+{
+    for (auto pos : module_list.m_modules)
+        Append(pos);
+}
+
 bool
-ModuleList::Remove (const ModuleSP &module_sp)
+ModuleList::AppendIfNeeded (const ModuleList& module_list)
+{
+    bool any_in = false;
+    for (auto pos : module_list.m_modules)
+        any_in = AppendIfNeeded(pos) | any_in;
+    return any_in;
+}
+
+bool
+ModuleList::RemoveImpl (const ModuleSP &module_sp, bool use_notifier)
 {
     if (module_sp)
     {
@@ -135,11 +169,40 @@ ModuleList::Remove (const ModuleSP &module_sp)
             if (pos->get() == module_sp.get())
             {
                 m_modules.erase (pos);
+                if (use_notifier && m_notifier)
+                    m_notifier->ModuleRemoved(module_sp);
                 return true;
             }
         }
     }
     return false;
+}
+
+ModuleList::collection::iterator
+ModuleList::RemoveImpl (ModuleList::collection::iterator pos, bool use_notifier)
+{
+    ModuleSP module_sp(*pos);
+    collection::iterator retval = m_modules.erase(pos);
+    if (use_notifier && m_notifier)
+        m_notifier->ModuleRemoved(module_sp);
+    return retval;
+}
+
+bool
+ModuleList::Remove (const ModuleSP &module_sp)
+{
+    return RemoveImpl (module_sp);
+}
+
+bool
+ModuleList::ReplaceModule (const lldb::ModuleSP &old_module_sp, const lldb::ModuleSP &new_module_sp)
+{
+    if (!RemoveImpl(old_module_sp, false))
+        return false;
+    AppendImpl (new_module_sp, false);
+    if (m_notifier)
+        m_notifier->ModuleUpdated(old_module_sp,new_module_sp);
+    return true;
 }
 
 bool
@@ -155,7 +218,7 @@ ModuleList::RemoveIfOrphaned (const Module *module_ptr)
             {
                 if (pos->unique())
                 {
-                    pos = m_modules.erase (pos);
+                    pos = RemoveImpl(pos);
                     return true;
                 }
                 else
@@ -187,7 +250,7 @@ ModuleList::RemoveOrphans (bool mandatory)
     {
         if (pos->unique())
         {
-            pos = m_modules.erase (pos);
+            pos = RemoveImpl(pos);
             ++remove_count;
         }
         else
@@ -213,20 +276,25 @@ ModuleList::Remove (ModuleList &module_list)
 }
 
 
-
 void
 ModuleList::Clear()
 {
-    Mutex::Locker locker(m_modules_mutex);
-    m_modules.clear();
+    ClearImpl();
 }
 
 void
 ModuleList::Destroy()
 {
+    ClearImpl();
+}
+
+void
+ModuleList::ClearImpl (bool use_notifier)
+{
     Mutex::Locker locker(m_modules_mutex);
-    collection empty;
-    m_modules.swap(empty);
+    if (use_notifier && m_notifier)
+        m_notifier->WillClearList();
+    m_modules.clear();
 }
 
 Module*
@@ -245,14 +313,14 @@ ModuleList::GetModulePointerAtIndexUnlocked (uint32_t idx) const
 }
 
 ModuleSP
-ModuleList::GetModuleAtIndex(uint32_t idx)
+ModuleList::GetModuleAtIndex(uint32_t idx) const
 {
     Mutex::Locker locker(m_modules_mutex);
     return GetModuleAtIndexUnlocked(idx);
 }
 
 ModuleSP
-ModuleList::GetModuleAtIndexUnlocked(uint32_t idx)
+ModuleList::GetModuleAtIndexUnlocked(uint32_t idx) const
 {
     ModuleSP module_sp;
     if (idx < m_modules.size())
@@ -266,7 +334,7 @@ ModuleList::FindFunctions (const ConstString &name,
                            bool include_symbols,
                            bool include_inlines,
                            bool append, 
-                           SymbolContextList &sc_list)
+                           SymbolContextList &sc_list) const
 {
     if (!append)
         sc_list.Clear();
@@ -284,7 +352,7 @@ ModuleList::FindFunctions (const ConstString &name,
 uint32_t
 ModuleList::FindCompileUnits (const FileSpec &path, 
                               bool append, 
-                              SymbolContextList &sc_list)
+                              SymbolContextList &sc_list) const
 {
     if (!append)
         sc_list.Clear();
@@ -303,11 +371,11 @@ uint32_t
 ModuleList::FindGlobalVariables (const ConstString &name, 
                                  bool append, 
                                  uint32_t max_matches, 
-                                 VariableList& variable_list)
+                                 VariableList& variable_list) const
 {
     size_t initial_size = variable_list.GetSize();
     Mutex::Locker locker(m_modules_mutex);
-    collection::iterator pos, end = m_modules.end();
+    collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
         (*pos)->FindGlobalVariables (name, NULL, append, max_matches, variable_list);
@@ -320,11 +388,11 @@ uint32_t
 ModuleList::FindGlobalVariables (const RegularExpression& regex, 
                                  bool append, 
                                  uint32_t max_matches, 
-                                 VariableList& variable_list)
+                                 VariableList& variable_list) const
 {
     size_t initial_size = variable_list.GetSize();
     Mutex::Locker locker(m_modules_mutex);
-    collection::iterator pos, end = m_modules.end();
+    collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
         (*pos)->FindGlobalVariables (regex, append, max_matches, variable_list);
@@ -337,14 +405,14 @@ size_t
 ModuleList::FindSymbolsWithNameAndType (const ConstString &name, 
                                         SymbolType symbol_type, 
                                         SymbolContextList &sc_list,
-                                        bool append)
+                                        bool append) const
 {
     Mutex::Locker locker(m_modules_mutex);
     if (!append)
         sc_list.Clear();
     size_t initial_size = sc_list.GetSize();
     
-    collection::iterator pos, end = m_modules.end();
+    collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
         (*pos)->FindSymbolsWithNameAndType (name, symbol_type, sc_list);
     return sc_list.GetSize() - initial_size;
@@ -354,14 +422,14 @@ size_t
 ModuleList::FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
                                              lldb::SymbolType symbol_type, 
                                              SymbolContextList &sc_list,
-                                             bool append)
+                                             bool append) const
 {
     Mutex::Locker locker(m_modules_mutex);
     if (!append)
         sc_list.Clear();
     size_t initial_size = sc_list.GetSize();
     
-    collection::iterator pos, end = m_modules.end();
+    collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
         (*pos)->FindSymbolsMatchingRegExAndType (regex, symbol_type, sc_list);
     return sc_list.GetSize() - initial_size;
@@ -384,7 +452,7 @@ ModuleList::FindModules (const ModuleSpec &module_spec, ModuleList& matching_mod
 }
 
 ModuleSP
-ModuleList::FindModule (const Module *module_ptr)
+ModuleList::FindModule (const Module *module_ptr) const
 {
     ModuleSP module_sp;
 
@@ -407,7 +475,7 @@ ModuleList::FindModule (const Module *module_ptr)
 }
 
 ModuleSP
-ModuleList::FindModule (const UUID &uuid)
+ModuleList::FindModule (const UUID &uuid) const
 {
     ModuleSP module_sp;
     
@@ -430,7 +498,7 @@ ModuleList::FindModule (const UUID &uuid)
 
 
 uint32_t
-ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, uint32_t max_matches, TypeList& types)
+ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, uint32_t max_matches, TypeList& types) const
 {
     Mutex::Locker locker(m_modules_mutex);
 
@@ -487,7 +555,7 @@ ModuleList::FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const
 
 
 ModuleSP
-ModuleList::FindFirstModule (const ModuleSpec &module_spec)
+ModuleList::FindFirstModule (const ModuleSpec &module_spec) const
 {
     ModuleSP module_sp;
     Mutex::Locker locker(m_modules_mutex);
@@ -554,7 +622,7 @@ ModuleList::LogUUIDAndPaths (LogSP &log_sp, const char *prefix_cstr)
 }
 
 bool
-ModuleList::ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr)
+ModuleList::ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr) const
 {
     Mutex::Locker locker(m_modules_mutex);
     collection::const_iterator pos, end = m_modules.end();
@@ -568,7 +636,7 @@ ModuleList::ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr)
 }
 
 uint32_t
-ModuleList::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc)
+ModuleList::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc) const
 {
     // The address is already section offset so it has a module
     uint32_t resolved_flags = 0;
@@ -604,14 +672,14 @@ ModuleList::ResolveSymbolContextForFilePath
     bool check_inlines, 
     uint32_t resolve_scope, 
     SymbolContextList& sc_list
-)
+)  const
 {
     FileSpec file_spec(file_path, false);
     return ResolveSymbolContextsForFileSpec (file_spec, line, check_inlines, resolve_scope, sc_list);
 }
 
 uint32_t
-ModuleList::ResolveSymbolContextsForFileSpec (const FileSpec &file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list)
+ModuleList::ResolveSymbolContextsForFileSpec (const FileSpec &file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list) const
 {
     Mutex::Locker locker(m_modules_mutex);
     collection::const_iterator pos, end = m_modules.end();

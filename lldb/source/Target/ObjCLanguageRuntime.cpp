@@ -75,7 +75,7 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
             m_complete_class_cache.erase(name);
     }
     
-    ModuleList &modules = m_process->GetTarget().GetImages();
+    const ModuleList &modules = m_process->GetTarget().GetImages();
 
     SymbolContextList sc_list;
     const size_t matching_symbols = modules.FindSymbolsWithNameAndType (name,

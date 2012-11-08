@@ -64,7 +64,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_platform_sp (platform_sp),
     m_mutex (Mutex::eMutexTypeRecursive), 
     m_arch (target_arch),
-    m_images (),
+    m_images (this),
     m_section_load_list (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
@@ -954,6 +954,18 @@ Target::GetExecutableModulePointer ()
     return m_images.GetModulePointerAtIndex(0);
 }
 
+static void
+LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
+{
+    Error error;
+    if (module_sp && !module_sp->LoadScriptingResourceInTarget(target, error))
+    {
+        target->GetDebugger().GetOutputStream().Printf("unable to load scripting data for module %s - error reported was %s\n",
+                                                       module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
+                                                       error.AsCString());
+    }
+}
+
 void
 Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 {
@@ -1047,16 +1059,31 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
 }
 
 void
-Target::ModuleAdded (ModuleSP &module_sp)
+Target::WillClearList ()
+{
+}
+
+void
+Target::ModuleAdded (const ModuleSP &module_sp)
 {
     // A module is being added to this target for the first time
     ModuleList module_list;
     module_list.Append(module_sp);
+    LoadScriptingResourceForModule(module_sp, this);
     ModulesDidLoad (module_list);
 }
 
 void
-Target::ModuleUpdated (ModuleSP &old_module_sp, ModuleSP &new_module_sp)
+Target::ModuleRemoved (const ModuleSP &module_sp)
+{
+    // A module is being added to this target for the first time
+    ModuleList module_list;
+    module_list.Append(module_sp);
+    ModulesDidUnload (module_list);
+}
+
+void
+Target::ModuleUpdated (const ModuleSP &old_module_sp, const ModuleSP &new_module_sp)
 {
     // A module is replacing an already added module
     m_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);
@@ -1065,28 +1092,28 @@ Target::ModuleUpdated (ModuleSP &old_module_sp, ModuleSP &new_module_sp)
 void
 Target::ModulesDidLoad (ModuleList &module_list)
 {
-    m_breakpoint_list.UpdateBreakpoints (module_list, true);
-    // TODO: make event data that packages up the module_list
-    BroadcastEvent (eBroadcastBitModulesLoaded, NULL);
+    if (module_list.GetSize())
+    {
+        m_breakpoint_list.UpdateBreakpoints (module_list, true);
+        // TODO: make event data that packages up the module_list
+        BroadcastEvent (eBroadcastBitModulesLoaded, NULL);
+    }
 }
 
 void
 Target::ModulesDidUnload (ModuleList &module_list)
 {
-    m_breakpoint_list.UpdateBreakpoints (module_list, false);
-
-    // Remove the images from the target image list
-    m_images.Remove(module_list);
-
-    // TODO: make event data that packages up the module_list
-    BroadcastEvent (eBroadcastBitModulesUnloaded, NULL);
+    if (module_list.GetSize())
+    {
+        m_breakpoint_list.UpdateBreakpoints (module_list, false);
+        // TODO: make event data that packages up the module_list
+        BroadcastEvent (eBroadcastBitModulesUnloaded, NULL);
+    }
 }
-
 
 bool
 Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_file_spec)
 {
-
     if (GetBreakpointsConsultPlatformAvoidList())
     {
         ModuleList matchingModules;
@@ -1456,17 +1483,15 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                 }
             }
             
-            m_images.Append (module_sp);
             if (old_module_sp && m_images.GetIndexForModule (old_module_sp.get()) != LLDB_INVALID_INDEX32)
             {
-                ModuleUpdated(old_module_sp, module_sp);
-                m_images.Remove (old_module_sp);
+                m_images.ReplaceModule(old_module_sp, module_sp);
                 Module *old_module_ptr = old_module_sp.get();
                 old_module_sp.reset();
                 ModuleList::RemoveSharedModuleIfOrphaned (old_module_ptr);
             }
             else
-                ModuleAdded(module_sp);
+                m_images.Append(module_sp);
         }
     }
     if (error_ptr)

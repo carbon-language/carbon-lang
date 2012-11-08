@@ -204,7 +204,7 @@ SearchFilter::DoModuleIteration (const SymbolContext &context, Searcher &searche
         }
         else
         {
-            ModuleList &target_images = m_target_sp->GetImages();
+            const ModuleList &target_images = m_target_sp->GetImages();
             Mutex::Locker modules_locker(target_images.GetMutex());
             
             size_t n_modules = target_images.GetSize();
@@ -428,7 +428,7 @@ SearchFilterByModule::Search (Searcher &searcher)
     // filespec that passes.  Otherwise, we need to go through all modules and
     // find the ones that match the file name.
 
-    ModuleList &target_modules = m_target_sp->GetImages();
+    const ModuleList &target_modules = m_target_sp->GetImages();
     Mutex::Locker modules_locker (target_modules.GetMutex());
     
     const size_t num_modules = target_modules.GetSize ();
@@ -595,7 +595,7 @@ SearchFilterByModuleList::Search (Searcher &searcher)
     // filespec that passes.  Otherwise, we need to go through all modules and
     // find the ones that match the file name.
 
-    ModuleList &target_modules = m_target_sp->GetImages();
+    const ModuleList &target_modules = m_target_sp->GetImages();
     Mutex::Locker modules_locker (target_modules.GetMutex());
     
     const size_t num_modules = target_modules.GetSize ();
@@ -768,7 +768,7 @@ SearchFilterByModuleListAndCU::Search (Searcher &searcher)
     // find the ones that match the file name.
 
     ModuleList matching_modules;
-    ModuleList &target_images = m_target_sp->GetImages();
+    const ModuleList &target_images = m_target_sp->GetImages();
     Mutex::Locker modules_locker(target_images.GetMutex());
     
     const size_t num_modules = target_images.GetSize ();

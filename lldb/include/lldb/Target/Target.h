@@ -47,7 +47,6 @@ typedef enum InlineStrategy
     eInlineBreakpointsAlways
 } InlineStrategy;
 
-
 //----------------------------------------------------------------------
 // TargetProperties
 //----------------------------------------------------------------------
@@ -266,7 +265,8 @@ class Target :
     public STD_ENABLE_SHARED_FROM_THIS(Target),
     public TargetProperties,
     public Broadcaster,
-    public ExecutionContextScope
+    public ExecutionContextScope,
+    public ModuleList::Notifier
 {
 public:
     friend class TargetList;
@@ -586,13 +586,6 @@ public:
     bool
     IgnoreWatchpointByID (lldb::watch_id_t watch_id, uint32_t ignore_count);
 
-    void
-    ModulesDidLoad (ModuleList &module_list);
-
-    void
-    ModulesDidUnload (ModuleList &module_list);
-
-    
     //------------------------------------------------------------------
     /// Get \a load_addr as a callable code load address for this target
     ///
@@ -623,13 +616,30 @@ public:
     GetOpcodeLoadAddress (lldb::addr_t load_addr, lldb::AddressClass addr_class = lldb::eAddressClassInvalid) const;
 
 protected:
-    void
-    ModuleAdded (lldb::ModuleSP &module_sp);
-
-    void
-    ModuleUpdated (lldb::ModuleSP &old_module_sp, lldb::ModuleSP &new_module_sp);
+    //------------------------------------------------------------------
+    /// Implementing of ModuleList::Notifier.
+    //------------------------------------------------------------------
+    
+    virtual void
+    ModuleAdded (const lldb::ModuleSP& module_sp);
+    
+    virtual void
+    ModuleRemoved (const lldb::ModuleSP& module_sp);
+    
+    virtual void
+    ModuleUpdated (const lldb::ModuleSP& old_module_sp,
+                   const lldb::ModuleSP& new_module_sp);
+    virtual void
+    WillClearList ();
 
 public:
+    
+    void
+    ModulesDidLoad (ModuleList &module_list);
+
+    void
+    ModulesDidUnload (ModuleList &module_list);
+    
     //------------------------------------------------------------------
     /// Gets the module for the main executable.
     ///
@@ -702,18 +712,17 @@ public:
     /// @return
     ///     A list of Module objects in a module list.
     //------------------------------------------------------------------
-    ModuleList&
-    GetImages ()
-    {
-        return m_images;
-    }
-
     const ModuleList&
     GetImages () const
     {
         return m_images;
     }
     
+    ModuleList&
+    GetImages ()
+    {
+        return m_images;
+    }
     
     //------------------------------------------------------------------
     /// Return whether this FileSpec corresponds to a module that should be considered for general searches.

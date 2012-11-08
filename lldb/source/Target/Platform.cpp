@@ -89,6 +89,12 @@ Platform::GetFile (const FileSpec &platform_file,
     return Error();
 }
 
+FileSpec
+Platform::LocateExecutableScriptingResource (const ModuleSpec &module_spec)
+{
+    return FileSpec();
+}
+
 Error
 Platform::GetSharedModule (const ModuleSpec &module_spec,
                            ModuleSP &module_sp,

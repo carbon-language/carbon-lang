@@ -287,7 +287,9 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
 {
     if (did_create_ptr)
         *did_create_ptr = false;
-    ModuleList &target_images = m_process->GetTarget().GetImages();
+    
+    
+    const ModuleList &target_images = m_process->GetTarget().GetImages();
     ModuleSpec module_spec (image_info.file_spec, image_info.GetArchitecture ());
     module_spec.GetUUID() = image_info.uuid;
     ModuleSP module_sp (target_images.FindFirstModule (module_spec));
@@ -816,7 +818,7 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
                     Section *commpage_section = sections->FindSectionByName(commpage_dbstr).get();
                     if (commpage_section)
                     {
-                        ModuleList& target_images = m_process->GetTarget().GetImages();
+                        const ModuleList& target_images = m_process->GetTarget().GetImages();
                         ModuleSpec module_spec (objfile->GetFileSpec(), image_infos[idx].GetArchitecture ());
                         module_spec.GetObjectName() = commpage_dbstr;
                         ModuleSP commpage_image_module_sp(target_images.FindFirstModule (module_spec));
@@ -966,7 +968,7 @@ DynamicLoaderMacOSXDYLD::RemoveModulesUsingImageInfosAddress (lldb::addr_t image
             log->PutCString("Unloaded:");
             unloaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidUnload");
         }
-        m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
+        m_process->GetTarget().GetImages().Remove (unloaded_module_list);
     }
     m_dyld_image_infos_stop_id = m_process->GetStopID();
     return true;
@@ -1060,7 +1062,7 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
         // to an equivalent version.  We don't want it to stay in the target's module list or it will confuse
         // us, so unload it here.
         Target &target = m_process->GetTarget();
-        ModuleList &target_modules = target.GetImages();
+        const ModuleList &target_modules = target.GetImages();
         ModuleList not_loaded_modules;
         Mutex::Locker modules_locker(target_modules.GetMutex());
         
@@ -1082,7 +1084,7 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
         
         if (not_loaded_modules.GetSize() != 0)
         {
-            target.ModulesDidUnload(not_loaded_modules);
+            target.GetImages().Remove(not_loaded_modules);
         }
 
         return true;
@@ -1586,7 +1588,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
             {
                 SymbolContextList target_symbols;
                 TargetSP target_sp (thread.CalculateTarget());
-                ModuleList &images = target_sp->GetImages();
+                const ModuleList &images = target_sp->GetImages();
                 
                 images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, target_symbols);
 

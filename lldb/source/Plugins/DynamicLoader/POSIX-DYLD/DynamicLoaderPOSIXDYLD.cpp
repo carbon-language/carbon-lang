@@ -271,9 +271,8 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
             FileSpec file(I->path.c_str(), true);
             ModuleSP module_sp = LoadModuleAtAddress(file, I->base_addr);
             if (module_sp.get())
-                new_modules.Append(module_sp);
+                loaded_modules.AppendIfNeeded(module_sp);
         }
-        m_process->GetTarget().ModulesDidLoad(new_modules);
     }
     
     if (m_rendezvous.ModulesDidUnload())
@@ -290,7 +289,7 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
             if (module_sp.get())
                 old_modules.Append(module_sp);
         }
-        m_process->GetTarget().ModulesDidUnload(old_modules);
+        loaded_modules.Remove(old_modules);
     }
 }
 
@@ -312,7 +311,7 @@ DynamicLoaderPOSIXDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
 
     SymbolContextList target_symbols;
     Target &target = thread.GetProcess()->GetTarget();
-    ModuleList &images = target.GetImages();
+    const ModuleList &images = target.GetImages();
 
     images.FindSymbolsWithNameAndType(sym_name, eSymbolTypeCode, target_symbols);
     size_t num_targets = target_symbols.GetSize();
