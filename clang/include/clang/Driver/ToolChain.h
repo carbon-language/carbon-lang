@@ -85,6 +85,10 @@ public:
   StringRef getPlatform() const { return Triple.getVendorName(); }
   StringRef getOS() const { return Triple.getOSName(); }
 
+  /// \brief Provide the default architecture name (as expected by -arch) for
+  /// this toolchain. Note t
+  std::string getDefaultUniversalArchName() const;
+
   std::string getTripleString() const {
     return Triple.getTriple();
   }

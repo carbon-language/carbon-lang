@@ -33,6 +33,21 @@ const Driver &ToolChain::getDriver() const {
  return D;
 }
 
+std::string ToolChain::getDefaultUniversalArchName() const {
+  // In universal driver terms, the arch name accepted by -arch isn't exactly
+  // the same as the ones that appear in the triple. Roughly speaking, this is
+  // an inverse of the darwin::getArchTypeForDarwinArchName() function, but the
+  // only interesting special case is powerpc.
+  switch (Triple.getArch()) {
+  case llvm::Triple::ppc:
+    return "ppc";
+  case llvm::Triple::ppc64:
+    return "ppc64";
+  default:
+    return Triple.getArchName();
+  }
+}
+
 bool ToolChain::IsUnwindTablesDefault() const {
   return false;
 }
