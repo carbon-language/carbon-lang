@@ -34,7 +34,7 @@ void FlushShadowMemory() {
 }
 
 const char *InitializePlatform() {
-  return getenv("TSAN_OPTIONS");
+  return getenv(kTsanOptionsEnv);
 }
 
 void FinalizePlatform() {

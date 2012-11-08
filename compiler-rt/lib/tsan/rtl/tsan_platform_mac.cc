@@ -82,7 +82,7 @@ const char *InitializePlatform() {
     setrlimit(RLIMIT_CORE, (rlimit*)&lim);
   }
 
-  return getenv("TSAN_OPTIONS");
+  return getenv(kTsanOptionsEnv);
 }
 
 void FinalizePlatform() {

@@ -24,6 +24,12 @@
 
 namespace __tsan {
 
+#ifdef TSAN_GO
+const char *const kTsanOptionsEnv = "GORACE";
+#else
+const char *const kTsanOptionsEnv = "TSAN_OPTIONS";
+#endif
+
 const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
