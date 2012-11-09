@@ -21,6 +21,7 @@
 #include <utility>
 #include <functional>
 #include <cassert>
+#include <string>
 
 namespace llvm {
   class MemoryBuffer;
