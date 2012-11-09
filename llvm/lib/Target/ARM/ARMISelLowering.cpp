@@ -9119,8 +9119,7 @@ bool ARMTargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
 
 bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   // The AllowsUnaliged flag models the SCTLR.A setting in ARM cpus
-  bool AllowsUnaligned = Subtarget->allowsUnalignedMem() &&
-    !getTargetMachine().Options.StrictAlign;
+  bool AllowsUnaligned = Subtarget->allowsUnalignedMem();
 
   switch (VT.getSimpleVT().SimpleTy) {
   default:
