@@ -99,9 +99,6 @@ namespace driver {
       return getInfo(id).GroupID;
     }
 
-    /// \brief Should the help for the given option be hidden by default.
-    bool isOptionHelpHidden(OptSpecifier id) const;
-
     /// \brief Get the help text to use to describe this option.
     const char *getOptionHelpText(OptSpecifier id) const {
       return getInfo(id).HelpText;
@@ -151,9 +148,12 @@ namespace driver {
     /// \param OS - The stream to write the help text to.
     /// \param Name - The name to use in the usage line.
     /// \param Title - The title to use in the usage line.
-    /// \param ShowHidden - Whether help-hidden arguments should be shown.
+    /// \param FlagsToInclude - If non-zero, only include options with any
+    ///                         of these flags set.
+    /// \param FlagsToExclude - Exclude options with any of these flags set.
     void PrintHelp(raw_ostream &OS, const char *Name,
-                   const char *Title, bool ShowHidden = false) const;
+                   const char *Title, unsigned short FlagsToInclude = 0,
+                   unsigned short FlagsToExclude = 0) const;
   };
 }
 }

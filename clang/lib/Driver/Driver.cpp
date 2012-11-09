@@ -564,7 +564,9 @@ void Driver::PrintOptions(const ArgList &Args) const {
 
 void Driver::PrintHelp(bool ShowHidden) const {
   getOpts().PrintHelp(llvm::outs(), Name.c_str(), DriverTitle.c_str(),
-                      ShowHidden);
+                      /*Include*/0,
+                      /*Exclude*/options::NoDriverOption |
+                      (ShowHidden ? 0 : options::HelpHidden));
 }
 
 void Driver::PrintVersion(const Compilation &C, raw_ostream &OS) const {

@@ -88,6 +88,9 @@ def NoForward : OptionFlag;
 // CC1Option - This option should be accepted by clang -cc1.
 def CC1Option : OptionFlag;
 
+// NoDriverOption - This option should not be accepted by the driver.
+def NoDriverOption : OptionFlag;
+
 // Define the option group class.
 
 class OptionGroup<string name> {

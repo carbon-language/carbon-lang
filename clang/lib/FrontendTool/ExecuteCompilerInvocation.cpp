@@ -16,6 +16,7 @@
 #include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 #include "clang/ARCMigrate/ARCMTActions.h"
 #include "clang/CodeGen/CodeGenAction.h"
+#include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -137,7 +138,9 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
   if (Clang->getFrontendOpts().ShowHelp) {
     OwningPtr<driver::OptTable> Opts(driver::createDriverOptTable());
     Opts->PrintHelp(llvm::outs(), "clang -cc1",
-                    "LLVM 'Clang' Compiler: http://clang.llvm.org");
+                    "LLVM 'Clang' Compiler: http://clang.llvm.org",
+                    /*Include=*/driver::options::CC1Option,
+                    /*Exclude=*/0);
     return 0;
   }
 
