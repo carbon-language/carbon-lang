@@ -82,17 +82,11 @@ bool Darwin::HasNativeLLVMSupport() const {
 
 /// Darwin provides an ARC runtime starting in MacOS X 10.7 and iOS 5.0.
 ObjCRuntime Darwin::getDefaultObjCRuntime(bool isNonFragile) const {
-  if (isTargetIPhoneOS()) {
+  if (isTargetIPhoneOS())
     return ObjCRuntime(ObjCRuntime::iOS, TargetVersion);
-  } else if (TargetSimulatorVersionFromDefines != VersionTuple()) {
-    return ObjCRuntime(ObjCRuntime::iOS, TargetSimulatorVersionFromDefines);
-  } else {
-    if (isNonFragile) {
-      return ObjCRuntime(ObjCRuntime::MacOSX, TargetVersion);
-    } else {
-      return ObjCRuntime(ObjCRuntime::FragileMacOSX, TargetVersion);
-    }
-  }
+  if (isNonFragile)
+    return ObjCRuntime(ObjCRuntime::MacOSX, TargetVersion);
+  return ObjCRuntime(ObjCRuntime::FragileMacOSX, TargetVersion);
 }
 
 /// Darwin provides a blocks runtime starting in MacOS X 10.6 and iOS 3.2.
@@ -250,9 +244,6 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
     s += "iphonesimulator";
   else if (isTargetIPhoneOS())
     s += "iphoneos";
-  // FIXME: Remove this once we depend fully on -mios-simulator-version-min.
-  else if (TargetSimulatorVersionFromDefines != VersionTuple())
-    s += "iphonesimulator";
   else
     s += "macosx";
   s += ".a";
@@ -376,35 +367,6 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   }
 }
 
-static inline StringRef SimulatorVersionDefineName() {
-  return "__IPHONE_OS_VERSION_MIN_REQUIRED";
-}
-
-/// \brief Parse the simulator version define:
-/// __IPHONE_OS_VERSION_MIN_REQUIRED=([0-9])([0-9][0-9])([0-9][0-9])
-// and return the grouped values as integers, e.g:
-//   __IPHONE_OS_VERSION_MIN_REQUIRED=40201
-// will return Major=4, Minor=2, Micro=1.
-static bool GetVersionFromSimulatorDefine(StringRef define,
-                                          unsigned &Major, unsigned &Minor,
-                                          unsigned &Micro) {
-  assert(define.startswith(SimulatorVersionDefineName()));
-  StringRef name, version;
-  llvm::tie(name, version) = define.split('=');
-  if (version.empty())
-    return false;
-  std::string verstr = version.str();
-  char *end;
-  unsigned num = (unsigned) strtol(verstr.c_str(), &end, 10);
-  if (*end != '\0')
-    return false;
-  Major = num / 10000;
-  num = num % 10000;
-  Minor = num / 100;
-  Micro = num % 100;
-  return true;
-}
-
 void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   const OptTable &Opts = getDriver().getOpts();
 
@@ -426,30 +388,6 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   Arg *iOSVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
   Arg *iOSSimVersion = Args.getLastArg(
     options::OPT_mios_simulator_version_min_EQ);
-
-  // FIXME: HACK! When compiling for the simulator we don't get a
-  // '-miphoneos-version-min' to help us know whether there is an ARC runtime
-  // or not; try to parse a __IPHONE_OS_VERSION_MIN_REQUIRED
-  // define passed in command-line.
-  if (!iOSVersion && !iOSSimVersion) {
-    for (arg_iterator it = Args.filtered_begin(options::OPT_D),
-           ie = Args.filtered_end(); it != ie; ++it) {
-      StringRef define = (*it)->getValue();
-      if (define.startswith(SimulatorVersionDefineName())) {
-        unsigned Major = 0, Minor = 0, Micro = 0;
-        if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
-            Major < 10 && Minor < 100 && Micro < 100) {
-          TargetSimulatorVersionFromDefines = VersionTuple(Major, Minor, Micro);
-        }
-        // When using the define to indicate the simulator, we force
-        // 10.6 macosx target.
-        const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-        OSXVersion = Args.MakeJoinedArg(0, O, "10.6");
-        Args.append(OSXVersion);
-        break;
-      }
-    }
-  }
 
   if (OSXVersion && (iOSVersion || iOSSimVersion)) {
     getDriver().Diag(diag::err_drv_argument_not_allowed_with)
@@ -895,13 +833,8 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     StringRef where;
 
     // Complain about targetting iOS < 5.0 in any way.
-    if (TargetSimulatorVersionFromDefines != VersionTuple()) {
-      if (TargetSimulatorVersionFromDefines < VersionTuple(5, 0))
-        where = "iOS 5.0";
-    } else if (isTargetIPhoneOS()) {
-      if (isIPhoneOSVersionLT(5, 0))
-        where = "iOS 5.0";
-    }
+    if (isTargetIPhoneOS() && isIPhoneOSVersionLT(5, 0))
+      where = "iOS 5.0";
 
     if (where != StringRef()) {
       getDriver().Diag(clang::diag::err_drv_invalid_libcxx_deployment)

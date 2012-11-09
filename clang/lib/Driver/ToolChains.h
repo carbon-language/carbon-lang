@@ -185,11 +185,6 @@ private:
   /// The OS version we are targeting.
   mutable VersionTuple TargetVersion;
 
-protected:
-  // FIXME: Remove this once there is a proper way to detect an ARC runtime
-  // for the simulator.
-  mutable VersionTuple TargetSimulatorVersionFromDefines;
-
 private:
   /// The default macosx-version-min of this tool chain; empty until
   /// initialized.
@@ -243,9 +238,7 @@ public:
   }
 
   bool isTargetMacOS() const {
-    return !isTargetIOSSimulator() &&
-           !isTargetIPhoneOS() &&
-           TargetSimulatorVersionFromDefines == VersionTuple();
+    return !isTargetIOSSimulator() && !isTargetIPhoneOS();
   }
 
   bool isTargetInitialized() const { return TargetInitialized; }
