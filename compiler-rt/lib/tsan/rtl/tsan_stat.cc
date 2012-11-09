@@ -197,6 +197,10 @@ void StatOutput(u64 *stat) {
   name[StatInt_epoll_ctl]                = "  epoll_ctl                       ";
   name[StatInt_epoll_wait]               = "  epoll_wait                      ";
   name[StatInt_sigaction]                = "  sigaction                       ";
+  name[StatInt_sleep]                    = "  sleep                           ";
+  name[StatInt_usleep]                   = "  usleep                          ";
+  name[StatInt_nanosleep]                = "  nanosleep                       ";
+  name[StatInt_gettimeofday]             = "  gettimeofday                    ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
