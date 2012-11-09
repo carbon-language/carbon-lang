@@ -390,15 +390,14 @@ static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
   switch (ord) {
     case NotAtomic:              assert(false);
     case Unordered:              // Fall-through.
-    case Monotonic:              v = 1 << 0; break;
-    // case Consume:                v = 1 << 1; break;  // Not specified yet.
-    case Acquire:                v = 1 << 2; break;
-    case Release:                v = 1 << 3; break;
-    case AcquireRelease:         v = 1 << 4; break;
-    case SequentiallyConsistent: v = 1 << 5; break;
+    case Monotonic:              v = 0; break;
+ // case Consume:                v = 1; break;  // Not specified yet.
+    case Acquire:                v = 2; break;
+    case Release:                v = 3; break;
+    case AcquireRelease:         v = 4; break;
+    case SequentiallyConsistent: v = 5; break;
   }
-  // +100500 is temporal to migrate to new enum values.
-  return IRB->getInt32(v + 100500);
+  return IRB->getInt32(v);
 }
 
 bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
