@@ -1583,6 +1583,7 @@ const char *ConvergingScheduler::getReasonStr(
   case NextDefUse:     return "DEF-USE   ";
   case NodeOrder:      return "ORDER     ";
   };
+  llvm_unreachable("Unknown reason!");
 }
 
 void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand,
