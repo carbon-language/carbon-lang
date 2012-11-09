@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   strncpy(short_buffer, hello, 10);  // BOOM
   // CHECK: {{WRITE of size 1 at 0x.* thread T0}}
   // CHECK-Linux: {{    #0 0x.* in .*strncpy}}
-  // CHECK-Darwin: {{    #0 0x.* in wrap_strncpy}}
+  // CHECK-Darwin: {{    #0 0x.* in _?wrap_strncpy}}
   // CHECK: {{    #1 0x.* in _?main .*strncpy-overflow.cc:24}}
   // CHECK: {{0x.* is located 0 bytes to the right of 9-byte region}}
   // CHECK: {{allocated by thread T0 here:}}

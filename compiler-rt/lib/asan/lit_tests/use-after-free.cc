@@ -32,7 +32,7 @@ int main() {
 
   // CHECK-Darwin: {{    #0 0x.* in .*mz_free.*}}
   // We override free() on Darwin, thus no malloc_zone_free
-  // CHECK-Darwin: {{    #1 0x.* in wrap_free}}
+  // CHECK-Darwin: {{    #1 0x.* in _?wrap_free}}
   // CHECK-Darwin: {{    #2 0x.* in _?main .*use-after-free.cc:21}}
 
   // CHECK: {{previously allocated by thread T0 here:}}
