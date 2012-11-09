@@ -214,7 +214,8 @@ def Wp_COMMA : CommaJoined<["-"], "Wp,">,
   MetaVarName<"<arg>">;
 def Wwrite_strings : Flag<["-"], "Wwrite-strings">, Group<W_Group>, Flags<[CC1Option]>;
 def Wno_write_strings : Flag<["-"], "Wno-write-strings">, Group<W_Group>, Flags<[CC1Option]>;
-def W_Joined : Joined<["-"], "W">, Group<W_Group>, Flags<[CC1Option]>;
+def W_Joined : Joined<["-"], "W">, Group<W_Group>, Flags<[CC1Option]>,
+  MetaVarName<"<warning>">, HelpText<"Enable the specified warning">;
 def Xanalyzer : Separate<["-"], "Xanalyzer">,
   HelpText<"Pass <arg> to the static analyzer">, MetaVarName<"<arg>">;
 def Xarch__ : JoinedAndSeparate<["-"], "Xarch_">, Flags<[DriverOption]>;
@@ -313,7 +314,7 @@ def fbootclasspath_EQ : Joined<["-"], "fbootclasspath=">, Group<f_Group>;
 def fborland_extensions : Flag<["-"], "fborland-extensions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Accept non-standard constructs supported by the Borland compiler">;
 def fbounds_checking : Flag<["-"], "fbounds-checking">, Group<f_Group>,
-  HelpText<"Enable run-time bounds checks.">;
+  HelpText<"Enable run-time bounds checks">;
 def fbounds_checking_EQ : Joined<["-"], "fbounds-checking=">, Flags<[CC1Option]>,
   Group<f_Group>;
 def fbuiltin_strcat : Flag<["-"], "fbuiltin-strcat">, Group<f_Group>;
@@ -377,7 +378,7 @@ def fhosted : Flag<["-"], "fhosted">, Group<f_Group>;
 def ffast_math : Flag<["-"], "ffast-math">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the *frontend*'s 'fast-math' mode. This has no effect on "
            "optimizations, but provides a preprocessor macro __FAST_MATH__ the "
-           "same as GCC's -ffast-math flag.">;
+           "same as GCC's -ffast-math flag">;
 def fno_fast_math : Flag<["-"], "fno-fast-math">, Group<f_Group>;
 def fmath_errno : Flag<["-"], "fmath-errno">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Require math functions to indicate errors by setting errno">;
@@ -387,7 +388,7 @@ def fno_signaling_math : Flag<["-"], "fno-signaling-math">, Group<f_Group>;
 def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
                    Flags<[CC1Option]>, MetaVarName<"<check>">,
                    HelpText<"Enable runtime instrumentation for bug detection: "
-                            "address (memory errors), thread (race detection), "
+                            "address (memory errors) | thread (race detection) | "
                             "undefined (miscellaneous undefined behavior)">;
 def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>;
 def funsafe_math_optimizations : Flag<["-"], "funsafe-math-optimizations">,
@@ -517,7 +518,7 @@ def fno_lax_vector_conversions : Flag<["-"], "fno-lax-vector-conversions">, Grou
 def fno_limit_debug_info : Flag<["-"], "fno-limit-debug-info">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Do not limit debug information produced to reduce size of debug binary">;
 def fno_merge_all_constants : Flag<["-"], "fno-merge-all-constants">, Group<f_Group>,
-    Flags<[CC1Option]>, HelpText<"Disallow merging of constants.">;
+    Flags<[CC1Option]>, HelpText<"Disallow merging of constants">;
 def fno_modules : Flag <["-"], "fno-modules">, Group<f_Group>, Flags<[NoForward]>;
 def fno_ms_extensions : Flag<["-"], "fno-ms-extensions">, Group<f_Group>;
 def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>;
@@ -631,7 +632,7 @@ def fstack_protector : Flag<["-"], "fstack-protector">, Group<f_Group>;
 def fstrict_aliasing : Flag<["-"], "fstrict-aliasing">, Group<f_Group>;
 def fstrict_enums : Flag<["-"], "fstrict-enums">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable optimizations based on the strict definition of an enum's "
-           "value range.">;
+           "value range">;
 def fstrict_overflow : Flag<["-"], "fstrict-overflow">, Group<f_Group>;
 def fsyntax_only : Flag<["-"], "fsyntax-only">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>;
 def ftabstop_EQ : Joined<["-"], "ftabstop=">, Group<f_Group>;
@@ -660,7 +661,7 @@ def ftrapv : Flag<["-"], "ftrapv">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Trap on integer overflow">;
 def ftrapv_handler_EQ : Joined<["-"], "ftrapv-handler=">, Group<f_Group>,
   MetaVarName<"<function name>">,
-  HelpText<"Specify the function to be called on overflow.">;
+  HelpText<"Specify the function to be called on overflow">;
 def ftrapv_handler : Separate<["-"], "ftrapv-handler">, Group<f_Group>, Flags<[CC1Option]>;
 def ftrap_function_EQ : Joined<["-"], "ftrap-function=">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Issue call to specified function rather than a trap instruction">;
@@ -784,13 +785,13 @@ def mllvm : Separate<["-"], "mllvm">, Flags<[CC1Option]>,
   HelpText<"Additional arguments to forward to LLVM's option processing">;
 def mmacosx_version_min_EQ : Joined<["-"], "mmacosx-version-min=">, Group<m_Group>;
 def mms_bitfields : Flag<["-"], "mms-bitfields">, Group<m_Group>, Flags<[CC1Option]>,
-  HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard.">;
+  HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard">;
 def mstackrealign : Flag<["-"], "mstackrealign">, Group<m_Group>, Flags<[CC1Option]>,
-  HelpText<"Force realign the stack at entry to every function.">;
+  HelpText<"Force realign the stack at entry to every function">;
 def mstack_alignment : Joined<["-"], "mstack-alignment=">, Group<m_Group>, Flags<[CC1Option]>,
   HelpText<"Set the stack alignment">;
 def mstrict_align : Flag<["-"], "mstrict-align">, Group<m_Group>, Flags<[CC1Option]>,
-  HelpText<"Force all memory accesses to be aligned. (ARM only)">;
+  HelpText<"Force all memory accesses to be aligned (ARM only)">;
 def mmmx : Flag<["-"], "mmmx">, Group<m_x86_Features_Group>;
 def mno_3dnowa : Flag<["-"], "mno-3dnowa">, Group<m_x86_Features_Group>;
 def mno_3dnow : Flag<["-"], "mno-3dnow">, Group<m_x86_Features_Group>;
@@ -832,7 +833,7 @@ def marm : Flag<["-"], "marm">, Alias<mno_thumb>;
 def mno_warn_nonportable_cfstrings : Flag<["-"], "mno-warn-nonportable-cfstrings">, Group<m_Group>;
 def mno_omit_leaf_frame_pointer : Flag<["-"], "mno-omit-leaf-frame-pointer">, Group<f_Group>;
 def momit_leaf_frame_pointer : Flag<["-"], "momit-leaf-frame-pointer">, Group<f_Group>,
-  HelpText<"Omit frame pointer setup for leaf functions.">, Flags<[CC1Option]>;
+  HelpText<"Omit frame pointer setup for leaf functions">, Flags<[CC1Option]>;
 def mpascal_strings : Flag<["-"], "mpascal-strings">, Group<m_Group>;
 def mred_zone : Flag<["-"], "mred-zone">, Group<m_Group>;
 def mregparm_EQ : Joined<["-"], "mregparm=">, Group<m_Group>;
@@ -1007,14 +1008,14 @@ def use_gold_plugin : Flag<["-"], "use-gold-plugin">;
 def v : Flag<["-"], "v">, Flags<[CC1Option]>,
   HelpText<"Show commands to run and use verbose output">;
 def verify : Flag<["-"], "verify">, Flags<[DriverOption,CC1Option]>,
-  HelpText<"Verify output using a verifier.">;
+  HelpText<"Verify output using a verifier">;
 def weak_l : Joined<["-"], "weak-l">, Flags<[LinkerInput]>;
 def weak__framework : Separate<["-"], "weak_framework">, Flags<[LinkerInput]>;
 def weak__library : Separate<["-"], "weak_library">, Flags<[LinkerInput]>;
 def weak__reference__mismatches : Separate<["-"], "weak_reference_mismatches">;
 def whatsloaded : Flag<["-"], "whatsloaded">;
 def whyload : Flag<["-"], "whyload">;
-def w : Flag<["-"], "w">, HelpText<"Suppress all warnings.">, Flags<[CC1Option]>;
+def w : Flag<["-"], "w">, HelpText<"Suppress all warnings">, Flags<[CC1Option]>;
 def x : JoinedOrSeparate<["-"], "x">, Flags<[DriverOption,CC1Option]>,
   HelpText<"Treat subsequent input files as having type <language>">,
   MetaVarName<"<language>">;
