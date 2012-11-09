@@ -600,9 +600,9 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
                                                FileManager &FileMgr,
                                                SourceManager &SourceMgr,
                                                const FrontendOptions &Opts) {
-  StringRef InputFile = Input.File;
+  StringRef InputFile = Input.getFile();
   SrcMgr::CharacteristicKind
-    Kind = Input.IsSystem ? SrcMgr::C_System : SrcMgr::C_User;
+    Kind = Input.isSystem() ? SrcMgr::C_System : SrcMgr::C_User;
 
   // Figure out where to get and map in the main file.
   if (InputFile != "-") {

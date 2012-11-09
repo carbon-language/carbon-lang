@@ -67,7 +67,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
   assert(!includes.empty() && "No '-chain-include' in options!");
 
   OwningPtr<ChainedIncludesSource> source(new ChainedIncludesSource());
-  InputKind IK = CI.getFrontendOpts().Inputs[0].Kind;
+  InputKind IK = CI.getFrontendOpts().Inputs[0].getKind();
 
   SmallVector<llvm::MemoryBuffer *, 4> serialBufs;
   SmallVector<std::string, 4> serialBufNames;

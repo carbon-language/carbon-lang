@@ -381,7 +381,7 @@ void CodeGenAction::ExecuteAction() {
     // FIXME: This is stupid, IRReader shouldn't take ownership.
     llvm::MemoryBuffer *MainFileCopy =
       llvm::MemoryBuffer::getMemBufferCopy(MainFile->getBuffer(),
-                                           getCurrentFile().c_str());
+                                           getCurrentFile());
 
     llvm::SMDiagnostic Err;
     TheModule.reset(ParseIR(MainFileCopy, Err, *VMContext));

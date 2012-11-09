@@ -16,6 +16,10 @@
 #include <string>
 #include <vector>
 
+namespace llvm {
+class MemoryBuffer;
+}
+
 namespace clang {
 
 namespace frontend {
@@ -72,19 +76,41 @@ enum InputKind {
 
   
 /// \brief An input file for the front end.
-struct FrontendInputFile {
+class FrontendInputFile {
   /// \brief The file name, or "-" to read from standard input.
   std::string File;
+
+  llvm::MemoryBuffer *Buffer;
 
   /// \brief The kind of input, e.g., C source, AST file, LLVM IR.
   InputKind Kind;
 
   /// \brief Whether we're dealing with a 'system' input (vs. a 'user' input).
   bool IsSystem;
-  
-  FrontendInputFile() : Kind(IK_None) { }
+
+public:
+  FrontendInputFile() : Buffer(0), Kind(IK_None) { }
   FrontendInputFile(StringRef File, InputKind Kind, bool IsSystem = false)
-    : File(File.str()), Kind(Kind), IsSystem(IsSystem) { }
+    : File(File.str()), Buffer(0), Kind(Kind), IsSystem(IsSystem) { }
+  FrontendInputFile(llvm::MemoryBuffer *buffer, InputKind Kind,
+                    bool IsSystem = false)
+    : Buffer(buffer), Kind(Kind), IsSystem(IsSystem) { }
+
+  InputKind getKind() const { return Kind; }
+  bool isSystem() const { return IsSystem; }
+
+  bool isEmpty() const { return File.empty() && Buffer == 0; }
+  bool isFile() const { return !isBuffer(); }
+  bool isBuffer() const { return Buffer != 0; }
+
+  StringRef getFile() const {
+    assert(isFile());
+    return File;
+  }
+  llvm::MemoryBuffer *getBuffer() const {
+    assert(isBuffer());
+    return Buffer;
+  }
 };
 
 /// FrontendOptions - Options for controlling the behavior of the frontend.
