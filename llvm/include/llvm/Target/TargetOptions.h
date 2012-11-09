@@ -48,10 +48,10 @@ namespace llvm {
           UseSoftFloat(false), NoZerosInBSS(false), JITExceptionHandling(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
           GuaranteedTailCallOpt(false), DisableTailCalls(false),
-          StackAlignmentOverride(0), RealignStack(true), EnableFastISel(false),
-          PositionIndependentExecutable(false), EnableSegmentedStacks(false),
-          UseInitArray(false), TrapFuncName(""), FloatABIType(FloatABI::Default),
-          AllowFPOpFusion(FPOpFusion::Standard)
+          StackAlignmentOverride(0), RealignStack(true), StrictAlign(false),
+          EnableFastISel(false), PositionIndependentExecutable(false),
+          EnableSegmentedStacks(false), UseInitArray(false), TrapFuncName(""),
+          FloatABIType(FloatABI::Default), AllowFPOpFusion(FPOpFusion::Standard)
     {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
@@ -154,6 +154,10 @@ namespace llvm {
     /// RealignStack - This flag indicates whether the stack should be
     /// automatically realigned, if needed.
     unsigned RealignStack : 1;
+
+    /// StrictAlign - This flag indicates that all memory accesses must be
+    /// aligned. (ARM only)
+    unsigned StrictAlign : 1;
 
     /// SSPBufferSize - The minimum size of buffers that will receive stack
     /// smashing protection when -fstack-protection is used.
