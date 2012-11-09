@@ -189,6 +189,13 @@ static bool AtomicCAS(ThreadState *thr, uptr pc,
   return false;
 }
 
+template<typename T>
+static T AtomicCAS(ThreadState *thr, uptr pc,
+    volatile T *a, T c, T v, morder mo) {
+  AtomicCAS(thr, pc, a, &c, v, mo);
+  return c;
+}
+
 static void AtomicFence(ThreadState *thr, uptr pc, morder mo) {
   __sync_synchronize();
 }
@@ -357,6 +364,25 @@ int __tsan_atomic32_compare_exchange_weak(volatile a32 *a, a32 *c, a32 v,
 }
 
 int __tsan_atomic64_compare_exchange_weak(volatile a64 *a, a64 *c, a64 v,
+    morder mo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo);
+}
+
+a8 __tsan_atomic8_compare_exchange_val(volatile a8 *a, a8 c, a8 v,
+    morder mo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo);
+}
+a16 __tsan_atomic16_compare_exchange_val(volatile a16 *a, a16 c, a16 v,
+    morder mo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo);
+}
+
+a32 __tsan_atomic32_compare_exchange_val(volatile a32 *a, a32 c, a32 v,
+    morder mo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo);
+}
+
+a64 __tsan_atomic64_compare_exchange_val(volatile a64 *a, a64 c, a64 v,
     morder mo) {
   SCOPED_ATOMIC(CAS, a, c, v, mo);
 }
