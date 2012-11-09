@@ -213,8 +213,8 @@ public:
   bool isCXXInstanceMember() const;
 
   class LinkageInfo {
-    uint8_t linkage_    : 4;
-    uint8_t visibility_ : 3;
+    uint8_t linkage_    : 2;
+    uint8_t visibility_ : 2;
     uint8_t explicit_   : 1;
 
     void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
