@@ -789,6 +789,8 @@ def mstackrealign : Flag<["-"], "mstackrealign">, Group<m_Group>, Flags<[CC1Opti
   HelpText<"Force realign the stack at entry to every function.">;
 def mstack_alignment : Joined<["-"], "mstack-alignment=">, Group<m_Group>, Flags<[CC1Option]>,
   HelpText<"Set the stack alignment">;
+def mstrict_align : Flag<["-"], "mstrict-align">, Group<m_Group>, Flags<[CC1Option]>,
+  HelpText<"Force all memory accesses to be aligned. (ARM only)">;
 def mmmx : Flag<["-"], "mmmx">, Group<m_x86_Features_Group>;
 def mno_3dnowa : Flag<["-"], "mno-3dnowa">, Group<m_x86_Features_Group>;
 def mno_3dnow : Flag<["-"], "mno-3dnow">, Group<m_x86_Features_Group>;

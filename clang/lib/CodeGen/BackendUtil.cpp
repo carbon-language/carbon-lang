@@ -401,6 +401,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.UseSoftFloat = CodeGenOpts.SoftFloat;
   Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
   Options.RealignStack = CodeGenOpts.StackRealignment;
+  Options.StrictAlign = CodeGenOpts.StrictAlign;
   Options.DisableTailCalls = CodeGenOpts.DisableTailCalls;
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
   Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
