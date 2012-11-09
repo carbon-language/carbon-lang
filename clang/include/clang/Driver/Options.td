@@ -873,13 +873,13 @@ def mno_dsp : Flag<["-"], "mno-dsp">, Group<m_Group>;
 def mdspr2 : Flag<["-"], "mdspr2">, Group<m_Group>;
 def mno_dspr2 : Flag<["-"], "mno-dspr2">, Group<m_Group>;
 def mips32 : Flag<["-"], "mips32">, Group<mips_CPUs_Group>,
-  HelpText<"Equivalent to -march=mips32">;
+  HelpText<"Equivalent to -march=mips32">, Flags<[HelpHidden]>;
 def mips32r2 : Flag<["-"], "mips32r2">, Group<mips_CPUs_Group>,
-  HelpText<"Equivalent to -march=mips32r2">;
+  HelpText<"Equivalent to -march=mips32r2">, Flags<[HelpHidden]>;
 def mips64 : Flag<["-"], "mips64">, Group<mips_CPUs_Group>,
-  HelpText<"Equivalent to -march=mips64">;
+  HelpText<"Equivalent to -march=mips64">, Flags<[HelpHidden]>;
 def mips64r2 : Flag<["-"], "mips64r2">, Group<mips_CPUs_Group>,
-  HelpText<"Equivalent to -march=mips64r2">;
+  HelpText<"Equivalent to -march=mips64r2">, Flags<[HelpHidden]>;
 def mthumb : Flag<["-"], "mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<["-"], "mtune=">, Group<m_Group>;
 def multi__module : Flag<["-"], "multi_module">;
