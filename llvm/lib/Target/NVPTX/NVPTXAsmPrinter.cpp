@@ -1525,6 +1525,9 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F,
       // <a> = PAL.getparamalignment
       // size = typeallocsize of element type
       unsigned align = PAL.getParamAlignment(paramIndex+1);
+      if (align == 0)
+        align = TD->getABITypeAlignment(ETy);
+
       unsigned sz = TD->getTypeAllocSize(ETy);
       O << "\t.param .align " << align
           << " .b8 ";
