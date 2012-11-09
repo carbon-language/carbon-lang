@@ -10999,7 +10999,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
 
   // An error diagnostic has already been printed when parsing the declaration.
-  if (Method->isStatic())
+  if (Method->isInvalidDecl())
     return ExprError();
 
   const FunctionProtoType *Proto =
