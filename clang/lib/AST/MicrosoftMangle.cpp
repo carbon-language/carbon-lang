@@ -307,39 +307,23 @@ void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
 }
 
 void MicrosoftCXXNameMangler::mangleNumber(int64_t Number) {
-  // <number> ::= [?] <decimal digit> # 1 <= Number <= 10
-  //          ::= [?] <hex digit>+ @ # 0 or > 9; A = 0, B = 1, etc...
-  //          ::= [?] @ # 0 (alternate mangling, not emitted by VC)
-  if (Number < 0) {
-    Out << '?';
-    Number = -Number;
-  }
-  // There's a special shorter mangling for 0, but Microsoft
-  // chose not to use it. Instead, 0 gets mangled as "A@". Oh well...
-  if (Number >= 1 && Number <= 10)
-    Out << Number-1;
-  else {
-    // We have to build up the encoding in reverse order, so it will come
-    // out right when we write it out.
-    char Encoding[16];
-    char *EndPtr = Encoding+sizeof(Encoding);
-    char *CurPtr = EndPtr;
-    do {
-      *--CurPtr = 'A' + (Number % 16);
-      Number /= 16;
-    } while (Number);
-    Out.write(CurPtr, EndPtr-CurPtr);
-    Out << '@';
-  }
+  llvm::APSInt APSNumber(/*BitWidth=*/64, /*isUnsigned=*/false);
+  APSNumber = Number;
+  mangleNumber(APSNumber);
 }
 
 void MicrosoftCXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
+  // <number> ::= [?] <decimal digit> # 1 <= Number <= 10
+  //          ::= [?] <hex digit>+ @ # 0 or > 9; A = 0, B = 1, etc...
+  //          ::= [?] @ # 0 (alternate mangling, not emitted by VC)
   if (Value.isSigned() && Value.isNegative()) {
     Out << '?';
     mangleNumber(llvm::APSInt(Value.abs()));
     return;
   }
   llvm::APSInt Temp(Value);
+  // There's a special shorter mangling for 0, but Microsoft
+  // chose not to use it. Instead, 0 gets mangled as "A@". Oh well...
   if (Value.uge(1) && Value.ule(10)) {
     --Temp;
     Temp.print(Out, false);
