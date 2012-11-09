@@ -25,12 +25,12 @@ typedef long  __tsan_atomic64;  // NOLINT
 // Part of ABI, do not change.
 // http://llvm.org/viewvc/llvm-project/libcxx/trunk/include/atomic?view=markup
 typedef enum {
-  __tsan_memory_order_relaxed = 1 << 0,
-  __tsan_memory_order_consume = 1 << 1,
-  __tsan_memory_order_acquire = 1 << 2,
-  __tsan_memory_order_release = 1 << 3,
-  __tsan_memory_order_acq_rel = 1 << 4,
-  __tsan_memory_order_seq_cst = 1 << 5
+  __tsan_memory_order_relaxed,
+  __tsan_memory_order_consume,
+  __tsan_memory_order_acquire,
+  __tsan_memory_order_release,
+  __tsan_memory_order_acq_rel,
+  __tsan_memory_order_seq_cst
 } __tsan_memory_order;
 
 __tsan_atomic8 __tsan_atomic8_load(const volatile __tsan_atomic8 *a,

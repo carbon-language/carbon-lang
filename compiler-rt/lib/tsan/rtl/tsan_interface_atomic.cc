@@ -39,12 +39,12 @@ typedef __tsan_atomic8 a8;
 typedef __tsan_atomic16 a16;
 typedef __tsan_atomic32 a32;
 typedef __tsan_atomic64 a64;
-const int mo_relaxed = __tsan_memory_order_relaxed;
-const int mo_consume = __tsan_memory_order_consume;
-const int mo_acquire = __tsan_memory_order_acquire;
-const int mo_release = __tsan_memory_order_release;
-const int mo_acq_rel = __tsan_memory_order_acq_rel;
-const int mo_seq_cst = __tsan_memory_order_seq_cst;
+const morder mo_relaxed = __tsan_memory_order_relaxed;
+const morder mo_consume = __tsan_memory_order_consume;
+const morder mo_acquire = __tsan_memory_order_acquire;
+const morder mo_release = __tsan_memory_order_release;
+const morder mo_acq_rel = __tsan_memory_order_acq_rel;
+const morder mo_seq_cst = __tsan_memory_order_seq_cst;
 
 static void AtomicStatInc(ThreadState *thr, uptr size, morder mo, StatType t) {
   StatInc(thr, StatAtomic);
@@ -79,8 +79,29 @@ static bool IsAcquireOrder(morder mo) {
       || mo == mo_acq_rel || mo == mo_seq_cst;
 }
 
+static morder ConvertOrder(morder mo) {
+  if (mo > (morder)100500) {
+    mo = morder(mo - 100500);
+    if (mo ==  morder(1 << 0))
+      mo = mo_relaxed;
+    else if (mo == morder(1 << 1))
+      mo = mo_consume;
+    else if (mo == morder(1 << 2))
+      mo = mo_acquire;
+    else if (mo == morder(1 << 3))
+      mo = mo_release;
+    else if (mo == morder(1 << 4))
+      mo = mo_acq_rel;
+    else if (mo == morder(1 << 5))
+      mo = mo_seq_cst;
+  }
+  CHECK_GE(mo, mo_relaxed);
+  CHECK_LE(mo, mo_seq_cst);
+  return mo;
+}
+
 #define SCOPED_ATOMIC(func, ...) \
-    if ((u32)mo > 100500) mo = (morder)((u32)mo - 100500); \
+    mo = ConvertOrder(mo); \
     mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
     ThreadState *const thr = cur_thread(); \
     const uptr pc = (uptr)__builtin_return_address(0); \
