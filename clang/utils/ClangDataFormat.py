@@ -52,9 +52,6 @@ class SourceLocation(object):
 # an object with such a type name from inside that function.
 FramePathMapCache = {}
 
-def findSourceManager(frame):
-	return findObject("clang::SourceManager", SourceManager_Paths, frame)
-
 def findObjectExpressionPath(typename, frame):
 	func_addr = frame.GetFunction().GetStartAddress().GetFileAddress()
 	key = (func_addr, typename)
