@@ -100,7 +100,6 @@ CODEGENOPT(VerifyModule      , 1, 1) ///< Control whether the module should be r
 
 CODEGENOPT(StackRealignment  , 1, 0) ///< Control whether to permit stack
                                      ///< realignment.
-CODEGENOPT(StrictAlign       , 1, 0) ///< Force all memory accesses to be aligned.
 CODEGENOPT(UseInitArray      , 1, 0) ///< Control whether to use .init_array or
                                      ///< .ctors.
 VALUE_CODEGENOPT(StackAlignment    , 32, 0) ///< Overrides default stack 
