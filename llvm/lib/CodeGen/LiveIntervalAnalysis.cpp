@@ -146,6 +146,11 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
       OS << PrintReg(Reg) << " = " << getInterval(Reg) << '\n';
   }
 
+  OS << "RegMasks:";
+  for (unsigned i = 0, e = RegMaskSlots.size(); i != e; ++i)
+    OS << ' ' << RegMaskSlots[i];
+  OS << '\n';
+
   printInstrs(OS);
 }
 
@@ -1257,10 +1262,15 @@ private:
     SmallVectorImpl<SlotIndex>::iterator RI =
       std::lower_bound(LIS.RegMaskSlots.begin(), LIS.RegMaskSlots.end(),
                        OldIdx);
-    assert(*RI == OldIdx && "No RegMask at OldIdx.");
-    *RI = NewIdx;
-    assert(*prior(RI) < *RI && *RI < *next(RI) &&
-           "RegSlots out of order. Did you move one call across another?");
+    assert(RI != LIS.RegMaskSlots.end() && *RI == OldIdx.getRegSlot() &&
+           "No RegMask at OldIdx.");
+    *RI = NewIdx.getRegSlot();
+    assert((RI == LIS.RegMaskSlots.begin() ||
+            SlotIndex::isEarlierInstr(*llvm::prior(RI), *RI)) &&
+            "Cannot move regmask instruction above another call");
+    assert((llvm::next(RI) == LIS.RegMaskSlots.end() ||
+            SlotIndex::isEarlierInstr(*RI, *llvm::next(RI))) &&
+            "Cannot move regmask instruction below another call");
   }
 
   // Return the last use of reg between NewIdx and OldIdx.
