@@ -845,7 +845,6 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
     for (size_t idx = 0; idx < num_cmds; idx++)
     {
         StringExtractorGDBRemote response;
-        printf ("Sending command: %s.\n", GetExtraStartupCommands().GetArgumentAtIndex(idx));
         m_gdb_comm.SendPacketAndWaitForResponse (GetExtraStartupCommands().GetArgumentAtIndex(idx), response, false);
     }
     return error;
