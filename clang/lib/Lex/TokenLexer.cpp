@@ -119,6 +119,55 @@ void TokenLexer::destroy() {
   if (ActualArgs) ActualArgs->destroy(PP);
 }
 
+/// Remove comma ahead of __VA_ARGS__, if present, according to compiler dialect
+/// settings.  Returns true if the comma is removed.
+static bool MaybeRemoveCommaBeforeVaArgs(SmallVector<Token, 128> &ResultToks,
+                                         bool &NextTokGetsSpace,
+                                         bool HasPasteOperator,
+                                         MacroInfo *Macro, unsigned MacroArgNo,
+                                         Preprocessor &PP) {
+  // Is the macro argument __VA_ARGS__?
+  if (!Macro->isVariadic() || MacroArgNo != Macro->getNumArgs()-1)
+    return false;
+
+  // In Microsoft-compatibility mode, a comma is removed in the expansion
+  // of " ... , __VA_ARGS__ " if __VA_ARGS__ is empty.  This extension is
+  // not supported by gcc.
+  if (!HasPasteOperator && !PP.getLangOpts().MicrosoftMode)
+    return false;
+
+  // GCC removes the comma in the expansion of " ... , ## __VA_ARGS__ " if
+  // __VA_ARGS__ is empty, but not in strict C99 mode where there are no
+  // named arguments, where it remains.  In all other modes, including C99
+  // with GNU extensions, it is removed regardless of named arguments.
+  // Microsoft also appears to support this extension, unofficially.
+  if (PP.getLangOpts().C99 && !PP.getLangOpts().GNUMode
+        && Macro->getNumArgs() < 2)
+    return false;
+
+  // Is a comma available to be removed?
+  if (ResultToks.empty() || !ResultToks.back().is(tok::comma))
+    return false;
+
+  // Issue an extension diagnostic for the paste operator.
+  if (HasPasteOperator)
+    PP.Diag(ResultToks.back().getLocation(), diag::ext_paste_comma);
+
+  // Remove the comma.
+  ResultToks.pop_back();
+
+  // If the comma was right after another paste (e.g. "X##,##__VA_ARGS__"),
+  // then removal of the comma should produce a placemarker token (in C99
+  // terms) which we model by popping off the previous ##, giving us a plain
+  // "X" when __VA_ARGS__ is empty.
+  if (!ResultToks.empty() && ResultToks.back().is(tok::hashhash))
+    ResultToks.pop_back();
+
+  // Never add a space, even if the comma, ##, or arg had a space.
+  NextTokGetsSpace = false;
+  return true;
+}
+
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from Tokens.
 void TokenLexer::ExpandFunctionArguments() {
@@ -198,6 +247,14 @@ void TokenLexer::ExpandFunctionArguments() {
     bool PasteBefore =
       !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
     bool PasteAfter = i+1 != e && Tokens[i+1].is(tok::hashhash);
+
+    // In Microsoft mode, remove the comma before __VA_ARGS__ to ensure there
+    // are no trailing commas if __VA_ARGS__ is empty.
+    if (!PasteBefore && ActualArgs->isVarargsElidedUse() &&
+        MaybeRemoveCommaBeforeVaArgs(ResultToks, NextTokGetsSpace,
+                                     /*HasPasteOperator=*/false,
+                                     Macro, ArgNo, PP))
+      continue;
 
     // If it is not the LHS/RHS of a ## operator, we must pre-expand the
     // argument and substitute the expanded tokens into the result.  This is
@@ -321,23 +378,13 @@ void TokenLexer::ExpandFunctionArguments() {
 
     // If this is the __VA_ARGS__ token, and if the argument wasn't provided,
     // and if the macro had at least one real argument, and if the token before
-    // the ## was a comma, remove the comma.
-    if ((unsigned)ArgNo == Macro->getNumArgs()-1 && // is __VA_ARGS__
-        ActualArgs->isVarargsElidedUse() &&       // Argument elided.
-        !ResultToks.empty() && ResultToks.back().is(tok::comma)) {
-      // Never add a space, even if the comma, ##, or arg had a space.
-      NextTokGetsSpace = false;
-      // Remove the paste operator, report use of the extension.
-      PP.Diag(ResultToks.back().getLocation(), diag::ext_paste_comma);
-      ResultToks.pop_back();
-      
-      // If the comma was right after another paste (e.g. "X##,##__VA_ARGS__"),
-      // then removal of the comma should produce a placemarker token (in C99
-      // terms) which we model by popping off the previous ##, giving us a plain
-      // "X" when __VA_ARGS__ is empty.
-      if (!ResultToks.empty() && ResultToks.back().is(tok::hashhash))
-        ResultToks.pop_back();
-    }
+    // the ## was a comma, remove the comma.  This is a GCC extension which is
+    // disabled when using -std=c99.
+    if (ActualArgs->isVarargsElidedUse())
+      MaybeRemoveCommaBeforeVaArgs(ResultToks, NextTokGetsSpace,
+                                   /*HasPasteOperator=*/true,
+                                   Macro, ArgNo, PP);
+
     continue;
   }
 
