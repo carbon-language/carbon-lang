@@ -23,6 +23,10 @@
 namespace __sanitizer {
 
 // --------------------- sanitizer_common.h
+bool FileExists(const char *filename) {
+  UNIMPLEMENTED();
+}
+
 int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }

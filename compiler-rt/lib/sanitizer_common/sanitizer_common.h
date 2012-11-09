@@ -117,6 +117,7 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size);
 // OS
 void DisableCoreDumper();
 void DumpProcessMap();
+bool FileExists(const char *filename);
 const char *GetEnv(const char *name);
 const char *GetPwd();
 void ReExec();

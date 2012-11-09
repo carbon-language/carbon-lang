@@ -80,6 +80,14 @@ int internal_sched_yield() {
 }
 
 // ----------------- sanitizer_common.h
+bool FileExists(const char *filename) {
+  struct stat st;
+  if (stat(filename, &st))
+    return false;
+  // Sanity check: filename is a regular file.
+  return S_ISREG(st.st_mode);
+}
+
 uptr GetTid() {
   return reinterpret_cast<uptr>(pthread_self());
 }

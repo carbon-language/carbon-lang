@@ -197,7 +197,11 @@ void Initialize(ThreadState *thr) {
   // Initialize external symbolizer before internal threads are started.
   const char *external_symbolizer = flags()->external_symbolizer_path;
   if (external_symbolizer != 0 && external_symbolizer[0] != '\0') {
-    InitializeExternalSymbolizer(external_symbolizer);
+    if (!InitializeExternalSymbolizer(external_symbolizer)) {
+      Printf("Failed to start external symbolizer: '%s'\n",
+             external_symbolizer);
+      Die();
+    }
   }
 #endif
   InitializeMemoryProfile();

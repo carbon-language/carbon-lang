@@ -94,6 +94,20 @@ int internal_sched_yield() {
 }
 
 // ----------------- sanitizer_common.h
+bool FileExists(const char *filename) {
+#if __WORDSIZE == 64
+  struct stat st;
+  if (syscall(__NR_stat, filename, &st))
+    return false;
+#else
+  struct stat64 st;
+  if (syscall(__NR_stat64, filename, &st))
+    return false;
+#endif
+  // Sanity check: filename is a regular file.
+  return S_ISREG(st.st_mode);
+}
+
 uptr GetTid() {
   return syscall(__NR_gettid);
 }

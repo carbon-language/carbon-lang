@@ -23,6 +23,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #if !defined(__ANDROID__) && !defined(ANDROID)
@@ -31,8 +32,15 @@
 
 namespace __sanitizer {
 
+static const int kSymbolizerStartupTimeMillis = 10;
+
 bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
                                int *input_fd, int *output_fd) {
+  if (!FileExists(path_to_symbolizer)) {
+    Report("WARNING: invalid path to external symbolizer!\n");
+    return false;
+  }
+
   int *infd = NULL;
   int *outfd = NULL;
   // The client program may close its stdin and/or stdout and/or stderr
@@ -99,6 +107,17 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
   internal_close(infd[1]);
   *input_fd = infd[0];
   *output_fd = outfd[1];
+
+  // Check that symbolizer subprocess started successfully.
+  int pid_status;
+  SleepForMillis(kSymbolizerStartupTimeMillis);
+  int exited_pid = waitpid(pid, &pid_status, WNOHANG);
+  if (exited_pid != 0) {
+    // Either waitpid failed, or child has already exited.
+    Report("WARNING: external symbolizer didn't start up correctly!\n");
+    return false;
+  }
+
   return true;
 }
 
