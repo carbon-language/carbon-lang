@@ -246,6 +246,9 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_ARM_TARGET1:
         Type = ELF::R_ARM_TARGET1;
         break;
+      case MCSymbolRefExpr::VK_ARM_TARGET2:
+        Type = ELF::R_ARM_TARGET2;
+        break;
       } 
       break;
     case ARM::fixup_arm_ldst_pcrel_12:

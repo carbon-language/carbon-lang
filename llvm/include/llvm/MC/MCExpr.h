@@ -167,6 +167,7 @@ public:
     VK_ARM_TPOFF,
     VK_ARM_GOTTPOFF,
     VK_ARM_TARGET1,
+    VK_ARM_TARGET2,
 
     VK_PPC_TOC,          // TOC base
     VK_PPC_TOC_ENTRY,    // TOC entry
