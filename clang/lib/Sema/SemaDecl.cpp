@@ -7219,8 +7219,8 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   // All the following checks are C++ only.
   if (!getLangOpts().CPlusPlus) return;
 
-  QualType baseType = Context.getBaseElementType(var->getType());
-  if (baseType->isDependentType()) return;
+  QualType type = var->getType();
+  if (type->isDependentType()) return;
 
   // __block variables might require us to capture a copy-initializer.
   if (var->hasAttr<BlocksAttr>()) {
@@ -7229,8 +7229,6 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
 
     // Regardless, we don't want to ignore array nesting when
     // constructing this copy.
-    QualType type = var->getType();
-
     if (type->isStructureOrClassType()) {
       SourceLocation poi = var->getLocation();
       Expr *varRef =new (Context) DeclRefExpr(var, false, type, VK_LValue, poi);
@@ -7248,6 +7246,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
 
   Expr *Init = var->getInit();
   bool IsGlobal = var->hasGlobalStorage() && !var->isStaticLocal();
+  QualType baseType = Context.getBaseElementType(type);
 
   if (!var->getDeclContext()->isDependentContext() &&
       Init && !Init->isValueDependent()) {
