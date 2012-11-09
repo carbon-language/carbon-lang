@@ -97,6 +97,10 @@ struct ThreadSanitizer : public FunctionPass {
   Function *TsanWrite[kNumberOfAccessSizes];
   Function *TsanAtomicLoad[kNumberOfAccessSizes];
   Function *TsanAtomicStore[kNumberOfAccessSizes];
+  Function *TsanAtomicRMW[AtomicRMWInst::LAST_BINOP + 1][kNumberOfAccessSizes];
+  Function *TsanAtomicCAS[kNumberOfAccessSizes];
+  Function *TsanAtomicThreadFence;
+  Function *TsanAtomicSignalFence;
   Function *TsanVptrUpdate;
 };
 }  // namespace
@@ -167,10 +171,42 @@ bool ThreadSanitizer::doInitialization(Module &M) {
     TsanAtomicStore[i] = checkInterfaceFunction(M.getOrInsertFunction(
         AtomicStoreName, IRB.getVoidTy(), PtrTy, Ty, OrdTy,
         NULL));
+
+    for (int op = AtomicRMWInst::FIRST_BINOP;
+        op <= AtomicRMWInst::LAST_BINOP; ++op) {
+      TsanAtomicRMW[op][i] = NULL;
+      const char *NamePart = NULL;
+      if (op == AtomicRMWInst::Xchg)
+        NamePart = "_exchange";
+      else if (op == AtomicRMWInst::Add)
+        NamePart = "_fetch_add";
+      else if (op == AtomicRMWInst::Sub)
+        NamePart = "_fetch_sub";
+      else if (op == AtomicRMWInst::And)
+        NamePart = "_fetch_and";
+      else if (op == AtomicRMWInst::Or)
+        NamePart = "_fetch_or";
+      else if (op == AtomicRMWInst::Xor)
+        NamePart = "_fetch_xor";
+      else
+        continue;
+      SmallString<32> RMWName("__tsan_atomic" + itostr(BitSize) + NamePart);
+      TsanAtomicRMW[op][i] = checkInterfaceFunction(M.getOrInsertFunction(
+          RMWName, Ty, PtrTy, Ty, OrdTy, NULL));
+    }
+
+    SmallString<32> AtomicCASName("__tsan_atomic" + itostr(BitSize) +
+                                  "_compare_exchange_val");
+    TsanAtomicCAS[i] = checkInterfaceFunction(M.getOrInsertFunction(
+        AtomicCASName, Ty, PtrTy, Ty, Ty, OrdTy, NULL));
   }
   TsanVptrUpdate = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_vptr_update", IRB.getVoidTy(), IRB.getInt8PtrTy(),
       IRB.getInt8PtrTy(), NULL));
+  TsanAtomicThreadFence = checkInterfaceFunction(M.getOrInsertFunction(
+      "__tsan_atomic_thread_fence", IRB.getVoidTy(), OrdTy, NULL));
+  TsanAtomicSignalFence = checkInterfaceFunction(M.getOrInsertFunction(
+      "__tsan_atomic_signal_fence", IRB.getVoidTy(), OrdTy, NULL));
   return true;
 }
 
@@ -253,8 +289,8 @@ static bool isAtomic(Instruction *I) {
     return true;
   if (isa<AtomicCmpXchgInst>(I))
     return true;
-  if (FenceInst *FI = dyn_cast<FenceInst>(I))
-    return FI->getSynchScope() == CrossThread;
+  if (isa<FenceInst>(I))
+    return true;
   return false;
 }
 
@@ -397,12 +433,44 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     CallInst *C = CallInst::Create(TsanAtomicStore[Idx],
                                    ArrayRef<Value*>(Args));
     ReplaceInstWithInst(I, C);
-  } else if (isa<AtomicRMWInst>(I)) {
-    // FIXME: Not yet supported.
-  } else if (isa<AtomicCmpXchgInst>(I)) {
-    // FIXME: Not yet supported.
-  } else if (isa<FenceInst>(I)) {
-    // FIXME: Not yet supported.
+  } else if (AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(I)) {
+    Value *Addr = RMWI->getPointerOperand();
+    int Idx = getMemoryAccessFuncIndex(Addr);
+    if (Idx < 0)
+      return false;
+    Function *F = TsanAtomicRMW[RMWI->getOperation()][Idx];
+    if (F == NULL)
+      return false;
+    const size_t ByteSize = 1 << Idx;
+    const size_t BitSize = ByteSize * 8;
+    Type *Ty = Type::getIntNTy(IRB.getContext(), BitSize);
+    Type *PtrTy = Ty->getPointerTo();
+    Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
+                     IRB.CreateIntCast(RMWI->getValOperand(), Ty, false),
+                     createOrdering(&IRB, RMWI->getOrdering())};
+    CallInst *C = CallInst::Create(F, ArrayRef<Value*>(Args));
+    ReplaceInstWithInst(I, C);
+  } else if (AtomicCmpXchgInst *CASI = dyn_cast<AtomicCmpXchgInst>(I)) {
+    Value *Addr = CASI->getPointerOperand();
+    int Idx = getMemoryAccessFuncIndex(Addr);
+    if (Idx < 0)
+      return false;
+    const size_t ByteSize = 1 << Idx;
+    const size_t BitSize = ByteSize * 8;
+    Type *Ty = Type::getIntNTy(IRB.getContext(), BitSize);
+    Type *PtrTy = Ty->getPointerTo();
+    Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
+                     IRB.CreateIntCast(CASI->getCompareOperand(), Ty, false),
+                     IRB.CreateIntCast(CASI->getNewValOperand(), Ty, false),
+                     createOrdering(&IRB, CASI->getOrdering())};
+    CallInst *C = CallInst::Create(TsanAtomicCAS[Idx], ArrayRef<Value*>(Args));
+    ReplaceInstWithInst(I, C);
+  } else if (FenceInst *FI = dyn_cast<FenceInst>(I)) {
+    Value *Args[] = {createOrdering(&IRB, FI->getOrdering())};
+    Function *F = FI->getSynchScope() == SingleThread ?
+        TsanAtomicSignalFence : TsanAtomicThreadFence;
+    CallInst *C = CallInst::Create(F, ArrayRef<Value*>(Args));
+    ReplaceInstWithInst(I, C);
   }
   return true;
 }
