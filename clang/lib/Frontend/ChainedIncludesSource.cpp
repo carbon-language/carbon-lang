@@ -86,8 +86,8 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     CInvok->getPreprocessorOpts().Macros.clear();
     
     CInvok->getFrontendOpts().Inputs.clear();
-    CInvok->getFrontendOpts().Inputs.push_back(FrontendInputFile(includes[i],
-                                                                 IK));
+    FrontendInputFile InputFile(includes[i], IK);
+    CInvok->getFrontendOpts().Inputs.push_back(InputFile);
 
     TextDiagnosticPrinter *DiagClient =
       new TextDiagnosticPrinter(llvm::errs(), new DiagnosticOptions());
@@ -147,7 +147,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
       Clang->getASTContext().setExternalSource(Reader);
     }
     
-    if (!Clang->InitializeSourceManager(includes[i]))
+    if (!Clang->InitializeSourceManager(InputFile))
       return 0;
 
     ParseAST(Clang->getSema());

@@ -631,15 +631,13 @@ public:
   /// as the main file.
   ///
   /// \return True on success.
-  bool InitializeSourceManager(StringRef InputFile,
-         SrcMgr::CharacteristicKind Kind = SrcMgr::C_User);
+  bool InitializeSourceManager(const FrontendInputFile &Input);
 
   /// InitializeSourceManager - Initialize the source manager to set InputFile
   /// as the main file.
   ///
   /// \return True on success.
-  static bool InitializeSourceManager(StringRef InputFile,
-                SrcMgr::CharacteristicKind Kind,
+  static bool InitializeSourceManager(const FrontendInputFile &Input,
                 DiagnosticsEngine &Diags,
                 FileManager &FileMgr,
                 SourceManager &SourceMgr,

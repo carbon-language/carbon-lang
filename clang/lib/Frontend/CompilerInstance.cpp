@@ -589,19 +589,21 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
 
 // Initialization Utilities
 
-bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
-                                               SrcMgr::CharacteristicKind Kind){
-  return InitializeSourceManager(InputFile, Kind, getDiagnostics(), 
+bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input){
+  return InitializeSourceManager(Input, getDiagnostics(),
                                  getFileManager(), getSourceManager(), 
                                  getFrontendOpts());
 }
 
-bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
-                                               SrcMgr::CharacteristicKind Kind,
+bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
                                                DiagnosticsEngine &Diags,
                                                FileManager &FileMgr,
                                                SourceManager &SourceMgr,
                                                const FrontendOptions &Opts) {
+  StringRef InputFile = Input.File;
+  SrcMgr::CharacteristicKind
+    Kind = Input.IsSystem ? SrcMgr::C_System : SrcMgr::C_User;
+
   // Figure out where to get and map in the main file.
   if (InputFile != "-") {
     const FileEntry *File = FileMgr.getFile(InputFile);
