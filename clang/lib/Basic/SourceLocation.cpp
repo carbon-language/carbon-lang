@@ -61,6 +61,13 @@ void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
   OS << '>';
 }
 
+std::string SourceLocation::printToString(const SourceManager &SM) const {
+  std::string S;
+  llvm::raw_string_ostream OS(S);
+  print(OS, SM);
+  return S;
+}
+
 void SourceLocation::dump(const SourceManager &SM) const {
   print(llvm::errs(), SM);
 }
