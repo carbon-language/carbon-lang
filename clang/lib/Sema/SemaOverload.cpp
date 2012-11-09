@@ -10997,6 +10997,11 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   // that calls this method, using Object for the implicit object
   // parameter and passing along the remaining arguments.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
+
+  // An error diagnostic has already been printed when parsing the declaration.
+  if (Method->isStatic())
+    return ExprError();
+
   const FunctionProtoType *Proto =
     Method->getType()->getAs<FunctionProtoType>();
 

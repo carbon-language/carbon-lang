@@ -48,3 +48,13 @@ struct PR10839 {
   operator int; // expected-error{{'operator int' cannot be the name of a variable or data member}}
   int operator+; // expected-error{{'operator+' cannot be the name of a variable or data member}}
 };
+
+namespace PR14120 {
+  struct A {
+    static void operator()(int& i) { ++i; } // expected-error{{overloaded 'operator()' cannot be a static member function}}
+  };
+  void f() {
+    int i = 0;
+    A()(i);
+  }
+}
