@@ -82,7 +82,13 @@ public:
     SwitchScope = 0x800,
 
     /// TryScope - This is the scope of a C++ try statement.
-    TryScope = 0x1000
+    TryScope = 0x1000,
+
+    /// FnTryScope - This is the scope of a function-level C++ try scope.
+    FnTryScope = 0x3000,
+
+    /// FnCatchScope - This is the scope of a function-level C++ catch scope.
+    FnCatchScope = 0x4000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit

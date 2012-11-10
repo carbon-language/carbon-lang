@@ -135,8 +135,13 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
       // of the controlled statement.
       //
       assert(S->getParent() && "No TUScope?");
-      if (S->getParent()->getFlags() & Scope::ControlScope)
+      if (S->getFlags() & Scope::FnTryScope)
         return S->getParent()->isDeclScope(D);
+      if (S->getParent()->getFlags() & Scope::ControlScope) {
+        if (S->getParent()->getFlags() & Scope::FnCatchScope)
+          S = S->getParent();
+        return S->getParent()->isDeclScope(D);
+      }
     }
     return false;
   }
