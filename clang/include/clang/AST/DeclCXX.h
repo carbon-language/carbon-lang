@@ -1322,12 +1322,8 @@ public:
   /// \param AllowShortCircuit if false, forces the callback to be called
   /// for every base class, even if a dependent or non-matching base was
   /// found.
-  ///
-  /// \param VisitDependent whether we should also visit dependent bases
-  /// that can be resolved to CXXRecordDecls.
   bool forallBases(ForallBasesCallback *BaseMatches, void *UserData,
-                   bool AllowShortCircuit = true,
-                   bool VisitDependent = false) const;
+                   bool AllowShortCircuit = true) const;
 
   /// \brief Function type used by lookupInBases() to determine whether a
   /// specific base class subobject matches the lookup criteria.

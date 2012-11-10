@@ -1018,12 +1018,39 @@ bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
     return false;
 }
 
-/// \brief Determine whether we have the same C++ record definition.
-///
-/// Used as a helper function in Sema::CheckBaseSpecifier, below.
-static bool sameCXXRecordDef(const CXXRecordDecl *BaseDefinition,
-                          void *UserData) {
-  return (CXXRecordDecl *)UserData != BaseDefinition;
+/// \brief Determine whether the given class is a base class of the given
+/// class, including looking at dependent bases.
+static bool findCircularInheritance(const CXXRecordDecl *Class,
+                                    const CXXRecordDecl *Current) {
+  SmallVector<const CXXRecordDecl*, 8> Queue;
+
+  Class = Class->getCanonicalDecl();
+  while (true) {
+    for (CXXRecordDecl::base_class_const_iterator I = Current->bases_begin(),
+                                                  E = Current->bases_end();
+         I != E; ++I) {
+      CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
+      if (!Base)
+        continue;
+
+      Base = Base->getDefinition();
+      if (!Base)
+        continue;
+
+      if (Base->getCanonicalDecl() == Class)
+        return true;
+
+      Queue.push_back(Base);
+    }
+
+    if (Queue.empty())
+      return false;
+
+    Current = Queue.back();
+    Queue.pop_back();
+  }
+
+  return false;
 }
 
 /// \brief Check the validity of a C++ base class specifier.
@@ -1062,7 +1089,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     if (CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl()) {
       if (BaseDecl->getCanonicalDecl() == Class->getCanonicalDecl() ||
           ((BaseDecl = BaseDecl->getDefinition()) &&
-           !BaseDecl->forallBases(&sameCXXRecordDef, Class))) {
+           findCircularInheritance(Class, BaseDecl))) {
         Diag(BaseLoc, diag::err_circular_inheritance)
           << BaseType << Context.getTypeDeclType(Class);
 

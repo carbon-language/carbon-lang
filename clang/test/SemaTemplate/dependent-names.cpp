@@ -336,6 +336,9 @@ namespace rdar12629723 {
       virtual void foo() { }
     };
     struct B;
+
+    struct D : T::foo { };
+    struct E : D { };
   };
 
   template<class T>
