@@ -12045,6 +12045,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FNMSUB:             return "X86ISD::FNMSUB";
   case X86ISD::FMADDSUB:           return "X86ISD::FMADDSUB";
   case X86ISD::FMSUBADD:           return "X86ISD::FMSUBADD";
+  case X86ISD::PCMPESTRI:          return "X86ISD::PCMPESTRI";
+  case X86ISD::PCMPISTRI:          return "X86ISD::PCMPISTRI";
   }
 }
 
@@ -12839,8 +12841,8 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
 // or XMM0_V32I8 in AVX all of this code can be replaced with that
 // in the .td file.
 MachineBasicBlock *
-X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
-                            unsigned numArgs, bool memArg) const {
+X86TargetLowering::EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
+                                bool Implicit, bool MemArg) const {
   assert(Subtarget->hasSSE42() &&
          "Target must have SSE4.2 or AVX features enabled");
 
@@ -12848,26 +12850,77 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   unsigned Opc;
   if (!Subtarget->hasAVX()) {
-    if (memArg)
-      Opc = numArgs == 3 ? X86::PCMPISTRM128rm : X86::PCMPESTRM128rm;
+    if (MemArg)
+      Opc = Implicit ? X86::PCMPISTRM128rm : X86::PCMPESTRM128rm;
     else
-      Opc = numArgs == 3 ? X86::PCMPISTRM128rr : X86::PCMPESTRM128rr;
+      Opc = Implicit ? X86::PCMPISTRM128rr : X86::PCMPESTRM128rr;
   } else {
-    if (memArg)
-      Opc = numArgs == 3 ? X86::VPCMPISTRM128rm : X86::VPCMPESTRM128rm;
+    if (MemArg)
+      Opc = Implicit ? X86::VPCMPISTRM128rm : X86::VPCMPESTRM128rm;
     else
-      Opc = numArgs == 3 ? X86::VPCMPISTRM128rr : X86::VPCMPESTRM128rr;
+      Opc = Implicit ? X86::VPCMPISTRM128rr : X86::VPCMPESTRM128rr;
   }
 
+  unsigned NumArgs = Implicit ? 3 : 5;
+  if (MemArg)
+    NumArgs += X86::AddrNumOperands;
+
   MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(Opc));
-  for (unsigned i = 0; i < numArgs; ++i) {
+  for (unsigned i = 0; i < NumArgs; ++i) {
     MachineOperand &Op = MI->getOperand(i+1);
     if (!(Op.isReg() && Op.isImplicit()))
       MIB.addOperand(Op);
   }
+  if (MemArg)
+    MIB->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+
   BuildMI(*BB, MI, dl,
     TII->get(TargetOpcode::COPY), MI->getOperand(0).getReg())
     .addReg(X86::XMM0);
+
+  MI->eraseFromParent();
+  return BB;
+}
+
+// FIXME: Custom handling because TableGen doesn't support multiple implicit
+// defs in an instruction pattern
+MachineBasicBlock *
+X86TargetLowering::EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
+                                bool Implicit, bool MemArg) const {
+  assert(Subtarget->hasSSE42() &&
+         "Target must have SSE4.2 or AVX features enabled");
+
+  DebugLoc dl = MI->getDebugLoc();
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  unsigned Opc;
+  if (!Subtarget->hasAVX()) {
+    if (MemArg)
+      Opc = Implicit ? X86::PCMPISTRIrm : X86::PCMPESTRIrm;
+    else
+      Opc = Implicit ? X86::PCMPISTRIrr : X86::PCMPESTRIrr;
+  } else {
+    if (MemArg)
+      Opc = Implicit ? X86::VPCMPISTRIrm : X86::VPCMPESTRIrm;
+    else
+      Opc = Implicit ? X86::VPCMPISTRIrr : X86::VPCMPESTRIrr;
+  }
+
+  unsigned NumArgs = Implicit ? 3 : 5;
+  if (MemArg)
+    NumArgs += X86::AddrNumOperands;
+
+  MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(Opc));
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    MachineOperand &Op = MI->getOperand(i+1);
+    if (!(Op.isReg() && Op.isImplicit()))
+      MIB.addOperand(Op);
+  }
+  if (MemArg)
+    MIB->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+
+  BuildMI(*BB, MI, dl,
+    TII->get(TargetOpcode::COPY), MI->getOperand(0).getReg())
+    .addReg(X86::ECX);
 
   MI->eraseFromParent();
   return BB;
@@ -13891,24 +13944,51 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::VPCMPESTRM128REG:
   case X86::PCMPESTRM128MEM:
   case X86::VPCMPESTRM128MEM: {
-    unsigned NumArgs;
-    bool MemArg;
+    bool Implicit, MemArg;
     switch (MI->getOpcode()) {
     default: llvm_unreachable("illegal opcode!");
     case X86::PCMPISTRM128REG:
     case X86::VPCMPISTRM128REG:
-      NumArgs = 3; MemArg = false; break;
+      Implicit = true; MemArg = false; break;
     case X86::PCMPISTRM128MEM:
     case X86::VPCMPISTRM128MEM:
-      NumArgs = 3; MemArg = true; break;
+     Implicit = true; MemArg = true; break;
     case X86::PCMPESTRM128REG:
     case X86::VPCMPESTRM128REG:
-      NumArgs = 5; MemArg = false; break;
+      Implicit = false; MemArg = false; break;
     case X86::PCMPESTRM128MEM:
     case X86::VPCMPESTRM128MEM:
-      NumArgs = 5; MemArg = true; break;
+      Implicit = false; MemArg = true; break;
     }
-    return EmitPCMP(MI, BB, NumArgs, MemArg);
+    return EmitPCMPSTRM(MI, BB, Implicit, MemArg);
+  }
+
+  // String/text processing lowering.
+  case X86::PCMPISTRIREG:
+  case X86::VPCMPISTRIREG:
+  case X86::PCMPISTRIMEM:
+  case X86::VPCMPISTRIMEM:
+  case X86::PCMPESTRIREG:
+  case X86::VPCMPESTRIREG:
+  case X86::PCMPESTRIMEM:
+  case X86::VPCMPESTRIMEM: {
+    bool Implicit, MemArg;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("illegal opcode!");
+    case X86::PCMPISTRIREG:
+    case X86::VPCMPISTRIREG:
+      Implicit = true; MemArg = false; break;
+    case X86::PCMPISTRIMEM:
+    case X86::VPCMPISTRIMEM:
+      Implicit = true; MemArg = true; break;
+    case X86::PCMPESTRIREG:
+    case X86::VPCMPESTRIREG:
+      Implicit = false; MemArg = false; break;
+    case X86::PCMPESTRIMEM:
+    case X86::VPCMPESTRIMEM:
+      Implicit = false; MemArg = true; break;
+    }
+    return EmitPCMPSTRI(MI, BB, Implicit, MemArg);
   }
 
     // Thread synchronization.

@@ -7002,8 +7002,8 @@ multiclass pseudo_pcmpistrm<string asm> {
                                                   imm:$src3))]>;
   def MEM : PseudoI<(outs VR128:$dst),
                     (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-    [(set VR128:$dst, (int_x86_sse42_pcmpistrm128
-                       VR128:$src1, (load addr:$src2), imm:$src3))]>;
+    [(set VR128:$dst, (int_x86_sse42_pcmpistrm128 VR128:$src1,
+                       (bc_v16i8 (memopv2i64 addr:$src2)), imm:$src3))]>;
 }
 
 let Defs = [EFLAGS], usesCustomInserter = 1 in {
@@ -7011,24 +7011,22 @@ let Defs = [EFLAGS], usesCustomInserter = 1 in {
   defm PCMPISTRM128 : pseudo_pcmpistrm<"#PCMPISTRM128">, Requires<[UseSSE42]>;
 }
 
-let Defs = [XMM0, EFLAGS], neverHasSideEffects = 1, Predicates = [HasAVX] in {
-  def VPCMPISTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
-      (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-      "vpcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize, VEX;
+multiclass pcmpistrm_SS42AI<string asm> {
+  def rr : SS42AI<0x62, MRMSrcReg, (outs),
+    (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+    !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
+    []>, OpSize;
   let mayLoad = 1 in
-  def VPCMPISTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
-      (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-      "vpcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize, VEX;
+  def rm :SS42AI<0x62, MRMSrcMem, (outs),
+    (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+    !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
+    []>, OpSize;
 }
 
 let Defs = [XMM0, EFLAGS], neverHasSideEffects = 1 in {
-  def PCMPISTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
-      (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-      "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize;
-  let mayLoad = 1 in
-  def PCMPISTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
-      (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-      "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize;
+  let Predicates = [HasAVX] in
+  defm VPCMPISTRM128 : pcmpistrm_SS42AI<"vpcmpistrm">, VEX;
+  defm PCMPISTRM128  : pcmpistrm_SS42AI<"pcmpistrm"> ;
 }
 
 // Packed Compare Explicit Length Strings, Return Mask
@@ -7039,8 +7037,8 @@ multiclass pseudo_pcmpestrm<string asm> {
                        VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5))]>;
   def MEM : PseudoI<(outs VR128:$dst),
                     (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-    [(set VR128:$dst, (int_x86_sse42_pcmpestrm128
-                       VR128:$src1, EAX, (load addr:$src3), EDX, imm:$src5))]>;
+    [(set VR128:$dst, (int_x86_sse42_pcmpestrm128 VR128:$src1, EAX,
+                       (bc_v16i8 (memopv2i64 addr:$src3)), EDX, imm:$src5))]>;
 }
 
 let Defs = [EFLAGS], Uses = [EAX, EDX], usesCustomInserter = 1 in {
@@ -7048,64 +7046,94 @@ let Defs = [EFLAGS], Uses = [EAX, EDX], usesCustomInserter = 1 in {
   defm PCMPESTRM128 : pseudo_pcmpestrm<"#PCMPESTRM128">, Requires<[UseSSE42]>;
 }
 
-let Predicates = [HasAVX],
-    Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
-  def VPCMPESTRM128rr : SS42AI<0x60, MRMSrcReg, (outs),
-      (ins VR128:$src1, VR128:$src3, i8imm:$src5),
-      "vpcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize, VEX;
+multiclass SS42AI_pcmpestrm<string asm> {
+  def rr : SS42AI<0x60, MRMSrcReg, (outs),
+    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+    !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
+    []>, OpSize;
   let mayLoad = 1 in
-  def VPCMPESTRM128rm : SS42AI<0x60, MRMSrcMem, (outs),
-      (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-      "vpcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize, VEX;
+  def rm : SS42AI<0x60, MRMSrcMem, (outs),
+    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+    !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
+    []>, OpSize;
 }
 
 let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
-  def PCMPESTRM128rr : SS42AI<0x60, MRMSrcReg, (outs),
-      (ins VR128:$src1, VR128:$src3, i8imm:$src5),
-      "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize;
-  let mayLoad = 1 in
-  def PCMPESTRM128rm : SS42AI<0x60, MRMSrcMem, (outs),
-      (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-      "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize;
+  let Predicates = [HasAVX] in
+  defm VPCMPESTRM128 : SS42AI_pcmpestrm<"vpcmpestrm">, VEX;
+  defm PCMPESTRM128 :  SS42AI_pcmpestrm<"pcmpestrm">;
 }
 
 // Packed Compare Implicit Length Strings, Return Index
-let Defs = [ECX, EFLAGS], neverHasSideEffects = 1 in {
-  multiclass SS42AI_pcmpistri<string asm> {
-    def rr : SS42AI<0x63, MRMSrcReg, (outs),
-      (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-      !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
-      []>, OpSize;
-    let mayLoad = 1 in
-    def rm : SS42AI<0x63, MRMSrcMem, (outs),
-      (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-      !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
-      []>, OpSize;
-  }
+multiclass pseudo_pcmpistri<string asm> {
+  def REG : PseudoI<(outs GR32:$dst),
+                    (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+    [(set GR32:$dst, EFLAGS,
+      (X86pcmpistri VR128:$src1, VR128:$src2, imm:$src3))]>;
+  def MEM : PseudoI<(outs GR32:$dst),
+                    (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+    [(set GR32:$dst, EFLAGS, (X86pcmpistri VR128:$src1,
+                              (bc_v16i8 (memopv2i64 addr:$src2)), imm:$src3))]>;
 }
 
-let Predicates = [HasAVX] in
-defm VPCMPISTRI  : SS42AI_pcmpistri<"vpcmpistri">, VEX;
-defm PCMPISTRI   : SS42AI_pcmpistri<"pcmpistri">;
+let Defs = [EFLAGS], usesCustomInserter = 1 in {
+  defm VPCMPISTRI : pseudo_pcmpistri<"#VPCMPISTRI">, Requires<[HasAVX]>;
+  defm PCMPISTRI  : pseudo_pcmpistri<"#PCMPISTRI">, Requires<[UseSSE42]>;
+}
+
+multiclass SS42AI_pcmpistri<string asm> {
+  def rr : SS42AI<0x63, MRMSrcReg, (outs),
+    (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+    !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
+    []>, OpSize;
+  let mayLoad = 1 in
+  def rm : SS42AI<0x63, MRMSrcMem, (outs),
+    (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+    !strconcat(asm, "\t{$src3, $src2, $src1|$src1, $src2, $src3}"),
+    []>, OpSize;
+}
+
+let Defs = [ECX, EFLAGS], neverHasSideEffects = 1 in {
+  let Predicates = [HasAVX] in
+  defm VPCMPISTRI : SS42AI_pcmpistri<"vpcmpistri">, VEX;
+  defm PCMPISTRI  : SS42AI_pcmpistri<"pcmpistri">;
+}
 
 // Packed Compare Explicit Length Strings, Return Index
-let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
-  multiclass SS42AI_pcmpestri<string asm> {
-    def rr : SS42AI<0x61, MRMSrcReg, (outs),
-      (ins VR128:$src1, VR128:$src3, i8imm:$src5),
-      !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
-      []>, OpSize;
-    let mayLoad = 1 in
-    def rm : SS42AI<0x61, MRMSrcMem, (outs),
-      (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-      !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
-      []>, OpSize;
-  }
+multiclass pseudo_pcmpestri<string asm> {
+  def REG : PseudoI<(outs GR32:$dst),
+                    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+    [(set GR32:$dst, EFLAGS,
+      (X86pcmpestri VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5))]>;
+  def MEM : PseudoI<(outs GR32:$dst),
+                    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+    [(set GR32:$dst, EFLAGS,
+      (X86pcmpestri VR128:$src1, EAX, (bc_v16i8 (memopv2i64 addr:$src3)), EDX,
+       imm:$src5))]>;
 }
 
-let Predicates = [HasAVX] in
-defm VPCMPESTRI  : SS42AI_pcmpestri<"vpcmpestri">, VEX;
-defm PCMPESTRI   : SS42AI_pcmpestri<"pcmpestri">;
+let Defs = [EFLAGS], Uses = [EAX, EDX], usesCustomInserter = 1 in {
+  defm VPCMPESTRI : pseudo_pcmpestri<"#VPCMPESTRI">, Requires<[HasAVX]>;
+  defm PCMPESTRI  : pseudo_pcmpestri<"#PCMPESTRI">, Requires<[UseSSE42]>;
+}
+
+multiclass SS42AI_pcmpestri<string asm> {
+  def rr : SS42AI<0x61, MRMSrcReg, (outs),
+    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+    !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
+    []>, OpSize;
+  let mayLoad = 1 in
+  def rm : SS42AI<0x61, MRMSrcMem, (outs),
+    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+    !strconcat(asm, "\t{$src5, $src3, $src1|$src1, $src3, $src5}"),
+    []>, OpSize;
+}
+
+let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
+  let Predicates = [HasAVX] in
+  defm VPCMPESTRI : SS42AI_pcmpestri<"vpcmpestri">, VEX;
+  defm PCMPESTRI  : SS42AI_pcmpestri<"pcmpestri">;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE4.2 - CRC Instructions

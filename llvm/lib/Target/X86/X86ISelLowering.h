@@ -871,13 +871,15 @@ namespace llvm {
                    const SmallVectorImpl<ISD::OutputArg> &Outs,
                    LLVMContext &Context) const;
 
-    /// Utility function to emit string processing sse4.2 instructions
+    /// Utility functions to emit string processing sse4.2 instructions
     /// that return in xmm0.
     /// This takes the instruction to expand, the associated machine basic
     /// block, the number of args, and whether or not the second arg is
     /// in memory or not.
-    MachineBasicBlock *EmitPCMP(MachineInstr *BInstr, MachineBasicBlock *BB,
-                                unsigned argNum, bool inMem) const;
+    MachineBasicBlock *EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
+                                    bool Implicit, bool MemArg) const;
+    MachineBasicBlock *EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
+                                    bool Implicit, bool MemArg) const;
 
     /// Utility functions to emit monitor and mwait instructions. These
     /// need to make sure that the arguments to the intrinsic are in the
