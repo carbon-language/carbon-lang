@@ -174,6 +174,62 @@ public:
         return m_should_stop;
     }
     
+    virtual bool
+    ShouldNotify (Event *event_ptr)
+    {
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
+        if (bp_site_sp)
+        {
+            bool all_internal = true;
+
+            for (uint32_t i = 0; i < bp_site_sp->GetNumberOfOwners(); i++)
+            {
+                if (!bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().IsInternal())
+                {
+                    all_internal = false;
+                    break;
+                }
+            }
+            return all_internal == false;
+        }
+        return true;
+    }
+
+    virtual const char *
+    GetDescription ()
+    {
+        if (m_description.empty())
+        {
+            BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
+            if (bp_site_sp)
+            {
+                StreamString strm;
+                strm.Printf("breakpoint ");
+                bp_site_sp->GetDescription(&strm, eDescriptionLevelBrief);
+                m_description.swap (strm.GetString());
+            }
+            else
+            {
+                StreamString strm;
+                if (m_break_id != LLDB_INVALID_BREAK_ID)
+                {
+                    if (m_was_one_shot)
+                        strm.Printf ("one-shot breakpoint %d", m_break_id);
+                    else
+                        strm.Printf ("breakpoint %d which has been deleted.", m_break_id);
+                }
+                else if (m_address == LLDB_INVALID_ADDRESS)
+                    strm.Printf("breakpoint site %lli which has been deleted - unknown address", m_value);
+                else
+                    strm.Printf("breakpoint site %lli which has been deleted - was at 0x%llx", m_value, m_address);
+                
+                m_description.swap (strm.GetString());
+            }
+        }
+        return m_description.c_str();
+    }
+
+protected:
     bool
     ShouldStop (Event *event_ptr)
     {
@@ -346,61 +402,6 @@ public:
         if (log)
             log->Printf ("Process::%s returning from action with m_should_stop: %d.", __FUNCTION__, m_should_stop);
     }
-        
-    virtual bool
-    ShouldNotify (Event *event_ptr)
-    {
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
-        if (bp_site_sp)
-        {
-            bool all_internal = true;
-
-            for (uint32_t i = 0; i < bp_site_sp->GetNumberOfOwners(); i++)
-            {
-                if (!bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().IsInternal())
-                {
-                    all_internal = false;
-                    break;
-                }
-            }
-            return all_internal == false;
-        }
-        return true;
-    }
-
-    virtual const char *
-    GetDescription ()
-    {
-        if (m_description.empty())
-        {
-            BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
-            if (bp_site_sp)
-            {
-                StreamString strm;
-                strm.Printf("breakpoint ");
-                bp_site_sp->GetDescription(&strm, eDescriptionLevelBrief);
-                m_description.swap (strm.GetString());
-            }
-            else
-            {
-                StreamString strm;
-                if (m_break_id != LLDB_INVALID_BREAK_ID)
-                {
-                    if (m_was_one_shot)
-                        strm.Printf ("one-shot breakpoint %d", m_break_id);
-                    else
-                        strm.Printf ("breakpoint %d which has been deleted.", m_break_id);
-                }
-                else if (m_address == LLDB_INVALID_ADDRESS)
-                    strm.Printf("breakpoint site %lli which has been deleted - unknown address", m_value);
-                else
-                    strm.Printf("breakpoint site %lli which has been deleted - was at 0x%llx", m_value, m_address);
-                
-                m_description.swap (strm.GetString());
-            }
-        }
-        return m_description.c_str();
-    }
 
 private:
     std::string m_description;
@@ -423,6 +424,32 @@ private:
 class StopInfoWatchpoint : public StopInfo
 {
 public:
+    // Make sure watchpoint is properly disabled and subsequently enabled while performing watchpoint actions.
+    class WatchpointSentry {
+    public:
+        WatchpointSentry(Process *p, Watchpoint *w):
+            process(p),
+            watchpoint(w)
+        {
+            if (process && watchpoint)
+            {
+                watchpoint->TurnOnEphemeralMode();
+                process->DisableWatchpoint(watchpoint);
+            }
+        }
+        ~WatchpointSentry()
+        {
+            if (process && watchpoint)
+            {
+                if (!watchpoint->IsDisabledDuringEphemeralMode())
+                    process->EnableWatchpoint(watchpoint);
+                watchpoint->TurnOffEphemeralMode();
+            }
+        }
+    private:
+        Process *process;
+        Watchpoint *watchpoint;
+    };
 
     StopInfoWatchpoint (Thread &thread, break_id_t watch_id) :
         StopInfo(thread, watch_id),
@@ -442,6 +469,19 @@ public:
         return eStopReasonWatchpoint;
     }
 
+    virtual const char *
+    GetDescription ()
+    {
+        if (m_description.empty())
+        {
+            StreamString strm;
+            strm.Printf("watchpoint %lli", m_value);
+            m_description.swap (strm.GetString());
+        }
+        return m_description.c_str();
+    }
+
+protected:
     virtual bool
     ShouldStop (Event *event_ptr)
     {
@@ -478,35 +518,6 @@ public:
         return m_should_stop;
     }
     
-    // Make sure watchpoint is properly disabled and subsequently enabled while performing watchpoint actions.
-    class WatchpointSentry {
-    public:
-        WatchpointSentry(Process *p, Watchpoint *w):
-            process(p),
-            watchpoint(w)
-        {
-            if (process && watchpoint)
-            {
-                watchpoint->TurnOnEphemeralMode();
-                process->DisableWatchpoint(watchpoint);
-            }
-        }
-        ~WatchpointSentry()
-        {
-            if (process && watchpoint)
-            {
-                if (!watchpoint->IsDisabledDuringEphemeralMode())
-                    process->EnableWatchpoint(watchpoint);
-                watchpoint->TurnOffEphemeralMode();
-            }
-        }
-    private:
-        Process *process;
-        Watchpoint *watchpoint;
-    };
-
-    // Perform any action that is associated with this stop.  This is done as the
-    // Event is removed from the event queue.
     virtual void
     PerformAction (Event *event_ptr)
     {
@@ -662,18 +673,6 @@ public:
         
     }
         
-    virtual const char *
-    GetDescription ()
-    {
-        if (m_description.empty())
-        {
-            StreamString strm;
-            strm.Printf("watchpoint %lli", m_value);
-            m_description.swap (strm.GetString());
-        }
-        return m_description.c_str();
-    }
-
 private:
     std::string m_description;
     bool m_should_stop;
