@@ -152,9 +152,12 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "sqrt",
     "sqrtf",
     "sqrtl",
+    "stpcpy",
     "strcat",
     "strchr",
+    "strcmp",
     "strcpy",
+    "strcspn",
     "strdup",
     "strlen",
     "strncat",
@@ -162,6 +165,17 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "strncpy",
     "strndup",
     "strnlen",
+    "strpbrk",
+    "strrchr",
+    "strspn",
+    "strstr",
+    "strtod",
+    "strtof",
+    "strtol",
+    "strtold",
+    "strtoll",
+    "strtoul",
+    "strtoull",
     "tan",
     "tanf",
     "tanh",
@@ -309,6 +323,10 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
       TLI.setUnavailable(LibFunc::tanf);
       TLI.setUnavailable(LibFunc::tanhf);
     }
+
+    // Win32 does *not* provide stpcpy.  It is provided on POSIX systems:
+    // http://pubs.opengroup.org/onlinepubs/9699919799/functions/stpcpy.html
+    TLI.setUnavailable(LibFunc::stpcpy);
   }
 }
 

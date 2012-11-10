@@ -276,12 +276,18 @@ namespace llvm {
       sqrtf,
       /// long double sqrtl(long double x);
       sqrtl,
+      /// char *stpcpy(char *s1, const char *s2);
+      stpcpy,
       /// char *strcat(char *s1, const char *s2);
       strcat,
       /// char *strchr(const char *s, int c);
       strchr,
+      /// int strcmp(const char *s1, const char *s2);
+      strcmp,
       /// char *strcpy(char *s1, const char *s2);
       strcpy,
+      /// size_t strcspn(const char *s1, const char *s2);
+      strcspn,
       /// char *strdup(const char *s1);
       strdup,
       /// size_t strlen(const char *s);
@@ -296,6 +302,29 @@ namespace llvm {
       strndup,
       /// size_t strnlen(const char *s, size_t maxlen);
       strnlen,
+      /// char *strpbrk(const char *s1, const char *s2);
+      strpbrk,
+      /// char *strrchr(const char *s, int c);
+      strrchr,
+      /// size_t strspn(const char *s1, const char *s2);
+      strspn,
+      /// char *strstr(const char *s1, const char *s2);
+      strstr,
+      /// double strtod(const char *nptr, char **endptr);
+      strtod,
+      /// float strtof(const char *nptr, char **endptr);
+      strtof,
+      /// long int strtol(const char *nptr, char **endptr, int base);
+      strtol,
+      /// long double strtold(const char *nptr, char **endptr);
+      strtold,
+      /// long long int strtoll(const char *nptr, char **endptr, int base);
+      strtoll,
+      /// unsigned long int strtoul(const char *nptr, char **endptr, int base);
+      strtoul,
+      /// unsigned long long int strtoull(const char *nptr, char **endptr,
+      ///                                 int base);
+      strtoull,
       /// double tan(double x);
       tan,
       /// float tanf(float x);
