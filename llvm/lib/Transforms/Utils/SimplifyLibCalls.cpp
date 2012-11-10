@@ -834,6 +834,7 @@ class LibCallSimplifierImpl {
   StrSpnOpt StrSpn;
 
   void initOptimizations();
+  void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
 public:
   LibCallSimplifierImpl(const DataLayout *TD, const TargetLibraryInfo *TLI) {
     this->TD = TD;
@@ -854,25 +855,25 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["__stpncpy_chk"] = &StrNCpyChk;
 
   // String and memory library call optimizations.
-  Optimizations["strcat"] = &StrCat;
-  Optimizations["strncat"] = &StrNCat;
-  Optimizations["strchr"] = &StrChr;
-  Optimizations["strrchr"] = &StrRChr;
-  Optimizations["strcmp"] = &StrCmp;
-  Optimizations["strncmp"] = &StrNCmp;
-  Optimizations["strcpy"] = &StrCpy;
-  Optimizations["stpcpy"] = &StpCpy;
-  Optimizations["strncpy"] = &StrNCpy;
-  Optimizations["strlen"] = &StrLen;
-  Optimizations["strpbrk"] = &StrPBrk;
-  Optimizations["strtol"] = &StrTo;
-  Optimizations["strtod"] = &StrTo;
-  Optimizations["strtof"] = &StrTo;
-  Optimizations["strtoul"] = &StrTo;
-  Optimizations["strtoll"] = &StrTo;
-  Optimizations["strtold"] = &StrTo;
-  Optimizations["strtoull"] = &StrTo;
-  Optimizations["strspn"] = &StrSpn;
+  addOpt(LibFunc::strcat, &StrCat);
+  addOpt(LibFunc::strncat, &StrNCat);
+  addOpt(LibFunc::strchr, &StrChr);
+  addOpt(LibFunc::strrchr, &StrRChr);
+  addOpt(LibFunc::strcmp, &StrCmp);
+  addOpt(LibFunc::strncmp, &StrNCmp);
+  addOpt(LibFunc::strcpy, &StrCpy);
+  addOpt(LibFunc::stpcpy, &StpCpy);
+  addOpt(LibFunc::strncpy, &StrNCpy);
+  addOpt(LibFunc::strlen, &StrLen);
+  addOpt(LibFunc::strpbrk, &StrPBrk);
+  addOpt(LibFunc::strtol, &StrTo);
+  addOpt(LibFunc::strtod, &StrTo);
+  addOpt(LibFunc::strtof, &StrTo);
+  addOpt(LibFunc::strtoul, &StrTo);
+  addOpt(LibFunc::strtoll, &StrTo);
+  addOpt(LibFunc::strtold, &StrTo);
+  addOpt(LibFunc::strtoull, &StrTo);
+  addOpt(LibFunc::strspn, &StrSpn);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
@@ -886,6 +887,11 @@ Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
     return LCO->optimizeCall(CI, TD, TLI, Builder);
   }
   return 0;
+}
+
+void LibCallSimplifierImpl::addOpt(LibFunc::Func F, LibCallOptimization* Opt) {
+  if (TLI->has(F))
+    Optimizations[TLI->getName(F)] = Opt;
 }
 
 LibCallSimplifier::LibCallSimplifier(const DataLayout *TD,
