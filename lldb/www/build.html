@@ -105,8 +105,8 @@
                 <code>&gt; cd $llvm/..
                   <br>&gt; mkdir build
                   <br>&gt; cd build
-                  <br>&gt; $llvm/configure --enable-libcpp
-                  <br>&gt; make CXXFLAGS=-std=c++11</code>
+                  <br>&gt; $llvm/configure --enable-cxx11 --enable-libcpp
+                  <br>&gt; make </code>
                 <p>Note that once both LLVM and Clang have been configured and built it is not
                 necessary to perform a top-level <tt>make</tt> to rebuild changes made only to LLDB.
                 You can run <tt>make</tt> from the <tt>build/tools/lldb</tt> subdirectory as well. If your
