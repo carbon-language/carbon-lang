@@ -86,7 +86,7 @@ PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec
     {
         path_string.Clear();
         path_string.Printf("%s.framework",module_basename);
-        if (strstr(module_directory, path_string.GetData()))
+        if (module_directory && strstr(module_directory, path_string.GetData()))
         {
             // we are going to be in foo.framework/Versions/X/foo
             path_string.Clear();
