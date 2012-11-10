@@ -818,6 +818,19 @@ namespace {
 
 static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
                                             bool PerFunction) {
+  // Only perform this analysis when using C++.  There is no good workflow
+  // for this warning when using straight C.  There is no good way to silence
+  // the warning (no attribute is available) unless we are using C++11's support
+  // for generalized attributes.  Once could use pragmas to silence the warning,
+  // but as a general solution that is gross and not in the spirit of this
+  // warning.
+  //
+  // NOTE: this argument also applies to C++ code not using C++11, as the
+  // generalized attributes are not available in earlier C++ dialects.
+  // This will require some discussion.
+  if (!AC.getASTContext().getLangOpts().CPlusPlus)
+    return;
+
   FallthroughMapper FM(S);
   FM.TraverseStmt(AC.getBody());
 
