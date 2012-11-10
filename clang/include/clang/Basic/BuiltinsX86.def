@@ -736,5 +736,8 @@ BUILTIN(__builtin_ia32_vfrczps, "V4fV4f", "")
 BUILTIN(__builtin_ia32_vfrczpd, "V2dV2d", "")
 BUILTIN(__builtin_ia32_vfrczps256, "V8fV8f", "")
 BUILTIN(__builtin_ia32_vfrczpd256, "V4dV4d", "")
+BUILTIN(__builtin_ia32_xbegin, "i", "")
+BUILTIN(__builtin_ia32_xend, "v", "")
+BUILTIN(__builtin_ia32_xabort, "vIc", "")
 
 #undef BUILTIN

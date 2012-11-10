@@ -1470,6 +1470,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasBMI;
   bool HasBMI2;
   bool HasPOPCNT;
+  bool HasRTM;
   bool HasSSE4a;
   bool HasFMA4;
   bool HasFMA;
@@ -1620,9 +1621,9 @@ public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
       HasAES(false), HasPCLMUL(false), HasLZCNT(false), HasRDRND(false),
-      HasBMI(false), HasBMI2(false), HasPOPCNT(false), HasSSE4a(false),
-      HasFMA4(false), HasFMA(false), HasXOP(false), HasF16C(false),
-      CPU(CK_Generic) {
+      HasBMI(false), HasBMI2(false), HasPOPCNT(false), HasRTM(false),
+      HasSSE4a(false), HasFMA4(false), HasFMA(false), HasXOP(false),
+      HasF16C(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1826,6 +1827,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["bmi"] = false;
   Features["bmi2"] = false;
   Features["popcnt"] = false;
+  Features["rtm"] = false;
   Features["fma4"] = false;
   Features["fma"] = false;
   Features["xop"] = false;
@@ -1906,6 +1908,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "rdrnd", true);
     setFeatureEnabled(Features, "bmi", true);
     setFeatureEnabled(Features, "bmi2", true);
+    setFeatureEnabled(Features, "rtm", true);
     setFeatureEnabled(Features, "fma", true);
     break;
   case CK_K6:
@@ -2042,6 +2045,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["popcnt"] = true;
     else if (Name == "f16c")
       Features["f16c"] = true;
+    else if (Name == "rtm")
+      Features["rtm"] = true;
   } else {
     if (Name == "mmx")
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
@@ -2104,6 +2109,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["xop"] = false;
     else if (Name == "f16c")
       Features["f16c"] = false;
+    else if (Name == "rtm")
+      Features["rtm"] = false;
   }
 
   return true;
@@ -2152,6 +2159,11 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     if (Feature == "popcnt") {
       HasPOPCNT = true;
+      continue;
+    }
+
+    if (Feature == "rtm") {
+      HasRTM = true;
       continue;
     }
 
@@ -2376,6 +2388,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasPOPCNT)
     Builder.defineMacro("__POPCNT__");
 
+  if (HasRTM)
+    Builder.defineMacro("__RTM__");
+
   if (HasSSE4a)
     Builder.defineMacro("__SSE4A__");
 
@@ -2463,6 +2478,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("mmx", MMX3DNowLevel >= MMX)
       .Case("pclmul", HasPCLMUL)
       .Case("popcnt", HasPOPCNT)
+      .Case("rtm", HasRTM)
       .Case("sse", SSELevel >= SSE1)
       .Case("sse2", SSELevel >= SSE2)
       .Case("sse3", SSELevel >= SSE3)

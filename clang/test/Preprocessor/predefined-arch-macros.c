@@ -516,6 +516,7 @@
 // CHECK_CORE_AVX2_M32: #define __PCLMUL__ 1
 // CHECK_CORE_AVX2_M32: #define __POPCNT__ 1
 // CHECK_CORE_AVX2_M32: #define __RDRND__ 1
+// CHECK_CORE_AVX2_M32: #define __RTM__ 1
 // CHECK_CORE_AVX2_M32: #define __SSE2__ 1
 // CHECK_CORE_AVX2_M32: #define __SSE3__ 1
 // CHECK_CORE_AVX2_M32: #define __SSE4_1__ 1
@@ -541,6 +542,7 @@
 // CHECK_CORE_AVX2_M64: #define __PCLMUL__ 1
 // CHECK_CORE_AVX2_M64: #define __POPCNT__ 1
 // CHECK_CORE_AVX2_M64: #define __RDRND__ 1
+// CHECK_CORE_AVX2_M64: #define __RTM__ 1
 // CHECK_CORE_AVX2_M64: #define __SSE2_MATH__ 1
 // CHECK_CORE_AVX2_M64: #define __SSE2__ 1
 // CHECK_CORE_AVX2_M64: #define __SSE3__ 1

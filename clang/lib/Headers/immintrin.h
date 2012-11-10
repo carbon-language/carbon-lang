@@ -98,4 +98,8 @@ _rdrand64_step(unsigned long long *__p)
 #endif
 #endif /* __RDRND__ */
 
+#ifdef __RTM__
+#include <rtmintrin.h>
+#endif
+
 #endif /* __IMMINTRIN_H */

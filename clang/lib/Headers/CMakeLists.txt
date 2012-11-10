@@ -20,6 +20,7 @@ set(files
   nmmintrin.h
   pmmintrin.h
   popcntintrin.h
+  rtmintrin.h
   smmintrin.h
   stdalign.h
   stdarg.h
