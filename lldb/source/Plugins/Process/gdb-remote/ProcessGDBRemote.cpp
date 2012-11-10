@@ -2946,8 +2946,8 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         struct dispatch_queue_offsets_s
         {
             uint16_t dqo_version;
-            uint16_t dqo_label;
-            uint16_t dqo_label_size;
+            uint16_t dqo_label;      // in version 1-3, offset to string; in version 4+, offset to a pointer to a string
+            uint16_t dqo_label_size; // in version 1-3, length of string; in version 4+, size of a (void*) in this process
         } dispatch_queue_offsets;
 
 
@@ -2961,11 +2961,28 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
                 {
                     data_offset = 0;
                     lldb::addr_t queue_addr = data.GetAddress(&data_offset);
-                    lldb::addr_t label_addr = queue_addr + dispatch_queue_offsets.dqo_label;
-                    dispatch_queue_name.resize(dispatch_queue_offsets.dqo_label_size, '\0');
-                    size_t bytes_read = ReadMemory (label_addr, &dispatch_queue_name[0], dispatch_queue_offsets.dqo_label_size, error);
-                    if (bytes_read < dispatch_queue_offsets.dqo_label_size)
-                        dispatch_queue_name.erase (bytes_read);
+                    if (dispatch_queue_offsets.dqo_version >= 4)
+                    {
+                        // libdispatch versions 4+, pointer to dispatch name is in the 
+                        // queue structure.
+                        lldb::addr_t pointer_to_label_address = queue_addr + dispatch_queue_offsets.dqo_label;
+                        if (ReadMemory (pointer_to_label_address, &memory_buffer, data.GetAddressByteSize(), error) == data.GetAddressByteSize())
+                        {
+                            data_offset = 0;
+                            lldb::addr_t label_addr = data.GetAddress(&data_offset);
+                            ReadCStringFromMemory (label_addr, dispatch_queue_name, error);
+                        }
+                    }
+                    else
+                    {
+                        // libdispatch versions 1-3, dispatch name is a fixed width char array
+                        // in the queue structure.
+                        lldb::addr_t label_addr = queue_addr + dispatch_queue_offsets.dqo_label;
+                        dispatch_queue_name.resize(dispatch_queue_offsets.dqo_label_size, '\0');
+                        size_t bytes_read = ReadMemory (label_addr, &dispatch_queue_name[0], dispatch_queue_offsets.dqo_label_size, error);
+                        if (bytes_read < dispatch_queue_offsets.dqo_label_size)
+                            dispatch_queue_name.erase (bytes_read);
+                    }
                 }
             }
         }
