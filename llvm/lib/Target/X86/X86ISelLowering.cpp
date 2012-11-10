@@ -12840,38 +12840,31 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
 // FIXME: When we get size specific XMM0 registers, i.e. XMM0_V16I8
 // or XMM0_V32I8 in AVX all of this code can be replaced with that
 // in the .td file.
-MachineBasicBlock *
-X86TargetLowering::EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
-                                bool Implicit, bool MemArg) const {
-  assert(Subtarget->hasSSE42() &&
-         "Target must have SSE4.2 or AVX features enabled");
-
-  DebugLoc dl = MI->getDebugLoc();
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+static MachineBasicBlock * EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
+                                        const TargetInstrInfo *TII) {
   unsigned Opc;
-  if (!Subtarget->hasAVX()) {
-    if (MemArg)
-      Opc = Implicit ? X86::PCMPISTRM128rm : X86::PCMPESTRM128rm;
-    else
-      Opc = Implicit ? X86::PCMPISTRM128rr : X86::PCMPESTRM128rr;
-  } else {
-    if (MemArg)
-      Opc = Implicit ? X86::VPCMPISTRM128rm : X86::VPCMPESTRM128rm;
-    else
-      Opc = Implicit ? X86::VPCMPISTRM128rr : X86::VPCMPESTRM128rr;
+  switch (MI->getOpcode()) {
+  default: llvm_unreachable("illegal opcode!");
+  case X86::PCMPISTRM128REG:  Opc = X86::PCMPISTRM128rr;  break;
+  case X86::VPCMPISTRM128REG: Opc = X86::VPCMPISTRM128rr; break;
+  case X86::PCMPISTRM128MEM:  Opc = X86::PCMPISTRM128rm;  break;
+  case X86::VPCMPISTRM128MEM: Opc = X86::VPCMPISTRM128rm; break;
+  case X86::PCMPESTRM128REG:  Opc = X86::PCMPESTRM128rr;  break;
+  case X86::VPCMPESTRM128REG: Opc = X86::VPCMPESTRM128rr; break;
+  case X86::PCMPESTRM128MEM:  Opc = X86::PCMPESTRM128rm;  break;
+  case X86::VPCMPESTRM128MEM: Opc = X86::VPCMPESTRM128rm; break;
   }
 
-  unsigned NumArgs = Implicit ? 3 : 5;
-  if (MemArg)
-    NumArgs += X86::AddrNumOperands;
-
+  DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(Opc));
+
+  unsigned NumArgs = MI->getNumOperands() - 1;
   for (unsigned i = 0; i < NumArgs; ++i) {
     MachineOperand &Op = MI->getOperand(i+1);
     if (!(Op.isReg() && Op.isImplicit()))
       MIB.addOperand(Op);
   }
-  if (MemArg)
+  if (MI->hasOneMemOperand())
     MIB->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
 
   BuildMI(*BB, MI, dl,
@@ -12884,38 +12877,31 @@ X86TargetLowering::EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
 
 // FIXME: Custom handling because TableGen doesn't support multiple implicit
 // defs in an instruction pattern
-MachineBasicBlock *
-X86TargetLowering::EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
-                                bool Implicit, bool MemArg) const {
-  assert(Subtarget->hasSSE42() &&
-         "Target must have SSE4.2 or AVX features enabled");
-
-  DebugLoc dl = MI->getDebugLoc();
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+static MachineBasicBlock * EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
+                                        const TargetInstrInfo *TII) {
   unsigned Opc;
-  if (!Subtarget->hasAVX()) {
-    if (MemArg)
-      Opc = Implicit ? X86::PCMPISTRIrm : X86::PCMPESTRIrm;
-    else
-      Opc = Implicit ? X86::PCMPISTRIrr : X86::PCMPESTRIrr;
-  } else {
-    if (MemArg)
-      Opc = Implicit ? X86::VPCMPISTRIrm : X86::VPCMPESTRIrm;
-    else
-      Opc = Implicit ? X86::VPCMPISTRIrr : X86::VPCMPESTRIrr;
+  switch (MI->getOpcode()) {
+  default: llvm_unreachable("illegal opcode!");
+  case X86::PCMPISTRIREG:  Opc = X86::PCMPISTRIrr;  break;
+  case X86::VPCMPISTRIREG: Opc = X86::VPCMPISTRIrr; break;
+  case X86::PCMPISTRIMEM:  Opc = X86::PCMPISTRIrm;  break;
+  case X86::VPCMPISTRIMEM: Opc = X86::VPCMPISTRIrm; break;
+  case X86::PCMPESTRIREG:  Opc = X86::PCMPESTRIrr;  break;
+  case X86::VPCMPESTRIREG: Opc = X86::VPCMPESTRIrr; break;
+  case X86::PCMPESTRIMEM:  Opc = X86::PCMPESTRIrm;  break;
+  case X86::VPCMPESTRIMEM: Opc = X86::VPCMPESTRIrm; break;
   }
 
-  unsigned NumArgs = Implicit ? 3 : 5;
-  if (MemArg)
-    NumArgs += X86::AddrNumOperands;
-
+  DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(Opc));
+
+  unsigned NumArgs = MI->getNumOperands() - 1; // remove the results
   for (unsigned i = 0; i < NumArgs; ++i) {
     MachineOperand &Op = MI->getOperand(i+1);
     if (!(Op.isReg() && Op.isImplicit()))
       MIB.addOperand(Op);
   }
-  if (MemArg)
+  if (MI->hasOneMemOperand())
     MIB->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
 
   BuildMI(*BB, MI, dl,
@@ -13943,25 +13929,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::PCMPESTRM128REG:
   case X86::VPCMPESTRM128REG:
   case X86::PCMPESTRM128MEM:
-  case X86::VPCMPESTRM128MEM: {
-    bool Implicit, MemArg;
-    switch (MI->getOpcode()) {
-    default: llvm_unreachable("illegal opcode!");
-    case X86::PCMPISTRM128REG:
-    case X86::VPCMPISTRM128REG:
-      Implicit = true; MemArg = false; break;
-    case X86::PCMPISTRM128MEM:
-    case X86::VPCMPISTRM128MEM:
-     Implicit = true; MemArg = true; break;
-    case X86::PCMPESTRM128REG:
-    case X86::VPCMPESTRM128REG:
-      Implicit = false; MemArg = false; break;
-    case X86::PCMPESTRM128MEM:
-    case X86::VPCMPESTRM128MEM:
-      Implicit = false; MemArg = true; break;
-    }
-    return EmitPCMPSTRM(MI, BB, Implicit, MemArg);
-  }
+  case X86::VPCMPESTRM128MEM:
+    assert(Subtarget->hasSSE42() &&
+           "Target must have SSE4.2 or AVX features enabled");
+    return EmitPCMPSTRM(MI, BB, getTargetMachine().getInstrInfo());
 
   // String/text processing lowering.
   case X86::PCMPISTRIREG:
@@ -13971,27 +13942,12 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::PCMPESTRIREG:
   case X86::VPCMPESTRIREG:
   case X86::PCMPESTRIMEM:
-  case X86::VPCMPESTRIMEM: {
-    bool Implicit, MemArg;
-    switch (MI->getOpcode()) {
-    default: llvm_unreachable("illegal opcode!");
-    case X86::PCMPISTRIREG:
-    case X86::VPCMPISTRIREG:
-      Implicit = true; MemArg = false; break;
-    case X86::PCMPISTRIMEM:
-    case X86::VPCMPISTRIMEM:
-      Implicit = true; MemArg = true; break;
-    case X86::PCMPESTRIREG:
-    case X86::VPCMPESTRIREG:
-      Implicit = false; MemArg = false; break;
-    case X86::PCMPESTRIMEM:
-    case X86::VPCMPESTRIMEM:
-      Implicit = false; MemArg = true; break;
-    }
-    return EmitPCMPSTRI(MI, BB, Implicit, MemArg);
-  }
+  case X86::VPCMPESTRIMEM:
+    assert(Subtarget->hasSSE42() &&
+           "Target must have SSE4.2 or AVX features enabled");
+    return EmitPCMPSTRI(MI, BB, getTargetMachine().getInstrInfo());
 
-    // Thread synchronization.
+  // Thread synchronization.
   case X86::MONITOR:
     return EmitMonitor(MI, BB);
 
@@ -13999,7 +13955,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::XBEGIN:
     return EmitXBegin(MI, BB);
 
-    // Atomic Lowering.
+  // Atomic Lowering.
   case X86::ATOMAND8:
   case X86::ATOMAND16:
   case X86::ATOMAND32:
