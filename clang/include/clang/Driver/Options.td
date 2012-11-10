@@ -831,8 +831,8 @@ def mno_thumb : Flag<["-"], "mno-thumb">, Group<m_Group>;
 def marm : Flag<["-"], "marm">, Alias<mno_thumb>;
 
 def mno_warn_nonportable_cfstrings : Flag<["-"], "mno-warn-nonportable-cfstrings">, Group<m_Group>;
-def mno_omit_leaf_frame_pointer : Flag<["-"], "mno-omit-leaf-frame-pointer">, Group<f_Group>;
-def momit_leaf_frame_pointer : Flag<["-"], "momit-leaf-frame-pointer">, Group<f_Group>,
+def mno_omit_leaf_frame_pointer : Flag<["-"], "mno-omit-leaf-frame-pointer">, Group<m_Group>;
+def momit_leaf_frame_pointer : Flag<["-"], "momit-leaf-frame-pointer">, Group<m_Group>,
   HelpText<"Omit frame pointer setup for leaf functions">, Flags<[CC1Option]>;
 def mpascal_strings : Flag<["-"], "mpascal-strings">, Group<m_Group>;
 def mred_zone : Flag<["-"], "mred-zone">, Group<m_Group>;
