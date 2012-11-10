@@ -123,7 +123,8 @@ bool CXXRecordDecl::isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const {
 
 bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
                                 void *OpaqueData,
-                                bool AllowShortCircuit) const {
+                                bool AllowShortCircuit,
+                                bool VisitDependent) const {
   SmallVector<const CXXRecordDecl*, 8> Queue;
 
   const CXXRecordDecl *Record = this;
@@ -131,15 +132,14 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
   while (true) {
     for (CXXRecordDecl::base_class_const_iterator
            I = Record->bases_begin(), E = Record->bases_end(); I != E; ++I) {
-      const RecordType *Ty = I->getType()->getAs<RecordType>();
-      if (!Ty) {
+      CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
+      if (!Base || (!VisitDependent && I->getType()->isDependentType())) {
         if (AllowShortCircuit) return false;
         AllMatches = false;
         continue;
       }
 
-      CXXRecordDecl *Base = 
-            cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition());
+      Base = Base->getDefinition();
       if (!Base) {
         if (AllowShortCircuit) return false;
         AllMatches = false;

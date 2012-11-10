@@ -5275,6 +5275,8 @@ def err_static_data_member_not_allowed_in_local_class : Error<
 def err_base_clause_on_union : Error<"unions cannot have base classes">;
 def err_base_must_be_class : Error<"base specifier must name a class">;
 def err_union_as_base_class : Error<"unions cannot be base classes">;
+def err_circular_inheritance : Error<
+  "circular inheritance between %0 and %1">;
 def err_incomplete_base_class : Error<"base class has incomplete type">;
 def err_duplicate_base_class : Error<
   "base class %0 specified more than once as a direct base class">;

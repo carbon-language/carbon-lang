@@ -1018,6 +1018,14 @@ bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
     return false;
 }
 
+/// \brief Determine whether we have the same C++ record definition.
+///
+/// Used as a helper function in Sema::CheckBaseSpecifier, below.
+static bool sameCXXRecordDef(const CXXRecordDecl *BaseDefinition,
+                          void *UserData) {
+  return (CXXRecordDecl *)UserData != BaseDefinition;
+}
+
 /// \brief Check the validity of a C++ base class specifier.
 ///
 /// \returns a new CXXBaseSpecifier if well-formed, emits diagnostics
@@ -1044,13 +1052,32 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
       << TInfo->getTypeLoc().getSourceRange();
     EllipsisLoc = SourceLocation();
   }
-  
-  if (BaseType->isDependentType())
+
+  SourceLocation BaseLoc = TInfo->getTypeLoc().getBeginLoc();
+
+  if (BaseType->isDependentType()) {
+    // Make sure that we don't have circular inheritance among our dependent
+    // bases. For non-dependent bases, the check for completeness below handles
+    // this.
+    if (CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl()) {
+      if (BaseDecl->getCanonicalDecl() == Class->getCanonicalDecl() ||
+          ((BaseDecl = BaseDecl->getDefinition()) &&
+           !BaseDecl->forallBases(&sameCXXRecordDef, Class))) {
+        Diag(BaseLoc, diag::err_circular_inheritance)
+          << BaseType << Context.getTypeDeclType(Class);
+
+        if (BaseDecl->getCanonicalDecl() != Class->getCanonicalDecl())
+          Diag(BaseDecl->getLocation(), diag::note_previous_decl)
+            << BaseType;
+            
+        return 0;
+      }
+    }
+
     return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                                           Class->getTagKind() == TTK_Class,
                                           Access, TInfo, EllipsisLoc);
-
-  SourceLocation BaseLoc = TInfo->getTypeLoc().getBeginLoc();
+  }
 
   // Base specifiers must be record types.
   if (!BaseType->isRecordType()) {
