@@ -1599,18 +1599,12 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (Subtarget->isThumb()) {
     if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
-    else if (doesNotRet && isDirect && !isARMFunc &&
-             Subtarget->hasRAS() && !Subtarget->isThumb1Only() &&
-             // Emit regular call when code size is the priority
-             !HasMinSizeAttr)
-      // "mov lr, pc; b _foo" to avoid confusing the RSP
-      CallOpc = ARMISD::CALL_NOLINK;
     else
       CallOpc = isARMFunc ? ARMISD::CALL : ARMISD::tCALL;
   } else {
-    if (!isDirect && !Subtarget->hasV5TOps()) {
+    if (!isDirect && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
-    } else if (doesNotRet && isDirect && Subtarget->hasRAS() &&
+    else if (doesNotRet && isDirect && Subtarget->hasRAS() &&
                // Emit regular call when code size is the priority
                !HasMinSizeAttr)
       // "mov lr, pc; b _foo" to avoid confusing the RSP

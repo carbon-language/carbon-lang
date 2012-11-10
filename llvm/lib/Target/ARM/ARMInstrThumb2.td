@@ -3331,20 +3331,6 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                  Requires<[IsThumb2, IsIOS]>;
 }
 
-let isCall = 1, Defs = [LR], Uses = [SP] in {
-  // mov lr, pc; b if callee is marked noreturn to avoid confusing the
-  // return stack predictor.
-  def t2BMOVPCB_CALL : tPseudoInst<(outs),
-                                   (ins t_bltarget:$func),
-                               6, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
-                        Requires<[IsThumb]>;
-}
-
-// Direct calls
-def : T2Pat<(ARMcall_nolink texternalsym:$func),
-            (t2BMOVPCB_CALL texternalsym:$func)>,
-      Requires<[IsThumb]>;
-
 // IT block
 let Defs = [ITSTATE] in
 def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),

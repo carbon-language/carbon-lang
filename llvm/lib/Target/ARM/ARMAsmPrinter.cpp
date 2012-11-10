@@ -1413,31 +1413,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::t2BMOVPCB_CALL: {
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-      // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::t2B);
-      const GlobalValue *GV = MI->getOperand(0).getGlobal();
-      MCSymbol *GVSym = Mang->getSymbol(GV);
-      const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
-      TmpInst.addOperand(MCOperand::CreateExpr(GVSymExpr));
-      // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    return;
-  }
   case ARM::MOVi16_ga_pcrel:
   case ARM::t2MOVi16_ga_pcrel: {
     MCInst TmpInst;
