@@ -66,6 +66,17 @@ struct V6 : S1 { virtual ~V6(); };
 struct V7 : virtual V2, virtual V6 { virtual ~V7(); };
 struct V8 : V5, virtual V6, V7 { double zz; virtual ~V8(); };
 
+double S6::f() { return 0.0; }
+float D2::g() { return 0.0f; }
+V1::~V1() {}
+V2::~V2() {}
+V3::~V3() {}
+V4::~V4() {}
+V5::~V5() {}
+V6::~V6() {}
+V7::~V7() {}
+V8::~V8() {}
+
 // Ensure alignment is a compile-time constant.
 char LLVM_ATTRIBUTE_UNUSED test_arr1
   [AlignOf<char>::Alignment > 0]
