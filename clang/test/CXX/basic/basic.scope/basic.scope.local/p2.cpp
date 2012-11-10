@@ -23,3 +23,15 @@ void func5() try {
 } catch (...) {
   int j = i; // expected-error{{use of undeclared identifier 'i'}}
 }
+
+void func6() try {
+} catch (int i) { // expected-note{{previous definition is here}}
+  int i; // expected-error{{redefinition of 'i'}}
+}
+
+void func7() {
+  try {
+  } catch (int i) { // expected-note{{previous definition is here}}
+    int i; // expected-error{{redefinition of 'i'}}
+  }
+}
