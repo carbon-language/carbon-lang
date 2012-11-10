@@ -876,7 +876,6 @@ namespace llvm {
     /// correct registers.
     MachineBasicBlock *EmitMonitor(MachineInstr *MI,
                                    MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitMwait(MachineInstr *MI, MachineBasicBlock *BB) const;
 
     /// Utility function to emit atomic-load-arith operations (and, or, xor,
     /// nand, max, min, umax, umin). It takes the corresponding instruction to
