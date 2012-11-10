@@ -36,6 +36,7 @@ declare i64 @strtol(i8*, i8**, i32)
 declare i64 @strtoll(i8*, i8**, i32)
 declare i64 @strtoul(i8*, i8**, i32)
 declare i64 @strtoull(i8*, i8**, i32)
+declare i64 @strcspn(i8*, i8*)
 
 define double @t1(double %x) {
 ; CHECK: @t1
@@ -224,4 +225,12 @@ define i64 @t24(i8** %y) {
   %ret = call i64 @strtoull(i8* %x, i8** %y, i32 10)
   ret i64 %ret
 ; CHECK: call i64 @strtoull
+}
+
+define i64 @t25(i8* %y) {
+; CHECK: @t25
+  %x = getelementptr [1 x i8]* @empty, i32 0, i32 0
+  %ret = call i64 @strcspn(i8* %x, i8* %y)
+  ret i64 %ret
+; CHECK: call i64 @strcspn
 }

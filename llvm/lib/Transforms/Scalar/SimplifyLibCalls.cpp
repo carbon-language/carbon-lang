@@ -119,41 +119,6 @@ static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
 
 namespace {
 //===---------------------------------------===//
-// 'strcspn' Optimizations
-
-struct StrCSpnOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 ||
-        FT->getParamType(0) != B.getInt8PtrTy() ||
-        FT->getParamType(1) != FT->getParamType(0) ||
-        !FT->getReturnType()->isIntegerTy())
-      return 0;
-
-    StringRef S1, S2;
-    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
-    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
-
-    // strcspn("", s) -> 0
-    if (HasS1 && S1.empty())
-      return Constant::getNullValue(CI->getType());
-
-    // Constant folding.
-    if (HasS1 && HasS2) {
-      size_t Pos = S1.find_first_of(S2);
-      if (Pos == StringRef::npos) Pos = S1.size();
-      return ConstantInt::get(CI->getType(), Pos);
-    }
-
-    // strcspn(s, "") -> strlen(s)
-    if (TD && HasS2 && S2.empty())
-      return EmitStrLen(CI->getArgOperand(0), B, TD, TLI);
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
 // 'strstr' Optimizations
 
 struct StrStrOpt : public LibCallOptimization {
@@ -1005,7 +970,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
-    StrCSpnOpt StrCSpn; StrStrOpt StrStr;
+    StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
     CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
@@ -1073,7 +1038,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // String and Memory LibCall Optimizations
-  Optimizations["strcspn"] = &StrCSpn;
   Optimizations["strstr"] = &StrStr;
   Optimizations["memcmp"] = &MemCmp;
   AddOpt(LibFunc::memcpy, &MemCpy);

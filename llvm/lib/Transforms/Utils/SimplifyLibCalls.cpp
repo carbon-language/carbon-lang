@@ -801,6 +801,38 @@ struct StrSpnOpt : public LibCallOptimization {
   }
 };
 
+struct StrCSpnOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 ||
+        FT->getParamType(0) != B.getInt8PtrTy() ||
+        FT->getParamType(1) != FT->getParamType(0) ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    StringRef S1, S2;
+    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
+
+    // strcspn("", s) -> 0
+    if (HasS1 && S1.empty())
+      return Constant::getNullValue(CI->getType());
+
+    // Constant folding.
+    if (HasS1 && HasS2) {
+      size_t Pos = S1.find_first_of(S2);
+      if (Pos == StringRef::npos) Pos = S1.size();
+      return ConstantInt::get(CI->getType(), Pos);
+    }
+
+    // strcspn(s, "") -> strlen(s)
+    if (TD && HasS2 && S2.empty())
+      return EmitStrLen(CI->getArgOperand(0), B, TD, TLI);
+
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -832,6 +864,7 @@ class LibCallSimplifierImpl {
   StrPBrkOpt StrPBrk;
   StrToOpt StrTo;
   StrSpnOpt StrSpn;
+  StrCSpnOpt StrCSpn;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -874,6 +907,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::strtold, &StrTo);
   addOpt(LibFunc::strtoull, &StrTo);
   addOpt(LibFunc::strspn, &StrSpn);
+  addOpt(LibFunc::strcspn, &StrCSpn);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
