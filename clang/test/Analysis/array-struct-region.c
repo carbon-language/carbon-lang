@@ -183,3 +183,110 @@ int testConcreteInvalidationDoubleStruct(int index) {
 }
 
 
+int testNonOverlappingStructFieldsSimple() {
+  S val;
+
+  val.x = 1;
+  val.y = 2;
+  clang_analyzer_eval(val.x == 1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(val.y == 2); // expected-warning{{TRUE}}
+
+  return val.z; // expected-warning{{garbage}}
+}
+
+int testNonOverlappingStructFieldsSymbolicBase(int index, int anotherIndex) {
+  SS vals;
+
+  vals.a[index].x = 42;
+  vals.a[index].y = 42;
+  clang_analyzer_eval(vals.a[index].x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals.a[index].y == 42); // expected-warning{{TRUE}}
+
+  vals.a[anotherIndex].x = 42;
+  clang_analyzer_eval(vals.a[index].x == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(vals.a[index].y == 42); // expected-warning{{TRUE}}
+
+  // FIXME: False negative. No bind ever set a field 'z'.
+  return vals.a[index].z; // no-warning
+}
+
+int testStructFieldChains(int index, int anotherIndex) {
+  SS vals[4];
+
+  vals[index].a[0].x = 42;
+  vals[anotherIndex].a[1].y = 42;
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals[anotherIndex].a[1].y == 42); // expected-warning{{TRUE}}
+
+  // This doesn't affect anything in the 'a' array field.
+  vals[anotherIndex].b[1].x = 42;
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals[anotherIndex].a[1].y == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals[anotherIndex].b[1].x == 42); // expected-warning{{TRUE}}
+
+  // This doesn't affect anything in the 'b' array field.
+  vals[index].a[anotherIndex].x = 42;
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(vals[anotherIndex].a[0].x == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(vals[anotherIndex].a[1].y == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(vals[anotherIndex].b[1].x == 42); // expected-warning{{TRUE}}
+
+  // FIXME: False negative. No bind ever set a field 'z'.
+  return vals[index].a[0].z; // no-warning
+}
+
+int testStructFieldChainsNested(int index, int anotherIndex) {
+  SS vals[4];
+
+  vals[index].a[0].x = 42;
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{TRUE}}
+
+  vals[index].b[0] = makeS();
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{TRUE}}
+
+  vals[index].a[0] = makeS();
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{UNKNOWN}}
+
+  vals[index].a[0].x = 42;
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{TRUE}}
+
+  return 0;
+}
+
+
+// --------------------
+// False positives
+// --------------------
+
+int testMixSymbolicAndConcrete(int index, int anotherIndex) {
+  SS vals;
+
+  vals.a[index].x = 42;
+  vals.a[0].y = 42;
+
+  // FIXME: Should be TRUE.
+  clang_analyzer_eval(vals.a[index].x == 42); // expected-warning{{UNKNOWN}}
+  // Should be TRUE; we set this explicitly.
+  clang_analyzer_eval(vals.a[0].y == 42); // expected-warning{{TRUE}}
+
+  vals.a[anotherIndex].y = 42;
+
+  // Should be UNKNOWN; we set an 'x'.
+  clang_analyzer_eval(vals.a[index].x == 42); // expected-warning{{UNKNOWN}}
+  // FIXME: Should be TRUE.
+  clang_analyzer_eval(vals.a[0].y == 42); // expected-warning{{UNKNOWN}}
+
+  return vals.a[0].x; // no-warning
+}
+
+void testFieldChainIsNotEnough(int index) {
+  SS vals[4];
+
+  vals[index].a[0].x = 42;
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{TRUE}}
+
+  vals[index].a[1] = makeS();
+  // FIXME: Should be TRUE.
+  clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{UNKNOWN}}
+}
+

@@ -522,6 +522,46 @@ bool RegionStoreManager::scanReachableSymbols(Store S, const MemRegion *R,
   return true;
 }
 
+static inline bool isUnionField(const FieldRegion *FR) {
+  return FR->getDecl()->getParent()->isUnion();
+}
+
+typedef SmallVector<const FieldDecl *, 8> FieldVector;
+
+void getSymbolicOffsetFields(BindingKey K, FieldVector &Fields) {
+  assert(K.hasSymbolicOffset() && "Not implemented for concrete offset keys");
+
+  const MemRegion *Base = K.getConcreteOffsetRegion();
+  const MemRegion *R = K.getRegion();
+
+  while (R != Base) {
+    if (const FieldRegion *FR = dyn_cast<FieldRegion>(R))
+      if (!isUnionField(FR))
+        Fields.push_back(FR->getDecl());
+
+    R = cast<SubRegion>(R)->getSuperRegion();
+  }
+}
+
+static bool isCompatibleWithFields(BindingKey K, const FieldVector &Fields) {
+  assert(K.hasSymbolicOffset() && "Not implemented for concrete offset keys");
+
+  if (Fields.empty())
+    return true;
+
+  FieldVector FieldsInBindingKey;
+  getSymbolicOffsetFields(K, FieldsInBindingKey);
+
+  ptrdiff_t Delta = FieldsInBindingKey.size() - Fields.size();
+  if (Delta >= 0)
+    return std::equal(FieldsInBindingKey.begin() + Delta,
+                      FieldsInBindingKey.end(),
+                      Fields.begin());
+  else
+    return std::equal(FieldsInBindingKey.begin(), FieldsInBindingKey.end(),
+                      Fields.begin() - Delta);
+}
+
 RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
                                                            const SubRegion *R) {
   BindingKey SRKey = BindingKey::Make(R, BindingKey::Default);
@@ -531,10 +571,12 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
     return RBFactory.remove(B, R);
   }
 
-  if (SRKey.hasSymbolicOffset()) {
-    const SubRegion *Base = cast<SubRegion>(SRKey.getConcreteOffsetRegion());
-    B = removeSubRegionBindings(B, Base);
-    return addBinding(B, Base, BindingKey::Default, UnknownVal());
+  FieldVector FieldsInSymbolicSubregions;
+  bool HasSymbolicOffset = SRKey.hasSymbolicOffset();
+  if (HasSymbolicOffset) {
+    getSymbolicOffsetFields(SRKey, FieldsInSymbolicSubregions);
+    R = cast<SubRegion>(SRKey.getConcreteOffsetRegion());
+    SRKey = BindingKey::Make(R, BindingKey::Default);
   }
 
   // This assumes the region being invalidated is char-aligned. This isn't
@@ -562,11 +604,17 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
        I != E; ++I) {
     BindingKey NextKey = I.getKey();
     if (NextKey.getRegion() == SRKey.getRegion()) {
+      // FIXME: This doesn't catch the case where we're really invalidating a
+      // region with a symbolic offset. Example:
+      //      R: points[i].y
+      //   Next: points[0].x
+
       if (NextKey.getOffset() > SRKey.getOffset() &&
           NextKey.getOffset() - SRKey.getOffset() < Length) {
         // Case 1: The next binding is inside the region we're invalidating.
         // Remove it.
         Result = CBFactory.remove(Result, NextKey);
+
       } else if (NextKey.getOffset() == SRKey.getOffset()) {
         // Case 2: The next binding is at the same offset as the region we're
         // invalidating. In this case, we need to leave default bindings alone,
@@ -577,6 +625,7 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
         if (NextKey.isDirect())
           Result = CBFactory.remove(Result, NextKey);
       }
+      
     } else if (NextKey.hasSymbolicOffset()) {
       const MemRegion *Base = NextKey.getConcreteOffsetRegion();
       if (R->isSubRegionOf(Base)) {
@@ -584,15 +633,23 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
         // its concrete region. We don't know if the binding is still valid, so
         // we'll be conservative and remove it.
         if (NextKey.isDirect())
-          Result = CBFactory.remove(Result, NextKey);
+          if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
+            Result = CBFactory.remove(Result, NextKey);
       } else if (const SubRegion *BaseSR = dyn_cast<SubRegion>(Base)) {
         // Case 4: The next key is symbolic, but we changed a known
         // super-region. In this case the binding is certainly no longer valid.
         if (R == Base || BaseSR->isSubRegionOf(R))
-          Result = CBFactory.remove(Result, NextKey);
+          if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
+            Result = CBFactory.remove(Result, NextKey);
       }
     }
   }
+
+  // If we're invalidating a region with a symbolic offset, we need to make sure
+  // we don't treat the base region as uninitialized anymore.
+  // FIXME: This isn't very precise; see the example in the loop.
+  if (HasSymbolicOffset)
+    Result = CBFactory.add(Result, SRKey, UnknownVal());
 
   if (Result.isEmpty())
     return RBFactory.remove(B, ClusterHead);
