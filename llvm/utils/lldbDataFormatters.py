@@ -2,6 +2,7 @@
 Load into LLDB with:
 script import lldbDataFormatters
 type synthetic add -x "^llvm::SmallVectorImpl<.+>$" -l lldbDataFormatters.SmallVectorSynthProvider
+type synthetic add -x "^llvm::SmallVector<.+,.+>$" -l lldbDataFormatters.SmallVectorSynthProvider
 """
 
 # Pretty printer for llvm::SmallVector/llvm::SmallVectorImpl
@@ -32,22 +33,15 @@ class SmallVectorSynthProvider:
         return self.begin.CreateChildAtOffset('['+str(index)+']',
                                               offset, self.data_type)
 
-    def get_type_from_name(self):
-        import re
-        name = self.valobj.GetType().GetName()
-        # This class works with both SmallVectors and SmallVectorImpls.
-        res = re.match("^(llvm::)?SmallVectorImpl<(.+)>$", name)
-        if res:
-            return res.group(2)
-        res = re.match("^(llvm::)?SmallVector<(.+), \d+>$", name)
-        if res:
-            return res.group(2)
-        return None
-
     def update(self):
         self.begin = self.valobj.GetChildMemberWithName('BeginX')
         self.end = self.valobj.GetChildMemberWithName('EndX')
-        data_type = self.get_type_from_name()
-        # FIXME: this sometimes returns an invalid type.
-        self.data_type = self.valobj.GetTarget().FindFirstType(data_type)
+        the_type = self.valobj.GetType()
+        # If this is a reference type we have to dereference it to get to the
+        # template parameter.
+        if the_type.IsReferenceType():
+            the_type = the_type.GetDereferencedType()
+
+        self.data_type = the_type.GetTemplateArgumentType(0)
         self.type_size = self.data_type.GetByteSize()
+        assert self.type_size != 0
