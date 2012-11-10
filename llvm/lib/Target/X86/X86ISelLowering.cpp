@@ -12840,8 +12840,8 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
 // FIXME: When we get size specific XMM0 registers, i.e. XMM0_V16I8
 // or XMM0_V32I8 in AVX all of this code can be replaced with that
 // in the .td file.
-static MachineBasicBlock * EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
-                                        const TargetInstrInfo *TII) {
+static MachineBasicBlock *EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
+                                       const TargetInstrInfo *TII) {
   unsigned Opc;
   switch (MI->getOpcode()) {
   default: llvm_unreachable("illegal opcode!");
@@ -12877,8 +12877,8 @@ static MachineBasicBlock * EmitPCMPSTRM(MachineInstr *MI, MachineBasicBlock *BB,
 
 // FIXME: Custom handling because TableGen doesn't support multiple implicit
 // defs in an instruction pattern
-static MachineBasicBlock * EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
-                                        const TargetInstrInfo *TII) {
+static MachineBasicBlock *EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
+                                       const TargetInstrInfo *TII) {
   unsigned Opc;
   switch (MI->getOpcode()) {
   default: llvm_unreachable("illegal opcode!");
