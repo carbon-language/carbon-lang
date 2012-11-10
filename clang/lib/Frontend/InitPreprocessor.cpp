@@ -116,51 +116,51 @@ static T PickFP(const llvm::fltSemantics *Sem, T IEEESingleVal,
 }
 
 static void DefineFloatMacros(MacroBuilder &Builder, StringRef Prefix,
-                              const llvm::fltSemantics *Sem) {
+                              const llvm::fltSemantics *Sem, StringRef Ext) {
   const char *DenormMin, *Epsilon, *Max, *Min;
-  DenormMin = PickFP(Sem, "1.40129846e-45F", "4.9406564584124654e-324",
-                     "3.64519953188247460253e-4951L",
-                     "4.94065645841246544176568792868221e-324L",
-                     "6.47517511943802511092443895822764655e-4966L");
+  DenormMin = PickFP(Sem, "1.40129846e-45", "4.9406564584124654e-324",
+                     "3.64519953188247460253e-4951",
+                     "4.94065645841246544176568792868221e-324",
+                     "6.47517511943802511092443895822764655e-4966");
   int Digits = PickFP(Sem, 6, 15, 18, 31, 33);
-  Epsilon = PickFP(Sem, "1.19209290e-7F", "2.2204460492503131e-16",
-                   "1.08420217248550443401e-19L",
-                   "4.94065645841246544176568792868221e-324L",
-                   "1.92592994438723585305597794258492732e-34L");
+  Epsilon = PickFP(Sem, "1.19209290e-7", "2.2204460492503131e-16",
+                   "1.08420217248550443401e-19",
+                   "4.94065645841246544176568792868221e-324",
+                   "1.92592994438723585305597794258492732e-34");
   int MantissaDigits = PickFP(Sem, 24, 53, 64, 106, 113);
   int Min10Exp = PickFP(Sem, -37, -307, -4931, -291, -4931);
   int Max10Exp = PickFP(Sem, 38, 308, 4932, 308, 4932);
   int MinExp = PickFP(Sem, -125, -1021, -16381, -968, -16381);
   int MaxExp = PickFP(Sem, 128, 1024, 16384, 1024, 16384);
-  Min = PickFP(Sem, "1.17549435e-38F", "2.2250738585072014e-308",
-               "3.36210314311209350626e-4932L",
-               "2.00416836000897277799610805135016e-292L",
-               "3.36210314311209350626267781732175260e-4932L");
-  Max = PickFP(Sem, "3.40282347e+38F", "1.7976931348623157e+308",
-               "1.18973149535723176502e+4932L",
-               "1.79769313486231580793728971405301e+308L",
-               "1.18973149535723176508575932662800702e+4932L");
+  Min = PickFP(Sem, "1.17549435e-38", "2.2250738585072014e-308",
+               "3.36210314311209350626e-4932",
+               "2.00416836000897277799610805135016e-292",
+               "3.36210314311209350626267781732175260e-4932");
+  Max = PickFP(Sem, "3.40282347e+38", "1.7976931348623157e+308",
+               "1.18973149535723176502e+4932",
+               "1.79769313486231580793728971405301e+308",
+               "1.18973149535723176508575932662800702e+4932");
 
   SmallString<32> DefPrefix;
   DefPrefix = "__";
   DefPrefix += Prefix;
   DefPrefix += "_";
 
-  Builder.defineMacro(DefPrefix + "DENORM_MIN__", DenormMin);
+  Builder.defineMacro(DefPrefix + "DENORM_MIN__", Twine(DenormMin)+Ext);
   Builder.defineMacro(DefPrefix + "HAS_DENORM__");
   Builder.defineMacro(DefPrefix + "DIG__", Twine(Digits));
-  Builder.defineMacro(DefPrefix + "EPSILON__", Twine(Epsilon));
+  Builder.defineMacro(DefPrefix + "EPSILON__", Twine(Epsilon)+Ext);
   Builder.defineMacro(DefPrefix + "HAS_INFINITY__");
   Builder.defineMacro(DefPrefix + "HAS_QUIET_NAN__");
   Builder.defineMacro(DefPrefix + "MANT_DIG__", Twine(MantissaDigits));
 
   Builder.defineMacro(DefPrefix + "MAX_10_EXP__", Twine(Max10Exp));
   Builder.defineMacro(DefPrefix + "MAX_EXP__", Twine(MaxExp));
-  Builder.defineMacro(DefPrefix + "MAX__", Twine(Max));
+  Builder.defineMacro(DefPrefix + "MAX__", Twine(Max)+Ext);
 
   Builder.defineMacro(DefPrefix + "MIN_10_EXP__","("+Twine(Min10Exp)+")");
   Builder.defineMacro(DefPrefix + "MIN_EXP__", "("+Twine(MinExp)+")");
-  Builder.defineMacro(DefPrefix + "MIN__", Twine(Min));
+  Builder.defineMacro(DefPrefix + "MIN__", Twine(Min)+Ext);
 }
 
 
@@ -525,9 +525,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__CHAR16_TYPE__", TI.getChar16Type(), Builder);
   DefineType("__CHAR32_TYPE__", TI.getChar32Type(), Builder);
 
-  DefineFloatMacros(Builder, "FLT", &TI.getFloatFormat());
-  DefineFloatMacros(Builder, "DBL", &TI.getDoubleFormat());
-  DefineFloatMacros(Builder, "LDBL", &TI.getLongDoubleFormat());
+  DefineFloatMacros(Builder, "FLT", &TI.getFloatFormat(), "F");
+  DefineFloatMacros(Builder, "DBL", &TI.getDoubleFormat(), "");
+  DefineFloatMacros(Builder, "LDBL", &TI.getLongDoubleFormat(), "L");
 
   // Define a __POINTER_WIDTH__ macro for stdint.h.
   Builder.defineMacro("__POINTER_WIDTH__",
