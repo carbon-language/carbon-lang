@@ -104,28 +104,6 @@ static bool CallHasFloatingPointArgument(const CallInst *CI) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-//===---------------------------------------===//
-// 'memset' Optimizations
-
-struct MemSetOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require DataLayout.
-    if (!TD) return 0;
-
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
-      return 0;
-
-    // memset(p, v, n) -> llvm.memset(p, v, n, 1)
-    Value *Val = B.CreateIntCast(CI->getArgOperand(1), B.getInt8Ty(), false);
-    B.CreateMemSet(CI->getArgOperand(0), Val, CI->getArgOperand(2), 1);
-    return CI->getArgOperand(0);
-  }
-};
-
 //===----------------------------------------------------------------------===//
 // Math Library Optimizations
 //===----------------------------------------------------------------------===//
@@ -794,8 +772,6 @@ namespace {
     TargetLibraryInfo *TLI;
 
     StringMap<LibCallOptimization*> Optimizations;
-    // Memory LibCall Optimizations
-    MemSetOpt MemSet;
     // Math Library Optimizations
     CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
     UnaryDoubleFPOpt UnaryDoubleFP, UnsafeUnaryDoubleFP;
@@ -861,9 +837,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// Optimizations - Populate the Optimizations map with all the optimizations
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
-  // Memory LibCall Optimizations
-  AddOpt(LibFunc::memset, &MemSet);
-
   // Math Library Optimizations
   Optimizations["cosf"] = &Cos;
   Optimizations["cos"] = &Cos;
