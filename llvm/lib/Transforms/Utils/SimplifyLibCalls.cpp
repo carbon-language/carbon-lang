@@ -914,6 +914,51 @@ struct StrStrOpt : public LibCallOptimization {
   }
 };
 
+struct MemCmpOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy(32))
+      return 0;
+
+    Value *LHS = CI->getArgOperand(0), *RHS = CI->getArgOperand(1);
+
+    if (LHS == RHS)  // memcmp(s,s,x) -> 0
+      return Constant::getNullValue(CI->getType());
+
+    // Make sure we have a constant length.
+    ConstantInt *LenC = dyn_cast<ConstantInt>(CI->getArgOperand(2));
+    if (!LenC) return 0;
+    uint64_t Len = LenC->getZExtValue();
+
+    if (Len == 0) // memcmp(s1,s2,0) -> 0
+      return Constant::getNullValue(CI->getType());
+
+    // memcmp(S1,S2,1) -> *(unsigned char*)LHS - *(unsigned char*)RHS
+    if (Len == 1) {
+      Value *LHSV = B.CreateZExt(B.CreateLoad(CastToCStr(LHS, B), "lhsc"),
+                                 CI->getType(), "lhsv");
+      Value *RHSV = B.CreateZExt(B.CreateLoad(CastToCStr(RHS, B), "rhsc"),
+                                 CI->getType(), "rhsv");
+      return B.CreateSub(LHSV, RHSV, "chardiff");
+    }
+
+    // Constant folding: memcmp(x, y, l) -> cnst (all arguments are constant)
+    StringRef LHSStr, RHSStr;
+    if (getConstantStringInfo(LHS, LHSStr) &&
+        getConstantStringInfo(RHS, RHSStr)) {
+      // Make sure we're not reading out-of-bounds memory.
+      if (Len > LHSStr.size() || Len > RHSStr.size())
+        return 0;
+      uint64_t Ret = memcmp(LHSStr.data(), RHSStr.data(), Len);
+      return ConstantInt::get(CI->getType(), Ret);
+    }
+
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -932,7 +977,7 @@ class LibCallSimplifierImpl {
   StpCpyChkOpt StpCpyChk;
   StrNCpyChkOpt StrNCpyChk;
 
-  // String and memory library call optimizations.
+  // String library call optimizations.
   StrCatOpt StrCat;
   StrNCatOpt StrNCat;
   StrChrOpt StrChr;
@@ -948,6 +993,9 @@ class LibCallSimplifierImpl {
   StrSpnOpt StrSpn;
   StrCSpnOpt StrCSpn;
   StrStrOpt StrStr;
+
+  // Memory library call optimizations.
+  MemCmpOpt MemCmp;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -972,7 +1020,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["__strncpy_chk"] = &StrNCpyChk;
   Optimizations["__stpncpy_chk"] = &StrNCpyChk;
 
-  // String and memory library call optimizations.
+  // String library call optimizations.
   addOpt(LibFunc::strcat, &StrCat);
   addOpt(LibFunc::strncat, &StrNCat);
   addOpt(LibFunc::strchr, &StrChr);
@@ -994,6 +1042,9 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::strspn, &StrSpn);
   addOpt(LibFunc::strcspn, &StrCSpn);
   addOpt(LibFunc::strstr, &StrStr);
+
+  // Memory library call optimizations.
+  addOpt(LibFunc::memcmp, &MemCmp);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {

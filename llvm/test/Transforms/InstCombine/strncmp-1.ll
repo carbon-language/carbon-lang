@@ -67,12 +67,14 @@ define i32 @test5() {
 }
 
 ; strncmp(x,y,1) -> memcmp(x,y,1)
-; TODO: Once the memcmp simplifier gets moved into the instcombine pass
-; the following memcmp will be folded into two loads and a subtract.
 define i32 @test6(i8* %str1, i8* %str2) {
 ; CHECK: @test6
-; CHECK: call i32 @memcmp
-; CHECK: ret i32 %memcmp
+; CHECK: [[LOAD1:%[a-z]+]] = load i8* %str1, align 1
+; CHECK: [[ZEXT1:%[a-z]+]] = zext i8 [[LOAD1]] to i32
+; CHECK: [[LOAD2:%[a-z]+]] = load i8* %str2, align 1
+; CHECK: [[ZEXT2:%[a-z]+]] = zext i8 [[LOAD2]] to i32
+; CHECK: [[RET:%[a-z]+]] = sub i32 [[ZEXT1]], [[ZEXT2]]
+; CHECK: ret i32 [[RET]]
 
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 1)
   ret i32 %temp1
