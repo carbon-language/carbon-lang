@@ -643,7 +643,7 @@ def ftemplate_backtrace_limit_EQ : Joined<["-"], "ftemplate-backtrace-limit=">,
 def ftest_coverage : Flag<["-"], "ftest-coverage">, Group<f_Group>;
 def Wlarge_by_value_copy_def : Flag<["-"], "Wlarge-by-value-copy">,
   HelpText<"Warn if a function definition returns or accepts an object larger "
-           "in bytes that a given value">, Flags<[HelpHidden]>;
+           "in bytes than a given value">, Flags<[HelpHidden]>;
 def Wlarge_by_value_copy_EQ : Joined<["-"], "Wlarge-by-value-copy=">, Flags<[CC1Option]>;
 
 // Just silence warnings about -Wlarger-than,  -Wframe-larger-than for now.
