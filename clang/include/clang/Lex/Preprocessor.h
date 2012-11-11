@@ -555,11 +555,8 @@ public:
   void setPredefines(const char *P) { Predefines = P; }
   void setPredefines(const std::string &P) { Predefines = P; }
 
-  /// getIdentifierInfo - Return information about the specified preprocessor
-  /// identifier token.  The version of this method that takes two character
-  /// pointers is preferred unless the identifier is already available as a
-  /// string (this avoids allocation and copying of memory to construct an
-  /// std::string).
+  /// Return information about the specified preprocessor
+  /// identifier token.
   IdentifierInfo *getIdentifierInfo(StringRef Name) const {
     return &Identifiers.get(Name);
   }
