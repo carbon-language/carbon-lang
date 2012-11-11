@@ -473,14 +473,30 @@ Release Notes</a>.</h1>
     <b>-mllvm -force-vector-width=4</b>.
     The default value is <b>0</b> which means auto-select.
     <br/>
-    We can now vectorize this code:
+    We can now vectorize this function:
 
     <pre class="doc_code">
-    for (i=0; i&lt;n; i++) {
-      a[i] = b[i+1] + c[i+3] + i;
-      sum += d[i];
+    unsigned sum_arrays(int *A, int *B, int start, int end) {
+      unsigned sum = 0;
+      for (int i = start; i &lt; end; ++i)
+        sum += A[i] + B[i] + i;
+
+      return sum;
     }
     </pre>
+
+    We vectorize under the following loops:
+    <ul>
+    <li>The inner most loops must have a single basic block.</li>
+    <li>The number of iterations are known before the loop starts to execute.</li>
+    <li>The loop counter needs to be incrimented by one.</li>
+    <li>The loop trip count <b>can</b> be a variable.</li>
+    <li>Loops do <b>not</b> need to start at zero.</li>
+    <li>The induction variable can be used inside the loop.</li>
+    <li>Loop reductions are supported.</li>
+    <li>Arrays with affine access pattern do <b>not</b> need to be marked as 'noalias' and are checked at runtime.</li>
+    <li>...</li>
+    </ul>
 
 </p>
 
