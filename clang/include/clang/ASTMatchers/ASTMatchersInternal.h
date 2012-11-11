@@ -141,7 +141,7 @@ public:
 private:
   void visitMatchesRecursively(
       Visitor* ResultVistior,
-      BoundNodesMap *AggregatedBindings);
+      const BoundNodesMap& AggregatedBindings);
 
   // FIXME: Find out whether we want to use different data structures here -
   // first benchmarks indicate that it doesn't matter though.

@@ -38,7 +38,7 @@ public:
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (FindResultReviewer != NULL) {
-      *Verified = FindResultReviewer->run(&Result.Nodes, Result.Context);
+      *Verified |= FindResultReviewer->run(&Result.Nodes, Result.Context);
     } else {
       *Verified = true;
     }

@@ -51,19 +51,20 @@ void BoundNodesTree::copyTo(BoundNodesTreeBuilder* Builder) const {
 
 void BoundNodesTree::visitMatches(Visitor* ResultVisitor) {
   BoundNodesMap AggregatedBindings;
-  visitMatchesRecursively(ResultVisitor, &AggregatedBindings);
+  visitMatchesRecursively(ResultVisitor, AggregatedBindings);
 }
 
 void BoundNodesTree::
 visitMatchesRecursively(Visitor* ResultVisitor,
-                        BoundNodesMap* AggregatedBindings) {
-  Bindings.copyTo(AggregatedBindings);
+                        const BoundNodesMap& AggregatedBindings) {
+  BoundNodesMap CombinedBindings(AggregatedBindings);
+  Bindings.copyTo(&CombinedBindings);
   if (RecursiveBindings.empty()) {
-    ResultVisitor->visitMatch(BoundNodes(*AggregatedBindings));
+    ResultVisitor->visitMatch(BoundNodes(CombinedBindings));
   } else {
     for (unsigned I = 0; I < RecursiveBindings.size(); ++I) {
       RecursiveBindings[I].visitMatchesRecursively(ResultVisitor,
-                                                   AggregatedBindings);
+                                                   CombinedBindings);
     }
   }
 }
