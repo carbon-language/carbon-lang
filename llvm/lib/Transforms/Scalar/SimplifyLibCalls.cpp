@@ -99,94 +99,11 @@ static bool CallHasFloatingPointArgument(const CallInst *CI) {
   return false;
 }
 
-/// IsOnlyUsedInEqualityComparison - Return true if it is only used in equality
-/// comparisons with With.
-static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
-      if (IC->isEquality() && IC->getOperand(1) == With)
-        continue;
-    // Unknown instruction.
-    return false;
-  }
-  return true;
-}
-
 //===----------------------------------------------------------------------===//
-// String and Memory LibCall Optimizations
+// Memory LibCall Optimizations
 //===----------------------------------------------------------------------===//
 
 namespace {
-//===---------------------------------------===//
-// 'strstr' Optimizations
-
-struct StrStrOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        !FT->getReturnType()->isPointerTy())
-      return 0;
-
-    // fold strstr(x, x) -> x.
-    if (CI->getArgOperand(0) == CI->getArgOperand(1))
-      return B.CreateBitCast(CI->getArgOperand(0), CI->getType());
-
-    // fold strstr(a, b) == a -> strncmp(a, b, strlen(b)) == 0
-    if (TD && IsOnlyUsedInEqualityComparison(CI, CI->getArgOperand(0))) {
-      Value *StrLen = EmitStrLen(CI->getArgOperand(1), B, TD, TLI);
-      if (!StrLen)
-        return 0;
-      Value *StrNCmp = EmitStrNCmp(CI->getArgOperand(0), CI->getArgOperand(1),
-                                   StrLen, B, TD, TLI);
-      if (!StrNCmp)
-        return 0;
-      for (Value::use_iterator UI = CI->use_begin(), UE = CI->use_end();
-           UI != UE; ) {
-        ICmpInst *Old = cast<ICmpInst>(*UI++);
-        Value *Cmp = B.CreateICmp(Old->getPredicate(), StrNCmp,
-                                  ConstantInt::getNullValue(StrNCmp->getType()),
-                                  "cmp");
-        Old->replaceAllUsesWith(Cmp);
-        Old->eraseFromParent();
-      }
-      return CI;
-    }
-
-    // See if either input string is a constant string.
-    StringRef SearchStr, ToFindStr;
-    bool HasStr1 = getConstantStringInfo(CI->getArgOperand(0), SearchStr);
-    bool HasStr2 = getConstantStringInfo(CI->getArgOperand(1), ToFindStr);
-
-    // fold strstr(x, "") -> x.
-    if (HasStr2 && ToFindStr.empty())
-      return B.CreateBitCast(CI->getArgOperand(0), CI->getType());
-
-    // If both strings are known, constant fold it.
-    if (HasStr1 && HasStr2) {
-      std::string::size_type Offset = SearchStr.find(ToFindStr);
-
-      if (Offset == StringRef::npos) // strstr("foo", "bar") -> null
-        return Constant::getNullValue(CI->getType());
-
-      // strstr("abcd", "bc") -> gep((char*)"abcd", 1)
-      Value *Result = CastToCStr(CI->getArgOperand(0), B);
-      Result = B.CreateConstInBoundsGEP1_64(Result, Offset, "strstr");
-      return B.CreateBitCast(Result, CI->getType());
-    }
-
-    // fold strstr(x, "y") -> strchr(x, 'y').
-    if (HasStr2 && ToFindStr.size() == 1) {
-      Value *StrChr= EmitStrChr(CI->getArgOperand(0), ToFindStr[0], B, TD, TLI);
-      return StrChr ? B.CreateBitCast(StrChr, CI->getType()) : 0;
-    }
-    return 0;
-  }
-};
-
-
 //===---------------------------------------===//
 // 'memcmp' Optimizations
 
@@ -969,8 +886,7 @@ namespace {
     TargetLibraryInfo *TLI;
 
     StringMap<LibCallOptimization*> Optimizations;
-    // String and Memory LibCall Optimizations
-    StrStrOpt StrStr;
+    // Memory LibCall Optimizations
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
     CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
@@ -1037,8 +953,7 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// Optimizations - Populate the Optimizations map with all the optimizations
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
-  // String and Memory LibCall Optimizations
-  Optimizations["strstr"] = &StrStr;
+  // Memory LibCall Optimizations
   Optimizations["memcmp"] = &MemCmp;
   AddOpt(LibFunc::memcpy, &MemCpy);
   Optimizations["memmove"] = &MemMove;
