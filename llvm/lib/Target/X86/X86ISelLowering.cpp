@@ -12195,13 +12195,10 @@ X86TargetLowering::isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
 //                           X86 Scheduler Hooks
 //===----------------------------------------------------------------------===//
 
-// private utility function
-
 /// Utility function to emit xbegin specifying the start of an RTM region.
-MachineBasicBlock *
-X86TargetLowering::EmitXBegin(MachineInstr *MI, MachineBasicBlock *MBB) const {
+static MachineBasicBlock *EmitXBegin(MachineInstr *MI, MachineBasicBlock *MBB,
+                                     const TargetInstrInfo *TII) {
   DebugLoc DL = MI->getDebugLoc();
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
 
   const BasicBlock *BB = MBB->getBasicBlock();
   MachineFunction::iterator I = MBB;
@@ -12912,10 +12909,10 @@ static MachineBasicBlock *EmitPCMPSTRI(MachineInstr *MI, MachineBasicBlock *BB,
   return BB;
 }
 
-MachineBasicBlock *
-X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
+static MachineBasicBlock * EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB,
+                                       const TargetInstrInfo *TII,
+                                       const X86Subtarget* Subtarget) {
   DebugLoc dl = MI->getDebugLoc();
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
 
   // Address into RAX/EAX, other two args into ECX, EDX.
   unsigned MemOpc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
@@ -13949,11 +13946,11 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   // Thread synchronization.
   case X86::MONITOR:
-    return EmitMonitor(MI, BB);
+    return EmitMonitor(MI, BB, getTargetMachine().getInstrInfo(), Subtarget);
 
   // xbegin
   case X86::XBEGIN:
-    return EmitXBegin(MI, BB);
+    return EmitXBegin(MI, BB, getTargetMachine().getInstrInfo());
 
   // Atomic Lowering.
   case X86::ATOMAND8:
