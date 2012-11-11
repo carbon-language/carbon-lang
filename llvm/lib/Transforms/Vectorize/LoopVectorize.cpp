@@ -79,7 +79,7 @@ VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
 const unsigned TinyTripCountThreshold = 16;
 
 /// When performing a runtime memory check, do not check more than this
-/// numner of pointers. Notice that the check is quadratic!
+/// number of pointers. Notice that the check is quadratic!
 const unsigned RuntimeMemoryCheckThreshold = 2;
 
 namespace {
@@ -118,7 +118,7 @@ public:
     /// Widen each instruction in the old loop to a new one in the new loop.
     /// Use the Legality module to find the induction and reduction variables.
     vectorizeLoop(Legal);
-    // register the new loop.
+    // Register the new loop and update the analysis passes.
     updateAnalysis();
  }
 
@@ -127,7 +127,8 @@ private:
   void createEmptyLoop(LoopVectorizationLegality *Legal);
   /// Copy and widen the instructions from the old loop.
   void vectorizeLoop(LoopVectorizationLegality *Legal);
-  /// Insert the new loop to the loop hierarchy and pass manager.
+  /// Insert the new loop to the loop hierarchy and pass manager
+  /// and update the analysis passes.
   void updateAnalysis();
 
   /// This instruction is un-vectorizable. Implement it as a sequence
@@ -304,7 +305,7 @@ private:
   bool isReductionInstr(Instruction *I, ReductionKind Kind);
   /// Returns True, if 'Phi' is an induction variable.
   bool isInductionVariable(PHINode *Phi);
-  /// Return true if we
+  /// Return true if can compute the address bounds of Ptr within the loop.
   bool hasComputableBounds(Value *Ptr);
 
   /// The loop that we evaluate.
