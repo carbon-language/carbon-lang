@@ -105,28 +105,6 @@ static bool CallHasFloatingPointArgument(const CallInst *CI) {
 
 namespace {
 //===---------------------------------------===//
-// 'memmove' Optimizations
-
-struct MemMoveOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require DataLayout.
-    if (!TD) return 0;
-
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
-      return 0;
-
-    // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
-    B.CreateMemMove(CI->getArgOperand(0), CI->getArgOperand(1),
-                    CI->getArgOperand(2), 1);
-    return CI->getArgOperand(0);
-  }
-};
-
-//===---------------------------------------===//
 // 'memset' Optimizations
 
 struct MemSetOpt : public LibCallOptimization {
@@ -817,7 +795,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Memory LibCall Optimizations
-    MemMoveOpt MemMove; MemSetOpt MemSet;
+    MemSetOpt MemSet;
     // Math Library Optimizations
     CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
     UnaryDoubleFPOpt UnaryDoubleFP, UnsafeUnaryDoubleFP;
@@ -884,7 +862,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // Memory LibCall Optimizations
-  Optimizations["memmove"] = &MemMove;
   AddOpt(LibFunc::memset, &MemSet);
 
   // Math Library Optimizations
