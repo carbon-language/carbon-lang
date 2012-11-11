@@ -2367,6 +2367,24 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   return MadeIRChange;
 }
 
+namespace {
+class InstCombinerLibCallSimplifier : public LibCallSimplifier {
+  InstCombiner *IC;
+public:
+  InstCombinerLibCallSimplifier(const DataLayout *TD,
+                                const TargetLibraryInfo *TLI,
+                                InstCombiner *IC)
+    : LibCallSimplifier(TD, TLI) {
+    this->IC = IC;
+  }
+
+  /// replaceAllUsesWith - override so that instruction replacement
+  /// can be defined in terms of the instruction combiner framework.
+  virtual void replaceAllUsesWith(Instruction *I, Value *With) const {
+    IC->ReplaceInstUsesWith(*I, With);
+  }
+};
+}
 
 bool InstCombiner::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<DataLayout>();
@@ -2379,7 +2397,7 @@ bool InstCombiner::runOnFunction(Function &F) {
                InstCombineIRInserter(Worklist));
   Builder = &TheBuilder;
 
-  LibCallSimplifier TheSimplifier(TD, TLI);
+  InstCombinerLibCallSimplifier TheSimplifier(TD, TLI, this);
   Simplifier = &TheSimplifier;
 
   bool EverMadeChange = false;

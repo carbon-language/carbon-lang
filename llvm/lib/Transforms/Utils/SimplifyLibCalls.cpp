@@ -34,6 +34,7 @@ protected:
   Function *Caller;
   const DataLayout *TD;
   const TargetLibraryInfo *TLI;
+  const LibCallSimplifier *LCS;
   LLVMContext* Context;
 public:
   LibCallOptimization() { }
@@ -48,10 +49,12 @@ public:
     =0;
 
   Value *optimizeCall(CallInst *CI, const DataLayout *TD,
-                      const TargetLibraryInfo *TLI, IRBuilder<> &B) {
+                      const TargetLibraryInfo *TLI,
+                      const LibCallSimplifier *LCS, IRBuilder<> &B) {
     Caller = CI->getParent()->getParent();
     this->TD = TD;
     this->TLI = TLI;
+    this->LCS = LCS;
     if (CI->getCalledFunction())
       Context = &CI->getCalledFunction()->getContext();
 
@@ -840,6 +843,7 @@ namespace llvm {
 class LibCallSimplifierImpl {
   const DataLayout *TD;
   const TargetLibraryInfo *TLI;
+  const LibCallSimplifier *LCS;
   StringMap<LibCallOptimization*> Optimizations;
 
   // Fortified library call optimizations.
@@ -869,9 +873,11 @@ class LibCallSimplifierImpl {
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
 public:
-  LibCallSimplifierImpl(const DataLayout *TD, const TargetLibraryInfo *TLI) {
+  LibCallSimplifierImpl(const DataLayout *TD, const TargetLibraryInfo *TLI,
+                        const LibCallSimplifier *LCS) {
     this->TD = TD;
     this->TLI = TLI;
+    this->LCS = LCS;
   }
 
   Value *optimizeCall(CallInst *CI);
@@ -918,7 +924,7 @@ Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
   LibCallOptimization *LCO = Optimizations.lookup(Callee->getName());
   if (LCO) {
     IRBuilder<> Builder(CI);
-    return LCO->optimizeCall(CI, TD, TLI, Builder);
+    return LCO->optimizeCall(CI, TD, TLI, LCS, Builder);
   }
   return 0;
 }
@@ -930,7 +936,7 @@ void LibCallSimplifierImpl::addOpt(LibFunc::Func F, LibCallOptimization* Opt) {
 
 LibCallSimplifier::LibCallSimplifier(const DataLayout *TD,
                                      const TargetLibraryInfo *TLI) {
-  Impl = new LibCallSimplifierImpl(TD, TLI);
+  Impl = new LibCallSimplifierImpl(TD, TLI, this);
 }
 
 LibCallSimplifier::~LibCallSimplifier() {
@@ -939,6 +945,11 @@ LibCallSimplifier::~LibCallSimplifier() {
 
 Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
   return Impl->optimizeCall(CI);
+}
+
+void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
+  I->replaceAllUsesWith(With);
+  I->eraseFromParent();
 }
 
 }

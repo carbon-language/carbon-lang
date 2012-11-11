@@ -19,6 +19,7 @@ namespace llvm {
   class Value;
   class CallInst;
   class DataLayout;
+  class Instruction;
   class TargetLibraryInfo;
   class LibCallSimplifierImpl;
 
@@ -35,8 +36,16 @@ namespace llvm {
 
     /// optimizeCall - Take the given call instruction and return a more
     /// optimal value to replace the instruction with or 0 if a more
-    /// optimal form can't be found.
+    /// optimal form can't be found.  Note that the returned value may
+    /// be equal to the instruction being optimized.  In this case all
+    /// other instructions that use the given instruction were modified
+    /// and the given instruction is dead.
     Value *optimizeCall(CallInst *CI);
+
+    /// replaceAllUsesWith - This method is used when the library call
+    /// simplifier needs to replace instructions other than the library
+    /// call being modified.
+    virtual void replaceAllUsesWith(Instruction *I, Value *With) const;
   };
 } // End llvm namespace
 
