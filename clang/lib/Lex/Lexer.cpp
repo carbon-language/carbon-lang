@@ -1898,21 +1898,21 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   return false;
 }
 
-// SkipBCPLComment - We have just read the // characters from input.  Skip until
-// we find the newline character thats terminate the comment.  Then update
-/// BufferPtr and return.
+/// We have just read the // characters from input.  Skip until we find the
+/// newline character thats terminate the comment.  Then update BufferPtr and
+/// return.
 ///
 /// If we're in KeepCommentMode or any CommentHandler has inserted
 /// some tokens, this will store the first token and return true.
-bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
-  // If BCPL comments aren't explicitly enabled for this language, emit an
+bool Lexer::SkipLineComment(Token &Result, const char *CurPtr) {
+  // If Line comments aren't explicitly enabled for this language, emit an
   // extension warning.
-  if (!LangOpts.BCPLComment && !isLexingRawMode()) {
-    Diag(BufferPtr, diag::ext_bcpl_comment);
+  if (!LangOpts.LineComment && !isLexingRawMode()) {
+    Diag(BufferPtr, diag::ext_line_comment);
 
     // Mark them enabled so we only emit one warning for this translation
     // unit.
-    LangOpts.BCPLComment = true;
+    LangOpts.LineComment = true;
   }
 
   // Scan over the body of the comment.  The common case, when scanning, is that
@@ -1976,7 +1976,7 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
           }
 
           if (!isLexingRawMode())
-            Diag(OldPtr-1, diag::ext_multi_line_bcpl_comment);
+            Diag(OldPtr-1, diag::ext_multi_line_line_comment);
           break;
         }
     }
@@ -2005,7 +2005,7 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
 
   // If we are returning comments as tokens, return this comment as a token.
   if (inKeepCommentMode())
-    return SaveBCPLComment(Result, CurPtr);
+    return SaveLineComment(Result, CurPtr);
 
   // If we are inside a preprocessor directive and we see the end of line,
   // return immediately, so that the lexer can return this as an EOD token.
@@ -2029,9 +2029,9 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   return false;
 }
 
-/// SaveBCPLComment - If in save-comment mode, package up this BCPL comment in
-/// an appropriate way and return it.
-bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
+/// If in save-comment mode, package up this Line comment in an appropriate
+/// way and return it.
+bool Lexer::SaveLineComment(Token &Result, const char *CurPtr) {
   // If we're not in a preprocessor directive, just return the // comment
   // directly.
   FormTokenWithChars(Result, CurPtr, tok::comment);
@@ -2039,14 +2039,14 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
   if (!ParsingPreprocessorDirective || LexingRawMode)
     return true;
 
-  // If this BCPL-style comment is in a macro definition, transmogrify it into
+  // If this Line-style comment is in a macro definition, transmogrify it into
   // a C-style block comment.
   bool Invalid = false;
   std::string Spelling = PP->getSpelling(Result, &Invalid);
   if (Invalid)
     return true;
   
-  assert(Spelling[0] == '/' && Spelling[1] == '/' && "Not bcpl comment?");
+  assert(Spelling[0] == '/' && Spelling[1] == '/' && "Not line comment?");
   Spelling[1] = '*';   // Change prefix to "/*".
   Spelling += "*/";    // add suffix.
 
@@ -2673,8 +2673,8 @@ LexNextToken:
     // If the next token is obviously a // or /* */ comment, skip it efficiently
     // too (without going through the big switch stmt).
     if (CurPtr[0] == '/' && CurPtr[1] == '/' && !inKeepCommentMode() &&
-        LangOpts.BCPLComment && !LangOpts.TraditionalCPP) {
-      if (SkipBCPLComment(Result, CurPtr+2))
+        LangOpts.LineComment && !LangOpts.TraditionalCPP) {
+      if (SkipLineComment(Result, CurPtr+2))
         return; // There is a token to return.
       goto SkipIgnoredUnits;
     } else if (CurPtr[0] == '/' && CurPtr[1] == '*' && !inKeepCommentMode()) {
@@ -2959,19 +2959,19 @@ LexNextToken:
   case '/':
     // 6.4.9: Comments
     Char = getCharAndSize(CurPtr, SizeTmp);
-    if (Char == '/') {         // BCPL comment.
-      // Even if BCPL comments are disabled (e.g. in C89 mode), we generally
+    if (Char == '/') {         // Line comment.
+      // Even if Line comments are disabled (e.g. in C89 mode), we generally
       // want to lex this as a comment.  There is one problem with this though,
       // that in one particular corner case, this can change the behavior of the
       // resultant program.  For example, In  "foo //**/ bar", C89 would lex
-      // this as "foo / bar" and langauges with BCPL comments would lex it as
+      // this as "foo / bar" and langauges with Line comments would lex it as
       // "foo".  Check to see if the character after the second slash is a '*'.
       // If so, we will lex that as a "/" instead of the start of a comment.
       // However, we never do this in -traditional-cpp mode.
-      if ((LangOpts.BCPLComment ||
+      if ((LangOpts.LineComment ||
            getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*') &&
           !LangOpts.TraditionalCPP) {
-        if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
+        if (SkipLineComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
           return; // There is a token to return.
 
         // It is common for the tokens immediately after a // comment to be

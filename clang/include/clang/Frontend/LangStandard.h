@@ -18,7 +18,7 @@ namespace clang {
 namespace frontend {
 
 enum LangFeatures {
-  BCPLComment = (1 << 0),
+  LineComment = (1 << 0),
   C89 = (1 << 1),
   C99 = (1 << 2),
   C11 = (1 << 3),
@@ -54,8 +54,8 @@ public:
   /// getDescription - Get the description of this standard.
   const char *getDescription() const { return Description; }
 
-  /// hasBCPLComments - Language supports '//' comments.
-  bool hasBCPLComments() const { return Flags & frontend::BCPLComment; }
+  /// Language supports '//' comments.
+  bool hasLineComments() const { return Flags & frontend::LineComment; }
 
   /// isC89 - Language is a superset of C89.
   bool isC89() const { return Flags & frontend::C89; }

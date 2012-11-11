@@ -41,9 +41,9 @@ def trigraph_ends_block_comment : Warning<"trigraph ends block comment">,
 def trigraph_converted : Warning<"trigraph converted to '%0' character">,
     InGroup<Trigraphs>;
 
-def ext_multi_line_bcpl_comment : Extension<"multi-line // comment">,
+def ext_multi_line_line_comment : Extension<"multi-line // comment">,
     InGroup<Comment>;
-def ext_bcpl_comment : Extension<
+def ext_line_comment : Extension<
   "// comments are not allowed in this language">,
   InGroup<Comment>;
 def ext_no_newline_eof : Extension<"no newline at end of file">, 

@@ -562,9 +562,9 @@ private:
   bool LexEndOfFile          (Token &Result, const char *CurPtr);
 
   bool SkipWhitespace        (Token &Result, const char *CurPtr);
-  bool SkipBCPLComment       (Token &Result, const char *CurPtr);
+  bool SkipLineComment       (Token &Result, const char *CurPtr);
   bool SkipBlockComment      (Token &Result, const char *CurPtr);
-  bool SaveBCPLComment       (Token &Result, const char *CurPtr);
+  bool SaveLineComment       (Token &Result, const char *CurPtr);
   
   bool IsStartOfConflictMarker(const char *CurPtr);
   bool HandleEndOfConflictMarker(const char *CurPtr);
