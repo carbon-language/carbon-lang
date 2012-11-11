@@ -959,6 +959,25 @@ struct MemCmpOpt : public LibCallOptimization {
   }
 };
 
+struct MemCpyOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
+      return 0;
+
+    // memcpy(x, y, n) -> llvm.memcpy(x, y, n, 1)
+    B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                   CI->getArgOperand(2), 1);
+    return CI->getArgOperand(0);
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -996,6 +1015,7 @@ class LibCallSimplifierImpl {
 
   // Memory library call optimizations.
   MemCmpOpt MemCmp;
+  MemCpyOpt MemCpy;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1045,6 +1065,7 @@ void LibCallSimplifierImpl::initOptimizations() {
 
   // Memory library call optimizations.
   addOpt(LibFunc::memcmp, &MemCmp);
+  addOpt(LibFunc::memcpy, &MemCpy);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
