@@ -964,7 +964,7 @@ ParsePLTRelocations(Symtab *symbol_table,
     reloc_info_fn reloc_type;
     reloc_info_fn reloc_symbol;
 
-    if (hdr->Is32Bit() == 4)
+    if (hdr->Is32Bit())
     {
         reloc_type = ELFRelocation::RelocType32;
         reloc_symbol = ELFRelocation::RelocSymbol32;
