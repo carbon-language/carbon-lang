@@ -7446,27 +7446,20 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (VD->isThisDeclarationADefinition() == VarDecl::DeclarationOnly)
     return false;
 
-  // Structs that have non-trivial constructors or destructors are required.
-
-  // FIXME: Handle references.
-  // FIXME: Be more selective about which constructors we care about.
-  if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
-    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      if (RD->hasDefinition() && !(RD->hasTrivialDefaultConstructor() &&
-                                   RD->hasTrivialCopyConstructor() &&
-                                   RD->hasTrivialMoveConstructor() &&
-                                   RD->hasTrivialDestructor()))
-        return true;
-    }
-  }
-
+  // Variables that can be needed in other TUs are required.
   GVALinkage L = GetGVALinkageForVariable(VD);
-  if (L == GVA_Internal || L == GVA_TemplateInstantiation) {
-    if (!(VD->getInit() && VD->getInit()->HasSideEffects(*this)))
-      return false;
-  }
+  if (L != GVA_Internal && L != GVA_TemplateInstantiation)
+    return true;
 
-  return true;
+  // Variables that have destruction with side-effects are required.
+  if (VD->getType().isDestructedType())
+    return true;
+
+  // Variables that have initialization with side-effects are required.
+  if (VD->getInit() && VD->getInit()->HasSideEffects(*this))
+    return true;
+
+  return false;
 }
 
 CallingConv ASTContext::getDefaultCXXMethodCallConv(bool isVariadic) {
