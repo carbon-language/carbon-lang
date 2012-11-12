@@ -87,7 +87,7 @@ Intel - Official manuals and docs
 Other x86-specific information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* `Calling conventions for different C++ compilers and operating systems  <http://www.agner.org/assem/calling_conventions.pdf>`_
+* `Calling conventions for different C++ compilers and operating systems  <http://www.agner.org/optimize/calling_conventions.pdf>`_
 
 Other relevant lists
 --------------------
