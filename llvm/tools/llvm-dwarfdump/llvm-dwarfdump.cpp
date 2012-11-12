@@ -162,7 +162,7 @@ static void DumpInput(const StringRef &Filename) {
                                                         DebugLineSection,
                                                         DebugStringSection,
                                                         DebugRangesSection,
-                                                        RelocMap));
+                                                        &RelocMap));
   if (Address == -1ULL) {
     outs() << Filename
            << ":\tfile format " << Obj->getFileFormatName() << "\n\n";

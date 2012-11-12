@@ -109,7 +109,7 @@ public:
                                     StringRef lineSection = StringRef(),
                                     StringRef stringSection = StringRef(),
                                     StringRef rangeSection = StringRef(),
-                                    const RelocAddrMap &Map = RelocAddrMap());
+                                    const RelocAddrMap *Map = 0);
 
   virtual void dump(raw_ostream &OS) = 0;
 
