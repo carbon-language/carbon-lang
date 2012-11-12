@@ -234,11 +234,8 @@ static bool isSplitEdge(const MachineBasicBlock *MBB) {
 
   for (MachineBasicBlock::const_iterator MII = MBB->begin(), E = MBB->end();
        MII != E; ++MII) {
-    if (MII->isCopyLike())
-      continue;
-    if (MII->isUnconditionalBranch())
-      continue;
-    return false;
+    if (!MII->isCopyLike() || !MII->isUnconditionalBranch())
+      return false;
   }
   return true;
 }
