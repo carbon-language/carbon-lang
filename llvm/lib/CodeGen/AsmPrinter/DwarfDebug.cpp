@@ -78,6 +78,15 @@ static cl::opt<DefaultOnOff> DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
                 clEnumValEnd),
      cl::init(Default));
 
+static cl::opt<DefaultOnOff> DwarfFission("dwarf-fission", cl::Hidden,
+     cl::desc("Output prototype dwarf fission."),
+     cl::values(
+                clEnumVal(Default, "Default for platform"),
+                clEnumVal(Enable, "Enabled"),
+                clEnumVal(Disable, "Disabled"),
+                clEnumValEnd),
+     cl::init(Default));
+
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
   const char *DbgTimerName = "DWARF Debug Writer";
@@ -173,6 +182,11 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       hasDwarfAccelTables = false;
   } else
     hasDwarfAccelTables = DwarfAccelTables == Enable ? true : false;
+
+  if (DwarfFission == Default)
+    hasDwarfFission = false;
+  else
+    hasDwarfFission = DwarfFission == Enable ? true : false;
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
