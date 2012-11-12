@@ -195,7 +195,7 @@ public:
   }
 
   BasicBlockPass *getContainedPass(unsigned N) {
-    assert(N < PassVector.size() && "Pass number out of range!");
+    assert(N < PassVectorSize && "Pass number out of range!");
     BasicBlockPass *BP = static_cast<BasicBlockPass *>(PassVector[N]);
     return BP;
   }
@@ -346,7 +346,7 @@ public:
   }
 
   ModulePass *getContainedPass(unsigned N) {
-    assert(N < PassVector.size() && "Pass number out of range!");
+    assert(N < PassVectorSize && "Pass number out of range!");
     return static_cast<ModulePass *>(PassVector[N]);
   }
 
@@ -963,6 +963,7 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
   if (!ProcessAnalysis) {
     // Add pass
     PassVector.push_back(P);
+    ++PassVectorSize;
     return;
   }
 
@@ -1024,6 +1025,7 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
 
   // Add pass
   PassVector.push_back(P);
+  ++PassVectorSize;
 }
 
 

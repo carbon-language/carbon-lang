@@ -263,7 +263,7 @@ private:
 class PMDataManager {
 public:
 
-  explicit PMDataManager() : TPM(NULL), Depth(0) {
+  explicit PMDataManager() : TPM(NULL), PassVectorSize(0), Depth(0) {
     initializeAnalysisInfo();
   }
 
@@ -344,7 +344,7 @@ public:
   void dumpPreservedSet(const Pass *P) const;
 
   virtual unsigned getNumContainedPasses() const {
-    return (unsigned)PassVector.size();
+    return PassVectorSize;
   }
 
   virtual PassManagerType getPassManagerType() const {
@@ -369,14 +369,16 @@ protected:
   // Top level manager.
   PMTopLevelManager *TPM;
 
-  // Collection of pass that are managed by this manager
-  SmallVector<Pass *, 16> PassVector;
-
   // Collection of Analysis provided by Parent pass manager and
   // used by current pass manager. At at time there can not be more
   // then PMT_Last active pass mangers.
   std::map<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
 
+  // Collection of pass that are managed by this manager
+  SmallVector<Pass *, 16> PassVector;
+
+  // Cache the size of PassVector
+  unsigned PassVectorSize;
 
   /// isPassDebuggingExecutionsOrMore - Return true if -debug-pass=Executions
   /// or higher is specified.
@@ -444,7 +446,7 @@ public:
   }
 
   FunctionPass *getContainedPass(unsigned N) {
-    assert ( N < PassVector.size() && "Pass number out of range!");
+    assert ( N < PassVectorSize && "Pass number out of range!");
     FunctionPass *FP = static_cast<FunctionPass *>(PassVector[N]);
     return FP;
   }
