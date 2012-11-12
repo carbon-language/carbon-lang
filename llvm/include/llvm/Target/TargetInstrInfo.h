@@ -634,6 +634,13 @@ public:
     return false;
   }
 
+  /// \brief Can this target fuse the given instructions if they are scheduled
+  /// adjacent.
+  virtual bool shouldScheduleAdjacent(MachineInstr* First,
+                                      MachineInstr *Second) const {
+    return false;
+  }
+
   /// ReverseBranchCondition - Reverses the branch condition of the specified
   /// condition list, returning false on success and true if it cannot be
   /// reversed.

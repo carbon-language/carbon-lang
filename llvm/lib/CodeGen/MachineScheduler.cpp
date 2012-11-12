@@ -62,6 +62,10 @@ static cl::opt<unsigned> ILPWindow("ilp-window", cl::Hidden,
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
   cl::desc("Enable load clustering."));
 
+// Experimental heuristics
+static cl::opt<bool> EnableMacroFusion("misched-fusion", cl::Hidden,
+  cl::desc("Enable scheduling for macro fusion."));
+
 //===----------------------------------------------------------------------===//
 // Machine Instruction Scheduling Pass and Registry
 //===----------------------------------------------------------------------===//
@@ -308,11 +312,13 @@ void ReadyQueue::dump() {
 //===----------------------------------------------------------------------===//
 
 bool ScheduleDAGMI::addEdge(SUnit *SuccSU, const SDep &PredDep) {
-  // Do not use WillCreateCycle, it assumes SD scheduling.
-  // If Pred is reachable from Succ, then the edge creates a cycle.
-  if (Topo.IsReachable(PredDep.getSUnit(), SuccSU))
-    return false;
-  Topo.AddPred(SuccSU, PredDep.getSUnit());
+  if (SuccSU != &ExitSU) {
+    // Do not use WillCreateCycle, it assumes SD scheduling.
+    // If Pred is reachable from Succ, then the edge creates a cycle.
+    if (Topo.IsReachable(PredDep.getSUnit(), SuccSU))
+      return false;
+    Topo.AddPred(SuccSU, PredDep.getSUnit());
+  }
   SuccSU->addPred(PredDep, /*Required=*/!PredDep.isArtificial());
   // Return true regardless of whether a new edge needed to be inserted.
   return true;
@@ -687,6 +693,10 @@ void ScheduleDAGMI::dumpSchedule() const {
 }
 #endif
 
+//===----------------------------------------------------------------------===//
+// LoadClusterMutation - DAG post-processing to cluster loads.
+//===----------------------------------------------------------------------===//
+
 namespace {
 /// \brief Post-process the DAG to create cluster edges between neighboring
 /// loads.
@@ -798,6 +808,50 @@ void LoadClusterMutation::apply(ScheduleDAGMI *DAG) {
   // Iterate over the store chains.
   for (unsigned Idx = 0, End = StoreChainDependents.size(); Idx != End; ++Idx)
     clusterNeighboringLoads(StoreChainDependents[Idx], DAG);
+}
+
+//===----------------------------------------------------------------------===//
+// MacroFusion - DAG post-processing to encourage fusion of macro ops.
+//===----------------------------------------------------------------------===//
+
+namespace {
+/// \brief Post-process the DAG to create cluster edges between instructions
+/// that may be fused by the processor into a single operation.
+class MacroFusion : public ScheduleDAGMutation {
+  const TargetInstrInfo *TII;
+public:
+  MacroFusion(const TargetInstrInfo *tii): TII(tii) {}
+
+  virtual void apply(ScheduleDAGMI *DAG);
+};
+} // anonymous
+
+/// \brief Callback from DAG postProcessing to create cluster edges to encourage
+/// fused operations.
+void MacroFusion::apply(ScheduleDAGMI *DAG) {
+  // For now, assume targets can only fuse with the branch.
+  MachineInstr *Branch = DAG->ExitSU.getInstr();
+  if (!Branch)
+    return;
+
+  for (unsigned Idx = DAG->SUnits.size(); Idx > 0;) {
+    SUnit *SU = &DAG->SUnits[--Idx];
+    if (!TII->shouldScheduleAdjacent(SU->getInstr(), Branch))
+      continue;
+
+    // Create a single weak edge from SU to ExitSU. The only effect is to cause
+    // bottom-up scheduling to heavily prioritize the clustered SU.  There is no
+    // need to copy predecessor edges from ExitSU to SU, since top-down
+    // scheduling cannot prioritize ExitSU anyway. To defer top-down scheduling
+    // of SU, we could create an artificial edge from the deepest root, but it
+    // hasn't been needed yet.
+    bool Success = DAG->addEdge(&DAG->ExitSU, SDep(SU, SDep::Cluster));
+    (void)Success;
+    assert(Success && "No DAG nodes should be reachable from ExitSU");
+
+    DEBUG(dbgs() << "Macro Fuse SU(" << SU->NodeNum << ")\n");
+    break;
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -1986,6 +2040,8 @@ static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
   // Register DAG post-processors.
   if (EnableLoadCluster)
     DAG->addMutation(new LoadClusterMutation(DAG->TII, DAG->TRI));
+  if (EnableMacroFusion)
+    DAG->addMutation(new MacroFusion(DAG->TII));
   return DAG;
 }
 static MachineSchedRegistry
