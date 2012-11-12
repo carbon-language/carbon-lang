@@ -287,9 +287,11 @@ static ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName) {
   return Info;
 }
 
-// Assume that __cxa_demangle is provided by libcxxabi.
+#if !defined(_MSC_VER)
+// Assume that __cxa_demangle is provided by libcxxabi (except for Windows).
 extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
                                 size_t *length, int *status);
+#endif
 
 static void printDILineInfo(DILineInfo LineInfo) {
   // By default, DILineInfo contains "<invalid>" for function/filename it
@@ -300,6 +302,7 @@ static void printDILineInfo(DILineInfo LineInfo) {
     std::string FunctionName = LineInfo.getFunctionName();
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kSymbolizerBadString;
+#if !defined(_MSC_VER)
     if (Demangle) {
       int status = 0;
       char *DemangledName = __cxa_demangle(
@@ -309,6 +312,7 @@ static void printDILineInfo(DILineInfo LineInfo) {
         free(DemangledName);
       }
     }
+#endif
     outs() << FunctionName << "\n";
   }
   std::string Filename = LineInfo.getFileName();
