@@ -2603,7 +2603,7 @@ public:
     case 'b':
     case 'c':
     case 'd':
-      return Size == 32;
+      return Size <= 32;
     }
 
     return true;
