@@ -179,6 +179,17 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 
     Exprs[i] = Result.take();
     InputConstraintInfos.push_back(Info);
+
+    const Type *Ty = Exprs[i]->getType().getTypePtr();
+    if (Ty->isDependentType() || Ty->isIncompleteType())
+      continue;
+
+    unsigned Size = Context.getTypeSize(Ty);
+    if (!Context.getTargetInfo().validateInputSize(Literal->getString(),
+                                                   Size))
+      return StmtError(Diag(InputExpr->getLocStart(),
+                            diag::err_asm_invalid_input_size)
+                       << Info.getConstraintStr());
   }
 
   // Check that the clobbers are valid.

@@ -5141,6 +5141,8 @@ let CategoryName = "Inline Assembly Issue" in {
     "%diff{$ matching output with type $|}0,1">;
   def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
   def err_asm_empty : Error<"__asm used with no assembly instructions">;
+  def err_asm_invalid_input_size : Error<
+    "invalid input size for constraint '%0'">;
   def err_invalid_asm_cast_lvalue : Error<
     "invalid use of a cast in a inline asm context requiring an l-value: "
     "remove the cast or build with -fheinous-gnu-extensions">;

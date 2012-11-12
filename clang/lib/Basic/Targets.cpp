@@ -2595,6 +2595,19 @@ public:
     if (RegNo == 1) return 2;
     return -1;
   }
+  virtual bool validateInputSize(StringRef Constraint,
+                                 unsigned Size) const {
+    switch (Constraint[0]) {
+    default: break;
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+      return Size == 32;
+    }
+
+    return true;
+  }
 };
 } // end anonymous namespace
 
