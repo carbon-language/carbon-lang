@@ -656,8 +656,7 @@ LinkageInfo NamedDecl::getLinkageAndVisibility() const {
 llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   // Use the most recent declaration of a variable.
   if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
-    if (llvm::Optional<Visibility> V =
-        getVisibilityOf(Var->getMostRecentDecl()))
+    if (llvm::Optional<Visibility> V = getVisibilityOf(Var))
       return V;
 
     if (Var->isStaticDataMember()) {
@@ -671,8 +670,7 @@ llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   // Use the most recent declaration of a function, and also handle
   // function template specializations.
   if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(this)) {
-    if (llvm::Optional<Visibility> V
-                            = getVisibilityOf(fn->getMostRecentDecl())) 
+    if (llvm::Optional<Visibility> V = getVisibilityOf(fn))
       return V;
 
     // If the function is a specialization of a template with an
