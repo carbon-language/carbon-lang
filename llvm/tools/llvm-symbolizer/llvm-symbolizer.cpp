@@ -170,59 +170,12 @@ typedef ModuleMapTy::iterator ModuleMapIter;
 
 static ModuleMapTy Modules;
 
-static bool isFullNameOfDwarfSection(const StringRef &FullName,
-                                     const StringRef &ShortName) {
-  static const char kDwarfPrefix[] = "__DWARF,";
-  StringRef Name = FullName;
-  // Skip "__DWARF," prefix.
-  if (Name.startswith(kDwarfPrefix))
-    Name = Name.substr(strlen(kDwarfPrefix));
-  // Skip . and _ prefixes.
-  Name = Name.substr(Name.find_first_not_of("._"));
-  return (Name == ShortName);
-}
-
 // Returns true if the object endianness is known.
 static bool getObjectEndianness(const ObjectFile *Obj,
                                 bool &IsLittleEndian) {
   // FIXME: Implement this when libLLVMObject allows to do it easily.
   IsLittleEndian = true;
   return true;
-}
-
-static void getDebugInfoSections(const ObjectFile *Obj,
-                                 StringRef &DebugInfoSection,
-                                 StringRef &DebugAbbrevSection,
-                                 StringRef &DebugLineSection,
-                                 StringRef &DebugArangesSection, 
-                                 StringRef &DebugStringSection, 
-                                 StringRef &DebugRangesSection) {
-  if (Obj == 0)
-    return;
-  error_code ec;
-  for (section_iterator i = Obj->begin_sections(),
-                        e = Obj->end_sections();
-                        i != e; i.increment(ec)) {
-    if (error(ec)) break;
-    StringRef Name;
-    if (error(i->getName(Name))) continue;
-    StringRef Data;
-    if (error(i->getContents(Data))) continue;
-    if (isFullNameOfDwarfSection(Name, "debug_info"))
-      DebugInfoSection = Data;
-    else if (isFullNameOfDwarfSection(Name, "debug_abbrev"))
-      DebugAbbrevSection = Data;
-    else if (isFullNameOfDwarfSection(Name, "debug_line"))
-      DebugLineSection = Data;
-    // Don't use debug_aranges for now, as address ranges contained
-    // there may not cover all instructions in the module
-    // else if (isFullNameOfDwarfSection(Name, "debug_aranges"))
-    //   DebugArangesSection = Data;
-    else if (isFullNameOfDwarfSection(Name, "debug_str"))
-      DebugStringSection = Data;
-    else if (isFullNameOfDwarfSection(Name, "debug_ranges"))
-      DebugRangesSection = Data;
-  }
 }
 
 static ObjectFile *getObjectFile(const std::string &Path) {
@@ -246,6 +199,7 @@ static ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName) {
     return I->second;
 
   ObjectFile *Obj = getObjectFile(ModuleName);
+  ObjectFile *DbgObj = Obj;
   if (Obj == 0) {
     // Module name doesn't point to a valid object file.
     Modules.insert(make_pair(ModuleName, (ModuleInfo*)0));
@@ -255,15 +209,6 @@ static ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName) {
   DIContext *Context = 0;
   bool IsLittleEndian;
   if (getObjectEndianness(Obj, IsLittleEndian)) {
-    StringRef DebugInfo;
-    StringRef DebugAbbrev;
-    StringRef DebugLine;
-    StringRef DebugAranges;
-    StringRef DebugString;
-    StringRef DebugRanges;
-    getDebugInfoSections(Obj, DebugInfo, DebugAbbrev, DebugLine,
-                         DebugAranges, DebugString, DebugRanges);
-    
     // On Darwin we may find DWARF in separate object file in
     // resource directory.
     if (isa<MachOObjectFile>(Obj)) {
@@ -271,14 +216,9 @@ static ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName) {
           ModuleName);
       ObjectFile *ResourceObj = getObjectFile(ResourceName);
       if (ResourceObj != 0)
-        getDebugInfoSections(ResourceObj, DebugInfo, DebugAbbrev, DebugLine,
-                             DebugAranges, DebugString, DebugRanges);
+        DbgObj = ResourceObj;
     }
-
-    Context = DIContext::getDWARFContext(
-        IsLittleEndian, DebugInfo, DebugAbbrev,
-        DebugAranges, DebugLine, DebugString,
-        DebugRanges);
+    Context = DIContext::getDWARFContext(DbgObj);
     assert(Context);
   }
 

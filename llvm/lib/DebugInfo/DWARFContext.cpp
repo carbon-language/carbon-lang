@@ -298,4 +298,84 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
   return InliningInfo;
 }
 
+DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
+  IsLittleEndian(true /* FIXME */) {
+  error_code ec;
+  for (object::section_iterator i = Obj->begin_sections(),
+         e = Obj->end_sections();
+       i != e; i.increment(ec)) {
+    StringRef name;
+    i->getName(name);
+    StringRef data;
+    i->getContents(data);
+
+    if (name.startswith("__DWARF,"))
+      name = name.substr(8); // Skip "__DWARF," prefix.
+    name = name.substr(name.find_first_not_of("._")); // Skip . and _ prefixes.
+    if (name == "debug_info")
+      InfoSection = data;
+    else if (name == "debug_abbrev")
+      AbbrevSection = data;
+    else if (name == "debug_line")
+      LineSection = data;
+    else if (name == "debug_aranges")
+      ARangeSection = data;
+    else if (name == "debug_str")
+      StringSection = data;
+    else if (name == "debug_ranges")
+      RangeSection = data;
+    // Any more debug info sections go here.
+    else
+      continue;
+
+    // TODO: For now only handle relocations for the debug_info section.
+    if (name != "debug_info")
+      continue;
+
+    if (i->begin_relocations() != i->end_relocations()) {
+      uint64_t SectionSize;
+      i->getSize(SectionSize);
+      for (object::relocation_iterator reloc_i = i->begin_relocations(),
+             reloc_e = i->end_relocations();
+           reloc_i != reloc_e; reloc_i.increment(ec)) {
+        uint64_t Address;
+        reloc_i->getAddress(Address);
+        uint64_t Type;
+        reloc_i->getType(Type);
+
+        object::RelocVisitor V(Obj->getFileFormatName());
+        // The section address is always 0 for debug sections.
+        object::RelocToApply R(V.visit(Type, *reloc_i));
+        if (V.error()) {
+          SmallString<32> Name;
+          error_code ec(reloc_i->getTypeName(Name));
+          if (ec) {
+            errs() << "Aaaaaa! Nameless relocation! Aaaaaa!\n";
+          }
+          errs() << "error: failed to compute relocation: "
+                 << Name << "\n";
+          continue;
+        }
+
+        if (Address + R.Width > SectionSize) {
+          errs() << "error: " << R.Width << "-byte relocation starting "
+                 << Address << " bytes into section " << name << " which is "
+                 << SectionSize << " bytes long.\n";
+          continue;
+        }
+        if (R.Width > 8) {
+          errs() << "error: can't handle a relocation of more than 8 bytes at "
+                    "a time.\n";
+          continue;
+        }
+        DEBUG(dbgs() << "Writing " << format("%p", R.Value)
+                     << " at " << format("%p", Address)
+                     << " with width " << format("%d", R.Width)
+                     << "\n");
+        RelocMap[Address] = std::make_pair(R.Width, R.Value);
+      }
+    }
+  }
+}
+
 void DWARFContextInMemory::anchor() { }

@@ -100,17 +100,13 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
     switch (Form) {
     case DW_FORM_addr:
     case DW_FORM_ref_addr: {
-      bool InRelocMap = false;
-      if (const RelocAddrMap *RelocMap = cu->getContext().relocMap()) {
-        RelocAddrMap::const_iterator AI = RelocMap->find(*offset_ptr);
-        if (AI != RelocMap->end()) {
-          const std::pair<uint8_t, int64_t> &R = AI->second;
-          Value.uval = R.second;
-          *offset_ptr += R.first;
-          InRelocMap = true;
-        }
-      }
-      if (!InRelocMap)
+      RelocAddrMap::const_iterator AI
+        = cu->getContext().relocMap().find(*offset_ptr);
+      if (AI != cu->getContext().relocMap().end()) {
+        const std::pair<uint8_t, int64_t> &R = AI->second;
+        Value.uval = R.second;
+        *offset_ptr += R.first;
+      } else
         Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
       break;
     }
@@ -152,17 +148,13 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       Value.sval = data.getSLEB128(offset_ptr);
       break;
     case DW_FORM_strp: {
-      bool InRelocMap = false;
-      if (const RelocAddrMap *RelocMap = cu->getContext().relocMap()) {
-        RelocAddrMap::const_iterator AI = RelocMap->find(*offset_ptr);
-        if (AI != RelocMap->end()) {
-          const std::pair<uint8_t, int64_t> &R = AI->second;
-          Value.uval = R.second;
-          *offset_ptr += R.first;
-          InRelocMap = true;
-        }
-      }
-      if (!InRelocMap)
+      RelocAddrMap::const_iterator AI
+        = cu->getContext().relocMap().find(*offset_ptr);
+      if (AI != cu->getContext().relocMap().end()) {
+        const std::pair<uint8_t, int64_t> &R = AI->second;
+        Value.uval = R.second;
+        *offset_ptr += R.first;
+      } else
         Value.uval = data.getU32(offset_ptr);
       break;
     }

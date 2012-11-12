@@ -19,6 +19,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/RelocVisitor.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -102,14 +104,7 @@ public:
   virtual ~DIContext();
 
   /// getDWARFContext - get a context for binary DWARF data.
-  static DIContext *getDWARFContext(bool isLittleEndian,
-                                    StringRef infoSection,
-                                    StringRef abbrevSection,
-                                    StringRef aRangeSection = StringRef(),
-                                    StringRef lineSection = StringRef(),
-                                    StringRef stringSection = StringRef(),
-                                    StringRef rangeSection = StringRef(),
-                                    const RelocAddrMap *Map = 0);
+  static DIContext *getDWARFContext(object::ObjectFile *);
 
   virtual void dump(raw_ostream &OS) = 0;
 
