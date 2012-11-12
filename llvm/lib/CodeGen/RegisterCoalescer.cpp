@@ -63,6 +63,12 @@ EnableJoining("join-liveintervals",
               cl::desc("Coalesce copies (default=true)"),
               cl::init(true));
 
+// Temporary flag to test critical edge unsplitting.
+static cl::opt<bool>
+EnableJoinSplits("join-splitedges",
+                 cl::desc("Coalesce copies on split edges (default=false)"),
+                 cl::init(false), cl::Hidden);
+
 static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
          cl::desc("Verify machine instrs before and after register coalescing"),
@@ -214,6 +220,26 @@ static bool isMoveInstr(const TargetRegisterInfo &tri, const MachineInstr *MI,
     SrcSub = MI->getOperand(2).getSubReg();
   } else
     return false;
+  return true;
+}
+
+// Return true if this block should be vacated by the coalescer to eliminate
+// branches. The important cases to handle in the coalescer are critical edges
+// split during phi elimination which contain only copies. Simple blocks that
+// contain non-branches should also be vacated, but this can be handled by an
+// earlier pass similar to early if-conversion.
+static bool isSplitEdge(const MachineBasicBlock *MBB) {
+  if (MBB->pred_size() != 1 || MBB->succ_size() != 1)
+    return false;
+
+  for (MachineBasicBlock::const_iterator MII = MBB->begin(), E = MBB->end();
+       MII != E; ++MII) {
+    if (MII->isCopyLike())
+      continue;
+    if (MII->isUnconditionalBranch())
+      continue;
+    return false;
+  }
   return true;
 }
 
@@ -1895,24 +1921,38 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
 }
 
 namespace {
-  // DepthMBBCompare - Comparison predicate that sort first based on the loop
-  // depth of the basic block (the unsigned), and then on the MBB number.
-  struct DepthMBBCompare {
-    typedef std::pair<unsigned, MachineBasicBlock*> DepthMBBPair;
-    bool operator()(const DepthMBBPair &LHS, const DepthMBBPair &RHS) const {
+  // Information concerning MBB coalescing priority.
+  struct MBBPriorityInfo {
+    MachineBasicBlock *MBB;
+    unsigned Depth;
+    bool IsSplit;
+
+    MBBPriorityInfo(MachineBasicBlock *mbb, unsigned depth, bool issplit)
+      : MBB(mbb), Depth(depth), IsSplit(issplit) {}
+  };
+
+  // MBBPriorityCompare - Comparison predicate that sorts first based on the
+  // loop depth of the basic block (the unsigned), and then on the MBB number.
+  struct MBBPriorityCompare {
+    bool operator()(const MBBPriorityInfo &LHS,
+                    const MBBPriorityInfo &RHS) const {
       // Deeper loops first
-      if (LHS.first != RHS.first)
-        return LHS.first > RHS.first;
+      if (LHS.Depth != RHS.Depth)
+        return LHS.Depth > RHS.Depth;
+
+      // Try to unsplit critical edges next.
+      if (EnableJoinSplits && LHS.IsSplit != RHS.IsSplit)
+        return LHS.IsSplit;
 
       // Prefer blocks that are more connected in the CFG. This takes care of
       // the most difficult copies first while intervals are short.
-      unsigned cl = LHS.second->pred_size() + LHS.second->succ_size();
-      unsigned cr = RHS.second->pred_size() + RHS.second->succ_size();
+      unsigned cl = LHS.MBB->pred_size() + LHS.MBB->succ_size();
+      unsigned cr = RHS.MBB->pred_size() + RHS.MBB->succ_size();
       if (cl != cr)
         return cl > cr;
 
       // As a last resort, sort by block number.
-      return LHS.second->getNumber() < RHS.second->getNumber();
+      return LHS.MBB->getNumber() < RHS.MBB->getNumber();
     }
   };
 }
@@ -1976,18 +2016,17 @@ void RegisterCoalescer::joinAllIntervals() {
 
     // Join intervals in the function prolog first. We want to join physical
     // registers with virtual registers before the intervals got too long.
-    std::vector<std::pair<unsigned, MachineBasicBlock*> > MBBs;
+    std::vector<MBBPriorityInfo> MBBs;
     for (MachineFunction::iterator I = MF->begin(), E = MF->end();I != E;++I){
       MachineBasicBlock *MBB = I;
-      MBBs.push_back(std::make_pair(Loops->getLoopDepth(MBB), I));
+      MBBs.push_back(MBBPriorityInfo(MBB, Loops->getLoopDepth(MBB),
+                                     isSplitEdge(MBB)));
     }
-
-    // Sort by loop depth.
-    std::sort(MBBs.begin(), MBBs.end(), DepthMBBCompare());
+    std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare());
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      copyCoalesceInMBB(MBBs[i].second);
+      copyCoalesceInMBB(MBBs[i].MBB);
   }
 
   // Joining intervals can allow other intervals to be joined.  Iteratively join
