@@ -754,8 +754,7 @@ void LoadClusterMutation::clusterNeighboringLoads(ArrayRef<SUnit*> Loads,
 
     SUnit *SUa = LoadRecords[Idx].SU;
     SUnit *SUb = LoadRecords[Idx+1].SU;
-    if (TII->shouldScheduleLoadsNear(SUa->getInstr(), SUb->getInstr(),
-                                     ClusterLength)
+    if (TII->shouldClusterLoads(SUa->getInstr(), SUb->getInstr(), ClusterLength)
         && DAG->addEdge(SUb, SDep(SUa, SDep::Cluster))) {
 
       DEBUG(dbgs() << "Cluster loads SU(" << SUa->NodeNum << ") - SU("

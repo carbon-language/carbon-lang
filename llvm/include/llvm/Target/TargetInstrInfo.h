@@ -628,9 +628,9 @@ public:
     return false;
   }
 
-  virtual bool shouldScheduleLoadsNear(MachineInstr *FirstLdSt,
-                                       MachineInstr *SecondLdSt,
-                                       unsigned NumLoads) const {
+  virtual bool shouldClusterLoads(MachineInstr *FirstLdSt,
+                                  MachineInstr *SecondLdSt,
+                                  unsigned NumLoads) const {
     return false;
   }
 
