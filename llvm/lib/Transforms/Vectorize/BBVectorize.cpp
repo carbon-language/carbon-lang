@@ -677,6 +677,19 @@ assert(n < 10 && "hrmm, really?");
 
       return false;
     }
+
+    bool isPureIEChain(InsertElementInst *IE) {
+      InsertElementInst *IENext = IE;
+      do {
+        if (!isa<UndefValue>(IENext->getOperand(0)) &&
+            !isa<InsertElementInst>(IENext->getOperand(0))) {
+          return false;
+        }
+      } while ((IENext =
+                 dyn_cast<InsertElementInst>(IENext->getOperand(0))));
+
+      return true;
+    }
   };
 
   // This function implements one vectorization iteration on the provided
@@ -1854,7 +1867,9 @@ assert(n < 10 && "hrmm, really?");
               // folded with other operations.
               if (Ty1 == Ty2) {
                 // If both are insert elements, then both can be widened.
-                if (isa<InsertElementInst>(O1) && isa<InsertElementInst>(O2))
+                InsertElementInst *IEO1 = dyn_cast<InsertElementInst>(O1),
+                                  *IEO2 = dyn_cast<InsertElementInst>(O2);
+                if (IEO1 && IEO2 && isPureIEChain(IEO1) && isPureIEChain(IEO2))
                   continue;
                 // If both are extract elements, and both have the same input
                 // type, then they can be replaced with a shuffle
@@ -2126,18 +2141,7 @@ assert(n < 10 && "hrmm, really?");
     if (InsertElementInst *LIE = dyn_cast<InsertElementInst>(LOp)) {
       // If we have a pure insertelement chain, then this can be rewritten
       // into a chain that directly builds the larger type.
-      bool PureChain = true;
-      InsertElementInst *LIENext = LIE;
-      do {
-        if (!isa<UndefValue>(LIENext->getOperand(0)) &&
-            !isa<InsertElementInst>(LIENext->getOperand(0))) {
-          PureChain = false;
-          break;
-        }
-      } while ((LIENext =
-                 dyn_cast<InsertElementInst>(LIENext->getOperand(0))));
-
-      if (PureChain) {
+      if (isPureIEChain(LIE)) {
         SmallVector<Value *, 8> VectElemts(numElemL,
           UndefValue::get(ArgTypeL->getScalarType()));
         InsertElementInst *LIENext = LIE;
