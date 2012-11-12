@@ -1773,17 +1773,18 @@ def err_alias_not_supported_on_darwin : Error <
 def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
-  "functions, methods and blocks|functions, methods, and parameters|"
-  "classes|variables|methods|variables, functions and labels|"
-  "fields and global variables|structs|"
+  "functions, methods and blocks|functions, methods, and classes|"
+  "functions, methods, and parameters|classes|variables|methods|"
+  "variables, functions and labels|fields and global variables|structs|"
   "variables, functions and tag types|thread-local variables}1">,
   InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
-  "functions, methods and blocks|functions, methods, and parameters|"
-  "classes|variables|methods|variables, functions and labels|"
-  "fields and global variables|structs|thread-local variables}1">;
+  "functions, methods and blocks|functions, methods, and classes|"
+  "functions, methods, and parameters|classes|variables|methods|"
+  "variables, functions and labels|fields and global variables|structs|"
+  "variables, functions and tag types|thread-local variables}1">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">,
   InGroup<IgnoredAttributes>;

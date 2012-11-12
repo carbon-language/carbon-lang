@@ -5691,6 +5691,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   ProcessDeclAttributes(S, NewFD, D,
                         /*NonInheritable=*/false, /*Inheritable=*/true);
 
+  QualType RetType = NewFD->getResultType();
+  const CXXRecordDecl *Ret = RetType->isRecordType() ?
+      RetType->getAsCXXRecordDecl() : RetType->getPointeeCXXRecordDecl();
+  if (!NewFD->isInvalidDecl() && !NewFD->hasAttr<WarnUnusedResultAttr>() &&
+      Ret && Ret->hasAttr<WarnUnusedResultAttr>()) {
+    NewFD->addAttr(new (Context) WarnUnusedResultAttr(SourceRange(), Context));
+  }
+
   if (!getLangOpts().CPlusPlus) {
     // Perform semantic checking on the function declaration.
     bool isExplicitSpecialization=false;
