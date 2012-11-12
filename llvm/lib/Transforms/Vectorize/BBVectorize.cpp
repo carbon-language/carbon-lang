@@ -483,6 +483,8 @@ namespace {
 
       if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
         T2 = SI->getCondition()->getType();
+      } else if (ShuffleVectorInst *SI = dyn_cast<ShuffleVectorInst>(I)) {
+        T2 = SI->getOperand(0)->getType();
       }
     }
 
@@ -987,10 +989,11 @@ namespace {
       // We don't want to fuse to a type that will be split, even
       // if the two input types will also be split and there is no other
       // associated cost.
-      unsigned VParts = VTTI->getNumberOfParts(VT1);
-      if (VParts > 1)
+      unsigned VParts1 = VTTI->getNumberOfParts(VT1),
+               VParts2 = VTTI->getNumberOfParts(VT2);
+      if (VParts1 > 1 || VParts2 > 1)
         return false;
-      else if (!VParts && VCost == ICost + JCost)
+      else if ((!VParts1 || !VParts2) && VCost == ICost + JCost)
         return false;
 
       CostSavings = ICost + JCost - VCost;
