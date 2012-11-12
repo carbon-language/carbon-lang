@@ -485,6 +485,8 @@ namespace {
         T2 = SI->getCondition()->getType();
       } else if (ShuffleVectorInst *SI = dyn_cast<ShuffleVectorInst>(I)) {
         T2 = SI->getOperand(0)->getType();
+      } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
+        T2 = CI->getOperand(0)->getType();
       }
     }
 
