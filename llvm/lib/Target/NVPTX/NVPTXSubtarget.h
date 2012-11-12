@@ -25,12 +25,17 @@
 namespace llvm {
 
 class NVPTXSubtarget : public NVPTXGenSubtargetInfo {
-
-  unsigned int SmVersion;
+  
   std::string TargetName;
   NVPTX::DrvInterface drvInterface;
   bool dummy; // For the 'dummy' feature, see NVPTX.td
   bool Is64Bit;
+
+  // PTX version x.y is represented as 10*x+y, e.g. 3.1 == 31
+  unsigned PTXVersion;
+
+  // SM version x.y is represented as 10*x+y, e.g. 3.1 == 31
+  unsigned int SmVersion;
 
 public:
   /// This constructor initializes the data members to match that
@@ -68,6 +73,8 @@ public:
   unsigned int getSmVersion() const { return SmVersion; }
   NVPTX::DrvInterface getDrvInterface() const { return drvInterface; }
   std::string getTargetName() const { return TargetName; }
+
+  unsigned getPTXVersion() const { return PTXVersion; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 

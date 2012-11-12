@@ -34,15 +34,17 @@ DriverInterface(cl::desc("Choose driver interface:"),
 
 NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS, bool is64Bit)
-:NVPTXGenSubtargetInfo(TT, "", FS), // Don't pass CPU to subtarget,
- // because we don't register all
- // nvptx targets.
- Is64Bit(is64Bit) {
+: NVPTXGenSubtargetInfo(TT, CPU, FS),
+  Is64Bit(is64Bit),
+  PTXVersion(0),
+  SmVersion(10) {
 
   drvInterface = DriverInterface;
 
   // Provide the default CPU if none
   std::string defCPU = "sm_10";
+
+  ParseSubtargetFeatures((CPU.empty() ? defCPU : CPU), FS);
 
   // Get the TargetName from the FS if available
   if (FS.empty() && CPU.empty())
@@ -52,6 +54,12 @@ NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
   else
     llvm_unreachable("we are not using FeatureStr");
 
-  // Set up the SmVersion
-  SmVersion = atoi(TargetName.c_str()+3);
+  // We default to PTX 3.1, but we cannot just default to it in the initializer
+  // since the attribute parser checks if the given option is >= the default.
+  // So if we set ptx31 as the default, the ptx30 attribute would never match.
+  // Instead, we use 0 as the default and manually set 31 if the default is
+  // used.
+  if (PTXVersion == 0) {
+    PTXVersion = 31;
+  }
 }

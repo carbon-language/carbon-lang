@@ -910,7 +910,8 @@ void NVPTXAsmPrinter::emitHeader (Module &M, raw_ostream &O) {
   O << "//\n";
   O << "\n";
 
-  O << ".version 3.0\n";
+  unsigned PTXVersion = nvptxSubtarget.getPTXVersion();
+  O << ".version " << (PTXVersion / 10) << "." << (PTXVersion % 10) << "\n";
 
   O << ".target ";
   O << nvptxSubtarget.getTargetName();
