@@ -62,10 +62,14 @@ const MCInstrDesc *ScheduleDAG::getNodeDesc(const SDNode *Node) const {
 /// addPred - This adds the specified edge as a pred of the current node if
 /// not already.  It also adds the current node as a successor of the
 /// specified node.
-bool SUnit::addPred(const SDep &D) {
+bool SUnit::addPred(const SDep &D, bool Required) {
   // If this node already has this depenence, don't add a redundant one.
   for (SmallVector<SDep, 4>::iterator I = Preds.begin(), E = Preds.end();
        I != E; ++I) {
+    // Zero-latency weak edges may be added purely for heuristic ordering. Don't
+    // add them if another kind of edge already exists.
+    if (!Required && I->getSUnit() == D.getSUnit())
+      return false;
     if (I->overlaps(D)) {
       // Extend the latency if needed. Equivalent to removePred(I) + addPred(D).
       if (I->getLatency() < D.getLatency()) {
@@ -96,13 +100,26 @@ bool SUnit::addPred(const SDep &D) {
     ++NumPreds;
     ++N->NumSuccs;
   }
+  // SD scheduler relies on artificial edges to enforce physreg
+  // antidependence, so it doesn't treat them as weak edges.
+  bool isWeak = D.isWeak() && N->isInstr();
   if (!N->isScheduled) {
-    assert(NumPredsLeft < UINT_MAX && "NumPredsLeft will overflow!");
-    ++NumPredsLeft;
+    if (isWeak) {
+      ++WeakPredsLeft;
+    }
+    else {
+      assert(NumPredsLeft < UINT_MAX && "NumPredsLeft will overflow!");
+      ++NumPredsLeft;
+    }
   }
   if (!isScheduled) {
-    assert(N->NumSuccsLeft < UINT_MAX && "NumSuccsLeft will overflow!");
-    ++N->NumSuccsLeft;
+    if (isWeak) {
+      ++N->WeakSuccsLeft;
+    }
+    else {
+      assert(N->NumSuccsLeft < UINT_MAX && "NumSuccsLeft will overflow!");
+      ++N->NumSuccsLeft;
+    }
   }
   Preds.push_back(D);
   N->Succs.push_back(P);
@@ -143,13 +160,22 @@ void SUnit::removePred(const SDep &D) {
         --NumPreds;
         --N->NumSuccs;
       }
+      bool isWeak = D.isWeak() && N->isInstr();
       if (!N->isScheduled) {
-        assert(NumPredsLeft > 0 && "NumPredsLeft will underflow!");
-        --NumPredsLeft;
+        if (isWeak)
+          --WeakPredsLeft;
+        else {
+          assert(NumPredsLeft > 0 && "NumPredsLeft will underflow!");
+          --NumPredsLeft;
+        }
       }
       if (!isScheduled) {
-        assert(N->NumSuccsLeft > 0 && "NumSuccsLeft will underflow!");
-        --N->NumSuccsLeft;
+        if (isWeak)
+          --N->WeakSuccsLeft;
+        else {
+          assert(N->NumSuccsLeft > 0 && "NumSuccsLeft will underflow!");
+          --N->NumSuccsLeft;
+        }
       }
       if (P.getLatency() != 0) {
         this->setDepthDirty();
@@ -292,6 +318,10 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
 
   dbgs() << "  # preds left       : " << NumPredsLeft << "\n";
   dbgs() << "  # succs left       : " << NumSuccsLeft << "\n";
+  if (WeakPredsLeft)
+    dbgs() << "  # weak preds left  : " << WeakPredsLeft << "\n";
+  if (WeakSuccsLeft)
+    dbgs() << "  # weak succs left  : " << WeakSuccsLeft << "\n";
   dbgs() << "  # rdefs left       : " << NumRegDefsLeft << "\n";
   dbgs() << "  Latency            : " << Latency << "\n";
   dbgs() << "  Depth              : " << Depth << "\n";
@@ -429,6 +459,8 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
   Node2Index.resize(DAGSize);
 
   // Initialize the data structures.
+  if (ExitSU)
+    WorkList.push_back(ExitSU);
   for (unsigned i = 0, e = DAGSize; i != e; ++i) {
     SUnit *SU = &SUnits[i];
     int NodeNum = SU->NodeNum;
@@ -448,11 +480,12 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
   while (!WorkList.empty()) {
     SUnit *SU = WorkList.back();
     WorkList.pop_back();
-    Allocate(SU->NodeNum, --Id);
+    if (SU->NodeNum < DAGSize)
+      Allocate(SU->NodeNum, --Id);
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
       SUnit *SU = I->getSUnit();
-      if (!--Node2Index[SU->NodeNum])
+      if (SU->NodeNum < DAGSize && !--Node2Index[SU->NodeNum])
         // If all dependencies of the node are processed already,
         // then the node can be computed now.
         WorkList.push_back(SU);
@@ -513,7 +546,10 @@ void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
     WorkList.pop_back();
     Visited.set(SU->NodeNum);
     for (int I = SU->Succs.size()-1; I >= 0; --I) {
-      int s = SU->Succs[I].getSUnit()->NodeNum;
+      unsigned s = SU->Succs[I].getSUnit()->NodeNum;
+      // Edges to non-SUnits are allowed but ignored (e.g. ExitSU).
+      if (s >= Node2Index.size())
+        continue;
       if (Node2Index[s] == UpperBound) {
         HasLoop = true;
         return;
@@ -554,15 +590,16 @@ void ScheduleDAGTopologicalSort::Shift(BitVector& Visited, int LowerBound,
 }
 
 
-/// WillCreateCycle - Returns true if adding an edge from SU to TargetSU will
-/// create a cycle.
-bool ScheduleDAGTopologicalSort::WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
-  if (IsReachable(TargetSU, SU))
+/// WillCreateCycle - Returns true if adding an edge to TargetSU from SU will
+/// create a cycle. If so, it is not safe to call AddPred(TargetSU, SU).
+bool ScheduleDAGTopologicalSort::WillCreateCycle(SUnit *TargetSU, SUnit *SU) {
+  // Is SU reachable from TargetSU via successor edges?
+  if (IsReachable(SU, TargetSU))
     return true;
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I)
+  for (SUnit::pred_iterator
+         I = TargetSU->Preds.begin(), E = TargetSU->Preds.end(); I != E; ++I)
     if (I->isAssignedRegDep() &&
-        IsReachable(TargetSU, I->getSUnit()))
+        IsReachable(SU, I->getSUnit()))
       return true;
   return false;
 }
@@ -592,6 +629,7 @@ void ScheduleDAGTopologicalSort::Allocate(int n, int index) {
 }
 
 ScheduleDAGTopologicalSort::
-ScheduleDAGTopologicalSort(std::vector<SUnit> &sunits) : SUnits(sunits) {}
+ScheduleDAGTopologicalSort(std::vector<SUnit> &sunits, SUnit *exitsu)
+  : SUnits(sunits), ExitSU(exitsu) {}
 
 ScheduleHazardRecognizer::~ScheduleHazardRecognizer() {}

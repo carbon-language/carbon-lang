@@ -245,21 +245,26 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       if (UseSU == SU)
         continue;
 
-      SDep dep(SU, SDep::Data, *Alias);
-
       // Adjust the dependence latency using operand def/use information,
       // then allow the target to perform its own adjustments.
       int UseOp = UseList[i].OpIdx;
-      MachineInstr *RegUse = UseOp < 0 ? 0 : UseSU->getInstr();
-      dep.setLatency(
+      MachineInstr *RegUse = 0;
+      SDep Dep;
+      if (UseOp < 0)
+        Dep = SDep(SU, SDep::Artificial);
+      else {
+        Dep = SDep(SU, SDep::Data, *Alias);
+        RegUse = UseSU->getInstr();
+        Dep.setMinLatency(
+          SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
+                                           RegUse, UseOp, /*FindMin=*/true));
+      }
+      Dep.setLatency(
         SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
                                          RegUse, UseOp, /*FindMin=*/false));
-      dep.setMinLatency(
-        SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
-                                         RegUse, UseOp, /*FindMin=*/true));
 
-      ST.adjustSchedDependency(SU, UseSU, dep);
-      UseSU->addPred(dep);
+      ST.adjustSchedDependency(SU, UseSU, Dep);
+      UseSU->addPred(Dep);
     }
   }
 }

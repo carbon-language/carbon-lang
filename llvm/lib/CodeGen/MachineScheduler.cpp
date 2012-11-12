@@ -310,6 +310,10 @@ void ReadyQueue::dump() {
 void ScheduleDAGMI::releaseSucc(SUnit *SU, SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
 
+  if (SuccEdge->isWeak()) {
+    --SuccSU->WeakPredsLeft;
+    return;
+  }
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft == 0) {
     dbgs() << "*** Scheduling failed! ***\n";
@@ -338,6 +342,10 @@ void ScheduleDAGMI::releaseSuccessors(SUnit *SU) {
 void ScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
   SUnit *PredSU = PredEdge->getSUnit();
 
+  if (PredEdge->isWeak()) {
+    --PredSU->WeakSuccsLeft;
+    return;
+  }
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft == 0) {
     dbgs() << "*** Scheduling failed! ***\n";
@@ -530,17 +538,20 @@ void ScheduleDAGMI::postprocessDAG() {
 }
 
 // Release all DAG roots for scheduling.
+//
+// Nodes with unreleased weak edges can still be roots.
 void ScheduleDAGMI::releaseRoots() {
   SmallVector<SUnit*, 16> BotRoots;
 
   for (std::vector<SUnit>::iterator
          I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
+    SUnit *SU = &(*I);
     // A SUnit is ready to top schedule if it has no predecessors.
-    if (I->Preds.empty())
-      SchedImpl->releaseTopNode(&(*I));
+    if (!I->NumPredsLeft && SU != &EntrySU)
+      SchedImpl->releaseTopNode(SU);
     // A SUnit is ready to bottom schedule if it has no successors.
-    if (I->Succs.empty())
-      BotRoots.push_back(&(*I));
+    if (!I->NumSuccsLeft && SU != &ExitSU)
+      BotRoots.push_back(SU);
   }
   // Release bottom roots in reverse order so the higher priority nodes appear
   // first. This is more natural and slightly more efficient.
@@ -555,12 +566,11 @@ void ScheduleDAGMI::initQueues() {
   // Initialize the strategy before modifying the DAG.
   SchedImpl->initialize(this);
 
-  // Release edges from the special Entry node or to the special Exit node.
+  // Release all DAG roots for scheduling, not including EntrySU/ExitSU.
+  releaseRoots();
+
   releaseSuccessors(&EntrySU);
   releasePredecessors(&ExitSU);
-
-  // Release all DAG roots for scheduling.
-  releaseRoots();
 
   SchedImpl->registerRoots();
 

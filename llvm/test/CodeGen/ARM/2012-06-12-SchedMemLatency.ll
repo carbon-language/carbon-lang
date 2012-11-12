@@ -13,6 +13,7 @@
 ; CHECK-NOT: ch SU
 ; CHECK: ch SU(2): Latency=1
 ; CHECK-NOT: ch SU
+; CHECK: Successors:
 ; CHECK: ** List Scheduling
 ; CHECK: SU(2){{.*}}STR{{.*}}
 ; CHECK-NOT: ch SU
@@ -22,6 +23,7 @@
 ; CHECK-NOT: ch SU
 ; CHECK: ch SU(2): Latency=1
 ; CHECK-NOT: ch SU
+; CHECK: Successors:
 define i32 @f1(i32* nocapture %p1, i32* nocapture %p2) nounwind {
 entry:
   store volatile i32 65540, i32* %p1, align 4, !tbaa !0

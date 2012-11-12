@@ -156,7 +156,7 @@ public:
                     CodeGenOpt::Level OptLevel)
     : ScheduleDAGSDNodes(mf),
       NeedLatency(needlatency), AvailableQueue(availqueue), CurCycle(0),
-      Topo(SUnits) {
+      Topo(SUnits, NULL) {
 
     const TargetMachine &tm = mf.getTarget();
     if (DisableSchedCycles || !NeedLatency)

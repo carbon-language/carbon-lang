@@ -123,6 +123,8 @@ void ScheduleDAGVLIW::releaseSucc(SUnit *SU, const SDep &D) {
     llvm_unreachable(0);
   }
 #endif
+  assert(!D.isWeak() && "unexpected artificial DAG edge");
+
   --SuccSU->NumPredsLeft;
 
   SuccSU->setDepthToAtLeast(SU->getDepth() + D.getLatency());

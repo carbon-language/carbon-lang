@@ -111,9 +111,6 @@ namespace {
     /// added to the AvailableQueue.
     std::vector<SUnit*> PendingQueue;
 
-    /// Topo - A topological ordering for SUnits.
-    ScheduleDAGTopologicalSort Topo;
-
     /// HazardRec - The hazard recognizer to use.
     ScheduleHazardRecognizer *HazardRec;
 
@@ -198,7 +195,7 @@ SchedulePostRATDList::SchedulePostRATDList(
   AliasAnalysis *AA, const RegisterClassInfo &RCI,
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs)
-  : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), Topo(SUnits), AA(AA),
+  : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA),
     LiveRegs(TRI->getNumRegs())
 {
   const TargetMachine &TM = MF.getTarget();
@@ -580,10 +577,14 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 //===----------------------------------------------------------------------===//
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
-/// the PendingQueue if the count reaches zero. Also update its cycle bound.
+/// the PendingQueue if the count reaches zero.
 void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
 
+  if (SuccEdge->isArtificial()) {
+    --SuccSU->WeakPredsLeft;
+    return;
+  }
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft == 0) {
     dbgs() << "*** Scheduling failed! ***\n";
@@ -653,8 +654,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
   // Add all leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    bool available = SUnits[i].Preds.empty();
-    if (available) {
+    if (!SUnits[i].NumPredsLeft && !SUnits[i].isAvailable) {
       AvailableQueue.push(&SUnits[i]);
       SUnits[i].isAvailable = true;
     }
