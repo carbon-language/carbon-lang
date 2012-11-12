@@ -7,7 +7,9 @@ typedef u_int32_t uint32_t;
 typedef unsigned long long u_int64_t;
 typedef u_int64_t uint64_t;
 
-int main () {
+struct S;
+
+int func(struct S *s) {
   // Error out if size is > 32-bits.
   uint32_t msr = 0x8b;
   uint64_t val = 0;
@@ -21,4 +23,7 @@ int main () {
   unsigned char data;
   unsigned int port;
   __asm__ volatile("outb %0, %w1" : : "a" (data), "Nd" (port)); // No error expected.
+
+  // Don't error out for incomplete types.
+  __asm(""::"a"(*s));  // No error expected.
 }

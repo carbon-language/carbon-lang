@@ -181,9 +181,6 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     InputConstraintInfos.push_back(Info);
 
     const Type *Ty = Exprs[i]->getType().getTypePtr();
-    if (Ty->isDependentType() || Ty->isIncompleteType())
-      continue;
-
     unsigned Size = Context.getTypeSize(Ty);
     if (!Context.getTargetInfo().validateInputSize(Literal->getString(),
                                                    Size))
