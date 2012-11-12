@@ -313,6 +313,33 @@ public:
         }
     }
 
+    size_t
+    Erase (const char *unique_cstr)
+    {
+        size_t num_removed = 0;
+        Entry search_entry (unique_cstr);
+        const_iterator end = m_map.end();
+        const_iterator begin = m_map.begin();
+        const_iterator lower_pos = std::lower_bound (begin, end, search_entry);
+        if (lower_pos != end)
+        {
+            if (lower_pos->cstring == unique_cstr)
+            {
+                const_iterator upper_pos = std::upper_bound (lower_pos, end, search_entry);
+                if (lower_pos == upper_pos)
+                {
+                    m_map.erase (lower_pos);
+                    num_removed = 1;
+                }
+                else
+                {
+                    num_removed = std::distance (lower_pos, upper_pos);
+                    m_map.erase (lower_pos, upper_pos);
+                }
+            }
+        }
+        return num_removed;
+    }
 protected:
     typedef std::vector<Entry> collection;
     typedef typename collection::iterator iterator;

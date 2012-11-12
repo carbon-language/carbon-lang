@@ -5077,6 +5077,8 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
     const DWARFDebugInfoEntry *dst_die;
     UniqueCStringMap<const DWARFDebugInfoEntry *> src_name_to_die;
     UniqueCStringMap<const DWARFDebugInfoEntry *> dst_name_to_die;
+    UniqueCStringMap<const DWARFDebugInfoEntry *> src_name_to_die_artificial;
+    UniqueCStringMap<const DWARFDebugInfoEntry *> dst_name_to_die_artificial;
     for (src_die = src_class_die->GetFirstChild(); src_die != NULL; src_die = src_die->GetSibling())
     {
         if (src_die->Tag() == DW_TAG_subprogram)
@@ -5089,7 +5091,13 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
             {
                 const char *src_name = src_die->GetMangledName (this, src_cu);
                 if (src_name)
-                    src_name_to_die.Append(ConstString(src_name).GetCString(), src_die);
+                {
+                    ConstString src_const_name(src_name);
+                    if (src_die->GetAttributeValueAsUnsigned(this, src_cu, DW_AT_artificial, 0))
+                        src_name_to_die_artificial.Append(src_const_name.GetCString(), src_die);
+                    else
+                        src_name_to_die.Append(src_const_name.GetCString(), src_die);
+                }
             }
         }
     }
@@ -5105,7 +5113,13 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
             {
                 const char *dst_name = dst_die->GetMangledName (this, dst_cu);
                 if (dst_name)
-                    dst_name_to_die.Append(ConstString(dst_name).GetCString(), dst_die);
+                {
+                    ConstString dst_const_name(dst_name);
+                    if (dst_die->GetAttributeValueAsUnsigned(this, dst_cu, DW_AT_artificial, 0))
+                        dst_name_to_die_artificial.Append(dst_const_name.GetCString(), dst_die);
+                    else
+                        dst_name_to_die.Append(dst_const_name.GetCString(), dst_die);
+                }
             }
         }
     }
@@ -5113,20 +5127,8 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
     const uint32_t dst_size = dst_name_to_die.GetSize ();
     LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_TYPE_COMPLETION));
     
-    if (src_size && dst_size)
+    if (src_size == dst_size)
     {
-        if (src_size != dst_size)
-        {
-            if (log)
-                log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but they didn't have the same size (src=%d, dst=%d)",
-                            src_class_die->GetOffset(),
-                            dst_class_die->GetOffset(),
-                            src_size,
-                            dst_size);
-            
-            return false;
-        }
-            
         uint32_t idx;
         for (idx = 0; idx < src_size; ++idx)
         {
@@ -5174,40 +5176,94 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
             if (src_decl_ctx)
             {
                 if (log)
-                    log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x\n", src_decl_ctx, src_die->GetOffset(), dst_die->GetOffset());
+                    log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x", src_decl_ctx, src_die->GetOffset(), dst_die->GetOffset());
                 LinkDeclContextToDIE (src_decl_ctx, dst_die);
             }
             else
             {
                 if (log)
-                    log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found\n", src_die->GetOffset(), dst_die->GetOffset());
+                    log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
             }
             
             Type *src_child_type = m_die_to_type[src_die];
             if (src_child_type)
             {
                 if (log)
-                    log->Printf ("uniquing type %p (uid=0x%llx) from 0x%8.8x for 0x%8.8x\n", src_child_type, src_child_type->GetID(), src_die->GetOffset(), dst_die->GetOffset());
+                    log->Printf ("uniquing type %p (uid=0x%llx) from 0x%8.8x for 0x%8.8x", src_child_type, src_child_type->GetID(), src_die->GetOffset(), dst_die->GetOffset());
                 m_die_to_type[dst_die] = src_child_type;
             }
             else
             {
                 if (log)
-                    log->Printf ("warning: tried to unique lldb_private::Type from 0x%8.8x for 0x%8.8x, but none was found\n", src_die->GetOffset(), dst_die->GetOffset());
+                    log->Printf ("warning: tried to unique lldb_private::Type from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
+            }
+        }
+        
+        const uint32_t src_size_artificial = src_name_to_die_artificial.GetSize ();
+        
+        UniqueCStringMap<const DWARFDebugInfoEntry *> name_to_die_artificial_not_in_src;
+
+        for (idx = 0; idx < src_size_artificial; ++idx)
+        {
+            const char *src_name_artificial = src_name_to_die_artificial.GetCStringAtIndex(idx);
+            src_die = src_name_to_die_artificial.GetValueAtIndexUnchecked (idx);
+            dst_die = dst_name_to_die_artificial.Find(src_name_artificial, NULL);
+            
+            if (dst_die)
+            {
+                // Erase this entry from the map
+                const size_t num_removed = dst_name_to_die_artificial.Erase (src_name_artificial);
+                assert (num_removed == 0 || num_removed == 1); // REMOVE THIS
+                // Both classes have the artificial types, link them
+                clang::DeclContext *src_decl_ctx = m_die_to_decl_ctx[src_die];
+                if (src_decl_ctx)
+                {
+                    if (log)
+                        log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x", src_decl_ctx, src_die->GetOffset(), dst_die->GetOffset());
+                    LinkDeclContextToDIE (src_decl_ctx, dst_die);
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
+                }
+                
+                Type *src_child_type = m_die_to_type[src_die];
+                if (src_child_type)
+                {
+                    if (log)
+                        log->Printf ("uniquing type %p (uid=0x%llx) from 0x%8.8x for 0x%8.8x", src_child_type, src_child_type->GetID(), src_die->GetOffset(), dst_die->GetOffset());
+                    m_die_to_type[dst_die] = src_child_type;
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("warning: tried to unique lldb_private::Type from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
+                }
+            }
+        }
+        const uint32_t dst_size_artificial = dst_name_to_die_artificial.GetSize ();
+
+        if (dst_size_artificial)
+        {
+            for (idx = 0; idx < dst_size_artificial; ++idx)
+            {
+                const char *dst_name_artificial = dst_name_to_die_artificial.GetCStringAtIndex(idx);
+                dst_die = dst_name_to_die_artificial.GetValueAtIndexUnchecked (idx);
+                if (log)
+                    log->Printf ("warning: need to create artificial method for 0x%8.8x for method '%s'", dst_die->GetOffset(), dst_name_artificial);
             }
         }
         return true;
     }
-    else
+    else if (src_size != 0 && dst_size != 0)
     {
         if (log)
-            log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but 0x%8.8x has %u methods and 0x%8.8x has %u",
+            log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but they didn't have the same size (src=%d, dst=%d)",
                         src_class_die->GetOffset(),
                         dst_class_die->GetOffset(),
-                        src_die->GetOffset(),
                         src_size,
-                        dst_die->GetOffset(),
-                        dst_size);
+                        dst_size);        
     }
     return false;
 }
