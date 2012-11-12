@@ -9,9 +9,6 @@
 
 // we perform white-box tests
 //
-#define private public
-#include "llvm/Use.h"
-#undef private
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
@@ -24,7 +21,7 @@ namespace {
 Constant *char2constant(char c) {
   return ConstantInt::get(Type::getInt8Ty(getGlobalContext()), c);
 }
-  
+
 
 TEST(WaymarkTest, NativeArray) {
   static uint8_t tail[22] = "s02s33s30y2y0s1x0syxS";
@@ -39,17 +36,17 @@ TEST(WaymarkTest, NativeArray) {
 	const Use *Ue = &A->getOperandUse(22);
   for (; U != Ue; ++U)
   {
-    EXPECT_EQ(Ue + 1, U->getImpliedUser());
+    EXPECT_EQ(A, U->getUser());
   }
 }
 
 TEST(WaymarkTest, TwoBit) {
-  Use* many = (Use*)calloc(sizeof(Use), 8212);
+  Use* many = (Use*)calloc(sizeof(Use), 8212 + 1);
   ASSERT_TRUE(many);
 	Use::initTags(many, many + 8212);
   for (const Use *U = many, *Ue = many + 8212 - 1; U != Ue; ++U)
   {
-    EXPECT_EQ(Ue + 1, U->getImpliedUser());
+    EXPECT_EQ((User*)(Ue + 1), U->getUser());
   }
 }
 
