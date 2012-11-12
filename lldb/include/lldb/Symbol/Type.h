@@ -302,7 +302,7 @@ protected:
     SymbolFile *m_symbol_file;
     SymbolContextScope *m_context; // The symbol context in which this type is defined
     Type *m_encoding_type;
-    uint32_t m_encoding_uid;
+    lldb::user_id_t m_encoding_uid;
     EncodingDataType m_encoding_uid_type;
     uint32_t m_byte_size;
     Declaration m_decl;

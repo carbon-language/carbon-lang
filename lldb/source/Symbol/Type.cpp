@@ -80,7 +80,7 @@ Type::Type () :
     m_symbol_file (NULL),
     m_context (NULL),
     m_encoding_type (NULL),
-    m_encoding_uid (0),
+    m_encoding_uid (LLDB_INVALID_UID),
     m_encoding_uid_type (eEncodingInvalid),
     m_byte_size (0),
     m_decl (),
@@ -150,7 +150,7 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
     {
-        s->Printf(", type_uid = 0x%8.8x", m_encoding_uid);
+        s->Printf(", type_uid = 0x%8.8llx", m_encoding_uid);
         switch (m_encoding_uid_type)
         {
         case eEncodingInvalid: break;
