@@ -58,6 +58,9 @@ PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec
     const char* module_directory = exec_fspec->GetDirectory().GetCString();
     const char* module_basename = exec_fspec->GetFileNameStrippingExtension().GetCString();
     
+    if (!module_directory || !module_basename)
+        return FileSpec();
+    
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableScriptingResource (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
@@ -75,7 +78,7 @@ PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec
     {
         // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
         // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
-        path_string.Printf("%s/../Python/%s.py",symbol_fspec.GetDirectory().GetCString(),module_basename);
+        path_string.Printf("%s/../Python/%s.py",symbol_fspec.GetDirectory().AsCString(""),module_basename);
         script_fspec.SetFile(path_string.GetData(), true);
         if (!script_fspec.Exists())
             script_fspec.Clear();
