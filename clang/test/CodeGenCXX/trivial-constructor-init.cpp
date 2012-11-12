@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -std=c++11 | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -std=c++11 | FileCheck %s
 
 extern "C" int printf(...);
 
