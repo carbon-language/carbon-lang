@@ -92,6 +92,8 @@
 					   	<li>Mac OS X desktop user space debugging for i386 and x86-64</li>
 					   	<li>iOS simulator debugging on i386</li>
 					   	<li>iOS device debugging on ARM</li>
+					   	<li>Linux local user-space debugging for i386 and x86-64</li>
+					   	<li>FreeBSD local user-space debugging for i386 and x86-64</li>
 				    </ul>
 				</div>
 				<div class="postfooter"></div>
@@ -108,8 +110,8 @@
 				        <li>svn co http://llvm.org/svn/llvm-project/lldb/trunk lldb</li>
 				    </ul>
 
-				    <p>Note that LLDB currently only builds out of the box on Mac OS X with
-				        Xcode, but patches to improve portability are definitely welcome.</p>
+				    <p>Note that LLDB generally builds from top-of-trunk on Mac OS X with
+				        Xcode and on Linux (with clang and libstdc++/libc++). </p>
 
 				    <p>Discussions about LLDB should go to the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-dev">lldb-dev</a> mailing
 				        list.  Commit messages for the lldb SVN module are automatically sent to the
