@@ -910,10 +910,18 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
 void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   // FIXME: Suppress printing implicit bases (like "this")
   PrintExpr(Node->getBase());
+
+  MemberExpr *ParentMember = dyn_cast<MemberExpr>(Node->getBase());
+  FieldDecl  *ParentDecl   = ParentMember ? dyn_cast<FieldDecl>(ParentMember->getMemberDecl()): NULL;
+
+  if (!ParentDecl || !ParentDecl->isAnonymousStructOrUnion()) {
+    OS << (Node->isArrow() ? "->" : ".");
+  }
+
   if (FieldDecl *FD = dyn_cast<FieldDecl>(Node->getMemberDecl()))
     if (FD->isAnonymousStructOrUnion())
       return;
-  OS << (Node->isArrow() ? "->" : ".");
+
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
   if (Node->hasTemplateKeyword())
