@@ -27,6 +27,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -42,6 +43,10 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   DiagnosticsEngine &Diags = *static_cast<DiagnosticsEngine*>(UserData);
 
   Diags.Report(diag::err_fe_error_backend) << Message;
+
+  // Run the interrupt handlers to make sure any special cleanups get done, in
+  // particular that we remove files registered with RemoveFileOnSignal.
+  llvm::sys::RunInterruptHandlers();
 
   // We cannot recover from llvm errors.
   exit(1);
