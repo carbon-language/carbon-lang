@@ -5,9 +5,9 @@ entry:
   %0 = atomicrmw sub i64* %a, i64 %b seq_cst
   ret i64 %0
 ; CHECK: atomicSub
-; movl %eax, %ebx
-; subl {{%[a-z]+}}, %ebx
-; movl %edx, %ecx
-; sbbl {{%[a-z]+}}, %ecx
+; CHECK: movl %eax, %ebx
+; CHECK: subl {{%[a-z]+}}, %ebx
+; CHECK: movl %edx, %ecx
+; CHECK: sbbl {{%[a-z]+}}, %ecx
 ; CHECK: ret
 }
