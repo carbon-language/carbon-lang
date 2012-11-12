@@ -683,9 +683,11 @@ BUILD_EXEEXT
 BUILD_CXX
 CVSBUILD
 ENABLE_LIBCPP
+ENABLE_CXX11
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
+ENABLE_WERROR
 ENABLE_EXPENSIVE_CHECKS
 EXPENSIVE_CHECKS
 DEBUG_RUNTIME
@@ -1375,10 +1377,12 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-polly          Use polly if available (default is YES)
   --enable-libcpp         Use libc++ if available (default is NO)
+  --enable-cxx11          Use c++11 if available (default is NO)
   --enable-optimized      Compile with optimizations enabled (default is NO)
   --enable-profiling      Compile with profiling enabled (default is NO)
   --enable-assertions     Compile with assertion checks enabled (default is
                           YES)
+  --enable-werror         Compile with -Werror enabled (default is NO)
   --enable-expensive-checks
                           Compile with expensive debug checks enabled (default
                           is NO)
@@ -4942,6 +4946,25 @@ echo "$as_me: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\""
    { (exit 1); exit 1; }; } ;;
 esac
 
+# Check whether --enable-cxx11 was given.
+if test "${enable_cxx11+set}" = set; then
+  enableval=$enable_cxx11;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes) ENABLE_CXX11=1
+ ;;
+  no)  ENABLE_CXX11=0
+ ;;
+  default) ENABLE_CXX11=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
 # Check whether --enable-optimized was given.
 if test "${enable_optimized+set}" = set; then
   enableval=$enable_optimized;
@@ -4986,6 +5009,25 @@ else
   DISABLE_ASSERTIONS=DISABLE_ASSERTIONS=1
 
 fi
+
+# Check whether --enable-werror was given.
+if test "${enable_werror+set}" = set; then
+  enableval=$enable_werror;
+else
+  enableval="no"
+fi
+
+case "$enableval" in
+  yes) ENABLE_WERROR=1
+ ;;
+  no)  ENABLE_WERROR=0
+ ;;
+  default) ENABLE_WERROR=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-werror. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-werror. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 
 # Check whether --enable-expensive-checks was given.
 if test "${enable_expensive_checks+set}" = set; then
@@ -21641,9 +21683,11 @@ BUILD_EXEEXT!$BUILD_EXEEXT$ac_delim
 BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
 ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
+ENABLE_CXX11!$ENABLE_CXX11$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
+ENABLE_WERROR!$ENABLE_WERROR$ac_delim
 ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
 DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
@@ -21653,8 +21697,6 @@ TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 ENABLE_DOCS!$ENABLE_DOCS$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 ENABLE_THREADS!$ENABLE_THREADS$ac_delim
-ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
-ENABLE_PIC!$ENABLE_PIC$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -21696,6 +21738,8 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
+ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
 ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
@@ -21787,7 +21831,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
