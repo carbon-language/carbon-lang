@@ -312,11 +312,6 @@ Listener::FindNextEventInternal
                 m_cond_wait.SetValue (false, eBroadcastNever);
         }
         
-        // Unlock the event queue here.  We've removed this event and are about to return
-        // it so it should be okay to get the next event off the queue here - and it might
-        // be useful to do that in the "DoOnRemoval".
-        lock.Unlock();
-        
         // Don't call DoOnRemoval if you aren't removing the event...
         if (remove)
             event_sp->DoOnRemoval();
@@ -411,12 +406,20 @@ Listener::WaitForEventsInternal
 
     while (1)
     {
-        if (GetNextEventInternal (broadcaster, broadcaster_names, num_broadcaster_names, event_type_mask, event_sp))
-            return true;
+        // Scope for "event_locker"
+        {
+            // Don't allow new events to be added while we're checking for the
+            // one we want.  Otherwise, setting m_cond_wait to false below
+            // might cause us to miss one.
+            Mutex::Locker event_locker(m_events_mutex);
 
-        // Reset condition value to false, so we can wait for new events to be
-        // added that might meet our current filter
-        m_cond_wait.SetValue (false, eBroadcastNever);
+            if (GetNextEventInternal (broadcaster, broadcaster_names, num_broadcaster_names, event_type_mask, event_sp))
+                return true;
+
+            // Reset condition value to false, so we can wait for new events to be
+            // added that might meet our current filter
+            m_cond_wait.SetValue (false, eBroadcastNever);
+        }
 
         if (m_cond_wait.WaitForValueEqualTo (true, timeout, &timed_out))
             continue;
