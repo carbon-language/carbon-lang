@@ -28,6 +28,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -400,6 +401,7 @@ namespace {
         DEBUG(dbgs() << "BBV: fusing loop #" << n <<
               " for " << BB.getName() << " in " <<
               BB.getParent()->getName() << "...\n");
+assert(n < 10 && "hrmm, really?");
         if (vectorizePairs(BB))
           changed = true;
         else
@@ -1765,9 +1767,12 @@ namespace {
             bool NeedsExtraction = false;
             for (Value::use_iterator I = S->first->use_begin(),
                  IE = S->first->use_end(); I != IE; ++I) {
-              if (isa<ShuffleVectorInst>(*I) ||
-                  isa<InsertElementInst>(*I) ||
-                  isa<ExtractElementInst>(*I))
+              if (ShuffleVectorInst *SI = dyn_cast<ShuffleVectorInst>(*I)) {
+                // Shuffle can be folded if it has no other input
+                if (isa<UndefValue>(SI->getOperand(1)))
+                  continue;
+              }
+              if (isa<ExtractElementInst>(*I))
                 continue;
               if (PrunedTreeInstrs.count(*I))
                 continue;
@@ -1792,9 +1797,12 @@ namespace {
             NeedsExtraction = false;
             for (Value::use_iterator I = S->second->use_begin(),
                  IE = S->second->use_end(); I != IE; ++I) {
-              if (isa<ShuffleVectorInst>(*I) ||
-                  isa<InsertElementInst>(*I) ||
-                  isa<ExtractElementInst>(*I))
+              if (ShuffleVectorInst *SI = dyn_cast<ShuffleVectorInst>(*I)) {
+                // Shuffle can be folded if it has no other input
+                if (isa<UndefValue>(SI->getOperand(1)))
+                  continue;
+              }
+              if (isa<ExtractElementInst>(*I))
                 continue;
               if (PrunedTreeInstrs.count(*I))
                 continue;
@@ -1844,14 +1852,35 @@ namespace {
 
               // Combining vector operations of the same type is also assumed
               // folded with other operations.
-              if (Ty1 == Ty2 &&
-                  (isa<ShuffleVectorInst>(O1) ||
-                   isa<InsertElementInst>(O1) ||
-                   isa<InsertElementInst>(O1)) &&
-                  (isa<ShuffleVectorInst>(O2) ||
-                   isa<InsertElementInst>(O2) ||
-                   isa<InsertElementInst>(O2)))
-                continue;
+              if (Ty1 == Ty2) {
+                // If both are insert elements, then both can be widened.
+                if (isa<InsertElementInst>(O1) && isa<InsertElementInst>(O2))
+                  continue;
+                // If both are extract elements, and both have the same input
+                // type, then they can be replaced with a shuffle
+                ExtractElementInst *EIO1 = dyn_cast<ExtractElementInst>(O1),
+                                   *EIO2 = dyn_cast<ExtractElementInst>(O2);
+                if (EIO1 && EIO2 &&
+                    EIO1->getOperand(0)->getType() ==
+                      EIO2->getOperand(0)->getType())
+                  continue;
+                // If both are a shuffle with equal operand types and only two
+                // unqiue operands, then they can be replaced with a single
+                // shuffle
+                ShuffleVectorInst *SIO1 = dyn_cast<ShuffleVectorInst>(O1),
+                                  *SIO2 = dyn_cast<ShuffleVectorInst>(O2);
+                if (SIO1 && SIO2 &&
+                    SIO1->getOperand(0)->getType() ==
+                      SIO2->getOperand(0)->getType()) {
+                  SmallSet<Value *, 4> SIOps;
+                  SIOps.insert(SIO1->getOperand(0));
+                  SIOps.insert(SIO1->getOperand(1));
+                  SIOps.insert(SIO2->getOperand(0));
+                  SIOps.insert(SIO2->getOperand(1));
+                  if (SIOps.size() <= 2)
+                    continue;
+                }
+              }
 
               int ESContrib;
               // This pair has already been formed.
