@@ -20,6 +20,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
@@ -92,12 +93,24 @@ bool BlackList::isIn(const Module &M) {
   return inSection("src", M.getModuleIdentifier());
 }
 
+static StringRef GetGVTypeString(const GlobalVariable &G) {
+  // Types of GlobalVariables are always pointer types.
+  Type *GType = G.getType()->getElementType();
+  // For now we support blacklisting struct types only.
+  if (GType->isStructTy()) {
+    return GType->getStructName();
+  }
+  return "<unknown type>";
+}
+
 bool BlackList::isInInit(const GlobalVariable &G) {
-  return isIn(*G.getParent()) || inSection("global-init", G.getName());
+  return (isIn(*G.getParent()) ||
+          inSection("global-init", G.getName()) ||
+          inSection("global-init-type", GetGVTypeString(G)));
 }
 
 bool BlackList::inSection(const StringRef Section,
-                                  const StringRef Query) {
+                          const StringRef Query) {
   Regex *FunctionRegex = Entries[Section];
   return FunctionRegex ? FunctionRegex->match(Query) : false;
 }

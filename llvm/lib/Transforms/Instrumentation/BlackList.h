@@ -18,6 +18,7 @@
 // fun:*_ZN4base6subtle*
 // global:*global_with_bad_access_or_initialization*
 // global-init:*global_with_initialization_issues*
+// global-init-type:*Namespace::ClassName*
 // src:file_with_tricky_code.cc
 // ---
 // Note that the wild card is in fact an llvm::Regex, but * is automatically
