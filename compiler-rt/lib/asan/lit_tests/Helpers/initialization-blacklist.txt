@@ -1,0 +1,2 @@
+global-init:*badGlobal*
+global-init-type:*badNamespace::BadClass*
