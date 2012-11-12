@@ -1504,6 +1504,11 @@ public:
     
     DelayedAddObjCClassProperty (const DelayedAddObjCClassProperty &rhs)
     {
+      *this = rhs;
+    }
+
+    DelayedAddObjCClassProperty& operator= (const DelayedAddObjCClassProperty &rhs)
+    {
         m_ast                  = rhs.m_ast;
         m_class_opaque_type    = rhs.m_class_opaque_type;
         m_property_name        = rhs.m_property_name;
@@ -1518,7 +1523,7 @@ public:
             m_metadata_ap.reset (new ClangASTMetadata());
             *(m_metadata_ap.get()) = *(rhs.m_metadata_ap.get());
         }
-        
+        return *this;
     }
     
     bool Finalize() const
