@@ -81,7 +81,10 @@ void llvm::report_fatal_error(const Twine &Reason) {
   // files registered with RemoveFileOnSignal.
   sys::RunInterruptHandlers();
 
-  exit(1);
+  // When reporting a fatal error, exit with status 70.  For BSD systems this
+  // is defined as an internal software error.  This notifies the driver to
+  // report diagnostics information.
+  exit(70);
 }
 
 void llvm::llvm_unreachable_internal(const char *msg, const char *file,
