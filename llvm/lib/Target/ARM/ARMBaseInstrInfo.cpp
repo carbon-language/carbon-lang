@@ -1373,6 +1373,9 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
 /// only return true if the base pointers are the same and the only differences
 /// between the two addresses is the offset. It also returns the offsets by
 /// reference.
+///
+/// FIXME: remove this in favor of the MachineInstr interface once pre-RA-sched
+/// is permanently disabled.
 bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
                                                int64_t &Offset1,
                                                int64_t &Offset2) const {
@@ -1447,6 +1450,9 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
 /// from the common base address. It returns true if it decides it's desirable
 /// to schedule the two loads together. "NumLoads" is the number of loads that
 /// have already been scheduled after Load1.
+///
+/// FIXME: remove this in favor of the MachineInstr interface once pre-RA-sched
+/// is permanently disabled.
 bool ARMBaseInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
                                                int64_t Offset1, int64_t Offset2,
                                                unsigned NumLoads) const {

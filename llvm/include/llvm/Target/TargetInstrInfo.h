@@ -621,6 +621,19 @@ public:
     return false;
   }
 
+  /// \brief Get the base register and byte offset of a load/store instr.
+  virtual bool getLdStBaseRegImmOfs(MachineInstr *LdSt,
+                                    unsigned &BaseReg, unsigned &Offset,
+                                    const TargetRegisterInfo *TRI) const {
+    return false;
+  }
+
+  virtual bool shouldScheduleLoadsNear(MachineInstr *FirstLdSt,
+                                       MachineInstr *SecondLdSt,
+                                       unsigned NumLoads) const {
+    return false;
+  }
+
   /// ReverseBranchCondition - Reverses the branch condition of the specified
   /// condition list, returning false on success and true if it cannot be
   /// reversed.

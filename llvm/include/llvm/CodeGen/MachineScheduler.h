@@ -202,6 +202,10 @@ protected:
   RegisterClassInfo *RegClassInfo;
   MachineSchedStrategy *SchedImpl;
 
+  /// Topo - A topological ordering for SUnits which permits fast IsReachable
+  /// and similar queries.
+  ScheduleDAGTopologicalSort Topo;
+
   /// Ordered list of DAG postprocessing steps.
   std::vector<ScheduleDAGMutation*> Mutations;
 
@@ -226,6 +230,10 @@ protected:
   IntervalPressure BotPressure;
   RegPressureTracker BotRPTracker;
 
+  /// Record the next node in a scheduled cluster.
+  const SUnit *NextClusterPred;
+  const SUnit *NextClusterSucc;
+
 #ifndef NDEBUG
   /// The number of instructions scheduled so far. Used to cut off the
   /// scheduler at the point determined by misched-cutoff.
@@ -236,23 +244,34 @@ public:
   ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
     AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
-    RPTracker(RegPressure), CurrentTop(), TopRPTracker(TopPressure),
-    CurrentBottom(), BotRPTracker(BotPressure) {
+    Topo(SUnits, &ExitSU), RPTracker(RegPressure), CurrentTop(),
+    TopRPTracker(TopPressure), CurrentBottom(), BotRPTracker(BotPressure),
+    NextClusterPred(NULL), NextClusterSucc(NULL) {
 #ifndef NDEBUG
     NumInstrsScheduled = 0;
 #endif
   }
 
   virtual ~ScheduleDAGMI() {
+    DeleteContainerPointers(Mutations);
     delete SchedImpl;
   }
 
   /// Add a postprocessing step to the DAG builder.
   /// Mutations are applied in the order that they are added after normal DAG
   /// building and before MachineSchedStrategy initialization.
+  ///
+  /// ScheduleDAGMI takes ownership of the Mutation object.
   void addMutation(ScheduleDAGMutation *Mutation) {
     Mutations.push_back(Mutation);
   }
+
+  /// \brief Add a DAG edge to the given SU with the given predecessor
+  /// dependence data.
+  ///
+  /// \returns true if the edge may be added without creating a cycle OR if an
+  /// equivalent edge already existed (false indicates failure).
+  bool addEdge(SUnit *SuccSU, const SDep &PredDep);
 
   MachineBasicBlock::iterator top() const { return CurrentTop; }
   MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
@@ -284,6 +303,10 @@ public:
   const std::vector<PressureElement> &getRegionCriticalPSets() const {
     return RegionCriticalPSets;
   }
+
+  const SUnit *getNextClusterPred() const { return NextClusterPred; }
+
+  const SUnit *getNextClusterSucc() const { return NextClusterSucc; }
 
 protected:
   // Top-Level entry points for the schedule() driver...
