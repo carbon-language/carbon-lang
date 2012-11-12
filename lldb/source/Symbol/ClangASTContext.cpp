@@ -257,7 +257,7 @@ ParseLangArgs
     }
 
     const LangStandard &Std = LangStandard::getLangStandardForKind(LangStd);
-    Opts.BCPLComment = Std.hasBCPLComments();
+    Opts.LineComment = Std.hasLineComments();
     Opts.C99 = Std.isC99();
     Opts.CPlusPlus = Std.isCPlusPlus();
     Opts.CPlusPlus0x = Std.isCPlusPlus0x();
