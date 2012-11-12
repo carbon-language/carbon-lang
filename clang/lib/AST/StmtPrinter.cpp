@@ -912,11 +912,11 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   PrintExpr(Node->getBase());
 
   MemberExpr *ParentMember = dyn_cast<MemberExpr>(Node->getBase());
-  FieldDecl  *ParentDecl   = ParentMember ? dyn_cast<FieldDecl>(ParentMember->getMemberDecl()): NULL;
+  FieldDecl  *ParentDecl   = ParentMember
+    ? dyn_cast<FieldDecl>(ParentMember->getMemberDecl()) : NULL;
 
-  if (!ParentDecl || !ParentDecl->isAnonymousStructOrUnion()) {
+  if (!ParentDecl || !ParentDecl->isAnonymousStructOrUnion())
     OS << (Node->isArrow() ? "->" : ".");
-  }
 
   if (FieldDecl *FD = dyn_cast<FieldDecl>(Node->getMemberDecl()))
     if (FD->isAnonymousStructOrUnion())
