@@ -341,25 +341,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     if (Var->getStorageClass() == SC_PrivateExtern)
       LV.mergeVisibility(HiddenVisibility, true);
 
-    if (!Context.getLangOpts().CPlusPlus &&
-        (Var->getStorageClass() == SC_Extern ||
-         Var->getStorageClass() == SC_PrivateExtern)) {
-
-      // C99 6.2.2p4:
-      //   For an identifier declared with the storage-class specifier
-      //   extern in a scope in which a prior declaration of that
-      //   identifier is visible, if the prior declaration specifies
-      //   internal or external linkage, the linkage of the identifier
-      //   at the later declaration is the same as the linkage
-      //   specified at the prior declaration. If no prior declaration
-      //   is visible, or if the prior declaration specifies no
-      //   linkage, then the identifier has external linkage.
-      if (const VarDecl *PrevVar = Var->getPreviousDecl()) {
-        LinkageInfo PrevLV = getLVForDecl(PrevVar, OnlyTemplate);
-        if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
-        LV.mergeVisibility(PrevLV);
-      }
-    }
+    // Note that Sema::MergeVarDecl already takes care of implementing
+    // C99 6.2.2p4 and propagating the visibility attribute, so we don't have
+    // to do it here.
 
   //     - a function, unless it has internal linkage; or
   } else if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
@@ -841,13 +825,10 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
           if (llvm::Optional<Visibility> Vis = Var->getExplicitVisibility())
             LV.mergeVisibility(*Vis, true);
         }
-        
-        if (const VarDecl *Prev = Var->getPreviousDecl()) {
-          LinkageInfo PrevLV = getLVForDecl(Prev, OnlyTemplate);
-          if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
-          LV.mergeVisibility(PrevLV);
-        }
 
+        // Note that Sema::MergeVarDecl already takes care of implementing
+        // C99 6.2.2p4 and propagating the visibility attribute, so we don't
+        // have to do it here.
         return LV;
       }
   }
