@@ -552,7 +552,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
     const uint8_t* actionTableStart = callSiteTableEnd;
     const uint8_t* callSitePtr = callSiteTableStart;
-    while (true)
+    while (callSitePtr < callSiteTableEnd)
     {
         // There is one entry per call site.
 #if !__arm__
@@ -782,7 +782,11 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
             call_terminate(native_exception, unwind_exception);
         }
 #endif  // !__arm__
-    }  // there is no break out of this loop, only return
+    }  // there might be some tricky cases which break out of this loop
+
+    // It is possible that no eh table entry specify how to handle
+    // this exception. By spec, terminate it immediately.
+    call_terminate(native_exception, unwind_exception);
 }
 
 // public API
