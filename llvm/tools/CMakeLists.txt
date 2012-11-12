@@ -38,6 +38,8 @@ add_subdirectory(llvm-bcanalyzer)
 add_subdirectory(llvm-stress)
 add_subdirectory(llvm-mcmarkup)
 
+add_subdirectory(llvm-symbolizer)
+
 if( NOT WIN32 )
   add_subdirectory(lto)
 endif()

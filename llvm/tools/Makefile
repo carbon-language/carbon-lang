@@ -34,7 +34,8 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  bugpoint llvm-bcanalyzer \
                  llvm-diff macho-dump llvm-objdump llvm-readobj \
 	         llvm-rtdyld llvm-dwarfdump llvm-cov \
-	         llvm-size llvm-stress llvm-mcmarkup
+	         llvm-size llvm-stress llvm-mcmarkup \
+	         llvm-symbolizer
 
 # Let users override the set of tools to build from the command line.
 ifdef ONLY_TOOLS
