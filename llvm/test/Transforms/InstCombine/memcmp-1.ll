@@ -59,7 +59,7 @@ define i32 @test_simplify5() {
   %mem2 = getelementptr [4 x i8]* @foo, i32 0, i32 0
   %ret = call i32 @memcmp(i8* %mem1, i8* %mem2, i32 3)
   ret i32 %ret
-; CHECK: ret i32 {{[0-9]+}}
+; CHECK: ret i32 1
 }
 
 define i32 @test_simplify6() {
@@ -68,5 +68,5 @@ define i32 @test_simplify6() {
   %mem2 = getelementptr [4 x i8]* @hel, i32 0, i32 0
   %ret = call i32 @memcmp(i8* %mem1, i8* %mem2, i32 3)
   ret i32 %ret
-; CHECK: ret i32 {{-[0-9]+}}
+; CHECK: ret i32 -1
 }

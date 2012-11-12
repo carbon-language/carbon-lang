@@ -951,7 +951,14 @@ struct MemCmpOpt : public LibCallOptimization {
       // Make sure we're not reading out-of-bounds memory.
       if (Len > LHSStr.size() || Len > RHSStr.size())
         return 0;
-      uint64_t Ret = memcmp(LHSStr.data(), RHSStr.data(), Len);
+      // Fold the memcmp and normalize the result.  This way we get consistent
+      // results across multiple platforms.
+      uint64_t Ret = 0;
+      int Cmp = memcmp(LHSStr.data(), RHSStr.data(), Len);
+      if (Cmp < 0)
+        Ret = -1;
+      else if (Cmp > 0)
+        Ret = 1;
       return ConstantInt::get(CI->getType(), Ret);
     }
 
