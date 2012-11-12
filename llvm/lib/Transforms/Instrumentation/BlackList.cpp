@@ -97,8 +97,9 @@ static StringRef GetGVTypeString(const GlobalVariable &G) {
   // Types of GlobalVariables are always pointer types.
   Type *GType = G.getType()->getElementType();
   // For now we support blacklisting struct types only.
-  if (GType->isStructTy()) {
-    return GType->getStructName();
+  if (StructType *SGType = dyn_cast<StructType>(GType)) {
+    if (!SGType->isLiteral())
+      return SGType->getName();
   }
   return "<unknown type>";
 }
