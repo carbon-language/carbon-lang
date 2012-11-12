@@ -480,8 +480,9 @@ int main(int argc_, const char **argv_) {
      Res = -1;
 
   // If result status is < 0, then the driver command signalled an error.
-  // In this case, generate additional diagnostic information if possible.
-  if (Res < 0)
+  // If result status is 70, then the driver command reported a fatal error.
+  // In these cases, generate additional diagnostic information if possible.
+  if (Res < 0 || Res == 70)
     TheDriver.generateCompilationDiagnostics(*C, FailingCommand);
 
   // If any timers were active but haven't been destroyed yet, print their

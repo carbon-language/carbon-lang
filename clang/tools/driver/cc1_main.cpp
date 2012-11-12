@@ -48,8 +48,10 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   // particular that we remove files registered with RemoveFileOnSignal.
   llvm::sys::RunInterruptHandlers();
 
-  // We cannot recover from llvm errors.
-  exit(1);
+  // We cannot recover from llvm errors.  When reporting a fatal error, exit
+  // with status 70.  For BSD systems this is defined as an internal software
+  // error.  This notifies the driver to report diagnostics information.
+  exit(70);
 }
 
 int cc1_main(const char **ArgBegin, const char **ArgEnd,
