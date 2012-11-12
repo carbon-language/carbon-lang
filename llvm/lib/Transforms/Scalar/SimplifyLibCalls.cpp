@@ -99,10 +99,6 @@ static bool CallHasFloatingPointArgument(const CallInst *CI) {
   return false;
 }
 
-//===----------------------------------------------------------------------===//
-// Memory LibCall Optimizations
-//===----------------------------------------------------------------------===//
-
 namespace {
 //===----------------------------------------------------------------------===//
 // Math Library Optimizations
