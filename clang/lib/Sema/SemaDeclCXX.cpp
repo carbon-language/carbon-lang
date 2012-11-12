@@ -7439,10 +7439,72 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
 ///
 /// \returns A statement or a loop that copies the expressions.
 static StmtResult
-BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T, 
+BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                       Expr *To, Expr *From,
                       bool CopyingBaseSubobject, bool Copying,
                       unsigned Depth = 0) {
+  // If the field should be copied with __builtin_memcpy rather than via
+  // explicit assignments, do so. This optimization only applies for arrays
+  // of scalars and arrays of class type with trivial copy-assignment
+  // operators.
+  QualType BaseType = S.Context.getBaseElementType(T);
+  if (T->isArrayType() && !T.isVolatileQualified()
+      && BaseType.hasTrivialAssignment(S.Context, Copying)) {
+    // Compute the size of the memory buffer to be copied.
+    QualType SizeType = S.Context.getSizeType();
+    llvm::APInt Size(S.Context.getTypeSize(SizeType),
+                     S.Context.getTypeSizeInChars(BaseType).getQuantity());
+    for (const ConstantArrayType *Array
+            = S.Context.getAsConstantArrayType(T);
+         Array;
+         Array = S.Context.getAsConstantArrayType(Array->getElementType())) {
+      llvm::APInt ArraySize
+        = Array->getSize().zextOrTrunc(Size.getBitWidth());
+      Size *= ArraySize;
+    }
+
+    // Take the address of the field references for "from" and "to". We
+    // directly construct UnaryOperators here because semantic analysis
+    // does not permit us to take the address of an xvalue.
+    From = new (S.Context) UnaryOperator(From, UO_AddrOf,
+                           S.Context.getPointerType(From->getType()),
+                           VK_RValue, OK_Ordinary, Loc);
+    To = new (S.Context) UnaryOperator(To, UO_AddrOf,
+                         S.Context.getPointerType(To->getType()),
+                         VK_RValue, OK_Ordinary, Loc);
+
+    bool NeedsCollectableMemCpy =
+        (BaseType->isRecordType() &&
+         BaseType->getAs<RecordType>()->getDecl()->hasObjectMember());
+
+    // Create a reference to the __builtin_objc_memmove_collectable function
+    StringRef MemCpyName = NeedsCollectableMemCpy ?
+        "__builtin_objc_memmove_collectable" :
+        "__builtin_memcpy";
+    LookupResult R(S, &S.Context.Idents.get(MemCpyName), Loc,
+                   Sema::LookupOrdinaryName);
+    S.LookupName(R, S.TUScope, true);
+
+    FunctionDecl *MemCpy = R.getAsSingle<FunctionDecl>();
+    if (!MemCpy)
+      // Something went horribly wrong earlier, and we will have complained
+      // about it.
+      return StmtError();
+
+    ExprResult MemCpyRef = S.BuildDeclRefExpr(MemCpy, S.Context.BuiltinFnTy,
+                                              VK_RValue, Loc, 0);
+    assert(MemCpyRef.isUsable() && "Builtin reference cannot fail");
+
+    Expr *CallArgs[] = {
+      To, From, IntegerLiteral::Create(S.Context, Size, SizeType, Loc)
+    };
+    ExprResult Call = S.ActOnCallExpr(/*Scope=*/0, MemCpyRef.take(),
+                                      Loc, CallArgs, Loc);
+
+    assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
+    return S.Owned(Call.takeAs<Stmt>());
+  }
+
   // C++0x [class.copy]p28:
   //   Each subobject is assigned in the manner appropriate to its type:
   //
@@ -7461,6 +7523,8 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     S.LookupQualifiedName(OpLookup, ClassDecl, false);
     
     // Filter out any result that isn't a copy/move-assignment operator.
+    // FIXME: This is wrong in C++11. We should perform overload resolution
+    //        instead here.
     LookupResult::Filter F = OpLookup.makeFilter();
     while (F.hasNext()) {
       NamedDecl *D = F.next();
@@ -7521,6 +7585,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     if (Call.isInvalid())
       return StmtError();
     
+    // FIXME: ActOnFinishFullExpr, ActOnExprStmt.
     return S.Owned(Call.takeAs<Stmt>());
   }
 
@@ -7907,11 +7972,6 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     Statements.push_back(Copy.takeAs<Expr>());
   }
   
-  // \brief Reference to the __builtin_memcpy function.
-  Expr *BuiltinMemCpyRef = 0;
-  // \brief Reference to the __builtin_objc_memmove_collectable function.
-  Expr *CollectableMemCpyRef = 0;
-  
   // Assign non-static members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end(); 
@@ -7969,99 +8029,9 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                              MemberLookup, 0);
     assert(!From.isInvalid() && "Implicit field reference cannot fail");
     assert(!To.isInvalid() && "Implicit field reference cannot fail");
-    
-    // If the field should be copied with __builtin_memcpy rather than via
-    // explicit assignments, do so. This optimization only applies for arrays 
-    // of scalars and arrays of class type with trivial copy-assignment 
-    // operators.
-    if (FieldType->isArrayType() && !FieldType.isVolatileQualified()
-        && BaseType.hasTrivialAssignment(Context, /*Copying=*/true)) {
-      // Compute the size of the memory buffer to be copied.
-      QualType SizeType = Context.getSizeType();
-      llvm::APInt Size(Context.getTypeSize(SizeType), 
-                       Context.getTypeSizeInChars(BaseType).getQuantity());
-      for (const ConstantArrayType *Array
-              = Context.getAsConstantArrayType(FieldType);
-           Array; 
-           Array = Context.getAsConstantArrayType(Array->getElementType())) {
-        llvm::APInt ArraySize
-          = Array->getSize().zextOrTrunc(Size.getBitWidth());
-        Size *= ArraySize;
-      }
-          
-      // Take the address of the field references for "from" and "to".
-      From = CreateBuiltinUnaryOp(Loc, UO_AddrOf, From.get());
-      To = CreateBuiltinUnaryOp(Loc, UO_AddrOf, To.get());
-          
-      bool NeedsCollectableMemCpy = 
-          (BaseType->isRecordType() && 
-           BaseType->getAs<RecordType>()->getDecl()->hasObjectMember());
-          
-      if (NeedsCollectableMemCpy) {
-        if (!CollectableMemCpyRef) {
-          // Create a reference to the __builtin_objc_memmove_collectable function.
-          LookupResult R(*this, 
-                         &Context.Idents.get("__builtin_objc_memmove_collectable"), 
-                         Loc, LookupOrdinaryName);
-          LookupName(R, TUScope, true);
-        
-          FunctionDecl *CollectableMemCpy = R.getAsSingle<FunctionDecl>();
-          if (!CollectableMemCpy) {
-            // Something went horribly wrong earlier, and we will have 
-            // complained about it.
-            Invalid = true;
-            continue;
-          }
-        
-          CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
-                                                  Context.BuiltinFnTy,
-                                                  VK_RValue, Loc, 0).take();
-          assert(CollectableMemCpyRef && "Builtin reference cannot fail");
-        }
-      }
-      // Create a reference to the __builtin_memcpy builtin function.
-      else if (!BuiltinMemCpyRef) {
-        LookupResult R(*this, &Context.Idents.get("__builtin_memcpy"), Loc,
-                       LookupOrdinaryName);
-        LookupName(R, TUScope, true);
-        
-        FunctionDecl *BuiltinMemCpy = R.getAsSingle<FunctionDecl>();
-        if (!BuiltinMemCpy) {
-          // Something went horribly wrong earlier, and we will have complained
-          // about it.
-          Invalid = true;
-          continue;
-        }
 
-        BuiltinMemCpyRef = BuildDeclRefExpr(BuiltinMemCpy, 
-                                            Context.BuiltinFnTy,
-                                            VK_RValue, Loc, 0).take();
-        assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
-      }
-          
-      SmallVector<Expr*, 8> CallArgs;
-      CallArgs.push_back(To.takeAs<Expr>());
-      CallArgs.push_back(From.takeAs<Expr>());
-      CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
-      ExprResult Call = ExprError();
-      if (NeedsCollectableMemCpy)
-        Call = ActOnCallExpr(/*Scope=*/0,
-                             CollectableMemCpyRef,
-                             Loc, CallArgs,
-                             Loc);
-      else
-        Call = ActOnCallExpr(/*Scope=*/0,
-                             BuiltinMemCpyRef,
-                             Loc, CallArgs,
-                             Loc);
-          
-      assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
-      Statements.push_back(Call.takeAs<Expr>());
-      continue;
-    }
-    
     // Build the copy of this field.
-    StmtResult Copy = BuildSingleCopyAssign(*this, Loc, FieldType, 
+    StmtResult Copy = BuildSingleCopyAssign(*this, Loc, FieldType,
                                             To.get(), From.get(),
                                             /*CopyingBaseSubobject=*/false,
                                             /*Copying=*/true);
@@ -8446,11 +8416,6 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     Statements.push_back(Move.takeAs<Expr>());
   }
 
-  // \brief Reference to the __builtin_memcpy function.
-  Expr *BuiltinMemCpyRef = 0;
-  // \brief Reference to the __builtin_objc_memmove_collectable function.
-  Expr *CollectableMemCpyRef = 0;
-
   // Assign non-static members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end(); 
@@ -8513,104 +8478,8 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
         "Member reference with rvalue base must be rvalue except for reference "
         "members, which aren't allowed for move assignment.");
 
-    // If the field should be copied with __builtin_memcpy rather than via
-    // explicit assignments, do so. This optimization only applies for arrays 
-    // of scalars and arrays of class type with trivial move-assignment 
-    // operators.
-    if (FieldType->isArrayType() && !FieldType.isVolatileQualified()
-        && BaseType.hasTrivialAssignment(Context, /*Copying=*/false)) {
-      // Compute the size of the memory buffer to be copied.
-      QualType SizeType = Context.getSizeType();
-      llvm::APInt Size(Context.getTypeSize(SizeType), 
-                       Context.getTypeSizeInChars(BaseType).getQuantity());
-      for (const ConstantArrayType *Array
-              = Context.getAsConstantArrayType(FieldType);
-           Array; 
-           Array = Context.getAsConstantArrayType(Array->getElementType())) {
-        llvm::APInt ArraySize
-          = Array->getSize().zextOrTrunc(Size.getBitWidth());
-        Size *= ArraySize;
-      }
-
-      // Take the address of the field references for "from" and "to". We
-      // directly construct UnaryOperators here because semantic analysis
-      // does not permit us to take the address of an xvalue.
-      From = new (Context) UnaryOperator(From.get(), UO_AddrOf,
-                             Context.getPointerType(From.get()->getType()),
-                             VK_RValue, OK_Ordinary, Loc);
-      To = new (Context) UnaryOperator(To.get(), UO_AddrOf,
-                           Context.getPointerType(To.get()->getType()),
-                           VK_RValue, OK_Ordinary, Loc);
-          
-      bool NeedsCollectableMemCpy = 
-          (BaseType->isRecordType() && 
-           BaseType->getAs<RecordType>()->getDecl()->hasObjectMember());
-          
-      if (NeedsCollectableMemCpy) {
-        if (!CollectableMemCpyRef) {
-          // Create a reference to the __builtin_objc_memmove_collectable function.
-          LookupResult R(*this, 
-                         &Context.Idents.get("__builtin_objc_memmove_collectable"), 
-                         Loc, LookupOrdinaryName);
-          LookupName(R, TUScope, true);
-        
-          FunctionDecl *CollectableMemCpy = R.getAsSingle<FunctionDecl>();
-          if (!CollectableMemCpy) {
-            // Something went horribly wrong earlier, and we will have 
-            // complained about it.
-            Invalid = true;
-            continue;
-          }
-        
-          CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
-                                                  Context.BuiltinFnTy,
-                                                  VK_RValue, Loc, 0).take();
-          assert(CollectableMemCpyRef && "Builtin reference cannot fail");
-        }
-      }
-      // Create a reference to the __builtin_memcpy builtin function.
-      else if (!BuiltinMemCpyRef) {
-        LookupResult R(*this, &Context.Idents.get("__builtin_memcpy"), Loc,
-                       LookupOrdinaryName);
-        LookupName(R, TUScope, true);
-        
-        FunctionDecl *BuiltinMemCpy = R.getAsSingle<FunctionDecl>();
-        if (!BuiltinMemCpy) {
-          // Something went horribly wrong earlier, and we will have complained
-          // about it.
-          Invalid = true;
-          continue;
-        }
-
-        BuiltinMemCpyRef = BuildDeclRefExpr(BuiltinMemCpy, 
-                                            Context.BuiltinFnTy,
-                                            VK_RValue, Loc, 0).take();
-        assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
-      }
-          
-      SmallVector<Expr*, 8> CallArgs;
-      CallArgs.push_back(To.takeAs<Expr>());
-      CallArgs.push_back(From.takeAs<Expr>());
-      CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
-      ExprResult Call = ExprError();
-      if (NeedsCollectableMemCpy)
-        Call = ActOnCallExpr(/*Scope=*/0,
-                             CollectableMemCpyRef,
-                             Loc, CallArgs,
-                             Loc);
-      else
-        Call = ActOnCallExpr(/*Scope=*/0,
-                             BuiltinMemCpyRef,
-                             Loc, CallArgs,
-                             Loc);
-          
-      assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
-      Statements.push_back(Call.takeAs<Expr>());
-      continue;
-    }
-    
     // Build the move of this field.
-    StmtResult Move = BuildSingleCopyAssign(*this, Loc, FieldType, 
+    StmtResult Move = BuildSingleCopyAssign(*this, Loc, FieldType,
                                             To.get(), From.get(),
                                             /*CopyingBaseSubobject=*/false,
                                             /*Copying=*/false);
@@ -8620,7 +8489,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
       MoveAssignOperator->setInvalidDecl();
       return;
     }
-    
+
     // Success! Record the copy.
     Statements.push_back(Move.takeAs<Stmt>());
   }
