@@ -5,8 +5,5 @@
 ; XFAIL: vg_leak
 ; REQUIRES: shell
 
-; On MSYS, 70 is not seen, but 1. r127726 should be reworked.
-; XFAIL: mingw32
-
 ; Test that the error handling when writing to stderr fails exits the
 ; program cleanly rather than aborting.
