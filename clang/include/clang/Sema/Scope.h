@@ -84,18 +84,9 @@ public:
     /// TryScope - This is the scope of a C++ try statement.
     TryScope = 0x1000,
 
-    /// CatchScope - This is the scope of a C++ catch statement.
-    CatchScope = 0x2000,
-
     /// FnTryCatchScope - This is the scope for a function-level C++ try or
     /// catch scope.
-    FnTryCatchScope = 0x4000,
-
-    /// FnTryScope - This is the scope of a function-level C++ try scope.
-    FnTryScope = TryScope | FnTryCatchScope,
-
-    /// FnCatchScope - This is the scope of a function-level C++ catch scope.
-    FnCatchScope = CatchScope | FnTryCatchScope
+    FnTryCatchScope = 0x2000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
