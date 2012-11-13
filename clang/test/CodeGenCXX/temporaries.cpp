@@ -537,3 +537,24 @@ namespace PR11365 {
     (void) (A [3]) {};
   }
 }
+
+namespace AssignmentOp {
+  struct A { ~A(); };
+  struct B { A operator=(const B&); };
+  struct C : B { B b1, b2; };
+  // CHECK: define void @_ZN12AssignmentOp1fE
+  void f(C &c1, const C &c2) {
+    // CHECK: call {{.*}} @_ZN12AssignmentOp1CaSERKS0_(
+    c1 = c2;
+  }
+
+  // Ensure that each 'A' temporary is destroyed before the next subobject is
+  // copied.
+  // CHECK: define {{.*}} @_ZN12AssignmentOp1CaSERKS0_(
+  // CHECK: call {{.*}} @_ZN12AssignmentOp1BaSERKS
+  // CHECK: call {{.*}} @_ZN12AssignmentOp1AD1Ev(
+  // CHECK: call {{.*}} @_ZN12AssignmentOp1BaSERKS
+  // CHECK: call {{.*}} @_ZN12AssignmentOp1AD1Ev(
+  // CHECK: call {{.*}} @_ZN12AssignmentOp1BaSERKS
+  // CHECK: call {{.*}} @_ZN12AssignmentOp1AD1Ev(
+}

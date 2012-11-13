@@ -7505,7 +7505,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     return S.Owned(Call.takeAs<Stmt>());
   }
 
-  // C++0x [class.copy]p28:
+  // C++11 [class.copy]p28:
   //   Each subobject is assigned in the manner appropriate to its type:
   //
   //     - if the subobject is of class type, as if by a call to operator= with
@@ -7513,34 +7513,41 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   //       subobject of x as a single function argument (as if by explicit
   //       qualification; that is, ignoring any possible virtual overriding
   //       functions in more derived classes);
+  //
+  // C++03 [class.copy]p13:
+  //     - if the subobject is of class type, the copy assignment operator for
+  //       the class is used (as if by explicit qualification; that is,
+  //       ignoring any possible virtual overriding functions in more derived
+  //       classes);
   if (const RecordType *RecordTy = T->getAs<RecordType>()) {
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
-    
+
     // Look for operator=.
     DeclarationName Name
       = S.Context.DeclarationNames.getCXXOperatorName(OO_Equal);
     LookupResult OpLookup(S, Name, Loc, Sema::LookupOrdinaryName);
     S.LookupQualifiedName(OpLookup, ClassDecl, false);
-    
-    // Filter out any result that isn't a copy/move-assignment operator.
-    // FIXME: This is wrong in C++11. We should perform overload resolution
-    //        instead here.
-    LookupResult::Filter F = OpLookup.makeFilter();
-    while (F.hasNext()) {
-      NamedDecl *D = F.next();
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-        if (Method->isCopyAssignmentOperator() ||
-            (!Copying && Method->isMoveAssignmentOperator()))
-          continue;
 
-      F.erase();
+    // Prior to C++11, filter out any result that isn't a copy/move-assignment
+    // operator.
+    if (!S.getLangOpts().CPlusPlus0x) {
+      LookupResult::Filter F = OpLookup.makeFilter();
+      while (F.hasNext()) {
+        NamedDecl *D = F.next();
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+          if (Method->isCopyAssignmentOperator() ||
+              (!Copying && Method->isMoveAssignmentOperator()))
+            continue;
+
+        F.erase();
+      }
+      F.done();
     }
-    F.done();
-    
+
     // Suppress the protected check (C++ [class.protected]) for each of the
-    // assignment operators we found. This strange dance is required when 
+    // assignment operators we found. This strange dance is required when
     // we're assigning via a base classes's copy-assignment operator. To
-    // ensure that we're getting the right base class subobject (without 
+    // ensure that we're getting the right base class subobject (without
     // ambiguities), we need to cast "this" to that subobject type; to
     // ensure that we don't go through the virtual call mechanism, we need
     // to qualify the operator= name with the base class (see below). However,
@@ -7555,20 +7562,20 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
           L.setAccess(AS_public);
       }
     }
-    
+
     // Create the nested-name-specifier that will be used to qualify the
     // reference to operator=; this is required to suppress the virtual
     // call mechanism.
     CXXScopeSpec SS;
     const Type *CanonicalT = S.Context.getCanonicalType(T.getTypePtr());
-    SS.MakeTrivial(S.Context, 
-                   NestedNameSpecifier::Create(S.Context, 0, false, 
+    SS.MakeTrivial(S.Context,
+                   NestedNameSpecifier::Create(S.Context, 0, false,
                                                CanonicalT),
                    Loc);
-    
+
     // Create the reference to operator=.
     ExprResult OpEqualRef
-      = S.BuildMemberReferenceExpr(To, T, Loc, /*isArrow=*/false, SS, 
+      = S.BuildMemberReferenceExpr(To, T, Loc, /*isArrow=*/false, SS,
                                    /*TemplateKWLoc=*/SourceLocation(),
                                    /*FirstQualifierInScope=*/0,
                                    OpLookup,
@@ -7576,33 +7583,34 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                    /*SuppressQualifierCheck=*/true);
     if (OpEqualRef.isInvalid())
       return StmtError();
-    
+
     // Build the call to the assignment operator.
 
-    ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0, 
+    ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0,
                                                   OpEqualRef.takeAs<Expr>(),
                                                   Loc, &From, 1, Loc);
     if (Call.isInvalid())
       return StmtError();
-    
-    // FIXME: ActOnFinishFullExpr, ActOnExprStmt.
-    return S.Owned(Call.takeAs<Stmt>());
+
+    // Convert to an expression-statement, and clean up any produced
+    // temporaries.
+    return S.ActOnExprStmt(S.MakeFullExpr(Call.take(), Loc));
   }
 
-  //     - if the subobject is of scalar type, the built-in assignment 
+  //     - if the subobject is of scalar type, the built-in assignment
   //       operator is used.
-  const ConstantArrayType *ArrayTy = S.Context.getAsConstantArrayType(T);  
+  const ConstantArrayType *ArrayTy = S.Context.getAsConstantArrayType(T);
   if (!ArrayTy) {
     ExprResult Assignment = S.CreateBuiltinBinOp(Loc, BO_Assign, To, From);
     if (Assignment.isInvalid())
       return StmtError();
-    
-    return S.Owned(Assignment.takeAs<Stmt>());
+
+    return S.ActOnExprStmt(S.MakeFullExpr(Assignment.take(), Loc));
   }
-    
-  //     - if the subobject is an array, each element is assigned, in the 
+
+  //     - if the subobject is an array, each element is assigned, in the
   //       manner appropriate to the element type;
-  
+
   // Construct a loop over the array bounds, e.g.,
   //
   //   for (__SIZE_TYPE__ i0 = 0; i0 != array-size; ++i0)
