@@ -1395,13 +1395,13 @@ let Uses = [RM] in {
                       "fdivs $FRT, $FRA, $FRB", FPDivS,
                       [(set F4RC:$FRT, (fdiv F4RC:$FRA, F4RC:$FRB))]>;
   def FMUL  : AForm_3<63, 25,
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
-                      "fmul $FRT, $FRA, $FRB", FPFused,
-                      [(set F8RC:$FRT, (fmul F8RC:$FRA, F8RC:$FRB))]>;
+                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC),
+                      "fmul $FRT, $FRA, $FRC", FPFused,
+                      [(set F8RC:$FRT, (fmul F8RC:$FRA, F8RC:$FRC))]>;
   def FMULS : AForm_3<59, 25,
-                      (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
-                      "fmuls $FRT, $FRA, $FRB", FPGeneral,
-                      [(set F4RC:$FRT, (fmul F4RC:$FRA, F4RC:$FRB))]>;
+                      (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC),
+                      "fmuls $FRT, $FRA, $FRC", FPGeneral,
+                      [(set F4RC:$FRT, (fmul F4RC:$FRA, F4RC:$FRC))]>;
   def FSUB  : AForm_2<63, 20,
                       (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
                       "fsub $FRT, $FRA, $FRB", FPAddSub,

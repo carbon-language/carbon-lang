@@ -626,9 +626,9 @@ class XFXForm_5<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
                 InstrItinClass itin> 
   : I<opcode, OOL, IOL, asmstr, itin> {
   bits<8>  FXM;
-  bits<5>  ST;
+  bits<5>  rS;
    
-  let Inst{6-10}  = ST;
+  let Inst{6-10}  = rS;
   let Inst{11}    = 0;
   let Inst{12-19} = FXM;
   let Inst{20}    = 0;
@@ -667,7 +667,7 @@ class XFLForm<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
                       string cstr, InstrItinClass itin, list<dag>pattern>
   : I<opcode, OOL, IOL, asmstr, itin> {
   bits<8> FM;
-  bits<5> RT;
+  bits<5> rT;
 
   bit RC = 0;    // set by isDOT
   let Pattern = pattern;
@@ -676,7 +676,7 @@ class XFLForm<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{6} = 0;
   let Inst{7-14}  = FM;
   let Inst{15} = 0;
-  let Inst{16-20} = RT;
+  let Inst{16-20} = rT;
   let Inst{21-30} = xo;
   let Inst{31}    = RC;
 }
