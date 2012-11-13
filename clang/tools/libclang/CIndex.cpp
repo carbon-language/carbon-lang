@@ -6119,6 +6119,8 @@ namespace clang {
 bool RunSafely(llvm::CrashRecoveryContext &CRC,
                void (*Fn)(void*), void *UserData,
                unsigned Size) {
+  if (getenv("LIBCLANG_THREAD_SMALLSTACK"))
+    Size = 0x10000; // 64K.
   if (!Size)
     Size = GetSafetyThreadStackSize();
   if (Size)

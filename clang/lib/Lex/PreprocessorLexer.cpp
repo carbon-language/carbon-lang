@@ -22,7 +22,7 @@ void PreprocessorLexer::anchor() { }
 PreprocessorLexer::PreprocessorLexer(Preprocessor *pp, FileID fid)
   : PP(pp), FID(fid), InitialNumSLocEntries(0),
     ParsingPreprocessorDirective(false),
-    ParsingFilename(false), LexingRawMode(false) {
+    ParsingFilename(false), LexingRawMode(false), EnableIncludedEOF(false) {
   if (pp)
     InitialNumSLocEntries = pp->getSourceManager().local_sloc_entry_size();
 }
