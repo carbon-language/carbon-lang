@@ -1473,23 +1473,23 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
 llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty, llvm::DIFile Unit) {
   llvm::DIType ElementTy = getOrCreateType(Ty->getElementType(), Unit);
-  int64_t NumElems = Ty->getNumElements();
+  int64_t UpperBound = Ty->getNumElements();
   int64_t LowerBound = 0;
-  if (NumElems == 0)
+  if (UpperBound == 0)
     // If number of elements are not known then this is an unbounded array.
     // Use Low = 1, Hi = 0 to express such arrays.
     LowerBound = 1;
   else
-    --NumElems;
+    --UpperBound;
 
-  llvm::Value *Subscript = DBuilder.getOrCreateSubrange(LowerBound, NumElems);
+  llvm::Value *Subscript = DBuilder.getOrCreateSubrange(LowerBound, UpperBound,
+                                                        Ty->getNumElements());
   llvm::DIArray SubscriptArray = DBuilder.getOrCreateArray(Subscript);
 
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
-  return
-    DBuilder.createVectorType(Size, Align, ElementTy, SubscriptArray);
+  return DBuilder.createVectorType(Size, Align, ElementTy, SubscriptArray);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
@@ -1525,9 +1525,11 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   while ((Ty = dyn_cast<ArrayType>(EltTy))) {
     int64_t UpperBound = 0;
     int64_t LowerBound = 0;
+    uint64_t Count = 0;
     if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty)) {
-      if (CAT->getSize().getZExtValue())
-        UpperBound = CAT->getSize().getZExtValue() - 1;
+      Count = CAT->getSize().getZExtValue();
+      if (Count)
+        UpperBound = Count - 1;
     } else
       // This is an unbounded array. Use Low = 1, Hi = 0 to express such 
       // arrays.
@@ -1535,7 +1537,8 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
     
     // FIXME: Verify this is right for VLAs.
     Subscripts.push_back(DBuilder.getOrCreateSubrange(LowerBound,
-                                                      UpperBound));
+                                                      UpperBound,
+                                                      Count));
     EltTy = Ty->getElementType();
   }
 
