@@ -633,6 +633,25 @@ protected:
                 return true;
             }
         }
+        
+        // if all else fails, go to static type
+        if (valobj.IsDynamic())
+        {
+            if (log)
+                log->Printf("[Get] going to static value");
+            lldb::ValueObjectSP static_value_sp(valobj.GetStaticValue());
+            if (static_value_sp)
+            {
+                if (log)
+                    log->Printf("[Get] has a static value - actually use it");
+                if (Get(*static_value_sp.get(), clang::QualType::getFromOpaquePtr(static_value_sp->GetClangType()) , entry, use_dynamic, reason))
+                {
+                    reason |= lldb_private::eFormatterChoiceCriterionWentToStaticValue;
+                    return true;
+                }
+            }
+        }
+        
         return false;
     }
 };

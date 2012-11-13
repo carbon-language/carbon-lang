@@ -77,12 +77,9 @@ public:
     virtual bool
     IsDynamic ()
     {
-        if (m_parent)
-            return m_parent->IsDynamic();
-        else
-            return false;
+        return false;
     }
-    
+
     virtual ValueObject *
     GetParent()
     {
