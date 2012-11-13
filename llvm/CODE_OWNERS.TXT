@@ -50,6 +50,10 @@ N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
 
+N: James Grosbach
+E: grosbach@apple.com
+D: MC layer
+
 N: Joe Abbey
 E: jabbey@arxan.com
 D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
