@@ -36,7 +36,7 @@ namespace __sanitizer {
 // --------------- sanitizer_libc.h
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
-#if __WORDSIZE == 64
+#if defined __x86_64__
   return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
 #else
   return (void *)syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
@@ -69,7 +69,7 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
 }
 
 uptr internal_filesize(fd_t fd) {
-#if __WORDSIZE == 64
+#if defined __x86_64__
   struct stat st;
   if (syscall(__NR_fstat, fd, &st))
     return -1;
@@ -95,7 +95,7 @@ int internal_sched_yield() {
 
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
-#if __WORDSIZE == 64
+#if defined __x86_64__
   struct stat st;
   if (syscall(__NR_stat, filename, &st))
     return false;
