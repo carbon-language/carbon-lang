@@ -33,6 +33,8 @@ public:
     , _type(llvm::ELF::ET_EXEC)
     , _pointerWidth(4)
     , _machine(llvm::ELF::EM_386)
+    , _baseAddress(0x400000)
+    , _pageSize(0x1000)
   {}
 
   /// \brief Create a specific instance of an architecture.
@@ -45,18 +47,24 @@ public:
                    const llvm::support::endianness endian,
                    const uint16_t Type,
                    const uint16_t Machine,
-                   uint64_t pointerWidth = 4)
+                   uint64_t pointerWidth = 4,
+                   uint64_t baseAddress = 0x400000,
+                   uint64_t pageSize = 0x1000)
   : _is64Bit(Is64Bit)
   , _endianness(endian)
   , _type(Type)
   , _pointerWidth(pointerWidth)
-  , _machine(Machine) {}
+  , _machine(Machine)
+  , _baseAddress(baseAddress)
+  , _pageSize(pageSize) {}
 
   bool is64Bit() const { return _is64Bit; }
   llvm::support::endianness endianness() const { return _endianness; }
   uint16_t type() const { return _type; }
   uint16_t machine() const { return _machine; }
   uint16_t pointerWidth() const { return _pointerWidth; }
+  uint64_t baseAddress() const { return _baseAddress; }
+  uint64_t pageSize() const { return _pageSize; }
 
   /// \brief Get the entry point if type() is ET_EXEC. Empty otherwise.
   StringRef entryPoint() const;
@@ -67,6 +75,8 @@ protected:
   uint16_t                  _type;
   uint16_t                  _pointerWidth;
   uint16_t                  _machine;
+  uint64_t                  _baseAddress;
+  uint64_t                  _pageSize;
 };
 
 /// \brief Create a WriterELF using the given options.
