@@ -94,12 +94,6 @@ class IForm<bits<6> opcode, bit aa, bit lk, dag OOL, dag IOL, string asmstr,
   let Inst{31}    = lk;
 }
 
-class IForm_ext<bits<6> opcode, bits<5> bo, bit aa, bit lk, dag OOL, dag IOL,
-            string asmstr, InstrItinClass itin, list<dag> pattern>
-         : IForm<opcode, aa, lk, OOL, IOL, asmstr, itin, pattern> {
-  let LI{0-4} = bo;
-}
-
 // 1.7.2 B-Form
 class BForm<bits<6> opcode, bit aa, bit lk, dag OOL, dag IOL, string asmstr>
   : I<opcode, OOL, IOL, asmstr, BrB> {
@@ -118,6 +112,13 @@ class BForm<bits<6> opcode, bit aa, bit lk, dag OOL, dag IOL, string asmstr>
   let Inst{31}    = lk;
 }
 
+class BForm_1<bits<6> opcode, bits<5> bo, bit aa, bit lk, dag OOL, dag IOL,
+             string asmstr>
+  : BForm<opcode, aa, lk, OOL, IOL, asmstr> {
+  let BIBO{4-0} = bo;
+  let BIBO{6-5} = 0;
+  let CR = 0;
+}
 
 // 1.7.4 D-Form
 class DForm_base<bits<6> opcode, dag OOL, dag IOL, string asmstr,
