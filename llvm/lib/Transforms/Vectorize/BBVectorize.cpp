@@ -401,7 +401,6 @@ namespace {
         DEBUG(dbgs() << "BBV: fusing loop #" << n <<
               " for " << BB.getName() << " in " <<
               BB.getParent()->getName() << "...\n");
-assert(n < 10 && "hrmm, really?");
         if (vectorizePairs(BB))
           changed = true;
         else
