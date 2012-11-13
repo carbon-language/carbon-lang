@@ -17,6 +17,10 @@
 #ifndef __STDIO_H__
 #define __STDIO_H__
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 typedef struct __sFILE FILE;
 typedef __SIZE_TYPE__ size_t;
 
@@ -63,12 +67,18 @@ extern FILE *__stderrp;
 
 int fclose(FILE *);
 int fflush(FILE *);
-FILE *fopen(const char * restrict, const char * restrict) __asm(__FOPEN_NAME);
-int fprintf(FILE * restrict, const char * restrict, ...);
-size_t fwrite(const void * restrict, size_t, size_t, FILE * restrict)
+FILE *fopen(const char * __restrict, const char * __restrict) __asm(__FOPEN_NAME);
+int fprintf(FILE * __restrict, const char * __restrict, ...);
+size_t fwrite(const void * __restrict, size_t, size_t, FILE * __restrict)
   __asm(__FWRITE_NAME);
 size_t fread(void * __restrict, size_t, size_t, FILE * __restrict);
 long ftell(FILE *);
 int fseek(FILE *, long, int);
+
+int snprintf(char * __restrict, size_t, const char * __restrict, ...);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* __STDIO_H__ */

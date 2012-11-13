@@ -14,9 +14,9 @@
 #ifndef UBSAN_VALUE_H
 #define UBSAN_VALUE_H
 
-// For now, only support linux. Other platforms should be easy to add, and
-// probably work as-is.
-#if !defined(__linux__)
+// For now, only support linux and darwin. Other platforms should be easy to
+// add, and probably work as-is.
+#if !defined(__linux__) && !defined(__APPLE__)
 #error "UBSan not supported for this platform!"
 #endif
 

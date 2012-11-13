@@ -76,6 +76,9 @@ UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
 Configs += asan_osx_dynamic
 UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
 
+Configs += ubsan_osx
+UniversalArchs.ubsan_osx := $(call CheckArches,i386 x86_64,ubsan_osx)
+
 # Darwin 10.6 has a bug in cctools that makes it unable to use ranlib on our ARM
 # object files. If we are on that platform, strip out all ARM archs. We still
 # build the libraries themselves so that Clang can find them where it expects
@@ -131,6 +134,8 @@ CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
 	-DMAC_INTERPOSE_FUNCTIONS=1
 
+CFLAGS.ubsan_osx	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
@@ -182,6 +187,8 @@ FUNCTIONS.asan_osx := $(AsanFunctions) $(InterceptionFunctions) \
 FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(InterceptionFunctions) \
                               $(SanitizerCommonFunctions) \
 	                      $(AsanDynamicFunctions)
+
+FUNCTIONS.ubsan_osx := $(UbsanFunctions)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
