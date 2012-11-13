@@ -256,6 +256,7 @@ int Finalize(ThreadState *thr) {
         ctx->nmissed_expected);
   }
 
+  StatAggregate(ctx->stat, thr->stat);
   StatOutput(ctx->stat);
   return failed ? flags()->exitcode : 0;
 }
