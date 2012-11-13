@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
@@ -241,7 +242,9 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   disablePass(&EarlyIfConverterID);
 
   // Temporarily disable experimental passes.
-  substitutePass(&MachineSchedulerID, 0);
+  const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
+  if (!ST.enableMachineScheduler())
+    disablePass(&MachineSchedulerID);
 }
 
 /// Insert InsertedPassID pass after TargetPassID.

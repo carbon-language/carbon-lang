@@ -60,11 +60,11 @@ static cl::opt<unsigned> ILPWindow("ilp-window", cl::Hidden,
 
 // Experimental heuristics
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
-  cl::desc("Enable load clustering."));
+  cl::desc("Enable load clustering."), cl::init(true));
 
 // Experimental heuristics
 static cl::opt<bool> EnableMacroFusion("misched-fusion", cl::Hidden,
-  cl::desc("Enable scheduling for macro fusion."));
+  cl::desc("Enable scheduling for macro fusion."), cl::init(true));
 
 //===----------------------------------------------------------------------===//
 // Machine Instruction Scheduling Pass and Registry

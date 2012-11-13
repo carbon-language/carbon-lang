@@ -45,6 +45,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
@@ -64,16 +65,16 @@ EnableJoining("join-liveintervals",
               cl::init(true));
 
 // Temporary flag to test critical edge unsplitting.
-static cl::opt<bool>
+static cl::opt<cl::boolOrDefault>
 EnableJoinSplits("join-splitedges",
-                 cl::desc("Coalesce copies on split edges (default=false)"),
-                 cl::init(false), cl::Hidden);
+  cl::desc("Coalesce copies on split edges (default=subtarget)"),
+  cl::init(cl::BOU_UNSET), cl::Hidden);
 
 // Temporary flag to test global copy optimization.
-static cl::opt<bool>
+static cl::opt<cl::boolOrDefault>
 EnableGlobalCopies("join-globalcopies",
-                   cl::desc("Coalesce copies that don't locally define an lrg"),
-                   cl::init(false));
+  cl::desc("Coalesce copies that span blocks (default=subtarget)"),
+  cl::init(cl::BOU_UNSET), cl::Hidden);
 
 static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
@@ -93,6 +94,14 @@ namespace {
     const MachineLoopInfo* Loops;
     AliasAnalysis *AA;
     RegisterClassInfo RegClassInfo;
+
+    /// \brief True if the coalescer should aggressively coalesce global copies
+    /// in favor of keeping local copies.
+    bool JoinGlobalCopies;
+
+    /// \brief True if the coalescer should aggressively coalesce fall-thru
+    /// blocks exclusively containing copies.
+    bool JoinSplitEdges;
 
     /// WorkList - Copy instructions yet to be coalesced.
     SmallVector<MachineInstr*, 8> WorkList;
@@ -1943,6 +1952,10 @@ namespace {
   //
   // EnableGlobalCopies assumes that the primary sort key is loop depth.
   struct MBBPriorityCompare {
+    bool JoinSplitEdges;
+
+    MBBPriorityCompare(bool joinsplits): JoinSplitEdges(joinsplits) {}
+
     bool operator()(const MBBPriorityInfo &LHS,
                     const MBBPriorityInfo &RHS) const {
       // Deeper loops first
@@ -1950,7 +1963,7 @@ namespace {
         return LHS.Depth > RHS.Depth;
 
       // Try to unsplit critical edges next.
-      if (EnableJoinSplits && LHS.IsSplit != RHS.IsSplit)
+      if (JoinSplitEdges && LHS.IsSplit != RHS.IsSplit)
         return LHS.IsSplit;
 
       // Prefer blocks that are more connected in the CFG. This takes care of
@@ -2011,7 +2024,7 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
   // Collect all copy-like instructions in MBB. Don't start coalescing anything
   // yet, it might invalidate the iterator.
   const unsigned PrevSize = WorkList.size();
-  if (EnableGlobalCopies) {
+  if (JoinGlobalCopies) {
     // Coalesce copies bottom-up to coalesce local defs before local uses. They
     // are not inherently easier to resolve, but slightly preferable until we
     // have local live range splitting. In particular this is required by
@@ -2061,13 +2074,13 @@ void RegisterCoalescer::joinAllIntervals() {
     MBBs.push_back(MBBPriorityInfo(MBB, Loops->getLoopDepth(MBB),
                                    isSplitEdge(MBB)));
   }
-  std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare());
+  std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare(JoinSplitEdges));
 
   // Coalesce intervals in MBB priority order.
   unsigned CurrDepth = UINT_MAX;
   for (unsigned i = 0, e = MBBs.size(); i != e; ++i) {
     // Try coalescing the collected local copies for deeper loops.
-    if (EnableGlobalCopies && MBBs[i].Depth < CurrDepth)
+    if (JoinGlobalCopies && MBBs[i].Depth < CurrDepth)
       coalesceLocals();
     copyCoalesceInMBB(MBBs[i].MBB);
   }
@@ -2096,6 +2109,17 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   LDV = &getAnalysis<LiveDebugVariables>();
   AA = &getAnalysis<AliasAnalysis>();
   Loops = &getAnalysis<MachineLoopInfo>();
+
+  const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
+  if (EnableGlobalCopies == cl::BOU_UNSET)
+    JoinGlobalCopies = ST.enableMachineScheduler();
+  else
+    JoinGlobalCopies = (EnableGlobalCopies == cl::BOU_TRUE);
+
+  if (EnableJoinSplits == cl::BOU_UNSET)
+    JoinSplitEdges = ST.enableMachineScheduler();
+  else
+    JoinSplitEdges = (EnableJoinSplits == cl::BOU_TRUE);
 
   DEBUG(dbgs() << "********** SIMPLE REGISTER COALESCING **********\n"
                << "********** Function: " << MF->getName() << '\n');
