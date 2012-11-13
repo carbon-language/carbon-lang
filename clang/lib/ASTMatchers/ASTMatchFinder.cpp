@@ -183,6 +183,8 @@ public:
   // We assume that the QualType and the contained type are on the same
   // hierarchy level. Thus, we try to match either of them.
   bool TraverseType(QualType TypeNode) {
+    if (TypeNode.isNull())
+      return true;
     ScopedIncrement ScopedDepth(&CurrentDepth);
     // Match the Type.
     if (!match(*TypeNode))
@@ -193,6 +195,8 @@ public:
   // We assume that the TypeLoc, contained QualType and contained Type all are
   // on the same hierarchy level. Thus, we try to match all of them.
   bool TraverseTypeLoc(TypeLoc TypeLocNode) {
+    if (TypeLocNode.isNull())
+      return true;
     ScopedIncrement ScopedDepth(&CurrentDepth);
     // Match the Type.
     if (!match(*TypeLocNode.getType()))
@@ -208,10 +212,12 @@ public:
     return (NNS == NULL) || traverse(*NNS);
   }
   bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS) {
+    if (!NNS)
+      return true;
     ScopedIncrement ScopedDepth(&CurrentDepth);
     if (!match(*NNS.getNestedNameSpecifier()))
       return false;
-    return !NNS || traverse(NNS);
+    return traverse(NNS);
   }
 
   bool shouldVisitTemplateInstantiations() const { return true; }
