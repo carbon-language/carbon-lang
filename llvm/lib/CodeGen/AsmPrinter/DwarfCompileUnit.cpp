@@ -1252,6 +1252,7 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
   uint64_t L = SR.getLo();
   uint64_t H = SR.getHi();
+  uint64_t C = SR.getCount();
 
   // The L value defines the lower bounds which is typically zero for C/C++. The
   // H value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
@@ -1265,7 +1266,7 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
   }
   if (L)
     addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
-  addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
+  addUInt(DW_Subrange, dwarf::DW_AT_count, 0, C);
   Buffer.addChild(DW_Subrange);
 }
 

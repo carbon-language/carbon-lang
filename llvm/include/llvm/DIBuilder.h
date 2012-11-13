@@ -371,7 +371,7 @@ namespace llvm {
 
     /// getOrCreateSubrange - Create a descriptor for a value range.  This
     /// implicitly uniques the values returned.
-    DISubrange getOrCreateSubrange(int64_t Lo, int64_t Hi);
+    DISubrange getOrCreateSubrange(int64_t Lo, int64_t Hi, uint64_t Count);
 
     /// createGlobalVariable - Create a new descriptor for the specified global.
     /// @param Name        Name of the variable.
