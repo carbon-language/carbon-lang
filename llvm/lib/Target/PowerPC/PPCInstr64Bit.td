@@ -511,7 +511,7 @@ def RLWINM8 : MForm_2<21,
                      "rlwinm $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>;
 
-def ISEL8   : AForm_1<31, 15,
+def ISEL8   : AForm_4<31, 15,
                      (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB, pred:$cond),
                      "isel $rT, $rA, $rB, $cond", IntGeneral,
                      []>;

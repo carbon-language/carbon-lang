@@ -758,6 +758,26 @@ class AForm_3<bits<6> opcode, bits<5> xo, dag OOL, dag IOL, string asmstr,
   let FRB = 0;
 }
 
+class AForm_4<bits<6> opcode, bits<5> xo, dag OOL, dag IOL, string asmstr, 
+              InstrItinClass itin, list<dag> pattern>
+         : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<5> RT;
+  bits<5> RA;
+  bits<5> RB;
+  bits<7> BIBO;  // 2 bits of BI and 5 bits of BO (must be 12).
+  bits<3> CR;
+
+  let Pattern = pattern;
+
+  let Inst{6-10}  = RT;
+  let Inst{11-15} = RA;
+  let Inst{16-20} = RB;
+  let Inst{21-23} = CR;
+  let Inst{24-25} = BIBO{6-5};
+  let Inst{26-30} = xo;
+  let Inst{31}    = 0;
+}
+
 // 1.7.13 M-Form
 class MForm_1<bits<6> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>

@@ -1414,7 +1414,7 @@ let Uses = [RM] in {
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-  def ISEL  : AForm_1<31, 15,
+  def ISEL  : AForm_4<31, 15,
                      (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB, pred:$cond),
                      "isel $rT, $rA, $rB, $cond", IntGeneral,
                      []>;
