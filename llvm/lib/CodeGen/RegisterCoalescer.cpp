@@ -69,6 +69,12 @@ EnableJoinSplits("join-splitedges",
                  cl::desc("Coalesce copies on split edges (default=false)"),
                  cl::init(false), cl::Hidden);
 
+// Temporary flag to test global copy optimization.
+static cl::opt<bool>
+EnableGlobalCopies("join-globalcopies",
+                   cl::desc("Coalesce copies that don't locally define an lrg"),
+                   cl::init(false));
+
 static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
          cl::desc("Verify machine instrs before and after register coalescing"),
@@ -90,6 +96,7 @@ namespace {
 
     /// WorkList - Copy instructions yet to be coalesced.
     SmallVector<MachineInstr*, 8> WorkList;
+    SmallVector<MachineInstr*, 8> LocalWorkList;
 
     /// ErasedInstrs - Set of instruction pointers that have been erased, and
     /// that may be present in WorkList.
@@ -107,6 +114,9 @@ namespace {
     /// LiveRangeEdit callback.
     void LRE_WillEraseInstruction(MachineInstr *MI);
 
+    /// coalesceLocals - coalesce the LocalWorkList.
+    void coalesceLocals();
+
     /// joinAllIntervals - join compatible live intervals
     void joinAllIntervals();
 
@@ -114,9 +124,9 @@ namespace {
     /// copies that cannot yet be coalesced into WorkList.
     void copyCoalesceInMBB(MachineBasicBlock *MBB);
 
-    /// copyCoalesceWorkList - Try to coalesce all copies in WorkList after
-    /// position From. Return true if any progress was made.
-    bool copyCoalesceWorkList(unsigned From = 0);
+    /// copyCoalesceWorkList - Try to coalesce all copies in CurrList. Return
+    /// true if any progress was made.
+    bool copyCoalesceWorkList(MutableArrayRef<MachineInstr*> CurrList);
 
     /// joinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns
@@ -1930,6 +1940,8 @@ namespace {
 
   // MBBPriorityCompare - Comparison predicate that sorts first based on the
   // loop depth of the basic block (the unsigned), and then on the MBB number.
+  //
+  // EnableGlobalCopies assumes that the primary sort key is loop depth.
   struct MBBPriorityCompare {
     bool operator()(const MBBPriorityInfo &LHS,
                     const MBBPriorityInfo &RHS) const {
@@ -1954,25 +1966,40 @@ namespace {
   };
 }
 
+/// \returns true if the given copy uses or defines a local live range.
+static bool isLocalCopy(MachineInstr *Copy, const LiveIntervals *LIS) {
+  if (!Copy->isCopy())
+    return false;
+
+  unsigned SrcReg = Copy->getOperand(1).getReg();
+  unsigned DstReg = Copy->getOperand(0).getReg();
+  if (TargetRegisterInfo::isPhysicalRegister(SrcReg)
+      || TargetRegisterInfo::isPhysicalRegister(DstReg))
+    return false;
+
+  return LIS->intervalIsInOneMBB(LIS->getInterval(SrcReg))
+    || LIS->intervalIsInOneMBB(LIS->getInterval(DstReg));
+}
+
 // Try joining WorkList copies starting from index From.
 // Null out any successful joins.
-bool RegisterCoalescer::copyCoalesceWorkList(unsigned From) {
-  assert(From <= WorkList.size() && "Out of range");
+bool RegisterCoalescer::
+copyCoalesceWorkList(MutableArrayRef<MachineInstr*> CurrList) {
   bool Progress = false;
-  for (unsigned i = From, e = WorkList.size(); i != e; ++i) {
-    if (!WorkList[i])
+  for (unsigned i = 0, e = CurrList.size(); i != e; ++i) {
+    if (!CurrList[i])
       continue;
     // Skip instruction pointers that have already been erased, for example by
     // dead code elimination.
-    if (ErasedInstrs.erase(WorkList[i])) {
-      WorkList[i] = 0;
+    if (ErasedInstrs.erase(CurrList[i])) {
+      CurrList[i] = 0;
       continue;
     }
     bool Again = false;
-    bool Success = joinCopy(WorkList[i], Again);
+    bool Success = joinCopy(CurrList[i], Again);
     Progress |= Success;
     if (Success || !Again)
-      WorkList[i] = 0;
+      CurrList[i] = 0;
   }
   return Progress;
 }
@@ -1984,22 +2011,49 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
   // Collect all copy-like instructions in MBB. Don't start coalescing anything
   // yet, it might invalidate the iterator.
   const unsigned PrevSize = WorkList.size();
-  for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
-       MII != E; ++MII)
-    if (MII->isCopyLike())
-      WorkList.push_back(MII);
-
+  if (EnableGlobalCopies) {
+    // Coalesce copies bottom-up to coalesce local defs before local uses. They
+    // are not inherently easier to resolve, but slightly preferable until we
+    // have local live range splitting. In particular this is required by
+    // cmp+jmp macro fusion.
+    for (MachineBasicBlock::reverse_iterator
+           MII = MBB->rbegin(), E = MBB->rend(); MII != E; ++MII) {
+      if (!MII->isCopyLike())
+        continue;
+      if (isLocalCopy(&(*MII), LIS))
+        LocalWorkList.push_back(&(*MII));
+      else
+        WorkList.push_back(&(*MII));
+    }
+  }
+  else {
+     for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
+          MII != E; ++MII)
+       if (MII->isCopyLike())
+         WorkList.push_back(MII);
+  }
   // Try coalescing the collected copies immediately, and remove the nulls.
   // This prevents the WorkList from getting too large since most copies are
   // joinable on the first attempt.
-  if (copyCoalesceWorkList(PrevSize))
+  MutableArrayRef<MachineInstr*>
+    CurrList(WorkList.begin() + PrevSize, WorkList.end());
+  if (copyCoalesceWorkList(CurrList))
     WorkList.erase(std::remove(WorkList.begin() + PrevSize, WorkList.end(),
                                (MachineInstr*)0), WorkList.end());
 }
 
+void RegisterCoalescer::coalesceLocals() {
+  copyCoalesceWorkList(LocalWorkList);
+  for (unsigned j = 0, je = LocalWorkList.size(); j != je; ++j) {
+    if (LocalWorkList[j])
+      WorkList.push_back(LocalWorkList[j]);
+  }
+  LocalWorkList.clear();
+}
+
 void RegisterCoalescer::joinAllIntervals() {
   DEBUG(dbgs() << "********** JOINING INTERVALS ***********\n");
-  assert(WorkList.empty() && "Old data still around.");
+  assert(WorkList.empty() && LocalWorkList.empty() && "Old data still around.");
 
   std::vector<MBBPriorityInfo> MBBs;
   for (MachineFunction::iterator I = MF->begin(), E = MF->end();I != E;++I){
@@ -2010,12 +2064,18 @@ void RegisterCoalescer::joinAllIntervals() {
   std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare());
 
   // Coalesce intervals in MBB priority order.
-  for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
+  unsigned CurrDepth = UINT_MAX;
+  for (unsigned i = 0, e = MBBs.size(); i != e; ++i) {
+    // Try coalescing the collected local copies for deeper loops.
+    if (EnableGlobalCopies && MBBs[i].Depth < CurrDepth)
+      coalesceLocals();
     copyCoalesceInMBB(MBBs[i].MBB);
+  }
+  coalesceLocals();
 
   // Joining intervals can allow other intervals to be joined.  Iteratively join
   // until we make no progress.
-  while (copyCoalesceWorkList())
+  while (copyCoalesceWorkList(WorkList))
     /* empty */ ;
 }
 
