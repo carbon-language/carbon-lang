@@ -1779,18 +1779,26 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // would do to enable flag_pic.
 
   Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                    options::OPT_fpic, options::OPT_fno_pic,
-                                    options::OPT_fPIE, options::OPT_fno_PIE,
+                                    options::OPT_fpic, options::OPT_fno_pic);
+  // We need to check for PIE flags separately because they can override the
+  // PIC flags.
+  Arg *LastPIEArg = Args.getLastArg(options::OPT_fPIE, options::OPT_fno_PIE,
                                     options::OPT_fpie, options::OPT_fno_pie);
   bool PICDisabled = false;
   bool PICEnabled = false;
   bool PICForPIE = false;
-  if (LastPICArg) {
-    PICForPIE = (LastPICArg->getOption().matches(options::OPT_fPIE) ||
-                 LastPICArg->getOption().matches(options::OPT_fpie));
+  if (LastPIEArg) {
+    PICForPIE = (LastPIEArg->getOption().matches(options::OPT_fPIE) ||
+                 LastPIEArg->getOption().matches(options::OPT_fpie));
+  }
+  if (LastPICArg || PICForPIE) {
+    // The last PIE enabled argument can infer that PIC is enabled.
     PICEnabled = (PICForPIE ||
                   LastPICArg->getOption().matches(options::OPT_fPIC) ||
                   LastPICArg->getOption().matches(options::OPT_fpic));
+    // We need to have PICDisabled inside the if statement because on darwin
+    // PIC is enabled by default even if PIC arguments are not in the command
+    // line (in this case causes PICDisabled to be true).
     PICDisabled = !PICEnabled;
   }
   // Note that these flags are trump-cards. Regardless of the order w.r.t. the
@@ -1825,9 +1833,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Infer the __PIC__ and __PIE__ values.
   if (ModelStr == "pic" && PICForPIE) {
+    CmdArgs.push_back("-pic-level");
+    CmdArgs.push_back((LastPIEArg &&
+                      LastPIEArg->getOption().matches(options::OPT_fPIE)) ?
+                      "2" : "1");
     CmdArgs.push_back("-pie-level");
-    CmdArgs.push_back((LastPICArg &&
-                       LastPICArg->getOption().matches(options::OPT_fPIE)) ?
+    CmdArgs.push_back((LastPIEArg &&
+                       LastPIEArg->getOption().matches(options::OPT_fPIE)) ?
                       "2" : "1");
   } else if (ModelStr == "pic" || ModelStr == "dynamic-no-pic") {
     CmdArgs.push_back("-pic-level");
