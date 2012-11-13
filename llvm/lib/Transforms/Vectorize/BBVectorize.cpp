@@ -1703,10 +1703,20 @@ assert(n < 10 && "hrmm, really?");
         // The set of pairs that have already contributed to the total cost.
         DenseSet<ValuePair> IncomingPairs;
 
+        // If the cost model were perfect, this might not be necessary; but we
+        // need to make sure that we don't get stuck vectorizing our own
+        // shuffle chains.
+        bool HasNontrivialInsts = false;
+
         // The node weights represent the cost savings associated with
         // fusing the pair of instructions.
         for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
              E = PrunedTree.end(); S != E; ++S) {
+          if (!isa<ShuffleVectorInst>(S->first) &&
+              !isa<InsertElementInst>(S->first) &&
+              !isa<ExtractElementInst>(S->first))
+            HasNontrivialInsts = true;
+
           bool FlipOrder = false;
 
           if (getDepthFactor(S->first)) {
@@ -1942,6 +1952,13 @@ assert(n < 10 && "hrmm, really?");
               IncomingPairs.insert(VP);
             }
           }
+        }
+
+        if (!HasNontrivialInsts) {
+          DEBUG(if (DebugPairSelection) dbgs() <<
+                "\tNo non-trivial instructions in tree;"
+                " override to zero effective size\n");
+          EffSize = 0;
         }
       } else {
         for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
