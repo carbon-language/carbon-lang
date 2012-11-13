@@ -14203,6 +14203,18 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
                                   Ld->getAlignment(),
                                   false/*isVolatile*/, true/*ReadMem*/,
                                   false/*WriteMem*/);
+
+        // Make sure the newly-created LOAD is in the same position as Ld in
+        // terms of dependency. We create a TokenFactor for Ld and ResNode,
+        // and update uses of Ld's output chain to use the TokenFactor.
+        if (Ld->hasAnyUseOfValue(1)) {
+          SDValue NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                             SDValue(Ld, 1), SDValue(ResNode.getNode(), 1));
+          DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), NewChain);
+          DAG.UpdateNodeOperands(NewChain.getNode(), SDValue(Ld, 1),
+                                 SDValue(ResNode.getNode(), 1));
+        }
+
         return DAG.getNode(ISD::BITCAST, dl, VT, ResNode);
       }
     }

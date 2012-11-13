@@ -246,3 +246,54 @@ define <8 x float> @test19(<8 x float> %A, <8 x float>%B) nounwind {
   ret <8 x float>%S
 }
 
+; rdar://12684358
+; Make sure loads happen before stores.
+; CHECK: swap8doubles
+; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
+; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
+; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
+; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
+; CHECK: vmovaps {{[0-9]*}}(%rsi), %ymm{{[0-9]+}}
+; CHECK: vmovaps {{[0-9]*}}(%rsi), %ymm{{[0-9]+}}
+; CHECK: vmovaps %xmm{{[0-9]+}}, {{[0-9]*}}(%rdi)
+; CHECK: vextractf128
+; CHECK: vmovaps %xmm{{[0-9]+}}, {{[0-9]*}}(%rdi)
+; CHECK: vextractf128
+; CHECK: vmovaps %ymm{{[0-9]+}}, {{[0-9]*}}(%rsi)
+; CHECK: vmovaps %ymm{{[0-9]+}}, {{[0-9]*}}(%rsi)
+define void @swap8doubles(double* nocapture %A, double* nocapture %C) nounwind uwtable ssp {
+entry:
+  %add.ptr = getelementptr inbounds double* %A, i64 2
+  %v.i = bitcast double* %A to <2 x double>*
+  %0 = load <2 x double>* %v.i, align 1
+  %shuffle.i.i = shufflevector <2 x double> %0, <2 x double> <double 0.000000e+00, double undef>, <4 x i32> <i32 0, i32 1, i32 2, i32 2>
+  %v1.i = bitcast double* %add.ptr to <2 x double>*
+  %1 = load <2 x double>* %v1.i, align 1
+  %2 = tail call <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double> %shuffle.i.i, <2 x double> %1, i8 1) nounwind
+  %add.ptr1 = getelementptr inbounds double* %A, i64 6
+  %add.ptr2 = getelementptr inbounds double* %A, i64 4
+  %v.i27 = bitcast double* %add.ptr2 to <2 x double>*
+  %3 = load <2 x double>* %v.i27, align 1
+  %shuffle.i.i28 = shufflevector <2 x double> %3, <2 x double> <double 0.000000e+00, double undef>, <4 x i32> <i32 0, i32 1, i32 2, i32 2>
+  %v1.i29 = bitcast double* %add.ptr1 to <2 x double>*
+  %4 = load <2 x double>* %v1.i29, align 1
+  %5 = tail call <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double> %shuffle.i.i28, <2 x double> %4, i8 1) nounwind
+  %6 = bitcast double* %C to <4 x double>*
+  %7 = load <4 x double>* %6, align 32
+  %add.ptr5 = getelementptr inbounds double* %C, i64 4
+  %8 = bitcast double* %add.ptr5 to <4 x double>*
+  %9 = load <4 x double>* %8, align 32
+  %shuffle.i26 = shufflevector <4 x double> %7, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  %10 = tail call <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double> %7, i8 1)
+  %shuffle.i = shufflevector <4 x double> %9, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  %11 = tail call <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double> %9, i8 1)
+  store <2 x double> %shuffle.i26, <2 x double>* %v.i, align 16
+  store <2 x double> %10, <2 x double>* %v1.i, align 16
+  store <2 x double> %shuffle.i, <2 x double>* %v.i27, align 16
+  store <2 x double> %11, <2 x double>* %v1.i29, align 16
+  store <4 x double> %2, <4 x double>* %6, align 32
+  store <4 x double> %5, <4 x double>* %8, align 32
+  ret void
+}
+declare <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double>, i8) nounwind readnone
+declare <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double>, <2 x double>, i8) nounwind readnone
