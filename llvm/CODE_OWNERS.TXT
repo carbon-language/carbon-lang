@@ -49,3 +49,7 @@ D: Register allocators and TableGen
 N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
+
+N: Joe Abbey
+E: jabbey@arxan.com
+D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
