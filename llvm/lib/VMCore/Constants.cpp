@@ -1213,6 +1213,19 @@ void ConstantVector::destroyConstant() {
   destroyConstantImpl();
 }
 
+/// getSplatValue - If this is a splat vector constant, meaning that all of
+/// the elements have the same value, return that value. Otherwise return 0.
+Constant *Constant::getSplatValue() const {
+  assert(this->getType()->isVectorTy() && "Only valid for vectors!");
+  if (isa<ConstantAggregateZero>(this))
+    return getNullValue(this->getType()->getVectorElementType());
+  if (const ConstantDataVector *CV = dyn_cast<ConstantDataVector>(this))
+    return CV->getSplatValue();
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(this))
+    return CV->getSplatValue();
+  return 0;
+}
+
 /// getSplatValue - If this is a splat constant, where all of the
 /// elements have the same value, return that value. Otherwise return null.
 Constant *ConstantVector::getSplatValue() const {
@@ -1224,6 +1237,18 @@ Constant *ConstantVector::getSplatValue() const {
       return 0;
   return Elt;
 }
+
+/// If C is a constant integer then return its value, otherwise C must be a
+/// vector of constant integers, all equal, and the common value is returned.
+const APInt &Constant::getUniqueInteger() const {
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(this))
+    return CI->getValue();
+  assert(this->getSplatValue() && "Doesn't contain a unique integer!");
+  const Constant *C = this->getAggregateElement(0U);
+  assert(C && isa<ConstantInt>(C) && "Not a vector of numbers!");
+  return cast<ConstantInt>(C)->getValue();
+}
+
 
 //---- ConstantPointerNull::get() implementation.
 //
@@ -1739,6 +1764,9 @@ Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2) {
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, ArrayRef<Value *> Idxs,
                                          bool InBounds) {
+  assert(C->getType()->isPtrOrPtrVectorTy() &&
+         "Non-pointer type for constant GetElementPtr expression");
+
   if (Constant *FC = ConstantFoldGetElementPtr(C, InBounds, Idxs))
     return FC;          // Fold a few common cases.
 
@@ -1747,15 +1775,22 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, ArrayRef<Value *> Idxs,
   assert(Ty && "GEP indices invalid!");
   unsigned AS = C->getType()->getPointerAddressSpace();
   Type *ReqTy = Ty->getPointerTo(AS);
+  if (VectorType *VecTy = dyn_cast<VectorType>(C->getType()))
+    ReqTy = VectorType::get(ReqTy, VecTy->getNumElements());
 
-  assert(C->getType()->isPointerTy() &&
-         "Non-pointer type for constant GetElementPtr expression");
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
   ArgVec.reserve(1 + Idxs.size());
   ArgVec.push_back(C);
-  for (unsigned i = 0, e = Idxs.size(); i != e; ++i)
+  for (unsigned i = 0, e = Idxs.size(); i != e; ++i) {
+    assert(Idxs[i]->getType()->isVectorTy() == ReqTy->isVectorTy() &&
+           "getelementptr index type missmatch");
+    assert((!Idxs[i]->getType()->isVectorTy() ||
+            ReqTy->getVectorNumElements() ==
+            Idxs[i]->getType()->getVectorNumElements()) &&
+           "getelementptr index type missmatch");
     ArgVec.push_back(cast<Constant>(Idxs[i]));
+  }
   const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
                            InBounds ? GEPOperator::IsInBounds : 0);
 

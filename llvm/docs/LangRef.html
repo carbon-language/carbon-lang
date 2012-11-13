@@ -5419,9 +5419,11 @@ specified by the <var>operation</var> argument:</p>
 
 <p>The type of each index argument depends on the type it is indexing into.
    When indexing into a (optionally packed) structure, only <tt>i32</tt>
-   integer <b>constants</b> are allowed.  When indexing into an array, pointer
-   or vector, integers of any width are allowed, and they are not required to be
-   constant.  These integers are treated as signed values where relevant.</p>
+   integer <b>constants</b> are allowed (when using a vector of indices they
+   must all be the <b>same</b> <tt>i32</tt> integer constant).  When indexing
+   into an array, pointer or vector, integers of any width are allowed, and
+   they are not required to be constant.  These integers are treated as signed
+   values where relevant.</p>
 
 <p>For example, let's consider a C code fragment and how it gets compiled to
    LLVM:</p>
@@ -5520,9 +5522,8 @@ define i32* @foo(%struct.ST* %s) {
     %iptr = getelementptr [10 x i32]* @arr, i16 0, i16 0
 </pre>
 
-<p>In cases where the pointer argument is a vector of pointers, only a
-   single index may be used, and the number of vector elements has to be
-   the same.  For example: </p>
+<p>In cases where the pointer argument is a vector of pointers, each index must
+   be a vector with the same number of elements.  For example: </p>
 <pre class="doc_code">
  %A = getelementptr <4 x i8*> %ptrs, <4 x i64> %offsets,
 </pre>

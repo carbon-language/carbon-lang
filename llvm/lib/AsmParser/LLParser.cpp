@@ -1697,8 +1697,7 @@ bool LLParser::ParseArrayVectorType(Type *&Result, bool isVector) {
     if ((unsigned)Size != Size)
       return Error(SizeLoc, "size too large for vector");
     if (!VectorType::isValidElementType(EltTy))
-      return Error(TypeLoc,
-       "vector element type must be fp, integer or a pointer to these types");
+      return Error(TypeLoc, "invalid vector element type");
     Result = VectorType::get(EltTy, unsigned(Size));
   } else {
     if (!ArrayType::isValidElementType(EltTy))
@@ -4031,9 +4030,6 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     }
     Indices.push_back(Val);
   }
-
-  if (Val && Val->getType()->isVectorTy() && Indices.size() != 1)
-    return Error(EltLoc, "vector getelementptrs must have a single index");
 
   if (!GetElementPtrInst::getIndexedType(Ptr->getType(), Indices))
     return Error(Loc, "invalid getelementptr indices");

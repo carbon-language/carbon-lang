@@ -1353,16 +1353,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 ///
 template <typename IndexTy>
 static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
-  if (Ptr->isVectorTy()) {
-    assert(IdxList.size() == 1 &&
-      "GEP with vector pointers must have a single index");
-    PointerType *PTy = dyn_cast<PointerType>(
-        cast<VectorType>(Ptr)->getElementType());
-    assert(PTy && "Gep with invalid vector pointer found");
-    return PTy->getElementType();
-  }
-
-  PointerType *PTy = dyn_cast<PointerType>(Ptr);
+  PointerType *PTy = dyn_cast<PointerType>(Ptr->getScalarType());
   if (!PTy) return 0;   // Type isn't a pointer type!
   Type *Agg = PTy->getElementType();
 

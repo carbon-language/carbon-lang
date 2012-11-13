@@ -629,11 +629,12 @@ StructType *Module::getTypeByName(StringRef Name) const {
 
 Type *CompositeType::getTypeAtIndex(const Value *V) {
   if (StructType *STy = dyn_cast<StructType>(this)) {
-    unsigned Idx = (unsigned)cast<ConstantInt>(V)->getZExtValue();
+    unsigned Idx =
+      (unsigned)cast<Constant>(V)->getUniqueInteger().getZExtValue();
     assert(indexValid(Idx) && "Invalid structure index!");
     return STy->getElementType(Idx);
   }
-  
+
   return cast<SequentialType>(this)->getElementType();
 }
 Type *CompositeType::getTypeAtIndex(unsigned Idx) {
@@ -646,15 +647,19 @@ Type *CompositeType::getTypeAtIndex(unsigned Idx) {
 }
 bool CompositeType::indexValid(const Value *V) const {
   if (const StructType *STy = dyn_cast<StructType>(this)) {
-    // Structure indexes require 32-bit integer constants.
-    if (V->getType()->isIntegerTy(32))
-      if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
-        return CU->getZExtValue() < STy->getNumElements();
-    return false;
+    // Structure indexes require (vectors of) 32-bit integer constants.  In the
+    // vector case all of the indices must be equal.
+    if (!V->getType()->getScalarType()->isIntegerTy(32))
+      return false;
+    const Constant *C = dyn_cast<Constant>(V);
+    if (C && V->getType()->isVectorTy())
+      C = C->getSplatValue();
+    const ConstantInt *CU = dyn_cast_or_null<ConstantInt>(C);
+    return CU && CU->getZExtValue() < STy->getNumElements();
   }
-  
+
   // Sequential types can be indexed by any integer.
-  return V->getType()->isIntegerTy();
+  return V->getType()->isIntOrIntVectorTy();
 }
 
 bool CompositeType::indexValid(unsigned Idx) const {
@@ -717,9 +722,8 @@ VectorType *VectorType::get(Type *elementType, unsigned NumElements) {
 }
 
 bool VectorType::isValidElementType(Type *ElemTy) {
-  if (PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    ElemTy = PTy->getElementType();
-  return ElemTy->isIntegerTy() || ElemTy->isFloatingPointTy();
+  return ElemTy->isIntegerTy() || ElemTy->isFloatingPointTy() ||
+    ElemTy->isPointerTy();
 }
 
 //===----------------------------------------------------------------------===//

@@ -1375,34 +1375,31 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     "GEP base pointer is not a vector or a vector of pointers", &GEP);
   Assert1(cast<PointerType>(TargetTy)->getElementType()->isSized(),
           "GEP into unsized type!", &GEP);
+  Assert1(GEP.getPointerOperandType()->isVectorTy() ==
+          GEP.getType()->isVectorTy(), "Vector GEP must return a vector value",
+          &GEP);
 
   SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   Type *ElTy =
     GetElementPtrInst::getIndexedType(GEP.getPointerOperandType(), Idxs);
   Assert1(ElTy, "Invalid indices for GEP pointer type!", &GEP);
 
-  if (GEP.getPointerOperandType()->isPointerTy()) {
-    // Validate GEPs with scalar indices.
-    Assert2(GEP.getType()->isPointerTy() &&
-           cast<PointerType>(GEP.getType())->getElementType() == ElTy,
-           "GEP is not of right type for indices!", &GEP, ElTy);
-  } else {
-    // Validate GEPs with a vector index.
-    Assert1(Idxs.size() == 1, "Invalid number of indices!", &GEP);
-    Value *Index = Idxs[0];
-    Type  *IndexTy = Index->getType();
-    Assert1(IndexTy->isVectorTy(),
-      "Vector GEP must have vector indices!", &GEP);
-    Assert1(GEP.getType()->isVectorTy(),
-      "Vector GEP must return a vector value", &GEP);
-    Type *ElemPtr = cast<VectorType>(GEP.getType())->getElementType();
-    Assert1(ElemPtr->isPointerTy(),
-      "Vector GEP pointer operand is not a pointer!", &GEP);
-    unsigned IndexWidth = cast<VectorType>(IndexTy)->getNumElements();
-    unsigned GepWidth = cast<VectorType>(GEP.getType())->getNumElements();
-    Assert1(IndexWidth == GepWidth, "Invalid GEP index vector width", &GEP);
-    Assert1(ElTy == cast<PointerType>(ElemPtr)->getElementType(),
-      "Vector GEP type does not match pointer type!", &GEP);
+  Assert2(GEP.getType()->getScalarType()->isPointerTy() &&
+          cast<PointerType>(GEP.getType()->getScalarType())->getElementType()
+          == ElTy, "GEP is not of right type for indices!", &GEP, ElTy);
+
+  if (GEP.getPointerOperandType()->isVectorTy()) {
+    // Additional checks for vector GEPs.
+    unsigned GepWidth = GEP.getPointerOperandType()->getVectorNumElements();
+    Assert1(GepWidth == GEP.getType()->getVectorNumElements(),
+            "Vector GEP result width doesn't match operand's", &GEP);
+    for (unsigned i = 0, e = Idxs.size(); i != e; ++i) {
+      Type *IndexTy = Idxs[i]->getType();
+      Assert1(IndexTy->isVectorTy(),
+              "Vector GEP must have vector indices!", &GEP);
+      unsigned IndexWidth = IndexTy->getVectorNumElements();
+      Assert1(IndexWidth == GepWidth, "Invalid GEP index vector width", &GEP);
+    }
   }
   visitInstruction(GEP);
 }

@@ -391,9 +391,9 @@ define void @example13(i32** nocapture %A, i32** nocapture %B, i32* nocapture %o
   ret void
 }
 
-; Can't vectorize because of reductions.
+; Can vectorize.
 ;CHECK: @example14
-;CHECK-NOT: <4 x i32>
+;CHECK: <4 x i32>
 ;CHECK: ret void
 define void @example14(i32** nocapture %in, i32** nocapture %coeff, i32* nocapture %out) nounwind uwtable ssp {
 .preheader3:
