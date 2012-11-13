@@ -39,10 +39,6 @@ using namespace llvm;
 STATISTIC(NumSimplified, "Number of library calls simplified");
 STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 
-static cl::opt<bool> UnsafeFPShrink("enable-double-float-shrink", cl::Hidden,
-                                   cl::init(false),
-                                   cl::desc("Enable unsafe double to float "
-                                            "shrinking for math lib calls"));
 //===----------------------------------------------------------------------===//
 // Optimizer Base Class
 //===----------------------------------------------------------------------===//
@@ -100,192 +96,6 @@ static bool CallHasFloatingPointArgument(const CallInst *CI) {
 }
 
 namespace {
-//===----------------------------------------------------------------------===//
-// Math Library Optimizations
-//===----------------------------------------------------------------------===//
-
-//===---------------------------------------===//
-// Double -> Float Shrinking Optimizations for Unary Functions like 'floor'
-
-struct UnaryDoubleFPOpt : public LibCallOptimization {
-  bool CheckRetType;
-  UnaryDoubleFPOpt(bool CheckReturnType): CheckRetType(CheckReturnType) {}
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 1 || !FT->getReturnType()->isDoubleTy() ||
-        !FT->getParamType(0)->isDoubleTy())
-      return 0;
-
-    if (CheckRetType) {
-      // Check if all the uses for function like 'sin' are converted to float.
-      for (Value::use_iterator UseI = CI->use_begin(); UseI != CI->use_end();
-          ++UseI) {
-        FPTruncInst *Cast = dyn_cast<FPTruncInst>(*UseI);
-        if (Cast == 0 || !Cast->getType()->isFloatTy())
-          return 0;
-      }
-    }
-
-    // If this is something like 'floor((double)floatval)', convert to floorf.
-    FPExtInst *Cast = dyn_cast<FPExtInst>(CI->getArgOperand(0));
-    if (Cast == 0 || !Cast->getOperand(0)->getType()->isFloatTy())
-      return 0;
-
-    // floor((double)floatval) -> (double)floorf(floatval)
-    Value *V = Cast->getOperand(0);
-    V = EmitUnaryFloatFnCall(V, Callee->getName(), B, Callee->getAttributes());
-    return B.CreateFPExt(V, B.getDoubleTy());
-  }
-};
-
-//===---------------------------------------===//
-// 'cos*' Optimizations
-struct CosOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    Value *Ret = NULL;
-    if (UnsafeFPShrink && Callee->getName() == "cos" &&
-        TLI->has(LibFunc::cosf)) {
-      UnaryDoubleFPOpt UnsafeUnaryDoubleFP(true);
-      Ret = UnsafeUnaryDoubleFP.CallOptimizer(Callee, CI, B);
-    }
-
-    FunctionType *FT = Callee->getFunctionType();
-    // Just make sure this has 1 argument of FP type, which matches the
-    // result type.
-    if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isFloatingPointTy())
-      return Ret;
-
-    // cos(-x) -> cos(x)
-    Value *Op1 = CI->getArgOperand(0);
-    if (BinaryOperator::isFNeg(Op1)) {
-      BinaryOperator *BinExpr = cast<BinaryOperator>(Op1);
-      return B.CreateCall(Callee, BinExpr->getOperand(1), "cos");
-    }
-    return Ret;
-  }
-};
-
-//===---------------------------------------===//
-// 'pow*' Optimizations
-
-struct PowOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    Value *Ret = NULL;
-    if (UnsafeFPShrink && Callee->getName() == "pow" &&
-        TLI->has(LibFunc::powf)) {
-      UnaryDoubleFPOpt UnsafeUnaryDoubleFP(true);
-      Ret = UnsafeUnaryDoubleFP.CallOptimizer(Callee, CI, B);
-    }
-
-    FunctionType *FT = Callee->getFunctionType();
-    // Just make sure this has 2 arguments of the same FP type, which match the
-    // result type.
-    if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
-        FT->getParamType(0) != FT->getParamType(1) ||
-        !FT->getParamType(0)->isFloatingPointTy())
-      return Ret;
-
-    Value *Op1 = CI->getArgOperand(0), *Op2 = CI->getArgOperand(1);
-    if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
-      if (Op1C->isExactlyValue(1.0))  // pow(1.0, x) -> 1.0
-        return Op1C;
-      if (Op1C->isExactlyValue(2.0))  // pow(2.0, x) -> exp2(x)
-        return EmitUnaryFloatFnCall(Op2, "exp2", B, Callee->getAttributes());
-    }
-
-    ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
-    if (Op2C == 0) return Ret;
-
-    if (Op2C->getValueAPF().isZero())  // pow(x, 0.0) -> 1.0
-      return ConstantFP::get(CI->getType(), 1.0);
-
-    if (Op2C->isExactlyValue(0.5)) {
-      // Expand pow(x, 0.5) to (x == -infinity ? +infinity : fabs(sqrt(x))).
-      // This is faster than calling pow, and still handles negative zero
-      // and negative infinity correctly.
-      // TODO: In fast-math mode, this could be just sqrt(x).
-      // TODO: In finite-only mode, this could be just fabs(sqrt(x)).
-      Value *Inf = ConstantFP::getInfinity(CI->getType());
-      Value *NegInf = ConstantFP::getInfinity(CI->getType(), true);
-      Value *Sqrt = EmitUnaryFloatFnCall(Op1, "sqrt", B,
-                                         Callee->getAttributes());
-      Value *FAbs = EmitUnaryFloatFnCall(Sqrt, "fabs", B,
-                                         Callee->getAttributes());
-      Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf);
-      Value *Sel = B.CreateSelect(FCmp, Inf, FAbs);
-      return Sel;
-    }
-
-    if (Op2C->isExactlyValue(1.0))  // pow(x, 1.0) -> x
-      return Op1;
-    if (Op2C->isExactlyValue(2.0))  // pow(x, 2.0) -> x*x
-      return B.CreateFMul(Op1, Op1, "pow2");
-    if (Op2C->isExactlyValue(-1.0)) // pow(x, -1.0) -> 1.0/x
-      return B.CreateFDiv(ConstantFP::get(CI->getType(), 1.0),
-                          Op1, "powrecip");
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
-// 'exp2' Optimizations
-
-struct Exp2Opt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    Value *Ret = NULL;
-    if (UnsafeFPShrink && Callee->getName() == "exp2" &&
-        TLI->has(LibFunc::exp2)) {
-      UnaryDoubleFPOpt UnsafeUnaryDoubleFP(true);
-      Ret = UnsafeUnaryDoubleFP.CallOptimizer(Callee, CI, B);
-    }
-
-    FunctionType *FT = Callee->getFunctionType();
-    // Just make sure this has 1 argument of FP type, which matches the
-    // result type.
-    if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isFloatingPointTy())
-      return Ret;
-
-    Value *Op = CI->getArgOperand(0);
-    // Turn exp2(sitofp(x)) -> ldexp(1.0, sext(x))  if sizeof(x) <= 32
-    // Turn exp2(uitofp(x)) -> ldexp(1.0, zext(x))  if sizeof(x) < 32
-    Value *LdExpArg = 0;
-    if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
-      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
-        LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty());
-    } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
-      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
-        LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty());
-    }
-
-    if (LdExpArg) {
-      const char *Name;
-      if (Op->getType()->isFloatTy())
-        Name = "ldexpf";
-      else if (Op->getType()->isDoubleTy())
-        Name = "ldexp";
-      else
-        Name = "ldexpl";
-
-      Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
-      if (!Op->getType()->isFloatTy())
-        One = ConstantExpr::getFPExtend(One, Op->getType());
-
-      Module *M = Caller->getParent();
-      Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
-                                             Op->getType(),
-                                             B.getInt32Ty(), NULL);
-      CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
-      if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
-        CI->setCallingConv(F->getCallingConv());
-
-      return CI;
-    }
-    return Ret;
-  }
-};
-
 //===----------------------------------------------------------------------===//
 // Integer Optimizations
 //===----------------------------------------------------------------------===//
@@ -768,9 +578,6 @@ namespace {
     TargetLibraryInfo *TLI;
 
     StringMap<LibCallOptimization*> Optimizations;
-    // Math Library Optimizations
-    CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
-    UnaryDoubleFPOpt UnaryDoubleFP, UnsafeUnaryDoubleFP;
     // Integer Optimizations
     FFSOpt FFS; AbsOpt Abs; IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
     ToAsciiOpt ToAscii;
@@ -782,8 +589,7 @@ namespace {
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
-    SimplifyLibCalls() : FunctionPass(ID), UnaryDoubleFP(false),
-                         UnsafeUnaryDoubleFP(true) {
+    SimplifyLibCalls() : FunctionPass(ID) {
       initializeSimplifyLibCallsPass(*PassRegistry::getPassRegistry());
     }
     void AddOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -833,59 +639,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// Optimizations - Populate the Optimizations map with all the optimizations
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
-  // Math Library Optimizations
-  Optimizations["cosf"] = &Cos;
-  Optimizations["cos"] = &Cos;
-  Optimizations["cosl"] = &Cos;
-  Optimizations["powf"] = &Pow;
-  Optimizations["pow"] = &Pow;
-  Optimizations["powl"] = &Pow;
-  Optimizations["llvm.pow.f32"] = &Pow;
-  Optimizations["llvm.pow.f64"] = &Pow;
-  Optimizations["llvm.pow.f80"] = &Pow;
-  Optimizations["llvm.pow.f128"] = &Pow;
-  Optimizations["llvm.pow.ppcf128"] = &Pow;
-  Optimizations["exp2l"] = &Exp2;
-  Optimizations["exp2"] = &Exp2;
-  Optimizations["exp2f"] = &Exp2;
-  Optimizations["llvm.exp2.ppcf128"] = &Exp2;
-  Optimizations["llvm.exp2.f128"] = &Exp2;
-  Optimizations["llvm.exp2.f80"] = &Exp2;
-  Optimizations["llvm.exp2.f64"] = &Exp2;
-  Optimizations["llvm.exp2.f32"] = &Exp2;
-
-  AddOpt(LibFunc::ceil, LibFunc::ceilf, &UnaryDoubleFP);
-  AddOpt(LibFunc::fabs, LibFunc::fabsf, &UnaryDoubleFP);
-  AddOpt(LibFunc::floor, LibFunc::floorf, &UnaryDoubleFP);
-  AddOpt(LibFunc::rint, LibFunc::rintf, &UnaryDoubleFP);
-  AddOpt(LibFunc::round, LibFunc::roundf, &UnaryDoubleFP);
-  AddOpt(LibFunc::nearbyint, LibFunc::nearbyintf, &UnaryDoubleFP);
-  AddOpt(LibFunc::trunc, LibFunc::truncf, &UnaryDoubleFP);
-
-  if(UnsafeFPShrink) {
-    AddOpt(LibFunc::acos, LibFunc::acosf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::acosh, LibFunc::acoshf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::asin, LibFunc::asinf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::asinh, LibFunc::asinhf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::atan, LibFunc::atanf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::atanh, LibFunc::atanhf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::cbrt, LibFunc::cbrtf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::cosh, LibFunc::coshf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::exp, LibFunc::expf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::exp10, LibFunc::exp10f, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::expm1, LibFunc::expm1f, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::log, LibFunc::logf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::log10, LibFunc::log10f, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::log1p, LibFunc::log1pf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::log2, LibFunc::log2f, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::logb, LibFunc::logbf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::sin, LibFunc::sinf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::sinh, LibFunc::sinhf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::sqrt, LibFunc::sqrtf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::tan, LibFunc::tanf, &UnsafeUnaryDoubleFP);
-    AddOpt(LibFunc::tanh, LibFunc::tanhf, &UnsafeUnaryDoubleFP);
-  }
-
   // Integer Optimizations
   Optimizations["ffs"] = &FFS;
   Optimizations["ffsl"] = &FFS;

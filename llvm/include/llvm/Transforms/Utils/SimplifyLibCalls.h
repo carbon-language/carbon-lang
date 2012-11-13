@@ -31,7 +31,8 @@ namespace llvm {
     /// simplifier.
     LibCallSimplifierImpl *Impl;
   public:
-    LibCallSimplifier(const DataLayout *TD, const TargetLibraryInfo *TLI);
+    LibCallSimplifier(const DataLayout *TD, const TargetLibraryInfo *TLI,
+                      bool UnsafeFPShrink);
     virtual ~LibCallSimplifier();
 
     /// optimizeCall - Take the given call instruction and return a more
