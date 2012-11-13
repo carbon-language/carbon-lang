@@ -272,3 +272,9 @@ void test12365078_nested(unichar *characters) {
     }
   }
 }
+
+void test12365078_check_positive() {
+  unichar *characters = (unichar*)malloc(12);
+  NSString *string = [[NSString alloc] initWithCharactersNoCopy:characters length:12 freeWhenDone:1];
+  if (string) free(characters); // expected-warning{{Attempt to free non-owned memory}}
+}

@@ -627,24 +627,19 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                     ReleasedAllocated, ReturnsNullOnFailure);
 }
 
-/// Check if the previous call to free on the given symbol failed.
-///
-/// For example, if free failed, returns true. In addition, cleans out the 
-/// state from the corresponding failure info. Retuns the cleaned out state 
-/// and the corresponding return value symbol.
-static std::pair<bool, ProgramStateRef>
-checkAndCleanFreeFailedInfo(ProgramStateRef State,
-                            SymbolRef Sym, const SymbolRef *Ret) {
-  Ret = State->get<FreeReturnValue>(Sym);
+/// Checks if the previous call to free on the given symbol failed - if free
+/// failed, returns true. Also, returns the corresponding return value symbol.
+bool didPreviousFreeFail(ProgramStateRef State,
+                         SymbolRef Sym, SymbolRef &RetStatusSymbol) {
+  const SymbolRef *Ret = State->get<FreeReturnValue>(Sym);
   if (Ret) {
     assert(*Ret && "We should not store the null return symbol");
     ConstraintManager &CMgr = State->getConstraintManager();
     ConditionTruthVal FreeFailed = CMgr.isNull(State, *Ret);
-    State = State->remove<FreeReturnValue>(Sym);
-    return std::pair<bool, ProgramStateRef>(FreeFailed.isConstrainedTrue(),
-                                            State);
+    RetStatusSymbol = *Ret;
+    return FreeFailed.isConstrainedTrue();
   }
-  return std::pair<bool, ProgramStateRef>(false, State);
+  return false;
 }
 
 ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
@@ -716,15 +711,12 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
   SymbolRef Sym = SR->getSymbol();
   const RefState *RS = State->get<RegionState>(Sym);
-  bool FailedToFree = false;
-  const SymbolRef *RetStatusSymbolPtr = 0;
-  llvm::tie(FailedToFree, State) =
-      checkAndCleanFreeFailedInfo(State, Sym, RetStatusSymbolPtr);
+  SymbolRef PreviousRetStatusSymbol = 0;
 
   // Check double free.
   if (RS &&
       (RS->isReleased() || RS->isRelinquished()) &&
-      !FailedToFree) {
+      !didPreviousFreeFail(State, Sym, PreviousRetStatusSymbol)) {
 
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_DoubleFree)
@@ -735,8 +727,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                             "Attempt to free non-owned memory"), N);
       R->addRange(ArgExpr->getSourceRange());
       R->markInteresting(Sym);
-      if (RetStatusSymbolPtr)
-        R->markInteresting(*RetStatusSymbolPtr);
+      if (PreviousRetStatusSymbol)
+        R->markInteresting(PreviousRetStatusSymbol);
       R->addVisitor(new MallocBugVisitor(Sym));
       C.emitReport(R);
     }
@@ -744,6 +736,9 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   }
 
   ReleasedAllocated = (RS != 0);
+
+  // Clean out the info on previous call to free return info.
+  State = State->remove<FreeReturnValue>(Sym);
 
   // Keep track of the return value. If it is NULL, we will know that free 
   // failed.
