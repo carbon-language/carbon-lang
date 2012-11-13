@@ -65,10 +65,9 @@ EnableJoining("join-liveintervals",
               cl::init(true));
 
 // Temporary flag to test critical edge unsplitting.
-static cl::opt<cl::boolOrDefault>
+static cl::opt<bool>
 EnableJoinSplits("join-splitedges",
-  cl::desc("Coalesce copies on split edges (default=subtarget)"),
-  cl::init(cl::BOU_UNSET), cl::Hidden);
+  cl::desc("Coalesce copies on split edges (default=subtarget)"), cl::Hidden);
 
 // Temporary flag to test global copy optimization.
 static cl::opt<cl::boolOrDefault>
