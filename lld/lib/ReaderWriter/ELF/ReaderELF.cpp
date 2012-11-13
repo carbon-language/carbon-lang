@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include "lld/ReaderWriter/ReaderELF.h"
+#include "lld/ReaderWriter/ReaderArchive.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -30,6 +30,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/Path.h"
 
 
 #include <map>
@@ -751,43 +752,72 @@ private:
 
 class ReaderELF: public Reader {
 public:
-  ReaderELF(const ReaderOptionsELF &) {}
+  ReaderELF(const ReaderOptionsELF &readerELFOptions,
+            ReaderOptionsArchive &readerOptionsArchive)
+         : _readerELFOptions(readerELFOptions),
+           _readerOptionsArchive(readerOptionsArchive),
+           _readerArchive(_readerOptionsArchive) { 
+    _readerOptionsArchive.setReader(this);
+  }
+
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb, std::vector<
-      std::unique_ptr<File> > &result) {
-
-    std::pair<unsigned char, unsigned char> Ident =
-        llvm::object::getElfArchType(&*mb);
-    llvm::error_code ec;
-    //    Instantiate the correct FileELF template instance
-    //    based on the Ident pair. Once the File is created
-    //     we push the file to the vector of files already
-    //     created during parser's life.
-
+                       std::unique_ptr<File> > &result) {
+    llvm::error_code ec; 
     std::unique_ptr<File> f;
+    std::pair<unsigned char, unsigned char> Ident;
 
-    if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
-        == llvm::ELF::ELFDATA2LSB) {
-      f.reset(new FileELF<llvm::support::little, false>(std::move(mb), ec));
+    llvm::sys::LLVMFileType fileType = 
+          llvm::sys::IdentifyFileType(mb->getBufferStart(),
+                                static_cast<unsigned>(mb->getBufferSize()));
+    switch (fileType) {
 
-    } else if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
-        == llvm::ELF::ELFDATA2MSB) {
-      f.reset(new FileELF<llvm::support::big, false> (std::move(mb), ec));
+      case llvm::sys::ELF_Relocatable_FileType:
 
-    } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
-        == llvm::ELF::ELFDATA2MSB) {
-      f.reset(new FileELF<llvm::support::big, true> (std::move(mb), ec));
+        Ident = llvm::object::getElfArchType(&*mb);
+        //    Instantiate the correct FileELF template instance
+        //    based on the Ident pair. Once the File is created
+        //     we push the file to the vector of files already
+        //     created during parser's life.
 
-    } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
-        == llvm::ELF::ELFDATA2LSB) {
-      f.reset(new FileELF<llvm::support::little, true> (std::move(mb), ec));
+        if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
+            == llvm::ELF::ELFDATA2LSB) {
+          f.reset(new FileELF<llvm::support::little, false>(std::move(mb), ec));
+
+        } else if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
+            == llvm::ELF::ELFDATA2MSB) {
+          f.reset(new FileELF<llvm::support::big, false> (std::move(mb), ec));
+
+        } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
+            == llvm::ELF::ELFDATA2MSB) {
+          f.reset(new FileELF<llvm::support::big, true> (std::move(mb), ec));
+
+        } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
+            == llvm::ELF::ELFDATA2LSB) {
+          f.reset(new FileELF<llvm::support::little, true> (std::move(mb), ec));
+        }
+        if (!ec)
+          result.push_back(std::move(f));
+        break;
+
+      case llvm::sys::Archive_FileType:
+        ec = _readerArchive.parseFile(std::move(mb), result);
+        break;
+
+      default:
+        llvm_unreachable("not supported format");
+        break;
     }
 
     if (ec)
       return ec;
 
-    result.push_back(std::move(f));
     return error_code::success();
   }
+
+private:
+  const ReaderOptionsELF &_readerELFOptions;
+  ReaderOptionsArchive &_readerOptionsArchive;
+  ReaderArchive _readerArchive;
 };
 
 } // namespace anonymous
@@ -800,8 +830,9 @@ ReaderOptionsELF::ReaderOptionsELF() {
 ReaderOptionsELF::~ReaderOptionsELF() {
 }
 
-Reader *createReaderELF(const ReaderOptionsELF &options) {
-  return new ReaderELF(options);
+Reader *createReaderELF(const ReaderOptionsELF &options,
+                        ReaderOptionsArchive &optionsArchive) {
+  return new ReaderELF(options, optionsArchive);
 }
 
 } // namespace LLD

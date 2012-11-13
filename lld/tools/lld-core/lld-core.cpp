@@ -12,6 +12,7 @@
 #include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/ReaderArchive.h"
 #include "lld/ReaderWriter/ReaderNative.h"
 #include "lld/ReaderWriter/ReaderYAML.h"
 #include "lld/ReaderWriter/ReaderELF.h"
@@ -74,6 +75,10 @@ cmdLineDoGotPass("got-pass",
 llvm::cl::opt<bool> 
 cmdLineUndefinesIsError("undefines-are-errors", 
           llvm::cl::desc("Any undefined symbols at end is an error"));
+
+llvm::cl::opt<bool> 
+cmdLineForceLoad("force-load", 
+          llvm::cl::desc("force load all members of the archive"));
 
 llvm::cl::opt<bool> 
 cmdLineCommonsSearchArchives("commons-search-archives", 
@@ -214,6 +219,8 @@ int main(int argc, char *argv[]) {
   // create object to mange input files
   InputFiles inputFiles;
 
+  ReaderOptionsArchive readerOptionsArchive(cmdLineForceLoad);
+
   // read input files into in-memory File objects
 
   TestingReaderOptionsYAML  readerOptionsYAML;
@@ -231,7 +238,9 @@ int main(int argc, char *argv[]) {
       reader = createReaderPECOFF(lld::ReaderOptionsPECOFF());
       break;
     case readerELF:
-      reader = createReaderELF(lld::ReaderOptionsELF());
+      reader = createReaderELF(lld::ReaderOptionsELF(),
+                               readerOptionsArchive);
+
       break;
     default:
       reader = createReaderYAML(readerOptionsYAML);

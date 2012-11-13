@@ -11,6 +11,7 @@
 #define LLD_READERWRITER_READER_ELF_H_
 
 #include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/ReaderArchive.h"
 #include "lld/Core/LLVM.h"
 
 
@@ -56,7 +57,8 @@ protected:
 /// ReaderOptionsELF object supplied, so the objects object must not be  
 /// destroyed before the Reader object. 
 ///
-Reader* createReaderELF(const ReaderOptionsELF &options);
+Reader* createReaderELF(const ReaderOptionsELF &options, 
+                        ReaderOptionsArchive &optionsArchive);
 
 
 

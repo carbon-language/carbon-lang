@@ -1,0 +1,48 @@
+# Tests the functionality of archive libraries reading 
+# and resolution 
+# Note: The binary files would not be required once we have support to generate
+# binary archives from textual(yaml) input
+#
+# Tests generated using the source files below
+# main file
+# int main()
+# {
+#   fn();
+#   return 0;
+# }
+#  
+# archive file
+# int fn()
+# {
+#   return 0;
+# }
+# 
+# int fn1()
+# {
+#   return 0;
+# }
+# gcc -c main.c fn.c fn1.c
+
+RUN: lld-core -reader ELF %p/Inputs/mainobj.x86_64 %p/Inputs/libfnarchive.x86_64 -force-load | FileCheck -check-prefix FORCELOAD %s
+
+FORCELOAD:    - name:              fn1
+FORCELOAD:      scope:             global
+FORCELOAD:      type:              code
+FORCELOAD:      section-choice:    custom-required
+FORCELOAD:      section-name:      .text
+FORCELOAD:      content:           [ 55, 48, 89, E5, B8, 00, 00, 00, 00, 5D, C3 ]
+FORCELOAD:    - name:              fn
+FORCELOAD:      scope:             global
+FORCELOAD:      type:              code
+FORCELOAD:      section-choice:    custom-required
+FORCELOAD:      section-name:      .text
+FORCELOAD:      content:           [ 55, 48, 89, E5, B8, 00, 00, 00, 00, 5D, C3 ]
+FORCELOAD:    - name:              main.c
+FORCELOAD:      definition:        absolute
+FORCELOAD:      value:             0x0
+FORCELOAD:    - name:              fn1.c
+FORCELOAD:      definition:        absolute
+FORCELOAD:      value:             0x0
+FORCELOAD:    - name:              fn.c
+FORCELOAD:      definition:        absolute
+FORCELOAD:      value:             0x0

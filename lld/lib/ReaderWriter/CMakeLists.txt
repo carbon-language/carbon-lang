@@ -6,4 +6,5 @@ add_subdirectory(YAML)
 add_lld_library(lldReaderWriter
   Reader.cpp
   Writer.cpp
+  ReaderArchive.cpp
   )
