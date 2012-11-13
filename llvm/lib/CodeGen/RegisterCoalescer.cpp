@@ -2116,10 +2116,10 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   else
     JoinGlobalCopies = (EnableGlobalCopies == cl::BOU_TRUE);
 
-  if (EnableJoinSplits == cl::BOU_UNSET)
-    JoinSplitEdges = ST.enableMachineScheduler();
-  else
-    JoinSplitEdges = (EnableJoinSplits == cl::BOU_TRUE);
+  // The MachineScheduler does not currently require JoinSplitEdges. This will
+  // either be enabled unconditionally or replaced by a more general live range
+  // splitting optimization.
+  JoinSplitEdges = EnableJoinSplits;
 
   DEBUG(dbgs() << "********** SIMPLE REGISTER COALESCING **********\n"
                << "********** Function: " << MF->getName() << '\n');
