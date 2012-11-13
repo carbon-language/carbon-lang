@@ -2449,7 +2449,7 @@ static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) 
 
   if (!isFunction(D) && !isa<ObjCMethodDecl>(D) && !isa<CXXRecordDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunctionOrMethod;
+      << Attr.getName() << ExpectedFunctionMethodOrClass;
     return;
   }
 

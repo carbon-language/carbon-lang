@@ -44,7 +44,7 @@ void bah() {
 }
 
 namespace warn_unused_CXX11 {
-struct [[warn_unused_result]] Status {
+struct [[clang::warn_unused_result]] Status {
   bool ok() const;
 };
 Status DoSomething();

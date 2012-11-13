@@ -699,7 +699,7 @@ def VecReturn : InheritableAttr {
 }
 
 def WarnUnusedResult : InheritableAttr {
-  let Spellings = [GNU<"warn_unused_result">, CXX11<"","warn_unused_result">];
+  let Spellings = [GNU<"warn_unused_result">, CXX11<"clang","warn_unused_result">];
 }
 
 def Weak : InheritableAttr {
