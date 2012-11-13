@@ -153,8 +153,8 @@ CHECKIDX:          U ??_7type_info@@6B@
 CHECKIDX: 00000000 R ??_C@_0BC@IHENMCGI@b?5cannot?5be?5zero?$CB?$AA@
 CHECKIDX:          w ??_Einvalid_argument@std@@UAEPAXI@Z
 CHECKIDX:          w ??_Elogic_error@std@@UAEPAXI@Z
-CHECKIDX:          U ??_Ginvalid_argument@std@@UAEPAXI@Z
 CHECKIDX: 00000000 T ??_Ginvalid_argument@std@@UAEPAXI@Z
+CHECKIDX:          U ??_Ginvalid_argument@std@@UAEPAXI@Z
 CHECKIDX: 00000000 T ??_Glogic_error@std@@UAEPAXI@Z
 CHECKIDX:          U ??_Glogic_error@std@@UAEPAXI@Z
 CHECKIDX: 00000000 D ??_R0?AVexception@std@@@8

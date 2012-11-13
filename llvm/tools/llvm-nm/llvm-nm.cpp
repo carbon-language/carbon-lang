@@ -150,6 +150,8 @@ namespace {
       return true;
     else if (a.Address == b.Address && a.Name < b.Name)
       return true;
+    else if (a.Address == b.Address && a.Name == b.Name && a.Size < b.Size)
+      return true;
     else
       return false;
 
@@ -160,12 +162,21 @@ namespace {
       return true;
     else if (a.Size == b.Size && a.Name < b.Name)
       return true;
+    else if (a.Size == b.Size && a.Name == b.Name && a.Address < b.Address)
+      return true;
     else
       return false;
   }
 
   static bool CompareSymbolName(const NMSymbol &a, const NMSymbol &b) {
-    return a.Name < b.Name;
+    if (a.Name < b.Name)
+      return true;
+    else if (a.Name == b.Name && a.Size < b.Size)
+      return true;
+    else if (a.Name == b.Name && a.Size == b.Size && a.Address < b.Address)
+      return true;
+    else
+      return false;
   }
 
   StringRef CurrentFilename;
