@@ -96,7 +96,7 @@ private:
   void mangleExtraDimensions(QualType T);
   void mangleFunctionClass(const FunctionDecl *FD);
   void mangleCallingConvention(const FunctionType *T, bool IsInstMethod = false);
-  void mangleIntegerLiteral(QualType T, const llvm::APSInt &Number);
+  void mangleIntegerLiteral(const llvm::APSInt &Number, bool IsBoolean);
   void mangleExpression(const Expr *E);
   void mangleThrowSpecification(const FunctionProtoType *T);
 
@@ -759,13 +759,13 @@ MicrosoftCXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *TD) {
 }
 
 void
-MicrosoftCXXNameMangler::mangleIntegerLiteral(QualType T,
-                                              const llvm::APSInt &Value) {
+MicrosoftCXXNameMangler::mangleIntegerLiteral(const llvm::APSInt &Value,
+                                              bool IsBoolean) {
   // <integer-literal> ::= $0 <number>
   Out << "$0";
   // Make sure booleans are encoded as 0/1.
-  if (T->isBooleanType())
-    Out << (Value.getBoolValue() ? "0" : "A@");
+  if (IsBoolean && Value.getBoolValue())
+    mangleNumber(1);
   else
     mangleNumber(Value);
 }
@@ -775,7 +775,7 @@ MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
   // See if this is a constant expression.
   llvm::APSInt Value;
   if (E->isIntegerConstantExpr(Value, Context.getASTContext())) {
-    mangleIntegerLiteral(E->getType(), Value);
+    mangleIntegerLiteral(Value, E->getType()->isBooleanType());
     return;
   }
 
@@ -802,7 +802,8 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(
       mangleType(TA.getAsType(), TAL.getSourceRange());
       break;
     case TemplateArgument::Integral:
-      mangleIntegerLiteral(TA.getIntegralType(), TA.getAsIntegral());
+      mangleIntegerLiteral(TA.getAsIntegral(),
+                           TA.getIntegralType()->isBooleanType());
       break;
     case TemplateArgument::Expression:
       mangleExpression(TA.getAsExpr());
