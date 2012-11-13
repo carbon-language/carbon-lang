@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.6.0"
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
+;;    for (long int j = 0; j < 100; j++) {
 ;;      A[i + 1][i + j] = i;
 ;;      *B++ = A[i][i + j];
 
@@ -14,12 +14,19 @@ define void @prop0([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc9, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc9 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - consistent flow [1 -1]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc9
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc10, %for.inc9 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -30,17 +37,17 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add6 = add nsw i64 %i.03, %j.02
   %arrayidx8 = getelementptr inbounds [100 x i32]* %A, i64 %i.03, i64 %add6
   %0 = load i32* %arrayidx8, align 4
-; CHECK: da analyze - consistent flow [1 -1]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc9
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc9
 
 for.inc9:                                         ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc10 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc10, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end11
+  %exitcond5 = icmp ne i64 %inc10, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end11
 
 for.end11:                                        ; preds = %for.inc9
   ret void
@@ -49,25 +56,32 @@ for.end11:                                        ; preds = %for.inc9
 
 ;;  for (long int i = 0; i < 100; i++)
 ;;    for (long int j = 0; j < 100; j++)
-;;      for (long int k = 0; k < 100; k++)
-;;        A[j - i][i + 1][j + k] = ...
-;;        ... = A[j - i][i][j + k];
+;;      for (long int k = 0; k < 100; k++) {
+;;        A[j - i][i + 1][j + k] = i;
+;;        *B++ = A[j - i][i][j + k];
 
 define void @prop1([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc18, %entry
-  %B.addr.06 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc18 ]
+; CHECK: da analyze - consistent output [0 0 0|<]!
+; CHECK: da analyze - consistent flow [1 1 -1]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc18
+  %B.addr.06 = phi i32* [ %B, %entry ], [ %scevgep7, %for.inc18 ]
   %i.05 = phi i64 [ 0, %entry ], [ %inc19, %for.inc18 ]
   br label %for.cond4.preheader
 
-for.cond4.preheader:                              ; preds = %for.inc15, %for.cond1.preheader
-  %B.addr.14 = phi i32* [ %B.addr.06, %for.cond1.preheader ], [ %incdec.ptr, %for.inc15 ]
+for.cond4.preheader:                              ; preds = %for.cond1.preheader, %for.inc15
+  %B.addr.14 = phi i32* [ %B.addr.06, %for.cond1.preheader ], [ %scevgep, %for.inc15 ]
   %j.03 = phi i64 [ 0, %for.cond1.preheader ], [ %inc16, %for.inc15 ]
   br label %for.body6
 
-for.body6:                                        ; preds = %for.body6, %for.cond4.preheader
+for.body6:                                        ; preds = %for.cond4.preheader, %for.body6
   %k.02 = phi i64 [ 0, %for.cond4.preheader ], [ %inc, %for.body6 ]
   %B.addr.21 = phi i32* [ %B.addr.14, %for.cond4.preheader ], [ %incdec.ptr, %for.body6 ]
   %conv = trunc i64 %i.05 to i32
@@ -80,22 +94,23 @@ for.body6:                                        ; preds = %for.body6, %for.con
   %sub11 = sub nsw i64 %j.03, %i.05
   %arrayidx14 = getelementptr inbounds [100 x [100 x i32]]* %A, i64 %sub11, i64 %i.05, i64 %add10
   %0 = load i32* %arrayidx14, align 4
-; CHECK: da analyze - consistent flow [1 1 -1]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.21, i64 1
   store i32 %0, i32* %B.addr.21, align 4
   %inc = add nsw i64 %k.02, 1
-  %cmp5 = icmp slt i64 %inc, 100
-  br i1 %cmp5, label %for.body6, label %for.inc15
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body6, label %for.inc15
 
 for.inc15:                                        ; preds = %for.body6
+  %scevgep = getelementptr i32* %B.addr.14, i64 100
   %inc16 = add nsw i64 %j.03, 1
-  %cmp2 = icmp slt i64 %inc16, 100
-  br i1 %cmp2, label %for.cond4.preheader, label %for.inc18
+  %exitcond8 = icmp ne i64 %inc16, 100
+  br i1 %exitcond8, label %for.cond4.preheader, label %for.inc18
 
 for.inc18:                                        ; preds = %for.inc15
+  %scevgep7 = getelementptr i32* %B.addr.06, i64 10000
   %inc19 = add nsw i64 %i.05, 1
-  %cmp = icmp slt i64 %inc19, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end20
+  %exitcond9 = icmp ne i64 %inc19, 100
+  br i1 %exitcond9, label %for.cond1.preheader, label %for.end20
 
 for.end20:                                        ; preds = %for.inc18
   ret void
@@ -103,20 +118,27 @@ for.end20:                                        ; preds = %for.inc18
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[i - 1][2*i] = ...
-;;      ... = A[i][i + j + 110];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[i - 1][2*i] = i;
+;;      *B++ = A[i][i + j + 110];
 
 define void @prop2([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc8, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc8 ]
+; CHECK: da analyze - consistent output [0 S|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc8
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc8 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc9, %for.inc8 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -128,17 +150,17 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add5 = add nsw i64 %add, 110
   %arrayidx7 = getelementptr inbounds [100 x i32]* %A, i64 %i.03, i64 %add5
   %0 = load i32* %arrayidx7, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc8
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc8
 
 for.inc8:                                         ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc9 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc9, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end10
+  %exitcond5 = icmp ne i64 %inc9, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end10
 
 for.end10:                                        ; preds = %for.inc8
   ret void
@@ -146,20 +168,27 @@ for.end10:                                        ; preds = %for.inc8
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[i][2*j + i] = ...
-;;      ... = A[i][2*j - i + 5];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[i][2*j + i] = i;
+;;      *B++ = A[i][2*j - i + 5];
 
 define void @prop3([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc9, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc9 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc9
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc10, %for.inc9 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -172,39 +201,45 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add6 = add nsw i64 %sub, 5
   %arrayidx8 = getelementptr inbounds [100 x i32]* %A, i64 %i.03, i64 %add6
   %0 = load i32* %arrayidx8, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc9
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc9
 
 for.inc9:                                         ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc10 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc10, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end11
+  %exitcond5 = icmp ne i64 %inc10, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end11
 
 for.end11:                                        ; preds = %for.inc9
   ret void
 }
 
 
-;; propagate Distance
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[i + 2][2*i + j + 1] = ...
-;;      ... = A[i][2*i + j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[i + 2][2*i + j + 1] = i;
+;;      *B++ = A[i][2*i + j];
 
 define void @prop4([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc11, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc11 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - consistent flow [2 -3]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc11
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc11 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc12, %for.inc11 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -218,39 +253,46 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add8 = add nsw i64 %mul7, %j.02
   %arrayidx10 = getelementptr inbounds [100 x i32]* %A, i64 %i.03, i64 %add8
   %0 = load i32* %arrayidx10, align 4
-; CHECK: da analyze - consistent flow [2 -3]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc11
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc11
 
 for.inc11:                                        ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc12 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc12, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end13
+  %exitcond5 = icmp ne i64 %inc12, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end13
 
 for.end13:                                        ; preds = %for.inc11
   ret void
 }
 
 
-;; propagate Point
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[3*i - 18][22 - i][2*i + j] = ...
-;;      ... = A[i][i][3*i + j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[3*i - 18][22 - i][2*i + j] = i;
+;;      *B++ = A[i][i][3*i + j];
 
 define void @prop5([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc13, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc13 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - flow [< -16] splitable!
+; CHECK: da analyze - split level = 1, iteration = 11!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc13
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc13 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc14, %for.inc13 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -265,40 +307,45 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add9 = add nsw i64 %mul8, %j.02
   %arrayidx12 = getelementptr inbounds [100 x [100 x i32]]* %A, i64 %i.03, i64 %i.03, i64 %add9
   %0 = load i32* %arrayidx12, align 4
-; CHECK: da analyze - flow [< -16] splitable!
-; CHECK: da analyze - split level = 1, iteration = 11!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc13
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc13
 
 for.inc13:                                        ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc14 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc14, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end15
+  %exitcond5 = icmp ne i64 %inc14, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end15
 
 for.end15:                                        ; preds = %for.inc13
   ret void
 }
 
 
-;; propagate Line
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[i + 1][4*i + j + 2] = ...
-;;      ... = A[2*i][8*i + j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[i + 1][4*i + j + 2] = i;
+;;      *B++ = A[2*i][8*i + j];
 
 define void @prop6([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc12, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc12 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - flow [=> -2]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc12
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc12 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc13, %for.inc12 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -313,17 +360,17 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %mul9 = shl nsw i64 %i.03, 1
   %arrayidx11 = getelementptr inbounds [100 x i32]* %A, i64 %mul9, i64 %add8
   %0 = load i32* %arrayidx11, align 4
-; CHECK: da analyze - flow [=> -2]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc12
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc12
 
 for.inc12:                                        ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc13 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc13, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end14
+  %exitcond5 = icmp ne i64 %inc13, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end14
 
 for.end14:                                        ; preds = %for.inc12
   ret void
@@ -331,20 +378,28 @@ for.end14:                                        ; preds = %for.inc12
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[2*i + 4][-5*i + j + 2] = ...
-;;      ... = A[-2*i + 20][5*i + j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[2*i + 4][-5*i + j + 2] = i;
+;;      *B++ = A[-2*i + 20][5*i + j];
 
 define void @prop7([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc14, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc14 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - flow [* -38] splitable!
+; CHECK: da analyze - split level = 1, iteration = 4!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc14
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc14 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc15, %for.inc14 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -361,18 +416,17 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add11 = add nsw i64 %mul10, 20
   %arrayidx13 = getelementptr inbounds [100 x i32]* %A, i64 %add11, i64 %add9
   %0 = load i32* %arrayidx13, align 4
-; CHECK: da analyze - flow [* -38] splitable!
-; CHECK: da analyze - split level = 1, iteration = 4!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc14
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc14
 
 for.inc14:                                        ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc15 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc15, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end16
+  %exitcond5 = icmp ne i64 %inc15, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end16
 
 for.end16:                                        ; preds = %for.inc14
   ret void
@@ -380,20 +434,27 @@ for.end16:                                        ; preds = %for.inc14
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[4][j + 2] = ...
-;;      ... = A[-2*i + 4][5*i + j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[4][j + 2] = i;
+;;      *B++ = A[-2*i + 4][5*i + j];
 
 define void @prop8([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc10, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc10 ]
+; CHECK: da analyze - consistent output [S 0|<]!
+; CHECK: da analyze - flow [p<= 2]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [0 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc10
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc10 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc11, %for.inc10 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -406,17 +467,17 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add7 = add nsw i64 %mul6, 4
   %arrayidx9 = getelementptr inbounds [100 x i32]* %A, i64 %add7, i64 %add5
   %0 = load i32* %arrayidx9, align 4
-; CHECK: da analyze - flow [p<= 2]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc10
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc10
 
 for.inc10:                                        ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc11 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc11, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end12
+  %exitcond5 = icmp ne i64 %inc11, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end12
 
 for.end12:                                        ; preds = %for.inc10
   ret void
@@ -424,20 +485,27 @@ for.end12:                                        ; preds = %for.inc10
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[2*i + 4][5*i + j + 2] = ...
-;;      ... = A[4][j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[2*i + 4][5*i + j + 2] = i;
+;;      *B++ = A[4][j];
 
 define void @prop9([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc10, %entry
-  %B.addr.04 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc10 ]
+; CHECK: da analyze - consistent output [0 0|<]!
+; CHECK: da analyze - flow [p<= 2]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent input [S 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc10
+  %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc10 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc11, %for.inc10 ]
   br label %for.body3
 
-for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
+for.body3:                                        ; preds = %for.cond1.preheader, %for.body3
   %j.02 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %B.addr.11 = phi i32* [ %B.addr.04, %for.cond1.preheader ], [ %incdec.ptr, %for.body3 ]
   %conv = trunc i64 %i.03 to i32
@@ -450,17 +518,17 @@ for.body3:                                        ; preds = %for.body3, %for.con
   store i32 %conv, i32* %arrayidx7, align 4
   %arrayidx9 = getelementptr inbounds [100 x i32]* %A, i64 4, i64 %j.02
   %0 = load i32* %arrayidx9, align 4
-; CHECK: da analyze - flow [p<= 2]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
-  %cmp2 = icmp slt i64 %inc, 100
-  br i1 %cmp2, label %for.body3, label %for.inc10
+  %exitcond = icmp ne i64 %inc, 100
+  br i1 %exitcond, label %for.body3, label %for.inc10
 
 for.inc10:                                        ; preds = %for.body3
+  %scevgep = getelementptr i32* %B.addr.04, i64 100
   %inc11 = add nsw i64 %i.03, 1
-  %cmp = icmp slt i64 %inc11, 100
-  br i1 %cmp, label %for.cond1.preheader, label %for.end12
+  %exitcond5 = icmp ne i64 %inc11, 100
+  br i1 %exitcond5, label %for.cond1.preheader, label %for.end12
 
 for.end12:                                        ; preds = %for.inc10
   ret void

@@ -6,13 +6,20 @@ target triple = "x86_64-apple-macosx10.6.0"
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[2*i - 4*j] = ...
-;;      ... = A[6*i + 8*j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[2*i - 4*j] = i;
+;;      *B++ = A[6*i + 8*j];
 
 define void @gcd0(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [=> *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -33,7 +40,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add = add nsw i64 %mul5, %mul6
   %arrayidx7 = getelementptr inbounds i32* %A, i64 %add
   %0 = load i32* %arrayidx7, align 4
-; CHECK: da analyze - flow [=> *|<]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
@@ -52,13 +58,20 @@ for.end10:                                        ; preds = %for.inc8
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[2*i - 4*j] = ...
-;;      ... = A[6*i + 8*j + 1];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[2*i - 4*j] = i;
+;;      *B++ = A[6*i + 8*j + 1];
 
 define void @gcd1(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -80,7 +93,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add7 = or i64 %add, 1
   %arrayidx8 = getelementptr inbounds i32* %A, i64 %add7
   %0 = load i32* %arrayidx8, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
@@ -99,13 +111,20 @@ for.end11:                                        ; preds = %for.inc9
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[2*i - 4*j + 1] = ...
-;;      ... = A[6*i + 8*j];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[2*i - 4*j + 1] = i;
+;;      *B++ = A[6*i + 8*j];
 
 define void @gcd2(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -127,7 +146,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add7 = add nsw i64 %mul5, %mul6
   %arrayidx8 = getelementptr inbounds i32* %A, i64 %add7
   %0 = load i32* %arrayidx8, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
@@ -146,13 +164,20 @@ for.end11:                                        ; preds = %for.inc9
 
 
 ;;  for (long int i = 0; i < 100; i++)
-;;    for (long int j = 0; j < 100; j++)
-;;      A[i + 2*j] = ...
-;;      ... = A[i + 2*j - 1];
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[i + 2*j] = i;
+;;      *B++ = A[i + 2*j - 1];
 
 define void @gcd3(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [<> *]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -172,7 +197,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %sub = add nsw i64 %add5, -1
   %arrayidx6 = getelementptr inbounds i32* %A, i64 %sub
   %0 = load i32* %arrayidx6, align 4
-; CHECK: da analyze - flow [<> *]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
@@ -190,15 +214,21 @@ for.end9:                                         ; preds = %for.inc7
 }
 
 
-;;  void gcd4(int *A, int *B, long int M, long int N) {
-;;    for (long int i = 0; i < 100; i++)
-;;      for (long int j = 0; j < 100; j++) {
-;;        A[5*i + 10*j*M + 9*M*N] = i;
-;;        *B++ = A[15*i + 20*j*M - 21*N*M + 4];
+;;  for (long int i = 0; i < 100; i++)
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[5*i + 10*j*M + 9*M*N] = i;
+;;      *B++ = A[15*i + 20*j*M - 21*N*M + 4];
 
 define void @gcd4(i32* %A, i32* %B, i64 %M, i64 %N) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc17
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc17 ]
@@ -228,7 +258,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add15 = add nsw i64 %sub, 4
   %arrayidx16 = getelementptr inbounds i32* %A, i64 %add15
   %0 = load i32* %arrayidx16, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
@@ -246,15 +275,21 @@ for.end19:                                        ; preds = %for.inc17
 }
 
 
-;;  void gcd5(int *A, int *B, long int M, long int N) {
-;;    for (long int i = 0; i < 100; i++)
-;;      for (long int j = 0; j < 100; j++) {
-;;        A[5*i + 10*j*M + 9*M*N] = i;
-;;        *B++ = A[15*i + 20*j*M - 21*N*M + 5];
+;;  for (long int i = 0; i < 100; i++)
+;;    for (long int j = 0; j < 100; j++) {
+;;      A[5*i + 10*j*M + 9*M*N] = i;
+;;      *B++ = A[15*i + 20*j*M - 21*N*M + 5];
 
 define void @gcd5(i32* %A, i32* %B, i64 %M, i64 %N) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [<> *]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc17
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc17 ]
@@ -284,7 +319,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add15 = add nsw i64 %sub, 5
   %arrayidx16 = getelementptr inbounds i32* %A, i64 %add15
   %0 = load i32* %arrayidx16, align 4
-; CHECK: da analyze - flow [<> *]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.11, i64 1
   store i32 %0, i32* %B.addr.11, align 4
   %inc = add nsw i64 %j.02, 1
@@ -302,16 +336,22 @@ for.end19:                                        ; preds = %for.inc17
 }
 
 
-;;  void gcd6(long int n, int A[][n], int *B) {
-;;    for (long int i = 0; i < n; i++)
-;;      for (long int j = 0; j < n; j++) {
-;;        A[2*i][4*j] = i;
-;;        *B++ = A[8*i][6*j + 1];
+;;  for (long int i = 0; i < n; i++)
+;;    for (long int j = 0; j < n; j++) {
+;;      A[2*i][4*j] = i;
+;;      *B++ = A[8*i][6*j + 1];
 
 define void @gcd6(i64 %n, i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   %cmp4 = icmp sgt i64 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end12
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -342,7 +382,6 @@ for.body3:                                        ; preds = %for.body3.preheader
   %arrayidx8.sum = add i64 %1, %add7
   %arrayidx9 = getelementptr inbounds i32* %A, i64 %arrayidx8.sum
   %2 = load i32* %arrayidx9, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.12, i64 1
   store i32 %2, i32* %B.addr.12, align 4
   %inc = add nsw i64 %j.03, 1
@@ -367,17 +406,23 @@ for.end12:                                        ; preds = %for.end12.loopexit,
 }
 
 
-;;  void gcd7(int n, int A[][n], int *B) {
-;;    for (int i = 0; i < n; i++)
-;;      for (int j = 0; j < n; j++) {
-;;        A[2*i][4*j] = i;
-;;        *B++ = A[8*i][6*j + 1];
+;;  for (int i = 0; i < n; i++)
+;;   for (int j = 0; j < n; j++) {
+;;    A[2*i][4*j] = i;
+;;   *B++ = A[8*i][6*j + 1];
 
 define void @gcd7(i32 %n, i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   %0 = zext i32 %n to i64
   %cmp4 = icmp sgt i32 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end15
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -419,7 +464,6 @@ for.body3:                                        ; preds = %for.body3.preheader
   %arrayidx11.sum = add i64 %10, %idxprom8
   %arrayidx12 = getelementptr inbounds i32* %A, i64 %arrayidx11.sum
   %11 = load i32* %arrayidx12, align 4
-; CHECK: da analyze - flow [* *|<]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.12, i64 1
   store i32 %11, i32* %B.addr.12, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -446,16 +490,22 @@ for.end15:                                        ; preds = %for.end15.loopexit,
 }
 
 
-;;  void gcd8(int n, int *A, int *B) {
-;;    for (int i = 0; i < n; i++)
-;;      for (int j = 0; j < n; j++) {
-;;        A[n*2*i + 4*j] = i;
-;;        *B++ = A[n*8*i + 6*j + 1];
+;;  for (int i = 0; i < n; i++)
+;;    for (int j = 0; j < n; j++) {
+;;      A[n*2*i + 4*j] = i;
+;;      *B++ = A[n*8*i + 6*j + 1];
 
 define void @gcd8(i32 %n, i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   %cmp4 = icmp sgt i32 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end15
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -492,7 +542,6 @@ for.body3:                                        ; preds = %for.body3.preheader
   %idxprom11 = sext i32 %add10 to i64
   %arrayidx12 = getelementptr inbounds i32* %A, i64 %idxprom11
   %5 = load i32* %arrayidx12, align 4
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.12, i64 1
   store i32 %5, i32* %B.addr.12, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -518,17 +567,23 @@ for.end15:                                        ; preds = %for.end15.loopexit,
 }
 
 
-;;  void gcd9(unsigned n, int A[][n], int *B) {
-;;    for (unsigned i = 0; i < n; i++)
-;;      for (unsigned j = 0; j < n; j++) {
-;;        A[2*i][4*j] = i;
-;;        *B++ = A[8*i][6*j + 1];
+;;  for (unsigned i = 0; i < n; i++)
+;;    for (unsigned j = 0; j < n; j++) {
+;;      A[2*i][4*j] = i;
+;;      *B++ = A[8*i][6*j + 1];
 
 define void @gcd9(i32 %n, i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   %0 = zext i32 %n to i64
   %cmp4 = icmp eq i32 %n, 0
   br i1 %cmp4, label %for.end15, label %for.cond1.preheader.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -570,7 +625,6 @@ for.body3:                                        ; preds = %for.body3.preheader
   %arrayidx11.sum = add i64 %10, %idxprom8
   %arrayidx12 = getelementptr inbounds i32* %A, i64 %arrayidx11.sum
   %11 = load i32* %arrayidx12, align 4
-; CHECK: da analyze - flow [* *|<]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.12, i64 1
   store i32 %11, i32* %B.addr.12, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1

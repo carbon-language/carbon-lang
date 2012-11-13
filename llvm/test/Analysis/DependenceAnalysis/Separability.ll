@@ -8,30 +8,37 @@ target triple = "x86_64-apple-macosx10.6.0"
 ;;  for (long int i = 0; i < 50; i++)
 ;;    for (long int j = 0; j < 50; j++)
 ;;      for (long int k = 0; k < 50; k++)
-;;        for (long int l = 0; l < 50; l++)
-;;          A[n][i][j + k] = ...
-;;          ... = A[10][i + 10][2*j - l];
+;;        for (long int l = 0; l < 50; l++) {
+;;          A[n][i][j + k] = i;
+;;          *B++ = A[10][i + 10][2*j - l];
 
 define void @sep0([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc22, %entry
-  %B.addr.08 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc22 ]
+; CHECK: da analyze - output [0 * * S|<]!
+; CHECK: da analyze - flow [-10 * * *]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [0 * S *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc22
+  %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc22 ]
   %i.07 = phi i64 [ 0, %entry ], [ %inc23, %for.inc22 ]
   br label %for.cond4.preheader
 
-for.cond4.preheader:                              ; preds = %for.inc19, %for.cond1.preheader
-  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %incdec.ptr, %for.inc19 ]
+for.cond4.preheader:                              ; preds = %for.cond1.preheader, %for.inc19
+  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %scevgep9, %for.inc19 ]
   %j.05 = phi i64 [ 0, %for.cond1.preheader ], [ %inc20, %for.inc19 ]
   br label %for.cond7.preheader
 
-for.cond7.preheader:                              ; preds = %for.inc16, %for.cond4.preheader
-  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %incdec.ptr, %for.inc16 ]
+for.cond7.preheader:                              ; preds = %for.cond4.preheader, %for.inc16
+  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %scevgep, %for.inc16 ]
   %k.03 = phi i64 [ 0, %for.cond4.preheader ], [ %inc17, %for.inc16 ]
   br label %for.body9
 
-for.body9:                                        ; preds = %for.body9, %for.cond7.preheader
+for.body9:                                        ; preds = %for.cond7.preheader, %for.body9
   %l.02 = phi i64 [ 0, %for.cond7.preheader ], [ %inc, %for.body9 ]
   %B.addr.31 = phi i32* [ %B.addr.24, %for.cond7.preheader ], [ %incdec.ptr, %for.body9 ]
   %conv = trunc i64 %i.07 to i32
@@ -44,27 +51,29 @@ for.body9:                                        ; preds = %for.body9, %for.con
   %add12 = add nsw i64 %i.07, 10
   %arrayidx15 = getelementptr inbounds [100 x [100 x i32]]* %A, i64 10, i64 %add12, i64 %sub
   %0 = load i32* %arrayidx15, align 4
-; CHECK: da analyze - flow [-10 * * *]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
-  %cmp8 = icmp slt i64 %inc, 50
-  br i1 %cmp8, label %for.body9, label %for.inc16
+  %exitcond = icmp ne i64 %inc, 50
+  br i1 %exitcond, label %for.body9, label %for.inc16
 
 for.inc16:                                        ; preds = %for.body9
+  %scevgep = getelementptr i32* %B.addr.24, i64 50
   %inc17 = add nsw i64 %k.03, 1
-  %cmp5 = icmp slt i64 %inc17, 50
-  br i1 %cmp5, label %for.cond7.preheader, label %for.inc19
+  %exitcond10 = icmp ne i64 %inc17, 50
+  br i1 %exitcond10, label %for.cond7.preheader, label %for.inc19
 
 for.inc19:                                        ; preds = %for.inc16
+  %scevgep9 = getelementptr i32* %B.addr.16, i64 2500
   %inc20 = add nsw i64 %j.05, 1
-  %cmp2 = icmp slt i64 %inc20, 50
-  br i1 %cmp2, label %for.cond4.preheader, label %for.inc22
+  %exitcond12 = icmp ne i64 %inc20, 50
+  br i1 %exitcond12, label %for.cond4.preheader, label %for.inc22
 
 for.inc22:                                        ; preds = %for.inc19
+  %scevgep11 = getelementptr i32* %B.addr.08, i64 125000
   %inc23 = add nsw i64 %i.07, 1
-  %cmp = icmp slt i64 %inc23, 50
-  br i1 %cmp, label %for.cond1.preheader, label %for.end24
+  %exitcond13 = icmp ne i64 %inc23, 50
+  br i1 %exitcond13, label %for.cond1.preheader, label %for.end24
 
 for.end24:                                        ; preds = %for.inc22
   ret void
@@ -74,30 +83,37 @@ for.end24:                                        ; preds = %for.inc22
 ;;  for (long int i = 0; i < 50; i++)
 ;;    for (long int j = 0; j < 50; j++)
 ;;      for (long int k = 0; k < 50; k++)
-;;        for (long int l = 0; l < 50; l++)
-;;          A[i][i][j + k] = ...
-;;          ... = A[10][i + 10][2*j - l];
+;;        for (long int l = 0; l < 50; l++) {
+;;          A[i][i][j + k] = i;
+;;          *B++ = A[10][i + 10][2*j - l];
 
 define void @sep1([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc22, %entry
-  %B.addr.08 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc22 ]
+; CHECK: da analyze - output [0 * * S|<]!
+; CHECK: da analyze - flow [> * * *]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [0 * S *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc22
+  %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc22 ]
   %i.07 = phi i64 [ 0, %entry ], [ %inc23, %for.inc22 ]
   br label %for.cond4.preheader
 
-for.cond4.preheader:                              ; preds = %for.inc19, %for.cond1.preheader
-  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %incdec.ptr, %for.inc19 ]
+for.cond4.preheader:                              ; preds = %for.cond1.preheader, %for.inc19
+  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %scevgep9, %for.inc19 ]
   %j.05 = phi i64 [ 0, %for.cond1.preheader ], [ %inc20, %for.inc19 ]
   br label %for.cond7.preheader
 
-for.cond7.preheader:                              ; preds = %for.inc16, %for.cond4.preheader
-  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %incdec.ptr, %for.inc16 ]
+for.cond7.preheader:                              ; preds = %for.cond4.preheader, %for.inc16
+  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %scevgep, %for.inc16 ]
   %k.03 = phi i64 [ 0, %for.cond4.preheader ], [ %inc17, %for.inc16 ]
   br label %for.body9
 
-for.body9:                                        ; preds = %for.body9, %for.cond7.preheader
+for.body9:                                        ; preds = %for.cond7.preheader, %for.body9
   %l.02 = phi i64 [ 0, %for.cond7.preheader ], [ %inc, %for.body9 ]
   %B.addr.31 = phi i32* [ %B.addr.24, %for.cond7.preheader ], [ %incdec.ptr, %for.body9 ]
   %conv = trunc i64 %i.07 to i32
@@ -109,27 +125,29 @@ for.body9:                                        ; preds = %for.body9, %for.con
   %add12 = add nsw i64 %i.07, 10
   %arrayidx15 = getelementptr inbounds [100 x [100 x i32]]* %A, i64 10, i64 %add12, i64 %sub
   %0 = load i32* %arrayidx15, align 4
-; CHECK: da analyze - flow [> * * *]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
-  %cmp8 = icmp slt i64 %inc, 50
-  br i1 %cmp8, label %for.body9, label %for.inc16
+  %exitcond = icmp ne i64 %inc, 50
+  br i1 %exitcond, label %for.body9, label %for.inc16
 
 for.inc16:                                        ; preds = %for.body9
+  %scevgep = getelementptr i32* %B.addr.24, i64 50
   %inc17 = add nsw i64 %k.03, 1
-  %cmp5 = icmp slt i64 %inc17, 50
-  br i1 %cmp5, label %for.cond7.preheader, label %for.inc19
+  %exitcond10 = icmp ne i64 %inc17, 50
+  br i1 %exitcond10, label %for.cond7.preheader, label %for.inc19
 
 for.inc19:                                        ; preds = %for.inc16
+  %scevgep9 = getelementptr i32* %B.addr.16, i64 2500
   %inc20 = add nsw i64 %j.05, 1
-  %cmp2 = icmp slt i64 %inc20, 50
-  br i1 %cmp2, label %for.cond4.preheader, label %for.inc22
+  %exitcond12 = icmp ne i64 %inc20, 50
+  br i1 %exitcond12, label %for.cond4.preheader, label %for.inc22
 
 for.inc22:                                        ; preds = %for.inc19
+  %scevgep11 = getelementptr i32* %B.addr.08, i64 125000
   %inc23 = add nsw i64 %i.07, 1
-  %cmp = icmp slt i64 %inc23, 50
-  br i1 %cmp, label %for.cond1.preheader, label %for.end24
+  %exitcond13 = icmp ne i64 %inc23, 50
+  br i1 %exitcond13, label %for.cond1.preheader, label %for.end24
 
 for.end24:                                        ; preds = %for.inc22
   ret void
@@ -139,30 +157,37 @@ for.end24:                                        ; preds = %for.inc22
 ;;  for (long int i = 0; i < 50; i++)
 ;;    for (long int j = 0; j < 50; j++)
 ;;      for (long int k = 0; k < 50; k++)
-;;        for (long int l = 0; l < 50; l++)
-;;          A[i][i][i + k][l] = ...
-;;          ... = A[10][i + 10][j + k][l + 10];
+;;        for (long int l = 0; l < 50; l++) {
+;;          A[i][i][i + k][l] = i;
+;;          *B++ = A[10][i + 10][j + k][l + 10];
 
 define void @sep2([100 x [100 x [100 x i32]]]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc26, %entry
-  %B.addr.08 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc26 ]
+; CHECK: da analyze - consistent output [0 S 0 0|<]!
+; CHECK: da analyze - flow [> * * -10]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [0 * * 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc26
+  %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc26 ]
   %i.07 = phi i64 [ 0, %entry ], [ %inc27, %for.inc26 ]
   br label %for.cond4.preheader
 
-for.cond4.preheader:                              ; preds = %for.inc23, %for.cond1.preheader
-  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %incdec.ptr, %for.inc23 ]
+for.cond4.preheader:                              ; preds = %for.cond1.preheader, %for.inc23
+  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %scevgep9, %for.inc23 ]
   %j.05 = phi i64 [ 0, %for.cond1.preheader ], [ %inc24, %for.inc23 ]
   br label %for.cond7.preheader
 
-for.cond7.preheader:                              ; preds = %for.inc20, %for.cond4.preheader
-  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %incdec.ptr, %for.inc20 ]
+for.cond7.preheader:                              ; preds = %for.cond4.preheader, %for.inc20
+  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %scevgep, %for.inc20 ]
   %k.03 = phi i64 [ 0, %for.cond4.preheader ], [ %inc21, %for.inc20 ]
   br label %for.body9
 
-for.body9:                                        ; preds = %for.body9, %for.cond7.preheader
+for.body9:                                        ; preds = %for.cond7.preheader, %for.body9
   %l.02 = phi i64 [ 0, %for.cond7.preheader ], [ %inc, %for.body9 ]
   %B.addr.31 = phi i32* [ %B.addr.24, %for.cond7.preheader ], [ %incdec.ptr, %for.body9 ]
   %conv = trunc i64 %i.07 to i32
@@ -174,27 +199,29 @@ for.body9:                                        ; preds = %for.body9, %for.con
   %add15 = add nsw i64 %i.07, 10
   %arrayidx19 = getelementptr inbounds [100 x [100 x [100 x i32]]]* %A, i64 10, i64 %add15, i64 %add14, i64 %add13
   %0 = load i32* %arrayidx19, align 4
-; CHECK: da analyze - flow [> * * -10]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
-  %cmp8 = icmp slt i64 %inc, 50
-  br i1 %cmp8, label %for.body9, label %for.inc20
+  %exitcond = icmp ne i64 %inc, 50
+  br i1 %exitcond, label %for.body9, label %for.inc20
 
 for.inc20:                                        ; preds = %for.body9
+  %scevgep = getelementptr i32* %B.addr.24, i64 50
   %inc21 = add nsw i64 %k.03, 1
-  %cmp5 = icmp slt i64 %inc21, 50
-  br i1 %cmp5, label %for.cond7.preheader, label %for.inc23
+  %exitcond10 = icmp ne i64 %inc21, 50
+  br i1 %exitcond10, label %for.cond7.preheader, label %for.inc23
 
 for.inc23:                                        ; preds = %for.inc20
+  %scevgep9 = getelementptr i32* %B.addr.16, i64 2500
   %inc24 = add nsw i64 %j.05, 1
-  %cmp2 = icmp slt i64 %inc24, 50
-  br i1 %cmp2, label %for.cond4.preheader, label %for.inc26
+  %exitcond12 = icmp ne i64 %inc24, 50
+  br i1 %exitcond12, label %for.cond4.preheader, label %for.inc26
 
 for.inc26:                                        ; preds = %for.inc23
+  %scevgep11 = getelementptr i32* %B.addr.08, i64 125000
   %inc27 = add nsw i64 %i.07, 1
-  %cmp = icmp slt i64 %inc27, 50
-  br i1 %cmp, label %for.cond1.preheader, label %for.end28
+  %exitcond13 = icmp ne i64 %inc27, 50
+  br i1 %exitcond13, label %for.cond1.preheader, label %for.end28
 
 for.end28:                                        ; preds = %for.inc26
   ret void
@@ -204,30 +231,37 @@ for.end28:                                        ; preds = %for.inc26
 ;;  for (long int i = 0; i < 50; i++)
 ;;    for (long int j = 0; j < 50; j++)
 ;;      for (long int k = 0; k < 50; k++)
-;;        for (long int l = 0; l < 50; l++)
-;;          A[i][i][i + k][l + k] = ...
-;;          ... = A[10][i + 10][j + k][l + 10];
+;;        for (long int l = 0; l < 50; l++) {
+;;          A[i][i][i + k][l + k] = i;
+;;          *B++ = A[10][i + 10][j + k][l + 10];
 
 define void @sep3([100 x [100 x [100 x i32]]]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-for.cond1.preheader:                              ; preds = %for.inc27, %entry
-  %B.addr.08 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.inc27 ]
+; CHECK: da analyze - consistent output [0 S 0 0|<]!
+; CHECK: da analyze - flow [> * * *]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [0 * * 0|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
+for.cond1.preheader:                              ; preds = %entry, %for.inc27
+  %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc27 ]
   %i.07 = phi i64 [ 0, %entry ], [ %inc28, %for.inc27 ]
   br label %for.cond4.preheader
 
-for.cond4.preheader:                              ; preds = %for.inc24, %for.cond1.preheader
-  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %incdec.ptr, %for.inc24 ]
+for.cond4.preheader:                              ; preds = %for.cond1.preheader, %for.inc24
+  %B.addr.16 = phi i32* [ %B.addr.08, %for.cond1.preheader ], [ %scevgep9, %for.inc24 ]
   %j.05 = phi i64 [ 0, %for.cond1.preheader ], [ %inc25, %for.inc24 ]
   br label %for.cond7.preheader
 
-for.cond7.preheader:                              ; preds = %for.inc21, %for.cond4.preheader
-  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %incdec.ptr, %for.inc21 ]
+for.cond7.preheader:                              ; preds = %for.cond4.preheader, %for.inc21
+  %B.addr.24 = phi i32* [ %B.addr.16, %for.cond4.preheader ], [ %scevgep, %for.inc21 ]
   %k.03 = phi i64 [ 0, %for.cond4.preheader ], [ %inc22, %for.inc21 ]
   br label %for.body9
 
-for.body9:                                        ; preds = %for.body9, %for.cond7.preheader
+for.body9:                                        ; preds = %for.cond7.preheader, %for.body9
   %l.02 = phi i64 [ 0, %for.cond7.preheader ], [ %inc, %for.body9 ]
   %B.addr.31 = phi i32* [ %B.addr.24, %for.cond7.preheader ], [ %incdec.ptr, %for.body9 ]
   %conv = trunc i64 %i.07 to i32
@@ -240,27 +274,29 @@ for.body9:                                        ; preds = %for.body9, %for.con
   %add16 = add nsw i64 %i.07, 10
   %arrayidx20 = getelementptr inbounds [100 x [100 x [100 x i32]]]* %A, i64 10, i64 %add16, i64 %add15, i64 %add14
   %0 = load i32* %arrayidx20, align 4
-; CHECK: da analyze - flow [> * * *]!
   %incdec.ptr = getelementptr inbounds i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
-  %cmp8 = icmp slt i64 %inc, 50
-  br i1 %cmp8, label %for.body9, label %for.inc21
+  %exitcond = icmp ne i64 %inc, 50
+  br i1 %exitcond, label %for.body9, label %for.inc21
 
 for.inc21:                                        ; preds = %for.body9
+  %scevgep = getelementptr i32* %B.addr.24, i64 50
   %inc22 = add nsw i64 %k.03, 1
-  %cmp5 = icmp slt i64 %inc22, 50
-  br i1 %cmp5, label %for.cond7.preheader, label %for.inc24
+  %exitcond10 = icmp ne i64 %inc22, 50
+  br i1 %exitcond10, label %for.cond7.preheader, label %for.inc24
 
 for.inc24:                                        ; preds = %for.inc21
+  %scevgep9 = getelementptr i32* %B.addr.16, i64 2500
   %inc25 = add nsw i64 %j.05, 1
-  %cmp2 = icmp slt i64 %inc25, 50
-  br i1 %cmp2, label %for.cond4.preheader, label %for.inc27
+  %exitcond12 = icmp ne i64 %inc25, 50
+  br i1 %exitcond12, label %for.cond4.preheader, label %for.inc27
 
 for.inc27:                                        ; preds = %for.inc24
+  %scevgep11 = getelementptr i32* %B.addr.08, i64 125000
   %inc28 = add nsw i64 %i.07, 1
-  %cmp = icmp slt i64 %inc28, 50
-  br i1 %cmp, label %for.cond1.preheader, label %for.end29
+  %exitcond13 = icmp ne i64 %inc28, 50
+  br i1 %exitcond13, label %for.cond1.preheader, label %for.end29
 
 for.end29:                                        ; preds = %for.inc27
   ret void

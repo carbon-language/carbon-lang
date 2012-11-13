@@ -7,12 +7,19 @@ target triple = "x86_64-apple-macosx10.6.0"
 
 ;;  for (long int i = 1; i <= 10; i++)
 ;;    for (long int j = 1; j <= 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j - 1];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j - 1];
 
 define void @banerjee0(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [<= <>]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -31,7 +38,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %sub = add nsw i64 %add5, -1
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %sub
   %0 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - flow [<= <>]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -51,13 +57,20 @@ for.end9:                                         ; preds = %for.inc7
 
 ;;  for (long int i = 1; i <= n; i++)
 ;;    for (long int j = 1; j <= m; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j - 1];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j - 1];
 
 define void @banerjee1(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   %cmp4 = icmp sgt i64 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end9
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [* <>]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   %0 = add i64 %n, 1
@@ -85,7 +98,6 @@ for.body3:                                        ; preds = %for.body3.preheader
   %sub = add nsw i64 %add5, -1
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %sub
   %2 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - flow [* <>]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.12, i64 1
   store i64 %2, i64* %B.addr.12, align 8
   %inc = add nsw i64 %j.03, 1
@@ -119,6 +131,13 @@ define void @banerjee2(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
+
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc9, %for.inc8 ]
@@ -136,7 +155,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add6 = add nsw i64 %add5, 100
   %arrayidx7 = getelementptr inbounds i64* %A, i64 %add6
   %0 = load i64* %arrayidx7, align 8
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -156,12 +174,19 @@ for.end10:                                        ; preds = %for.inc8
 
 ;;  for (long int i = 0; i < 10; i++)
 ;;    for (long int j = 0; j < 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j + 99];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j + 99];
 
 define void @banerjee3(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [> >]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -180,7 +205,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add6 = add nsw i64 %add5, 99
   %arrayidx7 = getelementptr inbounds i64* %A, i64 %add6
   %0 = load i64* %arrayidx7, align 8
-; CHECK: da analyze - flow [> >]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -200,12 +224,19 @@ for.end10:                                        ; preds = %for.inc8
 
 ;;  for (long int i = 0; i < 10; i++)
 ;;    for (long int j = 0; j < 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j - 100];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j - 100];
 
 define void @banerjee4(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - none!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -224,7 +255,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %sub = add nsw i64 %add5, -100
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %sub
   %0 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - none!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -244,12 +274,19 @@ for.end9:                                         ; preds = %for.inc7
 
 ;;  for (long int i = 0; i < 10; i++)
 ;;    for (long int j = 0; j < 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j - 99];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j - 99];
 
 define void @banerjee5(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [< <]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -268,7 +305,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %sub = add nsw i64 %add5, -99
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %sub
   %0 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - flow [< <]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -288,12 +324,19 @@ for.end9:                                         ; preds = %for.inc7
 
 ;;  for (long int i = 0; i < 10; i++)
 ;;    for (long int j = 0; j < 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j + 9];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j + 9];
 
 define void @banerjee6(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [=> <>]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -312,7 +355,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add6 = add nsw i64 %add5, 9
   %arrayidx7 = getelementptr inbounds i64* %A, i64 %add6
   %0 = load i64* %arrayidx7, align 8
-; CHECK: da analyze - flow [=> <>]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -332,12 +374,19 @@ for.end10:                                        ; preds = %for.inc8
 
 ;;  for (long int i = 0; i < 10; i++)
 ;;    for (long int j = 0; j < 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j + 10];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j + 10];
 
 define void @banerjee7(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [> <=]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -356,7 +405,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add6 = add nsw i64 %add5, 10
   %arrayidx7 = getelementptr inbounds i64* %A, i64 %add6
   %0 = load i64* %arrayidx7, align 8
-; CHECK: da analyze - flow [> <=]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -376,12 +424,19 @@ for.end10:                                        ; preds = %for.inc8
 
 ;;  for (long int i = 0; i < 10; i++)
 ;;    for (long int j = 0; j < 10; j++) {
-;;      A[10*i + j] = ...
-;;      ... = A[10*i + j + 11];
+;;      A[10*i + j] = 0;
+;;      *B++ = A[10*i + j + 11];
 
 define void @banerjee8(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [> <>]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -400,7 +455,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add6 = add nsw i64 %add5, 11
   %arrayidx7 = getelementptr inbounds i64* %A, i64 %add6
   %0 = load i64* %arrayidx7, align 8
-; CHECK: da analyze - flow [> <>]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -420,12 +474,19 @@ for.end10:                                        ; preds = %for.inc8
 
 ;;  for (long int i = 0; i < 20; i++)
 ;;    for (long int j = 0; j < 20; j++) {
-;;      A[30*i + 500*j] = ...
-;;      ... = A[i - 500*j + 11];
+;;      A[30*i + 500*j] = 0;
+;;      *B++ = A[i - 500*j + 11];
 
 define void @banerjee9(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - flow [<= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -445,7 +506,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add6 = add nsw i64 %sub, 11
   %arrayidx7 = getelementptr inbounds i64* %A, i64 %add6
   %1 = load i64* %arrayidx7, align 8
-; CHECK: da analyze - flow [<= =|<]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %1, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -465,12 +525,19 @@ for.end10:                                        ; preds = %for.inc8
 
 ;;  for (long int i = 0; i < 20; i++)
 ;;    for (long int j = 0; j < 20; j++) {
-;;      A[i + 500*j] = ...
-;;      ... = A[i - 500*j + 11];
+;;      A[i + 500*j] = 0;
+;;      *B++ = A[i - 500*j + 11];
 
 define void @banerjee10(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [<> =]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -489,7 +556,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add5 = add nsw i64 %sub, 11
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %add5
   %1 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - flow [<> =]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %1, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -509,12 +575,19 @@ for.end9:                                         ; preds = %for.inc7
 
 ;;  for (long int i = 0; i < 20; i++)
 ;;    for (long int j = 0; j < 20; j++) {
-;;      A[300*i + j] = ...
-;;      ... = A[250*i - j + 11];
+;;      A[300*i + j] = 0;
+;;      *B++ = A[250*i - j + 11];
 
 define void @banerjee11(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [<= <>]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -533,7 +606,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add5 = add nsw i64 %sub, 11
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %add5
   %0 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - flow [<= <>]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1
@@ -553,12 +625,19 @@ for.end9:                                         ; preds = %for.inc7
 
 ;;  for (long int i = 0; i < 20; i++)
 ;;    for (long int j = 0; j < 20; j++) {
-;;      A[100*i + j] = ...
-;;      ... = A[100*i - j + 11];
+;;      A[100*i + j] = 0;
+;;      *B++ = A[100*i - j + 11];
 
 define void @banerjee12(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
+
+; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - flow [= <>]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - confused!
+; CHECK: da analyze - confused!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -577,7 +656,6 @@ for.body3:                                        ; preds = %for.cond1.preheader
   %add5 = add nsw i64 %sub, 11
   %arrayidx6 = getelementptr inbounds i64* %A, i64 %add5
   %0 = load i64* %arrayidx6, align 8
-; CHECK: da analyze - flow [= <>]!
   %incdec.ptr = getelementptr inbounds i64* %B.addr.11, i64 1
   store i64 %0, i64* %B.addr.11, align 8
   %inc = add nsw i64 %j.02, 1

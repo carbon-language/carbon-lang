@@ -145,22 +145,20 @@ void DependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 
 // Used to test the dependence analyzer.
-// Looks through the function, noting the first store instruction
-// and the first load instruction
-// (which always follows the first load in our tests).
-// Calls depends() and prints out the result.
+// Looks through the function, noting loads and stores.
+// Calls depends() on every possible pair and prints out the result.
 // Ignores all other instructions.
 static
 void dumpExampleDependence(raw_ostream &OS, Function *F,
                            DependenceAnalysis *DA) {
   for (inst_iterator SrcI = inst_begin(F), SrcE = inst_end(F);
        SrcI != SrcE; ++SrcI) {
-    if (const StoreInst *Src = dyn_cast<StoreInst>(&*SrcI)) {
+    if (isa<StoreInst>(*SrcI) || isa<LoadInst>(*SrcI)) {
       for (inst_iterator DstI = SrcI, DstE = inst_end(F);
            DstI != DstE; ++DstI) {
-        if (const LoadInst *Dst = dyn_cast<LoadInst>(&*DstI)) {
+        if (isa<StoreInst>(*DstI) || isa<LoadInst>(*DstI)) {
           OS << "da analyze - ";
-          if (Dependence *D = DA->depends(Src, Dst, true)) {
+          if (Dependence *D = DA->depends(&*SrcI, &*DstI, true)) {
             D->dump(OS);
             for (unsigned Level = 1; Level <= D->getLevels(); Level++) {
               if (D->isSplitable(Level)) {
@@ -173,7 +171,6 @@ void dumpExampleDependence(raw_ostream &OS, Function *F,
           }
           else
             OS << "none!\n";
-          return;
         }
       }
     }
