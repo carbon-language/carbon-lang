@@ -935,8 +935,8 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
   llvm::APInt Min;
   llvm::APInt End;
   if (IsBool) {
-    Min = llvm::APInt(8, 0);
-    End = llvm::APInt(8, 2);
+    Min = llvm::APInt(getContext().getTypeSize(Ty), 0);
+    End = llvm::APInt(getContext().getTypeSize(Ty), 2);
   } else {
     const EnumDecl *ED = ET->getDecl();
     llvm::Type *LTy = ConvertTypeForMem(ED->getIntegerType());
@@ -1031,8 +1031,9 @@ llvm::Value *CodeGenFunction::EmitToMemory(llvm::Value *Value, QualType Ty) {
     // This should really always be an i1, but sometimes it's already
     // an i8, and it's awkward to track those cases down.
     if (Value->getType()->isIntegerTy(1))
-      return Builder.CreateZExt(Value, Builder.getInt8Ty(), "frombool");
-    assert(Value->getType()->isIntegerTy(8) && "value rep of bool not i1/i8");
+      return Builder.CreateZExt(Value, ConvertTypeForMem(Ty), "frombool");
+    assert(Value->getType()->isIntegerTy(getContext().getTypeSize(Ty)) &&
+           "wrong value rep of bool");
   }
 
   return Value;
@@ -1041,7 +1042,8 @@ llvm::Value *CodeGenFunction::EmitToMemory(llvm::Value *Value, QualType Ty) {
 llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
   // Bool has a different representation in memory than in registers.
   if (hasBooleanRepresentation(Ty)) {
-    assert(Value->getType()->isIntegerTy(8) && "memory rep of bool not i8");
+    assert(Value->getType()->isIntegerTy(getContext().getTypeSize(Ty)) &&
+           "wrong value rep of bool");
     return Builder.CreateTrunc(Value, Builder.getInt1Ty(), "tobool");
   }
 
