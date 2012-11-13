@@ -231,10 +231,6 @@ class Shadow : public FastState {
   }
 };
 
-// Freed memory.
-// As if 8-byte write by thread 0xff..f at epoch 0xff..f, races with everything.
-const u64 kShadowFreed = 0xfffffffffffffff8ull;
-
 struct SignalContext;
 
 // This struct is stored in TLS.
