@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ubsan_diag.h"
+#include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include <stdio.h>
-#include <unistd.h>
-#include <limits.h>
 
 using namespace __ubsan;
 
@@ -37,7 +37,7 @@ Diag &Diag::operator<<(const Value &V) {
 /// Hexadecimal printing for numbers too large for fprintf to handle directly.
 static void PrintHex(UIntMax Val) {
 #if HAVE_INT128_T
-  fprintf(stderr, "0x%08x%08x%08x%08x",
+  Printf("0x%08x%08x%08x%08x",
           (unsigned int)(Val >> 96),
           (unsigned int)(Val >> 64),
           (unsigned int)(Val >> 32),
@@ -48,55 +48,64 @@ static void PrintHex(UIntMax Val) {
 }
 
 Diag::~Diag() {
-  // FIXME: This is non-portable.
-  bool UseAnsiColor = isatty(STDERR_FILENO);
+  bool UseAnsiColor = PrintsToTty();
   if (UseAnsiColor)
-    fprintf(stderr, "\033[1m");
+    RawWrite("\033[1m");
   if (Loc.isInvalid())
-    fprintf(stderr, "<unknown>:");
+    RawWrite("<unknown>:");
   else {
-    fprintf(stderr, "%s:%d:", Loc.getFilename(), Loc.getLine());
+    Printf("%s:%d:", Loc.getFilename(), Loc.getLine());
     if (Loc.getColumn())
-      fprintf(stderr, "%d:", Loc.getColumn());
+      Printf("%d:", Loc.getColumn());
   }
   if (UseAnsiColor)
-    fprintf(stderr, "\033[31m");
-  fprintf(stderr, " fatal error: ");
+    RawWrite("\033[31m");
+  RawWrite(" fatal error: ");
   if (UseAnsiColor)
-    fprintf(stderr, "\033[0;1m");
+    RawWrite("\033[0;1m");
   for (const char *Msg = Message; *Msg; ++Msg) {
-    if (*Msg != '%')
-      fputc((unsigned char)*Msg, stderr);
-    else {
+    if (*Msg != '%') {
+      char Buffer[64];
+      unsigned I;
+      for (I = 0; Msg[I] && Msg[I] != '%' && I != 63; ++I)
+        Buffer[I] = Msg[I];
+      Buffer[I] = '\0';
+      RawWrite(Buffer);
+      Msg += I - 1;
+    } else {
       const Arg &A = Args[*++Msg - '0'];
       switch (A.Kind) {
       case AK_String:
-        fprintf(stderr, "%s", A.String);
+        Printf("%s", A.String);
         break;
       case AK_SInt:
         // 'long long' is guaranteed to be at least 64 bits wide.
         if (A.SInt >= INT64_MIN && A.SInt <= INT64_MAX)
-          fprintf(stderr, "%lld", (long long)A.SInt);
+          Printf("%lld", (long long)A.SInt);
         else
           PrintHex(A.SInt);
         break;
       case AK_UInt:
         if (A.UInt <= UINT64_MAX)
-          fprintf(stderr, "%llu", (unsigned long long)A.UInt);
+          Printf("%llu", (unsigned long long)A.UInt);
         else
           PrintHex(A.UInt);
         break;
-      case AK_Float:
-        fprintf(stderr, "%Lg", (long double)A.Float);
+      case AK_Float: {
+        // FIXME: Support floating-point formatting in sanitizer_common's
+        //        printf, and stop using snprintf here.
+        char Buffer[32];
+        snprintf(Buffer, sizeof(Buffer), "%Lg", (long double)A.Float);
+        Printf("%s", Buffer);
         break;
+      }
       case AK_Pointer:
-        fprintf(stderr, "0x%zx", (uptr)A.Pointer);
+        Printf("0x%zx", (uptr)A.Pointer);
         break;
       }
     }
   }
-  fputc('\n', stderr);
+  RawWrite("\n");
   if (UseAnsiColor)
-    fprintf(stderr, "\033[0m");
-  fflush(stderr);
+    Printf("\033[0m");
 }

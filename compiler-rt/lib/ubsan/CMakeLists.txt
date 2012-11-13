@@ -15,7 +15,10 @@ set(UBSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 set(UBSAN_RUNTIME_LIBRARIES)
 
 if(CAN_TARGET_X86_64)
-  add_library(clang_rt.ubsan-x86_64 STATIC ${UBSAN_SOURCES})
+  add_library(clang_rt.ubsan-x86_64 STATIC
+    ${UBSAN_SOURCES}
+    $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
+    )
   set_target_compile_flags(clang_rt.ubsan-x86_64
     ${UBSAN_CFLAGS} ${TARGET_X86_64_CFLAGS}
     )
@@ -23,7 +26,10 @@ if(CAN_TARGET_X86_64)
 endif()
 
 if(CAN_TARGET_I386)
-  add_library(clang_rt.ubsan-i386 STATIC ${UBSAN_SOURCES})
+  add_library(clang_rt.ubsan-i386 STATIC
+    ${UBSAN_SOURCES}
+    $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
+    )
   set_target_compile_flags(clang_rt.ubsan-i386
     ${UBSAN_CFLAGS} ${TARGET_I386_CFLAGS}
     )

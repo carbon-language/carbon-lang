@@ -55,13 +55,16 @@ static int AppendUnsigned(char **buff, const char *buff_end, u64 num,
   return result;
 }
 
-static int AppendSignedDecimal(char **buff, const char *buff_end, s64 num) {
+static int AppendSignedDecimal(char **buff, const char *buff_end, s64 num,
+                               u8 minimal_num_length) {
   int result = 0;
   if (num < 0) {
     result += AppendChar(buff, buff_end, '-');
     num = -num;
+    if (minimal_num_length)
+      --minimal_num_length;
   }
-  result += AppendUnsigned(buff, buff_end, (u64)num, 10, 0);
+  result += AppendUnsigned(buff, buff_end, (u64)num, 10, minimal_num_length);
   return result;
 }
 
@@ -85,8 +88,8 @@ static int AppendPointer(char **buff, const char *buff_end, u64 ptr_value) {
 
 int VSNPrintf(char *buff, int buff_length,
               const char *format, va_list args) {
-  static const char *kPrintfFormatsHelp = "Supported Printf formats: "
-                                          "%%[z]{d,u,x}; %%p; %%s; %%c\n";
+  static const char *kPrintfFormatsHelp =
+    "Supported Printf formats: %%(0[0-9]*)?(z|ll)?{d,u,x}; %%p; %%s; %%c\n";
   RAW_CHECK(format);
   RAW_CHECK(buff_length > 0);
   const char *buff_end = &buff[buff_length - 1];
@@ -98,42 +101,55 @@ int VSNPrintf(char *buff, int buff_length,
       continue;
     }
     cur++;
+    bool have_width = (*cur == '0');
+    int width = 0;
+    if (have_width) {
+      while (*cur >= '0' && *cur <= '9') {
+        have_width = true;
+        width = width * 10 + *cur++ - '0';
+      }
+    }
     bool have_z = (*cur == 'z');
     cur += have_z;
+    bool have_ll = !have_z && (cur[0] == 'l' && cur[1] == 'l');
+    cur += have_ll * 2;
     s64 dval;
     u64 uval;
+    bool have_flags = have_width | have_z | have_ll;
     switch (*cur) {
       case 'd': {
-        dval = have_z ? va_arg(args, sptr)
-                      : va_arg(args, int);
-        result += AppendSignedDecimal(&buff, buff_end, dval);
+        dval = have_ll ? va_arg(args, s64)
+             : have_z ? va_arg(args, sptr)
+             : va_arg(args, int);
+        result += AppendSignedDecimal(&buff, buff_end, dval, width);
         break;
       }
       case 'u':
       case 'x': {
-        uval = have_z ? va_arg(args, uptr)
-                      : va_arg(args, unsigned);
+        uval = have_ll ? va_arg(args, u64)
+             : have_z ? va_arg(args, uptr)
+             : va_arg(args, unsigned);
         result += AppendUnsigned(&buff, buff_end, uval,
-                                 (*cur == 'u') ? 10 : 16, 0);
+                                 (*cur == 'u') ? 10 : 16, width);
         break;
       }
       case 'p': {
-        RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
+        RAW_CHECK_MSG(!have_flags, kPrintfFormatsHelp);
         result += AppendPointer(&buff, buff_end, va_arg(args, uptr));
         break;
       }
       case 's': {
-        RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
+        RAW_CHECK_MSG(!have_flags, kPrintfFormatsHelp);
         result += AppendString(&buff, buff_end, va_arg(args, char*));
         break;
       }
       case 'c': {
-        RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
+        RAW_CHECK_MSG(!have_flags, kPrintfFormatsHelp);
         result += AppendChar(&buff, buff_end, va_arg(args, int));
         break;
       }
       case '%' : {
-        RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
+        RAW_CHECK_MSG(!have_flags, kPrintfFormatsHelp);
         result += AppendChar(&buff, buff_end, '%');
         break;
       }

@@ -19,18 +19,6 @@
 using namespace __sanitizer;
 using namespace __ubsan;
 
-NORETURN void __sanitizer::Die() {
-  __builtin_trap();
-}
-
-NORETURN void __sanitizer::CheckFailed(const char *File, int Line,
-                                       const char *Cond, u64 V1, u64 V2) {
-  Diag(SourceLocation(File, Line, 0),
-       "CHECK failed: %0 (with values %1 and %2)")
-    << Cond << V1 << V2;
-  Die();
-}
-
 namespace __ubsan {
   const char *TypeCheckKinds[] = {
     "load of", "store to", "reference binding to", "member access within",
