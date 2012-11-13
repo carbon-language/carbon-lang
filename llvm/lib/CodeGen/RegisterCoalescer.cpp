@@ -2001,30 +2001,17 @@ void RegisterCoalescer::joinAllIntervals() {
   DEBUG(dbgs() << "********** JOINING INTERVALS ***********\n");
   assert(WorkList.empty() && "Old data still around.");
 
-  if (Loops->empty()) {
-    // If there are no loops in the function, join intervals in function order.
-    for (MachineFunction::iterator I = MF->begin(), E = MF->end();
-         I != E; ++I)
-      copyCoalesceInMBB(I);
-  } else {
-    // Otherwise, join intervals in inner loops before other intervals.
-    // Unfortunately we can't just iterate over loop hierarchy here because
-    // there may be more MBB's than BB's.  Collect MBB's for sorting.
-
-    // Join intervals in the function prolog first. We want to join physical
-    // registers with virtual registers before the intervals got too long.
-    std::vector<MBBPriorityInfo> MBBs;
-    for (MachineFunction::iterator I = MF->begin(), E = MF->end();I != E;++I){
-      MachineBasicBlock *MBB = I;
-      MBBs.push_back(MBBPriorityInfo(MBB, Loops->getLoopDepth(MBB),
-                                     isSplitEdge(MBB)));
-    }
-    std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare());
-
-    // Finally, join intervals in loop nest order.
-    for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      copyCoalesceInMBB(MBBs[i].MBB);
+  std::vector<MBBPriorityInfo> MBBs;
+  for (MachineFunction::iterator I = MF->begin(), E = MF->end();I != E;++I){
+    MachineBasicBlock *MBB = I;
+    MBBs.push_back(MBBPriorityInfo(MBB, Loops->getLoopDepth(MBB),
+                                   isSplitEdge(MBB)));
   }
+  std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare());
+
+  // Coalesce intervals in MBB priority order.
+  for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
+    copyCoalesceInMBB(MBBs[i].MBB);
 
   // Joining intervals can allow other intervals to be joined.  Iteratively join
   // until we make no progress.

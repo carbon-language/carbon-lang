@@ -147,7 +147,7 @@ if.end:                                           ; preds = %entry, %if.then
 ; CHECK: vmov.f32 {{.*}}, #1.0
 ; CHECK-NOT: vmov
 ; CHECK-NOT: vorr
-; CHECK: %if.end
+; CHECK: bx
 ; We may leave the last insertelement in the if.end block.
 ; It is inserting the %add value into a dead lane, but %add causes interference
 ; in the entry block, and we don't do dead lane checks across basic blocks.
