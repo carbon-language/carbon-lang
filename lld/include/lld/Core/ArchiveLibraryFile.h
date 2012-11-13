@@ -27,18 +27,12 @@ namespace lld {
 class ArchiveLibraryFile : public File {
 public:
 
-  virtual ~ArchiveLibraryFile() {
-  }
-
   virtual Kind kind() const {
     return kindArchiveLibrary;
   }
 
   static inline bool classof(const File *f) {
     return f->kind() == kindArchiveLibrary;
-  }
-  static inline bool classof(const ArchiveLibraryFile *) { 
-    return true; 
   }
 
   /// Check if any member of the archive contains an Atom with the

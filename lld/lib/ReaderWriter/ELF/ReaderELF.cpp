@@ -752,11 +752,10 @@ private:
 
 class ReaderELF: public Reader {
 public:
-  ReaderELF(const ReaderOptionsELF &readerELFOptions,
+  ReaderELF(const ReaderOptionsELF &,
             ReaderOptionsArchive &readerOptionsArchive)
-         : _readerELFOptions(readerELFOptions),
-           _readerOptionsArchive(readerOptionsArchive),
-           _readerArchive(_readerOptionsArchive) { 
+    : _readerOptionsArchive(readerOptionsArchive)
+    , _readerArchive(_readerOptionsArchive) { 
     _readerOptionsArchive.setReader(this);
   }
 
@@ -770,42 +769,40 @@ public:
           llvm::sys::IdentifyFileType(mb->getBufferStart(),
                                 static_cast<unsigned>(mb->getBufferSize()));
     switch (fileType) {
+    case llvm::sys::ELF_Relocatable_FileType:
+      Ident = llvm::object::getElfArchType(&*mb);
+      //    Instantiate the correct FileELF template instance
+      //    based on the Ident pair. Once the File is created
+      //     we push the file to the vector of files already
+      //     created during parser's life.
 
-      case llvm::sys::ELF_Relocatable_FileType:
+      if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
+          == llvm::ELF::ELFDATA2LSB) {
+        f.reset(new FileELF<llvm::support::little, false>(std::move(mb), ec));
 
-        Ident = llvm::object::getElfArchType(&*mb);
-        //    Instantiate the correct FileELF template instance
-        //    based on the Ident pair. Once the File is created
-        //     we push the file to the vector of files already
-        //     created during parser's life.
+      } else if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
+          == llvm::ELF::ELFDATA2MSB) {
+        f.reset(new FileELF<llvm::support::big, false> (std::move(mb), ec));
 
-        if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
-            == llvm::ELF::ELFDATA2LSB) {
-          f.reset(new FileELF<llvm::support::little, false>(std::move(mb), ec));
+      } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
+          == llvm::ELF::ELFDATA2MSB) {
+        f.reset(new FileELF<llvm::support::big, true> (std::move(mb), ec));
 
-        } else if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
-            == llvm::ELF::ELFDATA2MSB) {
-          f.reset(new FileELF<llvm::support::big, false> (std::move(mb), ec));
+      } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
+          == llvm::ELF::ELFDATA2LSB) {
+        f.reset(new FileELF<llvm::support::little, true> (std::move(mb), ec));
+      }
+      if (!ec)
+        result.push_back(std::move(f));
+      break;
 
-        } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
-            == llvm::ELF::ELFDATA2MSB) {
-          f.reset(new FileELF<llvm::support::big, true> (std::move(mb), ec));
+    case llvm::sys::Archive_FileType:
+      ec = _readerArchive.parseFile(std::move(mb), result);
+      break;
 
-        } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
-            == llvm::ELF::ELFDATA2LSB) {
-          f.reset(new FileELF<llvm::support::little, true> (std::move(mb), ec));
-        }
-        if (!ec)
-          result.push_back(std::move(f));
-        break;
-
-      case llvm::sys::Archive_FileType:
-        ec = _readerArchive.parseFile(std::move(mb), result);
-        break;
-
-      default:
-        llvm_unreachable("not supported format");
-        break;
+    default:
+      llvm_unreachable("not supported format");
+      break;
     }
 
     if (ec)
@@ -815,7 +812,6 @@ public:
   }
 
 private:
-  const ReaderOptionsELF &_readerELFOptions;
   ReaderOptionsArchive &_readerOptionsArchive;
   ReaderArchive _readerArchive;
 };

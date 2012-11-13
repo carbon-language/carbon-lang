@@ -6,17 +6,17 @@
 // License. See LICENSE.TXT for details.
 //
 //===---------------------------------------------------------------------===//
+
 #include "lld/ReaderWriter/ReaderArchive.h"
 
-namespace lld 
-{
-// The FileArchive class represents an Archive Library file
+namespace lld {
+/// \brief The FileArchive class represents an Archive Library file
 class FileArchive : public ArchiveLibraryFile {
 public:
 
   virtual ~FileArchive() { }
 
-  /// Check if any member of the archive contains an Atom with the
+  /// \brief Check if any member of the archive contains an Atom with the
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const {
     error_code ec;  
@@ -66,8 +66,7 @@ public:
   }
 
 protected:
-  error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const
-  {
+  error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
     llvm::object::ObjectFile *obj = 
                   llvm::object::ObjectFile::createObjectFile(mb);
     error_code ec;
@@ -103,7 +102,6 @@ protected:
   }
 
 private:
-  llvm::MemoryBuffer *_mb;
   std::unique_ptr<llvm::object::Archive> _archive;
   const ReaderOptionsArchive _options;
   atom_collection_vector<DefinedAtom>       _definedAtoms;
@@ -117,13 +115,12 @@ public:
                        const ReaderOptionsArchive &options, 
                        error_code &ec)
                       :ArchiveLibraryFile(mb->getBufferIdentifier()),
-                       _mb(mb),
-                       _archive(nullptr),
                        _options(options) { 
-    auto *archive_obj = new llvm::object::Archive(mb, ec);
-    if (ec) 
+    std::unique_ptr<llvm::object::Archive> archive_obj(
+      new llvm::object::Archive(mb, ec));
+    if (ec)
       return;
-    _archive.reset(archive_obj);
+    _archive.swap(archive_obj);
   }
 }; // class FileArchive
 
@@ -133,15 +130,13 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
 		std::vector<std::unique_ptr<File>> &result) {
   error_code ec;
   
-  if (_options.isForceLoad())
-  {
+  if (_options.isForceLoad()) {
     _archive.reset(new llvm::object::Archive(mb.release(), ec));
     if (ec)
       return ec;
     
     for (auto mf = _archive->begin_children(), 
-              me = _archive->end_children(); mf != me; ++mf)
-    {
+              me = _archive->end_children(); mf != me; ++mf) {
     	if ((ec = _options.reader()->parseFile(std::unique_ptr<MemoryBuffer>
                                              (mf->getBuffer()), result)))
         return ec;
