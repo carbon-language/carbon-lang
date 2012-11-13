@@ -152,3 +152,8 @@ define void @splat_i4(%i4* %P, %i4* %Q, i32 %X) {
 	store %i4 %R, %i4* %P
 	ret void
 }
+
+define <2 x i32*> @vector_gep(<2 x [3 x {i32, i32}]*> %a) {
+    %w = getelementptr <2 x [3 x {i32, i32}]*> %a, <2 x i32> <i32 1, i32 2>, <2 x i32> <i32 2, i32 3>, <2 x i32> <i32 1, i32 1>
+      ret <2 x i32*> %w
+}
