@@ -732,7 +732,7 @@ def LHAUX : XForm_1<31, 375, (outs GPRC:$rD, ptr_rc:$ea_result),
                    []>, RegConstraint<"$addr.offreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHZUX : XForm_1<31, 331, (outs GPRC:$rD, ptr_rc:$ea_result),
+def LHZUX : XForm_1<31, 311, (outs GPRC:$rD, ptr_rc:$ea_result),
                    (ins memrr:$addr),
                    "lhzux $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.offreg = $ea_result">,
