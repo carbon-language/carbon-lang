@@ -26,6 +26,7 @@ class PredNewRel: PredRel;
 // ImmRegRel - Filter class used to relate instructions having reg-reg form
 // with their reg-imm counterparts.
 class ImmRegRel;
+
 //===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
