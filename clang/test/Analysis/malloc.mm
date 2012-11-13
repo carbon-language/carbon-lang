@@ -245,9 +245,12 @@ void test12365078_no_malloc(unichar *characters) {
   if (!string) {free(characters);}
 }
 
-void test12365078_false_negative_no_malloc(unichar *characters) {
+NSString *test12365078_no_malloc_returnValue(unichar *characters) {
   NSString *string = [[NSString alloc] initWithCharactersNoCopy:characters length:12 freeWhenDone:1];
-  if (!string) {;}
+  if (!string) {
+    return 0; // no-warning
+  }
+  return string;
 }
 
 void test12365078_nocheck_nomalloc(unichar *characters) {
