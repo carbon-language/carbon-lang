@@ -331,11 +331,11 @@ static inline bool BothReads(Shadow s, int kAccessIsWrite) {
   return !kAccessIsWrite && !s.is_write();
 }
 
-static inline bool OldIsRWStronger(Shadow old, int kAccessIsWrite) {
+static inline bool OldIsRWNotWeaker(Shadow old, int kAccessIsWrite) {
   return old.is_write() || !kAccessIsWrite;
 }
 
-static inline bool OldIsRWWeaker(Shadow old, int kAccessIsWrite) {
+static inline bool OldIsRWWeakerOrEqual(Shadow old, int kAccessIsWrite) {
   return !old.is_write() || kAccessIsWrite;
 }
 
