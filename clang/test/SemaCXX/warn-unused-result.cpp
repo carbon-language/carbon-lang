@@ -46,6 +46,12 @@ void bah() {
 namespace warn_unused_CXX11 {
 struct [[clang::warn_unused_result]] Status {
   bool ok() const;
+  Status& operator=(const Status& x);
+  inline void Update(const Status& new_status) {
+    if (ok()) {
+      *this = new_status; //no-warning
+    }
+  }
 };
 Status DoSomething();
 Status& DoSomethingElse();

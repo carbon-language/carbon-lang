@@ -5696,7 +5696,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       RetType->getAsCXXRecordDecl() : RetType->getPointeeCXXRecordDecl();
   if (!NewFD->isInvalidDecl() && !NewFD->hasAttr<WarnUnusedResultAttr>() &&
       Ret && Ret->hasAttr<WarnUnusedResultAttr>()) {
-    NewFD->addAttr(new (Context) WarnUnusedResultAttr(SourceRange(), Context));
+    const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
+    if (!(MD && MD->getCorrespondingMethodInClass(Ret, true))) {
+      NewFD->addAttr(new (Context) WarnUnusedResultAttr(SourceRange(),
+                                                        Context));
+    }
   }
 
   if (!getLangOpts().CPlusPlus) {
