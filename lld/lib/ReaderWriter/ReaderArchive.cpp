@@ -38,11 +38,7 @@ public:
     assert(result.size() == 1);
 
     // give up the pointer so that this object no longer manages it
-    for (std::unique_ptr<File> &f : result) {
-      return f.release();
-    }
-
-    return nullptr;
+    return result[0].release();
   }
 
   virtual void addAtom(const Atom&) {
@@ -67,8 +63,8 @@ public:
 
 protected:
   error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
-    llvm::object::ObjectFile *obj = 
-                  llvm::object::ObjectFile::createObjectFile(mb);
+    std::unique_ptr<llvm::object::ObjectFile> 
+                    obj(llvm::object::ObjectFile::createObjectFile(mb));
     error_code ec;
     llvm::object::SymbolRef::Type symtype;
     uint32_t symflags;
