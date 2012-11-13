@@ -191,12 +191,13 @@ void ExprEngine::removeDeadOnEndOfFunction(NodeBuilderContext& BC,
   currBldrCtx = 0;
 }
 
-static bool isDifferentDeclUsedAtRuntime(CallEventRef<> Call,
+static bool wasDifferentDeclUsedForInlining(CallEventRef<> Call,
     const StackFrameContext *calleeCtx) {
   const Decl *RuntimeCallee = calleeCtx->getDecl();
   const Decl *StaticDecl = Call->getDecl();
-  if (!RuntimeCallee || !StaticDecl)
-    return false;
+  assert(RuntimeCallee);
+  if (!StaticDecl)
+    return true;
   return RuntimeCallee->getCanonicalDecl() != StaticDecl->getCanonicalDecl();
 }
 
@@ -240,7 +241,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
       SVal V = state->getSVal(RS, LCtx);
 
       // Ensure that the return type matches the type of the returned Expr.
-      if (isDifferentDeclUsedAtRuntime(Call, calleeCtx)) {
+      if (wasDifferentDeclUsedForInlining(Call, calleeCtx)) {
         QualType ReturnedTy =
           CallEvent::getDeclaredResultType(calleeCtx->getDecl());
         if (!ReturnedTy.isNull()) {
