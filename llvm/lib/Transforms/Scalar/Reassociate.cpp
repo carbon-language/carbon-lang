@@ -1,4 +1,4 @@
-
+//===- Reassociate.cpp - Reassociate binary expressions -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -41,8 +41,6 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <deque>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumChanged, "Number of insts reassociated");
@@ -115,148 +113,10 @@ namespace {
 }
 
 namespace {
-
-  class Reassociate;
-
-  class isInstDeadFunc {
-  public:
-    bool operator() (Instruction* I) {
-      return isInstructionTriviallyDead(I);
-    }
-  };
-  
-  class RmInstCallBackFunc {
-    Reassociate *reassoc_;
-  public:
-    RmInstCallBackFunc(Reassociate* ra): reassoc_(ra) {}
-    inline void operator() (Instruction*);
-  };
-
-  // The worklist has following traits:
-  //  - it is pretty much a dequeue.
-  //  - has "set" semantic, meaning all elements in the worklist are distinct.
-  //  - efficient in-place element removal (by replacing the element with
-  //    invalid value 0).
-  //
-  class RedoWorklist {
-  public:
-    typedef AssertingVH<Instruction> value_type;
-    typedef std::set<value_type> set_type;
-    typedef std::deque<value_type> deque_type;
-    // caller cannot modify element via iterator, hence constant.
-    typedef deque_type::const_iterator iterator;
-    typedef deque_type::const_iterator const_iterator;
-    typedef deque_type::size_type size_type;
-  
-    RedoWorklist() {}
-  
-    bool empty() const {
-      return deque_.empty();
-    }
-  
-    size_type size() const {
-      return deque_.size();
-    }
-
-    // return true iff X is in the worklist
-    bool found(const value_type &X) {
-      return set_.find(X) != set_.end();
-    }
-  
-    iterator begin() {
-      return deque_.begin();
-    }
-  
-    const_iterator begin() const {
-      return deque_.begin();
-    }
-  
-    iterator end() {
-      return deque_.end();
-    }
-  
-    const_iterator end() const {
-      return deque_.end();
-    }
-  
-    const value_type &back() const {
-      assert(!empty() && "worklist is empty");
-      return deque_.back();
-    }
-  
-    // If element X is already in the worklist, do nothing but return false;
-    // otherwise, append X to the worklist and return true.
-    //
-    bool push_back(const value_type &X) {
-      bool result = set_.insert(X).second;
-      if (result)
-        deque_.push_back(X);
-      return result;
-    }
-  
-    // insert() is the alias of push_back()
-    bool insert(const value_type &X) {
-      return push_back(X);
-    }
-
-    void clear() {
-      set_.clear();
-      deque_.clear();
-    }
-  
-    void pop_back() {
-      assert(!empty() && "worklist is empty");
-      set_.erase(back());
-      deque_.pop_back();
-    }
-    
-    value_type pop_back_val() {
-      value_type Ret = back();
-      pop_back();
-      return Ret;
-    }
-
-    const value_type &front() const {
-      assert(!empty() && "worklist is empty");
-      return deque_.front();
-    }
-
-    void pop_front() {
-      assert(!empty() && "worklist is empty");
-      set_.erase(front());
-      deque_.pop_front();
-    }
-    
-    value_type pop_front_val() {
-      value_type Ret = front();
-      pop_front();
-      return Ret;
-    }
-
-    // Remove an element from the worklist. Return true iff the element was 
-    // in the worklist.
-    bool remove(const value_type& X);
-
-    template <typename pred, typename call_back_func>
-    int inplace_remove(pred p, call_back_func cb);
-
-    template <typename pred, typename call_back_func>
-    int inplace_rremove(pred p, call_back_func cb);
-
-    void append(RedoWorklist&);
-
-  private:
-    set_type set_;
-    deque_type deque_;
-  };
-
   class Reassociate : public FunctionPass {
-    friend class RmInstCallBackFunc;
-
     DenseMap<BasicBlock*, unsigned> RankMap;
     DenseMap<AssertingVH<Value>, unsigned> ValueRankMap;
-    RedoWorklist RedoInsts;
-    RedoWorklist TmpRedoInsts;
+    SetVector<AssertingVH<Instruction> > RedoInsts;
     bool MadeChange;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -281,12 +141,9 @@ namespace {
                                 SmallVectorImpl<Factor> &Factors);
     Value *buildMinimalMultiplyDAG(IRBuilder<> &Builder,
                                    SmallVectorImpl<Factor> &Factors);
-    void removeNegFromMulOps(SmallVectorImpl<ValueEntry> &Ops);
     Value *OptimizeMul(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
     void EraseInst(Instruction *I);
-    void EraseInstCallBack(Instruction *I);
-    void EraseAllDeadInst();
     void OptimizeInst(Instruction *I);
   };
 }
@@ -323,75 +180,6 @@ static bool isUnmovableInstruction(Instruction *I) {
       I->getOpcode() == Instruction::FRem)
     return true;
   return false;
-}
-
-inline void RmInstCallBackFunc::operator() (Instruction* I) {
-  reassoc_->EraseInstCallBack(I);
-}
-
-// Remove an item from the worklist. Return true iff the element was 
-// in the worklist.
-bool RedoWorklist::remove(const value_type& X) {
-  if (set_.erase(X)) {
-    deque_type::iterator I = std::find(deque_.begin(), deque_.end(), X);
-    assert(I != deque_.end() && "Can not find element");
-    deque_.erase(I);
-    return true;
-  }
-  return false;
-}
-
-// Forward go through each element e, calling p(e) to tell if e should be 
-// removed or not; if p(e) = true, then e will be replaced with NULL to 
-// indicate it is removed from the worklist, and functor cb will be 
-// called for further processing on e. The functors should not invalidate
-// the iterator by inserting or deleteing element to and from the worklist.
-// 
-// Returns the number of instruction being deleted.
-template <typename pred, typename call_back_func>
-int RedoWorklist::inplace_remove(pred p, call_back_func cb) {
-  int cnt = 0;
-  for (typename deque_type::iterator iter = deque_.begin(),
-       iter_e = deque_.end(); iter != iter_e; iter++) {
-    value_type &element = *iter;
-    if (p(element) && set_.erase(element)) {
-      Instruction* t = element;
-      element.~value_type();
-      new (&element) value_type(NULL);
-      cb(t);
-      cnt ++;
-    }
-  }
-  return cnt;
-}
-
-// inplace_rremove() is the same as inplace_remove() except that elements 
-// are visited in backward order.
-template <typename pred, typename call_back_func>
-int RedoWorklist::inplace_rremove(pred p, call_back_func cb) {
-  int cnt = 0;
-  for (typename deque_type::reverse_iterator iter = deque_.rbegin(),
-       iter_e = deque_.rend(); iter != iter_e; iter++) {
-    value_type &element = *iter;
-    if (p(element) && set_.erase(element)) {
-      Instruction* t = element;
-      element.~value_type();
-      new (&element) value_type(NULL);
-      cb(t);
-      cnt ++;
-    }
-  }
-  return cnt;
-}
-
-void RedoWorklist::append(RedoWorklist& that) {
-  deque_type &that_deque = that.deque_;
-
-  while (!that_deque.empty()) {
-    push_back(that_deque.front());
-    that_deque.pop_front();
-  }
-  that.clear();
 }
 
 void Reassociate::BuildRankMap(Function &F) {
@@ -1630,66 +1418,8 @@ Value *Reassociate::buildMinimalMultiplyDAG(IRBuilder<> &Builder,
   return V;
 }
 
-// Multiply Ops may have some negation operators. This situation arises
-// when the negation operators have multiple uses, and LinearizeExprTree() has
-// to treat them as leaf operands. Before multiplication optimization begins,
-// get rid of the negations wherever possible.
-void Reassociate::removeNegFromMulOps(SmallVectorImpl<ValueEntry> &Ops) {
-  int32_t NegIdx = -1;
-
-  // loop over all elements except the last one
-  for (int32_t Idx = 0, IdxEnd = Ops.size() - 1; Idx < IdxEnd; Idx++) {
-    ValueEntry &VE = Ops[Idx];
-    if (!BinaryOperator::isNeg(VE.Op))
-      continue;
-    
-    if (NegIdx < 0) {
-      NegIdx = Idx;
-      continue;
-    }
-
-    // Find a pair of negation operators, say -X and -Y, change them to 
-    // X and Y respectively.
-    ValueEntry &VEX = Ops[NegIdx];
-    Value *OpX = cast<BinaryOperator>(VEX.Op)->getOperand(1);
-    VEX.Op = OpX;
-    VEX.Rank = getRank(OpX);
-
-    Value *OpY = cast<BinaryOperator>(VE.Op)->getOperand(1);
-    VE.Op = OpY;
-    VE.Rank = getRank(OpY);
-    NegIdx = -1;
-  }
-
-  if (NegIdx >= 0) {
-    // We have visited odd number of negation operators so far. 
-    // Check if the last element is negation as well. 
-    ValueEntry &Last = Ops.back();
-    Value *LastOp = Last.Op;
-    if (!isa<ConstantInt>(LastOp) && !BinaryOperator::isNeg(LastOp))
-      return;
-
-    ValueEntry& PrevNeg = Ops[NegIdx]; 
-    Value *Op = cast<BinaryOperator>(PrevNeg.Op)->getOperand(1);
-    PrevNeg.Op = Op;
-    PrevNeg.Rank = getRank(Op);
-
-    if (isa<ConstantInt>(LastOp))
-      Last.Op = ConstantExpr::getNeg(cast<Constant>(LastOp));
-    else {
-      LastOp = cast<BinaryOperator>(PrevNeg.Op)->getOperand(1);
-      Last.Op = LastOp;
-      Last.Rank = getRank(LastOp);
-    }
-  }
-}
-
 Value *Reassociate::OptimizeMul(BinaryOperator *I,
                                 SmallVectorImpl<ValueEntry> &Ops) {
-
-  // Simplify the operands: (-x)*(-y) -> x*y, and (-x)*c -> x*(-c)
-  removeNegFromMulOps(Ops);
-
   // We can only optimize the multiplies when there is a chain of more than
   // three, such that a balanced tree might require fewer total multiplies.
   if (Ops.size() < 4)
@@ -1748,17 +1478,14 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   return 0;
 }
 
-// EraseInstCallBack is a helper function of EraseInst which will be called to 
-// delete an individual instruction, and it is also a callback funciton when 
-// EraseAllDeadInst is called to delete all dead instruciton in the Redo 
-// worklist (RedoInsts). 
-//  
-void Reassociate::EraseInstCallBack(Instruction *I) {
-  DEBUG(dbgs() << "Erase instruction :" << *I << "\n");
+/// EraseInst - Zap the given instruction, adding interesting operands to the
+/// work list.
+void Reassociate::EraseInst(Instruction *I) {
   assert(isInstructionTriviallyDead(I) && "Trivially dead instructions only!");
   SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
   // Erase the dead instruction.
   ValueRankMap.erase(I);
+  RedoInsts.remove(I);
   I->eraseFromParent();
   // Optimize its operands.
   SmallPtrSet<Instruction *, 8> Visited; // Detect self-referential nodes.
@@ -1770,34 +1497,8 @@ void Reassociate::EraseInstCallBack(Instruction *I) {
       while (Op->hasOneUse() && Op->use_back()->getOpcode() == Opcode &&
              Visited.insert(Op))
         Op = Op->use_back();
-      
-      // The caller may be itearating the RedoInsts. Inserting a new element to 
-      // RedoInsts will invaidate the iterator. Instead, we temporally place the 
-      // new candidate to TmpRedoInsts. It is up to caller to combine 
-      // TmpRedoInsts and RedoInsts together.
-      //
-      if (!RedoInsts.found(Op))
-        TmpRedoInsts.insert(Op);
+      RedoInsts.insert(Op);
     }
-}
-
-/// EraseInst - Zap the given instruction, adding interesting operands to the
-/// work list.
-void Reassociate::EraseInst(Instruction *I) {
-  RedoInsts.remove(I);
-
-  // Since EraseInstCallBack() put new reassociation candidates to TmpRedoInsts
-  // we need to copy the candidates back to RedoInsts.
-  TmpRedoInsts.clear();
-  EraseInstCallBack(I);
-  RedoInsts.append(TmpRedoInsts);
-}
-
-/// EraseAllDeadInst - Remove all dead instructions from the worklist. 
-void Reassociate::EraseAllDeadInst() {
-  TmpRedoInsts.clear();
-  RedoInsts.inplace_rremove(isInstDeadFunc(), RmInstCallBackFunc(this));
-  RedoInsts.append(TmpRedoInsts);
 }
 
 /// OptimizeInst - Inspect and optimize the given instruction. Note that erasing
@@ -1806,8 +1507,6 @@ void Reassociate::OptimizeInst(Instruction *I) {
   // Only consider operations that we understand.
   if (!isa<BinaryOperator>(I))
     return;
-
-  DEBUG(dbgs() << "\n>Opt Instruction: " << *I << '\n');
 
   if (I->getOpcode() == Instruction::Shl &&
       isa<ConstantInt>(I->getOperand(1)))
@@ -1987,14 +1686,9 @@ bool Reassociate::runOnFunction(Function &F) {
         ++II;
       }
 
-    DEBUG(dbgs() << "Process instructions in worklist\n");
-    EraseAllDeadInst();
-
     // If this produced extra instructions to optimize, handle them now.
     while (!RedoInsts.empty()) {
-      Instruction *I = RedoInsts.pop_front_val();
-      if (!I)
-        continue;
+      Instruction *I = RedoInsts.pop_back_val();
       if (isInstructionTriviallyDead(I))
         EraseInst(I);
       else
