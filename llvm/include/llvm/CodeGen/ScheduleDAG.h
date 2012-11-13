@@ -206,8 +206,7 @@ namespace llvm {
     /// not force ordering. Breaking a weak edge may require the scheduler to
     /// compensate, for example by inserting a copy.
     bool isWeak() const {
-      return getKind() == Order
-        && (Contents.OrdKind == Artificial || Contents.OrdKind == Cluster);
+      return getKind() == Order && Contents.OrdKind == Cluster;
     }
 
     /// isArtificial - Test if this is an Order dependence that is marked

@@ -581,7 +581,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
 
-  if (SuccEdge->isArtificial()) {
+  if (SuccEdge->isWeak()) {
     --SuccSU->WeakPredsLeft;
     return;
   }

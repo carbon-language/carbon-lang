@@ -100,11 +100,8 @@ bool SUnit::addPred(const SDep &D, bool Required) {
     ++NumPreds;
     ++N->NumSuccs;
   }
-  // SD scheduler relies on artificial edges to enforce physreg
-  // antidependence, so it doesn't treat them as weak edges.
-  bool isWeak = D.isWeak() && N->isInstr();
   if (!N->isScheduled) {
-    if (isWeak) {
+    if (D.isWeak()) {
       ++WeakPredsLeft;
     }
     else {
@@ -113,7 +110,7 @@ bool SUnit::addPred(const SDep &D, bool Required) {
     }
   }
   if (!isScheduled) {
-    if (isWeak) {
+    if (D.isWeak()) {
       ++N->WeakSuccsLeft;
     }
     else {
@@ -160,9 +157,8 @@ void SUnit::removePred(const SDep &D) {
         --NumPreds;
         --N->NumSuccs;
       }
-      bool isWeak = D.isWeak() && N->isInstr();
       if (!N->isScheduled) {
-        if (isWeak)
+        if (D.isWeak())
           --WeakPredsLeft;
         else {
           assert(NumPredsLeft > 0 && "NumPredsLeft will underflow!");
@@ -170,7 +166,7 @@ void SUnit::removePred(const SDep &D) {
         }
       }
       if (!isScheduled) {
-        if (isWeak)
+        if (D.isWeak())
           --N->WeakSuccsLeft;
         else {
           assert(N->NumSuccsLeft > 0 && "NumSuccsLeft will underflow!");
