@@ -28,3 +28,7 @@ N: Erik Olofsson
 E: erik.olofsson@hansoft.se
 E: erik@olofsson.info
 D: Minor patches and fixes
+
+N: Nowar Gu
+E: wenhan.gu@gmail.com
+D: Minor patches and fixes
