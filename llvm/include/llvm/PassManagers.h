@@ -168,7 +168,7 @@ class PMTopLevelManager {
 protected:
   explicit PMTopLevelManager(PMDataManager *PMDM);
 
-  virtual unsigned getNumContainedManagers() const {
+  unsigned getNumContainedManagers() const {
     return (unsigned)PassManagers.size();
   }
 
@@ -343,7 +343,7 @@ public:
   void dumpRequiredSet(const Pass *P) const;
   void dumpPreservedSet(const Pass *P) const;
 
-  virtual unsigned getNumContainedPasses() const {
+  unsigned getNumContainedPasses() const {
     return (unsigned)PassVector.size();
   }
 
