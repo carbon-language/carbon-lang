@@ -609,6 +609,7 @@ public:
   const Elf_Dyn  *getDyn(DataRefImpl DynData) const;
   error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                               bool &IsDefault) const;
+  uint64_t getSymbolIndex(const Elf_Sym *sym) const;
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
@@ -2092,6 +2093,21 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
       ++ShndxTable;
     }
   }
+}
+
+// Get the symbol table index in the symtab section given a symbol
+template<support::endianness target_endianness, bool is64Bits>
+uint64_t ELFObjectFile<target_endianness, is64Bits>
+                      ::getSymbolIndex(const Elf_Sym *Sym) const {
+  assert(SymbolTableSections.size() == 1 && "Only one symbol table supported!");
+  const Elf_Shdr *SymTab = *SymbolTableSections.begin();
+  uintptr_t SymLoc = uintptr_t(Sym);
+  uintptr_t SymTabLoc = uintptr_t(base() + SymTab->sh_offset);
+  assert(SymLoc > SymTabLoc && "Symbol not in symbol table!");
+  uint64_t SymOffset = SymLoc - SymTabLoc;
+  assert(SymOffset % SymTab->sh_entsize == 0 &&
+         "Symbol not multiple of symbol size!");
+  return SymOffset / SymTab->sh_entsize;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
