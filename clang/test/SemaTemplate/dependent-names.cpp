@@ -346,3 +346,17 @@ namespace rdar12629723 {
     virtual void foo() { }
   };
 }
+
+namespace test_reserved_identifiers {
+  template<typename A, typename B> void tempf(A a, B b) {
+    a + b;  // expected-error{{call to function 'operator+' that is neither visible in the template definition nor found by argument-dependent lookup}}
+  }
+  namespace __gnu_cxx { struct X {}; }
+  namespace ns { struct Y {}; }
+  void operator+(__gnu_cxx::X, ns::Y);  // expected-note{{or in namespace 'test_reserved_identifiers::ns'}}
+  void test() {
+    __gnu_cxx::X x;
+    ns::Y y;
+    tempf(x, y);  // expected-note{{in instantiation of}}
+  }
+}
