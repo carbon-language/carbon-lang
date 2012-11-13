@@ -28,7 +28,7 @@ endif()
 if(CAN_TARGET_I386)
   add_library(clang_rt.ubsan-i386 STATIC
     ${UBSAN_SOURCES}
-    $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
+    $<TARGET_OBJECTS:RTSanitizerCommon.i386>
     )
   set_target_compile_flags(clang_rt.ubsan-i386
     ${UBSAN_CFLAGS} ${TARGET_I386_CFLAGS}
