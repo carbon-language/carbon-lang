@@ -2483,7 +2483,17 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                 }
                 else // any other error
                 {
-                    error.SetErrorString("Python raised an error while importing module");
+                    PyObject *type,*value,*traceback;
+                    PyErr_Fetch (&type,&value,&traceback);
+                    
+                    if (value && value != Py_None)
+                        error.SetErrorStringWithFormat("Python error raised while importing module: %s", PyString_AsString(PyObject_Str(value)));
+                    else
+                        error.SetErrorString("Python raised an error while importing module");
+                    
+                    Py_XDECREF(type);
+                    Py_XDECREF(value);
+                    Py_XDECREF(traceback);
                 }
             }
             else // we failed but have no error to explain why
