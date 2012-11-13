@@ -35,3 +35,8 @@ define <2 x i1> @test5(<2 x i8*> %a) {
   %B = icmp ult <2 x i8*> %g, zeroinitializer
   ret <2 x i1> %B
 }
+
+define <2 x i32*> @test7(<2 x {i32, i32}*> %a) {
+  %w = getelementptr <2 x {i32, i32}*> %a, <2 x i32> <i32 5, i32 9>, <2 x i32> zeroinitializer
+  ret <2 x i32*> %w
+}
