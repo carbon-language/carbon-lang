@@ -1553,7 +1553,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   char PrevCh = 0;
-  while (isNumberBody(C)) { // FIXME: UCNs.
+  while (isNumberBody(C)) { // FIXME: UCNs in ud-suffix.
     CurPtr = ConsumeChar(CurPtr, Size, Result);
     PrevCh = C;
     C = getCharAndSize(CurPtr, Size);
@@ -1818,7 +1818,6 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
     // Skip escaped characters.
     if (C == '\\') {
       // Skip the escaped character.
-      // FIXME: UCN's
       getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
