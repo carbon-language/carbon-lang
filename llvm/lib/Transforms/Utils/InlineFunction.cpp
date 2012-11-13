@@ -668,10 +668,29 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       if (hasLifetimeMarkers(AI))
         continue;
 
-      builder.CreateLifetimeStart(AI);
+      // Try to determine the size of the allocation.
+      ConstantInt *AllocaSize = 0;
+      if (ConstantInt *AIArraySize =
+          dyn_cast<ConstantInt>(AI->getArraySize())) {
+        if (IFI.TD) {
+          Type *AllocaType = AI->getAllocatedType();
+          uint64_t AllocaTypeSize = IFI.TD->getTypeAllocSize(AllocaType);
+          uint64_t AllocaArraySize = AIArraySize->getLimitedValue();
+          assert(AllocaArraySize > 0 && "array size of AllocaInst is zero");
+          // Check that array size doesn't saturate uint64_t and doesn't
+          // overflow when it's multiplied by type size.
+          if (AllocaArraySize != ~0ULL &&
+              UINT64_MAX / AllocaArraySize >= AllocaTypeSize) {
+            AllocaSize = ConstantInt::get(Type::getInt64Ty(AI->getContext()),
+                                          AllocaArraySize * AllocaTypeSize);
+          }
+        }
+      }
+
+      builder.CreateLifetimeStart(AI, AllocaSize);
       for (unsigned ri = 0, re = Returns.size(); ri != re; ++ri) {
         IRBuilder<> builder(Returns[ri]);
-        builder.CreateLifetimeEnd(AI);
+        builder.CreateLifetimeEnd(AI, AllocaSize);
       }
     }
   }
