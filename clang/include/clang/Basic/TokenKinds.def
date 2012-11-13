@@ -103,8 +103,6 @@ TOK(unknown)             // Not a token.
 TOK(eof)                 // End of file.
 TOK(eod)                 // End of preprocessing directive (end of line inside a
                          // directive).
-TOK(included_eof)        // End of included file, only if
-                         // PreprocessorLexer::EnableIncludedEOF is true.
 TOK(code_completion)     // Code completion marker
 TOK(cxx_defaultarg_end)  // C++ default argument end marker
 

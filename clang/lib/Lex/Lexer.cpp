@@ -2594,14 +2594,8 @@ LexNextToken:
       // Read the PP instance variable into an automatic variable, because
       // LexEndOfFile will often delete 'this'.
       Preprocessor *PPCache = PP;
-      bool EnableIncludedEOFCache = EnableIncludedEOF;
       if (LexEndOfFile(Result, CurPtr-1))  // Retreat back into the file.
         return;   // Got a token to return.
-
-      if (EnableIncludedEOFCache) {
-        Result.setKind(tok::included_eof);
-        return;
-      }
       assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
       return PPCache->Lex(Result);
     }
@@ -3239,21 +3233,5 @@ HandleDirective:
     }
     goto LexNextToken;   // GCC isn't tail call eliminating.
   }
-
-  if (PreprocessorLexer *PPLex = PP->getCurrentLexer()) {
-    // If we #include something that contributes no tokens at all, return with
-    // a tok::included_eof instead of recursively continuing lexing.
-    // This avoids a stack overflow with a sequence of many empty #includes.
-    PPLex->setEnableIncludedEOF(true);
-    PP->Lex(Result);
-    if (Result.isNot(tok::included_eof)) {
-      if (Result.isNot(tok::eof) && Result.isNot(tok::eod))
-        PPLex->setEnableIncludedEOF(false);
-      return;
-    }
-    if (PP->isCurrentLexer(this))
-      goto LexNextToken;
-  }
-
   return PP->Lex(Result);
 }

@@ -61,10 +61,6 @@ protected:
   /// Note that in raw mode that the PP pointer may be null.
   bool LexingRawMode;
 
-  /// \brief When true, if EOF of the current lexer is found, tok::included_eof
-  /// is returned instead of continuing lexing higher in the include stack.
-  bool EnableIncludedEOF;
-
   /// \brief A state machine that detects the \#ifndef-wrapping a file
   /// idiom for the multiple-include optimization.
   MultipleIncludeOpt MIOpt;
@@ -83,8 +79,7 @@ protected:
     : PP(0), InitialNumSLocEntries(0),
       ParsingPreprocessorDirective(false),
       ParsingFilename(false),
-      LexingRawMode(false),
-      EnableIncludedEOF(false) {}
+      LexingRawMode(false) {}
 
   virtual ~PreprocessorLexer() {}
 
@@ -151,11 +146,6 @@ public:
 
   /// \brief Return true if this lexer is in raw mode or not.
   bool isLexingRawMode() const { return LexingRawMode; }
-
-  /// \brief When true, if EOF of the current lexer is found, tok::included_eof
-  /// is returned instead of continuing lexing higher in the include stack.
-  /// False is the default behavior.
-  void setEnableIncludedEOF(bool Enable) { EnableIncludedEOF = Enable; }
 
   /// \brief Return the preprocessor object for this lexer.
   Preprocessor *getPP() const { return PP; }
