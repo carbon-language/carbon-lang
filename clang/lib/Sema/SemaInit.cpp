@@ -2744,14 +2744,14 @@ static OverloadingResult
 ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet &CandidateSet,
-                           DeclContext::lookup_iterator Con,
-                           DeclContext::lookup_iterator ConEnd,
+                           ArrayRef<NamedDecl *> Ctors,
                            OverloadCandidateSet::iterator &Best,
                            bool CopyInitializing, bool AllowExplicit,
                            bool OnlyListConstructors, bool InitListSyntax) {
   CandidateSet.clear();
 
-  for (; Con != ConEnd; ++Con) {
+  for (ArrayRef<NamedDecl *>::iterator
+         Con = Ctors.begin(), ConEnd = Ctors.end(); Con != ConEnd; ++Con) {
     NamedDecl *D = *Con;
     DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
     bool SuppressUserConversions = false;
@@ -2844,6 +2844,10 @@ static void TryConstructorInitialization(Sema &S,
   //     through overload resolution.
   DeclContext::lookup_iterator ConStart, ConEnd;
   llvm::tie(ConStart, ConEnd) = S.LookupConstructors(DestRecordDecl);
+  // The container holding the constructors can under certain conditions
+  // be changed while iterating (e.g. because of deserialization).
+  // To be safe we copy the lookup results to a new container.
+  SmallVector<NamedDecl*, 16> Ctors(ConStart, ConEnd);
 
   OverloadingResult Result = OR_No_Viable_Function;
   OverloadCandidateSet::iterator Best;
@@ -2865,7 +2869,7 @@ static void TryConstructorInitialization(Sema &S,
         (!DestRecordDecl->hasDeclaredDefaultConstructor() &&
          !DestRecordDecl->needsImplicitDefaultConstructor()))
       Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
-                                          CandidateSet, ConStart, ConEnd, Best,
+                                          CandidateSet, Ctors, Best,
                                           CopyInitialization, AllowExplicit,
                                           /*OnlyListConstructor=*/true,
                                           InitListSyntax);
@@ -2883,7 +2887,7 @@ static void TryConstructorInitialization(Sema &S,
   if (Result == OR_No_Viable_Function) {
     AsInitializerList = false;
     Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
-                                        CandidateSet, ConStart, ConEnd, Best,
+                                        CandidateSet, Ctors, Best,
                                         CopyInitialization, AllowExplicit,
                                         /*OnlyListConstructors=*/false,
                                         InitListSyntax);
@@ -3153,9 +3157,14 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     CXXRecordDecl *T1RecordDecl = cast<CXXRecordDecl>(T1RecordType->getDecl());
 
     DeclContext::lookup_iterator Con, ConEnd;
-    for (llvm::tie(Con, ConEnd) = S.LookupConstructors(T1RecordDecl);
-         Con != ConEnd; ++Con) {
-      NamedDecl *D = *Con;
+    llvm::tie(Con, ConEnd) = S.LookupConstructors(T1RecordDecl);
+    // The container holding the constructors can under certain conditions
+    // be changed while iterating (e.g. because of deserialization).
+    // To be safe we copy the lookup results to a new container.
+    SmallVector<NamedDecl*, 16> Ctors(Con, ConEnd);
+    for (SmallVector<NamedDecl*, 16>::iterator
+           CI = Ctors.begin(), CE = Ctors.end(); CI != CE; ++CI) {
+      NamedDecl *D = *CI;
       DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
 
       // Find the constructor (which may be a template).
@@ -4317,11 +4326,17 @@ static void LookupCopyAndMoveConstructors(Sema &S,
                                           CXXRecordDecl *Class,
                                           Expr *CurInitExpr) {
   DeclContext::lookup_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
-       Con != ConEnd; ++Con) {
+  llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
+  // The container holding the constructors can under certain conditions
+  // be changed while iterating (e.g. because of deserialization).
+  // To be safe we copy the lookup results to a new container.
+  SmallVector<NamedDecl*, 16> Ctors(Con, ConEnd);
+  for (SmallVector<NamedDecl*, 16>::iterator
+         CI = Ctors.begin(), CE = Ctors.end(); CI != CE; ++CI) {
+    NamedDecl *D = *CI;
     CXXConstructorDecl *Constructor = 0;
 
-    if ((Constructor = dyn_cast<CXXConstructorDecl>(*Con))) {
+    if ((Constructor = dyn_cast<CXXConstructorDecl>(D))) {
       // Handle copy/moveconstructors, only.
       if (!Constructor || Constructor->isInvalidDecl() ||
           !Constructor->isCopyOrMoveConstructor() ||
@@ -4336,7 +4351,7 @@ static void LookupCopyAndMoveConstructors(Sema &S,
     }
 
     // Handle constructor templates.
-    FunctionTemplateDecl *ConstructorTmpl = cast<FunctionTemplateDecl>(*Con);
+    FunctionTemplateDecl *ConstructorTmpl = cast<FunctionTemplateDecl>(D);
     if (ConstructorTmpl->isInvalidDecl())
       continue;
 
