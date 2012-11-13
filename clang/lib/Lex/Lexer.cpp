@@ -3019,26 +3019,8 @@ LexNextToken:
         // it's actually the start of a preprocessing directive.  Callback to
         // the preprocessor to handle it.
         // FIXME: -fpreprocessed mode??
-        if (Result.isAtStartOfLine() && !LexingRawMode && !Is_PragmaLexer) {
-          FormTokenWithChars(Result, CurPtr, tok::hash);
-          PP->HandleDirective(Result);
-
-          // As an optimization, if the preprocessor didn't switch lexers, tail
-          // recurse.
-          if (PP->isCurrentLexer(this)) {
-            // Start a new token. If this is a #include or something, the PP may
-            // want us starting at the beginning of the line again.  If so, set
-            // the StartOfLine flag and clear LeadingSpace.
-            if (IsAtStartOfLine) {
-              Result.setFlag(Token::StartOfLine);
-              Result.clearFlag(Token::LeadingSpace);
-              IsAtStartOfLine = false;
-            }
-            goto LexNextToken;   // GCC isn't tail call eliminating.
-          }
-
-          return PP->Lex(Result);
-        }
+        if (Result.isAtStartOfLine() && !LexingRawMode && !Is_PragmaLexer)
+          goto HandleDirective;
 
         Kind = tok::hash;
       }
@@ -3203,25 +3185,8 @@ LexNextToken:
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
       // FIXME: -fpreprocessed mode??
-      if (Result.isAtStartOfLine() && !LexingRawMode && !Is_PragmaLexer) {
-        FormTokenWithChars(Result, CurPtr, tok::hash);
-        PP->HandleDirective(Result);
-
-        // As an optimization, if the preprocessor didn't switch lexers, tail
-        // recurse.
-        if (PP->isCurrentLexer(this)) {
-          // Start a new token.  If this is a #include or something, the PP may
-          // want us starting at the beginning of the line again.  If so, set
-          // the StartOfLine flag and clear LeadingSpace.
-          if (IsAtStartOfLine) {
-            Result.setFlag(Token::StartOfLine);
-            Result.clearFlag(Token::LeadingSpace);
-            IsAtStartOfLine = false;
-          }
-          goto LexNextToken;   // GCC isn't tail call eliminating.
-        }
-        return PP->Lex(Result);
-      }
+      if (Result.isAtStartOfLine() && !LexingRawMode && !Is_PragmaLexer)
+        goto HandleDirective;
 
       Kind = tok::hash;
     }
@@ -3248,4 +3213,26 @@ LexNextToken:
 
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr, Kind);
+  return;
+
+HandleDirective:
+  // We parsed a # character and it's the start of a preprocessing directive.
+
+  FormTokenWithChars(Result, CurPtr, tok::hash);
+  PP->HandleDirective(Result);
+
+  // As an optimization, if the preprocessor didn't switch lexers, tail
+  // recurse.
+  if (PP->isCurrentLexer(this)) {
+    // Start a new token.  If this is a #include or something, the PP may
+    // want us starting at the beginning of the line again.  If so, set
+    // the StartOfLine flag and clear LeadingSpace.
+    if (IsAtStartOfLine) {
+      Result.setFlag(Token::StartOfLine);
+      Result.clearFlag(Token::LeadingSpace);
+      IsAtStartOfLine = false;
+    }
+    goto LexNextToken;   // GCC isn't tail call eliminating.
+  }
+  return PP->Lex(Result);
 }
