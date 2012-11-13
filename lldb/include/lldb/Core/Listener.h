@@ -117,7 +117,7 @@ public:
     size_t
     HandleBroadcastEvent (lldb::EventSP &event_sp);
 
-protected:
+private:
 
     //------------------------------------------------------------------
     // Classes that inherit from Listener can see and modify these
@@ -177,7 +177,6 @@ protected:
     void
     BroadcasterManagerWillDestruct (BroadcasterManager *manager);
     
-private:
 
 //    broadcaster_collection::iterator
 //    FindBroadcasterWithMask (Broadcaster *broadcaster,
