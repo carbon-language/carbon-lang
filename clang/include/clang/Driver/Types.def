@@ -30,7 +30,7 @@
 // The fourth value is the suffix to use when creating temporary files
 // of this type, or null if unspecified.
 
-// The fifth value is a string containt option flags. Valid values:
+// The fifth value is a string containing option flags. Valid values:
 //  a - The type should only be assembled.
 //  p - The type should only be precompiled.
 //  u - The type can be user specified (with -x).
