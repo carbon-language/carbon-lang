@@ -178,7 +178,7 @@ namespace {
                                  MachineInstr *CopyMI);
 
     /// canJoinPhys - Return true if a physreg copy should be joined.
-    bool canJoinPhys(CoalescerPair &CP);
+    bool canJoinPhys(const CoalescerPair &CP);
 
     /// updateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a
@@ -928,7 +928,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
 }
 
 /// canJoinPhys - Return true if a copy involving a physreg should be joined.
-bool RegisterCoalescer::canJoinPhys(CoalescerPair &CP) {
+bool RegisterCoalescer::canJoinPhys(const CoalescerPair &CP) {
   /// Always join simple intervals that are defined by a single copy from a
   /// reserved register. This doesn't increase register pressure, so it is
   /// always beneficial.
