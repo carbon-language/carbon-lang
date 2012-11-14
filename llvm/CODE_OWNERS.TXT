@@ -33,7 +33,7 @@ D: libc++
 
 N: Anton Korobeynikov
 E: asl@math.spbu.ru
-D: Exception handling, debug information, and Windows codegen
+D: Exception handling and Windows codegen
 
 N: Ted Kremenek
 D: Clang Static Analyzer
@@ -65,3 +65,7 @@ D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
 N: Andrew Trick
 E: atrick@apple.com
 D: Instruction Scheduling
+
+N: Eric Christopher
+E: echristo@gmail.com
+D: Debug Information
