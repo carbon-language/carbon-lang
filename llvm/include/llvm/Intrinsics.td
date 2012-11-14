@@ -464,7 +464,6 @@ def int_convertuu  : Intrinsic<[llvm_anyint_ty],
 include "llvm/IntrinsicsPowerPC.td"
 include "llvm/IntrinsicsX86.td"
 include "llvm/IntrinsicsARM.td"
-include "llvm/IntrinsicsCellSPU.td"
 include "llvm/IntrinsicsXCore.td"
 include "llvm/IntrinsicsHexagon.td"
 include "llvm/IntrinsicsNVVM.td"

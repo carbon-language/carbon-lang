@@ -1762,7 +1762,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<th>Feature</th>`
 :raw-html:`<th>ARM</th>`
-:raw-html:`<th>CellSPU</th>`
 :raw-html:`<th>Hexagon</th>`
 :raw-html:`<th>MBlaze</th>`
 :raw-html:`<th>MSP430</th>`
@@ -1777,7 +1776,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_reliable">is generally reliable</a></td>`
 :raw-html:`<td class="yes"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="yes"></td> <!-- Hexagon -->`
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
@@ -1792,7 +1790,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_asmparser">assembly parser</a></td>`
 :raw-html:`<td class="no"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="no"></td> <!-- Hexagon -->`
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="no"></td> <!-- MSP430 -->`
@@ -1807,7 +1804,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_disassembler">disassembler</a></td>`
 :raw-html:`<td class="yes"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="no"></td> <!-- Hexagon -->`
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="no"></td> <!-- MSP430 -->`
@@ -1822,7 +1818,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_inlineasm">inline asm</a></td>`
 :raw-html:`<td class="yes"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="yes"></td> <!-- Hexagon -->`
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
@@ -1837,7 +1832,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_jit">jit</a></td>`
 :raw-html:`<td class="partial"><a href="#feat_jit_arm">*</a></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="no"></td> <!-- Hexagon -->`
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
@@ -1852,7 +1846,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_objectwrite">.o&nbsp;file writing</a></td>`
 :raw-html:`<td class="no"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="no"></td> <!-- Hexagon -->`
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="no"></td> <!-- MSP430 -->`
@@ -1867,7 +1860,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a hr:raw-html:`ef="#feat_tailcall">tail calls</a></td>`
 :raw-html:`<td class="yes"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="yes"></td> <!-- Hexagon -->`
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
@@ -1882,7 +1874,6 @@ Here is the table:
 :raw-html:`<tr>`
 :raw-html:`<td><a href="#feat_segstacks">segmented stacks</a></td>`
 :raw-html:`<td class="no"></td> <!-- ARM -->`
-:raw-html:`<td class="no"></td> <!-- CellSPU -->`
 :raw-html:`<td class="no"></td> <!-- Hexagon -->`
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="no"></td> <!-- MSP430 -->`
