@@ -336,7 +336,7 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
       if (RecordD->isPolymorphic() && E->isGLValue()) {
         // The subexpression is potentially evaluated; switch the context
         // and recheck the subexpression.
-        ExprResult Result = TranformToPotentiallyEvaluated(E);
+        ExprResult Result = TransformToPotentiallyEvaluated(E);
         if (Result.isInvalid()) return ExprError();
         E = Result.take();
 

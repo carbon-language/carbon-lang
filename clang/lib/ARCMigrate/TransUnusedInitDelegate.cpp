@@ -1,4 +1,4 @@
-//===--- TransUnusedInitDelegate.cpp - Tranformations to ARC mode ---------===//
+//===--- TransUnusedInitDelegate.cpp - Transformations to ARC mode --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===--- TransAutoreleasePool.cpp - Tranformations to ARC mode ------------===//
+//===--- TransAutoreleasePool.cpp - Transformations to ARC mode -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

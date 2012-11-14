@@ -1,4 +1,4 @@
-//===--- TransEmptyStatements.cpp - Tranformations to ARC mode ------------===//
+//===--- TransEmptyStatements.cpp - Transformations to ARC mode -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

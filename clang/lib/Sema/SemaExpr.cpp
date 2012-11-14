@@ -3189,7 +3189,7 @@ Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
     return ExprError();
 
   if (ExprKind == UETT_SizeOf && E->getType()->isVariableArrayType()) {
-    PE = TranformToPotentiallyEvaluated(E);
+    PE = TransformToPotentiallyEvaluated(E);
     if (PE.isInvalid()) return ExprError();
     E = PE.take();
   }
@@ -10211,7 +10211,7 @@ namespace {
   };
 }
 
-ExprResult Sema::TranformToPotentiallyEvaluated(Expr *E) {
+ExprResult Sema::TransformToPotentiallyEvaluated(Expr *E) {
   assert(ExprEvalContexts.back().Context == Unevaluated &&
          "Should only transform unevaluated expressions");
   ExprEvalContexts.back().Context =
@@ -10302,7 +10302,7 @@ void Sema::DiscardCleanupsInEvaluationContext() {
 ExprResult Sema::HandleExprEvaluationContextForTypeof(Expr *E) {
   if (!E->getType()->isVariablyModifiedType())
     return E;
-  return TranformToPotentiallyEvaluated(E);
+  return TransformToPotentiallyEvaluated(E);
 }
 
 static bool IsPotentiallyEvaluatedContext(Sema &SemaRef) {

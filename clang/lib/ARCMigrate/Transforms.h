@@ -1,4 +1,4 @@
-//===-- Transforms.h - Tranformations to ARC mode ---------------*- C++ -*-===//
+//===-- Transforms.h - Transformations to ARC mode --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

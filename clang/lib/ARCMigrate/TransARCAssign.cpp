@@ -1,4 +1,4 @@
-//===--- TransARCAssign.cpp - Tranformations to ARC mode ------------------===//
+//===--- TransARCAssign.cpp - Transformations to ARC mode -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===--- TransZeroOutPropsInDealloc.cpp - Tranformations to ARC mode ------===//
+//===--- TransZeroOutPropsInDealloc.cpp - Transformations to ARC mode -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //

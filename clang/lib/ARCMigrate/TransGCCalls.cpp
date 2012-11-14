@@ -1,4 +1,4 @@
-//===--- TransGCCalls.cpp - Tranformations to ARC mode --------------------===//
+//===--- TransGCCalls.cpp - Transformations to ARC mode -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

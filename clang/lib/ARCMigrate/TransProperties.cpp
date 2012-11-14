@@ -1,4 +1,4 @@
-//===--- TransProperties.cpp - Tranformations to ARC mode -----------------===//
+//===--- TransProperties.cpp - Transformations to ARC mode ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

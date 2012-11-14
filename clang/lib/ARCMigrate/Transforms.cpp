@@ -1,4 +1,4 @@
-//===--- Tranforms.cpp - Tranformations to ARC mode -----------------------===//
+//===--- Transforms.cpp - Transformations to ARC mode ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
