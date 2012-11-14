@@ -172,16 +172,6 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
 /// \brief Parse a single declaration that declares a template,
 /// template specialization, or explicit instantiation of a template.
 ///
-/// \param TemplateParams if non-NULL, the template parameter lists
-/// that preceded this declaration. In this case, the declaration is a
-/// template declaration, out-of-line definition of a template, or an
-/// explicit template specialization. When NULL, the declaration is an
-/// explicit template instantiation.
-///
-/// \param TemplateLoc when TemplateParams is NULL, the location of
-/// the 'template' keyword that indicates that we have an explicit
-/// template instantiation.
-///
 /// \param DeclEnd will receive the source location of the last token
 /// within this declaration.
 ///
