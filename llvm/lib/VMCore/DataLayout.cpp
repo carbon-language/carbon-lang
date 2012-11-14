@@ -159,7 +159,7 @@ static int getInt(StringRef R) {
   return Result;
 }
 
-void DataLayout::init() {
+void DataLayout::init(StringRef Desc) {
   initializeDataLayoutPass(*PassRegistry::getPassRegistry());
 
   LayoutMap = 0;
@@ -180,12 +180,13 @@ void DataLayout::init() {
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
   setPointerAlignment(0, 8, 8, 8);
+
+  std::string errMsg = parseSpecifier(Desc);
+  assert(errMsg == "" && "Invalid target data layout string.");
+  (void)errMsg;
 }
 
-std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
-
-  if (td)
-    td->init();
+std::string DataLayout::parseSpecifier(StringRef Desc) {
 
   while (!Desc.empty()) {
     std::pair<StringRef, StringRef> Split = Desc.split('-');
@@ -203,12 +204,10 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
 
     switch (Specifier[0]) {
     case 'E':
-      if (td)
-        td->LittleEndian = false;
+      LittleEndian = false;
       break;
     case 'e':
-      if (td)
-        td->LittleEndian = true;
+      LittleEndian = true;
       break;
     case 'p': {
       int AddrSpace = 0;
@@ -240,9 +239,8 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
 
       if (PointerPrefAlignBits == 0)
         PointerPrefAlignBits = PointerABIAlignBits;
-      if (td)
-        td->setPointerAlignment(AddrSpace, PointerABIAlignBits/8,
-            PointerPrefAlignBits/8, PointerMemSizeBits/8);
+      setPointerAlignment(AddrSpace, PointerABIAlignBits/8,
+                          PointerPrefAlignBits/8, PointerMemSizeBits/8);
       break;
     }
     case 'i':
@@ -284,9 +282,8 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
       unsigned PrefAlign = PrefAlignBits / 8;
       if (PrefAlign == 0)
         PrefAlign = ABIAlign;
+      setAlignment(AlignType, ABIAlign, PrefAlign, Size);
 
-      if (td)
-        td->setAlignment(AlignType, ABIAlign, PrefAlign, Size);
       break;
     }
     case 'n':  // Native integer types.
@@ -297,8 +294,8 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
           return std::string("invalid native integer size \'") +
             Specifier.str() + "\', must be a positive integer.";
         }
-        if (td && Width != 0)
-          td->LegalIntWidths.push_back(Width);
+        if (Width != 0)
+          LegalIntWidths.push_back(Width);
         Split = Token.split(':');
         Specifier = Split.first;
         Token = Split.second;
@@ -310,8 +307,7 @@ std::string DataLayout::parseSpecifier(StringRef Desc, DataLayout *td) {
         return "invalid natural stack alignment (S-field), "
                "must be a positive 8-bit multiple";
       }
-      if (td)
-        td->StackNaturalAlign = StackNaturalAlignBits / 8;
+      StackNaturalAlign = StackNaturalAlignBits / 8;
       break;
     }
     default:
@@ -333,9 +329,7 @@ DataLayout::DataLayout() : ImmutablePass(ID) {
 
 DataLayout::DataLayout(const Module *M)
   : ImmutablePass(ID) {
-  std::string errMsg = parseSpecifier(M->getDataLayout(), this);
-  assert(errMsg == "" && "Module M has malformed data layout string.");
-  (void)errMsg;
+  init(M->getDataLayout());
 }
 
 void

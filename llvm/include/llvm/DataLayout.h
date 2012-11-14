@@ -148,9 +148,9 @@ private:
     return &align != &InvalidPointerElem;
   }
 
-  /// Initialise a DataLayout object with default values, ensure that the
-  /// target data pass is registered.
-  void init();
+  /// Parses a target data specification string. Returns an error message
+  /// if the string is malformed, or the empty string on success.
+  std::string parseSpecifier(StringRef LayoutDescription);
 
 public:
   /// Default ctor.
@@ -162,16 +162,8 @@ public:
   /// Constructs a DataLayout from a specification string. See init().
   explicit DataLayout(StringRef LayoutDescription)
     : ImmutablePass(ID) {
-    std::string errMsg = parseSpecifier(LayoutDescription, this);
-    assert(errMsg == "" && "Invalid target data layout string.");
-    (void)errMsg;
+    init(LayoutDescription);
   }
-
-  /// Parses a target data specification string. Returns an error message
-  /// if the string is malformed, or the empty string on success. Optionally
-  /// initialises a DataLayout object if passed a non-null pointer.
-  static std::string parseSpecifier(StringRef LayoutDescription,
-                                    DataLayout* td = 0);
 
   /// Initialize target data from properties stored in the module.
   explicit DataLayout(const Module *M);
@@ -186,6 +178,10 @@ public:
   { }
 
   ~DataLayout();  // Not virtual, do not subclass this class
+
+  /// Parse a data layout string (with fallback to default values). Ensure that
+  /// the data layout pass is registered.
+  void init(StringRef LayoutDescription);
 
   /// Layout endianness...
   bool isLittleEndian() const { return LittleEndian; }
