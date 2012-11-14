@@ -4465,7 +4465,7 @@ def ext_delete_void_ptr_operand : ExtWarn<
 def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
-  "deleting pointer to incomplete type %0 may cause undefined behaviour">,
+  "deleting pointer to incomplete type %0 may cause undefined behavior">,
   InGroup<DiagGroup<"delete-incomplete">>;
 def err_delete_incomplete_class_type : Error<
   "deleting incomplete class type %0; no conversions to pointer type">;
