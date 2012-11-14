@@ -190,4 +190,8 @@ void test6(void)
   // CHECK-NEXT: store i32 0, i32* [[IX2]], align 4
 }
 
-
+// Follow gcc's behavior for VLAs in parameter lists.  PR9559.
+void test7(int a[b(0)]) {
+  // CHECK: define void @test7(
+  // CHECK: call i32 @b(i8* null)
+}
