@@ -1748,6 +1748,7 @@ processInstruction(MCInst &Inst,
   }
 }
 
+static const char *getSubtargetFeatureName(unsigned Val);
 bool X86AsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -1809,10 +1810,21 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       Out.EmitInstruction(Inst);
     Opcode = Inst.getOpcode();
     return false;
-  case Match_MissingFeature:
-    Error(IDLoc, "instruction requires a CPU feature not currently enabled",
-          EmptyRanges, MatchingInlineAsm);
-    return true;
+  case Match_MissingFeature: {
+    assert(ErrorInfo && "Unknown missing feature!");
+    // Special case the error message for the very common case where only
+    // a single subtarget feature is missing.
+    std::string Msg = "instruction requires:";
+    unsigned Mask = 1;
+    for (unsigned i = 0; i < (sizeof(ErrorInfo)*8-1); ++i) {
+      if (ErrorInfo & Mask) {
+        Msg += " ";
+        Msg += getSubtargetFeatureName(ErrorInfo & Mask);
+      }
+      Mask <<= 1;
+    }
+    return Error(IDLoc, Msg, EmptyRanges, MatchingInlineAsm);
+  }
   case Match_InvalidOperand:
     WasOriginallyInvalidOperand = true;
     break;
@@ -1843,19 +1855,32 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // Check for the various suffix matches.
   Tmp[Base.size()] = Suffixes[0];
   unsigned ErrorInfoIgnore;
+  unsigned ErrorInfoMissingFeature;
   unsigned Match1, Match2, Match3, Match4;
 
   Match1 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
                                 isParsingIntelSyntax());
+  // If this returned as a missing feature failure, remember that.
+  if (Match1 == Match_MissingFeature)
+    ErrorInfoMissingFeature = ErrorInfoIgnore;
   Tmp[Base.size()] = Suffixes[1];
   Match2 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
                                 isParsingIntelSyntax());
+  // If this returned as a missing feature failure, remember that.
+  if (Match2 == Match_MissingFeature)
+    ErrorInfoMissingFeature = ErrorInfoIgnore;
   Tmp[Base.size()] = Suffixes[2];
   Match3 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
                                 isParsingIntelSyntax());
+  // If this returned as a missing feature failure, remember that.
+  if (Match3 == Match_MissingFeature)
+    ErrorInfoMissingFeature = ErrorInfoIgnore;
   Tmp[Base.size()] = Suffixes[3];
   Match4 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
                                 isParsingIntelSyntax());
+  // If this returned as a missing feature failure, remember that.
+  if (Match4 == Match_MissingFeature)
+    ErrorInfoMissingFeature = ErrorInfoIgnore;
 
   // Restore the old token.
   Op->setTokenValue(Base);
@@ -1936,9 +1961,16 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // missing feature.
   if ((Match1 == Match_MissingFeature) + (Match2 == Match_MissingFeature) +
       (Match3 == Match_MissingFeature) + (Match4 == Match_MissingFeature) == 1){
-    Error(IDLoc, "instruction requires a CPU feature not currently enabled",
-          EmptyRanges, MatchingInlineAsm);
-    return true;
+    std::string Msg = "instruction requires:";
+    unsigned Mask = 1;
+    for (unsigned i = 0; i < (sizeof(ErrorInfoMissingFeature)*8-1); ++i) {
+      if (ErrorInfoMissingFeature & Mask) {
+        Msg += " ";
+        Msg += getSubtargetFeatureName(ErrorInfoMissingFeature & Mask);
+      }
+      Mask <<= 1;
+    }
+    return Error(IDLoc, Msg, EmptyRanges, MatchingInlineAsm);
   }
 
   // If one instruction matched with an invalid operand, report this as an
@@ -2039,4 +2071,5 @@ extern "C" void LLVMInitializeX86AsmParser() {
 
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
+#define GET_SUBTARGET_FEATURE_NAME
 #include "X86GenAsmMatcher.inc"

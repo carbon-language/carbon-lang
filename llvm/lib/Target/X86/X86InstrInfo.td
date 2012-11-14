@@ -594,9 +594,9 @@ def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">,
-                             AssemblerPredicate<"!Mode64Bit">;
+                             AssemblerPredicate<"!Mode64Bit", "32-bit mode">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">,
-                             AssemblerPredicate<"Mode64Bit">;
+                             AssemblerPredicate<"Mode64Bit", "64-bit mode">;
 def IsWin64      : Predicate<"Subtarget->isTargetWin64()">;
 def IsNaCl       : Predicate<"Subtarget->isTargetNaCl()">;
 def NotNaCl      : Predicate<"!Subtarget->isTargetNaCl()">;
