@@ -361,8 +361,8 @@ D: ARM fast-isel improvements
 D: Performance monitoring
 
 N: Nadav Rotem
-E: nadav.rotem@intel.com
-D: Vector code generation improvements.
+E: nrotem@apple.com
+D: X86 code generation improvements, Loop Vectorizer.
 
 N: Roman Samoilov
 E: roman@codedgers.com
