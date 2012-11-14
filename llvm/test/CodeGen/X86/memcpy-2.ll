@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mattr=+sse2      -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=SSE2
+; RUN: llc < %s -mattr=+sse2      -mtriple=i686-pc-mingw32 -mcpu=core2 | FileCheck %s -check-prefix=SSE2
 ; RUN: llc < %s -mattr=+sse,-sse2 -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=SSE1
 ; RUN: llc < %s -mattr=-sse       -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=NOSSE
 ; RUN: llc < %s                 -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=X86-64

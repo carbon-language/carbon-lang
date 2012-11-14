@@ -1362,18 +1362,14 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
                                        bool IsZeroVal,
                                        bool MemcpyStrSrc,
                                        MachineFunction &MF) const {
-  // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
-  // linux.  This is because the stack realignment code can't handle certain
-  // cases like PR2962.  This should be removed when PR2962 is fixed.
   const Function *F = MF.getFunction();
   if (IsZeroVal &&
       !F->getFnAttributes().hasAttribute(Attributes::NoImplicitFloat)) {
     if (Size >= 16 &&
         (Subtarget->isUnalignedMemAccessFast() ||
          ((DstAlign == 0 || DstAlign >= 16) &&
-          (SrcAlign == 0 || SrcAlign >= 16))) &&
-        Subtarget->getStackAlignment() >= 16) {
-      if (Subtarget->getStackAlignment() >= 32) {
+          (SrcAlign == 0 || SrcAlign >= 16)))) {
+      if (Size >= 32) {
         if (Subtarget->hasAVX2())
           return MVT::v8i32;
         if (Subtarget->hasAVX())
@@ -1385,7 +1381,6 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
         return MVT::v4f32;
     } else if (!MemcpyStrSrc && Size >= 8 &&
                !Subtarget->is64Bit() &&
-               Subtarget->getStackAlignment() >= 8 &&
                Subtarget->hasSSE2()) {
       // Do not use f64 to lower memcpy if source is string constant. It's
       // better to use i32 to avoid the loads.
