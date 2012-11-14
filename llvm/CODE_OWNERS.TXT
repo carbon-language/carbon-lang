@@ -8,9 +8,17 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 (W), PGP key ID and fingerprint (P), description (D), and snail-mail address
 (S).
 
+N: Joe Abbey
+E: jabbey@arxan.com
+D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
+
 N: Evan Cheng
 E: evan.cheng@apple.com
 D: Code generator and all targets
+
+N: Eric Christopher
+E: echristo@gmail.com
+D: Debug Information
 
 N: Greg Clayton
 D: LLDB
@@ -28,12 +36,20 @@ D: Clang Frontend Libraries
 N: Tobias Grosser
 D: Polly
 
+N: James Grosbach
+E: grosbach@apple.com
+D: MC layer
+
 N: Howard Hinnant
 D: libc++
 
 N: Anton Korobeynikov
 E: asl@math.spbu.ru
 D: Exception handling and Windows codegen
+
+N: Benjamin Kramer
+E: benny.kra@gmail.com
+D: DWARF Parser
 
 N: Ted Kremenek
 D: Clang Static Analyzer
@@ -54,18 +70,6 @@ N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
 
-N: James Grosbach
-E: grosbach@apple.com
-D: MC layer
-
-N: Joe Abbey
-E: jabbey@arxan.com
-D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
-
 N: Andrew Trick
 E: atrick@apple.com
 D: Instruction Scheduling
-
-N: Eric Christopher
-E: echristo@gmail.com
-D: Debug Information
