@@ -1855,6 +1855,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
         Record.push_back(MI->isC99Varargs());
         Record.push_back(MI->isGNUVarargs());
+        Record.push_back(MI->hasCommaPasting());
         Record.push_back(MI->getNumArgs());
         for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
              I != E; ++I)

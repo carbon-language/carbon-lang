@@ -1809,8 +1809,37 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     while (Tok.isNot(tok::eod)) {
       LastTok = Tok;
 
-      if (Tok.isNot(tok::hash)) {
+      if (Tok.isNot(tok::hash) && Tok.isNot(tok::hashhash)) {
         MI->AddTokenToBody(Tok);
+
+        // Get the next token of the macro.
+        LexUnexpandedToken(Tok);
+        continue;
+      }
+
+      if (Tok.is(tok::hashhash)) {
+        
+        // If we see token pasting, check if it looks like the gcc comma
+        // pasting extension.  We'll use this information to suppress
+        // diagnostics later on.
+        
+        // Get the next token of the macro.
+        LexUnexpandedToken(Tok);
+
+        if (Tok.is(tok::eod)) {
+          MI->AddTokenToBody(LastTok);
+          break;
+        }
+
+        unsigned NumTokens = MI->getNumTokens();
+        if (NumTokens && Tok.getIdentifierInfo() == Ident__VA_ARGS__ &&
+            MI->getReplacementToken(NumTokens-1).is(tok::comma))
+          MI->setHasCommaPasting();
+
+        // Things look ok, add the '##' and param name tokens to the macro.
+        MI->AddTokenToBody(LastTok);
+        MI->AddTokenToBody(Tok);
+        LastTok = Tok;
 
         // Get the next token of the macro.
         LexUnexpandedToken(Tok);

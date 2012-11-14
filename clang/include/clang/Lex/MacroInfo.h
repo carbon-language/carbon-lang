@@ -76,6 +76,9 @@ class MacroInfo {
   /// it has not yet been redefined or undefined.
   bool IsBuiltinMacro : 1;
 
+  /// \brief Whether this macro contains the sequence ", ## __VA_ARGS__"
+  bool HasCommaPasting : 1;
+
   /// \brief True if this macro was loaded from an AST file.
   bool IsFromAST : 1;
 
@@ -252,6 +255,9 @@ public:
   /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
   /// __LINE__, which requires processing before expansion.
   bool isBuiltinMacro() const { return IsBuiltinMacro; }
+
+  bool hasCommaPasting() const { return HasCommaPasting; }
+  void setHasCommaPasting() { HasCommaPasting = true; }
 
   /// isFromAST - Return true if this macro was loaded from an AST file.
   bool isFromAST() const { return IsFromAST; }

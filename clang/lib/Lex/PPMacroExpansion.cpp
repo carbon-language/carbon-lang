@@ -619,9 +619,14 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // Varargs where the named vararg parameter is missing: OK as extension.
       //   #define A(x, ...)
       //   A("blah")
-      Diag(Tok, diag::ext_missing_varargs_arg);
-      Diag(MI->getDefinitionLoc(), diag::note_macro_here)
-        << MacroName.getIdentifierInfo();
+      //
+      // If the macro contains the comma pasting extension, the diagnostic
+      // is suppressed; we know we'll get another diagnostic later.
+      if (!MI->hasCommaPasting()) {
+        Diag(Tok, diag::ext_missing_varargs_arg);
+        Diag(MI->getDefinitionLoc(), diag::note_macro_here)
+          << MacroName.getIdentifierInfo();
+      }
 
       // Remember this occurred, allowing us to elide the comma when used for
       // cases like:

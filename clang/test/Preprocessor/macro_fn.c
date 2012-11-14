@@ -44,3 +44,9 @@ one_dot()   /* empty first argument, elided ...: expected-warning {{must specify
 #define E() (i == 0)
 #if E
 #endif
+
+
+/* <rdar://problem/12292192> */
+#define NSAssert(condition, desc, ...) /* expected-warning {{variadic macros are a C99 feature}} */ \
+    SomeComplicatedStuff((desc), ##__VA_ARGS__) /* expected-warning {{token pasting of ',' and __VA_ARGS__ is a GNU extension}} */
+NSAssert(somecond, somedesc)

@@ -1141,6 +1141,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
         // Decode function-like macro info.
         bool isC99VarArgs = Record[NextIndex++];
         bool isGNUVarArgs = Record[NextIndex++];
+        bool hasCommaPasting = Record[NextIndex++];
         MacroArgs.clear();
         unsigned NumArgs = Record[NextIndex++];
         for (unsigned i = 0; i != NumArgs; ++i)
@@ -1150,6 +1151,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
         MI->setIsFunctionLike();
         if (isC99VarArgs) MI->setIsC99Varargs();
         if (isGNUVarArgs) MI->setIsGNUVarargs();
+        if (hasCommaPasting) MI->setHasCommaPasting();
         MI->setArgumentList(MacroArgs.data(), MacroArgs.size(),
                             PP.getPreprocessorAllocator());
       }
