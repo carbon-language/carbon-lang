@@ -391,7 +391,7 @@ static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
     case NotAtomic:              assert(false);
     case Unordered:              // Fall-through.
     case Monotonic:              v = 0; break;
- // case Consume:                v = 1; break;  // Not specified yet.
+    // case Consume:                v = 1; break;  // Not specified yet.
     case Acquire:                v = 2; break;
     case Release:                v = 3; break;
     case AcquireRelease:         v = 4; break;
