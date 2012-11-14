@@ -1073,8 +1073,8 @@ module that must be checked out (usually to ``projects/test-suite``).  This
 module contains a comprehensive correctness, performance, and benchmarking test
 suite for LLVM. It is a separate Subversion module because not every LLVM user
 is interested in downloading or building such a comprehensive test suite. For
-further details on this test suite, please see the `Testing
-Guide <TestingGuide.html>`_ document.
+further details on this test suite, please see the :doc:`Testing Guide
+<TestingGuide>` document.
 
 .. _tools:
 

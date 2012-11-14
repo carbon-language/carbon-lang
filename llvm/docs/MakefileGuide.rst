@@ -339,7 +339,7 @@ the invocation of ``make check-local`` in the ``test`` directory. The intended
 usage for this is to assist in running specific suites of tests. If
 ``TESTSUITE`` is not set, the implementation of ``check-local`` should run all
 normal tests.  It is up to the project to define what different values for
-``TESTSUTE`` will do. See the `Testing Guide <TestingGuide.html>`_ for further
+``TESTSUTE`` will do. See the :doc:`Testing Guide <TestingGuide>` for further
 details.
 
 ``check-local``

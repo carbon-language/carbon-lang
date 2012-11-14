@@ -20,6 +20,7 @@ User Guides
    HowToSubmitABug
    SphinxQuickstartTemplate
    Phabricator
+   TestingGuide
 
 * :ref:`getting_started`
     
@@ -77,7 +78,7 @@ User Guides
   A template + tutorial for writing new Sphinx documentation. It is meant
   to be read in source form.
     
-* `LLVM Testing Infrastructure Guide <TestingGuide.html>`_
+* :doc:`LLVM Testing Infrastructure Guide <TestingGuide>`
 
    A reference manual for using the LLVM testing infrastructure.
     
