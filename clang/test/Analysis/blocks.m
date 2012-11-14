@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core -analyzer-store=region -fblocks -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core -analyzer-store=region -fblocks -analyzer-opt-analyze-nested-blocks -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
@@ -26,6 +26,7 @@ typedef struct _NSZone NSZone;
 @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
 @interface NSObject <NSObject> {}
 + (id)alloc;
+- (id)init;
 - (id)copy;
 @end
 extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
@@ -94,3 +95,29 @@ void testMessaging() {
   // <rdar://problem/12119814>
   [[^(){} copy] release];
 }
+
+
+// FALSE POSITIVE <rdar://problem/12415065>
+@interface rdar12415065
+@end
+
+@implementation rdar12415065
+- (void)test {
+  // At one point this crashed because we created a path note at a
+  // PreStmtPurgeDeadSymbols point but only knew how to deal with PostStmt
+  // points. <rdar://problem/12687586>
+
+  extern dispatch_queue_t queue;
+
+  if (!queue)
+    return;
+
+  dispatch_async(queue, ^{
+    double x = 0.0;
+    if (24.0f < x) {
+      dispatch_async(queue, ^{ (void)x; });
+      [self test];
+    }
+  });
+}
+@end
