@@ -2258,9 +2258,11 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
   }
   bool HasByrefExtendedLayout;
   Qualifiers::ObjCLifetime Lifetime;
-  if (CGM.getContext().getByrefLifetime(Type, Lifetime, HasByrefExtendedLayout) &&
-      HasByrefExtendedLayout)
-    EltTys.push_back(CreateMemberType(Unit, FType, "__byref_variable_layout",
+  if (CGM.getContext().getByrefLifetime(Type,
+                                        Lifetime, HasByrefExtendedLayout)
+      && HasByrefExtendedLayout)
+    EltTys.push_back(CreateMemberType(Unit, FType,
+                                      "__byref_variable_layout",
                                       &FieldOffset));
   
   CharUnits Align = CGM.getContext().getDeclAlign(VD);
