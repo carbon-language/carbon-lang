@@ -549,13 +549,7 @@ Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
 
 Constant*
 SingleBlockLoopVectorizer::getUniformVector(unsigned Val, Type* ScalarTy) {
-  SmallVector<Constant*, 8> Indices;
-  // Create a vector of consecutive numbers from zero to VF.
-  for (unsigned i = 0; i < VF; ++i)
-    Indices.push_back(ConstantInt::get(ScalarTy, Val, true));
-
-  // Add the consecutive indices to the vector value.
-  return ConstantVector::get(Indices);
+  return ConstantVector::getSplat(VF, ConstantInt::get(ScalarTy, Val, true));
 }
 
 void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
