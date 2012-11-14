@@ -57,3 +57,7 @@ D: MC layer
 N: Joe Abbey
 E: jabbey@arxan.com
 D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
+
+N: Andrew Trick
+E: atrick@apple.com
+D: Instruction Scheduling
