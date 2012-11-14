@@ -631,7 +631,7 @@ void NVPTXAsmPrinter::printLdStCode(const MachineInstr *MI, int opNum,
           O << ".global";
         break;
       default:
-        assert("wrong value");
+        llvm_unreachable("Wrong Address Space");
       }
     }
     else if (!strcmp(Modifier, "sign")) {
@@ -649,10 +649,10 @@ void NVPTXAsmPrinter::printLdStCode(const MachineInstr *MI, int opNum,
         O << ".v4";
     }
     else
-      assert("unknown modifier");
+      llvm_unreachable("Unknown Modifier");
   }
   else
-    assert("unknown modifier");
+    llvm_unreachable("Empty Modifier");
 }
 
 void NVPTXAsmPrinter::emitDeclaration (const Function *F, raw_ostream &O) {
