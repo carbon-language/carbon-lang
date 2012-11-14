@@ -27,9 +27,6 @@ return:
 }
 
 ; CHECK: %p_scevgep = getelementptr [1024 x float**]* @B, i64 0, i64 0
-; CHECK: %p_scevgep1 = getelementptr [1024 x float**]* @B, i64 0, i64 1
-; CHECK: %p_scevgep2 = getelementptr [1024 x float**]* @B, i64 0, i64 2
-; CHECK: %p_scevgep3 = getelementptr [1024 x float**]* @B, i64 0, i64 3
 ; CHECK: %value_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8
 ; CHECK: %value_p_splat = shufflevector <1 x float> %value_p_splat_one, <1 x float> %value_p_splat_one, <4 x i32> zeroinitializer
 ; CHECK: %0 = extractelement <4 x float> %value_p_splat, i32 0
@@ -40,10 +37,12 @@ return:
 ; CHECK: [[RES2:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %1) nounwind
 ; CHECK: [[RES3:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %2) nounwind
 ; CHECK: [[RES4:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %3) nounwind
-; CHECK: store float** [[RES1]], float*** %p_scevgep, align 4
-; CHECK: store float** [[RES2]], float*** %p_scevgep1, align 4
-; CHECK: store float** [[RES3]], float*** %p_scevgep2, align 4
-; CHECK: store float** [[RES4]], float*** %p_scevgep3, align 4
+; CHECK: %4 = insertelement <4 x float**> undef, float** %p_result, i32 0
+; CHECK: %5 = insertelement <4 x float**> %4, float** %p_result4, i32 1
+; CHECK: %6 = insertelement <4 x float**> %5, float** %p_result5, i32 2
+; CHECK: %7 = insertelement <4 x float**> %6, float** %p_result6, i32 3
+; CHECK: %vector_ptr = bitcast float*** %p_scevgep to <4 x float**>*
+; CHECK: store <4 x float**> %7, <4 x float**>* %vector_ptr, align 8
 
 ; CHECK-SCEV: %value_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8
 ; CHECK-SCEV: %value_p_splat = shufflevector <1 x float> %value_p_splat_one, <1 x float> %value_p_splat_one, <4 x i32> zeroinitializer
@@ -55,7 +54,8 @@ return:
 ; CHECK-SCEV: [[RES2:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %1) nounwind
 ; CHECK-SCEV: [[RES3:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %2) nounwind
 ; CHECK-SCEV: [[RES4:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %3) nounwind
-; CHECK-SCEV: store float** [[RES1]], float*** getelementptr inbounds ([1024 x float**]* @B, i64 0, i64 0), align 4
-; CHECK-SCEV: store float** [[RES2]], float*** getelementptr inbounds ([1024 x float**]* @B, i64 0, i64 1), align 4
-; CHECK-SCEV: store float** [[RES3]], float*** getelementptr inbounds ([1024 x float**]* @B, i64 0, i64 2), align 4
-; CHECK-SCEV: store float** [[RES4]], float*** getelementptr inbounds ([1024 x float**]* @B, i64 0, i64 3), align 4
+; CHECK-SCEV: %4 = insertelement <4 x float**> undef, float** %p_result, i32 0
+; CHECK-SCEV: %5 = insertelement <4 x float**> %4, float** %p_result1, i32 1
+; CHECK-SCEV: %6 = insertelement <4 x float**> %5, float** %p_result2, i32 2
+; CHECK-SCEV: %7 = insertelement <4 x float**> %6, float** %p_result3, i32 3
+; CHECK-SCEV: store <4 x float**> %7, <4 x float**>* bitcast ([1024 x float**]* @B to <4 x float**>*), align 
