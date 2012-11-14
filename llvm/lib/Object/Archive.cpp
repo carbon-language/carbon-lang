@@ -272,7 +272,7 @@ error_code Archive::Symbol::getMember(child_iterator &Result) const {
     Offset = *(reinterpret_cast<const support::ubig32_t*>(Offsets)
                + SymbolIndex);
   } else if (Parent->kind() == K_BSD) {
-    assert("BSD format is not supported");
+    assert(0 && "BSD format is not supported");
   } else {
     uint32_t MemberCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
     
@@ -285,13 +285,13 @@ error_code Archive::Symbol::getMember(child_iterator &Result) const {
     if (SymbolIndex >= SymbolCount)
       return object_error::parse_failed;
 
-    // Skip SymbolCount to get to the indicies table.
-    const char *Indicies = Buf + sizeof(support::ulittle32_t);
+    // Skip SymbolCount to get to the indices table.
+    const char *Indices = Buf + sizeof(support::ulittle32_t);
 
     // Get the index of the offset in the file member offset table for this
     // symbol.
     uint16_t OffsetIndex =
-      *(reinterpret_cast<const support::ulittle16_t*>(Indicies)
+      *(reinterpret_cast<const support::ulittle16_t*>(Indices)
         + SymbolIndex);
     // Subtract 1 since OffsetIndex is 1 based.
     --OffsetIndex;
@@ -327,7 +327,7 @@ Archive::symbol_iterator Archive::begin_symbols() const {
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
     buf += sizeof(uint32_t) + (symbol_count * (sizeof(uint32_t)));
   } else if (kind() == K_BSD) {
-    assert("BSD archive format is not supported");
+    assert(0 && "BSD archive format is not supported");
   } else {
     uint32_t member_count = 0;
     uint32_t symbol_count = 0;
@@ -348,7 +348,7 @@ Archive::symbol_iterator Archive::end_symbols() const {
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
     buf += sizeof(uint32_t) + (symbol_count * (sizeof(uint32_t)));
   } else if (kind() == K_BSD) {
-    assert("BSD archive format is not supported");
+    assert(0 && "BSD archive format is not supported");
   } else {
     uint32_t member_count = 0;
     member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
