@@ -18,6 +18,10 @@ D: LLDB
 N: Peter Collingbourne
 D: libclc
 
+N: Hal Finkel
+E: hfinkel@anl.gov
+D: BBVectorize and the PowerPC target
+
 N: Doug Gregor
 D: Clang Frontend Libraries
 
