@@ -792,6 +792,13 @@ void Play3() {
 // CHECK-NOELIDE-TREE:     [1 != (no argument)]>
 }
 
+namespace PR14342 {
+  template<typename T, short a> struct X {};
+  X<int, (signed char)-1> x = X<long, -1>();
+  X<int, 3UL> y = X<int, 2>();
+  // CHECK-ELIDE-NOTREE: error: no viable conversion from 'X<long, [...]>' to 'X<int, [...]>'
+  // CHECK-ELIDE-NOTREE: error: no viable conversion from 'X<[...], 2>' to 'X<[...], 3UL>'
+}
 
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.

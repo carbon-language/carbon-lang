@@ -848,6 +848,9 @@ class TemplateDiff {
               dyn_cast<NonTypeTemplateParmDecl>(ParamND)) {
         Expr *FromExpr, *ToExpr;
         llvm::APSInt FromInt, ToInt;
+        unsigned ParamWidth = 0;
+        if (DefaultNTTPD->getType()->isIntegralOrEnumerationType())
+          ParamWidth = Context.getIntWidth(DefaultNTTPD->getType());
         bool HasFromInt = !FromIter.isEnd() &&
                           FromIter->getKind() == TemplateArgument::Integral;
         bool HasToInt = !ToIter.isEnd() &&
@@ -865,7 +868,7 @@ class TemplateDiff {
 
         if (!HasFromInt && !HasToInt) {
           Tree.SetNode(FromExpr, ToExpr);
-          Tree.SetSame(IsEqualExpr(Context, FromExpr, ToExpr));
+          Tree.SetSame(IsEqualExpr(Context, ParamWidth, FromExpr, ToExpr));
           Tree.SetDefault(FromIter.isEnd() && FromExpr,
                           ToIter.isEnd() && ToExpr);
         } else {
@@ -878,7 +881,7 @@ class TemplateDiff {
             HasToInt = true;
           }
           Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
-          Tree.SetSame(llvm::APSInt::isSameValue(FromInt, ToInt));
+          Tree.SetSame(IsSameConvertedInt(ParamWidth, FromInt, ToInt));
           Tree.SetDefault(FromIter.isEnd() && HasFromInt,
                           ToIter.isEnd() && HasToInt);
         }
@@ -1010,8 +1013,18 @@ class TemplateDiff {
       ArgDecl = DefaultTD;
   }
 
+  /// IsSameConvertedInt - Returns true if both integers are equal when
+  /// converted to an integer type with the given width.
+  static bool IsSameConvertedInt(unsigned Width, const llvm::APSInt &X,
+                                 const llvm::APSInt &Y) {
+    llvm::APInt ConvertedX = X.extOrTrunc(Width);
+    llvm::APInt ConvertedY = Y.extOrTrunc(Width);
+    return ConvertedX == ConvertedY;
+  }
+
   /// IsEqualExpr - Returns true if the expressions evaluate to the same value.
-  static bool IsEqualExpr(ASTContext &Context, Expr *FromExpr, Expr *ToExpr) {
+  static bool IsEqualExpr(ASTContext &Context, unsigned ParamWidth,
+                          Expr *FromExpr, Expr *ToExpr) {
     if (FromExpr == ToExpr)
       return true;
 
@@ -1042,7 +1055,7 @@ class TemplateDiff {
 
     switch (FromVal.getKind()) {
       case APValue::Int:
-        return FromVal.getInt() == ToVal.getInt();
+        return IsSameConvertedInt(ParamWidth, FromVal.getInt(), ToVal.getInt());
       case APValue::LValue: {
         APValue::LValueBase FromBase = FromVal.getLValueBase();
         APValue::LValueBase ToBase = ToVal.getLValueBase();
