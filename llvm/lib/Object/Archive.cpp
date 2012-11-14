@@ -265,31 +265,45 @@ error_code Archive::Symbol::getName(StringRef &Result) const {
 }
 
 error_code Archive::Symbol::getMember(child_iterator &Result) const {
-  const char *buf = Parent->SymbolTable->getBuffer()->getBufferStart();
-  const char *offsets = buf + 4;
-  uint32_t offset = 0;
+  const char *Buf = Parent->SymbolTable->getBuffer()->getBufferStart();
+  const char *Offsets = Buf + 4;
+  uint32_t Offset = 0;
   if (Parent->kind() == K_GNU) {
-    offset = *(reinterpret_cast<const support::ubig32_t*>(offsets) 
-                          + SymbolIndex);
+    Offset = *(reinterpret_cast<const support::ubig32_t*>(Offsets)
+               + SymbolIndex);
   } else if (Parent->kind() == K_BSD) {
     assert("BSD format is not supported");
   } else {
-    uint32_t member_count = 0;
-    member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
-    buf += 4 + (member_count * 4); // Skip offsets.
-    const char *indicies = buf + 4;
-    uint16_t offsetindex =
-      *(reinterpret_cast<const support::ulittle16_t*>(indicies)
+    uint32_t MemberCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
+    
+    // Skip offsets.
+    Buf += sizeof(support::ulittle32_t)
+           + (MemberCount * sizeof(support::ulittle32_t));
+
+    uint32_t SymbolCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
+
+    if (SymbolIndex >= SymbolCount)
+      return object_error::parse_failed;
+
+    // Skip SymbolCount to get to the indicies table.
+    const char *Indicies = Buf + sizeof(support::ulittle32_t);
+
+    // Get the index of the offset in the file member offset table for this
+    // symbol.
+    uint16_t OffsetIndex =
+      *(reinterpret_cast<const support::ulittle16_t*>(Indicies)
         + SymbolIndex);
-    uint32_t *offsetaddr = 
-             (uint32_t *)(reinterpret_cast<const support::ulittle32_t*>(offsets)
-                          + (offsetindex - 1));
-    assert((const char *)offsetaddr < 
-           Parent->SymbolTable->getBuffer()->getBufferEnd());
-    offset = *(offsetaddr);
+    // Subtract 1 since OffsetIndex is 1 based.
+    --OffsetIndex;
+
+    if (OffsetIndex >= MemberCount)
+      return object_error::parse_failed;
+
+    Offset = *(reinterpret_cast<const support::ulittle32_t*>(Offsets)
+               + OffsetIndex);
   }
 
-  const char *Loc = Parent->getData().begin() + offset;
+  const char *Loc = Parent->getData().begin() + Offset;
   size_t Size = sizeof(ArchiveMemberHeader) +
     ToHeader(Loc)->getSize();
   Result = Child(Parent, StringRef(Loc, Size));
