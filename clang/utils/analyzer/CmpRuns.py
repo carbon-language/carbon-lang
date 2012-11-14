@@ -148,45 +148,46 @@ def loadResultsFromSingleRun(info, deleteEmpty=True):
     path = info.path
     run = AnalysisRun(info)
     
-    for f in os.listdir(path):
-        if (not f.endswith('plist')):
-            continue
-
-        p = os.path.join(path, f)
-        data = plistlib.readPlist(p)
-
-        # Ignore/delete empty reports.
-        if not data['files']:
-            if deleteEmpty == True:
-                os.remove(p)
-            continue
-
-        # Extract the HTML reports, if they exists.
-        if 'HTMLDiagnostics_files' in data['diagnostics'][0]:
-            htmlFiles = []
-            for d in data['diagnostics']:
-                # FIXME: Why is this named files, when does it have multiple
-                # files?
-                assert len(d['HTMLDiagnostics_files']) == 1
-                htmlFiles.append(d.pop('HTMLDiagnostics_files')[0])
-        else:
-            htmlFiles = [None] * len(data['diagnostics'])
-        
-        clang_version = ''
-        if 'clang_version' in data:
-            clang_version = data.pop('clang_version')
-        
-        report = AnalysisReport(run, data.pop('files'), clang_version)
-        diagnostics = [AnalysisDiagnostic(d, report, h) 
-                       for d,h in zip(data.pop('diagnostics'),
-                                      htmlFiles)]
-
-        assert not data
-        
-        report.diagnostics.extend(diagnostics)
-        run.reports.append(report)
-        run.diagnostics.extend(diagnostics)
-
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        for f in filenames:
+            if (not f.endswith('plist')):
+                continue
+    
+            p = os.path.join(dirpath, f)
+            data = plistlib.readPlist(p)
+    
+            # Ignore/delete empty reports.
+            if not data['files']:
+                if deleteEmpty == True:
+                    os.remove(p)
+                continue
+    
+            # Extract the HTML reports, if they exists.
+            if 'HTMLDiagnostics_files' in data['diagnostics'][0]:
+                htmlFiles = []
+                for d in data['diagnostics']:
+                    # FIXME: Why is this named files, when does it have multiple
+                    # files?
+                    assert len(d['HTMLDiagnostics_files']) == 1
+                    htmlFiles.append(d.pop('HTMLDiagnostics_files')[0])
+            else:
+                htmlFiles = [None] * len(data['diagnostics'])
+            
+            clang_version = ''
+            if 'clang_version' in data:
+                clang_version = data.pop('clang_version')
+            
+            report = AnalysisReport(run, data.pop('files'), clang_version)
+            diagnostics = [AnalysisDiagnostic(d, report, h) 
+                           for d,h in zip(data.pop('diagnostics'),
+                                          htmlFiles)]
+    
+            assert not data
+            
+            report.diagnostics.extend(diagnostics)
+            run.reports.append(report)
+            run.diagnostics.extend(diagnostics)
+            
     return run
 
 def cmpAnalysisDiagnostic(d) :
