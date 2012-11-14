@@ -69,22 +69,25 @@ void ARMException::EndFunction() {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
                                                   Asm->getFunctionNumber()));
 
-    // Emit references to personality.
-    if (const Function * Personality =
-        MMI->getPersonalities()[MMI->getPersonalityIndex()]) {
-      MCSymbol *PerSym = Asm->Mang->getSymbol(Personality);
-      Asm->OutStreamer.EmitSymbolAttribute(PerSym, MCSA_Global);
-      Asm->OutStreamer.EmitPersonality(PerSym);
-    }
-
     if (EnableARMEHABIDescriptors) {
       // Map all labels and get rid of any dead landing pads.
       MMI->TidyLandingPads();
 
-      Asm->OutStreamer.EmitHandlerData();
+      if (!MMI->getLandingPads().empty()) {
+        // Emit references to personality.
+        if (const Function * Personality =
+            MMI->getPersonalities()[MMI->getPersonalityIndex()]) {
+          MCSymbol *PerSym = Asm->Mang->getSymbol(Personality);
+          Asm->OutStreamer.EmitSymbolAttribute(PerSym, MCSA_Global);
+          Asm->OutStreamer.EmitPersonality(PerSym);
+        }
 
-      // Emit actual exception table
-      EmitExceptionTable();
+        // Emit .handlerdata directive.
+        Asm->OutStreamer.EmitHandlerData();
+
+        // Emit actual exception table
+        EmitExceptionTable();
+      }
     }
   }
 
