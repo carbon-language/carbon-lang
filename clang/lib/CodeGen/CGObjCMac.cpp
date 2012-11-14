@@ -943,7 +943,7 @@ protected:
                            unsigned int BytePos, bool ForStrongLayout,
                            bool &HasUnion);
   
-  Qualifiers::ObjCLifetime getBlockCaptureLifetime(QualType QT);
+  Qualifiers::ObjCLifetime getBlockCaptureLifetime(QualType QT, bool ByrefLayout);
   
   void UpdateRunSkipBlockVars(bool IsByref,
                               Qualifiers::ObjCLifetime LifeTime,
@@ -951,14 +951,18 @@ protected:
                               CharUnits FieldSize);
   
   void BuildRCBlockVarRecordLayout(const RecordType *RT,
-                                   CharUnits BytePos, bool &HasUnion);
+                                   CharUnits BytePos, bool &HasUnion,
+                                   bool ByrefLayout=false);
   
   void BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
                            const RecordDecl *RD,
                            ArrayRef<const FieldDecl*> RecFields,
-                           CharUnits BytePos, bool &HasUnion);
+                           CharUnits BytePos, bool &HasUnion,
+                           bool ByrefLayout);
   
   uint64_t InlineLayoutInstruction(SmallVectorImpl<unsigned char> &Layout);
+  
+  llvm::Constant *getBitmapBlockLayout(bool ComputeByrefLayout);
   
 
   /// GetIvarLayoutName - Returns a unique constant for the given
@@ -1053,6 +1057,8 @@ public:
   virtual llvm::Constant *BuildRCBlockLayout(CodeGen::CodeGenModule &CGM,
                                              const CGBlockInfo &blockInfo);
   
+  virtual llvm::Constant *BuildByrefLayout(CodeGen::CodeGenModule &CGM,
+                                           QualType T);
 };
 
 class CGObjCMac : public CGObjCCommonMac {
@@ -1968,13 +1974,14 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
 /// getBlockCaptureLifetime - This routine returns life time of the captured
 /// block variable for the purpose of block layout meta-data generation. FQT is
 /// the type of the variable captured in the block.
-Qualifiers::ObjCLifetime CGObjCCommonMac::getBlockCaptureLifetime(QualType FQT) {
+Qualifiers::ObjCLifetime CGObjCCommonMac::getBlockCaptureLifetime(QualType FQT,
+                                                                  bool ByrefLayout) {
   if (CGM.getLangOpts().ObjCAutoRefCount)
     return FQT.getObjCLifetime();
   
   // MRR.
   if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
-    return Qualifiers::OCL_ExplicitNone;
+    return ByrefLayout ? Qualifiers::OCL_ExplicitNone : Qualifiers::OCL_Strong;
   
   return Qualifiers::OCL_None;
 }
@@ -2005,7 +2012,8 @@ void CGObjCCommonMac::UpdateRunSkipBlockVars(bool IsByref,
 void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
                                           const RecordDecl *RD,
                                           ArrayRef<const FieldDecl*> RecFields,
-                                          CharUnits BytePos, bool &HasUnion) {
+                                          CharUnits BytePos, bool &HasUnion,
+                                          bool ByrefLayout) {
   bool IsUnion = (RD && RD->isUnion());
   CharUnits MaxUnionSize = CharUnits::Zero();
   const FieldDecl *MaxField = 0;
@@ -2088,7 +2096,7 @@ void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
       }
     } else {
       UpdateRunSkipBlockVars(false,
-                             getBlockCaptureLifetime(FQT),
+                             getBlockCaptureLifetime(FQT, ByrefLayout),
                              BytePos + FieldOffset,
                              FieldSize);
     }
@@ -2104,7 +2112,8 @@ void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
       CharUnits Size = CharUnits::fromQuantity(UnsSize);
       Size += LastBitfieldOrUnnamedOffset;
       UpdateRunSkipBlockVars(false,
-                             getBlockCaptureLifetime(LastFieldBitfieldOrUnnamed->getType()),
+                             getBlockCaptureLifetime(LastFieldBitfieldOrUnnamed->getType(),
+                                                     ByrefLayout),
                              BytePos + LastBitfieldOrUnnamedOffset,
                              Size);
     } else {
@@ -2113,7 +2122,8 @@ void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
       CharUnits FieldSize
         = CGM.getContext().getTypeSizeInChars(LastFieldBitfieldOrUnnamed->getType());
       UpdateRunSkipBlockVars(false,
-                             getBlockCaptureLifetime(LastFieldBitfieldOrUnnamed->getType()),
+                             getBlockCaptureLifetime(LastFieldBitfieldOrUnnamed->getType(),
+                                                     ByrefLayout),
                              BytePos + LastBitfieldOrUnnamedOffset,
                              FieldSize);
     }
@@ -2121,14 +2131,15 @@ void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
   
   if (MaxField)
     UpdateRunSkipBlockVars(false,
-                           getBlockCaptureLifetime(MaxField->getType()),
+                           getBlockCaptureLifetime(MaxField->getType(), ByrefLayout),
                            BytePos + MaxFieldOffset,
                            MaxUnionSize);
 }
 
 void CGObjCCommonMac::BuildRCBlockVarRecordLayout(const RecordType *RT,
                                                   CharUnits BytePos,
-                                                  bool &HasUnion) {
+                                                  bool &HasUnion,
+                                                  bool ByrefLayout) {
   const RecordDecl *RD = RT->getDecl();
   SmallVector<const FieldDecl*, 16> Fields;
   for (RecordDecl::field_iterator i = RD->field_begin(),
@@ -2138,7 +2149,7 @@ void CGObjCCommonMac::BuildRCBlockVarRecordLayout(const RecordType *RT,
   const llvm::StructLayout *RecLayout =
     CGM.getDataLayout().getStructLayout(cast<llvm::StructType>(Ty));
   
-  BuildRCRecordLayout(RecLayout, RD, Fields, BytePos, HasUnion);
+  BuildRCRecordLayout(RecLayout, RD, Fields, BytePos, HasUnion, ByrefLayout);
 }
 
 /// InlineLayoutInstruction - This routine produce an inline instruction for the
@@ -2247,11 +2258,158 @@ uint64_t CGObjCCommonMac::InlineLayoutInstruction(
   return Result;
 }
 
+llvm::Constant *CGObjCCommonMac::getBitmapBlockLayout(bool ComputeByrefLayout) {
+  llvm::Constant *nullPtr = llvm::Constant::getNullValue(CGM.Int8PtrTy);
+  if (RunSkipBlockVars.empty())
+    return nullPtr;
+  unsigned WordSizeInBits = CGM.getContext().getTargetInfo().getPointerWidth(0);
+  unsigned ByteSizeInBits = CGM.getContext().getTargetInfo().getCharWidth();
+  unsigned WordSizeInBytes = WordSizeInBits/ByteSizeInBits;
+  
+  // Sort on byte position; captures might not be allocated in order,
+  // and unions can do funny things.
+  llvm::array_pod_sort(RunSkipBlockVars.begin(), RunSkipBlockVars.end());
+  SmallVector<unsigned char, 16> Layout;
+  
+  unsigned size = RunSkipBlockVars.size();
+  for (unsigned i = 0; i < size; i++) {
+    enum BLOCK_LAYOUT_OPCODE opcode = RunSkipBlockVars[i].opcode;
+    CharUnits start_byte_pos = RunSkipBlockVars[i].block_var_bytepos;
+    CharUnits end_byte_pos = start_byte_pos;
+    unsigned j = i+1;
+    while (j < size) {
+      if (opcode == RunSkipBlockVars[j].opcode) {
+        end_byte_pos = RunSkipBlockVars[j++].block_var_bytepos;
+        i++;
+      }
+      else
+        break;
+    }
+    CharUnits size_in_bytes =
+    end_byte_pos - start_byte_pos + RunSkipBlockVars[j-1].block_var_size;
+    if (j < size) {
+      CharUnits gap =
+      RunSkipBlockVars[j].block_var_bytepos -
+      RunSkipBlockVars[j-1].block_var_bytepos - RunSkipBlockVars[j-1].block_var_size;
+      size_in_bytes += gap;
+    }
+    CharUnits residue_in_bytes = CharUnits::Zero();
+    if (opcode == BLOCK_LAYOUT_NON_OBJECT_BYTES) {
+      residue_in_bytes = size_in_bytes % WordSizeInBytes;
+      size_in_bytes -= residue_in_bytes;
+      opcode = BLOCK_LAYOUT_NON_OBJECT_WORDS;
+    }
+    
+    unsigned size_in_words = size_in_bytes.getQuantity() / WordSizeInBytes;
+    while (size_in_words >= 16) {
+      // Note that value in imm. is one less that the actual
+      // value. So, 0xf means 16 words follow!
+      unsigned char inst = (opcode << 4) | 0xf;
+      Layout.push_back(inst);
+      size_in_words -= 16;
+    }
+    if (size_in_words > 0) {
+      // Note that value in imm. is one less that the actual
+      // value. So, we subtract 1 away!
+      unsigned char inst = (opcode << 4) | (size_in_words-1);
+      Layout.push_back(inst);
+    }
+    if (residue_in_bytes > CharUnits::Zero()) {
+      unsigned char inst =
+      (BLOCK_LAYOUT_NON_OBJECT_BYTES << 4) | (residue_in_bytes.getQuantity()-1);
+      Layout.push_back(inst);
+    }
+  }
+  
+  int e = Layout.size()-1;
+  while (e >= 0) {
+    unsigned char inst = Layout[e--];
+    enum BLOCK_LAYOUT_OPCODE opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+    if (opcode == BLOCK_LAYOUT_NON_OBJECT_BYTES || opcode == BLOCK_LAYOUT_NON_OBJECT_WORDS)
+      Layout.pop_back();
+    else
+      break;
+  }
+  
+  uint64_t Result = InlineLayoutInstruction(Layout);
+  if (Result != 0) {
+    // Block variable layout instruction has been inlined.
+    if (CGM.getLangOpts().ObjCGCBitmapPrint) {
+      if (ComputeByrefLayout)
+        printf("\n Inline instruction for BYREF variable layout: ");
+      else
+        printf("\n Inline instruction for block variable layout: ");
+      printf("0x0%llx\n", (unsigned long long)Result);
+    }
+    if (WordSizeInBytes == 8) {
+      const llvm::APInt Instruction(64, Result);
+      return llvm::Constant::getIntegerValue(CGM.Int64Ty, Instruction);
+    }
+    else {
+      const llvm::APInt Instruction(32, Result);
+      return llvm::Constant::getIntegerValue(CGM.Int32Ty, Instruction);
+    }
+  }
+  
+  unsigned char inst = (BLOCK_LAYOUT_OPERATOR << 4) | 0;
+  Layout.push_back(inst);
+  std::string BitMap;
+  for (unsigned i = 0, e = Layout.size(); i != e; i++)
+    BitMap += Layout[i];
+  
+  if (CGM.getLangOpts().ObjCGCBitmapPrint) {
+    if (ComputeByrefLayout)
+      printf("\n BYREF variable layout: ");
+    else
+      printf("\n block variable layout: ");
+    for (unsigned i = 0, e = BitMap.size(); i != e; i++) {
+      unsigned char inst = BitMap[i];
+      enum BLOCK_LAYOUT_OPCODE opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
+      unsigned delta = 1;
+      switch (opcode) {
+        case BLOCK_LAYOUT_OPERATOR:
+          printf("BL_OPERATOR:");
+          delta = 0;
+          break;
+        case BLOCK_LAYOUT_NON_OBJECT_BYTES:
+          printf("BL_NON_OBJECT_BYTES:");
+          break;
+        case BLOCK_LAYOUT_NON_OBJECT_WORDS:
+          printf("BL_NON_OBJECT_WORD:");
+          break;
+        case BLOCK_LAYOUT_STRONG:
+          printf("BL_STRONG:");
+          break;
+        case BLOCK_LAYOUT_BYREF:
+          printf("BL_BYREF:");
+          break;
+        case BLOCK_LAYOUT_WEAK:
+          printf("BL_WEAK:");
+          break;
+        case BLOCK_LAYOUT_UNRETAINED:
+          printf("BL_UNRETAINED:");
+          break;
+      }
+      // Actual value of word count is one more that what is in the imm.
+      // field of the instruction
+      printf("%d", (inst & 0xf) + delta);
+      if (i < e-1)
+        printf(", ");
+      else
+        printf("\n");
+    }
+  }
+  
+  llvm::GlobalVariable * Entry =
+  CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
+                    llvm::ConstantDataArray::getString(VMContext, BitMap,false),
+                    "__TEXT,__objc_classname,cstring_literals", 1, true);
+  return getConstantGEP(VMContext, Entry, 0, 0);
+}
+
 llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
                                                     const CGBlockInfo &blockInfo) {
   assert(CGM.getLangOpts().getGC() == LangOptions::NonGC);
-  
-  llvm::Constant *nullPtr = llvm::Constant::getNullValue(CGM.Int8PtrTy);
   
   RunSkipBlockVars.clear();
   bool hasUnion = false;
@@ -2284,155 +2442,37 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
        CharUnits::fromQuantity(layout->getElementOffset(capture.getIndex()));
     
     assert(!type->isArrayType() && "array variable should not be caught");
-    if (const RecordType *record = type->getAs<RecordType>()) {
-      BuildRCBlockVarRecordLayout(record, fieldOffset, hasUnion);
-      continue;
-    }
+    if (!ci->isByRef())
+      if (const RecordType *record = type->getAs<RecordType>()) {
+        BuildRCBlockVarRecordLayout(record, fieldOffset, hasUnion);
+        continue;
+      }
     CharUnits fieldSize;
     if (ci->isByRef())
       fieldSize = CharUnits::fromQuantity(WordSizeInBytes);
     else
       fieldSize = CGM.getContext().getTypeSizeInChars(type);
-    UpdateRunSkipBlockVars(ci->isByRef(), getBlockCaptureLifetime(type),
+    UpdateRunSkipBlockVars(ci->isByRef(), getBlockCaptureLifetime(type, false),
                            fieldOffset, fieldSize);
   }
-  
-  if (RunSkipBlockVars.empty())
-    return nullPtr;
-  
-  // Sort on byte position; captures might not be allocated in order,
-  // and unions can do funny things.
-  llvm::array_pod_sort(RunSkipBlockVars.begin(), RunSkipBlockVars.end());
-  SmallVector<unsigned char, 16> Layout;
+  return getBitmapBlockLayout(false);
+}
 
-  unsigned size = RunSkipBlockVars.size();
-  for (unsigned i = 0; i < size; i++) {
-    enum BLOCK_LAYOUT_OPCODE opcode = RunSkipBlockVars[i].opcode;
-    CharUnits start_byte_pos = RunSkipBlockVars[i].block_var_bytepos;
-    CharUnits end_byte_pos = start_byte_pos;
-    unsigned j = i+1;
-    while (j < size) {
-      if (opcode == RunSkipBlockVars[j].opcode) {
-        end_byte_pos = RunSkipBlockVars[j++].block_var_bytepos;
-        i++;
-      }
-      else
-        break;
-    }
-    CharUnits size_in_bytes =
-      end_byte_pos - start_byte_pos + RunSkipBlockVars[j-1].block_var_size;
-    if (j < size) {
-      CharUnits gap =
-        RunSkipBlockVars[j].block_var_bytepos -
-        RunSkipBlockVars[j-1].block_var_bytepos - RunSkipBlockVars[j-1].block_var_size;
-      size_in_bytes += gap;
-    }
-    CharUnits residue_in_bytes = CharUnits::Zero();
-    if (opcode == BLOCK_LAYOUT_NON_OBJECT_BYTES) {
-      residue_in_bytes = size_in_bytes % WordSizeInBytes;
-      size_in_bytes -= residue_in_bytes;
-      opcode = BLOCK_LAYOUT_NON_OBJECT_WORDS;
-    }
 
-    unsigned size_in_words = size_in_bytes.getQuantity() / WordSizeInBytes;
-    while (size_in_words >= 16) {
-      // Note that value in imm. is one less that the actual
-      // value. So, 0xf means 16 words follow!
-      unsigned char inst = (opcode << 4) | 0xf;
-      Layout.push_back(inst);
-      size_in_words -= 16;
-    }
-    if (size_in_words > 0) {
-      // Note that value in imm. is one less that the actual
-      // value. So, we subtract 1 away!
-      unsigned char inst = (opcode << 4) | (size_in_words-1);
-      Layout.push_back(inst);
-    }
-    if (residue_in_bytes > CharUnits::Zero()) {
-      unsigned char inst =
-        (BLOCK_LAYOUT_NON_OBJECT_BYTES << 4) | (residue_in_bytes.getQuantity()-1);
-      Layout.push_back(inst);
-    }
+llvm::Constant *CGObjCCommonMac::BuildByrefLayout(CodeGen::CodeGenModule &CGM,
+                                                  QualType T) {
+  assert(CGM.getLangOpts().getGC() == LangOptions::NonGC);
+  assert(!T->isArrayType() && "__block array variable should not be caught");
+  CharUnits fieldOffset;
+  RunSkipBlockVars.clear();
+  bool hasUnion = false;
+  if (const RecordType *record = T->getAs<RecordType>()) {
+    BuildRCBlockVarRecordLayout(record, fieldOffset, hasUnion, true /*ByrefLayout */);
+    llvm::Constant *Result = getBitmapBlockLayout(true);
+    return Result;
   }
-  
-  int e = Layout.size()-1;
-  while (e >= 0) {
-    unsigned char inst = Layout[e--];
-    enum BLOCK_LAYOUT_OPCODE opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
-    if (opcode == BLOCK_LAYOUT_NON_OBJECT_BYTES || opcode == BLOCK_LAYOUT_NON_OBJECT_WORDS)
-      Layout.pop_back();
-    else
-      break;
-  }
-  
-  uint64_t Result = InlineLayoutInstruction(Layout);
-  if (Result != 0) {
-    // Block variable layout instruction has been inlined.
-    if (CGM.getLangOpts().ObjCGCBitmapPrint) {
-      printf("\n Inline instruction for block variable layout: ");
-      printf("0x0%llx\n", (unsigned long long)Result);
-    }
-    if (WordSizeInBytes == 8) {
-      const llvm::APInt Instruction(64, Result);
-      return llvm::Constant::getIntegerValue(CGM.Int64Ty, Instruction);
-    }
-    else {
-      const llvm::APInt Instruction(32, Result);
-      return llvm::Constant::getIntegerValue(CGM.Int32Ty, Instruction);
-    }
-  }
-  
-  unsigned char inst = (BLOCK_LAYOUT_OPERATOR << 4) | 0;
-  Layout.push_back(inst);
-  std::string BitMap;
-  for (unsigned i = 0, e = Layout.size(); i != e; i++)
-    BitMap += Layout[i];
-  
-  if (CGM.getLangOpts().ObjCGCBitmapPrint) {
-    printf("\n block variable layout: ");
-    for (unsigned i = 0, e = BitMap.size(); i != e; i++) {
-      unsigned char inst = BitMap[i];
-      enum BLOCK_LAYOUT_OPCODE opcode = (enum BLOCK_LAYOUT_OPCODE) (inst >> 4);
-      unsigned delta = 1;
-      switch (opcode) {
-        case BLOCK_LAYOUT_OPERATOR:
-          printf("BL_OPERATOR:");
-          delta = 0;
-          break;
-        case BLOCK_LAYOUT_NON_OBJECT_BYTES:
-          printf("BL_NON_OBJECT_BYTES:");
-          break;
-        case BLOCK_LAYOUT_NON_OBJECT_WORDS:
-          printf("BL_NON_OBJECT_WORD:");
-          break;
-        case BLOCK_LAYOUT_STRONG:
-          printf("BL_STRONG:");
-          break;
-        case BLOCK_LAYOUT_BYREF:
-          printf("BL_BYREF:");
-          break;
-        case BLOCK_LAYOUT_WEAK:
-          printf("BL_WEAK:");
-          break;
-        case BLOCK_LAYOUT_UNRETAINED:
-          printf("BL_UNRETAINED:");
-          break;
-      } 
-      // Actual value of word count is one more that what is in the imm.
-      // field of the instruction
-      printf("%d", (inst & 0xf) + delta); 
-      if (i < e-1)
-        printf(", ");
-      else
-        printf("\n");
-    }
-  }
-  
-  llvm::GlobalVariable * Entry =
-    CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
-                    llvm::ConstantDataArray::getString(VMContext, BitMap,false),
-                    "__TEXT,__objc_classname,cstring_literals", 1, true);
-  return getConstantGEP(VMContext, Entry, 0, 0);
+  llvm::Constant *nullPtr = llvm::Constant::getNullValue(CGM.Int8PtrTy);
+  return nullPtr;
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,

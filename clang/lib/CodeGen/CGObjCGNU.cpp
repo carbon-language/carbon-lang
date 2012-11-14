@@ -537,6 +537,12 @@ public:
                                              const CGBlockInfo &blockInfo) {
     return NULLPtr;
   }
+  
+  virtual llvm::Constant *BuildByrefLayout(CodeGenModule &CGM,
+                                           QualType T) {
+    return NULLPtr;
+  }
+  
   virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) {
     return 0;
   }

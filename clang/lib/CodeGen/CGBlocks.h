@@ -69,11 +69,12 @@ enum BlockLiteralFlags {
 class BlockFlags {
   uint32_t flags;
 
-  BlockFlags(uint32_t flags) : flags(flags) {}
 public:
+  BlockFlags(uint32_t flags) : flags(flags) {}
   BlockFlags() : flags(0) {}
   BlockFlags(BlockLiteralFlags flag) : flags(flag) {}
-
+  BlockFlags(BlockByrefFlags flag) : flags(flag) {}
+  
   uint32_t getBitMask() const { return flags; }
   bool empty() const { return flags == 0; }
 
@@ -86,6 +87,9 @@ public:
   }
   friend bool operator&(BlockFlags l, BlockFlags r) {
     return (l.flags & r.flags);
+  }
+  bool operator==(BlockFlags r) {
+    return (flags == r.flags);
   }
 };
 inline BlockFlags operator|(BlockLiteralFlags l, BlockLiteralFlags r) {

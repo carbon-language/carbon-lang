@@ -16,25 +16,28 @@ void f() {
     __block id byref_bab = (id)0;
     __block id bl_var1;
 
-// block variable layout: BL_UNRETAINED:1, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [2 x i8] c"`\00"
-// CHECK-i386: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [2 x i8] c"`\00"
+// block variable layout: BL_STRONG:1, BL_OPERATOR:0
+// Inline instruction for block variable layout: 0x0100
+// CHECK: internal constant{{.*}}i64 256
+// CHECK-i386: internal constant{{.*}}i32 256
     void (^b)() = ^{
         x(bar);
     };    
 
-// block variable layout: BL_UNRETAINED:2, BL_BYREF:1, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"a@\00"
-// CHECK-i386: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"a@\00"
+// block variable layout: BL_STRONG:2, BL_BYREF:1, BL_OPERATOR:0
+// Inline instruction for block variable layout: 0x0210
+// CHECK: internal constant{{.*}}i64 528
+// CHECK-i386: internal constant{{.*}}i32 528
     void (^c)() = ^{
         x(bar);
         x(baz);
         byref_int = 1;
     };    
 
-// block variable layout: BL_UNRETAINED:2, BL_BYREF:3, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"aB\00
-// CHECK-i386: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"aB\00
+// block variable layout: BL_STRONG:2, BL_BYREF:3, BL_OPERATOR:0
+// Inline instruction for block variable layout: 0x0230
+// CHECK: internal constant{{.*}}i64 560
+// CHECK-i386: internal constant{{.*}}i32 560
     void (^d)() = ^{
         x(bar);
         x(baz);
@@ -43,9 +46,10 @@ void f() {
         byref_bab = 0;
     };
 
-// block variable layout: BL_UNRETAINED:2, BL_BYREF:3, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"aB\00"
-// CHECK-i386: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"aB\00"
+// block variable layout: BL_STRONG:2, BL_BYREF:3, BL_OPERATOR:0
+// Inline instruction for block variable layout: 0x0230
+// CHECK: internal constant{{.*}}i64 560
+// CHECK-i386: internal constant{{.*}}i32 560
     id (^e)() = ^{
         x(bar);
         x(baz);
@@ -56,8 +60,8 @@ void f() {
     };
 
 // Inline instruction for block variable layout: 0x020
-// CHECK: i8* getelementptr inbounds ([6 x i8]* {{@.*}}, i32 0, i32 0), i64 32 }
-// CHECK-i386: i8* getelementptr inbounds ([6 x i8]* {{@.*}}, i32 0, i32 0), i32 32 }
+// CHECK: internal constant{{.*}}i64 32
+// CHECK-i386: internal constant{{.*}}i32 32
     void (^ii)() = ^{
        byref_int = 1;
        byref_bab = 0;

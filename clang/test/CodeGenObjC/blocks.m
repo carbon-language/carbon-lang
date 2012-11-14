@@ -57,9 +57,9 @@ void test2(Test2 *x) {
   // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 1
   // CHECK-NEXT: store [[WEAK_T]]* [[WEAKX]], [[WEAK_T]]** [[T1]]
 
-  // Flags.  This is just BLOCK_HAS_COPY_DISPOSE.
+  // Flags.  This is just BLOCK_HAS_COPY_DISPOSE BLOCK_BYREF_LAYOUT_UNRETAINED
   // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 2
-  // CHECK-NEXT: store i32 33554432, i32* [[T2]]
+  // CHECK-NEXT: store i32 1375731712, i32* [[T2]]
 
   // Size.
   // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 3

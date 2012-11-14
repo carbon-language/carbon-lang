@@ -1892,6 +1892,7 @@ llvm::Value *CodeGenFunction::BuildBlockByrefAddress(llvm::Value *BaseAddr,
 ///        int32_t __size;
 ///        void *__copy_helper;       // only if needed
 ///        void *__destroy_helper;    // only if needed
+///        void *__byref_variable_layout;// only if needed
 ///        char padding[X];           // only if needed
 ///        T x;
 ///      } x
@@ -1930,6 +1931,12 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
     /// void *__destroy_helper;
     types.push_back(Int8PtrTy);
   }
+  bool HasByrefExtendedLayout = false;
+  Qualifiers::ObjCLifetime Lifetime;
+  if (getContext().getByrefLifetime(Ty, Lifetime, HasByrefExtendedLayout) &&
+      HasByrefExtendedLayout)
+    /// void *__byref_variable_layout;
+    types.push_back(Int8PtrTy);
 
   bool Packed = false;
   CharUnits Align = getContext().getDeclAlign(D);
@@ -1939,9 +1946,14 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
     // The struct above has 2 32-bit integers.
     unsigned CurrentOffsetInBytes = 4 * 2;
     
-    // And either 2 or 4 pointers.
-    CurrentOffsetInBytes += (HasCopyAndDispose ? 4 : 2) *
-      CGM.getDataLayout().getTypeAllocSize(Int8PtrTy);
+    // And either 2, 3, 4 or 5 pointers.
+    unsigned noPointers = 2;
+    if (HasCopyAndDispose)
+      noPointers += 2;
+    if (HasByrefExtendedLayout)
+      noPointers += 1;
+    
+    CurrentOffsetInBytes += noPointers * CGM.getDataLayout().getTypeAllocSize(Int8PtrTy);
     
     // Align the offset.
     unsigned AlignedOffsetInBytes = 
@@ -1991,6 +2003,11 @@ void CodeGenFunction::emitByrefStructureInit(const AutoVarEmission &emission) {
   const VarDecl &D = *emission.Variable;
   QualType type = D.getType();
 
+  bool HasByrefExtendedLayout;
+  Qualifiers::ObjCLifetime ByrefLifetime;
+  bool ByRefHasLifetime =
+    getContext().getByrefLifetime(type, ByrefLifetime, HasByrefExtendedLayout);
+  
   llvm::Value *V;
 
   // Initialize the 'isa', which is just 0 or 1.
@@ -2006,9 +2023,49 @@ void CodeGenFunction::emitByrefStructureInit(const AutoVarEmission &emission) {
 
   // Blocks ABI:
   //   c) the flags field is set to either 0 if no helper functions are
-  //      needed or BLOCK_HAS_COPY_DISPOSE if they are,
+  //      needed or BLOCK_BYREF_HAS_COPY_DISPOSE if they are,
   BlockFlags flags;
-  if (helpers) flags |= BLOCK_HAS_COPY_DISPOSE;
+  if (helpers) flags |= BLOCK_BYREF_HAS_COPY_DISPOSE;
+  if (ByRefHasLifetime) {
+    if (HasByrefExtendedLayout) flags |= BLOCK_BYREF_LAYOUT_EXTENDED;
+      else switch (ByrefLifetime) {
+        case Qualifiers::OCL_Strong:
+          flags |= BLOCK_BYREF_LAYOUT_STRONG;
+          break;
+        case Qualifiers::OCL_Weak:
+          flags |= BLOCK_BYREF_LAYOUT_WEAK;
+          break;
+        case Qualifiers::OCL_ExplicitNone:
+          flags |= BLOCK_BYREF_LAYOUT_UNRETAINED;
+          break;
+        case Qualifiers::OCL_None:
+          if (!type->isObjCObjectPointerType() && !type->isBlockPointerType())
+            flags |= BLOCK_BYREF_LAYOUT_NON_OBJECT;
+          break;
+        default:
+          break;
+      }
+    if (CGM.getLangOpts().ObjCGCBitmapPrint) {
+      printf("\n Inline flag for BYREF variable layout (%d):", flags.getBitMask());
+      if (flags & BLOCK_BYREF_HAS_COPY_DISPOSE)
+        printf(" BLOCK_BYREF_HAS_COPY_DISPOSE");
+      if (flags & BLOCK_BYREF_LAYOUT_MASK) {
+        BlockFlags ThisFlag(flags.getBitMask() & BLOCK_BYREF_LAYOUT_MASK);
+        if (ThisFlag ==  BLOCK_BYREF_LAYOUT_EXTENDED)
+          printf(" BLOCK_BYREF_LAYOUT_EXTENDED");
+        if (ThisFlag ==  BLOCK_BYREF_LAYOUT_STRONG)
+          printf(" BLOCK_BYREF_LAYOUT_STRONG");
+        if (ThisFlag == BLOCK_BYREF_LAYOUT_WEAK)
+          printf(" BLOCK_BYREF_LAYOUT_WEAK");
+        if (ThisFlag == BLOCK_BYREF_LAYOUT_UNRETAINED)
+          printf(" BLOCK_BYREF_LAYOUT_UNRETAINED");
+        if (ThisFlag == BLOCK_BYREF_LAYOUT_NON_OBJECT)
+          printf(" BLOCK_BYREF_LAYOUT_NON_OBJECT");
+      }
+      printf("\n");
+    }
+  }
+  
   Builder.CreateStore(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
                       Builder.CreateStructGEP(addr, 2, "byref.flags"));
 
@@ -2022,6 +2079,16 @@ void CodeGenFunction::emitByrefStructureInit(const AutoVarEmission &emission) {
 
     llvm::Value *destroy_helper = Builder.CreateStructGEP(addr, 5);
     Builder.CreateStore(helpers->DisposeHelper, destroy_helper);
+  }
+  if (ByRefHasLifetime && HasByrefExtendedLayout) {
+    llvm::Constant* ByrefLayoutInfo = CGM.getObjCRuntime().BuildByrefLayout(CGM, type);
+    llvm::Value *ByrefInfoAddr = Builder.CreateStructGEP(addr, helpers ? 6 : 4,
+                                                         "byref.layout");
+    // cast destination to pointer to source type.
+    llvm::Type *DesTy = ByrefLayoutInfo->getType();
+    DesTy = DesTy->getPointerTo();
+    llvm::Value *BC = Builder.CreatePointerCast(ByrefInfoAddr, DesTy);
+    Builder.CreateStore(ByrefLayoutInfo, BC);
   }
 }
 

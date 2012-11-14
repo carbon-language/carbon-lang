@@ -2256,6 +2256,12 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
     EltTys.push_back(CreateMemberType(Unit, FType, "__destroy_helper",
                                       &FieldOffset));
   }
+  bool HasByrefExtendedLayout;
+  Qualifiers::ObjCLifetime Lifetime;
+  if (CGM.getContext().getByrefLifetime(Type, Lifetime, HasByrefExtendedLayout) &&
+      HasByrefExtendedLayout)
+    EltTys.push_back(CreateMemberType(Unit, FType, "__byref_variable_layout",
+                                      &FieldOffset));
   
   CharUnits Align = CGM.getContext().getDeclAlign(VD);
   if (Align > CGM.getContext().toCharUnitsFromBits(
