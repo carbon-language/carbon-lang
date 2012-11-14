@@ -43,6 +43,10 @@ D: MC layer
 N: Howard Hinnant
 D: libc++
 
+N: Justin Holewinski
+E: jholewinski@nvidia.com
+D: NVPTX Target (lib/Target/NVPTX/*)
+
 N: Anton Korobeynikov
 E: asl@math.spbu.ru
 D: Exception handling and Windows codegen
