@@ -23,9 +23,13 @@ import lldb
 
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand("type summary add -F ClangDataFormat.SourceLocation_summary clang::SourceLocation")
+	debugger.HandleCommand("type summary add -F ClangDataFormat.StringRef_summary llvm::StringRef")
 
 def SourceLocation_summary(srcloc, internal_dict):
 	return SourceLocation(srcloc).summary()
+
+def StringRef_summary(strref, internal_dict):
+	return StringRef(strref).summary()
 
 class SourceLocation(object):
 	def __init__(self, srcloc):
@@ -50,6 +54,23 @@ class SourceLocation(object):
 		if srcmgr_path:
 			desc = "%s (offset: %d, %s, %s)" % (self.getPrint(srcmgr_path), self.offset(), "macro" if self.isMacro() else "file", "local" if self.isLocal(srcmgr_path) else "loaded")
 		return desc
+
+class StringRef(object):
+	def __init__(self, strref):
+		self.strref = strref
+		self.Data_value = strref.GetChildAtIndex(0)
+		self.Length = strref.GetChildAtIndex(1).GetValueAsUnsigned()
+
+	def summary(self):
+		if self.Length == 0:
+			return '""'
+		data = self.Data_value.GetPointeeData(0, self.Length)
+		error = lldb.SBError()
+		string = data.ReadRawData(error, 0, data.GetByteSize())
+		if error.Fail():
+			return None
+		return '"%s"' % string
+
 
 # Key is a (function address, type name) tuple, value is the expression path for
 # an object with such a type name from inside that function.
