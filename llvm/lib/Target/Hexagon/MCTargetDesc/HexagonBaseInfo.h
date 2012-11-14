@@ -43,7 +43,27 @@ namespace HexagonII {
     TypeMARKER = 31  // Such as end of a HW loop.
   };
 
+  enum SubTarget {
+    HasV2SubT     = 0xf,
+    HasV2SubTOnly = 0x1,
+    NoV2SubT      = 0x0,
+    HasV3SubT     = 0xe,
+    HasV3SubTOnly = 0x2,
+    NoV3SubT      = 0x1,
+    HasV4SubT     = 0xc,
+    NoV4SubT      = 0x3,
+    HasV5SubT     = 0x8,
+    NoV5SubT      = 0x7
+  };
 
+  enum AddrMode {
+    NoAddrMode     = 0,  // No addressing mode
+    Absolute       = 1,  // Absolute addressing mode
+    AbsoluteSet    = 2,  // Absolute set addressing mode
+    BaseImmOffset  = 3,  // Indirect with offset
+    BaseLongOffset = 4,  // Indirect with long offset
+    BaseRegOffset  = 5   // Indirect with register offset
+  };
 
   // MCInstrDesc TSFlags
   // *** Must match HexagonInstrFormat*.td ***
@@ -58,8 +78,47 @@ namespace HexagonII {
 
     // Predicated instructions.
     PredicatedPos  = 6,
-    PredicatedMask = 0x1
-  };
+    PredicatedMask = 0x1,
+    PredicatedNewPos  = 7,
+    PredicatedNewMask = 0x1,
+
+    // Stores that can be newified.
+    mayNVStorePos  = 8,
+    mayNVStoreMask = 0x1,
+
+    // Dot new value store instructions.
+    NVStorePos  = 9,
+    NVStoreMask = 0x1,
+
+    // Extendable insns.
+    ExtendablePos  = 10,
+    ExtendableMask = 0x1,
+
+    // Insns must be extended.
+    ExtendedPos  = 11,
+    ExtendedMask = 0x1,
+
+    // Which operand may be extended.
+    ExtendableOpPos  = 12,
+    ExtendableOpMask = 0x7,
+
+    // Signed or unsigned range.
+    ExtentSignedPos = 15,
+    ExtentSignedMask = 0x1,
+
+    // Number of bits of range before extending operand.
+    ExtentBitsPos  = 16,
+    ExtentBitsMask = 0x1f,
+
+    // Valid subtargets
+    validSubTargetPos = 21,
+    validSubTargetMask = 0xf,
+
+    // Addressing mode for load/store instructions
+    AddrModePos = 25,
+    AddrModeMask = 0xf
+
+ };
 
   // *** The code above must match HexagonInstrFormat*.td *** //
 

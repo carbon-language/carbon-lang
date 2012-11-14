@@ -26,6 +26,12 @@ class PredNewRel: PredRel;
 // ImmRegRel - Filter class used to relate instructions having reg-reg form
 // with their reg-imm counterparts.
 class ImmRegRel;
+// NewValueRel - Filter class used to relate regular store instructions with
+// their new-value store form.
+class NewValueRel: PredNewRel;
+// NewValueRel - Filter class used to relate load/store instructions having
+// different addressing modes with each other.
+class AddrModeRel: NewValueRel;
 
 //===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
@@ -819,8 +825,6 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicated = 1,
 // LD +
 //===----------------------------------------------------------------------===//
 ///
-/// Make sure that in post increment load, the first operand is always the post
-/// increment operand.
 ///
 // Load doubleword.
 let isPredicable = 1 in
@@ -851,12 +855,65 @@ def LDd_GP : LDInst2<(outs DoubleRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let isPredicable = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrid : LDInst2PI<(outs DoubleRegs:$dst, IntRegs:$dst2),
-            (ins IntRegs:$src1, s4Imm:$offset),
-            "$dst = memd($src1++#$offset)",
+//===----------------------------------------------------------------------===//
+// Post increment load
+// Make sure that in post increment load, the first operand is always the post
+// increment operand.
+//===----------------------------------------------------------------------===//
+
+multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
+                            bit isNot, bit isPredNew> {
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME# : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
+                       (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset),
+            #!if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#"$dst = "#mnemonic#"($src2++#$offset)",
             [],
-            "$src1 = $dst2">;
+            "$src2 = $dst2">;
+}
+
+multiclass LD_PostInc_Pred<string mnemonic, RegisterClass RC,
+                           Operand ImmOp, bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    defm _c#NAME# : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
+    // Predicate new
+    let Predicates = [HasV4T], validSubTargets = HasV4SubT in
+    defm _cdn#NAME#_V4 : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 1>;
+  }
+}
+
+multiclass LD_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
+                      Operand ImmOp> {
+
+  let BaseOpcode = "POST_"#BaseOp in {
+    let isPredicable = 1 in
+    def #NAME# : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
+                           (ins IntRegs:$src1, ImmOp:$offset),
+                 "$dst = "#mnemonic#"($src1++#$offset)",
+                 [],
+                 "$src1 = $dst2">;
+
+    let isPredicated = 1 in {
+      defm Pt : LD_PostInc_Pred<mnemonic, RC, ImmOp, 0 >;
+      defm NotPt : LD_PostInc_Pred<mnemonic, RC, ImmOp, 1 >;
+    }
+  }
+}
+
+let hasCtrlDep = 1, neverHasSideEffects = 1 in {
+  defm POST_LDrib : LD_PostInc<"memb", "LDrib", IntRegs, s4_0Imm>,
+                    PredNewRel;
+  defm POST_LDriub : LD_PostInc<"memub", "LDriub", IntRegs, s4_0Imm>,
+                    PredNewRel;
+  defm POST_LDrih : LD_PostInc<"memh", "LDrih", IntRegs, s4_1Imm>,
+                    PredNewRel;
+  defm POST_LDriuh : LD_PostInc<"memuh", "LDriuh", IntRegs, s4_1Imm>,
+                    PredNewRel;
+  defm POST_LDriw : LD_PostInc<"memw", "LDriw", IntRegs, s4_2Imm>,
+                    PredNewRel;
+  defm POST_LDrid : LD_PostInc<"memd", "LDrid", DoubleRegs, s4_3Imm>,
+                    PredNewRel;
+}
 
 // Load doubleword conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -883,20 +940,6 @@ def LDrid_indexed_cNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if (!$src1) $dst = memd($src2+#$src3)",
             []>;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDrid_cPt : LDInst2PI<(outs DoubleRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_3Imm:$src3),
-            "if ($src1) $dst1 = memd($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDrid_cNotPt : LDInst2PI<(outs DoubleRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_3Imm:$src3),
-            "if (!$src1) $dst1 = memd($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_cdnPt : LDInst2<(outs DoubleRegs:$dst),
@@ -969,13 +1012,6 @@ def LDub_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let isPredicable = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrib : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
-            (ins IntRegs:$src1, s4Imm:$offset),
-            "$dst = memb($src1++#$offset)",
-            [],
-            "$src1 = $dst2">;
-
 // Load byte conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_cPt : LDInst2<(outs IntRegs:$dst),
@@ -1000,20 +1036,6 @@ def LDrib_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1) $dst = memb($src2+#$src3)",
             []>;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDrib_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
-            "if ($src1) $dst1 = memb($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDrib_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
-            "if (!$src1) $dst1 = memb($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_cdnPt : LDInst2<(outs IntRegs:$dst),
@@ -1083,13 +1105,6 @@ def LDuh_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let isPredicable = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrih : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
-            (ins IntRegs:$src1, s4Imm:$offset),
-            "$dst = memh($src1++#$offset)",
-            [],
-            "$src1 = $dst2">;
-
 // Load halfword conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_cPt : LDInst2<(outs IntRegs:$dst),
@@ -1114,20 +1129,6 @@ def LDrih_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1) $dst = memh($src2+#$src3)",
             []>;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDrih_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
-            "if ($src1) $dst1 = memh($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDrih_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
-            "if (!$src1) $dst1 = memh($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_cdnPt : LDInst2<(outs IntRegs:$dst),
@@ -1182,13 +1183,6 @@ def LDriub_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let isPredicable = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriub : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
-            (ins IntRegs:$src1, s4Imm:$offset),
-            "$dst = memub($src1++#$offset)",
-            [],
-            "$src1 = $dst2">;
-
 // Load unsigned byte conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_cPt : LDInst2<(outs IntRegs:$dst),
@@ -1213,20 +1207,6 @@ def LDriub_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1) $dst = memub($src2+#$src3)",
             []>;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDriub_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
-            "if ($src1) $dst1 = memub($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDriub_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
-            "if (!$src1) $dst1 = memub($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_cdnPt : LDInst2<(outs IntRegs:$dst),
@@ -1275,13 +1255,6 @@ def LDriuh_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let isPredicable = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriuh : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
-            (ins IntRegs:$src1, s4Imm:$offset),
-            "$dst = memuh($src1++#$offset)",
-            [],
-            "$src1 = $dst2">;
-
 // Load unsigned halfword conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_cPt : LDInst2<(outs IntRegs:$dst),
@@ -1306,20 +1279,6 @@ def LDriuh_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1) $dst = memuh($src2+#$src3)",
             []>;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDriuh_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
-            "if ($src1) $dst1 = memuh($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDriuh_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
-            "if (!$src1) $dst1 = memuh($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_cdnPt : LDInst2<(outs IntRegs:$dst),
@@ -1381,13 +1340,6 @@ def LDw_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let isPredicable = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriw : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
-            (ins IntRegs:$src1, s4Imm:$offset),
-            "$dst = memw($src1++#$offset)",
-            [],
-            "$src1 = $dst2">;
-
 // Load word conditionally.
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -1413,20 +1365,6 @@ def LDriw_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
             "if (!$src1) $dst = memw($src2+#$src3)",
             []>;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDriw_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_2Imm:$src3),
-            "if ($src1) $dst1 = memw($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
-
-let hasCtrlDep = 1, neverHasSideEffects = 1, isPredicated = 1 in
-def POST_LDriw_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
-            (ins PredRegs:$src1, IntRegs:$src2, s4_2Imm:$src3),
-            "if (!$src1) $dst1 = memw($src2++#$src3)",
-            [],
-            "$src2 = $dst2">;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_cdnPt : LDInst2<(outs IntRegs:$dst),
