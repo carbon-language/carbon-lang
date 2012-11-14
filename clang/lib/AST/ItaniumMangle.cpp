@@ -1127,9 +1127,6 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       break;
     }
 
-    //assert(cast<RecordDecl>(RD)->isAnonymousStructOrUnion() && "Don't mangle unnamed things as "
-    //  "anonymous things");
-        
     // Get a unique id for the anonymous struct.
     uint64_t AnonStructId = Context.getAnonymousStructId(TD);
 
