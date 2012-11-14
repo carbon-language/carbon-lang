@@ -2068,6 +2068,7 @@ void RegisterCoalescer::joinAllIntervals() {
   assert(WorkList.empty() && LocalWorkList.empty() && "Old data still around.");
 
   std::vector<MBBPriorityInfo> MBBs;
+  MBBs.reserve(MF->size());
   for (MachineFunction::iterator I = MF->begin(), E = MF->end();I != E;++I){
     MachineBasicBlock *MBB = I;
     MBBs.push_back(MBBPriorityInfo(MBB, Loops->getLoopDepth(MBB),
