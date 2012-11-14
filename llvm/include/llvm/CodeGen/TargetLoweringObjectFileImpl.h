@@ -55,8 +55,8 @@ public:
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 
-  /// getExprForDwarfGlobalReference - Return an MCExpr to use for a reference
-  /// to the specified global variable from exception handling information.
+  /// getTTypeGlobalReference - Return an MCExpr to use for a reference to the
+  /// specified type info global variable from exception handling information.
   virtual const MCExpr *
   getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
                           MachineModuleInfo *MMI, unsigned Encoding,
