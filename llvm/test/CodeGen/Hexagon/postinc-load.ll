@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: true || llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 
 ; Check that post-increment load instructions are being generated.
 ; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memw(r{{[0-9]+}}{{ *}}++{{ *}}#4{{ *}})
