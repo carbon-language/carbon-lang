@@ -480,8 +480,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
   if (!(isa<CXXMethodDecl>(D) ||
         isa<VarDecl>(D) ||
         isa<FieldDecl>(D) ||
-        (isa<TagDecl>(D) &&
-         (D->getDeclName() || cast<TagDecl>(D)->getTypedefNameForAnonDecl()))))
+        isa<TagDecl>(D)))
     return LinkageInfo::none();
 
   LinkageInfo LV;
@@ -2561,8 +2560,7 @@ void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) {
 void TagDecl::startDefinition() {
   IsBeingDefined = true;
 
-  if (isa<CXXRecordDecl>(this)) {
-    CXXRecordDecl *D = cast<CXXRecordDecl>(this);
+  if (CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(this)) {
     struct CXXRecordDecl::DefinitionData *Data = 
       new (getASTContext()) struct CXXRecordDecl::DefinitionData(D);
     for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)

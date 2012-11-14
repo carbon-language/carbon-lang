@@ -377,15 +377,15 @@ private:
   static bool isExprRep(TST T) {
     return (T == TST_typeofExpr || T == TST_decltype);
   }
+
+  DeclSpec(const DeclSpec &) LLVM_DELETED_FUNCTION;
+  void operator=(const DeclSpec &) LLVM_DELETED_FUNCTION;
+public:
   static bool isDeclRep(TST T) {
     return (T == TST_enum || T == TST_struct ||
             T == TST_interface || T == TST_union ||
             T == TST_class);
   }
-
-  DeclSpec(const DeclSpec &) LLVM_DELETED_FUNCTION;
-  void operator=(const DeclSpec &) LLVM_DELETED_FUNCTION;
-public:
 
   DeclSpec(AttributeFactory &attrFactory)
     : StorageClassSpec(SCS_unspecified),

@@ -101,3 +101,20 @@ namespace test5 {
   static const double d = 0.0;
   int y = sizeof(d);
 }
+
+namespace unused_nested {
+  class outer {
+    void func1();
+    struct {
+      void func2() {
+      }
+    } x;
+  };
+}
+
+namespace unused {
+  struct {
+    void func() { // expected-warning {{unused member function}}
+    }
+  } x; // expected-warning {{unused variable}}
+}

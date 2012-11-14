@@ -218,7 +218,7 @@ struct S7 {
 // PR5139
 // CHECK: @_ZN2S7C1Ev
 // CHECK: @_ZN2S7C2Ev
-// CHECK: @"_ZN2S73$_0C1Ev"
+// CHECK: @_ZN2S7Ut_C1Ev
 S7::S7() {}
 
 // PR5063
@@ -851,4 +851,24 @@ namespace test36 {
 
   // CHECK: define weak_odr {{.*}} @_ZN6test362f1IJifEEENS_1AIXsZfp_EEEDpT_
   template A<2> f1(int, float);
+}
+
+namespace test37 {
+  struct foo {
+    struct {
+    } a;
+    typedef struct { } b;
+    typedef struct { } *c;
+    struct {
+    } d;
+  };
+  template<typename T> void func(T) { }
+  void test() {
+    // CHECK: define linkonce_odr void @_ZN6test374funcINS_3fooUt_EEEvT_
+    func(foo().a);
+    // CHECK: define linkonce_odr void @_ZN6test374funcINS_3fooUt0_EEEvT_
+    func(*foo::c());
+    // CHECK: define linkonce_odr void @_ZN6test374funcINS_3fooUt1_EEEvT_
+    func(foo().d);
+  }
 }

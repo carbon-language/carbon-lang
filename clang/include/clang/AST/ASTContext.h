@@ -343,7 +343,10 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// \brief Mapping from each declaration context to its corresponding lambda 
   /// mangling context.
   llvm::DenseMap<const DeclContext *, LambdaMangleContext> LambdaMangleContexts;
-  
+
+  llvm::DenseMap<const DeclContext *, unsigned> UnnamedMangleContexts;
+  llvm::DenseMap<const TagDecl *, unsigned> UnnamedMangleNumbers;
+
   /// \brief Mapping that stores parameterIndex values for ParmVarDecls when
   /// that value exceeds the bitfield size of ParmVarDeclBits.ParameterIndex.
   typedef llvm::DenseMap<const VarDecl *, unsigned> ParameterIndexTable;
@@ -1988,6 +1991,9 @@ public:
   /// \returns true if the function/var must be CodeGen'ed/deserialized even if
   /// it is not used.
   bool DeclMustBeEmitted(const Decl *D);
+
+  void addUnnamedTag(const TagDecl *Tag);
+  int getUnnamedTagManglingNumber(const TagDecl *Tag) const;
 
   /// \brief Retrieve the lambda mangling number for a lambda expression.
   unsigned getLambdaManglingNumber(CXXMethodDecl *CallOperator);
