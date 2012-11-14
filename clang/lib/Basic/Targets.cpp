@@ -384,13 +384,13 @@ public:
         case llvm::Triple::x86:
         case llvm::Triple::x86_64:
         case llvm::Triple::arm:
-	case llvm::Triple::sparc:
+        case llvm::Triple::sparc:
           this->MCountName = "__mcount";
           break;
         case llvm::Triple::mips64:
         case llvm::Triple::mips64el:
         case llvm::Triple::ppc:
-	case llvm::Triple::sparcv9:
+        case llvm::Triple::sparcv9:
           this->MCountName = "_mcount";
           break;
       }
@@ -1647,7 +1647,7 @@ public:
     NumAliases = 0;
   }
   virtual void getGCCAddlRegNames(const AddlRegName *&Names,
-				  unsigned &NumNames) const {
+                                  unsigned &NumNames) const {
     Names = AddlRegNames;
     NumNames = llvm::array_lengthof(AddlRegNames);
   }
@@ -3325,11 +3325,11 @@ public:
       case 'v': // ...VFP load/store (reg+constant offset)
       case 'y': // ...iWMMXt load/store
       case 't': // address valid for load/store opaque types wider
-	        // than 128-bits
+                // than 128-bits
       case 'n': // valid address for Neon doubleword vector load/store
       case 'm': // valid address for Neon element and structure load/store
       case 's': // valid address for non-offset loads/stores of quad-word
-	        // values in four ARM registers
+                // values in four ARM registers
         Info.setAllowsMemory();
         Name++;
         return true;
@@ -4579,10 +4579,6 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     default:
       return new SparcV8TargetInfo(T);
     }
-
-  // FIXME: Need a real SPU target.
-  case llvm::Triple::cellspu:
-    return new PS3SPUTargetInfo<PPC64TargetInfo>(T);
 
   case llvm::Triple::tce:
     return new TCETargetInfo(T);

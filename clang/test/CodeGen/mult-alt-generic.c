@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -triple i686 %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64 %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple arm %s -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 -triple cellspu %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple mblaze %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple mips %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple mipsel %s -emit-llvm -o - | FileCheck %s
