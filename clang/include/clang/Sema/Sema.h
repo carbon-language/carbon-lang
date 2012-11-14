@@ -635,7 +635,7 @@ public:
     ///
     /// This mangling information is allocated lazily, since most contexts
     /// do not have lambda expressions.
-    LambdaMangleContext *LambdaMangle;
+    IntrusiveRefCntPtr<LambdaMangleContext> LambdaMangle;
 
     /// \brief If we are processing a decltype type, a set of call expressions
     /// for which we have deferred checking the completeness of the return type.
@@ -653,10 +653,6 @@ public:
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
         IsDecltype(IsDecltype), NumCleanupObjects(NumCleanupObjects),
         LambdaContextDecl(LambdaContextDecl), LambdaMangle() { }
-
-    ~ExpressionEvaluationContextRecord() {
-      delete LambdaMangle;
-    }
 
     /// \brief Retrieve the mangling context for lambdas.
     LambdaMangleContext &getLambdaMangleContext() {
