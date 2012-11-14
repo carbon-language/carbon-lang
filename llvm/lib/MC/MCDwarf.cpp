@@ -484,7 +484,8 @@ static void EmitGenDwarfAbbrev(MCStreamer *MCOS) {
 // .debug_aranges section.  Which contains a header and a table of pairs of
 // PointerSize'ed values for the address and size of section(s) with line table
 // entries (just the default .text in our case) and a terminating pair of zeros.
-static void EmitGenDwarfAranges(MCStreamer *MCOS) {
+static void EmitGenDwarfAranges(MCStreamer *MCOS,
+                                const MCSymbol *InfoSectionSymbol) {
   MCContext &context = MCOS->getContext();
 
   // Create a symbol at the end of the section that we are creating the dwarf
@@ -523,8 +524,11 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS) {
   // The 2 byte version, which is 2.
   MCOS->EmitIntValue(2, 2);
   // The 4 byte offset to the compile unit in the .debug_info from the start
-  // of the .debug_info, it is at the start of that section so this is zero.
-  MCOS->EmitIntValue(0, 4);
+  // of the .debug_info.
+  if (InfoSectionSymbol)
+    MCOS->EmitSymbolValue(InfoSectionSymbol, 4);
+  else
+    MCOS->EmitIntValue(0, 4);
   // The 1 byte size of an address.
   MCOS->EmitIntValue(AddrSize, 1);
   // The 1 byte size of a segment descriptor, we use a value of zero.
@@ -705,15 +709,21 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
   // Create the dwarf sections in this order (.debug_line already created).
   MCContext &context = MCOS->getContext();
   const MCAsmInfo &AsmInfo = context.getAsmInfo();
+  bool CreateDwarfSectionSymbols =
+      AsmInfo.doesDwarfUseRelocationsAcrossSections();
+  if (!CreateDwarfSectionSymbols)
+    LineSectionSymbol = NULL;
+  MCSymbol *AbbrevSectionSymbol = NULL;
+  MCSymbol *InfoSectionSymbol = NULL;
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
+  if (CreateDwarfSectionSymbols) {
+    InfoSectionSymbol = context.CreateTempSymbol();
+    MCOS->EmitLabel(InfoSectionSymbol);
+  }
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfAbbrevSection());
-  MCSymbol *AbbrevSectionSymbol;
-  if (AsmInfo.doesDwarfUseRelocationsAcrossSections()) {
+  if (CreateDwarfSectionSymbols) {
     AbbrevSectionSymbol = context.CreateTempSymbol();
     MCOS->EmitLabel(AbbrevSectionSymbol);
-  } else {
-    AbbrevSectionSymbol = NULL;
-    LineSectionSymbol = NULL;
   }
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
 
@@ -722,7 +732,7 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
     return;
 
   // Output the data for .debug_aranges section.
-  EmitGenDwarfAranges(MCOS);
+  EmitGenDwarfAranges(MCOS, InfoSectionSymbol);
 
   // Output the data for .debug_abbrev section.
   EmitGenDwarfAbbrev(MCOS);

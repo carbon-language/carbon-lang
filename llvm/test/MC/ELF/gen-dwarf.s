@@ -1,8 +1,9 @@
 // RUN: llvm-mc -g -triple  i686-pc-linux-gnu %s -filetype=obj -o - | elf-dump | FileCheck %s
 
 
-// Test that on ELF the debug info has a relocation to debug_abbrev and one to
-// to debug_line.
+// Test that on ELF:
+// 1. the debug info has a relocation to debug_abbrev and one to to debug_line.
+// 2. the debug_aranges has relocations to text and debug_line.
 
 
     .text
@@ -47,6 +48,34 @@ foo:
 // CHECK:       # Section 8
 // CHECK-NEXT:  (('sh_name', 0x00000001) # '.debug_abbrev'
 
+// Section 9 is .debug_aranges
+// CHECK:       # Section 9
+// CHECK-NEXT:  (('sh_name', 0x0000001e) # '.debug_aranges'
+
+// Two relocations in .debug_aranges, one to text and one to debug_info.
+// CHECK:       # '.rel.debug_aranges'
+// CHECK:       # Relocation 0
+// CHECK-NEXT:  (('r_offset', 0x00000006)
+// CHECK-NEXT:   ('r_sym', 0x000005)
+// CHECK-NEXT:   ('r_type', 0x01)
+// CHECK-NEXT:  ),
+// CHECK-NEXT:  # Relocation 1
+// CHECK-NEXT: (('r_offset', 0x00000010)
+// CHECK-NEXT:  ('r_sym', 0x000001)
+// CHECK-NEXT:  ('r_type', 0x01)
+// CHECK-NEXT: ),
+
+// Symbol 1 is section 1 (.text)
+// CHECK:         # Symbol 1
+// CHECK-NEXT:    (('st_name', 0x00000000) # ''
+// CHECK-NEXT:     ('st_value', 0x00000000)
+// CHECK-NEXT:     ('st_size', 0x00000000)
+// CHECK-NEXT:     ('st_bind', 0x0)
+// CHECK-NEXT:     ('st_type', 0x3)
+// CHECK-NEXT:     ('st_other', 0x00)
+// CHECK-NEXT:     ('st_shndx', 0x0001)
+// CHECK-NEXT:    ),
+
 // Symbol 4 is section 4 (.debug_line)
 // CHECK:         # Symbol 4
 // CHECK-NEXT:    (('st_name', 0x00000000) # ''
@@ -56,6 +85,17 @@ foo:
 // CHECK-NEXT:     ('st_type', 0x3)
 // CHECK-NEXT:     ('st_other', 0x00)
 // CHECK-NEXT:     ('st_shndx', 0x0004)
+// CHECK-NEXT:    ),
+
+// Symbol 5 is section 6 (.debug_info)
+// CHECK:         # Symbol 5
+// CHECK-NEXT:    (('st_name', 0x00000000) # ''
+// CHECK-NEXT:     ('st_value', 0x00000000)
+// CHECK-NEXT:     ('st_size', 0x00000000)
+// CHECK-NEXT:     ('st_bind', 0x0)
+// CHECK-NEXT:     ('st_type', 0x3)
+// CHECK-NEXT:     ('st_other', 0x00)
+// CHECK-NEXT:     ('st_shndx', 0x0006)
 // CHECK-NEXT:    ),
 
 // Symbol 6 is section 8 (.debug_abbrev)
