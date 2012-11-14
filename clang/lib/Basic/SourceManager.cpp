@@ -1361,7 +1361,8 @@ const char *SourceManager::getBufferName(SourceLocation Loc,
 ///
 /// Note that a presumed location is always given as the expansion point of an
 /// expansion location, not at the spelling location.
-PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
+PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc,
+                                          bool UseLineDirectives) const {
   if (Loc.isInvalid()) return PresumedLoc();
 
   // Presumed locations are always for expansion points.
@@ -1395,7 +1396,7 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
 
   // If we have #line directives in this file, update and overwrite the physical
   // location info if appropriate.
-  if (FI.hasLineDirectives()) {
+  if (UseLineDirectives && FI.hasLineDirectives()) {
     assert(LineTable && "Can't have linetable entries without a LineTable!");
     // See if there is a #line directive before this.  If so, get it.
     if (const LineEntry *Entry =

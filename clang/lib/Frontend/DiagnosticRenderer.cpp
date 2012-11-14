@@ -128,7 +128,7 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
   
   PresumedLoc PLoc;
   if (Loc.isValid()) {
-    PLoc = SM->getPresumedLocForDisplay(Loc);
+    PLoc = SM->getPresumedLocForDisplay(Loc, DiagOpts->ShowPresumedLoc);
   
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
@@ -208,7 +208,7 @@ void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
   if (Loc.isInvalid())
     return;
   
-  PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+  PresumedLoc PLoc = SM.getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
   if (PLoc.isInvalid())
     return;
   
