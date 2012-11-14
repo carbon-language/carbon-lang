@@ -431,12 +431,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::SREM,    VT, Expand);
     setOperationAction(ISD::UDIV,    VT, Expand);
     setOperationAction(ISD::UREM,    VT, Expand);
+    setOperationAction(ISD::FFLOOR,  VT, Expand);
 
     // Expand all trunc stores
     for (unsigned j = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
          j <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++j) {
       MVT::SimpleValueType TargetVT = (MVT::SimpleValueType)j;
-    setTruncStoreAction(VT, TargetVT, Expand);
+      setTruncStoreAction(VT, TargetVT, Expand);
     }
 
     // Custom lower build_vector, constant pool spills, insert and
