@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=-sse -mtriple=i686-apple-darwin8.8.0 | grep mov | count 9
-; RUN: llc < %s -march=x86 -mattr=+sse -mtriple=i686-apple-darwin8.8.0 | grep mov | count 3
+; RUN: llc < %s -march=x86 -mcpu=pentium2 -mtriple=i686-apple-darwin8.8.0 | grep mov | count 9
+; RUN: llc < %s -march=x86 -mcpu=pentium3 -mtriple=i686-apple-darwin8.8.0 | grep mov | count 3
 
 	%struct.x = type { i16, i16 }
 
