@@ -57,5 +57,5 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_RUNTIMEDYLD_OBJECT_IMAGE_H
+#endif // LLVM_EXECUTIONENGINE_OBJECTIMAGE_H
 
