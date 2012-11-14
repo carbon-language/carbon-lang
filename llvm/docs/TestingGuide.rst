@@ -479,7 +479,7 @@ The CHECK: and CHECK-NOT: directives both take a pattern to match. For
 most uses of FileCheck, fixed string matching is perfectly sufficient.
 For some things, a more flexible form of matching is desired. To support
 this, FileCheck allows you to specify regular expressions in matching
-strings, surrounded by double braces: **{{yourregex}}**. Because we want
+strings, surrounded by double braces: ``{{yourregex}}``. Because we want
 to use fixed string matching for a majority of what we do, FileCheck has
 been designed to support mixing and matching fixed string matching with
 regular expressions. This allows you to write things like this:
@@ -495,7 +495,7 @@ Because regular expressions are enclosed with double braces, they are
 visually distinct, and you don't need to use escape characters within
 the double braces like you would in C. In the rare case that you want to
 match double braces explicitly from the input, you can use something
-ugly like **{{[{][{]}}** as your pattern.
+ugly like ``{{[{][{]}}`` as your pattern.
 
 FileCheck Variables
 ^^^^^^^^^^^^^^^^^^^
