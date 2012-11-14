@@ -66,6 +66,10 @@ D: Clang LLVM IR generation
 N: Jakob Olesen
 D: Register allocators and TableGen
 
+N: Chad Rosier
+E: mcrosier@apple.com
+D: MS-inline asm, fast-isel
+
 N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
