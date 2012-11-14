@@ -8,6 +8,11 @@ Lattner
 .. contents::
    :local:
 
+.. toctree::
+   :hidden:
+
+   TestSuiteMakefileGuide
+
 Overview
 ========
 
@@ -98,10 +103,9 @@ regressions tests are in the main "llvm" module under the directory
 ``llvm/test`` (so you get these tests for free with the main llvm tree).
 Use "make check-all" to run the regression tests after building LLVM.
 
-The more comprehensive test suite that includes whole programs in C and
-C++ is in the ``test-suite`` module. See ```test-suite``
-Quickstart <#testsuitequickstart>`_ for more information on running
-these tests.
+The more comprehensive test suite that includes whole programs in C and C++
+is in the ``test-suite`` module. See :ref:`test-suite Quickstart
+<test-suite-quickstart>` for more information on running these tests.
 
 Regression tests
 ----------------
@@ -688,6 +692,8 @@ SingleSource, and External.
    programs from somewhere else. When using ``LNT``, use the
    ``--test-externals`` option to include these tests in the results.
 
+.. _test-suite-quickstart:
+
 ``test-suite`` Quickstart
 -------------------------
 
@@ -710,4 +716,4 @@ under the covers and so developers who are interested in how LNT works
 under the hood may want to understand the Makefile based setup.
 
 For more information on the ``test-suite`` Makefile setup, please see
-the `Test Suite Makefile Guide. <TestSuiteMakefileGuide.html>`_
+the :doc:`Test Suite Makefile Guide <TestSuiteMakefileGuide>`.
