@@ -130,8 +130,9 @@ def imm0_4095_neg : Operand<i32>, PatLeaf<(i32 imm), [{
   let ParserMatchClass = imm0_4095_neg_asmoperand;
 }
 
-def imm0_255_neg : PatLeaf<(i32 imm), [{
-  return (uint32_t)(-N->getZExtValue()) < 255;
+def imm1_255_neg : PatLeaf<(i32 imm), [{
+  uint32_t Val = -N->getZExtValue();
+  return (Val > 0 && Val < 255);
 }], imm_neg_XFORM>;
 
 def imm0_255_not : PatLeaf<(i32 imm), [{
@@ -1928,8 +1929,8 @@ defm t2RSBS : T2I_rbin_s_is <BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 // The AddedComplexity preferences the first variant over the others since
 // it can be shrunk to a 16-bit wide encoding, while the others cannot.
 let AddedComplexity = 1 in
-def : T2Pat<(add        GPR:$src, imm0_255_neg:$imm),
-            (t2SUBri    GPR:$src, imm0_255_neg:$imm)>;
+def : T2Pat<(add        GPR:$src, imm1_255_neg:$imm),
+            (t2SUBri    GPR:$src, imm1_255_neg:$imm)>;
 def : T2Pat<(add        GPR:$src, t2_so_imm_neg:$imm),
             (t2SUBri    GPR:$src, t2_so_imm_neg:$imm)>;
 def : T2Pat<(add        GPR:$src, imm0_4095_neg:$imm),
@@ -1938,8 +1939,8 @@ def : T2Pat<(add        GPR:$src, imm0_65535_neg:$imm),
             (t2SUBrr    GPR:$src, (t2MOVi16 (imm_neg_XFORM imm:$imm)))>;
 
 let AddedComplexity = 1 in
-def : T2Pat<(ARMaddc    rGPR:$src, imm0_255_neg:$imm),
-            (t2SUBSri   rGPR:$src, imm0_255_neg:$imm)>;
+def : T2Pat<(ARMaddc    rGPR:$src, imm1_255_neg:$imm),
+            (t2SUBSri   rGPR:$src, imm1_255_neg:$imm)>;
 def : T2Pat<(ARMaddc    rGPR:$src, t2_so_imm_neg:$imm),
             (t2SUBSri   rGPR:$src, t2_so_imm_neg:$imm)>;
 def : T2Pat<(ARMaddc    rGPR:$src, imm0_65535_neg:$imm),
