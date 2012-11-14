@@ -57,11 +57,10 @@ public:
 
   /// getExprForDwarfGlobalReference - Return an MCExpr to use for a reference
   /// to the specified global variable from exception handling information.
-  ///
   virtual const MCExpr *
-  getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                 MachineModuleInfo *MMI, unsigned Encoding,
-                                 MCStreamer &Streamer) const;
+  getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                          MachineModuleInfo *MMI, unsigned Encoding,
+                          MCStreamer &Streamer) const;
 
   // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *
@@ -103,12 +102,12 @@ public:
   virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV,
                                           Mangler *) const;
 
-  /// getExprForDwarfGlobalReference - The mach-o version of this method
+  /// getTTypeGlobalReference - The mach-o version of this method
   /// defaults to returning a stub reference.
   virtual const MCExpr *
-  getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                 MachineModuleInfo *MMI, unsigned Encoding,
-                                 MCStreamer &Streamer) const;
+  getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                          MachineModuleInfo *MMI, unsigned Encoding,
+                          MCStreamer &Streamer) const;
 
   // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *

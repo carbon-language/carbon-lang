@@ -385,10 +385,8 @@ namespace llvm {
     /// GetSizeOfEncodedValue - Return the size of the encoding in bytes.
     unsigned GetSizeOfEncodedValue(unsigned Encoding) const;
 
-    /// EmitReference - Emit a reference to a label with a specified encoding.
-    ///
-    void EmitReference(const MCSymbol *Sym, unsigned Encoding) const;
-    void EmitReference(const GlobalValue *GV, unsigned Encoding) const;
+    /// EmitReference - Emit reference to a ttype global with a specified encoding.
+    void EmitTTypeReference(const GlobalValue *GV, unsigned Encoding) const;
 
     /// EmitSectionOffset - Emit the 4-byte offset of Label from the start of
     /// its section.  This can be done with a special directive if the target

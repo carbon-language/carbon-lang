@@ -28,6 +28,11 @@ public:
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
+  const MCExpr *
+  getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                          MachineModuleInfo *MMI, unsigned Encoding,
+                          MCStreamer &Streamer) const;
+  
   virtual const MCSection *getAttributesSection() const {
     return AttributesSection;
   }

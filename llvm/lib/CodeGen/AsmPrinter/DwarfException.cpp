@@ -685,7 +685,7 @@ void DwarfException::EmitExceptionTable() {
     if (VerboseAsm)
       Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
     if (GV)
-      Asm->EmitReference(GV, TTypeEncoding);
+      Asm->EmitTTypeReference(GV, TTypeEncoding);
     else
       Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
                                     0);

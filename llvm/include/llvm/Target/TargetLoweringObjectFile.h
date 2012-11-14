@@ -27,6 +27,7 @@ namespace llvm {
   class MCExpr;
   class MCSection;
   class MCSymbol;
+  class MCSymbolRefExpr;
   class MCStreamer;
   class GlobalValue;
   class TargetMachine;
@@ -108,13 +109,13 @@ public:
     return 0;
   }
   
-  /// getExprForDwarfGlobalReference - Return an MCExpr to use for a reference
+  /// getTTypeGlobalReference - Return an MCExpr to use for a reference
   /// to the specified global variable from exception handling information.
   ///
   virtual const MCExpr *
-  getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                 MachineModuleInfo *MMI, unsigned Encoding,
-                                 MCStreamer &Streamer) const;
+  getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                          MachineModuleInfo *MMI, unsigned Encoding,
+                          MCStreamer &Streamer) const;
 
   // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *
@@ -123,8 +124,8 @@ public:
 
   /// 
   const MCExpr *
-  getExprForDwarfReference(const MCSymbol *Sym, unsigned Encoding,
-                           MCStreamer &Streamer) const;
+  getTTypeReference(const MCSymbolRefExpr *Sym, unsigned Encoding,
+                    MCStreamer &Streamer) const;
 
   virtual const MCSection *
   getStaticCtorSection(unsigned Priority = 65535) const {

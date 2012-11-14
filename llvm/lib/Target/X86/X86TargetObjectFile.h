@@ -21,9 +21,9 @@ namespace llvm {
   class X86_64MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
   public:
     virtual const MCExpr *
-    getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                   MachineModuleInfo *MMI, unsigned Encoding,
-                                   MCStreamer &Streamer) const;
+    getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                            MachineModuleInfo *MMI, unsigned Encoding,
+                            MCStreamer &Streamer) const;
 
     // getCFIPersonalitySymbol - The symbol that gets passed to
     // .cfi_personality.

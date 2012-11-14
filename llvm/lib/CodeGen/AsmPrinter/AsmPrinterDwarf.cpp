@@ -119,19 +119,11 @@ unsigned AsmPrinter::GetSizeOfEncodedValue(unsigned Encoding) const {
   }
 }
 
-void AsmPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
+void AsmPrinter::EmitTTypeReference(const GlobalValue *GV, unsigned Encoding)const{
   const TargetLoweringObjectFile &TLOF = getObjFileLowering();
   
   const MCExpr *Exp =
-    TLOF.getExprForDwarfReference(Sym, Encoding, OutStreamer);
-  OutStreamer.EmitAbsValue(Exp, GetSizeOfEncodedValue(Encoding));
-}
-
-void AsmPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
-  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
-  
-  const MCExpr *Exp =
-    TLOF.getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
+    TLOF.getTTypeGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
   OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
 
