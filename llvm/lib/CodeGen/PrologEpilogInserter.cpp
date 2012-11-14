@@ -133,19 +133,6 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-#if 0
-void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-  if (ShrinkWrapping || ShrinkWrapFunc != "") {
-    AU.addRequired<MachineLoopInfo>();
-    AU.addRequired<MachineDominatorTree>();
-  }
-  AU.addPreserved<MachineLoopInfo>();
-  AU.addPreserved<MachineDominatorTree>();
-  MachineFunctionPass::getAnalysisUsage(AU);
-}
-#endif
-
 /// calculateCallsInformation - Calculate the MaxCallFrameSize and AdjustsStack
 /// variables for the function's frame information and eliminate call frame
 /// pseudo instructions.
