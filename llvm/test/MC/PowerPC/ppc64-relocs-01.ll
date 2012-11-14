@@ -1,4 +1,4 @@
-;; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -O3  \
+;; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -O3 -code-model=small  \
 ;; RUN:  -filetype=obj %s -o - | \
 ;; RUN: elf-dump --dump-section-data | FileCheck %s
 
