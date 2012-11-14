@@ -1319,8 +1319,15 @@ SourceLocation Lexer::findLocationAfterToken(SourceLocation Loc,
       C = *(++TokenEnd);
       NumWhitespaceChars++;
     }
-    if (isVerticalWhitespace(C))
+
+    // Skip \r, \n, \r\n, or \n\r
+    if (C == '\n' || C == '\r') {
+      char PrevC = C;
+      C = *(++TokenEnd);
       NumWhitespaceChars++;
+      if ((C == '\n' || C == '\r') && C != PrevC)
+        NumWhitespaceChars++;
+    }
   }
 
   return TokenLoc.getLocWithOffset(Tok.getLength() + NumWhitespaceChars);
