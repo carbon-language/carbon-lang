@@ -279,7 +279,7 @@ public:
   buffer_iterator buffer_begin() { return RewriteBuffers.begin(); }
   buffer_iterator buffer_end() { return RewriteBuffers.end(); }
 
-  /// SaveFiles - Save all changed files to disk.
+  /// overwriteChangedFiles - Save all changed files to disk.
   ///
   /// Returns whether not all changes were saved successfully.
   /// Outputs diagnostics via the source manager's diagnostic engine
