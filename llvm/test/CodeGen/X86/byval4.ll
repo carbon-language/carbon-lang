@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=-avx | FileCheck %s -check-prefix=X64
 ; X64-NOT:     movsq
 ; X64:     rep
 ; X64-NOT:     rep
@@ -12,7 +12,7 @@
 
 ; Win64 has not supported byval yet.
 
-; RUN: llc < %s -march=x86 | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -march=x86 -mattr=-avx | FileCheck %s -check-prefix=X32
 ; X32-NOT:     movsl
 ; X32:     rep
 ; X32-NOT:     rep
