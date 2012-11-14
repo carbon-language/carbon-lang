@@ -837,6 +837,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___vector:
   case tok::kw___pixel:
   case tok::kw__Atomic:
+  case tok::kw___unknown_anytype:
     return TPResult::False();
 
   default:
@@ -1056,6 +1057,9 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
 
     // Modules
   case tok::kw___module_private__:
+
+    // Debugger support
+  case tok::kw___unknown_anytype:
       
     // type-specifier:
     //   simple-type-specifier

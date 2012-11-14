@@ -1196,6 +1196,19 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
         !param->hasAttr<CFConsumedAttr>())
       argExpr = stripARCUnbridgedCast(argExpr);
 
+    // If the parameter is __unknown_anytype, infer its type
+    // from the argument.
+    if (param->getType() == Context.UnknownAnyTy) {
+      QualType paramType = checkUnknownAnyArg(argExpr);
+      if (paramType.isNull()) {
+        IsError = true;
+        continue;
+      }
+
+      // Update the parameter type in-place.
+      param->setType(paramType);
+    }
+
     if (RequireCompleteType(argExpr->getSourceRange().getBegin(),
                             param->getType(),
                             diag::err_call_incomplete_argument, argExpr))

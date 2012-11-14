@@ -6812,6 +6812,13 @@ public:
   /// given type.
   ExprResult forceUnknownAnyToType(Expr *E, QualType ToType);
 
+  /// \brief Handle an expression that's being passed to an
+  /// __unknown_anytype parameter.
+  ///
+  /// \return the effective parameter type to use, or null if the
+  ///   argument is invalid.
+  QualType checkUnknownAnyArg(Expr *&result);
+
   // CheckVectorCast - check type constraints for vectors.
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size.
