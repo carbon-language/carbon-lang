@@ -13,6 +13,7 @@
 
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -272,7 +273,7 @@ error_code Archive::Symbol::getMember(child_iterator &Result) const {
     Offset = *(reinterpret_cast<const support::ubig32_t*>(Offsets)
                + SymbolIndex);
   } else if (Parent->kind() == K_BSD) {
-    assert(0 && "BSD format is not supported");
+    llvm_unreachable("BSD format is not supported");
   } else {
     uint32_t MemberCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
     
@@ -327,7 +328,7 @@ Archive::symbol_iterator Archive::begin_symbols() const {
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
     buf += sizeof(uint32_t) + (symbol_count * (sizeof(uint32_t)));
   } else if (kind() == K_BSD) {
-    assert(0 && "BSD archive format is not supported");
+    llvm_unreachable("BSD archive format is not supported");
   } else {
     uint32_t member_count = 0;
     uint32_t symbol_count = 0;
@@ -348,7 +349,7 @@ Archive::symbol_iterator Archive::end_symbols() const {
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
     buf += sizeof(uint32_t) + (symbol_count * (sizeof(uint32_t)));
   } else if (kind() == K_BSD) {
-    assert(0 && "BSD archive format is not supported");
+    llvm_unreachable("BSD archive format is not supported");
   } else {
     uint32_t member_count = 0;
     member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
