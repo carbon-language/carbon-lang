@@ -432,7 +432,9 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     script = []
     xfails = []
     requires = []
+    line_number = 0
     for ln in open(sourcepath):
+        line_number += 1
         if 'RUN:' in ln:
             # Isolate the command to run.
             index = ln.index('RUN:')
@@ -440,6 +442,15 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
 
             # Trim trailing whitespace.
             ln = ln.rstrip()
+
+            # Substitute line number expressions
+            ln = re.sub('%\(line\)', str(line_number), ln)
+            def replace_line_number(match):
+                if match.group(1) == '+':
+                    return str(line_number + int(match.group(2)))
+                if match.group(1) == '-':
+                    return str(line_number - int(match.group(2)))
+            ln = re.sub('%\(line *([\+-]) *(\d+)\)', replace_line_number, ln)
 
             # Collapse lines with trailing '\\'.
             if script and script[-1][-1] == '\\':

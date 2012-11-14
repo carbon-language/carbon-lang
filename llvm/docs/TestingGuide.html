@@ -723,6 +723,11 @@ define two separate CHECK lines that match on the same line.
     <dd>The full path to the test case's source. This is suitable for passing
     on the command line as the input to an llvm tool.</dd>
 
+    <dt><b>%(line), %(line+<i>number</i>), %(line-<i>number</i>)</b></dt>
+    <dd>The number of the line where this variable is used, with an optional
+    integer offset. This can be used in tests with multiple RUN: lines, which
+    reference test file's line numbers.</dd>
+
     <dt><b>$srcdir</b></dt>
     <dd>The source directory from where the "<tt>make check</tt>" was run.</dd>
 
