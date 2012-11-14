@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -analyzer-constraints=range -Wno-tautological-compare -Wtautological-constant-out-of-range-compare %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -analyzer-constraints=range -Wno-tautological-compare %s
 
 void clang_analyzer_eval(bool);
 
@@ -128,10 +128,10 @@ void tautologies(unsigned a) {
 
 // Tautologies from outside the range of the symbol
 void tautologiesOutside(unsigned char a) {
-  clang_analyzer_eval(a <= 0x100); // expected-warning{{comparison of constant 256 with expression of type 'unsigned char' is always true}} expected-warning{{TRUE}}
-  clang_analyzer_eval(a < 0x100); // expected-warning{{comparison of constant 256 with expression of type 'unsigned char' is always true}} expected-warning{{TRUE}}
+  clang_analyzer_eval(a <= 0x100); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a < 0x100); // expected-warning{{TRUE}}
 
-  clang_analyzer_eval(a != 0x100); // expected-warning{{comparison of constant 256 with expression of type 'unsigned char' is always true}} expected-warning{{TRUE}}
+  clang_analyzer_eval(a != 0x100); // expected-warning{{TRUE}}
   clang_analyzer_eval(a != -1); // expected-warning{{TRUE}}
 
   clang_analyzer_eval(a > -1); // expected-warning{{TRUE}}

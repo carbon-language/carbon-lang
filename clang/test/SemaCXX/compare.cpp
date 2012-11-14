@@ -223,3 +223,117 @@ void test3() {
   (void) (true ? b : a);
   (void) (true ? (unsigned char)b : (signed char)a);
 }
+
+// Test comparison of short to unsigned.  If tautological compare does not
+// trigger, then the signed comparision warning will.
+void test4(short s) {
+  // A is max short plus 1.  All zero and positive shorts are smaller than it.
+  // All negative shorts are cast towards the max unsigned range.  Relation
+  // comparisons are possible, but equality comparisons are tautological.
+  const unsigned A = 32768;
+  void (s < A); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s > A); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s <= A); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s >= A); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+
+  void (s == A); // expected-warning{{comparison of constant 32768 with expression of type 'short' is always false}}
+  void (s != A); // expected-warning{{comparison of constant 32768 with expression of type 'short' is always true}}
+
+  // When negative one is converted to an unsigned value, it becomes the max
+  // unsigned.  Likewise, a negative one short can also be converted to max
+  // unsigned.
+  const unsigned B = -1;
+  void (s < B); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s > B); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s <= B); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s >= B); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s == B); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+  void (s != B); // expected-warning{{comparison of integers of different signs: 'short' and 'const unsigned int'}}
+
+}
+
+void test5(bool b) {
+  (void) (b < -1); // expected-warning{{comparison of constant -1 with expression of type 'bool' is always false}}
+  (void) (b > -1); // expected-warning{{comparison of constant -1 with expression of type 'bool' is always true}}
+  (void) (b == -1); // expected-warning{{comparison of constant -1 with expression of type 'bool' is always false}}
+  (void) (b != -1); // expected-warning{{comparison of constant -1 with expression of type 'bool' is always true}}
+  (void) (b <= -1); // expected-warning{{comparison of constant -1 with expression of type 'bool' is always false}}
+  (void) (b >= -1); // expected-warning{{comparison of constant -1 with expression of type 'bool' is always true}}
+
+  (void) (b < -10); // expected-warning{{comparison of constant -10 with expression of type 'bool' is always false}}
+  (void) (b > -10); // expected-warning{{comparison of constant -10 with expression of type 'bool' is always true}}
+  (void) (b == -10); // expected-warning{{comparison of constant -10 with expression of type 'bool' is always false}}
+  (void) (b != -10); // expected-warning{{comparison of constant -10 with expression of type 'bool' is always true}}
+  (void) (b <= -10); // expected-warning{{comparison of constant -10 with expression of type 'bool' is always false}}
+  (void) (b >= -10); // expected-warning{{comparison of constant -10 with expression of type 'bool' is always true}}
+
+  (void) (b < 2); // expected-warning{{comparison of constant 2 with expression of type 'bool' is always true}}
+  (void) (b > 2); // expected-warning{{comparison of constant 2 with expression of type 'bool' is always false}}
+  (void) (b == 2); // expected-warning{{comparison of constant 2 with expression of type 'bool' is always false}}
+  (void) (b != 2); // expected-warning{{comparison of constant 2 with expression of type 'bool' is always true}}
+  (void) (b <= 2); // expected-warning{{comparison of constant 2 with expression of type 'bool' is always true}}
+  (void) (b >= 2); // expected-warning{{comparison of constant 2 with expression of type 'bool' is always false}}
+
+  (void) (b < 10); // expected-warning{{comparison of constant 10 with expression of type 'bool' is always true}}
+  (void) (b > 10); // expected-warning{{comparison of constant 10 with expression of type 'bool' is always false}}
+  (void) (b == 10); // expected-warning{{comparison of constant 10 with expression of type 'bool' is always false}}
+  (void) (b != 10); // expected-warning{{comparison of constant 10 with expression of type 'bool' is always true}}
+  (void) (b <= 10); // expected-warning{{comparison of constant 10 with expression of type 'bool' is always true}}
+  (void) (b >= 10); // expected-warning{{comparison of constant 10 with expression of type 'bool' is always false}}
+}
+
+void test6(signed char sc) {
+  (void)(sc < 200); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always true}}
+  (void)(sc > 200); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always false}}
+  (void)(sc <= 200); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always true}}
+  (void)(sc >= 200); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always false}}
+  (void)(sc == 200); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always false}}
+  (void)(sc != 200); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always true}}
+
+  (void)(200 < sc); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always false}}
+  (void)(200 > sc); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always true}}
+  (void)(200 <= sc); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always false}}
+  (void)(200 >= sc); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always true}}
+  (void)(200 == sc); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always false}}
+  (void)(200 != sc); // expected-warning{{comparison of constant 200 with expression of type 'signed char' is always true}}
+}
+
+// Test many signedness combinations.
+void test7(unsigned long other) {
+  // Common unsigned, other unsigned, constant unsigned
+  (void)((unsigned)other != (unsigned long)(0x1ffffffff)); // expected-warning{{true}}
+  (void)((unsigned)other != (unsigned long)(0xffffffff));
+  (void)((unsigned long)other != (unsigned)(0x1ffffffff));
+  (void)((unsigned long)other != (unsigned)(0xffffffff));
+
+  // Common unsigned, other signed, constant unsigned
+  (void)((int)other != (unsigned long)(0xffffffffffffffff)); // expected-warning{{different signs}}
+  (void)((int)other != (unsigned long)(0x00000000ffffffff)); // expected-warning{{true}}
+  (void)((int)other != (unsigned long)(0x000000000fffffff));
+  (void)((int)other < (unsigned long)(0x00000000ffffffff));  // expected-warning{{different signs}}
+
+  // Common unsigned, other unsigned, constant signed
+  (void)((unsigned long)other != (int)(0xffffffff));  // expected-warning{{different signs}}
+
+  // Common unsigned, other signed, constant signed
+  // Should not be possible as the common type should also be signed.
+
+  // Common signed, other signed, constant signed
+  (void)((int)other != (long)(0xffffffff));  // expected-warning{{true}}
+  (void)((int)other != (long)(0xffffffff00000000));  // expected-warning{{true}}
+  (void)((int)other != (long)(0xfffffff));
+  (void)((int)other != (long)(0xfffffffff0000000));
+
+  // Common signed, other signed, constant unsigned
+  (void)((int)other != (unsigned char)(0xffff));
+  (void)((int)other != (unsigned char)(0xff));
+
+  // Common signed, other unsigned, constant signed
+  (void)((unsigned char)other != (int)(0xff));
+  (void)((unsigned char)other != (int)(0xffff));  // expected-warning{{true}}
+
+  // Common signed, other unsigned, constant unsigned
+  (void)((unsigned char)other != (unsigned short)(0xff));
+  (void)((unsigned char)other != (unsigned short)(0x100)); // expected-warning{{true}}
+  (void)((unsigned short)other != (unsigned char)(0xff));
+}
