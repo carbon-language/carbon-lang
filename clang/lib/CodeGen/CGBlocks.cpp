@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/DataLayout.h"
 #include <algorithm>
+#include <cstdio>
 
 using namespace clang;
 using namespace CodeGen;
