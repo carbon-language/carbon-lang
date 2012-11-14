@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -emit-llvm -verify -o - |FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -emit-llvm -o - -std=c++11 |FileCheck %s
 
 class x {
 public: int operator=(int);
@@ -27,4 +27,28 @@ namespace test1 {
   };
 
   A<int> a;
+}
+
+// Ensure that we use memcpy when we would have selected a trivial assignment
+// operator, even for a non-trivially-copyable type.
+struct A {
+  A &operator=(const A&);
+};
+struct B {
+  B(const B&);
+  B &operator=(const B&) = default;
+  int n;
+};
+struct C {
+  A a;
+  B b[16];
+};
+void b(C &a, C &b) {
+  // CHECK: define {{.*}} @_ZN1CaSERKS_(
+  // CHECK: call {{.*}} @_ZN1AaSERKS_(
+  // CHECK-NOT: call {{.*}} @_ZN1BaSERKS_(
+  // CHECK: call {{.*}} @{{.*}}memcpy
+  // CHECK-NOT: call {{.*}} @_ZN1BaSERKS_(
+  // CHECK: }
+  a = b;
 }

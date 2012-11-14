@@ -2296,25 +2296,3 @@ QualType::DestructionKind QualType::isDestructedTypeImpl(QualType type) {
 
   return DK_none;
 }
-
-bool QualType::hasTrivialAssignment(ASTContext &Context, bool Copying) const {
-  switch (getObjCLifetime()) {
-  case Qualifiers::OCL_None:
-    break;
-      
-  case Qualifiers::OCL_ExplicitNone:
-    return true;
-      
-  case Qualifiers::OCL_Autoreleasing:
-  case Qualifiers::OCL_Strong:
-  case Qualifiers::OCL_Weak:
-    return !Context.getLangOpts().ObjCAutoRefCount;
-  }
-  
-  if (const CXXRecordDecl *Record 
-            = getTypePtr()->getBaseElementTypeUnsafe()->getAsCXXRecordDecl())
-    return Copying ? Record->hasTrivialCopyAssignment() :
-                     Record->hasTrivialMoveAssignment();
-  
-  return true;
-}

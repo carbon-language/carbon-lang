@@ -979,10 +979,6 @@ public:
   ///   type other than void.
   bool isCForbiddenLValueType() const;
 
-  /// \brief Determine whether this type has trivial copy/move-assignment
-  ///        semantics.
-  bool hasTrivialAssignment(ASTContext &Context, bool Copying) const;
-
 private:
   // These methods are implemented in a separate translation unit;
   // "static"-ize them to avoid creating temporary QualTypes in the
