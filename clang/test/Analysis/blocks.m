@@ -98,7 +98,7 @@ void testMessaging() {
 
 
 // FALSE POSITIVE <rdar://problem/12415065>
-@interface rdar12415065
+@interface rdar12415065 : NSObject
 @end
 
 @implementation rdar12415065
@@ -112,6 +112,8 @@ void testMessaging() {
   if (!queue)
     return;
 
+  // FALSE POSITIVE
+  // expected-warning@+1 {{Variable 'x' is uninitialized when captured by block}}
   dispatch_async(queue, ^{
     double x = 0.0;
     if (24.0f < x) {
