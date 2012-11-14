@@ -16,7 +16,7 @@ After that, instead of getting this:
 you'll get:
 
 (lldb) p Tok.Loc
-(clang::SourceLocation) $4 = "/usr/include/i386/_types.h:37:1" (offset: 123582, file)
+(clang::SourceLocation) $4 = "/usr/include/i386/_types.h:37:1" (offset: 123582, file, local)
 """
 
 import lldb
@@ -37,6 +37,9 @@ class SourceLocation(object):
 	def isMacro(self):
 		return getValueFromExpression(self.srcloc, ".isMacroID()").GetValueAsUnsigned()
 
+	def isLocal(self, srcmgr_path):
+		return lldb.frame.EvaluateExpression("(%s).isLocalSourceLocation(%s)" % (srcmgr_path, getExpressionPath(self.srcloc))).GetValueAsUnsigned()
+
 	def getPrint(self, srcmgr_path):
 		print_str = getValueFromExpression(self.srcloc, ".printToString(%s)" % srcmgr_path)
 		return print_str.GetSummary()
@@ -45,7 +48,7 @@ class SourceLocation(object):
 		desc = "(offset: %d, %s)" % (self.offset(), "macro" if self.isMacro() else "file")
 		srcmgr_path = findObjectExpressionPath("clang::SourceManager", lldb.frame)
 		if srcmgr_path:
-			desc = self.getPrint(srcmgr_path) + " " + desc
+			desc = "%s (offset: %d, %s, %s)" % (self.getPrint(srcmgr_path), self.offset(), "macro" if self.isMacro() else "file", "local" if self.isLocal(srcmgr_path) else "loaded")
 		return desc
 
 # Key is a (function address, type name) tuple, value is the expression path for
