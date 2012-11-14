@@ -26,6 +26,7 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include <algorithm>
 using namespace llvm;
@@ -63,6 +64,9 @@ class Pattern {
   /// RegEx - If non-empty, this is a regex pattern.
   std::string RegExStr;
 
+  /// \brief Contains the number of line this pattern is in.
+  unsigned LineNumber;
+
   /// VariableUses - Entries in this vector map to uses of a variable in the
   /// pattern, e.g. "foo[[bar]]baz".  In this case, the RegExStr will contain
   /// "foobaz" and we'll get an entry in this vector that tells us to insert the
@@ -79,7 +83,7 @@ public:
 
   Pattern(bool matchEOF = false) : MatchEOF(matchEOF) { }
 
-  bool ParsePattern(StringRef PatternStr, SourceMgr &SM);
+  bool ParsePattern(StringRef PatternStr, SourceMgr &SM, unsigned LineNumber);
 
   /// Match - Match the pattern string against the input buffer Buffer.  This
   /// returns the position that is matched or npos if there is no match.  If
@@ -104,10 +108,16 @@ private:
   /// should correspond to a perfect match.
   unsigned ComputeMatchDistance(StringRef Buffer,
                                const StringMap<StringRef> &VariableTable) const;
+
+  /// \brief Evaluates expression and stores the result to \p Value.
+  /// \return true on success. false when the expression has invalid syntax.
+  bool EvaluateExpression(StringRef Expr, std::string &Value) const;
 };
 
 
-bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
+bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
+                           unsigned LineNumber) {
+  this->LineNumber = LineNumber;
   PatternLoc = SMLoc::getFromPointer(PatternStr.data());
 
   // Ignore trailing whitespace.
@@ -193,13 +203,28 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
         return true;
       }
 
-      // Verify that the name is well formed.
-      for (unsigned i = 0, e = Name.size(); i != e; ++i)
-        if (Name[i] != '_' && !isalnum(Name[i])) {
+      // Verify that the name/expression is well formed. FileCheck currently
+      // supports @LINE, @LINE+number, @LINE-number expressions. The check here
+      // is relaxed, more strict check is performed in \c EvaluateExpression.
+      bool IsExpression = false;
+      for (unsigned i = 0, e = Name.size(); i != e; ++i) {
+        if (i == 0 && Name[i] == '@') {
+          if (NameEnd != StringRef::npos) {
+            SM.PrintMessage(SMLoc::getFromPointer(Name.data()),
+                            SourceMgr::DK_Error,
+                            "invalid name in named regex definition");
+            return true;
+          }
+          IsExpression = true;
+          continue;
+        }
+        if (Name[i] != '_' && !isalnum(Name[i]) &&
+            (!IsExpression || (Name[i] != '+' && Name[i] != '-'))) {
           SM.PrintMessage(SMLoc::getFromPointer(Name.data()+i),
                           SourceMgr::DK_Error, "invalid name in named regex");
           return true;
         }
+      }
 
       // Name can't start with a digit.
       if (isdigit(Name[0])) {
@@ -279,6 +304,24 @@ bool Pattern::AddRegExToRegEx(StringRef RegexStr, unsigned &CurParen,
   return false;
 }
 
+bool Pattern::EvaluateExpression(StringRef Expr, std::string &Value) const {
+  // The only supported expression is @LINE([\+-]\d+)?
+  if (!Expr.startswith("@LINE"))
+    return false;
+  Expr = Expr.substr(StringRef("@LINE").size());
+  int Offset = 0;
+  if (!Expr.empty()) {
+    if (Expr[0] == '+')
+      Expr = Expr.substr(1);
+    else if (Expr[0] != '-')
+      return false;
+    if (Expr.getAsInteger(10, Offset))
+      return false;
+  }
+  Value = llvm::itostr(LineNumber + Offset);
+  return true;
+}
+
 /// Match - Match the pattern string against the input buffer Buffer.  This
 /// returns the position that is matched or npos if there is no match.  If
 /// there is a match, the size of the matched string is returned in MatchLen.
@@ -307,15 +350,21 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
 
     unsigned InsertOffset = 0;
     for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
-      StringMap<StringRef>::iterator it =
-        VariableTable.find(VariableUses[i].first);
-      // If the variable is undefined, return an error.
-      if (it == VariableTable.end())
-        return StringRef::npos;
-
-      // Look up the value and escape it so that we can plop it into the regex.
       std::string Value;
-      AddFixedStringToRegEx(it->second, Value);
+
+      if (VariableUses[i].first[0] == '@') {
+        if (!EvaluateExpression(VariableUses[i].first, Value))
+          return StringRef::npos;
+      } else {
+        StringMap<StringRef>::iterator it =
+          VariableTable.find(VariableUses[i].first);
+        // If the variable is undefined, return an error.
+        if (it == VariableTable.end())
+          return StringRef::npos;
+
+        // Look up the value and escape it so that we can plop it into the regex.
+        AddFixedStringToRegEx(it->second, Value);
+      }
 
       // Plop it into the regex at the adjusted offset.
       TmpStr.insert(TmpStr.begin()+VariableUses[i].second+InsertOffset,
@@ -371,19 +420,31 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   // variable values.
   if (!VariableUses.empty()) {
     for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
-      StringRef Var = VariableUses[i].first;
-      StringMap<StringRef>::const_iterator it = VariableTable.find(Var);
       SmallString<256> Msg;
       raw_svector_ostream OS(Msg);
-
-      // Check for undefined variable references.
-      if (it == VariableTable.end()) {
-        OS << "uses undefined variable \"";
-        OS.write_escaped(Var) << "\"";;
+      StringRef Var = VariableUses[i].first;
+      if (Var[0] == '@') {
+        std::string Value;
+        if (EvaluateExpression(Var, Value)) {
+          OS << "with expression \"";
+          OS.write_escaped(Var) << "\" equal to \"";
+          OS.write_escaped(Value) << "\"";
+        } else {
+          OS << "uses incorrect expression \"";
+          OS.write_escaped(Var) << "\"";
+        }
       } else {
-        OS << "with variable \"";
-        OS.write_escaped(Var) << "\" equal to \"";
-        OS.write_escaped(it->second) << "\"";
+        StringMap<StringRef>::const_iterator it = VariableTable.find(Var);
+
+        // Check for undefined variable references.
+        if (it == VariableTable.end()) {
+          OS << "uses undefined variable \"";
+          OS.write_escaped(Var) << "\"";
+        } else {
+          OS << "with variable \"";
+          OS.write_escaped(Var) << "\" equal to \"";
+          OS.write_escaped(it->second) << "\"";
+        }
       }
 
       SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
@@ -518,13 +579,19 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   std::vector<std::pair<SMLoc, Pattern> > NotMatches;
 
+  unsigned LineNumber = 1;
+
   while (1) {
     // See if Prefix occurs in the memory buffer.
-    Buffer = Buffer.substr(Buffer.find(CheckPrefix));
-
+    size_t PrefixLoc = Buffer.find(CheckPrefix);
     // If we didn't find a match, we're done.
-    if (Buffer.empty())
+    if (PrefixLoc == StringRef::npos)
       break;
+
+    // Recalculate line number.
+    LineNumber += Buffer.substr(0, PrefixLoc).count('\n');
+
+    Buffer = Buffer.substr(PrefixLoc);
 
     const char *CheckPrefixStart = Buffer.data();
 
@@ -560,7 +627,7 @@ static bool ReadCheckFile(SourceMgr &SM,
 
     // Parse the pattern.
     Pattern P;
-    if (P.ParsePattern(Buffer.substr(0, EOL), SM))
+    if (P.ParsePattern(Buffer.substr(0, EOL), SM, LineNumber))
       return true;
 
     Buffer = Buffer.substr(EOL);

@@ -252,3 +252,30 @@ advantage of the fact that FileCheck is not actually line-oriented when it
 matches, this allows you to define two separate "``CHECK``" lines that match on
 the same line.
 
+
+FileCheck Expressions
+~~~~~~~~~~~~~~~~~~~~~
+
+
+Sometimes there's a need to verify output which refers line numbers of the match
+file, e.g. when testing compiler diagnostics. This introduces a certain
+fragility of the match file structure, as CHECK: lines contain absolute line
+numbers in the same file, which have to be updated whenever line numbers change
+due to text addition or deletion.
+
+To support this case, FileCheck allows using ``[[@LINE]]``,
+``[[@LINE+<offset>]]``, ``[[@LINE-<offset>]]`` expressions in patterns. These
+expressions expand to a number of the line where a pattern is located (with an
+optional integer offset).
+
+This way match patterns can be put near the relevant test lines and include
+relative line number references, for example:
+
+.. code-block:: c++
+
+   // CHECK: test.cpp:[[@LINE+4]]:6: error: expected ';' after top level declarator
+   // CHECK-NEXT: {{^int a}}
+   // CHECK-NEXT: {{^     \^}}
+   // CHECK-NEXT: {{^     ;}}
+   int a
+
