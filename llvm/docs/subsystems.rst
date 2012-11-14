@@ -18,6 +18,10 @@ Subsystem Documentation
    DebuggingJITedCode
    GoldPlugin
    MarkedUpDisassembly
+   HowToUseInstrMappings
+
+.. FIXME: once LangRef is Sphinxified, HowToUseInstrMappings should be put
+   under LangRef's toctree instead of this page's toctree.
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
