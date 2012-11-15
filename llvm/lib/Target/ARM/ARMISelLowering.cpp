@@ -544,6 +544,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FP_TO_UINT, MVT::v4i16, Custom);
     setOperationAction(ISD::FP_TO_SINT, MVT::v4i16, Custom);
 
+    setOperationAction(ISD::FP_ROUND,   MVT::v2f32, Expand);
+
     setTargetDAGCombine(ISD::INTRINSIC_VOID);
     setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
     setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
