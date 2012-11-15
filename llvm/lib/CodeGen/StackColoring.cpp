@@ -720,7 +720,9 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   // and continue.
 
   // Sort the slots according to their size. Place unused slots at the end.
-  std::sort(SortedSlots.begin(), SortedSlots.end(), SlotSizeSorter(MFI));
+  // Use stable sort to guarantee deterministic code generation.
+  std::stable_sort(SortedSlots.begin(), SortedSlots.end(),
+                   SlotSizeSorter(MFI));
 
   bool Chanded = true;
   while (Chanded) {
