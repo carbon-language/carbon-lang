@@ -32,7 +32,8 @@ namespace llvm {
 
 uint8_t *SectionMemoryManager::allocateDataSection(uintptr_t Size,
                                                     unsigned Alignment,
-                                                    unsigned SectionID) {
+                                                    unsigned SectionID,
+                                                    bool IsReadOnly) {
   if (!Alignment)
     Alignment = 16;
   // Ensure that enough memory is requested to allow aligning.

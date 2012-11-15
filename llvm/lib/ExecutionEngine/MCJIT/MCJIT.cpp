@@ -118,17 +118,26 @@ void MCJIT::emitObject(Module *m) {
 
 // FIXME: Add a parameter to identify which object is being finalized when
 // MCJIT supports multiple modules.
+// FIXME: Provide a way to separate code emission, relocations and page 
+// protection in the interface.
 void MCJIT::finalizeObject() {
   // If the module hasn't been compiled, just do that.
   if (!isCompiled) {
     // If the call to Dyld.resolveRelocations() is removed from emitObject()
     // we'll need to do that here.
     emitObject(M);
+
+    // Set page permissions.
+    MemMgr->applyPermissions();
+
     return;
   }
 
   // Resolve any relocations.
   Dyld.resolveRelocations();
+
+  // Set page permissions.
+  MemMgr->applyPermissions();
 }
 
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {

@@ -118,13 +118,14 @@ public:
     Base->endFunctionBody(F, FunctionStart, FunctionEnd);
   }
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID) {
-    return Base->allocateDataSection(Size, Alignment, SectionID);
+                                       unsigned SectionID, bool IsReadOnly) {
+    return Base->allocateDataSection(Size, Alignment, SectionID, IsReadOnly);
   }
   virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID) {
     return Base->allocateCodeSection(Size, Alignment, SectionID);
   }
+  virtual bool applyPermissions(std::string *ErrMsg) { return false; }
   virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
     return Base->allocateSpace(Size, Alignment);
   }

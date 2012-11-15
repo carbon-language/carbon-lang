@@ -28,7 +28,8 @@ allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID) {
 }
 
 uint8_t *RecordingMemoryManager::
-allocateDataSection(uintptr_t Size, unsigned Alignment, unsigned SectionID) {
+allocateDataSection(uintptr_t Size, unsigned Alignment,
+                    unsigned SectionID, bool IsReadOnly) {
   // The recording memory manager is just a local copy of the remote target.
   // The alignment requirement is just stored here for later use. Regular
   // heap storage is sufficient here.

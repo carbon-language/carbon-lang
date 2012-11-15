@@ -182,7 +182,7 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
   // Allocate memory for the section
   unsigned SectionID = Sections.size();
   uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, sizeof(void*),
-                                              SectionID);
+                                              SectionID, false);
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
@@ -237,11 +237,13 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   bool IsRequired;
   bool IsVirtual;
   bool IsZeroInit;
+  bool IsReadOnly;
   uint64_t DataSize;
   StringRef Name;
   Check(Section.isRequiredForExecution(IsRequired));
   Check(Section.isVirtual(IsVirtual));
   Check(Section.isZeroInit(IsZeroInit));
+  Check(Section.isReadOnlyData(IsReadOnly));
   Check(Section.getSize(DataSize));
   Check(Section.getName(Name));
 
@@ -256,7 +258,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
     Allocate = DataSize + StubBufSize;
     Addr = IsCode
       ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID)
-      : MemMgr->allocateDataSection(Allocate, Alignment, SectionID);
+      : MemMgr->allocateDataSection(Allocate, Alignment, SectionID, IsReadOnly);
     if (!Addr)
       report_fatal_error("Unable to allocate section memory!");
 
@@ -451,6 +453,12 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
 //===----------------------------------------------------------------------===//
 // RuntimeDyld class implementation
 RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
+  // FIXME: There's a potential issue lurking here if a single instance of
+  // RuntimeDyld is used to load multiple objects.  The current implementation
+  // associates a single memory manager with a RuntimeDyld instance.  Even
+  // though the public class spawns a new 'impl' instance for each load,
+  // they share a single memory manager.  This can become a problem when page
+  // permissions are applied.
   Dyld = 0;
   MM = mm;
 }

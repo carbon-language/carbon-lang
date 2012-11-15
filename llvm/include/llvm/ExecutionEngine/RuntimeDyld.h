@@ -48,7 +48,7 @@ public:
   /// assigned by the JIT engine, and optionally recorded by the memory manager
   /// to access a loaded section.
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID) = 0;
+                                       unsigned SectionID, bool IsReadOnly) = 0;
 
   /// getPointerToNamedFunction - This method returns the address of the
   /// specified function. As such it is only useful for resolving library
@@ -59,6 +59,15 @@ public:
   /// message to stderr and aborts.
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) = 0;
+
+  /// applyPermissions - This method is called when object loading is
+  /// complete and section page permissions can be applied.  It is up to
+  /// the memory manager implementation to decide whether or not to act
+  /// on this method.  The memory manager will typically allocate all 
+  /// sections as read-write and then apply specific permissions when
+  /// this method is called.  Returns true if an error occurred, false
+  /// otherwise.
+  virtual bool applyPermissions(std::string *ErrMsg = 0) = 0;
 };
 
 class RuntimeDyld {

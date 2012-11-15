@@ -58,12 +58,14 @@ public:
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID);
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID);
+                               unsigned SectionID, bool IsReadOnly);
 
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) {
     return 0;
   }
+
+  bool applyPermissions(std::string *ErrMsg) { return false; }
 
   // Invalidate instruction cache for sections with execute permissions.
   // Some platforms with separate data cache and instruction cache require
@@ -82,7 +84,8 @@ uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
 
 uint8_t *TrivialMemoryManager::allocateDataSection(uintptr_t Size,
                                                    unsigned Alignment,
-                                                   unsigned SectionID) {
+                                                   unsigned SectionID,
+                                                   bool IsReadOnly) {
   sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, 0, 0);
   DataMemory.push_back(MB);
   return (uint8_t*)MB.base();

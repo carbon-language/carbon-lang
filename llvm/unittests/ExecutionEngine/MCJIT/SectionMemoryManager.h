@@ -34,7 +34,9 @@ public:
                                        unsigned SectionID);
 
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID);
+                                       unsigned SectionID, bool IsReadOnly);
+
+  virtual bool applyPermissions(std::string *ErrMsg) { return false; }
 
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true);

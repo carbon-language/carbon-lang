@@ -231,10 +231,12 @@ public:
                                        unsigned SectionID);
 
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID);
+                                       unsigned SectionID, bool IsReadOnly);
 
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true);
+
+  virtual bool applyPermissions(std::string *ErrMsg) { return false; }
 
   // Invalidate instruction cache for code sections. Some platforms with
   // separate data cache and instruction cache require explicit cache flush,
@@ -301,7 +303,8 @@ public:
 
 uint8_t *LLIMCJITMemoryManager::allocateDataSection(uintptr_t Size,
                                                     unsigned Alignment,
-                                                    unsigned SectionID) {
+                                                    unsigned SectionID,
+                                                    bool IsReadOnly) {
   if (!Alignment)
     Alignment = 16;
   // Ensure that enough memory is requested to allow aligning.
