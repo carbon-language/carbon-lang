@@ -58,6 +58,10 @@ D: DWARF Parser
 N: Ted Kremenek
 D: Clang Static Analyzer
 
+N: Sergei Larin
+E: slarin@codeaurora.org
+D: VLIW Instruction Scheduling, Packetization
+
 N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
