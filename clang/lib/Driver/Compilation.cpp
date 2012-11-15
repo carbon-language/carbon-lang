@@ -306,7 +306,7 @@ int Compilation::ExecuteJob(const Job &J,
   }
 }
 
-void Compilation::initCompilationForDiagnostics(void) {
+void Compilation::initCompilationForDiagnostics() {
   // Free actions and jobs.
   DeleteContainerPointers(Actions);
   Jobs.clear();
@@ -331,6 +331,6 @@ void Compilation::initCompilationForDiagnostics(void) {
   Redirects[2] = new const llvm::sys::Path();
 }
 
-StringRef Compilation::getSysRoot(void) const {
+StringRef Compilation::getSysRoot() const {
   return getDriver().SysRoot;
 }

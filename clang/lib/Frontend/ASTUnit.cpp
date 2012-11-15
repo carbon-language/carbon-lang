@@ -103,7 +103,7 @@ static llvm::sys::SmartMutex<false> &getOnDiskMutex() {
   return M;
 }
 
-static void cleanupOnDiskMapAtExit(void);
+static void cleanupOnDiskMapAtExit();
 
 typedef llvm::DenseMap<const ASTUnit *, OnDiskData *> OnDiskDataMap;
 static OnDiskDataMap &getOnDiskDataMap() {
@@ -116,7 +116,7 @@ static OnDiskDataMap &getOnDiskDataMap() {
   return M;
 }
 
-static void cleanupOnDiskMapAtExit(void) {
+static void cleanupOnDiskMapAtExit() {
   // Use the mutex because there can be an alive thread destroying an ASTUnit.
   llvm::MutexGuard Guard(getOnDiskMutex());
   OnDiskDataMap &M = getOnDiskDataMap();

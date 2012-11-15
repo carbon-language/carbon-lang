@@ -2782,7 +2782,7 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
   return NS;
 }
 
-void CGDebugInfo::finalize(void) {
+void CGDebugInfo::finalize() {
   for (std::vector<std::pair<void *, llvm::WeakVH> >::const_iterator VI
          = ReplaceMap.begin(), VE = ReplaceMap.end(); VI != VE; ++VI) {
     llvm::DIType Ty, RepTy;

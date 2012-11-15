@@ -169,7 +169,7 @@ public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
 
-  void finalize(void);
+  void finalize();
 
   /// setLocation - Update the current source location. If \arg loc is
   /// invalid it is ignored.

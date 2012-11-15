@@ -385,7 +385,7 @@ private:
   /// a class defined in the runtime, declaring no methods, but adopting the
   /// protocols.  This is a horribly ugly hack, but it allows us to collect all
   /// of the protocols without changing the ABI.
-  void GenerateProtocolHolderCategory(void);
+  void GenerateProtocolHolderCategory();
   /// Generates a class structure.
   llvm::Constant *GenerateClassStructure(
       llvm::Constant *MetaClass,
@@ -1810,7 +1810,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     llvm::ConstantExpr::getBitCast(MakeGlobal(ProtocolTy, Elements,
           ".objc_protocol"), IdTy);
 }
-void CGObjCGNU::GenerateProtocolHolderCategory(void) {
+void CGObjCGNU::GenerateProtocolHolderCategory() {
   // Collect information about instance methods
   SmallVector<Selector, 1> MethodSels;
   SmallVector<llvm::Constant*, 1> MethodTypes;

@@ -983,11 +983,11 @@ private:
 
   /// EmitDeferred - Emit any needed decls for which code generation
   /// was deferred.
-  void EmitDeferred(void);
+  void EmitDeferred();
 
   /// EmitLLVMUsed - Emit the llvm.used metadata used to force
   /// references to global which may otherwise be optimized out.
-  void EmitLLVMUsed(void);
+  void EmitLLVMUsed();
 
   void EmitDeclMetadata();
 

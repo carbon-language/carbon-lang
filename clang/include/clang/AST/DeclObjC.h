@@ -1847,7 +1847,7 @@ public:
     PropertyAttributesAsWritten = PRVal;
   }
 
- void makeitReadWriteAttribute(void) {
+ void makeitReadWriteAttribute() {
     PropertyAttributes &= ~OBJC_PR_readonly;
     PropertyAttributes |= OBJC_PR_readwrite;
  }
