@@ -143,8 +143,11 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
   }
 
   if (shadow_ptr < shadow_bottom) {
-    *offset = 0;
-    return "UNKNOWN";
+    // If we're one byte below the fake stack bottom, we've found the frame.
+    if (!is_fake_stack || (*shadow_bottom != kAsanStackAfterReturnLeftMagic)) {
+      *offset = 0;
+      return "UNKNOWN";
+    }
   }
 
   uptr* ptr = (uptr*)SHADOW_TO_MEM((uptr)(shadow_ptr + 1));
