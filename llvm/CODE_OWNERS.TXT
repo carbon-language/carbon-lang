@@ -48,8 +48,8 @@ E: jholewinski@nvidia.com
 D: NVPTX Target (lib/Target/NVPTX/*)
 
 N: Anton Korobeynikov
-E: asl@math.spbu.ru
-D: Exception handling and Windows codegen
+E: anton@korobeynikov.info
+D: Exception handling, Windows codegen, ARM EABI
 
 N: Benjamin Kramer
 E: benny.kra@gmail.com
