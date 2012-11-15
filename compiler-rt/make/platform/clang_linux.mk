@@ -51,19 +51,21 @@ endif
 
 # Build runtime libraries for i386.
 ifeq ($(call contains,$(SupportedArches),i386),true)
-Configs += full-i386 profile-i386 asan-i386
+Configs += full-i386 profile-i386 asan-i386 ubsan-i386
 Arch.full-i386 := i386
 Arch.profile-i386 := i386
 Arch.asan-i386 := i386
+Arch.ubsan-i386 := i386
 endif
 
 # Build runtime libraries for x86_64.
 ifeq ($(call contains,$(SupportedArches),x86_64),true)
-Configs += full-x86_64 profile-x86_64 asan-x86_64 tsan-x86_64
+Configs += full-x86_64 profile-x86_64 asan-x86_64 tsan-x86_64 ubsan-x86_64
 Arch.full-x86_64 := x86_64
 Arch.profile-x86_64 := x86_64
 Arch.asan-x86_64 := x86_64
 Arch.tsan-x86_64 := x86_64
+Arch.ubsan-x86_64 := x86_64
 endif
 
 ifneq ($(LLVM_ANDROID_TOOLCHAIN_DIR),)
@@ -85,6 +87,8 @@ CFLAGS.profile-x86_64 := $(CFLAGS) -m64
 CFLAGS.asan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin
 CFLAGS.asan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 CFLAGS.tsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
+CFLAGS.ubsan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin
+CFLAGS.ubsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 
 SHARED_LIBRARY.asan-arm-android := 1
 ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
@@ -113,7 +117,9 @@ FUNCTIONS.asan-x86_64 := $(AsanFunctions) $(InterceptionFunctions) \
 FUNCTIONS.asan-arm-android := $(AsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions)
 FUNCTIONS.tsan-x86_64 := $(TsanFunctions) $(InterceptionFunctions) \
-                                          $(SanitizerCommonFunctions) 
+                                          $(SanitizerCommonFunctions)
+FUNCTIONS.ubsan-i386 := $(UbsanFunctions) $(SanitizerCommonFunctions)
+FUNCTIONS.ubsan-x86_64 := $(UbsanFunctions) $(SanitizerCommonFunctions)
 
 # Always use optimized variants.
 OPTIMIZED := 1
