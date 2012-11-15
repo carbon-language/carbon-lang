@@ -450,7 +450,6 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
         bug_descr = "stack-buffer-overflow";
         break;
       case kAsanStackAfterReturnMagic:
-      case kAsanStackAfterReturnLeftMagic:
         bug_descr = "stack-use-after-return";
         break;
       case kAsanUserPoisonedMemoryMagic:

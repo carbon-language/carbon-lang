@@ -118,41 +118,35 @@ void AsanThread::ClearShadowForThreadStack() {
 
 const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
   uptr bottom = 0;
-  bool is_fake_stack = false;
   if (AddrIsInStack(addr)) {
     bottom = stack_bottom();
   } else {
     bottom = fake_stack().AddrIsInFakeStack(addr);
     CHECK(bottom);
-    is_fake_stack = true;
+    *offset = addr - bottom;
+    return  (const char *)((uptr*)bottom)[1];
   }
   uptr aligned_addr = addr & ~(__WORDSIZE/8 - 1);  // align addr.
   u8 *shadow_ptr = (u8*)MemToShadow(aligned_addr);
   u8 *shadow_bottom = (u8*)MemToShadow(bottom);
 
   while (shadow_ptr >= shadow_bottom &&
-      *shadow_ptr != kAsanStackLeftRedzoneMagic &&
-      *shadow_ptr != kAsanStackAfterReturnLeftMagic) {
+         *shadow_ptr != kAsanStackLeftRedzoneMagic) {
     shadow_ptr--;
   }
 
   while (shadow_ptr >= shadow_bottom &&
-      (*shadow_ptr == kAsanStackLeftRedzoneMagic ||
-       *shadow_ptr == kAsanStackAfterReturnLeftMagic)) {
+         *shadow_ptr == kAsanStackLeftRedzoneMagic) {
     shadow_ptr--;
   }
 
   if (shadow_ptr < shadow_bottom) {
-    // If we're one byte below the fake stack bottom, we've found the frame.
-    if (!is_fake_stack || (*shadow_bottom != kAsanStackAfterReturnLeftMagic)) {
-      *offset = 0;
-      return "UNKNOWN";
-    }
+    *offset = 0;
+    return "UNKNOWN";
   }
 
   uptr* ptr = (uptr*)SHADOW_TO_MEM((uptr)(shadow_ptr + 1));
-  CHECK((ptr[0] == kCurrentStackFrameMagic) ||
-      (is_fake_stack && ptr[0] == kRetiredStackFrameMagic));
+  CHECK(ptr[0] == kCurrentStackFrameMagic);
   *offset = addr - (uptr)ptr;
   return (const char*)ptr[1];
 }
