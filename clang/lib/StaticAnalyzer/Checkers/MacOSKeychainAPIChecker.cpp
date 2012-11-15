@@ -26,9 +26,7 @@ using namespace ento;
 
 namespace {
 class MacOSKeychainAPIChecker : public Checker<check::PreStmt<CallExpr>,
-                                               check::PreStmt<ReturnStmt>,
                                                check::PostStmt<CallExpr>,
-                                               check::EndPath,
                                                check::DeadSymbols> {
   mutable OwningPtr<BugType> BT;
 
@@ -56,10 +54,8 @@ public:
   };
 
   void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
-  void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *S, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
-  void checkEndPath(CheckerContext &C) const;
 
 private:
   typedef std::pair<SymbolRef, const AllocationState*> AllocationPair;
@@ -486,28 +482,6 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   }
 }
 
-void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
-                                           CheckerContext &C) const {
-  const Expr *retExpr = S->getRetValue();
-  if (!retExpr)
-    return;
-
-  // If inside inlined call, skip it.
-  const LocationContext *LC = C.getLocationContext();
-  if (LC->getParent() != 0)
-    return;
-
-  // Check  if the value is escaping through the return.
-  ProgramStateRef state = C.getState();
-  SymbolRef sym = state->getSVal(retExpr, LC).getAsLocSymbol();
-  if (!sym)
-    return;
-  state = state->remove<AllocatedData>(sym);
-
-  // Proceed from the new state.
-  C.addTransition(state);
-}
-
 // TODO: This logic is the same as in Malloc checker.
 const Stmt *
 MacOSKeychainAPIChecker::getAllocationSite(const ExplodedNode *N,
@@ -602,55 +576,6 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
 
   // Generate the new, cleaned up state.
   C.addTransition(State, N);
-}
-
-// TODO: Remove this after we ensure that checkDeadSymbols are always called.
-void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &C) const {
-  ProgramStateRef state = C.getState();
-
-  // If inside inlined call, skip it.
-  if (C.getLocationContext()->getParent() != 0)
-    return;
-
-  AllocatedDataTy AS = state->get<AllocatedData>();
-  if (AS.isEmpty())
-    return;
-
-  // Anything which has been allocated but not freed (nor escaped) will be
-  // found here, so report it.
-  bool Changed = false;
-  AllocationPairVec Errors;
-  for (AllocatedDataTy::iterator I = AS.begin(), E = AS.end(); I != E; ++I ) {
-    Changed = true;
-    state = state->remove<AllocatedData>(I->first);
-    // If the allocated symbol is null or if error code was returned at
-    // allocation, do not report.
-    ConstraintManager &CMgr = state->getConstraintManager();
-    ConditionTruthVal AllocFailed = CMgr.isNull(state, I.getKey());
-    if (AllocFailed.isConstrainedTrue() ||
-        definitelyReturnedError(I->second.Region, state,
-                                C.getSValBuilder())) {
-      continue;
-    }
-    Errors.push_back(std::make_pair(I->first, &I->second));
-  }
-
-  // If no change, do not generate a new state.
-  if (!Changed) {
-    C.addTransition(state);
-    return;
-  }
-
-  static SimpleProgramPointTag Tag("MacOSKeychainAPIChecker : EndPathLeak");
-  ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
-
-  // Generate the error reports.
-  for (AllocationPairVec::iterator I = Errors.begin(), E = Errors.end();
-                                                       I != E; ++I) {
-    C.emitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
-  }
-
-  C.addTransition(state, N);
 }
 
 
