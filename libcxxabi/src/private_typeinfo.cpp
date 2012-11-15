@@ -172,7 +172,7 @@ bool
 __fundamental_type_info::can_catch(const __shim_type_info* thrown_type,
                                    void*&) const
 {
-    return this == thrown_type;
+    return is_equal(this, thrown_type, false);
 }
 
 bool
@@ -200,7 +200,7 @@ bool
 __enum_type_info::can_catch(const __shim_type_info* thrown_type,
                             void*&) const
 {
-    return this == thrown_type;
+    return is_equal(this, thrown_type, false);
 }
 
 #pragma clang diagnostic push
@@ -212,7 +212,7 @@ __class_type_info::can_catch(const __shim_type_info* thrown_type,
                              void*& adjustedPtr) const
 {
     // bullet 1
-    if (this == thrown_type)
+    if (is_equal(this, thrown_type, false))
         return true;
     const __class_type_info* thrown_class_type =
         dynamic_cast<const __class_type_info*>(thrown_type);
@@ -265,7 +265,7 @@ __class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
                                                void* adjustedPtr,
                                                int path_below) const
 {
-    if (this == info->static_type)
+    if (is_equal(this, info->static_type, false))
         process_found_base_class(info, adjustedPtr, path_below);
 }
 
@@ -274,7 +274,7 @@ __si_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
                                                   void* adjustedPtr,
                                                   int path_below) const
 {
-    if (this == info->static_type)
+    if (is_equal(this, info->static_type, false))
         process_found_base_class(info, adjustedPtr, path_below);
     else
         __base_type->has_unambiguous_public_base(info, adjustedPtr, path_below);
@@ -303,7 +303,7 @@ __vmi_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
                                                    void* adjustedPtr,
                                                    int path_below) const
 {
-    if (this == info->static_type)
+    if (is_equal(this, info->static_type, false))
         process_found_base_class(info, adjustedPtr, path_below);
     else
     {
@@ -328,9 +328,9 @@ bool
 __pbase_type_info::can_catch(const __shim_type_info* thrown_type,
                              void*&) const
 {
-    if (this == thrown_type)
+    if (is_equal(this, thrown_type, false))
         return true;
-    return thrown_type == &typeid(std::nullptr_t);
+    return is_equal(thrown_type, &typeid(std::nullptr_t), false);
 }
 
 #pragma clang diagnostic push
@@ -354,10 +354,10 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     // bullet 3B
     if (thrown_pointer_type->__flags & ~__flags)
         return false;
-    if (__pointee == thrown_pointer_type->__pointee)
+    if (is_equal(__pointee, thrown_pointer_type->__pointee, false))
         return true;
     // bullet 3A
-    if (__pointee == &typeid(void))
+    if (is_equal(__pointee, &typeid(void), false))
         return true;
     const __class_type_info* catch_class_type =
         dynamic_cast<const __class_type_info*>(__pointee);
@@ -484,7 +484,7 @@ __dynamic_cast(const void* static_ptr,
     __dynamic_cast_info info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
 
     // Find out if we can use a giant short cut in the search
-    if (dynamic_type == dst_type)
+    if (is_equal(dynamic_type, dst_type, false))
     {
         // Using giant short cut.  Add that information to info.
         info.number_of_dst_type = 1;
@@ -504,12 +504,6 @@ __dynamic_cast(const void* static_ptr,
             info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
             info.number_of_dst_type = 1;
             dynamic_type->search_above_dst(&info, dynamic_ptr, dynamic_ptr, public_path, true);
-            if (info.path_dst_ptr_to_static_ptr == unknown)
-            {
-                abort_message("dynamic_cast error: Unable to compute dynamic "
-                              "cast from %s to %s\n", static_type->name(),
-                              dynamic_type->name());
-            }
         }
 #endif  // _LIBCXX_DYNAMIC_FALLBACK
         // Query the search.
@@ -533,14 +527,6 @@ __dynamic_cast(const void* static_ptr,
             // Redo the search comparing type_info's using strcmp
             info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
             dynamic_type->search_below_dst(&info, dynamic_ptr, public_path, true);
-            if (info.path_dst_ptr_to_static_ptr == unknown &&
-                info.path_dynamic_ptr_to_static_ptr == unknown)
-            {
-                abort_message("dynamic_cast error: Unable to compute dynamic "
-                              "cast from %s to %s with a dynamic type of %s\n",
-                              static_type->name(), dst_type->name(),
-                              dynamic_type->name());
-            }
         }
 #endif  // _LIBCXX_DYNAMIC_FALLBACK
         // Query the search.
