@@ -14,7 +14,7 @@ D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
 
 N: Evan Cheng
 E: evan.cheng@apple.com
-D: Code generator and all targets
+D: ARM target, parts of code generator not covered by someone else
 
 N: Eric Christopher
 E: echristo@gmail.com
