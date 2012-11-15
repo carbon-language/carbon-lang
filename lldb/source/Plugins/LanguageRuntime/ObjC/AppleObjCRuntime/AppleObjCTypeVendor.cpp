@@ -529,6 +529,8 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         
         if (method_decl)
             interface_decl->addDecl(method_decl);
+        
+        return false;
     };
     
     auto class_method_func = [log, interface_decl, this](const char *name, const char *types)
@@ -542,6 +544,8 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         
         if (method_decl)
             interface_decl->addDecl(method_decl);
+        
+        return false;
     };
     
     if (log)
@@ -552,7 +556,10 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     }
     
     
-    if (!descriptor->Describe(superclass_func, instance_method_func, class_method_func))
+    if (!descriptor->Describe(superclass_func,
+                              instance_method_func,
+                              class_method_func,
+                              std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> (nullptr)))
         return false;
     
     if (log)

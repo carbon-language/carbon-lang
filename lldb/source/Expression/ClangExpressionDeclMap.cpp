@@ -40,6 +40,7 @@
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
@@ -749,7 +750,7 @@ ClangExpressionDeclMap::GetFunctionAddress
 }
 
 addr_t
-ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &name, lldb::SymbolType symbol_type)
+ClangExpressionDeclMap::GetSymbolAddress (Target &target, Process *process, const ConstString &name, lldb::SymbolType symbol_type)
 {
     SymbolContextList sc_list;
     
@@ -808,6 +809,16 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &nam
         }
     }
     
+    if (symbol_load_addr == LLDB_INVALID_ADDRESS && process)
+    {
+        ObjCLanguageRuntime *runtime = process->GetObjCLanguageRuntime();
+        
+        if (runtime)
+        {
+            symbol_load_addr = runtime->LookupRuntimeSymbol(name);
+        }
+    }
+    
     return symbol_load_addr;
 }
 
@@ -819,7 +830,7 @@ ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name, lldb::SymbolT
     if (!m_parser_vars->m_exe_ctx.GetTargetPtr())
         return false;
     
-    return GetSymbolAddress(m_parser_vars->m_exe_ctx.GetTargetRef(), name, symbol_type);
+    return GetSymbolAddress(m_parser_vars->m_exe_ctx.GetTargetRef(), m_parser_vars->m_exe_ctx.GetProcessPtr(), name, symbol_type);
 }
 
 // Interface for IRInterpreter
@@ -1840,7 +1851,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     }
     else if (sym)
     {
-        addr_t location_load_addr = GetSymbolAddress(*target, name, lldb::eSymbolTypeAny);
+        addr_t location_load_addr = GetSymbolAddress(*target, process, name, lldb::eSymbolTypeAny);
         
         if (location_load_addr == LLDB_INVALID_ADDRESS)
         {

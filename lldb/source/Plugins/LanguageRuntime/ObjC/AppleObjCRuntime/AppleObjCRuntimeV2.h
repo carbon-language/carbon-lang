@@ -99,6 +99,9 @@ public:
     virtual TypeVendor *
     GetTypeVendor();
     
+    virtual lldb::addr_t
+    LookupRuntimeSymbol (const ConstString &name);
+    
 protected:
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);

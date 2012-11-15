@@ -114,8 +114,9 @@ public:
         // This should return true iff the interface could be completed
         virtual bool
         Describe (std::function <void (ObjCISA)> const &superclass_func,
-                  std::function <void (const char*, const char*)> const &instance_method_func,
-                  std::function <void (const char*, const char*)> const &class_method_func)
+                  std::function <bool (const char*, const char*)> const &instance_method_func,
+                  std::function <bool (const char*, const char*)> const &class_method_func,
+                  std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func)
         {
             return false;
         }
@@ -284,6 +285,15 @@ public:
     
     virtual size_t
     GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
+    
+    // Given the name of an Objective-C runtime symbol (e.g., ivar offset symbol),
+    // try to determine from the runtime what the value of that symbol would be.
+    // Useful when the underlying binary is stripped.
+    virtual lldb::addr_t
+    LookupRuntimeSymbol (const ConstString &name)
+    {
+        return LLDB_INVALID_ADDRESS;
+    }
     
     //------------------------------------------------------------------
     /// Chop up an objective C function prototype.

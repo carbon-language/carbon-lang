@@ -1047,8 +1047,9 @@ public:
     
     virtual bool
     Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
-              std::function <void (const char *, const char *)> const &instance_method_func,
-              std::function <void (const char *, const char *)> const &class_method_func)
+              std::function <bool (const char *, const char *)> const &instance_method_func,
+              std::function <bool (const char *, const char *)> const &class_method_func,
+              std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func)
     {
         lldb_private::Process *process = m_runtime.GetProcess();
 
@@ -1084,7 +1085,8 @@ public:
             {
                 method->Read(process, base_method_list->m_first_ptr + (i * base_method_list->m_entsize));
                 
-                instance_method_func(method->m_name.c_str(), method->m_types.c_str());
+                if (instance_method_func(method->m_name.c_str(), method->m_types.c_str()))
+                    break;
             }
         }
         
@@ -1097,9 +1099,32 @@ public:
             
             metaclass.Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> (nullptr),
                                class_method_func,
-                               std::function <void (const char *, const char *)> (nullptr));
+                               std::function <bool (const char *, const char *)> (nullptr),
+                               std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> (nullptr));
         }
-        while (0);
+        
+        if (ivar_func)
+        {
+            std::auto_ptr <ivar_list_t> ivar_list;
+            
+            ivar_list.reset(new ivar_list_t);
+            if (!ivar_list->Read(process, class_ro->m_ivars_ptr))
+                return false;
+            
+            if (ivar_list->m_entsize != ivar_t::GetSize(process))
+                return false;
+            
+            std::auto_ptr <ivar_t> ivar;
+            ivar.reset(new ivar_t);
+            
+            for (uint32_t i = 0, e = ivar_list->m_count; i < e; ++i)
+            {
+                ivar->Read(process, ivar_list->m_first_ptr + (i * ivar_list->m_entsize));
+                
+                if (ivar_func(ivar->m_name.c_str(), ivar->m_type.c_str(), ivar->m_offset_ptr, ivar->m_size))
+                    break;
+            }
+        }
             
         return true;
     }
@@ -1387,6 +1412,98 @@ private:
             
             count = process->ReadCStringFromMemory(m_types_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
             m_types.assign((char*)string_buf.GetBytes(), count);
+            
+            return true;
+        }
+    };
+    
+    struct ivar_list_t
+    {
+        uint32_t        m_entsize;
+        uint32_t        m_count;
+        lldb::addr_t    m_first_ptr;
+        
+        bool Read(Process *process, lldb::addr_t addr)
+        {
+            size_t size = sizeof(uint32_t)  // uint32_t entsize;
+                        + sizeof(uint32_t); // uint32_t count;
+            
+            DataBufferHeap buffer (size, '\0');
+            Error error;
+            
+            process->ReadMemory(addr, buffer.GetBytes(), size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_entsize   = extractor.GetU32_unchecked(&cursor);
+            m_count     = extractor.GetU32_unchecked(&cursor);
+            m_first_ptr = addr + cursor;
+            
+            return true;
+        }
+    };
+    
+    struct ivar_t
+    {
+        lldb::addr_t    m_offset_ptr;
+        lldb::addr_t    m_name_ptr;
+        lldb::addr_t    m_type_ptr;
+        uint32_t        m_alignment;
+        uint32_t        m_size;
+        
+        std::string     m_name;
+        std::string     m_type;
+        
+        static size_t GetSize(Process *process)
+        {
+            size_t ptr_size = process->GetAddressByteSize();
+            
+            return ptr_size             // uintptr_t *offset;
+                 + ptr_size             // const char *name;
+                 + ptr_size             // const char *type;
+                 + sizeof(uint32_t)     // uint32_t alignment;
+                 + sizeof(uint32_t);    // uint32_t size;
+        }
+        
+        bool Read(Process *process, lldb::addr_t addr)
+        {
+            size_t size = GetSize(process);
+            
+            DataBufferHeap buffer (size, '\0');
+            Error error;
+            
+            process->ReadMemory(addr, buffer.GetBytes(), size, error);
+            if (error.Fail())
+            {
+                return false;
+            }
+            
+            DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
+            
+            uint32_t cursor = 0;
+            
+            m_offset_ptr = extractor.GetAddress_unchecked(&cursor);
+            m_name_ptr   = extractor.GetAddress_unchecked(&cursor);
+            m_type_ptr   = extractor.GetAddress_unchecked(&cursor);
+            m_alignment  = extractor.GetU32_unchecked(&cursor);
+            m_size       = extractor.GetU32_unchecked(&cursor);
+            
+            const size_t buffer_size = 1024;
+            size_t count;
+            
+            DataBufferHeap string_buf(buffer_size, 0);
+            
+            count = process->ReadCStringFromMemory(m_name_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
+            m_name.assign((char*)string_buf.GetBytes(), count);
+            
+            count = process->ReadCStringFromMemory(m_type_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
+            m_type.assign((char*)string_buf.GetBytes(), count);
             
             return true;
         }
@@ -1863,4 +1980,54 @@ AppleObjCRuntimeV2::GetTypeVendor()
         m_type_vendor_ap.reset(new AppleObjCTypeVendor(*this));
     
     return m_type_vendor_ap.get();
+}
+
+lldb::addr_t
+AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
+{
+    lldb::addr_t ret = LLDB_INVALID_ADDRESS;
+
+    const char *name_cstr = name.AsCString();    
+    
+    if (name_cstr)
+    {
+        llvm::StringRef name_strref(name_cstr);
+        
+        static const llvm::StringRef ivar_prefix("OBJC_IVAR_$_");
+        
+        if (name_strref.startswith(ivar_prefix))
+        {
+            llvm::StringRef ivar_skipped_prefix = name_strref.substr(ivar_prefix.size());
+            std::pair<llvm::StringRef, llvm::StringRef> class_and_ivar = ivar_skipped_prefix.split('.');
+            
+            if (class_and_ivar.first.size() && class_and_ivar.second.size())
+            {
+                const ConstString class_name_cs(class_and_ivar.first);
+                ClassDescriptorSP descriptor = ObjCLanguageRuntime::GetClassDescriptor(class_name_cs);
+                                
+                if (descriptor)
+                {
+                    const ConstString ivar_name_cs(class_and_ivar.second);
+                    const char *ivar_name_cstr = ivar_name_cs.AsCString();
+                    
+                    auto ivar_func = [&ret, ivar_name_cstr](const char *name, const char *type, lldb::addr_t offset_addr, uint64_t size)
+                    {
+                        if (!strcmp(name, ivar_name_cstr))
+                        {
+                            ret = offset_addr;
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    descriptor->Describe(std::function<void (ObjCISA)>(nullptr),
+                                         std::function<bool (const char *, const char *)>(nullptr),
+                                         std::function<bool (const char *, const char *)>(nullptr),
+                                         ivar_func);
+                }
+            }
+        }
+    } 
+    
+    return ret;
 }
