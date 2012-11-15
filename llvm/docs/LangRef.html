@@ -256,7 +256,10 @@
           <li><a href="#int_cos">'<tt>llvm.cos.*</tt>' Intrinsic</a></li>
           <li><a href="#int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a></li>
           <li><a href="#int_exp">'<tt>llvm.exp.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_exp2">'<tt>llvm.exp2.*</tt>' Intrinsic</a></li>
           <li><a href="#int_log">'<tt>llvm.log.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_log10">'<tt>llvm.log10.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_log2">'<tt>llvm.log2.*</tt>' Intrinsic</a></li>
           <li><a href="#int_fma">'<tt>llvm.fma.*</tt>' Intrinsic</a></li>
           <li><a href="#int_fabs">'<tt>llvm.fabs.*</tt>' Intrinsic</a></li>
           <li><a href="#int_floor">'<tt>llvm.floor.*</tt>' Intrinsic</a></li>
@@ -7505,6 +7508,39 @@ LLVM</a>.</p>
 
 <!-- _______________________________________________________________________ -->
 <h4>
+  <a name="int_exp2">'<tt>llvm.exp2.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.exp2</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.exp2.f32(float  %Val)
+  declare double    @llvm.exp2.f64(double %Val)
+  declare x86_fp80  @llvm.exp2.f80(x86_fp80  %Val)
+  declare fp128     @llvm.exp2.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.exp2.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.exp2.*</tt>' intrinsics perform the exp2 function.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>exp2</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
   <a name="int_log">'<tt>llvm.log.*</tt>' Intrinsic</a>
 </h4>
 
@@ -7532,6 +7568,72 @@ LLVM</a>.</p>
 
 <h5>Semantics:</h5>
 <p>This function returns the same values as the libm <tt>log</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_log10">'<tt>llvm.log10.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.log10</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.log10.f32(float  %Val)
+  declare double    @llvm.log10.f64(double %Val)
+  declare x86_fp80  @llvm.log10.f80(x86_fp80  %Val)
+  declare fp128     @llvm.log10.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.log10.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.log10.*</tt>' intrinsics perform the log10 function.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>log10</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_log2">'<tt>llvm.log2.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.log2</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.log2.f32(float  %Val)
+  declare double    @llvm.log2.f64(double %Val)
+  declare x86_fp80  @llvm.log2.f80(x86_fp80  %Val)
+  declare fp128     @llvm.log2.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.log2.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.log2.*</tt>' intrinsics perform the log2 function.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>log2</tt> functions
    would, and handles error conditions in the same way.</p>
 
 </div>
