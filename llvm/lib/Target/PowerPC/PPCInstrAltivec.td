@@ -721,3 +721,13 @@ def : Pat<(v4f32 (sint_to_fp (v4i32 VRRC:$vA))),
            (VCFSX_0 VRRC:$vA)>;
 def : Pat<(v4f32 (uint_to_fp (v4i32 VRRC:$vA))),
            (VCFUX_0 VRRC:$vA)>;
+
+// Floating-point rounding
+def : Pat<(v4f32 (ffloor (v4f32 VRRC:$vA))),
+          (VRFIM VRRC:$vA)>;
+def : Pat<(v4f32 (fceil (v4f32 VRRC:$vA))),
+          (VRFIP VRRC:$vA)>;
+def : Pat<(v4f32 (ftrunc (v4f32 VRRC:$vA))),
+          (VRFIZ VRRC:$vA)>;
+def : Pat<(v4f32 (fnearbyint (v4f32 VRRC:$vA))),
+          (VRFIN VRRC:$vA)>;
