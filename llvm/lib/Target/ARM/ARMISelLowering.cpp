@@ -515,6 +515,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FLOG10, MVT::v4f32, Expand);
     setOperationAction(ISD::FEXP, MVT::v4f32, Expand);
     setOperationAction(ISD::FEXP2, MVT::v4f32, Expand);
+    setOperationAction(ISD::FCEIL, MVT::v4f32, Expand);
+    setOperationAction(ISD::FTRUNC, MVT::v4f32, Expand);
+    setOperationAction(ISD::FRINT, MVT::v4f32, Expand);
+    setOperationAction(ISD::FNEARBYINT, MVT::v4f32, Expand);
     setOperationAction(ISD::FFLOOR, MVT::v4f32, Expand);
 
     // Neon does not support some operations on v1i64 and v2i64 types.

@@ -727,7 +727,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // turn on ones that can be effectively codegen'd.
   for (int i = MVT::FIRST_VECTOR_VALUETYPE;
            i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
+    MVT VT = (MVT::SimpleValueType)i;
     setOperationAction(ISD::ADD , VT, Expand);
     setOperationAction(ISD::SUB , VT, Expand);
     setOperationAction(ISD::FADD, VT, Expand);
@@ -755,6 +755,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSQRT, VT, Expand);
     setOperationAction(ISD::FCOPYSIGN, VT, Expand);
     setOperationAction(ISD::FFLOOR, VT, Expand);
+    setOperationAction(ISD::FCEIL, VT, Expand);
+    setOperationAction(ISD::FTRUNC, VT, Expand);
+    setOperationAction(ISD::FRINT, VT, Expand);
+    setOperationAction(ISD::FNEARBYINT, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Expand);

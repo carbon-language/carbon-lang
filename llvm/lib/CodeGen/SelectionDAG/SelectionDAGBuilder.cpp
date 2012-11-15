@@ -4996,6 +4996,26 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                              getValue(I.getArgOperand(0)).getValueType(),
                              getValue(I.getArgOperand(0))));
     return 0;
+  case Intrinsic::ceil:
+    setValue(&I, DAG.getNode(ISD::FCEIL, dl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0))));
+    return 0;
+  case Intrinsic::trunc:
+    setValue(&I, DAG.getNode(ISD::FTRUNC, dl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0))));
+    return 0;
+  case Intrinsic::rint:
+    setValue(&I, DAG.getNode(ISD::FRINT, dl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0))));
+    return 0;
+  case Intrinsic::nearbyint:
+    setValue(&I, DAG.getNode(ISD::FNEARBYINT, dl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0))));
+    return 0;
   case Intrinsic::fma:
     setValue(&I, DAG.getNode(ISD::FMA, dl,
                              getValue(I.getArgOperand(0)).getValueType(),

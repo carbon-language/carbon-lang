@@ -260,6 +260,10 @@
           <li><a href="#int_fma">'<tt>llvm.fma.*</tt>' Intrinsic</a></li>
           <li><a href="#int_fabs">'<tt>llvm.fabs.*</tt>' Intrinsic</a></li>
           <li><a href="#int_floor">'<tt>llvm.floor.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_ceil">'<tt>llvm.ceil.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_trunc">'<tt>llvm.trunc.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_rint">'<tt>llvm.rint.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_nearbyint">'<tt>llvm.nearbyint.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
@@ -7631,6 +7635,143 @@ LLVM</a>.</p>
 <h5>Semantics:</h5>
 <p>This function returns the same values as the libm <tt>floor</tt> functions
    would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_ceil">'<tt>llvm.ceil.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.ceil</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.ceil.f32(float  %Val)
+  declare double    @llvm.ceil.f64(double %Val)
+  declare x86_fp80  @llvm.ceil.f80(x86_fp80  %Val)
+  declare fp128     @llvm.ceil.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.ceil.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.ceil.*</tt>' intrinsics return the ceiling of
+   the operand.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>ceil</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_trunc">'<tt>llvm.trunc.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.trunc</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.trunc.f32(float  %Val)
+  declare double    @llvm.trunc.f64(double %Val)
+  declare x86_fp80  @llvm.trunc.f80(x86_fp80  %Val)
+  declare fp128     @llvm.trunc.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.trunc.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.trunc.*</tt>' intrinsics returns the operand rounded to the
+   nearest integer not larger in magnitude than the operand.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>trunc</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_rint">'<tt>llvm.rint.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.rint</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.rint.f32(float  %Val)
+  declare double    @llvm.rint.f64(double %Val)
+  declare x86_fp80  @llvm.rint.f80(x86_fp80  %Val)
+  declare fp128     @llvm.rint.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.rint.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.rint.*</tt>' intrinsics returns the operand rounded to the
+   nearest integer. It may raise an inexact floating-point exception if the
+   operand isn't an integer.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>rint</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_nearbyint">'<tt>llvm.nearbyint.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.nearbyint</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.nearbyint.f32(float  %Val)
+  declare double    @llvm.nearbyint.f64(double %Val)
+  declare x86_fp80  @llvm.nearbyint.f80(x86_fp80  %Val)
+  declare fp128     @llvm.nearbyint.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.nearbyint.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.nearbyint.*</tt>' intrinsics returns the operand rounded to the
+   nearest integer.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>nearbyint</tt>
+   functions would, and handles error conditions in the same way.</p>
 
 </div>
 
