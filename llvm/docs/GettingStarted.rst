@@ -842,12 +842,39 @@ any subdirectories that it contains.  Entering any directory inside the LLVM
 object tree and typing ``gmake`` should rebuild anything in or below that
 directory that is out of date.
 
+This does not apply to building the documentation.
+LLVM's (non-Doxygen) documentation is produced with the
+`Sphinx <http://sphinx-doc.org/>`_ documentation generation system.
+There are some HTML documents that have not yet been converted to the new
+system (which uses the easy-to-read and easy-to-write
+`reStructuredText <http://sphinx-doc.org/rest.html>`_ plaintext markup
+language).
+The generated documentation is built in the ``SRC_ROOT/docs`` directory using
+a special makefile.
+For instructions on how to install Sphinx, see
+`Sphinx Introduction for LLVM Developers
+<http://lld.llvm.org/sphinx_intro.html>`_.
+After following the instructions there for installing Sphinx, build the LLVM
+HTML documentation by doing the following:
+
+.. code-block:: bash
+
+  $ cd SRC_ROOT/docs
+  $ make -f Makefile.sphinx
+
+This creates a ``_build/html`` sub-directory with all of the HTML files, not
+just the generated ones.
+This directory corresponds to ``llvm.org/docs``.
+For example, ``_build/html/SphinxQuickstartTemplate.html`` corresponds to
+``llvm.org/docs/SphinxQuickstartTemplate.html``.
+The :doc:`SphinxQuickstartTemplate` is useful when creating a new document.
+
 Cross-Compiling LLVM
 --------------------
 
 It is possible to cross-compile LLVM itself. That is, you can create LLVM
 executables and libraries to be hosted on a platform different from the platform
-where they are build (a Canadian Cross build). To configure a cross-compile,
+where they are built (a Canadian Cross build). To configure a cross-compile,
 supply the configure script with ``--build`` and ``--host`` options that are
 different. The values of these options must be legal target triples that your
 GCC compiler supports.
