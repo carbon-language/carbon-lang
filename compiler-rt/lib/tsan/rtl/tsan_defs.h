@@ -48,7 +48,7 @@ const uptr kShadowCnt = TSAN_SHADOW_COUNT;
 # endif
 #else
 // Count of shadow values in a shadow cell.
-const uptr kShadowCnt = 8;
+const uptr kShadowCnt = 4;
 #endif
 
 // That many user bytes are mapped onto a single shadow cell.
