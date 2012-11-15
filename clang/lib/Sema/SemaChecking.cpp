@@ -4385,7 +4385,7 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
       // Check to see if the constant is equivalent to a negative value
       // cast to CommonT.
       if (S.Context.getIntWidth(ConstantT) == S.Context.getIntWidth(CommonT) &&
-          Value.isNegative() && Value.getMinSignedBits() < OtherWidth)
+          Value.isNegative() && Value.getMinSignedBits() <= OtherWidth)
         return;
       // The constant value rests between values that OtherT can represent after
       // conversion.  Relational comparison still works, but equality
