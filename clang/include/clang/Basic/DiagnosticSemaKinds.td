@@ -1584,8 +1584,6 @@ def err_attribute_argument_not_int : Error<
   "'%0' attribute requires integer constant">;
 def err_aligned_attribute_argument_not_int : Error<
   "'aligned' attribute requires integer constant">;
-def err_attribute_argument_not_class : Error<
-  "%0 attribute requires arguments that are class type or point to class type">;
 def err_attribute_first_argument_not_int_or_bool : Error<
   "%0 attribute first argument must be of int or bool type">;
 def err_attribute_argument_outof_range : Error<

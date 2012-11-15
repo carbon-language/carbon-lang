@@ -225,8 +225,6 @@ def note_missing_selector_name : Note<
 def note_force_empty_selector_name : Note<
   "or insert whitespace before ':' to use %0 as parameter name "
   "and have an empty entry in the selector">;
-def note_missing_argument_name : Note<
-  "did you mean to use %0 as the selector name instead of %1">;
 def err_label_end_of_compound_statement : Error<
   "label at end of compound statement: expected statement">;
 def err_address_of_label_outside_fn : Error<

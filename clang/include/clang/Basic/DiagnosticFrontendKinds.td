@@ -129,8 +129,6 @@ def err_missing_module_name : Error<
   DefaultFatal;
 def err_missing_module : Error<
   "no module named '%0' declared in module map file '%1'">, DefaultFatal;
-def err_missing_umbrella_header : Error<
-  "cannot open umbrella header '%0': %1">, DefaultFatal;
 def err_no_submodule : Error<"no submodule named %0 in module '%1'">;
 def err_no_submodule_suggest : Error<
   "no submodule named %0 in module '%1'; did you mean '%2'?">;
