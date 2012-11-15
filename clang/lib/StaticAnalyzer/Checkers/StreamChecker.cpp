@@ -57,9 +57,7 @@ struct StreamState {
 };
 
 class StreamChecker : public Checker<eval::Call,
-                                       check::DeadSymbols,
-                                       check::EndPath,
-                                       check::PreStmt<ReturnStmt> > {
+                                     check::DeadSymbols > {
   mutable IdentifierInfo *II_fopen, *II_tmpfile, *II_fclose, *II_fread,
                  *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
@@ -75,8 +73,6 @@ public:
 
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
-  void checkEndPath(CheckerContext &Ctx) const;
-  void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
 
 private:
   void Fopen(CheckerContext &C, const CallExpr *CE) const;
@@ -421,47 +417,6 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
       }
     }
   }
-}
-
-void StreamChecker::checkEndPath(CheckerContext &Ctx) const {
-  ProgramStateRef state = Ctx.getState();
-  StreamMapTy M = state->get<StreamMap>();
-  
-  for (StreamMapTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    StreamState SS = I->second;
-    if (SS.isOpened()) {
-      ExplodedNode *N = Ctx.addTransition(state);
-      if (N) {
-        if (!BT_ResourceLeak)
-          BT_ResourceLeak.reset(new BuiltinBug("Resource Leak", 
-                         "Opened File never closed. Potential Resource leak."));
-        BugReport *R = new BugReport(*BT_ResourceLeak, 
-                                     BT_ResourceLeak->getDescription(), N);
-        Ctx.emitReport(R);
-      }
-    }
-  }
-}
-
-void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
-  const Expr *RetE = S->getRetValue();
-  if (!RetE)
-    return;
-  
-  ProgramStateRef state = C.getState();
-  SymbolRef Sym = state->getSVal(RetE, C.getLocationContext()).getAsSymbol();
-  
-  if (!Sym)
-    return;
-  
-  const StreamState *SS = state->get<StreamMap>(Sym);
-  if(!SS)
-    return;
-
-  if (SS->isOpened())
-    state = state->set<StreamMap>(Sym, StreamState::getEscaped(S));
-
-  C.addTransition(state);
 }
 
 void ento::registerStreamChecker(CheckerManager &mgr) {
