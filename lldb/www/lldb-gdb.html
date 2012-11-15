@@ -631,6 +631,17 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Calling a function so you can stop at a breakpoint in the function.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> set unwindonsignal 0<br>
+                            <b>(gdb)</b> p function_with_a_breakpoint()<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> expr -u 0 -- function_with_a_breakpoint()<br>
+                        </td>
+                    </tr>
+
 
                     </table>
                     <p>
