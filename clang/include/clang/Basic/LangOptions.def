@@ -104,7 +104,7 @@ LANGOPT(FastMath          , 1, 0, "__FAST_MATH__ predefined macro")
 LANGOPT(FiniteMathOnly    , 1, 0, "__FINITE_MATH_ONLY__ predefined macro")
 
 BENIGN_LANGOPT(ObjCGCBitmapPrint , 1, 0, "printing of GC's bitmap layout for __weak/__strong ivars")
-BENIGN_LANGOPT(ObjCExtendedBlockEncode , 1, 0, "Do extended encoding of block type signature")
+BENIGN_LANGOPT(ObjCExtendedBlockEncode , 1, 1, "Do extended encoding of block type signature")
 
 BENIGN_LANGOPT(AccessControl     , 1, 1, "C++ access control")
 LANGOPT(CharIsSigned      , 1, 1, "signed char")
