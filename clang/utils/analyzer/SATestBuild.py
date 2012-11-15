@@ -213,8 +213,8 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
             # If using 'make', auto imply a -jX argument
             # to speed up analysis.  xcodebuild will
             # automatically use the maximum number of cores.
-            if Command.startswith("make "):
-                Command += "-j" + Jobs
+            if Command.startswith("make ") or Command == "make":
+                Command += " -j" + Jobs
             SBCommand = SBPrefix + Command
             if Verbose == 1:        
                 print "  Executing: %s" % (SBCommand,)
