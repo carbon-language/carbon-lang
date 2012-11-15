@@ -175,16 +175,29 @@ ThreadList::FindThreadByIndexID (uint32_t index_id, bool can_update)
 bool
 ThreadList::ShouldStop (Event *event_ptr)
 {
-    Mutex::Locker locker(m_threads_mutex);
-
+    bool should_stop = false;    
     // Running events should never stop, obviously...
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
-    bool should_stop = false;    
-    m_process->UpdateThreadListIfNeeded();
+    // The ShouldStop method of the threads can do a whole lot of work,
+    // running breakpoint commands & conditions, etc.  So we don't want
+    // to keep the ThreadList locked the whole time we are doing this.
+    // FIXME: It is possible that running code could cause new threads
+    // to be created.  If that happens we will miss asking them whether
+    // then should stop.  This is not a big deal, since we haven't had
+    // a chance to hang any interesting operations on those threads yet.
+    
+    collection threads_copy;
+    {
+        // Scope for locker
+        Mutex::Locker locker(m_threads_mutex);
 
-    collection::iterator pos, end = m_threads.end();
+        m_process->UpdateThreadListIfNeeded();
+        threads_copy = m_threads;
+    }
+
+    collection::iterator pos, end = threads_copy.end();
 
     if (log)
     {
@@ -192,7 +205,7 @@ ThreadList::ShouldStop (Event *event_ptr)
         log->Printf ("ThreadList::%s: %llu threads", __FUNCTION__, (uint64_t)m_threads.size());
     }
 
-    for (pos = m_threads.begin(); pos != end; ++pos)
+    for (pos = threads_copy.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
         
@@ -206,7 +219,7 @@ ThreadList::ShouldStop (Event *event_ptr)
 
     if (should_stop)
     {
-        for (pos = m_threads.begin(); pos != end; ++pos)
+        for (pos = threads_copy.begin(); pos != end; ++pos)
         {
             ThreadSP thread_sp(*pos);
             thread_sp->WillStop ();
