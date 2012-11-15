@@ -323,7 +323,7 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   PM.add(createGlobalDCEPass());
 }
 
-LLVMPassManagerBuilderRef LLVMPassManagerBuilderCreate(void) {
+LLVMPassManagerBuilderRef LLVMPassManagerBuilderCreate() {
   PassManagerBuilder *PMB = new PassManagerBuilder();
   return wrap(PMB);
 }

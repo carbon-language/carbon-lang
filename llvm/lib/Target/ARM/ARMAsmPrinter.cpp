@@ -398,7 +398,7 @@ GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
 }
 
 
-MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel(void) const {
+MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "SJLJEH"
     << getFunctionNumber();

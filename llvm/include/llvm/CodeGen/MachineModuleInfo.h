@@ -372,7 +372,7 @@ public:
 
   /// getCurrentCallSite - Get the call site currently being processed, if any.
   /// return zero if none.
-  unsigned getCurrentCallSite(void) { return CurCallSite; }
+  unsigned getCurrentCallSite() { return CurCallSite; }
 
   /// getTypeInfos - Return a reference to the C++ typeinfo for the current
   /// function.

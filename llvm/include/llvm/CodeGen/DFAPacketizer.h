@@ -135,7 +135,7 @@ public:
   // initPacketizerState - perform initialization before packetizing
   // an instruction. This function is supposed to be overrided by
   // the target dependent packetizer.
-  virtual void initPacketizerState(void) { return; }
+  virtual void initPacketizerState() { return; }
 
   // ignorePseudoInstruction - Ignore bundling of pseudo instructions.
   virtual bool ignorePseudoInstruction(MachineInstr *I,

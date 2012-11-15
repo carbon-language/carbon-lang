@@ -71,7 +71,7 @@ namespace llvm
 
     /// flushBuffer - Dump the contents of the buffer to Stream.
     ///
-    void flushBuffer(void) {
+    void flushBuffer() {
       if (Filled)
         // Write the older portion of the buffer.
         TheStream->write(Cur, BufferArray + BufferSize - Cur);
@@ -151,7 +151,7 @@ namespace llvm
     /// flushBufferWithBanner - Force output of the buffer along with
     /// a small header.
     ///
-    void flushBufferWithBanner(void);
+    void flushBufferWithBanner();
 
   private:
     /// releaseStream - Delete the held stream if needed. Otherwise,

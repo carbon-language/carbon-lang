@@ -311,11 +311,11 @@ public:
 
   /// doInitialization - Run all of the initializers for the module passes.
   ///
-  bool doInitialization(void);
+  bool doInitialization();
 
   /// doFinalization - Run all of the finalizers for the module passes.
   ///
-  bool doFinalization(void);
+  bool doFinalization();
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
@@ -404,11 +404,11 @@ public:
 
   /// doInitialization - Run all of the initializers for the module passes.
   ///
-  bool doInitialization(void);
+  bool doInitialization();
 
   /// doFinalization - Run all of the finalizers for the module passes.
   ///
-  bool doFinalization(void);
+  bool doFinalization();
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
@@ -1616,7 +1616,7 @@ MPPassManager::runOnModule(Module &M) {
 
 /// Run all of the initializers for the module passes.
 ///
-bool MPPassManager::doInitialization(void) {
+bool MPPassManager::doInitialization() {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
@@ -1627,7 +1627,7 @@ bool MPPassManager::doInitialization(void) {
 
 /// Run all of the finalizers for the module passes.
 ///
-bool MPPassManager::doFinalization(void) {
+bool MPPassManager::doFinalization() {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
@@ -1680,7 +1680,7 @@ Pass* MPPassManager::getOnTheFlyPass(Pass *MP, AnalysisID PI, Function &F){
 //===----------------------------------------------------------------------===//
 // PassManagerImpl implementation
 
-bool PassManagerImpl::doInitialization(void) {
+bool PassManagerImpl::doInitialization() {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
@@ -1689,7 +1689,7 @@ bool PassManagerImpl::doInitialization(void) {
   return Changed;
 }
 
-bool PassManagerImpl::doFinalization(void) {
+bool PassManagerImpl::doFinalization() {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)

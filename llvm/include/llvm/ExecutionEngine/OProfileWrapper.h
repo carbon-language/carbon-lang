@@ -41,10 +41,10 @@ class OProfileWrapper {
   typedef  int           (*op_unload_native_code_ptr_t)(op_agent_t, uint64_t);
 
   // Also used for op_minor_version function which has the same signature
-  typedef  int           (*op_major_version_ptr_t)(void);
+  typedef  int           (*op_major_version_ptr_t)();
 
   // This is not a part of the opagent API, but is useful nonetheless
-  typedef  bool          (*IsOProfileRunningPtrT)(void);
+  typedef  bool          (*IsOProfileRunningPtrT)();
 
 
   op_agent_t                      Agent;
@@ -99,8 +99,8 @@ public:
                                size_t num_entries,
                                struct debug_line_info const* info);
   int op_unload_native_code(uint64_t addr);
-  int op_major_version(void);
-  int op_minor_version(void);
+  int op_major_version();
+  int op_minor_version();
 
   // Returns true if the oprofiled process is running, the opagent library is
   // loaded and a connection to the agent has been established, and false
