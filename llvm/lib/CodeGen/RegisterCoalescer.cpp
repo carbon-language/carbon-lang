@@ -2080,8 +2080,10 @@ void RegisterCoalescer::joinAllIntervals() {
   unsigned CurrDepth = UINT_MAX;
   for (unsigned i = 0, e = MBBs.size(); i != e; ++i) {
     // Try coalescing the collected local copies for deeper loops.
-    if (JoinGlobalCopies && MBBs[i].Depth < CurrDepth)
+    if (JoinGlobalCopies && MBBs[i].Depth < CurrDepth) {
       coalesceLocals();
+      CurrDepth = MBBs[i].Depth;
+    }
     copyCoalesceInMBB(MBBs[i].MBB);
   }
   coalesceLocals();
