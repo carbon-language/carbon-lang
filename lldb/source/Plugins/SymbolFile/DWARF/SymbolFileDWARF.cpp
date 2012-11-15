@@ -3222,9 +3222,8 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
                                                 const char *base_name_start,
                                                 const char *base_name_end)
 {
-    // If we are looking only for methods, throw away all the ones that aren't in C++ classes:
-    if (name_type_mask == eFunctionNameTypeMethod
-        || name_type_mask == eFunctionNameTypeBase)
+    // If we are looking only for methods, throw away all the ones that are or aren't in C++ classes:
+    if (name_type_mask == eFunctionNameTypeMethod || name_type_mask == eFunctionNameTypeBase)
     {
         clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIEOffset(die->GetOffset());
         if (!containing_decl_ctx)
@@ -3232,10 +3231,17 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
         
         bool is_cxx_method = DeclKindIsCXXClass(containing_decl_ctx->getDeclKind());
         
-        if (!is_cxx_method && name_type_mask == eFunctionNameTypeMethod)
-            return false;
-        if (is_cxx_method && name_type_mask == eFunctionNameTypeBase)
-            return false;
+        if (name_type_mask == eFunctionNameTypeMethod)
+        {
+            if (is_cxx_method == false)
+                return false;
+        }
+        
+        if (name_type_mask == eFunctionNameTypeBase)
+        {
+            if (is_cxx_method == true)
+                return false;
+        }
     }
 
     // Now we need to check whether the name we got back for this type matches the extra specifications
@@ -3246,20 +3252,31 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
         // we can pull out the mips linkage name attribute:
         
         Mangled best_name;
-
         DWARFDebugInfoEntry::Attributes attributes;
+        DWARFFormValue form_value;
         die->GetAttributes(this, dwarf_cu, NULL, attributes);
         uint32_t idx = attributes.FindAttributeIndex(DW_AT_MIPS_linkage_name);
         if (idx != UINT32_MAX)
         {
-            DWARFFormValue form_value;
             if (attributes.ExtractFormValueAtIndex(this, idx, form_value))
             {
-                const char *name = form_value.AsCString(&get_debug_str_data());
-                best_name.SetValue (ConstString(name), true);
-            } 
+                const char *mangled_name = form_value.AsCString(&get_debug_str_data());
+                if (mangled_name)
+                    best_name.SetValue (ConstString(mangled_name), true);
+            }
         }
-        if (best_name)
+
+        if (!best_name)
+        {
+            idx = attributes.FindAttributeIndex(DW_AT_name);
+            if (idx != UINT32_MAX && attributes.ExtractFormValueAtIndex(this, idx, form_value))
+            {
+                const char *name = form_value.AsCString(&get_debug_str_data());
+                best_name.SetValue (ConstString(name), false);
+            }
+        }
+
+        if (best_name.GetDemangledName())
         {
             const char *demangled = best_name.GetDemangledName().GetCString();
             if (demangled)
@@ -3489,20 +3506,20 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
                         if (die)
                         {
+                            if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                                continue;
+                            
                             if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                                 continue;
                             
-                            if (!FunctionDieMatchesPartialName(die, 
+                            if (!FunctionDieMatchesPartialName(die,
                                                                dwarf_cu, 
-                                                               effective_name_type_mask, 
+                                                               effective_name_type_mask,
                                                                name_cstr, 
                                                                base_name_start, 
                                                                base_name_end))
                                 continue;
                             
-                            if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                                continue;
-                                
                             // If we get to here, the die is good, and we should add it:
                             ResolveFunction (dwarf_cu, die, sc_list);
                         }
@@ -3540,18 +3557,18 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                 if (die)
                 {
+                    if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                        continue;
+                    
                     if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                         continue;
                     
                     if (!FunctionDieMatchesPartialName(die, 
                                                        dwarf_cu, 
-                                                       effective_name_type_mask, 
+                                                       eFunctionNameTypeBase, 
                                                        name_cstr, 
                                                        base_name_start, 
                                                        base_name_end))
-                        continue;
-                    
-                    if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
                         continue;
                     
                     // If we get to here, the die is good, and we should add it:
@@ -3573,15 +3590,15 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                     if (die)
                     {
-                        if (!FunctionDieMatchesPartialName(die, 
+                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                            continue;
+                        
+                        if (!FunctionDieMatchesPartialName(die,
                                                            dwarf_cu, 
-                                                           effective_name_type_mask, 
+                                                           eFunctionNameTypeMethod, 
                                                            name_cstr, 
                                                            base_name_start, 
                                                            base_name_end))
-                            continue;
-                        
-                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
                             continue;
                         
                         // If we get to here, the die is good, and we should add it:
