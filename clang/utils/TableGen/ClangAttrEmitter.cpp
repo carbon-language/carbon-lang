@@ -47,7 +47,7 @@ static std::string ReadPCHRecord(StringRef type) {
     .EndsWith("Decl *", "GetLocalDeclAs<" 
               + std::string(type, 0, type.size()-1) + ">(F, Record[Idx++])")
     .Case("QualType", "getLocalType(F, Record[Idx++])")
-    .Case("Expr *", "ReadSubExpr()")
+    .Case("Expr *", "ReadExpr(F)")
     .Case("IdentifierInfo *", "GetIdentifierInfo(F, Record, Idx)")
     .Case("SourceLocation", "ReadSourceLocation(F, Record, Idx)")
     .Default("Record[Idx++]");
