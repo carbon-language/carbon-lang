@@ -8467,46 +8467,38 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
 static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
                                       SourceLocation OpLoc, Expr *LHSExpr,
                                       Expr *RHSExpr) {
-  typedef BinaryOperator BinOp;
-  BinOp::Opcode LHSopc = static_cast<BinOp::Opcode>(-1),
-                RHSopc = static_cast<BinOp::Opcode>(-1);
-  if (BinOp *BO = dyn_cast<BinOp>(LHSExpr))
-    LHSopc = BO->getOpcode();
-  if (BinOp *BO = dyn_cast<BinOp>(RHSExpr))
-    RHSopc = BO->getOpcode();
+  BinaryOperator *LHSBO = dyn_cast<BinaryOperator>(LHSExpr);
+  BinaryOperator *RHSBO = dyn_cast<BinaryOperator>(RHSExpr);
 
-  // Subs are not binary operators.
-  if (LHSopc == -1 && RHSopc == -1)
+  // Check that one of the sides is a comparison operator.
+  bool isLeftComp = LHSBO && LHSBO->isComparisonOp();
+  bool isRightComp = RHSBO && RHSBO->isComparisonOp();
+  if (!isLeftComp && !isRightComp)
     return;
 
   // Bitwise operations are sometimes used as eager logical ops.
   // Don't diagnose this.
-  if ((BinOp::isComparisonOp(LHSopc) || BinOp::isBitwiseOp(LHSopc)) &&
-      (BinOp::isComparisonOp(RHSopc) || BinOp::isBitwiseOp(RHSopc)))
+  bool isLeftBitwise = LHSBO && LHSBO->isBitwiseOp();
+  bool isRightBitwise = RHSBO && RHSBO->isBitwiseOp();
+  if ((isLeftComp || isLeftBitwise) && (isRightComp || isRightBitwise))
     return;
-
-  bool isLeftComp = BinOp::isComparisonOp(LHSopc);
-  bool isRightComp = BinOp::isComparisonOp(RHSopc);
-  if (!isLeftComp && !isRightComp) return;
 
   SourceRange DiagRange = isLeftComp ? SourceRange(LHSExpr->getLocStart(),
                                                    OpLoc)
                                      : SourceRange(OpLoc, RHSExpr->getLocEnd());
-  StringRef OpStr = isLeftComp ? BinOp::getOpcodeStr(LHSopc)
-                               : BinOp::getOpcodeStr(RHSopc);
+  StringRef OpStr = isLeftComp ? LHSBO->getOpcodeStr() : RHSBO->getOpcodeStr();
   SourceRange ParensRange = isLeftComp ?
-      SourceRange(cast<BinOp>(LHSExpr)->getRHS()->getLocStart(),
-                  RHSExpr->getLocEnd())
-    : SourceRange(LHSExpr->getLocStart(),
-                  cast<BinOp>(RHSExpr)->getLHS()->getLocStart());
+      SourceRange(LHSBO->getRHS()->getLocStart(), RHSExpr->getLocEnd())
+    : SourceRange(LHSExpr->getLocStart(), RHSBO->getLHS()->getLocStart());
 
   Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
-    << DiagRange << BinOp::getOpcodeStr(Opc) << OpStr;
+    << DiagRange << BinaryOperator::getOpcodeStr(Opc) << OpStr;
   SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_silence) << OpStr,
     (isLeftComp ? LHSExpr : RHSExpr)->getSourceRange());
   SuggestParentheses(Self, OpLoc,
-    Self.PDiag(diag::note_precedence_bitwise_first) << BinOp::getOpcodeStr(Opc),
+    Self.PDiag(diag::note_precedence_bitwise_first)
+      << BinaryOperator::getOpcodeStr(Opc),
     ParensRange);
 }
 
