@@ -131,12 +131,14 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
   u8 *shadow_bottom = (u8*)MemToShadow(bottom);
 
   while (shadow_ptr >= shadow_bottom &&
-      *shadow_ptr != kAsanStackLeftRedzoneMagic) {
+      *shadow_ptr != kAsanStackLeftRedzoneMagic &&
+      *shadow_ptr != kAsanStackAfterReturnLeftMagic) {
     shadow_ptr--;
   }
 
   while (shadow_ptr >= shadow_bottom &&
-      *shadow_ptr == kAsanStackLeftRedzoneMagic) {
+      (*shadow_ptr == kAsanStackLeftRedzoneMagic ||
+       *shadow_ptr == kAsanStackAfterReturnLeftMagic)) {
     shadow_ptr--;
   }
 

@@ -998,6 +998,10 @@ void FakeStack::OnFree(uptr ptr, uptr size, uptr real_stack) {
   CHECK(fake_frame->descr != 0);
   CHECK(fake_frame->size_minus_one == size - 1);
   PoisonShadow(ptr, size, kAsanStackAfterReturnMagic);
+  CHECK(size >= SHADOW_GRANULARITY);
+  // Poison the leftmost shadow byte with a special value so that we can find
+  // the beginning of the fake frame when reporting an error.
+  PoisonShadow(ptr, SHADOW_GRANULARITY, kAsanStackAfterReturnLeftMagic);
 }
 
 }  // namespace __asan
