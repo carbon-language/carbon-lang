@@ -967,8 +967,8 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         for (std::set<ConstantInt*, ConstantIntOrdering>::iterator I =
                                     PTIHandled.begin(),
                E = PTIHandled.end(); I != E; ++I) {
-          if (PredHasWeights || SuccHasWeights) 
-            Weights.push_back(WeightsForHandled[*I]); 
+          if (PredHasWeights || SuccHasWeights)
+            Weights.push_back(WeightsForHandled[*I]);
           PredCases.push_back(ValueEqualityComparisonCase(*I, BBDefault));
           NewSuccessors.push_back(BBDefault);
         }
@@ -1193,7 +1193,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
        I != E; ++I) {
     if (PHINode *PN = dyn_cast<PHINode>(I)) {
       Value *BB1V = PN->getIncomingValueForBlock(BB1);
-      Value *BB2V = PN->getIncomingValueForBlock(BB2); 
+      Value *BB2V = PN->getIncomingValueForBlock(BB2);
       MapValueFromBB1ToBB2[BB1V] = std::make_pair(BB2V, PN);
     } else {
       FirstNonPhiInBBEnd = &*I;
@@ -1202,7 +1202,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
   }
   if (!FirstNonPhiInBBEnd)
     return false;
-  
+
 
   // This does very trivial matching, with limited scanning, to find identical
   // instructions in the two blocks.  We scan backward for obviously identical
