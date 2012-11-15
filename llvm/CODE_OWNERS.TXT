@@ -12,6 +12,10 @@ N: Joe Abbey
 E: jabbey@arxan.com
 D: LLVM Bitcode (lib/Bitcode/* include/llvm/Bitcode/*)
 
+N: Owen Anderson
+E: resistor@mac.com
+D: SelectionDAG (lib/CodeGen/SelectionDAG/*)
+
 N: Evan Cheng
 E: evan.cheng@apple.com
 D: ARM target, parts of code generator not covered by someone else
