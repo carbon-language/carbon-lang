@@ -111,8 +111,13 @@ namespace rdar8231724 {
   struct X { };
   struct Y : X { };
 
+  template<typename T> struct Z { int n; };
+
   void f(Y *y) {
     y->N::X1<int>; // expected-error{{'rdar8231724::N::X1' is not a member of class 'rdar8231724::Y'}}
+    y->Z<int>::n; // expected-error{{'rdar8231724::Z<int>::n' is not a member of class 'rdar8231724::Y'}}
+    y->template Z<int>::n; // expected-error{{'rdar8231724::Z<int>::n' is not a member of class 'rdar8231724::Y'}} \
+    // expected-warning{{'template' keyword outside of a template}}
   }
 }
 
