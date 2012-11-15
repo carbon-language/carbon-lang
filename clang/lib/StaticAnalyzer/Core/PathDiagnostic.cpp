@@ -790,11 +790,14 @@ PathDiagnosticCallPiece::getCallEnterEvent() const {
   StringRef msg = Out.str();
   if (msg.empty())
     return 0;
+  assert(callEnter.asLocation().isValid());
   return new PathDiagnosticEventPiece(callEnter, msg);
 }
 
 IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
+  if (!callEnterWithin.asLocation().isValid())
+    return 0;
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
   if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Caller))
@@ -819,6 +822,7 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
     Out << "Returning from '" << *ND << "'";
   else
     Out << "Returning to caller";
+  assert(callReturn.asLocation().isValid());
   return new PathDiagnosticEventPiece(callReturn, Out.str());
 }
 

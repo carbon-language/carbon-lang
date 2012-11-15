@@ -193,7 +193,7 @@ static void removeRedundantMsgs(PathPieces &path) {
 /// that aren't needed.  Return true if afterwards the path contains
 /// "interesting stuff" which means it should be pruned from the parent path.
 bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
-                                     PathDiagnosticCallPiece *CallWithLoc) {
+                                     PathDiagnosticLocation *LastCallLocation) {
   bool containsSomethingInteresting = false;
   const unsigned N = pieces.size();
   
@@ -217,18 +217,24 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
           containsSomethingInteresting = true;
           break;
         }
+
+        if (LastCallLocation) {
+          if (!call->callEnter.asLocation().isValid())
+            call->callEnter = *LastCallLocation;
+          if (!call->callReturn.asLocation().isValid())
+            call->callReturn = *LastCallLocation;
+        }
+
         // Recursively clean out the subclass.  Keep this call around if
         // it contains any informative diagnostics.
-        PathDiagnosticCallPiece *NewCallWithLoc =
-          call->getLocation().asLocation().isValid()
-            ? call : CallWithLoc;
-        
-        if (!RemoveUneededCalls(call->path, R, NewCallWithLoc))
-          continue;
+        if (call->callEnterWithin.asLocation().isValid())
+          LastCallLocation = &call->callEnterWithin;
+        else
+          LastCallLocation = &call->callEnter;
 
-        if (NewCallWithLoc == CallWithLoc && CallWithLoc) {
-          call->callEnter = CallWithLoc->callEnter;
-        }
+        assert(LastCallLocation && "Outermost call has an invalid location");
+        if (!RemoveUneededCalls(call->path, R, LastCallLocation))
+          continue;
         
         containsSomethingInteresting = true;
         break;

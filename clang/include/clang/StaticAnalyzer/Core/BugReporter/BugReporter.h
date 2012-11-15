@@ -441,7 +441,7 @@ public:
   }
 
   bool RemoveUneededCalls(PathPieces &pieces, BugReport *R,
-                          PathDiagnosticCallPiece *CallWithLoc = 0);
+                          PathDiagnosticLocation *LastCallLocation = 0);
 
   void Register(BugType *BT);
 
