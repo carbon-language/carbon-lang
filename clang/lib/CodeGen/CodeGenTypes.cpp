@@ -453,9 +453,19 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // cannot lower the function type.
     if (!isFuncTypeConvertible(FT)) {
       // This function's type depends on an incomplete tag type.
+
+      // Force conversion of all the relevant record types, to make sure
+      // we re-convert the FunctionType when appropriate.
+      if (const RecordType *RT = FT->getResultType()->getAs<RecordType>())
+        ConvertRecordDeclType(RT->getDecl());
+      if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
+        for (unsigned i = 0, e = FPT->getNumArgs(); i != e; i++)
+          if (const RecordType *RT = FPT->getArgType(i)->getAs<RecordType>())
+            ConvertRecordDeclType(RT->getDecl());
+
       // Return a placeholder type.
       ResultType = llvm::StructType::get(getLLVMContext());
-      
+
       SkippedLayout = true;
       break;
     }
