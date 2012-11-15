@@ -4782,8 +4782,7 @@ Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
 /// are omitted for the 'topmost' call in the decltype expression. If the
 /// topmost call bound a temporary, strip that temporary off the expression.
 ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
-  ExpressionEvaluationContextRecord &Rec = ExprEvalContexts.back();
-  assert(Rec.IsDecltype && "not in a decltype expression");
+  assert(ExprEvalContexts.back().IsDecltype && "not in a decltype expression");
 
   // C++11 [expr.call]p11:
   //   If a function call is a prvalue of object type,
@@ -4824,7 +4823,7 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
     E = TopBind->getSubExpr();
 
   // Disable the special decltype handling now.
-  Rec.IsDecltype = false;
+  ExprEvalContexts.back().IsDecltype = false;
 
   // In MS mode, don't perform any extra checking of call return types within a
   // decltype expression.
@@ -4833,8 +4832,9 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
 
   // Perform the semantic checks we delayed until this point.
   CallExpr *TopCall = dyn_cast<CallExpr>(E);
-  for (unsigned I = 0, N = Rec.DelayedDecltypeCalls.size(); I != N; ++I) {
-    CallExpr *Call = Rec.DelayedDecltypeCalls[I];
+  for (unsigned I = 0, N = ExprEvalContexts.back().DelayedDecltypeCalls.size();
+       I != N; ++I) {
+    CallExpr *Call = ExprEvalContexts.back().DelayedDecltypeCalls[I];
     if (Call == TopCall)
       continue;
 
@@ -4846,8 +4846,10 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
 
   // Now all relevant types are complete, check the destructors are accessible
   // and non-deleted, and annotate them on the temporaries.
-  for (unsigned I = 0, N = Rec.DelayedDecltypeBinds.size(); I != N; ++I) {
-    CXXBindTemporaryExpr *Bind = Rec.DelayedDecltypeBinds[I];
+  for (unsigned I = 0, N = ExprEvalContexts.back().DelayedDecltypeBinds.size();
+       I != N; ++I) {
+    CXXBindTemporaryExpr *Bind =
+      ExprEvalContexts.back().DelayedDecltypeBinds[I];
     if (Bind == TopBind)
       continue;
 
