@@ -537,8 +537,6 @@ uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
     return getStructLayout(cast<StructType>(Ty))->getSizeInBits();
   case Type::IntegerTyID:
     return cast<IntegerType>(Ty)->getBitWidth();
-  case Type::VoidTyID:
-    return 8;
   case Type::HalfTyID:
     return 16;
   case Type::FloatTyID:
@@ -600,7 +598,6 @@ unsigned DataLayout::getAlignment(Type *Ty, bool abi_or_pref) const {
     return std::max(Align, Layout->getAlignment());
   }
   case Type::IntegerTyID:
-  case Type::VoidTyID:
     AlignType = INTEGER_ALIGN;
     break;
   case Type::HalfTyID:

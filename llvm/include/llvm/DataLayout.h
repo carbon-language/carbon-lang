@@ -281,6 +281,7 @@ public:
 
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
   /// specified type.  For example, returns 36 for i36 and 80 for x86_fp80.
+  /// The type passed must have a size (Type::isSized() must return true).
   uint64_t getTypeSizeInBits(Type* Ty) const;
 
   /// getTypeStoreSize - Return the maximum number of bytes that may be
