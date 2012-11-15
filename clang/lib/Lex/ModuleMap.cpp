@@ -1307,7 +1307,9 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc,
       if (BuiltinFile)
         Map.addHeader(ActiveModule, BuiltinFile, Exclude);
     }
-  } else {
+  } else if (!Exclude) {
+    // Ignore excluded header files. They're optional anyway.
+    
     Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
       << Umbrella << FileName;
     HadError = true;

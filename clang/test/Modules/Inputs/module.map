@@ -63,6 +63,7 @@ module decldef {
 module redecl_merge_top { 
   header "redecl-merge-top.h"
   explicit module Explicit { header "redecl-merge-top-explicit.h" }
+  exclude header "nonexistent.h"
 }
 module redecl_merge_left { 
   header "redecl-merge-left.h" 
