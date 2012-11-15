@@ -4153,8 +4153,8 @@ QualType ASTContext::getPromotedIntegerType(QualType Promotable) const {
   // At this point, we should have a signed or unsigned integer type.
   if (Promotable->isSignedIntegerType())
     return IntTy;
-  uint64_t PromotableSize = getTypeSize(Promotable);
-  uint64_t IntSize = getTypeSize(IntTy);
+  uint64_t PromotableSize = getIntWidth(Promotable);
+  uint64_t IntSize = getIntWidth(IntTy);
   assert(Promotable->isUnsignedIntegerType() && PromotableSize <= IntSize);
   return (PromotableSize != IntSize) ? IntTy : UnsignedIntTy;
 }
