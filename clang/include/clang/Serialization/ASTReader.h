@@ -895,12 +895,23 @@ private:
 
   void MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
 
+  struct ImportedModule {
+    ModuleFile *Mod;
+    ModuleFile *ImportedBy;
+    SourceLocation ImportLoc;
+
+    ImportedModule(ModuleFile *Mod,
+                   ModuleFile *ImportedBy,
+                   SourceLocation ImportLoc)
+      : Mod(Mod), ImportedBy(ImportedBy), ImportLoc(ImportLoc) { }
+  };
+
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
-                            ModuleFile *ImportedBy,
-                            llvm::SmallVectorImpl<ModuleFile *> &Loaded,
+                            SourceLocation ImportLoc, ModuleFile *ImportedBy,
+                            llvm::SmallVectorImpl<ImportedModule> &Loaded,
                             unsigned ClientLoadCapabilities);
   ASTReadResult ReadControlBlock(ModuleFile &F,
-                                 llvm::SmallVectorImpl<ModuleFile *> &Loaded,
+                                 llvm::SmallVectorImpl<ImportedModule> &Loaded,
                                  unsigned ClientLoadCapabilities);
   bool ReadASTBlock(ModuleFile &F);
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
@@ -1100,10 +1111,14 @@ public:
   /// \param Type The kind of AST being loaded, e.g., PCH, module, main file,
   /// or preamble.
   ///
+  /// \param ImportLoc the location where the module file will be considered as
+  /// imported from. For non-module AST types it should be invalid.
+  ///
   /// \param ClientLoadCapabilities The set of client load-failure
   /// capabilities, represented as a bitset of the enumerators of
   /// LoadFailureCapabilities.
   ASTReadResult ReadAST(const std::string &FileName, ModuleKind Type,
+                        SourceLocation ImportLoc,
                         unsigned ClientLoadCapabilities);
 
   /// \brief Make the entities in the given module and any of its (non-explicit)

@@ -342,6 +342,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
   switch (Reader->ReadAST(Path,
                           Preamble ? serialization::MK_Preamble
                                    : serialization::MK_PCH,
+                          SourceLocation(),
                           ASTReader::ARR_None)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
@@ -989,7 +990,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     if (Module)
       ARRFlags |= ASTReader::ARR_OutOfDate;
     switch (ModuleManager->ReadAST(ModuleFile->getName(),
-                                   serialization::MK_Module,
+                                   serialization::MK_Module, ImportLoc,
                                    ARRFlags)) {
     case ASTReader::Success:
       break;
@@ -1005,7 +1006,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       ModuleFile = FileMgr->getFile(ModuleFileName);
       if (!ModuleFile ||
           ModuleManager->ReadAST(ModuleFileName,
-                                 serialization::MK_Module,
+                                 serialization::MK_Module, ImportLoc,
                                  ASTReader::ARR_None) != ASTReader::Success) {
         KnownModules[Path[0].first] = 0;
         return 0;

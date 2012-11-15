@@ -39,7 +39,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
     Reader->addInMemoryBuffer(sr, memBufs[ti]);
   }
   Reader->setDeserializationListener(deserialListener);
-  switch (Reader->ReadAST(pchFile, serialization::MK_PCH,
+  switch (Reader->ReadAST(pchFile, serialization::MK_PCH, SourceLocation(),
                           ASTReader::ARR_None)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader.

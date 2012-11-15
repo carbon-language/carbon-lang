@@ -791,7 +791,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                            Counter));
 
   switch (Reader->ReadAST(Filename, serialization::MK_MainFile,
-                          ASTReader::ARR_None)) {
+                          SourceLocation(), ASTReader::ARR_None)) {
   case ASTReader::Success:
     break;
 

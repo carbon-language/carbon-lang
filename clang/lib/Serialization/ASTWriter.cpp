@@ -1030,7 +1030,7 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
         continue;
 
       Record.push_back((unsigned)(*M)->Kind); // FIXME: Stable encoding
-      // FIXME: Write import location, once it matters.
+      AddSourceLocation((*M)->ImportLoc, Record);
       // FIXME: This writes the absolute path for AST files we depend on.
       const std::string &FileName = (*M)->FileName;
       Record.push_back(FileName.size());

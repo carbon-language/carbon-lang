@@ -964,6 +964,9 @@ bool ASTReader::ReadSLocEntry(int ID) {
     SrcMgr::CharacteristicKind
       FileCharacter = (SrcMgr::CharacteristicKind)Record[2];
     SourceLocation IncludeLoc = ReadSourceLocation(*F, Record[1]);
+    if (IncludeLoc.isInvalid() && F->Kind == MK_Module) {
+      IncludeLoc = getImportLocation(F);
+    }
     unsigned Code = SLocEntryCursor.ReadCode();
     Record.clear();
     unsigned RecCode
@@ -1611,7 +1614,7 @@ void ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M,
 
 ASTReader::ASTReadResult
 ASTReader::ReadControlBlock(ModuleFile &F,
-                            llvm::SmallVectorImpl<ModuleFile *> &Loaded,
+                            llvm::SmallVectorImpl<ImportedModule> &Loaded,
                             unsigned ClientLoadCapabilities) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
@@ -1706,13 +1709,18 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       while (Idx < N) {
         // Read information about the AST file.
         ModuleKind ImportedKind = (ModuleKind)Record[Idx++];
+        // The import location will be the local one for now; we will adjust
+        // all import locations of module imports after the global source
+        // location info are setup.
+        SourceLocation ImportLoc =
+            SourceLocation::getFromRawEncoding(Record[Idx++]);
         unsigned Length = Record[Idx++];
         SmallString<128> ImportedFile(Record.begin() + Idx,
                                       Record.begin() + Idx + Length);
         Idx += Length;
 
         // Load the AST file.
-        switch(ReadASTCore(ImportedFile, ImportedKind, &F, Loaded,
+        switch(ReadASTCore(ImportedFile, ImportedKind, ImportLoc, &F, Loaded,
                            ClientLoadCapabilities)) {
         case Failure: return Failure;
           // If we have to ignore the dependency, we'll have to ignore this too.
@@ -2675,13 +2683,14 @@ void ASTReader::makeModuleVisible(Module *Mod,
 
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type,
+                                            SourceLocation ImportLoc,
                                             unsigned ClientLoadCapabilities) {
   // Bump the generation number.
   unsigned PreviousGeneration = CurrentGeneration++;
 
   unsigned NumModules = ModuleMgr.size();
-  llvm::SmallVector<ModuleFile *, 4> Loaded;
-  switch(ASTReadResult ReadResult = ReadASTCore(FileName, Type,
+  llvm::SmallVector<ImportedModule, 4> Loaded;
+  switch(ASTReadResult ReadResult = ReadASTCore(FileName, Type, ImportLoc,
                                                 /*ImportedBy=*/0, Loaded,
                                                 ClientLoadCapabilities)) {
   case Failure:
@@ -2699,10 +2708,10 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // Here comes stuff that we only do once the entire chain is loaded.
 
   // Load the AST blocks of all of the modules that we loaded.
-  for (llvm::SmallVectorImpl<ModuleFile *>::iterator M = Loaded.begin(),
+  for (llvm::SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
                                                   MEnd = Loaded.end();
        M != MEnd; ++M) {
-    ModuleFile &F = **M;
+    ModuleFile &F = *M->Mod;
 
     // Read the AST block.
     if (ReadASTBlock(F))
@@ -2723,6 +2732,18 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
       // SourceManager.
       SourceMgr.getLoadedSLocEntryByID(Index);
     }
+  }
+
+  // Setup the import locations.
+  for (llvm::SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
+                                                    MEnd = Loaded.end();
+       M != MEnd; ++M) {
+    ModuleFile &F = *M->Mod;
+    if (!M->ImportedBy)
+      F.ImportLoc = M->ImportLoc;
+    else
+      F.ImportLoc = ReadSourceLocation(*M->ImportedBy,
+                                       M->ImportLoc.getRawEncoding());
   }
 
   // Mark all of the identifiers in the identifier table as being out of date,
@@ -2786,8 +2807,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 ASTReader::ASTReadResult
 ASTReader::ReadASTCore(StringRef FileName,
                        ModuleKind Type,
+                       SourceLocation ImportLoc,
                        ModuleFile *ImportedBy,
-                       llvm::SmallVectorImpl<ModuleFile *> &Loaded,
+                       llvm::SmallVectorImpl<ImportedModule> &Loaded,
                        unsigned ClientLoadCapabilities) {
   ModuleFile *M;
   bool NewModule;
@@ -2861,7 +2883,7 @@ ASTReader::ReadASTCore(StringRef FileName,
       break;
     case AST_BLOCK_ID:
       // Record that we've loaded this module.
-      Loaded.push_back(M);
+      Loaded.push_back(ImportedModule(M, ImportedBy, ImportLoc));
       return Success;
 
     default:
