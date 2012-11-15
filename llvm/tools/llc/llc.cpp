@@ -359,7 +359,9 @@ int main(int argc, char **argv) {
     // Before executing passes, print the final values of the LLVM options.
     cl::PrintOptionValues();
 
+    PM.doInitialization();
     PM.run(*mod);
+    PM.doFinalization();
   }
 
   // Declare success.

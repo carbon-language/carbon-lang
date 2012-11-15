@@ -412,7 +412,9 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
   // Verify that this is still valid.
   PassManager Passes;
   Passes.add(createVerifierPass());
+  Passes.doInitialization();
   Passes.run(*M);
+  Passes.doFinalization();
 
   // Try running on the hacked up program...
   if (TestFn(BD, M)) {

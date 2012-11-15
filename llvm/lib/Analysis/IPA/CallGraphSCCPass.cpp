@@ -51,6 +51,9 @@ public:
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M);
 
+  using ModulePass::doInitialization;
+  using ModulePass::doFinalization;
+
   bool doInitialization(CallGraph &CG);
   bool doFinalization(CallGraph &CG);
 

@@ -287,7 +287,9 @@ int main(int argc, char **argv) {
   PassManager PassMgr;
   PassMgr.add(createProfileLoaderPass(ProfileDataFile));
   PassMgr.add(new ProfileInfoPrinterPass(PIL));
+  PassMgr.doInitialization();
   PassMgr.run(*M);
+  PassMgr.doFinalization();
 
   return 0;
 }

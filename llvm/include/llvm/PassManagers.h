@@ -420,10 +420,20 @@ public:
   /// cleanup - After running all passes, clean up pass manager cache.
   void cleanup();
 
+  /// doInitialization - Overrides ModulePass doInitialization for global
+  /// initialization tasks
+  ///
+  using ModulePass::doInitialization;
+
   /// doInitialization - Run all of the initializers for the function passes.
   ///
   bool doInitialization(Module &M);
 
+  /// doFinalization - Overrides ModulePass doFinalization for global
+  /// finalization tasks
+  /// 
+  using ModulePass::doFinalization;
+  
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization(Module &M);

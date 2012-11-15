@@ -342,7 +342,9 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createInternalizePass(mustPreserveList));
 
   // apply scope restrictions
+  passes.doInitialization();
   passes.run(*mergedModule);
+  passes.doFinalization();
 
   _scopeRestrictionsDone = true;
 }
@@ -397,7 +399,9 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   }
 
   // Run our queue of passes all at once now, efficiently.
+  passes.doInitialization();
   passes.run(*mergedModule);
+  passes.doFinalization();
 
   // Run the code generator, and write assembly file
   codeGenPasses->doInitialization();

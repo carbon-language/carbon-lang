@@ -276,7 +276,9 @@ int main(int argc, char **argv) {
   else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
     Passes.add(createBitcodeWriterPass(Out.os()));
 
+  Passes.doInitialization();
   Passes.run(*M.get());
+  Passes.doFinalization();
 
   // Declare success.
   Out.keep();

@@ -227,9 +227,19 @@ public:
   /// createPrinterPass - Get a module printer pass.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
 
+  /// doInitialization - Virtual method overridden by subclasses to do
+  /// any necessary initialization.
+  ///
+  virtual bool doInitialization(void)  { return false; }
+
   /// runOnModule - Virtual method overriden by subclasses to process the module
   /// being operated on.
   virtual bool runOnModule(Module &M) = 0;
+
+  /// doFinalization - Virtual method overriden by subclasses to do any post
+  /// processing needed after all passes have run.
+  ///
+  virtual bool doFinalization(void) { return false; }
 
   virtual void assignPassManager(PMStack &PMS,
                                  PassManagerType T);
