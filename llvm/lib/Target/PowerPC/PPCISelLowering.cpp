@@ -347,6 +347,16 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::UREM, VT, Expand);
       setOperationAction(ISD::FDIV, VT, Expand);
       setOperationAction(ISD::FNEG, VT, Expand);
+      setOperationAction(ISD::FSQRT, VT, Expand);
+      setOperationAction(ISD::FLOG, VT, Expand);
+      setOperationAction(ISD::FLOG10, VT, Expand);
+      setOperationAction(ISD::FLOG2, VT, Expand);
+      setOperationAction(ISD::FEXP, VT, Expand);
+      setOperationAction(ISD::FEXP2, VT, Expand);
+      setOperationAction(ISD::FSIN, VT, Expand);
+      setOperationAction(ISD::FCOS, VT, Expand);
+      setOperationAction(ISD::FABS, VT, Expand);
+      setOperationAction(ISD::FPOWI, VT, Expand);
       setOperationAction(ISD::FFLOOR, VT, Expand);
       setOperationAction(ISD::FCEIL,  VT, Expand);
       setOperationAction(ISD::FTRUNC, VT, Expand);
@@ -376,12 +386,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
       setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
       setLoadExtAction(ISD::EXTLOAD, VT, Expand);
-    }
-
-    for (unsigned i = (unsigned)MVT::FIRST_FP_VECTOR_VALUETYPE;
-         i <= (unsigned)MVT::LAST_FP_VECTOR_VALUETYPE; ++i) {
-      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
-      setOperationAction(ISD::FSQRT, VT, Expand);
     }
 
     // We can custom expand all VECTOR_SHUFFLEs to VPERM, others we can handle
