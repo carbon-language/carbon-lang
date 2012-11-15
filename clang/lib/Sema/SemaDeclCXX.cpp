@@ -1795,7 +1795,11 @@ namespace {
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
     UninitializedFieldVisitor(Sema &S, ValueDecl *VD) : Inherited(S.Context),
-                                                        S(S), VD(VD) {
+                                                        S(S) {
+      if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(VD))
+        this->VD = IFD->getAnonField();
+      else
+        this->VD = VD;
     }
 
     void HandleExpr(Expr *E) {
@@ -1812,23 +1816,33 @@ namespace {
 
       if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
         if (isa<EnumConstantDecl>(ME->getMemberDecl()))
-            return;
+          return;
+
+        // FieldME is the inner-most MemberExpr that is not an anonymous struct
+        // or union.
+        MemberExpr *FieldME = ME;
+
         Expr *Base = E;
         while (isa<MemberExpr>(Base)) {
-          ME = dyn_cast<MemberExpr>(Base);
-          if (VarDecl *VarD = dyn_cast<VarDecl>(ME->getMemberDecl()))
-            if (VarD->hasGlobalStorage())
-              return;
+          ME = cast<MemberExpr>(Base);
+
+          if (isa<VarDecl>(ME->getMemberDecl()))
+            return;
+
+          if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
+            if (!FD->isAnonymousStructOrUnion())
+              FieldME = ME;
+
           Base = ME->getBase();
         }
 
-        if (VD == ME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
+        if (VD == FieldME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
           unsigned diag = VD->getType()->isReferenceType()
               ? diag::warn_reference_field_is_uninit
               : diag::warn_field_is_uninit;
-          S.Diag(ME->getExprLoc(), diag) << ME->getMemberNameInfo().getName();
-          return;
+          S.Diag(FieldME->getExprLoc(), diag) << VD;
         }
+        return;
       }
 
       if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {

@@ -283,3 +283,9 @@ namespace PR12049 {
       int member; // expected-error {{expected ')'}}
   };
 }
+
+namespace PR14073 {
+  struct S1 { union { int n; }; S1() : n(n) {} };  // expected-warning {{field 'n' is uninitialized when used here}}
+  struct S2 { union { union { int n; }; char c; }; S2() : n(n) {} };  // expected-warning {{field 'n' is uninitialized when used here}}
+  struct S3 { struct { int n; }; S3() : n(n) {} };  // expected-warning {{field 'n' is uninitialized when used here}}
+}
