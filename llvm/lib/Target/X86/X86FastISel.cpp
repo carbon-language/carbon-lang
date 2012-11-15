@@ -2154,13 +2154,13 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
 unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
   MVT VT;
   if (!isTypeLegal(CF->getType(), VT))
-    return false;
+    return 0;
 
   // Get opcode and regclass for the given zero.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
   switch (VT.SimpleTy) {
-  default: return false;
+  default: return 0;
   case MVT::f32:
     if (X86ScalarSSEf32) {
       Opc = X86::FsFLD0SS;
@@ -2181,7 +2181,7 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
     break;
   case MVT::f80:
     // No f80 support yet.
-    return false;
+    return 0;
   }
 
   unsigned ResultReg = createResultReg(RC);
