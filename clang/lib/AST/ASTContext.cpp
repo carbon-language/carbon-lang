@@ -4511,7 +4511,7 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
   QualType BlockTy =
       Expr->getType()->getAs<BlockPointerType>()->getPointeeType();
   // Encode result type.
-  if (getLangOpts().ObjCExtendedBlockEncode)
+  if (getLangOpts().EncodeExtendedBlockSig)
     getObjCEncodingForMethodParameter(Decl::OBJC_TQ_None,
                             BlockTy->getAs<FunctionType>()->getResultType(),
                             S, true /*Extended*/);
@@ -4552,7 +4552,7 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
         PType = PVDecl->getType();
     } else if (PType->isFunctionType())
       PType = PVDecl->getType();
-    if (getLangOpts().ObjCExtendedBlockEncode)
+    if (getLangOpts().EncodeExtendedBlockSig)
       getObjCEncodingForMethodParameter(Decl::OBJC_TQ_None, PType,
                                       S, true /*Extended*/);
     else
