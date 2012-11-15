@@ -258,7 +258,8 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     BalTgtMBB->addSuccessor(TgtMBB);
 
     int64_t TgtAddress = MBBInfos[TgtMBB->getNumber()].Address;
-    int64_t Offset = TgtAddress - (I.Address + I.Size - 20);
+    unsigned BalTgtMBBSize = 5;
+    int64_t Offset = TgtAddress - (I.Address + I.Size - BalTgtMBBSize * 4);
     int64_t Lo = SignExtend64<16>(Offset & 0xffff);
     int64_t Hi = SignExtend64<16>(((Offset + 0x8000) >> 16) & 0xffff);
 
@@ -351,6 +352,9 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::DADDiu), Mips::SP_64)
         .addReg(Mips::SP_64).addImm(16)->setIsInsideBundle();
     }
+
+    assert(BalTgtMBBSize == BalTgtMBB->size());
+    assert(LongBrMBB->size() + BalTgtMBBSize == LongBranchSeqSize);
   } else {
     // $longbr:
     //  j $tgt
@@ -361,6 +365,8 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     LongBrMBB->addSuccessor(TgtMBB);
     BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::J)).addMBB(TgtMBB);
     BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::NOP))->setIsInsideBundle();
+
+    assert(LongBrMBB->size() == LongBranchSeqSize);
   }
 
   if (I.Br->isUnconditionalBranch()) {
