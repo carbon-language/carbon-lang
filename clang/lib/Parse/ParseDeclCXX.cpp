@@ -1985,16 +1985,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
         Diag(DeclaratorInfo.getIdentifierLoc(),
              diag::err_function_declared_typedef);
-        // This recovery skips the entire function body. It would be nice
-        // to simply call ParseCXXInlineMethodDef() below, however Sema
-        // assumes the declarator represents a function, not a typedef.
-        ConsumeBrace();
-        SkipUntil(tok::r_brace, /*StopAtSemi*/false);
 
-        // Consume the optional ';'
-        if (Tok.is(tok::semi))
-          ConsumeToken();
-        return;
+        // Recover by treating the 'typedef' as spurious.
+        DS.ClearStorageClassSpecs();
       }
 
       Decl *FunDecl =

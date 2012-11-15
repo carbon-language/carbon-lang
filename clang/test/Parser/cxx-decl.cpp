@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux -pedantic %s
+// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux -pedantic -fcxx-exceptions -fexceptions %s
 
 const char const *x10; // expected-warning {{duplicate 'const' declaration specifier}}
 
@@ -123,6 +123,14 @@ void CodeCompleteConsumer::() { // expected-error {{xpected unqualified-id}}
 
 // PR4111
 void f(sqrgl); // expected-error {{unknown type name 'sqrgl'}}
+
+// PR9903
+struct S {
+  typedef void a() { }; // expected-error {{function definition declared 'typedef'}}
+  typedef void c() try { } catch(...) { } // expected-error {{function definition declared 'typedef'}}
+  int n, m;
+  typedef S() : n(1), m(2) { } // expected-error {{function definition declared 'typedef'}}
+};
 
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}

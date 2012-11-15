@@ -34,3 +34,8 @@ struct MultiCV {
 };
 
 static_assert(something, ""); // expected-error {{undeclared identifier}}
+
+// PR9903
+struct SS {
+  typedef void d() = default; // expected-error {{function definition declared 'typedef'}} expected-error {{only special member functions may be defaulted}}
+};
