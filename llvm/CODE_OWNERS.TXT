@@ -22,7 +22,7 @@ D: ARM target, parts of code generator not covered by someone else
 
 N: Eric Christopher
 E: echristo@gmail.com
-D: Debug Information, autotools, inline assembly
+D: Debug Information, autotools/configure/make build, inline assembly
 
 N: Greg Clayton
 D: LLDB
