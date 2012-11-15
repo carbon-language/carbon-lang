@@ -168,27 +168,24 @@ static SVal adjustReturnValue(SVal V, QualType ExpectedTy, QualType ActualTy,
 void ExprEngine::removeDeadOnEndOfFunction(NodeBuilderContext& BC,
                                            ExplodedNode *Pred,
                                            ExplodedNodeSet &Dst) {
-  NodeBuilder Bldr(Pred, Dst, BC);
-
   // Find the last statement in the function and the corresponding basic block.
   const Stmt *LastSt = 0;
   const CFGBlock *Blk = 0;
   llvm::tie(LastSt, Blk) = getLastStmt(Pred);
   if (!Blk || !LastSt) {
+    Dst.Add(Pred);
     return;
   }
-  
-  // If the last statement is return, everything it references should stay live.
-  if (isa<ReturnStmt>(LastSt))
-    return;
 
   // Here, we call the Symbol Reaper with 0 stack context telling it to clean up
   // everything on the stack. We use LastStmt as a diagnostic statement, with 
-  // which the PreStmtPurgeDead point will be associated.
-  currBldrCtx = &BC;
-  removeDead(Pred, Dst, 0, 0, LastSt,
+  // which the program point will be associated. However, we only want to use
+  // LastStmt as a reference for what to clean up if it's a ReturnStmt;
+  // otherwise, everything is dead.
+  SaveAndRestore<const NodeBuilderContext *> NodeContextRAII(currBldrCtx, &BC);
+  removeDead(Pred, Dst, dyn_cast<ReturnStmt>(LastSt),
+             Pred->getLocationContext(), LastSt,
              ProgramPoint::PostStmtPurgeDeadSymbolsKind);
-  currBldrCtx = 0;
 }
 
 static bool wasDifferentDeclUsedForInlining(CallEventRef<> Call,
@@ -290,11 +287,11 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
 
     NodeBuilderContext Ctx(getCoreEngine(), Blk, BindedRetNode);
     currBldrCtx = &Ctx;
-    // Here, we call the Symbol Reaper with 0 statement and caller location
+    // Here, we call the Symbol Reaper with 0 statement and callee location
     // context, telling it to clean up everything in the callee's context
-    // (and it's children). We use LastStmt as a diagnostic statement, which
-    // which the PreStmtPurge Dead point will be associated.
-    removeDead(BindedRetNode, CleanedNodes, 0, callerCtx, LastSt,
+    // (and its children). We use LastSt as a diagnostic statement, which
+    // which the program point will be associated.
+    removeDead(BindedRetNode, CleanedNodes, 0, calleeCtx, LastSt,
                ProgramPoint::PostStmtPurgeDeadSymbolsKind);
     currBldrCtx = 0;
   } else {

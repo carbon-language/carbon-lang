@@ -1030,6 +1030,11 @@ void *test(void *ptr) {
   return newPtr;
 }
 
+
+char *testLeakWithinReturn(char *str) {
+  return strdup(strdup(str)); // expected-warning{{leak}}
+}
+
 // ----------------------------------------------------------------------------
 // False negatives.
 

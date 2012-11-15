@@ -154,26 +154,33 @@ public:
   const ExplodedGraph& getGraph() const { return G; }
 
   /// \brief Run the analyzer's garbage collection - remove dead symbols and
-  /// bindings.
+  /// bindings from the state.
   ///
-  /// \param Node - The predecessor node, from which the processing should 
-  /// start.
-  /// \param Out - The returned set of output nodes.
-  /// \param ReferenceStmt - Run garbage collection using the symbols, 
-  /// which are live before the given statement.
-  /// \param LC - The location context of the ReferenceStmt.
-  /// \param DiagnosticStmt - the statement used to associate the diagnostic 
-  /// message, if any warnings should occur while removing the dead (leaks 
-  /// are usually reported here).
-  /// \param K - In some cases it is possible to use PreStmt kind. (Do 
-  /// not use it unless you know what you are doing.) 
-  /// If the ReferenceStmt is NULL, everything is this and parent contexts is
-  /// considered live.
-  /// If the stack frame context is NULL, everything on stack is considered
-  /// dead.
+  /// Checkers can participate in this process with two callbacks:
+  /// \c checkLiveSymbols and \c checkDeadSymbols. See the CheckerDocumentation
+  /// class for more information.
+  ///
+  /// \param Node The predecessor node, from which the processing should start.
+  /// \param Out The returned set of output nodes.
+  /// \param ReferenceStmt The statement which is about to be processed.
+  ///        Everything needed for this statement should be considered live.
+  ///        A null statement means that everything in child LocationContexts
+  ///        is dead.
+  /// \param LC The location context of the \p ReferenceStmt. A null location
+  ///        context means that we have reached the end of analysis and that
+  ///        all statements and local variables should be considered dead.
+  /// \param DiagnosticStmt Used as a location for any warnings that should
+  ///        occur while removing the dead (e.g. leaks). By default, the
+  ///        \p ReferenceStmt is used.
+  /// \param K Denotes whether this is a pre- or post-statement purge. This
+  ///        must only be ProgramPoint::PostStmtPurgeDeadSymbolsKind if an
+  ///        entire location context is being cleared, in which case the
+  ///        \p ReferenceStmt must either be a ReturnStmt or \c NULL. Otherwise,
+  ///        it must be ProgramPoint::PreStmtPurgeDeadSymbolsKind (the default)
+  ///        and \p ReferenceStmt must be valid (non-null).
   void removeDead(ExplodedNode *Node, ExplodedNodeSet &Out,
-            const Stmt *ReferenceStmt, const StackFrameContext *LC,
-            const Stmt *DiagnosticStmt,
+            const Stmt *ReferenceStmt, const LocationContext *LC,
+            const Stmt *DiagnosticStmt = 0,
             ProgramPoint::Kind K = ProgramPoint::PreStmtPurgeDeadSymbolsKind);
 
   /// processCFGElement - Called by CoreEngine. Used to generate new successor
