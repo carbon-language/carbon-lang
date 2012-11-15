@@ -120,9 +120,8 @@ class CmpOptions:
         self.verboseLog = verboseLog
 
 class AnalysisReport:
-    def __init__(self, run, files, clang_vers):
+    def __init__(self, run, files):
         self.run = run
-        self.clang_version = clang_vers
         self.files = files
         self.diagnostics = []
 
@@ -134,6 +133,10 @@ class AnalysisRun:
         self.reports = []
         # Cumulative list of all diagnostics from all the reports.
         self.diagnostics = []
+        self.clang_version = None
+    
+    def getClangVersion(self):
+        return self.clang_version
 
 
 # Backward compatibility API. 
@@ -156,6 +159,15 @@ def loadResultsFromSingleRun(info, deleteEmpty=True):
             p = os.path.join(dirpath, f)
             data = plistlib.readPlist(p)
     
+            # We want to retrieve the clang version even if there are no 
+            # reports. Assume that all reports were created using the same 
+            # clang version (this is always true and is more efficient).
+            if ('clang_version' in data) :
+                if (run.clang_version == None) :
+                    run.clang_version = data.pop('clang_version')
+                else:
+                    data.pop('clang_version')
+                
             # Ignore/delete empty reports.
             if not data['files']:
                 if deleteEmpty == True:
@@ -173,11 +185,7 @@ def loadResultsFromSingleRun(info, deleteEmpty=True):
             else:
                 htmlFiles = [None] * len(data['diagnostics'])
             
-            clang_version = ''
-            if 'clang_version' in data:
-                clang_version = data.pop('clang_version')
-            
-            report = AnalysisReport(run, data.pop('files'), clang_version)
+            report = AnalysisReport(run, data.pop('files'))
             diagnostics = [AnalysisDiagnostic(d, report, h) 
                            for d,h in zip(data.pop('diagnostics'),
                                           htmlFiles)]
