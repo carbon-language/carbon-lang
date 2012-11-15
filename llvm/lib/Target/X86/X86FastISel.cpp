@@ -297,7 +297,7 @@ bool X86FastISel::X86FastEmitStore(EVT VT, const Value *Val,
     case MVT::i32: Opc = X86::MOV32mi; break;
     case MVT::i64:
       // Must be a 32-bit sign extended value.
-      if ((int)CI->getSExtValue() == CI->getSExtValue())
+      if (isInt<32>(CI->getSExtValue()))
         Opc = X86::MOV64mi32;
       break;
     }
