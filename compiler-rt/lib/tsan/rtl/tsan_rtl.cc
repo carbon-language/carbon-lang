@@ -349,7 +349,7 @@ static inline bool HappensBefore(Shadow old, ThreadState *thr) {
 
 ALWAYS_INLINE
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
-    int kAccessSizeLog, bool kAccessIsWrite, FastState fast_state,
+    int kAccessSizeLog, bool kAccessIsWrite,
     u64 *shadow_mem, Shadow cur) {
   StatInc(thr, StatMop);
   StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
@@ -455,7 +455,7 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   // That is, this call must be moved somewhere below.
   TraceAddEvent(thr, fast_state.epoch(), EventTypeMop, pc);
 
-  MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite, fast_state,
+  MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite,
       shadow_mem, cur);
 }
 

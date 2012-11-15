@@ -470,7 +470,7 @@ int Finalize(ThreadState *thr);
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite);
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
-    int kAccessSizeLog, bool kAccessIsWrite, FastState fast_state,
+    int kAccessSizeLog, bool kAccessIsWrite,
     u64 *shadow_mem, Shadow cur);
 void MemoryRead1Byte(ThreadState *thr, uptr pc, uptr addr);
 void MemoryWrite1Byte(ThreadState *thr, uptr pc, uptr addr);
