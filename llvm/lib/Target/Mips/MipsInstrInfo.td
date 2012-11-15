@@ -148,14 +148,14 @@ def HasSwap     :     Predicate<"Subtarget.hasSwap()">,
                       AssemblerPredicate<"FeatureSwap">;
 def HasCondMov  :     Predicate<"Subtarget.hasCondMov()">,
                       AssemblerPredicate<"FeatureCondMov">;
+def HasFPIdx    :     Predicate<"Subtarget.hasFPIdx()">,
+                      AssemblerPredicate<"FeatureFPIdx">;
 def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
                       AssemblerPredicate<"FeatureMips32r2">;
 def HasMips64    :    Predicate<"Subtarget.hasMips64()">,
                       AssemblerPredicate<"FeatureMips64">;
-def HasMips32r2Or64 : Predicate<"Subtarget.hasMips32r2Or64()">,
-                      AssemblerPredicate<"FeatureMips32r2,FeatureMips64">;
 def NotMips64    :    Predicate<"!Subtarget.hasMips64()">,
                       AssemblerPredicate<"!FeatureMips64">;
 def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,

@@ -282,7 +282,7 @@ let Predicates = [NotN64, NotMips64, HasStandardEncoding] in {
 }
 
 // Indexed loads and stores.
-let Predicates = [HasMips32r2Or64, HasStandardEncoding] in {
+let Predicates = [HasFPIdx, HasStandardEncoding] in {
   def LWXC1 : FPIdxLoad<0x0, "lwxc1", FGR32, CPURegs, load>;
   def SWXC1 : FPIdxStore<0x8, "swxc1", FGR32, CPURegs, store>;
 }

@@ -31,8 +31,8 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   MipsArchVersion(Mips32), MipsABI(UnknownABI), IsLittle(little),
   IsSingleFloat(false), IsFP64bit(false), IsGP64bit(false), HasVFPU(false),
   IsLinux(true), HasSEInReg(false), HasCondMov(false), HasMulDivAdd(false),
-  HasMinMax(false), HasSwap(false), HasBitCount(false), InMips16Mode(false),
-  HasDSP(false), HasDSPR2(false), IsAndroid(false)
+  HasMinMax(false), HasSwap(false), HasBitCount(false), HasFPIdx(false),
+  InMips16Mode(false), HasDSP(false), HasDSPR2(false), IsAndroid(false)
 {
   std::string CPUName = CPU;
   if (CPUName.empty())

@@ -390,7 +390,7 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
 
     if (LS &&
         (LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
-        Subtarget.hasMips32r2Or64())
+        Subtarget.hasFPIdx())
       return false;
   }
 
@@ -500,7 +500,7 @@ bool MipsDAGToDAGISel::SelectAddr16(
 
     if (LS &&
         (LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
-        Subtarget.hasMips32r2Or64())
+        Subtarget.hasFPIdx())
       return false;
   }
   Base   = Addr;
