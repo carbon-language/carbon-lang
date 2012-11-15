@@ -269,7 +269,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 
 /// InsertRangeTest - Emit a computation of: (V >= Lo && V < Hi) if Inside is
 /// true, otherwise (V < Lo || V >= Hi).  In practice, we emit the more efficient
-/// (V-Lo) <u Hi-Lo.  This method expects that Lo <= Hi. isSigned indicates
+/// (V-Lo) \<u Hi-Lo.  This method expects that Lo <= Hi. isSigned indicates
 /// whether to treat the V, Lo and HI as signed or not. IB is the location to
 /// insert new instructions.
 Value *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
