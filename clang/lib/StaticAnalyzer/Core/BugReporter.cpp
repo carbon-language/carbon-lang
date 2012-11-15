@@ -227,13 +227,14 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
 
         // Recursively clean out the subclass.  Keep this call around if
         // it contains any informative diagnostics.
+        PathDiagnosticLocation *ThisCallLocation;
         if (call->callEnterWithin.asLocation().isValid())
-          LastCallLocation = &call->callEnterWithin;
+          ThisCallLocation = &call->callEnterWithin;
         else
-          LastCallLocation = &call->callEnter;
+          ThisCallLocation = &call->callEnter;
 
-        assert(LastCallLocation && "Outermost call has an invalid location");
-        if (!RemoveUneededCalls(call->path, R, LastCallLocation))
+        assert(ThisCallLocation && "Outermost call has an invalid location");
+        if (!RemoveUneededCalls(call->path, R, ThisCallLocation))
           continue;
         
         containsSomethingInteresting = true;
