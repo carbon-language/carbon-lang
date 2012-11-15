@@ -34,9 +34,13 @@ def StringRef_summary(strref, internal_dict):
 class SourceLocation(object):
 	def __init__(self, srcloc):
 		self.srcloc = srcloc
+		self.ID = srcloc.GetChildAtIndex(0).GetValueAsUnsigned()
 	
 	def offset(self):
 		return getValueFromExpression(self.srcloc, ".getOffset()").GetValueAsUnsigned()
+
+	def isInvalid(self):
+		return self.ID == 0
 
 	def isMacro(self):
 		return getValueFromExpression(self.srcloc, ".isMacroID()").GetValueAsUnsigned()
@@ -49,6 +53,8 @@ class SourceLocation(object):
 		return print_str.GetSummary()
 
 	def summary(self):
+		if self.isInvalid():
+			return "<invalid loc>"
 		desc = "(offset: %d, %s)" % (self.offset(), "macro" if self.isMacro() else "file")
 		srcmgr_path = findObjectExpressionPath("clang::SourceManager", lldb.frame)
 		if srcmgr_path:
