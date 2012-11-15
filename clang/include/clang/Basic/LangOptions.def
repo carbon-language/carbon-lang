@@ -149,7 +149,6 @@ ENUM_LANGOPT(StackProtector, StackProtectorMode, 2, SSPOff,
              "stack protector mode")
 ENUM_LANGOPT(SignedOverflowBehavior, SignedOverflowBehaviorTy, 2, SOB_Undefined,
              "signed integer overflow handling")
-ENUM_LANGOPT(FPContractMode, FPContractModeKind, 2, FPC_On, "FP_CONTRACT mode")
 
 BENIGN_LANGOPT(InstantiationDepth, 32, 512, 
                "maximum template instantiation depth")

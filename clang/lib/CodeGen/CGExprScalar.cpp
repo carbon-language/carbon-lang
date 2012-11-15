@@ -2217,7 +2217,7 @@ static Value* tryEmitFMulAdd(const BinOpInfo &op,
 
   // Check whether -ffp-contract=on. (If -ffp-contract=off/fast, fusing is
   // either disabled, or handled entirely by the LLVM backend).
-  if (CGF.getLangOpts().getFPContractMode() != LangOptions::FPC_On)
+  if (CGF.CGM.getCodeGenOpts().getFPContractMode() != CodeGenOptions::FPC_On)
     return 0;
 
   // We have a potentially fusable op. Look for a mul on one of the operands.

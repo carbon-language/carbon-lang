@@ -56,12 +56,6 @@ public:
     SOB_Trapping    // -ftrapv
   };
 
-  enum FPContractModeKind {
-    FPC_Off,        // Form fused FP ops only where result will not be affected.
-    FPC_On,         // Form fused FP ops according to FP_CONTRACT rules.
-    FPC_Fast        // Aggressively fuse FP ops (E.g. FMA).
-  };
-
 public:
   clang::ObjCRuntime ObjCRuntime;
 
