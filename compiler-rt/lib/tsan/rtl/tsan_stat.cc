@@ -196,6 +196,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_opendir]                  = "  opendir                         ";
   name[StatInt_epoll_ctl]                = "  epoll_ctl                       ";
   name[StatInt_epoll_wait]               = "  epoll_wait                      ";
+  name[StatInt_poll]                     = "  poll                            ";
   name[StatInt_sigaction]                = "  sigaction                       ";
   name[StatInt_sleep]                    = "  sleep                           ";
   name[StatInt_usleep]                   = "  usleep                          ";

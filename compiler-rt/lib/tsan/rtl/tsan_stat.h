@@ -195,6 +195,7 @@ enum StatType {
   StatInt_opendir,
   StatInt_epoll_ctl,
   StatInt_epoll_wait,
+  StatInt_poll,
   StatInt_sigaction,
   StatInt_signal,
   StatInt_raise,

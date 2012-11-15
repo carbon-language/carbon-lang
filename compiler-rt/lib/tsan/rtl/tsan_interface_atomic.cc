@@ -104,6 +104,7 @@ static morder ConvertOrder(morder mo) {
     mo = ConvertOrder(mo); \
     mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
     ThreadState *const thr = cur_thread(); \
+    ProcessPendingSignals(thr); \
     const uptr pc = (uptr)__builtin_return_address(0); \
     AtomicStatInc(thr, sizeof(*a), mo, StatAtomic##func); \
     ScopedAtomic sa(thr, pc, __FUNCTION__); \

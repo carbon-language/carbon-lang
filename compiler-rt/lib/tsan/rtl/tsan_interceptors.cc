@@ -115,6 +115,7 @@ struct SignalDesc {
 };
 
 struct SignalContext {
+  int in_blocking_func;
   int int_signal_send;
   int pending_signal_count;
   SignalDesc pending_signals[kSigCount];
@@ -136,8 +137,6 @@ static SignalContext *SigCtx(ThreadState *thr) {
 
 static unsigned g_thread_finalize_key;
 
-static void process_pending_signals(ThreadState *thr);
-
 ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
                                      uptr pc)
     : thr_(thr)
@@ -156,28 +155,45 @@ ScopedInterceptor::~ScopedInterceptor() {
   thr_->in_rtl--;
   if (thr_->in_rtl == 0) {
     FuncExit(thr_);
-    process_pending_signals(thr_);
+    ProcessPendingSignals(thr_);
   }
   CHECK_EQ(in_rtl_, thr_->in_rtl);
 }
 
+#define BLOCK_REAL(name) (BlockingCall(thr), REAL(name))
+
+struct BlockingCall {
+  BlockingCall(ThreadState *thr)
+      : ctx(SigCtx(thr)) {
+    CHECK_EQ(ctx->in_blocking_func, 0);
+    ctx->in_blocking_func++;
+  }
+
+  ~BlockingCall() {
+    ctx->in_blocking_func--;
+    CHECK_EQ(ctx->in_blocking_func, 0);
+  }
+
+  SignalContext *ctx;
+};
+
 TSAN_INTERCEPTOR(unsigned, sleep, unsigned sec) {
   SCOPED_TSAN_INTERCEPTOR(sleep, sec);
-  unsigned res = sleep(sec);
+  unsigned res = BLOCK_REAL(sleep)(sec);
   AfterSleep(thr, pc);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, usleep, long_t usec) {
   SCOPED_TSAN_INTERCEPTOR(usleep, usec);
-  int res = usleep(usec);
+  int res = BLOCK_REAL(usleep)(usec);
   AfterSleep(thr, pc);
   return res;
 }
 
 TSAN_INTERCEPTOR(int, nanosleep, void *req, void *rem) {
   SCOPED_TSAN_INTERCEPTOR(nanosleep, req, rem);
-  int res = nanosleep(req, rem);
+  int res = BLOCK_REAL(nanosleep)(req, rem);
   AfterSleep(thr, pc);
   return res;
 }
@@ -677,7 +693,7 @@ TSAN_INTERCEPTOR(int, pthread_create,
 TSAN_INTERCEPTOR(int, pthread_join, void *th, void **ret) {
   SCOPED_TSAN_INTERCEPTOR(pthread_join, th, ret);
   int tid = ThreadTid(thr, pc, (uptr)th);
-  int res = REAL(pthread_join)(th, ret);
+  int res = BLOCK_REAL(pthread_join)(th, ret);
   if (res == 0) {
     ThreadJoin(thr, pc, tid);
   }
@@ -980,7 +996,7 @@ TSAN_INTERCEPTOR(int, sem_destroy, void *s) {
 
 TSAN_INTERCEPTOR(int, sem_wait, void *s) {
   SCOPED_TSAN_INTERCEPTOR(sem_wait, s);
-  int res = REAL(sem_wait)(s);
+  int res = BLOCK_REAL(sem_wait)(s);
   if (res == 0) {
     Acquire(thr, pc, (uptr)s);
   }
@@ -989,7 +1005,7 @@ TSAN_INTERCEPTOR(int, sem_wait, void *s) {
 
 TSAN_INTERCEPTOR(int, sem_trywait, void *s) {
   SCOPED_TSAN_INTERCEPTOR(sem_trywait, s);
-  int res = REAL(sem_trywait)(s);
+  int res = BLOCK_REAL(sem_trywait)(s);
   if (res == 0) {
     Acquire(thr, pc, (uptr)s);
   }
@@ -998,7 +1014,7 @@ TSAN_INTERCEPTOR(int, sem_trywait, void *s) {
 
 TSAN_INTERCEPTOR(int, sem_timedwait, void *s, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(sem_timedwait, s, abstime);
-  int res = REAL(sem_timedwait)(s, abstime);
+  int res = BLOCK_REAL(sem_timedwait)(s, abstime);
   if (res == 0) {
     Acquire(thr, pc, (uptr)s);
   }
@@ -1190,10 +1206,16 @@ TSAN_INTERCEPTOR(int, epoll_ctl, int epfd, int op, int fd, void *ev) {
 
 TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   SCOPED_TSAN_INTERCEPTOR(epoll_wait, epfd, ev, cnt, timeout);
-  int res = REAL(epoll_wait)(epfd, ev, cnt, timeout);
+  int res = BLOCK_REAL(epoll_wait)(epfd, ev, cnt, timeout);
   if (res > 0) {
     Acquire(thr, pc, epollfd2addr(epfd));
   }
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, poll, void *fds, long_t nfds, int timeout) {
+  SCOPED_TSAN_INTERCEPTOR(poll, fds, nfds, timeout);
+  int res = BLOCK_REAL(poll)(fds, nfds, timeout);
   return res;
 }
 
@@ -1204,7 +1226,10 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
   // Don't mess with synchronous signals.
   if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
       sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE ||
-      (sctx && sig == sctx->int_signal_send)) {
+      // If we are sending signal to ourselves, we must process it now.
+      (sctx && sig == sctx->int_signal_send) ||
+      // If we are in blocking function, we can safely process it now.
+      (sctx && sctx->in_blocking_func)) {
     CHECK(thr->in_rtl == 0 || thr->in_rtl == 1);
     int in_rtl = thr->in_rtl;
     thr->in_rtl = 0;
@@ -1318,7 +1343,15 @@ TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
   return res;
 }
 
-static void process_pending_signals(ThreadState *thr) {
+TSAN_INTERCEPTOR(int, gettimeofday, void *tv, void *tz) {
+  SCOPED_TSAN_INTERCEPTOR(gettimeofday, tv, tz);
+  // It's intercepted merely to process pending signals.
+  return REAL(gettimeofday)(tv, tz);
+}
+
+namespace __tsan {
+
+void ProcessPendingSignals(ThreadState *thr) {
   CHECK_EQ(thr->in_rtl, 0);
   SignalContext *sctx = SigCtx(thr);
   if (sctx == 0 || sctx->pending_signal_count == 0 || thr->in_signal_handler)
@@ -1364,14 +1397,6 @@ static void process_pending_signals(ThreadState *thr) {
   CHECK_EQ(thr->in_signal_handler, true);
   thr->in_signal_handler = false;
 }
-
-TSAN_INTERCEPTOR(int, gettimeofday, void *tv, void *tz) {
-  SCOPED_TSAN_INTERCEPTOR(gettimeofday, tv, tz);
-  // It's intercepted merely to process pending signals.
-  return REAL(gettimeofday)(tv, tz);
-}
-
-namespace __tsan {
 
 void InitializeInterceptors() {
   CHECK_GT(cur_thread()->in_rtl, 0);
@@ -1489,6 +1514,7 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(epoll_ctl);
   TSAN_INTERCEPT(epoll_wait);
+  TSAN_INTERCEPT(poll);
 
   TSAN_INTERCEPT(sigaction);
   TSAN_INTERCEPT(signal);
