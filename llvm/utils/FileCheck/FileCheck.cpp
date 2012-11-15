@@ -256,7 +256,6 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
     FixedMatchEnd = std::min(FixedMatchEnd, PatternStr.find("[["));
     AddFixedStringToRegEx(PatternStr.substr(0, FixedMatchEnd), RegExStr);
     PatternStr = PatternStr.substr(FixedMatchEnd);
-    continue;
   }
 
   return false;
