@@ -395,7 +395,7 @@ ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
             if (object)
                 return ObjectFile::FindPlugin (module_sp, 
                                                file, 
-                                               object->ar_file_offset, 
+                                               m_offset + object->ar_file_offset,
                                                object->ar_file_size, 
                                                m_data.GetSharedDataBuffer());
         }
