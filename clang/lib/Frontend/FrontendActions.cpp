@@ -273,19 +273,11 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     CI.getPreprocessor().getHeaderSearchInfo().getModuleMap(),
     Module, HeaderContents);
 
-  StringRef InputName = Module::getModuleInputBufferName();
-
-  // We consistently construct a buffer as input to build the module.
-  // This means the main file for modules will always be a virtual one.
-  // FIXME: Maybe allow using a memory buffer as input directly instead of
-  // messing with virtual files.
-  const FileEntry *HeaderFile = FileMgr.getVirtualFile(InputName, 
-                                                       HeaderContents.size(), 
-                                                       time(0));
-  llvm::MemoryBuffer *HeaderContentsBuf
-    = llvm::MemoryBuffer::getMemBufferCopy(HeaderContents);
-  CI.getSourceManager().overrideFileContents(HeaderFile, HeaderContentsBuf);  
-  setCurrentInput(FrontendInputFile(InputName, getCurrentFileKind(),
+  llvm::MemoryBuffer *InputBuffer =
+      llvm::MemoryBuffer::getMemBufferCopy(HeaderContents,
+                                           Module::getModuleInputBufferName());
+  // Ownership of InputBuffer will be transfered to the SourceManager.
+  setCurrentInput(FrontendInputFile(InputBuffer, getCurrentFileKind(),
                                     Module->IsSystem));
   return true;
 }

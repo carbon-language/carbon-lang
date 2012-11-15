@@ -1796,6 +1796,10 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       MaybeAddSystemRootToFilename(F, F.OriginalSourceFileName);
       break;
 
+    case ORIGINAL_FILE_ID:
+      F.OriginalSourceFileID = FileID::get(Record[0]);
+      break;
+
     case ORIGINAL_PCH_DIR:
       F.OriginalDir.assign(BlobStart, BlobLen);
       break;

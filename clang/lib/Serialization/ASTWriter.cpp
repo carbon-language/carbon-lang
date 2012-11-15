@@ -777,6 +777,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(TARGET_OPTIONS);
   RECORD(ORIGINAL_FILE);
   RECORD(ORIGINAL_PCH_DIR);
+  RECORD(ORIGINAL_FILE_ID);
   RECORD(INPUT_FILE_OFFSETS);
   RECORD(DIAGNOSTIC_OPTIONS);
   RECORD(FILE_SYSTEM_OPTIONS);
@@ -1179,6 +1180,10 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Record.push_back(SM.getMainFileID().getOpaqueValue());
     Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
   }
+
+  Record.clear();
+  Record.push_back(SM.getMainFileID().getOpaqueValue());
+  Stream.EmitRecord(ORIGINAL_FILE_ID, Record);
 
   // Original PCH directory
   if (!OutputFile.empty() && OutputFile != "-") {
