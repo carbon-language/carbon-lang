@@ -33,7 +33,7 @@ class Instruction : public User, public ilist_node<Instruction> {
 
   BasicBlock *Parent;
   DebugLoc DbgLoc;                         // 'dbg' Metadata cache.
-  
+
   enum {
     /// HasMetadataBit - This is a bit stored in the SubClassData field which
     /// indicates whether this instruction has metadata attached to it or not.
@@ -42,12 +42,12 @@ class Instruction : public User, public ilist_node<Instruction> {
 public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();
-  
+
   /// use_back - Specialize the methods defined in Value, as we know that an
   /// instruction can only be used by other instructions.
   Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
   const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
-  
+
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
 
@@ -77,16 +77,16 @@ public:
   //===--------------------------------------------------------------------===//
   // Subclass classification.
   //===--------------------------------------------------------------------===//
-  
+
   /// getOpcode() returns a member of one of the enums like Instruction::Add.
   unsigned getOpcode() const { return getValueID() - InstructionVal; }
-  
+
   const char *getOpcodeName() const { return getOpcodeName(getOpcode()); }
   bool isTerminator() const { return isTerminator(getOpcode()); }
   bool isBinaryOp() const { return isBinaryOp(getOpcode()); }
   bool isShift() { return isShift(getOpcode()); }
   bool isCast() const { return isCast(getOpcode()); }
-  
+
   static const char* getOpcodeName(unsigned OpCode);
 
   static inline bool isTerminator(unsigned OpCode) {
@@ -121,33 +121,33 @@ public:
   //===--------------------------------------------------------------------===//
   // Metadata manipulation.
   //===--------------------------------------------------------------------===//
-  
+
   /// hasMetadata() - Return true if this instruction has any metadata attached
   /// to it.
   bool hasMetadata() const {
     return !DbgLoc.isUnknown() || hasMetadataHashEntry();
   }
-  
+
   /// hasMetadataOtherThanDebugLoc - Return true if this instruction has
   /// metadata attached to it other than a debug location.
   bool hasMetadataOtherThanDebugLoc() const {
     return hasMetadataHashEntry();
   }
-  
+
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
   MDNode *getMetadata(unsigned KindID) const {
     if (!hasMetadata()) return 0;
     return getMetadataImpl(KindID);
   }
-  
+
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
   MDNode *getMetadata(StringRef Kind) const {
     if (!hasMetadata()) return 0;
     return getMetadataImpl(Kind);
   }
-  
+
   /// getAllMetadata - Get all metadata attached to this Instruction.  The first
   /// element of each pair returned is the KindID, the second element is the
   /// metadata value.  This list is returned sorted by the KindID.
@@ -155,7 +155,7 @@ public:
     if (hasMetadata())
       getAllMetadataImpl(MDs);
   }
-  
+
   /// getAllMetadataOtherThanDebugLoc - This does the same thing as
   /// getAllMetadata, except that it filters out the debug location.
   void getAllMetadataOtherThanDebugLoc(SmallVectorImpl<std::pair<unsigned,
@@ -163,7 +163,7 @@ public:
     if (hasMetadataOtherThanDebugLoc())
       getAllMetadataOtherThanDebugLocImpl(MDs);
   }
-  
+
   /// setMetadata - Set the metadata of the specified kind to the specified
   /// node.  This updates/replaces metadata if already present, or removes it if
   /// Node is null.
@@ -172,17 +172,17 @@ public:
 
   /// setDebugLoc - Set the debug location information for this instruction.
   void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }
-  
+
   /// getDebugLoc - Return the debug location for this node as a DebugLoc.
   const DebugLoc &getDebugLoc() const { return DbgLoc; }
-  
+
 private:
   /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side
   /// metadata hash.
   bool hasMetadataHashEntry() const {
     return (getSubclassDataFromValue() & HasMetadataBit) != 0;
   }
-  
+
   // These are all implemented in Metadata.cpp.
   MDNode *getMetadataImpl(unsigned KindID) const;
   MDNode *getMetadataImpl(StringRef Kind) const;
@@ -194,8 +194,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Predicates and helper methods.
   //===--------------------------------------------------------------------===//
-  
-  
+
+
   /// isAssociative - Return true if the instruction is associative:
   ///
   ///   Associative operators satisfy:  x op (y op z) === (x op y) op z
@@ -271,12 +271,12 @@ public:
   ///   * The instruction has no name
   ///
   Instruction *clone() const;
-  
+
   /// isIdenticalTo - Return true if the specified instruction is exactly
   /// identical to the current one.  This means that all operands match and any
   /// extra information (e.g. load is volatile) agree.
   bool isIdenticalTo(const Instruction *I) const;
-  
+
   /// isIdenticalToWhenDefined - This is like isIdenticalTo, except that it
   /// ignores the SubclassOptionalData flags, which specify conditions
   /// under which the instruction's result is undefined.
@@ -291,7 +291,7 @@ public:
     /// as equivalent.
     CompareUsingScalarTypes = 1<<1
   };
-  
+
   /// This function determines if the specified instruction executes the same
   /// operation as the current one. This means that the opcodes, type, operand
   /// types and any other factors affecting the operation must be the same. This
@@ -301,14 +301,14 @@ public:
   /// the current one.
   /// @brief Determine if one instruction is the same operation as another.
   bool isSameOperationAs(const Instruction *I, unsigned flags = 0) const;
-  
+
   /// isUsedOutsideOfBlock - Return true if there are any uses of this
   /// instruction in blocks other than the specified block.  Note that PHI nodes
   /// are considered to evaluate their operands in the corresponding predecessor
   /// block.
   bool isUsedOutsideOfBlock(const BasicBlock *BB) const;
-  
-  
+
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
     return V->getValueID() >= Value::InstructionVal;
@@ -360,34 +360,34 @@ private:
   unsigned short getSubclassDataFromValue() const {
     return Value::getSubclassDataFromValue();
   }
-  
+
   void setHasMetadataHashEntry(bool V) {
     setValueSubclassData((getSubclassDataFromValue() & ~HasMetadataBit) |
                          (V ? HasMetadataBit : 0));
   }
-  
+
   friend class SymbolTableListTraits<Instruction, BasicBlock>;
   void setParent(BasicBlock *P);
 protected:
   // Instruction subclasses can stick up to 15 bits of stuff into the
   // SubclassData field of instruction with these members.
-  
+
   // Verify that only the low 15 bits are used.
   void setInstructionSubclassData(unsigned short D) {
     assert((D & HasMetadataBit) == 0 && "Out of range value put into field");
     setValueSubclassData((getSubclassDataFromValue() & HasMetadataBit) | D);
   }
-  
+
   unsigned getSubclassDataFromInstruction() const {
     return getSubclassDataFromValue() & ~HasMetadataBit;
   }
-  
+
   Instruction(Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               Instruction *InsertBefore = 0);
   Instruction(Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               BasicBlock *InsertAtEnd);
   virtual Instruction *clone_impl() const = 0;
-  
+
 };
 
 // Instruction* is only 4-byte aligned.
@@ -401,7 +401,7 @@ public:
   }
   enum { NumLowBitsAvailable = 2 };
 };
-  
+
 } // End llvm namespace
 
 #endif

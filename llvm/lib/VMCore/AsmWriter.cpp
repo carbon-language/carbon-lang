@@ -84,7 +84,7 @@ static void PrintCallingConv(unsigned cc, raw_ostream &Out)
     default:                        Out << "cc" << cc; break;
   }
 }
- 
+
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
 static void PrintEscapedString(StringRef Name, raw_ostream &Out) {
@@ -878,7 +878,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
     Out << ']';
     return;
   }
-  
+
   if (const ConstantDataArray *CA = dyn_cast<ConstantDataArray>(CV)) {
     // As a special case, print the array as a string if it is an array of
     // i8 with ConstantInt values.

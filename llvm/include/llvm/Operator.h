@@ -131,21 +131,21 @@ public:
   enum {
     IsExact = (1 << 0)
   };
-  
+
 private:
   friend class BinaryOperator;
   friend class ConstantExpr;
   void setIsExact(bool B) {
     SubclassOptionalData = (SubclassOptionalData & ~IsExact) | (B * IsExact);
   }
-  
+
 public:
   /// isExact - Test whether this division is known to be exact, with
   /// zero remainder.
   bool isExact() const {
     return SubclassOptionalData & IsExact;
   }
-  
+
   static bool isPossiblyExactOpcode(unsigned OpC) {
     return OpC == Instruction::SDiv ||
            OpC == Instruction::UDiv ||
@@ -182,7 +182,7 @@ public:
   }
 };
 
-  
+
 /// ConcreteOperator - A helper template for defining operators for individual
 /// opcodes.
 template<typename SuperClass, unsigned Opc>

@@ -607,7 +607,7 @@ bool BitcodeReader::ParseTypeTableBody() {
         else
           break;
       }
-      
+
       ResultTy = getTypeByID(Record[2]);
       if (ResultTy == 0 || ArgTys.size() < Record.size()-3)
         return Error("invalid type in function type");
@@ -626,7 +626,7 @@ bool BitcodeReader::ParseTypeTableBody() {
         else
           break;
       }
-      
+
       ResultTy = getTypeByID(Record[1]);
       if (ResultTy == 0 || ArgTys.size() < Record.size()-2)
         return Error("invalid type in function type");
@@ -657,10 +657,10 @@ bool BitcodeReader::ParseTypeTableBody() {
     case bitc::TYPE_CODE_STRUCT_NAMED: { // STRUCT: [ispacked, eltty x N]
       if (Record.size() < 1)
         return Error("Invalid STRUCT type record");
-      
+
       if (NumRecords >= TypeList.size())
         return Error("invalid TYPE table");
-      
+
       // Check to see if this was forward referenced, if so fill in the temp.
       StructType *Res = cast_or_null<StructType>(TypeList[NumRecords]);
       if (Res) {
@@ -669,7 +669,7 @@ bool BitcodeReader::ParseTypeTableBody() {
       } else  // Otherwise, create a new struct.
         Res = StructType::create(Context, TypeName);
       TypeName.clear();
-      
+
       SmallVector<Type*, 8> EltTys;
       for (unsigned i = 1, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
@@ -689,7 +689,7 @@ bool BitcodeReader::ParseTypeTableBody() {
 
       if (NumRecords >= TypeList.size())
         return Error("invalid TYPE table");
-      
+
       // Check to see if this was forward referenced, if so fill in the temp.
       StructType *Res = cast_or_null<StructType>(TypeList[NumRecords]);
       if (Res) {
@@ -700,7 +700,7 @@ bool BitcodeReader::ParseTypeTableBody() {
       TypeName.clear();
       ResultTy = Res;
       break;
-    }        
+    }
     case bitc::TYPE_CODE_ARRAY:     // ARRAY: [numelts, eltty]
       if (Record.size() < 2)
         return Error("Invalid ARRAY type record");
@@ -1006,7 +1006,7 @@ bool BitcodeReader::ParseConstants() {
       APInt VInt = ReadWideAPInt(Record,
                                  cast<IntegerType>(CurTy)->getBitWidth());
       V = ConstantInt::get(Context, VInt);
-      
+
       break;
     }
     case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
@@ -1073,10 +1073,10 @@ bool BitcodeReader::ParseConstants() {
     case bitc::CST_CODE_DATA: {// DATA: [n x value]
       if (Record.empty())
         return Error("Invalid CST_DATA record");
-      
+
       Type *EltTy = cast<SequentialType>(CurTy)->getElementType();
       unsigned Size = Record.size();
-      
+
       if (EltTy->isIntegerTy(8)) {
         SmallVector<uint8_t, 16> Elts(Record.begin(), Record.end());
         if (isa<VectorType>(CurTy))
@@ -1324,7 +1324,7 @@ bool BitcodeReader::ParseConstants() {
         V = FwdRef;
       }
       break;
-    }  
+    }
     }
 
     ValueList.AssignValue(V, NextCstNo);
@@ -1348,7 +1348,7 @@ bool BitcodeReader::ParseUseLists() {
     return Error("Malformed block record");
 
   SmallVector<uint64_t, 64> Record;
-  
+
   // Read all the records.
   while (1) {
     unsigned Code = Stream.ReadCode();
@@ -1357,7 +1357,7 @@ bool BitcodeReader::ParseUseLists() {
         return Error("Error at end of use-list table block");
       return false;
     }
-    
+
     if (Code == bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
       Stream.ReadSubBlockID();
@@ -1365,12 +1365,12 @@ bool BitcodeReader::ParseUseLists() {
         return Error("Malformed block record");
       continue;
     }
-    
+
     if (Code == bitc::DEFINE_ABBREV) {
       Stream.ReadAbbrevRecord();
       continue;
     }
-    
+
     // Read a use list record.
     Record.clear();
     switch (Stream.ReadRecord(Code, Record)) {
@@ -1919,7 +1919,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
   unsigned CurBBNo = 0;
 
   DebugLoc LastLoc;
-  
+
   // Read all the records.
   SmallVector<uint64_t, 64> Record;
   while (1) {
@@ -1974,24 +1974,24 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         FunctionBBs[i] = BasicBlock::Create(Context, "", F);
       CurBB = FunctionBBs[0];
       continue;
-        
+
     case bitc::FUNC_CODE_DEBUG_LOC_AGAIN:  // DEBUG_LOC_AGAIN
       // This record indicates that the last instruction is at the same
       // location as the previous instruction with a location.
       I = 0;
-        
+
       // Get the last instruction emitted.
       if (CurBB && !CurBB->empty())
         I = &CurBB->back();
       else if (CurBBNo && FunctionBBs[CurBBNo-1] &&
                !FunctionBBs[CurBBNo-1]->empty())
         I = &FunctionBBs[CurBBNo-1]->back();
-        
+
       if (I == 0) return Error("Invalid DEBUG_LOC_AGAIN record");
       I->setDebugLoc(LastLoc);
       I = 0;
       continue;
-        
+
     case bitc::FUNC_CODE_DEBUG_LOC: {      // DEBUG_LOC: [line, col, scope, ia]
       I = 0;     // Get the last instruction emitted.
       if (CurBB && !CurBB->empty())
@@ -2001,10 +2001,10 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         I = &FunctionBBs[CurBBNo-1]->back();
       if (I == 0 || Record.size() < 4)
         return Error("Invalid FUNC_CODE_DEBUG_LOC record");
-      
+
       unsigned Line = Record[0], Col = Record[1];
       unsigned ScopeID = Record[2], IAID = Record[3];
-      
+
       MDNode *Scope = 0, *IA = 0;
       if (ScopeID) Scope = cast<MDNode>(MDValueList.getValueFwdRef(ScopeID-1));
       if (IAID)    IA = cast<MDNode>(MDValueList.getValueFwdRef(IAID-1));
@@ -2272,10 +2272,10 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
     case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, op0, op1, ...]
-      // Check magic 
+      // Check magic
       if ((Record[0] >> 16) == SWITCH_INST_MAGIC) {
         // New SwitchInst format with case ranges.
-        
+
         Type *OpTy = getTypeByID(Record[1]);
         unsigned ValueBitWidth = cast<IntegerType>(OpTy)->getBitWidth();
 
@@ -2285,17 +2285,17 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           return Error("Invalid SWITCH record");
 
         unsigned NumCases = Record[4];
-        
+
         SwitchInst *SI = SwitchInst::Create(Cond, Default, NumCases);
         InstructionList.push_back(SI);
-        
+
         unsigned CurIdx = 5;
         for (unsigned i = 0; i != NumCases; ++i) {
           IntegersSubsetToBB CaseBuilder;
           unsigned NumItems = Record[CurIdx++];
           for (unsigned ci = 0; ci != NumItems; ++ci) {
             bool isSingleNumber = Record[CurIdx++];
-            
+
             APInt Low;
             unsigned ActiveWords = 1;
             if (ValueBitWidth > 64)
@@ -2311,7 +2311,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               APInt High =
                   ReadWideAPInt(makeArrayRef(&Record[CurIdx], ActiveWords),
                                 ValueBitWidth);
-              
+
               CaseBuilder.add(IntItem::fromType(OpTy, Low),
                               IntItem::fromType(OpTy, High));
               CurIdx += ActiveWords;
@@ -2319,7 +2319,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               CaseBuilder.add(IntItem::fromType(OpTy, Low));
           }
           BasicBlock *DestBB = getBasicBlock(Record[CurIdx++]);
-          IntegersSubset Case = CaseBuilder.getCase(); 
+          IntegersSubset Case = CaseBuilder.getCase();
           SI->addCase(Case, DestBB);
         }
         uint16_t Hash = SI->hash();
@@ -2328,9 +2328,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         I = SI;
         break;
       }
-      
+
       // Old SwitchInst format without case ranges.
-      
+
       if (Record.size() < 3 || (Record.size() & 1) == 0)
         return Error("Invalid SWITCH record");
       Type *OpTy = getTypeByID(Record[0]);
@@ -2375,7 +2375,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = IBI;
       break;
     }
-        
+
     case bitc::FUNC_CODE_INST_INVOKE: {
       // INVOKE: [attrs, cc, normBB, unwindBB, fnty, op0,op1,op2, ...]
       if (Record.size() < 4) return Error("Invalid INVOKE record");
@@ -2534,7 +2534,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
           OpNum+4 != Record.size())
         return Error("Invalid LOADATOMIC record");
-        
+
 
       AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
       if (Ordering == NotAtomic || Ordering == Release ||
@@ -2750,15 +2750,15 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       unsigned BlockIdx = RefList[i].first;
       if (BlockIdx >= FunctionBBs.size())
         return Error("Invalid blockaddress block #");
-    
+
       GlobalVariable *FwdRef = RefList[i].second;
       FwdRef->replaceAllUsesWith(BlockAddress::get(F, FunctionBBs[BlockIdx]));
       FwdRef->eraseFromParent();
     }
-    
+
     BlockAddrFwdRefs.erase(BAFRI);
   }
-  
+
   // Trim the value list down to the size it was before we parsed this function.
   ValueList.shrinkTo(ModuleValueListSize);
   MDValueList.shrinkTo(ModuleMDValueListSize);

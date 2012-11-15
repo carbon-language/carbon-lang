@@ -31,16 +31,16 @@ namespace bitc {
     PARAMATTR_BLOCK_ID,
 
     UNUSED_ID1,
-    
+
     CONSTANTS_BLOCK_ID,
     FUNCTION_BLOCK_ID,
-    
+
     UNUSED_ID2,
-    
+
     VALUE_SYMTAB_BLOCK_ID,
     METADATA_BLOCK_ID,
     METADATA_ATTACHMENT_ID,
-    
+
     TYPE_BLOCK_ID_NEW,
 
     USELIST_BLOCK_ID
@@ -93,9 +93,9 @@ namespace bitc {
 
     TYPE_CODE_FUNCTION_OLD = 9, // FUNCTION: [vararg, attrid, retty,
                                 //            paramty x N]
-    
+
     TYPE_CODE_HALF     =  10,   // HALF
-    
+
     TYPE_CODE_ARRAY    = 11,    // ARRAY: [numelts, eltty]
     TYPE_CODE_VECTOR   = 12,    // VECTOR: [numelts, eltty]
 
@@ -109,7 +109,7 @@ namespace bitc {
     TYPE_CODE_METADATA = 16,    // METADATA
 
     TYPE_CODE_X86_MMX = 17,     // X86 MMX
-    
+
     TYPE_CODE_STRUCT_ANON = 18, // STRUCT_ANON: [ispacked, eltty x N]
     TYPE_CODE_STRUCT_NAME = 19, // STRUCT_NAME: [strchr x N]
     TYPE_CODE_STRUCT_NAMED = 20,// STRUCT_NAMED: [ispacked, eltty x N]
@@ -234,7 +234,7 @@ namespace bitc {
     OBO_NO_SIGNED_WRAP = 1
   };
 
-  /// PossiblyExactOperatorOptionalFlags - Flags for serializing 
+  /// PossiblyExactOperatorOptionalFlags - Flags for serializing
   /// PossiblyExactOperator's SubclassOptionalData contents.
   enum PossiblyExactOperatorOptionalFlags {
     PEO_EXACT = 0
