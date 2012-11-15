@@ -58,6 +58,9 @@ private:
 
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitImplicitCode() const { return true; }
+  // Disables data recursion. We intercept Traverse* methods in the RAV, which
+  // are not triggered during data recursion.
+  bool shouldUseDataRecursionFor(clang::Stmt *S) const { return false; }
 
   template <typename T>
   bool TraverseNode(T *Node, bool (VisitorBase::*traverse)(T*)) {
@@ -222,6 +225,9 @@ public:
 
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitImplicitCode() const { return true; }
+  // Disables data recursion. We intercept Traverse* methods in the RAV, which
+  // are not triggered during data recursion.
+  bool shouldUseDataRecursionFor(clang::Stmt *S) const { return false; }
 
 private:
   // Used for updating the depth during traversal.
@@ -471,6 +477,9 @@ public:
 
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitImplicitCode() const { return true; }
+  // Disables data recursion. We intercept Traverse* methods in the RAV, which
+  // are not triggered during data recursion.
+  bool shouldUseDataRecursionFor(clang::Stmt *S) const { return false; }
 
 private:
   // Implements a BoundNodesTree::Visitor that calls a MatchCallback with
