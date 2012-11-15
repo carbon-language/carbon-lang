@@ -44,8 +44,8 @@ void CloseOnlyOnValidFileHandle() {
 }
 
 void leakOnEnfOfPath1(int *Data) {
-  FILE *F = fopen("myfile.txt", "w");// expected-warning {{Opened file is never closed; potential resource leak}}
-}
+  FILE *F = fopen("myfile.txt", "w");
+} // expected-warning {{Opened file is never closed; potential resource leak}}
 
 void leakOnEnfOfPath2(int *Data) {
   FILE *F = fopen("myfile.txt", "w");

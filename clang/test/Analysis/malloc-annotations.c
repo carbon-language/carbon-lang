@@ -63,8 +63,8 @@ void af1() {
 }
 
 void af1_b() {
-  int *p = my_malloc(12); // expected-warning{{Memory is never released; potential leak}}
-}
+  int *p = my_malloc(12);
+} // expected-warning{{Memory is never released; potential leak}}
 
 void af1_c() {
   myglobalpointer = my_malloc(12); // no-warning
@@ -72,8 +72,8 @@ void af1_c() {
 
 void af1_d() {
   struct stuff mystuff;
-  mystuff.somefield = my_malloc(12); // expected-warning{{Memory is never released; potential leak}}
-}
+  mystuff.somefield = my_malloc(12);
+} // expected-warning{{Memory is never released; potential leak}}
 
 // Test that we can pass out allocated memory via pointer-to-pointer.
 void af1_e(void **pp) {

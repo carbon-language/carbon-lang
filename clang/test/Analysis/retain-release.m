@@ -474,8 +474,8 @@ void f13_autorelease() {
 void f13_autorelease_b() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
-  [(id) A autorelease]; // expected-warning{{Object sent -autorelease too many times}}
-}
+  [(id) A autorelease];
+} // expected-warning{{Object sent -autorelease too many times}}
 
 CFMutableArrayRef f13_autorelease_c() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);

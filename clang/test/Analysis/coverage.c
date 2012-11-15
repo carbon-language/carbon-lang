@@ -32,27 +32,27 @@ static void function_which_doesnt_give_up_nested(int *x, int *y) {
 
 void coverage1(int *x) {
   function_which_gives_up(x);
-  char *m = (char*)malloc(12); // expected-warning {{potential leak}}
-}
+  char *m = (char*)malloc(12);
+} // expected-warning {{potential leak}}
 
 void coverage2(int *x) {
   if (x) {
     function_which_gives_up(x);
-    char *m = (char*)malloc(12);// expected-warning {{potential leak}}
+    char *m = (char*)malloc(12);
   }
-}
+} // expected-warning {{potential leak}}
 
 void coverage3(int *x) {
   x++;
   function_which_gives_up(x);
-  char *m = (char*)malloc(12);// expected-warning {{potential leak}}
-}
+  char *m = (char*)malloc(12);
+} // expected-warning {{potential leak}}
 
 void coverage4(int *x) {
   *x += another_function(x);
   function_which_gives_up(x);
-  char *m = (char*)malloc(12);// expected-warning {{potential leak}}
-}
+  char *m = (char*)malloc(12);
+} // expected-warning {{potential leak}}
 
 void coverage5(int *x) {
   for (int i = 0; i<7; ++i)
@@ -65,8 +65,8 @@ void coverage6(int *x) {
   for (int i = 0; i<3; ++i) {
     function_which_gives_up(x);
   }
-  char *m = (char*)malloc(12); // expected-warning {{potential leak}}
-}
+  char *m = (char*)malloc(12);
+} // expected-warning {{potential leak}}
 
 int coverage7_inline(int *i) {
   function_which_doesnt_give_up(&i);
@@ -77,8 +77,8 @@ void coverage8(int *x) {
   int y;
   function_which_doesnt_give_up_nested(x, &y);
   y = (*x)/y;  // expected-warning {{Division by zero}}
-  char *m = (char*)malloc(12); // expected-warning {{potential leak}}
-}
+  char *m = (char*)malloc(12);
+} // expected-warning {{potential leak}}
 
 void function_which_gives_up_settonull(int **x) {
   *x = 0;

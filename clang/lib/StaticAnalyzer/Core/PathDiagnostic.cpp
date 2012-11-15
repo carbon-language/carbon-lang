@@ -588,6 +588,8 @@ PathDiagnosticLocation
   }
   else if (const StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {
     S = SP->getStmt();
+    if (isa<PostStmtPurgeDeadSymbols>(P))
+      return PathDiagnosticLocation::createEnd(S, SMng, P.getLocationContext());
   }
   else if (const PostImplicitCall *PIE = dyn_cast<PostImplicitCall>(&P)) {
     return PathDiagnosticLocation(PIE->getLocation(), SMng);
@@ -619,12 +621,16 @@ PathDiagnosticLocation
 
   while (NI) {
     ProgramPoint P = NI->getLocation();
-    if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P))
+    if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P)) {
       S = PS->getStmt();
-    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P))
-      S = BE->getSrc()->getTerminator();
-    if (S)
+      if (isa<PostStmtPurgeDeadSymbols>(P))
+        return PathDiagnosticLocation::createEnd(S, SM,
+                                                 NI->getLocationContext());
       break;
+    } else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      S = BE->getSrc()->getTerminator();
+      break;
+    }
     NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
   }
 

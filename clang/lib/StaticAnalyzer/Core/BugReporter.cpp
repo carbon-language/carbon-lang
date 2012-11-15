@@ -1673,6 +1673,9 @@ PathDiagnosticLocation BugReport::getLocation(const SourceManager &SM) const {
       if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
         return PathDiagnosticLocation::createOperatorLoc(B, SM);
 
+      if (isa<PostStmtPurgeDeadSymbols>(ErrorNode->getLocation()))
+        return PathDiagnosticLocation::createEnd(S, SM, LC);
+
       return PathDiagnosticLocation::createBegin(S, SM, LC);
     }
   } else {

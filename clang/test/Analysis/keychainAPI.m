@@ -76,9 +76,9 @@ void errRetVal() {
   UInt32 length;
   void *outData;
   st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
-  if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'}}
+  if (st == GenericError)
     SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Only call free if a valid (non-NULL) buffer was returned}}
-}
+} // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'}}
 
 // If null is passed in, the data is not allocated, so no need for the matching free.
 void fooDoNotReportNull() {

@@ -177,14 +177,15 @@ void ExprEngine::removeDeadOnEndOfFunction(NodeBuilderContext& BC,
     return;
   }
 
-  // Here, we call the Symbol Reaper with 0 stack context telling it to clean up
-  // everything on the stack. We use LastStmt as a diagnostic statement, with 
-  // which the program point will be associated. However, we only want to use
-  // LastStmt as a reference for what to clean up if it's a ReturnStmt;
-  // otherwise, everything is dead.
+  // Here, we destroy the current location context. We use the current
+  // function's entire body as a diagnostic statement, with which the program
+  // point will be associated. However, we only want to use LastStmt as a
+  // reference for what to clean up if it's a ReturnStmt; otherwise, everything
+  // is dead.
   SaveAndRestore<const NodeBuilderContext *> NodeContextRAII(currBldrCtx, &BC);
-  removeDead(Pred, Dst, dyn_cast<ReturnStmt>(LastSt),
-             Pred->getLocationContext(), LastSt,
+  const LocationContext *LCtx = Pred->getLocationContext();
+  removeDead(Pred, Dst, dyn_cast<ReturnStmt>(LastSt), LCtx,
+             LCtx->getAnalysisDeclContext()->getBody(),
              ProgramPoint::PostStmtPurgeDeadSymbolsKind);
 }
 
@@ -289,9 +290,10 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     currBldrCtx = &Ctx;
     // Here, we call the Symbol Reaper with 0 statement and callee location
     // context, telling it to clean up everything in the callee's context
-    // (and its children). We use LastSt as a diagnostic statement, which
-    // which the program point will be associated.
-    removeDead(BindedRetNode, CleanedNodes, 0, calleeCtx, LastSt,
+    // (and its children). We use the callee's function body as a diagnostic
+    // statement, with which the program point will be associated.
+    removeDead(BindedRetNode, CleanedNodes, 0, calleeCtx,
+               calleeCtx->getAnalysisDeclContext()->getBody(),
                ProgramPoint::PostStmtPurgeDeadSymbolsKind);
     currBldrCtx = 0;
   } else {
