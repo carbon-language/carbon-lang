@@ -424,9 +424,10 @@ rety_open_create:
     // If the file existed, try again, otherwise, error.
     if (errno == errc::file_exists)
       goto retry_random_path;
-    // The path prefix doesn't exist.
-    if (errno == errc::no_such_file_or_directory) {
-      StringRef p(RandomPath.begin(), RandomPath.size());
+    // If path prefix doesn't exist, try to create it.
+    if (errno == errc::no_such_file_or_directory &&
+        !exists(path::parent_path(RandomPath))) {
+      StringRef p(RandomPath);
       SmallString<64> dir_to_create;
       for (path::const_iterator i = path::begin(p),
                                 e = --path::end(p); i != e; ++i) {
