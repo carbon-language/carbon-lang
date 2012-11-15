@@ -102,7 +102,6 @@ struct ReallocPair {
 typedef std::pair<const Stmt*, const MemRegion*> LeakInfo;
 
 class MallocChecker : public Checker<check::DeadSymbols,
-                                     check::EndPath,
                                      check::PreStmt<ReturnStmt>,
                                      check::PreStmt<CallExpr>,
                                      check::PostStmt<CallExpr>,
@@ -138,7 +137,6 @@ public:
   void checkPostObjCMessage(const ObjCMethodCall &Call, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
-  void checkEndPath(CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   ProgramStateRef evalAssume(ProgramStateRef state, SVal Cond,
                             bool Assumption) const;
@@ -1134,24 +1132,6 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   C.addTransition(state->set<RegionState>(RS), N);
 }
 
-void MallocChecker::checkEndPath(CheckerContext &C) const {
-  ProgramStateRef state = C.getState();
-  RegionStateTy M = state->get<RegionState>();
-
-  // If inside inlined call, skip it.
-  if (C.getLocationContext()->getParent() != 0)
-    return;
-
-  for (RegionStateTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    RefState RS = I->second;
-    if (RS.isAllocated()) {
-      ExplodedNode *N = C.addTransition(state);
-      if (N)
-        reportLeak(I->first, N, C);
-    }
-  }
-}
-
 void MallocChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   // We will check for double free in the post visit.
   if (isFreeFunction(C.getCalleeDecl(CE), C.getASTContext()))
@@ -1193,15 +1173,7 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
 
   // Check if we are returning freed memory.
   if (Sym)
-    if (checkUseAfterFree(Sym, C, E))
-      return;
-
-  // If this function body is not inlined, stop tracking any returned symbols.
-  if (C.getLocationContext()->getParent() == 0) {
-    State =
-      State->scanReachableSymbols<StopTrackingCallback>(RetVal).getState();
-    C.addTransition(State);
-  }
+    checkUseAfterFree(Sym, C, E);
 }
 
 // TODO: Blocks should be either inlined or should call invalidate regions
