@@ -43,7 +43,7 @@ void RegScavenger::setUsed(unsigned Reg) {
 
 bool RegScavenger::isAliasUsed(unsigned Reg) const {
   for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-    if (isUsed(*AI))
+    if (isUsed(*AI, *AI == Reg))
       return true;
   return false;
 }
