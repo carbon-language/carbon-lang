@@ -83,6 +83,18 @@ public:
     typename MapType::const_iterator Pos = Map.find(Key);
     return Pos == Map.end()? 0 : 1;
   }
+
+  iterator find(const KeyT &Key) {
+    typename MapType::const_iterator Pos = Map.find(Key);
+    return Pos == Map.end()? Vector.end() :
+                            (Vector.begin() + Pos->second);
+  }
+
+  const_iterator find(const KeyT &Key) const {
+    typename MapType::const_iterator Pos = Map.find(Key);
+    return Pos == Map.end()? Vector.end() :
+                            (Vector.begin() + Pos->second);
+  }
 };
 
 }
