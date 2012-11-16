@@ -12,7 +12,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
   # Run TSan output tests only if we're not cross-compiling,
   # and can be sure that clang would produce working binaries.
   set(TSAN_TEST_DEPS
-    clang clang-headers FileCheck count not
+    clang clang-headers FileCheck count not llvm-symbolizer
     ${TSAN_RUNTIME_LIBRARIES}
     )
   set(TSAN_TEST_PARAMS
@@ -31,6 +31,6 @@ elseif(LLVM_INCLUDE_TESTS)
   # Otherwise run only TSan unit tests.
   add_lit_testsuite(check-tsan "Running ThreadSanitizer tests"
     ${CMAKE_CURRENT_BINARY_DIR}/Unit
-    DEPENDS TsanUnitTests)
+    DEPENDS TsanUnitTests llvm-symbolizer)
   set_target_properties(check-tsan PROPERTIES FOLDER "TSan unittests")
 endif()
