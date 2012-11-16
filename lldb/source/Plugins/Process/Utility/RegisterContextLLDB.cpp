@@ -914,6 +914,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         if (iterator != m_registers.end())
         {
             regloc = iterator->second;
+            UnwindLogMsg ("supplying caller's saved reg %d's location, cached", lldb_regnum);
             return UnwindLLDB::RegisterSearchResult::eRegisterFound;
         }
     }
@@ -937,6 +938,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
         regloc.location.inferred_value = m_cfa;
         m_registers[lldb_regnum] = regloc;
+        UnwindLogMsg ("supplying caller's stack pointer (%d) value, computed from CFA", lldb_regnum);
         return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
@@ -1076,6 +1078,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             new_regloc.location.register_number = lldb_regnum;
             m_registers[lldb_regnum] = new_regloc;
             regloc = new_regloc;
+            UnwindLogMsg ("supplying caller's register %d from the live RegisterContext at frame 0", lldb_regnum);
             return UnwindLLDB::RegisterSearchResult::eRegisterFound;
         }
         else
@@ -1112,6 +1115,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
         regloc.location.inferred_value = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
+        UnwindLogMsg ("supplying caller's register %d, value is CFA plus offset", lldb_regnum);
         return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
@@ -1121,6 +1125,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterSavedAtMemoryLocation;
         regloc.location.target_memory_location = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
+        UnwindLogMsg ("supplying caller's register %d from the stack, saved at CFA plus offset", lldb_regnum);
         return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
@@ -1136,6 +1141,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterInRegister;
         regloc.location.register_number = row_regnum_in_lldb;
         m_registers[lldb_regnum] = regloc;
+        UnwindLogMsg ("supplying caller's register %d, saved in register %d", lldb_regnum, row_regnum_in_lldb);
         return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
@@ -1157,14 +1163,16 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                 regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
                 regloc.location.inferred_value = val;
                 m_registers[lldb_regnum] = regloc;
+                UnwindLogMsg ("supplying caller's register %d via DWARF expression (IsDWARFExpression)", lldb_regnum);
                 return UnwindLLDB::RegisterSearchResult::eRegisterFound;
             }
             else
             {
-               regloc.type = UnwindLLDB::RegisterLocation::eRegisterSavedAtMemoryLocation;
-               regloc.location.target_memory_location = val;
-               m_registers[lldb_regnum] = regloc;
-               return UnwindLLDB::RegisterSearchResult::eRegisterFound;
+                regloc.type = UnwindLLDB::RegisterLocation::eRegisterSavedAtMemoryLocation;
+                regloc.location.target_memory_location = val;
+                m_registers[lldb_regnum] = regloc;
+                UnwindLogMsg ("supplying caller's register %d via DWARF expression (IsAtDWARFExpression)", lldb_regnum);
+                return UnwindLLDB::RegisterSearchResult::eRegisterFound;
             }
         }
         UnwindLogMsg ("tried to use IsDWARFExpression or IsAtDWARFExpression for reg %d but failed", lldb_regnum);
