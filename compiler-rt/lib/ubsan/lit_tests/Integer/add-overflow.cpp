@@ -17,7 +17,7 @@ int main() {
 
 #ifdef ADD_I64
   (void)(int64_t(8000000000000000000ll) + int64_t(2000000000000000000ll));
-  // CHECK-ADD_I64: 8000000000000000000 + 2000000000000000000 cannot be represented in type 'long'
+  // CHECK-ADD_I64: 8000000000000000000 + 2000000000000000000 cannot be represented in type '{{long( long)?}}'
 #endif
 
 #ifdef ADD_I128

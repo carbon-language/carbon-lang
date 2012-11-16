@@ -8,6 +8,9 @@
 // RUN: %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
 // RUN: %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
 
+// FIXME: This test produces linker errors on Darwin.
+// XFAIL: darwin
+
 struct S {
   S() : a(0) {}
   ~S() {}

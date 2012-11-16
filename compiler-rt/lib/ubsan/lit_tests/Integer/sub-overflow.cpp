@@ -16,7 +16,7 @@ int main() {
 
 #ifdef SUB_I64
   (void)(int64_t(-8000000000000000000ll) - int64_t(2000000000000000000ll));
-  // CHECK-SUB_I64: -8000000000000000000 - 2000000000000000000 cannot be represented in type 'long'
+  // CHECK-SUB_I64: -8000000000000000000 - 2000000000000000000 cannot be represented in type '{{long( long)?}}'
 #endif
 
 #ifdef SUB_I128

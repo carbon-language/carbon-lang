@@ -6,12 +6,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
   add_subdirectory(asan)
   add_subdirectory(interception)
   add_subdirectory(sanitizer_common)
+  add_subdirectory(ubsan)
 endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   # ThreadSanitizer is supported on Linux only.
   add_subdirectory(tsan)
-  # UndefinedBehaviorSanitizer has been tested on Linux only.
-  add_subdirectory(ubsan)
 endif()
 
 # FIXME: Add support for the profile library.
