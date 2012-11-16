@@ -125,9 +125,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
                      << " flags: " << flags
                      << " SID: " << SectionID
                      << " Offset: " << format("%p", SectOffset));
-        bool isGlobal = flags & SymbolRef::SF_Global;
-        if (isGlobal)
-          GlobalSymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
+        GlobalSymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
       }
     }
     DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name << "\n");

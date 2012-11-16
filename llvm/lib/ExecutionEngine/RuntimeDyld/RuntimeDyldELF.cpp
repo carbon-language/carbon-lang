@@ -290,6 +290,7 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
 
   // Write a 32bit value to relocation address, taking into account the 
   // implicit addend encoded in the target.
+  case ELF::R_ARM_TARGET1 :
   case ELF::R_ARM_ABS32 :
     *TargetPtr += Value;
     break;
