@@ -1936,46 +1936,41 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
 }
 
 namespace {
-  // Information concerning MBB coalescing priority.
-  struct MBBPriorityInfo {
-    MachineBasicBlock *MBB;
-    unsigned Depth;
-    bool IsSplit;
+// Information concerning MBB coalescing priority.
+struct MBBPriorityInfo {
+  MachineBasicBlock *MBB;
+  unsigned Depth;
+  bool IsSplit;
 
-    MBBPriorityInfo(MachineBasicBlock *mbb, unsigned depth, bool issplit)
-      : MBB(mbb), Depth(depth), IsSplit(issplit) {}
-  };
+  MBBPriorityInfo(MachineBasicBlock *mbb, unsigned depth, bool issplit)
+    : MBB(mbb), Depth(depth), IsSplit(issplit) {}
+};
+}
 
-  // MBBPriorityCompare - Comparison predicate that sorts first based on the
-  // loop depth of the basic block (the unsigned), and then on the MBB number.
-  //
-  // EnableGlobalCopies assumes that the primary sort key is loop depth.
-  struct MBBPriorityCompare {
-    bool JoinSplitEdges;
+// C-style comparator that sorts first based on the loop depth of the basic
+// block (the unsigned), and then on the MBB number.
+//
+// EnableGlobalCopies assumes that the primary sort key is loop depth.
+static int compareMBBPriority(const void *L, const void *R) {
+  const MBBPriorityInfo *LHS = static_cast<const MBBPriorityInfo*>(L);
+  const MBBPriorityInfo *RHS = static_cast<const MBBPriorityInfo*>(R);
+  // Deeper loops first
+  if (LHS->Depth != RHS->Depth)
+    return LHS->Depth > RHS->Depth ? -1 : 1;
 
-    MBBPriorityCompare(bool joinsplits): JoinSplitEdges(joinsplits) {}
+  // Try to unsplit critical edges next.
+  if (LHS->IsSplit != RHS->IsSplit)
+    return LHS->IsSplit ? -1 : 1;
 
-    bool operator()(const MBBPriorityInfo &LHS,
-                    const MBBPriorityInfo &RHS) const {
-      // Deeper loops first
-      if (LHS.Depth != RHS.Depth)
-        return LHS.Depth > RHS.Depth;
+  // Prefer blocks that are more connected in the CFG. This takes care of
+  // the most difficult copies first while intervals are short.
+  unsigned cl = LHS->MBB->pred_size() + LHS->MBB->succ_size();
+  unsigned cr = RHS->MBB->pred_size() + RHS->MBB->succ_size();
+  if (cl != cr)
+    return cl > cr ? -1 : 1;
 
-      // Try to unsplit critical edges next.
-      if (JoinSplitEdges && LHS.IsSplit != RHS.IsSplit)
-        return LHS.IsSplit;
-
-      // Prefer blocks that are more connected in the CFG. This takes care of
-      // the most difficult copies first while intervals are short.
-      unsigned cl = LHS.MBB->pred_size() + LHS.MBB->succ_size();
-      unsigned cr = RHS.MBB->pred_size() + RHS.MBB->succ_size();
-      if (cl != cr)
-        return cl > cr;
-
-      // As a last resort, sort by block number.
-      return LHS.MBB->getNumber() < RHS.MBB->getNumber();
-    }
-  };
+  // As a last resort, sort by block number.
+  return LHS->MBB->getNumber() < RHS->MBB->getNumber() ? -1 : 1;
 }
 
 /// \returns true if the given copy uses or defines a local live range.
@@ -2072,9 +2067,9 @@ void RegisterCoalescer::joinAllIntervals() {
   for (MachineFunction::iterator I = MF->begin(), E = MF->end();I != E;++I){
     MachineBasicBlock *MBB = I;
     MBBs.push_back(MBBPriorityInfo(MBB, Loops->getLoopDepth(MBB),
-                                   isSplitEdge(MBB)));
+                                   JoinSplitEdges && isSplitEdge(MBB)));
   }
-  std::sort(MBBs.begin(), MBBs.end(), MBBPriorityCompare(JoinSplitEdges));
+  array_pod_sort(MBBs.begin(), MBBs.end(), compareMBBPriority);
 
   // Coalesce intervals in MBB priority order.
   unsigned CurrDepth = UINT_MAX;
