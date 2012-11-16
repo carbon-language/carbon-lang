@@ -4877,12 +4877,15 @@ defm VSRI     : N2VShInsR_QHSD<1, 1, 0b0100, 1, "vsri">;
 defm VABS     : N2VInt_QHS<0b11, 0b11, 0b01, 0b00110, 0,
                            IIC_VUNAiD, IIC_VUNAiQ, "vabs", "s",
                            int_arm_neon_vabs>;
-def  VABSfd   : N2VDInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0,
-                        IIC_VUNAD, "vabs", "f32",
-                        v2f32, v2f32, int_arm_neon_vabs>;
-def  VABSfq   : N2VQInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0,
-                        IIC_VUNAQ, "vabs", "f32",
-                        v4f32, v4f32, int_arm_neon_vabs>;
+def  VABSfd   : N2VD<0b11, 0b11, 0b10, 0b01, 0b01110, 0,
+                     "vabs", "f32",
+                     v2f32, v2f32, fabs>;
+def  VABSfq   : N2VQ<0b11, 0b11, 0b10, 0b01, 0b01110, 0,
+                     "vabs", "f32",
+                      v4f32, v4f32, fabs>;
+
+def : Pat<(v2f32 (int_arm_neon_vabs (v2f32 DPR:$src))), (VABSfd DPR:$src)>;
+def : Pat<(v4f32 (int_arm_neon_vabs (v4f32 QPR:$src))), (VABSfq QPR:$src)>;
 
 //   VQABS    : Vector Saturating Absolute Value
 defm VQABS    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01110, 0,
