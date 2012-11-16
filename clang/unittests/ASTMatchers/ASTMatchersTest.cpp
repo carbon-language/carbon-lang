@@ -2777,6 +2777,22 @@ TEST(ForEachDescendant, BindsOneNode) {
       new VerifyIdIsBoundTo<FieldDecl>("x", 1)));
 }
 
+TEST(ForEachDescendant, NestedForEachDescendant) {
+  DeclarationMatcher m = recordDecl(
+      isDefinition(), decl().bind("x"), hasName("C"));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+    "class A { class B { class C {}; }; };",
+    recordDecl(hasName("A"), anyOf(m, forEachDescendant(m))),
+    new VerifyIdIsBoundTo<Decl>("x", "C")));
+
+  // FIXME: This is not really a useful matcher, but the result is still
+  // surprising (currently binds "A").
+  //EXPECT_TRUE(matchAndVerifyResultTrue(
+  //  "class A { class B { class C {}; }; };",
+  //  recordDecl(hasName("A"), allOf(hasDescendant(m), anyOf(m, anything()))),
+  //  new VerifyIdIsBoundTo<Decl>("x", "C")));
+}
+
 TEST(ForEachDescendant, BindsMultipleNodes) {
   EXPECT_TRUE(matchAndVerifyResultTrue(
       "class C { class D { int x; int y; }; "

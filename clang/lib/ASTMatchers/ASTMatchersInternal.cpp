@@ -27,8 +27,11 @@ void BoundNodesMap::copyTo(BoundNodesTreeBuilder *Builder) const {
 }
 
 void BoundNodesMap::copyTo(BoundNodesMap *Other) const {
-  copy(NodeMap.begin(), NodeMap.end(),
-       inserter(Other->NodeMap, Other->NodeMap.begin()));
+  for (IDToNodeMap::const_iterator I = NodeMap.begin(),
+                                   E = NodeMap.end();
+       I != E; ++I) {
+    Other->NodeMap[I->first] = I->second;
+  }
 }
 
 BoundNodesTree::BoundNodesTree() {}
