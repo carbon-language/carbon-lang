@@ -542,7 +542,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 <p>This example is made up of a <a href="#globalvars">global variable</a> named
    "<tt>.str</tt>", an external declaration of the "<tt>puts</tt>" function,
    a <a href="#functionstructure">function definition</a> for
-   "<tt>main</tt>" and <a href="#namedmetadatastructure">named metadata</a> 
+   "<tt>main</tt>" and <a href="#namedmetadatastructure">named metadata</a>
    "<tt>foo</tt>".</p>
 
 <p>In general, a module is made up of a list of global values (where both
@@ -1103,7 +1103,7 @@ declare signext i8 @returns_signed_char()
       <tt><a href="#readonly">readonly</a></tt> functions should not write to
       <tt>byval</tt> parameters). This is not a valid attribute for return
       values.</p>
-      
+
       <p>The byval attribute also supports specifying an alignment with
       the align attribute.  It indicates the alignment of the stack slot to
       form and the known alignment of the pointer specified to the call site. If
@@ -1461,12 +1461,12 @@ target datalayout = "<i>layout specification</i>"
    this is not a specification from the frontend of what alignment the code
    generator should use.</p>
 
-<p>Instead, if specified, the target data layout is required to match what the 
-   ultimate <em>code generator</em> expects.  This string is used by the 
+<p>Instead, if specified, the target data layout is required to match what the
+   ultimate <em>code generator</em> expects.  This string is used by the
    mid-level optimizers to
-   improve code, and this only works if it matches what the ultimate code 
+   improve code, and this only works if it matches what the ultimate code
    generator uses.  If you would like to generate IR that does not embed this
-   target-specific detail into the IR, then you don't have to specify the 
+   target-specific detail into the IR, then you don't have to specify the
    string.  This will disable some optimizations that require precise layout
    information, but this also prevents those optimizations from introducing
    target specificity into the IR.</p>
@@ -1614,7 +1614,7 @@ any write to the same byte, except:</p>
       addresses which do not behave like normal memory.  It does not generally
       provide cross-thread synchronization.)
   <li>Otherwise, if there is no write to the same byte that happens before
-    <var>R<sub>byte</sub></var>, <var>R<sub>byte</sub></var> returns 
+    <var>R<sub>byte</sub></var>, <var>R<sub>byte</sub></var> returns
     <tt>undef</tt> for that byte.
   <li>Otherwise, if <var>R<sub>byte</sub></var> may see exactly one write,
       <var>R<sub>byte</sub></var> returns the value written by that
@@ -2113,8 +2113,8 @@ in signal handlers).</p>
    Structures in registers are accessed using the
    '<tt><a href="#i_extractvalue">extractvalue</a></tt>' and
    '<tt><a href="#i_insertvalue">insertvalue</a></tt>' instructions.</p>
-  
-<p>Structures may optionally be "packed" structures, which indicate that the 
+
+<p>Structures may optionally be "packed" structures, which indicate that the
   alignment of the struct is one byte, and that there is no padding between
   the elements.  In non-packed structs, padding between field types is inserted
   as defined by the DataLayout string in the module, which is required to match
@@ -2127,13 +2127,13 @@ in signal handlers).</p>
   no way to write one.  Identified types can be recursive, can be opaqued, and are
   never uniqued.
 </p>
-  
+
 <h5>Syntax:</h5>
 <pre>
   %T1 = type { &lt;type list&gt; }     <i>; Identified normal struct type</i>
   %T2 = type &lt;{ &lt;type list&gt; }&gt;   <i>; Identified packed struct type</i>
 </pre>
-  
+
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
@@ -2154,7 +2154,7 @@ in signal handlers).</p>
 </table>
 
 </div>
-  
+
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="t_opaque">Opaque Structure Types</a>
@@ -2195,7 +2195,7 @@ in signal handlers).</p>
 <h5>Overview:</h5>
 <p>The pointer type is used to specify memory locations.
    Pointers are commonly used to reference objects in memory.</p>
-   
+
 <p>Pointer types may have an optional address space attribute defining the
    numbered address space where the pointed-to object resides. The default
    address space is number zero. The semantics of non-zero address
@@ -2987,7 +2987,7 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 </pre>
 </div>
 
-<p>A <a href="#namedmetadatastructure">named metadata</a> is a collection of 
+<p>A <a href="#namedmetadatastructure">named metadata</a> is a collection of
    metadata nodes, which can be looked up in the module symbol table. For
    example:</p>
 
@@ -2997,7 +2997,7 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 </pre>
 </div>
 
-<p>Metadata can be used as function arguments. Here <tt>llvm.dbg.value</tt> 
+<p>Metadata can be used as function arguments. Here <tt>llvm.dbg.value</tt>
    function is using two metadata arguments:</p>
 
 <div class="doc_code">
@@ -3106,7 +3106,7 @@ are padding and what the TBAA tags of the struct are.</p>
 <h4>
   <a name="fpmath">'<tt>fpmath</tt>' Metadata</a>
 </h4>
- 
+
 <div>
 
 <p><tt>fpmath</tt> metadata may be attached to any instruction of floating point
@@ -3522,13 +3522,13 @@ cast formed of bitcast or getelementptr.  For example, a legal use of it is:</p>
    control flow, not values (the one exception being the
    '<a href="#i_invoke"><tt>invoke</tt></a>' instruction).</p>
 
-<p>The terminator instructions are: 
-   '<a href="#i_ret"><tt>ret</tt></a>', 
+<p>The terminator instructions are:
+   '<a href="#i_ret"><tt>ret</tt></a>',
    '<a href="#i_br"><tt>br</tt></a>',
-   '<a href="#i_switch"><tt>switch</tt></a>', 
+   '<a href="#i_switch"><tt>switch</tt></a>',
    '<a href="#i_indirectbr"><tt>indirectbr</tt></a>',
-   '<a href="#i_invoke"><tt>invoke</tt></a>', 
-   '<a href="#i_resume"><tt>resume</tt></a>', and 
+   '<a href="#i_invoke"><tt>invoke</tt></a>',
+   '<a href="#i_resume"><tt>resume</tt></a>', and
    '<a href="#i_unreachable"><tt>unreachable</tt></a>'.</p>
 
 <!-- _______________________________________________________________________ -->
@@ -3827,7 +3827,7 @@ IfUnequal:
 </div>
 
  <!-- _______________________________________________________________________ -->
- 
+
 <h4>
   <a name="i_resume">'<tt>resume</tt>' Instruction</a>
 </h4>
@@ -4426,7 +4426,7 @@ IfUnequal:
    vectors, each vector element of <tt>op1</tt> is shifted by the corresponding
    shift amount in <tt>op2</tt>.</p>
 
-<p>If the <tt>nuw</tt> keyword is present, then the shift produces a 
+<p>If the <tt>nuw</tt> keyword is present, then the shift produces a
    <a href="#poisonvalues">poison value</a> if it shifts out any non-zero bits.  If
    the <tt>nsw</tt> keyword is present, then the shift produces a
    <a href="#poisonvalues">poison value</a> if it shifts out any bits that disagree
@@ -5059,7 +5059,7 @@ IfUnequal:
    href="#memorymodel">defined</a> results when they may see multiple atomic
    stores.  The type of the pointee must be an integer type whose bit width
    is a power of two greater than or equal to eight and less than or equal
-   to a target-specific size limit. <code>align</code> must be explicitly 
+   to a target-specific size limit. <code>align</code> must be explicitly
    specified on atomic loads, and the load has undefined behavior if the
    alignment is not set to a value which is at least the size in bytes of
    the pointee. <code>!nontemporal</code> does not have any defined semantics
@@ -5140,7 +5140,7 @@ IfUnequal:
    href="#memorymodel">defined</a> results when they may see multiple atomic
    stores. The type of the pointee must be an integer type whose bit width
    is a power of two greater than or equal to eight and less than or equal
-   to a target-specific size limit. <code>align</code> must be explicitly 
+   to a target-specific size limit. <code>align</code> must be explicitly
    specified on atomic stores, and the store has undefined behavior if the
    alignment is not set to a value which is at least the size in bytes of
    the pointee. <code>!nontemporal</code> does not have any defined semantics
@@ -5402,7 +5402,7 @@ specified by the <var>operation</var> argument:</p>
 <pre>
   &lt;result&gt; = getelementptr &lt;pty&gt;* &lt;ptrval&gt;{, &lt;ty&gt; &lt;idx&gt;}*
   &lt;result&gt; = getelementptr inbounds &lt;pty&gt;* &lt;ptrval&gt;{, &lt;ty&gt; &lt;idx&gt;}*
-  &lt;result&gt; = getelementptr &lt;ptr vector&gt; ptrval, &lt;vector index type&gt; idx 
+  &lt;result&gt; = getelementptr &lt;ptr vector&gt; ptrval, &lt;vector index type&gt; idx
 </pre>
 
 <h5>Overview:</h5>
@@ -8408,7 +8408,7 @@ intrinsic function should be used instead.</p>
    format. This means that it is
    a dense encoding (in memory) but does not support computation in the
    format.</p>
-   
+
 <p>This means that code must first load the half-precision floating point
    value as an i16, then convert it to float with <a
    href="#int_convert_from_fp16"><tt>llvm.convert.from.fp16</tt></a>.
@@ -8942,7 +8942,7 @@ intrinsic function should be used instead.</p>
    is a boolean and determines whether <tt>llvm.objectsize</tt> returns 0 (if
    true) or -1 (if false) when the object size is unknown.
    The second argument only accepts constants.</p>
-   
+
 <h5>Semantics:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic is lowered to a constant representing
    the size of the object concerned. If the size cannot be determined at compile
