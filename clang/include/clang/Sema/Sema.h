@@ -5550,7 +5550,7 @@ public:
     NamedDecl *Template;
 
     /// \brief The entity that is being instantiated.
-    uintptr_t Entity;
+    Decl *Entity;
 
     /// \brief The list of template arguments we are substituting, if they
     /// are not part of the entity.

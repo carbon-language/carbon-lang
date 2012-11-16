@@ -182,7 +182,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     ActiveTemplateInstantiation Inst;
     Inst.Kind = ActiveTemplateInstantiation::TemplateInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = reinterpret_cast<uintptr_t>(Entity);
+    Inst.Entity = Entity;
     Inst.TemplateArgs = 0;
     Inst.NumTemplateArgs = 0;
     Inst.InstantiationRange = InstantiationRange;
@@ -205,7 +205,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     ActiveTemplateInstantiation Inst;
     Inst.Kind = ActiveTemplateInstantiation::ExceptionSpecInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = reinterpret_cast<uintptr_t>(Entity);
+    Inst.Entity = Entity;
     Inst.TemplateArgs = 0;
     Inst.NumTemplateArgs = 0;
     Inst.InstantiationRange = InstantiationRange;
@@ -230,7 +230,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     Inst.Kind
       = ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = reinterpret_cast<uintptr_t>(Template);
+    Inst.Entity = Template;
     Inst.TemplateArgs = TemplateArgs.data();
     Inst.NumTemplateArgs = TemplateArgs.size();
     Inst.InstantiationRange = InstantiationRange;
@@ -255,7 +255,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     ActiveTemplateInstantiation Inst;
     Inst.Kind = Kind;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = reinterpret_cast<uintptr_t>(FunctionTemplate);
+    Inst.Entity = FunctionTemplate;
     Inst.TemplateArgs = TemplateArgs.data();
     Inst.NumTemplateArgs = TemplateArgs.size();
     Inst.DeductionInfo = &DeductionInfo;
@@ -283,7 +283,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     ActiveTemplateInstantiation Inst;
     Inst.Kind = ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = reinterpret_cast<uintptr_t>(PartialSpec);
+    Inst.Entity = PartialSpec;
     Inst.TemplateArgs = TemplateArgs.data();
     Inst.NumTemplateArgs = TemplateArgs.size();
     Inst.DeductionInfo = &DeductionInfo;
@@ -308,7 +308,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     Inst.Kind
       = ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = reinterpret_cast<uintptr_t>(Param);
+    Inst.Entity = Param;
     Inst.TemplateArgs = TemplateArgs.data();
     Inst.NumTemplateArgs = TemplateArgs.size();
     Inst.InstantiationRange = InstantiationRange;
@@ -332,7 +332,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     Inst.Kind = ActiveTemplateInstantiation::PriorTemplateArgumentSubstitution;
     Inst.PointOfInstantiation = PointOfInstantiation;
     Inst.Template = Template;
-    Inst.Entity = reinterpret_cast<uintptr_t>(Param);
+    Inst.Entity = Param;
     Inst.TemplateArgs = TemplateArgs.data();
     Inst.NumTemplateArgs = TemplateArgs.size();
     Inst.InstantiationRange = InstantiationRange;
@@ -356,7 +356,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     Inst.Kind = ActiveTemplateInstantiation::PriorTemplateArgumentSubstitution;
     Inst.PointOfInstantiation = PointOfInstantiation;
     Inst.Template = Template;
-    Inst.Entity = reinterpret_cast<uintptr_t>(Param);
+    Inst.Entity = Param;
     Inst.TemplateArgs = TemplateArgs.data();
     Inst.NumTemplateArgs = TemplateArgs.size();
     Inst.InstantiationRange = InstantiationRange;
@@ -380,7 +380,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
   Inst.Kind = ActiveTemplateInstantiation::DefaultTemplateArgumentChecking;
   Inst.PointOfInstantiation = PointOfInstantiation;
   Inst.Template = Template;
-  Inst.Entity = reinterpret_cast<uintptr_t>(Param);
+  Inst.Entity = Param;
   Inst.TemplateArgs = TemplateArgs.data();
   Inst.NumTemplateArgs = TemplateArgs.size();
   Inst.InstantiationRange = InstantiationRange;
@@ -454,7 +454,7 @@ void Sema::PrintInstantiationStack() {
 
     switch (Active->Kind) {
     case ActiveTemplateInstantiation::TemplateInstantiation: {
-      Decl *D = reinterpret_cast<Decl *>(Active->Entity);
+      Decl *D = Active->Entity;
       if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
         unsigned DiagID = diag::note_template_member_class_here;
         if (isa<ClassTemplateSpecializationDecl>(Record))
@@ -491,7 +491,7 @@ void Sema::PrintInstantiationStack() {
     }
 
     case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation: {
-      TemplateDecl *Template = cast<TemplateDecl>((Decl *)Active->Entity);
+      TemplateDecl *Template = cast<TemplateDecl>(Active->Entity);
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                                          Active->TemplateArgs,
@@ -505,8 +505,7 @@ void Sema::PrintInstantiationStack() {
     }
 
     case ActiveTemplateInstantiation::ExplicitTemplateArgumentSubstitution: {
-      FunctionTemplateDecl *FnTmpl
-        = cast<FunctionTemplateDecl>((Decl *)Active->Entity);
+      FunctionTemplateDecl *FnTmpl = cast<FunctionTemplateDecl>(Active->Entity);
       Diags.Report(Active->PointOfInstantiation,
                    diag::note_explicit_template_arg_substitution_here)
         << FnTmpl 
@@ -518,9 +517,8 @@ void Sema::PrintInstantiationStack() {
     }
 
     case ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution:
-      if (ClassTemplatePartialSpecializationDecl *PartialSpec
-            = dyn_cast<ClassTemplatePartialSpecializationDecl>(
-                                                    (Decl *)Active->Entity)) {
+      if (ClassTemplatePartialSpecializationDecl *PartialSpec =
+            dyn_cast<ClassTemplatePartialSpecializationDecl>(Active->Entity)) {
         Diags.Report(Active->PointOfInstantiation,
                      diag::note_partial_spec_deduct_instantiation_here)
           << Context.getTypeDeclType(PartialSpec)
@@ -531,7 +529,7 @@ void Sema::PrintInstantiationStack() {
           << Active->InstantiationRange;
       } else {
         FunctionTemplateDecl *FnTmpl
-          = cast<FunctionTemplateDecl>((Decl *)Active->Entity);
+          = cast<FunctionTemplateDecl>(Active->Entity);
         Diags.Report(Active->PointOfInstantiation,
                      diag::note_function_template_deduction_instantiation_here)
           << FnTmpl
@@ -543,7 +541,7 @@ void Sema::PrintInstantiationStack() {
       break;
 
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation: {
-      ParmVarDecl *Param = cast<ParmVarDecl>((Decl *)Active->Entity);
+      ParmVarDecl *Param = cast<ParmVarDecl>(Active->Entity);
       FunctionDecl *FD = cast<FunctionDecl>(Param->getDeclContext());
 
       std::string TemplateArgsStr
@@ -559,7 +557,7 @@ void Sema::PrintInstantiationStack() {
     }
 
     case ActiveTemplateInstantiation::PriorTemplateArgumentSubstitution: {
-      NamedDecl *Parm = cast<NamedDecl>((Decl *)Active->Entity);
+      NamedDecl *Parm = cast<NamedDecl>(Active->Entity);
       std::string Name;
       if (!Parm->getName().empty())
         Name = std::string(" '") + Parm->getName().str() + "'";
@@ -603,7 +601,7 @@ void Sema::PrintInstantiationStack() {
     case ActiveTemplateInstantiation::ExceptionSpecInstantiation:
       Diags.Report(Active->PointOfInstantiation,
                    diag::note_template_exception_spec_instantiation_here)
-        << cast<FunctionDecl>((Decl *)Active->Entity)
+        << cast<FunctionDecl>(Active->Entity)
         << Active->InstantiationRange;
       break;
     }
@@ -624,7 +622,7 @@ llvm::Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
     case ActiveTemplateInstantiation::TemplateInstantiation:
       // An instantiation of an alias template may or may not be a SFINAE
       // context, depending on what else is on the stack.
-      if (isa<TypeAliasTemplateDecl>(reinterpret_cast<Decl *>(Active->Entity)))
+      if (isa<TypeAliasTemplateDecl>(Active->Entity))
         break;
       // Fall through.
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
