@@ -404,6 +404,10 @@ E: rspencer@reidspencer.com
 W: http://reidspencer.com/
 D: Lots of stuff, see: http://wiki.llvm.org/index.php/User:Reid
 
+N: Craig Topper
+E: craig.topper@gmail.com
+D: X86 codegen and disassembler improvements. AVX2 support.
+
 N: Edwin Torok
 E: edwintorok@gmail.com
 D: Miscellaneous bug fixes
