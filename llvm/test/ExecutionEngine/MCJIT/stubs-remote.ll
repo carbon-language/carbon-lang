@@ -1,5 +1,5 @@
 ; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit -disable-lazy-compilation=false %s
-; XFAIL: arm
+; XFAIL: arm, mingw32
 
 define i32 @main() nounwind {
 entry:

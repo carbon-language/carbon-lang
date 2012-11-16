@@ -1,5 +1,5 @@
 ; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit %s > /dev/null
-; XFAIL: arm
+; XFAIL: arm, mingw32
 
 define i32 @bar() {
 	ret i32 0
