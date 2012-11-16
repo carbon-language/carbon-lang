@@ -1,4 +1,5 @@
 ; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit %s > /dev/null
+; XFAIL: arm
 
 define double @test(double* %DP, double %Arg) {
 	%D = load double* %DP		; <double> [#uses=1]

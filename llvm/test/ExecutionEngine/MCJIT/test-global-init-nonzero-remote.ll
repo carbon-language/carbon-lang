@@ -1,4 +1,5 @@
 ; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit %s > /dev/null
+; XFAIL: arm
 
 @count = global i32 1, align 4
 
