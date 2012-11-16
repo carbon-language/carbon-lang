@@ -744,7 +744,7 @@ lltok::Kind LLLexer::Lex0x() {
 ///    HexFP128Constant  0xL[0-9A-Fa-f]+
 ///    HexPPC128Constant 0xM[0-9A-Fa-f]+
 lltok::Kind LLLexer::LexDigitOrNegative() {
-  // If the letter after the negative is a number, this is probably a label.
+  // If the letter after the negative is not a number, this is probably a label.
   if (!isdigit(TokStart[0]) && !isdigit(CurPtr[0])) {
     // Okay, this is not a number after the -, it's probably a label.
     if (const char *End = isLabelTail(CurPtr)) {
