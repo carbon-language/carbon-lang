@@ -261,7 +261,6 @@ public:
         if (m_process && m_process->GetStopID() != m_isa_to_descriptor_cache_stop_id)
         {
             UpdateISAToDescriptorMapIfNeeded ();
-            assert (m_process->GetStopID() == m_isa_to_descriptor_cache_stop_id); // REMOVE THIS PRIOR TO CHECKIN
         }
     }
     
