@@ -131,7 +131,7 @@ private:
     // If a non-volatile register (a "preserved" register) is requested mid-stack and no frames "below" the requested
     // stack have saved the register anywhere, it is safe to assume that frame 0's register values are still the same
     // as the requesting frame's.
-    bool
+    lldb_private::UnwindLLDB::RegisterSearchResult
     SavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc);
 
     bool

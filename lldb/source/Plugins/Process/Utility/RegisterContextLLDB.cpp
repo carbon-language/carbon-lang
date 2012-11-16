@@ -903,7 +903,7 @@ RegisterContextLLDB::IsSkipFrame () const
 
 // Answer the question: Where did THIS frame save the CALLER frame ("previous" frame)'s register value?
 
-bool
+enum UnwindLLDB::RegisterSearchResult
 RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc)
 {
     // Have we already found this register location?
@@ -914,7 +914,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         if (iterator != m_registers.end())
         {
             regloc = iterator->second;
-            return true;
+            return UnwindLLDB::RegisterSearchResult::eRegisterFound;
         }
     }
 
@@ -937,7 +937,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
         regloc.location.inferred_value = m_cfa;
         m_registers[lldb_regnum] = regloc;
-        return true;
+        return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
     // Look through the available UnwindPlans for the register location.
@@ -955,7 +955,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         {
             UnwindLogMsg ("could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
                     lldb_regnum, (int) unwindplan_registerkind);
-            return false;
+            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
         }
         if (active_row->GetRegisterInfo (row_regnum, unwindplan_regloc))
         {
@@ -993,7 +993,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                     else
                         UnwindLogMsg ("could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
                                 lldb_regnum, (int) unwindplan_registerkind);
-                    return false;
+                    return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
                 }
             }
 
@@ -1064,7 +1064,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             if (reg_info && abi->RegisterIsVolatile (reg_info))
             {
                 UnwindLogMsg ("did not supply reg location for %d because it is volatile", lldb_regnum);
-                return false;
+                return UnwindLLDB::RegisterSearchResult::eRegisterIsVolatile;
             }
         }
 
@@ -1076,11 +1076,11 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             new_regloc.location.register_number = lldb_regnum;
             m_registers[lldb_regnum] = new_regloc;
             regloc = new_regloc;
-            return true;
+            return UnwindLLDB::RegisterSearchResult::eRegisterFound;
         }
         else
         UnwindLogMsg ("could not supply caller's reg %d location", lldb_regnum);
-        return false;
+        return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
     }
 
     // unwindplan_regloc has valid contents about where to retrieve the register
@@ -1090,7 +1090,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         new_regloc.type = UnwindLLDB::RegisterLocation::eRegisterNotSaved;
         m_registers[lldb_regnum] = new_regloc;
         UnwindLogMsg ("could not supply caller's reg %d location", lldb_regnum);
-        return false;
+        return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
     }
 
     if (unwindplan_regloc.IsSame())
@@ -1098,11 +1098,11 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         if (IsFrameZero ())
         {
             UnwindLogMsg ("could not supply caller's reg %d location", lldb_regnum);
-            return false;
+            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
         }
         else
         {
-            return false;
+            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
         }
     }
 
@@ -1112,7 +1112,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
         regloc.location.inferred_value = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
-        return true;
+        return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
     if (unwindplan_regloc.IsAtCFAPlusOffset())
@@ -1121,7 +1121,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterSavedAtMemoryLocation;
         regloc.location.target_memory_location = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
-        return true;
+        return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
     if (unwindplan_regloc.IsInOtherRegister())
@@ -1131,12 +1131,12 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         if (!m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (unwindplan_registerkind, unwindplan_regnum, eRegisterKindLLDB, row_regnum_in_lldb))
         {
             UnwindLogMsg ("could not supply caller's reg %d location", lldb_regnum);
-            return false;
+            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
         }
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterInRegister;
         regloc.location.register_number = row_regnum_in_lldb;
         m_registers[lldb_regnum] = regloc;
-        return true;
+        return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
     if (unwindplan_regloc.IsDWARFExpression() || unwindplan_regloc.IsAtDWARFExpression())
@@ -1157,25 +1157,25 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                 regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
                 regloc.location.inferred_value = val;
                 m_registers[lldb_regnum] = regloc;
-                return true;
+                return UnwindLLDB::RegisterSearchResult::eRegisterFound;
             }
             else
             {
                regloc.type = UnwindLLDB::RegisterLocation::eRegisterSavedAtMemoryLocation;
                regloc.location.target_memory_location = val;
                m_registers[lldb_regnum] = regloc;
-               return true;
+               return UnwindLLDB::RegisterSearchResult::eRegisterFound;
             }
         }
         UnwindLogMsg ("tried to use IsDWARFExpression or IsAtDWARFExpression for reg %d but failed", lldb_regnum);
-        return false;
+        return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
     }
 
     UnwindLogMsg ("could not supply caller's reg %d location", lldb_regnum);
 
     // FIXME UnwindPlan::Row types atDWARFExpression and isDWARFExpression are unsupported.
 
-    return false;
+    return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
 }
 
 // If the Full unwindplan has been determined to be incorrect, this method will

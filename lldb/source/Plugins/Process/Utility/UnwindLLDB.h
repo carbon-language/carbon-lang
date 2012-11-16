@@ -30,6 +30,13 @@ public:
     virtual
     ~UnwindLLDB() { }
 
+    enum RegisterSearchResult
+    {
+        eRegisterFound = 0,
+        eRegisterNotFound,
+        eRegisterIsVolatile
+    };
+
 protected:
     friend class lldb_private::RegisterContextLLDB;
 

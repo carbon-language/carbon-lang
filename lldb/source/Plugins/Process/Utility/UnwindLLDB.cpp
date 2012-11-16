@@ -272,15 +272,21 @@ UnwindLLDB::SearchForSavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
     // isn't saved by frame_num, none of the frames lower on the stack will have a useful value.
     if (pc_or_return_address_reg)
     {
-        if (m_frames[frame_num]->reg_ctx_lldb_sp->SavedLocationForRegister (lldb_regnum, regloc))
+        UnwindLLDB::RegisterSearchResult result;
+        result = m_frames[frame_num]->reg_ctx_lldb_sp->SavedLocationForRegister (lldb_regnum, regloc);
+        if (result == UnwindLLDB::RegisterSearchResult::eRegisterFound)
           return true;
         else
           return false;
     }
     while (frame_num >= 0)
     {
-        if (m_frames[frame_num]->reg_ctx_lldb_sp->SavedLocationForRegister (lldb_regnum, regloc))
+        UnwindLLDB::RegisterSearchResult result;
+        result = m_frames[frame_num]->reg_ctx_lldb_sp->SavedLocationForRegister (lldb_regnum, regloc);
+        if (result == UnwindLLDB::RegisterSearchResult::eRegisterFound)
             return true;
+        if (result == UnwindLLDB::RegisterSearchResult::eRegisterIsVolatile)
+            return false;
         frame_num--;
     }
     return false;
