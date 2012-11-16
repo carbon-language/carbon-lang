@@ -24,7 +24,7 @@ class Rdar12586188TestCase(TestBase):
         self.expect("command script import ./fail12586188.py --allow-reload",
                 error=True, substrs = ['error: module importing failed: I do not want to be imported'])
         self.expect("command script import ./fail212586188.py --allow-reload",
-                error=True, substrs = ['error: module importing failed: Python raised an error while importing module'])
+                error=True, substrs = ['error: module importing failed: Python error raised while importing module: I do not want to be imported'])
 
 if __name__ == '__main__':
     import atexit
