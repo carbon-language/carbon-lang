@@ -56,6 +56,10 @@ N: Justin Holewinski
 E: jholewinski@nvidia.com
 D: NVPTX Target (lib/Target/NVPTX/*)
 
+N: Andy Kaylor
+E: andrew.kaylor@intel.com
+D: MCJIT, RuntimeDyld and JIT event listeners
+
 N: Galina Kistanova
 E: gkistanova@gmail.com
 D: LLVM Buildbot
