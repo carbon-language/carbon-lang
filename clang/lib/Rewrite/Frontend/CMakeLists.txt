@@ -25,4 +25,5 @@ target_link_libraries(clangRewriteFrontend
   clangAST
   clangParse
   clangFrontend
+  clangRewriteCore
   )
