@@ -664,7 +664,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   raw_ostream &OS = llvm::errs();
 
   // Create the target instance.
-  setTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), getTargetOpts()));
+  setTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), &getTargetOpts()));
   if (!hasTarget())
     return false;
 

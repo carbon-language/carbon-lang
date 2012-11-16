@@ -542,8 +542,8 @@ public:
       return false;
     
     this->TargetOpts = new TargetOptions(TargetOpts);
-    Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(), 
-                                          *this->TargetOpts);
+    Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(),
+                                          &*this->TargetOpts);
 
     updated();
     return false;
@@ -1082,7 +1082,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
   // Create the target instance.
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                   Clang->getTargetOpts()));
+                   &Clang->getTargetOpts()));
   if (!Clang->hasTarget()) {
     delete OverrideMainBuffer;
     return true;
@@ -1551,7 +1551,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   // Create the target instance.
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                                Clang->getTargetOpts()));
+                                                &Clang->getTargetOpts()));
   if (!Clang->hasTarget()) {
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
@@ -1774,7 +1774,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   
   // Create the target instance.
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                   Clang->getTargetOpts()));
+                                                &Clang->getTargetOpts()));
   if (!Clang->hasTarget())
     return 0;
 
@@ -2370,7 +2370,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   
   // Create the target instance.
   Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                               Clang->getTargetOpts()));
+                                                &Clang->getTargetOpts()));
   if (!Clang->hasTarget()) {
     Clang->setInvocation(0);
     return;

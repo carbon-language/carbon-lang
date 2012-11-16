@@ -4658,8 +4658,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 /// CreateTargetInfo - Return the target info object for the specified target
 /// triple.
 TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
-                                         TargetOptions &Opts) {
-  llvm::Triple Triple(Opts.Triple);
+                                         TargetOptions *Opts) {
+  llvm::Triple Triple(Opts->Triple);
 
   // Construct the target
   OwningPtr<TargetInfo> Target(AllocateTarget(Triple.str()));
@@ -4670,20 +4670,20 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   Target->setTargetOpts(Opts);
 
   // Set the target CPU if specified.
-  if (!Opts.CPU.empty() && !Target->setCPU(Opts.CPU)) {
-    Diags.Report(diag::err_target_unknown_cpu) << Opts.CPU;
+  if (!Opts->CPU.empty() && !Target->setCPU(Opts->CPU)) {
+    Diags.Report(diag::err_target_unknown_cpu) << Opts->CPU;
     return 0;
   }
 
   // Set the target ABI if specified.
-  if (!Opts.ABI.empty() && !Target->setABI(Opts.ABI)) {
-    Diags.Report(diag::err_target_unknown_abi) << Opts.ABI;
+  if (!Opts->ABI.empty() && !Target->setABI(Opts->ABI)) {
+    Diags.Report(diag::err_target_unknown_abi) << Opts->ABI;
     return 0;
   }
 
   // Set the target C++ ABI.
-  if (!Opts.CXXABI.empty() && !Target->setCXXABI(Opts.CXXABI)) {
-    Diags.Report(diag::err_target_unknown_cxxabi) << Opts.CXXABI;
+  if (!Opts->CXXABI.empty() && !Target->setCXXABI(Opts->CXXABI)) {
+    Diags.Report(diag::err_target_unknown_cxxabi) << Opts->CXXABI;
     return 0;
   }
 
@@ -4695,8 +4695,8 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   // Apply the user specified deltas.
   // First the enables.
   for (std::vector<std::string>::const_iterator 
-         it = Opts.FeaturesAsWritten.begin(),
-         ie = Opts.FeaturesAsWritten.end(); 
+         it = Opts->FeaturesAsWritten.begin(),
+         ie = Opts->FeaturesAsWritten.end();
        it != ie; ++it) {
     const char *Name = it->c_str();
 
@@ -4712,8 +4712,8 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
 
   // Then the disables.
   for (std::vector<std::string>::const_iterator 
-         it = Opts.FeaturesAsWritten.begin(),
-         ie = Opts.FeaturesAsWritten.end(); 
+         it = Opts->FeaturesAsWritten.begin(),
+         ie = Opts->FeaturesAsWritten.end();
        it != ie; ++it) {
     const char *Name = it->c_str();
 
@@ -4732,11 +4732,11 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   //
   // FIXME: If we are completely confident that we have the right set, we only
   // need to pass the minuses.
-  Opts.Features.clear();
+  Opts->Features.clear();
   for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it)
-    Opts.Features.push_back((it->second ? "+" : "-") + it->first().str());
-  Target->HandleTargetFeatures(Opts.Features);
+    Opts->Features.push_back((it->second ? "+" : "-") + it->first().str());
+  Target->HandleTargetFeatures(Opts->Features);
 
   return Target.take();
 }

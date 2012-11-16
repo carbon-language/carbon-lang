@@ -99,7 +99,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     Clang->setInvocation(CInvok.take());
     Clang->setDiagnostics(Diags.getPtr());
     Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                                  Clang->getTargetOpts()));
+                                                  &Clang->getTargetOpts()));
     Clang->createFileManager();
     Clang->createSourceManager(Clang->getFileManager());
     Clang->createPreprocessor();
