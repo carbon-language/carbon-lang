@@ -16,6 +16,11 @@ N: Owen Anderson
 E: resistor@mac.com
 D: SelectionDAG (lib/CodeGen/SelectionDAG/*)
 
+N: Chandler Carruth
+E: chandlerc@gmail.com
+E: chandlerc@google.com
+D: Config, ADT, Support, inlining & related passse, SROA/mem2reg & related passes, CMake, library layering
+
 N: Evan Cheng
 E: evan.cheng@apple.com
 D: ARM target, parts of code generator not covered by someone else
