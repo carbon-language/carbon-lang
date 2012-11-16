@@ -93,7 +93,7 @@ D: XCore Backend
 
 N: Chad Rosier
 E: mcrosier@apple.com
-D: MS-inline asm, fast-isel
+D: MS-inline asm, Fast-Isel, and the compiler driver
 
 N: Nadav Rotem
 E: nrotem@apple.com
