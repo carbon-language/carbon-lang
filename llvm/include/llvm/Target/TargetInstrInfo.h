@@ -435,7 +435,7 @@ public:
                              SmallVectorImpl<MachineOperand> &Cond,
                              unsigned &TrueOp, unsigned &FalseOp,
                              bool &Optimizable) const {
-    assert(MI && MI->isSelect() && "MI must be a select instruction");
+    assert(MI && MI->getDesc().isSelect() && "MI must be a select instruction");
     return true;
   }
 
