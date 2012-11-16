@@ -562,6 +562,11 @@ ObjectFileMachO::ParseHeader ()
 
             ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
             
+            // Check if the module has a required architecture
+            const ArchSpec &module_arch = module_sp->GetArchitecture();
+            if (module_arch.IsValid() && !module_arch.IsExactMatch(mach_arch))
+                return false;
+
             if (SetModulesArchitecture (mach_arch))
             {
                 const size_t header_and_lc_size = m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic);
