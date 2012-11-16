@@ -46,6 +46,8 @@ static const uint8_t form_sizes_addr4[] = {
   0, // 0x18 DW_FORM_exprloc
   0, // 0x19 DW_FORM_flag_present
   8, // 0x20 DW_FORM_ref_sig8
+  4, // 0x1f01 DW_FORM_GNU_addr_index
+  4, // 0x1f02 DW_FORM_GNU_str_index
 };
 
 static const uint8_t form_sizes_addr8[] = {
@@ -76,6 +78,8 @@ static const uint8_t form_sizes_addr8[] = {
   0, // 0x18 DW_FORM_exprloc
   0, // 0x19 DW_FORM_flag_present
   8, // 0x20 DW_FORM_ref_sig8
+  8, // 0x1f01 DW_FORM_GNU_addr_index
+  8, // 0x1f01 DW_FORM_GNU_str_index
 };
 
 const uint8_t *
@@ -184,6 +188,12 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       break;
     case DW_FORM_ref_sig8:
       Value.uval = data.getU64(offset_ptr);
+      break;
+    case DW_FORM_GNU_addr_index:
+      Value.uval = data.getULEB128(offset_ptr);
+      break;
+    case DW_FORM_GNU_str_index:
+      Value.uval = data.getULEB128(offset_ptr);
       break;
     default:
       return false;
