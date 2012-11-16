@@ -52,6 +52,31 @@ class StringTable:
        end = self.string_table.index('\x00', index)
        return self.string_table[index:end]
 
+class ProgramHeader:
+    def __init__(self, f):
+        self.p_type = f.read32()
+        if f.is64Bit:
+            self.p_flags = f.read32()
+        self.p_offset = f.readWord()
+        self.p_vaddr = f.readWord()
+        self.p_paddr = f.readWord()
+        self.p_filesz = f.readWord()
+        self.p_memsz = f.readWord()
+        if not f.is64Bit:
+            self.p_flags = f.read32()
+        self.p_align = f.readWord()
+
+    def dump(self):
+        print "  (('p_type', %s)" % common_dump.HexDump(self.p_type) 
+        print "   ('p_flags', %s)" % common_dump.HexDump(self.p_flags) 
+        print "   ('p_offset', %s)" % common_dump.HexDump(self.p_offset) 
+        print "   ('p_vaddr', %s)" % common_dump.HexDump(self.p_vaddr) 
+        print "   ('p_paddr', %s)" % common_dump.HexDump(self.p_paddr) 
+        print "   ('p_filesz', %s)" % common_dump.HexDump(self.p_filesz) 
+        print "   ('p_memsz', %s)" % common_dump.HexDump(self.p_memsz) 
+        print "   ('p_align', %s)" % common_dump.HexDump(self.p_align) 
+        print "  ),"
+
 class Section:
     def __init__(self, f):
         self.sh_name = f.read32()
@@ -189,19 +214,23 @@ def dumpELF(path, opts):
     print "('e_machine', %s)" % common_dump.HexDump(e_machine)
     print "('e_version', %s)" % common_dump.HexDump(f.read32())
     print "('e_entry', %s)" % common_dump.HexDump(f.readWord())
-    print "('e_phoff', %s)" % common_dump.HexDump(f.readWord())
+    e_phoff = f.readWord()
+    print "('e_phoff', %s)" % common_dump.HexDump(e_phoff)
     e_shoff = f.readWord()
     print "('e_shoff', %s)" % common_dump.HexDump(e_shoff)
     print "('e_flags', %s)" % common_dump.HexDump(f.read32())
     print "('e_ehsize', %s)" % common_dump.HexDump(f.read16())
-    print "('e_phentsize', %s)" % common_dump.HexDump(f.read16())
-    print "('e_phnum', %s)" % common_dump.HexDump(f.read16())
+    e_phentsize = f.read16()
+    print "('e_phentsize', %s)" % common_dump.HexDump(e_phentsize)
+    e_phnum = f.read16()
+    print "('e_phnum', %s)" % common_dump.HexDump(e_phnum)
     e_shentsize = f.read16()
     print "('e_shentsize', %s)" % common_dump.HexDump(e_shentsize)
     e_shnum = f.read16()
     print "('e_shnum', %s)" % common_dump.HexDump(e_shnum)
     e_shstrndx = f.read16()
     print "('e_shstrndx', %s)" % common_dump.HexDump(e_shstrndx)
+    
 
     # Read all section headers
     sections = []
@@ -226,6 +255,19 @@ def dumpELF(path, opts):
     for index in range(e_shnum[0]):
         print "  # Section %s" % index
         sections[index].dump(shstrtab, f, strtab, opts.dumpSectionData)
+    print "])"
+
+    # Read all  program headers
+    headers = []
+    for index in range(e_phnum[0]):
+        f.seek(e_phoff[0] + index * e_phentsize[0])
+        h = ProgramHeader(f)
+        headers.append(h)
+
+    print "('_ProgramHeaders', ["
+    for index in range(e_phnum[0]):
+        print "  # Program Header %s" % index
+        headers[index].dump()
     print "])"
 
 if __name__ == "__main__":
