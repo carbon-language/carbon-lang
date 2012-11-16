@@ -60,9 +60,11 @@ D: Loop unrolling with run-time trip counts.
 
 N: Chandler Carruth
 E: chandlerc@gmail.com
+E: chandlerc@google.com
 D: Hashing algorithms and interfaces
 D: Inline cost analysis
 D: Machine block placement pass
+D: SROA
 
 N: Casey Carter
 E: ccarter@uiuc.edu
