@@ -245,7 +245,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     // Create the target instance.
     m_compiler->setTarget(TargetInfo::CreateTargetInfo(m_compiler->getDiagnostics(),
-                                                       m_compiler->getTargetOpts()));
+                                                       &m_compiler->getTargetOpts()));
     
     assert (m_compiler->hasTarget());
     
