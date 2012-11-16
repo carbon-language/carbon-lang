@@ -3922,7 +3922,11 @@ struct IntRange {
       unsigned NumPositive = Enum->getNumPositiveBits();
       unsigned NumNegative = Enum->getNumNegativeBits();
 
-      return IntRange(std::max(NumPositive, NumNegative), NumNegative == 0);
+      if (NumNegative == 0)
+        return IntRange(NumPositive, true/*NonNegative*/);
+      else
+        return IntRange(std::max(NumPositive + 1, NumNegative),
+                        false/*NonNegative*/);
     }
 
     const BuiltinType *BT = cast<BuiltinType>(T);

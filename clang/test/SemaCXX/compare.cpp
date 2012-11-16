@@ -338,3 +338,13 @@ void test7(unsigned long other) {
   (void)((unsigned char)other != (unsigned short)(0x100)); // expected-warning{{true}}
   (void)((unsigned short)other != (unsigned char)(0xff));
 }
+
+void test8(int x) {
+  enum E {
+    Negative = -1,
+    Positive = 1
+  };
+
+  (void)((E)x == 1);
+  (void)((E)x == -1);
+}
