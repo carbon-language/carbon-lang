@@ -134,7 +134,7 @@ CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
 	-DMAC_INTERPOSE_FUNCTIONS=1
 
-CFLAGS.ubsan_osx	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.ubsan_osx	:= $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
@@ -188,7 +188,7 @@ FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(InterceptionFunctions) \
                               $(SanitizerCommonFunctions) \
 	                      $(AsanDynamicFunctions)
 
-FUNCTIONS.ubsan_osx := $(UbsanFunctions)
+FUNCTIONS.ubsan_osx := $(UbsanFunctions) $(SanitizerCommonFunctions)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
