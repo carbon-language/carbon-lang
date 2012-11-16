@@ -92,11 +92,6 @@ private:
   Attributes(AttributesImpl *A) : Attrs(A) {}
 public:
   Attributes() : Attrs(0) {}
-  Attributes(const Attributes &A) : Attrs(A.Attrs) {}
-  Attributes &operator=(const Attributes &A) {
-    Attrs = A.Attrs;
-    return *this;
-  }
 
   /// get - Return a uniquified Attributes object. This takes the uniquified
   /// value from the Builder and wraps it in the Attributes class.
@@ -199,7 +194,6 @@ public:
   AttrBuilder() : Bits(0) {}
   explicit AttrBuilder(uint64_t B) : Bits(B) {}
   AttrBuilder(const Attributes &A) : Bits(A.Raw()) {}
-  AttrBuilder(const AttrBuilder &B) : Bits(B.Bits) {}
 
   void clear() { Bits = 0; }
 
