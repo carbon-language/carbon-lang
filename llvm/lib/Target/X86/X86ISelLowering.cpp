@@ -1822,7 +1822,8 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
 /// IsTailCallConvention - Return true if the calling convention is one that
 /// supports tail call optimization.
 static bool IsTailCallConvention(CallingConv::ID CC) {
-  return (CC == CallingConv::Fast || CC == CallingConv::GHC);
+  return (CC == CallingConv::Fast || CC == CallingConv::GHC ||
+          CC == CallingConv::HiPE);
 }
 
 bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
@@ -1909,7 +1910,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   bool IsWin64 = Subtarget->isTargetWin64();
 
   assert(!(isVarArg && IsTailCallConvention(CallConv)) &&
-         "Var args not supported with calling convention fastcc or ghc");
+         "Var args not supported with calling convention fastcc, ghc or hipe");
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -2254,7 +2255,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   }
 
   assert(!(isVarArg && IsTailCallConvention(CallConv)) &&
-         "Var args not supported with calling convention fastcc or ghc");
+         "Var args not supported with calling convention fastcc, ghc or hipe");
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -3118,6 +3119,8 @@ bool X86::isCalleePop(CallingConv::ID CallingConv,
   case CallingConv::Fast:
     return TailCallOpt;
   case CallingConv::GHC:
+    return TailCallOpt;
+  case CallingConv::HiPE:
     return TailCallOpt;
   }
 }

@@ -1982,8 +1982,8 @@ Tail call optimization
 Tail call optimization, callee reusing the stack of the caller, is currently
 supported on x86/x86-64 and PowerPC. It is performed if:
 
-* Caller and callee have the calling convention ``fastcc`` or ``cc 10`` (GHC
-  call convention).
+* Caller and callee have the calling convention ``fastcc``, ``cc 10`` (GHC
+  calling convention) or ``cc 11`` (HiPE calling convention).
 
 * The call is a tail call - in tail position (ret immediately follows call and
   ret uses value of call or is void).
