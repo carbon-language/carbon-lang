@@ -53,12 +53,6 @@ def err_pch_macro_def_undef : Error<
 def err_pch_macro_def_conflict : Error<
     "definition of macro '%0' differs between the precompiled header ('%1') "
     "and the command line ('%2')">;
-def err_pch_include_opt_missing : Error<
-    "precompiled header depends on '%select{-include|-imacros}0 %1' option "
-    "that is missing from the command line">;
-def err_pch_include_opt_conflict : Error<
-    "precompiled header option '%select{-include|-imacros}0 %1' conflicts with "
-    "corresponding option '%select{-include|-imacros}0 %2' on command line">;
 def err_pch_undef : Error<
     "%select{command line contains|precompiled header was built with}0 "
     "'-undef' but %select{precompiled header was not built with it|"
