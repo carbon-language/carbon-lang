@@ -244,9 +244,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // non-trivial if it calls anything other than a trivial move constructor.
       if (!BaseClassDecl->hasTrivialCopyConstructor())
         data().HasTrivialCopyConstructor = false;
-      if (!BaseClassDecl->hasTrivialMoveConstructor() ||
-          !(BaseClassDecl->hasDeclaredMoveConstructor() ||
-            BaseClassDecl->needsImplicitMoveConstructor()))
+      if (!BaseClassDecl->hasTrivialMoveConstructor())
         data().HasTrivialMoveConstructor = false;
 
       // C++0x [class.copy]p27:
@@ -258,9 +256,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // of all of them.
       if (!BaseClassDecl->hasTrivialCopyAssignment())
         data().HasTrivialCopyAssignment = false;
-      if (!BaseClassDecl->hasTrivialMoveAssignment() ||
-          !(BaseClassDecl->hasDeclaredMoveAssignment() ||
-            BaseClassDecl->needsImplicitMoveAssignment()))
+      if (!BaseClassDecl->hasTrivialMoveAssignment())
         data().HasTrivialMoveAssignment = false;
 
       // C++11 [class.ctor]p6:
@@ -321,13 +317,13 @@ bool CXXRecordDecl::isTriviallyCopyable() const {
   // C++0x [class]p5:
   //   A trivially copyable class is a class that:
   //   -- has no non-trivial copy constructors,
-  if (!hasTrivialCopyConstructor()) return false;
+  if (hasNonTrivialCopyConstructor()) return false;
   //   -- has no non-trivial move constructors,
-  if (!hasTrivialMoveConstructor()) return false;
+  if (hasNonTrivialMoveConstructor()) return false;
   //   -- has no non-trivial copy assignment operators,
-  if (!hasTrivialCopyAssignment()) return false;
+  if (hasNonTrivialCopyAssignment()) return false;
   //   -- has no non-trivial move assignment operators, and
-  if (!hasTrivialMoveAssignment()) return false;
+  if (hasNonTrivialMoveAssignment()) return false;
   //   -- has a trivial destructor.
   if (!hasTrivialDestructor()) return false;
 
@@ -835,9 +831,7 @@ NotASpecialMember:;
         // FIXME: C++0x: We don't correctly model 'selected' constructors.
         if (!FieldRec->hasTrivialCopyConstructor())
           data().HasTrivialCopyConstructor = false;
-        if (!FieldRec->hasTrivialMoveConstructor() ||
-            !(FieldRec->hasDeclaredMoveConstructor() ||
-              FieldRec->needsImplicitMoveConstructor()))
+        if (!FieldRec->hasTrivialMoveConstructor())
           data().HasTrivialMoveConstructor = false;
 
         // C++0x [class.copy]p27:
@@ -849,9 +843,7 @@ NotASpecialMember:;
         // FIXME: C++0x: We don't correctly model 'selected' operators.
         if (!FieldRec->hasTrivialCopyAssignment())
           data().HasTrivialCopyAssignment = false;
-        if (!FieldRec->hasTrivialMoveAssignment() ||
-            !(FieldRec->hasDeclaredMoveAssignment() ||
-              FieldRec->needsImplicitMoveAssignment()))
+        if (!FieldRec->hasTrivialMoveAssignment())
           data().HasTrivialMoveAssignment = false;
 
         if (!FieldRec->hasTrivialDestructor())

@@ -218,7 +218,7 @@ static bool isSafeForCXXConstantCapture(QualType type) {
 
   // Maintain semantics for classes with non-trivial dtors or copy ctors.
   if (!record->hasTrivialDestructor()) return false;
-  if (!record->hasTrivialCopyConstructor()) return false;
+  if (record->hasNonTrivialCopyConstructor()) return false;
 
   // Otherwise, we just have to make sure there aren't any mutable
   // fields that might have changed since initialization.

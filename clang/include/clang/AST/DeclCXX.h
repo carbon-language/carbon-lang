@@ -805,6 +805,12 @@ public:
     return data().FirstFriend != 0;
   }
 
+  /// \brief Determine whether this class has any default constructors.
+  bool hasDefaultConstructor() const {
+    return !data().UserDeclaredConstructor ||
+           data().DeclaredDefaultConstructor;
+  }
+
   /// \brief Determine if we need to declare a default constructor for
   /// this class.
   ///
@@ -814,8 +820,8 @@ public:
            !data().DeclaredDefaultConstructor;
   }
 
-  /// hasDeclaredDefaultConstructor - Whether this class's default constructor
-  /// has been declared (either explicitly or implicitly).
+  /// \brief Determine whether any default constructors have been declared for
+  /// this class (either explicitly or implicitly).
   bool hasDeclaredDefaultConstructor() const {
     return data().DeclaredDefaultConstructor;
   }
@@ -1079,64 +1085,110 @@ public:
   /// mutable field.
   bool hasMutableFields() const { return data().HasMutableFields; }
 
-  /// hasTrivialDefaultConstructor - Whether this class has a trivial default
-  /// constructor (C++11 [class.ctor]p5).
+  /// \brief Determine whether this class has a trivial default constructor
+  /// (C++11 [class.ctor]p5).
+  /// FIXME: This can be wrong when the class has multiple default constructors.
   bool hasTrivialDefaultConstructor() const {
-    return data().HasTrivialDefaultConstructor &&
-           (!data().UserDeclaredConstructor ||
-             data().DeclaredDefaultConstructor);
+    return hasDefaultConstructor() && data().HasTrivialDefaultConstructor;
   }
 
-  /// hasConstexprNonCopyMoveConstructor - Whether this class has at least one
-  /// constexpr constructor other than the copy or move constructors.
+  /// \brief Determine whether this class has a non-trivial default constructor
+  /// (C++11 [class.ctor]p5).
+  bool hasNonTrivialDefaultConstructor() const {
+    return hasDefaultConstructor() && !data().HasTrivialDefaultConstructor;
+  }
+
+  /// \brief Determine whether this class has at least one constexpr constructor
+  /// other than the copy or move constructors.
   bool hasConstexprNonCopyMoveConstructor() const {
     return data().HasConstexprNonCopyMoveConstructor ||
            (!hasUserDeclaredConstructor() &&
             defaultedDefaultConstructorIsConstexpr());
   }
 
-  /// defaultedDefaultConstructorIsConstexpr - Whether a defaulted default
-  /// constructor for this class would be constexpr.
+  /// \brief Determine whether a defaulted default constructor for this class
+  /// would be constexpr.
   bool defaultedDefaultConstructorIsConstexpr() const {
     return data().DefaultedDefaultConstructorIsConstexpr &&
            (!isUnion() || hasInClassInitializer());
   }
 
-  /// hasConstexprDefaultConstructor - Whether this class has a constexpr
-  /// default constructor.
+  /// \brief Determine whether this class has a constexpr default constructor.
   bool hasConstexprDefaultConstructor() const {
     return data().HasConstexprDefaultConstructor ||
            (!data().UserDeclaredConstructor &&
             defaultedDefaultConstructorIsConstexpr());
   }
 
-  // hasTrivialCopyConstructor - Whether this class has a trivial copy
-  // constructor (C++ [class.copy]p6, C++0x [class.copy]p13)
+  /// \brief Determine whether this class has a trivial copy constructor
+  /// (C++ [class.copy]p6, C++11 [class.copy]p12)
+  /// FIXME: This can be wrong if the class has multiple copy constructors.
   bool hasTrivialCopyConstructor() const {
     return data().HasTrivialCopyConstructor;
   }
 
-  // hasTrivialMoveConstructor - Whether this class has a trivial move
-  // constructor (C++0x [class.copy]p13)
-  bool hasTrivialMoveConstructor() const {
-    return data().HasTrivialMoveConstructor;
+  /// \brief Determine whether this class has a non-trivial copy constructor
+  /// (C++ [class.copy]p6, C++11 [class.copy]p12)
+  bool hasNonTrivialCopyConstructor() const {
+    return !data().HasTrivialCopyConstructor;
   }
 
-  // hasTrivialCopyAssignment - Whether this class has a trivial copy
-  // assignment operator (C++ [class.copy]p11, C++0x [class.copy]p27)
+  /// \brief Determine whether this class has a trivial move constructor
+  /// (C++11 [class.copy]p12)
+  /// FIXME: This can be wrong if the class has multiple move constructors,
+  /// or if the implicit move constructor would be deleted.
+  bool hasTrivialMoveConstructor() const {
+    return data().HasTrivialMoveConstructor &&
+           (hasDeclaredMoveConstructor() || needsImplicitMoveConstructor());
+  }
+
+  /// \brief Determine whether this class has a non-trivial move constructor
+  /// (C++11 [class.copy]p12)
+  /// FIXME: This can be wrong if the implicit move constructor would be
+  /// deleted.
+  bool hasNonTrivialMoveConstructor() const {
+    return !data().HasTrivialMoveConstructor &&
+           (hasDeclaredMoveConstructor() || needsImplicitMoveConstructor());
+  }
+
+  /// \brief Determine whether this class has a trivial copy assignment operator
+  /// (C++ [class.copy]p11, C++11 [class.copy]p25)
+  /// FIXME: This can be wrong if the class has multiple copy assignment
+  /// operators.
   bool hasTrivialCopyAssignment() const {
     return data().HasTrivialCopyAssignment;
   }
 
-  // hasTrivialMoveAssignment - Whether this class has a trivial move
-  // assignment operator (C++0x [class.copy]p27)
-  bool hasTrivialMoveAssignment() const {
-    return data().HasTrivialMoveAssignment;
+  /// \brief Determine whether this class has a non-trivial copy assignment
+  /// operator (C++ [class.copy]p11, C++11 [class.copy]p25)
+  bool hasNonTrivialCopyAssignment() const {
+    return !data().HasTrivialCopyAssignment;
   }
 
-  // hasTrivialDestructor - Whether this class has a trivial destructor
-  // (C++ [class.dtor]p3)
+  /// \brief Determine whether this class has a trivial move assignment operator
+  /// (C++11 [class.copy]p25)
+  /// FIXME: This can be wrong if the class has multiple move assignment
+  /// operators, or if the implicit move assignment operator would be deleted.
+  bool hasTrivialMoveAssignment() const {
+    return data().HasTrivialMoveAssignment &&
+           (hasDeclaredMoveAssignment() || needsImplicitMoveAssignment());
+  }
+
+  /// \brief Determine whether this class has a non-trivial move assignment
+  /// operator (C++11 [class.copy]p25)
+  /// FIXME: This can be wrong if the implicit move assignment would be deleted.
+  bool hasNonTrivialMoveAssignment() const {
+    return !data().HasTrivialMoveAssignment &&
+           (hasDeclaredMoveAssignment() || needsImplicitMoveAssignment());
+  }
+
+  /// \brief Determine whether this class has a trivial destructor
+  /// (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
+
+  /// \brief Determine whether this class has a non-trivial destructor
+  /// (C++ [class.dtor]p3)
+  bool hasNonTrivialDestructor() const { return !data().HasTrivialDestructor; }
 
   // hasIrrelevantDestructor - Whether this class has a destructor which has no
   // semantic effect. Any such destructor will be trivial, public, defaulted

@@ -213,7 +213,7 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
   // Don't mess with non-trivial C++ types.
   RecordDecl *Record = RecordTy->getDecl();
   if (isa<CXXRecordDecl>(Record) &&
-      (!cast<CXXRecordDecl>(Record)->hasTrivialCopyConstructor() ||
+      (cast<CXXRecordDecl>(Record)->hasNonTrivialCopyConstructor() ||
        !cast<CXXRecordDecl>(Record)->hasTrivialDestructor()))
     return false;
 
@@ -1285,7 +1285,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
               Record->hasTrivialCopyAssignment() ||
               Record->hasTrivialMoveConstructor() ||
               Record->hasTrivialMoveAssignment()) &&
-             "Trying to aggregate-copy a type without a trivial copy "
+             "Trying to aggregate-copy a type without a trivial copy/move "
              "constructor or assignment operator");
       // Ignore empty classes in C++.
       if (Record->isEmpty())

@@ -8201,10 +8201,7 @@ hasVirtualBaseWithNonTrivialMoveAssignment(Sema &S, CXXRecordDecl *ClassDecl) {
     if (BaseClass->needsImplicitMoveAssignment())
       S.DeclareImplicitMoveAssignment(BaseClass);
 
-    // If the class has both a trivial move assignment and a non-trivial move
-    // assignment, hasTrivialMoveAssignment() is false.
-    if (BaseClass->hasDeclaredMoveAssignment() &&
-        !BaseClass->hasTrivialMoveAssignment())
+    if (BaseClass->hasNonTrivialMoveAssignment())
       return true;
   }
 

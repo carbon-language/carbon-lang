@@ -635,16 +635,16 @@ Sema::VarArgKind Sema::isValidVarArgType(const QualType &Ty) {
   if (Ty.isCXX98PODType(Context))
     return VAK_Valid;
 
-  // C++0x [expr.call]p7:
-  //   Passing a potentially-evaluated argument of class type (Clause 9) 
+  // C++11 [expr.call]p7:
+  //   Passing a potentially-evaluated argument of class type (Clause 9)
   //   having a non-trivial copy constructor, a non-trivial move constructor,
-  //   or a non-trivial destructor, with no corresponding parameter, 
+  //   or a non-trivial destructor, with no corresponding parameter,
   //   is conditionally-supported with implementation-defined semantics.
   if (getLangOpts().CPlusPlus0x && !Ty->isDependentType())
     if (CXXRecordDecl *Record = Ty->getAsCXXRecordDecl())
-      if (Record->hasTrivialCopyConstructor() &&
-          Record->hasTrivialMoveConstructor() &&
-          Record->hasTrivialDestructor())
+      if (!Record->hasNonTrivialCopyConstructor() &&
+          !Record->hasNonTrivialMoveConstructor() &&
+          !Record->hasNonTrivialDestructor())
         return VAK_ValidInCXX11;
 
   if (getLangOpts().ObjCAutoRefCount && Ty->isObjCLifetimeType())

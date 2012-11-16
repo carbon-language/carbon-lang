@@ -173,7 +173,7 @@ static bool hasNonTrivialDestructorOrCopyConstructor(const RecordType *RT) {
   if (!RD)
     return false;
 
-  return !RD->hasTrivialDestructor() || !RD->hasTrivialCopyConstructor();
+  return !RD->hasTrivialDestructor() || RD->hasNonTrivialCopyConstructor();
 }
 
 /// isRecordWithNonTrivialDestructorOrCopyConstructor - Determine if a type is
