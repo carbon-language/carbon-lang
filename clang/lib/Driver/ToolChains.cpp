@@ -317,12 +317,29 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
 
   SanitizerArgs Sanitize(getDriver(), Args);
 
+  // Add Ubsan runtime library, if required.
+  if (Sanitize.needsUbsanRt()) {
+    if (Args.hasArg(options::OPT_dynamiclib) ||
+        Args.hasArg(options::OPT_bundle)) {
+      // Assume the binary will provide the Ubsan runtime.
+    } else if (isTargetIPhoneOS()) {
+      getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
+        << "-fsanitize=undefined";
+    } else {
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.ubsan_osx.a");
+
+      // The Ubsan runtime library requires C++.
+      AddCXXStdlibLibArgs(Args, CmdArgs);
+    }
+  }
+
   // Add ASAN runtime library, if required. Dynamic libraries and bundles
   // should not be linked with the runtime library.
   if (Sanitize.needsAsanRt()) {
     if (Args.hasArg(options::OPT_dynamiclib) ||
-        Args.hasArg(options::OPT_bundle)) return;
-    if (isTargetIPhoneOS()) {
+        Args.hasArg(options::OPT_bundle)) {
+      // Assume the binary will provide the ASan runtime.
+    } else if (isTargetIPhoneOS()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=address";
     } else {
