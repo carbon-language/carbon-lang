@@ -95,6 +95,7 @@ private:
   bool DisableLineMarkers;
   bool DumpDefines;
   bool UseLineDirective;
+  bool IsFirstFileEntered;
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp, raw_ostream &os,
                            bool lineMarkers, bool defines)
@@ -107,6 +108,7 @@ public:
     EmittedDirectiveOnThisLine = false;
     FileType = SrcMgr::C_User;
     Initialized = false;
+    IsFirstFileEntered = false;
 
     // If we're in microsoft mode, use normal #line instead of line markers.
     UseLineDirective = PP.getLangOpts().MicrosoftExt;
@@ -271,6 +273,15 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   if (!Initialized) {
     WriteLineInfo(CurLine);
     Initialized = true;
+  }
+
+  // Do not emit an enter marker for the main file (which we expect is the first
+  // entered file). This matches gcc, and improves compatibility with some tools
+  // which track the # line markers as a way to determine when the preprocessed
+  // output is in the context of the main file.
+  if (Reason == PPCallbacks::EnterFile && !IsFirstFileEntered) {
+    IsFirstFileEntered = true;
+    return;
   }
 
   switch (Reason) {
