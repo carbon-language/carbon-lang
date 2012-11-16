@@ -87,6 +87,10 @@ D: Clang LLVM IR generation
 N: Jakob Olesen
 D: Register allocators and TableGen
 
+N: Richard Osborne
+E: richard@xmos.com
+D: XCore Backend
+
 N: Chad Rosier
 E: mcrosier@apple.com
 D: MS-inline asm, fast-isel
