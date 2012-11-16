@@ -124,9 +124,9 @@ RecordingMemoryManager::allocateCodeSection(uintptr_t Size, unsigned Alignment, 
 }
 
 uint8_t *
-RecordingMemoryManager::allocateDataSection(uintptr_t Size, unsigned Alignment, unsigned SectionID)
+RecordingMemoryManager::allocateDataSection(uintptr_t Size, unsigned Alignment, unsigned SectionID, bool IsReadOnly)
 {
-    uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID);
+    uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID, IsReadOnly);
     
     Allocation allocation;
     allocation.m_size = Size;

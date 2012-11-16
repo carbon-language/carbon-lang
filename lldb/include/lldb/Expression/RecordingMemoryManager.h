@@ -184,11 +184,14 @@ public:
     /// @param[in] SectionID
     ///     A unique identifier for the section.
     ///
+    /// @param[in] IsReadOnly
+    ///     Flag indicating the section is read-only.
+    ///
     /// @return
     ///     Allocated space.
     //------------------------------------------------------------------
     virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                         unsigned SectionID);
+                                         unsigned SectionID, bool IsReadOnly);
 
     //------------------------------------------------------------------
     /// Allocate space for a global variable, and add it to the
@@ -205,6 +208,18 @@ public:
     //------------------------------------------------------------------
     virtual uint8_t *allocateGlobal(uintptr_t Size, 
                                     unsigned Alignment);
+
+    //------------------------------------------------------------------
+    /// Called when object loading is complete and section page
+    /// permissions can be applied. Currently unimplemented for LLDB.
+    ///
+    /// @param[out] ErrMsg
+    ///     The error that prevented the page protection from succeeding.
+    ///
+    /// @return
+    ///     True in case of failure, false in case of success.
+    //------------------------------------------------------------------
+    bool applyPermissions(std::string *ErrMsg) { return false; }
 
     //------------------------------------------------------------------
     /// Passthrough interface stub
