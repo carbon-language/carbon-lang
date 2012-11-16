@@ -498,7 +498,8 @@ PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
     } else if (CRSpillFrameIdx) {
       FrameIdx = CRSpillFrameIdx;
     } else {
-      MachineFrameInfo *MFI = ((MachineFunction &)MF).getFrameInfo();
+      MachineFrameInfo *MFI = 
+        (const_cast<MachineFunction &>(MF)).getFrameInfo();
       FrameIdx = MFI->CreateFixedObject((uint64_t)4, (int64_t)-4, true);
       CRSpillFrameIdx = FrameIdx;
     }
