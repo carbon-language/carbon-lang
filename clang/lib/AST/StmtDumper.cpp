@@ -32,11 +32,6 @@ namespace  {
     unsigned IndentLevel;
     bool IsFirstLine;
 
-    /// MaxDepth - When doing a normal dump (not dumpAll) we only want to dump
-    /// the first few levels of an AST.  This keeps track of how many ast levels
-    /// are left.
-    unsigned MaxDepth;
-
     /// LastLocFilename/LastLocLine - Keep track of the last location we print
     /// out so that we can print out deltas from then on out.
     const char *LastLocFilename;
@@ -54,20 +49,15 @@ namespace  {
     };
 
   public:
-    StmtDumper(SourceManager *sm, raw_ostream &os, unsigned maxDepth)
-      : SM(sm), OS(os), IndentLevel(0), IsFirstLine(true), MaxDepth(maxDepth) {
-      LastLocFilename = "";
-      LastLocLine = ~0U;
-    }
+    StmtDumper(SourceManager *SM, raw_ostream &OS)
+      : SM(SM), OS(OS), IndentLevel(0), IsFirstLine(true),
+        LastLocFilename(""), LastLocLine(~0U) { }
 
     ~StmtDumper() {
       OS << "\n";
     }
 
     void DumpSubTree(Stmt *S) {
-      // Prune the recursion if not using dump all.
-      if (MaxDepth == 0) return;
-
       IndentScope Indent(*this);
 
       if (!S) {
@@ -727,34 +717,16 @@ void StmtDumper::VisitObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Node) {
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
 
-/// dump - This does a local dump of the specified AST fragment.  It dumps the
-/// specified node and a few nodes underneath it, but not the whole subtree.
-/// This is useful in a debugger.
 void Stmt::dump(SourceManager &SM) const {
   dump(llvm::errs(), SM);
 }
 
 void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
-  StmtDumper P(&SM, OS, 4);
+  StmtDumper P(&SM, OS);
   P.DumpSubTree(const_cast<Stmt*>(this));
 }
 
-/// dump - This does a local dump of the specified AST fragment.  It dumps the
-/// specified node and a few nodes underneath it, but not the whole subtree.
-/// This is useful in a debugger.
 void Stmt::dump() const {
-  StmtDumper P(0, llvm::errs(), 4);
-  P.DumpSubTree(const_cast<Stmt*>(this));
-}
-
-/// dumpAll - This does a dump of the specified AST fragment and all subtrees.
-void Stmt::dumpAll(SourceManager &SM) const {
-  StmtDumper P(&SM, llvm::errs(), ~0U);
-  P.DumpSubTree(const_cast<Stmt*>(this));
-}
-
-/// dumpAll - This does a dump of the specified AST fragment and all subtrees.
-void Stmt::dumpAll() const {
-  StmtDumper P(0, llvm::errs(), ~0U);
+  StmtDumper P(0, llvm::errs());
   P.DumpSubTree(const_cast<Stmt*>(this));
 }
