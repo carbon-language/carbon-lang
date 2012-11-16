@@ -163,7 +163,7 @@ ScopedInterceptor::~ScopedInterceptor() {
 #define BLOCK_REAL(name) (BlockingCall(thr), REAL(name))
 
 struct BlockingCall {
-  BlockingCall(ThreadState *thr)
+  explicit BlockingCall(ThreadState *thr)
       : ctx(SigCtx(thr)) {
     CHECK_EQ(ctx->in_blocking_func, 0);
     ctx->in_blocking_func++;
