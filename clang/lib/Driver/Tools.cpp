@@ -4399,22 +4399,15 @@ void darwin::Link::AddLinkArgs(Compilation &C,
       CmdArgs.push_back("-demangle");
   }
 
-  if (Version[0] >= 116 && D.IsUsingLTO(Args)) {
-    if (NeedsTempPath(Inputs)) {
-      // If we are using LTO, then automatically create a temporary file path
-      // for the linker to use, so that it's lifetime will extend past a
-      // possible dsymutil step.
-      const char *TmpPath = C.getArgs().MakeArgString(
-        D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
-      C.addTempFile(TmpPath);
-      CmdArgs.push_back("-object_path_lto");
-      CmdArgs.push_back(TmpPath);
-    }
-
-    // FIXME: Disable the creation of accelerator tables when using LTO. They
-    // don't currently work and can cause other tools to bork.
-    CmdArgs.push_back("-mllvm");
-    CmdArgs.push_back("-dwarf-accel-tables=Disable");
+  // If we are using LTO, then automatically create a temporary file path for
+  // the linker to use, so that it's lifetime will extend past a possible
+  // dsymutil step.
+  if (Version[0] >= 116 && D.IsUsingLTO(Args) && NeedsTempPath(Inputs)) {
+    const char *TmpPath = C.getArgs().MakeArgString(
+      D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
+    C.addTempFile(TmpPath);
+    CmdArgs.push_back("-object_path_lto");
+    CmdArgs.push_back(TmpPath);
   }
 
   // Derived from the "link" spec.
