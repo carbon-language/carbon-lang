@@ -581,6 +581,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("cc_out");
   REG("s_cc_out");
   REG("tGPR");
+  REG("GPRPairOp");
   REG("DPR");
   REG("DPR_VFP2");
   REG("DPR_8");

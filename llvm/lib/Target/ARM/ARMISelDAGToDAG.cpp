@@ -266,6 +266,7 @@ private:
                                             std::vector<SDValue> &OutOps);
 
   // Form pairs of consecutive S, D, or Q registers.
+  SDNode *createGPRPairNode(EVT VT, SDValue V0, SDValue V1);
   SDNode *PairSRegs(EVT VT, SDValue V0, SDValue V1);
   SDNode *PairDRegs(EVT VT, SDValue V0, SDValue V1);
   SDNode *PairQRegs(EVT VT, SDValue V0, SDValue V1);
@@ -1442,6 +1443,17 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDNode *N) {
   }
 
   return NULL;
+}
+
+/// \brief Form a GPRPair pseudo register from a pair of GPR regs.
+SDNode *ARMDAGToDAGISel::createGPRPairNode(EVT VT, SDValue V0, SDValue V1) {
+  DebugLoc dl = V0.getNode()->getDebugLoc();
+  SDValue RegClass =
+    CurDAG->getTargetConstant(ARM::GPRPairRegClassID, MVT::i32);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::gsub_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::gsub_1, MVT::i32);
+  const SDValue Ops[] = { RegClass, V0, SubReg0, V1, SubReg1 };
+  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 5);
 }
 
 /// PairSRegs - Form a D register from a pair of S registers.
@@ -3009,17 +3021,19 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       DebugLoc dl = N->getDebugLoc();
       SDValue Chain = N->getOperand(0);
 
-      unsigned NewOpc = ARM::LDREXD;
-      if (Subtarget->isThumb() && Subtarget->hasThumb2())
-        NewOpc = ARM::t2LDREXD;
+      bool isThumb = Subtarget->isThumb() && Subtarget->hasThumb2();
+      unsigned NewOpc = isThumb ? ARM::t2LDREXD :ARM::LDREXD;
 
       // arm_ldrexd returns a i64 value in {i32, i32}
       std::vector<EVT> ResTys;
-      ResTys.push_back(MVT::i32);
-      ResTys.push_back(MVT::i32);
+      if (isThumb) {
+        ResTys.push_back(MVT::i32);
+        ResTys.push_back(MVT::i32);
+      } else
+        ResTys.push_back(MVT::Untyped);
       ResTys.push_back(MVT::Other);
 
-      // place arguments in the right order
+      // Place arguments in the right order.
       SmallVector<SDValue, 7> Ops;
       Ops.push_back(MemAddr);
       Ops.push_back(getAL(CurDAG));
@@ -3032,30 +3046,35 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
       cast<MachineSDNode>(Ld)->setMemRefs(MemOp, MemOp + 1);
 
-      // Until there's support for specifing explicit register constraints
-      // like the use of even/odd register pair, hardcode ldrexd to always
-      // use the pair [R0, R1] to hold the load result.
-      Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, ARM::R0,
-                                   SDValue(Ld, 0), SDValue(0,0));
-      Chain = CurDAG->getCopyToReg(Chain, dl, ARM::R1,
-                                   SDValue(Ld, 1), Chain.getValue(1));
-
       // Remap uses.
-      SDValue Glue = Chain.getValue(1);
+      SDValue Glue = isThumb ? SDValue(Ld, 2) : SDValue(Ld, 1);
       if (!SDValue(N, 0).use_empty()) {
-        SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                                ARM::R0, MVT::i32, Glue);
-        Glue = Result.getValue(2);
+        SDValue Result;
+        if (isThumb)
+          Result = SDValue(Ld, 0);
+        else {
+          SDValue SubRegIdx = CurDAG->getTargetConstant(ARM::gsub_0, MVT::i32);
+          SDNode *ResNode = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+              dl, MVT::i32, MVT::Glue, SDValue(Ld, 0), SubRegIdx, Glue);
+          Result = SDValue(ResNode,0);
+          Glue = Result.getValue(1);
+        }
         ReplaceUses(SDValue(N, 0), Result);
       }
       if (!SDValue(N, 1).use_empty()) {
-        SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                                ARM::R1, MVT::i32, Glue);
-        Glue = Result.getValue(2);
+        SDValue Result;
+        if (isThumb)
+          Result = SDValue(Ld, 1);
+        else {
+          SDValue SubRegIdx = CurDAG->getTargetConstant(ARM::gsub_1, MVT::i32);
+          SDNode *ResNode = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+              dl, MVT::i32, MVT::Glue, SDValue(Ld, 0), SubRegIdx, Glue);
+          Result = SDValue(ResNode,0);
+          Glue = Result.getValue(1);
+        }
         ReplaceUses(SDValue(N, 1), Result);
       }
-
-      ReplaceUses(SDValue(N, 2), SDValue(Ld, 2));
+      ReplaceUses(SDValue(N, 2), Glue);
       return NULL;
     }
 
@@ -3066,38 +3085,27 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       SDValue Val1 = N->getOperand(3);
       SDValue MemAddr = N->getOperand(4);
 
-      // Until there's support for specifing explicit register constraints
-      // like the use of even/odd register pair, hardcode strexd to always
-      // use the pair [R2, R3] to hold the i64 (i32, i32) value to be stored.
-      Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, ARM::R2, Val0,
-                                   SDValue(0, 0));
-      Chain = CurDAG->getCopyToReg(Chain, dl, ARM::R3, Val1, Chain.getValue(1));
-
-      SDValue Glue = Chain.getValue(1);
-      Val0 = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                    ARM::R2, MVT::i32, Glue);
-      Glue = Val0.getValue(1);
-      Val1 = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                    ARM::R3, MVT::i32, Glue);
-
       // Store exclusive double return a i32 value which is the return status
       // of the issued store.
       std::vector<EVT> ResTys;
       ResTys.push_back(MVT::i32);
       ResTys.push_back(MVT::Other);
 
-      // place arguments in the right order
+      bool isThumb = Subtarget->isThumb() && Subtarget->hasThumb2();
+      // Place arguments in the right order.
       SmallVector<SDValue, 7> Ops;
-      Ops.push_back(Val0);
-      Ops.push_back(Val1);
+      if (isThumb) {
+        Ops.push_back(Val0);
+        Ops.push_back(Val1);
+      } else
+        // arm_strexd uses GPRPair.
+        Ops.push_back(SDValue(createGPRPairNode(MVT::Untyped, Val0, Val1), 0));
       Ops.push_back(MemAddr);
       Ops.push_back(getAL(CurDAG));
       Ops.push_back(CurDAG->getRegister(0, MVT::i32));
       Ops.push_back(Chain);
 
-      unsigned NewOpc = ARM::STREXD;
-      if (Subtarget->isThumb() && Subtarget->hasThumb2())
-        NewOpc = ARM::t2STREXD;
+      unsigned NewOpc = isThumb ? ARM::t2STREXD : ARM::STREXD;
 
       SDNode *St = CurDAG->getMachineNode(NewOpc, dl, ResTys, Ops.data(),
                                           Ops.size());

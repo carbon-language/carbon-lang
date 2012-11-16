@@ -252,6 +252,35 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
+  // Combine 2 GPRs from disassember into a GPRPair to match with instr def.
+  // ldrexd/strexd require even/odd GPR pair. To enforce this constraint,
+  // a single GPRPair reg operand is used in the .td file to replace the two
+  // GPRs. However, when decoding them, the two GRPs cannot be automatically
+  // expressed as a GPRPair, so we have to manually merge them.
+  // FIXME: We would really like to be able to tablegen'erate this.
+  if (Opcode == ARM::LDREXD || Opcode == ARM::STREXD) {
+    const MCRegisterClass& MRC = MRI.getRegClass(ARM::GPRRegClassID);
+    bool isStore = Opcode == ARM::STREXD;
+    unsigned Reg = MI->getOperand(isStore ? 1 : 0).getReg();
+    if (MRC.contains(Reg)) {
+      MCInst NewMI;
+      MCOperand NewReg;
+      NewMI.setOpcode(Opcode);
+
+      if (isStore)
+        NewMI.addOperand(MI->getOperand(0));
+      NewReg = MCOperand::CreateReg(MRI.getMatchingSuperReg(Reg, ARM::gsub_0,
+        &MRI.getRegClass(ARM::GPRPairRegClassID)));
+      NewMI.addOperand(NewReg);
+
+      // Copy the rest operands into NewMI.
+      for(unsigned i= isStore ? 3 : 2; i < MI->getNumOperands(); ++i)
+        NewMI.addOperand(MI->getOperand(i));
+      printInstruction(&NewMI, O);
+      return;
+    }
+  }
+
   printInstruction(MI, O);
   printAnnotation(O, Annot);
 }
@@ -690,6 +719,15 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
   }
   O << "}";
 }
+
+void ARMInstPrinter::printGPRPairOperand(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O) {
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+  printRegName(O, MRI.getSubReg(Reg, ARM::gsub_0));
+  O << ", ";
+  printRegName(O, MRI.getSubReg(Reg, ARM::gsub_1));
+}
+
 
 void ARMInstPrinter::printSetendOperand(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O) {

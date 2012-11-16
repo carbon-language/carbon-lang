@@ -124,6 +124,7 @@ public:
   void printNEONModImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printImmPlusOneOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printRotImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printGPRPairOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printPCLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbLdrLabelOperand(const MCInst *MI, unsigned OpNum,

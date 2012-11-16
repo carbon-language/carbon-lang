@@ -1,12 +1,12 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s
 
 define i64 @test1(i64* %ptr, i64 %val) {
-; CHECK: test1
+; CHECK: test1:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: adds r0, r2
-; CHECK: adc r1, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: adds [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK: adc [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -15,12 +15,12 @@ define i64 @test1(i64* %ptr, i64 %val) {
 }
 
 define i64 @test2(i64* %ptr, i64 %val) {
-; CHECK: test2
+; CHECK: test2:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: subs r0, r2
-; CHECK: sbc r1, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: subs [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK: sbc [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -29,12 +29,12 @@ define i64 @test2(i64* %ptr, i64 %val) {
 }
 
 define i64 @test3(i64* %ptr, i64 %val) {
-; CHECK: test3
+; CHECK: test3:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: and r0, r2
-; CHECK: and r1, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: and [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK: and [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -43,12 +43,12 @@ define i64 @test3(i64* %ptr, i64 %val) {
 }
 
 define i64 @test4(i64* %ptr, i64 %val) {
-; CHECK: test4
+; CHECK: test4:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: orr r0, r2
-; CHECK: orr r1, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: orr [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK: orr [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -57,12 +57,12 @@ define i64 @test4(i64* %ptr, i64 %val) {
 }
 
 define i64 @test5(i64* %ptr, i64 %val) {
-; CHECK: test5
+; CHECK: test5:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: eor r0, r2
-; CHECK: eor r1, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: eor [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK: eor [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -71,10 +71,10 @@ define i64 @test5(i64* %ptr, i64 %val) {
 }
 
 define i64 @test6(i64* %ptr, i64 %val) {
-; CHECK: test6
+; CHECK: test6:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: strexd {{[a-z0-9]+}}, {{r[0-9]?[02468]}}, {{r[0-9]?[13579]}}
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -83,13 +83,13 @@ define i64 @test6(i64* %ptr, i64 %val) {
 }
 
 define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
-; CHECK: test7
+; CHECK: test7:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: cmp r2
-; CHECK: cmpeq r3
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: cmp [[REG1]]
+; CHECK: cmpeq [[REG2]]
 ; CHECK: bne
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: strexd {{[a-z0-9]+}}, {{r[0-9]?[02468]}}, {{r[0-9]?[13579]}}
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -100,12 +100,12 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; Compiles down to cmpxchg
 ; FIXME: Should compile to a single ldrexd
 define i64 @test8(i64* %ptr) {
-; CHECK: test8
-; CHECK: ldrexd r2, r3
-; CHECK: cmp r2
-; CHECK: cmpeq r3
+; CHECK: test8:
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: cmp [[REG1]]
+; CHECK: cmpeq [[REG2]]
 ; CHECK: bne
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: strexd {{[a-z0-9]+}}, {{r[0-9]?[02468]}}, {{r[0-9]?[13579]}}
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
@@ -116,10 +116,10 @@ define i64 @test8(i64* %ptr) {
 ; Compiles down to atomicrmw xchg; there really isn't any more efficient
 ; way to write it.
 define void @test9(i64* %ptr, i64 %val) {
-; CHECK: test9
+; CHECK: test9:
 ; CHECK: dmb ish
-; CHECK: ldrexd r2, r3
-; CHECK: strexd {{[a-z0-9]+}}, r0, r1
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: strexd {{[a-z0-9]+}}, {{r[0-9]?[02468]}}, {{r[0-9]?[13579]}}
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb ish
