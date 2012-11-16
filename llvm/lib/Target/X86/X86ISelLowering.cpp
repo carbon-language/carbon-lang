@@ -978,7 +978,15 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FNEARBYINT,         MVT::f64,   Legal);
 
     setOperationAction(ISD::FFLOOR,             MVT::v4f32, Legal);
+    setOperationAction(ISD::FCEIL,              MVT::v4f32, Legal);
+    setOperationAction(ISD::FTRUNC,             MVT::v4f32, Legal);
+    setOperationAction(ISD::FRINT,              MVT::v4f32, Legal);
+    setOperationAction(ISD::FNEARBYINT,         MVT::v4f32, Legal);
     setOperationAction(ISD::FFLOOR,             MVT::v2f64, Legal);
+    setOperationAction(ISD::FCEIL,              MVT::v2f64, Legal);
+    setOperationAction(ISD::FTRUNC,             MVT::v2f64, Legal);
+    setOperationAction(ISD::FRINT,              MVT::v2f64, Legal);
+    setOperationAction(ISD::FNEARBYINT,         MVT::v2f64, Legal);
 
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
@@ -1058,6 +1066,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FDIV,               MVT::v8f32, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v8f32, Legal);
     setOperationAction(ISD::FFLOOR,             MVT::v8f32, Legal);
+    setOperationAction(ISD::FCEIL,              MVT::v8f32, Legal);
+    setOperationAction(ISD::FTRUNC,             MVT::v8f32, Legal);
+    setOperationAction(ISD::FRINT,              MVT::v8f32, Legal);
+    setOperationAction(ISD::FNEARBYINT,         MVT::v8f32, Legal);
     setOperationAction(ISD::FNEG,               MVT::v8f32, Custom);
     setOperationAction(ISD::FABS,               MVT::v8f32, Custom);
 
@@ -1067,6 +1079,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FDIV,               MVT::v4f64, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v4f64, Legal);
     setOperationAction(ISD::FFLOOR,             MVT::v4f64, Legal);
+    setOperationAction(ISD::FCEIL,              MVT::v4f64, Legal);
+    setOperationAction(ISD::FTRUNC,             MVT::v4f64, Legal);
+    setOperationAction(ISD::FRINT,              MVT::v4f64, Legal);
+    setOperationAction(ISD::FNEARBYINT,         MVT::v4f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v4f64, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f64, Custom);
 
