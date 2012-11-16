@@ -64,14 +64,14 @@ int main(int, char **argv) {
 
   switch (argv[1][0]) {
   case 'r':
-    // CHECK-REFERENCE: vptr.cpp:65:13: fatal error: reference binding to address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
+    // CHECK-REFERENCE: vptr.cpp:[[@LINE+1]]:13: fatal error: reference binding to address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
     {T &r = *p;}
     break;
   case 'm':
-    // CHECK-MEMBER: vptr.cpp:69:15: fatal error: member access within address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
+    // CHECK-MEMBER: vptr.cpp:[[@LINE+1]]:15: fatal error: member access within address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
     return p->b;
   case 'f':
-    // CHECK-MEMFUN: vptr.cpp:72:12: fatal error: member call on address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
+    // CHECK-MEMFUN: vptr.cpp:[[@LINE+1]]:12: fatal error: member call on address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
     return p->g();
   }
 }
