@@ -799,7 +799,7 @@ public:
     typedef basic_streambuf<_CharT,_Traits> streambuf_type;
     typedef basic_istream<_CharT,_Traits>   istream_type;
 private:
-    streambuf_type* __sbuf_;
+    mutable streambuf_type* __sbuf_;
 
     class __proxy
     {
@@ -813,13 +813,14 @@ private:
     };
 
     _LIBCPP_INLINE_VISIBILITY
-    void __test_for_eof()
+    bool __test_for_eof() const
     {
         if (__sbuf_ && traits_type::eq_int_type(__sbuf_->sgetc(), traits_type::eof()))
             __sbuf_ = 0;
+        return __sbuf_ == 0;
     }
 public:
-    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator() _NOEXCEPT : __sbuf_(0) {}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR istreambuf_iterator() _NOEXCEPT : __sbuf_(0) {}
     _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(istream_type& __s) _NOEXCEPT
         : __sbuf_(__s.rdbuf()) {__test_for_eof();}
     _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(streambuf_type* __s) _NOEXCEPT
@@ -832,19 +833,16 @@ public:
     _LIBCPP_INLINE_VISIBILITY char_type* operator->() const {return nullptr;}
     _LIBCPP_INLINE_VISIBILITY istreambuf_iterator& operator++()
         {
-            if (traits_type::eq_int_type(__sbuf_->snextc(), traits_type::eof()))
-                __sbuf_ = 0;
+            __sbuf_->sbumpc();
             return *this;
         }
     _LIBCPP_INLINE_VISIBILITY __proxy              operator++(int)
         {
-            char_type __c = __sbuf_->sgetc();
-            ++(*this);
-            return __proxy(__c, __sbuf_);
+            return __proxy(__sbuf_->sbumpc(), __sbuf_);
         }
 
     _LIBCPP_INLINE_VISIBILITY bool equal(const istreambuf_iterator& __b) const
-        {return (__sbuf_ == 0) == (__b.__sbuf_ == 0);}
+        {return __test_for_eof() == __b.__test_for_eof();}
 };
 
 template <class _CharT, class _Traits>
