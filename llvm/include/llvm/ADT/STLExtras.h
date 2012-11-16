@@ -246,10 +246,10 @@ inline int array_pod_sort_comparator(const void *P1, const void *P2) {
   return 0;
 }
 
-/// get_array_pad_sort_comparator - This is an internal helper function used to
+/// get_array_pod_sort_comparator - This is an internal helper function used to
 /// get type deduction of T right.
 template<typename T>
-inline int (*get_array_pad_sort_comparator(const T &))
+inline int (*get_array_pod_sort_comparator(const T &))
              (const void*, const void*) {
   return array_pod_sort_comparator<T>;
 }
@@ -274,7 +274,7 @@ inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;
   qsort(&*Start, End-Start, sizeof(*Start),
-        get_array_pad_sort_comparator(*Start));
+        get_array_pod_sort_comparator(*Start));
 }
 
 template<class IteratorTy>
