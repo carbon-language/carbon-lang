@@ -26,34 +26,40 @@ namespace {
   class CountArangeDescriptors {
   public:
     CountArangeDescriptors(uint32_t &count_ref) : Count(count_ref) {}
-    void operator()(const DWARFDebugArangeSet &set) {
-      Count += set.getNumDescriptors();
+    void operator()(const DWARFDebugArangeSet &Set) {
+      Count += Set.getNumDescriptors();
     }
     uint32_t &Count;
   };
 
   class AddArangeDescriptors {
   public:
-    AddArangeDescriptors(DWARFDebugAranges::RangeColl &ranges)
-      : RangeCollection(ranges) {}
-    void operator()(const DWARFDebugArangeSet& set) {
-      const DWARFDebugArangeSet::Descriptor* arange_desc_ptr;
-      DWARFDebugAranges::Range range;
-      range.Offset = set.getCompileUnitDIEOffset();
+    AddArangeDescriptors(DWARFDebugAranges::RangeColl &Ranges,
+                         DWARFDebugAranges::ParsedCUOffsetColl &CUOffsets)
+      : RangeCollection(Ranges),
+        CUOffsetCollection(CUOffsets) {}
+    void operator()(const DWARFDebugArangeSet &Set) {
+      DWARFDebugAranges::Range Range;
+      Range.Offset = Set.getCompileUnitDIEOffset();
+      CUOffsetCollection.insert(Range.Offset);
 
-      for (uint32_t i=0; (arange_desc_ptr = set.getDescriptor(i)) != NULL; ++i){
-        range.LoPC = arange_desc_ptr->Address;
-        range.Length = arange_desc_ptr->Length;
+      for (uint32_t i = 0, n = Set.getNumDescriptors(); i < n; ++i) {
+        const DWARFDebugArangeSet::Descriptor *ArangeDescPtr =
+            Set.getDescriptor(i);
+        Range.LoPC = ArangeDescPtr->Address;
+        Range.Length = ArangeDescPtr->Length;
 
         // Insert each item in increasing address order so binary searching
         // can later be done!
-        DWARFDebugAranges::RangeColl::iterator insert_pos =
+        DWARFDebugAranges::RangeColl::iterator InsertPos =
           std::lower_bound(RangeCollection.begin(), RangeCollection.end(),
-                           range, RangeLessThan);
-        RangeCollection.insert(insert_pos, range);
+                           Range, RangeLessThan);
+        RangeCollection.insert(InsertPos, Range);
       }
+
     }
-    DWARFDebugAranges::RangeColl& RangeCollection;
+    DWARFDebugAranges::RangeColl &RangeCollection;
+    DWARFDebugAranges::ParsedCUOffsetColl &CUOffsetCollection;
   };
 }
 
@@ -75,7 +81,7 @@ bool DWARFDebugAranges::extract(DataExtractor debug_aranges_data) {
 
     if (count > 0) {
       Aranges.reserve(count);
-      AddArangeDescriptors range_adder(Aranges);
+      AddArangeDescriptors range_adder(Aranges, ParsedCUOffsets);
       std::for_each(sets.begin(), sets.end(), range_adder);
     }
   }
@@ -83,13 +89,14 @@ bool DWARFDebugAranges::extract(DataExtractor debug_aranges_data) {
 }
 
 bool DWARFDebugAranges::generate(DWARFContext *ctx) {
-  clear();
   if (ctx) {
     const uint32_t num_compile_units = ctx->getNumCompileUnits();
     for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx) {
-      DWARFCompileUnit *cu = ctx->getCompileUnitAtIndex(cu_idx);
-      if (cu)
-        cu->buildAddressRangeTable(this, true);
+      if (DWARFCompileUnit *cu = ctx->getCompileUnitAtIndex(cu_idx)) {
+        uint32_t CUOffset = cu->getOffset();
+        if (ParsedCUOffsets.insert(CUOffset).second)
+          cu->buildAddressRangeTable(this, true);
+      }
     }
   }
   sort(true, /* overlap size */ 0);

@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_DWARFDEBUGARANGES_H
 
 #include "DWARFDebugArangeSet.h"
+#include "llvm/ADT/DenseSet.h"
 #include <list>
 
 namespace llvm {
@@ -60,7 +61,10 @@ public:
     uint32_t Offset; // Offset of the compile unit or die
   };
 
-  void clear() { Aranges.clear(); }
+  void clear() {
+    Aranges.clear();
+    ParsedCUOffsets.clear();
+  }
   bool allRangesAreContiguous(uint64_t& LoPC, uint64_t& HiPC) const;
   bool getMaxRange(uint64_t& LoPC, uint64_t& HiPC) const;
   bool extract(DataExtractor debug_aranges_data);
@@ -88,9 +92,11 @@ public:
 
   typedef std::vector<Range>              RangeColl;
   typedef RangeColl::const_iterator       RangeCollIterator;
+  typedef DenseSet<uint32_t>              ParsedCUOffsetColl;
 
 private:
   RangeColl Aranges;
+  ParsedCUOffsetColl ParsedCUOffsets;
 };
 
 }
