@@ -9,8 +9,8 @@ declare void @init() nounwind
 declare void @clock() nounwind
 
 ; CHECK: %entry
-; CHECK: fmr f31, f1
-; CHECK: bl _init
+; fmr f31, f1
+; bl _init
 define void @s332(double %t) nounwind {
 entry:
   tail call void @init()
