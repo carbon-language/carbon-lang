@@ -2559,18 +2559,55 @@ private:
     return NewPtr == &NewAI && !LI.isVolatile();
   }
 
+  bool rewriteWideStoreInst(IRBuilder<> &IRB, StoreInst &SI, Type *ValueTy,
+                            unsigned Size) {
+    assert(!SI.isVolatile());
+    assert(ValueTy->isIntegerTy() &&
+           "Only integer type loads and stores are split");
+    assert(ValueTy->getIntegerBitWidth() ==
+           TD.getTypeStoreSizeInBits(ValueTy) &&
+           "Non-byte-multiple bit width");
+    assert(ValueTy->getIntegerBitWidth() ==
+           TD.getTypeSizeInBits(OldAI.getAllocatedType()) &&
+           "Only alloca-wide stores can be split and recomposed");
+    IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), Size * 8);
+    Value *V = extractInteger(TD, IRB, SI.getValueOperand(), NarrowTy,
+                              BeginOffset, getName(".extract"));
+    StoreInst *NewSI;
+    bool IsConvertable = (BeginOffset - NewAllocaBeginOffset == 0) &&
+      canConvertValue(TD, NarrowTy, NewAllocaTy);
+    if (IsConvertable)
+      NewSI = IRB.CreateAlignedStore(convertValue(TD, IRB, V, NewAllocaTy),
+                                     &NewAI, NewAI.getAlignment());
+    else
+      NewSI = IRB.CreateAlignedStore(
+        V, getAdjustedAllocaPtr(IRB, NarrowTy->getPointerTo()),
+        getPartitionTypeAlign(NarrowTy));
+    (void)NewSI;
+    if (Pass.DeadSplitInsts.insert(&SI))
+      Pass.DeadInsts.push_back(&SI);
+
+    DEBUG(dbgs() << "          to: " << *NewSI << "\n");
+    return IsConvertable;
+  }
+
   bool rewriteVectorizedStoreInst(IRBuilder<> &IRB, StoreInst &SI,
                                   Value *OldOp) {
     Value *V = SI.getValueOperand();
-    if (V->getType() == ElementTy ||
+    Type *ValueTy = V->getType();
+    if (ValueTy == ElementTy ||
         BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
-      if (V->getType() != ElementTy)
+      if (ValueTy != ElementTy)
         V = convertValue(TD, IRB, V, ElementTy);
       LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                            getName(".load"));
       V = IRB.CreateInsertElement(LI, V, getIndex(IRB, BeginOffset),
                                   getName(".insert"));
-    } else if (V->getType() != VecTy) {
+    } else if (ValueTy != VecTy) {
+      uint64_t Size = EndOffset - BeginOffset;
+      if (Size < TD.getTypeStoreSize(ValueTy))
+        return rewriteWideStoreInst(IRB, SI, ValueTy, Size);
+
       V = convertValue(TD, IRB, V, VecTy);
     }
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
@@ -2613,36 +2650,8 @@ private:
     Type *ValueTy = SI.getValueOperand()->getType();
 
     uint64_t Size = EndOffset - BeginOffset;
-    if (Size < TD.getTypeStoreSize(ValueTy)) {
-      assert(!SI.isVolatile());
-      assert(ValueTy->isIntegerTy() &&
-             "Only integer type loads and stores are split");
-      assert(ValueTy->getIntegerBitWidth() ==
-             TD.getTypeStoreSizeInBits(ValueTy) &&
-             "Non-byte-multiple bit width");
-      assert(ValueTy->getIntegerBitWidth() ==
-             TD.getTypeSizeInBits(OldAI.getAllocatedType()) &&
-             "Only alloca-wide stores can be split and recomposed");
-      IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), Size * 8);
-      Value *V = extractInteger(TD, IRB, SI.getValueOperand(), NarrowTy,
-                                BeginOffset, getName(".extract"));
-      StoreInst *NewSI;
-      bool IsConvertable = (BeginOffset - NewAllocaBeginOffset == 0) &&
-                           canConvertValue(TD, NarrowTy, NewAllocaTy);
-      if (IsConvertable)
-        NewSI = IRB.CreateAlignedStore(convertValue(TD, IRB, V, NewAllocaTy),
-                                       &NewAI, NewAI.getAlignment());
-      else
-        NewSI = IRB.CreateAlignedStore(
-          V, getAdjustedAllocaPtr(IRB, NarrowTy->getPointerTo()),
-          getPartitionTypeAlign(NarrowTy));
-      (void)NewSI;
-      if (Pass.DeadSplitInsts.insert(&SI))
-        Pass.DeadInsts.push_back(&SI);
-
-      DEBUG(dbgs() << "          to: " << *NewSI << "\n");
-      return IsConvertable;
-    }
+    if (Size < TD.getTypeStoreSize(ValueTy))
+      return rewriteWideStoreInst(IRB, SI, ValueTy, Size);
 
     if (IntTy && ValueTy->isIntegerTy())
       return rewriteIntegerStore(IRB, SI);
