@@ -235,8 +235,6 @@ protected:
 public:
   void dumpToStream(raw_ostream &Out) const;
 
-  Loc(const Loc& X) : DefinedSVal(X.Data, true, X.getSubKind()) {}
-
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind;
