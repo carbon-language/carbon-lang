@@ -426,13 +426,13 @@ class TransferFunctions : public StmtVisitor<TransferFunctions> {
   AnalysisDeclContext &ac;
   const ClassifyRefs &classification;
   ObjCNoReturn objCNoRet;
-  UninitVariablesHandler *handler;
+  UninitVariablesHandler &handler;
 
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
                     const CFGBlock *block, AnalysisDeclContext &ac,
                     const ClassifyRefs &classification,
-                    UninitVariablesHandler *handler)
+                    UninitVariablesHandler &handler)
     : vals(vals), cfg(cfg), block(block), ac(ac),
       classification(classification), objCNoRet(ac.getASTContext()),
       handler(handler) {}
@@ -589,11 +589,9 @@ public:
 }
 
 void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
-  if (!handler)
-    return;
   Value v = vals[vd];
   if (isUninitialized(v))
-    handler->handleUseOfUninitVariable(vd, getUninitUse(ex, vd, v));
+    handler.handleUseOfUninitVariable(vd, getUninitUse(ex, vd, v));
 }
 
 void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS) {
@@ -654,8 +652,7 @@ void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
     vals[cast<VarDecl>(dr->getDecl())] = Initialized;
     break;
   case ClassifyRefs::SelfInit:
-    if (handler)
-      handler->handleSelfInit(cast<VarDecl>(dr->getDecl()));
+      handler.handleSelfInit(cast<VarDecl>(dr->getDecl()));
     break;
   }
 }
@@ -721,7 +718,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        AnalysisDeclContext &ac, CFGBlockValues &vals,
                        const ClassifyRefs &classification,
                        llvm::BitVector &wasAnalyzed,
-                       UninitVariablesHandler *handler = 0) {
+                       UninitVariablesHandler &handler) {
   wasAnalyzed[block->getBlockID()] = true;
   vals.resetScratch();
   // Merge in values of predecessor blocks.
@@ -743,6 +740,43 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
     }
   }
   return vals.updateValueVectorWithScratch(block);
+}
+
+/// PruneBlocksHandler is a special UninitVariablesHandler that is used
+/// to detect when a CFGBlock has any *potential* use of an uninitialized
+/// variable.  It is mainly used to prune out work during the final
+/// reporting pass.
+namespace {
+struct PruneBlocksHandler : public UninitVariablesHandler {
+  PruneBlocksHandler(unsigned numBlocks)
+    : hadUse(numBlocks, false), hadAnyUse(false),
+      currentBlock(0) {}
+
+  virtual ~PruneBlocksHandler() {}
+
+  /// Records if a CFGBlock had a potential use of an uninitialized variable.
+  llvm::BitVector hadUse;
+
+  /// Records if any CFGBlock had a potential use of an uninitialized variable.
+  bool hadAnyUse;
+
+  /// The current block to scribble use information.
+  unsigned currentBlock;
+
+  virtual void handleUseOfUninitVariable(const VarDecl *vd,
+                                         const UninitUse &use) {
+    hadUse[currentBlock] = true;
+    hadAnyUse = true;
+  }
+
+  /// Called when the uninitialized variable analysis detects the
+  /// idiom 'int x = x'.  All other uses of 'x' within the initializer
+  /// are handled by handleUseOfUninitVariable.
+  virtual void handleSelfInit(const VarDecl *vd) {
+    hadUse[currentBlock] = true;
+    hadAnyUse = true;
+  }
+};
 }
 
 void clang::runUninitializedVariablesAnalysis(
@@ -776,22 +810,28 @@ void clang::runUninitializedVariablesAnalysis(
   worklist.enqueueSuccessors(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
   wasAnalyzed[cfg.getEntry().getBlockID()] = true;
+  PruneBlocksHandler PBH(cfg.getNumBlockIDs());
 
   while (const CFGBlock *block = worklist.dequeue()) {
+    PBH.currentBlock = block->getBlockID();
+
     // Did the block change?
     bool changed = runOnBlock(block, cfg, ac, vals,
-                              classification, wasAnalyzed);
+                              classification, wasAnalyzed, PBH);
     ++stats.NumBlockVisits;
     if (changed || !previouslyVisited[block->getBlockID()])
       worklist.enqueueSuccessors(block);    
     previouslyVisited[block->getBlockID()] = true;
   }
-  
+
+  if (!PBH.hadAnyUse)
+    return;
+
   // Run through the blocks one more time, and report uninitialized variabes.
   for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
     const CFGBlock *block = *BI;
-    if (wasAnalyzed[block->getBlockID()]) {
-      runOnBlock(block, cfg, ac, vals, classification, wasAnalyzed, &handler);
+    if (PBH.hadUse[block->getBlockID()]) {
+      runOnBlock(block, cfg, ac, vals, classification, wasAnalyzed, handler);
       ++stats.NumBlockVisits;
     }
   }
