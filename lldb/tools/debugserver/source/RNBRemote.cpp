@@ -193,6 +193,8 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
     t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
+    t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
+    t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetAsyncEnableProfiling, NULL, "QSetAsyncEnableProfiling", "Enable or disable the profiling of current target."));
     t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
 
 }
@@ -221,6 +223,25 @@ RNBRemote::FlushSTDIO ()
             if (count > 0)
             {
                 SendSTDERRPacket (buf, count);
+            }
+        } while (count > 0);
+    }
+}
+
+void
+RNBRemote::SendAsyncProfileData ()
+{
+    if (m_ctx.HasValidProcessID())
+    {
+        nub_process_t pid = m_ctx.ProcessID();
+        char buf[256];
+        nub_size_t count;
+        do
+        {
+            count = DNBProcessGetAvailableProfileData(pid, buf, sizeof(buf));
+            if (count > 0)
+            {
+                SendAsyncProfileDataPacket (buf, count);
             }
         } while (count > 0);
     }
@@ -260,6 +281,18 @@ RNBRemote::SendSTDERRPacket (char *buf, nub_size_t buf_size)
     if (buf_size == 0)
         return rnb_success;
     return SendHexEncodedBytePacket("O", buf, buf_size, NULL);
+}
+
+// This makes use of asynchronous bit 'A' in the gdb remote protocol.
+rnb_err_t
+RNBRemote::SendAsyncProfileDataPacket (char *buf, nub_size_t buf_size)
+{
+    if (buf_size == 0)
+        return rnb_success;
+    
+    std::string packet("A");
+    packet.append(buf, buf_size);
+    return SendPacket(packet);
 }
 
 rnb_err_t
@@ -3425,6 +3458,58 @@ RNBRemote::HandlePacket_MemoryRegionInfo (const char *p)
         ostrm << ';';
     }
     return SendPacket (ostrm.str());
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_GetProfileData (const char *p)
+{
+    nub_process_t pid = m_ctx.ProcessID();
+    if (pid == INVALID_NUB_PROCESS)
+        return SendPacket ("OK");
+
+    const char *data = DNBProcessGetProfileDataAsCString(pid);
+    if (data)
+    {
+        return SendPacket (data);
+    }
+    else
+    {
+        return SendPacket ("OK");
+    }
+}
+
+
+// QSetAsyncEnableProfiling;enable:[0|1]:interval_usec:XXXXXX;
+rnb_err_t
+RNBRemote::HandlePacket_SetAsyncEnableProfiling (const char *p)
+{
+    nub_process_t pid = m_ctx.ProcessID();
+    if (pid == INVALID_NUB_PROCESS)
+        return SendPacket ("");
+
+    StringExtractor packet(p += sizeof ("QSetAsyncEnableProfiling:") - 1);
+    bool enable = false;
+    uint64_t interval_usec = 0;
+    std::string name;
+    std::string value;
+    while (packet.GetNameColonValue(name, value))
+    {
+        if (name.compare ("enable") == 0)
+        {
+            enable  = strtoul(value.c_str(), NULL, 10) > 0;
+        }
+        else if (name.compare ("interval_usec") == 0)
+        {
+            interval_usec  = strtoul(value.c_str(), NULL, 10);
+        }
+    }
+    
+    if (interval_usec == 0)
+    {
+        enable = 0;
+    }
+    DNBProcessSetAsyncEnableProfiling(pid, enable, interval_usec);
+    return SendPacket ("OK");
 }
 
 rnb_err_t

@@ -23,6 +23,8 @@
 #include <mach/mach_vm.h>
 
 // C++ Includes
+#include <sstream>
+
 // Other libraries and framework includes
 // Project includes
 #include "CFUtils.h"
@@ -222,6 +224,132 @@ MachTask::GetMemoryRegionInfo (nub_addr_t addr, DNBRegionInfo *region_info)
                      (uint64_t)region_info->size,
                      region_info->permissions);
     return ret;
+}
+
+#define	TIME_VALUE_TO_TIMEVAL(a, r) do {		\
+(r)->tv_sec = (a)->seconds;                     \
+(r)->tv_usec = (a)->microseconds;				\
+} while (0)
+
+// todo: make use of existing MachThread, if there is already one?
+static void update_used_time(task_t task, int &num_threads, uint64_t **threads_id, uint64_t **threads_used_usec, struct timeval &current_used_time)
+{
+	kern_return_t kr;
+	thread_act_array_t threads;
+	mach_msg_type_number_t tcnt;
+    
+	kr = task_threads(task, &threads, &tcnt);
+	if (kr != KERN_SUCCESS)
+        return;
+    
+    num_threads = tcnt;
+    *threads_id = (uint64_t *)malloc(num_threads * sizeof(uint64_t));
+    *threads_used_usec = (uint64_t *)malloc(num_threads * sizeof(uint64_t));
+
+	for (int i = 0; i < tcnt; i++) {
+        thread_identifier_info_data_t identifier_info;
+        mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
+        kr = thread_info(threads[i], THREAD_IDENTIFIER_INFO, (thread_info_t)&identifier_info, &count);
+        if (kr != KERN_SUCCESS) continue;
+
+		thread_basic_info_data_t basic_info;
+		count = THREAD_BASIC_INFO_COUNT;
+		kr = thread_info(threads[i], THREAD_BASIC_INFO, (thread_info_t)&basic_info, &count);
+		if (kr != KERN_SUCCESS) continue;
+		
+		if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
+            (*threads_id)[i] = identifier_info.thread_id;
+
+			struct timeval tv;
+			struct timeval thread_tv;
+			TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &tv);
+			TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &thread_tv);
+			timeradd(&current_used_time, &tv, &current_used_time);
+			TIME_VALUE_TO_TIMEVAL(&basic_info.system_time, &tv);
+			timeradd(&thread_tv, &tv, &thread_tv);
+			timeradd(&current_used_time, &tv, &current_used_time);
+            uint64_t used_usec = thread_tv.tv_sec * 1000000ULL + thread_tv.tv_usec;
+            (*threads_used_usec)[i] = used_usec;
+		}
+        
+		kr = mach_port_deallocate(mach_task_self(), threads[i]);
+	}
+	kr = mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
+}
+
+const char *
+MachTask::GetProfileDataAsCString ()
+{
+    task_t task = TaskPort();
+	if (task == TASK_NULL)
+		return NULL;
+    
+    struct task_basic_info task_info;
+    DNBError err;
+    err = BasicInfo(task, &task_info);
+    
+    if (!err.Success())
+        return NULL;
+    
+    uint64_t elapsed_usec = 0;
+    uint64_t task_used_usec = 0;
+    int num_threads = 0;
+    uint64_t *threads_used_usec = NULL;
+    uint64_t *threads_id = NULL;
+    mach_vm_size_t rprvt = 0;
+    mach_vm_size_t rsize = 0;
+    mach_vm_size_t vprvt = 0;
+    mach_vm_size_t vsize = 0;
+    mach_vm_size_t dirty_size = 0;
+
+    // Get current used time.
+    struct timeval current_used_time;
+    struct timeval tv;
+    TIME_VALUE_TO_TIMEVAL(&task_info.user_time, &current_used_time);
+    TIME_VALUE_TO_TIMEVAL(&task_info.system_time, &tv);
+    timeradd(&current_used_time, &tv, &current_used_time);
+    task_used_usec = current_used_time.tv_sec * 1000000ULL + current_used_time.tv_usec;
+    update_used_time(task, num_threads, &threads_id, &threads_used_usec, current_used_time);
+    
+    struct timeval current_elapsed_time;
+    int res = gettimeofday(&current_elapsed_time, NULL);
+    if (res == 0)
+    {
+        elapsed_usec = current_elapsed_time.tv_sec * 1000000ULL + current_elapsed_time.tv_usec;
+    }
+    
+    if (m_vm_memory.GetMemoryProfile(task, task_info, m_process->GetCPUType(), m_process->ProcessID(), rprvt, rsize, vprvt, vsize, dirty_size))
+    {
+        std::ostringstream profile_data_stream;
+        
+        profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
+        profile_data_stream << "task_used_usec:" << task_used_usec << ';';
+        
+        profile_data_stream << "threads_info:" << num_threads;
+        for (int i=0; i<num_threads; i++) {
+            profile_data_stream << ',' << threads_id[i];
+            profile_data_stream << ',' << threads_used_usec[i];
+        }
+        profile_data_stream << ';';
+        
+        profile_data_stream << "rprvt:" << rprvt << ';';
+        profile_data_stream << "rsize:" << rsize << ';';
+        profile_data_stream << "vprvt:" << vprvt << ';';
+        profile_data_stream << "vsize:" << vsize << ';';
+        profile_data_stream << "dirty:" << dirty_size << ';';
+        profile_data_stream << "$";
+        
+        m_profile_data = profile_data_stream.str();
+    }
+    else
+    {
+        m_profile_data.clear();
+    }
+    
+    free(threads_id);
+    free(threads_used_usec);
+    
+    return m_profile_data.c_str();
 }
 
 

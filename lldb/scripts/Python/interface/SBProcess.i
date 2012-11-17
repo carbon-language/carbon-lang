@@ -43,7 +43,8 @@ public:
         eBroadcastBitStateChanged   = (1 << 0),
         eBroadcastBitInterrupt      = (1 << 1),
         eBroadcastBitSTDOUT         = (1 << 2),
-        eBroadcastBitSTDERR         = (1 << 3)
+        eBroadcastBitSTDERR         = (1 << 3),
+        eBroadcastBitProfileData    = (1 << 4)
     };
 
     SBProcess ();
@@ -96,6 +97,9 @@ public:
     size_t
     GetSTDERR (char *dst, size_t dst_len) const;
 
+    size_t
+    GetAsyncProfileData(char *dst, size_t dst_len) const;
+    
     void
     ReportEventState (const lldb::SBEvent &event, FILE *out) const;
 

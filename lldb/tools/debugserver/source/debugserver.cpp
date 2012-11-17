@@ -498,8 +498,9 @@ RNBRunLoopInferiorExecuting (RNBRemote *remote)
 
         if (!ctx.ProcessStateRunning())
         {
-            // Clear the stdio bits if we are not running so we don't send any async packets
+            // Clear some bits if we are not running so we don't send any async packets
             event_mask &= ~RNBContext::event_proc_stdio_available;
+            event_mask &= ~RNBContext::event_proc_profile_data;
         }
 
         // We want to make sure we consume all process state changes and have
@@ -517,6 +518,11 @@ RNBRunLoopInferiorExecuting (RNBRemote *remote)
                 (set_events & RNBContext::event_proc_stdio_available))
             {
                 remote->FlushSTDIO();
+            }
+
+            if (set_events & RNBContext::event_proc_profile_data)
+            {
+                remote->SendAsyncProfileData();
             }
 
             if (set_events & RNBContext::event_read_packet_available)

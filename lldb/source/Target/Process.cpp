@@ -953,6 +953,8 @@ Process::Process(Target &target, Listener &listener) :
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
     m_stderr_data (),
+    m_profile_data_comm_mutex (Mutex::eMutexTypeRecursive),
+    m_profile_data (),
     m_memory_cache (*this),
     m_allocated_memory_cache (*this),
     m_should_detach (false),
@@ -972,6 +974,7 @@ Process::Process(Target &target, Listener &listener) :
     SetEventName (eBroadcastBitInterrupt, "interrupt");
     SetEventName (eBroadcastBitSTDOUT, "stdout-available");
     SetEventName (eBroadcastBitSTDERR, "stderr-available");
+    SetEventName (eBroadcastBitProfileData, "profile-data-available");
     
     m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlStop  , "control-stop"  );
     m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlPause , "control-pause" );
@@ -981,7 +984,8 @@ Process::Process(Target &target, Listener &listener) :
                                       eBroadcastBitStateChanged |
                                       eBroadcastBitInterrupt |
                                       eBroadcastBitSTDOUT |
-                                      eBroadcastBitSTDERR);
+                                      eBroadcastBitSTDERR |
+                                      eBroadcastBitProfileData);
 
     m_private_state_listener.StartListeningForEvents(&m_private_state_broadcaster,
                                                      eBroadcastBitStateChanged |
@@ -2546,6 +2550,12 @@ Process::DeallocateMemory (addr_t ptr)
     return error;
 }
 
+//Error
+//Process::GetProfileData (uint64_t &elapsed_usec, uint64_t &task_used_usec, int &num_threads, uint64_t **threads_id, uint64_t **threads_used_usec, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size)
+//{
+//    return DoGetProfileData(elapsed_usec, task_used_usec, num_threads, threads_id, threads_used_usec, rprvt, rsize, vprvt, vsize, dirty_size);
+//}
+//
 ModuleSP
 Process::ReadModuleFromMemory (const FileSpec& file_spec, 
                                lldb::addr_t header_addr, 
@@ -3998,6 +4008,40 @@ Process::AppendSTDERR (const char * s, size_t len)
     m_stderr_data.append (s, len);
     BroadcastEventIfUnique (eBroadcastBitSTDERR, new ProcessEventData (shared_from_this(), GetState()));
 }
+
+void
+Process::BroadcastAsyncProfileData(const char *s, size_t len)
+{
+    Mutex::Locker locker (m_profile_data_comm_mutex);
+    m_profile_data.append (s, len);
+    BroadcastEventIfUnique (eBroadcastBitProfileData, new ProcessEventData (shared_from_this(), GetState()));
+}
+
+size_t
+Process::GetAsyncProfileData (char *buf, size_t buf_size, Error &error)
+{
+    Mutex::Locker locker(m_profile_data_comm_mutex);
+    size_t bytes_available = m_profile_data.size();
+    if (bytes_available > 0)
+    {
+        LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if (log)
+            log->Printf ("Process::GetProfileData (buf = %p, size = %llu)", buf, (uint64_t)buf_size);
+        if (bytes_available > buf_size)
+        {
+            memcpy(buf, m_profile_data.c_str(), buf_size);
+            m_profile_data.erase(0, buf_size);
+            bytes_available = buf_size;
+        }
+        else
+        {
+            memcpy(buf, m_profile_data.c_str(), bytes_available);
+            m_profile_data.clear();
+        }
+    }
+    return bytes_available;
+}
+
 
 //------------------------------------------------------------------
 // Process STDIO

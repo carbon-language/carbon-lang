@@ -647,6 +647,16 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                     }
                     break;
 
+                case 'A':
+                    // Async miscellaneous reply. Right now, only profile data is coming through this channel.
+                    {
+                        const std::string& profile_data = response.GetStringRef();
+                        const char *data_cstr = profile_data.c_str();
+                        data_cstr++; // Move beyond 'A'
+                        process->BroadcastAsyncProfileData (data_cstr, profile_data.size()-1);
+                    }
+                    break;
+
                 case 'E':
                     // ERROR
                     state = eStateInvalid;

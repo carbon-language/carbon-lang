@@ -15,6 +15,7 @@
 #include "MachVMRegion.h"
 #include "DNBLog.h"
 #include <mach/mach_vm.h>
+#include <mach/shared_region.h>
 
 MachVMMemory::MachVMMemory() :
     m_page_size    (kInvalidPageSize),
@@ -85,6 +86,206 @@ MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo
         // Not readable, writeable or executable
         region_info->permissions = 0;
     }
+    return true;
+}
+
+// rsize and dirty_size is not adjusted for dyld shared cache and multiple __LINKEDIT segment, as in vmmap. In practice, dirty_size doesn't differ much but rsize may. There is performance penalty for the adjustment. Right now, only use the dirty_size.
+static void GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &dirty_size)
+{
+    mach_vm_address_t address = 0;
+    mach_vm_size_t size;
+    kern_return_t err = 0;
+    unsigned nestingDepth = 0;
+    mach_vm_size_t pages_resident = 0;
+    mach_vm_size_t pages_dirtied = 0;
+    
+    while (1)
+    {
+        mach_msg_type_number_t	count;
+        struct vm_region_submap_info_64 info;
+        
+        count = VM_REGION_SUBMAP_INFO_COUNT_64;
+        err = mach_vm_region_recurse(task, &address, &size, &nestingDepth, (vm_region_info_t)&info, &count);
+        if (err == KERN_INVALID_ADDRESS)
+        {
+            // It seems like this is a good break too.
+            break;
+        }
+        else if (err)
+        {
+            mach_error("vm_region",err);
+            break; // reached last region
+        }
+        
+        bool should_count = true;
+        if (info.is_submap)
+        { // is it a submap?
+            nestingDepth++;
+            should_count = false;
+        }
+        else
+        {
+            // Don't count malloc stack logging data in the TOTAL VM usage lines.
+            if (info.user_tag == VM_MEMORY_ANALYSIS_TOOL)
+                should_count = false;
+            // Don't count system shared library region not used by this process.
+            if (address >= SHARED_REGION_BASE && address < (SHARED_REGION_BASE + SHARED_REGION_SIZE))
+                should_count = false;
+
+            address = address+size;
+        }
+        
+        if (should_count)
+        {
+            pages_resident += info.pages_resident;
+            pages_dirtied += info.pages_dirtied;
+        }
+    }
+    
+    rsize = pages_resident * vm_page_size;
+    dirty_size = pages_dirtied * vm_page_size;
+}
+
+// Test whether the virtual address is within the architecture's shared region.
+static bool InSharedRegion(mach_vm_address_t addr, cpu_type_t type)
+{
+	mach_vm_address_t base = 0, size = 0;
+    
+	switch(type) {
+		case CPU_TYPE_ARM:
+			base = SHARED_REGION_BASE_ARM;
+			size = SHARED_REGION_SIZE_ARM;
+            break;
+            
+		case CPU_TYPE_X86_64:
+			base = SHARED_REGION_BASE_X86_64;
+			size = SHARED_REGION_SIZE_X86_64;
+            break;
+            
+		case CPU_TYPE_I386:
+			base = SHARED_REGION_BASE_I386;
+			size = SHARED_REGION_SIZE_I386;
+            break;
+            
+		default: {
+            // Log error abut unknown CPU type
+            break;
+		}
+	}
+    
+    
+	return(addr >= base && addr < (base + size));
+}
+
+static void GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid, mach_vm_size_t &rprvt, mach_vm_size_t &vprvt)
+{
+    // Collecting some other info cheaply but not reporting for now.
+    mach_vm_size_t empty = 0;
+	mach_vm_size_t fw_private = 0;
+    
+	mach_vm_size_t aliased = 0;
+	mach_vm_size_t pagesize = vm_page_size;
+    bool global_shared_text_data_mapped = false;
+    
+	for (mach_vm_address_t addr=0, size=0; ; addr += size)
+    {
+		vm_region_top_info_data_t info;
+		mach_msg_type_number_t count = VM_REGION_TOP_INFO_COUNT;
+		mach_port_t object_name;
+		
+		kern_return_t kr = mach_vm_region(task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info, &count, &object_name);
+		if (kr != KERN_SUCCESS) break;
+        
+		if (InSharedRegion(addr, cputype))
+        {
+			// Private Shared
+			fw_private += info.private_pages_resident * pagesize;
+            
+			// Check if this process has the globally shared text and data regions mapped in.  If so, set global_shared_text_data_mapped to TRUE and avoid checking again.
+			if (global_shared_text_data_mapped == FALSE && info.share_mode == SM_EMPTY) {
+				vm_region_basic_info_data_64_t	b_info;
+				mach_vm_address_t b_addr = addr;
+				mach_vm_size_t b_size = size;
+				count = VM_REGION_BASIC_INFO_COUNT_64;
+				
+				kr = mach_vm_region(task, &b_addr, &b_size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count, &object_name);
+				if (kr != KERN_SUCCESS) break;
+                
+				if (b_info.reserved) {
+					global_shared_text_data_mapped = TRUE;
+				}
+			}
+			
+			// Short circuit the loop if this isn't a shared private region, since that's the only region type we care about within the current address range.
+			if (info.share_mode != SM_PRIVATE)
+            {
+				continue;
+			}
+		}
+		
+		// Update counters according to the region type.
+		if (info.share_mode == SM_COW && info.ref_count == 1)
+        {
+			// Treat single reference SM_COW as SM_PRIVATE
+			info.share_mode = SM_PRIVATE;
+		}
+        
+		switch (info.share_mode)
+        {
+			case SM_LARGE_PAGE:
+				// Treat SM_LARGE_PAGE the same as SM_PRIVATE
+				// since they are not shareable and are wired.
+			case SM_PRIVATE:
+				rprvt += info.private_pages_resident * pagesize;
+				rprvt += info.shared_pages_resident * pagesize;
+				vprvt += size;
+				break;
+				
+			case SM_EMPTY:
+                empty += size;
+				break;
+				
+			case SM_COW:
+			case SM_SHARED:
+            {
+				if (pid == 0)
+                {
+					// Treat kernel_task specially
+					if (info.share_mode == SM_COW)
+                    {
+						rprvt += info.private_pages_resident * pagesize;
+						vprvt += size;
+					}
+					break;
+				}
+                
+				if (info.share_mode == SM_COW)
+                {
+					rprvt += info.private_pages_resident * pagesize;
+					vprvt += info.private_pages_resident * pagesize;
+				}
+				break;
+            }
+			default:
+                // log that something is really bad.
+				break;
+		}
+	}
+    
+	rprvt += aliased;
+}
+
+nub_bool_t
+MachVMMemory::GetMemoryProfile(task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size)
+{
+    // This uses vmmap strategy. We don't use the returned rsize for now. We prefer to match top's version since that's what we do for the rest of the metrics.
+    GetRegionSizes(task, rsize, dirty_size);
+    
+    GetMemorySizes(task, cputype, pid, rprvt, vprvt);
+    
+    rsize = ti.resident_size;
+    vsize = ti.virtual_size;
+    
     return true;
 }
 

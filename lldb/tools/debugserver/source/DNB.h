@@ -67,6 +67,8 @@ nub_size_t      DNBProcessMemoryWrite   (nub_process_t pid, nub_addr_t addr, nub
 nub_addr_t      DNBProcessMemoryAllocate    (nub_process_t pid, nub_size_t size, uint32_t permissions) DNB_EXPORT;
 nub_bool_t      DNBProcessMemoryDeallocate  (nub_process_t pid, nub_addr_t addr) DNB_EXPORT;
 int             DNBProcessMemoryRegionInfo  (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *region_info) DNB_EXPORT;
+const char *    DNBProcessGetProfileDataAsCString (nub_process_t pid) DNB_EXPORT; // Process owns the returned string. Do not free.
+nub_bool_t      DNBProcessSetAsyncEnableProfiling   (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec) DNB_EXPORT;
 
 //----------------------------------------------------------------------
 // Process status
@@ -88,6 +90,7 @@ nub_bool_t      DNBProcessSetSharedLibraryInfoCallback  (nub_process_t pid, DNBC
 nub_addr_t      DNBProcessLookupAddress                 (nub_process_t pid, const char *name, const char *shlib) DNB_EXPORT;
 nub_size_t      DNBProcessGetAvailableSTDOUT            (nub_process_t pid, char *buf, nub_size_t buf_size) DNB_EXPORT;
 nub_size_t      DNBProcessGetAvailableSTDERR            (nub_process_t pid, char *buf, nub_size_t buf_size) DNB_EXPORT;
+nub_size_t      DNBProcessGetAvailableProfileData       (nub_process_t pid, char *buf, nub_size_t buf_size) DNB_EXPORT;
 nub_size_t      DNBProcessGetStopCount                  (nub_process_t pid) DNB_EXPORT;
 uint32_t        DNBProcessGetCPUType                    (nub_process_t pid) DNB_EXPORT; 
 

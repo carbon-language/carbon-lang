@@ -144,6 +144,17 @@ public:
     void                    ExceptionMessageBundleComplete ();
     void                    SharedLibrariesUpdated ();
     nub_size_t              CopyImageInfos (struct DNBExecutableImageInfo **image_infos, bool only_changed);
+    
+    //----------------------------------------------------------------------
+    // Profile functions
+    //----------------------------------------------------------------------
+    void                    SetAsyncEnableProfiling (bool enable, uint64_t internal_usec);
+    bool                    IsProfilingEnabled () { return m_profile_enabled; }
+    uint64_t                ProfileInterval () { return m_profile_interval_usec; }
+    bool                    StartProfileThread ();
+    static void *           ProfileThread (void *arg);
+    void                    SignalAsyncProfileData (const char *info);
+    size_t                  GetAsyncProfileData (char *buf, size_t buf_size);
 
     //----------------------------------------------------------------------
     // Accessors
@@ -266,6 +277,13 @@ private:
     pthread_t                   m_stdio_thread;             // Thread ID for the thread that watches for child process stdio
     PThreadMutex                m_stdio_mutex;              // Multithreaded protection for stdio
     std::string                 m_stdout_data;
+    
+    bool                        m_profile_enabled;          // A flag to indicate if profiling is enabled
+    uint64_t                    m_profile_interval_usec;    // If enable, the profiling interval in microseconds
+    pthread_t                   m_profile_thread;           // Thread ID for the thread that profiles the inferior
+    PThreadMutex                m_profile_data_mutex;       // Multithreaded protection for profile info data
+    std::string                 m_profile_data;             // Profile data, must be protected by m_profile_data_mutex
+    
     DNBThreadResumeActions      m_thread_actions;           // The thread actions for the current MachProcess::Resume() call
     MachException::Message::collection
                                 m_exception_messages;       // A collection of exception messages caught when listening to the exception port

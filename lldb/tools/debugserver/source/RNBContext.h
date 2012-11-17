@@ -29,13 +29,15 @@ public:
         event_proc_thread_running       = 0x02, // Sticky
         event_proc_thread_exiting       = 0x04,
         event_proc_stdio_available      = 0x08,
-        event_read_packet_available     = 0x10,
-        event_read_thread_running       = 0x20, // Sticky
-        event_read_thread_exiting       = 0x40,
+        event_proc_profile_data         = 0x10,
+        event_read_packet_available     = 0x20,
+        event_read_thread_running       = 0x40, // Sticky
+        event_read_thread_exiting       = 0x80,
 
         normal_event_bits   = event_proc_state_changed |
                               event_proc_thread_exiting |
                               event_proc_stdio_available |
+                              event_proc_profile_data | 
                               event_read_packet_available |
                               event_read_thread_exiting,
 

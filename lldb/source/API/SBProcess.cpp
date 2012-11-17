@@ -366,6 +366,29 @@ SBProcess::GetSTDERR (char *dst, size_t dst_len) const
     return bytes_read;
 }
 
+size_t
+SBProcess::GetAsyncProfileData(char *dst, size_t dst_len) const
+{
+    size_t bytes_read = 0;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Error error;
+        bytes_read = process_sp->GetAsyncProfileData (dst, dst_len, error);
+    }
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBProcess(%p)::GetProfileData (dst=\"%.*s\", dst_len=%llu) => %llu",
+                     process_sp.get(),
+                     (int) bytes_read,
+                     dst,
+                     (uint64_t)dst_len,
+                     (uint64_t)bytes_read);
+    
+    return bytes_read;
+}
+
 void
 SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
 {

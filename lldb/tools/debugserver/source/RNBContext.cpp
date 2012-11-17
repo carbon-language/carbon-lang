@@ -148,9 +148,9 @@ RNBContext::ThreadFunctionProcessStatus(void *arg)
     bool done = false;
     while (!done)
     {
-        DNBLogThreadedIf(LOG_RNB_PROC, "RNBContext::%s calling DNBProcessWaitForEvent(pid, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged | eEventStdioAvailable, true)...", __FUNCTION__);
-        nub_event_t pid_status_event = DNBProcessWaitForEvents (pid, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged | eEventStdioAvailable, true, NULL);
-        DNBLogThreadedIf(LOG_RNB_PROC, "RNBContext::%s calling DNBProcessWaitForEvent(pid, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged | eEventStdioAvailable, true) => 0x%8.8x", __FUNCTION__, pid_status_event);
+        DNBLogThreadedIf(LOG_RNB_PROC, "RNBContext::%s calling DNBProcessWaitForEvent(pid, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged | eEventStdioAvailable | eEventProfileDataAvailable, true)...", __FUNCTION__);
+        nub_event_t pid_status_event = DNBProcessWaitForEvents (pid, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged | eEventStdioAvailable | eEventProfileDataAvailable, true, NULL);
+        DNBLogThreadedIf(LOG_RNB_PROC, "RNBContext::%s calling DNBProcessWaitForEvent(pid, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged | eEventStdioAvailable | eEventProfileDataAvailable, true) => 0x%8.8x", __FUNCTION__, pid_status_event);
 
         if (pid_status_event == 0)
         {
@@ -167,6 +167,13 @@ RNBContext::ThreadFunctionProcessStatus(void *arg)
                 ctx.Events().WaitForResetAck(RNBContext::event_proc_stdio_available);
             }
 
+            if (pid_status_event & eEventProfileDataAvailable)
+            {
+                DNBLogThreadedIf(LOG_RNB_PROC, "RNBContext::%s (pid=%4.4x) got profile data event....", __FUNCTION__, pid);
+                ctx.Events().SetEvents (RNBContext::event_proc_profile_data);
+                // Wait for the main thread to consume this notification if it requested we wait for it
+                ctx.Events().WaitForResetAck(RNBContext::event_proc_profile_data);
+            }
 
             if (pid_status_event & (eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged))
             {
@@ -217,6 +224,8 @@ RNBContext::EventsAsString (nub_event_t events, std::string& s)
         s += "proc_thread_exiting ";
     if (events & event_proc_stdio_available)
         s += "proc_stdio_available ";
+    if (events & event_proc_profile_data)
+        s += "proc_profile_data ";
     if (events & event_read_packet_available)
         s += "read_packet_available ";
     if (events & event_read_thread_running)

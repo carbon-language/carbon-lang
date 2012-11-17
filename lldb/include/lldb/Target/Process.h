@@ -1344,7 +1344,8 @@ public:
         eBroadcastBitStateChanged   = (1 << 0),
         eBroadcastBitInterrupt      = (1 << 1),
         eBroadcastBitSTDOUT         = (1 << 2),
-        eBroadcastBitSTDERR         = (1 << 3)
+        eBroadcastBitSTDERR         = (1 << 3),
+        eBroadcastBitProfileData    = (1 << 4)
     };
 
     enum
@@ -2942,6 +2943,35 @@ public:
 
     Error
     DeallocateMemory (lldb::addr_t ptr);
+    
+//    virtual Error
+//    DoGetProfileData (uint64_t &elapsed_usec,
+//                      uint64_t &task_used_usec,
+//                      int &num_threads,
+//                      uint64_t **threads_id,
+//                      uint64_t **threads_used_usec,
+//                      mach_vm_size_t &rprvt,
+//                      mach_vm_size_t &rsize,
+//                      mach_vm_size_t &vprvt,
+//                      mach_vm_size_t &vsize,
+//                      mach_vm_size_t &dirty_size)
+//    {
+//        Error error;
+//        error.SetErrorStringWithFormat("error: wrong method called.");
+//        return error;
+//    }
+//    
+//    Error
+//    GetProfileData (uint64_t &elapsed_usec,
+//                    uint64_t &task_used_usec,
+//                    int &num_threads,
+//                    uint64_t **threads_id,
+//                    uint64_t **threads_used_usec,
+//                    mach_vm_size_t &rprvt,
+//                    mach_vm_size_t &rsize,
+//                    mach_vm_size_t &vprvt,
+//                    mach_vm_size_t &vsize,
+//                    mach_vm_size_t &dirty_size);
 
     //------------------------------------------------------------------
     /// Get any available STDOUT.
@@ -2998,6 +3028,24 @@ public:
         return 0;
     }
 
+    //------------------------------------------------------------------
+    /// Get any available profile data.
+    ///
+    /// @param[out] buf
+    ///     A buffer that will receive any profile data bytes that are
+    ///     currently available.
+    ///
+    /// @param[out] buf_size
+    ///     The size in bytes for the buffer \a buf.
+    ///
+    /// @return
+    ///     The number of bytes written into \a buf. If this value is
+    ///     equal to \a buf_size, another call to this function should
+    ///     be made to retrieve more profile data.
+    //------------------------------------------------------------------
+    virtual size_t
+    GetAsyncProfileData (char *buf, size_t buf_size, Error &error);
+    
     //----------------------------------------------------------------------
     // Process Breakpoints
     //----------------------------------------------------------------------
@@ -3443,6 +3491,8 @@ protected:
     Mutex        				m_stdio_communication_mutex;
     std::string                 m_stdout_data;
     std::string                 m_stderr_data;
+    Mutex                       m_profile_data_comm_mutex;
+    std::string                 m_profile_data;
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
@@ -3517,6 +3567,9 @@ protected:
     
     void
     AppendSTDERR (const char *s, size_t len);
+    
+    void
+    BroadcastAsyncProfileData(const char *s, size_t len);
     
     static void
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);

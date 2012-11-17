@@ -112,6 +112,8 @@ public:
         set_list_threads_in_stop_reply, // 'QListThreadsInStopReply:'
         sync_thread_state,              // 'QSyncThreadState:'
         memory_region_info,             // 'qMemoryRegionInfo:'
+        get_profile_data,               // 'qGetProfileData'
+        set_enable_profiling,           // 'QSetAsyncEnableProfiling'
         watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
@@ -210,6 +212,8 @@ public:
     rnb_err_t HandlePacket_AllocateMemory (const char *p);
     rnb_err_t HandlePacket_DeallocateMemory (const char *p);
     rnb_err_t HandlePacket_MemoryRegionInfo (const char *p);
+    rnb_err_t HandlePacket_GetProfileData(const char *p);
+    rnb_err_t HandlePacket_SetAsyncEnableProfiling(const char *p);
     rnb_err_t HandlePacket_WatchpointSupportInfo (const char *p);
 
     rnb_err_t HandlePacket_stop_process (const char *p);
@@ -219,6 +223,8 @@ public:
     rnb_err_t SendSTDOUTPacket (char *buf, nub_size_t buf_size);
     rnb_err_t SendSTDERRPacket (char *buf, nub_size_t buf_size);
     void      FlushSTDIO ();
+    void      SendAsyncProfileData ();
+    rnb_err_t SendAsyncProfileDataPacket (char *buf, nub_size_t buf_size);
 
     RNBContext&     Context() { return m_ctx; }
     RNBSocket&      Comm() { return m_comm; }

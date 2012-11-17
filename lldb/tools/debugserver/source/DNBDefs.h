@@ -134,11 +134,13 @@ enum
     eEventProcessStoppedStateChanged = 1 << 1,  // The process has changed state to stopped
     eEventSharedLibsStateChange = 1 << 2,       // Shared libraries loaded/unloaded state has changed
     eEventStdioAvailable = 1 << 3,              // Something is available on stdout/stderr
-    eEventProcessAsyncInterrupt = 1 << 4,               // Gives the ability for any infinite wait calls to be interrupted
+    eEventProfileDataAvailable = 1 << 4,        // Profile data ready for retrieval
+    eEventProcessAsyncInterrupt = 1 << 5,       // Gives the ability for any infinite wait calls to be interrupted
     kAllEventsMask = eEventProcessRunningStateChanged |
                      eEventProcessStoppedStateChanged |
                      eEventSharedLibsStateChange |
                      eEventStdioAvailable |
+                     eEventProfileDataAvailable |
                      eEventProcessAsyncInterrupt
 };
 
