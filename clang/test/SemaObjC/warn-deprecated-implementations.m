@@ -1,12 +1,13 @@
 // RUN: %clang_cc1 -fsyntax-only -Wdeprecated-implementations -verify -Wno-objc-root-class %s
 // rdar://8973810
+// rdar://12717705
 
 @protocol P
 - (void) D __attribute__((deprecated)); // expected-note {{method 'D' declared here}}
 @end
 
 @interface A <P>
-+ (void)F __attribute__((deprecated)); // expected-note {{method 'F' declared here}}
++ (void)F __attribute__((deprecated));
 @end
 
 @interface A()
@@ -14,9 +15,17 @@
 @end
 
 @implementation A
-+ (void)F { } //  expected-warning {{Implementing deprecated method}}
++ (void)F { }	// No warning, implementing its own deprecated method
 - (void) D {} //  expected-warning {{Implementing deprecated method}}
 - (void) E {} //  expected-warning {{Implementing deprecated method}}
+@end
+
+@interface A(CAT)
+- (void) G __attribute__((deprecated)); 
+@end
+
+@implementation A(CAT)
+- (void) G {} 	// No warning, implementing its own deprecated method
 @end
 
 __attribute__((deprecated))
