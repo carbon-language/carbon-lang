@@ -265,16 +265,16 @@ private:
                                             char ConstraintCode,
                                             std::vector<SDValue> &OutOps);
 
-  // Form pairs of consecutive S, D, or Q registers.
+  // Form pairs of consecutive R, S, D, or Q registers.
   SDNode *createGPRPairNode(EVT VT, SDValue V0, SDValue V1);
-  SDNode *PairSRegs(EVT VT, SDValue V0, SDValue V1);
-  SDNode *PairDRegs(EVT VT, SDValue V0, SDValue V1);
-  SDNode *PairQRegs(EVT VT, SDValue V0, SDValue V1);
+  SDNode *createSRegPairNode(EVT VT, SDValue V0, SDValue V1);
+  SDNode *createDRegPairNode(EVT VT, SDValue V0, SDValue V1);
+  SDNode *createQRegPairNode(EVT VT, SDValue V0, SDValue V1);
 
   // Form sequences of 4 consecutive S, D, or Q registers.
-  SDNode *QuadSRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
-  SDNode *QuadDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
-  SDNode *QuadQRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
+  SDNode *createQuadSRegsNode(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
+  SDNode *createQuadDRegsNode(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
+  SDNode *createQuadQRegsNode(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
 
   // Get the alignment operand for a NEON VLD or VST instruction.
   SDValue GetVLDSTAlign(SDValue Align, unsigned NumVecs, bool is64BitVector);
@@ -1456,9 +1456,8 @@ SDNode *ARMDAGToDAGISel::createGPRPairNode(EVT VT, SDValue V0, SDValue V1) {
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 5);
 }
 
-/// PairSRegs - Form a D register from a pair of S registers.
-///
-SDNode *ARMDAGToDAGISel::PairSRegs(EVT VT, SDValue V0, SDValue V1) {
+/// \brief Form a D register from a pair of S registers.
+SDNode *ARMDAGToDAGISel::createSRegPairNode(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue RegClass =
     CurDAG->getTargetConstant(ARM::DPR_VFP2RegClassID, MVT::i32);
@@ -1468,9 +1467,8 @@ SDNode *ARMDAGToDAGISel::PairSRegs(EVT VT, SDValue V0, SDValue V1) {
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 5);
 }
 
-/// PairDRegs - Form a quad register from a pair of D registers.
-///
-SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
+/// \brief Form a quad register from a pair of D registers.
+SDNode *ARMDAGToDAGISel::createDRegPairNode(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue RegClass = CurDAG->getTargetConstant(ARM::QPRRegClassID, MVT::i32);
   SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
@@ -1479,9 +1477,8 @@ SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 5);
 }
 
-/// PairQRegs - Form 4 consecutive D registers from a pair of Q registers.
-///
-SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
+/// \brief Form 4 consecutive D registers from a pair of Q registers.
+SDNode *ARMDAGToDAGISel::createQRegPairNode(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue RegClass = CurDAG->getTargetConstant(ARM::QQPRRegClassID, MVT::i32);
   SDValue SubReg0 = CurDAG->getTargetConstant(ARM::qsub_0, MVT::i32);
@@ -1490,9 +1487,8 @@ SDNode *ARMDAGToDAGISel::PairQRegs(EVT VT, SDValue V0, SDValue V1) {
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 5);
 }
 
-/// QuadSRegs - Form 4 consecutive S registers.
-///
-SDNode *ARMDAGToDAGISel::QuadSRegs(EVT VT, SDValue V0, SDValue V1,
+/// \brief Form 4 consecutive S registers.
+SDNode *ARMDAGToDAGISel::createQuadSRegsNode(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V2, SDValue V3) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue RegClass =
@@ -1506,9 +1502,8 @@ SDNode *ARMDAGToDAGISel::QuadSRegs(EVT VT, SDValue V0, SDValue V1,
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 9);
 }
 
-/// QuadDRegs - Form 4 consecutive D registers.
-///
-SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
+/// \brief Form 4 consecutive D registers.
+SDNode *ARMDAGToDAGISel::createQuadDRegsNode(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V2, SDValue V3) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue RegClass = CurDAG->getTargetConstant(ARM::QQPRRegClassID, MVT::i32);
@@ -1521,9 +1516,8 @@ SDNode *ARMDAGToDAGISel::QuadDRegs(EVT VT, SDValue V0, SDValue V1,
   return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 9);
 }
 
-/// QuadQRegs - Form 4 consecutive Q registers.
-///
-SDNode *ARMDAGToDAGISel::QuadQRegs(EVT VT, SDValue V0, SDValue V1,
+/// \brief Form 4 consecutive Q registers.
+SDNode *ARMDAGToDAGISel::createQuadQRegsNode(EVT VT, SDValue V0, SDValue V1,
                                    SDValue V2, SDValue V3) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue RegClass = CurDAG->getTargetConstant(ARM::QQQQPRRegClassID, MVT::i32);
@@ -1796,7 +1790,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
       SDValue V0 = N->getOperand(Vec0Idx + 0);
       SDValue V1 = N->getOperand(Vec0Idx + 1);
       if (NumVecs == 2)
-        SrcReg = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+        SrcReg = SDValue(createDRegPairNode(MVT::v2i64, V0, V1), 0);
       else {
         SDValue V2 = N->getOperand(Vec0Idx + 2);
         // If it's a vst3, form a quad D-register and leave the last part as
@@ -1804,13 +1798,13 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
         SDValue V3 = (NumVecs == 3)
           ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
           : N->getOperand(Vec0Idx + 3);
-        SrcReg = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+        SrcReg = SDValue(createQuadDRegsNode(MVT::v4i64, V0, V1, V2, V3), 0);
       }
     } else {
       // Form a QQ register.
       SDValue Q0 = N->getOperand(Vec0Idx);
       SDValue Q1 = N->getOperand(Vec0Idx + 1);
-      SrcReg = SDValue(PairQRegs(MVT::v4i64, Q0, Q1), 0);
+      SrcReg = SDValue(createQRegPairNode(MVT::v4i64, Q0, Q1), 0);
     }
 
     unsigned Opc = (is64BitVector ? DOpcodes[OpcodeIndex] :
@@ -1852,7 +1846,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
   SDValue V3 = (NumVecs == 3)
     ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0)
     : N->getOperand(Vec0Idx + 3);
-  SDValue RegSeq = SDValue(QuadQRegs(MVT::v8i64, V0, V1, V2, V3), 0);
+  SDValue RegSeq = SDValue(createQuadQRegsNode(MVT::v8i64, V0, V1, V2, V3), 0);
 
   // Store the even D registers.  This is always an updating store, so that it
   // provides the address to the second store for the odd subregs.
@@ -1962,18 +1956,18 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   SDValue V1 = N->getOperand(Vec0Idx + 1);
   if (NumVecs == 2) {
     if (is64BitVector)
-      SuperReg = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
+      SuperReg = SDValue(createDRegPairNode(MVT::v2i64, V0, V1), 0);
     else
-      SuperReg = SDValue(PairQRegs(MVT::v4i64, V0, V1), 0);
+      SuperReg = SDValue(createQRegPairNode(MVT::v4i64, V0, V1), 0);
   } else {
     SDValue V2 = N->getOperand(Vec0Idx + 2);
     SDValue V3 = (NumVecs == 3)
       ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0)
       : N->getOperand(Vec0Idx + 3);
     if (is64BitVector)
-      SuperReg = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+      SuperReg = SDValue(createQuadDRegsNode(MVT::v4i64, V0, V1, V2, V3), 0);
     else
-      SuperReg = SDValue(QuadQRegs(MVT::v8i64, V0, V1, V2, V3), 0);
+      SuperReg = SDValue(createQuadQRegsNode(MVT::v8i64, V0, V1, V2, V3), 0);
   }
   Ops.push_back(SuperReg);
   Ops.push_back(getI32Imm(Lane));
@@ -2099,7 +2093,7 @@ SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs,
   SDValue V0 = N->getOperand(FirstTblReg + 0);
   SDValue V1 = N->getOperand(FirstTblReg + 1);
   if (NumVecs == 2)
-    RegSeq = SDValue(PairDRegs(MVT::v16i8, V0, V1), 0);
+    RegSeq = SDValue(createDRegPairNode(MVT::v16i8, V0, V1), 0);
   else {
     SDValue V2 = N->getOperand(FirstTblReg + 2);
     // If it's a vtbl3, form a quad D-register and leave the last part as
@@ -2107,7 +2101,7 @@ SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs,
     SDValue V3 = (NumVecs == 3)
       ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0)
       : N->getOperand(FirstTblReg + 3);
-    RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
+    RegSeq = SDValue(createQuadDRegsNode(MVT::v4i64, V0, V1, V2, V3), 0);
   }
 
   SmallVector<SDValue, 6> Ops;
@@ -2423,7 +2417,7 @@ SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
   EVT VT = N->getValueType(0);
   if (!VT.is128BitVector() || N->getNumOperands() != 2)
     llvm_unreachable("unexpected CONCAT_VECTORS");
-  return PairDRegs(VT, N->getOperand(0), N->getOperand(1));
+  return createDRegPairNode(VT, N->getOperand(0), N->getOperand(1));
 }
 
 SDNode *ARMDAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
@@ -2802,13 +2796,13 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     unsigned NumElts = VecVT.getVectorNumElements();
     if (EltVT == MVT::f64) {
       assert(NumElts == 2 && "unexpected type for BUILD_VECTOR");
-      return PairDRegs(VecVT, N->getOperand(0), N->getOperand(1));
+      return createDRegPairNode(VecVT, N->getOperand(0), N->getOperand(1));
     }
     assert(EltVT == MVT::f32 && "unexpected type for BUILD_VECTOR");
     if (NumElts == 2)
-      return PairSRegs(VecVT, N->getOperand(0), N->getOperand(1));
+      return createSRegPairNode(VecVT, N->getOperand(0), N->getOperand(1));
     assert(NumElts == 4 && "unexpected type for BUILD_VECTOR");
-    return QuadSRegs(VecVT, N->getOperand(0), N->getOperand(1),
+    return createQuadSRegsNode(VecVT, N->getOperand(0), N->getOperand(1),
                      N->getOperand(2), N->getOperand(3));
   }
 
@@ -3303,7 +3297,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     // Form a REG_SEQUENCE to force register allocation.
     SDValue V0 = N->getOperand(0);
     SDValue V1 = N->getOperand(1);
-    SDValue RegSeq = SDValue(PairDRegs(MVT::v16i8, V0, V1), 0);
+    SDValue RegSeq = SDValue(createDRegPairNode(MVT::v16i8, V0, V1), 0);
 
     SmallVector<SDValue, 6> Ops;
     Ops.push_back(RegSeq);
