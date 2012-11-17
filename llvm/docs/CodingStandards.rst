@@ -409,7 +409,8 @@ code.
 
 That said, LLVM does make extensive use of a hand-rolled form of RTTI that use
 templates like `isa<>, cast<>, and dyn_cast<> <ProgrammersManual.html#isa>`_.
-This form of RTTI is opt-in and can be added to any class.  It is also
+This form of RTTI is opt-in and can be
+:doc:`added to any class <HowToSetUpLLVMStyleRTTI>`. It is also
 substantially more efficient than ``dynamic_cast<>``.
 
 .. _static constructor:
