@@ -1065,9 +1065,15 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
       if (PN > V2)
         std::swap(Locs.first, Locs.second);
 
+      // Find the first incoming phi value not from its parent.
+      unsigned f = 0;
+      while (PN->getIncomingBlock(f) == PN->getParent() &&
+             f < PN->getNumIncomingValues()-1)
+        ++f;
+
       AliasResult Alias =
-        aliasCheck(PN->getIncomingValue(0), PNSize, PNTBAAInfo,
-                   PN2->getIncomingValueForBlock(PN->getIncomingBlock(0)),
+        aliasCheck(PN->getIncomingValue(f), PNSize, PNTBAAInfo,
+                   PN2->getIncomingValueForBlock(PN->getIncomingBlock(f)),
                    V2Size, V2TBAAInfo);
       if (Alias == MayAlias)
         return MayAlias;
@@ -1096,7 +1102,10 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
         ArePhisAssumedNoAlias = true;
       }
 
-      for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        if (i == f)
+          continue;
+
         AliasResult ThisAlias =
           aliasCheck(PN->getIncomingValue(i), PNSize, PNTBAAInfo,
                      PN2->getIncomingValueForBlock(PN->getIncomingBlock(i)),
