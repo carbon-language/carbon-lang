@@ -2550,12 +2550,7 @@ Process::DeallocateMemory (addr_t ptr)
     return error;
 }
 
-//Error
-//Process::GetProfileData (uint64_t &elapsed_usec, uint64_t &task_used_usec, int &num_threads, uint64_t **threads_id, uint64_t **threads_used_usec, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size)
-//{
-//    return DoGetProfileData(elapsed_usec, task_used_usec, num_threads, threads_id, threads_used_usec, rprvt, rsize, vprvt, vsize, dirty_size);
-//}
-//
+
 ModuleSP
 Process::ReadModuleFromMemory (const FileSpec& file_spec, 
                                lldb::addr_t header_addr, 

@@ -2944,35 +2944,6 @@ public:
     Error
     DeallocateMemory (lldb::addr_t ptr);
     
-//    virtual Error
-//    DoGetProfileData (uint64_t &elapsed_usec,
-//                      uint64_t &task_used_usec,
-//                      int &num_threads,
-//                      uint64_t **threads_id,
-//                      uint64_t **threads_used_usec,
-//                      mach_vm_size_t &rprvt,
-//                      mach_vm_size_t &rsize,
-//                      mach_vm_size_t &vprvt,
-//                      mach_vm_size_t &vsize,
-//                      mach_vm_size_t &dirty_size)
-//    {
-//        Error error;
-//        error.SetErrorStringWithFormat("error: wrong method called.");
-//        return error;
-//    }
-//    
-//    Error
-//    GetProfileData (uint64_t &elapsed_usec,
-//                    uint64_t &task_used_usec,
-//                    int &num_threads,
-//                    uint64_t **threads_id,
-//                    uint64_t **threads_used_usec,
-//                    mach_vm_size_t &rprvt,
-//                    mach_vm_size_t &rsize,
-//                    mach_vm_size_t &vprvt,
-//                    mach_vm_size_t &vsize,
-//                    mach_vm_size_t &dirty_size);
-
     //------------------------------------------------------------------
     /// Get any available STDOUT.
     ///

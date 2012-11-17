@@ -1227,16 +1227,6 @@ DNBProcessGetProfileDataAsCString (nub_process_t pid)
     return NULL;
 }
 
-//nub_bool_t
-//DNBProcessGetProfileData (nub_process_t pid, uint64_t &elapsed_usec, uint64_t &task_used_usec, int &num_threads, uint64_t **threads_id, uint64_t **threads_used_usec, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size)
-//{
-//    MachProcessSP procSP;
-//    if (GetProcessSP (pid, procSP))
-//        return procSP->Task().GetProfileData(elapsed_usec, task_used_usec, num_threads, threads_id, threads_used_usec, rprvt, rsize, vprvt, vsize, dirty_size);
-//    
-//    return false;
-//}
-//
 nub_bool_t
 DNBProcessSetAsyncEnableProfiling (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec)
 {
