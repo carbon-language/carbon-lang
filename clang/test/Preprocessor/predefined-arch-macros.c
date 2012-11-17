@@ -464,6 +464,7 @@
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE_AVX_I_M32
 // CHECK_CORE_AVX_I_M32: #define __AES__ 1
 // CHECK_CORE_AVX_I_M32: #define __AVX__ 1
+// CHECK_CORE_AVX_I_M32: #define __F16C__ 1
 // CHECK_CORE_AVX_I_M32: #define __MMX__ 1
 // CHECK_CORE_AVX_I_M32: #define __PCLMUL__ 1
 // CHECK_CORE_AVX_I_M32: #define __RDRND__ 1
@@ -484,6 +485,7 @@
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE_AVX_I_M64
 // CHECK_CORE_AVX_I_M64: #define __AES__ 1
 // CHECK_CORE_AVX_I_M64: #define __AVX__ 1
+// CHECK_CORE_AVX_I_M64: #define __F16C__ 1
 // CHECK_CORE_AVX_I_M64: #define __MMX__ 1
 // CHECK_CORE_AVX_I_M64: #define __PCLMUL__ 1
 // CHECK_CORE_AVX_I_M64: #define __RDRND__ 1
@@ -510,6 +512,7 @@
 // CHECK_CORE_AVX2_M32: #define __AVX__ 1
 // CHECK_CORE_AVX2_M32: #define __BMI2__ 1
 // CHECK_CORE_AVX2_M32: #define __BMI__ 1
+// CHECK_CORE_AVX2_M32: #define __F16C__ 1
 // CHECK_CORE_AVX2_M32: #define __FMA__ 1
 // CHECK_CORE_AVX2_M32: #define __LZCNT__ 1
 // CHECK_CORE_AVX2_M32: #define __MMX__ 1
@@ -536,6 +539,7 @@
 // CHECK_CORE_AVX2_M64: #define __AVX__ 1
 // CHECK_CORE_AVX2_M64: #define __BMI2__ 1
 // CHECK_CORE_AVX2_M64: #define __BMI__ 1
+// CHECK_CORE_AVX2_M64: #define __F16C__ 1
 // CHECK_CORE_AVX2_M64: #define __FMA__ 1
 // CHECK_CORE_AVX2_M64: #define __LZCNT__ 1
 // CHECK_CORE_AVX2_M64: #define __MMX__ 1
@@ -1008,12 +1012,33 @@
 // CHECK_ATHLON_FX_M64: #define __tune_k8__ 1
 // CHECK_ATHLON_FX_M64: #define __x86_64 1
 // CHECK_ATHLON_FX_M64: #define __x86_64__ 1
+// RUN: %clang -march=amdfam10 -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_AMDFAM10_M32
+// CHECK_AMDFAM10_M32: #define __3dNOW_A__ 1
+// CHECK_AMDFAM10_M32: #define __3dNOW__ 1
+// CHECK_AMDFAM10_M32: #define __LZCNT__ 1
+// CHECK_AMDFAM10_M32: #define __MMX__ 1
+// CHECK_AMDFAM10_M32: #define __POPCNT__ 1
+// CHECK_AMDFAM10_M32: #define __SSE2_MATH__ 1
+// CHECK_AMDFAM10_M32: #define __SSE2__ 1
+// CHECK_AMDFAM10_M32: #define __SSE3__ 1
+// CHECK_AMDFAM10_M32: #define __SSE4A__ 1
+// CHECK_AMDFAM10_M32: #define __SSE_MATH__ 1
+// CHECK_AMDFAM10_M32: #define __SSE__ 1
+// CHECK_AMDFAM10_M32: #define __amdfam10 1
+// CHECK_AMDFAM10_M32: #define __amdfam10__ 1
+// CHECK_AMDFAM10_M32: #define __i386 1
+// CHECK_AMDFAM10_M32: #define __i386__ 1
+// CHECK_AMDFAM10_M32: #define __tune_amdfam10__ 1
 // RUN: %clang -march=amdfam10 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_AMDFAM10_M64
 // CHECK_AMDFAM10_M64: #define __3dNOW_A__ 1
 // CHECK_AMDFAM10_M64: #define __3dNOW__ 1
+// CHECK_AMDFAM10_M64: #define __LZCNT__ 1
 // CHECK_AMDFAM10_M64: #define __MMX__ 1
+// CHECK_AMDFAM10_M64: #define __POPCNT__ 1
 // CHECK_AMDFAM10_M64: #define __SSE2_MATH__ 1
 // CHECK_AMDFAM10_M64: #define __SSE2__ 1
 // CHECK_AMDFAM10_M64: #define __SSE3__ 1
@@ -1027,15 +1052,87 @@
 // CHECK_AMDFAM10_M64: #define __tune_amdfam10__ 1
 // CHECK_AMDFAM10_M64: #define __x86_64 1
 // CHECK_AMDFAM10_M64: #define __x86_64__ 1
+// RUN: %clang -march=btver1 -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BTVER1_M32
+// CHECK_BTVER1_M32-NOT: #define __3dNOW_A__ 1
+// CHECK_BTVER1_M32-NOT: #define __3dNOW__ 1
+// CHECK_BTVER1_M32: #define __LZCNT__ 1
+// CHECK_BTVER1_M32: #define __MMX__ 1
+// CHECK_BTVER1_M32: #define __POPCNT__ 1
+// CHECK_BTVER1_M32: #define __SSE2_MATH__ 1
+// CHECK_BTVER1_M32: #define __SSE2__ 1
+// CHECK_BTVER1_M32: #define __SSE3__ 1
+// CHECK_BTVER1_M32: #define __SSE4A__ 1
+// CHECK_BTVER1_M32: #define __SSE_MATH__ 1
+// CHECK_BTVER1_M32: #define __SSE__ 1
+// CHECK_BTVER1_M32: #define __SSSE3__ 1
+// CHECK_BTVER1_M32: #define __btver1 1
+// CHECK_BTVER1_M32: #define __btver1__ 1
+// CHECK_BTVER1_M32: #define __i386 1
+// CHECK_BTVER1_M32: #define __i386__ 1
+// CHECK_BTVER1_M32: #define __tune_btver1__ 1
+// RUN: %clang -march=btver1 -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BTVER1_M64
+// CHECK_BTVER1_M64-NOT: #define __3dNOW_A__ 1
+// CHECK_BTVER1_M64-NOT: #define __3dNOW__ 1
+// CHECK_BTVER1_M64: #define __LZCNT__ 1
+// CHECK_BTVER1_M64: #define __MMX__ 1
+// CHECK_BTVER1_M64: #define __POPCNT__ 1
+// CHECK_BTVER1_M64: #define __SSE2_MATH__ 1
+// CHECK_BTVER1_M64: #define __SSE2__ 1
+// CHECK_BTVER1_M64: #define __SSE3__ 1
+// CHECK_BTVER1_M64: #define __SSE4A__ 1
+// CHECK_BTVER1_M64: #define __SSE_MATH__ 1
+// CHECK_BTVER1_M64: #define __SSE__ 1
+// CHECK_BTVER1_M64: #define __SSSE3__ 1
+// CHECK_BTVER1_M64: #define __amd64 1
+// CHECK_BTVER1_M64: #define __amd64__ 1
+// CHECK_BTVER1_M64: #define __btver1 1
+// CHECK_BTVER1_M64: #define __btver1__ 1
+// CHECK_BTVER1_M64: #define __tune_btver1__ 1
+// CHECK_BTVER1_M64: #define __x86_64 1
+// CHECK_BTVER1_M64: #define __x86_64__ 1
+// RUN: %clang -march=bdver1 -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BDVER1_M32
+// CHECK_BDVER1_M32-NOT: #define __3dNOW_A__ 1
+// CHECK_BDVER1_M32-NOT: #define __3dNOW__ 1
+// CHECK_BDVER1_M32: #define __AES__ 1
+// CHECK_BDVER1_M32: #define __AVX__ 1
+// CHECK_BDVER1_M32: #define __FMA4__ 1
+// CHECK_BDVER1_M32: #define __LZCNT__ 1
+// CHECK_BDVER1_M32: #define __MMX__ 1
+// CHECK_BDVER1_M32: #define __PCLMUL__ 1
+// CHECK_BDVER1_M32: #define __POPCNT__ 1
+// CHECK_BDVER1_M32: #define __SSE2_MATH__ 1
+// CHECK_BDVER1_M32: #define __SSE2__ 1
+// CHECK_BDVER1_M32: #define __SSE3__ 1
+// CHECK_BDVER1_M32: #define __SSE4A__ 1
+// CHECK_BDVER1_M32: #define __SSE4_1__ 1
+// CHECK_BDVER1_M32: #define __SSE4_2__ 1
+// CHECK_BDVER1_M32: #define __SSE_MATH__ 1
+// CHECK_BDVER1_M32: #define __SSE__ 1
+// CHECK_BDVER1_M32: #define __SSSE3__ 1
+// CHECK_BDVER1_M32: #define __XOP__ 1
+// CHECK_BDVER1_M32: #define __bdver1 1
+// CHECK_BDVER1_M32: #define __bdver1__ 1
+// CHECK_BDVER1_M32: #define __i386 1
+// CHECK_BDVER1_M32: #define __i386__ 1
+// CHECK_BDVER1_M32: #define __tune_bdver1__ 1
 // RUN: %clang -march=bdver1 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_BDVER1_M64
-// CHECK_BDVER1_M64: #define __AVX__ 1
 // CHECK_BDVER1_M64-NOT: #define __3dNOW_A__ 1
 // CHECK_BDVER1_M64-NOT: #define __3dNOW__ 1
+// CHECK_BDVER1_M64: #define __AES__ 1
+// CHECK_BDVER1_M64: #define __AVX__ 1
 // CHECK_BDVER1_M64: #define __FMA4__ 1
+// CHECK_BDVER1_M64: #define __LZCNT__ 1
 // CHECK_BDVER1_M64: #define __MMX__ 1
 // CHECK_BDVER1_M64: #define __PCLMUL__ 1
+// CHECK_BDVER1_M64: #define __POPCNT__ 1
 // CHECK_BDVER1_M64: #define __SSE2_MATH__ 1
 // CHECK_BDVER1_M64: #define __SSE2__ 1
 // CHECK_BDVER1_M64: #define __SSE3__ 1
@@ -1053,5 +1150,67 @@
 // CHECK_BDVER1_M64: #define __tune_bdver1__ 1
 // CHECK_BDVER1_M64: #define __x86_64 1
 // CHECK_BDVER1_M64: #define __x86_64__ 1
+// RUN: %clang -march=bdver2 -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BDVER2_M32
+// CHECK_BDVER2_M32-NOT: #define __3dNOW_A__ 1
+// CHECK_BDVER2_M32-NOT: #define __3dNOW__ 1
+// CHECK_BDVER2_M32: #define __AES__ 1
+// CHECK_BDVER2_M32: #define __AVX__ 1
+// CHECK_BDVER2_M32: #define __BMI__ 1
+// CHECK_BDVER2_M32: #define __F16C__ 1
+// CHECK_BDVER2_M32: #define __FMA4__ 1
+// CHECK_BDVER2_M32: #define __FMA__ 1
+// CHECK_BDVER2_M32: #define __LZCNT__ 1
+// CHECK_BDVER2_M32: #define __MMX__ 1
+// CHECK_BDVER2_M32: #define __PCLMUL__ 1
+// CHECK_BDVER2_M32: #define __POPCNT__ 1
+// CHECK_BDVER2_M32: #define __SSE2_MATH__ 1
+// CHECK_BDVER2_M32: #define __SSE2__ 1
+// CHECK_BDVER2_M32: #define __SSE3__ 1
+// CHECK_BDVER2_M32: #define __SSE4A__ 1
+// CHECK_BDVER2_M32: #define __SSE4_1__ 1
+// CHECK_BDVER2_M32: #define __SSE4_2__ 1
+// CHECK_BDVER2_M32: #define __SSE_MATH__ 1
+// CHECK_BDVER2_M32: #define __SSE__ 1
+// CHECK_BDVER2_M32: #define __SSSE3__ 1
+// CHECK_BDVER2_M32: #define __XOP__ 1
+// CHECK_BDVER2_M32: #define __bdver2 1
+// CHECK_BDVER2_M32: #define __bdver2__ 1
+// CHECK_BDVER2_M32: #define __i386 1
+// CHECK_BDVER2_M32: #define __i386__ 1
+// CHECK_BDVER2_M32: #define __tune_bdver2__ 1
+// RUN: %clang -march=bdver2 -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BDVER2_M64
+// CHECK_BDVER2_M64-NOT: #define __3dNOW_A__ 1
+// CHECK_BDVER2_M64-NOT: #define __3dNOW__ 1
+// CHECK_BDVER2_M64: #define __AES__ 1
+// CHECK_BDVER2_M64: #define __AVX__ 1
+// CHECK_BDVER2_M64: #define __BMI__ 1
+// CHECK_BDVER2_M64: #define __F16C__ 1
+// CHECK_BDVER2_M64: #define __FMA4__ 1
+// CHECK_BDVER2_M64: #define __FMA__ 1
+// CHECK_BDVER2_M64: #define __LZCNT__ 1
+// CHECK_BDVER2_M64: #define __MMX__ 1
+// CHECK_BDVER2_M64: #define __PCLMUL__ 1
+// CHECK_BDVER2_M64: #define __POPCNT__ 1
+// CHECK_BDVER2_M64: #define __SSE2_MATH__ 1
+// CHECK_BDVER2_M64: #define __SSE2__ 1
+// CHECK_BDVER2_M64: #define __SSE3__ 1
+// CHECK_BDVER2_M64: #define __SSE4A__ 1
+// CHECK_BDVER2_M64: #define __SSE4_1__ 1
+// CHECK_BDVER2_M64: #define __SSE4_2__ 1
+// CHECK_BDVER2_M64: #define __SSE_MATH__ 1
+// CHECK_BDVER2_M64: #define __SSE__ 1
+// CHECK_BDVER2_M64: #define __SSSE3__ 1
+// CHECK_BDVER2_M64: #define __XOP__ 1
+// CHECK_BDVER2_M64: #define __amd64 1
+// CHECK_BDVER2_M64: #define __amd64__ 1
+// CHECK_BDVER2_M64: #define __bdver2 1
+// CHECK_BDVER2_M64: #define __bdver2__ 1
+// CHECK_BDVER2_M64: #define __tune_bdver2__ 1
+// CHECK_BDVER2_M64: #define __x86_64 1
+// CHECK_BDVER2_M64: #define __x86_64__ 1
 //
 // End X86/GCC/Linux tests ------------------
