@@ -1293,9 +1293,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       if (!FinishLexStringLiteral(Tok, WarningName, "'__has_warning'",
                                   /*MacroExpansion=*/false)) {
         // Eat tokens until ')'.
-        while (Tok.isNot(tok::r_paren)
-                 && Tok.isNot(tok::eod)
-                 && Tok.isNot(tok::eof))
+        while (Tok.isNot(tok::r_paren) && Tok.isNot(tok::eod) &&
+               Tok.isNot(tok::eof))
           LexUnexpandedToken(Tok);
         break;
       }
