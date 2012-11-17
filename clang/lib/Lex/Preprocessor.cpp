@@ -691,10 +691,12 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
 }
 
 bool Preprocessor::FinishLexStringLiteral(Token &Result, std::string &String,
+                                          const char *DiagnosticTag,
                                           bool AllowMacroExpansion) {
   // We need at least one string literal.
   if (Result.isNot(tok::string_literal)) {
-    Diag(Result, diag::err_expected_string_literal);
+    Diag(Result, diag::err_expected_string_literal)
+      << /*Source='in...'*/0 << DiagnosticTag;
     return false;
   }
 
@@ -720,7 +722,8 @@ bool Preprocessor::FinishLexStringLiteral(Token &Result, std::string &String,
     return false;
 
   if (Literal.Pascal) {
-    Diag(StrToks[0].getLocation(), diag::err_expected_string_literal);
+    Diag(StrToks[0].getLocation(), diag::err_expected_string_literal)
+      << /*Source='in...'*/0 << DiagnosticTag;
     return false;
   }
 

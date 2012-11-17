@@ -12,3 +12,5 @@
 #define STRING(x) STRING2(x)
 #pragma message(":O I'm a message! " STRING(__LINE__)) // expected-warning {{:O I'm a message! 13}}
 #pragma message ":O gcc accepts this! " STRING(__LINE__) // expected-warning {{:O gcc accepts this! 14}}
+
+#pragma message(invalid) // expected-error {{expected string literal in pragma message}}

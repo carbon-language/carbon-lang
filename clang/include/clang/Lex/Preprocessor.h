@@ -700,17 +700,19 @@ public:
   /// string literals and may even come from macro expansion.
   /// \returns true on success, false if a error diagnostic has been generated.
   bool LexStringLiteral(Token &Result, std::string &String,
-                        bool AllowMacroExpansion) {
+                        const char *DiagnosticTag, bool AllowMacroExpansion) {
     if (AllowMacroExpansion)
       Lex(Result);
     else
       LexUnexpandedToken(Result);
-    return FinishLexStringLiteral(Result, String, AllowMacroExpansion);
+    return FinishLexStringLiteral(Result, String, DiagnosticTag,
+                                  AllowMacroExpansion);
   }
 
   /// \brief Complete the lexing of a string literal where the first token has
   /// already been lexed (see LexStringLiteral).
   bool FinishLexStringLiteral(Token &Result, std::string &String,
+                              const char *DiagnosticTag,
                               bool AllowMacroExpansion);
 
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get

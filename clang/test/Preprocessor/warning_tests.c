@@ -11,7 +11,7 @@
 #warning Should have -Wparentheses
 #endif
 
-// expected-error@+2 {{expected string literal}}
+// expected-error@+2 {{expected string literal in '__has_warning'}}
 // expected-error@+1 {{expected value in expression}}
 #if __has_warning(-Wfoo)
 #endif

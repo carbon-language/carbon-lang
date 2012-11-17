@@ -1263,7 +1263,8 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
       return ExprError();
     }
     default:
-      Diag(Tok, diag::err_expected_string_literal);
+      Diag(Tok, diag::err_expected_string_literal)
+        << /*Source='in...'*/0 << "'asm'";
       return ExprError();
   }
 

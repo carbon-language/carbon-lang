@@ -1290,7 +1290,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       LexUnexpandedToken(Tok);
       std::string WarningName;
       SourceLocation StrStartLoc = Tok.getLocation();
-      if (!FinishLexStringLiteral(Tok, WarningName, /*MacroExpansion=*/false)) {
+      if (!FinishLexStringLiteral(Tok, WarningName, "'__has_warning'",
+                                  /*MacroExpansion=*/false)) {
         // Eat tokens until ')'.
         while (Tok.isNot(tok::r_paren)
                  && Tok.isNot(tok::eod)

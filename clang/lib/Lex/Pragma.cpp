@@ -503,6 +503,7 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
   Lex(Tok);
   std::string ArgumentString;
   if (Tok.is(tok::comma) && !LexStringLiteral(Tok, ArgumentString,
+                                              "pragma comment",
                                               /*MacroExpansion=*/true))
     return;
 
@@ -559,7 +560,8 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
   }
 
   std::string MessageString;
-  if (!FinishLexStringLiteral(Tok, MessageString, /*MacroExpansion=*/true))
+  if (!FinishLexStringLiteral(Tok, MessageString, "pragma message",
+                              /*MacroExpansion=*/true))
     return;
 
   if (ExpectClosingParen) {
@@ -1039,7 +1041,8 @@ public:
     SourceLocation StringLoc = Tok.getLocation();
 
     std::string WarningName;
-    if (!PP.FinishLexStringLiteral(Tok, WarningName, /*MacroExpansion=*/false))
+    if (!PP.FinishLexStringLiteral(Tok, WarningName, "pragma diagnostic",
+                                   /*MacroExpansion=*/false))
       return;
 
     if (Tok.isNot(tok::eod)) {

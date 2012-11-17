@@ -9,3 +9,5 @@ void foo(void) {
   _Static_assert(1, "1 is nonzero");
   _Static_assert(0, "0 is nonzero"); // expected-error {{static_assert failed "0 is nonzero"}}
 }
+
+_Static_assert(1, invalid); // expected-error {{expected string literal for diagnostic message in static_assert}}

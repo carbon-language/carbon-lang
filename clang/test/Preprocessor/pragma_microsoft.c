@@ -11,7 +11,7 @@
 #pragma comment( user, "Compiled on " __DATE__ " at " __TIME__ ) 
 
 #pragma comment(foo)    // expected-error {{unknown kind of pragma comment}}
-#pragma comment(compiler,)     // expected-error {{expected string literal}}
+#pragma comment(compiler,)     // expected-error {{expected string literal in pragma comment}}
 #define foo compiler
 #pragma comment(foo)   // macro expand kind.
 #pragma comment(foo) x // expected-error {{pragma comment requires}}

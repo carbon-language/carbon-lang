@@ -735,7 +735,8 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     ConsumeToken();
     if (Keyword == Ident_message) {
       if (!isTokenStringLiteral()) {
-        Diag(Tok, diag::err_expected_string_literal);
+        Diag(Tok, diag::err_expected_string_literal)
+          << /*Source='availability attribute'*/2;
         SkipUntil(tok::r_paren);
         return;
       }

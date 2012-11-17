@@ -637,7 +637,8 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
     return 0;
 
   if (!isTokenStringLiteral()) {
-    Diag(Tok, diag::err_expected_string_literal);
+    Diag(Tok, diag::err_expected_string_literal)
+      << /*Source='static_assert'*/1;
     SkipMalformedDecl();
     return 0;
   }

@@ -20,7 +20,7 @@ void f6() __attribute__((availability(macosx,unavailable,introduced=10.5))); // 
 
 // rdar://10095131
 enum E{
-    gorf __attribute__((availability(macosx,introduced=8.5, message = 10.0))), // expected-error {{expected string literal}}
+    gorf __attribute__((availability(macosx,introduced=8.5, message = 10.0))), // expected-error {{expected string literal for optional message in 'availability' attribute}}
     garf __attribute__((availability(macosx,introduced=8.5, message))), // expected-error {{expected '=' after 'message'}}
 
     foo __attribute__((availability(macosx,introduced=8.5,deprecated=9.0, message="Use CTFontCopyPostScriptName()", deprecated=10.0))) // expected-error {{expected ')'}} \
