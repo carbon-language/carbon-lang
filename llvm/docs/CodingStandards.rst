@@ -714,8 +714,8 @@ sort of thing is:
 .. code-block:: c++
 
   bool FoundFoo = false;
-  for (unsigned i = 0, e = BarList.size(); i != e; ++i)
-    if (BarList[i]->isFoo()) {
+  for (unsigned I = 0, E = BarList.size(); I != E; ++I)
+    if (BarList[I]->isFoo()) {
       FoundFoo = true;
       break;
     }
@@ -733,8 +733,8 @@ code to be structured like this:
 
   /// \returns true if the specified list has an element that is a foo.
   static bool containsFoo(const std::vector<Bar*> &List) {
-    for (unsigned i = 0, e = List.size(); i != e; ++i)
-      if (List[i]->isFoo())
+    for (unsigned I = 0, E = List.size(); I != E; ++I)
+      if (List[I]->isFoo())
         return true;
     return false;
   }
@@ -821,8 +821,8 @@ Here are some examples of good and bad names:
 
   Vehicle MakeVehicle(VehicleType Type) {
     VehicleMaker M;                         // Might be OK if having a short life-span.
-    Tire tmp1 = M.makeTire();               // Bad -- 'tmp1' provides no information.
-    Light headlight = M.makeLight("head");  // Good -- descriptive.
+    Tire Tmp1 = M.makeTire();               // Bad -- 'Tmp1' provides no information.
+    Light Headlight = M.makeLight("head");  // Good -- descriptive.
     ...
   }
 
@@ -842,9 +842,9 @@ enforced, and hopefully what to do about it.  Here is one complete example:
 
 .. code-block:: c++
 
-  inline Value *getOperand(unsigned i) { 
-    assert(i < Operands.size() && "getOperand() out of range!");
-    return Operands[i]; 
+  inline Value *getOperand(unsigned I) {
+    assert(I < Operands.size() && "getOperand() out of range!");
+    return Operands[I];
   }
 
 Here are more examples:
@@ -1036,7 +1036,7 @@ form has two problems. First it may be less efficient than evaluating it at the
 start of the loop.  In this case, the cost is probably minor --- a few extra
 loads every time through the loop.  However, if the base expression is more
 complex, then the cost can rise quickly.  I've seen loops where the end
-expression was actually something like: "``SomeMap[x]->end()``" and map lookups
+expression was actually something like: "``SomeMap[X]->end()``" and map lookups
 really aren't cheap.  By writing it in the second form consistently, you
 eliminate the issue entirely and don't even have to think about it.
 
@@ -1112,27 +1112,27 @@ macros.  For example, this is good:
 
 .. code-block:: c++
 
-  if (x) ...
-  for (i = 0; i != 100; ++i) ...
-  while (llvm_rocks) ...
+  if (X) ...
+  for (I = 0; I != 100; ++I) ...
+  while (LLVMRocks) ...
 
   somefunc(42);
   assert(3 != 4 && "laws of math are failing me");
   
-  a = foo(42, 92) + bar(x);
+  A = foo(42, 92) + bar(X);
 
 and this is bad:
 
 .. code-block:: c++
 
-  if(x) ...
-  for(i = 0; i != 100; ++i) ...
-  while(llvm_rocks) ...
+  if(X) ...
+  for(I = 0; I != 100; ++I) ...
+  while(LLVMRocks) ...
 
   somefunc (42);
   assert (3 != 4 && "laws of math are failing me");
   
-  a = foo (42, 92) + bar (x);
+  A = foo (42, 92) + bar (X);
 
 The reason for doing this is not completely arbitrary.  This style makes control
 flow operators stand out more, and makes expressions flow better. The function
@@ -1140,11 +1140,11 @@ call operator binds very tightly as a postfix operator.  Putting a space after a
 function name (as in the last example) makes it appear that the code might bind
 the arguments of the left-hand-side of a binary operator with the argument list
 of a function and the name of the right side.  More specifically, it is easy to
-misread the "``a``" example as:
+misread the "``A``" example as:
 
 .. code-block:: c++
 
-  a = foo ((42, 92) + bar) (x);
+  A = foo ((42, 92) + bar) (X);
 
 when skimming through the code.  By avoiding a space in a function, we avoid
 this misinterpretation.
