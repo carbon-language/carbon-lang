@@ -101,7 +101,7 @@ static void GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &d
     
     while (1)
     {
-        mach_msg_type_number_t	count;
+        mach_msg_type_number_t  count;
         struct vm_region_submap_info_64 info;
         
         count = VM_REGION_SUBMAP_INFO_COUNT_64;
@@ -149,130 +149,130 @@ static void GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &d
 // Test whether the virtual address is within the architecture's shared region.
 static bool InSharedRegion(mach_vm_address_t addr, cpu_type_t type)
 {
-	mach_vm_address_t base = 0, size = 0;
+    mach_vm_address_t base = 0, size = 0;
     
-	switch(type) {
-		case CPU_TYPE_ARM:
-			base = SHARED_REGION_BASE_ARM;
-			size = SHARED_REGION_SIZE_ARM;
+    switch(type) {
+        case CPU_TYPE_ARM:
+            base = SHARED_REGION_BASE_ARM;
+            size = SHARED_REGION_SIZE_ARM;
             break;
             
-		case CPU_TYPE_X86_64:
-			base = SHARED_REGION_BASE_X86_64;
-			size = SHARED_REGION_SIZE_X86_64;
+        case CPU_TYPE_X86_64:
+            base = SHARED_REGION_BASE_X86_64;
+            size = SHARED_REGION_SIZE_X86_64;
             break;
             
-		case CPU_TYPE_I386:
-			base = SHARED_REGION_BASE_I386;
-			size = SHARED_REGION_SIZE_I386;
+        case CPU_TYPE_I386:
+            base = SHARED_REGION_BASE_I386;
+            size = SHARED_REGION_SIZE_I386;
             break;
             
-		default: {
+        default: {
             // Log error abut unknown CPU type
             break;
-		}
-	}
+        }
+    }
     
     
-	return(addr >= base && addr < (base + size));
+    return(addr >= base && addr < (base + size));
 }
 
 static void GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid, mach_vm_size_t &rprvt, mach_vm_size_t &vprvt)
 {
     // Collecting some other info cheaply but not reporting for now.
     mach_vm_size_t empty = 0;
-	mach_vm_size_t fw_private = 0;
+    mach_vm_size_t fw_private = 0;
     
-	mach_vm_size_t aliased = 0;
-	mach_vm_size_t pagesize = vm_page_size;
+    mach_vm_size_t aliased = 0;
+    mach_vm_size_t pagesize = vm_page_size;
     bool global_shared_text_data_mapped = false;
     
-	for (mach_vm_address_t addr=0, size=0; ; addr += size)
+    for (mach_vm_address_t addr=0, size=0; ; addr += size)
     {
-		vm_region_top_info_data_t info;
-		mach_msg_type_number_t count = VM_REGION_TOP_INFO_COUNT;
-		mach_port_t object_name;
-		
-		kern_return_t kr = mach_vm_region(task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info, &count, &object_name);
-		if (kr != KERN_SUCCESS) break;
+        vm_region_top_info_data_t info;
+        mach_msg_type_number_t count = VM_REGION_TOP_INFO_COUNT;
+        mach_port_t object_name;
         
-		if (InSharedRegion(addr, cputype))
+        kern_return_t kr = mach_vm_region(task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info, &count, &object_name);
+        if (kr != KERN_SUCCESS) break;
+        
+        if (InSharedRegion(addr, cputype))
         {
-			// Private Shared
-			fw_private += info.private_pages_resident * pagesize;
+            // Private Shared
+            fw_private += info.private_pages_resident * pagesize;
             
-			// Check if this process has the globally shared text and data regions mapped in.  If so, set global_shared_text_data_mapped to TRUE and avoid checking again.
-			if (global_shared_text_data_mapped == FALSE && info.share_mode == SM_EMPTY) {
-				vm_region_basic_info_data_64_t	b_info;
-				mach_vm_address_t b_addr = addr;
-				mach_vm_size_t b_size = size;
-				count = VM_REGION_BASIC_INFO_COUNT_64;
-				
-				kr = mach_vm_region(task, &b_addr, &b_size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count, &object_name);
-				if (kr != KERN_SUCCESS) break;
+            // Check if this process has the globally shared text and data regions mapped in.  If so, set global_shared_text_data_mapped to TRUE and avoid checking again.
+            if (global_shared_text_data_mapped == FALSE && info.share_mode == SM_EMPTY) {
+                vm_region_basic_info_data_64_t  b_info;
+                mach_vm_address_t b_addr = addr;
+                mach_vm_size_t b_size = size;
+                count = VM_REGION_BASIC_INFO_COUNT_64;
                 
-				if (b_info.reserved) {
-					global_shared_text_data_mapped = TRUE;
-				}
-			}
-			
-			// Short circuit the loop if this isn't a shared private region, since that's the only region type we care about within the current address range.
-			if (info.share_mode != SM_PRIVATE)
-            {
-				continue;
-			}
-		}
-		
-		// Update counters according to the region type.
-		if (info.share_mode == SM_COW && info.ref_count == 1)
-        {
-			// Treat single reference SM_COW as SM_PRIVATE
-			info.share_mode = SM_PRIVATE;
-		}
-        
-		switch (info.share_mode)
-        {
-			case SM_LARGE_PAGE:
-				// Treat SM_LARGE_PAGE the same as SM_PRIVATE
-				// since they are not shareable and are wired.
-			case SM_PRIVATE:
-				rprvt += info.private_pages_resident * pagesize;
-				rprvt += info.shared_pages_resident * pagesize;
-				vprvt += size;
-				break;
-				
-			case SM_EMPTY:
-                empty += size;
-				break;
-				
-			case SM_COW:
-			case SM_SHARED:
-            {
-				if (pid == 0)
-                {
-					// Treat kernel_task specially
-					if (info.share_mode == SM_COW)
-                    {
-						rprvt += info.private_pages_resident * pagesize;
-						vprvt += size;
-					}
-					break;
-				}
+                kr = mach_vm_region(task, &b_addr, &b_size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count, &object_name);
+                if (kr != KERN_SUCCESS) break;
                 
-				if (info.share_mode == SM_COW)
-                {
-					rprvt += info.private_pages_resident * pagesize;
-					vprvt += info.private_pages_resident * pagesize;
-				}
-				break;
+                if (b_info.reserved) {
+                    global_shared_text_data_mapped = TRUE;
+                }
             }
-			default:
+            
+            // Short circuit the loop if this isn't a shared private region, since that's the only region type we care about within the current address range.
+            if (info.share_mode != SM_PRIVATE)
+            {
+                continue;
+            }
+        }
+        
+        // Update counters according to the region type.
+        if (info.share_mode == SM_COW && info.ref_count == 1)
+        {
+            // Treat single reference SM_COW as SM_PRIVATE
+            info.share_mode = SM_PRIVATE;
+        }
+        
+        switch (info.share_mode)
+        {
+            case SM_LARGE_PAGE:
+                // Treat SM_LARGE_PAGE the same as SM_PRIVATE
+                // since they are not shareable and are wired.
+            case SM_PRIVATE:
+                rprvt += info.private_pages_resident * pagesize;
+                rprvt += info.shared_pages_resident * pagesize;
+                vprvt += size;
+                break;
+                
+            case SM_EMPTY:
+                empty += size;
+                break;
+                
+            case SM_COW:
+            case SM_SHARED:
+            {
+                if (pid == 0)
+                {
+                    // Treat kernel_task specially
+                    if (info.share_mode == SM_COW)
+                    {
+                        rprvt += info.private_pages_resident * pagesize;
+                        vprvt += size;
+                    }
+                    break;
+                }
+                
+                if (info.share_mode == SM_COW)
+                {
+                    rprvt += info.private_pages_resident * pagesize;
+                    vprvt += info.private_pages_resident * pagesize;
+                }
+                break;
+            }
+            default:
                 // log that something is really bad.
-				break;
-		}
-	}
+                break;
+        }
+    }
     
-	rprvt += aliased;
+    rprvt += aliased;
 }
 
 nub_bool_t

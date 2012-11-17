@@ -1817,7 +1817,7 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             }
         }
 
-		// if no_stdio or std paths not supplied, then route to "/dev/null".
+        // if no_stdio or std paths not supplied, then route to "/dev/null".
         if (no_stdio || stdin_path == NULL || stdin_path[0] == '\0')
             stdin_path = "/dev/null";
         if (no_stdio || stdout_path == NULL || stdout_path[0] == '\0')

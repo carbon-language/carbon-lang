@@ -4319,7 +4319,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         // The simplest thing to do is to spin up a temporary thread to handle private state thread events while
         // we are fielding public events here.
         if (log)
-			log->Printf ("Running thread plan on private state thread, spinning up another state thread to handle the events.");
+            log->Printf ("Running thread plan on private state thread, spinning up another state thread to handle the events.");
             
 
         backup_private_state_thread = m_private_state_thread;

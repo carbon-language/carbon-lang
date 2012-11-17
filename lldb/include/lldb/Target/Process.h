@@ -3458,8 +3458,8 @@ protected:
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;
-    Communication 				m_stdio_communication;
-    Mutex        				m_stdio_communication_mutex;
+    Communication               m_stdio_communication;
+    Mutex                       m_stdio_communication_mutex;
     std::string                 m_stdout_data;
     std::string                 m_stderr_data;
     Mutex                       m_profile_data_comm_mutex;
@@ -3467,7 +3467,7 @@ protected:
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
-    LanguageRuntimeCollection 	m_language_runtimes;
+    LanguageRuntimeCollection   m_language_runtimes;
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_run_lock;

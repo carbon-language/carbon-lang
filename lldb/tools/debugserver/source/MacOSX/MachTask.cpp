@@ -89,18 +89,18 @@ MachTask::Resume()
 {
     struct task_basic_info task_info;
     task_t task = TaskPort();
-	if (task == TASK_NULL)
-		return KERN_INVALID_ARGUMENT;
+    if (task == TASK_NULL)
+        return KERN_INVALID_ARGUMENT;
 
     DNBError err;
     err = BasicInfo(task, &task_info);
 
     if (err.Success())
     {
-		// task_resume isn't counted like task_suspend calls are, are, so if the 
-		// task is not suspended, don't try and resume it since it is already 
-		// running
-		if (task_info.suspend_count > 0)
+        // task_resume isn't counted like task_suspend calls are, are, so if the 
+        // task is not suspended, don't try and resume it since it is already 
+        // running
+        if (task_info.suspend_count > 0)
         {
             err = ::task_resume (task);
             if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())
@@ -226,63 +226,63 @@ MachTask::GetMemoryRegionInfo (nub_addr_t addr, DNBRegionInfo *region_info)
     return ret;
 }
 
-#define	TIME_VALUE_TO_TIMEVAL(a, r) do {		\
+#define TIME_VALUE_TO_TIMEVAL(a, r) do {        \
 (r)->tv_sec = (a)->seconds;                     \
-(r)->tv_usec = (a)->microseconds;				\
+(r)->tv_usec = (a)->microseconds;               \
 } while (0)
 
 // todo: make use of existing MachThread, if there is already one?
 static void update_used_time(task_t task, int &num_threads, uint64_t **threads_id, uint64_t **threads_used_usec, struct timeval &current_used_time)
 {
-	kern_return_t kr;
-	thread_act_array_t threads;
-	mach_msg_type_number_t tcnt;
+    kern_return_t kr;
+    thread_act_array_t threads;
+    mach_msg_type_number_t tcnt;
     
-	kr = task_threads(task, &threads, &tcnt);
-	if (kr != KERN_SUCCESS)
+    kr = task_threads(task, &threads, &tcnt);
+    if (kr != KERN_SUCCESS)
         return;
     
     num_threads = tcnt;
     *threads_id = (uint64_t *)malloc(num_threads * sizeof(uint64_t));
     *threads_used_usec = (uint64_t *)malloc(num_threads * sizeof(uint64_t));
 
-	for (int i = 0; i < tcnt; i++) {
+    for (int i = 0; i < tcnt; i++) {
         thread_identifier_info_data_t identifier_info;
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
         kr = thread_info(threads[i], THREAD_IDENTIFIER_INFO, (thread_info_t)&identifier_info, &count);
         if (kr != KERN_SUCCESS) continue;
 
-		thread_basic_info_data_t basic_info;
-		count = THREAD_BASIC_INFO_COUNT;
-		kr = thread_info(threads[i], THREAD_BASIC_INFO, (thread_info_t)&basic_info, &count);
-		if (kr != KERN_SUCCESS) continue;
-		
-		if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
+        thread_basic_info_data_t basic_info;
+        count = THREAD_BASIC_INFO_COUNT;
+        kr = thread_info(threads[i], THREAD_BASIC_INFO, (thread_info_t)&basic_info, &count);
+        if (kr != KERN_SUCCESS) continue;
+        
+        if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
             (*threads_id)[i] = identifier_info.thread_id;
 
-			struct timeval tv;
-			struct timeval thread_tv;
-			TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &tv);
-			TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &thread_tv);
-			timeradd(&current_used_time, &tv, &current_used_time);
-			TIME_VALUE_TO_TIMEVAL(&basic_info.system_time, &tv);
-			timeradd(&thread_tv, &tv, &thread_tv);
-			timeradd(&current_used_time, &tv, &current_used_time);
+            struct timeval tv;
+            struct timeval thread_tv;
+            TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &tv);
+            TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &thread_tv);
+            timeradd(&current_used_time, &tv, &current_used_time);
+            TIME_VALUE_TO_TIMEVAL(&basic_info.system_time, &tv);
+            timeradd(&thread_tv, &tv, &thread_tv);
+            timeradd(&current_used_time, &tv, &current_used_time);
             uint64_t used_usec = thread_tv.tv_sec * 1000000ULL + thread_tv.tv_usec;
             (*threads_used_usec)[i] = used_usec;
-		}
+        }
         
-		kr = mach_port_deallocate(mach_task_self(), threads[i]);
-	}
-	kr = mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
+        kr = mach_port_deallocate(mach_task_self(), threads[i]);
+    }
+    kr = mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
 }
 
 const char *
 MachTask::GetProfileDataAsCString ()
 {
     task_t task = TaskPort();
-	if (task == TASK_NULL)
-		return NULL;
+    if (task == TASK_NULL)
+        return NULL;
     
     struct task_basic_info task_info;
     DNBError err;
@@ -370,14 +370,14 @@ MachTask::TaskPortForProcessID (DNBError &err)
 task_t
 MachTask::TaskPortForProcessID (pid_t pid, DNBError &err, uint32_t num_retries, uint32_t usec_interval)
 {
-	if (pid != INVALID_NUB_PROCESS)
-	{
-		DNBError err;
-		mach_port_t task_self = mach_task_self ();	
-		task_t task = TASK_NULL;
-		for (uint32_t i=0; i<num_retries; i++)
-		{	
-			err = ::task_for_pid ( task_self, pid, &task);
+    if (pid != INVALID_NUB_PROCESS)
+    {
+        DNBError err;
+        mach_port_t task_self = mach_task_self ();  
+        task_t task = TASK_NULL;
+        for (uint32_t i=0; i<num_retries; i++)
+        {   
+            err = ::task_for_pid ( task_self, pid, &task);
 
             if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())
             {
@@ -394,14 +394,14 @@ MachTask::TaskPortForProcessID (pid_t pid, DNBError &err, uint32_t num_retries, 
                 err.LogThreaded(str);
             }
 
-			if (err.Success())
-				return task;
+            if (err.Success())
+                return task;
 
-			// Sleep a bit and try again
-			::usleep (usec_interval);
-		}
-	}
-	return TASK_NULL;
+            // Sleep a bit and try again
+            ::usleep (usec_interval);
+        }
+    }
+    return TASK_NULL;
 }
 
 
