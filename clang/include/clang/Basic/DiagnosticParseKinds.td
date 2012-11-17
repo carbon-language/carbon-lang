@@ -229,7 +229,6 @@ def err_label_end_of_compound_statement : Error<
   "label at end of compound statement: expected statement">;
 def err_address_of_label_outside_fn : Error<
   "use of address-of-label extension outside of a function body">;
-def err_expected_string_literal : Error<"expected string literal">;
 def err_asm_operand_wide_string_literal : Error<
   "cannot use %select{unicode|wide}0 string literal in 'asm'">;
 def err_expected_selector_for_method : Error<

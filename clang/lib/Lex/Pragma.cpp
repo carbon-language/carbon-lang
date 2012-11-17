@@ -502,38 +502,9 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
   // Read the optional string if present.
   Lex(Tok);
   std::string ArgumentString;
-  if (Tok.is(tok::comma)) {
-    Lex(Tok); // eat the comma.
-
-    // We need at least one string.
-    if (Tok.isNot(tok::string_literal)) {
-      Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
-      return;
-    }
-
-    // String concatenation allows multiple strings, which can even come from
-    // macro expansion.
-    // "foo " "bar" "Baz"
-    SmallVector<Token, 4> StrToks;
-    while (Tok.is(tok::string_literal)) {
-      if (Tok.hasUDSuffix())
-        Diag(Tok, diag::err_invalid_string_udl);
-      StrToks.push_back(Tok);
-      Lex(Tok);
-    }
-
-    // Concatenate and parse the strings.
-    StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
-    assert(Literal.isAscii() && "Didn't allow wide strings in");
-    if (Literal.hadError)
-      return;
-    if (Literal.Pascal) {
-      Diag(StrToks[0].getLocation(), diag::err_pragma_comment_malformed);
-      return;
-    }
-
-    ArgumentString = Literal.GetString();
-  }
+  if (Tok.is(tok::comma) && !LexStringLiteral(Tok, ArgumentString,
+                                              /*MacroExpansion=*/true))
+    return;
 
   // FIXME: If the kind is "compiler" warn if the string is present (it is
   // ignored).
@@ -587,34 +558,9 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
     return;
   }
 
-  // We need at least one string.
-  if (Tok.isNot(tok::string_literal)) {
-    Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
+  std::string MessageString;
+  if (!FinishLexStringLiteral(Tok, MessageString, /*MacroExpansion=*/true))
     return;
-  }
-
-  // String concatenation allows multiple strings, which can even come from
-  // macro expansion.
-  // "foo " "bar" "Baz"
-  SmallVector<Token, 4> StrToks;
-  while (Tok.is(tok::string_literal)) {
-    if (Tok.hasUDSuffix())
-      Diag(Tok, diag::err_invalid_string_udl);
-    StrToks.push_back(Tok);
-    Lex(Tok);
-  }
-
-  // Concatenate and parse the strings.
-  StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
-  assert(Literal.isAscii() && "Didn't allow wide strings in");
-  if (Literal.hadError)
-    return;
-  if (Literal.Pascal) {
-    Diag(StrToks[0].getLocation(), diag::err_pragma_message_malformed);
-    return;
-  }
-
-  StringRef MessageString(Literal.GetString());
 
   if (ExpectClosingParen) {
     if (Tok.isNot(tok::r_paren)) {
@@ -1090,50 +1036,27 @@ public:
     }
 
     PP.LexUnexpandedToken(Tok);
+    SourceLocation StringLoc = Tok.getLocation();
 
-    // We need at least one string.
-    if (Tok.isNot(tok::string_literal)) {
-      PP.Diag(Tok.getLocation(), diag::warn_pragma_diagnostic_invalid_token);
+    std::string WarningName;
+    if (!PP.FinishLexStringLiteral(Tok, WarningName, /*MacroExpansion=*/false))
       return;
-    }
-
-    // String concatenation allows multiple strings, which can even come from
-    // macro expansion.
-    // "foo " "bar" "Baz"
-    SmallVector<Token, 4> StrToks;
-    while (Tok.is(tok::string_literal)) {
-      StrToks.push_back(Tok);
-      PP.LexUnexpandedToken(Tok);
-    }
 
     if (Tok.isNot(tok::eod)) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_diagnostic_invalid_token);
       return;
     }
 
-    // Concatenate and parse the strings.
-    StringLiteralParser Literal(&StrToks[0], StrToks.size(), PP);
-    assert(Literal.isAscii() && "Didn't allow wide strings in");
-    if (Literal.hadError)
-      return;
-    if (Literal.Pascal) {
-      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
-      return;
-    }
-
-    StringRef WarningName(Literal.GetString());
-
     if (WarningName.size() < 3 || WarningName[0] != '-' ||
         WarningName[1] != 'W') {
-      PP.Diag(StrToks[0].getLocation(),
-              diag::warn_pragma_diagnostic_invalid_option);
+      PP.Diag(StringLoc, diag::warn_pragma_diagnostic_invalid_option);
       return;
     }
 
     if (PP.getDiagnostics().setDiagnosticGroupMapping(WarningName.substr(2),
                                                       Map, DiagLoc))
-      PP.Diag(StrToks[0].getLocation(),
-              diag::warn_pragma_diagnostic_unknown_warning) << WarningName;
+      PP.Diag(StringLoc, diag::warn_pragma_diagnostic_unknown_warning)
+        << WarningName;
     else if (Callbacks)
       Callbacks->PragmaDiagnostic(DiagLoc, Namespace, Map, WarningName);
   }

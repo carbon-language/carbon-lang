@@ -21,7 +21,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
-#include "clang/Lex/LiteralSupport.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/llvm-config.h"
@@ -1280,69 +1280,45 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     bool IsValid = false;
     bool Value = false;
     // Read the '('.
-    Lex(Tok);
+    LexUnexpandedToken(Tok);
     do {
-      if (Tok.is(tok::l_paren)) {      
-        // Read the string.
-        Lex(Tok);
-      
-        // We need at least one string literal.
-        if (!Tok.is(tok::string_literal)) {
-          StartLoc = Tok.getLocation();
-          IsValid = false;
-          // Eat tokens until ')'.
-          while (Tok.isNot(tok::r_paren)
-                   && Tok.isNot(tok::eod)
-                   && Tok.isNot(tok::eof))
-            Lex(Tok);
-          break;
-        }
-        
-        // String concatenation allows multiple strings, which can even come
-        // from macro expansion.
-        SmallVector<Token, 4> StrToks;
-        while (Tok.is(tok::string_literal)) {
-          // Complain about, and drop, any ud-suffix.
-          if (Tok.hasUDSuffix())
-            Diag(Tok, diag::err_invalid_string_udl);
-          StrToks.push_back(Tok);
-          LexUnexpandedToken(Tok);
-        }
-        
-        // Is the end a ')'?
-        if (!(IsValid = Tok.is(tok::r_paren)))
-          break;
-        
-        // Concatenate and parse the strings.
-        StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
-        assert(Literal.isAscii() && "Didn't allow wide strings in");
-        if (Literal.hadError)
-          break;
-        if (Literal.Pascal) {
-          Diag(Tok, diag::warn_pragma_diagnostic_invalid);
-          break;
-        }
-        
-        StringRef WarningName(Literal.GetString());
-        
-        if (WarningName.size() < 3 || WarningName[0] != '-' ||
-            WarningName[1] != 'W') {
-          Diag(StrToks[0].getLocation(), diag::warn_has_warning_invalid_option);
-          break;
-        }
-        
-        // Finally, check if the warning flags maps to a diagnostic group.
-        // We construct a SmallVector here to talk to getDiagnosticIDs().
-        // Although we don't use the result, this isn't a hot path, and not
-        // worth special casing.
-        llvm::SmallVector<diag::kind, 10> Diags;
-        Value = !getDiagnostics().getDiagnosticIDs()->
-          getDiagnosticsInGroup(WarningName.substr(2), Diags);
+      if (Tok.isNot(tok::l_paren)) {
+        Diag(StartLoc, diag::err_warning_check_malformed);
+        break;
       }
+
+      LexUnexpandedToken(Tok);
+      std::string WarningName;
+      SourceLocation StrStartLoc = Tok.getLocation();
+      if (!FinishLexStringLiteral(Tok, WarningName, /*MacroExpansion=*/false)) {
+        // Eat tokens until ')'.
+        while (Tok.isNot(tok::r_paren)
+                 && Tok.isNot(tok::eod)
+                 && Tok.isNot(tok::eof))
+          LexUnexpandedToken(Tok);
+        break;
+      }
+
+      // Is the end a ')'?
+      if (!(IsValid = Tok.is(tok::r_paren))) {
+        Diag(StartLoc, diag::err_warning_check_malformed);
+        break;
+      }
+
+      if (WarningName.size() < 3 || WarningName[0] != '-' ||
+          WarningName[1] != 'W') {
+        Diag(StrStartLoc, diag::warn_has_warning_invalid_option);
+        break;
+      }
+
+      // Finally, check if the warning flags maps to a diagnostic group.
+      // We construct a SmallVector here to talk to getDiagnosticIDs().
+      // Although we don't use the result, this isn't a hot path, and not
+      // worth special casing.
+      llvm::SmallVector<diag::kind, 10> Diags;
+      Value = !getDiagnostics().getDiagnosticIDs()->
+        getDiagnosticsInGroup(WarningName.substr(2), Diags);
     } while (false);
-    
-    if (!IsValid)
-      Diag(StartLoc, diag::err_warning_check_malformed);
 
     OS << (int)Value;
     if (IsValid)

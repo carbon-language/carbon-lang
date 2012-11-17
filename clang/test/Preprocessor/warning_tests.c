@@ -11,7 +11,7 @@
 #warning Should have -Wparentheses
 #endif
 
-// expected-error@+2 {{builtin warning check macro requires a parenthesized string}}
+// expected-error@+2 {{expected string literal}}
 // expected-error@+1 {{expected value in expression}}
 #if __has_warning(-Wfoo)
 #endif
@@ -20,4 +20,27 @@
 #if __has_warning("-Wnot-a-valid-warning-flag-at-all")
 #else
 #warning Not a valid warning flag
+#endif
+
+// expected-error@+2 {{builtin warning check macro requires a parenthesized string}}
+// expected-error@+1 {{invalid token}}
+#if __has_warning "not valid"
+#endif
+
+// Macro expansion does not occur in the parameter to __has_warning
+// (as is also expected behaviour for ordinary macros), so the
+// following should not expand:
+
+#define MY_ALIAS "-Wparentheses"
+
+// expected-error@+1 2{{expected}}
+#if __has_warning(MY_ALIAS)
+#error Alias expansion not allowed
+#endif
+
+// But deferring should expand:
+#define HAS_WARNING(X) __has_warning(X)
+
+#if !HAS_WARNING(MY_ALIAS)
+#error Expansion should have occurred
 #endif

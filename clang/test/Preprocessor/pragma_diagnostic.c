@@ -23,7 +23,7 @@
 #define foo error
 #pragma GCC diagnostic foo "-Wundef"  // expected-warning {{pragma diagnostic expected 'error', 'warning', 'ignored', 'fatal', 'push', or 'pop'}}
 
-#pragma GCC diagnostic error 42  // expected-warning {{unexpected token in pragma diagnostic}}
+#pragma GCC diagnostic error 42  // expected-error {{expected string literal}}
 
 #pragma GCC diagnostic error "-Wundef" 42  // expected-warning {{unexpected token in pragma diagnostic}}
 #pragma GCC diagnostic error "invalid-name"  // expected-warning {{pragma diagnostic expected option name (e.g. "-Wundef")}}
