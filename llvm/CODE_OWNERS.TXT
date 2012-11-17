@@ -40,7 +40,7 @@ E: hfinkel@anl.gov
 D: BBVectorize and the PowerPC target
 
 N: Doug Gregor
-D: Clang Frontend Libraries
+D: All parts of Clang not covered by someone else
 
 N: Tobias Grosser
 D: Polly
@@ -106,6 +106,10 @@ D: X86 Backend, Loop Vectorizer
 N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
+
+N: Richard Smith
+E: richard@metafoo.co.uk
+D: Clang Semantic Analysis (tools/clang/lib/Sema/* tools/clang/include/clang/Sema/*)
 
 N: Andrew Trick
 E: atrick@apple.com
