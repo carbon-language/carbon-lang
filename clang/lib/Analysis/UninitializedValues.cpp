@@ -22,6 +22,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
+#include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/DomainSpecific/ObjCNoReturn.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -202,10 +203,20 @@ ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
 
 namespace {
 class DataflowWorklist {
+  PostOrderCFGView::iterator PO_I, PO_E;
   SmallVector<const CFGBlock *, 20> worklist;
   llvm::BitVector enqueuedBlocks;
 public:
-  DataflowWorklist(const CFG &cfg) : enqueuedBlocks(cfg.getNumBlockIDs()) {}
+  DataflowWorklist(const CFG &cfg, PostOrderCFGView &view)
+    : PO_I(view.begin()), PO_E(view.end()),
+      enqueuedBlocks(cfg.getNumBlockIDs(), true) {
+        // Treat the first block as already analyzed.
+        if (PO_I != PO_E) {
+          assert(*PO_I == &cfg.getEntry());
+          enqueuedBlocks[(*PO_I)->getBlockID()] = false;
+          ++PO_I;
+        }
+      }
   
   void enqueueSuccessors(const CFGBlock *block);
   const CFGBlock *dequeue();
@@ -213,7 +224,6 @@ public:
 }
 
 void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
-  unsigned OldWorklistSize = worklist.size();
   for (CFGBlock::const_succ_iterator I = block->succ_begin(),
        E = block->succ_end(); I != E; ++I) {
     const CFGBlock *Successor = *I;
@@ -222,22 +232,30 @@ void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
     worklist.push_back(Successor);
     enqueuedBlocks[Successor->getBlockID()] = true;
   }
-  if (OldWorklistSize == 0 || OldWorklistSize == worklist.size())
-    return;
-
-  // Rotate the newly added blocks to the start of the worklist so that it forms
-  // a proper queue when we pop off the end of the worklist.
-  std::rotate(worklist.begin(), worklist.begin() + OldWorklistSize,
-              worklist.end());
 }
 
 const CFGBlock *DataflowWorklist::dequeue() {
-  if (worklist.empty())
+  const CFGBlock *B = 0;
+
+  // First dequeue from the worklist.  This can represent
+  // updates along backedges that we want propagated as quickly as possible.
+  if (!worklist.empty()) {
+    B = worklist.back();
+    worklist.pop_back();
+  }
+  // Next dequeue from the initial reverse post order.  This is the
+  // theoretical ideal in the presence of no back edges.
+  else if (PO_I != PO_E) {
+    B = *PO_I;
+    ++PO_I;
+  }
+  else {
     return 0;
-  const CFGBlock *b = worklist.back();
-  worklist.pop_back();
-  enqueuedBlocks[b->getBlockID()] = false;
-  return b;
+  }
+
+  assert(enqueuedBlocks[B->getBlockID()] == true);
+  enqueuedBlocks[B->getBlockID()] = false;
+  return B;
 }
 
 //------------------------------------------------------------------------====//
@@ -753,7 +771,7 @@ void clang::runUninitializedVariablesAnalysis(
   }
 
   // Proceed with the workist.
-  DataflowWorklist worklist(cfg);
+  DataflowWorklist worklist(cfg, *ac.getAnalysis<PostOrderCFGView>());
   llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
   worklist.enqueueSuccessors(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
