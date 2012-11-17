@@ -22,10 +22,10 @@ namespace {
 #pragma warning(disable:4584)
 #endif
 
-// Suppress direct base ‘{anonymous}::S1’ inaccessible in ‘{anonymous}::D9’ 
+// Suppress direct base '{anonymous}::S1' inaccessible in '{anonymous}::D9'
 // due to ambiguity warning.
 //
-// Pragma based warning suppression was introduced in GGC 4.2.  Additionally 
+// Pragma based warning suppression was introduced in GGC 4.2.  Additionally
 // this warning is "enabled by default".  The warning still appears if -Wall is
 // suppressed.  Apparently GCC suppresses it when -w is specifed, which is odd.
 // At any rate, clang on the other hand gripes about -Wunknown-pragma, so
