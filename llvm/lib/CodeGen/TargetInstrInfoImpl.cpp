@@ -472,7 +472,8 @@ bool TargetInstrInfoImpl::isSchedulingBoundary(const MachineInstr *MI,
   // stack slot reference to depend on the instruction that does the
   // modification.
   const TargetLowering &TLI = *MF.getTarget().getTargetLowering();
-  if (MI->definesRegister(TLI.getStackPointerRegisterToSaveRestore()))
+  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+  if (MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore(), TRI))
     return true;
 
   return false;
