@@ -1228,15 +1228,15 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     IdentifierInfo *FeatureII = 0;
 
     // Read the '('.
-    Lex(Tok);
+    LexUnexpandedToken(Tok);
     if (Tok.is(tok::l_paren)) {
       // Read the identifier
-      Lex(Tok);
+      LexUnexpandedToken(Tok);
       if (Tok.is(tok::identifier) || Tok.is(tok::kw_const)) {
         FeatureII = Tok.getIdentifierInfo();
 
         // Read the ')'.
-        Lex(Tok);
+        LexUnexpandedToken(Tok);
         if (Tok.is(tok::r_paren))
           IsValid = true;
       }
