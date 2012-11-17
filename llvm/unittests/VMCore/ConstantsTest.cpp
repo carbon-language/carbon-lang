@@ -8,8 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
+#include "llvm/Instruction.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "gtest/gtest.h"
 
 namespace llvm {
@@ -117,6 +120,109 @@ TEST(ConstantsTest, FP128Test) {
   Constant *X = ConstantExpr::getUIToFP(Zero128, FP128Ty);
   EXPECT_TRUE(isa<ConstantFP>(X));
 }
+
+#define CHECK(x, y) {                                           \
+    std::string __s;                                            \
+    raw_string_ostream __o(__s);                                \
+    cast<ConstantExpr>(x)->getAsInstruction()->print(__o);      \
+    __o.flush();                                                \
+    EXPECT_EQ(std::string("  <badref> = " y), __s);             \
+  }
+
+TEST(ConstantsTest, AsInstructionsTest) {
+  Module *M = new Module("MyModule", getGlobalContext());
+
+  Type *Int64Ty = Type::getInt64Ty(getGlobalContext());
+  Type *Int32Ty = Type::getInt32Ty(getGlobalContext());
+  Type *Int16Ty = Type::getInt16Ty(getGlobalContext());
+  Type *Int1Ty = Type::getInt1Ty(getGlobalContext());
+  Type *FloatTy = Type::getFloatTy(getGlobalContext());
+  Type *DoubleTy = Type::getDoubleTy(getGlobalContext());
+
+  Constant *Global = M->getOrInsertGlobal("dummy",
+                                         PointerType::getUnqual(Int32Ty));
+  Constant *Global2 = M->getOrInsertGlobal("dummy2",
+                                         PointerType::getUnqual(Int32Ty));
+
+  Constant *P0 = ConstantExpr::getPtrToInt(Global, Int32Ty);
+  Constant *P1 = ConstantExpr::getUIToFP(P0, FloatTy);
+  Constant *P2 = ConstantExpr::getUIToFP(P0, DoubleTy);
+  Constant *P3 = ConstantExpr::getTrunc(P0, Int1Ty);
+  Constant *P4 = ConstantExpr::getPtrToInt(Global2, Int32Ty);
+  Constant *P5 = ConstantExpr::getUIToFP(P4, FloatTy);
+  Constant *P6 = ConstantExpr::getBitCast(P4, VectorType::get(Int16Ty, 2));
+
+  Constant *One = ConstantInt::get(Int32Ty, 1);
+
+  #define P0STR "ptrtoint (i32** @dummy to i32)"
+  #define P1STR "uitofp (i32 ptrtoint (i32** @dummy to i32) to float)"
+  #define P2STR "uitofp (i32 ptrtoint (i32** @dummy to i32) to double)"
+  #define P3STR "ptrtoint (i32** @dummy to i1)"
+  #define P4STR "ptrtoint (i32** @dummy2 to i32)"
+  #define P5STR "uitofp (i32 ptrtoint (i32** @dummy2 to i32) to float)"
+  #define P6STR "bitcast (i32 ptrtoint (i32** @dummy2 to i32) to <2 x i16>)"
+
+  CHECK(ConstantExpr::getNeg(P0), "sub i32 0, " P0STR);
+  CHECK(ConstantExpr::getFNeg(P1), "fsub float -0.000000e+00, " P1STR);
+  CHECK(ConstantExpr::getNot(P0), "xor i32 " P0STR ", -1");
+  CHECK(ConstantExpr::getAdd(P0, P0), "add i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getAdd(P0, P0, false, true), "add nsw i32 " P0STR ", "
+        P0STR);
+  CHECK(ConstantExpr::getAdd(P0, P0, true, true), "add nuw nsw i32 " P0STR ", "
+        P0STR);
+  CHECK(ConstantExpr::getFAdd(P1, P1), "fadd float " P1STR ", " P1STR);
+  CHECK(ConstantExpr::getSub(P0, P0), "sub i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getFSub(P1, P1), "fsub float " P1STR ", " P1STR);
+  CHECK(ConstantExpr::getMul(P0, P0), "mul i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getFMul(P1, P1), "fmul float " P1STR ", " P1STR);
+  CHECK(ConstantExpr::getUDiv(P0, P0), "udiv i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getSDiv(P0, P0), "sdiv i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getFDiv(P1, P1), "fdiv float " P1STR ", " P1STR);
+  CHECK(ConstantExpr::getURem(P0, P0), "urem i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getSRem(P0, P0), "srem i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getFRem(P1, P1), "frem float " P1STR ", " P1STR);
+  CHECK(ConstantExpr::getAnd(P0, P0), "and i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getOr(P0, P0), "or i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getXor(P0, P0), "xor i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getShl(P0, P0), "shl i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getShl(P0, P0, true), "shl nuw i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getShl(P0, P0, false, true), "shl nsw i32 " P0STR ", "
+        P0STR);
+  CHECK(ConstantExpr::getLShr(P0, P0, false), "lshr i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getLShr(P0, P0, true), "lshr exact i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getAShr(P0, P0, false), "ashr i32 " P0STR ", " P0STR);
+  CHECK(ConstantExpr::getAShr(P0, P0, true), "ashr exact i32 " P0STR ", " P0STR);
+
+  CHECK(ConstantExpr::getSExt(P0, Int64Ty), "sext i32 " P0STR " to i64");
+  CHECK(ConstantExpr::getZExt(P0, Int64Ty), "zext i32 " P0STR " to i64");
+  CHECK(ConstantExpr::getFPTrunc(P2, FloatTy), "fptrunc double " P2STR
+        " to float");
+  CHECK(ConstantExpr::getFPExtend(P1, DoubleTy), "fpext float " P1STR
+        " to double");
+
+  CHECK(ConstantExpr::getExactUDiv(P0, P0), "udiv exact i32 " P0STR ", " P0STR);
+
+  CHECK(ConstantExpr::getSelect(P3, P0, P4), "select i1 " P3STR ", i32 " P0STR
+        ", i32 " P4STR);
+  CHECK(ConstantExpr::getICmp(CmpInst::ICMP_EQ, P0, P4), "icmp eq i32 " P0STR
+        ", " P4STR);
+  CHECK(ConstantExpr::getFCmp(CmpInst::FCMP_ULT, P1, P5), "fcmp ult float "
+        P1STR ", " P5STR);
+
+  std::vector<Constant*> V;
+  V.push_back(One);
+  // FIXME: getGetElementPtr() actually creates an inbounds ConstantGEP,
+  //        not a normal one!
+  //CHECK(ConstantExpr::getGetElementPtr(Global, V, false),
+  //      "getelementptr i32** @dummy, i32 1");
+  CHECK(ConstantExpr::getInBoundsGetElementPtr(Global, V),
+        "getelementptr inbounds i32** @dummy, i32 1");
+
+  CHECK(ConstantExpr::getExtractElement(P6, One), "extractelement <2 x i16> "
+        P6STR ", i32 1");
+}
+
+#undef CHECK
 
 }  // end anonymous namespace
 }  // end namespace llvm

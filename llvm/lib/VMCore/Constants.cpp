@@ -2704,3 +2704,66 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   // Delete the old constant!
   destroyConstant();
 }
+
+Instruction *ConstantExpr::getAsInstruction() {
+  SmallVector<Value*,4> ValueOperands;
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    ValueOperands.push_back(cast<Value>(I));
+
+  ArrayRef<Value*> Ops(ValueOperands);
+
+  switch (getOpcode()) {
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    return CastInst::Create((Instruction::CastOps)getOpcode(),
+                            Ops[0], getType());
+  case Instruction::Select:
+    return SelectInst::Create(Ops[0], Ops[1], Ops[2]);
+  case Instruction::InsertElement:
+    return InsertElementInst::Create(Ops[0], Ops[1], Ops[2]);
+  case Instruction::ExtractElement:
+    return ExtractElementInst::Create(Ops[0], Ops[1]);
+  case Instruction::InsertValue:
+    return InsertValueInst::Create(Ops[0], Ops[1], getIndices());
+  case Instruction::ExtractValue:
+    return ExtractValueInst::Create(Ops[0], getIndices());
+  case Instruction::ShuffleVector:
+    return new ShuffleVectorInst(Ops[0], Ops[1], Ops[2]);
+
+  case Instruction::GetElementPtr:
+    if (cast<GEPOperator>(this)->isInBounds())
+      return GetElementPtrInst::CreateInBounds(Ops[0], Ops.slice(1));
+    else
+      return GetElementPtrInst::Create(Ops[0], Ops.slice(1));
+
+  case Instruction::ICmp:
+  case Instruction::FCmp:
+    return CmpInst::Create((Instruction::OtherOps)getOpcode(),
+                           getPredicate(), Ops[0], Ops[1]);
+
+  default:
+    assert(getNumOperands() == 2 && "Must be binary operator?");
+    BinaryOperator *BO =
+      BinaryOperator::Create((Instruction::BinaryOps)getOpcode(),
+                             Ops[0], Ops[1]);
+    if (isa<OverflowingBinaryOperator>(BO)) {
+      BO->setHasNoUnsignedWrap(SubclassOptionalData &
+                               OverflowingBinaryOperator::NoUnsignedWrap);
+      BO->setHasNoSignedWrap(SubclassOptionalData &
+                             OverflowingBinaryOperator::NoSignedWrap);
+    }
+    if (isa<PossiblyExactOperator>(BO))
+      BO->setIsExact(SubclassOptionalData & PossiblyExactOperator::IsExact);
+    return BO;
+  }
+}
