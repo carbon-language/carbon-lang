@@ -222,6 +222,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::FNEARBYINT:
   case ISD::FFLOOR:
   case ISD::FP_ROUND:
+  case ISD::FP_EXTEND:
   case ISD::FMA:
   case ISD::SIGN_EXTEND_INREG:
     QueryType = Node->getValueType(0);
