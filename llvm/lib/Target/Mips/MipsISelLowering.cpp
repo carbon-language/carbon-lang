@@ -3483,6 +3483,26 @@ void MipsTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 }
 
 bool
+MipsTargetLowering::isLegalAddressingMode(const AddrMode &AM, Type *Ty) const {
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+
+  switch (AM.Scale) {
+  case 0: // "r+i" or just "i", depending on HasBaseReg.
+    break;
+  case 1:
+    if (!AM.HasBaseReg) // allow "r+i".
+      break;
+    return false; // disallow "r+r" or "r+r+i".
+  default:
+    return false;
+  }
+
+  return true;
+}
+
+bool
 MipsTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The Mips target isn't yet aware of offsets.
   return false;
