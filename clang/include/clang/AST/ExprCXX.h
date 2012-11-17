@@ -1111,7 +1111,7 @@ public:
 /// \code
 /// void low_pass_filter(std::vector<double> &values, double cutoff) {
 ///   values.erase(std::remove_if(values.begin(), values.end(),
-//                                [=](double value) { return value > cutoff; });
+///                               [=](double value) { return value > cutoff; });
 /// }
 /// \endcode
 ///
