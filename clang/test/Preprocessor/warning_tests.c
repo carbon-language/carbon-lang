@@ -11,7 +11,9 @@
 #warning Should have -Wparentheses
 #endif
 
-#if __has_warning(-Wfoo) // expected-error {{builtin warning check macro requires a parenthesized string}}
+// expected-error@+2 {{builtin warning check macro requires a parenthesized string}}
+// expected-error@+1 {{expected value in expression}}
+#if __has_warning(-Wfoo)
 #endif
 
 // expected-warning@+3 {{Not a valid warning flag}}

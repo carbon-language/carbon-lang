@@ -1291,7 +1291,10 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
           StartLoc = Tok.getLocation();
           IsValid = false;
           // Eat tokens until ')'.
-          do Lex(Tok); while (!(Tok.is(tok::r_paren) || Tok.is(tok::eod)));
+          while (Tok.isNot(tok::r_paren)
+                   && Tok.isNot(tok::eod)
+                   && Tok.isNot(tok::eof))
+            Lex(Tok);
           break;
         }
         
@@ -1342,7 +1345,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Diag(StartLoc, diag::err_warning_check_malformed);
 
     OS << (int)Value;
-    Tok.setKind(tok::numeric_constant);
+    if (IsValid)
+      Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__building_module) {
     // The argument to this builtin should be an identifier. The
     // builtin evaluates to 1 when that identifier names the module we are
