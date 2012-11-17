@@ -565,9 +565,8 @@ define i32 @example21(i32* nocapture %b, i32 %n) nounwind uwtable readonly ssp {
   ret i32 %a.0.lcssa
 }
 
-; Can't vectorize because there are multiple PHIs.
 ;CHECK: @example23
-;CHECK-NOT: <4 x i32>
+;CHECK: <4 x i32>
 ;CHECK: ret void
 define void @example23(i16* nocapture %src, i32* nocapture %dst) nounwind uwtable ssp {
   br label %1

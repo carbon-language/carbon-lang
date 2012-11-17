@@ -260,6 +260,10 @@ public:
   /// of the reductions that were found in the loop.
   typedef DenseMap<PHINode*, ReductionDescriptor> ReductionList;
 
+  /// InductionList saves induction variables and maps them to the initial
+  /// value entring the loop.
+  typedef DenseMap<PHINode*, Value*> InductionList;
+
   /// Returns true if it is legal to vectorize this loop.
   /// This does not mean that it is profitable to vectorize this
   /// loop, only that it is legal to do so.
@@ -270,6 +274,9 @@ public:
 
   /// Returns the reduction variables found in the loop.
   ReductionList *getReductionVars() { return &Reductions; }
+
+  /// Returns the induction variables found in the loop.
+  InductionList *getInductionVars() { return &Inductions; }
 
   /// Check if the pointer returned by this GEP is consecutive
   /// when the index is vectorized. This happens when the last
@@ -317,10 +324,16 @@ private:
 
   //  ---  vectorization state --- //
 
-  /// Holds the induction variable.
+  /// Holds the integer induction variable. This is the counter of the
+  /// loop.
   PHINode *Induction;
   /// Holds the reduction variables.
   ReductionList Reductions;
+  /// Holds all of the induction variables that we found in the loop.
+  /// Notice that inductions don't need to start at zero and that induction
+  /// variables can be pointers.
+  InductionList Inductions;
+
   /// Allowed outside users. This holds the reduction
   /// vars which can be accessed from outside the loop.
   SmallPtrSet<Value*, 4> AllowedExit;
@@ -791,14 +804,50 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   Loc->eraseFromParent();
 
   // We are going to resume the execution of the scalar loop.
-  // This PHI decides on what number to start. If we come from the
-  // vector loop then we need to start with the end index minus the
-  // index modulo VF. If we come from a bypass edge then we need to start
-  // from the real start.
-  PHINode* ResumeIndex = PHINode::Create(IdxTy, 2, "resume.idx",
-                                         MiddleBlock->getTerminator());
-  ResumeIndex->addIncoming(StartIdx, BypassBlock);
-  ResumeIndex->addIncoming(IdxEndRoundDown, VecBody);
+  // Go over all of the induction variables that we found and fix the
+  // PHIs that are left in the scalar version of the loop.
+  // The starting values of PHI nodes depend on the counter of the last
+  // iteration in the vectorized loop.
+  // If we come from a bypass edge then we need to start from the original start
+  // value.
+
+  // This variable saves the new starting index for the scalar loop.
+  Value *ResumeIndex = 0;
+  LoopVectorizationLegality::InductionList::iterator I, E;
+  LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
+  for (I = List->begin(), E = List->end(); I != E; ++I) {
+    PHINode *OrigPhi = I->first;
+    PHINode *ResumeVal = PHINode::Create(OrigPhi->getType(), 2, "resume.val",
+                                           MiddleBlock->getTerminator());
+    Value *EndValue = 0;
+    if (OrigPhi->getType()->isIntegerTy()) {
+      // Handle the integer induction counter:
+      assert(OrigPhi == OldInduction && "Unknown integer PHI");
+      // We know what the end value is.
+      EndValue = IdxEndRoundDown;
+      // We also know which PHI node holds it.
+      ResumeIndex = ResumeVal;
+    } else {
+      // For pointer induction variables, calculate the offset using
+      // the end index.
+      EndValue = GetElementPtrInst::Create(I->second, IdxEndRoundDown,
+                                           "ptr.ind.end",
+                                           BypassBlock->getTerminator());
+    }
+
+    // The new PHI merges the original incoming value, in case of a bypass,
+    // or the value at the end of the vectorized loop.
+    ResumeVal->addIncoming(I->second, BypassBlock);
+    ResumeVal->addIncoming(EndValue, VecBody);
+
+    // Fix the scalar body counter (PHI node).
+    unsigned BlockIdx = OldInduction->getBasicBlockIndex(ScalarPH);
+    OrigPhi->setIncomingValue(BlockIdx, ResumeVal);
+  }
+
+  // Make sure that we found the index where scalar loop needs to continue.
+  assert(ResumeIndex && ResumeIndex->getType()->isIntegerTy() &&
+         "Invalid resume Index");
 
   // Add a check in the middle block to see if we have completed
   // all of the iterations in the first vector loop.
@@ -821,10 +870,6 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Now we have two terminators. Remove the old one from the block.
   VecBody->getTerminator()->eraseFromParent();
-
-  // Fix the scalar body iteration count.
-  unsigned BlockIdx = OldInduction->getBasicBlockIndex(ScalarPH);
-  OldInduction->setIncomingValue(BlockIdx, ResumeIndex);
 
   // Get ready to start creating new instructions into the vectorized body.
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
@@ -895,7 +940,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   // add the new incoming edges to the PHI. At this point all of the
   // instructions in the basic block are vectorized, so we can use them to
   // construct the PHI.
-  PhiVector PHIsToFix;
+  PhiVector RdxPHIsToFix;
 
   // For each instruction in the old loop.
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
@@ -911,13 +956,40 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         // Special handling for the induction var.
         if (OldInduction == Inst)
           continue;
-        // This is phase one of vectorizing PHIs.
-        // This has to be a reduction variable.
-        assert(Legal->getReductionVars()->count(P) && "Not a Reduction");
-        Type *VecTy = VectorType::get(Inst->getType(), VF);
-        WidenMap[Inst] = Builder.CreatePHI(VecTy, 2, "vec.phi");
-        PHIsToFix.push_back(P);
-        continue;
+
+        // Handle reduction variables:
+        if (Legal->getReductionVars()->count(P)) {
+          // This is phase one of vectorizing PHIs.
+          Type *VecTy = VectorType::get(Inst->getType(), VF);
+          WidenMap[Inst] = Builder.CreatePHI(VecTy, 2, "vec.phi");
+          RdxPHIsToFix.push_back(P);
+          continue;
+        }
+
+        // Handle pointer inductions:
+        if (Legal->getInductionVars()->count(P)) {
+          Value *StartIdx = Legal->getInductionVars()->lookup(OldInduction);
+          Value *StartPtr = Legal->getInductionVars()->lookup(P);
+          // This is the normalized GEP that starts counting at zero.
+          Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
+                                                   "normalized.idx");
+          // This is the first GEP in the sequence.
+          Value *FirstGep = Builder.CreateGEP(StartPtr, NormalizedIdx,
+                                              "induc.ptr");
+          // This is the vector of results. Notice that we don't generate vector
+          // geps because scalar geps result in better code.
+          Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
+          for (unsigned int i = 0; i < VF; ++i) {
+            Value *SclrGep = Builder.CreateGEP(FirstGep, Builder.getInt32(i),
+                                               "next.gep");
+            VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
+                                                 Builder.getInt32(i),
+                                                 "insert.gep");
+          }
+
+          WidenMap[Inst] = VecVal;
+          continue;
+        }
       }
       case Instruction::Add:
       case Instruction::FAdd:
@@ -1092,7 +1164,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   // Create the 'reduced' values for each of the induction vars.
   // The reduced values are the vector values that we scalarize and combine
   // after the loop is finished.
-  for (PhiVector::iterator it = PHIsToFix.begin(), e = PHIsToFix.end();
+  for (PhiVector::iterator it = RdxPHIsToFix.begin(), e = RdxPHIsToFix.end();
        it != e; ++it) {
     PHINode *RdxPhi = *it;
     PHINode *VecRdxPhi = dyn_cast<PHINode>(WidenMap[RdxPhi]);
@@ -1123,7 +1195,6 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // incoming scalar reduction.
     Value *VectorStart = Builder.CreateInsertElement(Identity,
                                                     RdxDesc.StartValue, Zero);
-
 
     // Fix the vector-loop phi.
     // We created the induction variable so we know that the
@@ -1276,23 +1347,33 @@ bool LoopVectorizationLegality::canVectorize() {
 }
 
 bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
+  BasicBlock *PreHeader = TheLoop->getLoopPreheader();
+
   // Scan the instructions in the block and look for hazards.
   for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
     Instruction *I = it;
 
-    PHINode *Phi = dyn_cast<PHINode>(I);
-    if (Phi) {
+    if (PHINode *Phi = dyn_cast<PHINode>(I)) {
       // This should not happen because the loop should be normalized.
       if (Phi->getNumIncomingValues() != 2) {
         DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
         return false;
       }
-      // We only look at integer phi nodes.
-      if (!Phi->getType()->isIntegerTy()) {
-        DEBUG(dbgs() << "LV: Found an non-int PHI.\n");
+
+      // This is the value coming from the preheader.
+      Value *StartValue = Phi->getIncomingValueForBlock(PreHeader);
+
+      // We only look at integer and pointer phi nodes.
+      if (Phi->getType()->isPointerTy() && isInductionVariable(Phi)) {
+        DEBUG(dbgs() << "LV: Found a pointer induction variable.\n");
+        Inductions[Phi] = StartValue;
+        continue;
+      } else if (!Phi->getType()->isIntegerTy()) {
+        DEBUG(dbgs() << "LV: Found an non-int non-pointer PHI.\n");
         return false;
       }
 
+      // Handle integer PHIs:
       if (isInductionVariable(Phi)) {
         if (Induction) {
           DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
@@ -1300,6 +1381,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
         }
         DEBUG(dbgs() << "LV: Found the induction PHI."<< *Phi <<"\n");
         Induction = Phi;
+        Inductions[Phi] = StartValue;
         continue;
       }
       if (AddReductionVar(Phi, IntegerAdd)) {
@@ -1682,6 +1764,11 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
 }
 
 bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
+  Type *PhiTy = Phi->getType();
+  // We only handle integer and pointer inductions variables.
+  if (!PhiTy->isIntegerTy() && !PhiTy->isPointerTy())
+    return false;
+
   // Check that the PHI is consecutive and starts at zero.
   const SCEV *PhiScev = SE->getSCEV(Phi);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
@@ -1691,11 +1778,17 @@ bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   }
   const SCEV *Step = AR->getStepRecurrence(*SE);
 
-  if (!Step->isOne()) {
-    DEBUG(dbgs() << "LV: PHI stride does not equal one.\n");
-    return false;
-  }
-  return true;
+  // Integer inductions need to have a stride of one.
+  if (PhiTy->isIntegerTy())
+    return Step->isOne();
+
+  // Calculate the pointer stride and check if it is consecutive.
+  const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
+  if (!C) return false;
+
+  assert(PhiTy->isPointerTy() && "The PHI must be a pointer");
+  uint64_t Size = DL->getTypeAllocSize(PhiTy->getPointerElementType());
+  return (C->getValue()->equalsInt(Size));
 }
 
 bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
