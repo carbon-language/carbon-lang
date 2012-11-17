@@ -1,4 +1,4 @@
-#! python
+#!/usr/bin/env python
 
 """
 wciia - Whose Code Is It Anyway
