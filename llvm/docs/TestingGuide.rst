@@ -206,8 +206,8 @@ flexible, but we've standardized it for the LLVM regression tests. If
 you're adding a directory of tests, just copy ``lit.local.cfg`` from
 another directory to get running. The standard ``lit.local.cfg`` simply
 specifies which files to look in for tests. Any directory that contains
-only directories does not need the ``lit.local.cfg`` file. Read the `Lit
-documentation <http://llvm.org/cmds/lit.html>`_ for more information.
+only directories does not need the ``lit.local.cfg`` file. Read the :doc:`Lit
+documentation <CommandGuide/lit>` for more information.
 
 The ``llvm-runtests`` function looks at each file that is passed to it
 and gathers any lines together that match "RUN:". These are the "RUN"
