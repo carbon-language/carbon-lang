@@ -1,5 +1,5 @@
 ; RUN:  %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit -O0 %s
-; XFAIL: arm, mingw32
+; XFAIL: arm
 
 ; Check that a variable is always aligned as specified.
 

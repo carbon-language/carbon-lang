@@ -1,5 +1,5 @@
 ; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit -O0 -disable-lazy-compilation=false %s
-; XFAIL: arm, mingw32, cygwin
+; XFAIL: arm
 
 ; The intention of this test is to verify that symbols mapped to COMMON in ELF
 ; work as expected.

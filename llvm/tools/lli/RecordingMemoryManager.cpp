@@ -82,7 +82,20 @@ void RecordingMemoryManager::endExceptionTable(const Function *F, uint8_t *Table
 void RecordingMemoryManager::deallocateExceptionTable(void *ET) {
   llvm_unreachable("Unexpected!");
 }
+
+static int jit_noop() {
+  return 0;
+}
+
 void *RecordingMemoryManager::getPointerToNamedFunction(const std::string &Name,
                                                         bool AbortOnFailure) {
+  // We should not invoke parent's ctors/dtors from generated main()!
+  // On Mingw and Cygwin, the symbol __main is resolved to
+  // callee's(eg. tools/lli) one, to invoke wrong duplicated ctors
+  // (and register wrong callee's dtors with atexit(3)).
+  // We expect ExecutionEngine::runStaticConstructorsDestructors()
+  // is called before ExecutionEngine::runFunctionAsMain() is called.
+  if (Name == "__main") return (void*)(intptr_t)&jit_noop;
+
   return NULL;
 }
