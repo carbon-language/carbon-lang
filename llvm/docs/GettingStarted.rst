@@ -1277,8 +1277,8 @@ Example with clang
 
      % lli hello.bc
 
-   The second examples shows how to invoke the LLVM JIT, `lli
-   <CommandGuide/html/lli.html>`_.
+   The second examples shows how to invoke the LLVM JIT, :doc:`lli
+   <CommandGuide/lli>`.
 
 #. Use the ``llvm-dis`` utility to take a look at the LLVM assembly code:
 
