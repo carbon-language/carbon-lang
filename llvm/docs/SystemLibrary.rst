@@ -248,8 +248,3 @@ that was available or named pipes, or whatever gets the job done effectively
 for a given operating system.  In all cases, the interface and the
 implementation must be semantically consistent.
 
-Bug 351
--------
-See `bug 351 <http://llvm.org/PR351>`_ for further details on the progress of
-this work.
-
