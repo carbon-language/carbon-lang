@@ -423,10 +423,6 @@ static bool LinearizeExprTree(BinaryOperator *I,
   assert(Instruction::isAssociative(Opcode) &&
          Instruction::isCommutative(Opcode) &&
          "Expected an associative and commutative operation!");
-  // If we see an absorbing element then the entire expression must be equal to
-  // it.  For example, if this is a multiplication expression and zero occurs as
-  // an operand somewhere in it then the result of the expression must be zero.
-  Constant *Absorber = ConstantExpr::getBinOpAbsorber(Opcode, I->getType());
 
   // Visit all operands of the expression, keeping track of their weight (the
   // number of paths from the expression root to the operand, or if you like
@@ -473,13 +469,6 @@ static bool LinearizeExprTree(BinaryOperator *I,
       APInt Weight = P.second; // Number of paths to this operand.
       DEBUG(dbgs() << "OPERAND: " << *Op << " (" << Weight << ")\n");
       assert(!Op->use_empty() && "No uses, so how did we get to it?!");
-
-      // If the expression contains an absorbing element then there is no need
-      // to analyze it further: it must evaluate to the absorbing element.
-      if (Op == Absorber && !Weight.isMinValue()) {
-        Ops.push_back(std::make_pair(Absorber, APInt(Bitwidth, 1)));
-        return MadeChange;
-      }
 
       // If this is a binary operation of the right kind with only one use then
       // add its operands to the expression.
