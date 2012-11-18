@@ -1149,7 +1149,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
   assert(Cond && "ActOnDoStmt(): missing expression");
 
   ExprResult CondResult = CheckBooleanCondition(Cond, DoLoc);
-  if (CondResult.isInvalid() || CondResult.isInvalid())
+  if (CondResult.isInvalid())
     return StmtError();
   Cond = CondResult.take();
 
