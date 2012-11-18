@@ -1,4 +1,4 @@
-; RUN: llc -march=ppc64 -enable-misched < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc64-bgq-linux -enable-misched < %s | FileCheck %s
 ;
 ; PR14315: misched should not move the physreg copy of %t below the calls.
 
@@ -9,8 +9,8 @@ declare void @init() nounwind
 declare void @clock() nounwind
 
 ; CHECK: %entry
-; fmr f31, f1
-; bl _init
+; CHECK: fmr 31, 1
+; CHECK: bl init
 define void @s332(double %t) nounwind {
 entry:
   tail call void @init()
