@@ -226,16 +226,25 @@ Release Notes</a>.</h1>
 <div>
 
 <p><a href="http://polly.llvm.org/">Polly</a> is an <em>experimental</em>
-  optimizer for data locality and parallelism. It currently provides high-level
-  loop optimizations and automatic parallelisation (using the OpenMP run time).
-  Work in the area of automatic SIMD and accelerator code generation was
-  started.</p>
+  optimizer for data locality and parallelism. It provides high-level
+  loop optimizations and automatic parallelisation.</p>
 
 <p>Within the LLVM 3.2 time-frame there were the following highlights:</p>
 
 <ul>
-  <li>...</li>
+  <li>isl, the integer set library used by Polly, was relicensed to the MIT
+license</li>
+  <li>isl based code generation<br />
+        <ul>
+<li>MIT licensed replacement for CLooG (LGPLv2) </li>
+<li>Fine grained option handling (separation of
+core and border computations, control overhead vs. code size) </li>
+</li>
 </ul>
+<li>Support for FORTRAN and dragonegg</li>
+<li>OpenMP code generation fixes</li>
+</ul>
+
 
 </div>
 
