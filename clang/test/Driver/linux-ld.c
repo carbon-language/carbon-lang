@@ -420,6 +420,7 @@
 // CHECK-ANDROID: "-L[[SYSROOT]]/usr/lib"
 // CHECK-ANDROID-NOT: "gcc_s"
 // CHECK-ANDROID: "-lgcc"
+// CHECK-ANDROID: "-ldl"
 // CHECK-ANDROID-NOT: "gcc_s"
 // CHECK-ANDROID: "{{.*}}/crtend_android.o"
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -448,6 +449,7 @@
 // CHECK-ANDROID-SO: "-L[[SYSROOT]]/usr/lib"
 // CHECK-ANDROID-SO-NOT: "gcc_s"
 // CHECK-ANDROID-SO: "-lgcc"
+// CHECK-ANDROID-SO: "-ldl"
 // CHECK-ANDROID-SO-NOT: "gcc_s"
 // CHECK-ANDROID-SO: "{{.*}}/crtend_so.o"
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -475,6 +477,7 @@
 // CHECK-ANDROID-STATIC: "-L[[SYSROOT]]/usr/lib"
 // CHECK-ANDROID-STATIC-NOT: "gcc_s"
 // CHECK-ANDROID-STATIC: "-lgcc"
+// CHECK-ANDROID-STATIC-NOT: "-ldl"
 // CHECK-ANDROID-STATIC-NOT: "gcc_s"
 // CHECK-ANDROID-STATIC: "{{.*}}/crtend_android.o"
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
