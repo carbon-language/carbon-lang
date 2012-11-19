@@ -2230,7 +2230,8 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA,
 
 void Linux::addClangTargetOptions(ArgStringList &CC1Args) const {
   const Generic_GCC::GCCVersion &V = GCCInstallation.getVersion();
-  if (V >= Generic_GCC::GCCVersion::Parse("4.7.0"))
+  if (V >= Generic_GCC::GCCVersion::Parse("4.7.0") ||
+      getTriple().getEnvironment() == llvm::Triple::Android)
     CC1Args.push_back("-fuse-init-array");
 }
 
