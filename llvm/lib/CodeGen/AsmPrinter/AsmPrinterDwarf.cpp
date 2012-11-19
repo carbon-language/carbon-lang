@@ -120,11 +120,14 @@ unsigned AsmPrinter::GetSizeOfEncodedValue(unsigned Encoding) const {
 }
 
 void AsmPrinter::EmitTTypeReference(const GlobalValue *GV, unsigned Encoding)const{
-  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
+  if (GV) {
+    const TargetLoweringObjectFile &TLOF = getObjFileLowering();
   
-  const MCExpr *Exp =
-    TLOF.getTTypeGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
-  OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
+    const MCExpr *Exp =
+      TLOF.getTTypeGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
+    OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
+  } else
+    OutStreamer.EmitIntValue(0, GetSizeOfEncodedValue(Encoding), 0);
 }
 
 /// EmitSectionOffset - Emit the 4-byte offset of Label from the start of its

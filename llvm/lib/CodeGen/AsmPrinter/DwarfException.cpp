@@ -696,11 +696,7 @@ void DwarfException::EmitTypeInfos(unsigned TTypeEncoding) {
     const GlobalVariable *GV = *I;
     if (VerboseAsm)
       Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
-    if (GV)
-      Asm->EmitTTypeReference(GV, TTypeEncoding);
-    else
-      Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
-                                    0);
+    Asm->EmitTTypeReference(GV, TTypeEncoding);
   }
 
   // Emit the Exception Specifications.

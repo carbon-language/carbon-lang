@@ -113,11 +113,7 @@ void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {
     const GlobalVariable *GV = *I;
     if (VerboseAsm)
       Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
-    if (GV)
-      Asm->EmitTTypeReference(GV, TTypeEncoding);
-    else
-      Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
-                                    0);
+    Asm->EmitTTypeReference(GV, TTypeEncoding);
   }
 
   // Emit the Exception Specifications.
@@ -135,10 +131,7 @@ void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {
         Asm->OutStreamer.AddComment("FilterInfo " + Twine(Entry));
     }
 
-    if (TypeID == 0)
-      Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
-                                    0);
-    else
-      Asm->EmitTTypeReference(TypeInfos[TypeID - 1], TTypeEncoding);    
+    Asm->EmitTTypeReference((TypeID == 0 ? 0 : TypeInfos[TypeID - 1]),
+                            TTypeEncoding);
   }
 }
