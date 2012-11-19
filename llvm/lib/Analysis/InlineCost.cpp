@@ -794,7 +794,7 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
 /// viable. It computes the cost and adjusts the threshold based on numerous
 /// factors and heuristics. If this method returns false but the computed cost
 /// is below the computed threshold, then inlining was forcibly disabled by
-/// some artifact of the rountine.
+/// some artifact of the routine.
 bool CallAnalyzer::analyzeCall(CallSite CS) {
   ++NumCallsAnalyzed;
 
