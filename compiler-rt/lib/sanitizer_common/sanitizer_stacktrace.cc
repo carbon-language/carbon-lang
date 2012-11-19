@@ -123,18 +123,18 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
                                  uptr stack_top, uptr stack_bottom) {
   CHECK(size == 0 && trace[0] == pc);
   size = 1;
-  uptr *frame = (uptr*)bp;
-  uptr *prev_frame = frame;
+  uhwptr *frame = (uhwptr *)bp;
+  uhwptr *prev_frame = frame;
   while (frame >= prev_frame &&
-         frame < (uptr*)stack_top - 2 &&
-         frame > (uptr*)stack_bottom &&
+         frame < (uhwptr *)stack_top - 2 &&
+         frame > (uhwptr *)stack_bottom &&
          size < max_size) {
-    uptr pc1 = frame[1];
+    uhwptr pc1 = frame[1];
     if (pc1 != pc) {
-      trace[size++] = pc1;
+      trace[size++] = (uptr) pc1;
     }
     prev_frame = frame;
-    frame = (uptr*)frame[0];
+    frame = (uhwptr *)frame[0];
   }
 }
 
