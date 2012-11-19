@@ -968,7 +968,8 @@ The ``FADDS`` instruction is a simple binary single-precision add instruction.
 To perform this pattern match, the PowerPC backend includes the following
 instruction definitions:
 
-::
+.. code-block:: text
+  :emphasize-lines: 4-5,9
 
   def FMADDS : AForm_1<59, 29,
                       (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
@@ -980,10 +981,10 @@ instruction definitions:
                       "fadds $FRT, $FRA, $FRB",
                       [(set F4RC:$FRT, (fadd F4RC:$FRA, F4RC:$FRB))]>;
 
-The portion of the instruction definition in bold indicates the pattern used to
-match the instruction.  The DAG operators (like ``fmul``/``fadd``) are defined
-in the ``include/llvm/Target/TargetSelectionDAG.td`` file.  " ``F4RC``" is the
-register class of the input and result values.
+The highlighted portion of the instruction definitions indicates the pattern
+used to match the instructions. The DAG operators (like ``fmul``/``fadd``)
+are defined in the ``include/llvm/Target/TargetSelectionDAG.td`` file.
+"``F4RC``" is the register class of the input and result values.
 
 The TableGen DAG instruction selector generator reads the instruction patterns
 in the ``.td`` file and automatically builds parts of the pattern matching code
