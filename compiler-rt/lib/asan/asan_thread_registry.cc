@@ -104,10 +104,10 @@ AsanStats &AsanThreadRegistry::GetCurrentThreadStats() {
   return (t) ? t->stats() : main_thread_.stats();
 }
 
-AsanStats AsanThreadRegistry::GetAccumulatedStats() {
+void AsanThreadRegistry::GetAccumulatedStats(AsanStats *stats) {
   ScopedLock lock(&mu_);
   UpdateAccumulatedStatsUnlocked();
-  return accumulated_stats_;
+  internal_memcpy(stats, &accumulated_stats_, sizeof(accumulated_stats_));
 }
 
 uptr AsanThreadRegistry::GetCurrentAllocatedBytes() {

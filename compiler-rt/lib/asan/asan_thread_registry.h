@@ -47,9 +47,9 @@ class AsanThreadRegistry {
   // Returns stats for GetCurrent(), or stats for
   // T0 if GetCurrent() returns 0.
   AsanStats &GetCurrentThreadStats();
-  // Flushes all thread-local stats to accumulated stats, and returns
+  // Flushes all thread-local stats to accumulated stats, and makes
   // a copy of accumulated stats.
-  AsanStats GetAccumulatedStats();
+  void GetAccumulatedStats(AsanStats *stats);
   uptr GetCurrentAllocatedBytes();
   uptr GetHeapSize();
   uptr GetFreeBytes();

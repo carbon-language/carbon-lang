@@ -56,7 +56,8 @@ void AsanStats::Print() {
 static AsanLock print_lock(LINKER_INITIALIZED);
 
 static void PrintAccumulatedStats() {
-  AsanStats stats = asanThreadRegistry().GetAccumulatedStats();
+  AsanStats stats;
+  asanThreadRegistry().GetAccumulatedStats(&stats);
   // Use lock to keep reports from mixing up.
   ScopedLock lock(&print_lock);
   stats.Print();
