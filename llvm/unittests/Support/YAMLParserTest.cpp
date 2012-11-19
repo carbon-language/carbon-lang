@@ -10,6 +10,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/YAMLParser.h"
 #include "gtest/gtest.h"
@@ -19,6 +20,12 @@ namespace llvm {
 static void SuppressDiagnosticsOutput(const SMDiagnostic &, void *) {
   // Prevent SourceMgr from writing errors to stderr 
   // to reduce noise in unit test runs.
+}
+
+// Assumes Ctx is an SMDiagnostic where Diag can be stored.
+static void CollectDiagnosticsOutput(const SMDiagnostic &Diag, void *Ctx) {
+  SMDiagnostic* DiagOut = static_cast<SMDiagnostic*>(Ctx);
+  *DiagOut = Diag;
 }
 
 // Checks that the given input gives a parse error. Makes sure that an error
@@ -180,6 +187,33 @@ TEST(YAMLParser, WorksWithIteratorAlgorithms) {
   yaml::SequenceNode *Array
     = dyn_cast<yaml::SequenceNode>(Stream.begin()->getRoot());
   EXPECT_EQ(6, std::distance(Array->begin(), Array->end()));
+}
+
+TEST(YAMLParser, DefaultDiagnosticFilename) {
+  SourceMgr SM;
+
+  SMDiagnostic GeneratedDiag;
+  SM.setDiagHandler(CollectDiagnosticsOutput, &GeneratedDiag);
+
+  // When we construct a YAML stream over an unnamed string,
+  // the filename is hard-coded as "YAML".
+  yaml::Stream UnnamedStream("[]", SM);
+  UnnamedStream.printError(UnnamedStream.begin()->getRoot(), "Hello, World!");
+  EXPECT_EQ("YAML", GeneratedDiag.getFilename());
+}
+
+TEST(YAMLParser, DiagnosticFilenameFromBufferID) {
+  SourceMgr SM;
+
+  SMDiagnostic GeneratedDiag;
+  SM.setDiagHandler(CollectDiagnosticsOutput, &GeneratedDiag);
+
+  // When we construct a YAML stream over a named buffer,
+  // we get its ID as filename in diagnostics.
+  MemoryBuffer* Buffer = MemoryBuffer::getMemBuffer("[]", "buffername.yaml");
+  yaml::Stream Stream(Buffer, SM);
+  Stream.printError(Stream.begin()->getRoot(), "Hello, World!");
+  EXPECT_EQ("buffername.yaml", GeneratedDiag.getFilename());
 }
 
 } // end namespace llvm
