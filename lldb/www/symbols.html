@@ -118,9 +118,9 @@
 will be run in the order in which they are specified until a match is found.
 The shell script will be invoked with a single UUID string value like 
 "23516BE4-29BE-350C-91C9-F36E7999F0F1". The shell script must respond with a 
-property list being written to STDOUT. The property list must contain UUID
-string values as the root key values, with a dictionary for each UUID. The dictionaries
-can contain one or more of the following keys:
+property list being written to STDOUT. 
+The property list returned must contain UUID string values as the root key values, with 
+a dictionary for each UUID. The dictionaries can contain one or more of the following keys:
 
 						<table class="stats" width="620" cellspacing="0">
              	<tr>
@@ -215,6 +215,18 @@ can contain one or more of the following keys:
 &lt;/plist&gt;
 </tt></pre></code>
 
+<p>There is no timeout imposed on a shell script when is it asked to locate a dSYM file, so be careful to not make a shell
+script that has high latency or takes a long time to download unless this
+is really what you want. This can slow down debug sessions in LLDB and GDB, symbolication
+with CoreSymbolication or Report Crash, with no visible feedback to the user. You can
+quickly return a plist with a single <b>DBGError</b> key that indicates a timeout
+has been reached. You might also want to exec new processes to do the downloads so
+that if you return an error that indicates a timeout, your download can still proceed
+after your shell script has exited so subsequent debug sessions can use the cached files.
+It is also important to track when a current download is in progress in case you get multiple requests for the same UUID so
+that you don't end up downloading the same file simultaneously. Also you will want
+to verify the download was successful and then and only then place the file into the
+cache for tools that will cache files locally.
     			</div>
          	<div class="postfooter"></div>
         </div>
