@@ -1182,10 +1182,11 @@ bool BitcodeReader::ParseConstants() {
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3) return Error("Invalid CE_SELECT record");
-      V = ConstantExpr::getSelect(ValueList.getConstantFwdRef(Record[0],
-                                                              Type::getInt1Ty(Context)),
-                                  ValueList.getConstantFwdRef(Record[1],CurTy),
-                                  ValueList.getConstantFwdRef(Record[2],CurTy));
+      V = ConstantExpr::getSelect(
+                          ValueList.getConstantFwdRef(Record[0],
+                                                      Type::getInt1Ty(Context)),
+                          ValueList.getConstantFwdRef(Record[1],CurTy),
+                          ValueList.getConstantFwdRef(Record[2],CurTy));
       break;
     case bitc::CST_CODE_CE_EXTRACTELT: { // CE_EXTRACTELT: [opty, opval, opval]
       if (Record.size() < 3) return Error("Invalid CE_EXTRACTELT record");
@@ -1193,7 +1194,8 @@ bool BitcodeReader::ParseConstants() {
         dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
       if (OpTy == 0) return Error("Invalid CE_EXTRACTELT record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
-      Constant *Op1 = ValueList.getConstantFwdRef(Record[2], Type::getInt32Ty(Context));
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[2], 
+                                                  Type::getInt32Ty(Context));
       V = ConstantExpr::getExtractElement(Op0, Op1);
       break;
     }
@@ -1204,7 +1206,8 @@ bool BitcodeReader::ParseConstants() {
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1],
                                                   OpTy->getElementType());
-      Constant *Op2 = ValueList.getConstantFwdRef(Record[2], Type::getInt32Ty(Context));
+      Constant *Op2 = ValueList.getConstantFwdRef(Record[2], 
+                                                  Type::getInt32Ty(Context));
       V = ConstantExpr::getInsertElement(Op0, Op1, Op2);
       break;
     }
