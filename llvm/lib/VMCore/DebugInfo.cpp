@@ -793,7 +793,7 @@ bool llvm::isSubprogramContext(const MDNode *Context) {
 //===----------------------------------------------------------------------===//
 
 /// processModule - Process entire module and collect debug info.
-void DebugInfoFinder::processModule(Module &M) {
+void DebugInfoFinder::processModule(const Module &M) {
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
@@ -819,11 +819,11 @@ void DebugInfoFinder::processModule(Module &M) {
     }
   }
 
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
-      for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+    for (Function::const_iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
+      for (BasicBlock::const_iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
            ++BI) {
-        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
+        if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
 
         DebugLoc Loc = BI->getDebugLoc();
@@ -927,7 +927,7 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
 }
 
 /// processDeclare - Process DbgDeclareInst.
-void DebugInfoFinder::processDeclare(DbgDeclareInst *DDI) {
+void DebugInfoFinder::processDeclare(const DbgDeclareInst *DDI) {
   MDNode *N = dyn_cast<MDNode>(DDI->getVariable());
   if (!N) return;
 

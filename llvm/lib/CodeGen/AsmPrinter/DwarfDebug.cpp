@@ -190,7 +190,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
-    beginModule(M);
+    beginModule();
   }
 }
 DwarfDebug::~DwarfDebug() {
@@ -684,7 +684,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
 
 /// collectInfoFromNamedMDNodes - Collect debug info from named mdnodes such
 /// as llvm.dbg.enum and llvm.dbg.ty
-void DwarfDebug::collectInfoFromNamedMDNodes(Module *M) {
+void DwarfDebug::collectInfoFromNamedMDNodes(const Module *M) {
   if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.sp"))
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       const MDNode *N = NMD->getOperand(i);
@@ -716,7 +716,7 @@ void DwarfDebug::collectInfoFromNamedMDNodes(Module *M) {
 
 /// collectLegacyDebugInfo - Collect debug info using DebugInfoFinder.
 /// FIXME - Remove this when dragon-egg and llvm-gcc switch to DIBuilder.
-bool DwarfDebug::collectLegacyDebugInfo(Module *M) {
+bool DwarfDebug::collectLegacyDebugInfo(const Module *M) {
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
@@ -759,9 +759,11 @@ bool DwarfDebug::collectLegacyDebugInfo(Module *M) {
 /// beginModule - Emit all Dwarf sections that should come prior to the
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is invoked by the target AsmPrinter.
-void DwarfDebug::beginModule(Module *M) {
+void DwarfDebug::beginModule() {
   if (DisableDebugInfoPrinting)
     return;
+
+  const Module *M = MMI->getModule();
 
   // If module has named metadata anchors then use them, otherwise scan the
   // module using debug info finder to collect debug info.
@@ -798,7 +800,9 @@ void DwarfDebug::beginModule(Module *M) {
 /// endModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfDebug::endModule() {
+
   if (!FirstCU) return;
+
   const Module *M = MMI->getModule();
   DenseMap<const MDNode *, LexicalScope *> DeadFnScopeMap;
 

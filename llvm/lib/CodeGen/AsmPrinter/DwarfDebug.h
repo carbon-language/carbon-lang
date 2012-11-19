@@ -494,15 +494,15 @@ public:
 
   /// collectInfoFromNamedMDNodes - Collect debug info from named mdnodes such
   /// as llvm.dbg.enum and llvm.dbg.ty
-  void collectInfoFromNamedMDNodes(Module *M);
+  void collectInfoFromNamedMDNodes(const Module *M);
 
   /// collectLegacyDebugInfo - Collect debug info using DebugInfoFinder.
   /// FIXME - Remove this when DragonEgg switches to DIBuilder.
-  bool collectLegacyDebugInfo(Module *M);
+  bool collectLegacyDebugInfo(const Module *M);
 
   /// beginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void beginModule(Module *M);
+  void beginModule();
 
   /// endModule - Emit all Dwarf sections that should come after the content.
   ///

@@ -836,7 +836,7 @@ namespace llvm {
   public:
     /// processModule - Process entire module and collect debug info
     /// anchors.
-    void processModule(Module &M);
+    void processModule(const Module &M);
 
   private:
     /// processType - Process DIType.
@@ -849,7 +849,7 @@ namespace llvm {
     void processSubprogram(DISubprogram SP);
 
     /// processDeclare - Process DbgDeclareInst.
-    void processDeclare(DbgDeclareInst *DDI);
+    void processDeclare(const DbgDeclareInst *DDI);
 
     /// processLocation - Process DILocation.
     void processLocation(DILocation Loc);
