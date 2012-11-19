@@ -465,8 +465,7 @@ void TargetPassConfig::addMachinePasses() {
   // Add passes that optimize machine instructions in SSA form.
   if (getOptLevel() != CodeGenOpt::None) {
     addMachineSSAOptimization();
-  }
-  else {
+  } else {
     // If the target requests it, assign local variables to stack slots relative
     // to one another and simplify frame index references where possible.
     addPass(&LocalStackSlotAllocationID);
