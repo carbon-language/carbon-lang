@@ -791,9 +791,6 @@ void DwarfDebug::beginModule(Module *M) {
   // Tell MMI that we have debug info.
   MMI->setDebugInfoAvailability(true);
   
-  // Emit initial sections.
-  EmitSectionLabels();
-
   // Prime section data.
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());
 }
@@ -875,6 +872,9 @@ void DwarfDebug::endModule() {
 
   // Compute DIE offsets and sizes.
   computeSizeAndOffsets();
+
+  // Emit initial sections.
+  EmitSectionLabels();
 
   // Emit all the DIEs into a debug info section
   emitDebugInfo();
