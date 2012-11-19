@@ -129,6 +129,9 @@ namespace llvm {
     //  Note: This is used by out-of-tree passes, please do not remove without
     //  adding a replacement API.
     InlineCost getInlineCost(CallSite CS, Function *Callee, int Threshold);
+
+    /// \brief Minimal filter to detect invalid constructs for inlining.
+    bool isInlineViable(Function &Callee);
   };
 }
 

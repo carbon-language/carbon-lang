@@ -49,7 +49,6 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
 
   int Threshold;
   int Cost;
-  const bool AlwaysInline;
 
   bool IsCallerRecursive;
   bool IsRecursiveCall;
@@ -128,7 +127,6 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
 public:
   CallAnalyzer(const DataLayout *TD, Function &Callee, int Threshold)
     : TD(TD), F(Callee), Threshold(Threshold), Cost(0),
-      AlwaysInline(F.getFnAttributes().hasAttribute(Attributes::AlwaysInline)),
       IsCallerRecursive(false), IsRecursiveCall(false),
       ExposesReturnsTwice(false), HasDynamicAlloca(false), AllocatedSize(0),
       NumInstructions(0), NumVectorInstructions(0),
@@ -142,7 +140,6 @@ public:
 
   int getThreshold() { return Threshold; }
   int getCost() { return Cost; }
-  bool isAlwaysInline() { return AlwaysInline; }
 
   // Keep a bunch of stats about the cost savings found so we can print them
   // out when debugging.
@@ -281,9 +278,8 @@ bool CallAnalyzer::visitAlloca(AllocaInst &I) {
                       Ty->getPrimitiveSizeInBits());
   }
 
-  // We will happily inline static alloca instructions or dynamic alloca
-  // instructions in always-inline situations.
-  if (AlwaysInline || I.isStaticAlloca())
+  // We will happily inline static alloca instructions.
+  if (I.isStaticAlloca())
     return Base::visitAlloca(I);
 
   // FIXME: This is overly conservative. Dynamic allocas are inefficient for
@@ -743,7 +739,7 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB) {
 
     // Check if we've past the threshold so we don't spin in huge basic
     // blocks that will never inline.
-    if (!AlwaysInline && Cost > (Threshold + VectorBonus))
+    if (Cost > (Threshold + VectorBonus))
       return false;
   }
 
@@ -805,70 +801,69 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
   int SingleBBBonus = Threshold / 2;
   Threshold += SingleBBBonus;
 
-  // Unless we are always-inlining, perform some tweaks to the cost and
-  // threshold based on the direct callsite information.
-  if (!AlwaysInline) {
-    // We want to more aggressively inline vector-dense kernels, so up the
-    // threshold, and we'll lower it if the % of vector instructions gets too
-    // low.
-    assert(NumInstructions == 0);
-    assert(NumVectorInstructions == 0);
-    FiftyPercentVectorBonus = Threshold;
-    TenPercentVectorBonus = Threshold / 2;
+  // Perform some tweaks to the cost and threshold based on the direct
+  // callsite information.
 
-    // Give out bonuses per argument, as the instructions setting them up will
-    // be gone after inlining.
-    for (unsigned I = 0, E = CS.arg_size(); I != E; ++I) {
-      if (TD && CS.isByValArgument(I)) {
-        // We approximate the number of loads and stores needed by dividing the
-        // size of the byval type by the target's pointer size.
-        PointerType *PTy = cast<PointerType>(CS.getArgument(I)->getType());
-        unsigned TypeSize = TD->getTypeSizeInBits(PTy->getElementType());
-        unsigned PointerSize = TD->getPointerSizeInBits();
-        // Ceiling division.
-        unsigned NumStores = (TypeSize + PointerSize - 1) / PointerSize;
+  // We want to more aggressively inline vector-dense kernels, so up the
+  // threshold, and we'll lower it if the % of vector instructions gets too
+  // low.
+  assert(NumInstructions == 0);
+  assert(NumVectorInstructions == 0);
+  FiftyPercentVectorBonus = Threshold;
+  TenPercentVectorBonus = Threshold / 2;
 
-        // If it generates more than 8 stores it is likely to be expanded as an
-        // inline memcpy so we take that as an upper bound. Otherwise we assume
-        // one load and one store per word copied.
-        // FIXME: The maxStoresPerMemcpy setting from the target should be used
-        // here instead of a magic number of 8, but it's not available via
-        // DataLayout.
-        NumStores = std::min(NumStores, 8U);
+  // Give out bonuses per argument, as the instructions setting them up will
+  // be gone after inlining.
+  for (unsigned I = 0, E = CS.arg_size(); I != E; ++I) {
+    if (TD && CS.isByValArgument(I)) {
+      // We approximate the number of loads and stores needed by dividing the
+      // size of the byval type by the target's pointer size.
+      PointerType *PTy = cast<PointerType>(CS.getArgument(I)->getType());
+      unsigned TypeSize = TD->getTypeSizeInBits(PTy->getElementType());
+      unsigned PointerSize = TD->getPointerSizeInBits();
+      // Ceiling division.
+      unsigned NumStores = (TypeSize + PointerSize - 1) / PointerSize;
 
-        Cost -= 2 * NumStores * InlineConstants::InstrCost;
-      } else {
-        // For non-byval arguments subtract off one instruction per call
-        // argument.
-        Cost -= InlineConstants::InstrCost;
-      }
+      // If it generates more than 8 stores it is likely to be expanded as an
+      // inline memcpy so we take that as an upper bound. Otherwise we assume
+      // one load and one store per word copied.
+      // FIXME: The maxStoresPerMemcpy setting from the target should be used
+      // here instead of a magic number of 8, but it's not available via
+      // DataLayout.
+      NumStores = std::min(NumStores, 8U);
+
+      Cost -= 2 * NumStores * InlineConstants::InstrCost;
+    } else {
+      // For non-byval arguments subtract off one instruction per call
+      // argument.
+      Cost -= InlineConstants::InstrCost;
     }
-
-    // If there is only one call of the function, and it has internal linkage,
-    // the cost of inlining it drops dramatically.
-    if (F.hasLocalLinkage() && F.hasOneUse() && &F == CS.getCalledFunction())
-      Cost += InlineConstants::LastCallToStaticBonus;
-
-    // If the instruction after the call, or if the normal destination of the
-    // invoke is an unreachable instruction, the function is noreturn. As such,
-    // there is little point in inlining this unless there is literally zero
-    // cost.
-    Instruction *Instr = CS.getInstruction();
-    if (InvokeInst *II = dyn_cast<InvokeInst>(Instr)) {
-      if (isa<UnreachableInst>(II->getNormalDest()->begin()))
-        Threshold = 1;
-    } else if (isa<UnreachableInst>(++BasicBlock::iterator(Instr)))
-      Threshold = 1;
-
-    // If this function uses the coldcc calling convention, prefer not to inline
-    // it.
-    if (F.getCallingConv() == CallingConv::Cold)
-      Cost += InlineConstants::ColdccPenalty;
-
-    // Check if we're done. This can happen due to bonuses and penalties.
-    if (Cost > Threshold)
-      return false;
   }
+
+  // If there is only one call of the function, and it has internal linkage,
+  // the cost of inlining it drops dramatically.
+  if (F.hasLocalLinkage() && F.hasOneUse() && &F == CS.getCalledFunction())
+    Cost += InlineConstants::LastCallToStaticBonus;
+
+  // If the instruction after the call, or if the normal destination of the
+  // invoke is an unreachable instruction, the function is noreturn. As such,
+  // there is little point in inlining this unless there is literally zero
+  // cost.
+  Instruction *Instr = CS.getInstruction();
+  if (InvokeInst *II = dyn_cast<InvokeInst>(Instr)) {
+    if (isa<UnreachableInst>(II->getNormalDest()->begin()))
+      Threshold = 1;
+  } else if (isa<UnreachableInst>(++BasicBlock::iterator(Instr)))
+    Threshold = 1;
+
+  // If this function uses the coldcc calling convention, prefer not to inline
+  // it.
+  if (F.getCallingConv() == CallingConv::Cold)
+    Cost += InlineConstants::ColdccPenalty;
+
+  // Check if we're done. This can happen due to bonuses and penalties.
+  if (Cost > Threshold)
+    return false;
 
   if (F.empty())
     return true;
@@ -930,7 +925,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
   for (unsigned Idx = 0; Idx != BBWorklist.size(); ++Idx) {
     // Bail out the moment we cross the threshold. This means we'll under-count
     // the cost, but only when undercounting doesn't matter.
-    if (!AlwaysInline && Cost > (Threshold + VectorBonus))
+    if (Cost > (Threshold + VectorBonus))
       break;
 
     BasicBlock *BB = BBWorklist[Idx];
@@ -1015,7 +1010,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
 
   Threshold += VectorBonus;
 
-  return AlwaysInline || Cost < Threshold;
+  return Cost < Threshold;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -1040,10 +1035,22 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, int Threshold) {
 
 InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
                                              int Threshold) {
+  // Cannot inline indirect calls.
+  if (!Callee)
+    return llvm::InlineCost::getNever();
+
+  // Calls to functions with always-inline attributes should be inlined
+  // whenever possible.
+  if (Callee->getFnAttributes().hasAttribute(Attributes::AlwaysInline)) {
+    if (isInlineViable(*Callee))
+      return llvm::InlineCost::getAlways();
+    return llvm::InlineCost::getNever();
+  }
+
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.
-  if (!Callee || Callee->mayBeOverridden() ||
+  if (Callee->mayBeOverridden() ||
       Callee->getFnAttributes().hasAttribute(Attributes::NoInline) ||
       CS.isNoInline())
     return llvm::InlineCost::getNever();
@@ -1059,9 +1066,36 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
   // Check if there was a reason to force inlining or no inlining.
   if (!ShouldInline && CA.getCost() < CA.getThreshold())
     return InlineCost::getNever();
-  if (ShouldInline && (CA.isAlwaysInline() ||
-                       CA.getCost() >= CA.getThreshold()))
+  if (ShouldInline && CA.getCost() >= CA.getThreshold())
     return InlineCost::getAlways();
 
   return llvm::InlineCost::get(CA.getCost(), CA.getThreshold());
+}
+
+bool InlineCostAnalyzer::isInlineViable(Function &F) {
+  bool ReturnsTwice =F.getFnAttributes().hasAttribute(Attributes::ReturnsTwice);
+  for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+    // Disallow inlining of functions which contain an indirect branch.
+    if (isa<IndirectBrInst>(BI->getTerminator()))
+      return false;
+
+    for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
+         ++II) {
+      CallSite CS(II);
+      if (!CS)
+        continue;
+
+      // Disallow recursive calls.
+      if (&F == CS.getCalledFunction())
+        return false;
+
+      // Disallow calls which expose returns-twice to a function not previously
+      // attributed as such.
+      if (!ReturnsTwice && CS.isCall() &&
+          cast<CallInst>(CS.getInstruction())->canReturnTwice())
+        return false;
+    }
+  }
+
+  return true;
 }

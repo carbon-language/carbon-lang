@@ -32,6 +32,7 @@ namespace {
 
   // AlwaysInliner only inlines functions that are mark as "always inline".
   class AlwaysInliner : public Inliner {
+    InlineCostAnalyzer CA;
   public:
     // Use extremely low threshold.
     AlwaysInliner() : Inliner(ID, -2000000000, /*InsertLifetime*/true) {
@@ -63,35 +64,6 @@ Pass *llvm::createAlwaysInlinerPass(bool InsertLifetime) {
   return new AlwaysInliner(InsertLifetime);
 }
 
-/// \brief Minimal filter to detect invalid constructs for inlining.
-static bool isInlineViable(Function &F) {
-  bool ReturnsTwice =F.getFnAttributes().hasAttribute(Attributes::ReturnsTwice);
-  for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
-    // Disallow inlining of functions which contain an indirect branch.
-    if (isa<IndirectBrInst>(BI->getTerminator()))
-      return false;
-
-    for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
-         ++II) {
-      CallSite CS(II);
-      if (!CS)
-        continue;
-
-      // Disallow recursive calls.
-      if (&F == CS.getCalledFunction())
-        return false;
-
-      // Disallow calls which expose returns-twice to a function not previously
-      // attributed as such.
-      if (!ReturnsTwice && CS.isCall() &&
-          cast<CallInst>(CS.getInstruction())->canReturnTwice())
-        return false;
-    }
-  }
-
-  return true;
-}
-
 /// \brief Get the inline cost for the always-inliner.
 ///
 /// The always inliner *only* handles functions which are marked with the
@@ -106,27 +78,21 @@ static bool isInlineViable(Function &F) {
 /// likely not worth it in practice.
 InlineCost AlwaysInliner::getInlineCost(CallSite CS) {
   Function *Callee = CS.getCalledFunction();
-  // We assume indirect calls aren't calling an always-inline function.
-  if (!Callee) return InlineCost::getNever();
 
-  // We can't inline calls to external functions.
-  // FIXME: We shouldn't even get here.
-  if (Callee->isDeclaration()) return InlineCost::getNever();
+  // Only inline direct calls to functions with always-inline attributes
+  // that are viable for inlining. FIXME: We shouldn't even get here for
+  // declarations.
+  if (Callee && !Callee->isDeclaration() &&
+      Callee->getFnAttributes().hasAttribute(Attributes::AlwaysInline) &&
+      CA.isInlineViable(*Callee))
+    return InlineCost::getAlways();
 
-  // Return never for anything not marked as always inline.
-  if (!Callee->getFnAttributes().hasAttribute(Attributes::AlwaysInline))
-    return InlineCost::getNever();
-
-  // Do some minimal analysis to preclude non-viable functions.
-  if (!isInlineViable(*Callee))
-    return InlineCost::getNever();
-
-  // Otherwise, force inlining.
-  return InlineCost::getAlways();
+  return InlineCost::getNever();
 }
 
 // doInitialization - Initializes the vector of functions that have not
 // been annotated with the "always inline" attribute.
 bool AlwaysInliner::doInitialization(CallGraph &CG) {
+  CA.setDataLayout(getAnalysisIfAvailable<DataLayout>());
   return false;
 }
