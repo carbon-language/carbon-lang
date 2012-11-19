@@ -2003,7 +2003,8 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
 
-  if (SkipFunctionBodies && trySkippingFunctionBody()) {
+  if (SkipFunctionBodies && Actions.canSkipFunctionBody(Decl) &&
+      trySkippingFunctionBody()) {
     BodyScope.Exit();
     return Actions.ActOnFinishFunctionBody(Decl, 0);
   }
@@ -2045,7 +2046,8 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope) {
   else
     Actions.ActOnDefaultCtorInitializers(Decl);
 
-  if (SkipFunctionBodies && trySkippingFunctionBody()) {
+  if (SkipFunctionBodies && Actions.canSkipFunctionBody(Decl) &&
+      trySkippingFunctionBody()) {
     BodyScope.Exit();
     return Actions.ActOnFinishFunctionBody(Decl, 0);
   }

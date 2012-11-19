@@ -7984,6 +7984,22 @@ void Sema::computeNRVO(Stmt *Body, FunctionScopeInfo *Scope) {
     const_cast<VarDecl*>(NRVOCandidate)->setNRVOVariable(true);
 }
 
+bool Sema::canSkipFunctionBody(Decl *D) {
+  if (isa<ObjCMethodDecl>(D))
+    return true;
+
+  FunctionDecl *FD = 0;
+  if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
+    FD = FTD->getTemplatedDecl();
+  else
+    FD = cast<FunctionDecl>(D);
+
+  // We cannot skip the body of a function (or function template) which is
+  // constexpr, since we may need to evaluate its body in order to parse the
+  // rest of the file.
+  return !FD->isConstexpr();
+}
+
 Decl *Sema::ActOnFinishFunctionBody(Decl *D, Stmt *BodyArg) {
   return ActOnFinishFunctionBody(D, BodyArg, false);
 }

@@ -1379,6 +1379,15 @@ public:
     return D && isa<ObjCMethodDecl>(D);
   }
 
+  /// \brief Determine whether we can skip parsing the body of a function
+  /// definition, assuming we don't care about analyzing its body or emitting
+  /// code for that function.
+  ///
+  /// This will be \c false only if we may need the body of the function in
+  /// order to parse the rest of the program (for instance, if it is
+  /// \c constexpr in C++11 or has an 'auto' return type in C++14).
+  bool canSkipFunctionBody(Decl *D);
+
   void computeNRVO(Stmt *Body, sema::FunctionScopeInfo *Scope);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body, bool IsInstantiation);
