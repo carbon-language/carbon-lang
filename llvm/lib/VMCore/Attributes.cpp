@@ -281,14 +281,14 @@ bool AttrBuilder::hasAlignmentAttr() const {
 uint64_t AttrBuilder::getAlignment() const {
   if (!hasAlignmentAttr())
     return 0;
-  return 1U <<
+  return 1ULL <<
     (((Bits & AttributesImpl::getAttrMask(Attributes::Alignment)) >> 16) - 1);
 }
 
 uint64_t AttrBuilder::getStackAlignment() const {
   if (!hasAlignmentAttr())
     return 0;
-  return 1U <<
+  return 1ULL <<
     (((Bits & AttributesImpl::getAttrMask(Attributes::StackAlignment))>>26)-1);
 }
 

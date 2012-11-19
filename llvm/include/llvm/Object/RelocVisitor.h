@@ -80,17 +80,17 @@ private:
   RelocToApply zeroExtend(RelocToApply r, char Width) {
     if (Width == r.Width)
       return r;
-    r.Value &= (1 << ((Width * 8))) - 1;
+    r.Value &= (1LL << ((Width * 8))) - 1;
     return r;
   }
   RelocToApply signExtend(RelocToApply r, char Width) {
     if (Width == r.Width)
       return r;
-    bool SignBit = r.Value & (1 << ((Width * 8) - 1));
+    bool SignBit = r.Value & (1LL << ((Width * 8) - 1));
     if (SignBit) {
-      r.Value |= ~((1 << (Width * 8)) - 1);
+      r.Value |= ~((1LL << (Width * 8)) - 1);
     } else {
-      r.Value &= (1 << (Width * 8)) - 1;
+      r.Value &= (1LL << (Width * 8)) - 1;
     }
     return r;
   }
