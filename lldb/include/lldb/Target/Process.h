@@ -3137,8 +3137,7 @@ public:
     {
     public:
         ProcessEventHijacker (Process &process, Listener *listener) :
-            m_process (process),
-            m_listener (listener)
+            m_process (process)
         {
             m_process.HijackProcessEvents (listener);
         }
@@ -3149,7 +3148,6 @@ public:
          
     private:
         Process &m_process;
-        Listener *m_listener;
     };
     friend class ProcessEventHijacker;
     //------------------------------------------------------------------
