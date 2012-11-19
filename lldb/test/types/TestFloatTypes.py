@@ -24,6 +24,7 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         """Test that float-type variables are displayed correctly from a block."""
         self.build_and_run('float.cpp', set(['float']), bc=True)
 
+    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_float_type_with_dwarf(self):
         """Test that float-type variables are displayed correctly."""
@@ -41,6 +42,7 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         """Test that double-type variables are displayed correctly from a block."""
         self.build_and_run('double.cpp', set(['double']), bc=True)
 
+    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_double_type_with_dwarf(self):
         """Test that double-type variables are displayed correctly."""

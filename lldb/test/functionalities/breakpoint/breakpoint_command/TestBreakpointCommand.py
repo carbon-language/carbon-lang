@@ -26,6 +26,7 @@ class BreakpointCommandTestCase(TestBase):
         self.breakpoint_command_sequence()
         self.breakpoint_command_script_parameters ()
 
+    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_with_dwarf(self):
         """Test a sequence of breakpoint command add, list, and delete."""
