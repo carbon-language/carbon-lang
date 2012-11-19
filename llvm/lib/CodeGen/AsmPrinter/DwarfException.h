@@ -121,6 +121,8 @@ protected:
   ///     catches in the function.  This tables is reversed indexed base 1.
   void EmitExceptionTable();
 
+  virtual void EmitTypeInfos(unsigned TTypeEncoding);
+
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
@@ -175,6 +177,7 @@ public:
 };
 
 class ARMException : public DwarfException {
+  void EmitTypeInfos(unsigned TTypeEncoding);
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

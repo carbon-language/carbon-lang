@@ -93,3 +93,52 @@ void ARMException::EndFunction() {
 
   Asm->OutStreamer.EmitFnEnd();
 }
+
+void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {
+  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
+
+  bool VerboseAsm = Asm->OutStreamer.isVerboseAsm();
+
+  int Entry = 0;
+  // Emit the Catch TypeInfos.
+  if (VerboseAsm && !TypeInfos.empty()) {
+    Asm->OutStreamer.AddComment(">> Catch TypeInfos <<");
+    Asm->OutStreamer.AddBlankLine();
+    Entry = TypeInfos.size();
+  }
+
+  for (std::vector<const GlobalVariable *>::const_reverse_iterator
+         I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
+    const GlobalVariable *GV = *I;
+    if (VerboseAsm)
+      Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
+    if (GV)
+      Asm->EmitTTypeReference(GV, TTypeEncoding);
+    else
+      Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
+                                    0);
+  }
+
+  // Emit the Exception Specifications.
+  if (VerboseAsm && !FilterIds.empty()) {
+    Asm->OutStreamer.AddComment(">> Filter TypeInfos <<");
+    Asm->OutStreamer.AddBlankLine();
+    Entry = 0;
+  }
+  for (std::vector<unsigned>::const_iterator
+         I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
+    unsigned TypeID = *I;
+    if (VerboseAsm) {
+      --Entry;
+      if (TypeID != 0)
+        Asm->OutStreamer.AddComment("FilterInfo " + Twine(Entry));
+    }
+
+    if (TypeID == 0)
+      Asm->OutStreamer.EmitIntValue(0,Asm->GetSizeOfEncodedValue(TTypeEncoding),
+                                    0);
+    else
+      Asm->EmitTTypeReference(TypeInfos[TypeID - 1], TTypeEncoding);    
+  }
+}

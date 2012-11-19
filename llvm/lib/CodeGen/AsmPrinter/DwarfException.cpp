@@ -672,6 +672,18 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitSLEB128(Action.NextAction);
   }
 
+  EmitTypeInfos(TTypeEncoding);
+
+  Asm->EmitAlignment(2);
+}
+
+void DwarfException::EmitTypeInfos(unsigned TTypeEncoding) {
+  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
+
+  bool VerboseAsm = Asm->OutStreamer.isVerboseAsm();
+
+  int Entry = 0;
   // Emit the Catch TypeInfos.
   if (VerboseAsm && !TypeInfos.empty()) {
     Asm->OutStreamer.AddComment(">> Catch TypeInfos <<");
@@ -708,8 +720,6 @@ void DwarfException::EmitExceptionTable() {
 
     Asm->EmitULEB128(TypeID);
   }
-
-  Asm->EmitAlignment(2);
 }
 
 /// EndModule - Emit all exception information that should come after the
