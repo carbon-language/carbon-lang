@@ -884,6 +884,44 @@
                             <b>(lldb)</b> me r -o /tmp/mem.bin -b 0x1000 0x1200<br>
                         </td>
                     </tr>
+                    <tr><td class="header" colspan="2">Get information about a specific heap allocation (available on Mac OS X only).</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> info malloc 0x10010d680
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> process launch --environment MallocStackLogging=1 -- [ARGS]<br>	
+                            <b>(lldb)</b> malloc_info --stack-history 0x10010d680<br>
+                        </td>
+                    </tr>
+                    <tr><td class="header" colspan="2">Get information about a specific heap allocation and cast the result to any dynamic type that can be deduced (available on Mac OS X only)</td></tr>
+                    <tr>
+                        <td class="content">
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> malloc_info --type 0x10010d680<br>
+                        </td>
+                    </tr>
+                    <tr><td class="header" colspan="2">Find all heap blocks that contain a pointer specified by an expression EXPR (available on Mac OS X only).</td></tr>
+                    <tr>
+                        <td class="content">
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> ptr_refs EXPR <br>
+                        </td>
+                    </tr>
+                    <tr><td class="header" colspan="2">Find all heap blocks that contain a C string anywhere in the block (available on Mac OS X only).</td></tr>
+                    <tr>
+                        <td class="content">
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> cstr_refs CSTRING<br>
+                        </td>
+                    </tr>
                     <tr><td class="header" colspan="2">Disassemble the current function for the current frame.</td></tr>
                     <tr>
                         <td class="content">
