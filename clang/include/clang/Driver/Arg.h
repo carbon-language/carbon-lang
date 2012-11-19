@@ -72,7 +72,7 @@ namespace driver {
         const char *Value0, const char *Value1, const Arg *BaseArg = 0);
     ~Arg();
 
-    const Option getOption() const { return Opt; }
+    Option getOption() const { return Opt; }
     StringRef getSpelling() const { return Spelling; }
     unsigned getIndex() const { return Index; }
 
