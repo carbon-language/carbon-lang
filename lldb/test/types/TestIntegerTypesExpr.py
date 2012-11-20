@@ -12,6 +12,12 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 
+    def setUp(self):
+        # Call super's setUp().
+        AbstractBase.GenericTester.setUp(self)
+        # disable "There is a running process, kill it and restart?" prompt
+        self.runCmd("settings set auto-confirm true")
+
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_char_type_with_dsym(self):
@@ -24,7 +30,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that char-type variables are displayed correctly from a block."""
         self.build_and_run_expr('char.cpp', set(['char']), bc=True, qd=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_char_type_with_dwarf(self):
         """Test that char-type variable expressions are evaluated correctly."""
@@ -42,7 +47,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that 'unsigned char'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_char.cpp', set(['unsigned', 'char']), bc=True, qd=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_unsigned_char_type_with_dwarf(self):
         """Test that 'unsigned char'-type variable expressions are evaluated correctly."""
@@ -60,7 +64,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that short-type variables are displayed correctly from a block."""
         self.build_and_run_expr('short.cpp', set(['short']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_short_type_with_dwarf(self):
         """Test that short-type variable expressions are evaluated correctly."""
@@ -78,7 +81,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that 'unsigned short'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_short.cpp', set(['unsigned', 'short']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_unsigned_short_type_with_dwarf(self):
         """Test that 'unsigned short'-type variable expressions are evaluated correctly."""
@@ -96,7 +98,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that int-type variables are displayed correctly from a block."""
         self.build_and_run_expr('int.cpp', set(['int']), dsym=False)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_int_type_with_dwarf(self):
         """Test that int-type variable expressions are evaluated correctly."""
@@ -114,7 +115,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that 'unsigned int'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_int.cpp', set(['unsigned', 'int']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_unsigned_int_type_with_dwarf(self):
         """Test that 'unsigned int'-type variable expressions are evaluated correctly."""
@@ -132,7 +132,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that long-type variables are displayed correctly from a block."""
         self.build_and_run_expr('long.cpp', set(['long']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_long_type_with_dwarf(self):
         """Test that long-type variable expressions are evaluated correctly."""
@@ -150,7 +149,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that 'unsigned_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_long.cpp', set(['unsigned', 'long']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_unsigned_long_type_with_dwarf(self):
         """Test that 'unsigned long'-type variable expressions are evaluated correctly."""
@@ -171,7 +169,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that 'long_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('long_long.cpp', set(['long long']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_long_long_type_with_dwarf(self):
         """Test that 'long long'-type variable expressions are evaluated correctly."""
@@ -189,7 +186,6 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         """Test that 'unsigned_long_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_long_long.cpp', set(['unsigned', 'long long']), bc=True)
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_unsigned_long_long_type_with_dwarf(self):
         """Test that 'unsigned long long'-type variable expressions are evaluated correctly."""

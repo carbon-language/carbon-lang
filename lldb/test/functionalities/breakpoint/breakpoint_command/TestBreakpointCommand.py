@@ -26,7 +26,6 @@ class BreakpointCommandTestCase(TestBase):
         self.breakpoint_command_sequence()
         self.breakpoint_command_script_parameters ()
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14385")
     @dwarf_test
     def test_with_dwarf(self):
         """Test a sequence of breakpoint command add, list, and delete."""
@@ -39,6 +38,8 @@ class BreakpointCommandTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
+        # disable "There is a running process, kill it and restart?" prompt
+        self.runCmd("settings set auto-confirm true")
 
     def breakpoint_command_sequence(self):
         """Test a sequence of breakpoint command add, list, and delete."""
