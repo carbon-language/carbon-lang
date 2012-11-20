@@ -181,7 +181,7 @@ public:
     return Queue.begin() + idx;
   }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump();
 #endif
 };
