@@ -76,25 +76,6 @@ private:
 
   /// Operations
 
-  // Width is the width in bytes of the extend.
-  RelocToApply zeroExtend(RelocToApply r, char Width) {
-    if (Width == r.Width)
-      return r;
-    r.Value &= (1LL << ((Width * 8))) - 1;
-    return r;
-  }
-  RelocToApply signExtend(RelocToApply r, char Width) {
-    if (Width == r.Width)
-      return r;
-    bool SignBit = r.Value & (1LL << ((Width * 8) - 1));
-    if (SignBit) {
-      r.Value |= ~((1LL << (Width * 8)) - 1);
-    } else {
-      r.Value &= (1LL << (Width * 8)) - 1;
-    }
-    return r;
-  }
-
   /// X86-64 ELF
   RelocToApply visitELF_X86_64_NONE(RelocationRef R) {
     return RelocToApply(0, 0);
