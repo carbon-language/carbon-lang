@@ -12,10 +12,14 @@ from ctypes import c_void_p
 from ctypes import cdll
 
 import ctypes.util
+import platform
+
+# LLVM_VERSION: sync with PACKAGE_VERSION in autoconf/configure.ac and CMakeLists.txt
+#               but leave out the 'svn' suffix.
+LLVM_VERSION = '3.3'
 
 __all__ = [
     'c_object_p',
-    'find_library',
     'get_library',
 ]
 
@@ -87,20 +91,36 @@ class CachedProperty(object):
 
         return value
 
-def find_library():
-    # FIXME should probably have build system define absolute path of shared
-    # library at install time.
-    for lib in ['LLVM-3.1svn', 'libLLVM-3.1svn', 'LLVM', 'libLLVM']:
-        result = ctypes.util.find_library(lib)
-        if result:
-            return result
-
-    return None
-
 def get_library():
     """Obtain a reference to the llvm library."""
-    lib = find_library()
-    if not lib:
-        raise Exception('LLVM shared library not found!')
 
-    return cdll.LoadLibrary(lib)
+    # On Linux, ctypes.cdll.LoadLibrary() respects LD_LIBRARY_PATH
+    # while ctypes.util.find_library() doesn't.
+    # See http://docs.python.org/2/library/ctypes.html#finding-shared-libraries
+    #
+    # To make it possible to run the unit tests without installing the LLVM shared
+    # library into a default linker search path.  Always Try ctypes.cdll.LoadLibrary()
+    # with all possible library names first, then try ctypes.util.find_library().
+
+    names = ['LLVM-' + LLVM_VERSION, 'LLVM-' + LLVM_VERSION + 'svn']
+    t = platform.system()
+    if t == 'Darwin':
+        pfx, ext = 'lib', '.dylib'
+    elif t == 'Windows':
+        pfx, ext = '', '.dll'
+    else:
+        pfx, ext = 'lib', '.so'
+
+    for i in names:
+        try:
+            lib = cdll.LoadLibrary(pfx + i + ext)
+        except OSError:
+            pass
+        else:
+            return lib
+
+    for i in names:
+        t = ctypes.util.find_library(i)
+        if t:
+            return cdll.LoadLibrary(t)
+    raise Exception('LLVM shared library not found!')
