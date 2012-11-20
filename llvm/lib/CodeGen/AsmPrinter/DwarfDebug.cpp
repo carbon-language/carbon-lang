@@ -1582,7 +1582,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
 /// computeSizeAndOffset - Compute the size and offset of a DIE.
 ///
 unsigned
-DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
+DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   // Get the children.
   const std::vector<DIE *> &Children = Die->getChildren();
 
@@ -1613,7 +1613,7 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
            "Children flag not set");
 
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
-      Offset = computeSizeAndOffset(Children[j], Offset, (j + 1) == M);
+      Offset = computeSizeAndOffset(Children[j], Offset);
 
     // End of children marker.
     Offset += sizeof(int8_t);
@@ -1634,7 +1634,7 @@ void DwarfDebug::computeSizeAndOffsets() {
       sizeof(int16_t) + // DWARF version number
       sizeof(int32_t) + // Offset Into Abbrev. Section
       sizeof(int8_t);   // Pointer Size (in bytes)
-    computeSizeAndOffset(I->second->getCUDie(), Offset, true);
+    computeSizeAndOffset(I->second->getCUDie(), Offset);
   }
 }
 

@@ -357,9 +357,10 @@ private:
   ///
   void emitDIE(DIE *Die);
 
-  /// computeSizeAndOffset - Compute the size and offset of a DIE.
+  /// computeSizeAndOffset - Compute the size and offset of a DIE given
+  /// an incoming Offset.
   ///
-  unsigned computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last);
+  unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
 
   /// computeSizeAndOffsets - Compute the size and offset of all the DIEs.
   ///
