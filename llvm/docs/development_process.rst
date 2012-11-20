@@ -8,6 +8,7 @@ Development Process Documentation
 
    MakefileGuide
    Projects
+   LLVMBuild
 
 * :ref:`projects`
 
@@ -16,7 +17,7 @@ Development Process Documentation
   tree) allow the project code to be located outside (or inside) the ``llvm/``
   tree, while using LLVM header files and libraries.
 
-* `LLVMBuild Documentation <LLVMBuild.html>`_
+* :doc:`LLVMBuild`
 
   Describes the LLVMBuild organization and files used by LLVM to specify
   component descriptions.
