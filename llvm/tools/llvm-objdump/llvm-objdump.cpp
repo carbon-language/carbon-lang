@@ -100,6 +100,10 @@ MAttrs("mattr",
   cl::desc("Target specific attributes"),
   cl::value_desc("a1,+a2,-a3,..."));
 
+static cl::opt<bool>
+NoShowRawInsn("no-show-raw-insn", cl::desc("When disassembling instructions, "
+                                           "do not print the instruction bytes."));
+
 static StringRef ToolName;
 
 static bool error(error_code ec) {
@@ -321,8 +325,11 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
                                    DebugOut, nulls())) {
-          outs() << format("%8" PRIx64 ":\t", SectionAddr + Index);
-          DumpBytes(StringRef(Bytes.data() + Index, Size));
+          outs() << format("%8" PRIx64 ":", SectionAddr + Index);
+          if (!NoShowRawInsn) {
+            outs() << "\t";
+            DumpBytes(StringRef(Bytes.data() + Index, Size));
+          }
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";
         } else {
