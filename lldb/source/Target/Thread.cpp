@@ -1723,7 +1723,7 @@ Thread::Flush ()
     m_reg_context_sp.reset();
 }
 
-const bool
+bool
 Thread::IsStillAtLastBreakpointHit ()
 {
     // If we are currently stopped at a breakpoint, always return that stopinfo and don't reset it.
