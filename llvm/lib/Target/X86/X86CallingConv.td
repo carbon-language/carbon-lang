@@ -276,29 +276,6 @@ def CC_X86_Win64_C : CallingConv<[
   CCIfType<[f80], CCAssignToStack<0, 0>>
 ]>;
 
-// X86-64 Intel OpenCL built-ins calling convention.
-def CC_Intel_OCL_BI : CallingConv<[
-  CCIfType<[i32], CCIfSubtarget<"isTargetWin32()", CCAssignToStack<4, 4>>>,
-
-  CCIfType<[i32], CCIfSubtarget<"isTargetWin64()", CCAssignToReg<[ECX, EDX, R8D, R9D]>>>,
-  CCIfType<[i64], CCIfSubtarget<"isTargetWin64()", CCAssignToReg<[RCX, RDX, R8,  R9 ]>>>,
-
-  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX]>>,
-  CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX]>>,
-
- // The SSE vector arguments are passed in XMM registers.
-  CCIfType<[f32, f64, v4i32, v2i64, v4f32, v2f64],
-           CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,
-  
-  // The 256-bit vector arguments are passed in YMM registers.
-  CCIfType<[v8f32, v4f64, v8i32, v4i64],
-                CCAssignToReg<[YMM0, YMM1, YMM2, YMM3]>>,
-  
-  CCIfSubtarget<"isTargetWin64()", CCDelegateTo<CC_X86_Win64_C>>,
-  CCDelegateTo<CC_X86_64_C>
-]>;
-
-
 def CC_X86_64_GHC : CallingConv<[
   // Promote i8/i16/i32 arguments to i64.
   CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
@@ -466,6 +443,30 @@ def CC_X86_32_HiPE : CallingConv<[
   // Integer/Float values get stored in stack slots that are 4 bytes in
   // size and 4-byte aligned.
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>
+]>;
+
+// X86-64 Intel OpenCL built-ins calling convention.
+def CC_Intel_OCL_BI : CallingConv<[
+
+  CCIfType<[i32], CCIfSubtarget<"isTargetWin64()", CCAssignToReg<[ECX, EDX, R8D, R9D]>>>,
+  CCIfType<[i64], CCIfSubtarget<"isTargetWin64()", CCAssignToReg<[RCX, RDX, R8,  R9 ]>>>,
+
+  CCIfType<[i32], CCIfSubtarget<"is64Bit()", CCAssignToReg<[EDI, ESI, EDX, ECX]>>>,
+  CCIfType<[i64], CCIfSubtarget<"is64Bit()", CCAssignToReg<[RDI, RSI, RDX, RCX]>>>,
+
+  CCIfType<[i32], CCAssignToStack<4, 4>>,
+
+  // The SSE vector arguments are passed in XMM registers.
+  CCIfType<[f32, f64, v4i32, v2i64, v4f32, v2f64],
+           CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,
+
+  // The 256-bit vector arguments are passed in YMM registers.
+  CCIfType<[v8f32, v4f64, v8i32, v4i64],
+           CCAssignToReg<[YMM0, YMM1, YMM2, YMM3]>>,
+
+  CCIfSubtarget<"isTargetWin64()", CCDelegateTo<CC_X86_Win64_C>>,
+  CCIfSubtarget<"is64Bit()",       CCDelegateTo<CC_X86_64_C>>,
+  CCDelegateTo<CC_X86_32_C>
 ]>;
 
 //===----------------------------------------------------------------------===//
