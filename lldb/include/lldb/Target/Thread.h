@@ -859,7 +859,7 @@ protected:
     GetUnwinder ();
 
     // Check to see whether the thread is still at the last breakpoint hit that stopped it.
-    virtual const bool
+    virtual bool
     IsStillAtLastBreakpointHit();
 
     lldb::StackFrameListSP
