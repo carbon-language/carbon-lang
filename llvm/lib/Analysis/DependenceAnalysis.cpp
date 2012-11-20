@@ -221,8 +221,8 @@ bool Dependence::isScalar(unsigned level) const {
 //===----------------------------------------------------------------------===//
 // FullDependence methods
 
-FullDependence::FullDependence(const Instruction *Source,
-                               const Instruction *Destination,
+FullDependence::FullDependence(Instruction *Source,
+                               Instruction *Destination,
                                bool PossiblyLoopIndependent,
                                unsigned CommonLevels) :
   Dependence(Source, Destination),
@@ -649,10 +649,10 @@ bool isLoadOrStore(const Instruction *I) {
 
 
 static
-const Value *getPointerOperand(const Instruction *I) {
-  if (const LoadInst *LI = dyn_cast<LoadInst>(I))
+Value *getPointerOperand(Instruction *I) {
+  if (LoadInst *LI = dyn_cast<LoadInst>(I))
     return LI->getPointerOperand();
-  if (const StoreInst *SI = dyn_cast<StoreInst>(I))
+  if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->getPointerOperand();
   llvm_unreachable("Value is not load or store instruction");
   return 0;
@@ -3195,8 +3195,8 @@ static void dumpSmallBitVector(SmallBitVector &BV) {
 //            PLDI 1991
 //
 // Care is required to keep the code below up to date w.r.t. this routine.
-Dependence *DependenceAnalysis::depends(const Instruction *Src,
-                                        const Instruction *Dst,
+Dependence *DependenceAnalysis::depends(Instruction *Src,
+                                        Instruction *Dst,
                                         bool PossiblyLoopIndependent) {
   if ((!Src->mayReadFromMemory() && !Src->mayWriteToMemory()) ||
       (!Dst->mayReadFromMemory() && !Dst->mayWriteToMemory()))
@@ -3207,8 +3207,8 @@ Dependence *DependenceAnalysis::depends(const Instruction *Src,
     // can only analyze simple loads and stores, i.e., no calls, invokes, etc.
     return new Dependence(Src, Dst);
 
-  const Value *SrcPtr = getPointerOperand(Src);
-  const Value *DstPtr = getPointerOperand(Dst);
+  Value *SrcPtr = getPointerOperand(Src);
+  Value *DstPtr = getPointerOperand(Dst);
 
   switch (underlyingObjectsAlias(AA, DstPtr, SrcPtr)) {
   case AliasAnalysis::MayAlias:
@@ -3222,8 +3222,8 @@ Dependence *DependenceAnalysis::depends(const Instruction *Src,
     break; // The underlying objects alias; test accesses for dependence.
   }
 
-  const GEPOperator *SrcGEP = dyn_cast<GEPOperator>(SrcPtr);
-  const GEPOperator *DstGEP = dyn_cast<GEPOperator>(DstPtr);
+  GEPOperator *SrcGEP = dyn_cast<GEPOperator>(SrcPtr);
+  GEPOperator *DstGEP = dyn_cast<GEPOperator>(DstPtr);
   if (!SrcGEP || !DstGEP)
     return new Dependence(Src, Dst); // missing GEP, assume dependence
 
@@ -3605,8 +3605,8 @@ const  SCEV *DependenceAnalysis::getSplitIteration(const Dependence *Dep,
   assert(Dep && "expected a pointer to a Dependence");
   assert(Dep->isSplitable(SplitLevel) &&
          "Dep should be splitable at SplitLevel");
-  const Instruction *Src = Dep->getSrc();
-  const Instruction *Dst = Dep->getDst();
+  Instruction *Src = Dep->getSrc();
+  Instruction *Dst = Dep->getDst();
   assert(Src->mayReadFromMemory() || Src->mayWriteToMemory());
   assert(Dst->mayReadFromMemory() || Dst->mayWriteToMemory());
   assert(isLoadOrStore(Src));
