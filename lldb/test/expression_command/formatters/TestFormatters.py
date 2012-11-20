@@ -28,7 +28,7 @@ class ExprFormattersTestCase(TestBase):
     @dwarf_test
     def test_with_dwarf(self):
         """Test expr + formatters for good interoperability."""
-        self.buildDsym()
+        self.buildDwarf()
         self.do_my_test()
 
     def do_my_test(self):
