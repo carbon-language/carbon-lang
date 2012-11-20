@@ -583,7 +583,7 @@ git-imap-send. Here is an example to generate the patchset in Gmail's [Drafts].
 
 Then, your .git/config should have [imap] sections.
 
-.. code-block:: bash
+.. code-block:: ini
 
   [imap]
         host = imaps://imap.gmail.com
