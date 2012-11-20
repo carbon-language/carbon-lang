@@ -568,6 +568,10 @@ private:
 
     // Clamp the end offset to the end of the allocation. Note that this is
     // formulated to handle even the case where "BeginOffset + Size" overflows.
+    // NOTE! This may appear superficially to be something we could ignore
+    // entirely, but that is not so! There may be PHI-node uses where some
+    // instructions are dead but not others. We can't completely ignore the
+    // PHI node, and so have to record at least the information here.
     assert(AllocSize >= BeginOffset); // Established above.
     if (Size > AllocSize - BeginOffset) {
       DEBUG(dbgs() << "WARNING: Clamping a " << Size << " byte use @" << Offset
@@ -2492,6 +2496,23 @@ private:
 
     uint64_t Size = EndOffset - BeginOffset;
     bool IsSplitIntLoad = Size < TD.getTypeStoreSize(LI.getType());
+
+    // If this memory access can be shown to *statically* extend outside the
+    // bounds of the original allocation it's behavior is undefined. Rather
+    // than trying to transform it, just replace it with undef.
+    // FIXME: We should do something more clever for functions being
+    // instrumented by asan.
+    // FIXME: Eventually, once ASan and friends can flush out bugs here, this
+    // should be transformed to a load of null making it unreachable.
+    uint64_t OldAllocSize = TD.getTypeAllocSize(OldAI.getAllocatedType());
+    if (TD.getTypeStoreSize(LI.getType()) > OldAllocSize) {
+      LI.replaceAllUsesWith(UndefValue::get(LI.getType()));
+      Pass.DeadInsts.insert(&LI);
+      deleteIfTriviallyDead(OldOp);
+      DEBUG(dbgs() << "          to: undef!!\n");
+      return true;
+    }
+
     Type *TargetTy = IsSplitIntLoad ? Type::getIntNTy(LI.getContext(), Size * 8)
                                     : LI.getType();
     bool IsPtrAdjusted = false;
