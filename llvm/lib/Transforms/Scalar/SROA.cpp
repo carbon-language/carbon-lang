@@ -334,7 +334,7 @@ private:
   class UseBuilder;
   friend class AllocaPartitioning::UseBuilder;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   /// \brief Handle to alloca instruction to simplify method interfaces.
   AllocaInst &AI;
 #endif
@@ -1126,7 +1126,7 @@ void AllocaPartitioning::splitAndMergePartitions() {
 
 AllocaPartitioning::AllocaPartitioning(const DataLayout &TD, AllocaInst &AI)
     :
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
       AI(AI),
 #endif
       PointerEscapingInstr(0) {
