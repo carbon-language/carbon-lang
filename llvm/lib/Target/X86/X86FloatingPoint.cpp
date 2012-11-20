@@ -198,7 +198,7 @@ namespace {
     }
 
     /// getScratchReg - Return an FP register that is not currently in use.
-    unsigned getScratchReg() {
+    unsigned getScratchReg() const {
       for (int i = NumFPRegs - 1; i >= 8; --i)
         if (!isLive(i))
           return i;
@@ -206,7 +206,7 @@ namespace {
     }
 
     /// isScratchReg - Returns trus if RegNo is a scratch FP register.
-    bool isScratchReg(unsigned RegNo) {
+    bool isScratchReg(unsigned RegNo) const {
       return RegNo > 8 && RegNo < NumFPRegs;
     }
 
@@ -311,7 +311,7 @@ namespace {
     void handleSpecialFP(MachineBasicBlock::iterator &I);
 
     // Check if a COPY instruction is using FP registers.
-    bool isFPCopy(MachineInstr *MI) {
+    bool isFPCopy(MachineInstr *MI) const {
       unsigned DstReg = MI->getOperand(0).getReg();
       unsigned SrcReg = MI->getOperand(1).getReg();
 
