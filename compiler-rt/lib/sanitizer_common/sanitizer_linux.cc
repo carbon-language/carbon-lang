@@ -32,10 +32,9 @@
 #include <errno.h>
 
 // Are we using 32-bit or 64-bit syscalls?
-// We need to list the 64-bit architecures explicitly because for x32
-// (which defines __x86_64__) we have __WORDSIZE == 32,
-// but we still need to use 64-bit syscalls.
-#if defined(__x86_64__) || defined(__powerpc64__) || defined(__sparc64__)
+// x32 (which defines __x86_64__) has __WORDSIZE == 32
+// but it still needs to use 64-bit syscalls.
+#if defined(__x86_64__) || __WORDSIZE == 64
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 1
 #else
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 0
