@@ -2113,7 +2113,8 @@ static bool isVectorPromotionViable(const DataLayout &TD,
       return false;
 
     // FIXME: We should build shuffle vector instructions to handle
-    // non-element-sized accesses.
+    // non-element-sized accesses. See PR14055 for an example of where this
+    // matters.
     if ((EndOffset - BeginOffset) != ElementSize &&
         (EndOffset - BeginOffset) != VecSize)
       return false;
