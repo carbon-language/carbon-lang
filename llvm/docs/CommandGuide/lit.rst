@@ -430,14 +430,14 @@ TEST RUN OUTPUT FORMAT
 ~~~~~~~~~~~~~~~~~~~~~~
 
 
-The b<lit> output for a test run conforms to the following schema, in both short
-and verbose modes (although in short mode no PASS lines will be shown). This
-schema has been chosen to be relatively easy to reliably parse by a machine (for
-example in buildbot log scraping), and for other tools to generate.
+The **lit** output for a test run conforms to the following schema, in both
+short and verbose modes (although in short mode no PASS lines will be shown).
+This schema has been chosen to be relatively easy to reliably parse by a machine
+(for example in buildbot log scraping), and for other tools to generate.
 
-Each test result is expected to appear on a line that matches:
+Each test result is expected to appear on a line that matches::
 
-<result code>: <test name> (<progress info>)
+  <result code>: <test name> (<progress info>)
 
 where <result-code> is a standard test result such as PASS, FAIL, XFAIL, XPASS,
 UNRESOLVED, or UNSUPPORTED. The performance result codes of IMPROVED and
@@ -449,11 +449,11 @@ The <progress info> field can be used to report progress information such as
 (1/300) or can be empty, but even when empty the parentheses are required.
 
 Each test result may include additional (multiline) log information in the
-following format.
+following format::
 
-<log delineator> TEST '(<test name>)' <trailing delineator>
-... log message ...
-<log delineator>
+  <log delineator> TEST '(<test name>)' <trailing delineator>
+  ... log message ...
+  <log delineator>
 
 where <test name> should be the name of a preceding reported test, <log
 delineator> is a string of '\*' characters *at least* four characters long (the
