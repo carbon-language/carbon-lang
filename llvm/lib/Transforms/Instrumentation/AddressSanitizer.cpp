@@ -69,6 +69,7 @@ static const char *kAsanMappingOffsetName = "__asan_mapping_offset";
 static const char *kAsanMappingScaleName = "__asan_mapping_scale";
 static const char *kAsanStackMallocName = "__asan_stack_malloc";
 static const char *kAsanStackFreeName = "__asan_stack_free";
+static const char *kAsanGenPrefix = "__asan_gen_";
 
 static const int kAsanStackLeftRedzoneMagic = 0xf1;
 static const int kAsanStackMidRedzoneMagic = 0xf2;
@@ -239,7 +240,6 @@ struct AddressSanitizer : public FunctionPass {
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
   InlineAsm *EmptyAsm;
-  SmallSet<GlobalValue*, 32> GlobalsCreatedByAsan;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
 };
 
@@ -268,7 +268,12 @@ static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
 static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
   Constant *StrConst = ConstantDataArray::getString(M.getContext(), Str);
   return new GlobalVariable(M, StrConst->getType(), true,
-                            GlobalValue::PrivateLinkage, StrConst, "");
+                            GlobalValue::PrivateLinkage, StrConst,
+                            kAsanGenPrefix);
+}
+
+static bool GlobalWasGeneratedByAsan(GlobalVariable *G) {
+  return G->getName().find(kAsanGenPrefix) == 0;
 }
 
 Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
@@ -508,7 +513,7 @@ bool AddressSanitizer::ShouldInstrumentGlobal(GlobalVariable *G) {
   if (BL->isIn(*G)) return false;
   if (!Ty->isSized()) return false;
   if (!G->hasInitializer()) return false;
-  if (GlobalsCreatedByAsan.count(G)) return false;  // Our own global.
+  if (GlobalWasGeneratedByAsan(G)) return false;  // Our own global.
   // Touch only those globals that will not be defined in other modules.
   // Don't handle ODR type linkages since other modules may be built w/o asan.
   if (G->getLinkage() != GlobalVariable::ExternalLinkage &&
@@ -1093,7 +1098,6 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
   BasePlus1 = IRB.CreateIntToPtr(BasePlus1, IntptrPtrTy);
   GlobalVariable *StackDescriptionGlobal =
       createPrivateGlobalForString(*F.getParent(), StackDescription.str());
-  GlobalsCreatedByAsan.insert(StackDescriptionGlobal);
   Value *Description = IRB.CreatePointerCast(StackDescriptionGlobal, IntptrTy);
   IRB.CreateStore(Description, BasePlus1);
 
