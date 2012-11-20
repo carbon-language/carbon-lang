@@ -23,12 +23,25 @@ namespace __sanitizer {
 // Constants.
 const uptr kWordSize = __WORDSIZE / 8;
 const uptr kWordSizeInBits = 8 * kWordSize;
+#if defined(__powerpc__) || defined(__powerpc64__)
+// Current PPC64 kernels use 64K pages sizes, but they can be
+// configured with 4K or even other sizes.
+// We may want to use getpagesize() or sysconf(_SC_PAGESIZE) here rather than
+// hardcoding the values, but today these values need to be compile-time
+// constants.
+const uptr kPageSizeBits = 16;
+const uptr kPageSize = 1UL << kPageSizeBits;
+const uptr kCacheLineSize = 128;
+const uptr kMmapGranularity = kPageSize;
+#elif !defined(_WIN32)
 const uptr kPageSizeBits = 12;
 const uptr kPageSize = 1UL << kPageSizeBits;
 const uptr kCacheLineSize = 64;
-#ifndef _WIN32
 const uptr kMmapGranularity = kPageSize;
 #else
+const uptr kPageSizeBits = 12;
+const uptr kPageSize = 1UL << kPageSizeBits;
+const uptr kCacheLineSize = 64;
 const uptr kMmapGranularity = 1UL << 16;
 #endif
 

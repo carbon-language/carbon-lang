@@ -33,7 +33,12 @@ static uptr patch_pc(uptr pc) {
   // Cancel Thumb bit.
   pc = pc & (~1);
 #endif
+#if defined(__powerpc__) || defined(__powerpc64__)
+  // PCs are always 4 byte aligned.
+  return pc - 4;
+#else
   return pc - 1;
+#endif
 }
 
 static void PrintStackFramePrefix(uptr frame_num, uptr pc) {
@@ -135,6 +140,14 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
     }
     prev_frame = frame;
     frame = (uhwptr *)frame[0];
+  }
+}
+
+void StackTrace::PopStackFrames(uptr count) {
+  CHECK(size > count);
+  size -= count;
+  for (uptr i = 0; i < size; i++) {
+    trace[i] = trace[i + count];
   }
 }
 

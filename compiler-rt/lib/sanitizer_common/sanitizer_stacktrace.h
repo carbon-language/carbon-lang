@@ -45,6 +45,8 @@ struct StackTrace {
 
   void FastUnwindStack(uptr pc, uptr bp, uptr stack_top, uptr stack_bottom);
 
+  void PopStackFrames(uptr count);
+
   static uptr GetCurrentPc();
 
   static uptr CompressStack(StackTrace *stack,
