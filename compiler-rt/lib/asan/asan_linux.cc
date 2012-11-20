@@ -160,6 +160,8 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
     stack->max_size = max_s;
 #if defined(__arm__) || defined(__powerpc__) || defined(__powerpc64__)
     _Unwind_Backtrace(Unwind_Trace, stack);
+    // Pop off the two ASAN functions from the backtrace.
+    stack->PopStackFrames(2);
 #else
     if (!asan_inited) return;
     if (AsanThread *t = asanThreadRegistry().GetCurrent())
