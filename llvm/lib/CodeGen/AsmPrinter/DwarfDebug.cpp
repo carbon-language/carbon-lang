@@ -1796,7 +1796,7 @@ void DwarfDebug::emitDebugInfo() {
 
 /// emitAbbreviations - Emit the abbreviation section.
 ///
-void DwarfDebug::emitAbbreviations() const {
+void DwarfDebug::emitAbbreviations() {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.

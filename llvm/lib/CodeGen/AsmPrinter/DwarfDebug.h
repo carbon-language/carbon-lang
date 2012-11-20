@@ -372,7 +372,7 @@ private:
 
   /// emitAbbreviations - Emit the abbreviation section.
   ///
-  void emitAbbreviations() const;
+  void emitAbbreviations();
 
   /// emitEndOfLineMatrix - Emit the last address of the section and the end of
   /// the line matrix.
