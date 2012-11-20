@@ -364,11 +364,9 @@ void AddressSanitizer::instrumentMop(Instruction *I) {
       if (!ClInitializers)
         return;
       // If a global variable does not have dynamic initialization we don't
-      // have to instrument it.  However, if a global has external linkage, we
-      // assume it has dynamic initialization, as it may have an initializer
-      // in a different TU.
-      if (G->getLinkage() != GlobalVariable::ExternalLinkage &&
-          !DynamicallyInitializedGlobals.Contains(G))
+      // have to instrument it.  However, if a global does not have initailizer
+      // at all, we assume it has dynamic initializer (in other TU).
+      if (G->hasInitializer() && !DynamicallyInitializedGlobals.Contains(G))
         return;
     }
   }
