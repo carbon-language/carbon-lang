@@ -2793,7 +2793,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
                               Attributes::get(RetType->getContext(),
                                               FuncAttrs)));
 
-  AttrListPtr PAL = AttrListPtr::get(Attrs);
+  AttrListPtr PAL = AttrListPtr::get(Context, Attrs);
 
   if (PAL.getParamAttributes(1).hasAttribute(Attributes::StructRet) &&
       !RetType->isVoidTy())
@@ -3350,7 +3350,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
                                               FnAttrs)));
 
   // Finish off the Attributes and check them
-  AttrListPtr PAL = AttrListPtr::get(Attrs);
+  AttrListPtr PAL = AttrListPtr::get(Context, Attrs);
 
   InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB, Args);
   II->setCallingConv(CC);
@@ -3752,7 +3752,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
                                               FnAttrs)));
 
   // Finish off the Attributes and check them
-  AttrListPtr PAL = AttrListPtr::get(Attrs);
+  AttrListPtr PAL = AttrListPtr::get(Context, Attrs);
 
   CallInst *CI = CallInst::Create(Callee, Args);
   CI->setTailCall(isTail);
