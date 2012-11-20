@@ -53,7 +53,7 @@ void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
 void AsmPrinter::EmitCFAByte(unsigned Val) const {
   if (isVerbose()) {
     if (Val >= dwarf::DW_CFA_offset && Val < dwarf::DW_CFA_offset+64)
-      OutStreamer.AddComment("DW_CFA_offset + Reg (" + 
+      OutStreamer.AddComment("DW_CFA_offset + Reg (" +
                              Twine(Val-dwarf::DW_CFA_offset) + ")");
     else
       OutStreamer.AddComment(dwarf::CallFrameString(Val));
@@ -83,7 +83,7 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
   case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata8:
     return "indirect pcrel sdata8";
   }
-  
+
   return "<unknown encoding>";
 }
 
@@ -101,7 +101,7 @@ void AsmPrinter::EmitEncodingByte(unsigned Val, const char *Desc) const {
       OutStreamer.AddComment(Twine("Encoding = ") +
                              DecodeDWARFEncoding(Val));
   }
-  
+
   OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
 }
 
@@ -109,7 +109,7 @@ void AsmPrinter::EmitEncodingByte(unsigned Val, const char *Desc) const {
 unsigned AsmPrinter::GetSizeOfEncodedValue(unsigned Encoding) const {
   if (Encoding == dwarf::DW_EH_PE_omit)
     return 0;
-  
+
   switch (Encoding & 0x07) {
   default: llvm_unreachable("Invalid encoded value.");
   case dwarf::DW_EH_PE_absptr: return TM.getDataLayout()->getPointerSize();
@@ -119,10 +119,11 @@ unsigned AsmPrinter::GetSizeOfEncodedValue(unsigned Encoding) const {
   }
 }
 
-void AsmPrinter::EmitTTypeReference(const GlobalValue *GV, unsigned Encoding)const{
+void AsmPrinter::EmitTTypeReference(const GlobalValue *GV,
+                                    unsigned Encoding) const {
   if (GV) {
     const TargetLoweringObjectFile &TLOF = getObjFileLowering();
-  
+
     const MCExpr *Exp =
       TLOF.getTTypeGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
     OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
@@ -144,22 +145,22 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
     OutStreamer.EmitCOFFSecRel32(Label);
     return;
   }
-  
+
   // Get the section that we're referring to, based on SectionLabel.
   const MCSection &Section = SectionLabel->getSection();
-  
+
   // If Label has already been emitted, verify that it is in the same section as
   // section label for sanity.
   assert((!Label->isInSection() || &Label->getSection() == &Section) &&
          "Section offset using wrong section base for label");
-  
+
   // If the section in question will end up with an address of 0 anyway, we can
   // just emit an absolute reference to save a relocation.
   if (Section.isBaseAddressKnownZero()) {
     OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
     return;
   }
-  
+
   // Otherwise, emit it as a label difference from the start of the section.
   EmitLabelDifference(Label, SectionLabel, 4);
 }
