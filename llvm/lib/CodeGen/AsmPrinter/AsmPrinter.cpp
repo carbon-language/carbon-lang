@@ -90,9 +90,6 @@ static unsigned getGVAlignmentLog2(const GlobalValue *GV, const DataLayout &TD,
   return NumBits;
 }
 
-
-
-
 AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
   : MachineFunctionPass(ID),
     TM(tm), MAI(tm.getMCAsmInfo()),
@@ -129,7 +126,6 @@ unsigned AsmPrinter::getFunctionNumber() const {
 const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
   return TM.getTargetLowering()->getObjFileLowering();
 }
-
 
 /// getDataLayout - Return information about data layout.
 const DataLayout &AsmPrinter::getDataLayout() const {
@@ -1614,7 +1610,7 @@ static int isRepeatedByteSequence(const Value *V, TargetMachine &TM) {
     }
     return Byte;
   }
-  
+
   if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(V))
     return isRepeatedByteSequence(CDS);
 
@@ -1623,7 +1619,7 @@ static int isRepeatedByteSequence(const Value *V, TargetMachine &TM) {
 
 static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
                                              unsigned AddrSpace,AsmPrinter &AP){
-  
+
   // See if we can aggregate this into a .fill, if so, emit it as such.
   int Value = isRepeatedByteSequence(CDS, AP.TM);
   if (Value != -1) {
@@ -1632,7 +1628,7 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
     if (Bytes > 1)
       return AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
   }
-  
+
   // If this can be emitted with .ascii/.asciz, emit it as such.
   if (CDS->isString())
     return AP.OutStreamer.EmitBytes(CDS->getAsString(), AddrSpace);
@@ -1656,7 +1652,7 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
         float F;
         uint32_t I;
       };
-      
+
       F = CDS->getElementAsFloat(i);
       if (AP.isVerbose())
         AP.OutStreamer.GetCommentOS() << "float " << F << '\n';
@@ -1669,7 +1665,7 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
         double F;
         uint64_t I;
       };
-      
+
       F = CDS->getElementAsDouble(i);
       if (AP.isVerbose())
         AP.OutStreamer.GetCommentOS() << "double " << F << '\n';
@@ -1878,7 +1874,7 @@ static void emitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
 
   if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(CV))
     return emitGlobalConstantDataSequential(CDS, AddrSpace, AP);
-  
+
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
     return emitGlobalConstantArray(CVA, AddrSpace, AP);
 
@@ -1900,10 +1896,10 @@ static void emitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
         return emitGlobalConstantImpl(New, AddrSpace, AP);
     }
   }
-  
+
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
     return emitGlobalConstantVector(V, AddrSpace, AP);
-    
+
   // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
   // thread the streamer with EmitValue.
   AP.OutStreamer.EmitValue(lowerConstant(CV, AP), Size, AddrSpace);
