@@ -120,16 +120,16 @@ this (at the time of this writing):
   }
   ...
 
-This definition corresponds to a 32-bit register-register add instruction in the
-X86.  The string after the '``def``' string indicates the name of the
-record---"``ADD32rr``" in this case---and the comment at the end of the line
-indicates the superclasses of the definition.  The body of the record contains
-all of the data that TableGen assembled for the record, indicating that the
-instruction is part of the "X86" namespace, the pattern indicating how the the
-instruction should be emitted into the assembly file, that it is a two-address
-instruction, has a particular encoding, etc.  The contents and semantics of the
-information in the record is specific to the needs of the X86 backend, and is
-only shown as an example.
+This definition corresponds to the 32-bit register-register ``add`` instruction
+of the the x86 architecture.  ``def ADD32rr`` defines a record named
+``ADD32rr``, and the comment at the end of the line indicates the superclasses
+of the definition.  The body of the record contains all of the data that
+TableGen assembled for the record, indicating that the instruction is part of
+the "X86" namespace, the pattern indicating how the the instruction should be
+emitted into the assembly file, that it is a two-address instruction, has a
+particular encoding, etc.  The contents and semantics of the information in the
+record are specific to the needs of the X86 backend, and are only shown as an
+example.
 
 As you can see, a lot of information is needed for every instruction supported
 by the code generator, and specifying it all manually would be unmaintainable,
@@ -152,13 +152,12 @@ factor out the common features that instructions of its class share.  A key
 feature of TableGen is that it allows the end-user to define the abstractions
 they prefer to use when describing their information.
 
-Each def record has a special entry called "``NAME``."  This is the name of the
-def ("``ADD32rr``" above).  In the general case def names can be formed from
-various kinds of string processing expressions and ``NAME`` resolves to the
+Each ``def`` record has a special entry called "NAME".  This is the name of the
+record ("``ADD32rr``" above).  In the general case ``def`` names can be formed
+from various kinds of string processing expressions and ``NAME`` resolves to the
 final value obtained after resolving all of those expressions.  The user may
-refer to ``NAME`` anywhere she desires to use the ultimate name of the def.
-``NAME`` should not be defined anywhere else in user code to avoid conflict
-problems.
+refer to ``NAME`` anywhere she desires to use the ultimate name of the ``def``.
+``NAME`` should not be defined anywhere else in user code to avoid conflicts.
 
 Running TableGen
 ----------------
