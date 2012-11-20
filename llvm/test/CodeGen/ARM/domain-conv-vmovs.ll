@@ -98,3 +98,23 @@ define i32 @test_vmovs_no_sreg(i32 %in) {
 
   ret i32 %resi
 }
+
+
+; The point of this test is:
+;   + Make sure s1 is live before the BL
+;   + Make sure s1 is clobbered by the BL
+;   + Convince LLVM to emit a VMOV to S0
+;   + Convince LLVM to domain-convert this.
+
+; When all of those are satisfied, LLVM should *not* mark s1 as an implicit-use
+; because it's dead.
+
+declare float @clobbers_s1(float, float)
+
+define <2 x float> @test_clobbers_recognised(<2 x float> %invec, float %val) {
+  %elt = call float @clobbers_s1(float %val, float %val)
+
+  %vec = insertelement <2 x float> %invec, float %elt, i32 0
+  %res = fadd <2 x float> %vec, %vec
+  ret <2 x float> %res
+}

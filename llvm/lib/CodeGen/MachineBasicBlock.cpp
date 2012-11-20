@@ -982,7 +982,6 @@ MachineBasicBlock::LivenessQueryResult
 MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
                                            unsigned Reg, MachineInstr *MI,
                                            unsigned Neighborhood) {
-  
   unsigned N = Neighborhood;
   MachineBasicBlock *MBB = MI->getParent();
 
@@ -997,14 +996,18 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
       MachineOperandIteratorBase::PhysRegInfo Analysis =
         MIOperands(I).analyzePhysReg(Reg, TRI);
 
-      if (Analysis.Kills)
+      if (Analysis.Defines)
+        // Outputs happen after inputs so they take precedence if both are
+        // present.
+        return Analysis.DefinesDead ? LQR_Dead : LQR_Live;
+
+      if (Analysis.Kills || Analysis.Clobbers)
         // Register killed, so isn't live.
         return LQR_Dead;
 
-      else if (Analysis.DefinesOverlap || Analysis.ReadsOverlap)
+      else if (Analysis.ReadsOverlap)
         // Defined or read without a previous kill - live.
-        return (Analysis.Defines || Analysis.Reads) ? 
-          LQR_Live : LQR_OverlappingLive;
+        return Analysis.Reads ? LQR_Live : LQR_OverlappingLive;
 
     } while (I != MBB->begin() && --N > 0);
   }
@@ -1036,7 +1039,7 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
         return (Analysis.Reads) ?
           LQR_Live : LQR_OverlappingLive;
 
-      else if (Analysis.DefinesOverlap)
+      else if (Analysis.Clobbers || Analysis.Defines)
         // Defined (but not read) therefore cannot have been live.
         return LQR_Dead;
     }

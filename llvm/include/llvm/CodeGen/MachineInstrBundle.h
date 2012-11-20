@@ -149,15 +149,12 @@ public:
   /// PhysRegInfo - Information about a physical register used by a set of
   /// operands.
   struct PhysRegInfo {
-    /// Clobbers - Reg or an overlapping register is defined, or a regmask 
+    /// Clobbers - Reg or an overlapping register is defined, or a regmask
     /// clobbers Reg.
     bool Clobbers;
 
     /// Defines - Reg or a super-register is defined.
     bool Defines;
-
-    /// DefinesOverlap - Reg or an overlapping register is defined.
-    bool DefinesOverlap;
 
     /// Reads - Read or a super-register is read.
     bool Reads;

@@ -281,7 +281,7 @@ MachineOperandIteratorBase::PhysRegInfo
 MachineOperandIteratorBase::analyzePhysReg(unsigned Reg,
                                            const TargetRegisterInfo *TRI) {
   bool AllDefsDead = true;
-  PhysRegInfo PRI = {false, false, false, false, false, false, false};
+  PhysRegInfo PRI = {false, false, false, false, false, false};
 
   assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
          "analyzePhysReg not given a physical register!");
@@ -305,7 +305,9 @@ MachineOperandIteratorBase::analyzePhysReg(unsigned Reg,
       // Reg or a super-reg is read, and perhaps killed also.
       PRI.Reads = true;
       PRI.Kills = MO.isKill();
-    } if (IsRegOrOverlapping && MO.readsReg()) {
+    }
+
+    if (IsRegOrOverlapping && MO.readsReg()) {
       PRI.ReadsOverlap = true;// Reg or an overlapping register is read.
     }
 
