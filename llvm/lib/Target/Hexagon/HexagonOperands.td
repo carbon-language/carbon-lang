@@ -1,4 +1,4 @@
-//===- HexagonImmediates.td - Hexagon immediate processing -*- tablegen -*-===//
+//===- HexagonOperands.td - Hexagon immediate processing -*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
