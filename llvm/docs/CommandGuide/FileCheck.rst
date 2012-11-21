@@ -168,7 +168,7 @@ For example, something like this works as you'd expect:
    }
 
 "``CHECK-NEXT:``" directives reject the input unless there is exactly one
-newline between it an the previous directive.  A "``CHECK-NEXT:``" cannot be
+newline between it and the previous directive.  A "``CHECK-NEXT:``" cannot be
 the first directive in a file.
 
 The "CHECK-NOT:" directive
