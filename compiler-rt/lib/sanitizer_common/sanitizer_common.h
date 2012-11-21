@@ -21,7 +21,7 @@
 namespace __sanitizer {
 
 // Constants.
-const uptr kWordSize = __WORDSIZE / 8;
+const uptr kWordSize = SANITIZER_WORDSIZE / 8;
 const uptr kWordSizeInBits = 8 * kWordSize;
 #if defined(__powerpc__) || defined(__powerpc64__)
 // Current PPC64 kernels use 64K pages sizes, but they can be
@@ -187,7 +187,7 @@ INLINE int ToLower(int c) {
   return (c >= 'A' && c <= 'Z') ? (c + 'a' - 'A') : c;
 }
 
-#if __WORDSIZE == 64
+#if SANITIZER_WORDSIZE == 64
 # define FIRST_32_SECOND_64(a, b) (b)
 #else
 # define FIRST_32_SECOND_64(a, b) (a)

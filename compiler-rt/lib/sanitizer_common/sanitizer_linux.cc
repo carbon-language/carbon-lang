@@ -32,9 +32,9 @@
 #include <errno.h>
 
 // Are we using 32-bit or 64-bit syscalls?
-// x32 (which defines __x86_64__) has __WORDSIZE == 32
+// x32 (which defines __x86_64__) has SANITIZER_WORDSIZE == 32
 // but it still needs to use 64-bit syscalls.
-#if defined(__x86_64__) || __WORDSIZE == 64
+#if defined(__x86_64__) || SANITIZER_WORDSIZE == 64
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 1
 #else
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 0

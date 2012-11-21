@@ -344,7 +344,7 @@ TEST(AddressSanitizer, BitFieldNegativeTest) {
 }
 
 TEST(AddressSanitizer, OutOfMemoryTest) {
-  size_t size = __WORDSIZE == 64 ? (size_t)(1ULL << 48) : (0xf0000000);
+  size_t size = SANITIZER_WORDSIZE == 64 ? (size_t)(1ULL << 48) : (0xf0000000);
   EXPECT_EQ(0, realloc(0, size));
   EXPECT_EQ(0, realloc(0, ~Ident(0)));
   EXPECT_EQ(0, malloc(size));
@@ -448,9 +448,9 @@ TEST(AddressSanitizer, HugeMallocTest) {
   // 32-bit Mac 10.7 gives even less (< 1G).
   // (the libSystem malloc() allows allocating up to 2300 megabytes without
   // ASan).
-  size_t n_megs = __WORDSIZE == 32 ? 500 : 4100;
+  size_t n_megs = SANITIZER_WORDSIZE == 32 ? 500 : 4100;
 #else
-  size_t n_megs = __WORDSIZE == 32 ? 2600 : 4100;
+  size_t n_megs = SANITIZER_WORDSIZE == 32 ? 2600 : 4100;
 #endif
   TestLargeMalloc(n_megs << 20);
 }
@@ -479,7 +479,7 @@ void *ManyThreadsWorker(void *a) {
 }
 
 TEST(AddressSanitizer, ManyThreadsTest) {
-  const size_t kNumThreads = __WORDSIZE == 32 ? 30 : 1000;
+  const size_t kNumThreads = SANITIZER_WORDSIZE == 32 ? 30 : 1000;
   pthread_t t[kNumThreads];
   for (size_t i = 0; i < kNumThreads; i++) {
     pthread_create(&t[i], 0, (void* (*)(void *x))ManyThreadsWorker, (void*)i);
@@ -710,7 +710,7 @@ NOINLINE void ThrowFunc() {
 TEST(AddressSanitizer, CxxExceptionTest) {
   if (ASAN_UAR) return;
   // TODO(kcc): this test crashes on 32-bit for some reason...
-  if (__WORDSIZE == 32) return;
+  if (SANITIZER_WORDSIZE == 32) return;
   try {
     ThrowFunc();
   } catch(...) {}
@@ -1632,7 +1632,7 @@ TEST(AddressSanitizer, ThreadedTest) {
 
 #if ASAN_NEEDS_SEGV
 TEST(AddressSanitizer, ShadowGapTest) {
-#if __WORDSIZE == 32
+#if SANITIZER_WORDSIZE == 32
   char *addr = (char*)0x22000000;
 #else
   char *addr = (char*)0x0000100000080000;
@@ -1897,7 +1897,7 @@ TEST(AddressSanitizer, DISABLED_DemoOOBRightHigh) {
 }
 
 TEST(AddressSanitizer, DISABLED_DemoOOM) {
-  size_t size = __WORDSIZE == 64 ? (size_t)(1ULL << 40) : (0xf0000000);
+  size_t size = SANITIZER_WORDSIZE == 64 ? (size_t)(1ULL << 40) : (0xf0000000);
   printf("%p\n", malloc(size));
 }
 

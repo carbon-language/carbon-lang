@@ -58,7 +58,7 @@ static const uptr kMallocSizeClassStepLog = 26;
 static const uptr kMallocSizeClassStep = 1UL << kMallocSizeClassStepLog;
 
 static const uptr kMaxAllowedMallocSize =
-    (__WORDSIZE == 32) ? 3UL << 30 : 8UL << 30;
+    (SANITIZER_WORDSIZE == 32) ? 3UL << 30 : 8UL << 30;
 
 static inline bool IsAligned(uptr a, uptr alignment) {
   return (a & (alignment - 1)) == 0;
@@ -85,7 +85,7 @@ static inline uptr RoundUpToPowerOfTwo(uptr size) {
 
   unsigned long up;  // NOLINT
 #if !defined(_WIN32) || defined(__clang__)
-  up = __WORDSIZE - 1 - __builtin_clzl(size);
+  up = SANITIZER_WORDSIZE - 1 - __builtin_clzl(size);
 #elif defined(_WIN64)
   _BitScanReverse64(&up, size);
 #else

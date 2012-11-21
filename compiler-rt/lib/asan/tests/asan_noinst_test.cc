@@ -118,7 +118,7 @@ TEST(AddressSanitizer, DISABLED_InternalPrintShadow) {
 }
 
 static uptr pc_array[] = {
-#if __WORDSIZE == 64
+#if SANITIZER_WORDSIZE == 64
   0x7effbf756068ULL,
   0x7effbf75e5abULL,
   0x7effc0625b7cULL,
@@ -164,7 +164,7 @@ static uptr pc_array[] = {
   0x7effbcc3e726ULL,
   0x7effbcc40852ULL,
   0x7effb681ec4dULL,
-#endif  // __WORDSIZE
+#endif  // SANITIZER_WORDSIZE
   0xB0B5E768,
   0x7B682EC1,
   0x367F9918,
@@ -464,7 +464,7 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
   // chunks to fulfill future requests. So, future requests will decrease
   // the number of free bytes. Do this only on systems where there
   // is enough memory for such assumptions.
-  if (__WORDSIZE == 64 && !ASAN_LOW_MEMORY) {
+  if (SANITIZER_WORDSIZE == 64 && !ASAN_LOW_MEMORY) {
     static const size_t kNumOfChunks = 100;
     static const size_t kChunkSize = 100;
     char *chunks[kNumOfChunks];
@@ -486,7 +486,8 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
 
 static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<20, 357};
 static const size_t kManyThreadsIterations = 250;
-static const size_t kManyThreadsNumThreads = (__WORDSIZE == 32) ? 40 : 200;
+static const size_t kManyThreadsNumThreads =
+  (SANITIZER_WORDSIZE == 32) ? 40 : 200;
 
 void *ManyThreadsWithStatsWorker(void *arg) {
   (void)arg;
@@ -693,7 +694,7 @@ TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   std::vector<char *> pointers;
   std::vector<size_t> sizes;
   const size_t kNumMallocs =
-      (__WORDSIZE <= 32 || ASAN_LOW_MEMORY) ? 1 << 10 : 1 << 14;
+      (SANITIZER_WORDSIZE <= 32 || ASAN_LOW_MEMORY) ? 1 << 10 : 1 << 14;
   for (size_t i = 0; i < kNumMallocs; i++) {
     size_t size = i * 100 + 1;
     pointers.push_back((char*)malloc(size));

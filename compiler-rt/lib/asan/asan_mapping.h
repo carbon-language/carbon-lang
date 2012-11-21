@@ -30,7 +30,7 @@ extern __attribute__((visibility("default"))) uptr __asan_mapping_offset;
 #  define SHADOW_OFFSET (0)
 # else
 #  define SHADOW_SCALE (3)
-#  if __WORDSIZE == 32
+#  if SANITIZER_WORDSIZE == 32
 #   define SHADOW_OFFSET (1 << 29)
 #  else
 #   if defined(__powerpc64__)
@@ -46,15 +46,15 @@ extern __attribute__((visibility("default"))) uptr __asan_mapping_offset;
 #define MEM_TO_SHADOW(mem) (((mem) >> SHADOW_SCALE) | (SHADOW_OFFSET))
 #define SHADOW_TO_MEM(shadow) (((shadow) - SHADOW_OFFSET) << SHADOW_SCALE)
 
-#if __WORDSIZE == 64
+#if SANITIZER_WORDSIZE == 64
 # if defined(__powerpc64__)
   static const uptr kHighMemEnd = 0x00000fffffffffffUL;
 # else
   static const uptr kHighMemEnd = 0x00007fffffffffffUL;
 # endif
-#else  // __WORDSIZE == 32
+#else  // SANITIZER_WORDSIZE == 32
   static const uptr kHighMemEnd = 0xffffffff;
-#endif  // __WORDSIZE
+#endif  // SANITIZER_WORDSIZE
 
 
 #define kLowMemBeg      0

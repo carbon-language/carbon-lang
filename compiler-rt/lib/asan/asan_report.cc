@@ -44,7 +44,7 @@ void AppendToErrorMessageBuffer(const char *buffer) {
 
 static void PrintBytes(const char *before, uptr *a) {
   u8 *bytes = (u8*)a;
-  uptr byte_num = (__WORDSIZE) / 8;
+  uptr byte_num = (SANITIZER_WORDSIZE) / 8;
   Printf("%s%p:", before, (void*)a);
   for (uptr i = 0; i < byte_num; i++) {
     Printf(" %x%x", bytes[i] >> 4, bytes[i] & 15);

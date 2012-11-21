@@ -126,7 +126,7 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
     *offset = addr - bottom;
     return  (const char *)((uptr*)bottom)[1];
   }
-  uptr aligned_addr = addr & ~(__WORDSIZE/8 - 1);  // align addr.
+  uptr aligned_addr = addr & ~(SANITIZER_WORDSIZE/8 - 1);  // align addr.
   u8 *shadow_ptr = (u8*)MemToShadow(aligned_addr);
   u8 *shadow_bottom = (u8*)MemToShadow(bottom);
 

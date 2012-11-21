@@ -156,7 +156,7 @@ void StackTrace::PopStackFrames(uptr count) {
 // the previous one, we record a 31-bit offset instead of the full pc.
 SANITIZER_INTERFACE_ATTRIBUTE
 uptr StackTrace::CompressStack(StackTrace *stack, u32 *compressed, uptr size) {
-#if __WORDSIZE == 32
+#if SANITIZER_WORDSIZE == 32
   // Don't compress, just copy.
   uptr res = 0;
   for (uptr i = 0; i < stack->size && i < size; i++) {
@@ -197,7 +197,7 @@ uptr StackTrace::CompressStack(StackTrace *stack, u32 *compressed, uptr size) {
     compressed[c_index] = 0;
   if (c_index + 1 < size)
     compressed[c_index + 1] = 0;
-#endif  // __WORDSIZE
+#endif  // SANITIZER_WORDSIZE
 
   // debug-only code
 #if 0
@@ -220,7 +220,7 @@ uptr StackTrace::CompressStack(StackTrace *stack, u32 *compressed, uptr size) {
 SANITIZER_INTERFACE_ATTRIBUTE
 void StackTrace::UncompressStack(StackTrace *stack,
                                  u32 *compressed, uptr size) {
-#if __WORDSIZE == 32
+#if SANITIZER_WORDSIZE == 32
   // Don't uncompress, just copy.
   stack->size = 0;
   for (uptr i = 0; i < size && i < kStackTraceMax; i++) {
@@ -255,7 +255,7 @@ void StackTrace::UncompressStack(StackTrace *stack,
     stack->trace[stack->size++] = pc;
     prev_pc = pc;
   }
-#endif  // __WORDSIZE
+#endif  // SANITIZER_WORDSIZE
 }
 
 }  // namespace __sanitizer

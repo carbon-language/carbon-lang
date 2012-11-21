@@ -42,7 +42,7 @@ namespace __asan {
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
-# if __WORDSIZE == 64
+# if SANITIZER_WORDSIZE == 64
   *pc = ucontext->uc_mcontext->__ss.__rip;
   *bp = ucontext->uc_mcontext->__ss.__rbp;
   *sp = ucontext->uc_mcontext->__ss.__rsp;
@@ -50,7 +50,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = ucontext->uc_mcontext->__ss.__eip;
   *bp = ucontext->uc_mcontext->__ss.__ebp;
   *sp = ucontext->uc_mcontext->__ss.__esp;
-# endif  // __WORDSIZE
+# endif  // SANITIZER_WORDSIZE
 }
 
 int GetMacosVersion() {
@@ -179,7 +179,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
 // kHighMemBeg or kHighMemEnd.
 static void *island_allocator_pos = 0;
 
-#if __WORDSIZE == 32
+#if SANITIZER_WORDSIZE == 32
 # define kIslandEnd (0xffdf0000 - kPageSize)
 # define kIslandBeg (kIslandEnd - 256 * kPageSize)
 #else

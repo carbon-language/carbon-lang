@@ -47,12 +47,10 @@ typedef __int64          int64_t;
 # define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 #endif
 
-#ifndef __WORDSIZE
 #if __LP64__ || defined(_WIN64)
-#define __WORDSIZE 64
+#  define SANITIZER_WORDSIZE 64
 #else
-#define __WORDSIZE 32
-#endif
+#  define SANITIZER_WORDSIZE 32
 #endif
 
 // Make the compiler think that something is going on there.

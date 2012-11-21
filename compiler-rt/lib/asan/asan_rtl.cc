@@ -134,7 +134,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->unmap_shadow_on_exit = false;
   f->abort_on_error = false;
   f->atexit = false;
-  f->disable_core = (__WORDSIZE == 64);
+  f->disable_core = (SANITIZER_WORDSIZE == 64);
   f->strip_path_prefix = "";
   f->allow_reexec = true;
   f->print_full_thread_history = true;
