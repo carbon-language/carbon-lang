@@ -20,7 +20,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output [0|<]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -82,7 +82,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output [0|<]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -146,7 +146,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output [0|<]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -208,7 +208,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output [0|<]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -268,7 +268,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output [0|<]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -329,7 +329,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output [0|<]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -390,7 +390,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [S S|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [* *|<]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader

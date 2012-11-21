@@ -19,7 +19,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -70,7 +70,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [* *|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [* *|<]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   %0 = add i64 %n, 1
@@ -136,7 +136,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -186,7 +186,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -236,7 +236,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -286,7 +286,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -336,7 +336,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -386,7 +386,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -436,7 +436,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -486,7 +486,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -537,7 +537,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -587,7 +587,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -637,7 +637,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - input [= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - output [= =|<]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]

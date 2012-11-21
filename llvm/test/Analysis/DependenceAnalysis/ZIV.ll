@@ -19,7 +19,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output!
 
   %add1 = add i64 %n, 1
   %arrayidx2 = getelementptr inbounds i32* %A, i64 %add1
@@ -42,7 +42,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output!
 
   %add = add i64 %n, 1
   %arrayidx1 = getelementptr inbounds i32* %A, i64 %add
@@ -65,7 +65,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - confused!
+; CHECK: da analyze - consistent output!
 
   %arrayidx1 = getelementptr inbounds i32* %A, i64 %m
   %0 = load i32* %arrayidx1, align 4
