@@ -355,30 +355,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     if (Function->getStorageClass() == SC_PrivateExtern)
       LV.mergeVisibility(HiddenVisibility, true);
 
-    // C99 6.2.2p5:
-    //   If the declaration of an identifier for a function has no
-    //   storage-class specifier, its linkage is determined exactly
-    //   as if it were declared with the storage-class specifier
-    //   extern.
-    if (!Context.getLangOpts().CPlusPlus &&
-        (Function->getStorageClass() == SC_Extern ||
-         Function->getStorageClass() == SC_PrivateExtern ||
-         Function->getStorageClass() == SC_None)) {
-      // C99 6.2.2p4:
-      //   For an identifier declared with the storage-class specifier
-      //   extern in a scope in which a prior declaration of that
-      //   identifier is visible, if the prior declaration specifies
-      //   internal or external linkage, the linkage of the identifier
-      //   at the later declaration is the same as the linkage
-      //   specified at the prior declaration. If no prior declaration
-      //   is visible, or if the prior declaration specifies no
-      //   linkage, then the identifier has external linkage.
-      if (const FunctionDecl *PrevFunc = Function->getPreviousDecl()) {
-        LinkageInfo PrevLV = getLVForDecl(PrevFunc, OnlyTemplate);
-        if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
-        LV.mergeVisibility(PrevLV);
-      }
-    }
+    // Note that Sema::MergeCompatibleFunctionDecls already takes care of
+    // merging storage classes and visibility attributes, so we don't have to
+    // look at previous decls in here.
 
     // In C++, then if the type of the function uses a type with
     // unique-external linkage, it's not legally usable from outside
