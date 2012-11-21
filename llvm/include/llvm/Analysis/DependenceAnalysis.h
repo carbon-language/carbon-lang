@@ -18,6 +18,16 @@
 // of memory references in a function, returning either NULL, for no dependence,
 // or a more-or-less detailed description of the dependence between them.
 //
+// This pass exists to support the DependenceGraph pass. There are two separate
+// passes because there's a useful separation of concerns. A dependence exists
+// if two conditions are met:
+//
+//    1) Two instructions reference the same memory location, and
+//    2) There is a flow of control leading from one instruction to the other.
+//
+// DependenceAnalysis attacks the first condition; DependenceGraph will attack
+// the second (it's not yet ready).
+//
 // Please note that this is work in progress and the interface is subject to
 // change.
 //
