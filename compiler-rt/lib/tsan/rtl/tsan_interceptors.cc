@@ -1228,8 +1228,10 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE ||
       // If we are sending signal to ourselves, we must process it now.
       (sctx && sig == sctx->int_signal_send) ||
-      // If we are in blocking function, we can safely process it now.
-      (sctx && sctx->in_blocking_func)) {
+      // If we are in blocking function, we can safely process it now
+      // (but check if we are in a recursive interceptor,
+      // i.e. pthread_join()->munmap()).
+      (sctx && sctx->in_blocking_func && thr->in_rtl == 1)) {
     CHECK(thr->in_rtl == 0 || thr->in_rtl == 1);
     int in_rtl = thr->in_rtl;
     thr->in_rtl = 0;
