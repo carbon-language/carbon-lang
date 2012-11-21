@@ -307,8 +307,6 @@ let isCodeGenOnly = 1 in {
 } // isCodeGenOnly = 1
 }
 
-let Predicates = [HasFMA4] in {
-
 defm VFMADDSS4  : fma4s<0x6A, "vfmaddss", FR32, f32mem, f32, X86Fmadd, loadf32>,
                   fma4s_int<0x6A, "vfmaddss", ssmem, sse_load_f32,
                             int_x86_fma_vfmadd_ss>;
@@ -338,29 +336,33 @@ defm VFNMSUBSD4 : fma4s<0x7F, "vfnmsubsd", FR64, f64mem, f64,
                   fma4s_int<0x7F, "vfnmsubsd", sdmem, sse_load_f64,
                             int_x86_fma_vfnmsub_sd>;
 
-defm VFMADDPS4    : fma4p<0x68, "vfmaddps", X86Fmadd, v4f32, v8f32,
-                          memopv4f32, memopv8f32>;
-defm VFMADDPD4    : fma4p<0x69, "vfmaddpd", X86Fmadd, v2f64, v4f64,
-                          memopv2f64, memopv4f64>;
-defm VFMSUBPS4    : fma4p<0x6C, "vfmsubps", X86Fmsub, v4f32, v8f32,
-                          memopv4f32, memopv8f32>;
-defm VFMSUBPD4    : fma4p<0x6D, "vfmsubpd", X86Fmsub, v2f64, v4f64,
-                          memopv2f64, memopv4f64>;
-defm VFNMADDPS4   : fma4p<0x78, "vfnmaddps", X86Fnmadd, v4f32, v8f32,
-                          memopv4f32, memopv8f32>;
-defm VFNMADDPD4   : fma4p<0x79, "vfnmaddpd", X86Fnmadd, v2f64, v4f64,
-                          memopv2f64, memopv4f64>;
-defm VFNMSUBPS4   : fma4p<0x7C, "vfnmsubps", X86Fnmsub, v4f32, v8f32,
-                          memopv4f32, memopv8f32>;
-defm VFNMSUBPD4   : fma4p<0x7D, "vfnmsubpd", X86Fnmsub, v2f64, v4f64,
-                          memopv2f64, memopv4f64>;
-defm VFMADDSUBPS4 : fma4p<0x5C, "vfmaddsubps", X86Fmaddsub, v4f32, v8f32,
-                          memopv4f32, memopv8f32>;
-defm VFMADDSUBPD4 : fma4p<0x5D, "vfmaddsubpd", X86Fmaddsub, v2f64, v4f64,
-                          memopv2f64, memopv4f64>;
-defm VFMSUBADDPS4 : fma4p<0x5E, "vfmsubaddps", X86Fmsubadd, v4f32, v8f32,
-                          memopv4f32, memopv8f32>;
-defm VFMSUBADDPD4 : fma4p<0x5F, "vfmsubaddpd", X86Fmsubadd, v2f64, v4f64,
-                          memopv2f64, memopv4f64>;
-} // HasFMA4
+let ExeDomain = SSEPackedSingle in {
+  defm VFMADDPS4    : fma4p<0x68, "vfmaddps", X86Fmadd, v4f32, v8f32,
+                            memopv4f32, memopv8f32>;
+  defm VFMSUBPS4    : fma4p<0x6C, "vfmsubps", X86Fmsub, v4f32, v8f32,
+                            memopv4f32, memopv8f32>;
+  defm VFNMADDPS4   : fma4p<0x78, "vfnmaddps", X86Fnmadd, v4f32, v8f32,
+                            memopv4f32, memopv8f32>;
+  defm VFNMSUBPS4   : fma4p<0x7C, "vfnmsubps", X86Fnmsub, v4f32, v8f32,
+                            memopv4f32, memopv8f32>;
+  defm VFMADDSUBPS4 : fma4p<0x5C, "vfmaddsubps", X86Fmaddsub, v4f32, v8f32,
+                            memopv4f32, memopv8f32>;
+  defm VFMSUBADDPS4 : fma4p<0x5E, "vfmsubaddps", X86Fmsubadd, v4f32, v8f32,
+                            memopv4f32, memopv8f32>;
+}
+
+let ExeDomain = SSEPackedDouble in {
+  defm VFMADDPD4    : fma4p<0x69, "vfmaddpd", X86Fmadd, v2f64, v4f64,
+                            memopv2f64, memopv4f64>;
+  defm VFMSUBPD4    : fma4p<0x6D, "vfmsubpd", X86Fmsub, v2f64, v4f64,
+                            memopv2f64, memopv4f64>;
+  defm VFNMADDPD4   : fma4p<0x79, "vfnmaddpd", X86Fnmadd, v2f64, v4f64,
+                            memopv2f64, memopv4f64>;
+  defm VFNMSUBPD4   : fma4p<0x7D, "vfnmsubpd", X86Fnmsub, v2f64, v4f64,
+                            memopv2f64, memopv4f64>;
+  defm VFMADDSUBPD4 : fma4p<0x5D, "vfmaddsubpd", X86Fmaddsub, v2f64, v4f64,
+                            memopv2f64, memopv4f64>;
+  defm VFMSUBADDPD4 : fma4p<0x5F, "vfmsubaddpd", X86Fmsubadd, v2f64, v4f64,
+                            memopv2f64, memopv4f64>;
+}
 

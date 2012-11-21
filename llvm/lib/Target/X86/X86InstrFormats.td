@@ -570,7 +570,7 @@ class FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
 // FMA4 Instruction Templates
 class FMA4<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern, InstrItinClass itin = IIC_DEFAULT>
-      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA,
+      : I<o, F, outs, ins, asm, pattern, itin>, TA,
         OpSize, VEX_4V, VEX_I8IMM, Requires<[HasFMA4]>;
 
 // XOP 2, 3 and 4 Operand Instruction Template
