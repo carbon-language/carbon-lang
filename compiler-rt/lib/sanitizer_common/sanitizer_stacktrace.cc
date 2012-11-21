@@ -144,7 +144,7 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
 }
 
 void StackTrace::PopStackFrames(uptr count) {
-  CHECK(size > count);
+  CHECK(size >= count);
   size -= count;
   for (uptr i = 0; i < size; i++) {
     trace[i] = trace[i + count];
