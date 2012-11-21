@@ -206,7 +206,7 @@ namespace {
     }
 
     /// isScratchReg - Returns trus if RegNo is a scratch FP register.
-    bool isScratchReg(unsigned RegNo) const {
+    static bool isScratchReg(unsigned RegNo) {
       return RegNo > 8 && RegNo < NumFPRegs;
     }
 
@@ -311,7 +311,7 @@ namespace {
     void handleSpecialFP(MachineBasicBlock::iterator &I);
 
     // Check if a COPY instruction is using FP registers.
-    bool isFPCopy(MachineInstr *MI) const {
+    static bool isFPCopy(MachineInstr *MI) {
       unsigned DstReg = MI->getOperand(0).getReg();
       unsigned SrcReg = MI->getOperand(1).getReg();
 
