@@ -28,7 +28,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""
-        self.buildDsym()
+        self.buildDwarf()
         self.call_function()
 
     def call_function(self):

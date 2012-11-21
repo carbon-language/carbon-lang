@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include <map>

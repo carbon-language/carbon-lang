@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <fstream>
 #include <iostream>
