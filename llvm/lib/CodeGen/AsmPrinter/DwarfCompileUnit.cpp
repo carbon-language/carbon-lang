@@ -132,7 +132,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIVariable V) {
   // Verify variable.
   if (!V.Verify())
     return;
-  
+
   unsigned Line = V.getLineNumber();
   if (Line == 0)
     return;
@@ -231,9 +231,9 @@ void CompileUnit::addSourceLine(DIE *Die, DINameSpace NS) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
-/// addVariableAddress - Add DW_AT_location attribute for a 
+/// addVariableAddress - Add DW_AT_location attribute for a
 /// DbgVariable based on provided MachineLocation.
-void CompileUnit::addVariableAddress(DbgVariable *&DV, DIE *Die, 
+void CompileUnit::addVariableAddress(DbgVariable *&DV, DIE *Die,
                                      MachineLocation Location) {
   if (DV->variableHasComplexAddress())
     addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
@@ -492,7 +492,7 @@ bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
     case 64: Form = dwarf::DW_FORM_data8; break;
     default: break;
   }
-  SignedConstant ? addSInt(Block, 0, Form, MO.getImm()) 
+  SignedConstant ? addSInt(Block, 0, Form, MO.getImm())
     : addUInt(Block, 0, Form, MO.getImm());
 
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
@@ -535,7 +535,7 @@ bool CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
     case 16: form = dwarf::DW_FORM_data2; break;
     case 32: form = dwarf::DW_FORM_data4; break;
     case 64: form = dwarf::DW_FORM_data8; break;
-    default: 
+    default:
       form = Unsigned ? dwarf::DW_FORM_udata : dwarf::DW_FORM_sdata;
     }
     if (Unsigned)
@@ -635,7 +635,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
                      DwarfAccelTable::eTypeFlagClassIsImplementation : 0;
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
-  
+
   addToContextOwner(TyDIE, Ty.getContext());
   return TyDIE;
 }
@@ -670,8 +670,8 @@ void CompileUnit::addType(DIE *Entity, DIType Ty, unsigned Attribute) {
 ///
 void CompileUnit::addGlobalType(DIType Ty) {
   DIDescriptor Context = Ty.getContext();
-  if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl() 
-      && (!Context || Context.isCompileUnit() || Context.isFile() 
+  if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl()
+      && (!Context || Context.isCompileUnit() || Context.isFile()
           || Context.isNameSpace()))
     if (DIEEntry *Entry = getDIEEntry(Ty))
       GlobalTypes[Ty.getName()] = Entry->getEntry();
@@ -830,7 +830,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         else if (SP.isPrivate())
           addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
                   dwarf::DW_ACCESS_private);
-        else 
+        else
           addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
         if (SP.isExplicit())
@@ -878,7 +878,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         if (Property.isNonAtomicObjCProperty())
           PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_nonatomic;
         if (PropertyAttributes)
-          addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, 0, 
+          addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, 0,
                  PropertyAttributes);
 
         DIEEntry *Entry = getDIEEntry(Element);
@@ -951,7 +951,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   }
 }
 
-/// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE 
+/// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateTypeParameter.
 DIE *
 CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
@@ -965,7 +965,7 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
   return ParamDIE;
 }
 
-/// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE 
+/// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateValueParameter.
 DIE *
 CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV){
@@ -977,7 +977,7 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV){
   addType(ParamDIE, TPV.getType());
   if (!TPV.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, TPV.getName());
-  addUInt(ParamDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata, 
+  addUInt(ParamDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
           TPV.getValue());
   return ParamDIE;
 }
@@ -1095,7 +1095,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   if (!SP.isDefinition()) {
     addFlag(SPDie, dwarf::DW_AT_declaration);
-    
+
     // Add arguments. Do not add arguments for subprogram definition. They will
     // be handled while processing variables.
     DICompositeType SPTy = SP.getType();
@@ -1213,7 +1213,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     } else {
       addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
     }
-  } else if (const ConstantInt *CI = 
+  } else if (const ConstantInt *CI =
              dyn_cast_or_null<ConstantInt>(GV.getConstant()))
     addConstantValue(VariableDIE, CI, GTy.isUnsignedDIType());
   else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
@@ -1226,7 +1226,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
                     Asm->Mang->getSymbol(cast<GlobalValue>(Ptr)));
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     SmallVector<Value*, 3> Idx(CE->op_begin()+1, CE->op_end());
-    addUInt(Block, 0, dwarf::DW_FORM_udata, 
+    addUInt(Block, 0, dwarf::DW_FORM_udata,
                    Asm->getDataLayout().getIndexedOffset(Ptr->getType(), Idx));
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
     addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
@@ -1255,7 +1255,7 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
 
   // The L value defines the lower bounds which is typically zero for C/C++. The
   // H value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
-  // of the array. If L > H then do not emit DW_AT_lower_bound and 
+  // of the array. If L > H then do not emit DW_AT_lower_bound and
   // DW_AT_upper_bound attributes. If L is zero and H is also zero then the
   // array has one element and in such case do not emit lower bound.
 
@@ -1376,20 +1376,20 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
             TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
           unsigned FrameReg = 0;
           const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-          int Offset = 
-            TFI->getFrameIndexReference(*Asm->MF, 
-                                        DVInsn->getOperand(1).getImm(), 
+          int Offset =
+            TFI->getFrameIndexReference(*Asm->MF,
+                                        DVInsn->getOperand(1).getImm(),
                                         FrameReg);
           MachineLocation Location(FrameReg, Offset);
           addVariableAddress(DV, VariableDie, Location);
-          
+
         } else if (RegOp.getReg())
-          addVariableAddress(DV, VariableDie, 
+          addVariableAddress(DV, VariableDie,
                                          MachineLocation(RegOp.getReg()));
         updated = true;
       }
       else if (DVInsn->getOperand(0).isImm())
-        updated = 
+        updated =
           addConstantValue(VariableDie, DVInsn->getOperand(0),
                                        DV->getType());
       else if (DVInsn->getOperand(0).isFPImm())
@@ -1397,11 +1397,11 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
           addConstantFPValue(VariableDie, DVInsn->getOperand(0));
       else if (DVInsn->getOperand(0).isCImm())
         updated =
-          addConstantValue(VariableDie, 
+          addConstantValue(VariableDie,
                                        DVInsn->getOperand(0).getCImm(),
                                        DV->getType().isUnsignedDIType());
     } else {
-      addVariableAddress(DV, VariableDie, 
+      addVariableAddress(DV, VariableDie,
                                      Asm->getDebugValueLocation(DVInsn));
       updated = true;
     }
@@ -1419,7 +1419,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
     if (FI != ~0) {
       unsigned FrameReg = 0;
       const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-      int Offset = 
+      int Offset =
         TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
       MachineLocation Location(FrameReg, Offset);
       addVariableAddress(DV, VariableDie, Location);
@@ -1499,7 +1499,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_private);
   // Otherwise C++ member and base classes are considered public.
-  else 
+  else
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
   if (DT.isVirtual())
@@ -1509,7 +1509,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   // Objective-C properties.
   if (MDNode *PNode = DT.getObjCProperty())
     if (DIEEntry *PropertyDie = getDIEEntry(PNode))
-      MemberDie->addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4, 
+      MemberDie->addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4,
                           PropertyDie);
 
   // This is only for backward compatibility.
@@ -1536,7 +1536,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
     if (DT.isNonAtomicObjCProperty())
       PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_nonatomic;
     if (PropertyAttributes)
-      addUInt(MemberDie, dwarf::DW_AT_APPLE_property_attribute, 0, 
+      addUInt(MemberDie, dwarf::DW_AT_APPLE_property_attribute, 0,
               PropertyAttributes);
   }
   return MemberDie;
