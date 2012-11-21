@@ -83,22 +83,22 @@ typedef struct DotDebugLocEntry {
     const ConstantFP *CFP;
     const ConstantInt *CIP;
   } Constants;
-  DotDebugLocEntry() 
-    : Begin(0), End(0), Variable(0), Merged(false), 
+  DotDebugLocEntry()
+    : Begin(0), End(0), Variable(0), Merged(false),
       Constant(false) { Constants.Int = 0;}
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
-                   const MDNode *V) 
-    : Begin(B), End(E), Loc(L), Variable(V), Merged(false), 
+                   const MDNode *V)
+    : Begin(B), End(E), Loc(L), Variable(V), Merged(false),
       Constant(false) { Constants.Int = 0; EntryKind = E_Location; }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
-    : Begin(B), End(E), Variable(0), Merged(false), 
+    : Begin(B), End(E), Variable(0), Merged(false),
       Constant(true) { Constants.Int = i; EntryKind = E_Integer; }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
-    : Begin(B), End(E), Variable(0), Merged(false), 
+    : Begin(B), End(E), Variable(0), Merged(false),
       Constant(true) { Constants.CFP = FPtr; EntryKind = E_ConstantFP; }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E,
                    const ConstantInt *IPtr)
-    : Begin(B), End(E), Variable(0), Merged(false), 
+    : Begin(B), End(E), Variable(0), Merged(false),
       Constant(true) { Constants.CIP = IPtr; EntryKind = E_ConstantInt; }
 
   /// Empty entries are also used as a trigger to emit temp label. Such
@@ -132,7 +132,7 @@ class DbgVariable {
   int FrameIndex;
 public:
   // AbsVar may be NULL.
-  DbgVariable(DIVariable V, DbgVariable *AV) 
+  DbgVariable(DIVariable V, DbgVariable *AV)
     : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV), MInsn(0),
       FrameIndex(~0) {}
 
@@ -148,11 +148,11 @@ public:
   void setMInsn(const MachineInstr *M)     { MInsn = M; }
   int getFrameIndex()                const { return FrameIndex; }
   void setFrameIndex(int FI)               { FrameIndex = FI; }
-  // Translate tag to proper Dwarf tag.  
-  unsigned getTag()                  const { 
+  // Translate tag to proper Dwarf tag.
+  unsigned getTag()                  const {
     if (Var.getTag() == dwarf::DW_TAG_arg_variable)
       return dwarf::DW_TAG_formal_parameter;
-    
+
     return dwarf::DW_TAG_variable;
   }
   /// isArtificial - Return true if DbgVariable is artificial.
@@ -171,7 +171,7 @@ public:
       return true;
     return false;
   }
-  
+
   bool variableHasComplexAddress()   const {
     assert(Var.Verify() && "Invalid complex DbgVariable!");
     return Var.hasComplexAddress();
@@ -180,7 +180,7 @@ public:
     assert(Var.Verify() && "Invalid complex DbgVariable!");
     return Var.isBlockByrefVariable();
   }
-  unsigned getNumAddrElements()      const { 
+  unsigned getNumAddrElements()      const {
     assert(Var.Verify() && "Invalid complex DbgVariable!");
     return Var.getNumAddrElements();
   }
@@ -228,7 +228,7 @@ class DwarfDebug {
   /// references.
   StringMap<std::pair<MCSymbol*, unsigned>, BumpPtrAllocator&> StringPool;
   unsigned NextStringPoolNumber;
-  
+
   /// SectionMap - Provides a unique id per text section.
   ///
   SetVector<const MCSection*> SectionMap;
@@ -264,7 +264,7 @@ class DwarfDebug {
   // are processed to create DIEs.
   SmallPtrSet<const MDNode *, 16> ProcessedSPNodes;
 
-  /// LabelsBeforeInsn - Maps instruction with label emitted before 
+  /// LabelsBeforeInsn - Maps instruction with label emitted before
   /// instruction.
   DenseMap<const MachineInstr *, MCSymbol *> LabelsBeforeInsn;
 
@@ -331,13 +331,13 @@ private:
   /// findAbstractVariable - Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, DebugLoc Loc);
 
-  /// updateSubprogramScopeDIE - Find DIE for the given subprogram and 
+  /// updateSubprogramScopeDIE - Find DIE for the given subprogram and
   /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
   /// If there are global variables in this scope then create and insert
   /// DIEs for these variables.
   DIE *updateSubprogramScopeDIE(CompileUnit *SPCU, const MDNode *SPNode);
 
-  /// constructLexicalScope - Construct new DW_TAG_lexical_block 
+  /// constructLexicalScope - Construct new DW_TAG_lexical_block
   /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
   DIE *constructLexicalScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
 
@@ -382,7 +382,7 @@ private:
   /// emitAccelNames - Emit visible names into a hashed accelerator table
   /// section.
   void emitAccelNames();
-  
+
   /// emitAccelObjC - Emit objective C classes and categories into a hashed
   /// accelerator table section.
   void emitAccelObjC();
@@ -394,7 +394,7 @@ private:
   /// emitAccelTypes() - Emit type dies into a hashed accelerator table.
   ///
   void emitAccelTypes();
-  
+
   /// emitDebugPubTypes - Emit visible types into a debug pubtypes section.
   ///
   void emitDebugPubTypes();
@@ -427,19 +427,19 @@ private:
   ///
   /// Entries (one "entry" for each function that was inlined):
   ///
-  /// 1. offset into __debug_str section for MIPS linkage name, if exists; 
+  /// 1. offset into __debug_str section for MIPS linkage name, if exists;
   ///   otherwise offset into __debug_str for regular function name.
   /// 2. offset into __debug_str section for regular function name.
-  /// 3. an unsigned LEB128 number indicating the number of distinct inlining 
+  /// 3. an unsigned LEB128 number indicating the number of distinct inlining
   /// instances for the function.
-  /// 
-  /// The rest of the entry consists of a {die_offset, low_pc} pair for each 
+  ///
+  /// The rest of the entry consists of a {die_offset, low_pc} pair for each
   /// inlined instance; the die_offset points to the inlined_subroutine die in
   /// the __debug_info section, and the low_pc is the starting address for the
   /// inlining instance.
   void emitDebugInlineInfo();
 
-  /// constructCompileUnit - Create new CompileUnit for the given 
+  /// constructCompileUnit - Create new CompileUnit for the given
   /// metadata node with tag DW_TAG_compile_unit.
   CompileUnit *constructCompileUnit(const MDNode *N);
 
@@ -451,7 +451,7 @@ private:
   /// the source line list.
   void recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope,
                         unsigned Flags);
-  
+
   /// identifyScopeMarkers() - Indentify instructions that are marking the
   /// beginning of or ending of a scope.
   void identifyScopeMarkers();
@@ -464,7 +464,7 @@ private:
   /// collectVariableInfo - Populate LexicalScope entries with variables' info.
   void collectVariableInfo(const MachineFunction *,
                            SmallPtrSet<const MDNode *, 16> &ProcessedVars);
-  
+
   /// collectVariableInfoFromMMITable - Collect variable information from
   /// side table maintained by MMI.
   void collectVariableInfoFromMMITable(const MachineFunction * MF,
