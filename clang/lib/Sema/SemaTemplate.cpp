@@ -4606,7 +4606,18 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
                                                   SourceLocation Loc) {
   assert(Arg.getKind() == TemplateArgument::Integral &&
          "Operation is only valid for integral template arguments");
-  QualType T = Arg.getIntegralType();
+  QualType OrigT = Arg.getIntegralType();
+
+  // If this is an enum type that we're instantiating, we need to use an integer
+  // type the same size as the enumerator.  We don't want to build an
+  // IntegerLiteral with enum type.  The integer type of an enum type can be of
+  // any integral type with C++11 enum classes, make sure we create the right
+  // type of literal for it.
+  QualType T = OrigT;
+  if (const EnumType *ET = OrigT->getAs<EnumType>())
+    T = ET->getDecl()->getIntegerType();
+
+  Expr *E;
   if (T->isAnyCharacterType()) {
     CharacterLiteral::CharacterKind Kind;
     if (T->isWideCharType())
@@ -4618,34 +4629,22 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
     else
       Kind = CharacterLiteral::Ascii;
 
-    return Owned(new (Context) CharacterLiteral(
-                                            Arg.getAsIntegral().getZExtValue(),
-                                            Kind, T, Loc));
+    E = new (Context) CharacterLiteral(Arg.getAsIntegral().getZExtValue(),
+                                       Kind, T, Loc);
+  } else if (T->isBooleanType()) {
+    E = new (Context) CXXBoolLiteralExpr(Arg.getAsIntegral().getBoolValue(),
+                                         T, Loc);
+  } else if (T->isNullPtrType()) {
+    E = new (Context) CXXNullPtrLiteralExpr(Context.NullPtrTy, Loc);
+  } else {
+    E = IntegerLiteral::Create(Context, Arg.getAsIntegral(), T, Loc);
   }
 
-  if (T->isBooleanType())
-    return Owned(new (Context) CXXBoolLiteralExpr(
-                                            Arg.getAsIntegral().getBoolValue(),
-                                            T, Loc));
-
-  if (T->isNullPtrType())
-    return Owned(new (Context) CXXNullPtrLiteralExpr(Context.NullPtrTy, Loc));
-  
-  // If this is an enum type that we're instantiating, we need to use an integer
-  // type the same size as the enumerator.  We don't want to build an
-  // IntegerLiteral with enum type.
-  QualType BT;
-  if (const EnumType *ET = T->getAs<EnumType>())
-    BT = ET->getDecl()->getIntegerType();
-  else
-    BT = T;
-
-  Expr *E = IntegerLiteral::Create(Context, Arg.getAsIntegral(), BT, Loc);
-  if (T->isEnumeralType()) {
+  if (OrigT->isEnumeralType()) {
     // FIXME: This is a hack. We need a better way to handle substituted
     // non-type template parameters.
-    E = CStyleCastExpr::Create(Context, T, VK_RValue, CK_IntegralCast, E, 0, 
-                               Context.getTrivialTypeSourceInfo(T, Loc),
+    E = CStyleCastExpr::Create(Context, OrigT, VK_RValue, CK_IntegralCast, E, 0,
+                               Context.getTrivialTypeSourceInfo(OrigT, Loc),
                                Loc, Loc);
   }
   
