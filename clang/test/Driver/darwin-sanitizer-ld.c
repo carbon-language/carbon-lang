@@ -4,7 +4,7 @@
 // RUN:   -fsanitize=address %s -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN %s
 
-// CHECK-ASAN: "{{.*}}ld" 
+// CHECK-ASAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ASAN: libclang_rt.asan_osx.a"
 // CHECK-ASAN: "-lstdc++"
 // CHECK-ASAN: "-framework" "CoreFoundation"
@@ -13,7 +13,7 @@
 // RUN:   -fPIC -shared -fsanitize=address %s -o %t.so 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-DYN-ASAN %s
 
-// CHECK-DYN-ASAN: "{{.*}}ld"
+// CHECK-DYN-ASAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-DYN-ASAN: "-dylib"
 // CHECK-DYN-ASAN-NOT: libclang_rt.asan_osx.a
 // CHECK-DYN-ASAN: "-undefined"
@@ -24,7 +24,7 @@
 // RUN:   -fsanitize=undefined %s -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN %s
 
-// CHECK-UBSAN: "{{.*}}ld" 
+// CHECK-UBSAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-UBSAN: libclang_rt.ubsan_osx.a"
 // CHECK-UBSAN: "-lstdc++"
 
@@ -32,7 +32,7 @@
 // RUN:   -fPIC -shared -fsanitize=undefined %s -o %t.so 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-DYN-UBSAN %s
 
-// CHECK-DYN-UBSAN: "{{.*}}ld"
+// CHECK-DYN-UBSAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-DYN-UBSAN: "-dylib"
 // CHECK-DYN-UBSAN-NOT: libclang_rt.ubsan_osx.a
 // CHECK-DYN-UBSAN: "-undefined"
