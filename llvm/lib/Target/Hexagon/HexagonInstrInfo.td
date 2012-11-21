@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 include "HexagonInstrFormats.td"
-include "HexagonImmediates.td"
+include "HexagonOperands.td"
 
 //===----------------------------------------------------------------------===//
 // Classes used for relation maps.
