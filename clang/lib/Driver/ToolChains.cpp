@@ -2230,10 +2230,15 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
-void Linux::addClangTargetOptions(ArgStringList &CC1Args) const {
+void Linux::addClangTargetOptions(const ArgList &DriverArgs,
+                                  ArgStringList &CC1Args) const {
   const Generic_GCC::GCCVersion &V = GCCInstallation.getVersion();
-  if (V >= Generic_GCC::GCCVersion::Parse("4.7.0") ||
-      getTriple().getEnvironment() == llvm::Triple::Android)
+  bool UseInitArrayDefault
+    = V >= Generic_GCC::GCCVersion::Parse("4.7.0") ||
+      getTriple().getEnvironment() == llvm::Triple::Android;
+  if (DriverArgs.hasFlag(options::OPT_fuse_init_array,
+                         options::OPT_fno_use_init_array,
+                         UseInitArrayDefault))
     CC1Args.push_back("-fuse-init-array");
 }
 
