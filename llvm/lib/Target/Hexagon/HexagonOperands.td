@@ -7,215 +7,59 @@
 //
 //===----------------------------------------------------------------------===//
 
-// From IA64's InstrInfo file
-def s32Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
+// Immediate operands.
+
+let PrintMethod = "printImmOperand" in {
+  // f32Ext type is used to identify constant extended floating point immediates.
+  def f32Ext : Operand<f32>;
+  def s32Imm : Operand<i32>;
+  def s26_6Imm : Operand<i32>;
+  def s16Imm : Operand<i32>;
+  def s12Imm : Operand<i32>;
+  def s11Imm : Operand<i32>;
+  def s11_0Imm : Operand<i32>;
+  def s11_1Imm : Operand<i32>;
+  def s11_2Imm : Operand<i32>;
+  def s11_3Imm : Operand<i32>;
+  def s10Imm : Operand<i32>;
+  def s9Imm : Operand<i32>;
+  def m9Imm : Operand<i32>;
+  def s8Imm : Operand<i32>;
+  def s8Imm64 : Operand<i64>;
+  def s6Imm : Operand<i32>;
+  def s4Imm : Operand<i32>;
+  def s4_0Imm : Operand<i32>;
+  def s4_1Imm : Operand<i32>;
+  def s4_2Imm : Operand<i32>;
+  def s4_3Imm : Operand<i32>;
+  def u64Imm : Operand<i64>;
+  def u32Imm : Operand<i32>;
+  def u26_6Imm : Operand<i32>;
+  def u16Imm : Operand<i32>;
+  def u16_0Imm : Operand<i32>;
+  def u16_1Imm : Operand<i32>;
+  def u16_2Imm : Operand<i32>;
+  def u11_3Imm : Operand<i32>;
+  def u10Imm : Operand<i32>;
+  def u9Imm : Operand<i32>;
+  def u8Imm : Operand<i32>;
+  def u7Imm : Operand<i32>;
+  def u6Imm : Operand<i32>;
+  def u6_0Imm : Operand<i32>;
+  def u6_1Imm : Operand<i32>;
+  def u6_2Imm : Operand<i32>;
+  def u6_3Imm : Operand<i32>;
+  def u5Imm : Operand<i32>;
+  def u4Imm : Operand<i32>;
+  def u3Imm : Operand<i32>;
+  def u2Imm : Operand<i32>;
+  def u1Imm : Operand<i32>;
+  def n8Imm : Operand<i32>;
+  def m6Imm : Operand<i32>;
 }
 
-def s16Imm : Operand<i32> {
-  let PrintMethod = "printImmOperand";
-}
-
-def s12Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s11Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s11_0Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s11_1Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s11_2Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s11_3Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s10Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s9Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s8Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s8Imm64 : Operand<i64> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s6Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s4Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s4_0Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s4_1Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s4_2Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def s4_3Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u64Imm : Operand<i64> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u32Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u16Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u16_0Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u16_1Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u16_2Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u11_3Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u10Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u9Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u8Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u7Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u6Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u6_0Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u6_1Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u6_2Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u6_3Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u5Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u4Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u3Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u2Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def u1Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def n8Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def m6Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printImmOperand";
-}
-
-def nOneImm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printNOneImmOperand";
-}
+let PrintMethod = "printNOneImmOperand" in
+def nOneImm : Operand<i32>;
 
 //
 // Immediate predicates
