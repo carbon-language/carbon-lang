@@ -1812,8 +1812,6 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
-    SDVTList VTs = DAG.getVTList(MVT::i32);
-
     const MipsTargetObjectFile &TLOF =
       (const MipsTargetObjectFile&)getObjFileLowering();
 
@@ -1821,71 +1819,29 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
     if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) {
       SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
                                               MipsII::MO_GPREL);
-      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, &GA, 1);
+      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl,
+                                      DAG.getVTList(MVT::i32), &GA, 1);
       SDValue GPReg = DAG.getRegister(Mips::GP, MVT::i32);
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GPReg, GPRelNode);
     }
+
     // %hi/%lo relocation
-    SDValue GAHi = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                              MipsII::MO_ABS_HI);
-    SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                              MipsII::MO_ABS_LO);
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GAHi, 1);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
-    return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
+    return getAddrNonPIC(Op, DAG);
   }
 
-  EVT ValTy = Op.getValueType();
-  bool HasGotOfst = (GV->hasInternalLinkage() ||
-                     (GV->hasLocalLinkage() && !isa<Function>(GV)));
-  unsigned GotFlag = HasMips64 ?
-                     (HasGotOfst ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT_DISP) :
-                     (HasGotOfst ? MipsII::MO_GOT : MipsII::MO_GOT16);
-  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, GotFlag);
-  GA = DAG.getNode(MipsISD::Wrapper, dl, ValTy, GetGlobalReg(DAG, ValTy), GA);
-  SDValue ResNode = DAG.getLoad(ValTy, dl, DAG.getEntryNode(), GA,
-                                MachinePointerInfo::getGOT(), false, false,
-                                false, 0);
-  // On functions and global targets not internal linked only
-  // a load from got/GP is necessary for PIC to work.
-  if (!HasGotOfst)
-    return ResNode;
-  SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0,
-                                            HasMips64 ? MipsII::MO_GOT_OFST :
-                                                        MipsII::MO_ABS_LO);
-  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, GALo);
-  return DAG.getNode(ISD::ADD, dl, ValTy, ResNode, Lo);
+  if (GV->hasInternalLinkage() || (GV->hasLocalLinkage() && !isa<Function>(GV)))
+    return getAddrLocal(Op, DAG, HasMips64);
+
+  return getAddrGlobal(Op, DAG,
+                       HasMips64 ? MipsII::MO_GOT_DISP : MipsII::MO_GOT16);
 }
 
 SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
                                               SelectionDAG &DAG) const {
-  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  // FIXME there isn't actually debug info here
-  DebugLoc dl = Op.getDebugLoc();
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64)
+    return getAddrNonPIC(Op, DAG);
 
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
-    // %hi/%lo relocation
-    SDValue BAHi =
-      DAG.getTargetBlockAddress(BA, MVT::i32, 0, MipsII::MO_ABS_HI);
-    SDValue BALo =
-      DAG.getTargetBlockAddress(BA, MVT::i32, 0, MipsII::MO_ABS_LO);
-    SDValue Hi = DAG.getNode(MipsISD::Hi, dl, MVT::i32, BAHi);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, BALo);
-    return DAG.getNode(ISD::ADD, dl, MVT::i32, Hi, Lo);
-  }
-
-  EVT ValTy = Op.getValueType();
-  unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
-  unsigned OFSTFlag = HasMips64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
-  SDValue BAGOTOffset = DAG.getTargetBlockAddress(BA, ValTy, 0, GOTFlag);
-  BAGOTOffset = DAG.getNode(MipsISD::Wrapper, dl, ValTy,
-                            GetGlobalReg(DAG, ValTy), BAGOTOffset);
-  SDValue BALOOffset = DAG.getTargetBlockAddress(BA, ValTy, 0, OFSTFlag);
-  SDValue Load = DAG.getLoad(ValTy, dl, DAG.getEntryNode(), BAGOTOffset,
-                             MachinePointerInfo::getGOT(), false, false, false,
-                             0);
-  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, BALOOffset);
-  return DAG.getNode(ISD::ADD, dl, ValTy, Load, Lo);
+  return getAddrLocal(Op, DAG, HasMips64);
 }
 
 SDValue MipsTargetLowering::
@@ -1972,41 +1928,15 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 SDValue MipsTargetLowering::
 LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
 {
-  SDValue HiPart, JTI, JTILo;
-  // FIXME there isn't actually debug info here
-  DebugLoc dl = Op.getDebugLoc();
-  bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  EVT PtrVT = Op.getValueType();
-  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64)
+    return getAddrNonPIC(Op, DAG);
 
-  if (!IsPIC && !IsN64) {
-    JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MipsII::MO_ABS_HI);
-    HiPart = DAG.getNode(MipsISD::Hi, dl, PtrVT, JTI);
-    JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MipsII::MO_ABS_LO);
-  } else {// Emit Load from Global Pointer
-    unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
-    unsigned OfstFlag = HasMips64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
-    JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, GOTFlag);
-    JTI = DAG.getNode(MipsISD::Wrapper, dl, PtrVT, GetGlobalReg(DAG, PtrVT),
-                      JTI);
-    HiPart = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), JTI,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
-    JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OfstFlag);
-  }
-
-  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, PtrVT, JTILo);
-  return DAG.getNode(ISD::ADD, dl, PtrVT, HiPart, Lo);
+  return getAddrLocal(Op, DAG, HasMips64);
 }
 
 SDValue MipsTargetLowering::
 LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
 {
-  SDValue ResNode;
-  ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
-  const Constant *C = N->getConstVal();
-  // FIXME there isn't actually debug info here
-  DebugLoc dl = Op.getDebugLoc();
-
   // gp_rel relocation
   // FIXME: we should reference the constant pool using small data sections,
   // but the asm printer currently doesn't support this feature without
@@ -2017,31 +1947,10 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
   //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode);
 
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
-    SDValue CPHi = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                             N->getOffset(), MipsII::MO_ABS_HI);
-    SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                             N->getOffset(), MipsII::MO_ABS_LO);
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CPHi);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
-    ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
-  } else {
-    EVT ValTy = Op.getValueType();
-    unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
-    unsigned OFSTFlag = HasMips64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
-    SDValue CP = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
-                                           N->getOffset(), GOTFlag);
-    CP = DAG.getNode(MipsISD::Wrapper, dl, ValTy, GetGlobalReg(DAG, ValTy), CP);
-    SDValue Load = DAG.getLoad(ValTy, dl, DAG.getEntryNode(), CP,
-                               MachinePointerInfo::getGOT(), false,
-                               false, false, 0);
-    SDValue CPLo = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
-                                             N->getOffset(), OFSTFlag);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, CPLo);
-    ResNode = DAG.getNode(ISD::ADD, dl, ValTy, Load, Lo);
-  }
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64)
+    return getAddrNonPIC(Op, DAG);
 
-  return ResNode;
+  return getAddrLocal(Op, DAG, HasMips64);
 }
 
 SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
@@ -2933,59 +2842,34 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
-  unsigned char OpFlag;
   bool IsPICCall = (IsN64 || IsPIC); // true if calls are translated to jalr $25
   bool GlobalOrExternal = false;
   SDValue CalleeLo;
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    if (IsPICCall && G->getGlobal()->hasInternalLinkage()) {
-      OpFlag = IsO32 ? MipsII::MO_GOT : MipsII::MO_GOT_PAGE;
-      unsigned char LoFlag = IsO32 ? MipsII::MO_ABS_LO : MipsII::MO_GOT_OFST;
+    if (IsPICCall) {
+      if (G->getGlobal()->hasInternalLinkage())
+        Callee = getAddrLocal(Callee, DAG, HasMips64);
+      else
+        Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_CALL);
+    } else
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(), 0,
-                                          OpFlag);
-      CalleeLo = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(),
-                                            0, LoFlag);
-    } else {
-      OpFlag = IsPICCall ? MipsII::MO_GOT_CALL : MipsII::MO_NO_FLAG;
-      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-                                          getPointerTy(), 0, OpFlag);
-    }
-
+                                          MipsII::MO_NO_FLAG);
     GlobalOrExternal = true;
   }
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     if (IsN64 || (!IsO32 && IsPIC))
-      OpFlag = MipsII::MO_GOT_DISP;
+      Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_DISP);
     else if (!IsPIC) // !N64 && static
-      OpFlag = MipsII::MO_NO_FLAG;
+      Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
+                                            MipsII::MO_NO_FLAG);
     else // O32 & PIC
-      OpFlag = MipsII::MO_GOT_CALL;
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
-                                         OpFlag);
+      Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_CALL);
+
     GlobalOrExternal = true;
   }
 
   SDValue InFlag;
-
-  // Create nodes that load address of callee and copy it to T9
-  if (IsPICCall) {
-    if (GlobalOrExternal) {
-      // Load callee address
-      Callee = DAG.getNode(MipsISD::Wrapper, dl, getPointerTy(),
-                           GetGlobalReg(DAG, getPointerTy()), Callee);
-      SDValue LoadValue = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
-                                      Callee, MachinePointerInfo::getGOT(),
-                                      false, false, false, 0);
-
-      // Use GOT+LO if callee has internal linkage.
-      if (CalleeLo.getNode()) {
-        SDValue Lo = DAG.getNode(MipsISD::Lo, dl, getPointerTy(), CalleeLo);
-        Callee = DAG.getNode(ISD::ADD, dl, getPointerTy(), LoadValue, Lo);
-      } else
-        Callee = LoadValue;
-    }
-  }
 
   // T9 register operand.
   SDValue T9;
