@@ -1832,6 +1832,10 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   if (GV->hasInternalLinkage() || (GV->hasLocalLinkage() && !isa<Function>(GV)))
     return getAddrLocal(Op, DAG, HasMips64);
 
+  if (LargeGOT)
+    return getAddrGlobalLargeGOT(Op, DAG, MipsII::MO_GOT_HI16,
+                                 MipsII::MO_GOT_LO16);
+
   return getAddrGlobal(Op, DAG,
                        HasMips64 ? MipsII::MO_GOT_DISP : MipsII::MO_GOT16);
 }
@@ -2850,6 +2854,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     if (IsPICCall) {
       if (G->getGlobal()->hasInternalLinkage())
         Callee = getAddrLocal(Callee, DAG, HasMips64);
+      else if (LargeGOT)
+        Callee = getAddrGlobalLargeGOT(Callee, DAG, MipsII::MO_CALL_HI16,
+                                       MipsII::MO_CALL_LO16);
       else
         Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_CALL);
     } else
@@ -2858,11 +2865,14 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     GlobalOrExternal = true;
   }
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    if (IsN64 || (!IsO32 && IsPIC))
-      Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_DISP);
-    else if (!IsPIC) // !N64 && static
+    if (!IsN64 && !IsPIC) // !N64 && static
       Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
                                             MipsII::MO_NO_FLAG);
+    else if (LargeGOT)
+      Callee = getAddrGlobalLargeGOT(Callee, DAG, MipsII::MO_CALL_HI16,
+                                     MipsII::MO_CALL_LO16);
+    else if (HasMips64)
+      Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_DISP);
     else // O32 & PIC
       Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_CALL);
 
