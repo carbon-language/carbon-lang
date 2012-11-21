@@ -357,22 +357,34 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
     } else {
       // Sanity check
       assert(VA.isMemLoc());
-      // Load the argument to a virtual register
-      unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
-      if (ObjSize > 2) {
-        errs() << "LowerFormalArguments Unhandled argument type: "
-             << EVT(VA.getLocVT()).getEVTString()
-             << "\n";
-      }
-      // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true);
 
-      // Create the SelectionDAG nodes corresponding to a load
-      //from this parameter
-      SDValue FIN = DAG.getFrameIndex(FI, MVT::i16);
-      InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
-                                   MachinePointerInfo::getFixedStack(FI),
-                                   false, false, false, 0));
+      SDValue InVal;
+      ISD::ArgFlagsTy Flags = Ins[i].Flags;
+
+      if (Flags.isByVal()) {
+        int FI = MFI->CreateFixedObject(Flags.getByValSize(),
+                                        VA.getLocMemOffset(), true);
+        InVal = DAG.getFrameIndex(FI, getPointerTy());
+      } else {
+        // Load the argument to a virtual register
+        unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
+        if (ObjSize > 2) {
+            errs() << "LowerFormalArguments Unhandled argument type: "
+                << EVT(VA.getLocVT()).getEVTString()
+                << "\n";
+        }
+        // Create the frame index object for this incoming parameter...
+        int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true);
+
+        // Create the SelectionDAG nodes corresponding to a load
+        //from this parameter
+        SDValue FIN = DAG.getFrameIndex(FI, MVT::i16);
+        InVal = DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
+                            MachinePointerInfo::getFixedStack(FI),
+                            false, false, false, 0);
+      }
+
+      InVals.push_back(InVal);
     }
   }
 
@@ -498,9 +510,23 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                                    StackPtr,
                                    DAG.getIntPtrConstant(VA.getLocMemOffset()));
 
+      SDValue MemOp;
+      ISD::ArgFlagsTy Flags = Outs[i].Flags;
 
-      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                         MachinePointerInfo(),false, false, 0));
+      if (Flags.isByVal()) {
+        SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i16);
+        MemOp = DAG.getMemcpy(Chain, dl, PtrOff, Arg, SizeNode,
+                              Flags.getByValAlign(),
+                              /*isVolatile*/false,
+                              /*AlwaysInline=*/true,
+                              MachinePointerInfo(),
+                              MachinePointerInfo());
+      } else {
+        MemOp = DAG.getStore(Chain, dl, Arg, PtrOff, MachinePointerInfo(),
+                             false, false, 0);
+      }
+
+      MemOpChains.push_back(MemOp);
     }
   }
 

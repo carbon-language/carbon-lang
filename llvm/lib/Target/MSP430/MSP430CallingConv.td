@@ -24,6 +24,9 @@ def RetCC_MSP430 : CallingConv<[
 // MSP430 Argument Calling Conventions
 //===----------------------------------------------------------------------===//
 def CC_MSP430 : CallingConv<[
+  // Pass by value if the byval attribute is given
+  CCIfByVal<CCPassByVal<2, 2>>,
+
   // Promote i8 arguments to i16.
   CCIfType<[i8], CCPromoteToType<i16>>,
 
