@@ -1124,12 +1124,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSELECT,           MVT::v8f32, Legal);
 
     if (Subtarget->hasFMA() || Subtarget->hasFMA4()) {
-      setOperationAction(ISD::FMA,             MVT::v8f32, Custom);
-      setOperationAction(ISD::FMA,             MVT::v4f64, Custom);
-      setOperationAction(ISD::FMA,             MVT::v4f32, Custom);
-      setOperationAction(ISD::FMA,             MVT::v2f64, Custom);
-      setOperationAction(ISD::FMA,             MVT::f32, Custom);
-      setOperationAction(ISD::FMA,             MVT::f64, Custom);
+      setOperationAction(ISD::FMA,             MVT::v8f32, Legal);
+      setOperationAction(ISD::FMA,             MVT::v4f64, Legal);
+      setOperationAction(ISD::FMA,             MVT::v4f32, Legal);
+      setOperationAction(ISD::FMA,             MVT::v2f64, Legal);
+      setOperationAction(ISD::FMA,             MVT::f32, Legal);
+      setOperationAction(ISD::FMA,             MVT::f64, Legal);
     }
 
     if (Subtarget->hasAVX2()) {
