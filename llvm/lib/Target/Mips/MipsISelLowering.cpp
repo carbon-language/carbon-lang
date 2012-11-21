@@ -81,6 +81,71 @@ static SDValue GetGlobalReg(SelectionDAG &DAG, EVT Ty) {
   return DAG.getRegister(FI->getGlobalBaseReg(), Ty);
 }
 
+static SDValue getTargetNode(SDValue Op, SelectionDAG &DAG, unsigned Flag) {
+  EVT Ty = Op.getValueType();
+
+  if (GlobalAddressSDNode *N = dyn_cast<GlobalAddressSDNode>(Op))
+    return DAG.getTargetGlobalAddress(N->getGlobal(), Op.getDebugLoc(), Ty, 0,
+                                      Flag);
+  if (ExternalSymbolSDNode *N = dyn_cast<ExternalSymbolSDNode>(Op))
+    return DAG.getTargetExternalSymbol(N->getSymbol(), Ty, Flag);
+  if (BlockAddressSDNode *N = dyn_cast<BlockAddressSDNode>(Op))
+    return DAG.getTargetBlockAddress(N->getBlockAddress(), Ty, 0, Flag);
+  if (JumpTableSDNode *N = dyn_cast<JumpTableSDNode>(Op))
+    return DAG.getTargetJumpTable(N->getIndex(), Ty, Flag);
+  if (ConstantPoolSDNode *N = dyn_cast<ConstantPoolSDNode>(Op))
+    return DAG.getTargetConstantPool(N->getConstVal(), Ty, N->getAlignment(),
+                                     N->getOffset(), Flag);
+
+  llvm_unreachable("Unexpected node type.");
+  return SDValue();
+}
+
+static SDValue getAddrNonPIC(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT Ty = Op.getValueType();
+  SDValue Hi = getTargetNode(Op, DAG, MipsII::MO_ABS_HI);
+  SDValue Lo = getTargetNode(Op, DAG, MipsII::MO_ABS_LO);
+  return DAG.getNode(ISD::ADD, DL, Ty,
+                     DAG.getNode(MipsISD::Hi, DL, Ty, Hi),
+                     DAG.getNode(MipsISD::Lo, DL, Ty, Lo));
+}
+
+static SDValue getAddrLocal(SDValue Op, SelectionDAG &DAG, bool HasMips64) {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT Ty = Op.getValueType();
+  unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
+  SDValue GOT = DAG.getNode(MipsISD::Wrapper, DL, Ty, GetGlobalReg(DAG, Ty),
+                            getTargetNode(Op, DAG, GOTFlag));
+  SDValue Load = DAG.getLoad(Ty, DL, DAG.getEntryNode(), GOT,
+                             MachinePointerInfo::getGOT(), false, false, false,
+                             0);
+  unsigned LoFlag = HasMips64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
+  SDValue Lo = DAG.getNode(MipsISD::Lo, DL, Ty, getTargetNode(Op, DAG, LoFlag));
+  return DAG.getNode(ISD::ADD, DL, Ty, Load, Lo);
+}
+
+static SDValue getAddrGlobal(SDValue Op, SelectionDAG &DAG, unsigned Flag) {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT Ty = Op.getValueType();
+  SDValue Tgt = DAG.getNode(MipsISD::Wrapper, DL, Ty, GetGlobalReg(DAG, Ty),
+                            getTargetNode(Op, DAG, Flag));
+  return DAG.getLoad(Ty, DL, DAG.getEntryNode(), Tgt,
+                     MachinePointerInfo::getGOT(), false, false, false, 0);
+}
+
+static SDValue getAddrGlobalLargeGOT(SDValue Op, SelectionDAG &DAG,
+                                     unsigned HiFlag, unsigned LoFlag) {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT Ty = Op.getValueType();
+  SDValue Hi = DAG.getNode(MipsISD::Hi, DL, Ty, getTargetNode(Op, DAG, HiFlag));
+  Hi = DAG.getNode(ISD::ADD, DL, Ty, Hi, GetGlobalReg(DAG, Ty));
+  SDValue Wrapper = DAG.getNode(MipsISD::Wrapper, DL, Ty, Hi,
+                                getTargetNode(Op, DAG, LoFlag));
+  return DAG.getLoad(Ty, DL, DAG.getEntryNode(), Wrapper,
+                     MachinePointerInfo::getGOT(), false, false, false, 0);
+}
+
 const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   case MipsISD::JmpLink:           return "MipsISD::JmpLink";
