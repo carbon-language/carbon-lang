@@ -538,7 +538,15 @@ public:
   /// useDarwinGDBCompat - returns whether or not to limit some of our debug
   /// output to the limitations of darwin gdb.
   bool useDarwinGDBCompat() { return isDarwinGDBCompat; }
+
+  // Experimental DWARF5 features.
+
+  /// useDwarfAccelTables - returns whether or not to emit tables that
+  /// dwarf consumers can use to accelerate lookup.
   bool useDwarfAccelTables() { return hasDwarfAccelTables; }
+
+  /// useDwarfFission - returns whether or not to change the current debug
+  /// info for the fission proposal support.
   bool useDwarfFission() { return hasDwarfFission; }
 };
 } // End of namespace llvm
