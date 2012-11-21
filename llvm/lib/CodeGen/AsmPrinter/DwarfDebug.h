@@ -318,9 +318,9 @@ class DwarfDebug {
 
   // Holders for the various debug information flags that we might need to
   // have exposed. See accessor functions below for description.
-  bool isDarwinGDBCompat;
-  bool hasDwarfAccelTables;
-  bool hasDwarfFission;
+  bool IsDarwinGDBCompat;
+  bool HasDwarfAccelTables;
+  bool HasDwarfFission;
 private:
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.
@@ -352,7 +352,7 @@ private:
 
   /// EmitSectionLabels - Emit initial Dwarf sections with a label at
   /// the start of each one.
-  void EmitSectionLabels();
+  void emitSectionLabels();
 
   /// emitDIE - Recursively Emits a debug information entry.
   ///
@@ -410,7 +410,7 @@ private:
 
   /// EmitDebugARanges - Emit visible names into a debug aranges section.
   ///
-  void EmitDebugARanges();
+  void emitDebugARanges();
 
   /// emitDebugRanges - Emit visible names into a debug ranges section.
   ///
@@ -524,10 +524,10 @@ public:
   /// endInstruction - Prcess end of an instruction.
   void endInstruction(const MachineInstr *MI);
 
-  /// GetOrCreateSourceID - Look up the source id with the given directory and
+  /// getOrCreateSourceID - Look up the source id with the given directory and
   /// source file names. If none currently exists, create a new id and insert it
   /// in the SourceIds map.
-  unsigned GetOrCreateSourceID(StringRef DirName, StringRef FullName);
+  unsigned getOrCreateSourceID(StringRef DirName, StringRef FullName);
 
   /// getStringPool - returns the entry into the start of the pool.
   MCSymbol *getStringPool();
@@ -538,17 +538,17 @@ public:
 
   /// useDarwinGDBCompat - returns whether or not to limit some of our debug
   /// output to the limitations of darwin gdb.
-  bool useDarwinGDBCompat() { return isDarwinGDBCompat; }
+  bool useDarwinGDBCompat() { return IsDarwinGDBCompat; }
 
   // Experimental DWARF5 features.
 
   /// useDwarfAccelTables - returns whether or not to emit tables that
   /// dwarf consumers can use to accelerate lookup.
-  bool useDwarfAccelTables() { return hasDwarfAccelTables; }
+  bool useDwarfAccelTables() { return HasDwarfAccelTables; }
 
   /// useDwarfFission - returns whether or not to change the current debug
   /// info for the fission proposal support.
-  bool useDwarfFission() { return hasDwarfFission; }
+  bool useDwarfFission() { return HasDwarfFission; }
 };
 } // End of namespace llvm
 

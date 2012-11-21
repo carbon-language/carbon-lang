@@ -166,27 +166,27 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   // Turn on accelerator tables and older gdb compatibility
   // for Darwin.
-  bool isDarwin = Triple(M->getTargetTriple()).isOSDarwin();
+  bool IsDarwin = Triple(M->getTargetTriple()).isOSDarwin();
   if (DarwinGDBCompat == Default) {
-    if (isDarwin)
-      isDarwinGDBCompat = true;
+    if (IsDarwin)
+      IsDarwinGDBCompat = true;
     else
-      isDarwinGDBCompat = false;
+      IsDarwinGDBCompat = false;
   } else
-    isDarwinGDBCompat = DarwinGDBCompat == Enable ? true : false;
+    IsDarwinGDBCompat = DarwinGDBCompat == Enable ? true : false;
 
   if (DwarfAccelTables == Default) {
-    if (isDarwin)
-      hasDwarfAccelTables = true;
+    if (IsDarwin)
+      HasDwarfAccelTables = true;
     else
-      hasDwarfAccelTables = false;
+      HasDwarfAccelTables = false;
   } else
-    hasDwarfAccelTables = DwarfAccelTables == Enable ? true : false;
+    HasDwarfAccelTables = DwarfAccelTables == Enable ? true : false;
 
   if (DwarfFission == Default)
-    hasDwarfFission = false;
+    HasDwarfFission = false;
   else
-    hasDwarfFission = DwarfFission == Enable ? true : false;
+    HasDwarfFission = DwarfFission == Enable ? true : false;
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -196,9 +196,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 DwarfDebug::~DwarfDebug() {
 }
 
-/// EmitSectionSym - Switch to the specified MCSection and emit an assembler
+/// emitSectionSym - Switch to the specified MCSection and emit an assembler
 /// temporary label to it if SymbolStem is specified.
-static MCSymbol *EmitSectionSym(AsmPrinter *Asm, const MCSection *Section,
+static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
                                 const char *SymbolStem = 0) {
   Asm->OutStreamer.SwitchSection(Section);
   if (!SymbolStem) return 0;
@@ -501,7 +501,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
 
   DILocation DL(Scope->getInlinedAt());
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0,
-                 GetOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
+                 getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
@@ -580,15 +580,15 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   return ScopeDIE;
 }
 
-/// GetOrCreateSourceID - Look up the source id with the given directory and
+/// getOrCreateSourceID - Look up the source id with the given directory and
 /// source file names. If none currently exists, create a new id and insert it
 /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
 /// maps as well.
-unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
+unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
                                          StringRef DirName) {
   // If FE did not provide a file name, then assume stdin.
   if (FileName.empty())
-    return GetOrCreateSourceID("<stdin>", StringRef());
+    return getOrCreateSourceID("<stdin>", StringRef());
 
   // TODO: this might not belong here. See if we can factor this better.
   if (DirName == CompilationDir)
@@ -618,7 +618,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
-  unsigned ID = GetOrCreateSourceID(FN, CompilationDir);
+  unsigned ID = getOrCreateSourceID(FN, CompilationDir);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(ID, DIUnit.getLanguage(), Die,
@@ -878,7 +878,7 @@ void DwarfDebug::endModule() {
   computeSizeAndOffsets();
 
   // Emit initial sections.
-  EmitSectionLabels();
+  emitSectionLabels();
 
   // Emit all the DIEs into a debug info section
   emitDebugInfo();
@@ -904,7 +904,7 @@ void DwarfDebug::endModule() {
   emitDebugLoc();
 
   // Emit info into a debug aranges section.
-  EmitDebugARanges();
+  emitDebugARanges();
 
   // Emit info into a debug ranges section.
   emitDebugRanges();
@@ -1570,7 +1570,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
     } else
       llvm_unreachable("Unexpected scope info");
 
-    Src = GetOrCreateSourceID(Fn, Dir);
+    Src = getOrCreateSourceID(Fn, Dir);
   }
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0, 0, Fn);
 }
@@ -1638,34 +1638,34 @@ void DwarfDebug::computeSizeAndOffsets() {
   }
 }
 
-/// EmitSectionLabels - Emit initial Dwarf sections with a label at
+/// emitSectionLabels - Emit initial Dwarf sections with a label at
 /// the start of each one.
-void DwarfDebug::EmitSectionLabels() {
+void DwarfDebug::emitSectionLabels() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   // Dwarf sections base addresses.
   DwarfInfoSectionSym =
-    EmitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
+    emitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
   DwarfAbbrevSectionSym =
-    EmitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
-  EmitSectionSym(Asm, TLOF.getDwarfARangesSection());
+    emitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
+  emitSectionSym(Asm, TLOF.getDwarfARangesSection());
 
   if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
-    EmitSectionSym(Asm, MacroInfo);
+    emitSectionSym(Asm, MacroInfo);
 
-  EmitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
-  EmitSectionSym(Asm, TLOF.getDwarfLocSection());
-  EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
+  emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
+  emitSectionSym(Asm, TLOF.getDwarfLocSection());
+  emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
-    EmitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
-  DwarfDebugRangeSectionSym = EmitSectionSym(Asm, TLOF.getDwarfRangesSection(),
+    emitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
+  DwarfDebugRangeSectionSym = emitSectionSym(Asm, TLOF.getDwarfRangesSection(),
                                              "debug_range");
 
-  DwarfDebugLocSectionSym = EmitSectionSym(Asm, TLOF.getDwarfLocSection(),
+  DwarfDebugLocSectionSym = emitSectionSym(Asm, TLOF.getDwarfLocSection(),
                                            "section_debug_loc");
 
-  TextSectionSym = EmitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
-  EmitSectionSym(Asm, TLOF.getDataSection());
+  TextSectionSym = emitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
+  emitSectionSym(Asm, TLOF.getDataSection());
 }
 
 /// emitDIE - Recursively emits a debug information entry.
@@ -2152,9 +2152,9 @@ void DwarfDebug::emitDebugLoc() {
   }
 }
 
-/// EmitDebugARanges - Emit visible names into a debug aranges section.
+/// emitDebugARanges - Emit visible names into a debug aranges section.
 ///
-void DwarfDebug::EmitDebugARanges() {
+void DwarfDebug::emitDebugARanges() {
   // Start the dwarf aranges section.
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfARangesSection());
