@@ -12,11 +12,8 @@ if(NOT LLVM_BUILD_TOOLS)
   set(EXCLUDE_FROM_ALL ON)
 endif()
 
-add_lit_testsuite(check-llvm "Running the LLVM regression tests"
-  ${CMAKE_CURRENT_BINARY_DIR}
-  PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-         llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
-  DEPENDS UnitTests
+# Set the depends list as a variable so that it can grow conditionally.
+set(LLVM_TEST_DEPENDS UnitTests
           BugpointPasses LLVMHello
           llc lli llvm-ar llvm-as
           llvm-bcanalyzer llvm-diff
@@ -30,7 +27,18 @@ add_lit_testsuite(check-llvm "Running the LLVM regression tests"
           macho-dump opt
           profile_rt-shared
           FileCheck count not
-          yaml2obj
+          yaml2obj)
+
+# If Intel JIT events are supported, depend on a tool that tests the listener.
+if( LLVM_USE_INTEL_JITEVENTS )
+  set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} llvm-jitlistener)
+endif( LLVM_USE_INTEL_JITEVENTS )
+
+add_lit_testsuite(check-llvm "Running the LLVM regression tests"
+  ${CMAKE_CURRENT_BINARY_DIR}
+  PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+         llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+  DEPENDS ${LLVM_TEST_DEPENDS}
   )
 set_target_properties(check-llvm PROPERTIES FOLDER "Tests")
 

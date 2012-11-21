@@ -16,6 +16,7 @@ config.targets_to_build = "@TARGETS_TO_BUILD@"
 config.llvm_bindings = "@LLVM_BINDINGS@"
 config.host_os = "@HOST_OS@"
 config.host_arch = "@HOST_ARCH@"
+config.llvm_use_intel_jitevents = "@LLVM_USE_INTEL_JITEVENTS@"
 
 # Support substitution of the tools_dir with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
