@@ -45,7 +45,12 @@ static int AppendUnsigned(char **buff, const char *buff_end, u64 num,
     num_buffer[pos++] = num % base;
     num /= base;
   } while (num > 0);
-  while (pos < minimal_num_length) num_buffer[pos++] = 0;
+  if (pos < minimal_num_length) {
+    // Make sure compiler doesn't insert call to memset here.
+    internal_memset(&num_buffer[pos], 0,
+                    sizeof(num_buffer[0]) * (minimal_num_length - pos));
+    pos = minimal_num_length;
+  }
   int result = 0;
   while (pos-- > 0) {
     uptr digit = num_buffer[pos];
