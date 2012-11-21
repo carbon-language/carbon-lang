@@ -316,7 +316,8 @@ class DwarfDebug {
   // table for the same directory as DW_at_comp_dir.
   StringRef CompilationDir;
 
-  // A holder for the DarwinGDBCompat flag so that the compile unit can use it.
+  // Holders for the various debug information flags that we might need to
+  // have exposed. See accessor functions below for description.
   bool isDarwinGDBCompat;
   bool hasDwarfAccelTables;
   bool hasDwarfFission;
