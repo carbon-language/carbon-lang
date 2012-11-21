@@ -36,15 +36,15 @@ entry:
 
 define i32 @test2(<4 x i32> %x, <4 x i32> %y) {
 ; CHECK: @test2
-; FIXME: This should be handled!
 entry:
 	%a = alloca [2 x <4 x i32>]
-; CHECK: alloca <4 x i32>
+; CHECK-NOT: alloca
 
   %a.x = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 0
   store <4 x i32> %x, <4 x i32>* %a.x
   %a.y = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 1
   store <4 x i32> %y, <4 x i32>* %a.y
+; CHECK-NOT: store
 
   %a.tmp1 = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 0, i64 2
   %tmp1 = load i32* %a.tmp1
@@ -54,10 +54,18 @@ entry:
   %a.tmp3.cast = bitcast i32* %a.tmp3 to <2 x i32>*
   %tmp3.vec = load <2 x i32>* %a.tmp3.cast
   %tmp3 = extractelement <2 x i32> %tmp3.vec, i32 0
+; CHECK-NOT: load
+; CHECK:      %[[extract1:.*]] = extractelement <4 x i32> %x, i32 2
+; CHECK-NEXT: %[[extract2:.*]] = extractelement <4 x i32> %y, i32 3
+; CHECK-NEXT: %[[extract3:.*]] = shufflevector <4 x i32> %y, <4 x i32> undef, <2 x i32> <i32 0, i32 1>
+; CHECK-NEXT: %[[extract4:.*]] = extractelement <2 x i32> %[[extract3]], i32 0
 
   %tmp4 = add i32 %tmp1, %tmp2
   %tmp5 = add i32 %tmp3, %tmp4
   ret i32 %tmp5
+; CHECK-NEXT: %[[sum1:.*]] = add i32 %[[extract1]], %[[extract2]]
+; CHECK-NEXT: %[[sum2:.*]] = add i32 %[[extract4]], %[[sum1]]
+; CHECK-NEXT: ret i32 %[[sum2]]
 }
 
 define i32 @test3(<4 x i32> %x, <4 x i32> %y) {
@@ -204,6 +212,71 @@ define i64 @test6(<4 x i64> %x, <4 x i64> %y, i64 %n) {
   %addr = getelementptr inbounds { <4 x i64>, <4 x i64> }* %tmp, i32 0, i32 0, i64 %n
   %res = load i64* %addr, align 4
   ret i64 %res
+}
+
+define <4 x i32> @test_subvec_store() {
+; CHECK: @test_subvec_store
+entry:
+  %a = alloca <4 x i32>
+; CHECK-NOT: alloca
+
+  %a.gep0 = getelementptr <4 x i32>* %a, i32 0, i32 0
+  %a.cast0 = bitcast i32* %a.gep0 to <2 x i32>*
+  store <2 x i32> <i32 0, i32 0>, <2 x i32>* %a.cast0
+; CHECK-NOT: store
+; CHECK:      %[[insert1:.*]] = shufflevector <4 x i32> <i32 0, i32 0, i32 undef, i32 undef>, <4 x i32> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
+
+  %a.gep1 = getelementptr <4 x i32>* %a, i32 0, i32 1
+  %a.cast1 = bitcast i32* %a.gep1 to <2 x i32>*
+  store <2 x i32> <i32 1, i32 1>, <2 x i32>* %a.cast1
+; CHECK-NEXT: %[[insert2:.*]] = shufflevector <4 x i32> <i32 undef, i32 1, i32 1, i32 undef>, <4 x i32> %[[insert1]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
+
+  %a.gep2 = getelementptr <4 x i32>* %a, i32 0, i32 2
+  %a.cast2 = bitcast i32* %a.gep2 to <2 x i32>*
+  store <2 x i32> <i32 2, i32 2>, <2 x i32>* %a.cast2
+; CHECK-NEXT: %[[insert3:.*]] = shufflevector <4 x i32> <i32 undef, i32 undef, i32 2, i32 2>, <4 x i32> %[[insert2]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+
+  %a.gep3 = getelementptr <4 x i32>* %a, i32 0, i32 3
+  store i32 3, i32* %a.gep3
+; CHECK-NEXT: %[[insert4:.*]] = insertelement <4 x i32> %[[insert3]], i32 3, i32 3
+
+  %ret = load <4 x i32>* %a
+
+  ret <4 x i32> %ret
+; CHECK-NEXT: ret <4 x i32> %[[insert4]]
+}
+
+define <4 x i32> @test_subvec_load() {
+; CHECK: @test_subvec_load
+entry:
+  %a = alloca <4 x i32>
+; CHECK-NOT: alloca
+  store <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32>* %a
+; CHECK-NOT: store
+
+  %a.gep0 = getelementptr <4 x i32>* %a, i32 0, i32 0
+  %a.cast0 = bitcast i32* %a.gep0 to <2 x i32>*
+  %first = load <2 x i32>* %a.cast0
+; CHECK-NOT: load
+; CHECK:      %[[extract1:.*]] = shufflevector <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32> undef, <2 x i32> <i32 0, i32 1>
+
+  %a.gep1 = getelementptr <4 x i32>* %a, i32 0, i32 1
+  %a.cast1 = bitcast i32* %a.gep1 to <2 x i32>*
+  %second = load <2 x i32>* %a.cast1
+; CHECK-NEXT: %[[extract2:.*]] = shufflevector <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32> undef, <2 x i32> <i32 1, i32 2>
+
+  %a.gep2 = getelementptr <4 x i32>* %a, i32 0, i32 2
+  %a.cast2 = bitcast i32* %a.gep2 to <2 x i32>*
+  %third = load <2 x i32>* %a.cast2
+; CHECK-NEXT: %[[extract3:.*]] = shufflevector <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+
+  %tmp = shufflevector <2 x i32> %first, <2 x i32> %second, <2 x i32> <i32 0, i32 2>
+  %ret = shufflevector <2 x i32> %tmp, <2 x i32> %third, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+; CHECK-NEXT: %[[tmp:.*]] = shufflevector <2 x i32> %[[extract1]], <2 x i32> %[[extract2]], <2 x i32> <i32 0, i32 2>
+; CHECK-NEXT: %[[ret:.*]] = shufflevector <2 x i32> %[[tmp]], <2 x i32> %[[extract3]], <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+
+  ret <4 x i32> %ret
+; CHECK-NEXT: ret <4 x i32> %[[ret]]
 }
 
 define i32 @PR14212() {

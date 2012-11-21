@@ -2116,12 +2116,11 @@ static bool isVectorPromotionViable(const DataLayout &TD,
         EndIndex > Ty->getNumElements())
       return false;
 
-    // FIXME: We should build shuffle vector instructions to handle
-    // non-element-sized accesses. See PR14055 for an example of where this
-    // matters.
-    if ((EndOffset - BeginOffset) != ElementSize &&
-        (EndOffset - BeginOffset) != VecSize)
-      return false;
+    assert(EndIndex > BeginIndex && "Empty vector!");
+    uint64_t NumElements = EndIndex - BeginIndex;
+    Type *PartitionTy
+      = (NumElements == 1) ? Ty->getElementType()
+                           : VectorType::get(Ty->getElementType(), NumElements);
 
     if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I->U->getUser())) {
       if (MI->isVolatile())
@@ -2138,8 +2137,12 @@ static bool isVectorPromotionViable(const DataLayout &TD,
     } else if (LoadInst *LI = dyn_cast<LoadInst>(I->U->getUser())) {
       if (LI->isVolatile())
         return false;
+      if (!canConvertValue(TD, PartitionTy, LI->getType()))
+        return false;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I->U->getUser())) {
       if (SI->isVolatile())
+        return false;
+      if (!canConvertValue(TD, SI->getValueOperand()->getType(), PartitionTy))
         return false;
     } else {
       return false;
@@ -2448,13 +2451,13 @@ private:
     return getOffsetTypeAlign(Ty, BeginOffset - NewAllocaBeginOffset);
   }
 
-  ConstantInt *getIndex(IRBuilder<> &IRB, uint64_t Offset) {
+  unsigned getIndex(uint64_t Offset) {
     assert(VecTy && "Can only call getIndex when rewriting a vector");
     uint64_t RelOffset = Offset - NewAllocaBeginOffset;
     assert(RelOffset / ElementSize < UINT32_MAX && "Index out of bounds");
     uint32_t Index = RelOffset / ElementSize;
     assert(Index * ElementSize == RelOffset);
-    return IRB.getInt32(Index);
+    return Index;
   }
 
   void deleteIfTriviallyDead(Value *V) {
@@ -2466,10 +2469,24 @@ private:
   Value *rewriteVectorizedLoadInst(IRBuilder<> &IRB, LoadInst &LI, Value *OldOp) {
     Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                      getName(".load"));
-    if (LI.getType() == VecTy->getElementType() ||
-        BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
-      V = IRB.CreateExtractElement(V, getIndex(IRB, BeginOffset),
+    unsigned BeginIndex = getIndex(BeginOffset);
+    unsigned EndIndex = getIndex(EndOffset);
+    assert(EndIndex > BeginIndex && "Empty vector!");
+    unsigned NumElements = EndIndex - BeginIndex;
+    assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
+    if (NumElements == 1) {
+      V = IRB.CreateExtractElement(V, IRB.getInt32(BeginIndex),
                                    getName(".extract"));
+      DEBUG(dbgs() << "     extract: " << *V << "\n");
+    } else if (NumElements < VecTy->getNumElements()) {
+      SmallVector<Constant*, 8> Mask;
+      Mask.reserve(NumElements);
+      for (unsigned i = BeginIndex; i != EndIndex; ++i)
+        Mask.push_back(IRB.getInt32(i));
+      V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
+                                  ConstantVector::get(Mask),
+                                  getName(".extract"));
+      DEBUG(dbgs() << "     shuffle: " << *V << "\n");
     }
     return V;
   }
@@ -2569,15 +2586,52 @@ private:
 
   bool rewriteVectorizedStoreInst(IRBuilder<> &IRB, Value *V,
                                   StoreInst &SI, Value *OldOp) {
-    if (V->getType() == ElementTy ||
-        BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset) {
-      if (V->getType() != ElementTy)
-        V = convertValue(TD, IRB, V, ElementTy);
+    unsigned BeginIndex = getIndex(BeginOffset);
+    unsigned EndIndex = getIndex(EndOffset);
+    assert(EndIndex > BeginIndex && "Empty vector!");
+    unsigned NumElements = EndIndex - BeginIndex;
+    assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
+    Type *PartitionTy
+      = (NumElements == 1) ? ElementTy
+                           : VectorType::get(ElementTy, NumElements);
+    if (V->getType() != PartitionTy)
+      V = convertValue(TD, IRB, V, PartitionTy);
+    if (NumElements < VecTy->getNumElements()) {
+      // We need to mix in the existing elements.
       LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                            getName(".load"));
-      V = IRB.CreateInsertElement(LI, V, getIndex(IRB, BeginOffset),
-                                  getName(".insert"));
-    } else if (V->getType() != VecTy) {
+      if (NumElements == 1) {
+        V = IRB.CreateInsertElement(LI, V, IRB.getInt32(BeginIndex),
+                                    getName(".insert"));
+        DEBUG(dbgs() <<  "     insert: " << *V << "\n");
+      } else {
+        // When inserting a smaller vector into the larger to store, we first
+        // use a shuffle vector to widen it with undef elements, and then
+        // a second shuffle vector to select between the loaded vector and the
+        // incoming vector.
+        SmallVector<Constant*, 8> Mask;
+        Mask.reserve(VecTy->getNumElements());
+        for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
+          if (i >= BeginIndex && i < EndIndex)
+            Mask.push_back(IRB.getInt32(i - BeginIndex));
+          else
+            Mask.push_back(UndefValue::get(IRB.getInt32Ty()));
+        V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
+                                    ConstantVector::get(Mask),
+                                    getName(".expand"));
+        DEBUG(dbgs() << "    shuffle1: " << *V << "\n");
+
+        Mask.clear();
+        for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
+          if (i >= BeginIndex && i < EndIndex)
+            Mask.push_back(IRB.getInt32(i));
+          else
+            Mask.push_back(IRB.getInt32(i + VecTy->getNumElements()));
+        V = IRB.CreateShuffleVector(V, LI, ConstantVector::get(Mask),
+                                    getName("insert"));
+        DEBUG(dbgs() << "    shuffle2: " << *V << "\n");
+      }
+    } else {
       V = convertValue(TD, IRB, V, VecTy);
     }
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
@@ -2731,7 +2785,7 @@ private:
         IRB.CreateInsertElement(IRB.CreateAlignedLoad(&NewAI,
                                                       NewAI.getAlignment(),
                                                       getName(".load")),
-                                V, getIndex(IRB, BeginOffset),
+                                V, IRB.getInt32(getIndex(BeginOffset)),
                                 getName(".insert")),
         &NewAI, NewAI.getAlignment());
       (void)Store;
@@ -2899,7 +2953,7 @@ private:
       // We have to extract rather than load.
       Src = IRB.CreateExtractElement(
         IRB.CreateAlignedLoad(SrcPtr, Align, getName(".copyload")),
-        getIndex(IRB, BeginOffset),
+        IRB.getInt32(getIndex(BeginOffset)),
         getName(".copyextract"));
     } else if (IntTy && !IsWholeAlloca && !IsDest) {
       Src = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
@@ -2927,7 +2981,7 @@ private:
       // We have to insert into a loaded copy before storing.
       Src = IRB.CreateInsertElement(
         IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(), getName(".load")),
-        Src, getIndex(IRB, BeginOffset),
+        Src, IRB.getInt32(getIndex(BeginOffset)),
         getName(".insert"));
     }
 
