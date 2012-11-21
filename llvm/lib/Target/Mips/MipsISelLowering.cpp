@@ -1775,7 +1775,8 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, GotFlag);
   GA = DAG.getNode(MipsISD::Wrapper, dl, ValTy, GetGlobalReg(DAG, ValTy), GA);
   SDValue ResNode = DAG.getLoad(ValTy, dl, DAG.getEntryNode(), GA,
-                                MachinePointerInfo(), false, false, false, 0);
+                                MachinePointerInfo::getGOT(), false, false,
+                                false, 0);
   // On functions and global targets not internal linked only
   // a load from got/GP is necessary for PIC to work.
   if (!HasGotOfst)
@@ -1812,7 +1813,8 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
                             GetGlobalReg(DAG, ValTy), BAGOTOffset);
   SDValue BALOOffset = DAG.getTargetBlockAddress(BA, ValTy, 0, OFSTFlag);
   SDValue Load = DAG.getLoad(ValTy, dl, DAG.getEntryNode(), BAGOTOffset,
-                             MachinePointerInfo(), false, false, false, 0);
+                             MachinePointerInfo::getGOT(), false, false, false,
+                             0);
   SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, BALOOffset);
   return DAG.getNode(ISD::ADD, dl, ValTy, Load, Lo);
 }
@@ -1919,7 +1921,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
     JTI = DAG.getNode(MipsISD::Wrapper, dl, PtrVT, GetGlobalReg(DAG, PtrVT),
                       JTI);
     HiPart = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), JTI,
-                         MachinePointerInfo(), false, false, false, 0);
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
     JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OfstFlag);
   }
 
@@ -1962,7 +1964,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
                                            N->getOffset(), GOTFlag);
     CP = DAG.getNode(MipsISD::Wrapper, dl, ValTy, GetGlobalReg(DAG, ValTy), CP);
     SDValue Load = DAG.getLoad(ValTy, dl, DAG.getEntryNode(), CP,
-                               MachinePointerInfo::getConstantPool(), false,
+                               MachinePointerInfo::getGOT(), false,
                                false, false, 0);
     SDValue CPLo = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
                                              N->getOffset(), OFSTFlag);
