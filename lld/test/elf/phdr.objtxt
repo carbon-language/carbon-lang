@@ -1,0 +1,17 @@
+RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/phdr.i386 | elf-dump %t1 |  FileCheck -check-prefix=ED %s 
+
+ED: # Program Header 0
+ED: 'p_flags', 0x00000005
+ED: 'p_filesz', 0x0000002a
+ED: # Program Header 1
+ED: 'p_flags', 0x00000004
+ED: 'p_vaddr', 0x004010e0
+ED: 'p_memsz', 0x00000078
+ED: # Program Header 2
+ED: 'p_flags', 0x00000006
+ED: 'p_vaddr', 0x00402158
+ED: 'p_memsz', 0x000000ac
+ED: # Program Header 3
+ED: 'p_flags', 0x00000006
+ED: 'p_vaddr', 0x00404000
+ED: 'p_memsz', 0x00000005

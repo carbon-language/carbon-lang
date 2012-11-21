@@ -294,11 +294,14 @@ public:
 
     ContentType ret = typeUnknown;
 
-
     switch (_section->sh_type) {
     case llvm::ELF::SHT_PROGBITS:
     case llvm::ELF::SHT_DYNAMIC:
       switch (_section->sh_flags) {
+      case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR
+            | llvm::ELF::SHF_WRITE):
+        ret = typeCode;
+        break;
       case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR):
         ret = typeCode;
         break;

@@ -88,6 +88,9 @@ enum {
 template<support::endianness target_endianness, bool is64Bits>
 class ELFWriter;
 
+template<support::endianness target_endianness, bool is64Bits>
+class StockSectionChunk;
+
 /// \brief A Chunk is a contiguous range of space.
 template<support::endianness target_endianness, bool is64Bits>
 class Chunk {
@@ -188,7 +191,7 @@ public:
                uint64_t flags , uint64_t link,  uint64_t info ,
                uint64_t type, uint64_t entsz, const WriterOptionsELF &op, 
                ELFWriter<target_endianness, is64Bits> &writer);
-
+  
   static inline bool classof(const Chunk<target_endianness, is64Bits> *c) {
     return c->getChunkKind() == Chunk<target_endianness, is64Bits>::Kind
                                                                   ::Section;
@@ -213,6 +216,24 @@ bool IsBss(const  Chunk<target_endianness, is64Bits> *A) {
   llvm_unreachable("Call to a non section type chunk");
   // adding a non-reachable return bool for making compiler happy
   return false;
+}
+
+/// \brief Return  pointer to a defined atom whose name is specified as parameter 
+///        if present in the specified section.
+///        When all the atoms are resolved, get addresses and offsets, we 
+///        have atoms with unique names. Only then this routine is guaranteed 
+///        to return the atom of interest. This routine is useful in finding atoms 
+///        which are special such as entry point to a file 
+template<support::endianness target_endianness, bool is64Bits>
+static const DefinedAtom* findDefinedAtomByName(StringRef name,
+                                          StockSectionChunk<target_endianness, 
+                                                            is64Bits> *sec) {
+  ArrayRef<AtomInfo> atoms = sec->atoms();
+  for (auto ai = atoms.begin(); ai != atoms.end(); ai++) {
+    if ((std::get<0>(*ai))->name() == name )
+      return std::get<0>(*ai);
+  }
+  return nullptr;
 }
 
 /// \brief A StockSectionChunk is a section created by linker with all 
@@ -266,7 +287,6 @@ public:
     return c->getChunkKind() ==  Chunk<target_endianness, is64Bits>::Kind
                                                                    ::Header;
   }
-
 private:
   Elf_Ehdr             _eh;
 };
@@ -740,9 +760,6 @@ void ELFSymbolTableChunk<target_endianness, is64Bits>
         symbol->st_shndx = ELF::SHN_COMMON;
       }
       break;
-    case DefinedAtom::typeFirstInSection:
-      t = ELF::STT_SECTION;
-      break;
    // TODO:: How to find STT_FILE symbols?
     default:
       t = ELF::STT_NOTYPE;
@@ -847,7 +864,7 @@ ELFHeaderChunk<target_endianness, is64Bits>
   e_phoff(0);
   e_shoff(0ULL);
   
-  e_flags(0);
+  e_flags(2);
   e_ehsize(this->_size);
   e_phentsize(0);
   e_phnum(0);
@@ -1190,6 +1207,12 @@ void ELFWriter<target_endianness, is64Bits>::build(const lld::File &file){
   ehc->e_phnum(_phdr->computeNumber());
   ehc->e_phoff(_phdr->fileOffset());
   ehc->e_phentsize(sizeof(Elf_Phdr));
+  for (auto i : _stockSectionChunks) {
+    if(const DefinedAtom* da = findDefinedAtomByName(_options.entryPoint(), i)) {
+      ehc->e_entry(this->addressOfAtom(da));
+      return;
+    }
+  }
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -1237,7 +1260,11 @@ void ELFWriter<target_endianness, is64Bits>
 
 //TODO: implement .hash section
 
+  DEBUG_WITH_TYPE("WriterELF-layout", dbgs() 
+                    << "Atoms in file" << file.path()<<":\n");
   for (const DefinedAtom *a : file.defined() ) {
+    DEBUG_WITH_TYPE("WriterELF-layout", dbgs() 
+                    << a->name() << " type: " << a->contentType() <<"\n");
     StringRef sectionName = a->customSectionName();
     if (a->sectionChoice() == 
         DefinedAtom::SectionChoice::sectionBasedOnContent) {
@@ -1302,19 +1329,17 @@ void ELFWriter<target_endianness, is64Bits>
      return A->ordinal() < B->ordinal();}));
 
   // Populate symbol table  with correct st_shndx member.
-  if (_options.type() == ELF::ET_REL) {
-    for (auto chnk : _sectionChunks ) {
-       Elf_Sym *sym  = new (_chunkAllocate.Allocate<Elf_Sym>()) Elf_Sym;
-       sym->st_name  = 0;
-       sym->st_value = 0;
-       sym->st_size  = 0;
-       sym->st_other = ELF::STV_DEFAULT;
-      // first two chunks are not sections hence we subtract 2 but there is a 
-      // NULL section in section table so add 1
-       sym->st_shndx = chnk->ordinal() - 1 ;
-       sym->setBindingAndType(ELF::STB_LOCAL, ELF::STT_SECTION);
-       _symtable->addSymbol(sym);
-    }
+  for (auto chnk : _sectionChunks ) {
+     Elf_Sym *sym  = new (_chunkAllocate.Allocate<Elf_Sym>()) Elf_Sym;
+     sym->st_name  = 0;
+     sym->st_value = 0;
+     sym->st_size  = 0;
+     sym->st_other = ELF::STV_DEFAULT;
+    // first two chunks are not sections hence we subtract 2 but there is a 
+    // NULL section in section table so add 1
+     sym->st_shndx = chnk->ordinal() - 1 ;
+     sym->setBindingAndType(ELF::STB_LOCAL, ELF::STT_SECTION);
+     _symtable->addSymbol(sym);
   }
  for (const auto ssc : _stockSectionChunks){
    for (const auto da : ssc->atoms()) {

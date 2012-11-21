@@ -21,7 +21,7 @@ namespace lld {
 
 StringRef WriterOptionsELF::entryPoint() const {
   if (_type == llvm::ELF::ET_EXEC)
-    return "start";
+    return _entryPoint;
   return StringRef();
 }
 

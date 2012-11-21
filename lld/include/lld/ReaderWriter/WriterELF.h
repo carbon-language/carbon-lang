@@ -35,7 +35,7 @@ public:
     , _machine(llvm::ELF::EM_386)
     , _baseAddress(0x400000)
     , _pageSize(0x1000)
-  {}
+    , _entryPoint("start") {}
 
   /// \brief Create a specific instance of an architecture.
   ///
@@ -56,7 +56,8 @@ public:
   , _pointerWidth(pointerWidth)
   , _machine(Machine)
   , _baseAddress(baseAddress)
-  , _pageSize(pageSize) {}
+  , _pageSize(pageSize)
+  , _entryPoint("start") {}
 
   bool is64Bit() const { return _is64Bit; }
   llvm::support::endianness endianness() const { return _endianness; }
@@ -65,6 +66,7 @@ public:
   uint16_t pointerWidth() const { return _pointerWidth; }
   uint64_t baseAddress() const { return _baseAddress; }
   uint64_t pageSize() const { return _pageSize; }
+  void setEntryPoint(StringRef name) { _entryPoint = name; }
 
   /// \brief Get the entry point if type() is ET_EXEC. Empty otherwise.
   StringRef entryPoint() const;
@@ -77,6 +79,7 @@ protected:
   uint16_t                  _machine;
   uint64_t                  _baseAddress;
   uint64_t                  _pageSize;
+  StringRef                 _entryPoint;
 };
 
 /// \brief Create a WriterELF using the given options.
