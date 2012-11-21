@@ -46,6 +46,10 @@ static cl::opt<bool>
 EnableMipsTailCalls("enable-mips-tail-calls", cl::Hidden,
                     cl::desc("MIPS: Enable tail calls."), cl::init(false));
 
+static cl::opt<bool>
+LargeGOT("mxgot", cl::Hidden,
+         cl::desc("MIPS: Enable GOT larger than 64k."), cl::init(false));
+
 static const uint16_t O32IntRegs[4] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
 };
