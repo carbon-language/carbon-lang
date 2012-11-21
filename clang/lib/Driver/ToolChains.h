@@ -370,9 +370,10 @@ public:
 
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const;
-  void AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs, 
-                         const char *DarwinStaticLib) const;
-  
+  void AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs,
+                         const char *DarwinStaticLib,
+                         bool AlwaysLink = false) const;
+
   virtual void AddCXXStdlibLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const;
 

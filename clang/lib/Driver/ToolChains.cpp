@@ -261,16 +261,18 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
 
 void DarwinClang::AddLinkRuntimeLib(const ArgList &Args,
                                     ArgStringList &CmdArgs,
-                                    const char *DarwinStaticLib) const {
+                                    const char *DarwinStaticLib,
+                                    bool AlwaysLink) const {
   llvm::sys::Path P(getDriver().ResourceDir);
   P.appendComponent("lib");
   P.appendComponent("darwin");
   P.appendComponent(DarwinStaticLib);
 
   // For now, allow missing resource libraries to support developers who may
-  // not have compiler-rt checked out or integrated into their build.
+  // not have compiler-rt checked out or integrated into their build (unless
+  // we explicitly force linking with this library).
   bool Exists;
-  if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+  if (AlwaysLink || (!llvm::sys::fs::exists(P.str(), Exists) && Exists))
     CmdArgs.push_back(Args.MakeArgString(P.str()));
 }
 
@@ -326,7 +328,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=undefined";
     } else {
-      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.ubsan_osx.a");
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.ubsan_osx.a", true);
 
       // The Ubsan runtime library requires C++.
       AddCXXStdlibLibArgs(Args, CmdArgs);
@@ -343,7 +345,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=address";
     } else {
-      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.asan_osx.a");
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.asan_osx.a", true);
 
       // The ASAN runtime library requires C++ and CoreFoundation.
       AddCXXStdlibLibArgs(Args, CmdArgs);
