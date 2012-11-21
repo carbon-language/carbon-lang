@@ -20,6 +20,7 @@ class Radar10642615DataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
