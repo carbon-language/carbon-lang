@@ -229,7 +229,7 @@ ID types::lookupCXXTypeForCType(ID Id) {
   switch (Id) {
   default:
     return Id;
-    
+
   case types::TY_C:
     return types::TY_CXX;
   case types::TY_PP_C:
