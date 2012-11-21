@@ -29,18 +29,15 @@ const uptr kWordSizeInBits = 8 * kWordSize;
 // We may want to use getpagesize() or sysconf(_SC_PAGESIZE) here rather than
 // hardcoding the values, but today these values need to be compile-time
 // constants.
-const uptr kPageSizeBits = 16;
-const uptr kPageSize = 1UL << kPageSizeBits;
+const uptr kPageSize = 1UL << 16;
 const uptr kCacheLineSize = 128;
 const uptr kMmapGranularity = kPageSize;
 #elif !defined(_WIN32)
-const uptr kPageSizeBits = 12;
-const uptr kPageSize = 1UL << kPageSizeBits;
+const uptr kPageSize = 1UL << 12;
 const uptr kCacheLineSize = 64;
 const uptr kMmapGranularity = kPageSize;
 #else
-const uptr kPageSizeBits = 12;
-const uptr kPageSize = 1UL << kPageSizeBits;
+const uptr kPageSize = 1UL << 12;
 const uptr kCacheLineSize = 64;
 const uptr kMmapGranularity = 1UL << 16;
 #endif
