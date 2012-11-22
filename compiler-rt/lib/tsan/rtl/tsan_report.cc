@@ -51,7 +51,7 @@ static void PrintHeader(ReportType typ) {
 
 void PrintStack(const ReportStack *ent) {
   if (ent == 0) {
-    Printf("    [failed to restore the stack]\n");
+    Printf("    [failed to restore the stack]\n\n");
     return;
   }
   for (int i = 0; ent; ent = ent->next, i++) {
