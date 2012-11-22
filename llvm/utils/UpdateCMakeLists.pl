@@ -68,7 +68,7 @@ sub UpdateCMake {
   while(<IN>) {
     if (!$foundLibrary) {
       print OUT $_;
-      if (/^add_[^_]+_library\(/ || /^add_llvm_target\(/ || /^add_executable\(/) {
+      if (/^add_[^_]+_library\(/ || /^add_llvm_target\(/ || /^add_[^_]+_executable\(/) {
         $foundLibrary = 1;
         EmitCMakeList($dir);
       }
