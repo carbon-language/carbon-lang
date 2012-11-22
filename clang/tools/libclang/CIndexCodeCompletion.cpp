@@ -236,7 +236,8 @@ clang_getCompletionBriefComment(CXCompletionString completion_string) {
   return createCXString(CCStr->getBriefComment(), /*DupString=*/false);
 }
 
-  
+namespace {
+
 /// \brief The CXCodeCompleteResults structure we allocate internally;
 /// the client only sees the initial CXCodeCompleteResults structure.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
@@ -297,6 +298,8 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// message send.
   std::string Selector;
 };
+
+} // end anonymous namespace
 
 /// \brief Tracks the number of code-completion result objects that are 
 /// currently active.
