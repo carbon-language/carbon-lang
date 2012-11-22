@@ -191,7 +191,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // emission fails.
     MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI,
                                                          STI, *Context);
-    MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple(), TargetCPU);
+    MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple(),
+                                                       TargetCPU);
     if (MCE == 0 || MAB == 0)
       return true;
 
