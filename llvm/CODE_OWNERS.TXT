@@ -16,6 +16,10 @@ N: Owen Anderson
 E: resistor@mac.com
 D: SelectionDAG (lib/CodeGen/SelectionDAG/*)
 
+N: Rafael Avila de Espindola
+E: rafael.espindola@gmail.com
+D: Gold plugin (tools/gold/*)
+
 N: Chandler Carruth
 E: chandlerc@gmail.com
 E: chandlerc@google.com
