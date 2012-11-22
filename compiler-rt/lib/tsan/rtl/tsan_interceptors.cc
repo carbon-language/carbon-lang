@@ -165,13 +165,11 @@ ScopedInterceptor::~ScopedInterceptor() {
 struct BlockingCall {
   explicit BlockingCall(ThreadState *thr)
       : ctx(SigCtx(thr)) {
-    CHECK_EQ(ctx->in_blocking_func, 0);
     ctx->in_blocking_func++;
   }
 
   ~BlockingCall() {
     ctx->in_blocking_func--;
-    CHECK_EQ(ctx->in_blocking_func, 0);
   }
 
   SignalContext *ctx;
@@ -1231,7 +1229,7 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       // If we are in blocking function, we can safely process it now
       // (but check if we are in a recursive interceptor,
       // i.e. pthread_join()->munmap()).
-      (sctx && sctx->in_blocking_func && thr->in_rtl == 1)) {
+      (sctx && sctx->in_blocking_func == 1 && thr->in_rtl == 1)) {
     CHECK(thr->in_rtl == 0 || thr->in_rtl == 1);
     int in_rtl = thr->in_rtl;
     thr->in_rtl = 0;
