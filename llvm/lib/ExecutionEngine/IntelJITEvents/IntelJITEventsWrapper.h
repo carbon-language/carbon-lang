@@ -35,8 +35,6 @@ class IntelJITEventsWrapper {
   NotifyEventPtr NotifyEventFunc;
   RegisterCallbackExPtr RegisterCallbackExFunc;
   IsProfilingActivePtr IsProfilingActiveFunc;
-  FinalizeThreadPtr FinalizeThreadFunc;
-  FinalizeProcessPtr FinalizeProcessFunc;
   GetNewMethodIDPtr GetNewMethodIDFunc;
 
 public:
@@ -48,8 +46,6 @@ public:
   : NotifyEventFunc(::iJIT_NotifyEvent),
     RegisterCallbackExFunc(::iJIT_RegisterCallbackEx),
     IsProfilingActiveFunc(::iJIT_IsProfilingActive),
-    FinalizeThreadFunc(::FinalizeThread),
-    FinalizeProcessFunc(::FinalizeProcess),
     GetNewMethodIDFunc(::iJIT_GetNewMethodID) {
   }
 
@@ -62,8 +58,6 @@ public:
   : NotifyEventFunc(NotifyEventImpl),
     RegisterCallbackExFunc(RegisterCallbackExImpl),
     IsProfilingActiveFunc(IsProfilingActiveImpl),
-    FinalizeThreadFunc(FinalizeThreadImpl),
-    FinalizeProcessFunc(FinalizeProcessImpl),
     GetNewMethodIDFunc(GetNewMethodIDImpl) {
   }
 
