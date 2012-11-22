@@ -256,7 +256,6 @@ class AddressSanitizerCreateGlobalRedzonesPass {
   void createInitializerPoisonCalls(Module &M, Value *FirstAddr,
                                     Value *LastAddr);
 
-  static char ID;  // Pass identification, replacement for typeid
   OwningPtr<BlackList> BL;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
   Type *IntptrTy;
