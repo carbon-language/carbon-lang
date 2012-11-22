@@ -136,7 +136,7 @@ void FailInAssertionOnOOM() {
 
 TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
   EXPECT_DEATH(FailInAssertionOnOOM(),
-               "allocated_user.*allocated_meta.*kRegionSize");
+               "Out of memory");
 }
 
 TEST(SanitizerCommon, LargeMmapAllocator) {
