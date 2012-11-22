@@ -47,6 +47,10 @@ N: Hal Finkel
 E: hfinkel@anl.gov
 D: BBVectorize and the PowerPC target
 
+N: Venkatraman Govindaraju
+E: venkatra@cs.wisc.edu
+D: Sparc Backend (lib/Target/Sparc/*)
+
 N: Doug Gregor
 D: All parts of Clang not covered by someone else
 
