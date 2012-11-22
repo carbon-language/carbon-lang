@@ -39,6 +39,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__cxa_guard_acquire",
     "__cxa_guard_release",
     "__memcpy_chk",
+    "abs",
     "acos",
     "acosf",
     "acosh",
@@ -91,6 +92,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "fabs",
     "fabsf",
     "fabsl",
+    "ffs",
+    "ffsl",
+    "ffsll",
     "fiprintf",
     "floor",
     "floorf",
@@ -98,11 +102,16 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "fmod",
     "fmodf",
     "fmodl",
+    "fprintf",
     "fputc",
     "fputs",
     "free",
     "fwrite",
     "iprintf",
+    "isascii",
+    "isdigit",
+    "labs",
+    "llabs",
     "log",
     "log10",
     "log10f",
@@ -132,6 +141,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "pow",
     "powf",
     "powl",
+    "printf",
     "putchar",
     "puts",
     "realloc",
@@ -149,6 +159,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "sinhl",
     "sinl",
     "siprintf",
+    "sprintf",
     "sqrt",
     "sqrtf",
     "sqrtl",
@@ -182,6 +193,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "tanhf",
     "tanhl",
     "tanl",
+    "toascii",
     "trunc",
     "truncf",
     "truncl",
@@ -327,6 +339,41 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     // Win32 does *not* provide stpcpy.  It is provided on POSIX systems:
     // http://pubs.opengroup.org/onlinepubs/9699919799/functions/stpcpy.html
     TLI.setUnavailable(LibFunc::stpcpy);
+
+    // Win32 does *not* provide ffs.  It is provided on POSIX systems:
+    // http://pubs.opengroup.org/onlinepubs/009695399/functions/ffs.html
+    TLI.setUnavailable(LibFunc::ffs);
+
+    // Win32 does *not* provide llabs.  It is defined in ISO/IEC 9899:1999,
+    // but Visual C++ does not support it.
+    TLI.setUnavailable(LibFunc::llabs);
+  }
+
+  // ffsl is available on at least Darwin, Mac OS X, iOS, FreeBSD, and
+  // Linux (GLIBC):
+  // http://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man3/ffsl.3.html
+  // http://svn.freebsd.org/base/user/eri/pf45/head/lib/libc/string/ffsl.c
+  // http://www.gnu.org/software/gnulib/manual/html_node/ffsl.html
+  switch (T.getOS()) {
+  case Triple::Darwin:
+  case Triple::MacOSX:
+  case Triple::IOS:
+  case Triple::FreeBSD:
+  case Triple::Linux:
+    break;
+  default:
+    TLI.setUnavailable(LibFunc::ffsl);
+  }
+
+  // ffsll is available on at least FreeBSD and Linux (GLIBC):
+  // http://svn.freebsd.org/base/user/eri/pf45/head/lib/libc/string/ffsll.c
+  // http://www.gnu.org/software/gnulib/manual/html_node/ffsll.html
+  switch (T.getOS()) {
+  case Triple::FreeBSD:
+  case Triple::Linux:
+    break;
+  default:
+    TLI.setUnavailable(LibFunc::ffsll);
   }
 }
 

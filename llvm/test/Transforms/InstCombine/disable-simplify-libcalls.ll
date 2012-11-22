@@ -37,6 +37,18 @@ declare i64 @strtoll(i8*, i8**, i32)
 declare i64 @strtoul(i8*, i8**, i32)
 declare i64 @strtoull(i8*, i8**, i32)
 declare i64 @strcspn(i8*, i8*)
+declare i32 @abs(i32)
+declare i32 @ffs(i32)
+declare i32 @ffsl(i64)
+declare i32 @ffsll(i64)
+declare i32 @fprintf(i8*, i8*)
+declare i32 @isascii(i32)
+declare i32 @isdigit(i32)
+declare i32 @toascii(i32)
+declare i64 @labs(i64)
+declare i64 @llabs(i64)
+declare i32 @printf(i8*)
+declare i32 @sprintf(i8*, i8*)
 
 define double @t1(double %x) {
 ; CHECK: @t1
@@ -233,4 +245,91 @@ define i64 @t25(i8* %y) {
   %ret = call i64 @strcspn(i8* %x, i8* %y)
   ret i64 %ret
 ; CHECK: call i64 @strcspn
+}
+
+define i32 @t26(i32 %y) {
+; CHECK: @t26
+  %ret = call i32 @abs(i32 %y)
+  ret i32 %ret
+; CHECK: call i32 @abs
+}
+
+define i32 @t27(i32 %y) {
+; CHECK: @t27
+  %ret = call i32 @ffs(i32 %y)
+  ret i32 %ret
+; CHECK: call i32 @ffs
+}
+
+define i32 @t28(i64 %y) {
+; CHECK: @t28
+  %ret = call i32 @ffsl(i64 %y)
+  ret i32 %ret
+; CHECK: call i32 @ffsl
+}
+
+define i32 @t29(i64 %y) {
+; CHECK: @t29
+  %ret = call i32 @ffsll(i64 %y)
+  ret i32 %ret
+; CHECK: call i32 @ffsll
+}
+
+define void @t30() {
+; CHECK: @t30
+  %x = getelementptr inbounds [13 x i8]* @.str1, i32 0, i32 0
+  call i32 @fprintf(i8* null, i8* %x)
+  ret void
+; CHECK: call i32 @fprintf
+}
+
+define i32 @t31(i32 %y) {
+; CHECK: @t31
+  %ret = call i32 @isascii(i32 %y)
+  ret i32 %ret
+; CHECK: call i32 @isascii
+}
+
+define i32 @t32(i32 %y) {
+; CHECK: @t32
+  %ret = call i32 @isdigit(i32 %y)
+  ret i32 %ret
+; CHECK: call i32 @isdigit
+}
+
+define i32 @t33(i32 %y) {
+; CHECK: @t33
+  %ret = call i32 @toascii(i32 %y)
+  ret i32 %ret
+; CHECK: call i32 @toascii
+}
+
+define i64 @t34(i64 %y) {
+; CHECK: @t34
+  %ret = call i64 @labs(i64 %y)
+  ret i64 %ret
+; CHECK: call i64 @labs
+}
+
+define i64 @t35(i64 %y) {
+; CHECK: @t35
+  %ret = call i64 @llabs(i64 %y)
+  ret i64 %ret
+; CHECK: call i64 @llabs
+}
+
+define void @t36() {
+; CHECK: @t36
+  %x = getelementptr inbounds [1 x i8]* @empty, i32 0, i32 0
+  call i32 @printf(i8* %x)
+  ret void
+; CHECK: call i32 @printf
+}
+
+define void @t37(i8* %x) {
+; CHECK: @t37
+  %y = getelementptr inbounds [13 x i8]* @.str1, i32 0, i32 0
+  call i32 @sprintf(i8* %x, i8* %y)
+  ret void
+; CHECK: call i32 @sprintf
 }
