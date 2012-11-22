@@ -20,6 +20,7 @@ Subsystem Documentation
    MarkedUpDisassembly
    HowToUseInstrMappings
    SystemLibrary
+   SourceLevelDebugging
 
 .. FIXME: once LangRef is Sphinxified, HowToUseInstrMappings should be put
    under LangRef's toctree instead of this page's toctree.
@@ -53,7 +54,7 @@ Subsystem Documentation
    The interfaces source-language compilers should use for compiling GC'd
    programs.
 
-* `Source Level Debugging with LLVM <SourceLevelDebugging.html>`_
+* :doc:`Source Level Debugging with LLVM <SourceLevelDebugging>`
     
    This document describes the design and philosophy behind the LLVM
    source-level debugger.
