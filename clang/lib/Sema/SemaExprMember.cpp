@@ -163,7 +163,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
     // member name lookup, and it's sufficient to check that we have the naming
     // class as a base class.
     Classes.clear();
-    Classes.insert(R.getNamingClass());
+    Classes.insert(R.getNamingClass()->getCanonicalDecl());
   }
 
   // If we can prove that the current context is unrelated to all the

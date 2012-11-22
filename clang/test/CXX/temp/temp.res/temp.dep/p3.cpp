@@ -77,4 +77,13 @@ namespace PR14402 {
   template<> struct A<char>::E : A<char> {};
   // 'cannot bind to a temporary'
   char &s = A<char>::F().g(); // expected-note {{in instantiation of}}
+
+  struct X;
+  struct X { void f(); };
+  struct X;
+  template<typename T> struct Y : X {
+    void g() {
+      X::f();
+    }
+  };
 }
