@@ -175,7 +175,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#simplify-libcalls">-simplify-libcalls</a></td><td>Simplify well-known library calls</td></tr>
 <tr><td><a href="#simplifycfg">-simplifycfg</a></td><td>Simplify the CFG</td></tr>
 <tr><td><a href="#sink">-sink</a></td><td>Code sinking</td></tr>
-<tr><td><a href="#sretpromotion">-sretpromotion</a></td><td>Promote sret arguments to multiple ret values</td></tr>
 <tr><td><a href="#strip">-strip</a></td><td>Strip all symbols from a module</td></tr>
 <tr><td><a href="#strip-dead-debug-info">-strip-dead-debug-info</a></td><td>Strip debug info for unused symbols</td></tr>
 <tr><td><a href="#strip-dead-prototypes">-strip-dead-prototypes</a></td><td>Strip Unused Function Prototypes</td></tr>
@@ -1711,29 +1710,6 @@ if (X &lt; 3) {</pre>
   <p>This pass moves instructions into successor blocks, when possible, so that
  they aren't executed on paths where their results aren't needed.
   </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<h3>
-  <a name="sretpromotion">-sretpromotion: Promote sret arguments to multiple ret values</a>
-</h3>
-<div>
-  <p>
-  This pass finds functions that return a struct (using a pointer to the struct
-  as the first argument of the function, marked with the '<tt>sret</tt>' attribute) and
-  replaces them with a new function that simply returns each of the elements of
-  that struct (using multiple return values).
-  </p>
-
-  <p>
-  This pass works under a number of conditions:
-  </p>
-
-  <ul>
-  <li>The returned struct must not contain other structs</li>
-  <li>The returned struct must only be used to load values from</li>
-  <li>The placeholder struct passed in is the result of an <tt>alloca</tt></li>
-  </ul>
 </div>
 
 <!-------------------------------------------------------------------------- -->
