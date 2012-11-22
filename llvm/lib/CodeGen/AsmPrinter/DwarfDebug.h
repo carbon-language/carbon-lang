@@ -367,6 +367,21 @@ private:
   ///
   void computeSizeAndOffsets();
 
+  /// computeInlinedDIEs - Attach DW_AT_inline attribute with inlined
+  /// subprogram DIEs.
+  void computeInlinedDIEs();
+
+  /// collectDeadVariables - Collect info for variables that were optimized out.
+  void collectDeadVariables();
+
+  /// finalizeModuleInfo - Finish off debug information after all functions
+  /// have been processed.
+  void finalizeModuleInfo();
+
+  /// endSections - Emit labels to close any remaining sections that have
+  /// been left open.
+  void endSections();
+
   /// EmitDebugInfo - Emit the debug info section.
   ///
   void emitDebugInfo();

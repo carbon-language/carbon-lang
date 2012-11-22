@@ -797,71 +797,83 @@ void DwarfDebug::beginModule() {
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());
 }
 
-/// endModule - Emit all Dwarf sections that should come after the content.
-///
-void DwarfDebug::endModule() {
-
-  if (!FirstCU) return;
-
-  const Module *M = MMI->getModule();
-  DenseMap<const MDNode *, LexicalScope *> DeadFnScopeMap;
-
-  // Collect info for variables that were optimized out.
-  if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
-    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      DICompileUnit TheCU(CU_Nodes->getOperand(i));
-      DIArray Subprograms = TheCU.getSubprograms();
-      for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
-        DISubprogram SP(Subprograms.getElement(i));
-        if (ProcessedSPNodes.count(SP) != 0) continue;
-        if (!SP.Verify()) continue;
-        if (!SP.isDefinition()) continue;
-        DIArray Variables = SP.getVariables();
-        if (Variables.getNumElements() == 0) continue;
-
-        LexicalScope *Scope =
-          new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
-        DeadFnScopeMap[SP] = Scope;
-
-        // Construct subprogram DIE and add variables DIEs.
-        CompileUnit *SPCU = CUMap.lookup(TheCU);
-        assert(SPCU && "Unable to find Compile Unit!");
-        constructSubprogramDIE(SPCU, SP);
-        DIE *ScopeDIE = SPCU->getDIE(SP);
-        for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
-          DIVariable DV(Variables.getElement(vi));
-          if (!DV.Verify()) continue;
-          DbgVariable *NewVar = new DbgVariable(DV, NULL);
-          if (DIE *VariableDIE =
-              SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
-            ScopeDIE->addChild(VariableDIE);
-        }
-      }
-    }
-  }
-
+// Attach DW_AT_inline attribute with inlined subprogram DIEs.
+void DwarfDebug::computeInlinedDIEs() {
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
-         AE = InlinedSubprogramDIEs.end(); AI != AE; ++AI) {
+	 AE = InlinedSubprogramDIEs.end(); AI != AE; ++AI) {
     DIE *ISP = *AI;
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
   for (DenseMap<const MDNode *, DIE *>::iterator AI = AbstractSPDies.begin(),
-         AE = AbstractSPDies.end(); AI != AE; ++AI) {
+	 AE = AbstractSPDies.end(); AI != AE; ++AI) {
     DIE *ISP = AI->second;
     if (InlinedSubprogramDIEs.count(ISP))
       continue;
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
+}
+
+// Collect info for variables that were optimized out.
+void DwarfDebug::collectDeadVariables() {
+  const Module *M = MMI->getModule();
+  DenseMap<const MDNode *, LexicalScope *> DeadFnScopeMap;
+
+  if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
+    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
+      DICompileUnit TheCU(CU_Nodes->getOperand(i));
+      DIArray Subprograms = TheCU.getSubprograms();
+      for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
+	DISubprogram SP(Subprograms.getElement(i));
+	if (ProcessedSPNodes.count(SP) != 0) continue;
+	if (!SP.Verify()) continue;
+	if (!SP.isDefinition()) continue;
+	DIArray Variables = SP.getVariables();
+	if (Variables.getNumElements() == 0) continue;
+
+	LexicalScope *Scope =
+	  new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
+	DeadFnScopeMap[SP] = Scope;
+
+	// Construct subprogram DIE and add variables DIEs.
+	CompileUnit *SPCU = CUMap.lookup(TheCU);
+	assert(SPCU && "Unable to find Compile Unit!");
+	constructSubprogramDIE(SPCU, SP);
+	DIE *ScopeDIE = SPCU->getDIE(SP);
+	for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
+	  DIVariable DV(Variables.getElement(vi));
+	  if (!DV.Verify()) continue;
+	  DbgVariable *NewVar = new DbgVariable(DV, NULL);
+	  if (DIE *VariableDIE =
+	      SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
+	    ScopeDIE->addChild(VariableDIE);
+	}
+      }
+    }
+  }
+  DeleteContainerSeconds(DeadFnScopeMap);
+}
+
+void DwarfDebug::finalizeModuleInfo() {
+  // Collect info for variables that were optimized out.
+  collectDeadVariables();
+
+  // Attach DW_AT_inline attribute with inlined subprogram DIEs.
+  computeInlinedDIEs();
 
   // Emit DW_AT_containing_type attribute to connect types with their
   // vtable holding type.
   for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
-         CUE = CUMap.end(); CUI != CUE; ++CUI) {
+	 CUE = CUMap.end(); CUI != CUE; ++CUI) {
     CompileUnit *TheCU = CUI->second;
     TheCU->constructContainingTypeDIEs();
   }
 
+   // Compute DIE offsets and sizes.
+  computeSizeAndOffsets();
+}
+
+void DwarfDebug::endSections() {
   // Standard sections final addresses.
   Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getTextSection());
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("text_end"));
@@ -873,9 +885,20 @@ void DwarfDebug::endModule() {
     Asm->OutStreamer.SwitchSection(SectionMap[I]);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_end", I+1));
   }
+}
 
-  // Compute DIE offsets and sizes.
-  computeSizeAndOffsets();
+/// endModule - Emit all Dwarf sections that should come after the content.
+///
+void DwarfDebug::endModule() {
+
+  if (!FirstCU) return;
+
+  // End any existing sections.
+  // TODO: Does this need to happen?
+  endSections();
+
+  // Finalize the debug info for the module.
+  finalizeModuleInfo();
 
   // Emit initial sections.
   emitSectionLabels();
@@ -923,7 +946,6 @@ void DwarfDebug::endModule() {
   emitDebugStr();
 
   // clean up.
-  DeleteContainerSeconds(DeadFnScopeMap);
   SPMap.clear();
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I)
