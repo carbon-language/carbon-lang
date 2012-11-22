@@ -1219,7 +1219,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
         }
 
         process->SendMessage(message);
-        stop_monitoring = message.GetKind() == ProcessMessage::eExitMessage;
+        stop_monitoring = !process->IsAlive();
     }
 
     return stop_monitoring;
@@ -1657,7 +1657,6 @@ ProcessMonitor::Detach()
         DetachOperation op(error);
         DoOperation(&op);
     }
-    StopMonitor();
     return error;
 }
 
@@ -1705,6 +1704,7 @@ ProcessMonitor::StopOpThread()
 
     Host::ThreadCancel(m_operation_thread, NULL);
     Host::ThreadJoin(m_operation_thread, &result, NULL);
+    m_operation_thread = LLDB_INVALID_HOST_THREAD;
 }
 
 void
