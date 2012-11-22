@@ -765,7 +765,8 @@ public:
     return reverse_base_class_const_iterator(vbases_begin());
  }
 
-  /// \brief Determine whether this class has any dependent base classes.
+  /// \brief Determine whether this class has any dependent base classes which
+  /// are not the current instantiation.
   bool hasAnyDependentBases() const;
 
   /// Iterator access to method members.  The method iterator visits
@@ -1307,6 +1308,10 @@ public:
 
     return dyn_cast<FunctionDecl>(getDeclContext());
   }
+
+  /// \brief Determine whether this dependent class is a current instantiation,
+  /// when viewed from within the given context.
+  bool isCurrentInstantiation(const DeclContext *CurContext) const;
 
   /// \brief Determine whether this class is derived from the class \p Base.
   ///

@@ -26,7 +26,7 @@
 using namespace clang;
 
 /// \brief Find the current instantiation that associated with the given type.
-static CXXRecordDecl *getCurrentInstantiationOf(QualType T, 
+static CXXRecordDecl *getCurrentInstantiationOf(QualType T,
                                                 DeclContext *CurContext) {
   if (T.isNull())
     return 0;
@@ -34,16 +34,10 @@ static CXXRecordDecl *getCurrentInstantiationOf(QualType T,
   const Type *Ty = T->getCanonicalTypeInternal().getTypePtr();
   if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
-    if (!T->isDependentType())
+    if (!Record->isDependentContext() ||
+        Record->isCurrentInstantiation(CurContext))
       return Record;
 
-    // This may be a member of a class template or class template partial
-    // specialization. If it's part of the current semantic context, then it's
-    // an injected-class-name;
-    for (; !CurContext->isFileContext(); CurContext = CurContext->getParent())
-      if (CurContext->Equals(Record))
-        return Record;
-    
     return 0;
   } else if (isa<InjectedClassNameType>(Ty))
     return cast<InjectedClassNameType>(Ty)->getDecl();

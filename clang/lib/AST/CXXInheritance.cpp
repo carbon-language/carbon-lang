@@ -121,6 +121,17 @@ bool CXXRecordDecl::isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const {
   return forallBases(BaseIsNot, (void*) Base->getCanonicalDecl());
 }
 
+bool
+CXXRecordDecl::isCurrentInstantiation(const DeclContext *CurContext) const {
+  assert(isDependentContext());
+
+  for (; !CurContext->isFileContext(); CurContext = CurContext->getParent())
+    if (CurContext->Equals(this))
+      return true;
+
+  return false;
+}
+
 bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
                                 void *OpaqueData,
                                 bool AllowShortCircuit) const {
@@ -140,7 +151,9 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
 
       CXXRecordDecl *Base = 
             cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition());
-      if (!Base) {
+      if (!Base ||
+          (Base->isDependentContext() &&
+           !Base->isCurrentInstantiation(Record))) {
         if (AllowShortCircuit) return false;
         AllMatches = false;
         continue;
@@ -725,4 +738,3 @@ CXXRecordDecl::getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const {
       AddIndirectPrimaryBases(BaseDecl, Context, Bases);
   }
 }
-

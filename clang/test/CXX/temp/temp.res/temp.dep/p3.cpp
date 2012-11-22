@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// expected-no-diagnostics
 struct A0 {
   struct K { };
 };
@@ -41,4 +40,41 @@ namespace E2 {
   }; 
   
   Y<A> ya;
+}
+
+namespace PR14402 {
+  template<typename T>
+  struct A {
+    typedef int n;
+    int f();
+
+    struct B {};
+    struct C : B {
+      // OK, can't be sure whether we derive from A yet.
+      using A::n;
+      int g() { return f(); }
+    };
+
+    struct D {
+      using A::n; // expected-error {{using declaration refers into 'A<T>::', which is not a base class of 'D'}}
+      int g() { return f(); } // expected-error {{call to non-static member function 'f' of 'A' from nested type 'D'}}
+    };
+
+    struct E { char &f(); };
+    struct F : E {
+      // FIXME: Reject this prior to instantiation; f() is known to return int.
+      char &g() { return f(); }
+      // expected-error@-1 {{'PR14402::A<int>::f' is not a member of class 'PR14402::A<int>::F'}}
+      // expected-error@-2 {{non-const lvalue reference to type 'char' cannot bind to a temporary of type 'int'}}
+    };
+  };
+
+  template<> struct A<int>::B : A<int> {};
+  A<int>::C::n n = A<int>::C().g();
+
+  // 'not a member'
+  char &r = A<int>::F().g(); // expected-note {{in instantiation of}}
+  template<> struct A<char>::E : A<char> {};
+  // 'cannot bind to a temporary'
+  char &s = A<char>::F().g(); // expected-note {{in instantiation of}}
 }

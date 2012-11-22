@@ -100,3 +100,33 @@ namespace PR13499 {
   Y<X> y;
   Z<X> z; // expected-note {{in instantiation of}}
 }
+
+namespace MemberOfUnknownSpecialization {
+  template<typename T> struct A {
+    struct B {};
+    struct C : B {
+      void f() override;
+    };
+  };
+
+  template<> struct A<int>::B {
+    virtual void f();
+  };
+  // ok
+  A<int>::C c1;
+
+  template<> struct A<char>::B {
+    void f();
+  };
+  // expected-error@-13 {{only virtual member functions can be marked 'override'}}
+  // expected-note@+1 {{in instantiation of}}
+  A<char>::C c2;
+
+  template<> struct A<double>::B {
+    virtual void f() final;
+  };
+  // expected-error@-20 {{declaration of 'f' overrides a 'final' function}}
+  // expected-note@-3 {{here}}
+  // expected-note@+1 {{in instantiation of}}
+  A<double>::C c3;
+}
