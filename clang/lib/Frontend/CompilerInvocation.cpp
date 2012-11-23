@@ -386,8 +386,6 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
   Opts.TrapFuncName = Args.getLastArgValue(OPT_ftrap_function_EQ);
-  Opts.BoundsChecking = Args.getLastArgIntValue(OPT_fbounds_checking_EQ, 0,
-                                                Diags);
   Opts.UseInitArray = Args.hasArg(OPT_fuse_init_array);
 
   Opts.FunctionSections = Args.hasArg(OPT_ffunction_sections);

@@ -152,10 +152,9 @@ static void addObjCARCOptPass(const PassManagerBuilder &Builder, PassManagerBase
     PM.add(createObjCARCOptPass());
 }
 
-static unsigned BoundsChecking;
 static void addBoundsCheckingPass(const PassManagerBuilder &Builder,
                                     PassManagerBase &PM) {
-  PM.add(createBoundsCheckingPass(BoundsChecking));
+  PM.add(createBoundsCheckingPass());
 }
 
 static void addAddressSanitizerPass(const PassManagerBuilder &Builder,
@@ -197,8 +196,7 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
                            addObjCARCOptPass);
   }
 
-  if (CodeGenOpts.BoundsChecking > 0) {
-    BoundsChecking = CodeGenOpts.BoundsChecking;
+  if (LangOpts.SanitizeBounds) {
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addBoundsCheckingPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,

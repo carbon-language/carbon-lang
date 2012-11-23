@@ -113,9 +113,6 @@ CODEGENOPT(DebugColumnInfo, 1, 0) ///< Whether or not to use column information
 /// or 0 if unspecified.
 VALUE_CODEGENOPT(NumRegisterParameters, 32, 0)
 
-/// The run-time penalty for bounds checking, or 0 to disable.
-VALUE_CODEGENOPT(BoundsChecking, 8, 0)
-
 /// The lower bound for a buffer to be considered for stack protection.
 VALUE_CODEGENOPT(SSPBufferSize, 32, 0)
 

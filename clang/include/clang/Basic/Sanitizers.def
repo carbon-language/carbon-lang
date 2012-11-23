@@ -56,6 +56,7 @@ SANITIZER("null", Null)
 SANITIZER("vptr", Vptr)
 SANITIZER("object-size", ObjectSize)
 SANITIZER("float-cast-overflow", FloatCastOverflow)
+SANITIZER("bounds", Bounds)
 
 // -fsanitize=undefined (and its alias -fcatch-undefined-behavior). This should
 // include all the sanitizers which have low overhead, no ABI or address space
@@ -63,7 +64,7 @@ SANITIZER("float-cast-overflow", FloatCastOverflow)
 SANITIZER_GROUP("undefined", Undefined,
                 SignedIntegerOverflow | DivideByZero | Shift | Unreachable |
                 Return | VLABound | Alignment | Null | Vptr | ObjectSize |
-                FloatCastOverflow)
+                FloatCastOverflow | Bounds)
 
 #undef SANITIZER
 #undef SANITIZER_GROUP

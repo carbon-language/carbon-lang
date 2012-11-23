@@ -1,7 +1,11 @@
-// RUN: %clang -target x86_64-apple-darwin10 -fbounds-checking -### -fsyntax-only %s 2> %t
-// RUN: FileCheck < %t %s
-// RUN: %clang -target x86_64-apple-darwin10 -fbounds-checking=3 -### -fsyntax-only %s 2> %t
-// RUN: FileCheck -check-prefix=CHECK2 < %t %s
+// RUN: %clang -fsanitize=bounds -### -fsyntax-only %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK < %t %s
+// CHECK: "-fsanitize=bounds"
 
-// CHECK: "-fbounds-checking=1"
-// CHECK2: "-fbounds-checking=3"
+// RUN: %clang -fbounds-checking -### -fsyntax-only %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-OLD < %t %s
+// CHECK-OLD: "-fsanitize=bounds"
+
+// RUN: %clang -fbounds-checking=3 -### -fsyntax-only %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-OLD2 < %t %s
+// CHECK-OLD2: "-fsanitize=bounds"

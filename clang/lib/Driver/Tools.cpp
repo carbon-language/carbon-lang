@@ -1479,6 +1479,10 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
       Add = parse(D, *I);
     } else if ((*I)->getOption().matches(options::OPT_fno_sanitize_EQ)) {
       Remove = parse(D, *I);
+    } else if ((*I)->getOption().matches(options::OPT_fbounds_checking) ||
+               (*I)->getOption().matches(options::OPT_fbounds_checking_EQ)) {
+      Add = Bounds;
+      DeprecatedReplacement = "-fsanitize=bounds";
     } else {
       continue;
     }
@@ -2372,14 +2376,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-Wlarge-by-value-copy=64"); // default value
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_fbounds_checking,
-                               options::OPT_fbounds_checking_EQ)) {
-    if (A->getNumValues()) {
-      StringRef val = A->getValue();
-      CmdArgs.push_back(Args.MakeArgString("-fbounds-checking=" + val));
-    } else
-      CmdArgs.push_back("-fbounds-checking=1");
-  }
 
   if (Args.hasArg(options::OPT_relocatable_pch))
     CmdArgs.push_back("-relocatable-pch");
