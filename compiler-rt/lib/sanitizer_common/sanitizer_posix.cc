@@ -32,6 +32,13 @@
 namespace __sanitizer {
 
 // ------------- sanitizer_common.h
+uptr GetPageSize() {
+  return sysconf(_SC_PAGESIZE);
+}
+
+uptr GetMmapGranularity() {
+  return GetPageSize();
+}
 
 int GetPid() {
   return getpid();
@@ -42,7 +49,7 @@ uptr GetThreadSelf() {
 }
 
 void *MmapOrDie(uptr size, const char *mem_type) {
-  size = RoundUpTo(size, kPageSize);
+  size = RoundUpTo(size, GetPageSizeCached());
   void *res = internal_mmap(0, size,
                             PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -74,8 +81,9 @@ void UnmapOrDie(void *addr, uptr size) {
 }
 
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
-  void *p = internal_mmap((void*)(fixed_addr & ~(kPageSize - 1)),
-      RoundUpTo(size, kPageSize),
+  uptr PageSize = GetPageSizeCached();
+  void *p = internal_mmap((void*)(fixed_addr & ~(PageSize - 1)),
+      RoundUpTo(size, PageSize),
       PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
       -1, 0);
@@ -98,7 +106,7 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   uptr fsize = internal_filesize(fd);
   CHECK_NE(fsize, (uptr)-1);
   CHECK_GT(fsize, 0);
-  *buff_size = RoundUpTo(fsize, kPageSize);
+  *buff_size = RoundUpTo(fsize, GetPageSizeCached());
   void *map = internal_mmap(0, *buff_size, PROT_READ, MAP_PRIVATE, fd, 0);
   return (map == MAP_FAILED) ? 0 : map;
 }

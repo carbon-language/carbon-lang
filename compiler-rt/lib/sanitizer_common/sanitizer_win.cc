@@ -23,6 +23,14 @@
 namespace __sanitizer {
 
 // --------------------- sanitizer_common.h
+uptr GetPageSize() {
+  return 1U << 14;  // FIXME: is this configurable?
+}
+
+uptr GetMmapGranularity() {
+  return 1U << 16;  // FIXME: is this configurable?
+}
+
 bool FileExists(const char *filename) {
   UNIMPLEMENTED();
 }

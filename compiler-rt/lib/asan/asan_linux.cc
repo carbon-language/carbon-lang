@@ -176,9 +176,10 @@ void ClearShadowMemoryForContext(void *context) {
   uptr sp = (uptr)ucp->uc_stack.ss_sp;
   uptr size = ucp->uc_stack.ss_size;
   // Align to page size.
-  uptr bottom = sp & ~(kPageSize - 1);
+  uptr PageSize = GetPageSizeCached();
+  uptr bottom = sp & ~(PageSize - 1);
   size += sp - bottom;
-  size = RoundUpTo(size, kPageSize);
+  size = RoundUpTo(size, PageSize);
   PoisonShadow(bottom, size, 0);
 }
 #else

@@ -28,15 +28,16 @@ AsanThread::AsanThread(LinkerInitialized x)
 
 AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
                                void *arg, StackTrace *stack) {
-  uptr size = RoundUpTo(sizeof(AsanThread), kPageSize);
+  uptr PageSize = GetPageSizeCached();
+  uptr size = RoundUpTo(sizeof(AsanThread), PageSize);
   AsanThread *thread = (AsanThread*)MmapOrDie(size, __FUNCTION__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
 
-  const uptr kSummaryAllocSize = kPageSize;
+  const uptr kSummaryAllocSize = PageSize;
   CHECK_LE(sizeof(AsanThreadSummary), kSummaryAllocSize);
   AsanThreadSummary *summary =
-      (AsanThreadSummary*)MmapOrDie(kPageSize, "AsanThreadSummary");
+      (AsanThreadSummary*)MmapOrDie(PageSize, "AsanThreadSummary");
   summary->Init(parent_tid, stack);
   summary->set_thread(thread);
   thread->set_summary(summary);
@@ -66,7 +67,7 @@ void AsanThread::Destroy() {
   // and we don't want it to have any poisoned stack.
   ClearShadowForThreadStack();
   fake_stack().Cleanup();
-  uptr size = RoundUpTo(sizeof(AsanThread), kPageSize);
+  uptr size = RoundUpTo(sizeof(AsanThread), GetPageSizeCached());
   UnmapOrDie(this, size);
 }
 

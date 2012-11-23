@@ -132,7 +132,7 @@ static void PoisonHeapPartialRightRedzone(uptr mem, uptr size) {
 }
 
 static u8 *MmapNewPagesAndPoisonShadow(uptr size) {
-  CHECK(IsAligned(size, kPageSize));
+  CHECK(IsAligned(size, GetPageSizeCached()));
   u8 *res = (u8*)MmapOrDie(size, __FUNCTION__);
   PoisonShadow((uptr)res, size, kAsanHeapLeftRedzoneMagic);
   if (flags()->debug) {
@@ -534,12 +534,13 @@ class MallocInfo {
     uptr mmap_size = Max(size, kMinMmapSize);
     uptr n_chunks = mmap_size / size;
     CHECK(n_chunks * size == mmap_size);
-    if (size < kPageSize) {
+    uptr PageSize = GetPageSizeCached();
+    if (size < PageSize) {
       // Size is small, just poison the last chunk.
       n_chunks--;
     } else {
       // Size is large, allocate an extra page at right and poison it.
-      mmap_size += kPageSize;
+      mmap_size += PageSize;
     }
     CHECK(n_chunks > 0);
     u8 *mem = MmapNewPagesAndPoisonShadow(mmap_size);
@@ -813,18 +814,19 @@ void *asan_realloc(void *p, uptr size, StackTrace *stack) {
 }
 
 void *asan_valloc(uptr size, StackTrace *stack) {
-  void *ptr = (void*)Allocate(kPageSize, size, stack);
+  void *ptr = (void*)Allocate(GetPageSizeCached(), size, stack);
   __asan_malloc_hook(ptr, size);
   return ptr;
 }
 
 void *asan_pvalloc(uptr size, StackTrace *stack) {
-  size = RoundUpTo(size, kPageSize);
+  uptr PageSize = GetPageSizeCached();
+  size = RoundUpTo(size, PageSize);
   if (size == 0) {
     // pvalloc(0) should allocate one page.
-    size = kPageSize;
+    size = PageSize;
   }
-  void *ptr = (void*)Allocate(kPageSize, size, stack);
+  void *ptr = (void*)Allocate(PageSize, size, stack);
   __asan_malloc_hook(ptr, size);
   return ptr;
 }
@@ -943,7 +945,7 @@ uptr FakeStack::ClassMmapSize(uptr size_class) {
 }
 
 void FakeStack::AllocateOneSizeClass(uptr size_class) {
-  CHECK(ClassMmapSize(size_class) >= kPageSize);
+  CHECK(ClassMmapSize(size_class) >= GetPageSizeCached());
   uptr new_mem = (uptr)MmapOrDie(
       ClassMmapSize(size_class), __FUNCTION__);
   // Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",

@@ -165,8 +165,8 @@ void ShowStatsAndAbort() {
 // ---------------------- mmap -------------------- {{{1
 // Reserve memory range [beg, end].
 static void ReserveShadowMemoryRange(uptr beg, uptr end) {
-  CHECK((beg % kPageSize) == 0);
-  CHECK(((end + 1) % kPageSize) == 0);
+  CHECK((beg % GetPageSizeCached()) == 0);
+  CHECK(((end + 1) % GetPageSizeCached()) == 0);
   uptr size = end - beg + 1;
   void *res = MmapFixedNoReserve(beg, size);
   if (res != (void*)beg) {
@@ -271,8 +271,9 @@ void NOINLINE __asan_handle_no_return() {
   int local_stack;
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
   CHECK(curr_thread);
+  uptr PageSize = GetPageSizeCached();
   uptr top = curr_thread->stack_top();
-  uptr bottom = ((uptr)&local_stack - kPageSize) & ~(kPageSize-1);
+  uptr bottom = ((uptr)&local_stack - PageSize) & ~(PageSize-1);
   PoisonShadow(bottom, top - bottom, 0);
 }
 

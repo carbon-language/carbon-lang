@@ -42,6 +42,9 @@ const uptr kCacheLineSize = 64;
 const uptr kMmapGranularity = 1UL << 16;
 #endif
 
+uptr GetPageSize();
+uptr GetPageSizeCached();
+uptr GetMmapGranularity();
 // Threads
 int GetPid();
 uptr GetTid();

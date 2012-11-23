@@ -165,7 +165,7 @@ void *mz_valloc(malloc_zone_t *zone, size_t size) {
     return malloc_zone_valloc(system_malloc_zone, size);
   }
   GET_STACK_TRACE_HERE_FOR_MALLOC;
-  return asan_memalign(kPageSize, size, &stack);
+  return asan_memalign(GetPageSizeCached(), size, &stack);
 }
 
 #define GET_ZONE_FOR_PTR(ptr) \

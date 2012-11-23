@@ -16,6 +16,13 @@
 
 namespace __sanitizer {
 
+uptr GetPageSizeCached() {
+  static uptr PageSize;
+  if (!PageSize)
+    PageSize = GetPageSize();
+  return PageSize;
+}
+
 // By default, dump to stderr. If report_fd is kInvalidFd, try to obtain file
 // descriptor by opening file in report_path.
 static fd_t report_fd = kStderrFd;
@@ -77,7 +84,8 @@ void RawWrite(const char *buffer) {
 
 uptr ReadFileToBuffer(const char *file_name, char **buff,
                       uptr *buff_size, uptr max_len) {
-  const uptr kMinFileLen = kPageSize;
+  uptr PageSize = GetPageSizeCached();
+  uptr kMinFileLen = PageSize;
   uptr read_len = 0;
   *buff = 0;
   *buff_size = 0;
@@ -91,8 +99,8 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
     // Read up to one page at a time.
     read_len = 0;
     bool reached_eof = false;
-    while (read_len + kPageSize <= size) {
-      uptr just_read = internal_read(fd, *buff + read_len, kPageSize);
+    while (read_len + PageSize <= size) {
+      uptr just_read = internal_read(fd, *buff + read_len, PageSize);
       if (just_read == 0) {
         reached_eof = true;
         break;

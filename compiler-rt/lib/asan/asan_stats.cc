@@ -43,7 +43,7 @@ void AsanStats::Print() {
   Printf("Stats: %zuM really freed by %zu calls\n",
              really_freed>>20, real_frees);
   Printf("Stats: %zuM (%zu full pages) mmaped in %zu calls\n",
-             mmaped>>20, mmaped / kPageSize, mmaps);
+             mmaped>>20, mmaped / GetPageSizeCached(), mmaps);
 
   PrintMallocStatsArray("  mmaps   by size class: ", mmaped_by_size);
   PrintMallocStatsArray("  mallocs by size class: ", malloced_by_size);
