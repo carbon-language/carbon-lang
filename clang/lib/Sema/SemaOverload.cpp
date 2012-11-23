@@ -2980,7 +2980,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
          S.IsDerivedFrom(From->getType(), ToType)))
       ConstructorsOnly = true;
 
-    S.RequireCompleteType(From->getLocStart(), ToType, 0);
+    S.RequireCompleteType(From->getExprLoc(), ToType, 0);
     // RequireCompleteType may have returned true due to some invalid decl
     // during template instantiation, but ToType may be complete enough now
     // to try to recover.

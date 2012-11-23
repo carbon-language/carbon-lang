@@ -303,3 +303,21 @@ namespace PR12581 {
   {
   }
 }
+
+namespace PR13758 {
+  template <typename T> struct move_from {
+    T invalid; // expected-error {{field has incomplete type 'void'}}
+  };
+  template <class K>
+  struct unordered_map {
+    explicit unordered_map(int n = 42);
+    unordered_map(move_from<K> other);
+  };
+  template<typename T>
+  void StripedHashTable() {
+    new unordered_map<void>(); // expected-note {{in instantiation of template class 'PR13758::move_from<void>' requested here}}
+  }
+  void tt() {
+    StripedHashTable<int>(); // expected-note {{in instantiation of function template specialization 'PR13758::StripedHashTable<int>' requested here}}
+  }
+}

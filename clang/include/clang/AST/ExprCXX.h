@@ -795,6 +795,8 @@ public:
     return SourceRange();
   }
 
+  SourceLocation getExprLoc() const LLVM_READONLY { return Loc; }
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDefaultArgExprClass;
   }
