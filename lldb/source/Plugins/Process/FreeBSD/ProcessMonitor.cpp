@@ -502,8 +502,8 @@ SingleStepOperation::Execute(ProcessMonitor *monitor)
 class SiginfoOperation : public Operation
 {
 public:
-    SiginfoOperation(lldb::tid_t tid, void *info, bool &result)
-        : m_tid(tid), m_info(info), m_result(result) { }
+    SiginfoOperation(lldb::tid_t tid, void *info, bool &result, int &ptrace_err)
+        : m_tid(tid), m_info(info), m_result(result), m_err(ptrace_err) { }
 
     void Execute(ProcessMonitor *monitor);
 
@@ -511,6 +511,7 @@ private:
     lldb::tid_t m_tid;
     void *m_info;
     bool &m_result;
+    int &m_err;
 };
 
 void
@@ -518,9 +519,10 @@ SiginfoOperation::Execute(ProcessMonitor *monitor)
 {
     struct ptrace_lwpinfo plwp;
 
-    if (PTRACE(PT_LWPINFO, m_tid, (caddr_t)&plwp, sizeof(plwp)))
+    if (PTRACE(PT_LWPINFO, m_tid, (caddr_t)&plwp, sizeof(plwp))) {
         m_result = false;
-    else {
+        m_err = errno;
+    } else {
         memcpy(m_info, &plwp.pl_siginfo, sizeof(siginfo_t));
         m_result = true;
     }
@@ -1060,8 +1062,9 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
     ProcessFreeBSD *process = monitor->m_process;
     bool stop_monitoring;
     siginfo_t info;
+    int ptrace_err;
 
-    if (!monitor->GetSignalInfo(pid, &info))
+    if (!monitor->GetSignalInfo(pid, &info, ptrace_err))
         stop_monitoring = true; // pid is gone.  Bail.
     else {
         switch (info.si_signo)
@@ -1488,10 +1491,10 @@ ProcessMonitor::BringProcessIntoLimbo()
 }
 
 bool
-ProcessMonitor::GetSignalInfo(lldb::tid_t tid, void *siginfo)
+ProcessMonitor::GetSignalInfo(lldb::tid_t tid, void *siginfo, int &ptrace_err)
 {
     bool result;
-    SiginfoOperation op(tid, siginfo, result);
+    SiginfoOperation op(tid, siginfo, result, ptrace_err);
     DoOperation(&op);
     return result;
 }

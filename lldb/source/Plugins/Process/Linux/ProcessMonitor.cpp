@@ -652,8 +652,8 @@ SingleStepOperation::Execute(ProcessMonitor *monitor)
 class SiginfoOperation : public Operation
 {
 public:
-    SiginfoOperation(lldb::tid_t tid, void *info, bool &result)
-        : m_tid(tid), m_info(info), m_result(result) { }
+    SiginfoOperation(lldb::tid_t tid, void *info, bool &result, int &ptrace_err)
+        : m_tid(tid), m_info(info), m_result(result), m_err(ptrace_err) { }
 
     void Execute(ProcessMonitor *monitor);
 
@@ -661,13 +661,16 @@ private:
     lldb::tid_t m_tid;
     void *m_info;
     bool &m_result;
+    int &m_err;
 };
 
 void
 SiginfoOperation::Execute(ProcessMonitor *monitor)
 {
-    if (PTRACE(PTRACE_GETSIGINFO, m_tid, NULL, m_info))
+    if (PTRACE(PTRACE_GETSIGINFO, m_tid, NULL, m_info)) {
         m_result = false;
+        m_err = errno;
+    }
     else
         m_result = true;
 }
@@ -1203,9 +1206,22 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
     assert(process);
     bool stop_monitoring;
     siginfo_t info;
+    int ptrace_err;
 
-    if (!monitor->GetSignalInfo(pid, &info))
-        stop_monitoring = true; // pid is gone.  Bail.
+    if (!monitor->GetSignalInfo(pid, &info, ptrace_err)) {
+        if (ptrace_err == EINVAL) {
+            // inferior process is in 'group-stop', so deliver SIGSTOP signal
+            if (!monitor->Resume(pid, SIGSTOP)) {
+              assert(0 && "SIGSTOP delivery failed while in 'group-stop' state");
+            }
+            stop_monitoring = false;
+        } else {
+            // ptrace(GETSIGINFO) failed (but not due to group-stop). Most likely,
+            // this means the child pid is gone (or not being debugged) therefore
+            // stop the monitor thread.
+            stop_monitoring = true;
+        }
+    }
     else {
         switch (info.si_signo)
         {
@@ -1632,10 +1648,10 @@ ProcessMonitor::BringProcessIntoLimbo()
 }
 
 bool
-ProcessMonitor::GetSignalInfo(lldb::tid_t tid, void *siginfo)
+ProcessMonitor::GetSignalInfo(lldb::tid_t tid, void *siginfo, int &ptrace_err)
 {
     bool result;
-    SiginfoOperation op(tid, siginfo, result);
+    SiginfoOperation op(tid, siginfo, result, ptrace_err);
     DoOperation(&op);
     return result;
 }

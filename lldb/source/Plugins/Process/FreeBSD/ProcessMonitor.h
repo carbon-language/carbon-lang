@@ -132,7 +132,7 @@ public:
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.
     bool
-    GetSignalInfo(lldb::tid_t tid, void *siginfo);
+    GetSignalInfo(lldb::tid_t tid, void *siginfo, int &errno);
 
     /// Writes the raw event message code (vis-a-vis PTRACE_GETEVENTMSG)
     /// corresponding to the given thread IDto the memory pointed to by @p
