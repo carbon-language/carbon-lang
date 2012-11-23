@@ -267,7 +267,7 @@ namespace llvm {
   class MCCFIInstruction {
   public:
     enum OpType { SameValue, RememberState, RestoreState, Move, RelMove, Escape,
-                  Restore};
+                  Restore, Undefined };
   private:
     OpType Operation;
     MCSymbol *Label;
@@ -282,7 +282,7 @@ namespace llvm {
     }
     MCCFIInstruction(OpType Op, MCSymbol *L, unsigned Register)
       : Operation(Op), Label(L), Destination(Register) {
-      assert(Op == SameValue || Op == Restore);
+      assert(Op == SameValue || Op == Restore || Op == Undefined);
     }
     MCCFIInstruction(MCSymbol *L, const MachineLocation &D,
                      const MachineLocation &S)

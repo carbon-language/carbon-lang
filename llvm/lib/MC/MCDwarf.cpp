@@ -938,6 +938,16 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
   bool VerboseAsm = Streamer.isVerboseAsm();
 
   switch (Instr.getOperation()) {
+  case MCCFIInstruction::Undefined: {
+    unsigned Reg = Instr.getDestination().getReg();
+    if (VerboseAsm) {
+      Streamer.AddComment("DW_CFA_undefined");
+      Streamer.AddComment(Twine("Reg ") + Twine(Reg));
+    }
+    Streamer.EmitIntValue(dwarf::DW_CFA_undefined, 1);
+    Streamer.EmitULEB128IntValue(Reg);
+    return;
+  }
   case MCCFIInstruction::Move:
   case MCCFIInstruction::RelMove: {
     const MachineLocation &Dst = Instr.getDestination();

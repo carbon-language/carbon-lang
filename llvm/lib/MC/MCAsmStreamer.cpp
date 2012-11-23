@@ -226,6 +226,7 @@ public:
   virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
   virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
   virtual void EmitCFISignalFrame();
+  virtual void EmitCFIUndefined(int64_t Register);
 
   virtual void EmitWin64EHStartProc(const MCSymbol *Symbol);
   virtual void EmitWin64EHEndProc();
@@ -1033,6 +1034,16 @@ void MCAsmStreamer::EmitCFISignalFrame() {
     return;
 
   OS << "\t.cfi_signal_frame";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFIUndefined(int64_t Register) {
+  MCStreamer::EmitCFIUndefined(Register);
+
+  if (!UseCFI)
+    return;
+
+  OS << "\t.cfi_undefined " << Register;
   EmitEOL();
 }
 
