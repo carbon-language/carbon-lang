@@ -180,7 +180,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
     Printf("    [%zu, %zu) '%s'\n", beg, beg + size, buf);
   }
   Printf("HINT: this may be a false positive if your program uses "
-             "some custom stack unwind mechanism\n"
+             "some custom stack unwind mechanism or swapcontext\n"
              "      (longjmp and C++ exceptions *are* supported)\n");
   DescribeThread(t->summary());
   return true;

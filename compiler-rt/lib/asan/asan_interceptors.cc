@@ -136,6 +136,28 @@ DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
     struct sigaction *oldact);
 #endif  // ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 
+#if ASAN_INTERCEPT_SWAPCONTEXT
+INTERCEPTOR(int, swapcontext, struct ucontext_t *oucp,
+            struct ucontext_t *ucp) {
+  static bool reported_warning = false;
+  if (!reported_warning) {
+    Report("WARNING: ASan doesn't fully support makecontext/swapcontext "
+           "functions and may produce false positives in some cases!\n");
+    reported_warning = true;
+  }
+  // Clear shadow memory for new context (it may share stack
+  // with current context).
+  ClearShadowMemoryForContext(ucp);
+  int res = REAL(swapcontext)(oucp, ucp);
+  // swapcontext technically does not return, but program may swap context to
+  // "oucp" later, that would look as if swapcontext() returned 0.
+  // We need to clear shadow for ucp once again, as it may be in arbitrary
+  // state.
+  ClearShadowMemoryForContext(ucp);
+  return res;
+}
+#endif
+
 INTERCEPTOR(void, longjmp, void *env, int val) {
   __asan_handle_no_return();
   REAL(longjmp)(env, val);
@@ -688,6 +710,9 @@ void InitializeAsanInterceptors() {
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
   ASAN_INTERCEPT_FUNC(sigaction);
   ASAN_INTERCEPT_FUNC(signal);
+#endif
+#if ASAN_INTERCEPT_SWAPCONTEXT
+  ASAN_INTERCEPT_FUNC(swapcontext);
 #endif
 #if ASAN_INTERCEPT__LONGJMP
   ASAN_INTERCEPT_FUNC(_longjmp);
