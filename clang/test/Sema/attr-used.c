@@ -17,4 +17,4 @@ void f1() {
   int b __attribute__((used)); // expected-warning {{used attribute ignored}}
 }
 
-
+static void __attribute__((used)) f0(void);
