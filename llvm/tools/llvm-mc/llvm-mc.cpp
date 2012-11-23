@@ -69,6 +69,9 @@ static cl::opt<bool>
 RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
 
 static cl::opt<bool>
+DisableCFI("disable-cfi", cl::desc("Do not use .cfi_* directives"));
+
+static cl::opt<bool>
 NoExecStack("mc-no-exec-stack", cl::desc("File doesn't need an exec stack"));
 
 enum OutputFileType {
@@ -415,9 +418,10 @@ int main(int argc, char **argv) {
       CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
       MAB = TheTarget->createMCAsmBackend(TripleName, MCPU);
     }
+    bool UseCFI = !DisableCFI;
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
                                            /*useLoc*/ true,
-                                           /*useCFI*/ true,
+                                           UseCFI,
                                            /*useDwarfDirectory*/ true,
                                            IP, CE, MAB, ShowInst));
 
