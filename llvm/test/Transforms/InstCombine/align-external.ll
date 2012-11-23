@@ -8,7 +8,7 @@
 ; CHECK: %q = add i64 %r, 1
 ; CHECK: ret i64 %q
 
-target datalayout = "-i32:8:32"
+target datalayout = "i32:8:32"
 
 @A = external global i32
 @B = weak_odr global i32 0

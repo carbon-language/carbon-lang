@@ -1,7 +1,7 @@
 ; Test that the PutsOptimizer works correctly
 ; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
 
-target datalayout = "-p:64:64:64"
+target datalayout = "p:64:64:64"
 
 @.str = private constant [1 x i8] zeroinitializer
 

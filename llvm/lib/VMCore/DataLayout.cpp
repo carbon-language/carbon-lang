@@ -193,9 +193,6 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
     StringRef Token = Split.first;
     Desc = Split.second;
 
-    if (Token.empty())
-      continue;
-
     Split = Token.split(':');
     StringRef Specifier = Split.first;
     Token = Split.second;
