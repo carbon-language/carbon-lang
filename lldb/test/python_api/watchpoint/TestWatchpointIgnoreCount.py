@@ -28,6 +28,7 @@ class WatchpointIgnoreCountTestCase(TestBase):
         self.buildDsym()
         self.do_watchpoint_ignore_count()
 
+    @expectedFailureLinux # bugzilla 14416
     @python_api_test
     @dwarf_test
     def test_set_watch_ignore_count_with_dwarf(self):

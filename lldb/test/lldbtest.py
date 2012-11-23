@@ -410,6 +410,42 @@ def expectedFailurei386(func):
             raise case._UnexpectedSuccess
     return wrapper
 
+def expectedFailureLinux(func):
+    """Decorate the item as a Linux only expectedFailure."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@expectedFailureLinux can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        platform = sys.platform
+        try:
+            func(*args, **kwargs)
+        except Exception:
+            if "linux" in platform:
+                raise case._ExpectedFailure(sys.exc_info())
+            else:
+                raise
+
+        if "linux" in platform:
+            raise case._UnexpectedSuccess
+    return wrapper
+
+def skipOnLinux(func):
+    """Decorate the item to skip tests that should be skipped on Linux."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipOnLinux can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        platform = sys.platform
+        if "linux" in platform:
+            self.skipTest("skip on linux")
+        else:
+            func(self, *args, **kwargs)
+    return wrapper
+
 class Base(unittest2.TestCase):
     """
     Abstract base for performing lldb (see TestBase) or other generic tests (see

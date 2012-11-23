@@ -19,6 +19,7 @@ class HelloWatchpointTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_watchpoint()
 
+    @expectedFailureLinux # bugzilla 14416
     @dwarf_test
     def test_hello_watchpoint_with_dwarf_using_watchpoint_set(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""

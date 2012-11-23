@@ -24,6 +24,7 @@ class ObjectDescriptionAPITestCase(TestBase):
         self.find_global_variables_then_object_description('a.out')
 
     # rdar://problem/10857337
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dwarf_test
     def test_find_global_variables_then_object_description_with_dwarf(self):

@@ -22,6 +22,7 @@ class LoadUnloadTestCase(TestBase):
         self.line_d_function = line_number('d.c',
                                            '// Find this line number within d_dunction().')
 
+    @skipOnLinux # bugzilla 14424 - missing linux Makefiles/testcase support
     def test_modules_search_paths(self):
         """Test target modules list after loading a different copy of the library libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 
@@ -75,7 +76,7 @@ class LoadUnloadTestCase(TestBase):
         self.expect("target modules list", "LLDB successfully locates the relocated dynamic library",
             substrs = [new_dylib])
 
-        
+    @skipOnLinux # bugzilla 14424 - missing linux Makefiles/testcase support
     def test_dyld_library_path(self):
         """Test DYLD_LIBRARY_PATH after moving libd.dylib, which defines d_function, somewhere else."""
 
@@ -130,6 +131,7 @@ class LoadUnloadTestCase(TestBase):
         self.expect("target modules list",
             substrs = [special_dir, os.path.basename(new_dylib)])
 
+    @skipOnLinux # bugzilla 14424 - missing linux Makefiles/testcase support
     def test_lldb_process_load_and_unload_commands(self):
         """Test that lldb process load/unload command work correctly."""
 
@@ -176,6 +178,7 @@ class LoadUnloadTestCase(TestBase):
 
         self.runCmd("process continue")
 
+    @skipOnLinux # bugzilla 14424 - missing linux Makefiles/testcase support
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
 
@@ -215,6 +218,7 @@ class LoadUnloadTestCase(TestBase):
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 2'])
 
+    @skipOnLinux # bugzilla 14424 - missing linux Makefiles/testcase support
     def test_step_over_load (self):
         """Test stepping over code that loads a shared library works correctly."""
 

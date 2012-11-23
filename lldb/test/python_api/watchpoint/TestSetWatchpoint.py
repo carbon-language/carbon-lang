@@ -28,6 +28,7 @@ class SetWatchpointAPITestCase(TestBase):
         self.buildDsym()
         self.do_set_watchpoint()
 
+    @expectedFailureLinux # bugzilla 14416
     @python_api_test
     @dwarf_test
     def test_watch_val_with_dwarf(self):

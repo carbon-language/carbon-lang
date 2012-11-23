@@ -20,6 +20,7 @@ class ObjCXXTestCase(TestBase):
         self.buildDsym()
         self.do_testObjCXXClasses()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_break_with_dwarf(self):
         """Test ivars of Objective-C++ classes"""

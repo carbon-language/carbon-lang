@@ -19,6 +19,7 @@ class TestObjCStaticMethod(TestBase):
         self.buildDsym()
         self.objc_static_method()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     #<rdar://problem/9745789> "expression" can't call functions in class methods
     @dwarf_test

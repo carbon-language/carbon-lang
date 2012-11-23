@@ -34,18 +34,21 @@ class BreakpointConditionsTestCase(TestBase):
         self.buildDsym()
         self.breakpoint_conditions_python()
 
+    @expectedFailureLinux # bugzilla 14426
     @dwarf_test
     def test_breakpoint_condition_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
 
+    @expectedFailureLinux # bugzilla 14426
     @dwarf_test
     def test_breakpoint_condition_inline_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition inline with 'breakpoint set'."""
         self.buildDwarf()
         self.breakpoint_conditions(inline=True)
 
+    @expectedFailureLinux # bugzilla 14426
     @python_api_test
     @dwarf_test
     def test_breakpoint_condition_with_dwarf_and_python_api(self):

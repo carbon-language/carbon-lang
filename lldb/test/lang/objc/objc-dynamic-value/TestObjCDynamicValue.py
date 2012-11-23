@@ -23,6 +23,7 @@ class ObjCDynamicValueTestCase(TestBase):
         self.buildDsym()
         self.do_get_dynamic_vals()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dwarf_test
     def test_get_objc_dynamic_vals_with_dwarf(self):

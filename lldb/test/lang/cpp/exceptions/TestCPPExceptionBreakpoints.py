@@ -19,6 +19,7 @@ class CPPBreakpointTestCase(TestBase):
         self.buildDsym()
         self.cpp_exceptions()
 
+    @expectedFailureLinux # bugzilla 14423
     @dwarf_test
     def test_with_dwarf(self):
         """Test lldb exception breakpoint command for CPP."""

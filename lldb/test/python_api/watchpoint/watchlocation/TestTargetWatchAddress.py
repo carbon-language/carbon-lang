@@ -30,6 +30,7 @@ class TargetWatchAddressAPITestCase(TestBase):
         self.buildDsym()
         self.do_set_watchaddress()
 
+    @expectedFailureLinux # bugzilla 14416
     @python_api_test
     @dwarf_test
     def test_watch_address_with_dwarf(self):

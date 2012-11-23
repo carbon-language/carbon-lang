@@ -18,6 +18,7 @@ class TestObjCIvarOffsets(TestBase):
         self.buildDsym()
         self.objc_ivar_offsets()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):

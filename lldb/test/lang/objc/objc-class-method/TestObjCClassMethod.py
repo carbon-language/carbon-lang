@@ -20,6 +20,7 @@ class TestObjCClassMethod(TestBase):
         self.buildDsym()
         self.objc_class_method()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailurei386
     @python_api_test
     @dwarf_test

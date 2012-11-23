@@ -74,6 +74,7 @@ class ThreadAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.step_out_of_malloc_into_function_b(self.exe_name)
 
+    @expectedFailureLinux # bugzilla 14416
     @python_api_test
     @dwarf_test
     def test_step_out_of_malloc_into_function_b_with_dwarf(self):

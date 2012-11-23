@@ -33,6 +33,7 @@ class WatchpointPythonCommandTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watchpoint_command()
 
+    @expectedFailureLinux # bugzilla 14416
     @dwarf_test
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""

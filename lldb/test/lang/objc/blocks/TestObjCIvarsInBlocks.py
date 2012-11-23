@@ -20,6 +20,7 @@ class TestObjCIvarsInBlocks(TestBase):
         self.buildDsym()
         self.ivars_in_blocks()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     # This test requires the 2.0 runtime, so it will fail on i386.
     @expectedFailurei386
