@@ -2388,6 +2388,10 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
   if (Old->isPure())
     New->setPure();
 
+  // Merge "used" flag.
+  if (Old->isUsed(false))
+    New->setUsed();
+
   // Merge attributes from the parameters.  These can mismatch with K&R
   // declarations.
   if (New->getNumParams() == Old->getNumParams())
