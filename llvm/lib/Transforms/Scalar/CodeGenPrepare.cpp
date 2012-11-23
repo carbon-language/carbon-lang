@@ -125,7 +125,7 @@ namespace {
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
     bool OptimizeSelectInst(SelectInst *SI);
-    bool DupRetToEnableTailCallOpts(ReturnInst *RI);
+    bool DupRetToEnableTailCallOpts(BasicBlock *BB);
     bool PlaceDbgValues(Function &F);
   };
 }
@@ -689,8 +689,12 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
 ///   %tmp2 = tail call i32 @f2()
 ///   ret i32 %tmp2
 /// @endcode
-bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
+bool CodeGenPrepare::DupRetToEnableTailCallOpts(BasicBlock *BB) {
   if (!TLI)
+    return false;
+
+  ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
+  if (!RI)
     return false;
 
   PHINode *PN = 0;
@@ -706,7 +710,6 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
       return false;
   }
 
-  BasicBlock *BB = RI->getParent();
   if (PN && PN->getParent() != BB)
     return false;
 
@@ -1319,9 +1322,6 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return OptimizeCallInst(CI);
 
-  if (ReturnInst *RI = dyn_cast<ReturnInst>(I))
-    return DupRetToEnableTailCallOpts(RI);
-
   if (SelectInst *SI = dyn_cast<SelectInst>(I))
     return OptimizeSelectInst(SI);
 
@@ -1338,6 +1338,8 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   CurInstIterator = BB.begin();
   while (CurInstIterator != BB.end())
     MadeChange |= OptimizeInst(CurInstIterator++);
+
+  MadeChange |= DupRetToEnableTailCallOpts(&BB);
 
   return MadeChange;
 }
