@@ -41,7 +41,7 @@ namespace {
   struct BoundsChecking : public FunctionPass {
     static char ID;
 
-    BoundsChecking(unsigned _Penalty = 5) : FunctionPass(ID), Penalty(_Penalty){
+    BoundsChecking() : FunctionPass(ID) {
       initializeBoundsCheckingPass(*PassRegistry::getPassRegistry());
     }
 
@@ -59,7 +59,6 @@ namespace {
     BuilderTy *Builder;
     Instruction *Inst;
     BasicBlock *TrapBB;
-    unsigned Penalty;
 
     BasicBlock *getTrapBB();
     void emitBranchToTrap(Value *Cmp = 0);
@@ -208,6 +207,6 @@ bool BoundsChecking::runOnFunction(Function &F) {
   return MadeChange;
 }
 
-FunctionPass *llvm::createBoundsCheckingPass(unsigned Penalty) {
-  return new BoundsChecking(Penalty);
+FunctionPass *llvm::createBoundsCheckingPass() {
+  return new BoundsChecking();
 }

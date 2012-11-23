@@ -41,9 +41,7 @@ FunctionPass *createThreadSanitizerPass();
 
 // BoundsChecking - This pass instruments the code to perform run-time bounds
 // checking on loads, stores, and other memory intrinsics.
-// Penalty is the maximum run-time that is acceptable for the user.
-//
-FunctionPass *createBoundsCheckingPass(unsigned Penalty = 5);
+FunctionPass *createBoundsCheckingPass();
 
 } // End llvm namespace
 
