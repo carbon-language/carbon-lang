@@ -27,6 +27,7 @@ class ObjCTypeQueryTestCase(TestBase):
         self.buildDsym()
         self.type_query_from_other_cu()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_with_dwarf(self):
         """The expression parser's type search should be wider than the current compilation unit."""
