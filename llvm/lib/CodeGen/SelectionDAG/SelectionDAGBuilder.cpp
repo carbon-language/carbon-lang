@@ -3813,16 +3813,12 @@ SelectionDAGBuilder::visitExp(const CallInst &I) {
   setValue(&I, result);
 }
 
-/// visitLog - Lower a log intrinsic. Handles the special sequences for
+/// expandLog - Lower a log intrinsic. Handles the special sequences for
 /// limited-precision mode.
-void
-SelectionDAGBuilder::visitLog(const CallInst &I) {
-  SDValue result;
-  DebugLoc dl = getCurDebugLoc();
-
-  if (getValue(I.getArgOperand(0)).getValueType() == MVT::f32 &&
+static SDValue expandLog(DebugLoc dl, SDValue Op, SelectionDAG &DAG,
+                         const TargetLowering &TLI) {
+  if (Op.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
-    SDValue Op = getValue(I.getArgOperand(0));
     SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 
     // Scale the exponent by log(2) [0.69314718f].
@@ -3906,28 +3902,19 @@ SelectionDAGBuilder::visitLog(const CallInst &I) {
                                   getF32Constant(DAG, 0x4006dcab));
     }
 
-    result = DAG.getNode(ISD::FADD, dl,
-                         MVT::f32, LogOfExponent, LogOfMantissa);
-  } else {
-    // No special expansion.
-    result = DAG.getNode(ISD::FLOG, dl,
-                         getValue(I.getArgOperand(0)).getValueType(),
-                         getValue(I.getArgOperand(0)));
+    return DAG.getNode(ISD::FADD, dl, MVT::f32, LogOfExponent, LogOfMantissa);
   }
 
-  setValue(&I, result);
+  // No special expansion.
+  return DAG.getNode(ISD::FLOG, dl, Op.getValueType(), Op);
 }
 
-/// visitLog2 - Lower a log2 intrinsic. Handles the special sequences for
+/// expandLog2 - Lower a log2 intrinsic. Handles the special sequences for
 /// limited-precision mode.
-void
-SelectionDAGBuilder::visitLog2(const CallInst &I) {
-  SDValue result;
-  DebugLoc dl = getCurDebugLoc();
-
-  if (getValue(I.getArgOperand(0)).getValueType() == MVT::f32 &&
+static SDValue expandLog2(DebugLoc dl, SDValue Op, SelectionDAG &DAG,
+                          const TargetLowering &TLI) {
+  if (Op.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
-    SDValue Op = getValue(I.getArgOperand(0));
     SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 
     // Get the exponent.
@@ -4010,28 +3997,19 @@ SelectionDAGBuilder::visitLog2(const CallInst &I) {
                                    getF32Constant(DAG, 0x4042902c));
     }
 
-    result = DAG.getNode(ISD::FADD, dl,
-                         MVT::f32, LogOfExponent, Log2ofMantissa);
-  } else {
-    // No special expansion.
-    result = DAG.getNode(ISD::FLOG2, dl,
-                         getValue(I.getArgOperand(0)).getValueType(),
-                         getValue(I.getArgOperand(0)));
+    return DAG.getNode(ISD::FADD, dl, MVT::f32, LogOfExponent, Log2ofMantissa);
   }
 
-  setValue(&I, result);
+  // No special expansion.
+  return DAG.getNode(ISD::FLOG2, dl, Op.getValueType(), Op);
 }
 
-/// visitLog10 - Lower a log10 intrinsic. Handles the special sequences for
+/// expandLog10 - Lower a log10 intrinsic. Handles the special sequences for
 /// limited-precision mode.
-void
-SelectionDAGBuilder::visitLog10(const CallInst &I) {
-  SDValue result;
-  DebugLoc dl = getCurDebugLoc();
-
-  if (getValue(I.getArgOperand(0)).getValueType() == MVT::f32 &&
+static SDValue expandLog10(DebugLoc dl, SDValue Op, SelectionDAG &DAG,
+                           const TargetLowering &TLI) {
+  if (Op.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
-    SDValue Op = getValue(I.getArgOperand(0));
     SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 
     // Scale the exponent by log10(2) [0.30102999f].
@@ -4107,16 +4085,11 @@ SelectionDAGBuilder::visitLog10(const CallInst &I) {
                                     getF32Constant(DAG, 0x3f57ce70));
     }
 
-    result = DAG.getNode(ISD::FADD, dl,
-                         MVT::f32, LogOfExponent, Log10ofMantissa);
-  } else {
-    // No special expansion.
-    result = DAG.getNode(ISD::FLOG10, dl,
-                         getValue(I.getArgOperand(0)).getValueType(),
-                         getValue(I.getArgOperand(0)));
+    return DAG.getNode(ISD::FADD, dl, MVT::f32, LogOfExponent, Log10ofMantissa);
   }
 
-  setValue(&I, result);
+  // No special expansion.
+  return DAG.getNode(ISD::FLOG10, dl, Op.getValueType(), Op);
 }
 
 /// visitExp2 - Lower an exp2 intrinsic. Handles the special sequences for
@@ -4939,13 +4912,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                             getValue(I.getArgOperand(1)), DAG));
     return 0;
   case Intrinsic::log:
-    visitLog(I);
+    setValue(&I, expandLog(dl, getValue(I.getArgOperand(0)), DAG, TLI));
     return 0;
   case Intrinsic::log2:
-    visitLog2(I);
+    setValue(&I, expandLog2(dl, getValue(I.getArgOperand(0)), DAG, TLI));
     return 0;
   case Intrinsic::log10:
-    visitLog10(I);
+    setValue(&I, expandLog10(dl, getValue(I.getArgOperand(0)), DAG, TLI));
     return 0;
   case Intrinsic::exp:
     visitExp(I);

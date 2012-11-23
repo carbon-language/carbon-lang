@@ -536,9 +536,6 @@ private:
   void visitPow(const CallInst &I);
   void visitExp2(const CallInst &I);
   void visitExp(const CallInst &I);
-  void visitLog(const CallInst &I);
-  void visitLog2(const CallInst &I);
-  void visitLog10(const CallInst &I);
 
   void visitVAStart(const CallInst &I);
   void visitVAArg(const VAArgInst &I);
