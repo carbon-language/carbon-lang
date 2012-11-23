@@ -198,7 +198,8 @@ static T AtomicFetchXor(ThreadState *thr, uptr pc, volatile T *a, T v,
 
 template<typename T>
 static bool AtomicCAS(ThreadState *thr, uptr pc,
-    volatile T *a, T *c, T v, morder mo) {
+    volatile T *a, T *c, T v, morder mo, morder fmo) {
+  (void)fmo;
   if (IsReleaseOrder(mo))
     Release(thr, pc, (uptr)a);
   T cc = *c;
@@ -213,8 +214,8 @@ static bool AtomicCAS(ThreadState *thr, uptr pc,
 
 template<typename T>
 static T AtomicCAS(ThreadState *thr, uptr pc,
-    volatile T *a, T c, T v, morder mo) {
-  AtomicCAS(thr, pc, a, &c, v, mo);
+    volatile T *a, T c, T v, morder mo, morder fmo) {
+  AtomicCAS(thr, pc, a, &c, v, mo, fmo);
   return c;
 }
 
@@ -351,62 +352,62 @@ a64 __tsan_atomic64_fetch_xor(volatile a64 *a, a64 v, morder mo) {
 }
 
 int __tsan_atomic8_compare_exchange_strong(volatile a8 *a, a8 *c, a8 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic16_compare_exchange_strong(volatile a16 *a, a16 *c, a16 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic32_compare_exchange_strong(volatile a32 *a, a32 *c, a32 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic64_compare_exchange_strong(volatile a64 *a, a64 *c, a64 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic8_compare_exchange_weak(volatile a8 *a, a8 *c, a8 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic16_compare_exchange_weak(volatile a16 *a, a16 *c, a16 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic32_compare_exchange_weak(volatile a32 *a, a32 *c, a32 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 int __tsan_atomic64_compare_exchange_weak(volatile a64 *a, a64 *c, a64 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 a8 __tsan_atomic8_compare_exchange_val(volatile a8 *a, a8 c, a8 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 a16 __tsan_atomic16_compare_exchange_val(volatile a16 *a, a16 c, a16 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 a32 __tsan_atomic32_compare_exchange_val(volatile a32 *a, a32 c, a32 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 a64 __tsan_atomic64_compare_exchange_val(volatile a64 *a, a64 c, a64 v,
-    morder mo) {
-  SCOPED_ATOMIC(CAS, a, c, v, mo);
+    morder mo, morder fmo) {
+  SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
 void __tsan_atomic_thread_fence(morder mo) {
