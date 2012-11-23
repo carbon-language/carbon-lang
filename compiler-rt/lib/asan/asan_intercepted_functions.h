@@ -51,12 +51,16 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT_STRNLEN 0
 #endif
 
-#if !defined(ANDROID) && !defined(_WIN32)
-# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 1
+#if defined(__linux__) && !defined(ANDROID)
 # define ASAN_INTERCEPT_SWAPCONTEXT 1
 #else
-# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
 # define ASAN_INTERCEPT_SWAPCONTEXT 0
+#endif
+
+#if !defined(ANDROID) && !defined(_WIN32)
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 1
+#else
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
 #endif
 
 // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
@@ -88,12 +92,6 @@ DECLARE_FUNCTION_AND_WRAPPER(int, sigaction, int sig,
               const struct sigaction *act,
               struct sigaction *oldact);
 DECLARE_FUNCTION_AND_WRAPPER(void*, signal, int signum, void *handler);
-# endif
-
-// ucontext.h
-# if ASAN_INTERCEPT_SWAPCONTEXT
-DECLARE_FUNCTION_AND_WRAPPER(int, swapcontext, struct ucontext_t *oucp,
-                             struct ucontext_t *ucp);
 # endif
 
 // setjmp.h

@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <ucontext.h>
 #include <unistd.h>
 
 static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
@@ -94,17 +93,6 @@ void InstallSignalHandlers() {
   if (flags()->use_sigaltstack) SetAlternateSignalStack();
   MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
-}
-
-void ClearShadowMemoryForContext(void *context) {
-  ucontext_t *ucp = (ucontext_t*)context;
-  uptr sp = (uptr)ucp->uc_stack.ss_sp;
-  uptr size = ucp->uc_stack.ss_size;
-  // Align to page size.
-  uptr bottom = sp & ~(kPageSize - 1);
-  size += sp - bottom;
-  size = RoundUpTo(size, kPageSize);
-  PoisonShadow(bottom, size, 0);
 }
 
 // ---------------------- TSD ---------------- {{{1

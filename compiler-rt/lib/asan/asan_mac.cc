@@ -171,6 +171,10 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
   }
 }
 
+void ClearShadowMemoryForContext(void *context) {
+  UNIMPLEMENTED();
+}
+
 // The range of pages to be used for escape islands.
 // TODO(glider): instead of mapping a fixed range we must find a range of
 // unmapped pages in vmmap and take them.
