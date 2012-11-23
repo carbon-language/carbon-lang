@@ -758,14 +758,13 @@ void TargetLowering::computeRegisterProperties() {
 
   // Every integer value type larger than this largest register takes twice as
   // many registers to represent as the previous ValueType.
-  for (unsigned ExpandedReg = LargestIntReg + 1; ; ++ExpandedReg) {
-    EVT ExpandedVT = (MVT::SimpleValueType)ExpandedReg;
-    if (!ExpandedVT.isInteger())
-      break;
+  for (unsigned ExpandedReg = LargestIntReg + 1;
+       ExpandedReg <= MVT::LAST_INTEGER_VALUETYPE; ++ExpandedReg) {
     NumRegistersForVT[ExpandedReg] = 2*NumRegistersForVT[ExpandedReg-1];
     RegisterTypeForVT[ExpandedReg] = (MVT::SimpleValueType)LargestIntReg;
     TransformToType[ExpandedReg] = (MVT::SimpleValueType)(ExpandedReg - 1);
-    ValueTypeActions.setTypeAction(ExpandedVT, TypeExpandInteger);
+    ValueTypeActions.setTypeAction((MVT::SimpleValueType)ExpandedReg,
+                                   TypeExpandInteger);
   }
 
   // Inspect all of the ValueType's smaller than the largest integer
