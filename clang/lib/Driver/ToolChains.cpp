@@ -194,13 +194,11 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
     case Action::BindArchClass:
       llvm_unreachable("Invalid tool kind.");
     case Action::PreprocessJobClass:
-      T = new tools::darwin::Preprocess(*this); break;
     case Action::AnalyzeJobClass:
     case Action::MigrateJobClass:
-      T = new tools::Clang(*this); break;
     case Action::PrecompileJobClass:
     case Action::CompileJobClass:
-      T = new tools::darwin::Compile(*this); break;
+      T = new tools::Clang(*this); break;
     case Action::AssembleJobClass: {
       if (UseIntegratedAs)
         T = new tools::ClangAs(*this);
