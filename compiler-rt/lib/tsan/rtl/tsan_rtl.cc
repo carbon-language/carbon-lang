@@ -517,6 +517,7 @@ void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryRangeSet(thr, pc, addr, size, s.raw());
 }
 
+ALWAYS_INLINE
 void FuncEntry(ThreadState *thr, uptr pc) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncEnter);
@@ -546,6 +547,7 @@ void FuncEntry(ThreadState *thr, uptr pc) {
   thr->shadow_stack_pos++;
 }
 
+ALWAYS_INLINE
 void FuncExit(ThreadState *thr) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncExit);
