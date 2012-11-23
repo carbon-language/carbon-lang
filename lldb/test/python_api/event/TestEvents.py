@@ -20,7 +20,6 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_listen_for_and_print_event()
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14384")
     @python_api_test
     @dwarf_test
     def test_listen_for_and_print_event_with_dwarf(self):
@@ -36,7 +35,6 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_wait_for_event()
 
-    @unittest2.skipIf(sys.platform.startswith("linux"), "Hanging on Linux: bugzilla #14384")
     @python_api_test
     @dwarf_test
     def test_wait_for_event_with_dwarf(self):
