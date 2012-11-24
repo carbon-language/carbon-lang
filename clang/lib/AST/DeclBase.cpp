@@ -261,6 +261,13 @@ bool Decl::isUsed(bool CheckUsedAttr) const {
   if (CheckUsedAttr && hasAttr<UsedAttr>())
     return true;
 
+  // Check redeclarations. We merge attributes, so we don't need to check
+  // attributes in all redeclarations.
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if (I->Used)
+      return true;
+  }
+
   return false; 
 }
 
