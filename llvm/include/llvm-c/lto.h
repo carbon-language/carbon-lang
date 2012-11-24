@@ -291,6 +291,13 @@ lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
 extern void
 lto_codegen_debug_options(lto_code_gen_t cg, const char *);
 
+/**
+ * Initializes LLVM disassemblers.
+ * FIXME: This doesn't really belong here.
+ */
+extern void
+lto_initialize_disassembler(void);
+
 #ifdef __cplusplus
 }
 #endif

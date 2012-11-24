@@ -6,6 +6,7 @@ add_definitions( -DLLVM_VERSION_INFO=\"${PACKAGE_VERSION}\" )
 
 set(SOURCES
   LTOCodeGenerator.cpp
+  LTODisassembler.cpp
   lto.cpp
   LTOModule.cpp
   )
