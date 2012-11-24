@@ -10,8 +10,8 @@ entry:
 ; CHECK: 	.section	__TEXT,__symbol_stub1,symbol_stubs,pure_instructions,16
 ; CHECK: ___floatditf$stub:
 ; CHECK: 	.indirect_symbol ___floatditf
-; CHECK: 	lis r11,ha16(___floatditf$lazy_ptr)
-; CHECK: 	lwzu r12,lo16(___floatditf$lazy_ptr)(r11)
+; CHECK: 	lis r11, ha16(___floatditf$lazy_ptr)
+; CHECK: 	lwzu r12, lo16(___floatditf$lazy_ptr)(r11)
 ; CHECK: 	mtctr r12
 ; CHECK: 	bctr
 ; CHECK: 	.section	__DATA,__la_symbol_ptr,lazy_symbol_pointers

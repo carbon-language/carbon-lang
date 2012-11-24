@@ -55,6 +55,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/VariadicFunction.h"
 using namespace llvm;
 
 namespace {
@@ -558,6 +559,21 @@ static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
   return Ctx.GetOrCreateSymbol(Sym->getName() + "$tmp");
 }
 
+namespace {
+  // Helper function to emit a custom MCInst.
+  void emitMCInstImpl(MCStreamer &OutStreamer, unsigned Opcode,
+                      ArrayRef<const MCOperand *> Ops) {
+    MCInst TmpInst;
+    TmpInst.setOpcode(Opcode);
+    for (unsigned I = 0, E = Ops.size(); I != E; ++I)
+      TmpInst.addOperand(*Ops[I]);
+    OutStreamer.EmitInstruction(TmpInst);
+  }
+
+  const VariadicFunction2<void, MCStreamer &, unsigned, MCOperand,
+                          emitMCInstImpl> emitMCInst = {};
+}
+
 void PPCDarwinAsmPrinter::
 EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
@@ -586,32 +602,52 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
                                            
       OutStreamer.EmitLabel(Stub);
       OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
+
+      // mflr r0
+      emitMCInst(OutStreamer, PPC::MFLR, MCOperand::CreateReg(PPC::R0));
       // FIXME: MCize this.
-      OutStreamer.EmitRawText(StringRef("\tmflr r0"));
-      OutStreamer.EmitRawText("\tbcl 20,31," + Twine(AnonSymbol->getName()));
+      OutStreamer.EmitRawText("\tbcl 20, 31, " + Twine(AnonSymbol->getName()));
       OutStreamer.EmitLabel(AnonSymbol);
-      OutStreamer.EmitRawText(StringRef("\tmflr r11"));
-      OutStreamer.EmitRawText("\taddis r11,r11,ha16("+Twine(LazyPtr->getName())+
-                              "-" + AnonSymbol->getName() + ")");
-      OutStreamer.EmitRawText(StringRef("\tmtlr r0"));
-      
-      if (isPPC64)
-        OutStreamer.EmitRawText("\tldu r12,lo16(" + Twine(LazyPtr->getName()) +
-                                "-" + AnonSymbol->getName() + ")(r11)");
-      else
-        OutStreamer.EmitRawText("\tlwzu r12,lo16(" + Twine(LazyPtr->getName()) +
-                                "-" + AnonSymbol->getName() + ")(r11)");
-      OutStreamer.EmitRawText(StringRef("\tmtctr r12"));
-      OutStreamer.EmitRawText(StringRef("\tbctr"));
-      
+      // mflr r11
+      emitMCInst(OutStreamer, PPC::MFLR, MCOperand::CreateReg(PPC::R11));
+      // addis r11, r11, ha16(LazyPtr - AnonSymbol)
+      MCOperand Sub = MCOperand::CreateExpr(
+                        MCBinaryExpr::CreateSub(
+                          MCSymbolRefExpr::Create(LazyPtr, OutContext),
+                          MCSymbolRefExpr::Create(AnonSymbol, OutContext),
+                        OutContext));
+      emitMCInst(OutStreamer, PPC::ADDIS, MCOperand::CreateReg(PPC::R11),
+                 MCOperand::CreateReg(PPC::R11), Sub);
+      // mtlr r0
+      emitMCInst(OutStreamer, PPC::MTLR, MCOperand::CreateReg(PPC::R0));
+
+      if (isPPC64) {
+        // ldu r12, lo16(LazyPtr - AnonSymbol)(r11)
+        emitMCInst(OutStreamer, PPC::LDU, MCOperand::CreateReg(PPC::R12),
+                   Sub, Sub, MCOperand::CreateReg(PPC::R11));
+      } else {
+        // lwzu r12, lo16(LazyPtr - AnonSymbol)(r11)
+        emitMCInst(OutStreamer, PPC::LWZU, MCOperand::CreateReg(PPC::R12),
+                   Sub, Sub, MCOperand::CreateReg(PPC::R11));
+      }
+      // mtctr r12
+      emitMCInst(OutStreamer, PPC::MTCTR, MCOperand::CreateReg(PPC::R12));
+      // bctr
+      emitMCInst(OutStreamer, PPC::BCTR);
+
       OutStreamer.SwitchSection(LSPSection);
       OutStreamer.EmitLabel(LazyPtr);
       OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
-      
-      if (isPPC64)
-        OutStreamer.EmitRawText(StringRef("\t.quad dyld_stub_binding_helper"));
-      else
-        OutStreamer.EmitRawText(StringRef("\t.long dyld_stub_binding_helper"));
+
+      MCSymbol *DyldStubBindingHelper =
+        OutContext.GetOrCreateSymbol(StringRef("dyld_stub_binding_helper"));
+      if (isPPC64) {
+        // .quad dyld_stub_binding_helper
+        OutStreamer.EmitSymbolValue(DyldStubBindingHelper, 8);
+      } else {
+        // .long dyld_stub_binding_helper
+        OutStreamer.EmitSymbolValue(DyldStubBindingHelper, 4);
+      }
     }
     OutStreamer.AddBlankLine();
     return;
@@ -631,23 +667,44 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     EmitAlignment(4);
     OutStreamer.EmitLabel(Stub);
     OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
-    OutStreamer.EmitRawText("\tlis r11,ha16(" + Twine(LazyPtr->getName()) +")");
-    if (isPPC64)
-      OutStreamer.EmitRawText("\tldu r12,lo16(" + Twine(LazyPtr->getName()) +
-                              ")(r11)");
-    else
-      OutStreamer.EmitRawText("\tlwzu r12,lo16(" + Twine(LazyPtr->getName()) +
-                              ")(r11)");
-    OutStreamer.EmitRawText(StringRef("\tmtctr r12"));
-    OutStreamer.EmitRawText(StringRef("\tbctr"));
+    // lis r11, ha16(LazyPtr)
+    MCOperand LazyPtrHa16 =
+      MCOperand::CreateExpr(
+        MCSymbolRefExpr::Create(LazyPtr, MCSymbolRefExpr::VK_PPC_DARWIN_HA16,
+                                OutContext));
+    emitMCInst(OutStreamer, PPC::LIS, MCOperand::CreateReg(PPC::R11),
+               LazyPtrHa16);
+
+    MCOperand LazyPtrLo16 =
+      MCOperand::CreateExpr(
+        MCSymbolRefExpr::Create(LazyPtr, MCSymbolRefExpr::VK_PPC_DARWIN_LO16,
+                                OutContext));
+    if (isPPC64) {
+      // ldu r12, lo16(LazyPtr)(r11)
+      emitMCInst(OutStreamer, PPC::LDU, MCOperand::CreateReg(PPC::R12),
+                 LazyPtrLo16, LazyPtrLo16, MCOperand::CreateReg(PPC::R11));
+    } else {
+      // lwzu r12, lo16(LazyPtr)(r11)
+      emitMCInst(OutStreamer, PPC::LWZU, MCOperand::CreateReg(PPC::R12),
+                 LazyPtrLo16, LazyPtrLo16, MCOperand::CreateReg(PPC::R11));
+    }
+    // mtctr r12
+    emitMCInst(OutStreamer, PPC::MTCTR, MCOperand::CreateReg(PPC::R12));
+    // bctr
+    emitMCInst(OutStreamer, PPC::BCTR);
     OutStreamer.SwitchSection(LSPSection);
     OutStreamer.EmitLabel(LazyPtr);
     OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
-    
-    if (isPPC64)
-      OutStreamer.EmitRawText(StringRef("\t.quad dyld_stub_binding_helper"));
-    else
-      OutStreamer.EmitRawText(StringRef("\t.long dyld_stub_binding_helper"));
+
+    MCSymbol *DyldStubBindingHelper =
+      OutContext.GetOrCreateSymbol(StringRef("dyld_stub_binding_helper"));
+    if (isPPC64) {
+      // .quad dyld_stub_binding_helper
+      OutStreamer.EmitSymbolValue(DyldStubBindingHelper, 8);
+    } else {
+      // .long dyld_stub_binding_helper
+      OutStreamer.EmitSymbolValue(DyldStubBindingHelper, 4);
+    }
   }
   
   OutStreamer.AddBlankLine();
