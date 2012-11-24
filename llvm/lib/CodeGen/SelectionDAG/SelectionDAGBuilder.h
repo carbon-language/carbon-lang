@@ -534,8 +534,6 @@ private:
   void visitTargetIntrinsic(const CallInst &I, unsigned Intrinsic);
 
   void visitPow(const CallInst &I);
-  void visitExp2(const CallInst &I);
-  void visitExp(const CallInst &I);
 
   void visitVAStart(const CallInst &I);
   void visitVAArg(const VAArgInst &I);
