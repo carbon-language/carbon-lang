@@ -1264,8 +1264,21 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
       TranslateMachineLocation(MRI, Moves[i].getDestination());
     const MachineLocation &Src =
       TranslateMachineLocation(MRI, Moves[i].getSource());
-    MCCFIInstruction Inst(Label, Dst, Src);
-    Instructions.push_back(Inst);
+
+    if (Dst.isReg()) {
+      assert(Dst.getReg() == MachineLocation::VirtualFP);
+      assert(!Src.isReg());
+      MCCFIInstruction Inst =
+        MCCFIInstruction::createDefCfa(Label, Src.getReg(), -Src.getOffset());
+      Instructions.push_back(Inst);
+    } else {
+      assert(Src.isReg());
+      unsigned Reg = Src.getReg();
+      int Offset = Dst.getOffset();
+      MCCFIInstruction Inst =
+        MCCFIInstruction::createCFIOffset(Label, Reg, Offset);
+      Instructions.push_back(Inst);
+    }
   }
 
   EmitCFIInstructions(streamer, Instructions, NULL);

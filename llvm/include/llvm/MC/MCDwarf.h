@@ -275,28 +275,100 @@ namespace llvm {
     MachineLocation Destination;
     MachineLocation Source;
     std::vector<char> Values;
-  public:
-    MCCFIInstruction(OpType Op, MCSymbol *L)
-      : Operation(Op), Label(L) {
-      assert(Op == RememberState || Op == RestoreState);
-    }
-    MCCFIInstruction(OpType Op, MCSymbol *L, unsigned Register)
-      : Operation(Op), Label(L), Destination(Register) {
-      assert(Op == SameValue || Op == Restore || Op == Undefined);
-    }
-    MCCFIInstruction(MCSymbol *L, const MachineLocation &D,
-                     const MachineLocation &S)
-      : Operation(Move), Label(L), Destination(D), Source(S) {
-    }
     MCCFIInstruction(OpType Op, MCSymbol *L, const MachineLocation &D,
-                     const MachineLocation &S)
-      : Operation(Op), Label(L), Destination(D), Source(S) {
-      assert(Op == RelMove);
+                     const MachineLocation &S, StringRef V) :
+      Operation(Op), Label(L), Destination(D), Source(S),
+      Values(V.begin(), V.end()) {
     }
-    MCCFIInstruction(OpType Op, MCSymbol *L, StringRef Vals)
-      : Operation(Op), Label(L), Values(Vals.begin(), Vals.end()) {
-      assert(Op == Escape);
+
+  public:
+    static MCCFIInstruction
+    createCFIOffset(MCSymbol *L, unsigned Register, int Offset) {
+      MachineLocation Dest(Register, Offset);
+      MachineLocation Source(Register, Offset);
+
+      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      return Ret;
     }
+
+    static MCCFIInstruction
+    createDefCfaRegister(MCSymbol *L, unsigned Register) {
+      MachineLocation Dest(Register);
+      MachineLocation Source(MachineLocation::VirtualFP);
+      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createDefCfaOffset(MCSymbol *L, int Offset) {
+      MachineLocation Dest(MachineLocation::VirtualFP);
+      MachineLocation Source(MachineLocation::VirtualFP, -Offset);
+      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction
+    createDefCfa(MCSymbol *L, unsigned Register, int Offset) {
+      MachineLocation Dest(MachineLocation::VirtualFP);
+      MachineLocation Source(Register, -Offset);
+      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createUndefined(MCSymbol *L, unsigned Register) {
+      MachineLocation Dummy;
+      MachineLocation Dest(Register);
+      MCCFIInstruction Ret(Undefined, L, Dest, Dummy, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createRestore(MCSymbol *L, unsigned Register) {
+      MachineLocation Dummy;
+      MachineLocation Dest(Register);
+      MCCFIInstruction Ret(Restore, L, Dest, Dummy, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createSameValue(MCSymbol *L, unsigned Register) {
+      MachineLocation Dummy;
+      MachineLocation Dest(Register);
+      MCCFIInstruction Ret(SameValue, L, Dest, Dummy, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createRestoreState(MCSymbol *L) {
+      MachineLocation Dummy;
+      MCCFIInstruction Ret(RestoreState, L, Dummy, Dummy, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createRememberState(MCSymbol *L) {
+      MachineLocation Dummy;
+      MCCFIInstruction Ret(RememberState, L, Dummy, Dummy, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction
+    createRelOffset(MCSymbol *L, unsigned Register, int Offset) {
+      MachineLocation Dest(Register, Offset);
+      MachineLocation Source(Register, Offset);
+      MCCFIInstruction Ret(RelMove, L, Dest, Source, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction
+    createAdjustCfaOffset(MCSymbol *L, int Adjustment) {
+      MachineLocation Dest(MachineLocation::VirtualFP);
+      MachineLocation Source(MachineLocation::VirtualFP, Adjustment);
+      MCCFIInstruction Ret(RelMove, L, Dest, Source, "");
+      return Ret;
+    }
+
+    static MCCFIInstruction createEscape(MCSymbol *L, StringRef Vals) {
+      MachineLocation Dummy;
+      MCCFIInstruction Ret(Escape, L, Dummy, Dummy, Vals);
+      return Ret;
+    }
+
     OpType getOperation() const { return Operation; }
     MCSymbol *getLabel() const { return Label; }
     const MachineLocation &getDestination() const { return Destination; }
