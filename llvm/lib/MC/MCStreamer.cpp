@@ -276,7 +276,7 @@ void MCStreamer::EmitCFIDefCfaRegister(int64_t Register) {
 void MCStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
   MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
-    MCCFIInstruction::createCFIOffset(Label, Register, Offset);
+    MCCFIInstruction::createOffset(Label, Register, Offset);
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }

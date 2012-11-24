@@ -266,8 +266,9 @@ namespace llvm {
 
   class MCCFIInstruction {
   public:
-    enum OpType { SameValue, RememberState, RestoreState, Move, RelMove, Escape,
-                  Restore, Undefined };
+    enum OpType { OpSameValue, OpRememberState, OpRestoreState, OpOffset,
+                  OpDefCfaRegister, OpDefCfaOffset, OpDefCfa, OpRelOffset,
+                  OpAdjustCfaOffset, OpEscape, OpRestore, OpUndefined };
   private:
     OpType Operation;
     MCSymbol *Label;
@@ -283,11 +284,10 @@ namespace llvm {
 
   public:
     static MCCFIInstruction
-    createCFIOffset(MCSymbol *L, unsigned Register, int Offset) {
+    createOffset(MCSymbol *L, unsigned Register, int Offset) {
       MachineLocation Dest(Register, Offset);
       MachineLocation Source(Register, Offset);
-
-      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      MCCFIInstruction Ret(OpOffset, L, Dest, Source, "");
       return Ret;
     }
 
@@ -295,14 +295,14 @@ namespace llvm {
     createDefCfaRegister(MCSymbol *L, unsigned Register) {
       MachineLocation Dest(Register);
       MachineLocation Source(MachineLocation::VirtualFP);
-      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      MCCFIInstruction Ret(OpDefCfaRegister, L, Dest, Source, "");
       return Ret;
     }
 
     static MCCFIInstruction createDefCfaOffset(MCSymbol *L, int Offset) {
       MachineLocation Dest(MachineLocation::VirtualFP);
       MachineLocation Source(MachineLocation::VirtualFP, -Offset);
-      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      MCCFIInstruction Ret(OpDefCfaOffset, L, Dest, Source, "");
       return Ret;
     }
 
@@ -310,40 +310,40 @@ namespace llvm {
     createDefCfa(MCSymbol *L, unsigned Register, int Offset) {
       MachineLocation Dest(MachineLocation::VirtualFP);
       MachineLocation Source(Register, -Offset);
-      MCCFIInstruction Ret(Move, L, Dest, Source, "");
+      MCCFIInstruction Ret(OpDefCfa, L, Dest, Source, "");
       return Ret;
     }
 
     static MCCFIInstruction createUndefined(MCSymbol *L, unsigned Register) {
       MachineLocation Dummy;
       MachineLocation Dest(Register);
-      MCCFIInstruction Ret(Undefined, L, Dest, Dummy, "");
+      MCCFIInstruction Ret(OpUndefined, L, Dest, Dummy, "");
       return Ret;
     }
 
     static MCCFIInstruction createRestore(MCSymbol *L, unsigned Register) {
       MachineLocation Dummy;
       MachineLocation Dest(Register);
-      MCCFIInstruction Ret(Restore, L, Dest, Dummy, "");
+      MCCFIInstruction Ret(OpRestore, L, Dest, Dummy, "");
       return Ret;
     }
 
     static MCCFIInstruction createSameValue(MCSymbol *L, unsigned Register) {
       MachineLocation Dummy;
       MachineLocation Dest(Register);
-      MCCFIInstruction Ret(SameValue, L, Dest, Dummy, "");
+      MCCFIInstruction Ret(OpSameValue, L, Dest, Dummy, "");
       return Ret;
     }
 
     static MCCFIInstruction createRestoreState(MCSymbol *L) {
       MachineLocation Dummy;
-      MCCFIInstruction Ret(RestoreState, L, Dummy, Dummy, "");
+      MCCFIInstruction Ret(OpRestoreState, L, Dummy, Dummy, "");
       return Ret;
     }
 
     static MCCFIInstruction createRememberState(MCSymbol *L) {
       MachineLocation Dummy;
-      MCCFIInstruction Ret(RememberState, L, Dummy, Dummy, "");
+      MCCFIInstruction Ret(OpRememberState, L, Dummy, Dummy, "");
       return Ret;
     }
 
@@ -351,7 +351,7 @@ namespace llvm {
     createRelOffset(MCSymbol *L, unsigned Register, int Offset) {
       MachineLocation Dest(Register, Offset);
       MachineLocation Source(Register, Offset);
-      MCCFIInstruction Ret(RelMove, L, Dest, Source, "");
+      MCCFIInstruction Ret(OpRelOffset, L, Dest, Source, "");
       return Ret;
     }
 
@@ -359,13 +359,13 @@ namespace llvm {
     createAdjustCfaOffset(MCSymbol *L, int Adjustment) {
       MachineLocation Dest(MachineLocation::VirtualFP);
       MachineLocation Source(MachineLocation::VirtualFP, Adjustment);
-      MCCFIInstruction Ret(RelMove, L, Dest, Source, "");
+      MCCFIInstruction Ret(OpAdjustCfaOffset, L, Dest, Source, "");
       return Ret;
     }
 
     static MCCFIInstruction createEscape(MCSymbol *L, StringRef Vals) {
       MachineLocation Dummy;
-      MCCFIInstruction Ret(Escape, L, Dummy, Dummy, Vals);
+      MCCFIInstruction Ret(OpEscape, L, Dummy, Dummy, Vals);
       return Ret;
     }
 
