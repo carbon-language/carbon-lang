@@ -68,7 +68,12 @@ extern __attribute__((visibility("default"))) uptr __asan_mapping_offset;
 #define kHighShadowBeg  MEM_TO_SHADOW(kHighMemBeg)
 #define kHighShadowEnd  MEM_TO_SHADOW(kHighMemEnd)
 
-#define kShadowGapBeg   (kLowShadowEnd ? kLowShadowEnd + 1 : 16 * kPageSize)
+// With the zero shadow base we can not actually map pages starting from 0.
+// This constant is somewhat arbitrary.
+#define kZeroBaseShadowStart (1 << 18)
+
+#define kShadowGapBeg   (kLowShadowEnd ? kLowShadowEnd + 1 \
+                                       : kZeroBaseShadowStart)
 #define kShadowGapEnd   (kHighShadowBeg - 1)
 
 #define kGlobalAndStackRedzone \

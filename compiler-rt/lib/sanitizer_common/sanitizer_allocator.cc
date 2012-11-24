@@ -63,7 +63,7 @@ void *LowLevelAllocator::Allocate(uptr size) {
   // Align allocation size.
   size = RoundUpTo(size, 8);
   if (allocated_end_ - allocated_current_ < (sptr)size) {
-    uptr size_to_allocate = Max(size, kPageSize);
+    uptr size_to_allocate = Max(size, GetPageSizeCached());
     allocated_current_ =
         (char*)MmapOrDie(size_to_allocate, __FUNCTION__);
     allocated_end_ = allocated_current_ + size_to_allocate;

@@ -65,7 +65,7 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
                             bool symbolize, const char *strip_file_prefix,
                             SymbolizeCallback symbolize_callback ) {
   MemoryMappingLayout proc_maps;
-  InternalScopedBuffer<char> buff(kPageSize * 2);
+  InternalScopedBuffer<char> buff(GetPageSizeCached() * 2);
   InternalScopedBuffer<AddressInfo> addr_frames(64);
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {

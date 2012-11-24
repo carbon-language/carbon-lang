@@ -350,12 +350,13 @@ void __asan_init() {
   }
 
   uptr shadow_start = kLowShadowBeg;
-  if (kLowShadowBeg > 0) shadow_start -= kMmapGranularity;
+  if (kLowShadowBeg > 0) shadow_start -= GetMmapGranularity();
   uptr shadow_end = kHighShadowEnd;
   if (MemoryRangeIsAvailable(shadow_start, shadow_end)) {
     if (kLowShadowBeg != kLowShadowEnd) {
       // mmap the low shadow plus at least one page.
-      ReserveShadowMemoryRange(kLowShadowBeg - kMmapGranularity, kLowShadowEnd);
+      ReserveShadowMemoryRange(kLowShadowBeg - GetMmapGranularity(),
+                               kLowShadowEnd);
     }
     // mmap the high shadow.
     ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);

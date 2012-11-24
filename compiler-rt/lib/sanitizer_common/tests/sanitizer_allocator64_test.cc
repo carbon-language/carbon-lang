@@ -182,7 +182,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
 
   for (uptr alignment = 8; alignment <= (1<<28); alignment *= 2) {
     for (int i = 0; i < kNumAllocs; i++) {
-      uptr size = ((i % 10) + 1) * kPageSize;
+      uptr size = ((i % 10) + 1) * 4096;
       allocated[i] = a.Allocate(size, alignment);
       CHECK_EQ(0, (uptr)allocated[i] % alignment);
       char *p = (char*)allocated[i];

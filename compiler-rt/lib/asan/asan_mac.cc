@@ -184,11 +184,11 @@ void ClearShadowMemoryForContext(void *context) {
 static void *island_allocator_pos = 0;
 
 #if SANITIZER_WORDSIZE == 32
-# define kIslandEnd (0xffdf0000 - kPageSize)
-# define kIslandBeg (kIslandEnd - 256 * kPageSize)
+# define kIslandEnd (0xffdf0000 - GetPageSizeCached())
+# define kIslandBeg (kIslandEnd - 256 * GetPageSizeCached())
 #else
-# define kIslandEnd (0x7fffffdf0000 - kPageSize)
-# define kIslandBeg (kIslandEnd - 256 * kPageSize)
+# define kIslandEnd (0x7fffffdf0000 - GetPageSizeCached())
+# define kIslandBeg (kIslandEnd - 256 * GetPageSizeCached())
 #endif
 
 extern "C"
@@ -212,7 +212,7 @@ mach_error_t __interception_allocate_island(void **ptr,
     internal_memset(island_allocator_pos, 0xCC, kIslandEnd - kIslandBeg);
   };
   *ptr = island_allocator_pos;
-  island_allocator_pos = (char*)island_allocator_pos + kPageSize;
+  island_allocator_pos = (char*)island_allocator_pos + GetPageSizeCached();
   if (flags()->verbosity) {
     Report("Branch island allocated at %p\n", *ptr);
   }

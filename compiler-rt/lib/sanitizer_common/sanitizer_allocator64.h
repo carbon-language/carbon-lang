@@ -217,7 +217,6 @@ class SizeClassAllocator64 {
   }
 
   static uptr AllocBeg()  { return kSpaceBeg; }
-  static uptr AllocEnd()  { return kSpaceBeg  + kSpaceSize + AdditionalSize(); }
   static uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
   static const uptr kNumClasses = 256;  // Power of two <= 256
@@ -243,7 +242,7 @@ class SizeClassAllocator64 {
 
   static uptr AdditionalSize() {
     uptr res = sizeof(RegionInfo) * kNumClasses;
-    CHECK_EQ(res % kPageSize, 0);
+    CHECK_EQ(res % GetPageSizeCached(), 0);
     return res;
   }
 
@@ -366,17 +365,18 @@ class LargeMmapAllocator {
  public:
   void Init() {
     internal_memset(this, 0, sizeof(*this));
+    page_size_ = GetPageSizeCached();
   }
   void *Allocate(uptr size, uptr alignment) {
     CHECK(IsPowerOfTwo(alignment));
     uptr map_size = RoundUpMapSize(size);
-    if (alignment > kPageSize)
+    if (alignment > page_size_)
       map_size += alignment;
     if (map_size < size) return 0;  // Overflow.
     uptr map_beg = reinterpret_cast<uptr>(
         MmapOrDie(map_size, "LargeMmapAllocator"));
     uptr map_end = map_beg + map_size;
-    uptr res = map_beg + kPageSize;
+    uptr res = map_beg + page_size_;
     if (res & (alignment - 1))  // Align.
       res += alignment - (res & (alignment - 1));
     CHECK_EQ(0, res & (alignment - 1));
@@ -423,7 +423,7 @@ class LargeMmapAllocator {
 
   bool PointerIsMine(void *p) {
     // Fast check.
-    if ((reinterpret_cast<uptr>(p) % kPageSize) != 0) return false;
+    if ((reinterpret_cast<uptr>(p) & (page_size_ - 1))) return false;
     SpinMutexLock l(&mutex_);
     for (Header *l = list_; l; l = l->next) {
       if (GetUser(l) == p) return true;
@@ -432,10 +432,10 @@ class LargeMmapAllocator {
   }
 
   uptr GetActuallyAllocatedSize(void *p) {
-    return RoundUpMapSize(GetHeader(p)->size) - kPageSize;
+    return RoundUpMapSize(GetHeader(p)->size) - page_size_;
   }
 
-  // At least kPageSize/2 metadata bytes is available.
+  // At least page_size_/2 metadata bytes is available.
   void *GetMetaData(void *p) {
     return GetHeader(p) + 1;
   }
@@ -459,17 +459,20 @@ class LargeMmapAllocator {
     Header *prev;
   };
 
-  Header *GetHeader(uptr p) { return reinterpret_cast<Header*>(p - kPageSize); }
+  Header *GetHeader(uptr p) {
+    return reinterpret_cast<Header*>(p - page_size_);
+  }
   Header *GetHeader(void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
 
   void *GetUser(Header *h) {
-    return reinterpret_cast<void*>(reinterpret_cast<uptr>(h) + kPageSize);
+    return reinterpret_cast<void*>(reinterpret_cast<uptr>(h) + page_size_);
   }
 
   uptr RoundUpMapSize(uptr size) {
-    return RoundUpTo(size, kPageSize) + kPageSize;
+    return RoundUpTo(size, page_size_) + page_size_;
   }
 
+  uptr page_size_;
   Header *list_;
   SpinMutex mutex_;
 };

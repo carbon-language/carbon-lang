@@ -52,7 +52,7 @@ static const uptr kLinuxAppMemMsk = 0x7c0000000000ULL;
 
 static const uptr kLinuxShadowBeg = MemToShadow(kLinuxAppMemBeg);
 static const uptr kLinuxShadowEnd =
-  MemToShadow(kLinuxAppMemEnd) | (kPageSize - 1);
+    MemToShadow(kLinuxAppMemEnd) | 0xff;
 
 static inline bool IsAppMem(uptr mem) {
   return mem >= kLinuxAppMemBeg && mem <= kLinuxAppMemEnd;
