@@ -549,16 +549,13 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
 static MCSymbol *GetLazyPtr(MCSymbol *Sym, MCContext &Ctx) {
   // Remove $stub suffix, add $lazy_ptr.
-  SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end()-5);
-  TmpStr += "$lazy_ptr";
-  return Ctx.GetOrCreateSymbol(TmpStr.str());
+  StringRef NoStub = Sym->getName().substr(0, Sym->getName().size()-5);
+  return Ctx.GetOrCreateSymbol(NoStub + "$lazy_ptr");
 }
 
 static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
   // Add $tmp suffix to $stub, yielding $stub$tmp.
-  SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end());
-  TmpStr += "$tmp";
-  return Ctx.GetOrCreateSymbol(TmpStr.str());
+  return Ctx.GetOrCreateSymbol(Sym->getName() + "$tmp");
 }
 
 void PPCDarwinAsmPrinter::
