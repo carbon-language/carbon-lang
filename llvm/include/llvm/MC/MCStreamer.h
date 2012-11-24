@@ -55,6 +55,7 @@ namespace llvm {
 
     std::vector<MCDwarfFrameInfo> FrameInfos;
     MCDwarfFrameInfo *getCurrentFrameInfo();
+    MCSymbol *EmitCFICommon();
     void EnsureValidFrame();
 
     std::vector<MCWin64EHUnwindInfo *> W64UnwindInfos;

@@ -234,63 +234,58 @@ void MCStreamer::RecordProcEnd(MCDwarfFrameInfo &Frame) {
   EmitLabel(Frame.End);
 }
 
-void MCStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
+MCSymbol *MCStreamer::EmitCFICommon() {
   EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   MCSymbol *Label = getContext().CreateTempSymbol();
   EmitLabel(Label);
+  return Label;
+}
+
+void MCStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createDefCfa(Label, Register, Offset);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createDefCfaOffset(Label, Offset);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createAdjustCfaOffset(Label, Adjustment);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIDefCfaRegister(int64_t Register) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createDefCfaRegister(Label, Register);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createCFIOffset(Label, Register, Offset);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createRelOffset(Label, Register, Offset);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
@@ -310,50 +305,40 @@ void MCStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
 }
 
 void MCStreamer::EmitCFIRememberState() {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction = MCCFIInstruction::createRememberState(Label);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIRestoreState() {
   // FIXME: Error if there is no matching cfi_remember_state.
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction = MCCFIInstruction::createRestoreState(Label);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFISameValue(int64_t Register) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createSameValue(Label, Register);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIRestore(int64_t Register) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createRestore(Label, Register);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
 void MCStreamer::EmitCFIEscape(StringRef Values) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction = MCCFIInstruction::createEscape(Label, Values);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
@@ -364,12 +349,10 @@ void MCStreamer::EmitCFISignalFrame() {
 }
 
 void MCStreamer::EmitCFIUndefined(int64_t Register) {
-  EnsureValidFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  MCSymbol *Label = getContext().CreateTempSymbol();
-  EmitLabel(Label);
+  MCSymbol *Label = EmitCFICommon();
   MCCFIInstruction Instruction =
     MCCFIInstruction::createUndefined(Label, Register);
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Instructions.push_back(Instruction);
 }
 
