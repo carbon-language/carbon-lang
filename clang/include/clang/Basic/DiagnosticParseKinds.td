@@ -768,7 +768,7 @@ let CategoryName = "Modules Issue" in {
 def err_module_expected_ident : Error<
   "expected a module name after module import">;
 def err_module_expected_semi : Error<
-  "expected a semicolon name after module name">;
+  "expected ';' after module name">;
 }
 
 } // end of Parser diagnostics
