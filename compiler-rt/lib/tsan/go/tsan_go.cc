@@ -149,8 +149,7 @@ void __tsan_malloc(int goid, void *p, uptr sz, void *pc) {
   if (thr == 0)  // probably before __tsan_init()
     return;
   thr->in_rtl++;
-  MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
-  MemoryAccessRange(thr, (uptr)pc, (uptr)p, sz, true);
+  MemoryRangeImitateWrite(thr, (uptr)pc, (uptr)p, sz);
   thr->in_rtl--;
 }
 
