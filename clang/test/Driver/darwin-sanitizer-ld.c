@@ -6,7 +6,7 @@
 
 // CHECK-ASAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ASAN: libclang_rt.asan_osx.a"
-// CHECK-ASAN: "-lstdc++"
+// CHECK-ASAN: stdc++
 // CHECK-ASAN: "-framework" "CoreFoundation"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
@@ -26,7 +26,7 @@
 
 // CHECK-UBSAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-UBSAN: libclang_rt.ubsan_osx.a"
-// CHECK-UBSAN: "-lstdc++"
+// CHECK-UBSAN: stdc++
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fsanitize=bounds %s -o %t.o 2>&1 \
@@ -34,7 +34,6 @@
 
 // CHECK-BOUNDS: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BOUNDS-NOT: libclang_rt.ubsan_osx.a"
-// CHECK-BOUNDS-NOT: "-lstdc++"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fPIC -shared -fsanitize=undefined %s -o %t.so 2>&1 \
