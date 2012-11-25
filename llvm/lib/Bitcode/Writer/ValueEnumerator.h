@@ -51,15 +51,15 @@ private:
   ValueList MDValues;
   SmallVector<const MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
-  
+
   typedef DenseMap<void*, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
   std::vector<AttrListPtr> Attributes;
-  
+
   /// GlobalBasicBlockIDs - This map memoizes the basic block ID's referenced by
   /// the "getGlobalBasicBlockID" method.
   mutable DenseMap<const BasicBlock*, unsigned> GlobalBasicBlockIDs;
-  
+
   typedef DenseMap<const Instruction*, unsigned> InstructionMapType;
   InstructionMapType InstructionMap;
   unsigned InstructionCount;
@@ -67,7 +67,7 @@ private:
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
   std::vector<const BasicBlock*> BasicBlocks;
-  
+
   /// When a function is incorporated, this is the size of the Values list
   /// before incorporation.
   unsigned NumModuleValues;
@@ -111,20 +111,20 @@ public:
     Start = FirstFuncConstantID;
     End = FirstInstID;
   }
-  
+
   const ValueList &getValues() const { return Values; }
   const ValueList &getMDValues() const { return MDValues; }
-  const SmallVector<const MDNode *, 8> &getFunctionLocalMDValues() const { 
+  const SmallVector<const MDNode *, 8> &getFunctionLocalMDValues() const {
     return FunctionLocalMDs;
   }
   const TypeList &getTypes() const { return Types; }
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
-    return BasicBlocks; 
+    return BasicBlocks;
   }
   const std::vector<AttrListPtr> &getAttributes() const {
     return Attributes;
   }
-  
+
   /// getGlobalBasicBlockID - This returns the function-specific ID for the
   /// specified basic block.  This is relatively expensive information, so it
   /// should only be used by rare constructs such as address-of-label.
@@ -138,7 +138,7 @@ public:
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
-    
+
   void EnumerateMDNodeOperands(const MDNode *N);
   void EnumerateMetadata(const Value *MD);
   void EnumerateFunctionLocalMetadata(const MDNode *N);
@@ -147,7 +147,7 @@ private:
   void EnumerateType(Type *T);
   void EnumerateOperandType(const Value *V);
   void EnumerateAttributes(const AttrListPtr &PAL);
-  
+
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
   void EnumerateNamedMetadata(const Module *M);
 };

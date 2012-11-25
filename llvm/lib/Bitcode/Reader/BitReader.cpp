@@ -30,7 +30,7 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
                                    LLVMModuleRef *OutModule,
                                    char **OutMessage) {
   std::string Message;
-  
+
   *OutModule = wrap(ParseBitcodeFile(unwrap(MemBuf), *unwrap(ContextRef),
                                      &Message));
   if (!*OutModule) {
@@ -38,19 +38,19 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
       *OutMessage = strdup(Message.c_str());
     return 1;
   }
-  
+
   return 0;
 }
 
 /* Reads a module from the specified path, returning via the OutModule parameter
    a module provider which performs lazy deserialization. Returns 0 on success.
-   Optionally returns a human-readable error message via OutMessage. */ 
+   Optionally returns a human-readable error message via OutMessage. */
 LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
                                        LLVMMemoryBufferRef MemBuf,
                                        LLVMModuleRef *OutM,
                                        char **OutMessage) {
   std::string Message;
-  
+
   *OutM = wrap(getLazyBitcodeModule(unwrap(MemBuf), *unwrap(ContextRef),
                                     &Message));
   if (!*OutM) {
@@ -58,7 +58,7 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
       *OutMessage = strdup(Message.c_str());
     return 1;
   }
-  
+
   return 0;
 
 }

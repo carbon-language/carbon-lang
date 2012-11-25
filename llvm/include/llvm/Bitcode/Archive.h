@@ -50,10 +50,10 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
       SVR4SymbolTableFlag = 1,     ///< Member is a SVR4 symbol table
       BSD4SymbolTableFlag = 2,     ///< Member is a BSD4 symbol table
       LLVMSymbolTableFlag = 4,     ///< Member is an LLVM symbol table
-      BitcodeFlag = 8,             ///< Member is bitcode
-      HasPathFlag = 16,            ///< Member has a full or partial path
+      BitcodeFlag         = 8,     ///< Member is bitcode
+      HasPathFlag         = 16,    ///< Member has a full or partial path
       HasLongFilenameFlag = 32,    ///< Member uses the long filename syntax
-      StringTableFlag = 64         ///< Member is an ar(1) format string table
+      StringTableFlag     = 64     ///< Member is an ar(1) format string table
     };
 
   /// @}

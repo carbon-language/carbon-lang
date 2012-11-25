@@ -273,7 +273,7 @@ public:
 
 private:
   /// EmitAbbreviatedLiteral - Emit a literal value according to its abbrev
-  /// record.  This is a no-op, since the abbrev specifies the literal to use. 
+  /// record.  This is a no-op, since the abbrev specifies the literal to use.
   template<typename uintty>
   void EmitAbbreviatedLiteral(const BitCodeAbbrevOp &Op, uintty V) {
     assert(Op.isLiteral() && "Not a literal");
@@ -282,13 +282,13 @@ private:
     assert(V == Op.getLiteralValue() &&
            "Invalid abbrev for record!");
   }
-  
+
   /// EmitAbbreviatedField - Emit a single scalar field value with the specified
   /// encoding.
   template<typename uintty>
   void EmitAbbreviatedField(const BitCodeAbbrevOp &Op, uintty V) {
     assert(!Op.isLiteral() && "Literals should use EmitAbbreviatedLiteral!");
-    
+
     // Encode the value as we are commanded.
     switch (Op.getEncoding()) {
     default: llvm_unreachable("Unknown encoding!");
@@ -305,7 +305,7 @@ private:
       break;
     }
   }
-  
+
   /// EmitRecordWithAbbrevImpl - This is the core implementation of the record
   /// emission code.  If BlobData is non-null, then it specifies an array of
   /// data that should be emitted as part of the Blob or Array operand that is
@@ -341,11 +341,11 @@ private:
                  "Blob data and record entries specified for array!");
           // Emit a vbr6 to indicate the number of elements present.
           EmitVBR(static_cast<uint32_t>(BlobLen), 6);
-          
+
           // Emit each field.
           for (unsigned i = 0; i != BlobLen; ++i)
             EmitAbbreviatedField(EltEnc, (unsigned char)BlobData[i]);
-          
+
           // Know that blob data is consumed for assertion below.
           BlobData = 0;
         } else {
@@ -359,7 +359,7 @@ private:
       } else if (Op.getEncoding() == BitCodeAbbrevOp::Blob) {
         // If this record has blob data, emit it, otherwise we must have record
         // entries to encode this way.
-        
+
         // Emit a vbr6 to indicate the number of elements present.
         if (BlobData) {
           EmitVBR(static_cast<uint32_t>(BlobLen), 6);
@@ -368,7 +368,7 @@ private:
         } else {
           EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
         }
-        
+
         // Flush to a 32-bit alignment boundary.
         FlushToWord();
 
@@ -376,7 +376,7 @@ private:
         if (BlobData) {
           for (unsigned i = 0; i != BlobLen; ++i)
             WriteByte((unsigned char)BlobData[i]);
-          
+
           // Know that blob data is consumed for assertion below.
           BlobData = 0;
         } else {
@@ -399,7 +399,7 @@ private:
     assert(BlobData == 0 &&
            "Blob data specified for record that doesn't use it!");
   }
-  
+
 public:
 
   /// EmitRecord - Emit the specified record to the stream, using an abbrev if
@@ -420,10 +420,10 @@ public:
 
     // Insert the code into Vals to treat it uniformly.
     Vals.insert(Vals.begin(), Code);
-    
+
     EmitRecordWithAbbrev(Abbrev, Vals);
   }
-  
+
   /// EmitRecordWithAbbrev - Emit a record with the specified abbreviation.
   /// Unlike EmitRecord, the code for the record should be included in Vals as
   /// the first entry.
@@ -431,7 +431,7 @@ public:
   void EmitRecordWithAbbrev(unsigned Abbrev, SmallVectorImpl<uintty> &Vals) {
     EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef());
   }
-  
+
   /// EmitRecordWithBlob - Emit the specified record to the stream, using an
   /// abbrev that includes a blob at the end.  The blob data to emit is
   /// specified by the pointer and length specified at the end.  In contrast to
@@ -461,7 +461,7 @@ public:
     return EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef(ArrayData, 
                                                             ArrayLen));
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Abbrev Emission
   //===--------------------------------------------------------------------===//

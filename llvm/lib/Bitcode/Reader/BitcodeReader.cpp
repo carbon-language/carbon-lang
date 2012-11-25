@@ -1194,7 +1194,7 @@ bool BitcodeReader::ParseConstants() {
         dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
       if (OpTy == 0) return Error("Invalid CE_EXTRACTELT record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
-      Constant *Op1 = ValueList.getConstantFwdRef(Record[2], 
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[2],
                                                   Type::getInt32Ty(Context));
       V = ConstantExpr::getExtractElement(Op0, Op1);
       break;
@@ -1206,7 +1206,7 @@ bool BitcodeReader::ParseConstants() {
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1],
                                                   OpTy->getElementType());
-      Constant *Op2 = ValueList.getConstantFwdRef(Record[2], 
+      Constant *Op2 = ValueList.getConstantFwdRef(Record[2],
                                                   Type::getInt32Ty(Context));
       V = ConstantExpr::getInsertElement(Op0, Op1, Op2);
       break;

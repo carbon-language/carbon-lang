@@ -26,8 +26,8 @@
 namespace llvm {
 namespace bitc {
   enum StandardWidths {
-    BlockIDWidth = 8,  // We use VBR-8 for block IDs.
-    CodeLenWidth = 4,  // Codelen are VBR-4.
+    BlockIDWidth   = 8,  // We use VBR-8 for block IDs.
+    CodeLenWidth   = 4,  // Codelen are VBR-4.
     BlockSizeWidth = 32  // BlockSize up to 2^32 32-bit words = 16GB per block.
   };
 
@@ -69,10 +69,11 @@ namespace bitc {
   enum BlockInfoCodes {
     // DEFINE_ABBREV has magic semantics here, applying to the current SETBID'd
     // block, instead of the BlockInfo block.
-    
-    BLOCKINFO_CODE_SETBID = 1,       // SETBID: [blockid#]
-    BLOCKINFO_CODE_BLOCKNAME = 2,    // BLOCKNAME: [name]
-    BLOCKINFO_CODE_SETRECORDNAME = 3 // BLOCKINFO_CODE_SETRECORDNAME: [id, name]
+
+    BLOCKINFO_CODE_SETBID        = 1, // SETBID: [blockid#]
+    BLOCKINFO_CODE_BLOCKNAME     = 2, // BLOCKNAME: [name]
+    BLOCKINFO_CODE_SETRECORDNAME = 3  // BLOCKINFO_CODE_SETRECORDNAME:
+                                      //                             [id, name]
   };
 
 } // End bitc namespace
@@ -99,7 +100,7 @@ public:
   explicit BitCodeAbbrevOp(Encoding E, uint64_t Data = 0)
     : Val(Data), IsLiteral(false), Enc(E) {}
 
-  bool isLiteral() const { return IsLiteral; }
+  bool isLiteral() const  { return IsLiteral; }
   bool isEncoding() const { return !IsLiteral; }
 
   // Accessors for literals.
@@ -138,18 +139,18 @@ public:
     if (C >= 'a' && C <= 'z') return C-'a';
     if (C >= 'A' && C <= 'Z') return C-'A'+26;
     if (C >= '0' && C <= '9') return C-'0'+26+26;
-    if (C == '.') return 62;
-    if (C == '_') return 63;
+    if (C == '.')             return 62;
+    if (C == '_')             return 63;
     llvm_unreachable("Not a value Char6 character!");
   }
 
   static char DecodeChar6(unsigned V) {
     assert((V & ~63) == 0 && "Not a Char6 encoded character!");
-    if (V < 26) return V+'a';
-    if (V < 26+26) return V-26+'A';
+    if (V < 26)       return V+'a';
+    if (V < 26+26)    return V-26+'A';
     if (V < 26+26+10) return V-26-26+'0';
-    if (V == 62) return '.';
-    if (V == 63) return '_';
+    if (V == 62)      return '.';
+    if (V == 63)      return '_';
     llvm_unreachable("Not a value Char6 character!");
   }
 

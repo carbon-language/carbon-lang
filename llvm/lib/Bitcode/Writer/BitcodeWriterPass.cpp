@@ -22,9 +22,9 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     explicit WriteBitcodePass(raw_ostream &o)
       : ModulePass(ID), OS(o) {}
-    
+
     const char *getPassName() const { return "Bitcode Writer"; }
-    
+
     bool runOnModule(Module &M) {
       WriteBitcodeToFile(&M, OS);
       return false;

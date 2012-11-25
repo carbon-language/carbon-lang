@@ -27,14 +27,14 @@
 namespace llvm {
   class MemoryBuffer;
   class LLVMContext;
-  
+
 //===----------------------------------------------------------------------===//
 //                          BitcodeReaderValueList Class
 //===----------------------------------------------------------------------===//
 
 class BitcodeReaderValueList {
   std::vector<WeakVH> ValuePtrs;
-  
+
   /// ResolveConstants - As we resolve forward-referenced constants, we add
   /// information about them to this vector.  This allows us to resolve them in
   /// bulk instead of resolving each reference at a time.  See the code in
@@ -57,17 +57,17 @@ public:
   void push_back(Value *V) {
     ValuePtrs.push_back(V);
   }
-  
+
   void clear() {
     assert(ResolveConstants.empty() && "Constants not resolved?");
     ValuePtrs.clear();
   }
-  
+
   Value *operator[](unsigned i) const {
     assert(i < ValuePtrs.size());
     return ValuePtrs[i];
   }
-  
+
   Value *back() const { return ValuePtrs.back(); }
     void pop_back() { ValuePtrs.pop_back(); }
   bool empty() const { return ValuePtrs.empty(); }
@@ -75,12 +75,12 @@ public:
     assert(N <= size() && "Invalid shrinkTo request!");
     ValuePtrs.resize(N);
   }
-  
+
   Constant *getConstantFwdRef(unsigned Idx, Type *Ty);
   Value *getValueFwdRef(unsigned Idx, Type *Ty);
-  
+
   void AssignValue(Value *V, unsigned Idx);
-  
+
   /// ResolveConstantForwardRefs - Once all constants are read, this method bulk
   /// resolves any forward references.
   void ResolveConstantForwardRefs();
@@ -93,7 +93,7 @@ public:
 
 class BitcodeReaderMDValueList {
   std::vector<WeakVH> MDValuePtrs;
-  
+
   LLVMContext &Context;
 public:
   BitcodeReaderMDValueList(LLVMContext& C) : Context(C) {}
@@ -106,12 +106,12 @@ public:
   Value *back() const         { return MDValuePtrs.back(); }
   void pop_back()             { MDValuePtrs.pop_back(); }
   bool empty() const          { return MDValuePtrs.empty(); }
-  
+
   Value *operator[](unsigned i) const {
     assert(i < MDValuePtrs.size());
     return MDValuePtrs[i];
   }
-  
+
   void shrinkTo(unsigned N) {
     assert(N <= size() && "Invalid shrinkTo request!");
     MDValuePtrs.resize(N);
@@ -131,9 +131,9 @@ class BitcodeReader : public GVMaterializer {
   DataStreamer *LazyStreamer;
   uint64_t NextUnreadBit;
   bool SeenValueSymbolTable;
-  
+
   const char *ErrorString;
-  
+
   std::vector<Type*> TypeList;
   BitcodeReaderValueList ValueList;
   BitcodeReaderMDValueList MDValueList;
@@ -142,38 +142,38 @@ class BitcodeReader : public GVMaterializer {
 
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
-  
+
   /// MAttributes - The set of attributes by index.  Index zero in the
   /// file is for null, and is thus not represented here.  As such all indices
   /// are off by one.
   std::vector<AttrListPtr> MAttributes;
-  
+
   /// FunctionBBs - While parsing a function body, this is a list of the basic
   /// blocks for the function.
   std::vector<BasicBlock*> FunctionBBs;
-  
+
   // When reading the module header, this list is populated with functions that
   // have bodies later in the file.
   std::vector<Function*> FunctionsWithBodies;
 
-  // When intrinsic functions are encountered which require upgrading they are 
+  // When intrinsic functions are encountered which require upgrading they are
   // stored here with their replacement function.
   typedef std::vector<std::pair<Function*, Function*> > UpgradedIntrinsicMap;
   UpgradedIntrinsicMap UpgradedIntrinsics;
 
   // Map the bitcode's custom MDKind ID to the Module's MDKind ID.
   DenseMap<unsigned, unsigned> MDKindMap;
-  
+
   // Several operations happen after the module header has been read, but
   // before function bodies are processed. This keeps track of whether
   // we've done this yet.
   bool SeenFirstFunctionBody;
-  
+
   /// DeferredFunctionInfo - When function bodies are initially scanned, this
   /// map contains info about where to find deferred function body in the
   /// stream.
   DenseMap<Function*, uint64_t> DeferredFunctionInfo;
-  
+
   /// BlockAddrFwdRefs - These are blockaddr references to basic blocks.  These
   /// are resolved lazily when functions are loaded.
   typedef std::pair<unsigned, GlobalVariable*> BlockAddrRefTy;
@@ -208,11 +208,11 @@ public:
   void materializeForwardReferencedFunctions();
 
   void FreeState();
-  
+
   /// setBufferOwned - If this is true, the reader will destroy the MemoryBuffer
   /// when the reader is destroyed.
   void setBufferOwned(bool Owned) { BufferOwned = Owned; }
-  
+
   virtual bool isMaterializable(const GlobalValue *GV) const;
   virtual bool isDematerializable(const GlobalValue *GV) const;
   virtual bool Materialize(GlobalValue *GV, std::string *ErrInfo = 0);
@@ -224,7 +224,7 @@ public:
     return true;
   }
   const char *getErrorString() const { return ErrorString; }
-  
+
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
   bool ParseBitcodeInto(Module *M);
@@ -251,7 +251,7 @@ private:
       return MAttributes[i-1];
     return AttrListPtr();
   }
-  
+
   /// getValueTypePair - Read a value/type pair out of the specified record from
   /// slot 'Slot'.  Increment Slot past the number of slots used in the record.
   /// Return true on failure.
@@ -339,7 +339,7 @@ private:
   bool FindFunctionInStream(Function *F,
          DenseMap<Function*, uint64_t>::iterator DeferredFunctionInfoIterator);
 };
-  
+
 } // End llvm namespace
 
 #endif
