@@ -284,67 +284,55 @@ namespace llvm {
   public:
     static MCCFIInstruction
     createOffset(MCSymbol *L, unsigned Register, int Offset) {
-      MCCFIInstruction Ret(OpOffset, L, Register, Offset, "");
-      return Ret;
+      return MCCFIInstruction(OpOffset, L, Register, Offset, "");
     }
 
     static MCCFIInstruction
     createDefCfaRegister(MCSymbol *L, unsigned Register) {
-      MCCFIInstruction Ret(OpDefCfaRegister, L, Register, 0, "");
-      return Ret;
+      return MCCFIInstruction(OpDefCfaRegister, L, Register, 0, "");
     }
 
     static MCCFIInstruction createDefCfaOffset(MCSymbol *L, int Offset) {
-      MCCFIInstruction Ret(OpDefCfaOffset, L, 0, -Offset, "");
-      return Ret;
+      return MCCFIInstruction(OpDefCfaOffset, L, 0, -Offset, "");
     }
 
     static MCCFIInstruction
     createDefCfa(MCSymbol *L, unsigned Register, int Offset) {
-      MCCFIInstruction Ret(OpDefCfa, L, Register, -Offset, "");
-      return Ret;
+      return MCCFIInstruction(OpDefCfa, L, Register, -Offset, "");
     }
 
     static MCCFIInstruction createUndefined(MCSymbol *L, unsigned Register) {
-      MCCFIInstruction Ret(OpUndefined, L, Register, 0, "");
-      return Ret;
+      return MCCFIInstruction(OpUndefined, L, Register, 0, "");
     }
 
     static MCCFIInstruction createRestore(MCSymbol *L, unsigned Register) {
-      MCCFIInstruction Ret(OpRestore, L, Register, 0, "");
-      return Ret;
+      return MCCFIInstruction(OpRestore, L, Register, 0, "");
     }
 
     static MCCFIInstruction createSameValue(MCSymbol *L, unsigned Register) {
-      MCCFIInstruction Ret(OpSameValue, L, Register, 0, "");
-      return Ret;
+      return MCCFIInstruction(OpSameValue, L, Register, 0, "");
     }
 
     static MCCFIInstruction createRestoreState(MCSymbol *L) {
-      MCCFIInstruction Ret(OpRestoreState, L, 0, 0, "");
-      return Ret;
+      return MCCFIInstruction(OpRestoreState, L, 0, 0, "");
     }
 
     static MCCFIInstruction createRememberState(MCSymbol *L) {
-      MCCFIInstruction Ret(OpRememberState, L, 0, 0, "");
-      return Ret;
+      return MCCFIInstruction(OpRememberState, L, 0, 0, "");
     }
 
     static MCCFIInstruction
     createRelOffset(MCSymbol *L, unsigned Register, int Offset) {
-      MCCFIInstruction Ret(OpRelOffset, L, Register, Offset, "");
-      return Ret;
+      return MCCFIInstruction(OpRelOffset, L, Register, Offset, "");
     }
 
     static MCCFIInstruction
     createAdjustCfaOffset(MCSymbol *L, int Adjustment) {
-      MCCFIInstruction Ret(OpAdjustCfaOffset, L, 0, Adjustment, "");
-      return Ret;
+      return MCCFIInstruction(OpAdjustCfaOffset, L, 0, Adjustment, "");
     }
 
     static MCCFIInstruction createEscape(MCSymbol *L, StringRef Vals) {
-      MCCFIInstruction Ret(OpEscape, L, 0, 0, Vals);
-      return Ret;
+      return MCCFIInstruction(OpEscape, L, 0, 0, Vals);
     }
 
     OpType getOperation() const { return Operation; }
