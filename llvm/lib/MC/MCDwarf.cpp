@@ -938,6 +938,19 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
   bool VerboseAsm = Streamer.isVerboseAsm();
 
   switch (Instr.getOperation()) {
+  case MCCFIInstruction::OpRegister: {
+    unsigned Reg1 = Instr.getRegister();
+    unsigned Reg2 = Instr.getRegister2();
+    if (VerboseAsm) {
+      Streamer.AddComment("DW_CFA_register");
+      Streamer.AddComment(Twine("Reg1 ") + Twine(Reg1));
+      Streamer.AddComment(Twine("Reg2 ") + Twine(Reg2));
+    }
+    Streamer.EmitIntValue(dwarf::DW_CFA_register, 1);
+    Streamer.EmitULEB128IntValue(Reg1);
+    Streamer.EmitULEB128IntValue(Reg2);
+    return;
+  }
   case MCCFIInstruction::OpUndefined: {
     unsigned Reg = Instr.getRegister();
     if (VerboseAsm) {

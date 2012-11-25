@@ -267,18 +267,27 @@ namespace llvm {
   public:
     enum OpType { OpSameValue, OpRememberState, OpRestoreState, OpOffset,
                   OpDefCfaRegister, OpDefCfaOffset, OpDefCfa, OpRelOffset,
-                  OpAdjustCfaOffset, OpEscape, OpRestore, OpUndefined };
+                  OpAdjustCfaOffset, OpEscape, OpRestore, OpUndefined,
+                  OpRegister };
   private:
     OpType Operation;
     MCSymbol *Label;
     unsigned Register;
-    int Offset;
+    union {
+      int Offset;
+      unsigned Register2;
+    };
     std::vector<char> Values;
 
-    MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R,
-                     int O, StringRef V) :
+    MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R, int O, StringRef V) :
       Operation(Op), Label(L), Register(R), Offset(O),
       Values(V.begin(), V.end()) {
+      assert(Op != OpRegister);
+    }
+
+    MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R1, unsigned R2) :
+      Operation(Op), Label(L), Register(R1), Register2(R2) {
+      assert(Op == OpRegister);
     }
 
   public:
@@ -335,6 +344,11 @@ namespace llvm {
       return MCCFIInstruction(OpEscape, L, 0, 0, Vals);
     }
 
+   static MCCFIInstruction
+   createRegister(MCSymbol *L, unsigned Register1, unsigned Register2) {
+      return MCCFIInstruction(OpRegister, L, Register1, Register2);
+    }
+
     OpType getOperation() const { return Operation; }
     MCSymbol *getLabel() const { return Label; }
 
@@ -342,8 +356,13 @@ namespace llvm {
       assert(Operation == OpDefCfa || Operation == OpOffset ||
              Operation == OpRestore || Operation == OpUndefined ||
              Operation == OpSameValue || Operation == OpDefCfaRegister ||
-             Operation == OpRelOffset);
+             Operation == OpRelOffset || Operation == OpRegister);
       return Register;
+    }
+
+    unsigned getRegister2() const {
+      assert(Operation == OpRegister);
+      return Register2;
     }
 
     int getOffset() const {
