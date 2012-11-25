@@ -86,6 +86,9 @@ const unsigned TinyTripCountThreshold = 16;
 /// number of pointers. Notice that the check is quadratic!
 const unsigned RuntimeMemoryCheckThreshold = 2;
 
+/// This is the highest vector width that we try to generate.
+const unsigned MaxVectorSize = 8;
+
 namespace {
 
 // Forward declarations.
@@ -130,7 +133,7 @@ public:
 private:
   /// Add code that checks at runtime if the accessed arrays overlap.
   /// Returns the comperator value or NULL if no check is needed.
-  Value*  addRuntimeCheck(LoopVectorizationLegality *Legal,
+  Value* addRuntimeCheck(LoopVectorizationLegality *Legal,
                           Instruction *Loc);
   /// Create an empty loop, based on the loop ranges of the old loop.
   void createEmptyLoop(LoopVectorizationLegality *Legal);
@@ -400,7 +403,7 @@ public:
   /// Returns the most profitable vectorization factor for the loop that is
   /// smaller or equal to the VF argument. This method checks every power
   /// of two up to VF.
-  unsigned findBestVectorizationFactor(unsigned VF = 8);
+  unsigned findBestVectorizationFactor(unsigned VF = MaxVectorSize);
 
 private:
   /// Returns the expected execution cost. The unit of the cost does
@@ -856,13 +859,12 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
                                StartIdx,
                                "cmp.zero", Loc);
 
-  Value *MemoryRuntimeCheck = addRuntimeCheck(Legal, Loc);  
+  Value *MemoryRuntimeCheck = addRuntimeCheck(Legal, Loc);
 
   // If we are using memory runtime checks, include them in.
-  if (MemoryRuntimeCheck) {
+  if (MemoryRuntimeCheck)
     Cmp = BinaryOperator::Create(Instruction::Or, Cmp, MemoryRuntimeCheck,
                                  "CntOrMem", Loc);
-  }
 
   BranchInst::Create(MiddleBlock, VectorPH, Cmp, Loc);
   // Remove the old terminator.
