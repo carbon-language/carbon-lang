@@ -118,10 +118,10 @@ public:
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *Legal) {
-    ///Create a new empty loop. Unlink the old loop and connect the new one.
+    // Create a new empty loop. Unlink the old loop and connect the new one.
     createEmptyLoop(Legal);
-    /// Widen each instruction in the old loop to a new one in the new loop.
-    /// Use the Legality module to find the induction and reduction variables.
+    // Widen each instruction in the old loop to a new one in the new loop.
+    // Use the Legality module to find the induction and reduction variables.
     vectorizeLoop(Legal);
     // Register the new loop and update the analysis passes.
     updateAnalysis();
