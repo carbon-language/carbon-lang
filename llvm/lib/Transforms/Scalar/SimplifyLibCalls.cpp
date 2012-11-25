@@ -19,7 +19,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/IRBuilder.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -99,42 +98,6 @@ namespace {
 //===----------------------------------------------------------------------===//
 // Integer Optimizations
 //===----------------------------------------------------------------------===//
-
-//===---------------------------------------===//
-// 'ffs*' Optimizations
-
-struct FFSOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    // Just make sure this has 2 arguments of the same FP type, which match the
-    // result type.
-    if (FT->getNumParams() != 1 ||
-        !FT->getReturnType()->isIntegerTy(32) ||
-        !FT->getParamType(0)->isIntegerTy())
-      return 0;
-
-    Value *Op = CI->getArgOperand(0);
-
-    // Constant fold.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
-      if (CI->isZero()) // ffs(0) -> 0.
-        return B.getInt32(0);
-      // ffs(c) -> cttz(c)+1
-      return B.getInt32(CI->getValue().countTrailingZeros() + 1);
-    }
-
-    // ffs(x) -> x != 0 ? (i32)llvm.cttz(x)+1 : 0
-    Type *ArgType = Op->getType();
-    Value *F = Intrinsic::getDeclaration(Callee->getParent(),
-                                         Intrinsic::cttz, ArgType);
-    Value *V = B.CreateCall2(F, Op, B.getFalse(), "cttz");
-    V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1));
-    V = B.CreateIntCast(V, B.getInt32Ty(), false);
-
-    Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType));
-    return B.CreateSelect(Cond, V, B.getInt32(0));
-  }
-};
 
 //===---------------------------------------===//
 // 'isdigit' Optimizations
@@ -579,7 +542,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Integer Optimizations
-    FFSOpt FFS; AbsOpt Abs; IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
+    AbsOpt Abs; IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
     ToAsciiOpt ToAscii;
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
@@ -640,9 +603,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // Integer Optimizations
-  Optimizations["ffs"] = &FFS;
-  Optimizations["ffsl"] = &FFS;
-  Optimizations["ffsll"] = &FFS;
   Optimizations["abs"] = &Abs;
   Optimizations["labs"] = &Abs;
   Optimizations["llabs"] = &Abs;

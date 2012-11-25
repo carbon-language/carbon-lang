@@ -20,6 +20,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetLibraryInfo.h"
@@ -1212,6 +1213,43 @@ struct Exp2Opt : public UnsafeFPLibCallOptimization {
   }
 };
 
+//===----------------------------------------------------------------------===//
+// Integer Library Call Optimizations
+//===----------------------------------------------------------------------===//
+
+struct FFSOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    // Just make sure this has 2 arguments of the same FP type, which match the
+    // result type.
+    if (FT->getNumParams() != 1 ||
+        !FT->getReturnType()->isIntegerTy(32) ||
+        !FT->getParamType(0)->isIntegerTy())
+      return 0;
+
+    Value *Op = CI->getArgOperand(0);
+
+    // Constant fold.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+      if (CI->isZero()) // ffs(0) -> 0.
+        return B.getInt32(0);
+      // ffs(c) -> cttz(c)+1
+      return B.getInt32(CI->getValue().countTrailingZeros() + 1);
+    }
+
+    // ffs(x) -> x != 0 ? (i32)llvm.cttz(x)+1 : 0
+    Type *ArgType = Op->getType();
+    Value *F = Intrinsic::getDeclaration(Callee->getParent(),
+                                         Intrinsic::cttz, ArgType);
+    Value *V = B.CreateCall2(F, Op, B.getFalse(), "cttz");
+    V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1));
+    V = B.CreateIntCast(V, B.getInt32Ty(), false);
+
+    Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType));
+    return B.CreateSelect(Cond, V, B.getInt32(0));
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1257,6 +1295,9 @@ class LibCallSimplifierImpl {
   // Math library call optimizations.
   UnaryDoubleFPOpt UnaryDoubleFP, UnsafeUnaryDoubleFP;
   CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
+
+  // Integer library call optimizations.
+  FFSOpt FFS;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1367,6 +1408,11 @@ void LibCallSimplifierImpl::initOptimizations() {
   Optimizations["llvm.exp2.f80"] = &Exp2;
   Optimizations["llvm.exp2.f64"] = &Exp2;
   Optimizations["llvm.exp2.f32"] = &Exp2;
+
+  // Integer library call optimizations.
+  addOpt(LibFunc::ffs, &FFS);
+  addOpt(LibFunc::ffsl, &FFS);
+  addOpt(LibFunc::ffsll, &FFS);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
