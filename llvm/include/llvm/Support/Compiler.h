@@ -143,8 +143,8 @@
 #define TEMPLATE_INSTANTIATION(X)
 #endif
 
-// LLVM_ATTRIBUTE_NOINLINE - On compilers where we have a directive to do so,
-// mark a method "not for inlining".
+/// LLVM_ATTRIBUTE_NOINLINE - On compilers where we have a directive to do so,
+/// mark a method "not for inlining".
 #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
 #define LLVM_ATTRIBUTE_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
@@ -153,10 +153,10 @@
 #define LLVM_ATTRIBUTE_NOINLINE
 #endif
 
-// LLVM_ATTRIBUTE_ALWAYS_INLINE - On compilers where we have a directive to do
-// so, mark a method "always inline" because it is performance sensitive. GCC
-// 3.4 supported this but is buggy in various cases and produces unimplemented
-// errors, just use it in GCC 4.0 and later.
+/// LLVM_ATTRIBUTE_ALWAYS_INLINE - On compilers where we have a directive to do
+/// so, mark a method "always inline" because it is performance sensitive. GCC
+/// 3.4 supported this but is buggy in various cases and produces unimplemented
+/// errors, just use it in GCC 4.0 and later.
 #if __GNUC__ > 3
 #define LLVM_ATTRIBUTE_ALWAYS_INLINE inline __attribute__((always_inline))
 #elif defined(_MSC_VER)
@@ -174,8 +174,8 @@
 #define LLVM_ATTRIBUTE_NORETURN
 #endif
 
-// LLVM_EXTENSION - Support compilers where we have a keyword to suppress
-// pedantic diagnostics.
+/// LLVM_EXTENSION - Support compilers where we have a keyword to suppress
+/// pedantic diagnostics.
 #ifdef __GNUC__
 #define LLVM_EXTENSION __extension__
 #else
@@ -197,16 +197,16 @@
   decl
 #endif
 
-// LLVM_BUILTIN_UNREACHABLE - On compilers which support it, expands
-// to an expression which states that it is undefined behavior for the
-// compiler to reach this point.  Otherwise is not defined.
+/// LLVM_BUILTIN_UNREACHABLE - On compilers which support it, expands
+/// to an expression which states that it is undefined behavior for the
+/// compiler to reach this point.  Otherwise is not defined.
 #if defined(__clang__) || (__GNUC__ > 4) \
  || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
 # define LLVM_BUILTIN_UNREACHABLE __builtin_unreachable()
 #endif
 
-// LLVM_BUILTIN_TRAP - On compilers which support it, expands to an expression
-// which causes the program to exit abnormally.
+/// LLVM_BUILTIN_TRAP - On compilers which support it, expands to an expression
+/// which causes the program to exit abnormally.
 #if defined(__clang__) || (__GNUC__ > 4) \
  || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 # define LLVM_BUILTIN_TRAP __builtin_trap()
