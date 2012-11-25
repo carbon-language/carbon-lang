@@ -4184,7 +4184,7 @@ SelectionDAGBuilder::visitPow(const CallInst &I) {
     }
   }
 
-  if (IsExp10 && LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
+  if (IsExp10) {
     SDValue Op = getValue(I.getArgOperand(1));
 
     // Put the exponent in the right bit position for later addition to the
