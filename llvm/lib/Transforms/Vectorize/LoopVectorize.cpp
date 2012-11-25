@@ -268,7 +268,7 @@ public:
     }
 
     /// Insert a pointer and calculate the start and end SCEVs.
-    void insert_pointer(ScalarEvolution *SE, Loop *Lp, Value *Ptr) {
+    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr) {
       const SCEV *Sc = SE->getSCEV(Ptr);
       const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
       assert(AR && "Invalid addrec expression");
@@ -1667,7 +1667,7 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
   bool RT = true;
   for (I = ReadWrites.begin(), IE = ReadWrites.end(); I != IE; ++I)
     if (hasComputableBounds(*I)) {
-      PtrRtCheck.insert_pointer(SE, TheLoop, *I);
+      PtrRtCheck.insert(SE, TheLoop, *I);
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << **I <<"\n");
     } else {
       RT = false;
@@ -1675,7 +1675,7 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
     }
   for (I = Reads.begin(), IE = Reads.end(); I != IE; ++I)
     if (hasComputableBounds(*I)) {
-      PtrRtCheck.insert_pointer(SE, TheLoop, *I);
+      PtrRtCheck.insert(SE, TheLoop, *I);
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << **I <<"\n");
     } else {
       RT = false;
