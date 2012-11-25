@@ -25,6 +25,7 @@
 // 4. LoopVectorizationCostModel - A unit that checks for the profitability
 //    of vectorization. It decides on the optimal vector width, which
 //    can be one, if vectorization is not profitable.
+//
 //===----------------------------------------------------------------------===//
 //
 // The reduction-variable vectorization is based on the paper:
@@ -35,6 +36,9 @@
 //
 // Other ideas/concepts are from:
 //  A. Zaks and D. Nuzman. Autovectorization in GCC-two years later.
+//
+//  S. Maleki, Y. Gao, M. Garzaran, T. Wong and D. Padua.  An Evaluation of
+//  Vectorizing Compilers.
 //
 //===----------------------------------------------------------------------===//
 #define LV_NAME "loop-vectorize"
