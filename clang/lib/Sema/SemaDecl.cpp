@@ -2388,6 +2388,10 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
   if (Old->isPure())
     New->setPure();
 
+  // Merge "used" flag.
+  if (Old->isUsed(false))
+    New->setUsed();
+
   // Merge attributes from the parameters.  These can mismatch with K&R
   // declarations.
   if (New->getNumParams() == Old->getNumParams())
@@ -2612,6 +2616,10 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
       Old->getLinkage() == InternalLinkage &&
       New->getDeclContext() == Old->getDeclContext())
     New->setStorageClass(Old->getStorageClass());
+
+  // Merge "used" flag.
+  if (Old->isUsed(false))
+    New->setUsed();
 
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);
