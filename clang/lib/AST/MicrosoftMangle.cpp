@@ -453,7 +453,7 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       
       if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
         if (NS->isAnonymousNamespace()) {
-          Out << "?A";
+          Out << "?A@";
           break;
         }
       }
