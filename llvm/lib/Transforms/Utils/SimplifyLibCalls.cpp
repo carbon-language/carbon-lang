@@ -1315,7 +1315,7 @@ struct ToAsciiOpt : public LibCallOptimization {
         !FT->getParamType(0)->isIntegerTy(32))
       return 0;
 
-    // isascii(c) -> c & 0x7f
+    // toascii(c) -> c & 0x7f
     return B.CreateAnd(CI->getArgOperand(0),
                        ConstantInt::get(CI->getType(),0x7F));
   }
