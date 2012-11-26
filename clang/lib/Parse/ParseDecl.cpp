@@ -1842,7 +1842,8 @@ static bool isValidAfterIdentifierInDeclarator(const Token &T) {
 ///
 bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                               const ParsedTemplateInfo &TemplateInfo,
-                              AccessSpecifier AS, DeclSpecContext DSC) {
+                              AccessSpecifier AS, DeclSpecContext DSC, 
+                              ParsedAttributesWithRange &Attrs) {
   assert(Tok.is(tok::identifier) && "should have identifier");
 
   SourceLocation Loc = Tok.getLocation();
@@ -1928,7 +1929,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
         ParseEnumSpecifier(Loc, DS, TemplateInfo, AS, DSC_normal);
       else
         ParseClassSpecifier(TagKind, Loc, DS, TemplateInfo, AS,
-                            /*EnteringContext*/ false, DSC_normal);
+                            /*EnteringContext*/ false, DSC_normal, Attrs);
       return true;
     }
   }
@@ -2352,7 +2353,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // typename.
       if (TypeRep == 0) {
         ConsumeToken();   // Eat the scope spec so the identifier is current.
-        if (ParseImplicitInt(DS, &SS, TemplateInfo, AS, DSContext)) continue;
+        ParsedAttributesWithRange Attrs(AttrFactory);
+        if (ParseImplicitInt(DS, &SS, TemplateInfo, AS, DSContext, Attrs)) {
+          if (!Attrs.empty()) {
+            AttrsLastTime = true;
+            attrs.takeAllFrom(Attrs);
+          }
+          continue;
+        }
         goto DoneWithDeclSpec;
       }
 
@@ -2448,7 +2456,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
       if (!TypeRep) {
-        if (ParseImplicitInt(DS, 0, TemplateInfo, AS, DSContext)) continue;
+        ParsedAttributesWithRange Attrs(AttrFactory);
+        if (ParseImplicitInt(DS, 0, TemplateInfo, AS, DSContext, Attrs)) {
+          if (!Attrs.empty()) {
+            AttrsLastTime = true;
+            attrs.takeAllFrom(Attrs);
+          }
+          continue;
+        }
         goto DoneWithDeclSpec;
       }
 
@@ -2749,8 +2764,20 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_union: {
       tok::TokenKind Kind = Tok.getKind();
       ConsumeToken();
+
+      // These are attributes following class specifiers.
+      // To produce better diagnostic, we parse them when
+      // parsing class specifier.
+      ParsedAttributesWithRange Attributes(AttrFactory);
       ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS,
-                          EnteringContext, DSContext);
+                          EnteringContext, DSContext, Attributes);
+
+      // If there are attributes following class specifier,
+      // take them over and handle them here.
+      if (!Attributes.empty()) {
+        AttrsLastTime = true;
+        attrs.takeAllFrom(Attributes);
+      }
       continue;
     }
 

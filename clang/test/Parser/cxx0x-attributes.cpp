@@ -62,6 +62,29 @@ struct MemberFnOrder {
 struct [[]] struct_attr;
 class [[]] class_attr {};
 union [[]] union_attr;
+
+// Checks attributes placed at wrong syntactic locations of class specifiers.
+// FIXME: provide fix-it hint.
+class [[]] [[]]
+  attr_after_class_name_decl [[]] [[]]; // expected-error {{an attribute list cannot appear here}}
+
+class [[]] [[]]
+ attr_after_class_name_definition [[]] [[]] [[]]{}; // expected-error {{an attribute list cannot appear here}}
+
+class [[]] c {};
+class c [[]] [[]] x;
+class c [[]] [[]] y [[]] [[]];
+class c final [(int){0}];
+
+class base {};
+class [[]] [[]] final_class 
+  alignas(float) [[]] final // expected-error {{an attribute list cannot appear here}}
+  alignas(float) [[]] [[]] alignas(float): base{}; // expected-error {{an attribute list cannot appear here}}
+
+class [[]] [[]] final_class_another 
+  [[]] [[]] alignas(16) final // expected-error {{an attribute list cannot appear here}}
+  [[]] [[]] alignas(16) [[]]{}; // expected-error {{an attribute list cannot appear here}}
+
 [[]] struct with_init_declarators {} init_declarator;
 [[]] struct no_init_declarators; // expected-error {{an attribute list cannot appear here}}
 [[]];

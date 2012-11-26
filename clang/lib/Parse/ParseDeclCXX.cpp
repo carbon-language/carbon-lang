@@ -1052,7 +1052,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  SourceLocation StartLoc, DeclSpec &DS,
                                  const ParsedTemplateInfo &TemplateInfo,
                                  AccessSpecifier AS, 
-                                 bool EnteringContext, DeclSpecContext DSC) {
+                                 bool EnteringContext, DeclSpecContext DSC, 
+                                 ParsedAttributesWithRange &Attributes) {
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
     TagType = DeclSpec::TST_struct;
@@ -1234,12 +1235,24 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   //  - If we have 'struct foo;', then this is either a forward declaration
   //    or a friend declaration, which have to be treated differently.
   //  - Otherwise we have something like 'struct foo xyz', a reference.
+  //
+  //  We also detect these erroneous cases to provide better diagnostic for
+  //  C++11 attributes parsing.
+  //  - attributes follow class name:
+  //    struct foo [[]] {};
+  //  - attributes appear before or after 'final':
+  //    struct foo [[]] final [[]] {};
+  //
   // However, in type-specifier-seq's, things look like declarations but are
   // just references, e.g.
   //   new struct s;
   // or
   //   &T::operator struct s;
   // For these, DSC is DSC_type_specifier.
+
+  // If there are attributes after class name, parse them.
+  MaybeParseCXX0XAttributes(Attributes);
+
   Sema::TagUseKind TUK;
   if (DSC == DSC_trailing)
     TUK = Sema::TUK_Reference;
@@ -1261,6 +1274,39 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Okay, this is a class definition.
       TUK = Sema::TUK_Definition;
     }
+  } else if (isCXX0XFinalKeyword() && (NextToken().is(tok::l_square) || 
+                                       NextToken().is(tok::kw_alignas) ||
+                                       NextToken().is(tok::kw__Alignas))) {
+    // We can't tell if this is a definition or reference
+    // until we skipped the 'final' and C++11 attribute specifiers.
+    TentativeParsingAction PA(*this);
+
+    // Skip the 'final' keyword.
+    ConsumeToken();
+
+    // Skip C++11 attribute specifiers.
+    while (true) {
+      if (Tok.is(tok::l_square) && NextToken().is(tok::l_square)) {
+        ConsumeBracket();
+        if (!SkipUntil(tok::r_square))
+          break;
+      } else if ((Tok.is(tok::kw_alignas) || Tok.is(tok::kw__Alignas)) &&
+                 NextToken().is(tok::l_paren)) {
+        ConsumeToken();
+        ConsumeParen();
+        if (!SkipUntil(tok::r_paren))
+          break;
+      } else {
+        break;
+      }
+    }
+
+    if (Tok.is(tok::l_brace) || Tok.is(tok::colon))
+      TUK = Sema::TUK_Definition;
+    else
+      TUK = Sema::TUK_Reference;
+
+    PA.Revert();
   } else if (DSC != DSC_type_specifier &&
              (Tok.is(tok::semi) ||
               (Tok.isAtStartOfLine() && !isValidAfterTypeSpecifier(false)))) {
@@ -1274,6 +1320,12 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     }
   } else
     TUK = Sema::TUK_Reference;
+
+  // Forbid misplaced attributes. In cases of a reference, we pass attributes
+  // to caller to handle.
+  // FIXME: provide fix-it hints if we can.
+  if (TUK != Sema::TUK_Reference)
+    ProhibitAttributes(Attributes);
 
   // If this is an elaborated type specifier, and we delayed
   // diagnostics before, just merge them into the current pool.
@@ -2326,6 +2378,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
            diag::warn_cxx98_compat_override_control_keyword :
            diag::ext_override_control_keyword) << "final";
     }
+
+    // Forbid C++11 attributes that appear here.
+    ParsedAttributesWithRange Attrs(AttrFactory);
+    MaybeParseCXX0XAttributes(Attrs);
+    ProhibitAttributes(Attrs);
   }
 
   if (Tok.is(tok::colon)) {
