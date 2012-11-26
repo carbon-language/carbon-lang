@@ -3150,33 +3150,21 @@ public:
         ProcessGDBRemote *process = (ProcessGDBRemote *)m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process)
         {
-            const StateType state = process->GetState();
-
-            if (StateIsStoppedState (state, true))
+            for (size_t i=0; i<argc; ++ i)
             {
-                for (size_t i=0; i<argc; ++ i)
-                {
-                    const char *packet_cstr = command.GetArgumentAtIndex(0);
-                    bool send_async = false;
-                    StringExtractorGDBRemote response;
-                    process->GetGDBRemote().SendPacketAndWaitForResponse(packet_cstr, response, send_async);
-                    result.SetStatus (eReturnStatusSuccessFinishResult);
-                    Stream &output_strm = result.GetOutputStream();
-                    output_strm.Printf ("  packet: %s\n", packet_cstr);
-                    const std::string &response_str = response.GetStringRef();
-                    if (response_str.empty())
-                        output_strm.PutCString ("response: \nerror: UNIMPLEMENTED\n");
-                    else
-                        output_strm.Printf ("response: %s\n", response.GetStringRef().c_str());
-                }
+                const char *packet_cstr = command.GetArgumentAtIndex(0);
+                bool send_async = true;
+                StringExtractorGDBRemote response;
+                process->GetGDBRemote().SendPacketAndWaitForResponse(packet_cstr, response, send_async);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+                Stream &output_strm = result.GetOutputStream();
+                output_strm.Printf ("  packet: %s\n", packet_cstr);
+                const std::string &response_str = response.GetStringRef();
+                if (response_str.empty())
+                    output_strm.PutCString ("response: \nerror: UNIMPLEMENTED\n");
+                else
+                    output_strm.Printf ("response: %s\n", response.GetStringRef().c_str());
             }
-            else
-            {
-                result.AppendErrorWithFormat ("process must be stopped in order to send GDB remote packets, state is %s", StateAsCString (state));
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-
         }
         return true;
     }
