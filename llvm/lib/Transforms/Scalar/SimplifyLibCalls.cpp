@@ -137,27 +137,6 @@ struct IsAsciiOpt : public LibCallOptimization {
 };
 
 //===---------------------------------------===//
-// 'abs', 'labs', 'llabs' Optimizations
-
-struct AbsOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    // We require integer(integer) where the types agree.
-    if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
-        FT->getParamType(0) != FT->getReturnType())
-      return 0;
-
-    // abs(x) -> x >s -1 ? x : -x
-    Value *Op = CI->getArgOperand(0);
-    Value *Pos = B.CreateICmpSGT(Op, Constant::getAllOnesValue(Op->getType()),
-                                 "ispos");
-    Value *Neg = B.CreateNeg(Op, "neg");
-    return B.CreateSelect(Pos, Op, Neg);
-  }
-};
-
-
-//===---------------------------------------===//
 // 'toascii' Optimizations
 
 struct ToAsciiOpt : public LibCallOptimization {
@@ -542,7 +521,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Integer Optimizations
-    AbsOpt Abs; IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
+    IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
     ToAsciiOpt ToAscii;
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
@@ -603,9 +582,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // Integer Optimizations
-  Optimizations["abs"] = &Abs;
-  Optimizations["labs"] = &Abs;
-  Optimizations["llabs"] = &Abs;
   Optimizations["isdigit"] = &IsDigit;
   Optimizations["isascii"] = &IsAscii;
   Optimizations["toascii"] = &ToAscii;
