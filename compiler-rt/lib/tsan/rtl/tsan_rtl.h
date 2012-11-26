@@ -523,6 +523,7 @@ void AfterSleep(ThreadState *thr, uptr pc);
 #define HACKY_CALL(f) \
   __asm__ __volatile__("sub $1024, %%rsp;" \
                        "/*.cfi_adjust_cfa_offset 1024;*/" \
+                       ".hidden " #f "_thunk;" \
                        "call " #f "_thunk;" \
                        "add $1024, %%rsp;" \
                        "/*.cfi_adjust_cfa_offset -1024;*/" \

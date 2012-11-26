@@ -1,5 +1,6 @@
 .section .text
 
+.hidden __tsan_trace_switch
 .globl __tsan_trace_switch_thunk
 __tsan_trace_switch_thunk:
   .cfi_startproc
@@ -79,6 +80,7 @@ __tsan_trace_switch_thunk:
   ret
   .cfi_endproc
 
+.hidden __tsan_report_race
 .globl __tsan_report_race_thunk
 __tsan_report_race_thunk:
   .cfi_startproc
