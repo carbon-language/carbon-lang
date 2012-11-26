@@ -58,14 +58,6 @@ public:
   /// whether any of the passes modifies the module, and if so, return true.
   bool run(Module &M);
 
-  /// doInitialization - Run all of the initializers for the module passes.
-  ///
-  bool doInitialization();
-
-  /// doFinalization - Run all of the finalizers for the module passes.
-  ///
-  bool doFinalization();
-
 private:
   /// PassManagerImpl_New is the actual class. PassManager is just the
   /// wraper to publish simple pass manager interface
