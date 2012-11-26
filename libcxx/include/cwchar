@@ -151,9 +151,13 @@ using ::wcstof;
 using ::wcstold;
 #endif // _MSC_VER
 using ::wcstol;
+#ifndef _LIBCPP_HAS_NO_LONG_LONG
 using ::wcstoll;
+#endif // _LIBCPP_HAS_NO_LONG_LONG
 using ::wcstoul;
+#ifndef _LIBCPP_HAS_NO_LONG_LONG
 using ::wcstoull;
+#endif // _LIBCPP_HAS_NO_LONG_LONG
 using ::wcscpy;
 using ::wcsncpy;
 using ::wcscat;
