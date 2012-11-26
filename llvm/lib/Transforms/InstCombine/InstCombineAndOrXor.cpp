@@ -2159,6 +2159,27 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             I.setOperand(1, NewRHS);
             return &I;
           }
+        } else if (Op0I->getOpcode() == Instruction::LShr) {
+          // ((X^C1) >> C2) ^ C3 -> (X>>C2) ^ ((C1>>C2)^C3)
+          // E1 = "X ^ C1"
+          BinaryOperator *E1; 
+          ConstantInt *C1;
+          if (Op0I->hasOneUse() &&
+              (E1 = dyn_cast<BinaryOperator>(Op0I->getOperand(0))) &&
+              E1->getOpcode() == Instruction::Xor &&
+              (C1 = dyn_cast<ConstantInt>(E1->getOperand(1)))) {
+            // fold (C1 >> C2) ^ C3
+            ConstantInt *C2 = Op0CI, *C3 = RHS;
+            APInt FoldConst = C1->getValue().lshr(C2->getValue());
+            FoldConst ^= C3->getValue();
+            // Prepare the two operands.
+            Value *Opnd0 = Builder->CreateLShr(E1->getOperand(0), C2);
+            Opnd0->takeName(Op0I);
+            cast<Instruction>(Opnd0)->setDebugLoc(I.getDebugLoc());
+            Value *FoldVal = ConstantInt::get(Opnd0->getType(), FoldConst);
+
+            return BinaryOperator::CreateXor(Opnd0, FoldVal);
+          }
         }
       }
     }

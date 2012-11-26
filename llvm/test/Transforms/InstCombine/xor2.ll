@@ -51,3 +51,18 @@ define i32 @test4(i32 %A, i32 %B) {
 ; CHECK: %1 = ashr i32 %A, %B
 ; CHECK: ret i32 %1
 }
+
+; defect-2 in rdar://12329730
+; (X^C1) >> C2) ^ C3 -> (X>>C2) ^ ((C1>>C2)^C3)
+;   where the "X" has more than one use
+define i32 @test5(i32 %val1) {
+test5:
+  %xor = xor i32 %val1, 1234
+  %shr = lshr i32 %xor, 8
+  %xor1 = xor i32 %shr, 1
+  %add = add i32 %xor1, %xor
+  ret i32 %add
+; CHECK: @test5
+; CHECK: lshr i32 %val1, 8
+; CHECK: ret
+}
