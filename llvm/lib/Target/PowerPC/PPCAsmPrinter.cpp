@@ -37,6 +37,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -55,7 +56,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/VariadicFunction.h"
 using namespace llvm;
 
 namespace {
@@ -350,14 +350,11 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *PICBase = MF->getPICBaseSymbol();
     
     // Emit the 'bl'.
-    TmpInst.setOpcode(PPC::BL_Darwin); // Darwin vs SVR4 doesn't matter here.
-    
-    
-    // FIXME: We would like an efficient form for this, so we don't have to do
-    // a lot of extra uniquing.
-    TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::
-                                             Create(PICBase, OutContext)));
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(PPC::BL_Darwin) // Darwin vs SVR4 doesn't matter here.
+      // FIXME: We would like an efficient form for this, so we don't have to do
+      // a lot of extra uniquing.
+      .addExpr(MCSymbolRefExpr::Create(PICBase, OutContext))
+      .emit(OutStreamer);
     
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
@@ -406,9 +403,9 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Into:      %R3 = MFCR      ;; cr7
     OutStreamer.AddComment(PPCInstPrinter::
                            getRegisterName(MI->getOperand(1).getReg()));
-    TmpInst.setOpcode(Subtarget.isPPC64() ? PPC::MFCR8 : PPC::MFCR);
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(Subtarget.isPPC64() ? PPC::MFCR8 : PPC::MFCR)
+      .addReg(MI->getOperand(0).getReg())
+      .emit(OutStreamer);
     return;
   case PPC::SYNC:
     // In Book E sync is called msync, handle this special case here...
@@ -559,21 +556,6 @@ static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
   return Ctx.GetOrCreateSymbol(Sym->getName() + "$tmp");
 }
 
-namespace {
-  // Helper function to emit a custom MCInst.
-  void emitMCInstImpl(MCStreamer &OutStreamer, unsigned Opcode,
-                      ArrayRef<const MCOperand *> Ops) {
-    MCInst TmpInst;
-    TmpInst.setOpcode(Opcode);
-    for (unsigned I = 0, E = Ops.size(); I != E; ++I)
-      TmpInst.addOperand(*Ops[I]);
-    OutStreamer.EmitInstruction(TmpInst);
-  }
-
-  const VariadicFunction2<void, MCStreamer &, unsigned, MCOperand,
-                          emitMCInstImpl> emitMCInst = {};
-}
-
 void PPCDarwinAsmPrinter::
 EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
@@ -604,36 +586,36 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
 
       // mflr r0
-      emitMCInst(OutStreamer, PPC::MFLR, MCOperand::CreateReg(PPC::R0));
+      MCInstBuilder(PPC::MFLR).addReg(PPC::R0).emit(OutStreamer);
       // FIXME: MCize this.
       OutStreamer.EmitRawText("\tbcl 20, 31, " + Twine(AnonSymbol->getName()));
       OutStreamer.EmitLabel(AnonSymbol);
       // mflr r11
-      emitMCInst(OutStreamer, PPC::MFLR, MCOperand::CreateReg(PPC::R11));
+      MCInstBuilder(PPC::MFLR).addReg(PPC::R11).emit(OutStreamer);
       // addis r11, r11, ha16(LazyPtr - AnonSymbol)
-      MCOperand Sub = MCOperand::CreateExpr(
-                        MCBinaryExpr::CreateSub(
-                          MCSymbolRefExpr::Create(LazyPtr, OutContext),
-                          MCSymbolRefExpr::Create(AnonSymbol, OutContext),
-                        OutContext));
-      emitMCInst(OutStreamer, PPC::ADDIS, MCOperand::CreateReg(PPC::R11),
-                 MCOperand::CreateReg(PPC::R11), Sub);
+      const MCExpr *Sub =
+        MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(LazyPtr, OutContext),
+                                MCSymbolRefExpr::Create(AnonSymbol, OutContext),
+                                OutContext);
+      MCInstBuilder(PPC::ADDIS)
+        .addReg(PPC::R11)
+        .addReg(PPC::R11)
+        .addExpr(Sub)
+        .emit(OutStreamer);
       // mtlr r0
-      emitMCInst(OutStreamer, PPC::MTLR, MCOperand::CreateReg(PPC::R0));
+      MCInstBuilder(PPC::MTLR).addReg(PPC::R0).emit(OutStreamer);
 
-      if (isPPC64) {
-        // ldu r12, lo16(LazyPtr - AnonSymbol)(r11)
-        emitMCInst(OutStreamer, PPC::LDU, MCOperand::CreateReg(PPC::R12),
-                   Sub, Sub, MCOperand::CreateReg(PPC::R11));
-      } else {
-        // lwzu r12, lo16(LazyPtr - AnonSymbol)(r11)
-        emitMCInst(OutStreamer, PPC::LWZU, MCOperand::CreateReg(PPC::R12),
-                   Sub, Sub, MCOperand::CreateReg(PPC::R11));
-      }
+      // ldu r12, lo16(LazyPtr - AnonSymbol)(r11)
+      // lwzu r12, lo16(LazyPtr - AnonSymbol)(r11)
+      MCInstBuilder(isPPC64 ? PPC::LDU : PPC::LWZU)
+        .addReg(PPC::R12)
+        .addExpr(Sub).addExpr(Sub)
+        .addReg(PPC::R11)
+        .emit(OutStreamer);
       // mtctr r12
-      emitMCInst(OutStreamer, PPC::MTCTR, MCOperand::CreateReg(PPC::R12));
+      MCInstBuilder(PPC::MTCTR).addReg(PPC::R12).emit(OutStreamer);
       // bctr
-      emitMCInst(OutStreamer, PPC::BCTR);
+      MCInstBuilder(PPC::BCTR).emit(OutStreamer);
 
       OutStreamer.SwitchSection(LSPSection);
       OutStreamer.EmitLabel(LazyPtr);
@@ -668,30 +650,30 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     OutStreamer.EmitLabel(Stub);
     OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
     // lis r11, ha16(LazyPtr)
-    MCOperand LazyPtrHa16 =
-      MCOperand::CreateExpr(
-        MCSymbolRefExpr::Create(LazyPtr, MCSymbolRefExpr::VK_PPC_DARWIN_HA16,
-                                OutContext));
-    emitMCInst(OutStreamer, PPC::LIS, MCOperand::CreateReg(PPC::R11),
-               LazyPtrHa16);
+    const MCExpr *LazyPtrHa16 =
+      MCSymbolRefExpr::Create(LazyPtr, MCSymbolRefExpr::VK_PPC_DARWIN_HA16,
+                              OutContext);
+    MCInstBuilder(PPC::LIS)
+      .addReg(PPC::R11)
+      .addExpr(LazyPtrHa16)
+      .emit(OutStreamer);
 
-    MCOperand LazyPtrLo16 =
-      MCOperand::CreateExpr(
-        MCSymbolRefExpr::Create(LazyPtr, MCSymbolRefExpr::VK_PPC_DARWIN_LO16,
-                                OutContext));
-    if (isPPC64) {
-      // ldu r12, lo16(LazyPtr)(r11)
-      emitMCInst(OutStreamer, PPC::LDU, MCOperand::CreateReg(PPC::R12),
-                 LazyPtrLo16, LazyPtrLo16, MCOperand::CreateReg(PPC::R11));
-    } else {
-      // lwzu r12, lo16(LazyPtr)(r11)
-      emitMCInst(OutStreamer, PPC::LWZU, MCOperand::CreateReg(PPC::R12),
-                 LazyPtrLo16, LazyPtrLo16, MCOperand::CreateReg(PPC::R11));
-    }
+    const MCExpr *LazyPtrLo16 =
+      MCSymbolRefExpr::Create(LazyPtr, MCSymbolRefExpr::VK_PPC_DARWIN_LO16,
+                              OutContext);
+    // ldu r12, lo16(LazyPtr)(r11)
+    // lwzu r12, lo16(LazyPtr)(r11)
+    MCInstBuilder(isPPC64 ? PPC::LDU : PPC::LWZU)
+      .addReg(PPC::R12)
+      .addExpr(LazyPtrLo16).addExpr(LazyPtrLo16)
+      .addReg(PPC::R11)
+      .emit(OutStreamer);
+
     // mtctr r12
-    emitMCInst(OutStreamer, PPC::MTCTR, MCOperand::CreateReg(PPC::R12));
+    MCInstBuilder(PPC::MTCTR).addReg(PPC::R12).emit(OutStreamer);
     // bctr
-    emitMCInst(OutStreamer, PPC::BCTR);
+    MCInstBuilder(PPC::BCTR).emit(OutStreamer);
+
     OutStreamer.SwitchSection(LSPSection);
     OutStreamer.EmitLabel(LazyPtr);
     OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);

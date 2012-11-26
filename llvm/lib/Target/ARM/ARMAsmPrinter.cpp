@@ -37,6 +37,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCStreamer.h"
@@ -1051,12 +1052,11 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
                                                       OutContext);
     // If this isn't a TBB or TBH, the entries are direct branch instructions.
     if (OffsetWidth == 4) {
-      MCInst BrInst;
-      BrInst.setOpcode(ARM::t2B);
-      BrInst.addOperand(MCOperand::CreateExpr(MBBSymbolExpr));
-      BrInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      BrInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(BrInst);
+      MCInstBuilder(ARM::t2B)
+        .addExpr(MBBSymbolExpr)
+        .addImm(ARMCC::AL)
+        .addReg(0)
+        .emit(OutStreamer);
       continue;
     }
     // Otherwise it's an offset from the dispatch instruction. Construct an
@@ -1098,18 +1098,6 @@ void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   OS << ']';
   OS << "+";
   printOperand(MI, NOps-2, OS);
-}
-
-static void populateADROperands(MCInst &Inst, unsigned Dest,
-                                const MCSymbol *Label,
-                                unsigned pred, unsigned ccreg,
-                                MCContext &Ctx) {
-  const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Label, Ctx);
-  Inst.addOperand(MCOperand::CreateReg(Dest));
-  Inst.addOperand(MCOperand::CreateExpr(SymbolExpr));
-  // Add predicate operands.
-  Inst.addOperand(MCOperand::CreateImm(pred));
-  Inst.addOperand(MCOperand::CreateReg(ccreg));
 }
 
 void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
@@ -1288,129 +1276,112 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::tLEApcrel:
   case ARM::t2LEApcrel: {
     // FIXME: Need to also handle globals and externals
-    MCInst TmpInst;
-    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrel ? ARM::t2ADR
-                      : (MI->getOpcode() == ARM::tLEApcrel ? ARM::tADR
-                         : ARM::ADR));
-    populateADROperands(TmpInst, MI->getOperand(0).getReg(),
-                        GetCPISymbol(MI->getOperand(1).getIndex()),
-                        MI->getOperand(2).getImm(), MI->getOperand(3).getReg(),
-                        OutContext);
-    OutStreamer.EmitInstruction(TmpInst);
+    MCSymbol *CPISymbol = GetCPISymbol(MI->getOperand(1).getIndex());
+    MCInstBuilder(MI->getOpcode() == ARM::t2LEApcrel ? ARM::t2ADR
+                  : (MI->getOpcode() == ARM::tLEApcrel ? ARM::tADR
+                     : ARM::ADR))
+      .addReg(MI->getOperand(0).getReg())
+      .addExpr(MCSymbolRefExpr::Create(CPISymbol, OutContext))
+      // Add predicate operands.
+      .addImm(MI->getOperand(2).getImm())
+      .addReg(MI->getOperand(3).getReg())
+      .emit(OutStreamer);
     return;
   }
   case ARM::LEApcrelJT:
   case ARM::tLEApcrelJT:
   case ARM::t2LEApcrelJT: {
-    MCInst TmpInst;
-    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrelJT ? ARM::t2ADR
-                      : (MI->getOpcode() == ARM::tLEApcrelJT ? ARM::tADR
-                         : ARM::ADR));
-    populateADROperands(TmpInst, MI->getOperand(0).getReg(),
-                      GetARMJTIPICJumpTableLabel2(MI->getOperand(1).getIndex(),
-                                                  MI->getOperand(2).getImm()),
-                      MI->getOperand(3).getImm(), MI->getOperand(4).getReg(),
-                      OutContext);
-    OutStreamer.EmitInstruction(TmpInst);
+    MCSymbol *JTIPICSymbol =
+      GetARMJTIPICJumpTableLabel2(MI->getOperand(1).getIndex(),
+                                  MI->getOperand(2).getImm());
+    MCInstBuilder(MI->getOpcode() == ARM::t2LEApcrelJT ? ARM::t2ADR
+                  : (MI->getOpcode() == ARM::tLEApcrelJT ? ARM::tADR
+                     : ARM::ADR))
+      .addReg(MI->getOperand(0).getReg())
+      .addExpr(MCSymbolRefExpr::Create(JTIPICSymbol, OutContext))
+      // Add predicate operands.
+      .addImm(MI->getOperand(3).getImm())
+      .addReg(MI->getOperand(4).getReg())
+      .emit(OutStreamer);
     return;
   }
   // Darwin call instructions are just normal call instructions with different
   // clobber semantics (they clobber R9).
   case ARM::BX_CALL: {
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    MCInstBuilder(ARM::MOVr)
+      .addReg(ARM::LR)
+      .addReg(ARM::PC)
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // Add 's' bit operand (always reg0 for this)
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::BX);
-      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::BX)
+      .addReg(MI->getOperand(0).getReg())
+      .emit(OutStreamer);
     return;
   }
   case ARM::tBX_CALL: {
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    MCInstBuilder(ARM::tMOVr)
+      .addReg(ARM::LR)
+      .addReg(ARM::PC)
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tBX);
-      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tBX)
+      .addReg(MI->getOperand(0).getReg())
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::BMOVPCRX_CALL: {
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    MCInstBuilder(ARM::MOVr)
+      .addReg(ARM::LR)
+      .addReg(ARM::PC)
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // Add 's' bit operand (always reg0 for this)
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::MOVr)
+      .addReg(ARM::PC)
+      .addImm(MI->getOperand(0).getReg())
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // Add 's' bit operand (always reg0 for this)
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::BMOVPCB_CALL: {
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    MCInstBuilder(ARM::MOVr)
+      .addReg(ARM::LR)
+      .addReg(ARM::PC)
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // Add 's' bit operand (always reg0 for this)
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::Bcc);
-      const GlobalValue *GV = MI->getOperand(0).getGlobal();
-      MCSymbol *GVSym = Mang->getSymbol(GV);
-      const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
-      TmpInst.addOperand(MCOperand::CreateExpr(GVSymExpr));
+      .addReg(0)
+      .emit(OutStreamer);
+
+    const GlobalValue *GV = MI->getOperand(0).getGlobal();
+    MCSymbol *GVSym = Mang->getSymbol(GV);
+    const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
+    MCInstBuilder(ARM::Bcc)
+      .addExpr(GVSymExpr)
       // Add predicate operands.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::MOVi16_ga_pcrel:
@@ -1498,15 +1469,14 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                           OutContext));
 
     // Form and emit the add.
-    MCInst AddInst;
-    AddInst.setOpcode(ARM::tADDhirr);
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    // Add predicate operands.
-    AddInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    AddInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(AddInst);
+    MCInstBuilder(ARM::tADDhirr)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(ARM::PC)
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::PICADD: {
@@ -1521,17 +1491,16 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                           OutContext));
 
     // Form and emit the add.
-    MCInst AddInst;
-    AddInst.setOpcode(ARM::ADDrr);
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    // Add predicate operands.
-    AddInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
-    // Add 's' bit operand (always reg0 for this)
-    AddInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(AddInst);
+    MCInstBuilder(ARM::ADDrr)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(1).getReg())
+      // Add predicate operands.
+      .addImm(MI->getOperand(3).getImm())
+      .addReg(MI->getOperand(4).getReg())
+      // Add 's' bit operand (always reg0 for this)
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::PICSTR:
@@ -1567,16 +1536,15 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     case ARM::PICLDRSB: Opcode = ARM::LDRSB; break;
     case ARM::PICLDRSH: Opcode = ARM::LDRSH; break;
     }
-    MCInst LdStInst;
-    LdStInst.setOpcode(Opcode);
-    LdStInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    LdStInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    LdStInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    LdStInst.addOperand(MCOperand::CreateImm(0));
-    // Add predicate operands.
-    LdStInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
-    LdStInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
-    OutStreamer.EmitInstruction(LdStInst);
+    MCInstBuilder(Opcode)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(1).getReg())
+      .addImm(0)
+      // Add predicate operands.
+      .addImm(MI->getOperand(3).getImm())
+      .addReg(MI->getOperand(4).getReg())
+      .emit(OutStreamer);
 
     return;
   }
@@ -1606,29 +1574,28 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
-    TmpInst.setOpcode(ARM::tMOVr);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(ARM::tMOVr)
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(0).getReg())
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
     // Output the data for the jump table itself
     EmitJump2Table(MI);
     return;
   }
   case ARM::t2TBB_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
+    MCInstBuilder(ARM::t2TBB)
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(0).getReg())
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
 
-    TmpInst.setOpcode(ARM::t2TBB);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
     // Output the data for the jump table itself
     EmitJump2Table(MI);
     // Make sure the next instruction is 2-byte aligned.
@@ -1637,15 +1604,14 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case ARM::t2TBH_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
+    MCInstBuilder(ARM::t2TBH)
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(0).getReg())
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
 
-    TmpInst.setOpcode(ARM::t2TBH);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
     // Output the data for the jump table itself
     EmitJump2Table(MI);
     return;
@@ -1705,17 +1671,16 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::BR_JTadd: {
     // Lower and emit the instruction itself, then the jump table following it.
     // add pc, target, idx
-    MCInst TmpInst;
-    TmpInst.setOpcode(ARM::ADDrr);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    // Add 's' bit operand (always reg0 for this)
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(ARM::ADDrr)
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(1).getReg())
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      // Add 's' bit operand (always reg0 for this)
+      .addReg(0)
+      .emit(OutStreamer);
 
     // Output the data for the jump table itself
     EmitJumpTable(MI);
@@ -1759,75 +1724,63 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned SrcReg = MI->getOperand(0).getReg();
     unsigned ValReg = MI->getOperand(1).getReg();
     MCSymbol *Label = GetARMSJLJEHLabel();
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    OutStreamer.AddComment("eh_setjmp begin");
+    MCInstBuilder(ARM::tMOVr)
+      .addReg(ValReg)
+      .addReg(ARM::PC)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.AddComment("eh_setjmp begin");
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tADDi3);
-      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tADDi3)
+      .addReg(ValReg)
       // 's' bit operand
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
-      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
-      TmpInst.addOperand(MCOperand::CreateImm(7));
+      .addReg(ARM::CPSR)
+      .addReg(ValReg)
+      .addImm(7)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tSTRi);
-      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tSTRi)
+      .addReg(ValReg)
+      .addReg(SrcReg)
       // The offset immediate is #4. The operand value is scaled by 4 for the
       // tSTR instruction.
-      TmpInst.addOperand(MCOperand::CreateImm(1));
+      .addImm(1)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVi8);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
-      TmpInst.addOperand(MCOperand::CreateImm(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tMOVi8)
+      .addReg(ARM::R0)
+      .addReg(ARM::CPSR)
+      .addImm(0)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Label, OutContext);
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tB);
-      TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVi8);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
-      TmpInst.addOperand(MCOperand::CreateImm(1));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Label, OutContext);
+    MCInstBuilder(ARM::tB)
+      .addExpr(SymbolExpr)
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    OutStreamer.AddComment("eh_setjmp end");
+    MCInstBuilder(ARM::tMOVi8)
+      .addReg(ARM::R0)
+      .addReg(ARM::CPSR)
+      .addImm(1)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.AddComment("eh_setjmp end");
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
     OutStreamer.EmitLabel(Label);
     return;
   }
@@ -1843,69 +1796,58 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned SrcReg = MI->getOperand(0).getReg();
     unsigned ValReg = MI->getOperand(1).getReg();
 
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::ADDri);
-      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-      TmpInst.addOperand(MCOperand::CreateImm(8));
+    OutStreamer.AddComment("eh_setjmp begin");
+    MCInstBuilder(ARM::ADDri)
+      .addReg(ValReg)
+      .addReg(ARM::PC)
+      .addImm(8)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // 's' bit operand (always reg0 for this).
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.AddComment("eh_setjmp begin");
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::STRi12);
-      TmpInst.addOperand(MCOperand::CreateReg(ValReg));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(4));
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::STRi12)
+      .addReg(ValReg)
+      .addReg(SrcReg)
+      .addImm(4)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVi);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
-      TmpInst.addOperand(MCOperand::CreateImm(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::MOVi)
+      .addReg(ARM::R0)
+      .addImm(0)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // 's' bit operand (always reg0 for this).
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::ADDri);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-      TmpInst.addOperand(MCOperand::CreateImm(0));
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::ADDri)
+      .addReg(ARM::PC)
+      .addReg(ARM::PC)
+      .addImm(0)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // 's' bit operand (always reg0 for this).
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVi);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::R0));
-      TmpInst.addOperand(MCOperand::CreateImm(1));
+      .addReg(0)
+      .emit(OutStreamer);
+
+    OutStreamer.AddComment("eh_setjmp end");
+    MCInstBuilder(ARM::MOVi)
+      .addReg(ARM::R0)
+      .addImm(1)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
       // 's' bit operand (always reg0 for this).
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.AddComment("eh_setjmp end");
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::Int_eh_sjlj_longjmp: {
@@ -1915,48 +1857,39 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // bx $scratch
     unsigned SrcReg = MI->getOperand(0).getReg();
     unsigned ScratchReg = MI->getOperand(1).getReg();
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::LDRi12);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::SP));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(8));
+    MCInstBuilder(ARM::LDRi12)
+      .addReg(ARM::SP)
+      .addReg(SrcReg)
+      .addImm(8)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::LDRi12);
-      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(4));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::LDRi12)
+      .addReg(ScratchReg)
+      .addReg(SrcReg)
+      .addImm(4)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::LDRi12);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::R7));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::LDRi12)
+      .addReg(ARM::R7)
+      .addReg(SrcReg)
+      .addImm(0)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::BX);
-      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::BX)
+      .addReg(ScratchReg)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   case ARM::tInt_eh_sjlj_longjmp: {
@@ -1967,60 +1900,49 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // bx $scratch
     unsigned SrcReg = MI->getOperand(0).getReg();
     unsigned ScratchReg = MI->getOperand(1).getReg();
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tLDRi);
-      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
+    MCInstBuilder(ARM::tLDRi)
+      .addReg(ScratchReg)
+      .addReg(SrcReg)
       // The offset immediate is #8. The operand value is scaled by 4 for the
       // tLDR instruction.
-      TmpInst.addOperand(MCOperand::CreateImm(2));
+      .addImm(2)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVr);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::SP));
-      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tMOVr)
+      .addReg(ARM::SP)
+      .addReg(ScratchReg)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tLDRi);
-      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(1));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tLDRi)
+      .addReg(ScratchReg)
+      .addReg(SrcReg)
+      .addImm(1)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tLDRi);
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::R7));
-      TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(0));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tLDRi)
+      .addReg(ARM::R7)
+      .addReg(SrcReg)
+      .addImm(0)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tBX);
-      TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
+
+    MCInstBuilder(ARM::tBX)
+      .addReg(ScratchReg)
       // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(TmpInst);
-    }
+      .addImm(ARMCC::AL)
+      .addReg(0)
+      .emit(OutStreamer);
     return;
   }
   }

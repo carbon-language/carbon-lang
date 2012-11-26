@@ -21,6 +21,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
@@ -549,17 +550,13 @@ ReSimplify:
     OutMI.setOpcode(X86::RET);
     break;
 
-  case X86::MORESTACK_RET_RESTORE_R10: {
-    MCInst retInst;
-
+  case X86::MORESTACK_RET_RESTORE_R10:
     OutMI.setOpcode(X86::MOV64rr);
     OutMI.addOperand(MCOperand::CreateReg(X86::R10));
     OutMI.addOperand(MCOperand::CreateReg(X86::RAX));
 
-    retInst.setOpcode(X86::RET);
-    AsmPrinter.OutStreamer.EmitInstruction(retInst);
+    MCInstBuilder(X86::RET).emit(AsmPrinter.OutStreamer);
     break;
-  }
   }
 }
 
@@ -574,11 +571,8 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
 
   MCContext &context = OutStreamer.getContext();
 
-  if (needsPadding) {
-    MCInst prefix;
-    prefix.setOpcode(X86::DATA16_PREFIX);
-    OutStreamer.EmitInstruction(prefix);
-  }
+  if (needsPadding)
+    MCInstBuilder(X86::DATA16_PREFIX).emit(OutStreamer);
 
   MCSymbolRefExpr::VariantKind SRVK;
   switch (MI.getOpcode()) {
@@ -628,20 +622,11 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
   OutStreamer.EmitInstruction(LEA);
 
   if (needsPadding) {
-    MCInst prefix;
-    prefix.setOpcode(X86::DATA16_PREFIX);
-    OutStreamer.EmitInstruction(prefix);
-    prefix.setOpcode(X86::DATA16_PREFIX);
-    OutStreamer.EmitInstruction(prefix);
-    prefix.setOpcode(X86::REX64_PREFIX);
-    OutStreamer.EmitInstruction(prefix);
+    MCInstBuilder(X86::DATA16_PREFIX).emit(OutStreamer);
+    MCInstBuilder(X86::DATA16_PREFIX).emit(OutStreamer);
+    MCInstBuilder(X86::REX64_PREFIX).emit(OutStreamer);
   }
 
-  MCInst call;
-  if (is64Bits)
-    call.setOpcode(X86::CALL64pcrel32);
-  else
-    call.setOpcode(X86::CALLpcrel32);
   StringRef name = is64Bits ? "__tls_get_addr" : "___tls_get_addr";
   MCSymbol *tlsGetAddr = context.GetOrCreateSymbol(name);
   const MCSymbolRefExpr *tlsRef =
@@ -649,8 +634,9 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
                             MCSymbolRefExpr::VK_PLT,
                             context);
 
-  call.addOperand(MCOperand::CreateExpr(tlsRef));
-  OutStreamer.EmitInstruction(call);
+  MCInstBuilder(is64Bits ? X86::CALL64pcrel32 : X86::CALLpcrel32)
+    .addExpr(tlsRef)
+    .emit(OutStreamer);
 }
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -694,7 +680,6 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return LowerTlsAddr(OutStreamer, MCInstLowering, *MI);
 
   case X86::MOVPC32r: {
-    MCInst TmpInst;
     // This is a pseudo op for a two instruction sequence with a label, which
     // looks like:
     //     call "L1$pb"
@@ -703,20 +688,19 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     // Emit the call.
     MCSymbol *PICBase = MF->getPICBaseSymbol();
-    TmpInst.setOpcode(X86::CALLpcrel32);
     // FIXME: We would like an efficient form for this, so we don't have to do a
     // lot of extra uniquing.
-    TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(PICBase,
-                                                                 OutContext)));
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(X86::CALLpcrel32)
+      .addExpr(MCSymbolRefExpr::Create(PICBase, OutContext))
+      .emit(OutStreamer);
 
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
 
     // popl $reg
-    TmpInst.setOpcode(X86::POP32r);
-    TmpInst.getOperand(0) = MCOperand::CreateReg(MI->getOperand(0).getReg());
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(X86::POP32r)
+      .addReg(MI->getOperand(0).getReg())
+      .emit(OutStreamer);
     return;
   }
 
@@ -746,12 +730,11 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext),
                                       DotExpr, OutContext);
 
-    MCInst TmpInst;
-    TmpInst.setOpcode(X86::ADD32ri);
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    TmpInst.addOperand(MCOperand::CreateExpr(DotExpr));
-    OutStreamer.EmitInstruction(TmpInst);
+    MCInstBuilder(X86::ADD32ri)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(1).getReg())
+      .addExpr(DotExpr)
+      .emit(OutStreamer);
     return;
   }
   }
