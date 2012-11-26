@@ -6689,7 +6689,7 @@ X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
 
     // Handle splats by matching through known shuffle masks
     if ((Size == 128 && NumElem <= 4) ||
-        (Size == 256 && NumElem < 8))
+        (Size == 256 && NumElem <= 8))
       return SDValue();
 
     // All remaning splats are promoted to target supported vector shuffles.
