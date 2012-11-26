@@ -396,9 +396,15 @@ Thread::CheckpointThreadState (ThreadStateCheckpoint &saved_state)
 }
 
 bool
-Thread::RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
+Thread::RestoreRegisterStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
 {
     RestoreSaveFrameZero(saved_state.register_backup);
+    return true;
+}
+
+bool
+Thread::RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
+{
     if (saved_state.stop_info_sp)
         saved_state.stop_info_sp->MakeStopInfoValid();
     SetStopInfo(saved_state.stop_info_sp);

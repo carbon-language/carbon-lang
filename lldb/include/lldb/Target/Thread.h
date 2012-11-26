@@ -732,6 +732,9 @@ public:
     CheckpointThreadState (ThreadStateCheckpoint &saved_state);
     
     virtual bool
+    RestoreRegisterStateFromCheckpoint (ThreadStateCheckpoint &saved_state);
+    
+    virtual bool
     RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state);
     
     void

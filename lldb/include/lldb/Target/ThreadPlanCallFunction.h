@@ -127,6 +127,9 @@ public:
         return m_stop_address;
     }
 
+    virtual bool
+    RestoreThreadState();
+
 protected:
     void ReportRegisterState (const char *message);
 private:
@@ -154,8 +157,6 @@ private:
     Address                                         m_function_addr;
     Address                                         m_start_addr;
     lldb::addr_t                                    m_function_sp;
-//    Process                                        &m_process;
-//    Thread                                         &m_thread;
     Thread::RegisterCheckpoint                      m_register_backup;
     lldb::ThreadPlanSP                              m_subplan_sp;
     LanguageRuntime                                *m_cxx_language_runtime;

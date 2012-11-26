@@ -112,9 +112,6 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
             log->Printf ("ThreadPlanCallFunction(%p): Setting up ThreadPlanCallFunction, failed to checkpoint thread state.", this);
         return false;
     }
-    // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
-    thread.SetStopInfoToNothing();
-    
     function_load_addr = m_function_addr.GetLoadAddress (target_sp.get());
     
     return true;
@@ -196,10 +193,11 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
     m_function_addr (function),
-    m_function_sp(0),
+    m_function_sp (0),
     m_return_type (return_type),
     m_takedown_done (false),
-    m_stop_address (LLDB_INVALID_ADDRESS)
+    m_stop_address (LLDB_INVALID_ADDRESS),
+    m_discard_on_error (discard_on_error)
 {
     lldb::addr_t start_load_addr;
     ABI *abi;
@@ -289,7 +287,7 @@ ThreadPlanCallFunction::DoTakedown (bool success)
         m_takedown_done = true;
         m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
         m_real_stop_info_sp = GetPrivateStopReason();
-        m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
+        m_thread.RestoreRegisterStateFromCheckpoint(m_stored_thread_state);
         SetPlanComplete(success);
         ClearBreakpoints();
         if (log && log->GetVerbose())
@@ -460,6 +458,11 @@ ThreadPlanCallFunction::DidPush ()
 {
 //#define SINGLE_STEP_EXPRESSIONS
     
+    // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
+    // Wait till the plan is pushed so we aren't changing the stop info till we're about to run.
+    
+    GetThread().SetStopInfoToNothing();
+    
 #ifndef SINGLE_STEP_EXPRESSIONS
     m_subplan_sp.reset(new ThreadPlanRunToAddress(m_thread, m_start_addr, m_stop_other_threads));
     
@@ -533,3 +536,10 @@ ThreadPlanCallFunction::BreakpointsExplainStop()
     
     return false;
 }
+
+bool
+ThreadPlanCallFunction::RestoreThreadState()
+{
+    return GetThread().RestoreThreadStateFromCheckpoint(m_stored_thread_state);
+}
+

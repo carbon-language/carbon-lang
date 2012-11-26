@@ -494,6 +494,17 @@ public:
         return lldb::ValueObjectSP();
     }
     
+    // If a thread plan stores the state before it was run, then you might
+    // want to restore the state when it is done.  This will do that job.
+    // This is mostly useful for artificial plans like CallFunction plans.
+    
+    virtual bool
+    RestoreThreadState()
+    {
+        // Nothing to do in general.
+        return true;
+    }
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ThreadPlan can see and modify these

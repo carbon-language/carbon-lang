@@ -4377,6 +4377,9 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         const uint64_t default_one_thread_timeout_usec = 250000;
         uint64_t computed_timeout = 0;
         
+        // This while loop must exit out the bottom, there's cleanup that we need to do when we are done.
+        // So don't call return anywhere within it.
+        
         while (1)
         {
             // We usually want to resume the process if we get to the top of the loop.
@@ -4784,6 +4787,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
         }
         
+        // Restore the thread state if we are going to discard the plan execution.
+        
+        if (return_value == eExecutionCompleted || discard_on_error)
+        {
+            thread_plan_sp->RestoreThreadState();
+        }
         
         // Now do some processing on the results of the run:
         if (return_value == eExecutionInterrupted)
