@@ -14,6 +14,7 @@ ifneq (,$(SDKROOT))
 	RANLIB := $(shell xcrun -sdk $(SDKROOT) -find ranlib) 
 	STRIP := $(shell xcrun -sdk $(SDKROOT) -find strip) 
 	LIPO := $(shell xcrun -sdk $(SDKROOT) -find lipo)
+	DSYMUTIL := $(shell xcrun -sdk $(SDKROOT) -find dsymutil)
 endif
 
 ifneq ($(IPHONEOS_DEPLOYMENT_TARGET),)

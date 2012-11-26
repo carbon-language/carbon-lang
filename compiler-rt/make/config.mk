@@ -21,6 +21,7 @@ MKDIR := mkdir -p
 DATE := date
 LIPO := lipo
 CP := cp
+DSYMUTIL := dsymutil
 
 VERBOSE := 0
 DEBUGMAKE :=

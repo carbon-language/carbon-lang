@@ -64,8 +64,7 @@ $(OBJROOT)/libcompiler_rt-%.dylib : $(OBJROOT)/darwin_bni/Release/%/libcompiler_
 $(SYMROOT)/libcompiler_rt.dylib: $(foreach arch,$(filter-out armv4t,$(RC_ARCHS)), \
                                         $(OBJROOT)/libcompiler_rt-$(arch).dylib)
 	$(call GetCNAVar,LIPO,Platform.darwin_bni,Release,) -create $^ -o  $@
-
-
+	$(call GetCNAVar,DSYMUTIL,Platform.darwin_bni,Release,) $@
 
 
 # Copy results to DSTROOT.
