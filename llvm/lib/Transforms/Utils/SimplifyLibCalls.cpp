@@ -1298,6 +1298,20 @@ struct IsAsciiOpt : public LibCallOptimization {
   }
 };
 
+struct ToAsciiOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    // We require i32(i32)
+    if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isIntegerTy(32))
+      return 0;
+
+    // isascii(c) -> c & 0x7f
+    return B.CreateAnd(CI->getArgOperand(0),
+                       ConstantInt::get(CI->getType(),0x7F));
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1349,6 +1363,7 @@ class LibCallSimplifierImpl {
   AbsOpt Abs;
   IsDigitOpt IsDigit;
   IsAsciiOpt IsAscii;
+  ToAsciiOpt ToAscii;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1469,6 +1484,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::llabs, &Abs);
   addOpt(LibFunc::isdigit, &IsDigit);
   addOpt(LibFunc::isascii, &IsAscii);
+  addOpt(LibFunc::toascii, &ToAscii);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {

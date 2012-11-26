@@ -96,27 +96,6 @@ static bool CallHasFloatingPointArgument(const CallInst *CI) {
 
 namespace {
 //===----------------------------------------------------------------------===//
-// Integer Optimizations
-//===----------------------------------------------------------------------===//
-
-//===---------------------------------------===//
-// 'toascii' Optimizations
-
-struct ToAsciiOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    // We require i32(i32)
-    if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isIntegerTy(32))
-      return 0;
-
-    // isascii(c) -> c & 0x7f
-    return B.CreateAnd(CI->getArgOperand(0),
-                       ConstantInt::get(CI->getType(),0x7F));
-  }
-};
-
-//===----------------------------------------------------------------------===//
 // Formatting and IO Optimizations
 //===----------------------------------------------------------------------===//
 
@@ -483,8 +462,6 @@ namespace {
     TargetLibraryInfo *TLI;
 
     StringMap<LibCallOptimization*> Optimizations;
-    // Integer Optimizations
-    ToAsciiOpt ToAscii;
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
@@ -543,9 +520,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// Optimizations - Populate the Optimizations map with all the optimizations
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
-  // Integer Optimizations
-  Optimizations["toascii"] = &ToAscii;
-
   // Formatting and IO Optimizations
   Optimizations["sprintf"] = &SPrintF;
   Optimizations["printf"] = &PrintF;
