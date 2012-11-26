@@ -77,6 +77,7 @@ enum StatType {
   StatAtomicFetchAnd,
   StatAtomicFetchOr,
   StatAtomicFetchXor,
+  StatAtomicFetchNand,
   StatAtomicCAS,
   StatAtomicFence,
   StatAtomicRelaxed,

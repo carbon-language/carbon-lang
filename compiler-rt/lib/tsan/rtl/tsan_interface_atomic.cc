@@ -197,6 +197,24 @@ static T AtomicFetchXor(ThreadState *thr, uptr pc, volatile T *a, T v,
 }
 
 template<typename T>
+static T AtomicFetchNand(ThreadState *thr, uptr pc, volatile T *a, T v,
+    morder mo) {
+  if (IsReleaseOrder(mo))
+    Release(thr, pc, (uptr)a);
+  T cmp = *a;
+  for (;;) {
+    T xch = ~cmp & v;
+    T cur = __sync_val_compare_and_swap(a, cmp, xch);
+    if (cmp == cur)
+      break;
+    cmp = cur;
+  }
+  if (IsAcquireOrder(mo))
+    Acquire(thr, pc, (uptr)a);
+  return v;
+}
+
+template<typename T>
 static bool AtomicCAS(ThreadState *thr, uptr pc,
     volatile T *a, T *c, T v, morder mo, morder fmo) {
   (void)fmo;
@@ -349,6 +367,22 @@ a32 __tsan_atomic32_fetch_xor(volatile a32 *a, a32 v, morder mo) {
 
 a64 __tsan_atomic64_fetch_xor(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchXor, a, v, mo);
+}
+
+a8 __tsan_atomic8_fetch_nand(volatile a8 *a, a8 v, morder mo) {
+  SCOPED_ATOMIC(FetchNand, a, v, mo);
+}
+
+a16 __tsan_atomic16_fetch_nand(volatile a16 *a, a16 v, morder mo) {
+  SCOPED_ATOMIC(FetchNand, a, v, mo);
+}
+
+a32 __tsan_atomic32_fetch_nand(volatile a32 *a, a32 v, morder mo) {
+  SCOPED_ATOMIC(FetchNand, a, v, mo);
+}
+
+a64 __tsan_atomic64_fetch_nand(volatile a64 *a, a64 v, morder mo) {
+  SCOPED_ATOMIC(FetchNand, a, v, mo);
 }
 
 int __tsan_atomic8_compare_exchange_strong(volatile a8 *a, a8 *c, a8 v,

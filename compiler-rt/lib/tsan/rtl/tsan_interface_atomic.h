@@ -105,6 +105,15 @@ __tsan_atomic32 __tsan_atomic32_fetch_xor(volatile __tsan_atomic32 *a,
 __tsan_atomic64 __tsan_atomic64_fetch_xor(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
 
+__tsan_atomic8 __tsan_atomic8_fetch_nand(volatile __tsan_atomic8 *a,
+    __tsan_atomic8 v, __tsan_memory_order mo);
+__tsan_atomic16 __tsan_atomic16_fetch_nand(volatile __tsan_atomic16 *a,
+    __tsan_atomic16 v, __tsan_memory_order mo);
+__tsan_atomic32 __tsan_atomic32_fetch_nand(volatile __tsan_atomic32 *a,
+    __tsan_atomic32 v, __tsan_memory_order mo);
+__tsan_atomic64 __tsan_atomic64_fetch_nand(volatile __tsan_atomic64 *a,
+    __tsan_atomic64 v, __tsan_memory_order mo);
+
 int __tsan_atomic8_compare_exchange_weak(volatile __tsan_atomic8 *a,
     __tsan_atomic8 *c, __tsan_atomic8 v, __tsan_memory_order mo,
     __tsan_memory_order fail_mo);
