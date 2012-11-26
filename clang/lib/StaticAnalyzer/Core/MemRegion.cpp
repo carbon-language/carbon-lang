@@ -272,10 +272,11 @@ void ObjCStringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
 
 void AllocaRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
                                  const Expr *Ex, unsigned cnt,
-                                 const MemRegion *) {
+                                 const MemRegion *superRegion) {
   ID.AddInteger((unsigned) AllocaRegionKind);
   ID.AddPointer(Ex);
   ID.AddInteger(cnt);
+  ID.AddPointer(superRegion);
 }
 
 void AllocaRegion::Profile(llvm::FoldingSetNodeID& ID) const {

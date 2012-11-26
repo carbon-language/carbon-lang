@@ -68,6 +68,7 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     DefinedOrUnknownSVal extentMatchesSizeArg =
       svalBuilder.evalEQ(state, Extent, Size);
     state = state->assume(extentMatchesSizeArg, true);
+    assert(state && "The region should not have any previous constraints");
 
     C.addTransition(state->BindExpr(CE, LCtx, loc::MemRegionVal(R)));
     return true;
