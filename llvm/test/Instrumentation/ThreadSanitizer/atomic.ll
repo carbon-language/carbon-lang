@@ -312,7 +312,7 @@ entry:
   ret void
 }
 ; CHECK: atomic8_cas_monotonic
-; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 0)
+; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 0, i32 0)
 
 define void @atomic8_cas_acquire(i8* %a) nounwind uwtable {
 entry:
@@ -320,7 +320,7 @@ entry:
   ret void
 }
 ; CHECK: atomic8_cas_acquire
-; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 2)
+; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 2, i32 2)
 
 define void @atomic8_cas_release(i8* %a) nounwind uwtable {
 entry:
@@ -328,7 +328,7 @@ entry:
   ret void
 }
 ; CHECK: atomic8_cas_release
-; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 3)
+; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 3, i32 0)
 
 define void @atomic8_cas_acq_rel(i8* %a) nounwind uwtable {
 entry:
@@ -336,7 +336,7 @@ entry:
   ret void
 }
 ; CHECK: atomic8_cas_acq_rel
-; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 4)
+; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 4, i32 2)
 
 define void @atomic8_cas_seq_cst(i8* %a) nounwind uwtable {
 entry:
@@ -344,7 +344,7 @@ entry:
   ret void
 }
 ; CHECK: atomic8_cas_seq_cst
-; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 5)
+; CHECK: call i8 @__tsan_atomic8_compare_exchange_val(i8* %a, i8 0, i8 1, i32 5, i32 5)
 
 define i16 @atomic16_load_unordered(i16* %a) nounwind uwtable {
 entry:
@@ -656,7 +656,7 @@ entry:
   ret void
 }
 ; CHECK: atomic16_cas_monotonic
-; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 0)
+; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 0, i32 0)
 
 define void @atomic16_cas_acquire(i16* %a) nounwind uwtable {
 entry:
@@ -664,7 +664,7 @@ entry:
   ret void
 }
 ; CHECK: atomic16_cas_acquire
-; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 2)
+; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 2, i32 2)
 
 define void @atomic16_cas_release(i16* %a) nounwind uwtable {
 entry:
@@ -672,7 +672,7 @@ entry:
   ret void
 }
 ; CHECK: atomic16_cas_release
-; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 3)
+; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 3, i32 0)
 
 define void @atomic16_cas_acq_rel(i16* %a) nounwind uwtable {
 entry:
@@ -680,7 +680,7 @@ entry:
   ret void
 }
 ; CHECK: atomic16_cas_acq_rel
-; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 4)
+; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 4, i32 2)
 
 define void @atomic16_cas_seq_cst(i16* %a) nounwind uwtable {
 entry:
@@ -688,7 +688,7 @@ entry:
   ret void
 }
 ; CHECK: atomic16_cas_seq_cst
-; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 5)
+; CHECK: call i16 @__tsan_atomic16_compare_exchange_val(i16* %a, i16 0, i16 1, i32 5, i32 5)
 
 define i32 @atomic32_load_unordered(i32* %a) nounwind uwtable {
 entry:
@@ -1000,7 +1000,7 @@ entry:
   ret void
 }
 ; CHECK: atomic32_cas_monotonic
-; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 0)
+; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 0, i32 0)
 
 define void @atomic32_cas_acquire(i32* %a) nounwind uwtable {
 entry:
@@ -1008,7 +1008,7 @@ entry:
   ret void
 }
 ; CHECK: atomic32_cas_acquire
-; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 2)
+; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 2, i32 2)
 
 define void @atomic32_cas_release(i32* %a) nounwind uwtable {
 entry:
@@ -1016,7 +1016,7 @@ entry:
   ret void
 }
 ; CHECK: atomic32_cas_release
-; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 3)
+; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 3, i32 0)
 
 define void @atomic32_cas_acq_rel(i32* %a) nounwind uwtable {
 entry:
@@ -1024,7 +1024,7 @@ entry:
   ret void
 }
 ; CHECK: atomic32_cas_acq_rel
-; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 4)
+; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 4, i32 2)
 
 define void @atomic32_cas_seq_cst(i32* %a) nounwind uwtable {
 entry:
@@ -1032,7 +1032,7 @@ entry:
   ret void
 }
 ; CHECK: atomic32_cas_seq_cst
-; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 5)
+; CHECK: call i32 @__tsan_atomic32_compare_exchange_val(i32* %a, i32 0, i32 1, i32 5, i32 5)
 
 define i64 @atomic64_load_unordered(i64* %a) nounwind uwtable {
 entry:
@@ -1344,7 +1344,7 @@ entry:
   ret void
 }
 ; CHECK: atomic64_cas_monotonic
-; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 0)
+; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 0, i32 0)
 
 define void @atomic64_cas_acquire(i64* %a) nounwind uwtable {
 entry:
@@ -1352,7 +1352,7 @@ entry:
   ret void
 }
 ; CHECK: atomic64_cas_acquire
-; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 2)
+; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 2, i32 2)
 
 define void @atomic64_cas_release(i64* %a) nounwind uwtable {
 entry:
@@ -1360,7 +1360,7 @@ entry:
   ret void
 }
 ; CHECK: atomic64_cas_release
-; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 3)
+; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 3, i32 0)
 
 define void @atomic64_cas_acq_rel(i64* %a) nounwind uwtable {
 entry:
@@ -1368,7 +1368,7 @@ entry:
   ret void
 }
 ; CHECK: atomic64_cas_acq_rel
-; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 4)
+; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 4, i32 2)
 
 define void @atomic64_cas_seq_cst(i64* %a) nounwind uwtable {
 entry:
@@ -1376,7 +1376,7 @@ entry:
   ret void
 }
 ; CHECK: atomic64_cas_seq_cst
-; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 5)
+; CHECK: call i64 @__tsan_atomic64_compare_exchange_val(i64* %a, i64 0, i64 1, i32 5, i32 5)
 
 define i128 @atomic128_load_unordered(i128* %a) nounwind uwtable {
 entry:
@@ -1688,7 +1688,7 @@ entry:
   ret void
 }
 ; CHECK: atomic128_cas_monotonic
-; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 0)
+; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 0, i32 0)
 
 define void @atomic128_cas_acquire(i128* %a) nounwind uwtable {
 entry:
@@ -1696,7 +1696,7 @@ entry:
   ret void
 }
 ; CHECK: atomic128_cas_acquire
-; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 2)
+; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 2, i32 2)
 
 define void @atomic128_cas_release(i128* %a) nounwind uwtable {
 entry:
@@ -1704,7 +1704,7 @@ entry:
   ret void
 }
 ; CHECK: atomic128_cas_release
-; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 3)
+; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 3, i32 0)
 
 define void @atomic128_cas_acq_rel(i128* %a) nounwind uwtable {
 entry:
@@ -1712,7 +1712,7 @@ entry:
   ret void
 }
 ; CHECK: atomic128_cas_acq_rel
-; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 4)
+; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 4, i32 2)
 
 define void @atomic128_cas_seq_cst(i128* %a) nounwind uwtable {
 entry:
@@ -1720,7 +1720,7 @@ entry:
   ret void
 }
 ; CHECK: atomic128_cas_seq_cst
-; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 5)
+; CHECK: call i128 @__tsan_atomic128_compare_exchange_val(i128* %a, i128 0, i128 1, i32 5, i32 5)
 
 define void @atomic_signal_fence_acquire() nounwind uwtable {
 entry:

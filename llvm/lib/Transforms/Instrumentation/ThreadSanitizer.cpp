@@ -198,7 +198,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
     SmallString<32> AtomicCASName("__tsan_atomic" + itostr(BitSize) +
                                   "_compare_exchange_val");
     TsanAtomicCAS[i] = checkInterfaceFunction(M.getOrInsertFunction(
-        AtomicCASName, Ty, PtrTy, Ty, Ty, OrdTy, NULL));
+        AtomicCASName, Ty, PtrTy, Ty, Ty, OrdTy, OrdTy, NULL));
   }
   TsanVptrUpdate = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_vptr_update", IRB.getVoidTy(), IRB.getInt8PtrTy(),
@@ -391,7 +391,7 @@ static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
     case NotAtomic:              assert(false);
     case Unordered:              // Fall-through.
     case Monotonic:              v = 0; break;
-    // case Consume:                v = 1; break;  // Not specified yet.
+ // case Consume:                v = 1; break;  // Not specified yet.
     case Acquire:                v = 2; break;
     case Release:                v = 3; break;
     case AcquireRelease:         v = 4; break;
@@ -399,6 +399,29 @@ static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
   }
   return IRB->getInt32(v);
 }
+
+static ConstantInt *createFailOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
+  uint32_t v = 0;
+  switch (ord) {
+    case NotAtomic:              assert(false);
+    case Unordered:              // Fall-through.
+    case Monotonic:              v = 0; break;
+ // case Consume:                v = 1; break;  // Not specified yet.
+    case Acquire:                v = 2; break;
+    case Release:                v = 0; break;
+    case AcquireRelease:         v = 2; break;
+    case SequentiallyConsistent: v = 5; break;
+  }
+  return IRB->getInt32(v);
+}
+
+// Both llvm and ThreadSanitizer atomic operations are based on C++11/C1x
+// standards.  For background see C++11 standard.  A slightly older, publically
+// available draft of the standard (not entirely up-to-date, but close enough
+// for casual browsing) is available here:
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf\
+// The following page contains more background information:
+// http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/
 
 bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
   IRBuilder<> IRB(I);
@@ -461,7 +484,8 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      IRB.CreateIntCast(CASI->getCompareOperand(), Ty, false),
                      IRB.CreateIntCast(CASI->getNewValOperand(), Ty, false),
-                     createOrdering(&IRB, CASI->getOrdering())};
+                     createOrdering(&IRB, CASI->getOrdering()),
+                     createFailOrdering(&IRB, CASI->getOrdering())};
     CallInst *C = CallInst::Create(TsanAtomicCAS[Idx], ArrayRef<Value*>(Args));
     ReplaceInstWithInst(I, C);
   } else if (FenceInst *FI = dyn_cast<FenceInst>(I)) {
