@@ -336,12 +336,11 @@ TEST(AddressSanitizer, MemsetWildAddressTest) {
   typedef void*(*memset_p)(void*, int, size_t);
   // Prevent inlining of memset().
   volatile memset_p libc_memset = (memset_p)memset;
-  uptr PageSize = GetPageSizeCached();
-  EXPECT_DEATH(libc_memset((void*)(kLowShadowBeg + PageSize), 0, 100),
+  EXPECT_DEATH(libc_memset((void*)(kLowShadowBeg + 200), 0, 100),
                "unknown-crash.*low shadow");
-  EXPECT_DEATH(libc_memset((void*)(kShadowGapBeg + PageSize), 0, 100),
+  EXPECT_DEATH(libc_memset((void*)(kShadowGapBeg + 200), 0, 100),
                "unknown-crash.*shadow gap");
-  EXPECT_DEATH(libc_memset((void*)(kHighShadowBeg + PageSize), 0, 100),
+  EXPECT_DEATH(libc_memset((void*)(kHighShadowBeg + 200), 0, 100),
                "unknown-crash.*high shadow");
 }
 
