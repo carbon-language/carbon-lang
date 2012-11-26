@@ -150,26 +150,6 @@ isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
   return 0;
 }
 
-/// getPointeeAlignment - Compute the minimum alignment of the value pointed
-/// to by the given pointer.
-static unsigned getPointeeAlignment(Value *V, const DataLayout &TD) {
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::BitCast ||
-        (CE->getOpcode() == Instruction::GetElementPtr &&
-         cast<GEPOperator>(CE)->hasAllZeroIndices()))
-      return getPointeeAlignment(CE->getOperand(0), TD);
-
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    if (!GV->isDeclaration())
-      return TD.getPreferredAlignment(GV);
-
-  if (PointerType *PT = dyn_cast<PointerType>(V->getType()))
-    if (PT->getElementType()->isSized())
-      return TD.getABITypeAlignment(PT->getElementType());
-
-  return 0;
-}
-
 Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   // Ensure that the alloca array size argument has type intptr_t, so that
   // any casting is exposed early.
@@ -265,7 +245,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     }
   }
 
-  if (TD) {
+  if (AI.getAlignment()) {
     // Check to see if this allocation is only modified by a memcpy/memmove from
     // a constant global whose alignment is equal to or exceeds that of the
     // allocation.  If this is the case, we can change all users to use
@@ -274,7 +254,9 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     // is only subsequently read.
     SmallVector<Instruction *, 4> ToDelete;
     if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(&AI, ToDelete)) {
-      if (AI.getAlignment() <= getPointeeAlignment(Copy->getSource(), *TD)) {
+      unsigned SourceAlign = getOrEnforceKnownAlignment(Copy->getSource(),
+                                                        AI.getAlignment(), TD);
+      if (AI.getAlignment() <= SourceAlign) {
         DEBUG(dbgs() << "Found alloca equal to global: " << AI << '\n');
         DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
         for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)

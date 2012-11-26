@@ -134,3 +134,13 @@ define void @test8() {
 ; CHECK: bar
   ret void
 }
+
+define void @test9() {
+  %A = alloca %U, align 4
+  %a = bitcast %U* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 1) to i8*), i64 20, i32 4, i1 false)
+  call void @bar(i8* %a) readonly
+; CHECK: @test9
+; CHECK-NEXT: call void @bar(i8* bitcast (%U* getelementptr inbounds ([2 x %U]* @H, i64 0, i64 1) to i8*))
+  ret void
+}
