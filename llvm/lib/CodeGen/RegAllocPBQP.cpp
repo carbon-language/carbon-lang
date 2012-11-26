@@ -552,8 +552,6 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   vrm = &getAnalysis<VirtRegMap>();
   spiller.reset(createInlineSpiller(*this, MF, *vrm));
 
-  mri->freezeReservedRegs(MF);
-
   DEBUG(dbgs() << "PBQP Register Allocating for " << mf->getName() << "\n");
 
   // Allocator main loop:
