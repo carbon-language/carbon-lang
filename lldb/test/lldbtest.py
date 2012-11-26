@@ -621,6 +621,12 @@ class Base(unittest2.TestCase):
         # See HideStdout(self).
         self.sys_stdout_hidden = False
 
+        # set environment variable names for finding shared libraries
+        if sys.platform.startswith("darwin"):
+            self.dylibPath = 'DYLD_LIBRARY_PATH'
+        elif sys.platform.startswith("linux") or sys.platform.startswith("freebsd"):
+            self.dylibPath = 'LD_LIBRARY_PATH'
+
     def runHooks(self, child=None, child_prompt=None, use_cmd_api=False):
         """Perform the run hooks to bring lldb debugger to the desired state.
 

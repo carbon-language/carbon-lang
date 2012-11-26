@@ -31,7 +31,6 @@ class LoadUnloadTestCase(TestBase):
 
         if sys.platform.startswith("darwin"):
             dylibName = 'libd.dylib'
-            dylibPath = 'DYLD_LIBRARY_PATH'
 
         # The directory with the dynamic library we did not link to.
         new_dir = os.path.join(os.getcwd(), "hidden")
@@ -62,13 +61,13 @@ class LoadUnloadTestCase(TestBase):
         # Obliterate traces of libd from the old location.
         os.remove(old_dylib)
         # Inform dyld of the new path, too.
-        env_cmd_string = "settings set target.env-vars " + dylibPath + "=" + new_dir
+        env_cmd_string = "settings set target.env-vars " + self.dylibPath + "=" + new_dir
         if self.TraceOn():
             print "Set environment to: ", env_cmd_string
         self.runCmd(env_cmd_string)
         self.runCmd("settings show target.env-vars")
 
-        remove_dyld_path_cmd = "settings remove target.env-vars " + dylibPath
+        remove_dyld_path_cmd = "settings remove target.env-vars " + self.dylibPath
         self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
 
         self.runCmd("run")
@@ -89,7 +88,6 @@ class LoadUnloadTestCase(TestBase):
         if sys.platform.startswith("darwin"):
             dylibName = 'libd.dylib'
             dsymName = 'libd.dylib.dSYM'
-            dylibPath = 'DYLD_LIBRARY_PATH'
 
         # The directory to relocate the dynamic library and its debugging info.
         special_dir = "hidden"
@@ -105,13 +103,13 @@ class LoadUnloadTestCase(TestBase):
         # Try running with the DYLD_LIBRARY_PATH environment variable set, make sure
         # we pick up the hidden dylib.
 
-        env_cmd_string = "settings set target.env-vars " + dylibPath + "=" + new_dir
+        env_cmd_string = "settings set target.env-vars " + self.dylibPath + "=" + new_dir
         if self.TraceOn():
             print "Set environment to: ", env_cmd_string
         self.runCmd(env_cmd_string)
         self.runCmd("settings show target.env-vars")
 
-        remove_dyld_path_cmd = "settings remove target.env-vars " + dylibPath
+        remove_dyld_path_cmd = "settings remove target.env-vars " + self.dylibPath
         self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
 
         lldbutil.run_break_set_by_file_and_line (self, "d.c", self.line_d_function, num_expected_locations=1, loc_exact=True)
