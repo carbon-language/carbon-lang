@@ -16,7 +16,6 @@
 #define LLVM_MC_MCINSTBUILDER_H
 
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
 
@@ -59,9 +58,8 @@ public:
     return *this;
   }
 
-  /// \brief Emit the built instruction to an MCStreamer.
-  void emit(MCStreamer &OutStreamer) {
-    OutStreamer.EmitInstruction(Inst);
+  operator MCInst&() {
+    return Inst;
   }
 };
 

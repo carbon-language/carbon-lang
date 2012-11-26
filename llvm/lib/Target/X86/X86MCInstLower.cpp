@@ -555,7 +555,7 @@ ReSimplify:
     OutMI.addOperand(MCOperand::CreateReg(X86::R10));
     OutMI.addOperand(MCOperand::CreateReg(X86::RAX));
 
-    MCInstBuilder(X86::RET).emit(AsmPrinter.OutStreamer);
+    AsmPrinter.OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
     break;
   }
 }
@@ -572,7 +572,7 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
   MCContext &context = OutStreamer.getContext();
 
   if (needsPadding)
-    MCInstBuilder(X86::DATA16_PREFIX).emit(OutStreamer);
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX));
 
   MCSymbolRefExpr::VariantKind SRVK;
   switch (MI.getOpcode()) {
@@ -622,9 +622,9 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
   OutStreamer.EmitInstruction(LEA);
 
   if (needsPadding) {
-    MCInstBuilder(X86::DATA16_PREFIX).emit(OutStreamer);
-    MCInstBuilder(X86::DATA16_PREFIX).emit(OutStreamer);
-    MCInstBuilder(X86::REX64_PREFIX).emit(OutStreamer);
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX));
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX));
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::REX64_PREFIX));
   }
 
   StringRef name = is64Bits ? "__tls_get_addr" : "___tls_get_addr";
@@ -634,9 +634,9 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
                             MCSymbolRefExpr::VK_PLT,
                             context);
 
-  MCInstBuilder(is64Bits ? X86::CALL64pcrel32 : X86::CALLpcrel32)
-    .addExpr(tlsRef)
-    .emit(OutStreamer);
+  OutStreamer.EmitInstruction(MCInstBuilder(is64Bits ? X86::CALL64pcrel32
+                                                     : X86::CALLpcrel32)
+    .addExpr(tlsRef));
 }
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -690,17 +690,15 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *PICBase = MF->getPICBaseSymbol();
     // FIXME: We would like an efficient form for this, so we don't have to do a
     // lot of extra uniquing.
-    MCInstBuilder(X86::CALLpcrel32)
-      .addExpr(MCSymbolRefExpr::Create(PICBase, OutContext))
-      .emit(OutStreamer);
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::CALLpcrel32)
+      .addExpr(MCSymbolRefExpr::Create(PICBase, OutContext)));
 
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
 
     // popl $reg
-    MCInstBuilder(X86::POP32r)
-      .addReg(MI->getOperand(0).getReg())
-      .emit(OutStreamer);
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::POP32r)
+      .addReg(MI->getOperand(0).getReg()));
     return;
   }
 
@@ -730,11 +728,10 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext),
                                       DotExpr, OutContext);
 
-    MCInstBuilder(X86::ADD32ri)
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::ADD32ri)
       .addReg(MI->getOperand(0).getReg())
       .addReg(MI->getOperand(1).getReg())
-      .addExpr(DotExpr)
-      .emit(OutStreamer);
+      .addExpr(DotExpr));
     return;
   }
   }
