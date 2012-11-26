@@ -1041,13 +1041,6 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   } else if (Initializer && isa<InitListExpr>(Initializer))
     initStyle = CXXNewExpr::ListInit;
   else {
-    // In template instantiation, the initializer could be a CXXDefaultArgExpr
-    // unwrapped from a CXXConstructExpr that was implicitly built. There is no
-    // particularly sane way we can handle this (especially since it can even
-    // occur for array new), so we throw the initializer away and have it be
-    // rebuilt.
-    if (Initializer && isa<CXXDefaultArgExpr>(Initializer))
-      Initializer = 0;
     assert((!Initializer || isa<ImplicitValueInitExpr>(Initializer) ||
             isa<CXXConstructExpr>(Initializer)) &&
            "Initializer expression that cannot have been implicitly created.");
@@ -1056,19 +1049,19 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
 
   Expr **Inits = &Initializer;
   unsigned NumInits = Initializer ? 1 : 0;
-  if (initStyle == CXXNewExpr::CallInit) {
-    if (ParenListExpr *List = dyn_cast<ParenListExpr>(Initializer)) {
-      Inits = List->getExprs();
-      NumInits = List->getNumExprs();
-    } else if (CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Initializer)){
-      if (!isa<CXXTemporaryObjectExpr>(CCE)) {
-        // Can happen in template instantiation. Since this is just an implicit
-        // construction, we just take it apart and rebuild it.
-        Inits = CCE->getArgs();
-        NumInits = CCE->getNumArgs();
-      }
-    }
+  if (ParenListExpr *List = dyn_cast_or_null<ParenListExpr>(Initializer)) {
+    assert(initStyle == CXXNewExpr::CallInit && "paren init for non-call init");
+    Inits = List->getExprs();
+    NumInits = List->getNumExprs();
   }
+
+  // Determine whether we've already built the initializer.
+  bool HaveCompleteInit = false;
+  if (Initializer && isa<CXXConstructExpr>(Initializer) &&
+      !isa<CXXTemporaryObjectExpr>(Initializer))
+    HaveCompleteInit = true;
+  else if (Initializer && isa<ImplicitValueInitExpr>(Initializer))
+    HaveCompleteInit = true;
 
   // C++11 [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   AutoType *AT = 0;
@@ -1341,9 +1334,12 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     }
   }
 
+  // If we can perform the initialization, and we've not already done so,
+  // do it now.
   if (!AllocType->isDependentType() &&
       !Expr::hasAnyTypeDependentArguments(
-        llvm::makeArrayRef(Inits, NumInits))) {
+        llvm::makeArrayRef(Inits, NumInits)) &&
+      !HaveCompleteInit) {
     // C++11 [expr.new]p15:
     //   A new-expression that creates an object of type T initializes that
     //   object as follows:
