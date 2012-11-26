@@ -667,8 +667,6 @@ static _Unwind_Reason_Code handleLsda(int version,
   const uint8_t   *actionTableStart = callSiteTableEnd;
   const uint8_t   *callSitePtr = callSiteTableStart;
 
-  bool foreignException = false;
-
   while (callSitePtr < callSiteTableEnd) {
     uintptr_t start = readEncodedPointer(&callSitePtr,
                                          callSiteEncoding);
@@ -684,7 +682,6 @@ static _Unwind_Reason_Code handleLsda(int version,
       // We have been notified of a foreign exception being thrown,
       // and we therefore need to execute cleanup landing pads
       actionEntry = 0;
-      foreignException = true;
     }
 
     if (landingPad == 0) {
@@ -1687,7 +1684,6 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   std::vector<llvm::Constant*> structVals;
 
   llvm::Constant *nextStruct;
-  llvm::GlobalVariable *nextGlobal = NULL;
 
   // Generate each type info
   //
@@ -1702,7 +1698,6 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
     typeInfoName = typeInfoNameBuilder.str();
 
     // Note: Does not seem to work without allocation
-    nextGlobal =
     new llvm::GlobalVariable(module,
                              ourTypeInfoType,
                              true,
