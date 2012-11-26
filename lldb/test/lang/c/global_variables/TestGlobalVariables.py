@@ -24,14 +24,14 @@ class GlobalVariablesTestCase(TestBase):
         self.global_variables()
 
     def setUp(self):
-        if sys.platform.startswith("linux"):
-            # On Linux, environment variable must be set so the shared library is loaded correctly
-            os.environ["LD_LIBRARY_PATH"] = os.getcwd()
-
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
+        if sys.platform.startswith("linux"):
+            # On Linux, LD_LIBRARY_PATH must be set so the shared libraries are found on startup
+            self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
+            self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars " + self.dylibPath))
 
     def global_variables(self):
         """Test 'frame variable -s -a' which omits args and shows scopes."""
