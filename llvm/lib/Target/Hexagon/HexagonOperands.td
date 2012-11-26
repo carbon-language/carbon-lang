@@ -65,7 +65,7 @@ def nOneImm : Operand<i32>;
 // Immediate predicates
 //
 def s32ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
+  // s32ImmPred predicate - True if the immediate fits in a 32-bit sign extended
   // field.
   int64_t v = (int64_t)N->getSExtValue();
   return isInt<32>(v);
@@ -86,15 +86,15 @@ def s32_16s8ImmPred  : PatLeaf<(i32 imm), [{
 }]>;
 
 def s26_6ImmPred  : PatLeaf<(i32 imm), [{
-  // immS26_6 predicate - True if the immediate fits in a 32-bit sign extended
-  // field.
+  // s26_6ImmPred predicate - True if the immediate fits in a 32-bit
+  // sign extended field.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedInt<26,6>(v);
 }]>;
 
 
 def s16ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
+  // s16ImmPred predicate - True if the immediate fits in a 16-bit sign extended
   // field.
   int64_t v = (int64_t)N->getSExtValue();
   return isInt<16>(v);
@@ -102,7 +102,7 @@ def s16ImmPred  : PatLeaf<(i32 imm), [{
 
 
 def s13ImmPred  : PatLeaf<(i32 imm), [{
-  // immS13 predicate - True if the immediate fits in a 13-bit sign extended
+  // s13ImmPred predicate - True if the immediate fits in a 13-bit sign extended
   // field.
   int64_t v = (int64_t)N->getSExtValue();
   return isInt<13>(v);
@@ -110,39 +110,39 @@ def s13ImmPred  : PatLeaf<(i32 imm), [{
 
 
 def s12ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
+  // s12ImmPred predicate - True if the immediate fits in a 12-bit
+  // sign extended field.
   int64_t v = (int64_t)N->getSExtValue();
   return isInt<12>(v);
 }]>;
 
 def s11_0ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
+  // s11_0ImmPred predicate - True if the immediate fits in a 11-bit
+  // sign extended field.
   int64_t v = (int64_t)N->getSExtValue();
   return isInt<11>(v);
 }]>;
 
 
 def s11_1ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
+  // s11_1ImmPred predicate - True if the immediate fits in a 12-bit
+  // sign extended field and is a multiple of 2.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedInt<11,1>(v);
 }]>;
 
 
 def s11_2ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
+  // s11_2ImmPred predicate - True if the immediate fits in a 13-bit
+  // sign extended field and is a multiple of 4.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedInt<11,2>(v);
 }]>;
 
 
 def s11_3ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
+  // s11_3ImmPred predicate - True if the immediate fits in a 14-bit
+  // sign extended field and is a multiple of 8.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedInt<11,3>(v);
 }]>;
@@ -227,21 +227,19 @@ def s4_3ImmPred  : PatLeaf<(i32 imm), [{
 
 
 def u64ImmPred  : PatLeaf<(i64 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
   // Adding "N ||" to suppress gcc unused warning.
   return (N || true);
 }]>;
 
 def u32ImmPred  : PatLeaf<(i32 imm), [{
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
+  // u32ImmPred predicate - True if the immediate fits in a 32-bit field.
   int64_t v = (int64_t)N->getSExtValue();
   return isUInt<32>(v);
 }]>;
 
 def u26_6ImmPred  : PatLeaf<(i32 imm), [{
-  // True if the immediate fits in a 32-bit field and is 6-bit aligned.
+  // u26_6ImmPred - True if the immediate fits in a 32-bit field and
+  // is a multiple of 64.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedUInt<26,6>(v);
 }]>;
@@ -282,7 +280,7 @@ def u7StrictPosImmPred : ImmLeaf<i32, [{
 }]>;
 
 def u7ImmPred  : PatLeaf<(i32 imm), [{
-  // u7ImmPred predicate - True if the immediate fits in a 8-bit unsigned
+  // u7ImmPred predicate - True if the immediate fits in a 7-bit unsigned
   // field.
   int64_t v = (int64_t)N->getSExtValue();
   return isUInt<7>(v);
@@ -304,21 +302,21 @@ def u6_0ImmPred  : PatLeaf<(i32 imm), [{
 }]>;
 
 def u6_1ImmPred  : PatLeaf<(i32 imm), [{
-  // u6_1ImmPred predicate - True if the immediate fits in a 6-bit unsigned
+  // u6_1ImmPred predicate - True if the immediate fits in a 7-bit unsigned
   // field that is 1 bit alinged - multiple of 2.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedUInt<6,1>(v);
 }]>;
 
 def u6_2ImmPred  : PatLeaf<(i32 imm), [{
-  // u6_2ImmPred predicate - True if the immediate fits in a 6-bit unsigned
+  // u6_2ImmPred predicate - True if the immediate fits in a 8-bit unsigned
   // field that is 2 bits alinged - multiple of 4.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedUInt<6,2>(v);
 }]>;
 
 def u6_3ImmPred  : PatLeaf<(i32 imm), [{
-  // u6_3ImmPred predicate - True if the immediate fits in a 6-bit unsigned
+  // u6_3ImmPred predicate - True if the immediate fits in a 9-bit unsigned
   // field that is 3 bits alinged - multiple of 8.
   int64_t v = (int64_t)N->getSExtValue();
   return isShiftedUInt<6,3>(v);
@@ -413,7 +411,7 @@ def Clr5ImmPred : PatLeaf<(i32 imm), [{
 }]>;
 
 def SetClr5ImmPred : PatLeaf<(i32 imm), [{
-  // predicate - True if the immediate is in range 0..31.
+  // SetClr5ImmPred predicate - True if the immediate is in range 0..31.
   int32_t v = (int32_t)N->getSExtValue();
   return (v >= 0 && v <= 31);
 }]>;
@@ -438,13 +436,13 @@ def Clr4ImmPred : PatLeaf<(i32 imm), [{
 }]>;
 
 def SetClr4ImmPred : PatLeaf<(i32 imm), [{
-  // predicate - True if the immediate is in the range 0..15.
+  // SetClr4ImmPred predicate - True if the immediate is in the range 0..15.
   int16_t v = (int16_t)N->getSExtValue();
   return (v >= 0 && v <= 15);
 }]>;
 
 def Set3ImmPred : PatLeaf<(i32 imm), [{
-  // Set4ImmPred predicate - True if the number is in the series of values:
+  // Set3ImmPred predicate - True if the number is in the series of values:
   // [ 2^0, 2^1, ... 2^7 ].
   // For use in setbit immediate.
   uint8_t v = (int8_t)N->getSExtValue();
@@ -453,7 +451,7 @@ def Set3ImmPred : PatLeaf<(i32 imm), [{
 }]>;
 
 def Clr3ImmPred : PatLeaf<(i32 imm), [{
-  // Clr4ImmPred predicate - True if the number is in the series of
+  // Clr3ImmPred predicate - True if the number is in the series of
   // bit negated values:
   // [ 2^0, 2^1, ... 2^7 ].
   // For use in setbit and clrbit immediate.
@@ -463,7 +461,7 @@ def Clr3ImmPred : PatLeaf<(i32 imm), [{
 }]>;
 
 def SetClr3ImmPred : PatLeaf<(i32 imm), [{
-  // predicate - True if the immediat is in the range  0..7.
+  // SetClr3ImmPred predicate - True if the immediate is in the range  0..7.
   int8_t v = (int8_t)N->getSExtValue();
   return (v >= 0 && v <= 7);
 }]>;
