@@ -419,7 +419,7 @@ static ConstantInt *createFailOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
 // standards.  For background see C++11 standard.  A slightly older, publically
 // available draft of the standard (not entirely up-to-date, but close enough
 // for casual browsing) is available here:
-// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf\
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf
 // The following page contains more background information:
 // http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/
 
