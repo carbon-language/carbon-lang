@@ -2679,9 +2679,10 @@ IRForTarget::StripAllGVs (Module &llvm_module)
 
         GlobalValue::use_iterator ui = global_var->use_begin();
         
-        log->Printf("Couldn't remove %s because of %s",
-                    PrintValue(global_var).c_str(),
-                    PrintValue(*ui).c_str());
+        if (log)
+            log->Printf("Couldn't remove %s because of %s",
+                        PrintValue(global_var).c_str(),
+                        PrintValue(*ui).c_str());
     }
     
     return true;
