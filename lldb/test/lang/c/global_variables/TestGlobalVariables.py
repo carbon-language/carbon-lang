@@ -24,6 +24,10 @@ class GlobalVariablesTestCase(TestBase):
         self.global_variables()
 
     def setUp(self):
+        if sys.platform.startswith("linux"):
+            # On Linux, environment variable must be set so the shared library is loaded correctly
+            os.environ["LD_LIBRARY_PATH"] = os.getcwd()
+
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
