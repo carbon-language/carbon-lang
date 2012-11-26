@@ -1960,6 +1960,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "lzcnt", true);
     setFeatureEnabled(Features, "aes", true);
     setFeatureEnabled(Features, "pclmul", true);
+    break;
   case CK_BDVER2:
     setFeatureEnabled(Features, "xop", true);
     setFeatureEnabled(Features, "lzcnt", true);
