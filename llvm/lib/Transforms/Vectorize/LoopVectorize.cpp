@@ -113,10 +113,10 @@ class SingleBlockLoopVectorizer {
 public:
   /// Ctor.
   SingleBlockLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
-                            DominatorTree *dt, DataLayout *dl,
+                            DominatorTree *Dt, DataLayout *Dl,
                             LPPassManager *Lpm,
                             unsigned VecWidth):
-  OrigLoop(Orig), SE(Se), LI(Li), DT(dt), DL(dl), LPM(Lpm), VF(VecWidth),
+  OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), LPM(Lpm), VF(VecWidth),
   Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
   // Perform the actual loop widening (vectorization).
@@ -133,8 +133,8 @@ public:
 private:
   /// Add code that checks at runtime if the accessed arrays overlap.
   /// Returns the comperator value or NULL if no check is needed.
-  Value* addRuntimeCheck(LoopVectorizationLegality *Legal,
-                          Instruction *Loc);
+  Value *addRuntimeCheck(LoopVectorizationLegality *Legal,
+                         Instruction *Loc);
   /// Create an empty loop, based on the loop ranges of the old loop.
   void createEmptyLoop(LoopVectorizationLegality *Legal);
   /// Copy and widen the instructions from the old loop.
@@ -179,7 +179,7 @@ private:
   LoopInfo *LI;
   // Dominator Tree.
   DominatorTree *DT;
-  // Data Layout;
+  // Data Layout.
   DataLayout *DL;
   // Loop Pass Manager;
   LPPassManager *LPM;
@@ -725,14 +725,14 @@ SingleBlockLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
                                     Starts[j], Ends[i], "bound1", Loc);
       Value *IsConflict = BinaryOperator::Create(Instruction::And, Cmp0, Cmp1,
                                                  "found.conflict", Loc);
-      if (MemoryRuntimeCheck) {
+      if (MemoryRuntimeCheck)
         MemoryRuntimeCheck = BinaryOperator::Create(Instruction::Or,
                                                     MemoryRuntimeCheck,
                                                     IsConflict,
                                                     "conflict.rdx", Loc);
-      } else {
+      else
         MemoryRuntimeCheck = IsConflict;
-      }
+
     }
   }
 
@@ -770,6 +770,11 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
    ...
    */
 
+  BasicBlock *OldBasicBlock = OrigLoop->getHeader();
+  BasicBlock *BypassBlock = OrigLoop->getLoopPreheader();
+  BasicBlock *ExitBlock = OrigLoop->getExitBlock();
+  assert(ExitBlock && "Must have an exit block");
+
   // Some loops have a single integer induction variable, while other loops
   // don't. One example is c++ iterators that often have multiple pointer
   // induction variables. In the code below we also support a case where we
@@ -786,10 +791,13 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   ExitCount = SE->getAddExpr(ExitCount,
                              SE->getConstant(ExitCount->getType(), 1));
 
-  // This is the original scalar-loop preheader.
-  BasicBlock *BypassBlock = OrigLoop->getLoopPreheader();
-  BasicBlock *ExitBlock = OrigLoop->getExitBlock();
-  assert(ExitBlock && "Must have an exit block");
+  // Expand the trip count and place the new instructions in the preheader.
+  // Notice that the pre-header does not change, only the loop body.
+  SCEVExpander Exp(*SE, "induction");
+
+  // Count holds the overall loop count (N).
+  Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
+                                   BypassBlock->getTerminator());
 
   // The loop index does not have to start at Zero. Find the original start
   // value from the induction PHI node. If we don't have an induction variable
@@ -801,18 +809,23 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   assert(OrigLoop->getNumBlocks() == 1 && "Invalid loop");
   assert(BypassBlock && "Invalid loop structure");
 
+  // Generate the code that checks in runtime if arrays overlap.
+  Value *MemoryRuntimeCheck = addRuntimeCheck(Legal,
+                                              BypassBlock->getTerminator());
+
+  // Split the single block loop into the two loop structure described above.
   BasicBlock *VectorPH =
       BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
-  BasicBlock *VecBody = VectorPH->splitBasicBlock(VectorPH->getTerminator(),
-                                                 "vector.body");
-
-  BasicBlock *MiddleBlock = VecBody->splitBasicBlock(VecBody->getTerminator(),
-                                                  "middle.block");
+  BasicBlock *VecBody =
+    VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.body");
+  BasicBlock *MiddleBlock =
+    VecBody->splitBasicBlock(VecBody->getTerminator(), "middle.block");
   BasicBlock *ScalarPH =
-    MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(),
-                                 "scalar.preheader");
-  // Find the induction variable.
-  BasicBlock *OldBasicBlock = OrigLoop->getHeader();
+    MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(), "scalar.ph");
+
+  // This is the location in which we add all of the logic for bypassing
+  // the new vector loop.
+  Instruction *Loc = BypassBlock->getTerminator();
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
@@ -821,14 +834,6 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   // Generate the induction variable.
   Induction = Builder.CreatePHI(IdxTy, 2, "index");
   Constant *Step = ConstantInt::get(IdxTy, VF);
-
-  // Expand the trip count and place the new instructions in the preheader.
-  // Notice that the pre-header does not change, only the loop body.
-  SCEVExpander Exp(*SE, "induction");
-  Instruction *Loc = BypassBlock->getTerminator();
-
-  // Count holds the overall loop count (N).
-  Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(), Loc);
 
   // We may need to extend the index in case there is a type mismatch.
   // We know that the count starts at zero and does not overflow.
@@ -858,8 +863,6 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
                                IdxEndRoundDown,
                                StartIdx,
                                "cmp.zero", Loc);
-
-  Value *MemoryRuntimeCheck = addRuntimeCheck(Legal, Loc);
 
   // If we are using memory runtime checks, include them in.
   if (MemoryRuntimeCheck)
@@ -1053,7 +1056,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
           continue;
         }
 
-        // Handle pointer inductions:
+        // Handle pointer inductions.
         assert(P->getType()->isPointerTy() && "Unexpected type.");
         Value *StartIdx = OldInduction ?
           Legal->getInductionVars()->lookup(OldInduction) :
