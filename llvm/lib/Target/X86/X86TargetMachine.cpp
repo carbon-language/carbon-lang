@@ -171,7 +171,6 @@ bool X86PassConfig::addInstSelector() {
 }
 
 bool X86PassConfig::addPreRegAlloc() {
-  addPass(createX86MaxStackAlignmentHeuristicPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
 

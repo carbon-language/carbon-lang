@@ -103,7 +103,7 @@ entry:
 
 declare void @t4_helper(i32*, i32*, <8 x float>*)
 
-; Dynamic realignment + Spill
+; Spilling an AVX register shouldn't cause dynamic realignment
 define i32 @t5(float* nocapture %f) nounwind uwtable ssp {
 entry:
   %a = alloca i32, align 4
@@ -116,21 +116,15 @@ entry:
   ret i32 %add
 
 ; CHECK: _t5
-; CHECK: pushq %rbp
-; CHECK: movq %rsp, %rbp
-; CHECK: andq $-32, %rsp
 ; CHECK: subq ${{[0-9]+}}, %rsp
 ;
 ; CHECK: vmovaps (%rdi), [[AVXREG:%ymm[0-9]+]]
-; CHECK: vmovaps [[AVXREG]], (%rsp)
+; CHECK: vmovups [[AVXREG]], (%rsp)
 ; CHECK: leaq {{[0-9]+}}(%rsp), %rdi
 ; CHECK: callq   _t5_helper1
-; CHECK: vmovaps (%rsp), %ymm0
+; CHECK: vmovups (%rsp), %ymm0
 ; CHECK: callq   _t5_helper2
 ; CHECK: movl {{[0-9]+}}(%rsp), %eax
-;
-; CHECK: movq %rbp, %rsp
-; CHECK: popq %rbp
 }
 
 declare void @t5_helper1(i32*)
