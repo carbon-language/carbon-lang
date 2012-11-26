@@ -1,4 +1,5 @@
-; Test that the strcpy library call simplifier works correctly.
+; Test that the ffs* library call simplifier works correctly.
+;
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 ; RUN: opt < %s -mtriple i386-pc-linux -instcombine -S | FileCheck %s -check-prefix=LINUX
 
