@@ -100,24 +100,6 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
-// 'isascii' Optimizations
-
-struct IsAsciiOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    FunctionType *FT = Callee->getFunctionType();
-    // We require integer(i32)
-    if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
-        !FT->getParamType(0)->isIntegerTy(32))
-      return 0;
-
-    // isascii(c) -> c <u 128
-    Value *Op = CI->getArgOperand(0);
-    Op = B.CreateICmpULT(Op, B.getInt32(128), "isascii");
-    return B.CreateZExt(Op, CI->getType());
-  }
-};
-
-//===---------------------------------------===//
 // 'toascii' Optimizations
 
 struct ToAsciiOpt : public LibCallOptimization {
@@ -502,7 +484,6 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Integer Optimizations
-    IsAsciiOpt IsAscii;
     ToAsciiOpt ToAscii;
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
@@ -563,7 +544,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // Integer Optimizations
-  Optimizations["isascii"] = &IsAscii;
   Optimizations["toascii"] = &ToAscii;
 
   // Formatting and IO Optimizations

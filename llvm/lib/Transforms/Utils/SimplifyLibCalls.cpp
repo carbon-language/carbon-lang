@@ -1283,6 +1283,21 @@ struct IsDigitOpt : public LibCallOptimization {
   }
 };
 
+struct IsAsciiOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    // We require integer(i32)
+    if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
+        !FT->getParamType(0)->isIntegerTy(32))
+      return 0;
+
+    // isascii(c) -> c <u 128
+    Value *Op = CI->getArgOperand(0);
+    Op = B.CreateICmpULT(Op, B.getInt32(128), "isascii");
+    return B.CreateZExt(Op, CI->getType());
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1333,6 +1348,7 @@ class LibCallSimplifierImpl {
   FFSOpt FFS;
   AbsOpt Abs;
   IsDigitOpt IsDigit;
+  IsAsciiOpt IsAscii;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1452,6 +1468,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::labs, &Abs);
   addOpt(LibFunc::llabs, &Abs);
   addOpt(LibFunc::isdigit, &IsDigit);
+  addOpt(LibFunc::isascii, &IsAscii);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
