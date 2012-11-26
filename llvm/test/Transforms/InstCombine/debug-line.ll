@@ -1,4 +1,4 @@
-; RUN: opt -simplify-libcalls -S < %s | FileCheck %s
+; RUN: opt -instcombine -S < %s | FileCheck %s
 
 
 @.str = private constant [3 x i8] c"%c\00"

@@ -100,93 +100,6 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
-// 'printf' Optimizations
-
-struct PrintFOpt : public LibCallOptimization {
-  Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
-                                   IRBuilder<> &B) {
-    // Check for a fixed format string.
-    StringRef FormatStr;
-    if (!getConstantStringInfo(CI->getArgOperand(0), FormatStr))
-      return 0;
-
-    // Empty format string -> noop.
-    if (FormatStr.empty())  // Tolerate printf's declared void.
-      return CI->use_empty() ? (Value*)CI :
-                               ConstantInt::get(CI->getType(), 0);
-
-    // Do not do any of the following transformations if the printf return value
-    // is used, in general the printf return value is not compatible with either
-    // putchar() or puts().
-    if (!CI->use_empty())
-      return 0;
-
-    // printf("x") -> putchar('x'), even for '%'.
-    if (FormatStr.size() == 1) {
-      Value *Res = EmitPutChar(B.getInt32(FormatStr[0]), B, TD, TLI);
-      if (CI->use_empty() || !Res) return Res;
-      return B.CreateIntCast(Res, CI->getType(), true);
-    }
-
-    // printf("foo\n") --> puts("foo")
-    if (FormatStr[FormatStr.size()-1] == '\n' &&
-        FormatStr.find('%') == std::string::npos) {  // no format characters.
-      // Create a string literal with no \n on it.  We expect the constant merge
-      // pass to be run after this pass, to merge duplicate strings.
-      FormatStr = FormatStr.drop_back();
-      Value *GV = B.CreateGlobalString(FormatStr, "str");
-      Value *NewCI = EmitPutS(GV, B, TD, TLI);
-      return (CI->use_empty() || !NewCI) ?
-              NewCI :
-              ConstantInt::get(CI->getType(), FormatStr.size()+1);
-    }
-
-    // Optimize specific format strings.
-    // printf("%c", chr) --> putchar(chr)
-    if (FormatStr == "%c" && CI->getNumArgOperands() > 1 &&
-        CI->getArgOperand(1)->getType()->isIntegerTy()) {
-      Value *Res = EmitPutChar(CI->getArgOperand(1), B, TD, TLI);
-
-      if (CI->use_empty() || !Res) return Res;
-      return B.CreateIntCast(Res, CI->getType(), true);
-    }
-
-    // printf("%s\n", str) --> puts(str)
-    if (FormatStr == "%s\n" && CI->getNumArgOperands() > 1 &&
-        CI->getArgOperand(1)->getType()->isPointerTy()) {
-      return EmitPutS(CI->getArgOperand(1), B, TD, TLI);
-    }
-    return 0;
-  }
-
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Require one fixed pointer argument and an integer/void result.
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
-        !(FT->getReturnType()->isIntegerTy() ||
-          FT->getReturnType()->isVoidTy()))
-      return 0;
-
-    if (Value *V = OptimizeFixedFormatString(Callee, CI, B)) {
-      return V;
-    }
-
-    // printf(format, ...) -> iprintf(format, ...) if no floating point
-    // arguments.
-    if (TLI->has(LibFunc::iprintf) && !CallHasFloatingPointArgument(CI)) {
-      Module *M = B.GetInsertBlock()->getParent()->getParent();
-      Constant *IPrintFFn =
-        M->getOrInsertFunction("iprintf", FT, Callee->getAttributes());
-      CallInst *New = cast<CallInst>(CI->clone());
-      New->setCalledFunction(IPrintFFn);
-      B.Insert(New);
-      return New;
-    }
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
 // 'sprintf' Optimizations
 
 struct SPrintFOpt : public LibCallOptimization {
@@ -463,7 +376,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Formatting and IO Optimizations
-    SPrintFOpt SPrintF; PrintFOpt PrintF;
+    SPrintFOpt SPrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
     PutsOpt Puts;
 
@@ -522,7 +435,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 void SimplifyLibCalls::InitOptimizations() {
   // Formatting and IO Optimizations
   Optimizations["sprintf"] = &SPrintF;
-  Optimizations["printf"] = &PrintF;
   AddOpt(LibFunc::fwrite, &FWrite);
   AddOpt(LibFunc::fputs, &FPuts);
   Optimizations["fprintf"] = &FPrintF;
