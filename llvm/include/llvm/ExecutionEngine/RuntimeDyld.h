@@ -36,23 +36,21 @@ public:
   RTDyldMemoryManager() {}
   virtual ~RTDyldMemoryManager();
 
-  /// allocateCodeSection - Allocate a memory block of (at least) the given
-  /// size suitable for executable code. The SectionID is a unique identifier
-  /// assigned by the JIT engine, and optionally recorded by the memory manager
-  /// to access a loaded section.
+  /// Allocate a memory block of (at least) the given size suitable for
+  /// executable code. The SectionID is a unique identifier assigned by the JIT
+  /// engine, and optionally recorded by the memory manager to access a loaded
+  /// section.
   virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID) = 0;
 
-  /// allocateDataSection - Allocate a memory block of (at least) the given
-  /// size suitable for data. The SectionID is a unique identifier
-  /// assigned by the JIT engine, and optionally recorded by the memory manager
-  /// to access a loaded section.
+  /// Allocate a memory block of (at least) the given size suitable for data.
+  /// The SectionID is a unique identifier assigned by the JIT engine, and
+  /// optionally recorded by the memory manager to access a loaded section.
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID, bool IsReadOnly) = 0;
 
-  /// getPointerToNamedFunction - This method returns the address of the
-  /// specified function. As such it is only useful for resolving library
-  /// symbols, not code generated symbols.
+  /// This method returns the address of the specified function. As such it is
+  /// only useful for resolving library symbols, not code generated symbols.
   ///
   /// If AbortOnFailure is false and no function with the given name is
   /// found, this function returns a null pointer. Otherwise, it prints a
@@ -60,13 +58,13 @@ public:
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) = 0;
 
-  /// applyPermissions - This method is called when object loading is
-  /// complete and section page permissions can be applied.  It is up to
-  /// the memory manager implementation to decide whether or not to act
-  /// on this method.  The memory manager will typically allocate all 
-  /// sections as read-write and then apply specific permissions when
-  /// this method is called.  Returns true if an error occurred, false
-  /// otherwise.
+  /// This method is called when object loading is complete and section page
+  /// permissions can be applied.  It is up to the memory manager implementation
+  /// to decide whether or not to act on this method.  The memory manager will
+  /// typically allocate all sections as read-write and then apply specific
+  /// permissions when this method is called.
+  ///
+  /// Returns true if an error occurred, false otherwise.
   virtual bool applyPermissions(std::string *ErrMsg = 0) = 0;
 };
 
@@ -86,10 +84,10 @@ public:
   RuntimeDyld(RTDyldMemoryManager *);
   ~RuntimeDyld();
 
-  /// loadObject - prepare the object contained in the input buffer for
-  /// execution.  Ownership of the input buffer is transferred to the
-  /// ObjectImage instance returned from this function if successful.
-  /// In the case of load failure, the input buffer will be deleted.
+  /// Prepare the object contained in the input buffer for execution.
+  /// Ownership of the input buffer is transferred to the ObjectImage
+  /// instance returned from this function if successful. In the case of load
+  /// failure, the input buffer will be deleted.
   ObjectImage *loadObject(ObjectBuffer *InputBuffer);
 
   /// Get the address of our local copy of the symbol. This may or may not
@@ -104,7 +102,7 @@ public:
   /// Resolve the relocations for all symbols we currently know about.
   void resolveRelocations();
 
-  /// mapSectionAddress - map a section to its target address space value.
+  /// Map a section to its target address space value.
   /// Map the address of a JIT section as returned from the memory manager
   /// to the address in the target process as the running code will see it.
   /// This is the address which will be used for relocation resolution.
