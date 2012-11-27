@@ -876,7 +876,8 @@ class PrintReg {
   unsigned Reg;
   unsigned SubIdx;
 public:
-  PrintReg(unsigned reg, const TargetRegisterInfo *tri = 0, unsigned subidx = 0)
+  explicit PrintReg(unsigned reg, const TargetRegisterInfo *tri = 0,
+                    unsigned subidx = 0)
     : TRI(tri), Reg(reg), SubIdx(subidx) {}
   void print(raw_ostream&) const;
 };
