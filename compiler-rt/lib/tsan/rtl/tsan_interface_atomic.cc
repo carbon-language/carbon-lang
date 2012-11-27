@@ -298,9 +298,11 @@ a64 __tsan_atomic64_load(const volatile a64 *a, morder mo) {
   SCOPED_ATOMIC(Load, a, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_load(const volatile a128 *a, morder mo) {
   SCOPED_ATOMIC(Load, a, mo);
 }
+#endif
 
 void __tsan_atomic8_store(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(Store, a, v, mo);
@@ -318,9 +320,11 @@ void __tsan_atomic64_store(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(Store, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 void __tsan_atomic128_store(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(Store, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_exchange(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(Exchange, a, v, mo);
@@ -338,9 +342,11 @@ a64 __tsan_atomic64_exchange(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(Exchange, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_exchange(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(Exchange, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_fetch_add(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchAdd, a, v, mo);
@@ -358,9 +364,11 @@ a64 __tsan_atomic64_fetch_add(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchAdd, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_fetch_add(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(FetchAdd, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_fetch_sub(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchSub, a, v, mo);
@@ -378,9 +386,11 @@ a64 __tsan_atomic64_fetch_sub(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchSub, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_fetch_sub(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(FetchSub, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_fetch_and(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchAnd, a, v, mo);
@@ -398,9 +408,11 @@ a64 __tsan_atomic64_fetch_and(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchAnd, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_fetch_and(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(FetchAnd, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_fetch_or(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchOr, a, v, mo);
@@ -418,9 +430,11 @@ a64 __tsan_atomic64_fetch_or(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchOr, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_fetch_or(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(FetchOr, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_fetch_xor(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchXor, a, v, mo);
@@ -438,9 +452,11 @@ a64 __tsan_atomic64_fetch_xor(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchXor, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_fetch_xor(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(FetchXor, a, v, mo);
 }
+#endif
 
 a8 __tsan_atomic8_fetch_nand(volatile a8 *a, a8 v, morder mo) {
   SCOPED_ATOMIC(FetchNand, a, v, mo);
@@ -458,9 +474,11 @@ a64 __tsan_atomic64_fetch_nand(volatile a64 *a, a64 v, morder mo) {
   SCOPED_ATOMIC(FetchNand, a, v, mo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic128_fetch_nand(volatile a128 *a, a128 v, morder mo) {
   SCOPED_ATOMIC(FetchNand, a, v, mo);
 }
+#endif
 
 int __tsan_atomic8_compare_exchange_strong(volatile a8 *a, a8 *c, a8 v,
     morder mo, morder fmo) {
@@ -482,10 +500,12 @@ int __tsan_atomic64_compare_exchange_strong(volatile a64 *a, a64 *c, a64 v,
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
+#if __TSAN_HAS_INT128
 int __tsan_atomic128_compare_exchange_strong(volatile a128 *a, a128 *c, a128 v,
     morder mo, morder fmo) {
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
+#endif
 
 int __tsan_atomic8_compare_exchange_weak(volatile a8 *a, a8 *c, a8 v,
     morder mo, morder fmo) {
@@ -507,10 +527,12 @@ int __tsan_atomic64_compare_exchange_weak(volatile a64 *a, a64 *c, a64 v,
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
+#if __TSAN_HAS_INT128
 int __tsan_atomic128_compare_exchange_weak(volatile a128 *a, a128 *c, a128 v,
     morder mo, morder fmo) {
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
+#endif
 
 a8 __tsan_atomic8_compare_exchange_val(volatile a8 *a, a8 c, a8 v,
     morder mo, morder fmo) {
@@ -531,10 +553,12 @@ a64 __tsan_atomic64_compare_exchange_val(volatile a64 *a, a64 c, a64 v,
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
 
+#if __TSAN_HAS_INT128
 a128 __tsan_atomic64_compare_exchange_val(volatile a128 *a, a128 c, a128 v,
     morder mo, morder fmo) {
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
+#endif
 
 void __tsan_atomic_thread_fence(morder mo) {
   char* a;

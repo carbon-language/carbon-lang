@@ -21,7 +21,19 @@ typedef char     __tsan_atomic8;
 typedef short    __tsan_atomic16;  // NOLINT
 typedef int      __tsan_atomic32;
 typedef long     __tsan_atomic64;  // NOLINT
+
+#if (defined(__clang__) && defined(__clang_major__) \
+      && defined(__clang_minor__) && __clang__ >= 1 && __clang_major__ >= 3 \
+      && __clang_minor__ >= 3) \
+    || (defined(__GNUC__) && defined(__GNUC_MINOR__) \
+      && defined(__GNUC_PATCHLEVEL__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 6 \
+      && __GNUC_PATCHLEVEL__ >= 3)
 typedef __int128 __tsan_atomic128;
+#define __TSAN_HAS_INT128 1
+#else
+typedef char     __tsan_atomic128;
+#define __TSAN_HAS_INT128 0
+#endif
 
 // Part of ABI, do not change.
 // http://llvm.org/viewvc/llvm-project/libcxx/trunk/include/atomic?view=markup
