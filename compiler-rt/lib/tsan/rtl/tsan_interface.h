@@ -44,6 +44,9 @@ void __tsan_vptr_update(void **vptr_p, void *new_val);
 void __tsan_func_entry(void *call_pc);
 void __tsan_func_exit();
 
+void __tsan_read_range(void *addr, unsigned long size);  // NOLINT
+void __tsan_write_range(void *addr, unsigned long size);  // NOLINT
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
