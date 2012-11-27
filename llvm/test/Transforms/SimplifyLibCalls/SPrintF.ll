@@ -1,6 +1,7 @@
 ; Test that the SPrintFOptimizer works correctly
 ; RUN: opt < %s -simplify-libcalls -S | \
 ; RUN:   not grep "call.*sprintf"
+; REQUIRES: suppressed
 
 ; This transformation requires the pointer size, as it assumes that size_t is
 ; the size of a pointer.
