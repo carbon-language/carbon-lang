@@ -11,6 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+// ThreadSanitizer atomic operations are based on C++11/C1x standards.
+// For background see C++11 standard.  A slightly older, publically
+// available draft of the standard (not entirely up-to-date, but close enough
+// for casual browsing) is available here:
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf
+// The following page contains more background information:
+// http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/
+
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_interface_atomic.h"
 #include "tsan_flags.h"
@@ -79,6 +87,10 @@ static bool IsAcquireOrder(morder mo) {
       || mo == mo_acq_rel || mo == mo_seq_cst;
 }
 
+static bool IsAcqRelOrder(morder mo) {
+  return mo == mo_acq_rel || mo == mo_seq_cst;
+}
+
 static morder ConvertOrder(morder mo) {
   if (mo > (morder)100500) {
     mo = morder(mo - 100500);
@@ -100,6 +112,34 @@ static morder ConvertOrder(morder mo) {
   return mo;
 }
 
+template<typename T> T func_xchg(T v, T op) {
+  return op;
+}
+
+template<typename T> T func_add(T v, T op) {
+  return v + op;
+}
+
+template<typename T> T func_sub(T v, T op) {
+  return v - op;
+}
+
+template<typename T> T func_and(T v, T op) {
+  return v & op;
+}
+
+template<typename T> T func_or(T v, T op) {
+  return v | op;
+}
+
+template<typename T> T func_xor(T v, T op) {
+  return v ^ op;
+}
+
+template<typename T> T func_nand(T v, T op) {
+  return ~v & op;
+}
+
 #define SCOPED_ATOMIC(func, ...) \
     mo = ConvertOrder(mo); \
     mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
@@ -115,9 +155,15 @@ template<typename T>
 static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
     morder mo) {
   CHECK(IsLoadOrder(mo));
+  // This fast-path is critical for performance.
+  // Assume the access is atomic.
+  if (!IsAcquireOrder(mo) && sizeof(T) <= sizeof(a))
+    return *a;
+  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, false);
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.acquire(&s->clock);
   T v = *a;
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
+  s->mtx.ReadUnlock();
   return v;
 }
 
@@ -125,109 +171,101 @@ template<typename T>
 static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
   CHECK(IsStoreOrder(mo));
-  if (IsReleaseOrder(mo))
-    ReleaseStore(thr, pc, (uptr)a);
+  // This fast-path is critical for performance.
+  // Assume the access is atomic.
+  // Strictly saying even relaxed store cuts off release sequence,
+  // so must reset the clock.
+  if (!IsReleaseOrder(mo) && sizeof(T) <= sizeof(a)) {
+    *a = v;
+    return;
+  }
+  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.ReleaseStore(&s->clock);
   *a = v;
+  s->mtx.Unlock();
+}
+
+template<typename T, T (*F)(T v, T op)>
+static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
+  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  if (IsAcqRelOrder(mo))
+    thr->clock.acq_rel(&s->clock);
+  else if (IsReleaseOrder(mo))
+    thr->clock.release(&s->clock);
+  else if (IsAcquireOrder(mo))
+    thr->clock.acquire(&s->clock);
+  T c = *a;
+  *a = F(c, v);
+  s->mtx.Unlock();
+  return c;
 }
 
 template<typename T>
 static T AtomicExchange(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  v = __sync_lock_test_and_set(a, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_xchg>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static T AtomicFetchAdd(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  v = __sync_fetch_and_add(a, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_add>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static T AtomicFetchSub(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  v = __sync_fetch_and_sub(a, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_sub>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static T AtomicFetchAnd(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  v = __sync_fetch_and_and(a, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_and>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static T AtomicFetchOr(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  v = __sync_fetch_and_or(a, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_or>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static T AtomicFetchXor(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  v = __sync_fetch_and_xor(a, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_xor>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static T AtomicFetchNand(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  T cmp = *a;
-  for (;;) {
-    T xch = ~cmp & v;
-    T cur = __sync_val_compare_and_swap(a, cmp, xch);
-    if (cmp == cur)
-      break;
-    cmp = cur;
-  }
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  return v;
+  return AtomicRMW<T, func_nand>(thr, pc, a, v, mo);
 }
 
 template<typename T>
 static bool AtomicCAS(ThreadState *thr, uptr pc,
     volatile T *a, T *c, T v, morder mo, morder fmo) {
-  (void)fmo;
-  if (IsReleaseOrder(mo))
-    Release(thr, pc, (uptr)a);
-  T cc = *c;
-  T pr = __sync_val_compare_and_swap(a, cc, v);
-  if (IsAcquireOrder(mo))
-    Acquire(thr, pc, (uptr)a);
-  if (pr == cc)
-    return true;
-  *c = pr;
-  return false;
+  (void)fmo;  // Unused because llvm does not pass it yet.
+  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
+  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  if (IsAcqRelOrder(mo))
+    thr->clock.acq_rel(&s->clock);
+  else if (IsReleaseOrder(mo))
+    thr->clock.release(&s->clock);
+  else if (IsAcquireOrder(mo))
+    thr->clock.acquire(&s->clock);
+  T cur = *a;
+  bool res = false;
+  if (cur == *c) {
+    *a = v;
+    res = true;
+  } else {
+    *c = cur;
+  }
+  s->mtx.Unlock();
+  return res;
 }
 
 template<typename T>
@@ -238,6 +276,7 @@ static T AtomicCAS(ThreadState *thr, uptr pc,
 }
 
 static void AtomicFence(ThreadState *thr, uptr pc, morder mo) {
+  // FIXME(dvyukov): not implemented.
   __sync_synchronize();
 }
 
