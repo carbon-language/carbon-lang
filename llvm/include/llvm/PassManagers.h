@@ -462,10 +462,6 @@ public:
   virtual PassManagerType getPassManagerType() const {
     return PMT_FunctionPassManager;
   }
-
-protected:
-  // FIXME: due to limitation in AddressSanitizer
-  bool RunFinalization;
 };
 
 Timer *getPassTimer(Pass *);

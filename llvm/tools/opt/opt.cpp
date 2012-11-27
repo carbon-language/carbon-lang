@@ -820,7 +820,9 @@ int main(int argc, char **argv) {
   cl::PrintOptionValues();
 
   // Now that we have all of the passes ready, run them.
+  Passes.doInitialization();
   Passes.run(*M.get());
+  Passes.doFinalization();
 
   // Declare success.
   if (!NoOutput || PrintBreakpoints)
