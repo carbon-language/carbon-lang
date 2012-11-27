@@ -3,7 +3,7 @@
 declare x86_fastcallcc i64 @barrier()
 
 ;CHECK: bcast_fold
-;CHECK: vmovaps %xmm{{[0-9]+}}, [[SPILLED:[^\)]+\)]]
+;CHECK: vmov{{[au]}}ps %xmm{{[0-9]+}}, [[SPILLED:[^\)]+\)]]
 ;CHECK: barrier
 ;CHECK: vbroadcastss [[SPILLED]], %ymm0
 ;CHECK: ret
