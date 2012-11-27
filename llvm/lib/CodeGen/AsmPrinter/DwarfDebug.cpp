@@ -94,8 +94,8 @@ namespace {
 
 //===----------------------------------------------------------------------===//
 
-/// Configuration values for initial hash set sizes (log2).
-///
+// Configuration values for initial hash set sizes (log2).
+//
 static const unsigned InitAbbreviationsSetSize = 9; // log2(512)
 
 namespace llvm {
@@ -196,8 +196,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 DwarfDebug::~DwarfDebug() {
 }
 
-/// emitSectionSym - Switch to the specified MCSection and emit an assembler
-/// temporary label to it if SymbolStem is specified.
+// Switch to the specified MCSection and emit an assembler
+// temporary label to it if SymbolStem is specified.
 static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
                                 const char *SymbolStem = 0) {
   Asm->OutStreamer.SwitchSection(Section);
@@ -220,8 +220,8 @@ MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
   return Entry.first = Asm->GetTempSymbol("string", Entry.second);
 }
 
-/// assignAbbrevNumber - Define a unique number for the abbreviation.
-///
+// Define a unique number for the abbreviation.
+//
 void DwarfDebug::assignAbbrevNumber(DIEAbbrev &Abbrev) {
   // Profile the node so that we can make it unique.
   FoldingSetNodeID ID;
@@ -243,9 +243,9 @@ void DwarfDebug::assignAbbrevNumber(DIEAbbrev &Abbrev) {
   }
 }
 
-/// getRealLinkageName - If special LLVM prefix that is used to inform the asm
-/// printer to not emit usual symbol prefix before the symbol name is used then
-/// return linkage name after skipping this special LLVM prefix.
+// If special LLVM prefix that is used to inform the asm
+// printer to not emit usual symbol prefix before the symbol name is used then
+// return linkage name after skipping this special LLVM prefix.
 static StringRef getRealLinkageName(StringRef LinkageName) {
   char One = '\1';
   if (LinkageName.startswith(StringRef(&One, 1)))
@@ -310,10 +310,9 @@ static void addSubprogramNames(CompileUnit *TheCU, DISubprogram SP,
   }
 }
 
-/// updateSubprogramScopeDIE - Find DIE for the given subprogram and
-/// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
-/// If there are global variables in this scope then create and insert
-/// DIEs for these variables.
+// Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
+// and DW_AT_high_pc attributes. If there are global variables in this
+// scope then create and insert DIEs for these variables.
 DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
                                           const MDNode *SPNode) {
   DIE *SPDie = SPCU->getDIE(SPNode);
@@ -383,8 +382,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   return SPDie;
 }
 
-/// constructLexicalScope - Construct new DW_TAG_lexical_block
-/// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
+// Construct new DW_TAG_lexical_block for this scope and attach
+// DW_AT_low_pc/DW_AT_high_pc labels.
 DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
@@ -427,9 +426,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
-/// constructInlinedScopeDIE - This scope represents inlined body of
-/// a function. Construct DIE to represent this concrete inlined copy
-/// of the function.
+// This scope represents inlined body of a function. Construct DIE to
+// represent this concrete inlined copy of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
   const SmallVector<InsnRange, 4> &Ranges = Scope->getRanges();
@@ -511,7 +509,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
-/// constructScopeDIE - Construct a DIE for this scope.
+// Construct a DIE for this scope.
 DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return NULL;
@@ -580,10 +578,10 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   return ScopeDIE;
 }
 
-/// getOrCreateSourceID - Look up the source id with the given directory and
-/// source file names. If none currently exists, create a new id and insert it
-/// in the SourceIds map. This can update DirectoryNames and SourceFileNames
-/// maps as well.
+// Look up the source id with the given directory and source file names.
+// If none currently exists, create a new id and insert it in the
+// SourceIds map. This can update DirectoryNames and SourceFileNames maps
+// as well.
 unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
                                          StringRef DirName) {
   // If FE did not provide a file name, then assume stdin.
@@ -612,8 +610,7 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
   return SrcId;
 }
 
-/// constructCompileUnit - Create new CompileUnit for the given
-/// metadata node with tag DW_TAG_compile_unit.
+// Create new CompileUnit for the given metadata node with tag DW_TAG_compile_unit.
 CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
@@ -657,7 +654,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   return NewCU;
 }
 
-/// construct SubprogramDIE - Construct subprogram DIE.
+// Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
                                         const MDNode *N) {
   CompileUnit *&CURef = SPMap[N];
@@ -682,8 +679,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   return;
 }
 
-/// collectInfoFromNamedMDNodes - Collect debug info from named mdnodes such
-/// as llvm.dbg.enum and llvm.dbg.ty
+// Collect debug info from named mdnodes such as llvm.dbg.enum and llvm.dbg.ty.
 void DwarfDebug::collectInfoFromNamedMDNodes(const Module *M) {
   if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.sp"))
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
@@ -714,8 +710,8 @@ void DwarfDebug::collectInfoFromNamedMDNodes(const Module *M) {
     }
 }
 
-/// collectLegacyDebugInfo - Collect debug info using DebugInfoFinder.
-/// FIXME - Remove this when dragon-egg and llvm-gcc switch to DIBuilder.
+// Collect debug info using DebugInfoFinder.
+// FIXME - Remove this when dragonegg switches to DIBuilder.
 bool DwarfDebug::collectLegacyDebugInfo(const Module *M) {
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
@@ -756,9 +752,9 @@ bool DwarfDebug::collectLegacyDebugInfo(const Module *M) {
   return HasDebugInfo;
 }
 
-/// beginModule - Emit all Dwarf sections that should come prior to the
-/// content. Create global DIEs and emit initial debug info sections.
-/// This is invoked by the target AsmPrinter.
+// Emit all Dwarf sections that should come prior to the content. Create
+// global DIEs and emit initial debug info sections. This is invoked by
+// the target AsmPrinter.
 void DwarfDebug::beginModule() {
   if (DisableDebugInfoPrinting)
     return;
@@ -887,8 +883,7 @@ void DwarfDebug::endSections() {
   }
 }
 
-/// endModule - Emit all Dwarf sections that should come after the content.
-///
+// Emit all Dwarf sections that should come after the content.
 void DwarfDebug::endModule() {
 
   if (!FirstCU) return;
@@ -983,7 +978,7 @@ void DwarfDebug::endModule() {
   FirstCU = NULL;  // Reset for the next Module, if any.
 }
 
-/// findAbstractVariable - Find abstract variable, if any, associated with Var.
+// Find abstract variable, if any, associated with Var.
 DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
                                               DebugLoc ScopeLoc) {
   LLVMContext &Ctx = DV->getContext();
@@ -1003,8 +998,7 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
   return AbsDbgVariable;
 }
 
-/// addCurrentFnArgument - If Var is a current function argument then add
-/// it to CurrentFnArguments list.
+// If Var is a current function argument then add it to CurrentFnArguments list.
 bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
                                       DbgVariable *Var, LexicalScope *Scope) {
   if (!LScopes.isCurrentFunctionScope(Scope))
@@ -1027,8 +1021,7 @@ bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
   return true;
 }
 
-/// collectVariableInfoFromMMITable - Collect variable information from
-/// side table maintained by MMI.
+// Collect variable information from side table maintained by MMI.
 void
 DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction *MF,
                                    SmallPtrSet<const MDNode *, 16> &Processed) {
@@ -1057,8 +1050,8 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction *MF,
   }
 }
 
-/// isDbgValueInDefinedReg - Return true if debug value, encoded by
-/// DBG_VALUE instruction, is in a defined reg.
+// Return true if debug value, encoded by DBG_VALUE instruction, is in a
+// defined reg.
 static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
   assert(MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
   return MI->getNumOperands() == 3 &&
@@ -1066,8 +1059,7 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
          MI->getOperand(1).isImm() && MI->getOperand(1).getImm() == 0;
 }
 
-/// getDebugLocEntry - Get .debug_loc entry for the instruction range starting
-/// at MI.
+// Get .debug_loc entry for the instruction range starting at MI.
 static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
                                          const MCSymbol *FLabel,
                                          const MCSymbol *SLabel,
@@ -1093,12 +1085,12 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
   llvm_unreachable("Unexpected 3 operand DBG_VALUE instruction!");
 }
 
-/// collectVariableInfo - Find variables for each lexical scope.
+// Find variables for each lexical scope.
 void
 DwarfDebug::collectVariableInfo(const MachineFunction *MF,
                                 SmallPtrSet<const MDNode *, 16> &Processed) {
 
-  /// collection info from MMI table.
+  // collection info from MMI table.
   collectVariableInfoFromMMITable(MF, Processed);
 
   for (SmallVectorImpl<const MDNode*>::const_iterator
@@ -1204,19 +1196,19 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
   }
 }
 
-/// getLabelBeforeInsn - Return Label preceding the instruction.
+// Return Label preceding the instruction.
 const MCSymbol *DwarfDebug::getLabelBeforeInsn(const MachineInstr *MI) {
   MCSymbol *Label = LabelsBeforeInsn.lookup(MI);
   assert(Label && "Didn't insert label before instruction");
   return Label;
 }
 
-/// getLabelAfterInsn - Return Label immediately following the instruction.
+// Return Label immediately following the instruction.
 const MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
   return LabelsAfterInsn.lookup(MI);
 }
 
-/// beginInstruction - Process beginning of an instruction.
+// Process beginning of an instruction.
 void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   // Check if source location changes, but ignore DBG_VALUE locations.
   if (!MI->isDebugValue()) {
@@ -1258,7 +1250,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   I->second = PrevLabel;
 }
 
-/// endInstruction - Process end of an instruction.
+// Process end of an instruction.
 void DwarfDebug::endInstruction(const MachineInstr *MI) {
   // Don't create a new label after DBG_VALUE instructions.
   // They don't generate code.
@@ -1284,11 +1276,10 @@ void DwarfDebug::endInstruction(const MachineInstr *MI) {
   I->second = PrevLabel;
 }
 
-/// identifyScopeMarkers() -
-/// Each LexicalScope has first instruction and last instruction to mark
-/// beginning and end of a scope respectively. Create an inverse map that list
-/// scopes starts (and ends) with an instruction. One instruction may start (or
-/// end) multiple scopes. Ignore scopes that are not reachable.
+// Each LexicalScope has first instruction and last instruction to mark
+// beginning and end of a scope respectively. Create an inverse map that list
+// scopes starts (and ends) with an instruction. One instruction may start (or
+// end) multiple scopes. Ignore scopes that are not reachable.
 void DwarfDebug::identifyScopeMarkers() {
   SmallVector<LexicalScope *, 4> WorkList;
   WorkList.push_back(LScopes.getCurrentFunctionScope());
@@ -1317,15 +1308,15 @@ void DwarfDebug::identifyScopeMarkers() {
   }
 }
 
-/// getScopeNode - Get MDNode for DebugLoc's scope.
+// Get MDNode for DebugLoc's scope.
 static MDNode *getScopeNode(DebugLoc DL, const LLVMContext &Ctx) {
   if (MDNode *InlinedAt = DL.getInlinedAt(Ctx))
     return getScopeNode(DebugLoc::getFromDILocation(InlinedAt), Ctx);
   return DL.getScope(Ctx);
 }
 
-/// getFnDebugLoc - Walk up the scope chain of given debug loc and find
-/// line number info for the function.
+// Walk up the scope chain of given debug loc and find line number info
+// for the function.
 static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
   const MDNode *Scope = getScopeNode(DL, Ctx);
   DISubprogram SP = getDISubprogram(Scope);
@@ -1341,8 +1332,8 @@ static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
   return DebugLoc();
 }
 
-/// beginFunction - Gather pre-function debug information.  Assumes being
-/// emitted immediately after the function entry point.
+// Gather pre-function debug information.  Assumes being called immediately
+// after the function entry point has been emitted.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo()) return;
   LScopes.initialize(*MF);
@@ -1357,7 +1348,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
 
   const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
-  /// LiveUserVar - Map physreg numbers to the MDNode they contain.
+  // LiveUserVar - Map physreg numbers to the MDNode they contain.
   std::vector<const MDNode*> LiveUserVar(TRI->getNumRegs());
 
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
@@ -1522,8 +1513,7 @@ void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
 //  Vars.push_back(Var);
 }
 
-/// endFunction - Gather and emit post-function debug information.
-///
+// Gather and emit post-function debug information.
 void DwarfDebug::endFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo() || LScopes.empty()) return;
 
@@ -1588,9 +1578,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   PrevLabel = NULL;
 }
 
-/// recordSourceLine - Register a source line with debug info. Returns the
-/// unique label that was emitted and which provides correspondence to
-/// the source line list.
+// Register a source line with debug info. Returns the  unique label that was
+// emitted and which provides correspondence to the source line list.
 void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
                                   unsigned Flags) {
   StringRef Fn;
@@ -1631,8 +1620,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
 // Emit Methods
 //===----------------------------------------------------------------------===//
 
-/// computeSizeAndOffset - Compute the size and offset of a DIE.
-///
+// Compute the size and offset of a DIE.
 unsigned
 DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   // Get the children.
@@ -1675,8 +1663,7 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   return Offset;
 }
 
-/// computeSizeAndOffsets - Compute the size and offset of all the DIEs.
-///
+// Compute the size and offset of all the DIEs.
 void DwarfDebug::computeSizeAndOffsets() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
@@ -1690,8 +1677,7 @@ void DwarfDebug::computeSizeAndOffsets() {
   }
 }
 
-/// emitSectionLabels - Emit initial Dwarf sections with a label at
-/// the start of each one.
+// Emit initial Dwarf sections with a label at the start of each one.
 void DwarfDebug::emitSectionLabels() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
@@ -1720,8 +1706,7 @@ void DwarfDebug::emitSectionLabels() {
   emitSectionSym(Asm, TLOF.getDataSection());
 }
 
-/// emitDIE - Recursively emits a debug information entry.
-///
+// Recursively emits a debug information entry.
 void DwarfDebug::emitDIE(DIE *Die) {
   // Get the abbreviation for this DIE.
   unsigned AbbrevNumber = Die->getAbbrevNumber();
@@ -1810,8 +1795,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
   }
 }
 
-/// emitDebugInfo - Emit the debug info section.
-///
+// Emit the debug info section.
 void DwarfDebug::emitDebugInfo() {
   // Start debug info section.
   Asm->OutStreamer.SwitchSection(
@@ -1846,8 +1830,7 @@ void DwarfDebug::emitDebugInfo() {
   }
 }
 
-/// emitAbbreviations - Emit the abbreviation section.
-///
+// Emit the abbreviation section.
 void DwarfDebug::emitAbbreviations() {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
@@ -1876,9 +1859,7 @@ void DwarfDebug::emitAbbreviations() {
   }
 }
 
-/// emitEndOfLineMatrix - Emit the last address of the section and the end of
-/// the line matrix.
-///
+// Emit the last address of the section and the end of the line matrix.
 void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   // Define last address of section.
   Asm->OutStreamer.AddComment("Extended Op");
@@ -1902,8 +1883,7 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(1);
 }
 
-/// emitAccelNames - Emit visible names into a hashed accelerator table
-/// section.
+// Emit visible names into a hashed accelerator table section.
 void DwarfDebug::emitAccelNames() {
   DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
                                            dwarf::DW_FORM_data4));
@@ -1931,8 +1911,7 @@ void DwarfDebug::emitAccelNames() {
   AT.Emit(Asm, SectionBegin, this);
 }
 
-/// emitAccelObjC - Emit objective C classes and categories into a hashed
-/// accelerator table section.
+// Emit objective C classes and categories into a hashed accelerator table section.
 void DwarfDebug::emitAccelObjC() {
   DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
                                            dwarf::DW_FORM_data4));
@@ -1960,8 +1939,7 @@ void DwarfDebug::emitAccelObjC() {
   AT.Emit(Asm, SectionBegin, this);
 }
 
-/// emitAccelNamespace - Emit namespace dies into a hashed accelerator
-/// table.
+// Emit namespace dies into a hashed accelerator table.
 void DwarfDebug::emitAccelNamespaces() {
   DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
                                            dwarf::DW_FORM_data4));
@@ -1989,7 +1967,7 @@ void DwarfDebug::emitAccelNamespaces() {
   AT.Emit(Asm, SectionBegin, this);
 }
 
-/// emitAccelTypes() - Emit type dies into a hashed accelerator table.
+// Emit type dies into a hashed accelerator table.
 void DwarfDebug::emitAccelTypes() {
   std::vector<DwarfAccelTable::Atom> Atoms;
   Atoms.push_back(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
@@ -2072,8 +2050,7 @@ void DwarfDebug::emitDebugPubTypes() {
   }
 }
 
-/// emitDebugStr - Emit visible names into a debug str section.
-///
+// Emit visible names into a debug str section.
 void DwarfDebug::emitDebugStr() {
   // Check to see if it is worth the effort.
   if (StringPool.empty()) return;
@@ -2104,8 +2081,7 @@ void DwarfDebug::emitDebugStr() {
   }
 }
 
-/// emitDebugLoc - Emit visible names into a debug loc section.
-///
+// Emit visible names into a debug loc section.
 void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
@@ -2204,16 +2180,14 @@ void DwarfDebug::emitDebugLoc() {
   }
 }
 
-/// emitDebugARanges - Emit visible names into a debug aranges section.
-///
+// Emit visible names into a debug aranges section.
 void DwarfDebug::emitDebugARanges() {
   // Start the dwarf aranges section.
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfARangesSection());
 }
 
-/// emitDebugRanges - Emit visible names into a debug ranges section.
-///
+// Emit visible names into a debug ranges section.
 void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->OutStreamer.SwitchSection(
@@ -2229,8 +2203,7 @@ void DwarfDebug::emitDebugRanges() {
   }
 }
 
-/// emitDebugMacInfo - Emit visible names into a debug macinfo section.
-///
+// Emit visible names into a debug macinfo section.
 void DwarfDebug::emitDebugMacInfo() {
   if (const MCSection *LineInfo =
       Asm->getObjFileLowering().getDwarfMacroInfoSection()) {
@@ -2239,24 +2212,24 @@ void DwarfDebug::emitDebugMacInfo() {
   }
 }
 
-/// emitDebugInlineInfo - Emit inline info using following format.
-/// Section Header:
-/// 1. length of section
-/// 2. Dwarf version number
-/// 3. address size.
-///
-/// Entries (one "entry" for each function that was inlined):
-///
-/// 1. offset into __debug_str section for MIPS linkage name, if exists;
-///   otherwise offset into __debug_str for regular function name.
-/// 2. offset into __debug_str section for regular function name.
-/// 3. an unsigned LEB128 number indicating the number of distinct inlining
-/// instances for the function.
-///
-/// The rest of the entry consists of a {die_offset, low_pc} pair for each
-/// inlined instance; the die_offset points to the inlined_subroutine die in the
-/// __debug_info section, and the low_pc is the starting address for the
-/// inlining instance.
+// Emit inline info using following format.
+// Section Header:
+// 1. length of section
+// 2. Dwarf version number
+// 3. address size.
+//
+// Entries (one "entry" for each function that was inlined):
+//
+// 1. offset into __debug_str section for MIPS linkage name, if exists;
+//   otherwise offset into __debug_str for regular function name.
+// 2. offset into __debug_str section for regular function name.
+// 3. an unsigned LEB128 number indicating the number of distinct inlining
+// instances for the function.
+//
+// The rest of the entry consists of a {die_offset, low_pc} pair for each
+// inlined instance; the die_offset points to the inlined_subroutine die in the
+// __debug_info section, and the low_pc is the starting address for the
+// inlining instance.
 void DwarfDebug::emitDebugInlineInfo() {
   if (!Asm->MAI->doesDwarfUseInlineInfoSection())
     return;
