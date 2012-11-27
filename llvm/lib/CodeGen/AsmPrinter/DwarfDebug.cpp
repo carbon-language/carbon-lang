@@ -801,12 +801,12 @@ void DwarfDebug::beginModule() {
 void DwarfDebug::computeInlinedDIEs() {
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
-	 AE = InlinedSubprogramDIEs.end(); AI != AE; ++AI) {
+         AE = InlinedSubprogramDIEs.end(); AI != AE; ++AI) {
     DIE *ISP = *AI;
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
   for (DenseMap<const MDNode *, DIE *>::iterator AI = AbstractSPDies.begin(),
-	 AE = AbstractSPDies.end(); AI != AE; ++AI) {
+         AE = AbstractSPDies.end(); AI != AE; ++AI) {
     DIE *ISP = AI->second;
     if (InlinedSubprogramDIEs.count(ISP))
       continue;
@@ -824,30 +824,30 @@ void DwarfDebug::collectDeadVariables() {
       DICompileUnit TheCU(CU_Nodes->getOperand(i));
       DIArray Subprograms = TheCU.getSubprograms();
       for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
-	DISubprogram SP(Subprograms.getElement(i));
-	if (ProcessedSPNodes.count(SP) != 0) continue;
-	if (!SP.Verify()) continue;
-	if (!SP.isDefinition()) continue;
-	DIArray Variables = SP.getVariables();
-	if (Variables.getNumElements() == 0) continue;
+        DISubprogram SP(Subprograms.getElement(i));
+        if (ProcessedSPNodes.count(SP) != 0) continue;
+        if (!SP.Verify()) continue;
+        if (!SP.isDefinition()) continue;
+        DIArray Variables = SP.getVariables();
+        if (Variables.getNumElements() == 0) continue;
 
-	LexicalScope *Scope =
-	  new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
-	DeadFnScopeMap[SP] = Scope;
+        LexicalScope *Scope =
+          new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
+        DeadFnScopeMap[SP] = Scope;
 
-	// Construct subprogram DIE and add variables DIEs.
-	CompileUnit *SPCU = CUMap.lookup(TheCU);
-	assert(SPCU && "Unable to find Compile Unit!");
-	constructSubprogramDIE(SPCU, SP);
-	DIE *ScopeDIE = SPCU->getDIE(SP);
-	for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
-	  DIVariable DV(Variables.getElement(vi));
-	  if (!DV.Verify()) continue;
-	  DbgVariable *NewVar = new DbgVariable(DV, NULL);
-	  if (DIE *VariableDIE =
-	      SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
-	    ScopeDIE->addChild(VariableDIE);
-	}
+        // Construct subprogram DIE and add variables DIEs.
+        CompileUnit *SPCU = CUMap.lookup(TheCU);
+        assert(SPCU && "Unable to find Compile Unit!");
+        constructSubprogramDIE(SPCU, SP);
+        DIE *ScopeDIE = SPCU->getDIE(SP);
+        for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
+          DIVariable DV(Variables.getElement(vi));
+          if (!DV.Verify()) continue;
+          DbgVariable *NewVar = new DbgVariable(DV, NULL);
+          if (DIE *VariableDIE =
+              SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
+            ScopeDIE->addChild(VariableDIE);
+        }
       }
     }
   }
@@ -864,7 +864,7 @@ void DwarfDebug::finalizeModuleInfo() {
   // Emit DW_AT_containing_type attribute to connect types with their
   // vtable holding type.
   for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
-	 CUE = CUMap.end(); CUI != CUE; ++CUI) {
+         CUE = CUMap.end(); CUI != CUE; ++CUI) {
     CompileUnit *TheCU = CUI->second;
     TheCU->constructContainingTypeDIEs();
   }
