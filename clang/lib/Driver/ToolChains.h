@@ -394,7 +394,7 @@ public:
   std::string ComputeEffectiveClangTriple(const ArgList &Args,
                                           types::ID InputType) const;
 
-  virtual bool isPICDefault() const { return false; };
+  virtual bool isPICDefault() const { return false; }
 };
 
 class LLVM_LIBRARY_VISIBILITY Generic_ELF : public Generic_GCC {
