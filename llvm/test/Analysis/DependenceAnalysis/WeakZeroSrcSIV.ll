@@ -13,12 +13,12 @@ define void @weakzerosrc0(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [p<=|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -50,12 +50,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [p<=|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -92,12 +92,12 @@ define void @weakzerosrc2(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -127,12 +127,12 @@ define void @weakzerosrc3(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [=>p|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -162,12 +162,12 @@ define void @weakzerosrc4(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -197,12 +197,12 @@ define void @weakzerosrc5(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -233,12 +233,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [S|<]!
+; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body

@@ -16,12 +16,12 @@ define void @sep0([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ssp
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [0 * * S|<]!
+; CHECK: da analyze - output [0 * * S]!
 ; CHECK: da analyze - flow [-10 * * *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [0 * S *|<]!
+; CHECK: da analyze - input [0 * S *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= = = =|<]!
+; CHECK: da analyze - output [= = = =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc22
   %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc22 ]
@@ -91,12 +91,12 @@ define void @sep1([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ssp
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [0 * * S|<]!
+; CHECK: da analyze - output [0 * * S]!
 ; CHECK: da analyze - flow [> * * *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [0 * S *|<]!
+; CHECK: da analyze - input [0 * S *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= = = =|<]!
+; CHECK: da analyze - output [= = = =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc22
   %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc22 ]
@@ -165,12 +165,12 @@ define void @sep2([100 x [100 x [100 x i32]]]* %A, i32* %B, i32 %n) nounwind uwt
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 S 0 0|<]!
+; CHECK: da analyze - consistent output [0 S 0 0]!
 ; CHECK: da analyze - flow [> * * -10]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [0 * * 0|<]!
+; CHECK: da analyze - input [0 * * 0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= = = =|<]!
+; CHECK: da analyze - output [= = = =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc26
   %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc26 ]
@@ -239,12 +239,12 @@ define void @sep3([100 x [100 x [100 x i32]]]* %A, i32* %B, i32 %n) nounwind uwt
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 S 0 0|<]!
+; CHECK: da analyze - consistent output [0 S 0 0]!
 ; CHECK: da analyze - flow [> * * *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [0 * * 0|<]!
+; CHECK: da analyze - input [0 * * 0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= = = =|<]!
+; CHECK: da analyze - output [= = = =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc27
   %B.addr.08 = phi i32* [ %B, %entry ], [ %scevgep11, %for.inc27 ]

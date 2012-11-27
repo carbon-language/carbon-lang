@@ -14,12 +14,12 @@ define void @rdiv0(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -62,12 +62,12 @@ define void @rdiv1(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -108,12 +108,12 @@ define void @rdiv2(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -154,12 +154,12 @@ define void @rdiv3(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -200,12 +200,12 @@ define void @rdiv4(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -246,12 +246,12 @@ define void @rdiv5(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -293,12 +293,12 @@ define void @rdiv6(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -340,12 +340,12 @@ define void @rdiv7(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -387,12 +387,12 @@ define void @rdiv8(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.03 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -434,12 +434,12 @@ define void @rdiv9(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [S S|<]!
+; CHECK: da analyze - consistent input [S S]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc5
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc5 ]
@@ -483,12 +483,12 @@ define void @rdiv10(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [S S|<]!
+; CHECK: da analyze - consistent input [S S]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc5
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc5 ]
@@ -531,12 +531,12 @@ define void @rdiv11(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [S S|<]!
+; CHECK: da analyze - consistent input [S S]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc5
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc5 ]
@@ -579,12 +579,12 @@ define void @rdiv12(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [* *|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [S S|<]!
+; CHECK: da analyze - consistent input [S S]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc5
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc5 ]

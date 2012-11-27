@@ -13,12 +13,12 @@ define void @couple0([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -49,12 +49,12 @@ define void @couple1([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [-9]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -85,12 +85,12 @@ define void @couple2([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -123,12 +123,12 @@ define void @couple3([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -161,12 +161,12 @@ define void @couple4([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -200,12 +200,12 @@ define void @couple5([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -241,12 +241,12 @@ define void @couple6([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [=|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -277,12 +277,12 @@ define void @couple7([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -313,12 +313,12 @@ define void @couple8([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -350,12 +350,12 @@ define void @couple9([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -387,13 +387,13 @@ define void @couple10([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [>] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 3!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -425,13 +425,13 @@ define void @couple11([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [=|<] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 9!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -463,13 +463,13 @@ define void @couple12([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [<] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 11!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -501,12 +501,12 @@ define void @couple13([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -537,13 +537,13 @@ define void @couple14([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [=|<] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 9!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -575,12 +575,12 @@ define void @couple15([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]

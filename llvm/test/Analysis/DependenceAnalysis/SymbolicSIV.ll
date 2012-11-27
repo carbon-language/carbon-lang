@@ -14,12 +14,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -59,12 +59,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -106,12 +106,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -151,12 +151,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -197,12 +197,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -242,12 +242,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -289,13 +289,13 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [*|<] splitable!
 ; CHECK: da analyze - split level = 1, iteration = ((0 smax (-1 + (-1 * %n))) /u 2)!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -334,12 +334,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -383,12 +383,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - flow [<>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body

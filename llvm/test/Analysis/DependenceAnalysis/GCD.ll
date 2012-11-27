@@ -14,12 +14,12 @@ define void @gcd0(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [=> *|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -66,12 +66,12 @@ define void @gcd1(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -119,12 +119,12 @@ define void @gcd2(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -172,12 +172,12 @@ define void @gcd3(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [<> *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -223,12 +223,12 @@ define void @gcd4(i32* %A, i32* %B, i64 %M, i64 %N) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc17
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc17 ]
@@ -284,12 +284,12 @@ define void @gcd5(i32* %A, i32* %B, i64 %M, i64 %N) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [<> *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc17
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc17 ]
@@ -346,12 +346,12 @@ entry:
   %cmp4 = icmp sgt i64 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end12
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -417,12 +417,12 @@ entry:
   %cmp4 = icmp sgt i32 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end15
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [* *|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -500,12 +500,12 @@ entry:
   %cmp4 = icmp sgt i32 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end15
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -578,12 +578,12 @@ entry:
   %cmp4 = icmp eq i32 %n, 0
   br i1 %cmp4, label %for.end15, label %for.cond1.preheader.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [* *|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader

@@ -14,12 +14,12 @@ entry:
   %cmp1 = icmp sgt i64 %n, 0
   br i1 %cmp1, label %for.body.preheader, label %for.end
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -56,12 +56,12 @@ entry:
   %cmp1 = icmp sgt i32 %n, 0
   br i1 %cmp1, label %for.body.preheader, label %for.end
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   %0 = sext i32 %n to i64
@@ -99,12 +99,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -141,12 +141,12 @@ entry:
   %cmp1 = icmp sgt i32 %n, 0
   br i1 %cmp1, label %for.body.preheader, label %for.end
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -183,12 +183,12 @@ define void @strong4(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -218,12 +218,12 @@ define void @strong5(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [19]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -253,12 +253,12 @@ define void @strong6(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [3]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -290,12 +290,12 @@ define void @strong7(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -327,12 +327,12 @@ define void @strong8(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [%n|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -363,12 +363,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -406,12 +406,12 @@ define void @strong10(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - consistent flow [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]

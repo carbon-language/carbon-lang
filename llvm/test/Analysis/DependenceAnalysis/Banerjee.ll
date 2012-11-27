@@ -14,12 +14,12 @@ define void @banerjee0(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [<= <>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -65,12 +65,12 @@ entry:
   %cmp4 = icmp sgt i64 %n, 0
   br i1 %cmp4, label %for.cond1.preheader.preheader, label %for.end9
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [* <>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [* *|<]!
+; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   %0 = add i64 %n, 1
@@ -131,12 +131,12 @@ define void @banerjee2(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -181,12 +181,12 @@ define void @banerjee3(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [> >]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -231,12 +231,12 @@ define void @banerjee4(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -281,12 +281,12 @@ define void @banerjee5(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [< <]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -331,12 +331,12 @@ define void @banerjee6(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [=> <>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -381,12 +381,12 @@ define void @banerjee7(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [> <=]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -431,12 +431,12 @@ define void @banerjee8(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [> <>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -481,12 +481,12 @@ define void @banerjee9(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - flow [<= =|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -532,12 +532,12 @@ define void @banerjee10(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [<> =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -582,12 +582,12 @@ define void @banerjee11(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [<= <>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]
@@ -632,12 +632,12 @@ define void @banerjee12(i64* %A, i64* %B, i64 %m, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 ; CHECK: da analyze - flow [= <>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - input [= =|<]!
+; CHECK: da analyze - input [= =]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =|<]!
+; CHECK: da analyze - output [= =]!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i64* [ %B, %entry ], [ %scevgep, %for.inc7 ]

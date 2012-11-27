@@ -15,12 +15,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -77,12 +77,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond2.preheader, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -141,12 +141,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -203,12 +203,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -263,12 +263,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -324,12 +324,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.cond1.preheader, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0|<]!
+; CHECK: da analyze - consistent input [0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0|<]!
+; CHECK: da analyze - consistent output [0]!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -385,12 +385,12 @@ entry:
   %cmp4 = icmp eq i64 %n1, 0
   br i1 %cmp4, label %for.end7, label %for.cond1.preheader.preheader
 
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [S S|<]!
+; CHECK: da analyze - consistent input [S S]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [* *|<]!
+; CHECK: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader

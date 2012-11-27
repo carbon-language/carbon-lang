@@ -3199,6 +3199,9 @@ static void dumpSmallBitVector(SmallBitVector &BV) {
 Dependence *DependenceAnalysis::depends(Instruction *Src,
                                         Instruction *Dst,
                                         bool PossiblyLoopIndependent) {
+  if (Src == Dst)
+    PossiblyLoopIndependent = false;
+
   if ((!Src->mayReadFromMemory() && !Src->mayWriteToMemory()) ||
       (!Dst->mayReadFromMemory() && !Dst->mayWriteToMemory()))
     // if both instructions don't reference memory, there's no dependence
