@@ -904,10 +904,34 @@ void DwarfDebug::endModule() {
   emitSectionLabels();
 
   // Emit all the DIEs into a debug info section
-  emitDebugInfo();
+  if (!useDwarfFission()) {
+    emitDebugInfo();
 
-  // Corresponding abbreviations into a abbrev section.
-  emitAbbreviations();
+    // Corresponding abbreviations into a abbrev section.
+    emitAbbreviations();
+
+    // Emit info into a debug loc section.
+    emitDebugLoc();
+
+    // Emit info into a debug aranges section.
+    emitDebugARanges();
+
+    // Emit info into a debug ranges section.
+    emitDebugRanges();
+
+    // Emit info into a debug macinfo section.
+    emitDebugMacInfo();
+
+    // Emit inline info.
+    // TODO: When we don't need the option anymore we
+    // can remove all of the code that this section
+    // depends upon.
+    if (useDarwinGDBCompat())
+      emitDebugInlineInfo();
+
+    // Emit info into a debug str section.
+    emitDebugStr();
+  }
 
   // Emit info into the dwarf accelerator table sections.
   if (useDwarfAccelTables()) {
@@ -922,28 +946,6 @@ void DwarfDebug::endModule() {
   // remove all of the code that adds to the table.
   if (useDarwinGDBCompat())
     emitDebugPubTypes();
-
-  // Emit info into a debug loc section.
-  emitDebugLoc();
-
-  // Emit info into a debug aranges section.
-  emitDebugARanges();
-
-  // Emit info into a debug ranges section.
-  emitDebugRanges();
-
-  // Emit info into a debug macinfo section.
-  emitDebugMacInfo();
-
-  // Emit inline info.
-  // TODO: When we don't need the option anymore we
-  // can remove all of the code that this section
-  // depends upon.
-  if (useDarwinGDBCompat())
-    emitDebugInlineInfo();
-
-  // Emit info into a debug str section.
-  emitDebugStr();
 
   // clean up.
   SPMap.clear();
