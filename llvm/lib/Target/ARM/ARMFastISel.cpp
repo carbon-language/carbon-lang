@@ -2586,26 +2586,24 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
   default: return 0;
   case MVT::i16:
     if (!Subtarget->hasV6Ops()) return 0;
-    if (isZExt) {
+    RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
+    if (isZExt)
       Opc = isThumb2 ? ARM::t2UXTH : ARM::UXTH;
-    } else {
+    else
       Opc = isThumb2 ? ARM::t2SXTH : ARM::SXTH;
-      RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
-    }
     break;
   case MVT::i8:
     if (!Subtarget->hasV6Ops()) return 0;
-    if (isZExt) {
+    RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
+    if (isZExt)
       Opc = isThumb2 ? ARM::t2UXTB : ARM::UXTB;
-    } else {
+    else
       Opc = isThumb2 ? ARM::t2SXTB : ARM::SXTB;
-      RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
-    }
     break;
   case MVT::i1:
     if (isZExt) {
-      Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
       RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRRegClass;
+      Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
       isBoolZext = true;
       break;
     }
