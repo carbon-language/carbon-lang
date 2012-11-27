@@ -3982,6 +3982,21 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     break;
   }
   default: {
+    if ((LoadMI->getOpcode() == X86::MOVSSrm ||
+         LoadMI->getOpcode() == X86::VMOVSSrm) &&
+        MF.getRegInfo().getRegClass(LoadMI->getOperand(0).getReg())->getSize()
+          > 4)
+      // These instructions only load 32 bits, we can't fold them if the
+      // destination register is wider than 32 bits (4 bytes).
+      return NULL;
+    if ((LoadMI->getOpcode() == X86::MOVSDrm ||
+         LoadMI->getOpcode() == X86::VMOVSDrm) &&
+        MF.getRegInfo().getRegClass(LoadMI->getOperand(0).getReg())->getSize()
+          > 8)
+      // These instructions only load 64 bits, we can't fold them if the
+      // destination register is wider than 64 bits (8 bytes).
+      return NULL;
+
     // Folding a normal load. Just copy the load's address operands.
     unsigned NumOps = LoadMI->getDesc().getNumOperands();
     for (unsigned i = NumOps - X86::AddrNumOperands; i != NumOps; ++i)
