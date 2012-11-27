@@ -25,4 +25,3 @@ entry:
 	%tmp.7 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf( %struct._IO_FILE* %tmp.8, i8* getelementptr ([3 x i8]* @chr, i32 0, i32 0), i32 33 )		; <i32> [#uses=0]
 	ret i32 0
 }
-

@@ -26,4 +26,3 @@ entry:
 	%c = call i32 @fputs( i8* %s3, %struct._IO_FILE* %out )		; <i32> [#uses=0]
 	ret i32 0
 }
-
