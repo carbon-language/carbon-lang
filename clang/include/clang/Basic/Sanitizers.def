@@ -45,26 +45,34 @@ SANITIZER("address", Address)
 SANITIZER("thread", Thread)
 
 // UndefinedBehaviorSanitizer
-SANITIZER("signed-integer-overflow", SignedIntegerOverflow)
-SANITIZER("divide-by-zero", DivideByZero)
-SANITIZER("shift", Shift)
-SANITIZER("unreachable", Unreachable)
-SANITIZER("return", Return)
-SANITIZER("vla-bound", VLABound)
 SANITIZER("alignment", Alignment)
-SANITIZER("null", Null)
-SANITIZER("vptr", Vptr)
-SANITIZER("object-size", ObjectSize)
-SANITIZER("float-cast-overflow", FloatCastOverflow)
 SANITIZER("bounds", Bounds)
+SANITIZER("float-cast-overflow", FloatCastOverflow)
+SANITIZER("float-divide-by-zero", FloatDivideByZero)
+SANITIZER("integer-divide-by-zero", IntegerDivideByZero)
+SANITIZER("null", Null)
+SANITIZER("object-size", ObjectSize)
+SANITIZER("return", Return)
+SANITIZER("shift", Shift)
+SANITIZER("signed-integer-overflow", SignedIntegerOverflow)
+SANITIZER("unreachable", Unreachable)
+SANITIZER("vla-bound", VLABound)
+SANITIZER("vptr", Vptr)
+
+// IntegerSanitizer
+SANITIZER("unsigned-integer-overflow", UnsignedIntegerOverflow)
 
 // -fsanitize=undefined (and its alias -fcatch-undefined-behavior). This should
 // include all the sanitizers which have low overhead, no ABI or address space
 // layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
-                SignedIntegerOverflow | DivideByZero | Shift | Unreachable |
-                Return | VLABound | Alignment | Null | Vptr | ObjectSize |
-                FloatCastOverflow | Bounds)
+                Alignment | Bounds | FloatCastOverflow | FloatDivideByZero |
+                IntegerDivideByZero | Null | ObjectSize | Return | Shift |
+                SignedIntegerOverflow | Unreachable | VLABound | Vptr)
+
+SANITIZER_GROUP("integer", Integer,
+                SignedIntegerOverflow | UnsignedIntegerOverflow | Shift |
+                IntegerDivideByZero)
 
 #undef SANITIZER
 #undef SANITIZER_GROUP

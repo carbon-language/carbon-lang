@@ -30,7 +30,7 @@ class SanitizerArgs {
 #include "clang/Basic/Sanitizers.def"
     NeedsAsanRt = Address,
     NeedsTsanRt = Thread,
-    NeedsUbsanRt = Undefined ^ Bounds
+    NeedsUbsanRt = (Undefined & ~Bounds) | Integer
   };
   unsigned Kind;
 

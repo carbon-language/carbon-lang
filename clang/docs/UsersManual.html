@@ -875,21 +875,27 @@ likely to affect PCH files that reference a large number of headers.</p>
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <dl>
 <dt id="opt_fsanitize"><b>-fsanitize=check1,check2</b>: Turn on runtime checks
-for various forms of undefined behavior.</dt>
+for various forms of undefined or suspicious behavior.</dt>
 
 <dd>This option controls whether Clang adds runtime checks for various forms of
-undefined behavior, and is disabled by default. If a check fails, a diagnostic
-message is produced at runtime explaining the problem. The main checks are:
+undefined or suspicious behavior, and is disabled by default. If a check
+fails, a diagnostic message is produced at runtime explaining the problem. The
+main checks are:
 
 <ul>
 <li id="opt_fsanitize_address"><tt>-fsanitize=address</tt>:
     <a href="AddressSanitizer.html">AddressSanitizer</a>, a memory error
     detector.</li>
+<li id="opt_fsanitize_integer"><tt>-fsanitize=integer</tt>:
+    Enables checks for undefined or suspicious integer behavior.</li>
 <li id="opt_fsanitize_thread"><tt>-fsanitize=thread</tt>:
     <a href="ThreadSanitizer.html">ThreadSanitizer</a>, an <em>experimental</em>
     data race detector.  Not ready for widespread use.</li>
 <li id="opt_fsanitize_undefined"><tt>-fsanitize=undefined</tt>:
-    Enables all the checks listed below.</li>
+    Fast and compatible undefined behavior checker.  Enables the undefined behavior
+    checks that have small runtime cost and no impact on address space layout
+    or ABI.  This includes all of the checks listed below other than unsigned
+    integer overflow.</li>
 </ul>
 
 The following more fine-grained checks are also available:
@@ -897,11 +903,13 @@ The following more fine-grained checks are also available:
 <ul>
 <li id="opt_fsanitize_alignment"><tt>-fsanitize=alignment</tt>:
     Use of a misaligned pointer or creation of a misaligned reference.</li>
-<li id="opt_fsanitize_divide-by-zero"><tt>-fsanitize=divide-by-zero</tt>:
-    Division by zero.</li>
 <li id="opt_fsanitize_float-cast-overflow"><tt>-fsanitize=float-cast-overflow</tt>:
     Conversion to, from, or between floating-point types which would overflow
     the destination.</li>
+<li id="opt_fsanitize_float-divide-by-zero"><tt>-fsanitize=float-divide-by-zero</tt>:
+    Floating point division by zero.</li>
+<li id="opt_fsanitize_integer-divide-by-zero"><tt>-fsanitize=integer-divide-by-zero</tt>:
+    Integer division by zero.</li>
 <li id="opt_fsanitize_null"><tt>-fsanitize=null</tt>:
     Use of a null pointer or creation of a null reference.</li>
 <li id="opt_fsanitize_object-size"><tt>-fsanitize=object-size</tt>:
@@ -923,6 +931,8 @@ The following more fine-grained checks are also available:
     and checking for overflow in signed division (<tt>INT_MIN / -1</tt>).</li>
 <li id="opt_fsanitize_unreachable"><tt>-fsanitize=unreachable</tt>:
     If control flow reaches __builtin_unreachable.</li>
+<li id="opt_fsanitize_unsigned-integer-overflow"><tt>-fsanitize=unsigned-integer-overflow</tt>:
+    Unsigned integer overflows.</li>
 <li id="opt_fsanitize_vla-bound"><tt>-fsanitize=vla-bound</tt>:
     A variable-length array whose bound does not evaluate to a positive value.</li>
 <li id="opt_fsanitize_vptr"><tt>-fsanitize=vptr</tt>:

@@ -414,6 +414,10 @@ public:
       }
     }
 
+    if (Ops.Ty->isUnsignedIntegerType() &&
+        CGF.getLangOpts().SanitizeUnsignedIntegerOverflow)
+      return EmitOverflowCheckedBinOp(Ops);
+
     if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFMul(Ops.LHS, Ops.RHS, "mul");
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
@@ -1472,11 +1476,23 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
 
     // Note that signed integer inc/dec with width less than int can't
     // overflow because of promotion rules; we're just eliding a few steps here.
-    if (type->isSignedIntegerOrEnumerationType() &&
-        value->getType()->getPrimitiveSizeInBits() >=
-            CGF.IntTy->getBitWidth())
+    if (value->getType()->getPrimitiveSizeInBits() >=
+            CGF.IntTy->getBitWidth() &&
+        type->isSignedIntegerOrEnumerationType()) {
       value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
-    else
+    } else if (value->getType()->getPrimitiveSizeInBits() >=
+               CGF.IntTy->getBitWidth() &&
+               type->isUnsignedIntegerType() &&
+               CGF.getLangOpts().SanitizeUnsignedIntegerOverflow) {
+      BinOpInfo BinOp;
+      BinOp.LHS = value;
+      BinOp.RHS = llvm::ConstantInt::get(value->getType(), 1, false);
+      BinOp.Ty = E->getType();
+      BinOp.Opcode = isInc ? BO_Add : BO_Sub;
+      BinOp.FPContractable = false;
+      BinOp.E = E;
+      value = EmitOverflowCheckedBinOp(BinOp);
+    } else
       value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
   
   // Next most common: pointer increment.
@@ -1926,7 +1942,7 @@ void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
     const BinOpInfo &Ops, llvm::Value *Zero, bool isDiv) {
   llvm::Value *Cond = 0;
 
-  if (CGF.getLangOpts().SanitizeDivideByZero)
+  if (CGF.getLangOpts().SanitizeIntegerDivideByZero)
     Cond = Builder.CreateICmpNE(Ops.RHS, Zero);
 
   if (CGF.getLangOpts().SanitizeSignedIntegerOverflow &&
@@ -1948,16 +1964,17 @@ void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
 }
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
-  if (CGF.getLangOpts().SanitizeDivideByZero ||
-      CGF.getLangOpts().SanitizeSignedIntegerOverflow) {
+  if ((CGF.getLangOpts().SanitizeIntegerDivideByZero ||
+      CGF.getLangOpts().SanitizeSignedIntegerOverflow) &&
+      Ops.Ty->isIntegerType()) {
     llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
-
-    if (Ops.Ty->isIntegerType())
-      EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
-    else if (CGF.getLangOpts().SanitizeDivideByZero &&
-             Ops.Ty->isRealFloatingType())
-      EmitBinOpCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero), Ops);
+    EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
+  } else if (CGF.getLangOpts().SanitizeFloatDivideByZero &&
+             Ops.Ty->isRealFloatingType()) {
+    llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
+    EmitBinOpCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero), Ops);
   }
+
   if (Ops.LHS->getType()->isFPOrFPVectorTy()) {
     llvm::Value *Val = Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
     if (CGF.getLangOpts().OpenCL) {
@@ -1978,10 +1995,10 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
   // Rem in C can't be a floating point type: C99 6.5.5p2.
-  if (CGF.getLangOpts().SanitizeDivideByZero) {
+  if (CGF.getLangOpts().SanitizeIntegerDivideByZero) {
     llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
 
-    if (Ops.Ty->isIntegerType()) 
+    if (Ops.Ty->isIntegerType())
       EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, false);
   }
 
@@ -1995,27 +2012,32 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   unsigned IID;
   unsigned OpID = 0;
 
+  bool isSigned = Ops.Ty->isSignedIntegerOrEnumerationType();
   switch (Ops.Opcode) {
   case BO_Add:
   case BO_AddAssign:
     OpID = 1;
-    IID = llvm::Intrinsic::sadd_with_overflow;
+    IID = isSigned ? llvm::Intrinsic::sadd_with_overflow :
+                     llvm::Intrinsic::uadd_with_overflow;
     break;
   case BO_Sub:
   case BO_SubAssign:
     OpID = 2;
-    IID = llvm::Intrinsic::ssub_with_overflow;
+    IID = isSigned ? llvm::Intrinsic::ssub_with_overflow :
+                     llvm::Intrinsic::usub_with_overflow;
     break;
   case BO_Mul:
   case BO_MulAssign:
     OpID = 3;
-    IID = llvm::Intrinsic::smul_with_overflow;
+    IID = isSigned ? llvm::Intrinsic::smul_with_overflow :
+                     llvm::Intrinsic::umul_with_overflow;
     break;
   default:
     llvm_unreachable("Unsupported operation for overflow detection");
   }
   OpID <<= 1;
-  OpID |= 1;
+  if (isSigned)
+    OpID |= 1;
 
   llvm::Type *opTy = CGF.CGM.getTypes().ConvertType(Ops.Ty);
 
@@ -2031,7 +2053,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   if (handlerName->empty()) {
     // If the signed-integer-overflow sanitizer is enabled, emit a call to its
     // runtime. Otherwise, this is a -ftrapv check, so just emit a trap.
-    if (CGF.getLangOpts().SanitizeSignedIntegerOverflow)
+    if (!isSigned || CGF.getLangOpts().SanitizeSignedIntegerOverflow)
       EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
     else
       CGF.EmitTrapvCheck(Builder.CreateNot(overflow));
@@ -2256,7 +2278,11 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
       return EmitOverflowCheckedBinOp(op);
     }
   }
-    
+
+  if (op.Ty->isUnsignedIntegerType() &&
+      CGF.getLangOpts().SanitizeUnsignedIntegerOverflow)
+    return EmitOverflowCheckedBinOp(op);
+
   if (op.LHS->getType()->isFPOrFPVectorTy()) {
     // Try to form an fmuladd.
     if (Value *FMulAdd = tryEmitFMulAdd(op, CGF, Builder))
@@ -2283,7 +2309,11 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
         return EmitOverflowCheckedBinOp(op);
       }
     }
-    
+
+    if (op.Ty->isUnsignedIntegerType() &&
+        CGF.getLangOpts().SanitizeUnsignedIntegerOverflow)
+      return EmitOverflowCheckedBinOp(op);
+
     if (op.LHS->getType()->isFPOrFPVectorTy()) {
       // Try to form an fmuladd.
       if (Value *FMulAdd = tryEmitFMulAdd(op, CGF, Builder, true))
