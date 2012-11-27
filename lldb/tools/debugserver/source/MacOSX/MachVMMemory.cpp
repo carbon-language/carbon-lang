@@ -16,6 +16,7 @@
 #include "DNBLog.h"
 #include <mach/mach_vm.h>
 #include <mach/shared_region.h>
+#include <sys/sysctl.h>
 
 MachVMMemory::MachVMMemory() :
     m_page_size    (kInvalidPageSize),
@@ -87,6 +88,126 @@ MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo
         region_info->permissions = 0;
     }
     return true;
+}
+
+// For integrated graphics chip, this makes the accounting info for 'wired' memory more like top.
+static uint64_t GetStolenPages()
+{
+    static uint64_t stolenPages = 0;
+    static bool calculated = false;
+    if (calculated) return stolenPages;
+
+	static int mib_reserved[CTL_MAXNAME];
+	static int mib_unusable[CTL_MAXNAME];
+	static int mib_other[CTL_MAXNAME];
+	static size_t mib_reserved_len = 0;
+	static size_t mib_unusable_len = 0;
+	static size_t mib_other_len = 0;
+	int r;	
+    
+	/* This can be used for testing: */
+	//tsamp->pages_stolen = (256 * 1024 * 1024ULL) / tsamp->pagesize;
+    
+	if(0 == mib_reserved_len)
+    {
+		mib_reserved_len = CTL_MAXNAME;
+		
+		r = sysctlnametomib("machdep.memmap.Reserved", mib_reserved,
+                            &mib_reserved_len);
+        
+		if(-1 == r)
+        {
+			mib_reserved_len = 0;
+			return 0;
+		}
+        
+		mib_unusable_len = CTL_MAXNAME;
+        
+		r = sysctlnametomib("machdep.memmap.Unusable", mib_unusable,
+                            &mib_unusable_len);
+        
+		if(-1 == r)
+        {
+			mib_reserved_len = 0;
+			return 0;
+		}
+        
+        
+		mib_other_len = CTL_MAXNAME;
+		
+		r = sysctlnametomib("machdep.memmap.Other", mib_other,
+                            &mib_other_len);
+        
+		if(-1 == r)
+        {
+			mib_reserved_len = 0;
+			return 0;
+		}
+	}
+    
+	if(mib_reserved_len > 0 && mib_unusable_len > 0 && mib_other_len > 0)
+    {
+		uint64_t reserved = 0, unusable = 0, other = 0;
+		size_t reserved_len;
+		size_t unusable_len;
+		size_t other_len;
+		
+		reserved_len = sizeof(reserved);
+		unusable_len = sizeof(unusable);
+		other_len = sizeof(other);
+        
+		/* These are all declared as QUAD/uint64_t sysctls in the kernel. */
+        
+		if(-1 == sysctl(mib_reserved, mib_reserved_len, &reserved,
+                        &reserved_len, NULL, 0))
+        {
+			return 0;
+		}
+        
+		if(-1 == sysctl(mib_unusable, mib_unusable_len, &unusable,
+                        &unusable_len, NULL, 0))
+        {
+			return 0;
+		}
+        
+		if(-1 == sysctl(mib_other, mib_other_len, &other,
+                        &other_len, NULL, 0))
+        {
+			return 0;
+		}
+        
+		if(reserved_len == sizeof(reserved)
+		   && unusable_len == sizeof(unusable)
+		   && other_len == sizeof(other))
+        {
+			uint64_t stolen = reserved + unusable + other;	
+			uint64_t mb128 = 128 * 1024 * 1024ULL;
+            
+			if(stolen >= mb128)
+            {
+                stolen = (stolen & ~((128 * 1024 * 1024ULL) - 1)); // rounding down
+                stolenPages = stolen/vm_page_size;
+			}
+		}
+	}
+    
+    calculated = true;
+    return stolenPages;
+}
+
+static uint64_t GetPhysicalMemory()
+{
+    // This doesn't change often at all. No need to poll each time.
+    static uint64_t physical_memory = 0;
+    static bool calculated = false;
+    if (calculated) return physical_memory;
+    
+    int mib[2];
+    mib[0] = CTL_HW;
+    mib[1] = HW_MEMSIZE;
+    size_t len = sizeof(physical_memory);
+    sysctl(mib, 2, &physical_memory, &len, NULL, 0);
+    return physical_memory;
 }
 
 // rsize and dirty_size is not adjusted for dyld shared cache and multiple __LINKEDIT segment, as in vmmap. In practice, dirty_size doesn't differ much but rsize may. There is performance penalty for the adjustment. Right now, only use the dirty_size.
@@ -276,8 +397,14 @@ static void GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid, m
 }
 
 nub_bool_t
-MachVMMemory::GetMemoryProfile(task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size)
+MachVMMemory::GetMemoryProfile(task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics_data_t &vm_stats, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size)
 {
+    static mach_port_t localHost = mach_host_self();
+    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+    host_statistics(localHost, HOST_VM_INFO, (host_info_t)&vm_stats, &count);
+    vm_stats.wire_count += GetStolenPages();
+    physical_memory = GetPhysicalMemory();
+
     // This uses vmmap strategy. We don't use the returned rsize for now. We prefer to match top's version since that's what we do for the rest of the metrics.
     GetRegionSizes(task, rsize, dirty_size);
     
