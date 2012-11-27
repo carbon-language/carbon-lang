@@ -25,6 +25,7 @@ class ExprFormattersTestCase(TestBase):
         self.buildDsym()
         self.do_my_test()
 
+    @expectedFailureLinux # bugzilla 14437
     @dwarf_test
     def test_with_dwarf(self):
         """Test expr + formatters for good interoperability."""

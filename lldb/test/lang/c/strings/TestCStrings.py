@@ -16,6 +16,7 @@ class CStringsTestCase(TestBase):
         self.buildDsym()
         self.static_method_commands()
 
+    @expectedFailureLinux # bugzilla 14437
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Tests that C strings work as expected in expressions"""

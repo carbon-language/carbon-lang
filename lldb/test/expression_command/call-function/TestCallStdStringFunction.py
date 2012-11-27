@@ -25,6 +25,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.buildDsym()
         self.call_function()
 
+    @expectedFailureLinux # bugzilla 14437
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""
