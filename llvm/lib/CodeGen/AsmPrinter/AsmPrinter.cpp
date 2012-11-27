@@ -308,8 +308,13 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       return;
     }
 
-    if (Align == 1 ||
-        MAI->getLCOMMDirectiveAlignmentType() != LCOMM::NoAlignment) {
+    // Use .lcomm only if it supports user-specified alignment.
+    // Otherwise, while it would still be correct to use .lcomm in some
+    // cases (e.g. when Align == 1), the external assembler might enfore
+    // some -unknown- default alignment behavior, which could cause
+    // spurious differences between external and integrated assembler.
+    // Prefer to simply fall back to .local / .comm in this case.
+    if (MAI->getLCOMMDirectiveAlignmentType() != LCOMM::NoAlignment) {
       // .lcomm _foo, 42
       OutStreamer.EmitLocalCommonSymbol(GVSym, Size, Align);
       return;
