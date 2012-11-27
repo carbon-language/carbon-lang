@@ -563,7 +563,9 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   const ConstantInt *CI = cast<ConstantInt>(C);
   if (Subtarget->hasV6T2Ops() && isUInt<16>(CI->getZExtValue())) {
     unsigned Opc = isThumb2 ? ARM::t2MOVi16 : ARM::MOVi16;
-    unsigned ImmReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+    const TargetRegisterClass *RC = isThumb2 ? &ARM::rGPRRegClass :
+      &ARM::GPRRegClass;
+    unsigned ImmReg = createResultReg(RC);
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ImmReg)
                     .addImm(CI->getZExtValue()));
@@ -2577,15 +2579,18 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
 
   unsigned Opc;
   bool isBoolZext = false;
+  const TargetRegisterClass *RC = TLI.getRegClassFor(MVT::i32);
   if (!SrcVT.isSimple()) return 0;
   switch (SrcVT.getSimpleVT().SimpleTy) {
   default: return 0;
   case MVT::i16:
     if (!Subtarget->hasV6Ops()) return 0;
-    if (isZExt)
+    if (isZExt) {
       Opc = isThumb2 ? ARM::t2UXTH : ARM::UXTH;
-    else
+    } else {
       Opc = isThumb2 ? ARM::t2SXTH : ARM::SXTH;
+      RC = isThumb2 ?&ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
+    }
     break;
   case MVT::i8:
     if (!Subtarget->hasV6Ops()) return 0;
@@ -2597,13 +2602,14 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
   case MVT::i1:
     if (isZExt) {
       Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
+      RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRRegClass;
       isBoolZext = true;
       break;
     }
     return 0;
   }
 
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  unsigned ResultReg = createResultReg(RC);
   MachineInstrBuilder MIB;
   MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
         .addReg(SrcReg);
