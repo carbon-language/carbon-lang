@@ -110,13 +110,8 @@ sub GetHTMLRunDir {
   my $Dir = shift @_;    
   my $TmpMode = 0;
   if (!defined $Dir) {
-    if (`uname` =~ /Darwin/) {
-      $Dir = $ENV{'TMPDIR'};
-      if (!defined $Dir) { $Dir = "/tmp"; }
-    }
-    else {
-      $Dir = "/tmp";
-    }    
+    $Dir = $ENV{'TMPDIR'};
+    if (!defined $Dir) { $Dir = "/tmp"; }
     $TmpMode = 1;
   }
   
