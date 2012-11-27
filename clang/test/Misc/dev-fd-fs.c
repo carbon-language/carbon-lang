@@ -1,8 +1,5 @@
 // Check that we can operate on files from /dev/fd.
 // REQUIRES: dev-fd-fs
-//
-// Currently, this only appears to work on Darwin's dev-fs.
-// REQUIRES: system-darwin
 
 
 // Check reading from named pipes. We cat the input here instead of redirecting

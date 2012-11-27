@@ -620,7 +620,6 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
       Diags.Report(diag::err_fe_error_reading) << InputFile;
       return false;
     }
-    SourceMgr.createMainFileID(File, Kind);
 
     // The natural SourceManager infrastructure can't currently handle named
     // pipes, but we would at least like to accept them for the main
@@ -632,8 +631,13 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
         Diags.Report(diag::err_cannot_open_file) << InputFile << ec.message();
         return false;
       }
+
+      // Create a new virtual file that will have the correct size.
+      File = FileMgr.getVirtualFile(InputFile, MB->getBufferSize(), 0);
       SourceMgr.overrideFileContents(File, MB.take());
     }
+
+    SourceMgr.createMainFileID(File, Kind);
   } else {
     OwningPtr<llvm::MemoryBuffer> SB;
     if (llvm::MemoryBuffer::getSTDIN(SB)) {
