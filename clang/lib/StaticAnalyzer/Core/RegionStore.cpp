@@ -1581,14 +1581,16 @@ StoreRef RegionStoreManager::BindArray(Store store, const TypedValueRegion* R,
     Size = CAT->getSize().getZExtValue();
 
   // Check if the init expr is a string literal.
-  if (loc::MemRegionVal *MRV = dyn_cast<loc::MemRegionVal>(&Init)) {
-    const StringRegion *S = cast<StringRegion>(MRV->getRegion());
-
-    // Treat the string as a lazy compound value.
-    nonloc::LazyCompoundVal LCV =
-      cast<nonloc::LazyCompoundVal>(svalBuilder.
-                                makeLazyCompoundVal(StoreRef(store, *this), S));
-    return BindAggregate(store, R, LCV);
+  if (const MemRegion *Reg = Init.getAsRegion()) {
+    if (const StringRegion *S = dyn_cast<StringRegion>(Reg)) {
+      // Treat the string as a lazy compound value.
+      NonLoc V = svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), S);
+      return BindAggregate(store, R, V);
+    }
+    // FIXME: Handle CXXTempObjectRegion, which can occur in cases
+    // where a struct contains an array of structs in C++.
+    assert(isa<CXXTempObjectRegion>(Reg));
+    return BindAggregate(store, R, UnknownVal());
   }
 
   // Handle lazy compound values.

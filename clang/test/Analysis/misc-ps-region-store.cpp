@@ -633,3 +633,26 @@ void test_alloca_in_a_recursive_function(int p1) {
     test_alloca_in_a_recursive_function(1);
     test_alloca_in_a_recursive_function(2);
 }
+
+//===---------------------------------------------------------------------===//
+// Random tests.
+//===---------------------------------------------------------------------===//
+
+// Tests assigning using a C-style initializer to a struct
+// variable whose sub-field is also a struct.  This currently
+// results in a CXXTempObjectRegion being created, but not
+// properly handled.  For now, we just ignore that value
+// to avoid a crash (<rdar://problem/12753384>).
+struct RDar12753384_ClassA {
+  unsigned z;
+};
+struct  RDar12753384_ClassB {
+  unsigned x;
+  RDar12753384_ClassA y[ 8 ] ;
+};
+unsigned RDar12753384() {
+  RDar12753384_ClassB w = { 0x00 };
+  RDar12753384_ClassA y[8];
+  return w.x;
+}
+
