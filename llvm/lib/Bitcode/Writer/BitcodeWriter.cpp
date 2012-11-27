@@ -553,6 +553,18 @@ static uint64_t GetOptimizationFlags(const Value *V) {
                dyn_cast<PossiblyExactOperator>(V)) {
     if (PEO->isExact())
       Flags |= 1 << bitc::PEO_EXACT;
+  } else if (const FPMathOperator *FPMO =
+             dyn_cast<const FPMathOperator>(V)) {
+    if (FPMO->hasUnsafeAlgebra())
+      Flags |= 1 << bitc::FMF_UNSAFE_ALGEBRA;
+    if (FPMO->hasNoNaNs())
+      Flags |= 1 << bitc::FMF_NO_NANS;
+    if (FPMO->hasNoInfs())
+      Flags |= 1 << bitc::FMF_NO_INFS;
+    if (FPMO->hasNoSignedZeros())
+      Flags |= 1 << bitc::FMF_NO_SIGNED_ZEROS;
+    if (FPMO->hasAllowReciprocal())
+      Flags |= 1 << bitc::FMF_ALLOW_RECIPROCAL;
   }
 
   return Flags;

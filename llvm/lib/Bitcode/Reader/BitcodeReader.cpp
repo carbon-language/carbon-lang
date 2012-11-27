@@ -2044,7 +2044,22 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
                    Opc == Instruction::AShr) {
           if (Record[OpNum] & (1 << bitc::PEO_EXACT))
             cast<BinaryOperator>(I)->setIsExact(true);
+        } else if (isa<FPMathOperator>(I)) {
+          FastMathFlags FMF;
+          FMF.UnsafeAlgebra =
+            0 != (Record[OpNum] & (1 << bitc::FMF_UNSAFE_ALGEBRA));
+          FMF.NoNaNs
+            = 0 != (Record[OpNum] & (1 << bitc::FMF_NO_NANS));
+          FMF.NoInfs
+            = 0 != (Record[OpNum] & (1 << bitc::FMF_NO_INFS));
+          FMF.NoSignedZeros
+            = 0 != (Record[OpNum] & (1 << bitc::FMF_NO_SIGNED_ZEROS));
+          FMF.AllowReciprocal
+            = 0 != (Record[OpNum] & (1 << bitc::FMF_ALLOW_RECIPROCAL));
+          if (FMF.any())
+            I->setFastMathFlags(FMF);
         }
+
       }
       break;
     }

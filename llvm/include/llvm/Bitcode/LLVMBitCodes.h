@@ -240,6 +240,16 @@ namespace bitc {
     PEO_EXACT = 0
   };
 
+  /// Flags for serializing FPMathOperator's
+  /// SubclassOptionalData contents.
+  enum FastMathFlags {
+    FMF_UNSAFE_ALGEBRA   = 0,
+    FMF_NO_NANS          = 1,
+    FMF_NO_INFS          = 2,
+    FMF_NO_SIGNED_ZEROS  = 3,
+    FMF_ALLOW_RECIPROCAL = 4
+  };
+
   /// Encoded AtomicOrdering values.
   enum AtomicOrderingCodes {
     ORDERING_NOTATOMIC = 0,
