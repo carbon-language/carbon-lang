@@ -890,7 +890,8 @@ DWARFCompileUnit::Supports_unnamed_objc_bitfields ()
 {
     if (GetProducer() == eProducerClang)
     {
-        if (GetProducerVersionMajor() >= 425 && GetProducerVersionUpdate() >= 13)
+        const uint32_t major_version = GetProducerVersionMajor();
+        if (major_version > 425 || (major_version == 425 && GetProducerVersionUpdate() >= 13))
             return true;
         else
             return false;
