@@ -176,8 +176,9 @@ ValueObjectDynamicValue::UpdateValue ()
     // Or we could return false, and make ourselves an echo of our parent?
     if (!found_dynamic_type)
     {
-        if (m_type_sp)
-            SetValueDidChange(true);
+        ClearDynamicTypeInformation();
+        m_type_sp.reset();
+        SetValueDidChange(true);
         m_value = m_parent->GetValue();
         m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule().get());
         return m_error.Success();
