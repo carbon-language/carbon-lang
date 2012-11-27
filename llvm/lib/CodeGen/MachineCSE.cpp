@@ -126,8 +126,6 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
       // deleted.
       continue;
     MachineInstr *DefMI = MRI->getVRegDef(Reg);
-    if (DefMI->getParent() != MBB)
-      continue;
     if (!DefMI->isCopy())
       continue;
     unsigned SrcReg = DefMI->getOperand(1).getReg();
