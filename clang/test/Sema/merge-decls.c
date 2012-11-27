@@ -37,3 +37,14 @@ void foo6096412(void) {
   int x = sizeof(i6096412);
 }
 
+
+typedef int test1_IA[];
+typedef int test1_A10[10];
+static test1_A10 *test1_f(void);
+void test1_g(void)
+{
+  {
+    extern test1_IA  *test1_f(void);
+  }
+  (void)sizeof(*test1_f());
+}
