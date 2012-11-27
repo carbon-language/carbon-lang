@@ -2595,10 +2595,12 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
     break;
   case MVT::i8:
     if (!Subtarget->hasV6Ops()) return 0;
-    if (isZExt)
+    if (isZExt) {
       Opc = isThumb2 ? ARM::t2UXTB : ARM::UXTB;
-    else
+    } else {
       Opc = isThumb2 ? ARM::t2SXTB : ARM::SXTB;
+      RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
+    }
     break;
   case MVT::i1:
     if (isZExt) {
