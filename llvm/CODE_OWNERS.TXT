@@ -51,9 +51,6 @@ N: Venkatraman Govindaraju
 E: venkatra@cs.wisc.edu
 D: Sparc Backend (lib/Target/Sparc/*)
 
-N: Doug Gregor
-D: All parts of Clang not covered by someone else
-
 N: Tobias Grosser
 D: Polly
 
@@ -84,9 +81,6 @@ N: Benjamin Kramer
 E: benny.kra@gmail.com
 D: DWARF Parser
 
-N: Ted Kremenek
-D: Clang Static Analyzer
-
 N: Sergei Larin
 E: slarin@codeaurora.org
 D: VLIW Instruction Scheduling, Packetization
@@ -95,10 +89,6 @@ N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Everything not covered by someone else
-
-N: John McCall
-E: rjmccall@apple.com
-D: Clang LLVM IR generation
 
 N: Jakob Olesen
 D: Register allocators and TableGen
@@ -118,10 +108,6 @@ D: X86 Backend, Loop Vectorizer
 N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
-
-N: Richard Smith
-E: richard@metafoo.co.uk
-D: Clang Semantic Analysis (tools/clang/lib/Sema/* tools/clang/include/clang/Sema/*)
 
 N: Andrew Trick
 E: atrick@apple.com
