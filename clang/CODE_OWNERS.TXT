@@ -1,0 +1,23 @@
+This file is a list of the people responsible for ensuring that patches for a
+particular part of Clang are reviewed, either by themself or by someone else.
+They are also the gatekeepers for their part of Clang, with the final word on
+what goes in or not.
+
+The list is sorted by surname and formatted to allow easy grepping and
+beautification by scripts.  The fields are: name (N), email (E), web-address
+(W), PGP key ID and fingerprint (P), description (D), and snail-mail address
+(S).
+
+N: Doug Gregor
+D: All parts of Clang not covered by someone else
+
+N: Ted Kremenek
+D: Clang Static Analyzer
+
+N: John McCall
+E: rjmccall@apple.com
+D: Clang LLVM IR generation
+
+N: Richard Smith
+E: richard@metafoo.co.uk
+D: Clang Semantic Analysis (tools/clang/lib/Sema/* tools/clang/include/clang/Sema/*)
