@@ -886,6 +886,33 @@ Value *llvm::SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
                            RecursionLimit);
 }
 
+/// Given the operands for an FMul, see if we can fold the result
+static Value *SimplifyFMulInst(Value *Op0, Value *Op1,
+                               FastMathFlags FMF,
+                               const Query &Q,
+                               unsigned MaxRecurse) {
+ if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::FMul, CLHS->getType(),
+                                      Ops, Q.TD, Q.TLI);
+    }
+ }
+
+ // Check for some fast-math optimizations
+ if (FMF.NoNaNs) {
+   if (FMF.NoSignedZeros) {
+     // fmul N S 0, x ==> 0
+     if (match(Op0, m_Zero()))
+       return Op0;
+     if (match(Op1, m_Zero()))
+       return Op1;
+   }
+ }
+
+ return 0;
+}
+
 /// SimplifyMulInst - Given operands for a Mul, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyMulInst(Value *Op0, Value *Op1, const Query &Q,
@@ -949,6 +976,14 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const Query &Q,
       return V;
 
   return 0;
+}
+
+Value *llvm::SimplifyFMulInst(Value *Op0, Value *Op1,
+                              FastMathFlags FMF,
+                              const DataLayout *TD,
+                              const TargetLibraryInfo *TLI,
+                              const DominatorTree *DT) {
+  return ::SimplifyFMulInst(Op0, Op1, FMF, Query (TD, TLI, DT), RecursionLimit);
 }
 
 Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const DataLayout *TD,
@@ -2798,6 +2833,10 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *TD,
                              cast<BinaryOperator>(I)->hasNoSignedWrap(),
                              cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
                              TD, TLI, DT);
+    break;
+  case Instruction::FMul:
+    Result = SimplifyFMulInst(I->getOperand(0), I->getOperand(1),
+                              I->getFastMathFlags(), TD, TLI, DT);
     break;
   case Instruction::Mul:
     Result = SimplifyMulInst(I->getOperand(0), I->getOperand(1), TD, TLI, DT);

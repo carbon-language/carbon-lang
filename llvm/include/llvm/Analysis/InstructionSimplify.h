@@ -25,6 +25,7 @@ namespace llvm {
   class DominatorTree;
   class Instruction;
   class DataLayout;
+  struct FastMathFlags;
   class TargetLibraryInfo;
   class Type;
   class Value;
@@ -42,6 +43,14 @@ namespace llvm {
                          const DataLayout *TD = 0,
                          const TargetLibraryInfo *TLI = 0,
                          const DominatorTree *DT = 0);
+
+  /// Given operands for an FMul, see if we can fold the result.  If not, this
+  /// returns null.
+  Value *SimplifyFMulInst(Value *LHS, Value *RHS,
+                          FastMathFlags FMF,
+                          const DataLayout *TD = 0,
+                          const TargetLibraryInfo *TLI = 0,
+                          const DominatorTree *DT = 0);
 
   /// SimplifyMulInst - Given operands for a Mul, see if we can
   /// fold the result.  If not, this returns null.
