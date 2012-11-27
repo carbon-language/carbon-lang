@@ -711,6 +711,86 @@
 			};
 			name = Release;
 		};
+		4968B7A916657FAE00741ABB /* DebugClang */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"ARCHS[sdk=iphoneos*]" = (
+					armv7,
+					armv7s,
+				);
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 193;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = "";
+				STRIP_INSTALLED_PRODUCT = NO;
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_BUILDER = "$(USER)";
+			};
+			name = DebugClang;
+		};
+		4968B7AA16657FAE00741ABB /* DebugClang */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
+				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 193;
+				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
+					"$(SDKROOT)/System/Library/PrivateFrameworks",
+					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
+				);
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_DEBUG;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				INSTALL_PATH = /usr/bin;
+				LLDB_DEBUGSERVER = 1;
+				OTHER_CFLAGS = "-Wparentheses";
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-Wparentheses",
+					"-DWITH_LOCKDOWN",
+					"-DWITH_SPRINGBOARD",
+					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
+					"-DOS_OBJECT_USE_OBJC=0",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
+				OTHER_LDFLAGS = (
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-framework",
+					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
+					"-llockdown",
+				);
+				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
+				PRODUCT_NAME = debugserver;
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
+				SKIP_INSTALL = YES;
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
+				ZERO_LINK = NO;
+			};
+			name = DebugClang;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -718,6 +798,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1DEB914F08733D8E0010E9CD /* Debug */,
+				4968B7A916657FAE00741ABB /* DebugClang */,
 				1DEB915008733D8E0010E9CD /* Release */,
 				262419A11198A93E00067686 /* BuildAndIntegration */,
 			);
@@ -728,6 +809,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				26CE0596115C31C30022F371 /* Debug */,
+				4968B7AA16657FAE00741ABB /* DebugClang */,
 				26CE0597115C31C30022F371 /* Release */,
 				262419A21198A93E00067686 /* BuildAndIntegration */,
 			);
