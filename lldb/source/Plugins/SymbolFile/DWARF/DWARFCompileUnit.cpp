@@ -43,7 +43,10 @@ DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
     m_length        (0),
     m_version       (0),
     m_addr_size     (DWARFCompileUnit::GetDefaultAddressSize()),
-    m_producer      (eProducerInvalid)
+    m_producer      (eProducerInvalid),
+    m_producer_version_major (0),
+    m_producer_version_minor (0),
+    m_producer_version_update (0)
 {
 }
 
@@ -883,9 +886,22 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
 }
 
 bool
+DWARFCompileUnit::Supports_unnamed_objc_bitfields ()
+{
+    if (GetProducer() == eProducerClang)
+    {
+        if (GetProducerVersionMajor() >= 425 && GetProducerVersionUpdate() >= 13)
+            return true;
+        else
+            return false;
+    }
+    return true; // Assume all other compilers didn't have incorrect ObjC bitfield info
+}
+
+bool
 DWARFCompileUnit::Supports_DW_AT_APPLE_objc_complete_type ()
 {
-    if (GetProducer() == eProcucerLLVMGCC)
+    if (GetProducer() == eProducerLLVMGCC)
         return false;
     return true;
 }
@@ -895,34 +911,81 @@ DWARFCompileUnit::DW_AT_decl_file_attributes_are_invalid()
 {
     // llvm-gcc makes completely invalid decl file attributes and won't ever
     // be fixed, so we need to know to ignore these.
-    return GetProducer() == eProcucerLLVMGCC;
+    return GetProducer() == eProducerLLVMGCC;
+}
+
+void
+DWARFCompileUnit::ParseProducerInfo ()
+{
+    m_producer_version_major = UINT32_MAX;
+    m_producer_version_minor = UINT32_MAX;
+    m_producer_version_update = UINT32_MAX;
+
+    const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+    if (die)
+    {
+
+        const char *producer_cstr = die->GetAttributeValueAsString(m_dwarf2Data, this, DW_AT_producer, NULL);
+        if (producer_cstr)
+        {
+            RegularExpression llvm_gcc_regex("^4\\.[012]\\.[01] \\(Based on Apple Inc\\. build [0-9]+\\) \\(LLVM build [\\.0-9]+\\)$");
+            if (llvm_gcc_regex.Execute (producer_cstr))
+            {
+                m_producer = eProducerLLVMGCC;
+            }
+            else if (strstr(producer_cstr, "clang"))
+            {
+                RegularExpression clang_regex("clang-([0-9]+)\\.([0-9]+)\\.([0-9]+)");
+                if (clang_regex.Execute (producer_cstr, 3))
+                {
+                    std::string str;
+                    if (clang_regex.GetMatchAtIndex (producer_cstr, 1, str))
+                        m_producer_version_major = Args::StringToUInt32(str.c_str(), UINT32_MAX, 10);
+                    if (clang_regex.GetMatchAtIndex (producer_cstr, 2, str))
+                        m_producer_version_minor = Args::StringToUInt32(str.c_str(), UINT32_MAX, 10);
+                    if (clang_regex.GetMatchAtIndex (producer_cstr, 3, str))
+                        m_producer_version_update = Args::StringToUInt32(str.c_str(), UINT32_MAX, 10);
+                }
+                m_producer = eProducerClang;
+            }
+            else if (strstr(producer_cstr, "GNU"))
+                m_producer = eProducerGCC;
+        }
+    }
+    if (m_producer == eProducerInvalid)
+        m_producer = eProcucerOther;
 }
 
 DWARFCompileUnit::Producer
 DWARFCompileUnit::GetProducer ()
 {
     if (m_producer == eProducerInvalid)
-    {
-        const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
-        if (die)
-        {
-            const char *producer_cstr = die->GetAttributeValueAsString(m_dwarf2Data, this, DW_AT_producer, NULL);
-            if (producer_cstr)
-            {
-                RegularExpression g_llvm_gcc_regex("^4\\.[012]\\.[01] \\(Based on Apple Inc\\. build [0-9]+\\) \\(LLVM build [\\.0-9]+\\)$");
-                if (g_llvm_gcc_regex.Execute (producer_cstr))
-                    m_producer = eProcucerLLVMGCC;
-                else if (strstr(producer_cstr, "clang"))
-                    m_producer = eProducerClang;
-                else if (strstr(producer_cstr, "GNU"))
-                    m_producer = eProducerGCC;
-            }
-        }
-        if (m_producer == eProducerInvalid)
-            m_producer = eProcucerOther;
-    }
+        ParseProducerInfo ();
     return m_producer;
 }
 
 
+uint32_t
+DWARFCompileUnit::GetProducerVersionMajor()
+{
+    if (m_producer_version_major == 0)
+        ParseProducerInfo ();
+    return m_producer_version_major;
+}
+
+uint32_t
+DWARFCompileUnit::GetProducerVersionMinor()
+{
+    if (m_producer_version_minor == 0)
+        ParseProducerInfo ();
+    return m_producer_version_minor;
+}
+
+uint32_t
+DWARFCompileUnit::GetProducerVersionUpdate()
+{
+    if (m_producer_version_update == 0)
+        ParseProducerInfo ();
+    return m_producer_version_update;
+}
 

@@ -1768,11 +1768,15 @@ SymbolFileDWARF::ParseChildMembers
                                 // Code to detect unnamed bitifields
                                 if (bit_size > 0 && member_byte_offset != UINT32_MAX)
                                 {
-                                    // Objective C has invalid DW_AT_bit_offset values so we can't use them to detect
-                                    // unnamed bitfields. Once clang is fixed we will enable unnamed bitfields
-                                    // in ObjC classes (<rdar://problem/12636970>)
+                                    // Objective C has invalid DW_AT_bit_offset values in older versions
+                                    // of clang, so we have to be careful and only detect unnammed bitfields
+                                    // if we have a new enough clang.
+                                    bool detect_unnamed_bitfields = true;
                                     
-                                    if (!(class_language == eLanguageTypeObjC || class_language == eLanguageTypeObjC_plus_plus))
+                                    if (class_language == eLanguageTypeObjC || class_language == eLanguageTypeObjC_plus_plus)
+                                        detect_unnamed_bitfields = dwarf_cu->Supports_unnamed_objc_bitfields ();
+                                    
+                                    if (detect_unnamed_bitfields)
                                     {
                                         // We have a bitfield, we need to watch out for
                                         // unnamed bitfields that we need to insert if

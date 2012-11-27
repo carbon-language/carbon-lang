@@ -23,7 +23,7 @@ public:
         eProducerInvalid = 0,
         eProducerClang,
         eProducerGCC,
-        eProcucerLLVMGCC,
+        eProducerLLVMGCC,
         eProcucerOther
     };
 
@@ -144,6 +144,9 @@ public:
     bool
     DW_AT_decl_file_attributes_are_invalid();
 
+    bool
+    Supports_unnamed_objc_bitfields ();
+
 //    void
 //    AddGlobalDIEByIndex (uint32_t die_idx);
 //
@@ -173,6 +176,14 @@ public:
     Producer
     GetProducer ();
     
+    uint32_t
+    GetProducerVersionMajor();
+
+    uint32_t
+    GetProducerVersionMinor();
+    
+    uint32_t
+    GetProducerVersionUpdate();
 
 protected:
     SymbolFileDWARF*    m_dwarf2Data;
@@ -186,6 +197,12 @@ protected:
     uint16_t            m_version;
     uint8_t             m_addr_size;
     Producer            m_producer;
+    uint32_t            m_producer_version_major;
+    uint32_t            m_producer_version_minor;
+    uint32_t            m_producer_version_update;
+    
+    void
+    ParseProducerInfo ();
 private:
     DISALLOW_COPY_AND_ASSIGN (DWARFCompileUnit);
 };
