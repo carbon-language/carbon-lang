@@ -288,9 +288,6 @@ namespace llvm {
   /// MachineLoopInfo - This pass is a loop analysis pass.
   extern char &MachineLoopInfoID;
 
-  /// MachineLoopRanges - This pass is an on-demand loop coverage analysis.
-  extern char &MachineLoopRangesID;
-
   /// MachineDominators - This pass is a machine dominators analysis pass.
   extern char &MachineDominatorsID;
 

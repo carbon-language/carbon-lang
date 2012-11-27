@@ -172,7 +172,6 @@ void initializeMachineDominatorTreePass(PassRegistry&);
 void initializeMachinePostDominatorTreePass(PassRegistry&);
 void initializeMachineLICMPass(PassRegistry&);
 void initializeMachineLoopInfoPass(PassRegistry&);
-void initializeMachineLoopRangesPass(PassRegistry&);
 void initializeMachineModuleInfoPass(PassRegistry&);
 void initializeMachineSchedulerPass(PassRegistry&);
 void initializeMachineSinkingPass(PassRegistry&);

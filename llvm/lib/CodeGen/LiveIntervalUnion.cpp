@@ -16,7 +16,6 @@
 #define DEBUG_TYPE "regalloc"
 #include "LiveIntervalUnion.h"
 #include "llvm/ADT/SparseBitVector.h"
-#include "llvm/CodeGen/MachineLoopRanges.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -180,33 +179,6 @@ collectInterferingVRegs(unsigned MaxInterferingRegs) {
   }
   SeenAllInterferences = true;
   return InterferingVRegs.size();
-}
-
-bool LiveIntervalUnion::Query::checkLoopInterference(MachineLoopRange *Loop) {
-  // VirtReg is likely live throughout the loop, so start by checking LIU-Loop
-  // overlaps.
-  IntervalMapOverlaps<LiveIntervalUnion::Map, MachineLoopRange::Map>
-    Overlaps(LiveUnion->getMap(), Loop->getMap());
-  if (!Overlaps.valid())
-    return false;
-
-  // The loop is overlapping an LIU assignment. Check VirtReg as well.
-  LiveInterval::iterator VRI = VirtReg->find(Overlaps.start());
-
-  for (;;) {
-    if (VRI == VirtReg->end())
-      return false;
-    if (VRI->start < Overlaps.stop())
-      return true;
-
-    Overlaps.advanceTo(VRI->start);
-    if (!Overlaps.valid())
-      return false;
-    if (Overlaps.start() < VRI->end)
-      return true;
-
-    VRI = VirtReg->advanceTo(VRI, Overlaps.start());
-  }
 }
 
 void LiveIntervalUnion::Array::init(LiveIntervalUnion::Allocator &Alloc,
