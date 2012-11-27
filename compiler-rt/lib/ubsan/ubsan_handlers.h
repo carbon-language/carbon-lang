@@ -35,15 +35,15 @@ struct OverflowData {
   const TypeDescriptor &Type;
 };
 
-/// \brief Handle a signed integer addition overflow.
+/// \brief Handle an integer addition overflow.
 extern "C" void __ubsan_handle_add_overflow(OverflowData *Data,
                                             ValueHandle LHS,
                                             ValueHandle RHS);
-/// \brief Handle a signed integer subtraction overflow.
+/// \brief Handle an integer subtraction overflow.
 extern "C" void __ubsan_handle_sub_overflow(OverflowData *Data,
                                             ValueHandle LHS,
                                             ValueHandle RHS);
-/// \brief Handle a signed integer multiplication overflow.
+/// \brief Handle an integer multiplication overflow.
 extern "C" void __ubsan_handle_mul_overflow(OverflowData *Data,
                                             ValueHandle LHS,
                                             ValueHandle RHS);

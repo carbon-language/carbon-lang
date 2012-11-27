@@ -43,30 +43,31 @@ void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
   Die();
 }
 
-/// \brief Common diagnostic emission for various forms of signed overflow.
-template<typename T> static void HandleSignedOverflow(OverflowData *Data,
+/// \brief Common diagnostic emission for various forms of integer overflow.
+template<typename T> static void HandleIntegerOverflow(OverflowData *Data,
                                                       ValueHandle LHS,
                                                       const char *Operator,
                                                       T RHS) {
-  Diag(Data->Loc, "signed integer overflow: "
-                  "%0 %1 %2 cannot be represented in type %3")
+  Diag(Data->Loc, "%0 integer overflow: "
+                  "%1 %2 %3 cannot be represented in type %4")
+    << (Data->Type.isSignedIntegerTy() ? "signed" : "unsigned")
     << Value(Data->Type, LHS) << Operator << RHS << Data->Type;
   Die();
 }
 
 void __ubsan::__ubsan_handle_add_overflow(OverflowData *Data,
                                           ValueHandle LHS, ValueHandle RHS) {
-  HandleSignedOverflow(Data, LHS, "+", Value(Data->Type, RHS));
+  HandleIntegerOverflow(Data, LHS, "+", Value(Data->Type, RHS));
 }
 
 void __ubsan::__ubsan_handle_sub_overflow(OverflowData *Data,
                                           ValueHandle LHS, ValueHandle RHS) {
-  HandleSignedOverflow(Data, LHS, "-", Value(Data->Type, RHS));
+  HandleIntegerOverflow(Data, LHS, "-", Value(Data->Type, RHS));
 }
 
 void __ubsan::__ubsan_handle_mul_overflow(OverflowData *Data,
                                           ValueHandle LHS, ValueHandle RHS) {
-  HandleSignedOverflow(Data, LHS, "*", Value(Data->Type, RHS));
+  HandleIntegerOverflow(Data, LHS, "*", Value(Data->Type, RHS));
 }
 
 void __ubsan::__ubsan_handle_negate_overflow(OverflowData *Data,
