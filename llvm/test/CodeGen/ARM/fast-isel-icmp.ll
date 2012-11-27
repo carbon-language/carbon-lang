@@ -1,6 +1,21 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 
+define i32 @icmp_i16_signed(i16 %a, i16 %b) nounwind {
+entry:
+; ARM: icmp_i16_signed
+; ARM: sxth r0, r0
+; ARM: sxth r1, r1
+; ARM: cmp	r0, r1
+; THUMB: icmp_i16_signed
+; THUMB: sxth r0, r0
+; THUMB: sxth r1, r1
+; THUMB: cmp	r0, r1
+  %cmp = icmp slt i16 %a, %b
+  %conv2 = zext i1 %cmp to i32
+  ret i32 %conv2
+}
+
 define i32 @icmp_i16_unsigned(i16 %a, i16 %b) nounwind {
 entry:
 ; ARM: icmp_i16_unsigned
@@ -27,6 +42,21 @@ entry:
 ; THUMB: sxtb r1, r1
 ; THUMB: cmp r0, r1
   %cmp = icmp sgt i8 %a, %b
+  %conv2 = zext i1 %cmp to i32
+  ret i32 %conv2
+}
+
+define i32 @icmp_i8_unsigned(i8 %a, i8 %b) nounwind {
+entry:
+; ARM: icmp_i8_unsigned
+; ARM: uxtb r0, r0
+; ARM: uxtb r1, r1
+; ARM: cmp r0, r1
+; THUMB: icmp_i8_unsigned
+; THUMB: uxtb r0, r0
+; THUMB: uxtb r1, r1
+; THUMB: cmp r0, r1
+  %cmp = icmp ugt i8 %a, %b
   %conv2 = zext i1 %cmp to i32
   ret i32 %conv2
 }
