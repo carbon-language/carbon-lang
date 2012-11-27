@@ -12,10 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "gtest/gtest.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "MCJITTestBase.h"
-#include "SectionMemoryManager.h"
-#include "gtest/gtest.h"
 
 using namespace llvm;
 
@@ -47,6 +46,7 @@ TEST_F(MCJITTest, global_variable) {
   GlobalValue *Global = insertGlobalInt32(M.get(), "test_global", initialValue);
   createJIT(M.take());
   void *globalPtr =  TheJIT->getPointerToGlobal(Global);
+  MM->applyPermissions();
   static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != globalPtr)
     << "Unable to get pointer to global value from JIT";
@@ -61,6 +61,7 @@ TEST_F(MCJITTest, add_function) {
   Function *F = insertAddFunction(M.get());
   createJIT(M.take());
   void *addPtr = TheJIT->getPointerToFunction(F);
+  MM->applyPermissions();
   static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != addPtr)
     << "Unable to get pointer to function from JIT";
@@ -78,6 +79,7 @@ TEST_F(MCJITTest, run_main) {
   Function *Main = insertMainFunction(M.get(), 6);
   createJIT(M.take());
   void *vPtr = TheJIT->getPointerToFunction(Main);
+  MM->applyPermissions();
   static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != vPtr)
     << "Unable to get pointer to main() from JIT";
@@ -100,6 +102,7 @@ TEST_F(MCJITTest, return_global) {
 
   createJIT(M.take());
   void *rgvPtr = TheJIT->getPointerToFunction(ReturnGlobal);
+  MM->applyPermissions();
   static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != rgvPtr);
 
@@ -169,6 +172,7 @@ TEST_F(MCJITTest, multiple_functions) {
 
   createJIT(M.take());
   void *vPtr = TheJIT->getPointerToFunction(Outer);
+  MM->applyPermissions();
   static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
   EXPECT_TRUE(0 != vPtr)
     << "Unable to get pointer to outer function from JIT";

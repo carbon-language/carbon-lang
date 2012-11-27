@@ -1,4 +1,4 @@
-//===-- SectionMemoryManager.cpp - The memory manager for MCJIT -----------===//
+//===- SectionMemoryManager.cpp - Memory manager for MCJIT/RtDyld *- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,25 +7,24 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the implementation of the section-based memory manager
-// used by MCJIT.
+// This file implements the section-based memory manager used by the MCJIT
+// execution engine and RuntimeDyld
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/MathExtras.h"
-
 #include "SectionMemoryManager.h"
 
 #ifdef __linux__
-// These includes used by SectionMemoryManager::getPointerToNamedFunction()
-// for Glibc trickery. Look comments in this function for more information.
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#include <fcntl.h>
-#include <unistd.h>
+  // These includes used by SectionMemoryManager::getPointerToNamedFunction()
+  // for Glibc trickery. See comments in this function for more information.
+  #ifdef HAVE_SYS_STAT_H
+    #include <sys/stat.h>
+  #endif
+  #include <fcntl.h>
+  #include <unistd.h>
 #endif
 
 namespace llvm {
@@ -34,65 +33,137 @@ uint8_t *SectionMemoryManager::allocateDataSection(uintptr_t Size,
                                                     unsigned Alignment,
                                                     unsigned SectionID,
                                                     bool IsReadOnly) {
-  if (!Alignment)
-    Alignment = 16;
-  // Ensure that enough memory is requested to allow aligning.
-  size_t NumElementsAligned = 1 + (Size + Alignment - 1)/Alignment;
-  uint8_t *Addr = (uint8_t*)calloc(NumElementsAligned, Alignment);
-
-  // Honour the alignment requirement.
-  uint8_t *AlignedAddr = (uint8_t*)RoundUpToAlignment((uint64_t)Addr, Alignment);
-
-  // Store the original address from calloc so we can free it later.
-  AllocatedDataMem.push_back(sys::MemoryBlock(Addr, NumElementsAligned*Alignment));
-  return AlignedAddr;
+  if (IsReadOnly)
+    return allocateSection(RODataMem, Size, Alignment);
+  return allocateSection(RWDataMem, Size, Alignment);
 }
 
 uint8_t *SectionMemoryManager::allocateCodeSection(uintptr_t Size,
-                                                    unsigned Alignment,
-                                                    unsigned SectionID) {
+                                                   unsigned Alignment,
+                                                   unsigned SectionID) {
+  return allocateSection(CodeMem, Size, Alignment);
+}
+
+uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
+                                               uintptr_t Size,
+                                               unsigned Alignment) {
   if (!Alignment)
     Alignment = 16;
-  unsigned NeedAllocate = Alignment * ((Size + Alignment - 1)/Alignment + 1);
+
+  assert(!(Alignment & (Alignment - 1)) && "Alignment must be a power of two.");
+
+  uintptr_t RequiredSize = Alignment * ((Size + Alignment - 1)/Alignment + 1);
   uintptr_t Addr = 0;
-  // Look in the list of free code memory regions and use a block there if one
+
+  // Look in the list of free memory regions and use a block there if one
   // is available.
-  for (int i = 0, e = FreeCodeMem.size(); i != e; ++i) {
-    sys::MemoryBlock &MB = FreeCodeMem[i];
-    if (MB.size() >= NeedAllocate) {
+  for (int i = 0, e = MemGroup.FreeMem.size(); i != e; ++i) {
+    sys::MemoryBlock &MB = MemGroup.FreeMem[i];
+    if (MB.size() >= RequiredSize) {
       Addr = (uintptr_t)MB.base();
       uintptr_t EndOfBlock = Addr + MB.size();
       // Align the address.
       Addr = (Addr + Alignment - 1) & ~(uintptr_t)(Alignment - 1);
       // Store cutted free memory block.
-      FreeCodeMem[i] = sys::MemoryBlock((void*)(Addr + Size),
-                                        EndOfBlock - Addr - Size);
+      MemGroup.FreeMem[i] = sys::MemoryBlock((void*)(Addr + Size),
+                                             EndOfBlock - Addr - Size);
       return (uint8_t*)Addr;
     }
   }
 
   // No pre-allocated free block was large enough. Allocate a new memory region.
-  sys::MemoryBlock MB = sys::Memory::AllocateRWX(NeedAllocate, 0, 0);
+  // Note that all sections get allocated as read-write.  The permissions will
+  // be updated later based on memory group.
+  //
+  // FIXME: It would be useful to define a default allocation size (or add
+  // it as a constructor parameter) to minimize the number of allocations.
+  // 
+  // FIXME: Initialize the Near member for each memory group to avoid
+  // interleaving.
+  error_code ec;
+  sys::MemoryBlock MB = sys::Memory::allocateMappedMemory(RequiredSize,
+                                                          &MemGroup.Near,
+                                                          sys::Memory::MF_READ |
+                                                            sys::Memory::MF_WRITE,
+                                                          ec);
+  if (ec) {
+    // FIXME: Add error propogation to the interface.
+    return NULL;
+  }
 
-  AllocatedCodeMem.push_back(MB);
+  // Save this address as the basis for our next request
+  MemGroup.Near = MB;
+
+  MemGroup.AllocatedMem.push_back(MB);
   Addr = (uintptr_t)MB.base();
   uintptr_t EndOfBlock = Addr + MB.size();
+
   // Align the address.
   Addr = (Addr + Alignment - 1) & ~(uintptr_t)(Alignment - 1);
-  // The AllocateRWX may allocate much more memory than we need. In this case,
-  // we store the unused memory as a free memory block.
+
+  // The allocateMappedMemory may allocate much more memory than we need. In
+  // this case, we store the unused memory as a free memory block.
   unsigned FreeSize = EndOfBlock-Addr-Size;
   if (FreeSize > 16)
-    FreeCodeMem.push_back(sys::MemoryBlock((void*)(Addr + Size), FreeSize));
+    MemGroup.FreeMem.push_back(sys::MemoryBlock((void*)(Addr + Size), FreeSize));
 
   // Return aligned address
   return (uint8_t*)Addr;
 }
 
+bool SectionMemoryManager::applyPermissions(std::string *ErrMsg)
+{
+  // FIXME: Should in-progress permissions be reverted if an error occurs?
+  error_code ec;
+
+  // Make code memory executable.
+  ec = applyMemoryGroupPermissions(CodeMem,
+                                   sys::Memory::MF_READ | sys::Memory::MF_EXEC);
+  if (ec) {
+    if (ErrMsg) {
+      *ErrMsg = ec.message();
+    }
+    return true;
+  }
+
+  // Make read-only data memory read-only.
+  ec = applyMemoryGroupPermissions(RODataMem,
+                                   sys::Memory::MF_READ | sys::Memory::MF_EXEC);
+  if (ec) {
+    if (ErrMsg) {
+      *ErrMsg = ec.message();
+    }
+    return true;
+  }
+
+  // Read-write data memory already has the correct permissions
+
+  return false;
+}
+
+error_code SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
+                                                             unsigned Permissions) {
+
+  for (int i = 0, e = MemGroup.AllocatedMem.size(); i != e; ++i) {
+      error_code ec;
+      ec = sys::Memory::protectMappedMemory(MemGroup.AllocatedMem[i],
+                                            Permissions);
+      if (ec) {
+        return ec;
+      }
+  }
+
+  return error_code::success();
+}
+
 void SectionMemoryManager::invalidateInstructionCache() {
-  for (int i = 0, e = AllocatedCodeMem.size(); i != e; ++i)
-    sys::Memory::InvalidateInstructionCache(AllocatedCodeMem[i].base(),
-                                            AllocatedCodeMem[i].size());
+  for (int i = 0, e = CodeMem.AllocatedMem.size(); i != e; ++i)
+    sys::Memory::InvalidateInstructionCache(CodeMem.AllocatedMem[i].base(),
+                                            CodeMem.AllocatedMem[i].size());
+}
+
+static int jit_noop() {
+  return 0;
 }
 
 void *SectionMemoryManager::getPointerToNamedFunction(const std::string &Name,
@@ -117,6 +188,14 @@ void *SectionMemoryManager::getPointerToNamedFunction(const std::string &Name,
   if (Name == "mknod") return (void*)(intptr_t)&mknod;
 #endif // __linux__
 
+  // We should not invoke parent's ctors/dtors from generated main()!
+  // On Mingw and Cygwin, the symbol __main is resolved to
+  // callee's(eg. tools/lli) one, to invoke wrong duplicated ctors
+  // (and register wrong callee's dtors with atexit(3)).
+  // We expect ExecutionEngine::runStaticConstructorsDestructors()
+  // is called before ExecutionEngine::runFunctionAsMain() is called.
+  if (Name == "__main") return (void*)(intptr_t)&jit_noop;
+
   const char *NameStr = Name.c_str();
   void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
   if (Ptr) return Ptr;
@@ -135,10 +214,13 @@ void *SectionMemoryManager::getPointerToNamedFunction(const std::string &Name,
 }
 
 SectionMemoryManager::~SectionMemoryManager() {
-  for (unsigned i = 0, e = AllocatedCodeMem.size(); i != e; ++i)
-    sys::Memory::ReleaseRWX(AllocatedCodeMem[i]);
-  for (unsigned i = 0, e = AllocatedDataMem.size(); i != e; ++i)
-    free(AllocatedDataMem[i].base());
+  for (unsigned i = 0, e = CodeMem.AllocatedMem.size(); i != e; ++i)
+    sys::Memory::releaseMappedMemory(CodeMem.AllocatedMem[i]);
+  for (unsigned i = 0, e = RWDataMem.AllocatedMem.size(); i != e; ++i)
+    sys::Memory::releaseMappedMemory(RWDataMem.AllocatedMem[i]);
+  for (unsigned i = 0, e = RODataMem.AllocatedMem.size(); i != e; ++i)
+    sys::Memory::releaseMappedMemory(RODataMem.AllocatedMem[i]);
 }
 
 } // namespace llvm
+
