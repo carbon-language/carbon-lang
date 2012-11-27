@@ -29,6 +29,40 @@
 
 using namespace clang;
 
+namespace {
+
+/// If a crash happens while the parser is active, an entry is printed for it.
+class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
+  const Parser &P;
+public:
+  PrettyStackTraceParserEntry(const Parser &p) : P(p) {}
+  virtual void print(raw_ostream &OS) const;
+};
+
+/// If a crash happens while the parser is active, print out a line indicating
+/// what the current token is.
+void PrettyStackTraceParserEntry::print(raw_ostream &OS) const {
+  const Token &Tok = P.getCurToken();
+  if (Tok.is(tok::eof)) {
+    OS << "<eof> parser at end of file\n";
+    return;
+  }
+
+  if (Tok.getLocation().isInvalid()) {
+    OS << "<unknown> parser at unknown location\n";
+    return;
+  }
+
+  const Preprocessor &PP = P.getPreprocessor();
+  Tok.getLocation().print(OS, PP.getSourceManager());
+  if (Tok.isAnnotation())
+    OS << ": at annotation token \n";
+  else
+    OS << ": current parser token '" << PP.getSpelling(Tok) << "'\n";
+}
+
+}  // namespace
+
 //===----------------------------------------------------------------------===//
 // Public interface to the file
 //===----------------------------------------------------------------------===//
@@ -43,9 +77,7 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
                      CodeCompleteConsumer *CompletionConsumer,
                      bool SkipFunctionBodies) {
 
-  OwningPtr<Sema> S(new Sema(PP, Ctx, *Consumer,
-                                   TUKind,
-                                   CompletionConsumer));
+  OwningPtr<Sema> S(new Sema(PP, Ctx, *Consumer, TUKind, CompletionConsumer));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<Sema> CleanupSema(S.get());

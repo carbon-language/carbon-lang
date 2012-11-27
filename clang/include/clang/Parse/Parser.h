@@ -44,15 +44,6 @@ namespace clang {
   class PoisonSEHIdentifiersRAIIObject;
   class VersionTuple;
 
-/// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
-/// an entry is printed for it.
-class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
-  const Parser &P;
-public:
-  PrettyStackTraceParserEntry(const Parser &p) : P(p) {}
-  virtual void print(raw_ostream &OS) const;
-};
-
 /// PrecedenceLevels - These are precedences for the binary/ternary
 /// operators in the C99 grammar.  These have been named to relate
 /// with the C99 grammar productions.  Low precedences numbers bind
