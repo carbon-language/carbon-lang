@@ -4,7 +4,7 @@
 
 ; This transformation requires the pointer size, as it assumes that size_t is
 ; the size of a pointer.
-target datalayout = "-p:64:64:64"
+target datalayout = "p:64:64:64"
 
 	%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i32, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i32, [52 x i8] }
 	%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }

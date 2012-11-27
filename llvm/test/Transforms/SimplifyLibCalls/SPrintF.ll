@@ -5,7 +5,7 @@
 
 ; This transformation requires the pointer size, as it assumes that size_t is
 ; the size of a pointer.
-target datalayout = "-p:64:64:64"
+target datalayout = "p:64:64:64"
 
 @hello = constant [6 x i8] c"hello\00"		; <[6 x i8]*> [#uses=1]
 @null = constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=1]
