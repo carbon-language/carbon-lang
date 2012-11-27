@@ -250,6 +250,15 @@ ifeq ($(ENABLE_LIBCPP),1)
   LD.Flags +=  -stdlib=libc++
 endif
 
+ifeq ($(ENABLE_CXX11),1)
+  CXX.Flags += -std=c++11
+endif
+
+ifeq ($(ENABLE_WERROR),1)
+  CXX.Flags += -Werror
+  C.Flags += -Werror
+endif
+
 ifeq ($(ENABLE_PROFILING),1)
   BuildMode := $(BuildMode)+Profile
   CXX.Flags := $(filter-out -fomit-frame-pointer,$(CXX.Flags)) -pg -g
