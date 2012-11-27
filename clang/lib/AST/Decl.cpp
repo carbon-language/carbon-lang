@@ -777,10 +777,12 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
         if (llvm::Optional<Visibility> Vis = Function->getExplicitVisibility())
           LV.mergeVisibility(*Vis, true);
       }
-
-      // Note that Sema::MergeCompatibleFunctionDecls already takes care of
-      // merging storage classes and visibility attributes, so we don't have to
-      // look at previous decls in here.
+      
+      if (const FunctionDecl *Prev = Function->getPreviousDecl()) {
+        LinkageInfo PrevLV = getLVForDecl(Prev, OnlyTemplate);
+        if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
+        LV.mergeVisibility(PrevLV);
+      }
 
       return LV;
     }
