@@ -94,6 +94,7 @@ void StatOutput(u64 *stat) {
   name[StatAtomic2]                      = "            size 2                ";
   name[StatAtomic4]                      = "            size 4                ";
   name[StatAtomic8]                      = "            size 8                ";
+  name[StatAtomic16]                     = "            size 16               ";
 
   name[StatInterceptor]                  = "Interceptors                      ";
   name[StatInt_longjmp]                  = "  longjmp                         ";

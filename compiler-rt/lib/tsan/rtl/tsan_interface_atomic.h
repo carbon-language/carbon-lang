@@ -17,10 +17,11 @@
 extern "C" {
 #endif
 
-typedef char  __tsan_atomic8;
-typedef short __tsan_atomic16;  // NOLINT
-typedef int   __tsan_atomic32;
-typedef long  __tsan_atomic64;  // NOLINT
+typedef char     __tsan_atomic8;
+typedef short    __tsan_atomic16;  // NOLINT
+typedef int      __tsan_atomic32;
+typedef long     __tsan_atomic64;  // NOLINT
+typedef __int128 __tsan_atomic128;
 
 // Part of ABI, do not change.
 // http://llvm.org/viewvc/llvm-project/libcxx/trunk/include/atomic?view=markup
@@ -41,6 +42,8 @@ __tsan_atomic32 __tsan_atomic32_load(const volatile __tsan_atomic32 *a,
     __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_load(const volatile __tsan_atomic64 *a,
     __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_load(const volatile __tsan_atomic128 *a,
+    __tsan_memory_order mo);
 
 void __tsan_atomic8_store(volatile __tsan_atomic8 *a, __tsan_atomic8 v,
     __tsan_memory_order mo);
@@ -49,6 +52,8 @@ void __tsan_atomic16_store(volatile __tsan_atomic16 *a, __tsan_atomic16 v,
 void __tsan_atomic32_store(volatile __tsan_atomic32 *a, __tsan_atomic32 v,
     __tsan_memory_order mo);
 void __tsan_atomic64_store(volatile __tsan_atomic64 *a, __tsan_atomic64 v,
+    __tsan_memory_order mo);
+void __tsan_atomic128_store(volatile __tsan_atomic128 *a, __tsan_atomic128 v,
     __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_exchange(volatile __tsan_atomic8 *a,
@@ -59,6 +64,8 @@ __tsan_atomic32 __tsan_atomic32_exchange(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_exchange(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_exchange(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_fetch_add(volatile __tsan_atomic8 *a,
     __tsan_atomic8 v, __tsan_memory_order mo);
@@ -68,6 +75,8 @@ __tsan_atomic32 __tsan_atomic32_fetch_add(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_fetch_add(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_fetch_add(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_fetch_sub(volatile __tsan_atomic8 *a,
     __tsan_atomic8 v, __tsan_memory_order mo);
@@ -77,6 +86,8 @@ __tsan_atomic32 __tsan_atomic32_fetch_sub(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_fetch_sub(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_fetch_sub(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_fetch_and(volatile __tsan_atomic8 *a,
     __tsan_atomic8 v, __tsan_memory_order mo);
@@ -86,6 +97,8 @@ __tsan_atomic32 __tsan_atomic32_fetch_and(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_fetch_and(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_fetch_and(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_fetch_or(volatile __tsan_atomic8 *a,
     __tsan_atomic8 v, __tsan_memory_order mo);
@@ -95,6 +108,8 @@ __tsan_atomic32 __tsan_atomic32_fetch_or(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_fetch_or(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_fetch_or(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_fetch_xor(volatile __tsan_atomic8 *a,
     __tsan_atomic8 v, __tsan_memory_order mo);
@@ -104,6 +119,8 @@ __tsan_atomic32 __tsan_atomic32_fetch_xor(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_fetch_xor(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_fetch_xor(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 __tsan_atomic8 __tsan_atomic8_fetch_nand(volatile __tsan_atomic8 *a,
     __tsan_atomic8 v, __tsan_memory_order mo);
@@ -113,6 +130,8 @@ __tsan_atomic32 __tsan_atomic32_fetch_nand(volatile __tsan_atomic32 *a,
     __tsan_atomic32 v, __tsan_memory_order mo);
 __tsan_atomic64 __tsan_atomic64_fetch_nand(volatile __tsan_atomic64 *a,
     __tsan_atomic64 v, __tsan_memory_order mo);
+__tsan_atomic128 __tsan_atomic128_fetch_nand(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 v, __tsan_memory_order mo);
 
 int __tsan_atomic8_compare_exchange_weak(volatile __tsan_atomic8 *a,
     __tsan_atomic8 *c, __tsan_atomic8 v, __tsan_memory_order mo,
@@ -125,6 +144,9 @@ int __tsan_atomic32_compare_exchange_weak(volatile __tsan_atomic32 *a,
     __tsan_memory_order fail_mo);
 int __tsan_atomic64_compare_exchange_weak(volatile __tsan_atomic64 *a,
     __tsan_atomic64 *c, __tsan_atomic64 v, __tsan_memory_order mo,
+    __tsan_memory_order fail_mo);
+int __tsan_atomic128_compare_exchange_weak(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 *c, __tsan_atomic128 v, __tsan_memory_order mo,
     __tsan_memory_order fail_mo);
 
 int __tsan_atomic8_compare_exchange_strong(volatile __tsan_atomic8 *a,
@@ -139,6 +161,9 @@ int __tsan_atomic32_compare_exchange_strong(volatile __tsan_atomic32 *a,
 int __tsan_atomic64_compare_exchange_strong(volatile __tsan_atomic64 *a,
     __tsan_atomic64 *c, __tsan_atomic64 v, __tsan_memory_order mo,
     __tsan_memory_order fail_mo);
+int __tsan_atomic128_compare_exchange_strong(volatile __tsan_atomic128 *a,
+    __tsan_atomic128 *c, __tsan_atomic128 v, __tsan_memory_order mo,
+    __tsan_memory_order fail_mo);
 
 __tsan_atomic8 __tsan_atomic8_compare_exchange_val(
     volatile __tsan_atomic8 *a, __tsan_atomic8 c, __tsan_atomic8 v,
@@ -151,6 +176,9 @@ __tsan_atomic32 __tsan_atomic32_compare_exchange_val(
     __tsan_memory_order mo, __tsan_memory_order fail_mo);
 __tsan_atomic64 __tsan_atomic64_compare_exchange_val(
     volatile __tsan_atomic64 *a, __tsan_atomic64 c, __tsan_atomic64 v,
+    __tsan_memory_order mo, __tsan_memory_order fail_mo);
+__tsan_atomic128 __tsan_atomic128_compare_exchange_val(
+    volatile __tsan_atomic128 *a, __tsan_atomic128 c, __tsan_atomic128 v,
     __tsan_memory_order mo, __tsan_memory_order fail_mo);
 
 void __tsan_atomic_thread_fence(__tsan_memory_order mo);
