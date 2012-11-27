@@ -2,14 +2,14 @@ set(LLVM_LINK_COMPONENTS
   asmparser
   bitreader
   bitwriter
-  mcjit
   jit
+  mcjit
   nativecodegen
   )
 
 set(MCJITTestsSources
   MCJITTest.cpp
-  SectionMemoryManager.cpp
+  MCJITMemoryManagerTest.cpp
   )
 
 if(MSVC)

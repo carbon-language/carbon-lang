@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/MathExtras.h"
-#include "SectionMemoryManager.h"
 
 #ifdef __linux__
   // These includes used by SectionMemoryManager::getPointerToNamedFunction()
@@ -77,7 +77,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
   //
   // FIXME: It would be useful to define a default allocation size (or add
   // it as a constructor parameter) to minimize the number of allocations.
-  // 
+  //
   // FIXME: Initialize the Near member for each memory group to avoid
   // interleaving.
   error_code ec;

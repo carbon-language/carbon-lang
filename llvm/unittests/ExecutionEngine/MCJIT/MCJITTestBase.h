@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/LLVMContext.h"
@@ -29,8 +30,6 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/TypeBuilder.h"
-
-#include "SectionMemoryManager.h"
 
 // Used to skip tests on unsupported architectures and operating systems.
 // To skip a test, add this macro at the top of a test-case in a suite that
