@@ -3012,7 +3012,17 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   }
   case lltok::kw_fadd:
   case lltok::kw_fsub:
-  case lltok::kw_fmul:    return ParseArithmetic(Inst, PFS, KeywordVal, 2);
+  case lltok::kw_fmul:
+  case lltok::kw_fdiv:
+  case lltok::kw_frem: {
+    FastMathFlags FMF = EatFastMathFlagsIfPresent();
+    int Res = ParseArithmetic(Inst, PFS, KeywordVal, 2);
+    if (Res != 0)
+      return Res;
+    if (FMF.any())
+      Inst->setFastMathFlags(FMF);
+    return 0;
+  }
 
   case lltok::kw_sdiv:
   case lltok::kw_udiv:
@@ -3027,8 +3037,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
 
   case lltok::kw_urem:
   case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, KeywordVal, 1);
-  case lltok::kw_fdiv:
-  case lltok::kw_frem:   return ParseArithmetic(Inst, PFS, KeywordVal, 2);
   case lltok::kw_and:
   case lltok::kw_or:
   case lltok::kw_xor:    return ParseLogical(Inst, PFS, KeywordVal);

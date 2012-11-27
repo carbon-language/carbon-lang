@@ -18,6 +18,7 @@
 #include "llvm/Attributes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
@@ -154,6 +155,21 @@ namespace llvm {
       Lex.Lex();
       return true;
     }
+
+    FastMathFlags EatFastMathFlagsIfPresent() {
+      FastMathFlags FMF;
+      while (true)
+        switch (Lex.getKind()) {
+        case lltok::kw_fast: FMF.UnsafeAlgebra   = true; Lex.Lex(); continue;
+        case lltok::kw_nnan: FMF.NoNaNs          = true; Lex.Lex(); continue;
+        case lltok::kw_ninf: FMF.NoInfs          = true; Lex.Lex(); continue;
+        case lltok::kw_nsz:  FMF.NoSignedZeros   = true; Lex.Lex(); continue;
+        case lltok::kw_arcp: FMF.AllowReciprocal = true; Lex.Lex(); continue;
+        default: return FMF;
+        }
+      return FMF;
+    }
+
     bool ParseOptionalToken(lltok::Kind T, bool &Present, LocTy *Loc = 0) {
       if (Lex.getKind() != T) {
         Present = false;
