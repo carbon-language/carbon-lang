@@ -2048,14 +2048,14 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           FastMathFlags FMF;
           FMF.UnsafeAlgebra =
             0 != (Record[OpNum] & (1 << bitc::FMF_UNSAFE_ALGEBRA));
-          FMF.NoNaNs
-            = 0 != (Record[OpNum] & (1 << bitc::FMF_NO_NANS));
-          FMF.NoInfs
-            = 0 != (Record[OpNum] & (1 << bitc::FMF_NO_INFS));
-          FMF.NoSignedZeros
-            = 0 != (Record[OpNum] & (1 << bitc::FMF_NO_SIGNED_ZEROS));
-          FMF.AllowReciprocal
-            = 0 != (Record[OpNum] & (1 << bitc::FMF_ALLOW_RECIPROCAL));
+          FMF.NoNaNs =
+            0 != (Record[OpNum] & (1 << bitc::FMF_NO_NANS));
+          FMF.NoInfs =
+            0 != (Record[OpNum] & (1 << bitc::FMF_NO_INFS));
+          FMF.NoSignedZeros =
+            0 != (Record[OpNum] & (1 << bitc::FMF_NO_SIGNED_ZEROS));
+          FMF.AllowReciprocal =
+            0 != (Record[OpNum] & (1 << bitc::FMF_ALLOW_RECIPROCAL));
           if (FMF.any())
             I->setFastMathFlags(FMF);
         }
