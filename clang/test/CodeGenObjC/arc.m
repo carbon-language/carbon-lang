@@ -958,6 +958,8 @@ void test34(int cond) {
   // CHECK-NEXT: [[WEAK:%.*]] = alloca i8*
   // CHECK-NEXT: [[TEMP1:%.*]] = alloca i8*
   // CHECK-NEXT: [[TEMP2:%.*]] = alloca i8*
+  // CHECK-NEXT: [[CONDCLEANUPSAVE:%.*]] = alloca i8*
+  // CHECK-NEXT: [[CONDCLEANUP:%.*]] = alloca i1
   // CHECK-NEXT: store i32
   // CHECK-NEXT: store i8* null, i8** [[STRONG]]
   // CHECK-NEXT: call i8* @objc_initWeak(i8** [[WEAK]], i8* null)
@@ -986,8 +988,11 @@ void test34(int cond) {
   // CHECK:      [[ARG:%.*]] = phi i8**
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: [[T1:%.*]] = select i1 [[T0]], i8** null, i8** [[TEMP2]]
+  // CHECK-NEXT: store i1 false, i1* [[CONDCLEANUP]]
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = call i8* @objc_loadWeak(i8** [[ARG]])
+  // CHECK:      [[T0:%.*]] = call i8* @objc_loadWeakRetained(i8** [[ARG]])
+  // CHECK-NEXT: store i8* [[T0]], i8** [[CONDCLEANUPSAVE]]
+  // CHECK-NEXT: store i1 true, i1* [[CONDCLEANUP]]
   // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP2]]
   // CHECK-NEXT: br label
   // CHECK:      call void @test34_sink(i8** [[T1]])

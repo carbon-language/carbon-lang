@@ -109,8 +109,9 @@ void test1(NSArray *array) {
 
 // CHECK-LP64:      [[D0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
-// CHECK-LP64-NEXT: [[T1:%.*]] = call i8* @objc_loadWeak(i8** [[X]])
+// CHECK-LP64-NEXT: [[T1:%.*]] = call i8* @objc_loadWeakRetained(i8** [[X]])
 // CHECK-LP64-NEXT: call i8* @objc_initWeak(i8** [[T0]], i8* [[T1]])
+// CHECK-LP64-NEXT: call void @objc_release(i8* [[T1]]) 
 // CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to
 // CHECK-LP64: call void @use_block
 // CHECK-LP64-NEXT: call void @objc_destroyWeak(i8** [[D0]])
