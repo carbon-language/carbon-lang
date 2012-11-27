@@ -443,7 +443,7 @@ def skipOnLinux(func):
         if "linux" in platform:
             self.skipTest("skip on linux")
         else:
-            func(self, *args, **kwargs)
+            func(*args, **kwargs)
     return wrapper
 
 class Base(unittest2.TestCase):
