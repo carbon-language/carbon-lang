@@ -1667,7 +1667,6 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
 
   // Things need to be register sized for register moves.
   if (VT != MVT::i32) return false;
-  const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
 
   unsigned CondReg = getRegForValue(I->getOperand(0));
   if (CondReg == 0) return false;
@@ -1700,14 +1699,16 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
                   .addReg(CondReg).addImm(0));
 
   unsigned MovCCOpc;
+  const TargetRegisterClass *RC;
   if (!UseImm) {
+    RC = isThumb2 ? &ARM::tGPRRegClass : &ARM::GPRRegClass;
     MovCCOpc = isThumb2 ? ARM::t2MOVCCr : ARM::MOVCCr;
   } else {
-    if (!isNegativeImm) {
+    RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRRegClass;
+    if (!isNegativeImm)
       MovCCOpc = isThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi;
-    } else {
+    else
       MovCCOpc = isThumb2 ? ARM::t2MVNCCi : ARM::MVNCCi;
-    }
   }
   unsigned ResultReg = createResultReg(RC);
   if (!UseImm)
@@ -2589,7 +2590,7 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
       Opc = isThumb2 ? ARM::t2UXTH : ARM::UXTH;
     } else {
       Opc = isThumb2 ? ARM::t2SXTH : ARM::SXTH;
-      RC = isThumb2 ?&ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
+      RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
     }
     break;
   case MVT::i8:
