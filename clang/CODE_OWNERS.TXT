@@ -8,8 +8,21 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 (W), PGP key ID and fingerprint (P), description (D), and snail-mail address
 (S).
 
+N: Chandler Carruth
+E: chandlerc@gmail.com
+E: chandlerc@google.com
+D: CMake, library layering
+
+N: Eric Christopher
+E: echristo@gmail.com
+D: Debug Information, autotools/configure/make build, inline assembly
+
 N: Doug Gregor
 D: All parts of Clang not covered by someone else
+
+N: Anton Korobeynikov
+E: anton@korobeynikov.info
+D: Exception handling, Windows codegen, ARM EABI
 
 N: Ted Kremenek
 D: Clang Static Analyzer
@@ -17,6 +30,10 @@ D: Clang Static Analyzer
 N: John McCall
 E: rjmccall@apple.com
 D: Clang LLVM IR generation
+
+N: Chad Rosier
+E: mcrosier@apple.com
+D: MS-inline asm, and the compiler driver
 
 N: Richard Smith
 E: richard@metafoo.co.uk
