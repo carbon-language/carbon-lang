@@ -138,7 +138,7 @@ Visual Studio:</p>
     <li><b>Subversion</b>.  Source code control program.  Get it from:
         <a href="http://subversion.tigris.org/getting.html">
         http://subversion.tigris.org/getting.html</a></li>
-    <li><b>cmake</b>.  This is used for generating Visual Studio solution and
+    <li><b>CMake</b>.  This is used for generating Visual Studio solution and
         project files.  Get it from:
         <a href="http://www.cmake.org/cmake/resources/software.html">
         http://www.cmake.org/cmake/resources/software.html</a></li>
@@ -169,19 +169,19 @@ Visual Studio:</p>
      <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
   </ul>
   </li>
-  <li>Run cmake to generate the Visual Studio solution and project files:
+  <li>Run CMake to generate the Visual Studio solution and project files:
   <ul>
     <li><tt>cd ..\..</tt>  (back to where you started)</li>
     <li><tt>mkdir build</tt> (for building without polluting the source dir)</li>
     <li><tt>cd build</tt></li>
     <li>If you are using Visual Studio 2008:  <tt>cmake -G "Visual Studio 9 2008" ..\llvm</tt></li>
     <li>Or if you are using Visual Studio 2010:  <tt>cmake -G "Visual Studio 10" ..\llvm</tt></li>
-    <li>By default, cmake will target LLVM to X86.  If you want all targets
+    <li>By default, CMake will target LLVM to X86.  If you want all targets
         (needed if you want to run the LLVM tests), add the <tt>-DLLVM_TARGETS_TO_BUILD=all</tt> option to the
-        cmake command line.  Or specify a target from the LLVM_TARGETS_TO_BUILD
+        CMake command line.  Or specify a target from the LLVM_TARGETS_TO_BUILD
         definition in CMakeLists.txt.</li>
     <li>See the <a href="http://www.llvm.org/docs/CMake.html">LLVM CMake guide</a> for
-        more information on other configuration options for cmake.</li>
+        more information on other configuration options for CMake.</li>
     <li>The above, if successful, will have created an LLVM.sln file in the
        <tt>build</tt> directory.
   </ul>
