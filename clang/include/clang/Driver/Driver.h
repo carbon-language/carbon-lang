@@ -178,7 +178,6 @@ public:
   Driver(StringRef _ClangExecutable,
          StringRef _DefaultTargetTriple,
          StringRef _DefaultImageName,
-         bool IsProduction,
          DiagnosticsEngine &_Diags);
   ~Driver();
 

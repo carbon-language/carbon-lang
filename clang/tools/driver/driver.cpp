@@ -397,13 +397,8 @@ int main(int argc_, const char **argv_) {
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
   ProcessWarningOptions(Diags, *DiagOpts);
 
-#ifdef CLANG_IS_PRODUCTION
-  const bool IsProduction = true;
-#else
-  const bool IsProduction = false;
-#endif
   Driver TheDriver(Path.str(), llvm::sys::getDefaultTargetTriple(),
-                   "a.out", IsProduction, Diags);
+                   "a.out", Diags);
 
   // Attempt to find the original path used to invoke the driver, to determine
   // the installed path. We do this manually, because we want to support that

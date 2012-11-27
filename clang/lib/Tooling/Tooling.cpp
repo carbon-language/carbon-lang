@@ -48,7 +48,7 @@ static clang::driver::Driver *newDriver(clang::DiagnosticsEngine *Diagnostics,
   const std::string DefaultOutputName = "a.out";
   clang::driver::Driver *CompilerDriver = new clang::driver::Driver(
     BinaryName, llvm::sys::getDefaultTargetTriple(),
-    DefaultOutputName, false, *Diagnostics);
+    DefaultOutputName, *Diagnostics);
   CompilerDriver->setTitle("clang_based_tool");
   return CompilerDriver;
 }

@@ -46,7 +46,6 @@ using namespace clang;
 Driver::Driver(StringRef ClangExecutable,
                StringRef DefaultTargetTriple,
                StringRef DefaultImageName,
-               bool IsProduction,
                DiagnosticsEngine &Diags)
   : Opts(createDriverOptTable()), Diags(Diags),
     ClangExecutable(ClangExecutable), SysRoot(DEFAULT_SYSROOT),
