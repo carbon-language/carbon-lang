@@ -10,6 +10,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CompilationDatabase.h"
@@ -161,6 +162,29 @@ TEST(newFrontendActionFactory, InjectsEndOfSourceFileCallback) {
   EXPECT_EQ(2u, EndCallback.Called);
 }
 #endif
+
+struct SkipBodyConsumer : public clang::ASTConsumer {
+  /// Skip the 'skipMe' function.
+  virtual bool shouldSkipFunctionBody(Decl *D) {
+    FunctionDecl *F = dyn_cast<FunctionDecl>(D);
+    return F && F->getNameAsString() == "skipMe";
+  }
+};
+
+struct SkipBodyAction : public clang::ASTFrontendAction {
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &Compiler,
+                                         StringRef) {
+    Compiler.getFrontendOpts().SkipFunctionBodies = true;
+    return new SkipBodyConsumer;
+  }
+};
+
+TEST(runToolOnCode, TestSkipFunctionBoddy) {
+  EXPECT_TRUE(runToolOnCode(new SkipBodyAction,
+                            "int skipMe() { an_error_here }"));
+  EXPECT_FALSE(runToolOnCode(new SkipBodyAction,
+                             "int skipMeNot() { an_error_here }"));
+}
 
 } // end namespace tooling
 } // end namespace clang

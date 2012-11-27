@@ -17,6 +17,7 @@
 namespace clang {
   class ASTContext;
   class CXXRecordDecl;
+  class Decl;
   class DeclGroupRef;
   class HandleTagDeclDefinition;
   class PPMutationListener;
@@ -130,6 +131,14 @@ public:
 
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {}
+
+  /// \brief This callback is called for each function if the Parser was
+  /// initialized with \c SkipFunctionBodies set to \c true.
+  ///
+  /// \return \c true if the function's body should be skipped. The function
+  /// body may be parsed anyway if it is needed (for instance, if it contains
+  /// the code completion point or is constexpr).
+  virtual bool shouldSkipFunctionBody(Decl *D) { return true; }
 };
 
 } // end namespace clang.
