@@ -1,7 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
 
-// FIXME: add tests for return types with complex templates when PR13389 is fixed.
-
 template<class X, class Y, class Z>
 class A {};
 template<class X>
