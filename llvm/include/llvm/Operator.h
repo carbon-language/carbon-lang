@@ -164,10 +164,126 @@ public:
   }
 };
 
+/// Convenience struct for specifying and reasoning about fast-math flags.
+struct FastMathFlags {
+  bool UnsafeAlgebra   : 1;
+  bool NoNaNs          : 1;
+  bool NoInfs          : 1;
+  bool NoSignedZeros   : 1;
+  bool AllowReciprocal : 1;
+
+  FastMathFlags() : UnsafeAlgebra(false), NoNaNs(false), NoInfs(false),
+                    NoSignedZeros(false), AllowReciprocal(false)
+  { }
+
+  bool any() {
+    return UnsafeAlgebra || NoNaNs || NoInfs || NoSignedZeros ||
+      AllowReciprocal;
+  }
+};
+
+
 /// FPMathOperator - Utility class for floating point operations which can have
 /// information about relaxed accuracy requirements attached to them.
 class FPMathOperator : public Operator {
 public:
+  enum {
+    UnsafeAlgebra   = (1 << 0),
+    NoNaNs          = (1 << 1),
+    NoInfs          = (1 << 2),
+    NoSignedZeros   = (1 << 3),
+    AllowReciprocal = (1 << 4)
+  };
+
+private:
+  friend class Instruction;
+
+  void setHasUnsafeAlgebra(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~UnsafeAlgebra) | (B * UnsafeAlgebra);
+
+    // Unsafe algebra implies all the others
+    if (B) {
+      setHasNoNaNs(true);
+      setHasNoInfs(true);
+      setHasNoSignedZeros(true);
+      setHasAllowReciprocal(true);
+    }
+  }
+  void setHasNoNaNs(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~NoNaNs) | (B * NoNaNs);
+  }
+  void setHasNoInfs(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~NoInfs) | (B * NoInfs);
+  }
+  void setHasNoSignedZeros(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~NoSignedZeros) | (B * NoSignedZeros);
+  }
+  void setHasAllowReciprocal(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~AllowReciprocal) | (B * AllowReciprocal);
+  }
+
+  /// Convenience function for setting all the fast-math flags
+  void setFastMathFlags(FastMathFlags FMF) {
+    if (FMF.UnsafeAlgebra) {
+      // Set all the bits to true
+      setHasUnsafeAlgebra(true);
+      return;
+    }
+
+    setHasUnsafeAlgebra(FMF.UnsafeAlgebra);
+    setHasNoNaNs(FMF.NoNaNs);
+    setHasNoInfs(FMF.NoInfs);
+    setHasNoSignedZeros(FMF.NoSignedZeros);
+    setHasAllowReciprocal(FMF.AllowReciprocal);
+  }
+
+public:
+  /// Test whether this operation is permitted to be
+  /// algebraically transformed, aka the 'A' fast-math property.
+  bool hasUnsafeAlgebra() const {
+    return (SubclassOptionalData & UnsafeAlgebra) != 0;
+  }
+
+  /// Test whether this operation's arguments and results are to be
+  /// treated as non-NaN, aka the 'N' fast-math property.
+  bool hasNoNaNs() const {
+    return (SubclassOptionalData & NoNaNs) != 0;
+  }
+
+  /// Test whether this operation's arguments and results are to be
+  /// treated as NoN-Inf, aka the 'I' fast-math property.
+  bool hasNoInfs() const {
+    return (SubclassOptionalData & NoInfs) != 0;
+  }
+
+  /// Test whether this operation can treat the sign of zero
+  /// as insignificant, aka the 'S' fast-math property.
+  bool hasNoSignedZeros() const {
+    return (SubclassOptionalData & NoSignedZeros) != 0;
+  }
+
+  /// Test whether this operation is permitted to use
+  /// reciprocal instead of division, aka the 'R' fast-math property.
+  bool hasAllowReciprocal() const {
+    return (SubclassOptionalData & AllowReciprocal) != 0;
+  }
+
+  /// Convenience function for getting all the fast-math flags
+  FastMathFlags getFastMathFlags() const {
+    FastMathFlags FMF;
+    FMF.UnsafeAlgebra   = hasUnsafeAlgebra();
+    FMF.NoNaNs          = hasNoNaNs();
+    FMF.NoInfs          = hasNoInfs();
+    FMF.NoSignedZeros   = hasNoSignedZeros();
+    FMF.AllowReciprocal = hasAllowReciprocal();
+    return FMF;
+  }
+
 
   /// \brief Get the maximum error permitted by this operation in ULPs.  An
   /// accuracy of 0.0 means that the operation should be performed with the
