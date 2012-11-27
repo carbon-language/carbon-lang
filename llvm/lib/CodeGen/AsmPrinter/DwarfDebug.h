@@ -350,7 +350,7 @@ private:
   /// constructScopeDIE - Construct a DIE for this scope.
   DIE *constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
 
-  /// EmitSectionLabels - Emit initial Dwarf sections with a label at
+  /// emitSectionLabels - Emit initial Dwarf sections with a label at
   /// the start of each one.
   void emitSectionLabels();
 
@@ -382,7 +382,7 @@ private:
   /// been left open.
   void endSections();
 
-  /// EmitDebugInfo - Emit the debug info section.
+  /// emitDebugInfo - Emit the debug info section.
   ///
   void emitDebugInfo();
 
@@ -423,7 +423,7 @@ private:
   ///
   void emitDebugLoc();
 
-  /// EmitDebugARanges - Emit visible names into a debug aranges section.
+  /// emitDebugARanges - Emit visible names into a debug aranges section.
   ///
   void emitDebugARanges();
 
