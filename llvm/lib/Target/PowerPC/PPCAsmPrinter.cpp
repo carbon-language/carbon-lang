@@ -73,6 +73,7 @@ namespace {
       return "PowerPC Assembly Printer";
     }
 
+    MCSymbol *lookUpOrCreateTOCEntry(MCSymbol *Sym);
 
     virtual void EmitInstruction(const MachineInstr *MI);
 
@@ -310,6 +311,25 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 
+/// lookUpOrCreateTOCEntry -- Given a symbol, look up whether a TOC entry
+/// exists for it.  If not, create one.  Then return a symbol that references
+/// the TOC entry.
+MCSymbol *PPCAsmPrinter::lookUpOrCreateTOCEntry(MCSymbol *Sym) {
+
+  MCSymbol *&TOCEntry = TOC[Sym];
+
+  // To avoid name clash check if the name already exists.
+  while (TOCEntry == 0) {
+    if (OutContext.LookupSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                                "C" + Twine(TOCLabelID++)) == 0) {
+      TOCEntry = GetTempSymbol("C", TOCLabelID);
+    }
+  }
+
+  return TOCEntry;
+}
+
+
 /// EmitInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
 ///
@@ -379,14 +399,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MOSymbol = GetCPISymbol(MO.getIndex());
     else if (MO.isJTI())
       MOSymbol = GetJTISymbol(MO.getIndex());
-    MCSymbol *&TOCEntry = TOC[MOSymbol];
-    // To avoid name clash check if the name already exists.
-    while (TOCEntry == 0) {
-      if (OutContext.LookupSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                                  "C" + Twine(TOCLabelID++)) == 0) {
-        TOCEntry = GetTempSymbol("C", TOCLabelID);
-      }
-    }
+
+    MCSymbol *TOCEntry = lookUpOrCreateTOCEntry(MOSymbol);
 
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(TOCEntry, MCSymbolRefExpr::VK_PPC_TOC_ENTRY,
@@ -396,6 +410,109 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
       
+  case PPC::ADDIStocHA: {
+    // Transform %Xd = ADDIStocHA %X2, <ga:@sym>
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+
+    // Change the opcode to ADDIS8.  If the global address is external,
+    // has common linkage, is a function address, or is a jump table
+    // address, then generate a TOC entry and reference that.  Otherwise
+    // reference the symbol directly.
+    TmpInst.setOpcode(PPC::ADDIS8);
+    const MachineOperand &MO = MI->getOperand(2);
+    assert((MO.isGlobal() || MO.isCPI() || MO.isJTI()) &&
+           "Invalid operand for ADDIStocHA!");
+    MCSymbol *MOSymbol = 0;
+    bool IsExternal = false;
+    bool IsFunction = false;
+    bool IsCommon = false;
+
+    if (MO.isGlobal()) {
+      const GlobalValue *GValue = MO.getGlobal();
+      MOSymbol = Mang->getSymbol(GValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GValue);
+      IsExternal = GVar && !GVar->hasInitializer();
+      IsCommon = GVar && GValue->hasCommonLinkage();
+      IsFunction = !GVar;
+    } else if (MO.isCPI())
+      MOSymbol = GetCPISymbol(MO.getIndex());
+    else if (MO.isJTI())
+      MOSymbol = GetJTISymbol(MO.getIndex());
+
+    if (IsExternal || IsFunction || IsCommon || MO.isJTI())
+      MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
+
+    const MCExpr *Exp =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TOC16_HA,
+                              OutContext);
+    TmpInst.getOperand(2) = MCOperand::CreateExpr(Exp);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
+  case PPC::LDtocL: {
+    // Transform %Xd = LDtocL <ga:@sym>, %Xs
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+
+    // Change the opcode to LDrs, which is a form of LD with the offset
+    // specified by a SymbolLo.  If the global address is external, has
+    // common linkage, or is a jump table address, then reference the
+    // associated TOC entry.  Otherwise reference the symbol directly.
+    TmpInst.setOpcode(PPC::LDrs);
+    const MachineOperand &MO = MI->getOperand(1);
+    assert((MO.isGlobal() || MO.isJTI()) && "Invalid operand for LDtocL!");
+    MCSymbol *MOSymbol = 0;
+
+    if (MO.isJTI())
+      MOSymbol = lookUpOrCreateTOCEntry(GetJTISymbol(MO.getIndex()));
+    else {
+      const GlobalValue *GValue = MO.getGlobal();
+      MOSymbol = Mang->getSymbol(GValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GValue);
+    
+      if (!GVar || !GVar->hasInitializer() || GValue->hasCommonLinkage())
+        MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
+    }
+
+    const MCExpr *Exp =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TOC16_LO,
+                              OutContext);
+    TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
+  case PPC::ADDItocL: {
+    // Transform %Xd = ADDItocL %Xs, <ga:@sym>
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+
+    // Change the opcode to ADDI8L.  If the global address is external, then
+    // generate a TOC entry and reference that.  Otherwise reference the
+    // symbol directly.
+    TmpInst.setOpcode(PPC::ADDI8L);
+    const MachineOperand &MO = MI->getOperand(2);
+    assert((MO.isGlobal() || MO.isCPI()) && "Invalid operand for ADDItocL");
+    MCSymbol *MOSymbol = 0;
+    bool IsExternal = false;
+    bool IsFunction = false;
+
+    if (MO.isGlobal()) {
+      const GlobalValue *GValue = MO.getGlobal();
+      MOSymbol = Mang->getSymbol(GValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GValue);
+      IsExternal = GVar && !GVar->hasInitializer();
+      IsFunction = !GVar;
+    } else if (MO.isCPI())
+      MOSymbol = GetCPISymbol(MO.getIndex());
+
+    if (IsFunction || IsExternal)
+      MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
+
+    const MCExpr *Exp =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TOC16_LO,
+                              OutContext);
+    TmpInst.getOperand(2) = MCOperand::CreateExpr(Exp);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case PPC::MFCRpseud:
   case PPC::MFCR8pseud:
     // Transform: %R3 = MFCRpseud %CR7

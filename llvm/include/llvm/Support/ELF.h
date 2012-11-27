@@ -472,8 +472,11 @@ enum {
   R_PPC64_ADDR16_HIGHER       = 39,
   R_PPC64_ADDR16_HIGHEST      = 41,
   R_PPC64_TOC16               = 47,
+  R_PPC64_TOC16_LO            = 48,
+  R_PPC64_TOC16_HA            = 50,
   R_PPC64_TOC                 = 51,
-  R_PPC64_TOC16_DS            = 63
+  R_PPC64_TOC16_DS            = 63,
+  R_PPC64_TOC16_LO_DS         = 64
 };
 
 // ARM Specific e_flags

@@ -32,6 +32,11 @@ def symbolLo64 : Operand<i64> {
 def tocentry : Operand<iPTR> {
   let MIOperandInfo = (ops i32imm:$imm);
 }
+def memrs : Operand<iPTR> {   // memri where the immediate is a symbolLo64
+  let PrintMethod = "printMemRegImm";
+  let EncoderMethod = "getMemRIXEncoding";
+  let MIOperandInfo = (ops symbolLo64:$off, ptr_rc:$reg);
+}
 
 //===----------------------------------------------------------------------===//
 // 64-bit transformation functions.
@@ -625,6 +630,12 @@ let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
+def LDrs : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrs:$src),
+                    "ld $rD, $src", LdStLD,
+                    []>, isPPC64;
+// The following three definitions are selected for small code model only.
+// Otherwise, we need to create two instructions to form a 32-bit offset,
+// so we have a custom matcher for TOC_ENTRY in PPCDAGToDAGIsel::Select().
 def LDtoc: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                   "#LDtoc",
                   [(set G8RC:$rD,
@@ -670,6 +681,21 @@ def : Pat<(PPCload ixaddr:$src),
           (LD ixaddr:$src)>;
 def : Pat<(PPCload xaddr:$src),
           (LDX xaddr:$src)>;
+
+// Support for medium code model.
+def ADDIStocHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
+                       "#ADDIStocHA",
+                       [(set G8RC:$rD,
+                         (PPCaddisTocHA G8RC:$reg, tglobaladdr:$disp))]>,
+                       isPPC64;
+def LDtocL: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
+                   "#LDtocL",
+                   [(set G8RC:$rD,
+                     (PPCldTocL tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
+def ADDItocL: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
+                     "#ADDItocL",
+                     [(set G8RC:$rD,
+                       (PPCaddiTocL G8RC:$reg, tglobaladdr:$disp))]>, isPPC64;
 
 let PPC970_Unit = 2 in {
 // Truncating stores.                       

@@ -191,7 +191,21 @@ namespace llvm {
       /// byte-swapping load instruction.  It loads "Type" bits, byte swaps it,
       /// then puts it in the bottom bits of the GPRC.  TYPE can be either i16
       /// or i32.
-      LBRX
+      LBRX,
+
+      /// G8RC = ADDIS_TOC_HA %X2, Symbol - For medium code model, produces
+      /// an ADDIS8 instruction that adds the TOC base register to sym@toc@ha.
+      ADDIS_TOC_HA,
+
+      /// G8RC = LD_TOC_L Symbol, G8RReg - For medium code model, produces a
+      /// LD instruction with base register G8RReg and offset sym@toc@l.
+      /// Preceded by an ADDIS_TOC_HA to form a full 32-bit offset.
+      LD_TOC_L,
+
+      /// G8RC = ADDI_TOC_L G8RReg, Symbol - For medium code model, produces
+      /// an ADDI8 instruction that adds G8RReg to sym@toc@l.
+      /// Preceded by an ADDIS_TOC_HA to form a full 32-bit offset.
+      ADDI_TOC_L
     };
   }
 
