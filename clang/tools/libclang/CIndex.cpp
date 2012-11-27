@@ -2486,7 +2486,6 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   FileSystemOptions FileSystemOpts;
-  FileSystemOpts.WorkingDir = CXXIdx->getWorkingDirectory();
 
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
   ASTUnit *TU = ASTUnit::LoadFromASTFile(ast_filename, Diags, FileSystemOpts,
