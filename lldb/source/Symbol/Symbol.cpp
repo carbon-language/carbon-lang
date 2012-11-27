@@ -33,6 +33,7 @@ Symbol::Symbol() :
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
     m_calculated_size (false),
+    m_demangled_is_synthesized (false),
     m_type (eSymbolTypeInvalid),
     m_flags (),
     m_addr_range ()
@@ -65,6 +66,7 @@ Symbol::Symbol
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
     m_calculated_size (size > 0),
+    m_demangled_is_synthesized (false),
     m_type (type),
     m_flags (flags),
     m_addr_range (section_sp, offset, size)
@@ -95,6 +97,7 @@ Symbol::Symbol
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
     m_calculated_size (range.GetByteSize() > 0),
+    m_demangled_is_synthesized (false),
     m_type (type),
     m_flags (flags),
     m_addr_range (range)
@@ -113,6 +116,7 @@ Symbol::Symbol(const Symbol& rhs):
     m_size_is_sibling (rhs.m_size_is_sibling),
     m_size_is_synthesized (false),
     m_calculated_size (rhs.m_calculated_size),
+    m_demangled_is_synthesized (rhs.m_demangled_is_synthesized),
     m_type (rhs.m_type),
     m_flags (rhs.m_flags),
     m_addr_range (rhs.m_addr_range)
@@ -135,6 +139,7 @@ Symbol::operator= (const Symbol& rhs)
         m_size_is_sibling = rhs.m_size_is_sibling;
         m_size_is_synthesized = rhs.m_size_is_sibling;
         m_calculated_size = rhs.m_calculated_size;
+        m_demangled_is_synthesized = rhs.m_demangled_is_synthesized;
         m_type = rhs.m_type;
         m_flags = rhs.m_flags;
         m_addr_range = rhs.m_addr_range;
@@ -155,6 +160,7 @@ Symbol::Clear()
     m_size_is_sibling = false;
     m_size_is_synthesized = false;
     m_calculated_size = false;
+    m_demangled_is_synthesized = false;
     m_type = eSymbolTypeInvalid;
     m_flags = 0;
     m_addr_range.Clear();

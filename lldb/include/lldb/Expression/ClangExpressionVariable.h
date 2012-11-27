@@ -108,7 +108,7 @@ public:
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
         lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
         lldb::VariableSP        m_lldb_var;     ///< The original variable for this variable
-        lldb_private::Symbol   *m_lldb_sym;     ///< The original symbol for this variable, if it was a symbol
+        const lldb_private::Symbol *m_lldb_sym; ///< The original symbol for this variable, if it was a symbol
 
     private:
         DISALLOW_COPY_AND_ASSIGN (ParserVars);

@@ -1838,7 +1838,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     TypeFromUser type(expr_var->GetTypeFromUser());
     
     VariableSP &var(expr_var->m_parser_vars->m_lldb_var);
-    lldb_private::Symbol *sym(expr_var->m_parser_vars->m_lldb_sym);
+    const lldb_private::Symbol *symbol = expr_var->m_parser_vars->m_lldb_sym;
     
     bool is_reference(expr_var->m_flags & ClangExpressionVariable::EVTypeIsReference);
     
@@ -1849,7 +1849,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
         location_value.reset(GetVariableValue(var,
                                               NULL));
     }
-    else if (sym)
+    else if (symbol)
     {
         addr_t location_load_addr = GetSymbolAddress(*target, process, name, lldb::eSymbolTypeAny);
         
@@ -2281,25 +2281,69 @@ ClangExpressionDeclMap::FindVariableInScope
     return lldb::VariableSP();
 }
 
-Symbol *
-ClangExpressionDeclMap::FindGlobalDataSymbol
-(
-    Target &target,
-    const ConstString &name
-)
+const Symbol *
+ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
+                                              const ConstString &name)
 {
     SymbolContextList sc_list;
     
-    target.GetImages().FindSymbolsWithNameAndType(name, 
-                                                  eSymbolTypeData, 
-                                                  sc_list);
+    target.GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
     
-    if (sc_list.GetSize())
+    const uint32_t matches = sc_list.GetSize();
+    for (uint32_t i=0; i<matches; ++i)
     {
         SymbolContext sym_ctx;
-        sc_list.GetContextAtIndex(0, sym_ctx);
-        
-        return sym_ctx.symbol;
+        sc_list.GetContextAtIndex(i, sym_ctx);
+        if (sym_ctx.symbol)
+        {
+            const Symbol *symbol = sym_ctx.symbol;
+            const Address *sym_address = &symbol->GetAddress();
+            
+            if (sym_address && sym_address->IsValid())
+            {
+                switch (symbol->GetType())
+                {
+                    case eSymbolTypeData:
+                    case eSymbolTypeRuntime:
+                    case eSymbolTypeAbsolute:
+                    case eSymbolTypeObjCClass:
+                    case eSymbolTypeObjCMetaClass:
+                    case eSymbolTypeObjCIVar:
+                        if (symbol->GetDemangledNameIsSynthesized())
+                        {
+                            // If the demangled name was synthesized, then don't use it
+                            // for expressions. Only let the symbol match if the mangled
+                            // named matches for these symbols.
+                            if (symbol->GetMangled().GetMangledName() != name)
+                                break;
+                        }
+                        return symbol;
+
+                    case eSymbolTypeCode: // We already lookup functions elsewhere
+                    case eSymbolTypeVariable:
+                    case eSymbolTypeLocal:
+                    case eSymbolTypeParam:
+                    case eSymbolTypeTrampoline:
+                    case eSymbolTypeInvalid:
+                    case eSymbolTypeException:
+                    case eSymbolTypeSourceFile:
+                    case eSymbolTypeHeaderFile:
+                    case eSymbolTypeObjectFile:
+                    case eSymbolTypeCommonBlock:
+                    case eSymbolTypeBlock:
+                    case eSymbolTypeVariableType:
+                    case eSymbolTypeLineEntry:
+                    case eSymbolTypeLineHeader:
+                    case eSymbolTypeScopeBegin:
+                    case eSymbolTypeScopeEnd:
+                    case eSymbolTypeAdditional:
+                    case eSymbolTypeCompiler:
+                    case eSymbolTypeInstrumentation:
+                    case eSymbolTypeUndefined:
+                        break;
+                }
+            }
+        }
     }
     
     return NULL;
@@ -2878,7 +2922,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 // We couldn't find a non-symbol variable for this.  Now we'll hunt for a generic 
                 // data symbol, and -- if it is found -- treat it as a variable.
                 
-                Symbol *data_symbol = FindGlobalDataSymbol(*target, name);
+                const Symbol *data_symbol = FindGlobalDataSymbol(*target, name);
                 
                 if (data_symbol)
                 {
@@ -3144,7 +3188,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
 
 void
 ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context, 
-                                              Symbol &symbol, 
+                                              const Symbol &symbol,
                                               unsigned int current_id)
 {
     assert(m_parser_vars.get());
@@ -3177,7 +3221,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     
     std::auto_ptr<Value> symbol_location(new Value);
     
-    Address &symbol_address = symbol.GetAddress();
+    const Address &symbol_address = symbol.GetAddress();
     lldb::addr_t symbol_load_addr = symbol_address.GetLoadAddress(target);
     
     symbol_location->SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());

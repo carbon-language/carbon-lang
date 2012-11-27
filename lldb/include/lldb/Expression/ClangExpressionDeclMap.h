@@ -840,7 +840,7 @@ private:
     /// @return
     ///     The LLDB Symbol found, or NULL if none was found.
     //---------------------------------------------------------
-    Symbol *
+    const Symbol *
     FindGlobalDataSymbol (Target &target,
                           const ConstString &name);
     
@@ -958,7 +958,7 @@ private:
     //------------------------------------------------------------------
     void
     AddOneGenericVariable (NameSearchContext &context,
-                           Symbol &symbol,
+                           const Symbol &symbol,
                            unsigned int current_id);
     
     //------------------------------------------------------------------
