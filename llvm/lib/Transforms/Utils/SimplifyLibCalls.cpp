@@ -1409,6 +1409,99 @@ struct PrintFOpt : public LibCallOptimization {
   }
 };
 
+struct SPrintFOpt : public LibCallOptimization {
+  Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
+                                   IRBuilder<> &B) {
+    // Check for a fixed format string.
+    StringRef FormatStr;
+    if (!getConstantStringInfo(CI->getArgOperand(1), FormatStr))
+      return 0;
+
+    // If we just have a format string (nothing else crazy) transform it.
+    if (CI->getNumArgOperands() == 2) {
+      // Make sure there's no % in the constant array.  We could try to handle
+      // %% -> % in the future if we cared.
+      for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
+        if (FormatStr[i] == '%')
+          return 0; // we found a format specifier, bail out.
+
+      // These optimizations require DataLayout.
+      if (!TD) return 0;
+
+      // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
+      B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                     ConstantInt::get(TD->getIntPtrType(*Context), // Copy the
+                                      FormatStr.size() + 1), 1);   // nul byte.
+      return ConstantInt::get(CI->getType(), FormatStr.size());
+    }
+
+    // The remaining optimizations require the format string to be "%s" or "%c"
+    // and have an extra operand.
+    if (FormatStr.size() != 2 || FormatStr[0] != '%' ||
+        CI->getNumArgOperands() < 3)
+      return 0;
+
+    // Decode the second character of the format string.
+    if (FormatStr[1] == 'c') {
+      // sprintf(dst, "%c", chr) --> *(i8*)dst = chr; *((i8*)dst+1) = 0
+      if (!CI->getArgOperand(2)->getType()->isIntegerTy()) return 0;
+      Value *V = B.CreateTrunc(CI->getArgOperand(2), B.getInt8Ty(), "char");
+      Value *Ptr = CastToCStr(CI->getArgOperand(0), B);
+      B.CreateStore(V, Ptr);
+      Ptr = B.CreateGEP(Ptr, B.getInt32(1), "nul");
+      B.CreateStore(B.getInt8(0), Ptr);
+
+      return ConstantInt::get(CI->getType(), 1);
+    }
+
+    if (FormatStr[1] == 's') {
+      // These optimizations require DataLayout.
+      if (!TD) return 0;
+
+      // sprintf(dest, "%s", str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
+      if (!CI->getArgOperand(2)->getType()->isPointerTy()) return 0;
+
+      Value *Len = EmitStrLen(CI->getArgOperand(2), B, TD, TLI);
+      if (!Len)
+        return 0;
+      Value *IncLen = B.CreateAdd(Len,
+                                  ConstantInt::get(Len->getType(), 1),
+                                  "leninc");
+      B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(2), IncLen, 1);
+
+      // The sprintf result is the unincremented number of bytes in the string.
+      return B.CreateIntCast(Len, CI->getType(), false);
+    }
+    return 0;
+  }
+
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require two fixed pointer arguments and an integer result.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    if (Value *V = OptimizeFixedFormatString(Callee, CI, B)) {
+      return V;
+    }
+
+    // sprintf(str, format, ...) -> siprintf(str, format, ...) if no floating
+    // point arguments.
+    if (TLI->has(LibFunc::siprintf) && !callHasFloatingPointArgument(CI)) {
+      Module *M = B.GetInsertBlock()->getParent()->getParent();
+      Constant *SIPrintFFn =
+        M->getOrInsertFunction("siprintf", FT, Callee->getAttributes());
+      CallInst *New = cast<CallInst>(CI->clone());
+      New->setCalledFunction(SIPrintFFn);
+      B.Insert(New);
+      return New;
+    }
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1464,6 +1557,7 @@ class LibCallSimplifierImpl {
 
   // Formatting and IO library call optimizations.
   PrintFOpt PrintF;
+  SPrintFOpt SPrintF;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1588,6 +1682,7 @@ void LibCallSimplifierImpl::initOptimizations() {
 
   // Formatting and IO library call optimizations.
   addOpt(LibFunc::printf, &PrintF);
+  addOpt(LibFunc::sprintf, &SPrintF);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
