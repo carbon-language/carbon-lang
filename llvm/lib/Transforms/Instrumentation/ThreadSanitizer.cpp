@@ -188,6 +188,8 @@ bool ThreadSanitizer::doInitialization(Module &M) {
         NamePart = "_fetch_or";
       else if (op == AtomicRMWInst::Xor)
         NamePart = "_fetch_xor";
+      else if (op == AtomicRMWInst::Nand)
+        NamePart = "_fetch_nand";
       else
         continue;
       SmallString<32> RMWName("__tsan_atomic" + itostr(BitSize) + NamePart);

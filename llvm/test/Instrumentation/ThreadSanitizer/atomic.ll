@@ -114,6 +114,14 @@ entry:
 ; CHECK: atomic8_xor_monotonic
 ; CHECK: call i8 @__tsan_atomic8_fetch_xor(i8* %a, i8 0, i32 0)
 
+define void @atomic8_nand_monotonic(i8* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i8* %a, i8 0 monotonic
+  ret void
+}
+; CHECK: atomic8_nand_monotonic
+; CHECK: call i8 @__tsan_atomic8_fetch_nand(i8* %a, i8 0, i32 0)
+
 define void @atomic8_xchg_acquire(i8* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i8* %a, i8 0 acquire
@@ -161,6 +169,14 @@ entry:
 }
 ; CHECK: atomic8_xor_acquire
 ; CHECK: call i8 @__tsan_atomic8_fetch_xor(i8* %a, i8 0, i32 2)
+
+define void @atomic8_nand_acquire(i8* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i8* %a, i8 0 acquire
+  ret void
+}
+; CHECK: atomic8_nand_acquire
+; CHECK: call i8 @__tsan_atomic8_fetch_nand(i8* %a, i8 0, i32 2)
 
 define void @atomic8_xchg_release(i8* %a) nounwind uwtable {
 entry:
@@ -210,6 +226,14 @@ entry:
 ; CHECK: atomic8_xor_release
 ; CHECK: call i8 @__tsan_atomic8_fetch_xor(i8* %a, i8 0, i32 3)
 
+define void @atomic8_nand_release(i8* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i8* %a, i8 0 release
+  ret void
+}
+; CHECK: atomic8_nand_release
+; CHECK: call i8 @__tsan_atomic8_fetch_nand(i8* %a, i8 0, i32 3)
+
 define void @atomic8_xchg_acq_rel(i8* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i8* %a, i8 0 acq_rel
@@ -258,6 +282,14 @@ entry:
 ; CHECK: atomic8_xor_acq_rel
 ; CHECK: call i8 @__tsan_atomic8_fetch_xor(i8* %a, i8 0, i32 4)
 
+define void @atomic8_nand_acq_rel(i8* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i8* %a, i8 0 acq_rel
+  ret void
+}
+; CHECK: atomic8_nand_acq_rel
+; CHECK: call i8 @__tsan_atomic8_fetch_nand(i8* %a, i8 0, i32 4)
+
 define void @atomic8_xchg_seq_cst(i8* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i8* %a, i8 0 seq_cst
@@ -305,6 +337,14 @@ entry:
 }
 ; CHECK: atomic8_xor_seq_cst
 ; CHECK: call i8 @__tsan_atomic8_fetch_xor(i8* %a, i8 0, i32 5)
+
+define void @atomic8_nand_seq_cst(i8* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i8* %a, i8 0 seq_cst
+  ret void
+}
+; CHECK: atomic8_nand_seq_cst
+; CHECK: call i8 @__tsan_atomic8_fetch_nand(i8* %a, i8 0, i32 5)
 
 define void @atomic8_cas_monotonic(i8* %a) nounwind uwtable {
 entry:
@@ -458,6 +498,14 @@ entry:
 ; CHECK: atomic16_xor_monotonic
 ; CHECK: call i16 @__tsan_atomic16_fetch_xor(i16* %a, i16 0, i32 0)
 
+define void @atomic16_nand_monotonic(i16* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i16* %a, i16 0 monotonic
+  ret void
+}
+; CHECK: atomic16_nand_monotonic
+; CHECK: call i16 @__tsan_atomic16_fetch_nand(i16* %a, i16 0, i32 0)
+
 define void @atomic16_xchg_acquire(i16* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i16* %a, i16 0 acquire
@@ -505,6 +553,14 @@ entry:
 }
 ; CHECK: atomic16_xor_acquire
 ; CHECK: call i16 @__tsan_atomic16_fetch_xor(i16* %a, i16 0, i32 2)
+
+define void @atomic16_nand_acquire(i16* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i16* %a, i16 0 acquire
+  ret void
+}
+; CHECK: atomic16_nand_acquire
+; CHECK: call i16 @__tsan_atomic16_fetch_nand(i16* %a, i16 0, i32 2)
 
 define void @atomic16_xchg_release(i16* %a) nounwind uwtable {
 entry:
@@ -554,6 +610,14 @@ entry:
 ; CHECK: atomic16_xor_release
 ; CHECK: call i16 @__tsan_atomic16_fetch_xor(i16* %a, i16 0, i32 3)
 
+define void @atomic16_nand_release(i16* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i16* %a, i16 0 release
+  ret void
+}
+; CHECK: atomic16_nand_release
+; CHECK: call i16 @__tsan_atomic16_fetch_nand(i16* %a, i16 0, i32 3)
+
 define void @atomic16_xchg_acq_rel(i16* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i16* %a, i16 0 acq_rel
@@ -602,6 +666,14 @@ entry:
 ; CHECK: atomic16_xor_acq_rel
 ; CHECK: call i16 @__tsan_atomic16_fetch_xor(i16* %a, i16 0, i32 4)
 
+define void @atomic16_nand_acq_rel(i16* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i16* %a, i16 0 acq_rel
+  ret void
+}
+; CHECK: atomic16_nand_acq_rel
+; CHECK: call i16 @__tsan_atomic16_fetch_nand(i16* %a, i16 0, i32 4)
+
 define void @atomic16_xchg_seq_cst(i16* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i16* %a, i16 0 seq_cst
@@ -649,6 +721,14 @@ entry:
 }
 ; CHECK: atomic16_xor_seq_cst
 ; CHECK: call i16 @__tsan_atomic16_fetch_xor(i16* %a, i16 0, i32 5)
+
+define void @atomic16_nand_seq_cst(i16* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i16* %a, i16 0 seq_cst
+  ret void
+}
+; CHECK: atomic16_nand_seq_cst
+; CHECK: call i16 @__tsan_atomic16_fetch_nand(i16* %a, i16 0, i32 5)
 
 define void @atomic16_cas_monotonic(i16* %a) nounwind uwtable {
 entry:
@@ -802,6 +882,14 @@ entry:
 ; CHECK: atomic32_xor_monotonic
 ; CHECK: call i32 @__tsan_atomic32_fetch_xor(i32* %a, i32 0, i32 0)
 
+define void @atomic32_nand_monotonic(i32* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i32* %a, i32 0 monotonic
+  ret void
+}
+; CHECK: atomic32_nand_monotonic
+; CHECK: call i32 @__tsan_atomic32_fetch_nand(i32* %a, i32 0, i32 0)
+
 define void @atomic32_xchg_acquire(i32* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i32* %a, i32 0 acquire
@@ -849,6 +937,14 @@ entry:
 }
 ; CHECK: atomic32_xor_acquire
 ; CHECK: call i32 @__tsan_atomic32_fetch_xor(i32* %a, i32 0, i32 2)
+
+define void @atomic32_nand_acquire(i32* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i32* %a, i32 0 acquire
+  ret void
+}
+; CHECK: atomic32_nand_acquire
+; CHECK: call i32 @__tsan_atomic32_fetch_nand(i32* %a, i32 0, i32 2)
 
 define void @atomic32_xchg_release(i32* %a) nounwind uwtable {
 entry:
@@ -898,6 +994,14 @@ entry:
 ; CHECK: atomic32_xor_release
 ; CHECK: call i32 @__tsan_atomic32_fetch_xor(i32* %a, i32 0, i32 3)
 
+define void @atomic32_nand_release(i32* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i32* %a, i32 0 release
+  ret void
+}
+; CHECK: atomic32_nand_release
+; CHECK: call i32 @__tsan_atomic32_fetch_nand(i32* %a, i32 0, i32 3)
+
 define void @atomic32_xchg_acq_rel(i32* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i32* %a, i32 0 acq_rel
@@ -946,6 +1050,14 @@ entry:
 ; CHECK: atomic32_xor_acq_rel
 ; CHECK: call i32 @__tsan_atomic32_fetch_xor(i32* %a, i32 0, i32 4)
 
+define void @atomic32_nand_acq_rel(i32* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i32* %a, i32 0 acq_rel
+  ret void
+}
+; CHECK: atomic32_nand_acq_rel
+; CHECK: call i32 @__tsan_atomic32_fetch_nand(i32* %a, i32 0, i32 4)
+
 define void @atomic32_xchg_seq_cst(i32* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i32* %a, i32 0 seq_cst
@@ -993,6 +1105,14 @@ entry:
 }
 ; CHECK: atomic32_xor_seq_cst
 ; CHECK: call i32 @__tsan_atomic32_fetch_xor(i32* %a, i32 0, i32 5)
+
+define void @atomic32_nand_seq_cst(i32* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i32* %a, i32 0 seq_cst
+  ret void
+}
+; CHECK: atomic32_nand_seq_cst
+; CHECK: call i32 @__tsan_atomic32_fetch_nand(i32* %a, i32 0, i32 5)
 
 define void @atomic32_cas_monotonic(i32* %a) nounwind uwtable {
 entry:
@@ -1146,6 +1266,14 @@ entry:
 ; CHECK: atomic64_xor_monotonic
 ; CHECK: call i64 @__tsan_atomic64_fetch_xor(i64* %a, i64 0, i32 0)
 
+define void @atomic64_nand_monotonic(i64* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i64* %a, i64 0 monotonic
+  ret void
+}
+; CHECK: atomic64_nand_monotonic
+; CHECK: call i64 @__tsan_atomic64_fetch_nand(i64* %a, i64 0, i32 0)
+
 define void @atomic64_xchg_acquire(i64* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i64* %a, i64 0 acquire
@@ -1193,6 +1321,14 @@ entry:
 }
 ; CHECK: atomic64_xor_acquire
 ; CHECK: call i64 @__tsan_atomic64_fetch_xor(i64* %a, i64 0, i32 2)
+
+define void @atomic64_nand_acquire(i64* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i64* %a, i64 0 acquire
+  ret void
+}
+; CHECK: atomic64_nand_acquire
+; CHECK: call i64 @__tsan_atomic64_fetch_nand(i64* %a, i64 0, i32 2)
 
 define void @atomic64_xchg_release(i64* %a) nounwind uwtable {
 entry:
@@ -1242,6 +1378,14 @@ entry:
 ; CHECK: atomic64_xor_release
 ; CHECK: call i64 @__tsan_atomic64_fetch_xor(i64* %a, i64 0, i32 3)
 
+define void @atomic64_nand_release(i64* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i64* %a, i64 0 release
+  ret void
+}
+; CHECK: atomic64_nand_release
+; CHECK: call i64 @__tsan_atomic64_fetch_nand(i64* %a, i64 0, i32 3)
+
 define void @atomic64_xchg_acq_rel(i64* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i64* %a, i64 0 acq_rel
@@ -1290,6 +1434,14 @@ entry:
 ; CHECK: atomic64_xor_acq_rel
 ; CHECK: call i64 @__tsan_atomic64_fetch_xor(i64* %a, i64 0, i32 4)
 
+define void @atomic64_nand_acq_rel(i64* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i64* %a, i64 0 acq_rel
+  ret void
+}
+; CHECK: atomic64_nand_acq_rel
+; CHECK: call i64 @__tsan_atomic64_fetch_nand(i64* %a, i64 0, i32 4)
+
 define void @atomic64_xchg_seq_cst(i64* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i64* %a, i64 0 seq_cst
@@ -1337,6 +1489,14 @@ entry:
 }
 ; CHECK: atomic64_xor_seq_cst
 ; CHECK: call i64 @__tsan_atomic64_fetch_xor(i64* %a, i64 0, i32 5)
+
+define void @atomic64_nand_seq_cst(i64* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i64* %a, i64 0 seq_cst
+  ret void
+}
+; CHECK: atomic64_nand_seq_cst
+; CHECK: call i64 @__tsan_atomic64_fetch_nand(i64* %a, i64 0, i32 5)
 
 define void @atomic64_cas_monotonic(i64* %a) nounwind uwtable {
 entry:
@@ -1490,6 +1650,14 @@ entry:
 ; CHECK: atomic128_xor_monotonic
 ; CHECK: call i128 @__tsan_atomic128_fetch_xor(i128* %a, i128 0, i32 0)
 
+define void @atomic128_nand_monotonic(i128* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i128* %a, i128 0 monotonic
+  ret void
+}
+; CHECK: atomic128_nand_monotonic
+; CHECK: call i128 @__tsan_atomic128_fetch_nand(i128* %a, i128 0, i32 0)
+
 define void @atomic128_xchg_acquire(i128* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i128* %a, i128 0 acquire
@@ -1537,6 +1705,14 @@ entry:
 }
 ; CHECK: atomic128_xor_acquire
 ; CHECK: call i128 @__tsan_atomic128_fetch_xor(i128* %a, i128 0, i32 2)
+
+define void @atomic128_nand_acquire(i128* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i128* %a, i128 0 acquire
+  ret void
+}
+; CHECK: atomic128_nand_acquire
+; CHECK: call i128 @__tsan_atomic128_fetch_nand(i128* %a, i128 0, i32 2)
 
 define void @atomic128_xchg_release(i128* %a) nounwind uwtable {
 entry:
@@ -1586,6 +1762,14 @@ entry:
 ; CHECK: atomic128_xor_release
 ; CHECK: call i128 @__tsan_atomic128_fetch_xor(i128* %a, i128 0, i32 3)
 
+define void @atomic128_nand_release(i128* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i128* %a, i128 0 release
+  ret void
+}
+; CHECK: atomic128_nand_release
+; CHECK: call i128 @__tsan_atomic128_fetch_nand(i128* %a, i128 0, i32 3)
+
 define void @atomic128_xchg_acq_rel(i128* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i128* %a, i128 0 acq_rel
@@ -1634,6 +1818,14 @@ entry:
 ; CHECK: atomic128_xor_acq_rel
 ; CHECK: call i128 @__tsan_atomic128_fetch_xor(i128* %a, i128 0, i32 4)
 
+define void @atomic128_nand_acq_rel(i128* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i128* %a, i128 0 acq_rel
+  ret void
+}
+; CHECK: atomic128_nand_acq_rel
+; CHECK: call i128 @__tsan_atomic128_fetch_nand(i128* %a, i128 0, i32 4)
+
 define void @atomic128_xchg_seq_cst(i128* %a) nounwind uwtable {
 entry:
   atomicrmw xchg i128* %a, i128 0 seq_cst
@@ -1681,6 +1873,14 @@ entry:
 }
 ; CHECK: atomic128_xor_seq_cst
 ; CHECK: call i128 @__tsan_atomic128_fetch_xor(i128* %a, i128 0, i32 5)
+
+define void @atomic128_nand_seq_cst(i128* %a) nounwind uwtable {
+entry:
+  atomicrmw nand i128* %a, i128 0 seq_cst
+  ret void
+}
+; CHECK: atomic128_nand_seq_cst
+; CHECK: call i128 @__tsan_atomic128_fetch_nand(i128* %a, i128 0, i32 5)
 
 define void @atomic128_cas_monotonic(i128* %a) nounwind uwtable {
 entry:
