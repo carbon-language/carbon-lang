@@ -16,6 +16,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
@@ -92,6 +93,89 @@ void Instruction::moveBefore(Instruction *MovePos) {
                                              this);
 }
 
+/// Set or clear the unsafe-algebra flag on this instruction, which must be an
+/// operator which supports this flag. See LangRef.html for the meaning of this
+/// flag.
+void Instruction::setHasUnsafeAlgebra(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasUnsafeAlgebra(B);
+}
+
+/// Set or clear the NoNaNs flag on this instruction, which must be an operator
+/// which supports this flag. See LangRef.html for the meaning of this flag.
+void Instruction::setHasNoNaNs(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasNoNaNs(B);
+}
+
+/// Set or clear the no-infs flag on this instruction, which must be an operator
+/// which supports this flag. See LangRef.html for the meaning of this flag.
+void Instruction::setHasNoInfs(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasNoInfs(B);
+}
+
+/// Set or clear the no-signed-zeros flag on this instruction, which must be an
+/// operator which supports this flag. See LangRef.html for the meaning of this
+/// flag.
+void Instruction::setHasNoSignedZeros(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasNoSignedZeros(B);
+}
+
+/// Set or clear the allow-reciprocal flag on this instruction, which must be an
+/// operator which supports this flag. See LangRef.html for the meaning of this
+/// flag.
+void Instruction::setHasAllowReciprocal(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasAllowReciprocal(B);
+}
+
+/// Convenience function for setting all the fast-math flags on this
+/// instruction, which must be an operator which supports these flags. See
+/// LangRef.html for the meaning of these flats.
+void Instruction::setFastMathFlags(FastMathFlags FMF) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setFastMathFlags(FMF);
+}
+
+/// Determine whether the unsafe-algebra flag is set.
+bool Instruction::hasUnsafeAlgebra() const {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasUnsafeAlgebra();
+}
+
+/// Determine whether the no-NaNs flag is set.
+bool Instruction::hasNoNaNs() const {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasNoNaNs();
+}
+
+/// Determine whether the no-infs flag is set.
+bool Instruction::hasNoInfs() const {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasNoInfs();
+}
+
+/// Determine whether the no-signed-zeros flag is set.
+bool Instruction::hasNoSignedZeros() const {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasNoSignedZeros();
+}
+
+/// Determine whether the allow-reciprocal flag is set.
+bool Instruction::hasAllowReciprocal() const {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasAllowReciprocal();
+}
+
+/// Convenience function for getting all the fast-math flags, which must be an
+/// operator which supports these flags. See LangRef.html for the meaning of
+/// these flats.
+FastMathFlags Instruction::getFastMathFlags() const {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->getFastMathFlags();
+}
 
 const char *Instruction::getOpcodeName(unsigned OpCode) {
   switch (OpCode) {

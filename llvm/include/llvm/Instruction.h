@@ -21,6 +21,7 @@
 
 namespace llvm {
 
+struct FastMathFlags;
 class LLVMContext;
 class MDNode;
 
@@ -175,6 +176,56 @@ public:
 
   /// getDebugLoc - Return the debug location for this node as a DebugLoc.
   const DebugLoc &getDebugLoc() const { return DbgLoc; }
+
+  /// Set or clear the unsafe-algebra flag on this instruction, which must be an
+  /// operator which supports this flag. See LangRef.html for the meaning of
+  /// this flag.
+  void setHasUnsafeAlgebra(bool B);
+
+  /// Set or clear the no-nans flag on this instruction, which must be an
+  /// operator which supports this flag. See LangRef.html for the meaning of
+  /// this flag.
+  void setHasNoNaNs(bool B);
+
+  /// Set or clear the no-infs flag on this instruction, which must be an
+  /// operator which supports this flag. See LangRef.html for the meaning of
+  /// this flag.
+  void setHasNoInfs(bool B);
+
+  /// Set or clear the no-signed-zeros flag on this instruction, which must be
+  /// an operator which supports this flag. See LangRef.html for the meaning of
+  /// this flag.
+  void setHasNoSignedZeros(bool B);
+
+  /// Set or clear the allow-reciprocal flag on this instruction, which must be
+  /// an operator which supports this flag. See LangRef.html for the meaning of
+  /// this flag.
+  void setHasAllowReciprocal(bool B);
+
+  /// Convenience function for setting all the fast-math flags on this
+  /// instruction, which must be an operator which supports these flags. See
+  /// LangRef.html for the meaning of these flats.
+  void setFastMathFlags(FastMathFlags FMF);
+
+  /// Determine whether the unsafe-algebra flag is set.
+  bool hasUnsafeAlgebra() const;
+
+  /// Determine whether the no-NaNs flag is set.
+  bool hasNoNaNs() const;
+
+  /// Determine whether the no-infs flag is set.
+  bool hasNoInfs() const;
+
+  /// Determine whether the no-signed-zeros flag is set.
+  bool hasNoSignedZeros() const;
+
+  /// Determine whether the allow-reciprocal flag is set.
+  bool hasAllowReciprocal() const;
+
+  /// Convenience function for getting all the fast-math flags, which must be an
+  /// operator which supports these flags. See LangRef.html for the meaning of
+  /// these flats.
+  FastMathFlags getFastMathFlags() const;
 
 private:
   /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side
