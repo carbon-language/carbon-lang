@@ -94,7 +94,7 @@ Here's the short story for getting up and running quickly with LLVM:
      running ``svn update``.
 
    * It is also possible to use CMake instead of the makefiles. With CMake it is
-     also possible to generate project files for several IDEs: Eclipse CDT4,
+     possible to generate project files for several IDEs: Xcode, Eclipse CDT4,
      CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.
 
    * If you get an "internal compiler error (ICE)" or test failures, see
