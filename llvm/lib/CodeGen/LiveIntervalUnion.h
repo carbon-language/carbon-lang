@@ -22,7 +22,6 @@
 
 namespace llvm {
 
-class MachineLoopRange;
 class TargetRegisterInfo;
 
 #ifndef NDEBUG
