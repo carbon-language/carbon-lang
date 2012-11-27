@@ -786,7 +786,7 @@ Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const DataLayout *TD) {
   if (CI->getCalledFunction() == 0) return 0;
 
   if (Value *With = Simplifier->optimizeCall(CI))
-    return ReplaceInstUsesWith(*CI, With);
+    return CI->use_empty() ? CI : ReplaceInstUsesWith(*CI, With);
 
   return 0;
 }
