@@ -2,7 +2,6 @@
 ; PR992
 target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"
-deplibs = [ "stdc++", "c", "crtend" ]
 	%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i32, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i32, [52 x i8] }
 	%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
 	%"struct.__cxxabiv1::__array_type_info" = type { %"struct.std::type_info" }

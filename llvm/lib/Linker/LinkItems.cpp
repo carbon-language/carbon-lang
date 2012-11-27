@@ -51,20 +51,6 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
     }
   }
 
-  // At this point we have processed all the link items provided to us. Since
-  // we have an aggregated module at this point, the dependent libraries in
-  // that module should also be aggregated with duplicates eliminated. This is
-  // now the time to process the dependent libraries to resolve any remaining
-  // symbols.
-  bool is_native;
-  for (Module::lib_iterator I = Composite->lib_begin(),
-         E = Composite->lib_end(); I != E; ++I) {
-    if(LinkInLibrary(*I, is_native))
-      return true;
-    if (is_native)
-      NativeItems.push_back(std::make_pair(*I, true));
-  }
-
   return false;
 }
 
@@ -126,17 +112,6 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
   bool is_native = false;
   for (unsigned i = 0; i < Libraries.size(); ++i)
     if (LinkInLibrary(Libraries[i], is_native))
-      return true;
-
-  // At this point we have processed all the libraries provided to us. Since
-  // we have an aggregated module at this point, the dependent libraries in
-  // that module should also be aggregated with duplicates eliminated. This is
-  // now the time to process the dependent libraries to resolve any remaining
-  // symbols.
-  const Module::LibraryListType& DepLibs = Composite->getLibraries();
-  for (Module::LibraryListType::const_iterator I = DepLibs.begin(),
-         E = DepLibs.end(); I != E; ++I)
-    if (LinkInLibrary(*I, is_native))
       return true;
 
   return false;

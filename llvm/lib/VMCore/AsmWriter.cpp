@@ -1303,21 +1303,6 @@ void AssemblyWriter::printModule(const Module *M) {
     }
   }
 
-  // Loop over the dependent libraries and emit them.
-  Module::lib_iterator LI = M->lib_begin();
-  Module::lib_iterator LE = M->lib_end();
-  if (LI != LE) {
-    Out << '\n';
-    Out << "deplibs = [ ";
-    while (LI != LE) {
-      Out << '"' << *LI << '"';
-      ++LI;
-      if (LI != LE)
-        Out << ", ";
-    }
-    Out << " ]";
-  }
-
   printTypeIdentities();
 
   // Output all globals.

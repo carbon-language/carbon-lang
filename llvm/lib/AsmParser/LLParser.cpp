@@ -168,7 +168,6 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_define:  if (ParseDefine()) return true; break;
     case lltok::kw_module:  if (ParseModuleAsm()) return true; break;
     case lltok::kw_target:  if (ParseTargetDefinition()) return true; break;
-    case lltok::kw_deplibs: if (ParseDepLibs()) return true; break;
     case lltok::LocalVarID: if (ParseUnnamedType()) return true; break;
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
@@ -262,31 +261,6 @@ bool LLParser::ParseTargetDefinition() {
     M->setDataLayout(Str);
     return false;
   }
-}
-
-/// toplevelentity
-///   ::= 'deplibs' '=' '[' ']'
-///   ::= 'deplibs' '=' '[' STRINGCONSTANT (',' STRINGCONSTANT)* ']'
-bool LLParser::ParseDepLibs() {
-  assert(Lex.getKind() == lltok::kw_deplibs);
-  Lex.Lex();
-  if (ParseToken(lltok::equal, "expected '=' after deplibs") ||
-      ParseToken(lltok::lsquare, "expected '=' after deplibs"))
-    return true;
-
-  if (EatIfPresent(lltok::rsquare))
-    return false;
-
-  std::string Str;
-  if (ParseStringConstant(Str)) return true;
-  M->addLibrary(Str);
-
-  while (EatIfPresent(lltok::comma)) {
-    if (ParseStringConstant(Str)) return true;
-    M->addLibrary(Str);
-  }
-
-  return ParseToken(lltok::rsquare, "expected ']' at end of list");
 }
 
 /// ParseUnnamedType:

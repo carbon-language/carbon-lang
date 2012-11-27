@@ -486,7 +486,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(target);
   KEYWORD(triple);
   KEYWORD(unwind);
-  KEYWORD(deplibs);
   KEYWORD(datalayout);
   KEYWORD(volatile);
   KEYWORD(atomic);

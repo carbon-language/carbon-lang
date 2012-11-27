@@ -54,7 +54,6 @@ namespace bitc {
     MODULE_CODE_DATALAYOUT  = 3,    // DATALAYOUT:  [strchr x N]
     MODULE_CODE_ASM         = 4,    // ASM:         [strchr x N]
     MODULE_CODE_SECTIONNAME = 5,    // SECTIONNAME: [strchr x N]
-    MODULE_CODE_DEPLIB      = 6,    // DEPLIB:      [strchr x N]
 
     // GLOBALVAR: [pointer type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal]

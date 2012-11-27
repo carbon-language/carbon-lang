@@ -2,7 +2,6 @@
 ; PR993
 target datalayout = "e-p:32:32"
 target triple = "i386-unknown-openbsd3.9"
-deplibs = [ "stdc++", "c", "crtend" ]
 	%"struct.__gnu_cxx::__normal_iterator<char*,std::basic_string<char, std::char_traits<char>, std::allocator<char> > >" = type { i8* }
 	%"struct.__gnu_cxx::char_producer<char>" = type { i32 (...)** }
 	%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, i8*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }

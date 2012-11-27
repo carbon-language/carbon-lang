@@ -55,7 +55,6 @@ Module::~Module() {
   GlobalList.clear();
   FunctionList.clear();
   AliasList.clear();
-  LibraryList.clear();
   NamedMDList.clear();
   delete ValSymTab;
   delete static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab);
@@ -449,21 +448,4 @@ void Module::dropAllReferences() {
 
   for(Module::alias_iterator I = alias_begin(), E = alias_end(); I != E; ++I)
     I->dropAllReferences();
-}
-
-void Module::addLibrary(StringRef Lib) {
-  for (Module::lib_iterator I = lib_begin(), E = lib_end(); I != E; ++I)
-    if (*I == Lib)
-      return;
-  LibraryList.push_back(Lib);
-}
-
-void Module::removeLibrary(StringRef Lib) {
-  LibraryListType::iterator I = LibraryList.begin();
-  LibraryListType::iterator E = LibraryList.end();
-  for (;I != E; ++I)
-    if (*I == Lib) {
-      LibraryList.erase(I);
-      return;
-    }
 }

@@ -21,7 +21,6 @@
 #include "llvm/Metadata.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
 
 namespace llvm {
 
@@ -122,9 +121,6 @@ public:
   /// The type for the list of named metadata.
   typedef ilist<NamedMDNode> NamedMDListType;
 
-  /// The type for the list of dependent libraries.
-  typedef std::vector<std::string> LibraryListType;
-
   /// The Global Variable iterator.
   typedef GlobalListType::iterator                      global_iterator;
   /// The Global Variable constant iterator.
@@ -144,8 +140,6 @@ public:
   typedef NamedMDListType::iterator             named_metadata_iterator;
   /// The named metadata constant interators.
   typedef NamedMDListType::const_iterator const_named_metadata_iterator;
-  /// The Library list iterator.
-  typedef LibraryListType::const_iterator lib_iterator;
 
   /// An enumeration for describing the endianess of the target machine.
   enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
@@ -195,7 +189,6 @@ private:
   GlobalListType GlobalList;      ///< The Global Variables in the module
   FunctionListType FunctionList;  ///< The Functions in the module
   AliasListType AliasList;        ///< The Aliases in the module
-  LibraryListType LibraryList;    ///< The Libraries needed by the module
   NamedMDListType NamedMDList;    ///< The named metadata in the module
   std::string GlobalScopeAsm;     ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;    ///< Symbol table for values
@@ -525,23 +518,6 @@ public:
   const_iterator          end  () const { return FunctionList.end();   }
   size_t                  size() const  { return FunctionList.size(); }
   bool                    empty() const { return FunctionList.empty(); }
-
-/// @}
-/// @name Dependent Library Iteration
-/// @{
-
-  /// @brief Get a constant iterator to beginning of dependent library list.
-  inline lib_iterator lib_begin() const { return LibraryList.begin(); }
-  /// @brief Get a constant iterator to end of dependent library list.
-  inline lib_iterator lib_end()   const { return LibraryList.end();   }
-  /// @brief Returns the number of items in the list of libraries.
-  inline size_t       lib_size()  const { return LibraryList.size();  }
-  /// @brief Add a library to the list of dependent libraries
-  void addLibrary(StringRef Lib);
-  /// @brief Remove a library from the list of dependent libraries
-  void removeLibrary(StringRef Lib);
-  /// @brief Get all the libraries
-  inline const LibraryListType& getLibraries() const { return LibraryList; }
 
 /// @}
 /// @name Alias Iteration

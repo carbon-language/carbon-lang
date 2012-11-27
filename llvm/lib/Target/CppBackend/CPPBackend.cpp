@@ -1941,14 +1941,6 @@ void CppWriter::printModule(const std::string& fname,
   }
   nl(Out);
 
-  // Loop over the dependent libraries and emit them.
-  Module::lib_iterator LI = TheModule->lib_begin();
-  Module::lib_iterator LE = TheModule->lib_end();
-  while (LI != LE) {
-    Out << "mod->addLibrary(\"" << *LI << "\");";
-    nl(Out);
-    ++LI;
-  }
   printModuleBody();
   nl(Out) << "return mod;";
   nl(Out,-1) << "}";

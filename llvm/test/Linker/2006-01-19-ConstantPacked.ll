@@ -3,11 +3,8 @@
 
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin7.7.0"
-deplibs = [ "c", "crtend" ]
 @source = global <4 x i32> < i32 0, i32 1, i32 2, i32 3 >		; <<4 x i32>*> [#uses=0]
 
 define i32 @main() {
-entry:
-	ret i32 0
+  ret i32 0
 }
-

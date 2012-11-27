@@ -392,10 +392,6 @@ static unsigned getEncodedThreadLocalMode(const GlobalVariable *GV) {
 // descriptors for global variables, and function prototype info.
 static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
                             BitstreamWriter &Stream) {
-  // Emit the list of dependent libraries for the Module.
-  for (Module::lib_iterator I = M->lib_begin(), E = M->lib_end(); I != E; ++I)
-    WriteStringRecord(bitc::MODULE_CODE_DEPLIB, *I, 0/*TODO*/, Stream);
-
   // Emit various pieces of data attached to a module.
   if (!M->getTargetTriple().empty())
     WriteStringRecord(bitc::MODULE_CODE_TRIPLE, M->getTargetTriple(),
