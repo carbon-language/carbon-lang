@@ -35,7 +35,7 @@ void DWARFContext::dump(raw_ostream &OS) {
     set.dump(OS);
 
   uint8_t savedAddressByteSize = 0;
-  OS << "\n.debug_lines contents:\n";
+  OS << "\n.debug_line contents:\n";
   for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i) {
     DWARFCompileUnit *cu = getCompileUnitAtIndex(i);
     savedAddressByteSize = cu->getAddressByteSize();

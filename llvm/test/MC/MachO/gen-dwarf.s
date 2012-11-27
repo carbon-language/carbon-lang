@@ -86,7 +86,7 @@ _x:	.long 1
 // CHECK: .debug_aranges contents:
 // CHECK: Address Range Header: length = 0x0000001c, version = 0x0002, cu_offset = 0x00000000, addr_size = 0x04, seg_size = 0x00
 
-// CHECK: .debug_lines contents:
+// CHECK: .debug_line contents:
 // CHECK: Line table prologue:
 // We don't check the total_length as it includes lengths of temp paths
 // CHECK:         version: 2
