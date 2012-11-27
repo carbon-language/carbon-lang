@@ -228,7 +228,7 @@ public:
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
 
   /// doInitialization - Virtual method overridden by subclasses to do
-  /// any necessary initialization.
+  /// any necessary initialization before any pass is run.
   ///
   virtual bool doInitialization()  { return false; }
 
@@ -236,8 +236,8 @@ public:
   /// being operated on.
   virtual bool runOnModule(Module &M) = 0;
 
-  /// doFinalization - Virtual method overriden by subclasses to do any post
-  /// processing needed after all passes have run.
+  /// doFinalization - Virtual method overriden by subclasses to do any
+  /// necessary clean up after all passes have run.
   ///
   virtual bool doFinalization() { return false; }
 
