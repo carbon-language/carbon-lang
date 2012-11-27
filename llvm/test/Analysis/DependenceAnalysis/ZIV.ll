@@ -14,12 +14,12 @@ entry:
   %arrayidx = getelementptr inbounds i32* %A, i64 %add
   store i32 0, i32* %arrayidx, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - consistent flow!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   %add1 = add i64 %n, 1
   %arrayidx2 = getelementptr inbounds i32* %A, i64 %add1
@@ -37,12 +37,12 @@ entry:
   %arrayidx = getelementptr inbounds i32* %A, i64 %n
   store i32 0, i32* %arrayidx, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   %add = add i64 %n, 1
   %arrayidx1 = getelementptr inbounds i32* %A, i64 %add
@@ -60,12 +60,12 @@ entry:
   %arrayidx = getelementptr inbounds i32* %A, i64 %n
   store i32 0, i32* %arrayidx, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   %arrayidx1 = getelementptr inbounds i32* %A, i64 %m
   %0 = load i32* %arrayidx1, align 4

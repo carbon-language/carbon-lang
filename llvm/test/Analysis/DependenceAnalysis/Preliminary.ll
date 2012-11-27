@@ -13,9 +13,9 @@ define i32 @p0(i32 %n, i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   store i32 %n, i32* %A, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 
   %arrayidx1 = getelementptr inbounds i32* %B, i64 1
   %0 = load i32* %arrayidx1, align 4
@@ -31,9 +31,9 @@ define i32 @p1(i32 %n, i32* noalias %A, i32* noalias %B) nounwind uwtable ssp {
 entry:
   store i32 %n, i32* %A, align 4
 
-; CHECK: da analyze - consistent output!
 ; CHECK: da analyze - none!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
+; CHECK: da analyze - none!
 
   %arrayidx1 = getelementptr inbounds i32* %B, i64 1
   %0 = load i32* %arrayidx1, align 4
@@ -54,10 +54,10 @@ entry:
   %cmp10 = icmp sgt i64 %n, 0
   br i1 %cmp10, label %for.cond1.preheader.preheader, label %for.end26
 
-; CHECK: da analyze - consistent output [0 0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [-3 -2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - output [* * *]!
 
@@ -428,9 +428,9 @@ entry:
 ; CHECK: da analyze - output [*]!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -474,9 +474,9 @@ entry:
 ; CHECK: da analyze - output [*]!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -517,12 +517,12 @@ entry:
   %cmp1 = icmp sgt i64 %n, 0
   br i1 %cmp1, label %for.body.preheader, label %for.end
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - consistent flow [2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -559,12 +559,12 @@ entry:
   %idxprom = sext i8 %n to i64
   %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   store i32 0, i32* %arrayidx, align 4
   %conv = sext i8 %n to i64
@@ -586,12 +586,12 @@ entry:
   %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom
   store i32 0, i32* %arrayidx, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   %conv = sext i16 %n to i64
   %add = add i64 %conv, 1
@@ -612,12 +612,12 @@ entry:
   %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom
   store i32 0, i32* %arrayidx, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   %add = add nsw i32 %n, 1
   %idxprom1 = sext i32 %add to i64
@@ -638,12 +638,12 @@ entry:
   %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom
   store i32 0, i32* %arrayidx, align 4
 
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output!
+; CHECK: da analyze - none!
 
   %add = add i32 %n, 1
   %idxprom1 = zext i32 %add to i64
@@ -672,9 +672,9 @@ entry:
   %cmp1 = icmp eq i64 %add.ptr.sum, 0
   br i1 %cmp1, label %while.end, label %while.body.preheader
 
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - consistent anti [1]!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 while.body.preheader:                             ; preds = %entry
   br label %while.body

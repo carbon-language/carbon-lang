@@ -3563,14 +3563,29 @@ Dependence *DependenceAnalysis::depends(Instruction *Src,
     if (CompleteLoops[II])
       Result.DV[II - 1].Scalar = false;
 
-  // make sure loopIndepent flag is set correctly
   if (PossiblyLoopIndependent) {
+    // Make sure the LoopIndependent flag is set correctly.
+    // All directions must include equal, otherwise no
+    // loop-independent dependence is possible.
     for (unsigned II = 1; II <= CommonLevels; ++II) {
       if (!(Result.getDirection(II) & Dependence::DVEntry::EQ)) {
         Result.LoopIndependent = false;
         break;
       }
     }
+  }
+  else {
+    // On the other hand, if all directions are equal and there's no
+    // loop-independent dependence possible, then no dependence exists.
+    bool AllEqual = true;
+    for (unsigned II = 1; II <= CommonLevels; ++II) {
+      if (Result.getDirection(II) != Dependence::DVEntry::EQ) {
+	AllEqual = false;
+	break;
+      }
+    }
+    if (AllEqual)
+      return NULL;
   }
 
   FullDependence *Final = new FullDependence(Result);

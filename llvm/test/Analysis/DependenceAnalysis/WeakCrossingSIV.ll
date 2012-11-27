@@ -17,12 +17,12 @@ entry:
 for.body.preheader:                               ; preds = %entry
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %i.03 = phi i64 [ %inc, %for.body ], [ 0, %for.body.preheader ]
@@ -59,13 +59,13 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [<>] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 0!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -103,12 +103,12 @@ define void @weakcrossing2(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -138,12 +138,12 @@ define void @weakcrossing3(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [0|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -173,12 +173,12 @@ define void @weakcrossing4(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -209,12 +209,12 @@ entry:
   %cmp1 = icmp eq i64 %n, 0
   br i1 %cmp1, label %for.end, label %for.body.preheader
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -252,13 +252,13 @@ define void @weakcrossing6(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [<>] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 2!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]

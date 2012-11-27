@@ -16,9 +16,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [p<=|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -53,9 +53,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [p<=|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body
@@ -95,9 +95,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -130,9 +130,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [=>p|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -165,9 +165,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -200,9 +200,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -236,9 +236,9 @@ entry:
 ; CHECK: da analyze - consistent output [S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body.preheader:                               ; preds = %entry
   br label %for.body

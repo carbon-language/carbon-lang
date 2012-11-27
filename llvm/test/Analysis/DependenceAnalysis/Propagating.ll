@@ -14,12 +14,12 @@ define void @prop0([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - consistent flow [1 -1]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -64,12 +64,12 @@ define void @prop1([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ss
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - consistent flow [1 1 -1]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= = =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc18
   %B.addr.06 = phi i32* [ %B, %entry ], [ %scevgep7, %for.inc18 ]
@@ -129,9 +129,9 @@ entry:
 ; CHECK: da analyze - consistent output [0 S]!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -176,12 +176,12 @@ define void @prop3([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -227,12 +227,12 @@ define void @prop4([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - consistent flow [2 -3]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc11
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc11 ]
@@ -279,13 +279,13 @@ define void @prop5([100 x [100 x i32]]* %A, i32* %B, i32 %n) nounwind uwtable ss
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [< -16] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 11!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc13
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc13 ]
@@ -333,12 +333,12 @@ define void @prop6([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [=> -2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc12
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc12 ]
@@ -386,13 +386,13 @@ define void @prop7([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [* -38] splitable!
 ; CHECK: da analyze - split level = 1, iteration = 4!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc14
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc14 ]
@@ -445,9 +445,9 @@ entry:
 ; CHECK: da analyze - consistent output [S 0]!
 ; CHECK: da analyze - flow [p<= 2]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc10
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc10 ]
@@ -493,12 +493,12 @@ define void @prop9([100 x i32]* %A, i32* %B, i32 %n) nounwind uwtable ssp {
 entry:
   br label %for.cond1.preheader
 
-; CHECK: da analyze - consistent output [0 0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [p<= 2]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - consistent input [S 0]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - output [= =]!
+; CHECK: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc10
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc10 ]

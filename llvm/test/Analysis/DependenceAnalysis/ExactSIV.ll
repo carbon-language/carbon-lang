@@ -13,12 +13,12 @@ define void @exact0(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [<=|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -50,12 +50,12 @@ define void @exact1(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -88,12 +88,12 @@ define void @exact2(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -124,12 +124,12 @@ define void @exact3(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -160,12 +160,12 @@ define void @exact4(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -196,12 +196,12 @@ define void @exact5(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [=>|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -232,12 +232,12 @@ define void @exact6(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [=>|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -268,12 +268,12 @@ define void @exact7(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -304,12 +304,12 @@ define void @exact8(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -340,12 +340,12 @@ define void @exact9(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -376,12 +376,12 @@ define void @exact10(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [>]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -412,12 +412,12 @@ define void @exact11(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [=>|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -448,12 +448,12 @@ define void @exact12(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [=>|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
@@ -484,12 +484,12 @@ define void @exact13(i32* %A, i32* %B) nounwind uwtable ssp {
 entry:
   br label %for.body
 
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - flow [*|<]!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent input [0]!
+; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
-; CHECK: da analyze - consistent output [0]!
+; CHECK: da analyze - none!
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
