@@ -1,6 +1,5 @@
 ; Test that the FPrintFOptimizer works correctly
-; RUN: opt < %s -simplify-libcalls -S | \
-; RUN:   not grep "call.*fprintf"
+; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
 
 ; This transformation requires the pointer size, as it assumes that size_t is
 ; the size of a pointer.
@@ -15,6 +14,7 @@ target datalayout = "p:64:64:64"
 
 declare i32 @fprintf(%struct._IO_FILE*, i8*, ...)
 
+; CHECK: define i32 @foo() {
 define i32 @foo() {
 entry:
 	%tmp.1 = load %struct._IO_FILE** @stdout		; <%struct._IO_FILE*> [#uses=1]
@@ -24,4 +24,6 @@ entry:
 	%tmp.8 = load %struct._IO_FILE** @stdout		; <%struct._IO_FILE*> [#uses=1]
 	%tmp.7 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf( %struct._IO_FILE* %tmp.8, i8* getelementptr ([3 x i8]* @chr, i32 0, i32 0), i32 33 )		; <i32> [#uses=0]
 	ret i32 0
+
+; CHECK-NOT: @fprintf(
 }

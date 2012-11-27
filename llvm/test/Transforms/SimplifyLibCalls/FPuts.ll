@@ -1,6 +1,5 @@
 ; Test that the FPutsOptimizer works correctly
-; RUN: opt < %s -simplify-libcalls -S | \
-; RUN:   not grep "call.*fputs"
+; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
 
 ; This transformation requires the pointer size, as it assumes that size_t is
 ; the size of a pointer.
@@ -16,6 +15,7 @@ target datalayout = "p:64:64:64"
 declare i32 @fputs(i8*, %struct._IO_FILE*)
 
 define i32 @main() {
+; CHECK: define i32 @main() {
 entry:
 	%out = load %struct._IO_FILE** @stdout		; <%struct._IO_FILE*> [#uses=3]
 	%s1 = getelementptr [1 x i8]* @empty, i32 0, i32 0		; <i8*> [#uses=1]
@@ -25,4 +25,6 @@ entry:
 	%b = call i32 @fputs( i8* %s2, %struct._IO_FILE* %out )		; <i32> [#uses=0]
 	%c = call i32 @fputs( i8* %s3, %struct._IO_FILE* %out )		; <i32> [#uses=0]
 	ret i32 0
+
+; CHECK-NOT: @fputs(
 }

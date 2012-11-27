@@ -1,6 +1,5 @@
 ; Test that the SPrintFOptimizer works correctly
-; RUN: opt < %s -instcombine -S | \
-; RUN:   not grep "call.*sprintf"
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ; This transformation requires the pointer size, as it assumes that size_t is
 ; the size of a pointer.
@@ -17,6 +16,7 @@ declare i32 @sprintf(i8*, i8*, ...)
 declare i32 @puts(i8*)
 
 define i32 @foo(i8* %p) {
+; CHECK: define i32 @foo(i8* %p) {
 	%target = alloca [1024 x i8]		; <[1024 x i8]*> [#uses=1]
 	%target_p = getelementptr [1024 x i8]* %target, i32 0, i32 0		; <i8*> [#uses=7]
 	%hello_p = getelementptr [6 x i8]* @hello, i32 0, i32 0		; <i8*> [#uses=2]
@@ -37,4 +37,6 @@ define i32 @foo(i8* %p) {
 	%r9 = add i32 %r8, %r4		; <i32> [#uses=1]
 	%r10 = add i32 %r9, %r4.1		; <i32> [#uses=1]
 	ret i32 %r10
+
+; CHECK-NOT: @sprintf(
 }
