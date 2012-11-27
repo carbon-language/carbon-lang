@@ -3970,7 +3970,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fadd &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = fadd [fast-math flags]* &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3982,7 +3982,28 @@ IfUnequal:
    floating point values. Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point sum of the two operands.</p>
+<p>The value produced is the floating point sum of the two operands. This
+  instruction can also take any number of fast-math flags, which are
+  optimization hints to enable otherwise unsafe floating point
+  optimizations:</p>
+<ol>
+
+  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
+  result are not NaN. Such optimizations are required to retain defined behavior
+  over NaNs, but the value of the result is undefined.</li>
+
+  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
+  result are not +/-Inf. Such optimizations are required to retain defined
+  behavior over +/-Inf, but the value of the result is undefined.</li>
+
+  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
+  sign of a zero argument or result as insignificant. </li>
+
+  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
+  dramatically change results in floating point (e.g. reassociate). This flag
+  implies all the others.</li>
+
+</ol>
 
 <h5>Example:</h5>
 <pre>
@@ -4052,7 +4073,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fsub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = fsub [fast-math flags]* &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4069,7 +4090,28 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point difference of the two operands.</p>
+<p>The value produced is the floating point difference of the two operands.  This
+  instruction can also take any number of fast-math flags, which are
+  optimization hints to enable otherwise unsafe floating point
+  optimizations:</p>
+<ol>
+
+  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
+  result are not NaN. Such optimizations are required to retain defined behavior
+  over NaNs, but the value of the result is undefined.</li>
+
+  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
+  result are not +/-Inf. Such optimizations are required to retain defined
+  behavior over +/-Inf, but the value of the result is undefined.</li>
+
+  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
+  sign of a zero argument or result as insignificant. </li>
+
+  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
+  dramatically change results in floating point (e.g. reassociate). This flag
+  implies all the others.</li>
+
+</ol>
 
 <h5>Example:</h5>
 <pre>
@@ -4138,7 +4180,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fmul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = fmul [fast-math flags]* &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4150,7 +4192,28 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point product of the two operands.</p>
+<p>The value produced is the floating point product of the two operands.  This
+  instruction can also take any number of fast-math flags, which are
+  optimization hints to enable otherwise unsafe floating point
+  optimizations:</p>
+<ol>
+
+  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
+  result are not NaN. Such optimizations are required to retain defined behavior
+  over NaNs, but the value of the result is undefined.</li>
+
+  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
+  result are not +/-Inf. Such optimizations are required to retain defined
+  behavior over +/-Inf, but the value of the result is undefined.</li>
+
+  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
+  sign of a zero argument or result as insignificant. </li>
+
+  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
+  dramatically change results in floating point (e.g. reassociate). This flag
+  implies all the others.</li>
+
+</ol>
 
 <h5>Example:</h5>
 <pre>
@@ -4252,7 +4315,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fdiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = fdiv [fast-math flags]* &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4264,7 +4327,32 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point quotient of the two operands.</p>
+<p>The value produced is the floating point quotient of the two operands. This
+  instruction can also take any number of fast-math flags, which are
+  optimization hints to enable otherwise unsafe floating point
+  optimizations:</p>
+<ol>
+
+  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
+  result are not NaN. Such optimizations are required to retain defined behavior
+  over NaNs, but the value of the result is undefined.</li>
+
+  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
+  result are not +/-Inf. Such optimizations are required to retain defined
+  behavior over +/-Inf, but the value of the result is undefined.</li>
+
+  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
+  sign of a zero argument or result as insignificant. </li>
+
+  <li><tt>arcp</tt>: Allow Reciprocal: Allow optimizations to use the reciprocal
+  of an argument rather than perform division. </li>
+
+  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
+  dramatically change results in floating point (e.g. reassociate). This flag
+  implies all the others.</li>
+
+</ol>
+</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4371,7 +4459,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = frem &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = frem [fast-math flags]* &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4384,8 +4472,32 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>This instruction returns the <i>remainder</i> of a division.  The remainder
-   has the same sign as the dividend.</p>
+  <p>This instruction returns the <i>remainder</i> of a division.  The remainder
+   has the same sign as the dividend.  This instruction can also take any number
+   of fast-math flags, which are optimization hints to enable otherwise unsafe
+   floating point optimizations:</p>
+
+<ol>
+
+  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
+  result are not NaN. Such optimizations are required to retain defined behavior
+  over NaNs, but the value of the result is undefined.</li>
+
+  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
+  result are not +/-Inf. Such optimizations are required to retain defined
+  behavior over +/-Inf, but the value of the result is undefined.</li>
+
+  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
+  sign of a zero argument or result as insignificant. </li>
+
+  <li><tt>arcp</tt>: Allow Reciprocal: Allow optimizations to use the reciprocal
+  of an argument rather than perform division. </li>
+
+  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
+  dramatically change results in floating point (e.g. reassociate). This flag
+  implies all the others.</li>
+
+</ol>
 
 <h5>Example:</h5>
 <pre>
