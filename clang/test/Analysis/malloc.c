@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.deadcode.UnreachableCode,alpha.core.CastSize,unix.Malloc,debug.ExprInspection -analyzer-store=region -verify %s
-// REQUIRES: LP64
 
 #include "Inputs/system-header-simulator.h"
 
@@ -947,20 +946,24 @@ void localStructTest() {
   pSt->memP = malloc(12);
 } // expected-warning{{Memory is never released; potential leak}}
 
+#ifdef __INTPTR_TYPE__
 // Test double assignment through integers.
-static long glob;
+typedef __INTPTR_TYPE__ intptr_t;
+typedef unsigned __INTPTR_TYPE__ uintptr_t;
+
+static intptr_t glob;
 void test_double_assign_ints()
 {
   void *ptr = malloc (16);  // no-warning
-  glob = (long)(unsigned long)ptr;
+  glob = (intptr_t)(uintptr_t)ptr;
 }
 
 void test_double_assign_ints_positive()
 {
   void *ptr = malloc(16);
-  (void*)(long)(unsigned long)ptr; // expected-warning {{unused}}
+  (void*)(intptr_t)(uintptr_t)ptr; // expected-warning {{unused}}
 } // expected-warning {{leak}}
-
+#endif
 
 void testCGContextNoLeak()
 {
