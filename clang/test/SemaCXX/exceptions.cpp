@@ -120,3 +120,26 @@ namespace PR6831 {
     }
   }
 }
+
+namespace Decay {
+  struct A {
+    void f() throw (A[10]);
+  };
+
+  template<typename T> struct B {
+    void f() throw (B[10]);
+  };
+  template struct B<int>;
+
+  void f() throw (int[10], int(*)());
+  void f() throw (int*, int());
+
+  template<typename T> struct C {
+    void f() throw (T); // expected-error {{pointer to incomplete type 'Decay::E' is not allowed in exception specification}}
+  };
+  struct D {
+    C<D[10]> c;
+  };
+  struct E; // expected-note {{forward declaration}}
+  C<E[10]> e; // expected-note {{in instantiation of}}
+}
