@@ -305,8 +305,6 @@ void MachineRegisterInfo::dumpUses(unsigned Reg) const {
 #endif
 
 void MachineRegisterInfo::freezeReservedRegs(const MachineFunction &MF) {
-  assert (!reservedRegsFrozen() &&
-          "freezeReservedRegs should only be called once!");
   ReservedRegs = TRI->getReservedRegs(MF);
   assert(ReservedRegs.size() == TRI->getNumRegs() &&
          "Invalid ReservedRegs vector from target");
