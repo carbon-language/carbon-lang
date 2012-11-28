@@ -695,6 +695,7 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   llvm::Type *I8PtrTy = CGF.Builder.getInt8PtrTy();
   llvm::Value *Casted = CGF.Builder.CreateBitCast(Tmp, I8PtrTy);
   llvm::Value *SrcCasted = CGF.Builder.CreateBitCast(SrcPtr, I8PtrTy);
+  // FIXME: Use better alignment.
   CGF.Builder.CreateMemCpy(Casted, SrcCasted,
       llvm::ConstantInt::get(CGF.IntPtrTy, SrcSize),
       1, false);
@@ -782,6 +783,7 @@ static void CreateCoercedStore(llvm::Value *Src,
     llvm::Type *I8PtrTy = CGF.Builder.getInt8PtrTy();
     llvm::Value *Casted = CGF.Builder.CreateBitCast(Tmp, I8PtrTy);
     llvm::Value *DstCasted = CGF.Builder.CreateBitCast(DstPtr, I8PtrTy);
+    // FIXME: Use better alignment.
     CGF.Builder.CreateMemCpy(DstCasted, Casted,
         llvm::ConstantInt::get(CGF.IntPtrTy, DstSize),
         1, false);

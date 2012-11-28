@@ -370,7 +370,7 @@ typedef union T1 { T2 field0; T4 field1; } T1;
 extern T1 T1_retval;
 T1 test48(void) {
 // CHECK: @test48
-// CHECK-NOT: load %struct.T4* %{{.*}}
-// CHECK-NOT: store %struct.T4 %{{.*}}, %struct.T4* %{{.*}}
+// CHECK: memcpy
+// CHECK: memcpy
   return T1_retval;
 }
