@@ -1915,8 +1915,14 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   ColonProtectionRAIIObject X(*this);
 
   ParsedAttributesWithRange attrs(AttrFactory);
+  ParsedAttributesWithRange FnAttrs(AttrFactory);
   // Optional C++0x attribute-specifier
   MaybeParseCXX0XAttributes(attrs);
+  // We need to keep these attributes for future diagnostic
+  // before they are taken over by declaration specifier.
+  FnAttrs.addAll(attrs.getList());
+  FnAttrs.Range = attrs.Range;
+
   MaybeParseMicrosoftAttributes(attrs);
 
   if (Tok.is(tok::kw_using)) {
@@ -1955,6 +1961,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
+
+    if (DS.isFriendSpecified())
+      ProhibitAttributes(FnAttrs);
+
     Decl *TheDecl =
       Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS, TemplateParams);
     DS.complete(TheDecl);
@@ -2023,12 +2033,21 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       }
     }
 
+    // C++11 [dcl.attr.grammar] p4: If an attribute-specifier-seq appertains 
+    // to a friend declaration, that declaration shall be a definition.
+    if (DeclaratorInfo.isFunctionDeclarator() && 
+        DefinitionKind != FDK_Definition && DS.isFriendSpecified()) {
+      // Diagnose attributes that appear before decl specifier:
+      // [[]] friend int foo();
+      ProhibitAttributes(FnAttrs);
+    }
+
     if (DefinitionKind) {
       if (!DeclaratorInfo.isFunctionDeclarator()) {
         Diag(DeclaratorInfo.getIdentifierLoc(), diag::err_func_def_no_params);
         ConsumeBrace();
         SkipUntil(tok::r_brace, /*StopAtSemi*/false);
-        
+
         // Consume the optional ';'
         if (Tok.is(tok::semi))
           ConsumeToken();
@@ -2123,6 +2142,21 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     Decl *ThisDecl = 0;
     if (DS.isFriendSpecified()) {
+      // C++11 [dcl.attr.grammar] p4: If an attribute-specifier-seq appertains 
+      // to a friend declaration, that declaration shall be a definition.
+      //
+      // Diagnose attributes appear after friend member function declarator:
+      // foo [[]] ();
+      SmallVector<SourceRange, 4> Ranges;
+      DeclaratorInfo.getCXX11AttributeRanges(Ranges);
+      if (!Ranges.empty()) {
+        for (SmallVector<SourceRange, 4>::iterator I = Ranges.begin(), 
+             E = Ranges.end(); I != E; ++I) {
+          Diag((*I).getBegin(), diag::err_attributes_not_allowed) 
+            << *I;
+        }
+      }
+
       // TODO: handle initializers, bitfields, 'delete'
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
                                                  TemplateParams);

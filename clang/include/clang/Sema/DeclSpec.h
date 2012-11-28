@@ -1897,6 +1897,17 @@ public:
     return false;
   }
 
+  /// \brief Return a source range list of C++11 attributes associated
+  /// with the declarator.
+  void getCXX11AttributeRanges(SmallVector<SourceRange, 4> &Ranges) {
+    AttributeList *AttrList = Attrs.getList();
+    while (AttrList) {
+      if (AttrList->isCXX0XAttribute())
+        Ranges.push_back(AttrList->getRange());
+      AttrList = AttrList->getNext();
+    }
+  }
+
   void setAsmLabel(Expr *E) { AsmLabel = E; }
   Expr *getAsmLabel() const { return AsmLabel; }
 

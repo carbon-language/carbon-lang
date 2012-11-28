@@ -151,10 +151,16 @@ enum struct [[]] E5;
 
 struct S {
   friend int f [[]] (); // expected-FIXME{{an attribute list cannot appear here}}
-  [[]] friend int g(); // expected-FIXME{{an attribute list cannot appear here}}
+  friend int f1 [[noreturn]] (); //expected-error{{an attribute list cannot appear here}}
+  friend int f2 [[]] [[noreturn]] () {}
+  [[]] friend int g(); // expected-error{{an attribute list cannot appear here}}
   [[]] friend int h() {
   }
+  [[]] friend int f3(), f4(), f5(); // expected-error{{an attribute list cannot appear here}}
+  friend int f6 [[noreturn]] (), f7 [[noreturn]] (), f8 [[noreturn]] (); // expected-error3 {{an attribute list cannot appear here}}
   friend class [[]] C; // expected-error{{an attribute list cannot appear here}}
+  [[]] friend class D; // expected-error{{an attribute list cannot appear here}}
+  [[]] friend int; // expected-error{{an attribute list cannot appear here}}
 };
 template<typename T> void tmpl(T) {}
 template void tmpl [[]] (int); // expected-FIXME {{an attribute list cannot appear here}}
