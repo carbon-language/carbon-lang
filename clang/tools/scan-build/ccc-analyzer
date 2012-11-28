@@ -31,11 +31,11 @@ my $DefaultCCompiler;
 my $DefaultCXXCompiler;
 
 if (`uname -a` =~ m/Darwin/) { 
-	$DefaultCCompiler = 'clang';
-	$DefaultCXXCompiler = 'clang++'; 
+  $DefaultCCompiler = 'clang';
+  $DefaultCXXCompiler = 'clang++';
 } else {
-    $DefaultCCompiler = 'gcc';
-    $DefaultCXXCompiler = 'g++'; 	
+  $DefaultCCompiler = 'gcc';
+  $DefaultCXXCompiler = 'g++';
 }
 
 if ($FindBin::Script =~ /c\+\+-analyzer/) {
@@ -252,6 +252,7 @@ sub Analyze {
     print $ofh $_;
     print STDERR $_;
   }
+  close $ofh;
 
   waitpid($pid,0);
   close(FROM_CHILD);
@@ -269,7 +270,7 @@ sub Analyze {
                             $HtmlDir, $ParserRejects, $ofile);
       } else {
         ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses,
-                            $HtmlDir, $OtherError, $ofile);      	
+                            $HtmlDir, $OtherError, $ofile);
       }
     }
     else {
@@ -618,7 +619,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
   my @Archs = keys %ArchsSeen;
   # Skip the file if we don't support the architectures specified.
   exit 0 if ($HadArch && scalar(@Archs) == 0);
-  
+
   foreach my $file (@Files) {
     # Determine the language for the file.
     my $FileLang = $Lang;
@@ -672,7 +673,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
         $ResultFile = $f;
         # If the HtmlDir is not set, we sould clean up the plist files.
         if (!defined $HtmlDir || -z $HtmlDir) {
-        	$CleanupFile = $f; 
+          $CleanupFile = $f;
         }
       }
     }
