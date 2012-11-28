@@ -23,7 +23,7 @@ namespace lldb_private {
 
 class StopInfo
 {
-    friend Process::ProcessEventData;
+    friend class Process::ProcessEventData;
     friend class ThreadPlanBase;
     
 public:
