@@ -194,9 +194,19 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
           WorkList.insert(*II);
     }
 
-    for (SmallPtrSet<BasicBlock*, 8>::iterator
-           I = WorkList.begin(), E = WorkList.end(); I != E; ++I)
-      DeleteDeadBlock(*I);
+    // Delete the dead blocks and any of their dead successors.
+    while (!WorkList.empty()) {
+      BasicBlock *BB = *WorkList.begin();
+      WorkList.erase(BB);
+      SmallVector<BasicBlock*, 2> Successors(succ_begin(BB), succ_end(BB));
+
+      DeleteDeadBlock(BB);
+      
+      for (SmallVectorImpl<BasicBlock*>::iterator
+             II = Successors.begin(), IE = Successors.end(); II != IE; ++II)
+        if (pred_begin(*II) == pred_end(*II))
+          WorkList.insert(*II);
+    }
 
     // Merge pairs of basic blocks with unconditional branches, connected by
     // a single edge.
