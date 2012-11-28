@@ -389,6 +389,7 @@ my %LangMap = (
   'cxx' => 'c++',
   'txx' => 'c++',
   'cc'  => 'c++',
+  'C'   => 'c++',
   'ii'  => 'c++',
   'i'   => 'c-cpp-output',
   'm'   => 'objective-c',
