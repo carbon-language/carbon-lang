@@ -277,8 +277,9 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
     DPrintf2("  #%02lu: pc=%zx\n", i, stack[i]);
   }
   uptr pos = hdr->stack0.Size();
+  Event *events = (Event*)GetThreadTrace(tid);
   for (uptr i = ebegin; i <= eend; i++) {
-    Event ev = trace->events[i];
+    Event ev = events[i];
     EventType typ = (EventType)(ev >> 61);
     uptr pc = (uptr)(ev & 0xffffffffffffull);
     DPrintf2("  %zu typ=%d pc=%zx\n", i, typ, pc);
@@ -416,8 +417,7 @@ void ReportRace(ThreadState *thr) {
   ScopedReport rep(freed ? ReportTypeUseAfterFree : ReportTypeRace);
   const uptr kMop = 2;
   StackTrace traces[kMop];
-  const uptr toppc = thr->trace.events[thr->fast_state.epoch() % kTraceSize]
-      & ((1ull << 61) - 1);
+  const uptr toppc = TraceTopPC(thr);
   traces[0].ObtainCurrent(thr, toppc);
   if (IsFiredSuppression(ctx, rep, traces[0]))
     return;

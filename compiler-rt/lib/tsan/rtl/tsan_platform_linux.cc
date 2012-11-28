@@ -103,7 +103,7 @@ void InitializeShadowMemory() {
   const uptr kClosedLowBeg  = 0x200000;
   const uptr kClosedLowEnd  = kLinuxShadowBeg - 1;
   const uptr kClosedMidBeg = kLinuxShadowEnd + 1;
-  const uptr kClosedMidEnd = kLinuxAppMemBeg - 1;
+  const uptr kClosedMidEnd = min(kLinuxAppMemBeg, kTraceMemBegin);
   ProtectRange(kClosedLowBeg, kClosedLowEnd);
   ProtectRange(kClosedMidBeg, kClosedMidEnd);
   DPrintf("kClosedLow   %zx-%zx (%zuGB)\n",
@@ -119,6 +119,16 @@ void InitializeShadowMemory() {
   DPrintf("stack        %zx\n", (uptr)&shadow);
 }
 #endif
+
+void MapThreadTrace(uptr addr, uptr size) {
+  DPrintf("Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
+  CHECK_GE(addr, kTraceMemBegin);
+  CHECK_LE(addr + size, kTraceMemBegin + kTraceMemSize);
+  if (addr != (uptr)MmapFixedNoReserve(addr, size)) {
+    Printf("FATAL: ThreadSanitizer can not mmap thread trace\n");
+    Die();
+  }
+}
 
 static uptr g_data_start;
 static uptr g_data_end;

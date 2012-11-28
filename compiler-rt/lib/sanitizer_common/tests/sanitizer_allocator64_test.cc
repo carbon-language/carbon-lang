@@ -14,8 +14,8 @@
 #include <algorithm>
 #include <vector>
 
-static const uptr kAllocatorSpace = 0x600000000000ULL;
-static const uptr kAllocatorSize = 0x10000000000;  // 1T.
+static const uptr kAllocatorSpace = 0x700000000000ULL;
+static const uptr kAllocatorSize  = 0x010000000000ULL;  // 1T.
 
 typedef DefaultSizeClassMap SCMap;
 typedef

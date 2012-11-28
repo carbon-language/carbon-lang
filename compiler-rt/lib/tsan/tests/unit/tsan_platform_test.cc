@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_platform.h"
+#include "tsan_rtl.h"
 #include "gtest/gtest.h"
 
 namespace __tsan {

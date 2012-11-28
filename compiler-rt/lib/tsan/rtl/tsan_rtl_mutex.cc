@@ -75,7 +75,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr) {
   if (IsAppMem(addr))
     MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeLock, addr);
+  TraceAddEvent(thr, thr->fast_state, EventTypeLock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
   if (s->owner_tid == SyncVar::kInvalidTid) {
     CHECK_EQ(s->recursion, 0);
@@ -107,7 +107,7 @@ void MutexUnlock(ThreadState *thr, uptr pc, uptr addr) {
   if (IsAppMem(addr))
     MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeUnlock, addr);
+  TraceAddEvent(thr, thr->fast_state, EventTypeUnlock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
   if (s->recursion == 0) {
     if (!s->is_broken) {
@@ -144,7 +144,7 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
   if (IsAppMem(addr))
     MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeRLock, addr);
+  TraceAddEvent(thr, thr->fast_state, EventTypeRLock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, false);
   if (s->owner_tid != SyncVar::kInvalidTid) {
     Printf("ThreadSanitizer WARNING: read lock of a write locked mutex\n");
@@ -164,7 +164,7 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
   if (IsAppMem(addr))
     MemoryRead1Byte(thr, pc, addr);
   thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeRUnlock, addr);
+  TraceAddEvent(thr, thr->fast_state, EventTypeRUnlock, addr);
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, addr, true);
   if (s->owner_tid != SyncVar::kInvalidTid) {
     Printf("ThreadSanitizer WARNING: read unlock of a write "
@@ -188,7 +188,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     // Seems to be read unlock.
     StatInc(thr, StatMutexReadUnlock);
     thr->fast_state.IncrementEpoch();
-    TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeRUnlock, addr);
+    TraceAddEvent(thr, thr->fast_state, EventTypeRUnlock, addr);
     thr->clock.set(thr->tid, thr->fast_state.epoch());
     thr->fast_synch_epoch = thr->fast_state.epoch();
     thr->clock.release(&s->read_clock);
@@ -205,7 +205,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
       // First, it's a bug to increment the epoch w/o writing to the trace.
       // Then, the acquire/release logic can be factored out as well.
       thr->fast_state.IncrementEpoch();
-      TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeUnlock, addr);
+      TraceAddEvent(thr, thr->fast_state, EventTypeUnlock, addr);
       thr->clock.set(thr->tid, thr->fast_state.epoch());
       thr->fast_synch_epoch = thr->fast_state.epoch();
       thr->clock.ReleaseStore(&s->clock);

@@ -35,6 +35,7 @@
 #include "tsan_trace.h"
 #include "tsan_vector.h"
 #include "tsan_report.h"
+#include "tsan_platform.h"
 
 namespace __tsan {
 
@@ -533,11 +534,13 @@ void AfterSleep(ThreadState *thr, uptr pc);
 #endif
 
 void TraceSwitch(ThreadState *thr);
+uptr TraceTopPC(ThreadState *thr);
 
 extern "C" void __tsan_trace_switch();
-void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, u64 epoch,
+void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
                                         EventType typ, uptr addr) {
   StatInc(thr, StatEvents);
+  u64 epoch = fs.epoch();
   if (UNLIKELY((epoch % kTracePartSize) == 0)) {
 #ifndef TSAN_GO
     HACKY_CALL(__tsan_trace_switch);
@@ -545,7 +548,8 @@ void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, u64 epoch,
     TraceSwitch(thr);
 #endif
   }
-  Event *evp = &thr->trace.events[epoch % kTraceSize];
+  Event *trace = (Event*)GetThreadTrace(fs.tid());
+  Event *evp = &trace[epoch % kTraceSize];
   Event ev = (u64)addr | ((u64)typ << 61);
   *evp = ev;
 }

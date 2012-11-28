@@ -123,6 +123,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     void *mem = internal_alloc(MBlockThreadContex, sizeof(ThreadContext));
     tctx = new(mem) ThreadContext(tid);
     ctx->threads[tid] = tctx;
+    MapThreadTrace(GetThreadTrace(tid), kTraceSize * sizeof(Event));
   }
   CHECK_NE(tctx, 0);
   CHECK_GE(tid, 0);
@@ -143,7 +144,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   if (tid) {
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
-    TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeMop, 0);
+    TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
     thr->clock.set(thr->tid, thr->fast_state.epoch());
     thr->fast_synch_epoch = thr->fast_state.epoch();
     thr->clock.release(&tctx->sync);
@@ -238,7 +239,7 @@ void ThreadFinish(ThreadState *thr) {
   } else {
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
-    TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeMop, 0);
+    TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
     thr->clock.set(thr->tid, thr->fast_state.epoch());
     thr->fast_synch_epoch = thr->fast_state.epoch();
     thr->clock.release(&tctx->sync);
@@ -249,9 +250,8 @@ void ThreadFinish(ThreadState *thr) {
   // Save from info about the thread.
   tctx->dead_info = new(internal_alloc(MBlockDeadInfo, sizeof(ThreadDeadInfo)))
       ThreadDeadInfo();
-  internal_memcpy(&tctx->dead_info->trace.events[0],
-      &thr->trace.events[0], sizeof(thr->trace.events));
   for (int i = 0; i < kTraceParts; i++) {
+    tctx->dead_info->trace.headers[i].epoch0 = thr->trace.headers[i].epoch0;
     tctx->dead_info->trace.headers[i].stack0.CopyFrom(
         thr->trace.headers[i].stack0);
   }
@@ -358,7 +358,7 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
 
   fast_state.IncrementEpoch();
   thr->fast_state = fast_state;
-  TraceAddEvent(thr, fast_state.epoch(), EventTypeMop, pc);
+  TraceAddEvent(thr, fast_state, EventTypeMop, pc);
 
   bool unaligned = (addr % kShadowCell) != 0;
 

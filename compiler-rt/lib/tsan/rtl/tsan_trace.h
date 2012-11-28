@@ -61,7 +61,6 @@ struct TraceHeader {
 };
 
 struct Trace {
-  Event events[kTraceSize];
   TraceHeader headers[kTraceParts];
   Mutex mtx;
 

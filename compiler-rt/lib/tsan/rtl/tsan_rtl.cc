@@ -288,6 +288,13 @@ void TraceSwitch(ThreadState *thr) {
   thr->nomalloc--;
 }
 
+uptr TraceTopPC(ThreadState *thr) {
+  Event *events = (Event*)GetThreadTrace(thr->tid);
+  uptr pc = events[thr->fast_state.epoch() % kTraceSize]
+      & ((1ull << 61) - 1);
+  return pc;
+}
+
 #ifndef TSAN_GO
 extern "C" void __tsan_trace_switch() {
   TraceSwitch(cur_thread());
@@ -453,7 +460,7 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
 
   // We must not store to the trace if we do not store to the shadow.
   // That is, this call must be moved somewhere below.
-  TraceAddEvent(thr, fast_state.epoch(), EventTypeMop, pc);
+  TraceAddEvent(thr, fast_state, EventTypeMop, pc);
 
   MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite,
       shadow_mem, cur);
@@ -523,7 +530,7 @@ void FuncEntry(ThreadState *thr, uptr pc) {
   StatInc(thr, StatFuncEnter);
   DPrintf2("#%d: FuncEntry %p\n", (int)thr->fast_state.tid(), (void*)pc);
   thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeFuncEnter, pc);
+  TraceAddEvent(thr, thr->fast_state, EventTypeFuncEnter, pc);
 
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
@@ -553,7 +560,7 @@ void FuncExit(ThreadState *thr) {
   StatInc(thr, StatFuncExit);
   DPrintf2("#%d: FuncExit\n", (int)thr->fast_state.tid());
   thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeFuncExit, 0);
+  TraceAddEvent(thr, thr->fast_state, EventTypeFuncExit, 0);
 
   DCHECK_GT(thr->shadow_stack_pos, &thr->shadow_stack[0]);
 #ifndef TSAN_GO
