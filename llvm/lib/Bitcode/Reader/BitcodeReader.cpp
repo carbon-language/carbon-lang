@@ -1564,6 +1564,14 @@ bool BitcodeReader::ParseModule(bool Resume) {
       TheModule->setModuleInlineAsm(S);
       break;
     }
+    case bitc::MODULE_CODE_DEPLIB: {  // DEPLIB: [strchr x N]
+      // FIXME: Remove in 4.0.
+      std::string S;
+      if (ConvertToString(Record, 0, S))
+        return Error("Invalid MODULE_CODE_DEPLIB record");
+      // Ignore value.
+      break;
+    }
     case bitc::MODULE_CODE_SECTIONNAME: {  // SECTIONNAME: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))

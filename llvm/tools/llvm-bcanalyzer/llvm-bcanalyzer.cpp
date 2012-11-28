@@ -150,6 +150,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::MODULE_CODE_DATALAYOUT:  return "DATALAYOUT";
     case bitc::MODULE_CODE_ASM:         return "ASM";
     case bitc::MODULE_CODE_SECTIONNAME: return "SECTIONNAME";
+    case bitc::MODULE_CODE_DEPLIB:      return "DEPLIB"; // FIXME: Remove in 4.0
     case bitc::MODULE_CODE_GLOBALVAR:   return "GLOBALVAR";
     case bitc::MODULE_CODE_FUNCTION:    return "FUNCTION";
     case bitc::MODULE_CODE_ALIAS:       return "ALIAS";

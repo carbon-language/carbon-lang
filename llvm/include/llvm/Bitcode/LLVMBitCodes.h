@@ -55,6 +55,9 @@ namespace bitc {
     MODULE_CODE_ASM         = 4,    // ASM:         [strchr x N]
     MODULE_CODE_SECTIONNAME = 5,    // SECTIONNAME: [strchr x N]
 
+    // FIXME: Remove DEPLIB in 4.0.
+    MODULE_CODE_DEPLIB      = 6,    // DEPLIB:      [strchr x N]
+
     // GLOBALVAR: [pointer type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal]
     MODULE_CODE_GLOBALVAR   = 7,

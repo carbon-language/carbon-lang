@@ -54,6 +54,7 @@ namespace lltok {
     kw_target,
     kw_triple,
     kw_unwind,
+    kw_deplibs,                 // FIXME: Remove in 4.0
     kw_datalayout,
     kw_volatile,
     kw_atomic,
