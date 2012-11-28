@@ -692,12 +692,12 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   // Otherwise do coercion through memory. This is stupid, but
   // simple.
   llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
-  llvm::Value *Casted =
-    CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(SrcTy));
-  llvm::StoreInst *Store =
-    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
-  // FIXME: Use better alignment / avoid requiring aligned store.
-  Store->setAlignment(1);
+  llvm::Type *I8PtrTy = CGF.Builder.getInt8PtrTy();
+  llvm::Value *Casted = CGF.Builder.CreateBitCast(Tmp, I8PtrTy);
+  llvm::Value *SrcCasted = CGF.Builder.CreateBitCast(SrcPtr, I8PtrTy);
+  CGF.Builder.CreateMemCpy(Casted, SrcCasted,
+      llvm::ConstantInt::get(CGF.IntPtrTy, SrcSize),
+      1, false);
   return CGF.Builder.CreateLoad(Tmp);
 }
 
@@ -779,12 +779,12 @@ static void CreateCoercedStore(llvm::Value *Src,
     // to that information.
     llvm::Value *Tmp = CGF.CreateTempAlloca(SrcTy);
     CGF.Builder.CreateStore(Src, Tmp);
-    llvm::Value *Casted =
-      CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(DstTy));
-    llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
-    // FIXME: Use better alignment / avoid requiring aligned load.
-    Load->setAlignment(1);
-    CGF.Builder.CreateStore(Load, DstPtr, DstIsVolatile);
+    llvm::Type *I8PtrTy = CGF.Builder.getInt8PtrTy();
+    llvm::Value *Casted = CGF.Builder.CreateBitCast(Tmp, I8PtrTy);
+    llvm::Value *DstCasted = CGF.Builder.CreateBitCast(DstPtr, I8PtrTy);
+    CGF.Builder.CreateMemCpy(DstCasted, Casted,
+        llvm::ConstantInt::get(CGF.IntPtrTy, DstSize),
+        1, false);
   }
 }
 

@@ -354,3 +354,23 @@ void test46() { v46 x = {1,2}; f46(x,x,x,x,x,x,x,x,x,x); }
 struct s47 { unsigned a; };
 void f47(int,int,int,int,int,int,struct s47);
 void test47(int a, struct s47 b) { f47(a, a, a, a, a, a, b); }
+
+// rdar://12723368
+// In the following example, there are holes in T4 at the 3rd byte and the 4th
+// byte, however, T2 does not have those holes. T4 is chosen to be the
+// representing type for union T1, but we can't use load or store of T4 since
+// it will skip the 3rd byte and the 4th byte.
+// In general, Since we don't accurately represent the data fields of a union,
+// do not use load or store of the representing llvm type for the union.
+typedef _Complex int T2;
+typedef _Complex char T5;
+typedef _Complex int T7;
+typedef struct T4 { T5 field0; T7 field1; } T4;
+typedef union T1 { T2 field0; T4 field1; } T1;
+extern T1 T1_retval;
+T1 test48(void) {
+// CHECK: @test48
+// CHECK-NOT: load %struct.T4* %{{.*}}
+// CHECK-NOT: store %struct.T4 %{{.*}}, %struct.T4* %{{.*}}
+  return T1_retval;
+}
