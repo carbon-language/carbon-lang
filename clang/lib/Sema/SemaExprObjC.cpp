@@ -2236,7 +2236,8 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
 
           if (!Method && getLangOpts().ObjCAutoRefCount) {
             Diag(Loc, diag::err_arc_may_not_respond)
-              << OCIType->getPointeeType() << Sel;
+              << OCIType->getPointeeType() << Sel 
+              << SourceRange(SelectorLocs.front(), SelectorLocs.back());
             return ExprError();
           }
 
