@@ -465,3 +465,114 @@ def SetClr3ImmPred : PatLeaf<(i32 imm), [{
   int8_t v = (int8_t)N->getSExtValue();
   return (v >= 0 && v <= 7);
 }]>;
+
+
+// Extendable immediate operands.
+
+let PrintMethod = "printExtOperand" in {
+  def s16Ext : Operand<i32>;
+  def s12Ext : Operand<i32>;
+  def s10Ext : Operand<i32>;
+  def s9Ext : Operand<i32>;
+  def s8Ext : Operand<i32>;
+  def s6Ext : Operand<i32>;
+  def s11_0Ext : Operand<i32>;
+  def s11_1Ext : Operand<i32>;
+  def s11_2Ext : Operand<i32>;
+  def s11_3Ext : Operand<i32>;
+}
+
+let PrintMethod = "printImmOperand" in
+def u0AlwaysExt : Operand<i32>;
+
+// Predicates for constant extendable operands
+def s16ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 16-bit sign extended field.
+    return isInt<16>(v);
+  else {
+    if (isInt<16>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit signed field.
+    if (isConstExtProfitable(Node) && isInt<32>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s10ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 10-bit sign extended field.
+    return isInt<10>(v);
+  else {
+    if (isInt<10>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit signed field.
+    if (isConstExtProfitable(Node) && isInt<32>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s9ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 9-bit sign extended field.
+    return isInt<9>(v);
+  else {
+    if (isInt<9>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    if (isConstExtProfitable(Node) && isInt<32>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s8ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 8-bit sign extended field.
+    return isInt<8>(v);
+  else {
+    if (isInt<8>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit signed field.
+    if (isConstExtProfitable(Node) && isInt<32>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s8_16ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate fits in a 8-bit sign extended field.
+    return isInt<8>(v);
+  else {
+    if (isInt<8>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can't fit in a 16-bit signed field. This is required to avoid
+    // unnecessary constant extenders.
+    if (isConstExtProfitable(Node) && !isInt<16>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
