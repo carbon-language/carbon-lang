@@ -391,20 +391,6 @@ public:
     const char *
     FindHistoryString (const char *input_str) const;
 
-
-#ifndef SWIG
-    void
-    AddLogChannel (const char *name, 
-                   const Log::Callbacks &log_callbacks);
-
-    bool
-    GetLogChannelCallbacks (const char *channel, 
-                            Log::Callbacks &log_callbacks);
-
-    bool
-    RemoveLogChannel (const char *name);
-#endif
-
     size_t
     FindLongestCommandWord (CommandObject::CommandMap &dict);
 
