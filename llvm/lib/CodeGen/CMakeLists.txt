@@ -100,7 +100,6 @@ add_llvm_library(LLVMCodeGen
   TailDuplication.cpp
   TargetFrameLoweringImpl.cpp
   TargetInstrInfo.cpp
-  TargetInstrInfoImpl.cpp
   TargetLoweringObjectFileImpl.cpp
   TargetOptionsImpl.cpp
   TargetRegisterInfo.cpp
