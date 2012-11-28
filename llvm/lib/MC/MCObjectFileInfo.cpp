@@ -408,6 +408,11 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfAccelTypesSection =
     Ctx->getELFSection(".apple_types", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
+
+  // Fission Sections
+  DwarfInfoDWOSection =
+    Ctx->getELFSection(".debug_info.dwo", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
 }
 
 
