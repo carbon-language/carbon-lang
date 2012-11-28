@@ -517,16 +517,23 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
              diag::err_param_default_argument_member_template_redecl)
           << WhichKind
           << NewParam->getDefaultArgRange();
-      } else if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(New)) {
-        CXXSpecialMember NewSM = getSpecialMember(Ctor),
-                         OldSM = getSpecialMember(cast<CXXConstructorDecl>(Old));
-        if (NewSM != OldSM) {
-          Diag(NewParam->getLocation(),diag::warn_default_arg_makes_ctor_special)
-            << NewParam->getDefaultArgRange() << NewSM;
-          Diag(Old->getLocation(), diag::note_previous_declaration_special)
-            << OldSM;
-        }
       }
+    }
+  }
+
+  // DR1344: If a default argument is added outside a class definition and that
+  // default argument makes the function a special member function, the program
+  // is ill-formed. This can only happen for constructors.
+  if (isa<CXXConstructorDecl>(New) &&
+      New->getMinRequiredArguments() < Old->getMinRequiredArguments()) {
+    CXXSpecialMember NewSM = getSpecialMember(cast<CXXMethodDecl>(New)),
+                     OldSM = getSpecialMember(cast<CXXMethodDecl>(Old));
+    if (NewSM != OldSM) {
+      ParmVarDecl *NewParam = New->getParamDecl(New->getMinRequiredArguments());
+      assert(NewParam->hasDefaultArg());
+      Diag(NewParam->getLocation(), diag::err_default_arg_makes_ctor_special)
+        << NewParam->getDefaultArgRange() << NewSM;
+      Diag(Old->getLocation(), diag::note_previous_declaration);
     }
   }
 

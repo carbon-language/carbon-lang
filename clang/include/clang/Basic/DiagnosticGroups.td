@@ -43,7 +43,6 @@ def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
-def DefaultArgSpecialMember : DiagGroup<"default-arg-special-member">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 
 def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;

@@ -272,9 +272,8 @@ namespace CtorLookup {
   struct A {
     constexpr A(const A&) {}
     A(A&) {}
-    constexpr A(int); // expected-note {{previous}}
+    constexpr A(int = 0);
   };
-  constexpr A::A(int = 0) {} // expected-warning {{default constructor}}
 
   struct B : A {
     B() = default;
