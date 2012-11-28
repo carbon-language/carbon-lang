@@ -59,7 +59,9 @@ class ASTVector {
 
 public:
   // Default ctor - Initialize to empty.
-  explicit ASTVector(ASTContext &C, unsigned N = 0)
+  ASTVector() : Begin(NULL), End(NULL), Capacity(NULL) { }
+
+  ASTVector(ASTContext &C, unsigned N)
   : Begin(NULL), End(NULL), Capacity(NULL) {
     reserve(C, N);
   }

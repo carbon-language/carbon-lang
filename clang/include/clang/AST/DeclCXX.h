@@ -19,7 +19,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TypeLoc.h"
-#include "clang/AST/UnresolvedSet.h"
+#include "clang/AST/ASTUnresolvedSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -522,14 +522,14 @@ class CXXRecordDecl : public RecordDecl {
     /// of this C++ class (but not its inherited conversion
     /// functions). Each of the entries in this overload set is a
     /// CXXConversionDecl.
-    UnresolvedSet<4> Conversions;
+    ASTUnresolvedSet Conversions;
 
     /// VisibleConversions - Overload set containing the conversion
     /// functions of this C++ class and all those inherited conversion
     /// functions that are visible in this class. Each of the entries
     /// in this overload set is a CXXConversionDecl or a
     /// FunctionTemplateDecl.
-    UnresolvedSet<4> VisibleConversions;
+    ASTUnresolvedSet VisibleConversions;
 
     /// Definition - The declaration which defines this record.
     CXXRecordDecl *Definition;

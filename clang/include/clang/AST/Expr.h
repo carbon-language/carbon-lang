@@ -3580,8 +3580,8 @@ public:
                ArrayRef<Expr*> initExprs, SourceLocation rbraceloc);
 
   /// \brief Build an empty initializer list.
-  explicit InitListExpr(ASTContext &C, EmptyShell Empty)
-    : Expr(InitListExprClass, Empty), InitExprs(C) { }
+  explicit InitListExpr(EmptyShell Empty)
+    : Expr(InitListExprClass, Empty) { }
 
   unsigned getNumInits() const { return InitExprs.size(); }
 

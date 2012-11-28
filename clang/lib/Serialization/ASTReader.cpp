@@ -6448,13 +6448,14 @@ ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
 }
 
 /// \brief Read a UnresolvedSet structure.
-void ASTReader::ReadUnresolvedSet(ModuleFile &F, UnresolvedSetImpl &Set,
+void ASTReader::ReadUnresolvedSet(ModuleFile &F, ASTUnresolvedSet &Set,
                                   const RecordData &Record, unsigned &Idx) {
   unsigned NumDecls = Record[Idx++];
+  Set.reserve(Context, NumDecls);
   while (NumDecls--) {
     NamedDecl *D = ReadDeclAs<NamedDecl>(F, Record, Idx);
     AccessSpecifier AS = (AccessSpecifier)Record[Idx++];
-    Set.addDecl(D, AS);
+    Set.addDecl(Context, D, AS);
   }
 }
 

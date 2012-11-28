@@ -4480,9 +4480,9 @@ ASTWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
 
 
 void
-ASTWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordDataImpl &Record) {
+ASTWriter::AddUnresolvedSet(const ASTUnresolvedSet &Set, RecordDataImpl &Record) {
   Record.push_back(Set.size());
-  for (UnresolvedSetImpl::const_iterator
+  for (ASTUnresolvedSet::const_iterator
          I = Set.begin(), E = Set.end(); I != E; ++I) {
     AddDeclRef(I.getDecl(), Record);
     Record.push_back(I.getAccess());

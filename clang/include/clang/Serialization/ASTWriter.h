@@ -63,6 +63,7 @@ class SourceManager;
 class SwitchCase;
 class TargetInfo;
 class VersionTuple;
+class ASTUnresolvedSet;
 
 namespace SrcMgr { class SLocEntry; }
 
@@ -603,7 +604,7 @@ public:
                                 RecordDataImpl &Record);
 
   /// \brief Emit a UnresolvedSet structure.
-  void AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordDataImpl &Record);
+  void AddUnresolvedSet(const ASTUnresolvedSet &Set, RecordDataImpl &Record);
 
   /// \brief Emit a C++ base specifier.
   void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,

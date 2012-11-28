@@ -1868,7 +1868,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case EXPR_INIT_LIST:
-      S = new (Context) InitListExpr(getContext(), Empty);
+      S = new (Context) InitListExpr(Empty);
       break;
 
     case EXPR_DESIGNATED_INIT:

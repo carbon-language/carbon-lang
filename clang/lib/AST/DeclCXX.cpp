@@ -709,13 +709,13 @@ NotASpecialMember:;
           data().Conversions.replace(FunTmpl->getPreviousDecl(),
                                      FunTmpl);
         else
-          data().Conversions.addDecl(FunTmpl);
+          data().Conversions.addDecl(getASTContext(), FunTmpl);
       } else {
         if (Conversion->getPreviousDecl())
           data().Conversions.replace(Conversion->getPreviousDecl(),
                                      Conversion);
         else
-          data().Conversions.addDecl(Conversion);        
+          data().Conversions.addDecl(getASTContext(), Conversion);
       }
     }
     
@@ -935,7 +935,7 @@ NotASpecialMember:;
   if (UsingShadowDecl *Shadow = dyn_cast<UsingShadowDecl>(D))
     if (Shadow->getDeclName().getNameKind()
           == DeclarationName::CXXConversionFunctionName)
-      data().Conversions.addDecl(Shadow, Shadow->getAccess());
+      data().Conversions.addDecl(getASTContext(), Shadow, Shadow->getAccess());
 }
 
 bool CXXRecordDecl::isCLike() const {
@@ -996,7 +996,7 @@ static void CollectVisibleConversions(ASTContext &Context,
                                       bool InVirtual,
                                       AccessSpecifier Access,
                   const llvm::SmallPtrSet<CanQualType, 8> &ParentHiddenTypes,
-                                      UnresolvedSetImpl &Output,
+                                      ASTUnresolvedSet &Output,
                                       UnresolvedSetImpl &VOutput,
                            llvm::SmallPtrSet<NamedDecl*, 8> &HiddenVBaseCs) {
   // The set of types which have conversions in this class or its
@@ -1032,7 +1032,7 @@ static void CollectVisibleConversions(ASTContext &Context,
         if (InVirtual)
           VOutput.addDecl(I.getDecl(), IAccess);
         else
-          Output.addDecl(I.getDecl(), IAccess);
+          Output.addDecl(Context, I.getDecl(), IAccess);
       }
     }
   }
@@ -1059,7 +1059,7 @@ static void CollectVisibleConversions(ASTContext &Context,
 /// bases.  It might be worth special-casing that, really.
 static void CollectVisibleConversions(ASTContext &Context,
                                       CXXRecordDecl *Record,
-                                      UnresolvedSetImpl &Output) {
+                                      ASTUnresolvedSet &Output) {
   // The collection of all conversions in virtual bases that we've
   // found.  These will be added to the output as long as they don't
   // appear in the hidden-conversions set.
@@ -1076,7 +1076,7 @@ static void CollectVisibleConversions(ASTContext &Context,
   // hidden-types set.
   CXXRecordDecl::conversion_iterator ConvI = Record->conversion_begin();
   CXXRecordDecl::conversion_iterator ConvE = Record->conversion_end();
-  Output.append(ConvI, ConvE);
+  Output.append(Context, ConvI, ConvE);
   for (; ConvI != ConvE; ++ConvI)
     HiddenTypes.insert(GetConversionType(Context, ConvI.getDecl()));
 
@@ -1095,7 +1095,7 @@ static void CollectVisibleConversions(ASTContext &Context,
   for (UnresolvedSetIterator I = VBaseCs.begin(), E = VBaseCs.end();
          I != E; ++I) {
     if (!HiddenVBaseCs.count(cast<NamedDecl>(I.getDecl()->getCanonicalDecl())))
-      Output.addDecl(I.getDecl(), I.getAccess());
+      Output.addDecl(Context, I.getDecl(), I.getAccess());
   }
 }
 
@@ -1127,7 +1127,7 @@ void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
   // with sufficiently large numbers of directly-declared conversions
   // that asymptotic behavior matters.
 
-  UnresolvedSetImpl &Convs = data().Conversions;
+  ASTUnresolvedSet &Convs = data().Conversions;
   for (unsigned I = 0, E = Convs.size(); I != E; ++I) {
     if (Convs[I].getDecl() == ConvDecl) {
       Convs.erase(I);
@@ -1266,7 +1266,7 @@ void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
   for (UnresolvedSetIterator I = data().Conversions.begin(), 
                              E = data().Conversions.end(); 
        I != E; ++I)
-    data().Conversions.setAccess(I, (*I)->getAccess());
+    I.setAccess((*I)->getAccess());
 }
 
 bool CXXRecordDecl::mayBeAbstract() const {
