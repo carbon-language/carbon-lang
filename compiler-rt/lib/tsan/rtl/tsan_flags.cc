@@ -56,6 +56,11 @@ void InitializeFlags(Flags *f, const char *env) {
   f->stop_on_start = false;
   f->running_on_valgrind = false;
   f->external_symbolizer_path = "";
+  f->history_size = 2;
+
+#ifdef TSAN_GO
+  f->history_size = 1;  // There are a lot of goroutines.
+#endif
 
   // Let a frontend override.
   OverrideFlags(f);
@@ -79,11 +84,18 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
   ParseFlag(env, &f->stop_on_start, "stop_on_start");
   ParseFlag(env, &f->external_symbolizer_path, "external_symbolizer_path");
+  ParseFlag(env, &f->history_size, "history_size");
 
   if (!f->report_bugs) {
     f->report_thread_leaks = false;
     f->report_destroy_locked = false;
     f->report_signal_unsafe = false;
+  }
+
+  if (f->history_size < 0 || f->history_size > 7) {
+    Printf("ThreadSanitizer: incorrect value for history_size"
+           " (must be [0..7])\n");
+    Die();
   }
 }
 

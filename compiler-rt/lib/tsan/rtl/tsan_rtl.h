@@ -74,6 +74,7 @@ void TsanCheckFailed(const char *file, int line, const char *cond,
 //   tid             : kTidBits
 //   epoch           : kClkBits
 //   unused          : -
+//   history_size    : 3
 class FastState {
  public:
   FastState(u64 tid, u64 epoch) {
@@ -113,6 +114,27 @@ class FastState {
   void ClearIgnoreBit() { x_ &= ~kIgnoreBit; }
   bool GetIgnoreBit() const { return (s64)x_ < 0; }
 
+  void SetHistorySize(int hs) {
+    CHECK_GE(hs, 0);
+    CHECK_LE(hs, 7);
+    x_ = (x_ & ~7) | hs;
+  }
+
+  int GetHistorySize() const {
+    return (int)(x_ & 7);
+  }
+
+  void ClearHistorySize() {
+    x_ &= ~7;
+  }
+
+  u64 GetTracePos() const {
+    const int hs = GetHistorySize();
+    // When hs == 0, the trace consists of 2 parts.
+    const u64 mask = (1ull << (kTracePartSizeBits + hs + 1)) - 1;
+    return epoch() & mask;
+  }
+
  private:
   friend class Shadow;
   static const int kTidShift = 64 - kTidBits - 1;
@@ -131,9 +153,14 @@ class FastState {
 //   addr0           : 3
 class Shadow : public FastState {
  public:
-  explicit Shadow(u64 x) : FastState(x) { }
+  explicit Shadow(u64 x)
+      : FastState(x) {
+  }
 
-  explicit Shadow(const FastState &s) : FastState(s.x_) { }
+  explicit Shadow(const FastState &s)
+      : FastState(s.x_) {
+    ClearHistorySize();
+  }
 
   void SetAddr0AndSizeLog(u64 addr0, unsigned kAccessSizeLog) {
     DCHECK_EQ(x_ & 31, 0);
@@ -535,12 +562,13 @@ void AfterSleep(ThreadState *thr, uptr pc);
 
 void TraceSwitch(ThreadState *thr);
 uptr TraceTopPC(ThreadState *thr);
+uptr TraceSize();
 
 extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
                                         EventType typ, uptr addr) {
   StatInc(thr, StatEvents);
-  u64 epoch = fs.epoch();
+  u64 epoch = fs.GetTracePos();
   if (UNLIKELY((epoch % kTracePartSize) == 0)) {
 #ifndef TSAN_GO
     HACKY_CALL(__tsan_trace_switch);
@@ -549,7 +577,7 @@ void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
 #endif
   }
   Event *trace = (Event*)GetThreadTrace(fs.tid());
-  Event *evp = &trace[epoch % kTraceSize];
+  Event *evp = &trace[epoch];
   Event ev = (u64)addr | ((u64)typ << 61);
   *evp = ev;
 }

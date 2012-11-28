@@ -169,7 +169,10 @@ void SetStackSizeLimitInBytes(uptr limit) {
   struct rlimit rlim;
   rlim.rlim_cur = limit;
   rlim.rlim_max = limit;
-  CHECK_EQ(0, setrlimit(RLIMIT_STACK, &rlim));
+  if (setrlimit(RLIMIT_STACK, &rlim)) {
+    Report("setrlimit() failed %d\n", errno);
+    Die();
+  }
   CHECK(!StackSizeIsUnlimited());
 }
 

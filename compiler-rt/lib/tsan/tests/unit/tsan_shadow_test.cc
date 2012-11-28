@@ -22,6 +22,7 @@ TEST(Shadow, FastState) {
   EXPECT_EQ(s.epoch(), (u64)22);
   EXPECT_EQ(s.GetIgnoreBit(), false);
   EXPECT_EQ(s.GetFreedAndReset(), false);
+  EXPECT_EQ(s.GetHistorySize(), 0);
   EXPECT_EQ(s.addr0(), (u64)0);
   EXPECT_EQ(s.size(), (u64)1);
   EXPECT_EQ(s.is_write(), false);
@@ -35,6 +36,14 @@ TEST(Shadow, FastState) {
   EXPECT_EQ(s.GetIgnoreBit(), true);
   s.ClearIgnoreBit();
   EXPECT_EQ(s.GetIgnoreBit(), false);
+
+  for (int i = 0; i < 8; i++) {
+    s.SetHistorySize(i);
+    EXPECT_EQ(s.GetHistorySize(), i);
+  }
+  s.SetHistorySize(2);
+  s.ClearHistorySize();
+  EXPECT_EQ(s.GetHistorySize(), 0);
 }
 
 TEST(Shadow, Mapping) {

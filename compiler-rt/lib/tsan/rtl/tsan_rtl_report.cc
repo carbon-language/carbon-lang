@@ -263,11 +263,11 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
     return;
   }
   Lock l(&trace->mtx);
-  const int partidx = (epoch / (kTraceSize / kTraceParts)) % kTraceParts;
+  const int partidx = (epoch / (TraceSize() / kTraceParts)) % kTraceParts;
   TraceHeader* hdr = &trace->headers[partidx];
   if (epoch < hdr->epoch0)
     return;
-  const u64 eend = epoch % kTraceSize;
+  const u64 eend = epoch % TraceSize();
   const u64 ebegin = eend / kTracePartSize * kTracePartSize;
   DPrintf("#%d: RestoreStack epoch=%zu ebegin=%zu eend=%zu partidx=%d\n",
           tid, (uptr)epoch, (uptr)ebegin, (uptr)eend, partidx);

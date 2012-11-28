@@ -123,7 +123,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     void *mem = internal_alloc(MBlockThreadContex, sizeof(ThreadContext));
     tctx = new(mem) ThreadContext(tid);
     ctx->threads[tid] = tctx;
-    MapThreadTrace(GetThreadTrace(tid), kTraceSize * sizeof(Event));
+    MapThreadTrace(GetThreadTrace(tid), TraceSize() * sizeof(Event));
   }
   CHECK_NE(tctx, 0);
   CHECK_GE(tid, 0);
@@ -149,7 +149,6 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     thr->fast_synch_epoch = thr->fast_state.epoch();
     thr->clock.release(&tctx->sync);
     StatInc(thr, StatSyncRelease);
-
     tctx->creation_stack.ObtainCurrent(thr, pc);
   }
   return tid;
@@ -205,6 +204,7 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   thr->fast_synch_epoch = tctx->epoch0;
   thr->clock.set(tid, tctx->epoch0);
   thr->clock.acquire(&tctx->sync);
+  thr->fast_state.SetHistorySize(flags()->history_size);
   StatInc(thr, StatSyncAcquire);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",

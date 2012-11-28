@@ -290,9 +290,12 @@ void TraceSwitch(ThreadState *thr) {
 
 uptr TraceTopPC(ThreadState *thr) {
   Event *events = (Event*)GetThreadTrace(thr->tid);
-  uptr pc = events[thr->fast_state.epoch() % kTraceSize]
-      & ((1ull << 61) - 1);
+  uptr pc = events[thr->fast_state.GetTracePos()];
   return pc;
+}
+
+uptr TraceSize() {
+  return (uptr)(1ull << (kTracePartSizeBits + flags()->history_size + 1));
 }
 
 #ifndef TSAN_GO
