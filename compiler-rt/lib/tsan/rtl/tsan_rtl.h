@@ -70,18 +70,18 @@ void TsanCheckFailed(const char *file, int line, const char *cond,
                      u64 v1, u64 v2);
 
 // FastState (from most significant bit):
-//   unused          : 1
+//   ignore          : 1
 //   tid             : kTidBits
 //   epoch           : kClkBits
 //   unused          : -
-//   ignore_bit      : 1
 class FastState {
  public:
   FastState(u64 tid, u64 epoch) {
     x_ = tid << kTidShift;
     x_ |= epoch << kClkShift;
-    DCHECK(tid == this->tid());
-    DCHECK(epoch == this->epoch());
+    DCHECK_EQ(tid, this->tid());
+    DCHECK_EQ(epoch, this->epoch());
+    DCHECK_EQ(GetIgnoreBit(), false);
   }
 
   explicit FastState(u64 x)
@@ -111,13 +111,13 @@ class FastState {
 
   void SetIgnoreBit() { x_ |= kIgnoreBit; }
   void ClearIgnoreBit() { x_ &= ~kIgnoreBit; }
-  bool GetIgnoreBit() const { return x_ & kIgnoreBit; }
+  bool GetIgnoreBit() const { return (s64)x_ < 0; }
 
  private:
   friend class Shadow;
   static const int kTidShift = 64 - kTidBits - 1;
   static const int kClkShift = kTidShift - kClkBits;
-  static const u64 kIgnoreBit = 1ull;
+  static const u64 kIgnoreBit = 1ull << 63;
   static const u64 kFreedBit = 1ull << 63;
   u64 x_;
 };

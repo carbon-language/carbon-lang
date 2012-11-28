@@ -11,9 +11,31 @@
 //
 //===----------------------------------------------------------------------===//
 #include "tsan_platform.h"
+#include "tsan_rtl.h"
 #include "gtest/gtest.h"
 
 namespace __tsan {
+
+TEST(Shadow, FastState) {
+  Shadow s(FastState(11, 22));
+  EXPECT_EQ(s.tid(), (u64)11);
+  EXPECT_EQ(s.epoch(), (u64)22);
+  EXPECT_EQ(s.GetIgnoreBit(), false);
+  EXPECT_EQ(s.GetFreedAndReset(), false);
+  EXPECT_EQ(s.addr0(), (u64)0);
+  EXPECT_EQ(s.size(), (u64)1);
+  EXPECT_EQ(s.is_write(), false);
+
+  s.IncrementEpoch();
+  EXPECT_EQ(s.epoch(), (u64)23);
+  s.IncrementEpoch();
+  EXPECT_EQ(s.epoch(), (u64)24);
+
+  s.SetIgnoreBit();
+  EXPECT_EQ(s.GetIgnoreBit(), true);
+  s.ClearIgnoreBit();
+  EXPECT_EQ(s.GetIgnoreBit(), false);
+}
 
 TEST(Shadow, Mapping) {
   static int global;
