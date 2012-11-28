@@ -195,18 +195,6 @@ public:
   const MCSection *getCompactUnwindSection() const{
     return CompactUnwindSection;
   }
-  const MCSection *getDwarfAccelNamesSection() const {
-    return DwarfAccelNamesSection;
-  }
-  const MCSection *getDwarfAccelObjCSection() const {
-    return DwarfAccelObjCSection;
-  }
-  const MCSection *getDwarfAccelNamespaceSection() const {
-    return DwarfAccelNamespaceSection;
-  }
-  const MCSection *getDwarfAccelTypesSection() const {
-    return DwarfAccelTypesSection;
-  }
   const MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
   const MCSection *getDwarfInfoSection() const { return DwarfInfoSection; }
   const MCSection *getDwarfLineSection() const { return DwarfLineSection; }
@@ -222,6 +210,21 @@ public:
   const MCSection *getDwarfMacroInfoSection() const {
     return DwarfMacroInfoSection;
   }
+
+  // DWARF5 Experimental Debug Info Sections
+  const MCSection *getDwarfAccelNamesSection() const {
+    return DwarfAccelNamesSection;
+  }
+  const MCSection *getDwarfAccelObjCSection() const {
+    return DwarfAccelObjCSection;
+  }
+  const MCSection *getDwarfAccelNamespaceSection() const {
+    return DwarfAccelNamespaceSection;
+  }
+  const MCSection *getDwarfAccelTypesSection() const {
+    return DwarfAccelTypesSection;
+  }
+
   const MCSection *getTLSExtraDataSection() const {
     return TLSExtraDataSection;
   }
