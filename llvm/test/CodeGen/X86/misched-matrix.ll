@@ -1,6 +1,12 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
 ; RUN:          -misched-topdown -verify-machineinstrs \
 ; RUN:     | FileCheck %s -check-prefix=TOPDOWN
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
+; RUN:          -misched=ilpmin -verify-machineinstrs \
+; RUN:     | FileCheck %s -check-prefix=ILPMIN
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
+; RUN:          -misched=ilpmax -verify-machineinstrs \
+; RUN:     | FileCheck %s -check-prefix=ILPMAX
 ;
 ; Verify that the MI scheduler minimizes register pressure for a
 ; uniform set of bottom-up subtrees (unrolled matrix multiply).
@@ -17,6 +23,68 @@
 ; TOPDOWN: movl %{{.*}}, 8(
 ; TOPDOWN: movl %{{.*}}, 12(
 ; TOPDOWN: %for.end
+;
+; For -misched=ilpmin, verify that each expression subtree is
+; scheduled independently, and that the imull/adds are interleaved.
+;
+; ILPMIN: %for.body
+; ILPMIN: movl %{{.*}}, (
+; ILPMIN: imull
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: movl %{{.*}}, 4(
+; ILPMIN: imull
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: movl %{{.*}}, 8(
+; ILPMIN: imull
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: imull
+; ILPMIN: addl
+; ILPMIN: movl %{{.*}}, 12(
+; ILPMIN: %for.end
+;
+; For -misched=ilpmax, verify that each expression subtree is
+; scheduled independently, and that the imull/adds are clustered.
+;
+; ILPMAX: %for.body
+; ILPMAX: movl %{{.*}}, (
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: addl
+; ILPMAX: addl
+; ILPMAX: addl
+; ILPMAX: movl %{{.*}}, 4(
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: addl
+; ILPMAX: addl
+; ILPMAX: addl
+; ILPMAX: movl %{{.*}}, 8(
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: imull
+; ILPMAX: addl
+; ILPMAX: addl
+; ILPMAX: addl
+; ILPMAX: movl %{{.*}}, 12(
+; ILPMAX: %for.end
 
 define void @mmult([4 x i32]* noalias nocapture %m1, [4 x i32]* noalias nocapture %m2,
 [4 x i32]* noalias nocapture %m3) nounwind uwtable ssp {

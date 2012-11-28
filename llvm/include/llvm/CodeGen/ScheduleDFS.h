@@ -14,38 +14,41 @@
 #ifndef LLVM_CODEGEN_SCHEDULEDAGILP_H
 #define LLVM_CODEGEN_SCHEDULEDAGILP_H
 
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
 
 namespace llvm {
 
 class raw_ostream;
+class IntEqClasses;
 class ScheduleDAGInstrs;
 class SUnit;
 
 /// \brief Represent the ILP of the subDAG rooted at a DAG node.
+///
+/// When computed using bottom-up DFS, this metric assumes that the DAG is a
+/// forest of trees with roots at the bottom of the schedule branching upward.
 struct ILPValue {
   unsigned InstrCount;
-  unsigned Cycles;
+  /// Length may either correspond to depth or height, depending on direction,
+  /// and cycles or nodes depending on context.
+  unsigned Length;
 
-  ILPValue(): InstrCount(0), Cycles(0) {}
-
-  ILPValue(unsigned count, unsigned cycles):
-    InstrCount(count), Cycles(cycles) {}
-
-  bool isValid() const { return Cycles > 0; }
+  ILPValue(unsigned count, unsigned length):
+    InstrCount(count), Length(length) {}
 
   // Order by the ILP metric's value.
   bool operator<(ILPValue RHS) const {
-    return (uint64_t)InstrCount * RHS.Cycles
-      < (uint64_t)Cycles * RHS.InstrCount;
+    return (uint64_t)InstrCount * RHS.Length
+      < (uint64_t)Length * RHS.InstrCount;
   }
   bool operator>(ILPValue RHS) const {
     return RHS < *this;
   }
   bool operator<=(ILPValue RHS) const {
-    return (uint64_t)InstrCount * RHS.Cycles
-      <= (uint64_t)Cycles * RHS.InstrCount;
+    return (uint64_t)InstrCount * RHS.Length
+      <= (uint64_t)Length * RHS.InstrCount;
   }
   bool operator>=(ILPValue RHS) const {
     return RHS <= *this;
@@ -58,25 +61,88 @@ struct ILPValue {
 #endif
 };
 
-/// \brief Compute the values of each DAG node for an ILP metric.
+/// \brief Compute the values of each DAG node for various metrics during DFS.
 ///
-/// This metric assumes that the DAG is a forest of trees with roots at the
-/// bottom of the schedule.
-class ScheduleDAGILP {
+/// ILPValues summarize the DAG subtree rooted at each node up to
+/// SubtreeLimit. ILPValues are also valid for interior nodes of a subtree, not
+/// just the root.
+class SchedDFSResult {
+  friend class SchedDFSImpl;
+
+  /// \brief Per-SUnit data computed during DFS for various metrics.
+  struct NodeData {
+    unsigned InstrCount;
+    unsigned SubtreeID;
+
+    NodeData(): InstrCount(0), SubtreeID(0) {}
+  };
+
+  /// \brief Record a connection between subtrees and the connection level.
+  struct Connection {
+    unsigned TreeID;
+    unsigned Level;
+
+    Connection(unsigned tree, unsigned level): TreeID(tree), Level(level) {}
+  };
+
   bool IsBottomUp;
-  std::vector<ILPValue> ILPValues;
+  unsigned SubtreeLimit;
+  /// DFS results for each SUnit in this DAG.
+  std::vector<NodeData> DFSData;
+
+  // For each subtree discovered during DFS, record its connections to other
+  // subtrees.
+  std::vector<SmallVector<Connection, 4> > SubtreeConnections;
+
+  /// Cache the current connection level of each subtree.
+  /// This mutable array is updated during scheduling.
+  std::vector<unsigned> SubtreeConnectLevels;
 
 public:
-  ScheduleDAGILP(bool IsBU): IsBottomUp(IsBU) {}
+  SchedDFSResult(bool IsBU, unsigned lim)
+    : IsBottomUp(IsBU), SubtreeLimit(lim) {}
+
+  /// \brief Clear the results.
+  void clear() {
+    DFSData.clear();
+    SubtreeConnections.clear();
+    SubtreeConnectLevels.clear();
+  }
 
   /// \brief Initialize the result data with the size of the DAG.
-  void resize(unsigned NumSUnits);
+  void resize(unsigned NumSUnits) {
+    DFSData.resize(NumSUnits);
+  }
 
-  /// \brief Compute the ILP metric for the subDAG at this root.
-  void computeILP(const SUnit *Root);
+  /// \brief Compute various metrics for the DAG with given roots.
+  void compute(ArrayRef<SUnit *> Roots);
 
   /// \brief Get the ILP value for a DAG node.
-  ILPValue getILP(const SUnit *SU);
+  ///
+  /// A leaf node has an ILP of 1/1.
+  ILPValue getILP(const SUnit *SU) {
+    return ILPValue(DFSData[SU->NodeNum].InstrCount, 1 + SU->getDepth());
+  }
+
+  /// \brief The number of subtrees detected in this DAG.
+  unsigned getNumSubtrees() const { return SubtreeConnectLevels.size(); }
+
+  /// \brief Get the ID of the subtree the given DAG node belongs to.
+  unsigned getSubtreeID(const SUnit *SU) {
+    return DFSData[SU->NodeNum].SubtreeID;
+  }
+
+  /// \brief Get the connection level of a subtree.
+  ///
+  /// For bottom-up trees, the connection level is the latency depth (in cycles)
+  /// of the deepest connection to another subtree.
+  unsigned getSubtreeLevel(unsigned SubtreeID) {
+    return SubtreeConnectLevels[SubtreeID];
+  }
+
+  /// \brief Scheduler callback to update SubtreeConnectLevels when a tree is
+  /// initially scheduled.
+  void scheduleTree(unsigned SubtreeID);
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const ILPValue &Val);

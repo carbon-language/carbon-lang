@@ -2054,58 +2054,99 @@ ConvergingSchedRegistry("converge", "Standard converging scheduler.",
 namespace {
 /// \brief Order nodes by the ILP metric.
 struct ILPOrder {
-  ScheduleDAGILP *ILP;
+  SchedDFSResult *DFSResult;
+  BitVector *ScheduledTrees;
   bool MaximizeILP;
 
-  ILPOrder(ScheduleDAGILP *ilp, bool MaxILP): ILP(ilp), MaximizeILP(MaxILP) {}
+  ILPOrder(SchedDFSResult *dfs, BitVector *schedtrees, bool MaxILP)
+    : DFSResult(dfs), ScheduledTrees(schedtrees), MaximizeILP(MaxILP) {}
 
   /// \brief Apply a less-than relation on node priority.
+  ///
+  /// (Return true if A comes after B in the Q.)
   bool operator()(const SUnit *A, const SUnit *B) const {
-    // Return true if A comes after B in the Q.
+    unsigned SchedTreeA = DFSResult->getSubtreeID(A);
+    unsigned SchedTreeB = DFSResult->getSubtreeID(B);
+    if (SchedTreeA != SchedTreeB) {
+      // Unscheduled trees have lower priority.
+      if (ScheduledTrees->test(SchedTreeA) != ScheduledTrees->test(SchedTreeB))
+        return ScheduledTrees->test(SchedTreeB);
+
+      // Trees with shallower connections have have lower priority.
+      if (DFSResult->getSubtreeLevel(SchedTreeA)
+          != DFSResult->getSubtreeLevel(SchedTreeB)) {
+        return DFSResult->getSubtreeLevel(SchedTreeA)
+          < DFSResult->getSubtreeLevel(SchedTreeB);
+      }
+    }
     if (MaximizeILP)
-      return ILP->getILP(A) < ILP->getILP(B);
+      return DFSResult->getILP(A) < DFSResult->getILP(B);
     else
-      return ILP->getILP(A) > ILP->getILP(B);
+      return DFSResult->getILP(A) > DFSResult->getILP(B);
   }
 };
 
 /// \brief Schedule based on the ILP metric.
 class ILPScheduler : public MachineSchedStrategy {
-  ScheduleDAGILP ILP;
+  /// In case all subtrees are eventually connected to a common root through
+  /// data dependence (e.g. reduction), place an upper limit on their size.
+  ///
+  /// FIXME: A subtree limit is generally good, but in the situation commented
+  /// above, where multiple similar subtrees feed a common root, we should
+  /// only split at a point where the resulting subtrees will be balanced.
+  /// (a motivating test case must be found).
+  static const unsigned SubtreeLimit = 16;
+
+  SchedDFSResult DFSResult;
+  BitVector ScheduledTrees;
   ILPOrder Cmp;
 
   std::vector<SUnit*> ReadyQ;
 public:
   ILPScheduler(bool MaximizeILP)
-  : ILP(/*BottomUp=*/true), Cmp(&ILP, MaximizeILP) {}
+  : DFSResult(/*BottomUp=*/true, SubtreeLimit),
+    Cmp(&DFSResult, &ScheduledTrees, MaximizeILP) {}
 
   virtual void initialize(ScheduleDAGMI *DAG) {
     ReadyQ.clear();
-    ILP.resize(DAG->SUnits.size());
+    DFSResult.clear();
+    DFSResult.resize(DAG->SUnits.size());
+    ScheduledTrees.clear();
   }
 
   virtual void registerRoots() {
-    for (std::vector<SUnit*>::const_iterator
-           I = ReadyQ.begin(), E = ReadyQ.end(); I != E; ++I) {
-      ILP.computeILP(*I);
-    }
+    DFSResult.compute(ReadyQ);
+    ScheduledTrees.resize(DFSResult.getNumSubtrees());
   }
 
   /// Implement MachineSchedStrategy interface.
   /// -----------------------------------------
 
+  /// Callback to select the highest priority node from the ready Q.
   virtual SUnit *pickNode(bool &IsTopNode) {
     if (ReadyQ.empty()) return NULL;
     pop_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
     SUnit *SU = ReadyQ.back();
     ReadyQ.pop_back();
     IsTopNode = false;
-    DEBUG(dbgs() << "*** Scheduling " << *SU->getInstr()
-          << " ILP: " << ILP.getILP(SU) << '\n');
+    DEBUG(dbgs() << "*** Scheduling " << "SU(" << SU->NodeNum << "): "
+          << *SU->getInstr()
+          << " ILP: " << DFSResult.getILP(SU)
+          << " Tree: " << DFSResult.getSubtreeID(SU) << " @"
+          << DFSResult.getSubtreeLevel(DFSResult.getSubtreeID(SU))<< '\n');
     return SU;
   }
 
-  virtual void schedNode(SUnit *, bool) {}
+  /// Callback after a node is scheduled. Mark a newly scheduled tree, notify
+  /// DFSResults, and resort the priority Q.
+  virtual void schedNode(SUnit *SU, bool IsTopNode) {
+    assert(!IsTopNode && "SchedDFSResult needs bottom-up");
+    if (!ScheduledTrees.test(DFSResult.getSubtreeID(SU))) {
+      ScheduledTrees.set(DFSResult.getSubtreeID(SU));
+      DFSResult.scheduleTree(DFSResult.getSubtreeID(SU));
+      std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
+    }
+  }
 
   virtual void releaseTopNode(SUnit *) { /*only called for top roots*/ }
 

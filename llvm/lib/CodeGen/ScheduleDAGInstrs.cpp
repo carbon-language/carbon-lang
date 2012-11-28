@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sched-instrs"
+#define DEBUG_TYPE "misched"
 #include "llvm/Operator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -949,6 +949,120 @@ std::string ScheduleDAGInstrs::getDAGName() const {
   return "dag." + BB->getFullName();
 }
 
+//===----------------------------------------------------------------------===//
+// SchedDFSResult Implementation
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+/// \brief Internal state used to compute SchedDFSResult.
+class SchedDFSImpl {
+  SchedDFSResult &R;
+
+  /// Join DAG nodes into equivalence classes by their subtree.
+  IntEqClasses SubtreeClasses;
+  /// List PredSU, SuccSU pairs that represent data edges between subtrees.
+  std::vector<std::pair<const SUnit*, const SUnit*> > ConnectionPairs;
+
+public:
+  SchedDFSImpl(SchedDFSResult &r): R(r), SubtreeClasses(R.DFSData.size()) {}
+
+  /// SubtreID is initialized to zero, set to itself to flag the root of a
+  /// subtree, set to the parent to indicate an interior node,
+  /// then set to a representative subtree ID during finalization.
+  bool isVisited(const SUnit *SU) const {
+    return R.DFSData[SU->NodeNum].SubtreeID;
+  }
+
+  /// Initialize this node's instruction count. We don't need to flag the node
+  /// visited until visitPostorder because the DAG cannot have cycles.
+  void visitPreorder(const SUnit *SU) {
+    R.DFSData[SU->NodeNum].InstrCount = SU->getInstr()->isTransient() ? 0 : 1;
+  }
+
+  /// Mark this node as either the root of a subtree or an interior
+  /// node. Increment the parent node's instruction count.
+  void visitPostorder(const SUnit *SU, const SDep *PredDep, const SUnit *Parent) {
+    R.DFSData[SU->NodeNum].SubtreeID = SU->NodeNum;
+
+    // Join the child to its parent if they are connected via data dependence
+    // and do not exceed the limit.
+    if (!Parent || PredDep->getKind() != SDep::Data)
+      return;
+
+    unsigned PredCnt = R.DFSData[SU->NodeNum].InstrCount;
+    if (PredCnt > R.SubtreeLimit)
+      return;
+
+    R.DFSData[SU->NodeNum].SubtreeID = Parent->NodeNum;
+
+    // Add the recently finished predecessor's bottom-up descendent count.
+    R.DFSData[Parent->NodeNum].InstrCount += PredCnt;
+    SubtreeClasses.join(Parent->NodeNum, SU->NodeNum);
+  }
+
+  /// Determine whether the DFS cross edge should be considered a subtree edge
+  /// or a connection between subtrees.
+  void visitCross(const SDep &PredDep, const SUnit *Succ) {
+    if (PredDep.getKind() == SDep::Data) {
+      // If this is a cross edge to a root, join the subtrees. This happens when
+      // the root was first reached by a non-data dependence.
+      unsigned NodeNum = PredDep.getSUnit()->NodeNum;
+      unsigned PredCnt = R.DFSData[NodeNum].InstrCount;
+      if (R.DFSData[NodeNum].SubtreeID == NodeNum && PredCnt < R.SubtreeLimit) {
+        R.DFSData[NodeNum].SubtreeID = Succ->NodeNum;
+        R.DFSData[Succ->NodeNum].InstrCount += PredCnt;
+        SubtreeClasses.join(Succ->NodeNum, NodeNum);
+        return;
+      }
+    }
+    ConnectionPairs.push_back(std::make_pair(PredDep.getSUnit(), Succ));
+  }
+
+  /// Set each node's subtree ID to the representative ID and record connections
+  /// between trees.
+  void finalize() {
+    SubtreeClasses.compress();
+    R.SubtreeConnections.resize(SubtreeClasses.getNumClasses());
+    R.SubtreeConnectLevels.resize(SubtreeClasses.getNumClasses());
+    DEBUG(dbgs() << R.getNumSubtrees() << " subtrees:\n");
+    for (unsigned Idx = 0, End = R.DFSData.size(); Idx != End; ++Idx) {
+      R.DFSData[Idx].SubtreeID = SubtreeClasses[Idx];
+      DEBUG(dbgs() << "  SU(" << Idx << ") in tree "
+            << R.DFSData[Idx].SubtreeID << '\n');
+    }
+    for (std::vector<std::pair<const SUnit*, const SUnit*> >::const_iterator
+           I = ConnectionPairs.begin(), E = ConnectionPairs.end();
+         I != E; ++I) {
+      unsigned PredTree = SubtreeClasses[I->first->NodeNum];
+      unsigned SuccTree = SubtreeClasses[I->second->NodeNum];
+      if (PredTree == SuccTree)
+        continue;
+      unsigned Depth = I->first->getDepth();
+      addConnection(PredTree, SuccTree, Depth);
+      addConnection(SuccTree, PredTree, Depth);
+    }
+  }
+
+protected:
+  /// Called by finalize() to record a connection between trees.
+  void addConnection(unsigned FromTree, unsigned ToTree, unsigned Depth) {
+    if (!Depth)
+      return;
+
+    SmallVectorImpl<SchedDFSResult::Connection> &Connections =
+      R.SubtreeConnections[FromTree];
+    for (SmallVectorImpl<SchedDFSResult::Connection>::iterator
+           I = Connections.begin(), E = Connections.end(); I != E; ++I) {
+      if (I->TreeID == ToTree) {
+        I->Level = std::max(I->Level, Depth);
+        return;
+      }
+    }
+    Connections.push_back(SchedDFSResult::Connection(ToTree, Depth));
+  }
+};
+} // namespace llvm
+
 namespace {
 /// \brief Manage the stack used by a reverse depth-first search over the DAG.
 class SchedDAGReverseDFS {
@@ -961,7 +1075,10 @@ public:
   }
   void advance() { ++DFSStack.back().second; }
 
-  void backtrack() { DFSStack.pop_back(); }
+  const SDep *backtrack() {
+    DFSStack.pop_back();
+    return DFSStack.empty() ? 0 : llvm::prior(DFSStack.back().second);
+  }
 
   const SUnit *getCurr() const { return DFSStack.back().first; }
 
@@ -973,57 +1090,65 @@ public:
 };
 } // anonymous
 
-void ScheduleDAGILP::resize(unsigned NumSUnits) {
-  ILPValues.resize(NumSUnits);
-}
-
-ILPValue ScheduleDAGILP::getILP(const SUnit *SU) {
-  return ILPValues[SU->NodeNum];
-}
-
-// A leaf node has an ILP of 1/1.
-static ILPValue initILP(const SUnit *SU) {
-  unsigned Cnt = SU->getInstr()->isTransient() ? 0 : 1;
-  return ILPValue(Cnt, 1 + SU->getDepth());
-}
-
 /// Compute an ILP metric for all nodes in the subDAG reachable via depth-first
 /// search from this root.
-void ScheduleDAGILP::computeILP(const SUnit *Root) {
+void SchedDFSResult::compute(ArrayRef<SUnit *> Roots) {
   if (!IsBottomUp)
     llvm_unreachable("Top-down ILP metric is unimplemnted");
 
-  SchedDAGReverseDFS DFS;
-  // Mark a node visited by validating it.
-  ILPValues[Root->NodeNum] = initILP(Root);
-  DFS.follow(Root);
-  for (;;) {
-    // Traverse the leftmost path as far as possible.
-    while (DFS.getPred() != DFS.getPredEnd()) {
-      const SUnit *PredSU = DFS.getPred()->getSUnit();
-      DFS.advance();
-      // If the pred is already valid, skip it.
-      if (ILPValues[PredSU->NodeNum].isValid())
-        continue;
-      ILPValues[PredSU->NodeNum] = initILP(PredSU);
-      DFS.follow(PredSU);
+  SchedDFSImpl Impl(*this);
+  for (ArrayRef<const SUnit*>::const_iterator
+         RootI = Roots.begin(), RootE = Roots.end(); RootI != RootE; ++RootI) {
+    SchedDAGReverseDFS DFS;
+    Impl.visitPreorder(*RootI);
+    DFS.follow(*RootI);
+    for (;;) {
+      // Traverse the leftmost path as far as possible.
+      while (DFS.getPred() != DFS.getPredEnd()) {
+        const SDep &PredDep = *DFS.getPred();
+        DFS.advance();
+        // If the pred is already valid, skip it. We may preorder visit a node
+        // with InstrCount==0 more than once, but it won't affect heuristics
+        // because we don't care about cross edges to leaf copies.
+        if (Impl.isVisited(PredDep.getSUnit())) {
+          Impl.visitCross(PredDep, DFS.getCurr());
+          continue;
+        }
+        Impl.visitPreorder(PredDep.getSUnit());
+        DFS.follow(PredDep.getSUnit());
+      }
+      // Visit the top of the stack in postorder and backtrack.
+      const SUnit *Child = DFS.getCurr();
+      const SDep *PredDep = DFS.backtrack();
+      Impl.visitPostorder(Child, PredDep, PredDep ? DFS.getCurr() : 0);
+      if (DFS.isComplete())
+        break;
     }
-    // Visit the top of the stack in postorder and backtrack.
-    unsigned PredCount = ILPValues[DFS.getCurr()->NodeNum].InstrCount;
-    DFS.backtrack();
-    if (DFS.isComplete())
-      break;
-    // Add the recently finished predecessor's bottom-up descendent count.
-    ILPValues[DFS.getCurr()->NodeNum].InstrCount += PredCount;
+  }
+  Impl.finalize();
+}
+
+/// The root of the given SubtreeID was just scheduled. For all subtrees
+/// connected to this tree, record the depth of the connection so that the
+/// nearest connected subtrees can be prioritized.
+void SchedDFSResult::scheduleTree(unsigned SubtreeID) {
+  for (SmallVectorImpl<Connection>::const_iterator
+         I = SubtreeConnections[SubtreeID].begin(),
+         E = SubtreeConnections[SubtreeID].end(); I != E; ++I) {
+    SubtreeConnectLevels[I->TreeID] =
+      std::max(SubtreeConnectLevels[I->TreeID], I->Level);
+    DEBUG(dbgs() << "  Tree: " << I->TreeID
+          << " @" << SubtreeConnectLevels[I->TreeID] << '\n');
   }
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void ILPValue::print(raw_ostream &OS) const {
-  if (!isValid())
+  OS << InstrCount << " / " << Length << " = ";
+  if (!Length)
     OS << "BADILP";
-  OS << InstrCount << " / " << Cycles << " = "
-     << format("%g", ((double)InstrCount / Cycles));
+  else
+    OS << format("%g", ((double)InstrCount / Length));
 }
 
 void ILPValue::dump() const {
