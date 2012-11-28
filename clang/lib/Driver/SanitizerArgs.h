@@ -71,16 +71,76 @@ class SanitizerArgs {
 
   /// Parse a -fsanitize= or -fno-sanitize= argument's values, diagnosing any
   /// invalid components.
-  static unsigned parse(const Driver &D, const Arg *A) {
+  static unsigned parse(const Driver &D, const Arg *A, bool DiagnoseErrors) {
     unsigned Kind = 0;
     for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
       if (unsigned K = parse(A->getValue(I)))
         Kind |= K;
-      else
+      else if (DiagnoseErrors)
         D.Diag(diag::err_drv_unsupported_option_argument)
           << A->getOption().getName() << A->getValue(I);
     }
     return Kind;
+  }
+
+  /// Parse a single flag of the form -f[no]sanitize=, or
+  /// -f*-sanitizer. Sets the masks defining required change of Kind value.
+  /// Returns true if the flag was parsed successfully.
+  static bool parse(const Driver &D, const ArgList &Args, const Arg *A,
+                    unsigned &Add, unsigned &Remove, bool DiagnoseErrors) {
+    Add = 0;
+    Remove = 0;
+    const char *DeprecatedReplacement = 0;
+    if (A->getOption().matches(options::OPT_faddress_sanitizer)) {
+      Add = Address;
+      DeprecatedReplacement = "-fsanitize=address";
+    } else if (A->getOption().matches(options::OPT_fno_address_sanitizer)) {
+      Remove = Address;
+      DeprecatedReplacement = "-fno-sanitize=address";
+    } else if (A->getOption().matches(options::OPT_fthread_sanitizer)) {
+      Add = Thread;
+      DeprecatedReplacement = "-fsanitize=thread";
+    } else if (A->getOption().matches(options::OPT_fno_thread_sanitizer)) {
+      Remove = Thread;
+      DeprecatedReplacement = "-fno-sanitize=thread";
+    } else if (A->getOption().matches(options::OPT_fcatch_undefined_behavior)) {
+      Add = Undefined;
+      DeprecatedReplacement = "-fsanitize=undefined";
+    } else if (A->getOption().matches(options::OPT_fbounds_checking) ||
+               A->getOption().matches(options::OPT_fbounds_checking_EQ)) {
+      Add = Bounds;
+      DeprecatedReplacement = "-fsanitize=bounds";
+    } else if (A->getOption().matches(options::OPT_fsanitize_EQ)) {
+      Add = parse(D, A, DiagnoseErrors);
+    } else if (A->getOption().matches(options::OPT_fno_sanitize_EQ)) {
+      Remove = parse(D, A, DiagnoseErrors);
+    } else {
+      // Flag is not relevant to sanitizers.
+      return false;
+    }
+    // If this is a deprecated synonym, produce a warning directing users
+    // towards the new spelling.
+    if (DeprecatedReplacement && DiagnoseErrors)
+      D.Diag(diag::warn_drv_deprecated_arg)
+        << A->getAsString(Args) << DeprecatedReplacement;
+    return true;
+  }
+
+  /// Produce an argument string from ArgList \p Args, which shows how it
+  /// provides a sanitizer kind in \p Mask. For example, the argument list
+  /// "-fsanitize=thread,vptr -faddress-sanitizer" with mask \c NeedsUbsanRt
+  /// would produce "-fsanitize=vptr".
+  static std::string lastArgumentForKind(const Driver &D, const ArgList &Args,
+                                         unsigned Kind) {
+    for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
+         I != E; ++I) {
+      unsigned Add, Remove;
+      if (parse(D, Args, *I, Add, Remove, false) &&
+          (Add & Kind))
+        return describeSanitizeArg(Args, *I, Kind);
+      Kind &= ~Remove;
+    }
+    llvm_unreachable("arg list didn't provide expected value");
   }
 
   /// Produce an argument string from argument \p A, which shows how it provides

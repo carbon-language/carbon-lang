@@ -1456,51 +1456,13 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
 SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
   Kind = 0;
 
-  const Arg *AsanArg, *TsanArg, *UbsanArg;
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
-    unsigned Add = 0, Remove = 0;
-    const char *DeprecatedReplacement = 0;
-    if ((*I)->getOption().matches(options::OPT_faddress_sanitizer)) {
-      Add = Address;
-      DeprecatedReplacement = "-fsanitize=address";
-    } else if ((*I)->getOption().matches(options::OPT_fno_address_sanitizer)) {
-      Remove = Address;
-      DeprecatedReplacement = "-fno-sanitize=address";
-    } else if ((*I)->getOption().matches(options::OPT_fthread_sanitizer)) {
-      Add = Thread;
-      DeprecatedReplacement = "-fsanitize=thread";
-    } else if ((*I)->getOption().matches(options::OPT_fno_thread_sanitizer)) {
-      Remove = Thread;
-      DeprecatedReplacement = "-fno-sanitize=thread";
-    } else if ((*I)->getOption().matches(options::OPT_fcatch_undefined_behavior)) {
-      Add = Undefined;
-      DeprecatedReplacement = "-fsanitize=undefined";
-    } else if ((*I)->getOption().matches(options::OPT_fsanitize_EQ)) {
-      Add = parse(D, *I);
-    } else if ((*I)->getOption().matches(options::OPT_fno_sanitize_EQ)) {
-      Remove = parse(D, *I);
-    } else if ((*I)->getOption().matches(options::OPT_fbounds_checking) ||
-               (*I)->getOption().matches(options::OPT_fbounds_checking_EQ)) {
-      Add = Bounds;
-      DeprecatedReplacement = "-fsanitize=bounds";
-    } else {
+    unsigned Add, Remove;
+    if (!parse(D, Args, *I, Add, Remove, true))
       continue;
-    }
-
     (*I)->claim();
-
     Kind |= Add;
     Kind &= ~Remove;
-
-    if (Add & NeedsAsanRt) AsanArg = *I;
-    if (Add & NeedsTsanRt) TsanArg = *I;
-    if (Add & NeedsUbsanRt) UbsanArg = *I;
-
-    // If this is a deprecated synonym, produce a warning directing users
-    // towards the new spelling.
-    if (DeprecatedReplacement)
-      D.Diag(diag::warn_drv_deprecated_arg)
-        << (*I)->getAsString(Args) << DeprecatedReplacement;
   }
 
   // Only one runtime library can be used at once.
@@ -1510,10 +1472,8 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
   bool NeedsUbsan = needsUbsanRt();
   if (NeedsAsan + NeedsTsan + NeedsUbsan > 1)
     D.Diag(diag::err_drv_argument_not_allowed_with)
-      << describeSanitizeArg(Args, NeedsAsan ? AsanArg : TsanArg,
-                             NeedsAsan ? NeedsAsanRt : NeedsTsanRt)
-      << describeSanitizeArg(Args, NeedsUbsan ? UbsanArg : TsanArg,
-                             NeedsUbsan ? NeedsUbsanRt : NeedsTsanRt);
+      << lastArgumentForKind(D, Args, NeedsAsan ? NeedsAsanRt : NeedsTsanRt)
+      << lastArgumentForKind(D, Args, NeedsUbsan ? NeedsUbsanRt : NeedsTsanRt);
 }
 
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
