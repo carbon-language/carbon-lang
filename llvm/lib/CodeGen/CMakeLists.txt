@@ -99,9 +99,11 @@ add_llvm_library(LLVMCodeGen
   StrongPHIElimination.cpp
   TailDuplication.cpp
   TargetFrameLoweringImpl.cpp
+  TargetInstrInfo.cpp
   TargetInstrInfoImpl.cpp
   TargetLoweringObjectFileImpl.cpp
   TargetOptionsImpl.cpp
+  TargetRegisterInfo.cpp
   TargetSchedule.cpp
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp

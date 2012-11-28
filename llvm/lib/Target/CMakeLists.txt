@@ -1,14 +1,12 @@
 add_llvm_library(LLVMTarget
   Mangler.cpp
   Target.cpp
-  TargetInstrInfo.cpp
   TargetIntrinsicInfo.cpp
   TargetJITInfo.cpp
   TargetLibraryInfo.cpp
   TargetLoweringObjectFile.cpp
   TargetMachine.cpp
   TargetMachineC.cpp
-  TargetRegisterInfo.cpp
   TargetSubtargetInfo.cpp
   TargetTransformImpl.cpp
   )
