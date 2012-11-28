@@ -1950,6 +1950,14 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.DeclaredCopyAssignment = FromData.DeclaredCopyAssignment;
     ToData.DeclaredMoveAssignment = FromData.DeclaredMoveAssignment;
     ToData.DeclaredDestructor = FromData.DeclaredDestructor;
+    ToData.ImplicitCopyConstructorHasConstParam
+      = FromData.ImplicitCopyConstructorHasConstParam;
+    ToData.ImplicitCopyAssignmentHasConstParam
+      = FromData.ImplicitCopyAssignmentHasConstParam;
+    ToData.HasDeclaredCopyConstructorWithConstParam
+      = FromData.HasDeclaredCopyConstructorWithConstParam;
+    ToData.HasDeclaredCopyAssignmentWithConstParam
+      = FromData.HasDeclaredCopyAssignmentWithConstParam;
     ToData.FailedImplicitMoveConstructor
       = FromData.FailedImplicitMoveConstructor;
     ToData.FailedImplicitMoveAssignment = FromData.FailedImplicitMoveAssignment;

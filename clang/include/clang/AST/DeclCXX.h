@@ -494,6 +494,22 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief Whether we have already declared a destructor within the class.
     bool DeclaredDestructor : 1;
 
+    /// \brief Whether an implicit copy constructor would have a const-qualified
+    /// parameter.
+    bool ImplicitCopyConstructorHasConstParam : 1;
+
+    /// \brief Whether an implicit copy assignment operator would have a
+    /// const-qualified parameter.
+    bool ImplicitCopyAssignmentHasConstParam : 1;
+
+    /// \brief Whether any declared copy constructor has a const-qualified
+    /// parameter.
+    bool HasDeclaredCopyConstructorWithConstParam : 1;
+
+    /// \brief Whether any declared copy assignment operator has either a
+    /// const-qualified reference parameter or a non-reference parameter.
+    bool HasDeclaredCopyAssignmentWithConstParam : 1;
+
     /// \brief Whether an implicit move constructor was attempted to be declared
     /// but would have been deleted.
     bool FailedImplicitMoveConstructor : 1;
@@ -881,6 +897,20 @@ public:
     return data().DeclaredCopyConstructor;
   }
 
+  /// \brief Determine whether an implicit copy constructor for this type
+  /// would have a parameter with a const-qualified reference type.
+  bool implicitCopyConstructorHasConstParam() const {
+    return data().ImplicitCopyConstructorHasConstParam;
+  }
+
+  /// \brief Determine whether this class has a copy constructor with
+  /// a parameter type which is a reference to a const-qualified type.
+  bool hasCopyConstructorWithConstParam() const {
+    return data().HasDeclaredCopyConstructorWithConstParam ||
+           (!hasDeclaredCopyConstructor() &&
+            implicitCopyConstructorHasConstParam());
+  }
+
   /// hasUserDeclaredMoveOperation - Whether this class has a user-
   /// declared move constructor or assignment operator. When false, a
   /// move constructor and assignment operator may be implicitly declared.
@@ -941,6 +971,21 @@ public:
   /// This value is used for lazy creation of copy assignment operators.
   bool hasDeclaredCopyAssignment() const {
     return data().DeclaredCopyAssignment;
+  }
+
+  /// \brief Determine whether an implicit copy assignment operator for this
+  /// type would have a parameter with a const-qualified reference type.
+  bool implicitCopyAssignmentHasConstParam() const {
+    return data().ImplicitCopyAssignmentHasConstParam;
+  }
+
+  /// \brief Determine whether this class has a copy assignment operator with
+  /// a parameter type which is a reference to a const-qualified type or is not
+  /// a reference..
+  bool hasCopyAssignmentWithConstParam() const {
+    return data().HasDeclaredCopyAssignmentWithConstParam ||
+           (!hasDeclaredCopyAssignment() &&
+            implicitCopyAssignmentHasConstParam());
   }
 
   /// \brief Determine whether this class has had a move assignment
@@ -2126,7 +2171,7 @@ public:
   /// constructor (C++ [class.copy]p2, which can be used to copy the
   /// class. @p TypeQuals will be set to the qualifiers on the
   /// argument type. For example, @p TypeQuals would be set to @c
-  /// QualType::Const for the following copy constructor:
+  /// Qualifiers::Const for the following copy constructor:
   ///
   /// @code
   /// class X {
