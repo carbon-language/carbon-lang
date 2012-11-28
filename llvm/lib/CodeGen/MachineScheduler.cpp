@@ -533,7 +533,7 @@ void ScheduleDAGMI::schedule() {
   placeDebugValues();
 
   DEBUG({
-      unsigned BBNum = top()->getParent()->getNumber();
+      unsigned BBNum = begin()->getParent()->getNumber();
       dbgs() << "*** Final schedule for BB#" << BBNum << " ***\n";
       dumpSchedule();
       dbgs() << '\n';
