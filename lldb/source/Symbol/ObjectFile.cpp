@@ -218,29 +218,7 @@ ObjectFile::~ObjectFile()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-    {
-        ModuleSP module_sp (GetModule());
-        if (m_file)
-        {
-            log->Printf ("%p ObjectFile::~ObjectFile () module = %s/%s, file = %s/%s, offset = 0x%8.8llx, size = %llu\n",
-                         this,
-                         module_sp->GetFileSpec().GetDirectory().AsCString(),
-                         module_sp->GetFileSpec().GetFilename().AsCString(),
-                         m_file.GetDirectory().AsCString(),
-                         m_file.GetFilename().AsCString(),
-                         m_offset,
-                         m_length);
-        }
-        else
-        {
-            log->Printf ("%p ObjectFile::~ObjectFile () module = %s/%s, file = <NULL>, offset = 0x%8.8llx, size = %llu\n",
-                         this,
-                         module_sp->GetFileSpec().GetDirectory().AsCString(),
-                         module_sp->GetFileSpec().GetFilename().AsCString(),
-                         m_offset,
-                         m_length);
-        }
-    }
+        log->Printf ("%p ObjectFile::~ObjectFile ()\n", this);
 }
 
 bool 
