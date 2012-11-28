@@ -1,18 +1,14 @@
 bugpoint - automatic test case reduction tool
 =============================================
 
-
 SYNOPSIS
 --------
-
 
 **bugpoint** [*options*] [*input LLVM ll/bc files*] [*LLVM passes*] **--args**
 *program arguments*
 
-
 DESCRIPTION
 -----------
-
 
 **bugpoint** narrows down the source of problems in LLVM tools and passes.  It
 can be used to debug three types of failures: optimizer crashes, miscompilations
@@ -22,11 +18,8 @@ For more information on the design and inner workings of **bugpoint**, as well a
 advice for using bugpoint, see *llvm/docs/Bugpoint.html* in the LLVM
 distribution.
 
-
 OPTIONS
 -------
-
-
 
 **--additional-so** *library*
 
@@ -34,69 +27,51 @@ OPTIONS
  run.  This is useful if you are debugging programs which depend on non-LLVM
  libraries (such as the X or curses libraries) to run.
 
-
-
 **--append-exit-code**\ =\ *{true,false}*
 
  Append the test programs exit code to the output file so that a change in exit
  code is considered a test failure. Defaults to false.
 
-
-
 **--args** *program args*
 
- Pass all arguments specified after -args to the test program whenever it runs.
- Note that if any of the *program args* start with a '-', you should use:
-
+ Pass all arguments specified after **--args** to the test program whenever it runs.
+ Note that if any of the *program args* start with a "``-``", you should use:
 
  .. code-block:: perl
 
       bugpoint [bugpoint args] --args -- [program args]
 
-
- The "--" right after the **--args** option tells **bugpoint** to consider any
- options starting with ``-`` to be part of the **--args** option, not as options to
- **bugpoint** itself.
-
-
+ The "``--``" right after the **--args** option tells **bugpoint** to consider
+ any options starting with "``-``" to be part of the **--args** option, not as
+ options to **bugpoint** itself.
 
 **--tool-args** *tool args*
 
- Pass all arguments specified after --tool-args to the LLVM tool under test
+ Pass all arguments specified after **--tool-args** to the LLVM tool under test
  (**llc**, **lli**, etc.) whenever it runs.  You should use this option in the
  following way:
-
 
  .. code-block:: perl
 
       bugpoint [bugpoint args] --tool-args -- [tool args]
 
-
- The "--" right after the **--tool-args** option tells **bugpoint** to consider any
- options starting with ``-`` to be part of the **--tool-args** option, not as
- options to **bugpoint** itself. (See **--args**, above.)
-
-
+ The "``--``" right after the **--tool-args** option tells **bugpoint** to
+ consider any options starting with "``-``" to be part of the **--tool-args**
+ option, not as options to **bugpoint** itself. (See **--args**, above.)
 
 **--safe-tool-args** *tool args*
 
  Pass all arguments specified after **--safe-tool-args** to the "safe" execution
  tool.
 
-
-
 **--gcc-tool-args** *gcc tool args*
 
  Pass all arguments specified after **--gcc-tool-args** to the invocation of
  **gcc**.
 
-
-
 **--opt-args** *opt args*
 
  Pass all arguments specified after **--opt-args** to the invocation of **opt**.
-
-
 
 **--disable-{dce,simplifycfg}**
 
@@ -105,35 +80,25 @@ OPTIONS
  reduce test programs.  If you're trying to find a bug in one of these passes,
  **bugpoint** may crash.
 
-
-
 **--enable-valgrind**
 
  Use valgrind to find faults in the optimization phase. This will allow
  bugpoint to find otherwise asymptomatic problems caused by memory
  mis-management.
 
-
-
 **-find-bugs**
 
  Continually randomize the specified passes and run them on the test program
  until a bug is found or the user kills **bugpoint**.
 
-
-
 **-help**
 
  Print a summary of command line options.
-
-
 
 **--input** *filename*
 
  Open *filename* and redirect the standard input of the test program, whenever
  it runs, to come from that file.
-
-
 
 **--load** *plugin*
 
@@ -147,15 +112,10 @@ OPTIONS
 
       bugpoint --load myNewPass.so -help
 
-
-
-
 **--mlimit** *megabytes*
 
  Specifies an upper limit on memory usage of the optimization and codegen. Set
  to zero to disable the limit.
-
-
 
 **--output** *filename*
 
@@ -164,13 +124,9 @@ OPTIONS
  do not use this option, **bugpoint** will attempt to generate a reference output
  by compiling the program with the "safe" backend and running it.
 
-
-
 **--profile-info-file** *filename*
 
  Profile file loaded by **--profile-loader**.
-
-
 
 **--run-{int,jit,llc,custom}**
 
@@ -178,8 +134,6 @@ OPTIONS
  using the specified code generator.  These options allow you to choose the
  interpreter, the JIT compiler, the static native code compiler, or a
  custom command (see **--exec-command**) respectively.
-
-
 
 **--safe-{llc,custom}**
 
@@ -192,15 +146,11 @@ OPTIONS
  respectively. The interpreter and the JIT backends cannot currently
  be used as the "safe" backends.
 
-
-
 **--exec-command** *command*
 
  This option defines the command to use with the **--run-custom** and
  **--safe-custom** options to execute the bitcode testcase. This can
  be useful for cross-compilation.
-
-
 
 **--compile-command** *command*
 
@@ -210,18 +160,14 @@ OPTIONS
  generate a reduced unit test, you may add CHECK directives to the
  testcase and pass the name of an executable compile-command script in this form:
 
-
  .. code-block:: sh
 
       #!/bin/sh
       llc "$@"
       not FileCheck [bugpoint input file].ll < bugpoint-test-program.s
 
-
  This script will "fail" as long as FileCheck passes. So the result
  will be the minimum bitcode that passes FileCheck.
-
-
 
 **--safe-path** *path*
 
@@ -229,19 +175,13 @@ OPTIONS
  **--safe-{int,jit,llc,custom}**
  option.
 
-
-
-
 EXIT STATUS
 -----------
-
 
 If **bugpoint** succeeds in finding a problem, it will exit with 0.  Otherwise,
 if an error occurs, it will exit with a non-zero value.
 
-
 SEE ALSO
 --------
-
 
 opt|opt

@@ -7,7 +7,6 @@ System Library
 Abstract
 ========
 
-
 This document provides some details on LLVM's System Library, located in the
 source at ``lib/System`` and ``include/llvm/System``. The library's purpose is
 to shield LLVM from the differences between operating systems for the few
