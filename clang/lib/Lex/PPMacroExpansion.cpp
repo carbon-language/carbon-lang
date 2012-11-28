@@ -845,10 +845,6 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_base_of", LangOpts.CPlusPlus)
            .Case("is_class", LangOpts.CPlusPlus)
            .Case("is_convertible_to", LangOpts.CPlusPlus)
-            // __is_empty is available only if the horrible
-            // "struct __is_empty" parsing hack hasn't been needed in this
-            // translation unit. If it has, __is_empty reverts to a normal
-            // identifier and __has_feature(is_empty) evaluates false.
            .Case("is_empty", LangOpts.CPlusPlus)
            .Case("is_enum", LangOpts.CPlusPlus)
            .Case("is_final", LangOpts.CPlusPlus)
