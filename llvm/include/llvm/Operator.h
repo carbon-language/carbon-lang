@@ -176,9 +176,15 @@ struct FastMathFlags {
                     NoSignedZeros(false), AllowReciprocal(false)
   { }
 
+  /// Whether any flag is set
   bool any() {
     return UnsafeAlgebra || NoNaNs || NoInfs || NoSignedZeros ||
       AllowReciprocal;
+  }
+
+  /// Set all the flags to false
+  void clear() {
+    UnsafeAlgebra = NoNaNs = NoInfs = NoSignedZeros = AllowReciprocal = false;
   }
 };
 
