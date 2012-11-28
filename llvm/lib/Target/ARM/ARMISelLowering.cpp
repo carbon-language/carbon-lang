@@ -1882,6 +1882,17 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   return true;
 }
 
+bool
+ARMTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
+                                  MachineFunction &MF, bool isVarArg,
+                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                  LLVMContext &Context) const {
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(), RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, CCAssignFnForNode(CallConv, /*Return=*/true,
+                                                    isVarArg));
+}
+
 SDValue
 ARMTargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
