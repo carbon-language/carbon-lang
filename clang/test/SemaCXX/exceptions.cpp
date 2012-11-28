@@ -143,3 +143,5 @@ namespace Decay {
   struct E; // expected-note {{forward declaration}}
   C<E[10]> e; // expected-note {{in instantiation of}}
 }
+
+void rval_ref() throw (int &&); // expected-error {{rvalue reference type 'int &&' is not allowed in exception specification}} expected-warning {{C++11}}

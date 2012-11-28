@@ -42,50 +42,51 @@ static const FunctionProtoType *GetUnderlyingFunction(QualType T)
 /// \param[in,out] T  The exception type. This will be decayed to a pointer type
 ///                   when the input is an array or a function type.
 bool Sema::CheckSpecifiedExceptionType(QualType &T, const SourceRange &Range) {
-  // This check (and the similar one below) deals with issue 437, that changes
-  // C++ 9.2p2 this way:
-  // Within the class member-specification, the class is regarded as complete
-  // within function bodies, default arguments, exception-specifications, and
-  // constructor ctor-initializers (including such things in nested classes).
-  if (T->isRecordType() && T->getAs<RecordType>()->isBeingDefined())
-    return false;
-
-  // C++ 15.4p2: A type cv T, "array of T", or "function returning T" denoted
+  // C++11 [except.spec]p2:
+  //   A type cv T, "array of T", or "function returning T" denoted
   //   in an exception-specification is adjusted to type T, "pointer to T", or
   //   "pointer to function returning T", respectively.
-  // C++ 15.4p2: A type denoted in an exception-specification shall not denote
-  //   an incomplete type.
+  //
+  // We also apply this rule in C++98.
   if (T->isArrayType())
     T = Context.getArrayDecayedType(T);
   else if (T->isFunctionType())
     T = Context.getPointerType(T);
-  else if (RequireCompleteType(Range.getBegin(), T,
-                               diag::err_incomplete_in_exception_spec,
-                               /*direct*/0, Range))
-    return true;
 
-
-  // C++ 15.4p2: A type denoted in an exception-specification shall not denote
-  //   an incomplete type a pointer or reference to an incomplete type, other
-  //   than (cv) void*.
-  int kind;
+  int Kind = 0;
   QualType PointeeT = T;
-  if (const PointerType* IT = T->getAs<PointerType>()) {
-    PointeeT = IT->getPointeeType();
-    kind = 1;
-  } else if (const ReferenceType* IT = T->getAs<ReferenceType>()) {
-    PointeeT = IT->getPointeeType();
-    kind = 2;
-  } else
-    return false;
+  if (const PointerType *PT = T->getAs<PointerType>()) {
+    PointeeT = PT->getPointeeType();
+    Kind = 1;
 
-  // Again as before
-  if (PointeeT->isRecordType() && PointeeT->getAs<RecordType>()->isBeingDefined())
-    return false;
+    // cv void* is explicitly permitted, despite being a pointer to an
+    // incomplete type.
+    if (PointeeT->isVoidType())
+      return false;
+  } else if (const ReferenceType *RT = T->getAs<ReferenceType>()) {
+    PointeeT = RT->getPointeeType();
+    Kind = 2;
 
-  if (!PointeeT->isVoidType() &&
+    if (RT->isRValueReferenceType()) {
+      // C++11 [except.spec]p2:
+      //   A type denoted in an exception-specification shall not denote [...]
+      //   an rvalue reference type.
+      Diag(Range.getBegin(), diag::err_rref_in_exception_spec)
+        << T << Range;
+      return true;
+    }
+  }
+
+  // C++11 [except.spec]p2:
+  //   A type denoted in an exception-specification shall not denote an
+  //   incomplete type other than a class currently being defined [...].
+  //   A type denoted in an exception-specification shall not denote a
+  //   pointer or reference to an incomplete type, other than (cv) void* or a
+  //   pointer or reference to a class currently being defined.
+  if (!(PointeeT->isRecordType() &&
+        PointeeT->getAs<RecordType>()->isBeingDefined()) &&
       RequireCompleteType(Range.getBegin(), PointeeT,
-                          diag::err_incomplete_in_exception_spec, kind, Range))
+                          diag::err_incomplete_in_exception_spec, Kind, Range))
     return true;
 
   return false;
