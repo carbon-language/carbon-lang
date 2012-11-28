@@ -151,6 +151,10 @@ void PrintReport(const ReportDesc *rep) {
 #else
 
 void PrintStack(const ReportStack *ent) {
+  if (ent == 0) {
+    Printf("  [failed to restore the stack]\n\n");
+    return;
+  }
   for (int i = 0; ent; ent = ent->next, i++) {
     Printf("  %s()\n      %s:%d +0x%zx\n",
         ent->func, ent->file, ent->line, (void*)ent->offset);
