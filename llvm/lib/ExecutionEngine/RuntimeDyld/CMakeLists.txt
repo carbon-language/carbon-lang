@@ -3,5 +3,4 @@ add_llvm_library(LLVMRuntimeDyld
   RuntimeDyld.cpp
   RuntimeDyldELF.cpp
   RuntimeDyldMachO.cpp
-  SectionMemoryManager.cpp
   )
