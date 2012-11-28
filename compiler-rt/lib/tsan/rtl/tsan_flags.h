@@ -49,8 +49,10 @@ struct Flags {
   const char *suppressions;
   // Override exit status if something was reported.
   int exitcode;
-  // Log fileno (1 - stdout, 2 - stderr).
-  int log_fileno;
+  // Write logs to "log_path.pid".
+  // The special values are "stdout" and "stderr".
+  // The default is "stderr".
+  const char *log_path;  
   // Sleep in main thread before exiting for that many ms
   // (useful to catch "at exit" races).
   int atexit_sleep_ms;

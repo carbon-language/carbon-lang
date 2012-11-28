@@ -48,7 +48,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->strip_path_prefix = "";
   f->suppressions = "";
   f->exitcode = 66;
-  f->log_fileno = kStderrFd;
+  f->log_path = "stderr";
   f->atexit_sleep_ms = 1000;
   f->verbosity = 0;
   f->profile_memory = "";
@@ -77,7 +77,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(env, &f->suppressions, "suppressions");
   ParseFlag(env, &f->exitcode, "exitcode");
-  ParseFlag(env, &f->log_fileno, "log_fileno");
+  ParseFlag(env, &f->log_path, "log_path");
   ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
   ParseFlag(env, &f->verbosity, "verbosity");
   ParseFlag(env, &f->profile_memory, "profile_memory");
