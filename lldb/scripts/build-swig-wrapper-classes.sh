@@ -83,8 +83,8 @@ fi
 # Next look for swig
 #
 
-SWIG=
-if [ -f /usr/bin/swig ]
+SWIG=`which swig`
+if [ ! -x "$SWIG" -a -f /usr/bin/swig ]
 then
     SWIG=/usr/bin/swig
 else
