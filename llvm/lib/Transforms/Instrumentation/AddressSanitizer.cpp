@@ -187,7 +187,9 @@ static size_t RedzoneSize() {
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public FunctionPass {
   AddressSanitizer();
-  virtual const char *getPassName() const;
+  virtual const char *getPassName() const {
+    return "AddressSanitizerFunctionPass";
+  }
   void instrumentMop(Instruction *I);
   void instrumentAddress(Instruction *OrigIns, IRBuilder<> &IRB,
                          Value *Addr, uint32_t TypeSize, bool IsWrite);
@@ -206,7 +208,6 @@ struct AddressSanitizer : public FunctionPass {
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
   bool poisonStackInFunction(Function &F);
   virtual bool doInitialization(Module &M);
-  virtual bool doFinalization(Module &M);
   static char ID;  // Pass identification, replacement for typeid
 
  private:
@@ -247,10 +248,14 @@ struct AddressSanitizer : public FunctionPass {
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
 };
 
-// FIXME: inherit this from ModulePass and actually use it as a ModulePass.
-class AddressSanitizerCreateGlobalRedzonesPass {
+class AddressSanitizerModule : public ModulePass {
  public:
-  bool runOnModule(Module &M, DataLayout *TD);
+  bool runOnModule(Module &M);
+  static char ID;  // Pass identification, replacement for typeid
+  AddressSanitizerModule() : ModulePass(ID) { }
+  virtual const char *getPassName() const {
+    return "AddressSanitizerModule";
+  }
  private:
   bool ShouldInstrumentGlobal(GlobalVariable *G);
   void createInitializerPoisonCalls(Module &M, Value *FirstAddr,
@@ -260,6 +265,7 @@ class AddressSanitizerCreateGlobalRedzonesPass {
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
   Type *IntptrTy;
   LLVMContext *C;
+  DataLayout *TD;
 };
 
 }  // namespace
@@ -269,12 +275,16 @@ INITIALIZE_PASS(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
 AddressSanitizer::AddressSanitizer() : FunctionPass(ID) { }
-FunctionPass *llvm::createAddressSanitizerPass() {
+FunctionPass *llvm::createAddressSanitizerFunctionPass() {
   return new AddressSanitizer();
 }
 
-const char *AddressSanitizer::getPassName() const {
-  return "AddressSanitizer";
+char AddressSanitizerModule::ID = 0;
+INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
+    "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
+    "ModulePass", false, false)
+ModulePass *llvm::createAddressSanitizerModulePass() {
+  return new AddressSanitizerModule();
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -492,7 +502,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   Crash->setDebugLoc(OrigIns->getDebugLoc());
 }
 
-void AddressSanitizerCreateGlobalRedzonesPass::createInitializerPoisonCalls(
+void AddressSanitizerModule::createInitializerPoisonCalls(
     Module &M, Value *FirstAddr, Value *LastAddr) {
   // We do all of our poisoning and unpoisoning within _GLOBAL__I_a.
   Function *GlobalInit = M.getFunction("_GLOBAL__I_a");
@@ -524,8 +534,7 @@ void AddressSanitizerCreateGlobalRedzonesPass::createInitializerPoisonCalls(
   }
 }
 
-bool AddressSanitizerCreateGlobalRedzonesPass::ShouldInstrumentGlobal(
-    GlobalVariable *G) {
+bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   Type *Ty = cast<PointerType>(G->getType())->getElementType();
   DEBUG(dbgs() << "GLOBAL: " << *G << "\n");
 
@@ -587,8 +596,11 @@ bool AddressSanitizerCreateGlobalRedzonesPass::ShouldInstrumentGlobal(
 // This function replaces all global variables with new variables that have
 // trailing redzones. It also creates a function that poisons
 // redzones and inserts this function into llvm.global_ctors.
-bool AddressSanitizerCreateGlobalRedzonesPass::runOnModule(Module &M,
-                                                           DataLayout *TD) {
+bool AddressSanitizerModule::runOnModule(Module &M) {
+  if (!ClGlobals) return false;
+  TD = getAnalysisIfAvailable<DataLayout>();
+  if (!TD)
+    return false;
   BL.reset(new BlackList(ClBlackListFile));
   DynamicallyInitializedGlobals.Init(M);
   C = &(M.getContext());
@@ -816,18 +828,6 @@ bool AddressSanitizer::doInitialization(Module &M) {
 
   return true;
 }
-
-bool AddressSanitizer::doFinalization(Module &M) {
-  // We transform the globals at the very end so that the optimization analysis
-  // works on the original globals.
-  if (ClGlobals) {
-    // FIXME: instead of doFinalization, run this as a true ModulePass.
-    AddressSanitizerCreateGlobalRedzonesPass Pass;
-    return Pass.runOnModule(M, TD);
-  }
-  return false;
-}
-
 
 bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   // For each NSObject descendant having a +load method, this method is invoked
