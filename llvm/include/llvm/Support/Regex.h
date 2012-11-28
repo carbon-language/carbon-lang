@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a POSIX regular expression matcher.
+// This file implements a POSIX regular expression matcher.  Both Basic and
+// Extended POSIX regular expressions (ERE) are supported.  EREs were extended
+// to support backreferences in matches.
+// This implementation also supports matching strings with embedded NUL chars.
 //
 //===----------------------------------------------------------------------===//
 
@@ -33,12 +36,14 @@ namespace llvm {
       /// null string after any newline in the string in addition to its normal
       /// function, and the $ anchor matches the null string before any
       /// newline in the string in addition to its normal function.
-      Newline=2
+      Newline=2,
+      /// By default, the POSIX extended regular expression (ERE) syntax is
+      /// assumed. Pass this flag to turn on basic regular expressions (BRE)
+      /// instead.
+      BasicRegex=4
     };
 
-    /// Compiles the given POSIX Extended Regular Expression \p Regex.
-    /// This implementation supports regexes and matching strings with embedded
-    /// NUL characters.
+    /// Compiles the given regular expression \p Regex.
     Regex(StringRef Regex, unsigned Flags = NoFlags);
     ~Regex();
 

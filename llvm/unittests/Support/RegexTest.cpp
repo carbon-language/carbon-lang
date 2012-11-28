@@ -51,7 +51,6 @@ TEST_F(RegexTest, Basics) {
   EXPECT_EQ(1u, Matches.size());
   EXPECT_EQ(String, Matches[0].str());
 
-
   std::string NulPattern="X[0-9]+X([a-f])?:([0-9]+)";
   String="YX99a:513b";
   NulPattern[7] = '\0';
@@ -60,6 +59,28 @@ TEST_F(RegexTest, Basics) {
   EXPECT_FALSE(r5.match("X9"));
   String[3]='\0';
   EXPECT_TRUE(r5.match(String));
+}
+
+TEST_F(RegexTest, Backreferences) {
+  Regex r1("([a-z]+)_\\1");
+  SmallVector<StringRef, 4> Matches;
+  EXPECT_TRUE(r1.match("abc_abc", &Matches));
+  EXPECT_EQ(2u, Matches.size());
+  EXPECT_FALSE(r1.match("abc_ab", &Matches));
+
+  Regex r2("a([0-9])b\\1c\\1");
+  EXPECT_TRUE(r2.match("a4b4c4", &Matches));
+  EXPECT_EQ(2u, Matches.size());
+  EXPECT_EQ("4", Matches[1].str());
+  EXPECT_FALSE(r2.match("a2b2c3"));
+
+  Regex r3("a([0-9])([a-z])b\\1\\2");
+  EXPECT_TRUE(r3.match("a6zb6z", &Matches));
+  EXPECT_EQ(3u, Matches.size());
+  EXPECT_EQ("6", Matches[1].str());
+  EXPECT_EQ("z", Matches[2].str());
+  EXPECT_FALSE(r3.match("a6zb6y"));
+  EXPECT_FALSE(r3.match("a6zb7z"));
 }
 
 TEST_F(RegexTest, Substitution) {

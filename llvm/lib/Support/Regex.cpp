@@ -27,7 +27,9 @@ Regex::Regex(StringRef regex, unsigned Flags) {
     flags |= REG_ICASE;
   if (Flags & Newline)
     flags |= REG_NEWLINE;
-  error = llvm_regcomp(preg, regex.data(), flags|REG_EXTENDED|REG_PEND);
+  if (!(Flags & BasicRegex))
+    flags |= REG_EXTENDED;
+  error = llvm_regcomp(preg, regex.data(), flags|REG_PEND);
 }
 
 Regex::~Regex() {

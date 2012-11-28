@@ -303,6 +303,7 @@ p_ere_exp(struct parse *p)
 	sopno pos;
 	int count;
 	int count2;
+	int backrefnum;
 	sopno subno;
 	int wascaret = 0;
 
@@ -370,7 +371,34 @@ p_ere_exp(struct parse *p)
 	case '\\':
 		REQUIRE(MORE(), REG_EESCAPE);
 		c = GETNEXT();
-		ordinary(p, c);
+		if (c >= '1' && c <= '9') {
+			/* \[0-9] is taken to be a back-reference to a previously specified
+			 * matching group. backrefnum will hold the number. The matching
+			 * group must exist (i.e. if \4 is found there must have been at
+			 * least 4 matching groups specified in the pattern previously).
+			 */
+			backrefnum = c - '0';
+			if (p->pend[backrefnum] == 0) {
+				SETERROR(REG_ESUBREG);
+				break;
+			}
+
+			/* Make sure everything checks out and emit the sequence
+			 * that marks a back-reference to the parse structure.
+			 */
+			assert(backrefnum <= p->g->nsub);
+			EMIT(OBACK_, backrefnum);
+			assert(p->pbegin[backrefnum] != 0);
+			assert(OP(p->strip[p->pbegin[backrefnum]]) != OLPAREN);
+			assert(OP(p->strip[p->pend[backrefnum]]) != ORPAREN);
+			(void) dupl(p, p->pbegin[backrefnum]+1, p->pend[backrefnum]);
+			EMIT(O_BACK, backrefnum);
+			p->g->backrefs = 1;
+		} else {
+			/* Other chars are simply themselves when escaped with a backslash.
+			 */
+			ordinary(p, c);
+		}
 		break;
 	case '{':		/* okay as ordinary except if digit follows */
 		REQUIRE(!MORE() || !isdigit((uch)PEEK()), REG_BADRPT);
