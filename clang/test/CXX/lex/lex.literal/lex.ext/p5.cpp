@@ -11,3 +11,10 @@ double &i3 = L"foo"_x1; // expected-error {{no matching literal operator}}
 char &operator "" _x1(const wchar_t *, size_t);
 char &i4 = L"foo"_x1; // ok
 double &i5 = R"(foo)"_x1; // ok
+double &i6 = u\
+8\
+R\
+"(foo)"\
+_\
+x\
+1; // ok

@@ -76,5 +76,12 @@ def)";
   const char *q = R"(abc
 def)" "ghi";
 
+  // CHECK-CPP0X: private unnamed_addr constant [13 x i8] c"abc\5C\0A??=\0Adef\00", align 1
+  const char *r = R\
+"(abc\
+??=
+def)";
+
+
 #endif
 }
