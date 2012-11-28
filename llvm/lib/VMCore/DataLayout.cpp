@@ -152,13 +152,6 @@ DataLayout::InvalidPointerElem = PointerAlignElem::get(~0U, 0U, 0U, 0U);
 //                       DataLayout Class Implementation
 //===----------------------------------------------------------------------===//
 
-/// getInt - Get an integer ignoring errors.
-static int getInt(StringRef R) {
-  int Result = 0;
-  R.getAsInteger(10, Result);
-  return Result;
-}
-
 void DataLayout::init(StringRef Desc) {
   initializeDataLayoutPass(*PassRegistry::getPassRegistry());
 
@@ -186,6 +179,16 @@ void DataLayout::init(StringRef Desc) {
   (void)errMsg;
 }
 
+/// Get an unsinged integer, including error checks.
+static unsigned getInt(StringRef R) {
+  if (R.empty())
+    return 0;
+  unsigned Result;
+  bool error = R.getAsInteger(10, Result);
+  assert(!error && "not a number, or does not fit in an unsigned int");
+  return Result;
+}
+
 std::string DataLayout::parseSpecifier(StringRef Desc) {
 
   while (!Desc.empty()) {
@@ -207,31 +210,31 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
       LittleEndian = true;
       break;
     case 'p': {
-      int AddrSpace = 0;
+      unsigned AddrSpace = 0;
       if (Specifier.size() > 1) {
         AddrSpace = getInt(Specifier.substr(1));
-        if (AddrSpace < 0 || AddrSpace > (1 << 24))
-          return "Invalid address space, must be a positive 24bit integer";
+        if (AddrSpace > (1 << 24))
+          return "Invalid address space, must be a 24bit integer";
       }
       Split = Token.split(':');
-      int PointerMemSizeBits = getInt(Split.first);
-      if (PointerMemSizeBits < 0 || PointerMemSizeBits % 8 != 0)
-        return "invalid pointer size, must be a positive 8-bit multiple";
+      unsigned PointerMemSizeBits = getInt(Split.first);
+      if (PointerMemSizeBits % 8 != 0)
+        return "invalid pointer size, must be an 8-bit multiple";
 
       // Pointer ABI alignment.
       Split = Split.second.split(':');
-      int PointerABIAlignBits = getInt(Split.first);
-      if (PointerABIAlignBits < 0 || PointerABIAlignBits % 8 != 0) {
+      unsigned PointerABIAlignBits = getInt(Split.first);
+      if (PointerABIAlignBits % 8 != 0) {
         return "invalid pointer ABI alignment, "
-               "must be a positive 8-bit multiple";
+               "must be an 8-bit multiple";
       }
 
       // Pointer preferred alignment.
       Split = Split.second.split(':');
-      int PointerPrefAlignBits = getInt(Split.first);
-      if (PointerPrefAlignBits < 0 || PointerPrefAlignBits % 8 != 0) {
+      unsigned PointerPrefAlignBits = getInt(Split.first);
+      if (PointerPrefAlignBits % 8 != 0) {
         return "invalid pointer preferred alignment, "
-               "must be a positive 8-bit multiple";
+               "must be an 8-bit multiple";
       }
 
       if (PointerPrefAlignBits == 0)
@@ -255,26 +258,22 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
       case 'a': AlignType = AGGREGATE_ALIGN; break;
       case 's': AlignType = STACK_ALIGN; break;
       }
-      int Size = getInt(Specifier.substr(1));
-      if (Size < 0) {
-        return std::string("invalid ") + field + "-size field, "
-               "must be positive";
-      }
+      unsigned Size = getInt(Specifier.substr(1));
 
       Split = Token.split(':');
-      int ABIAlignBits = getInt(Split.first);
-      if (ABIAlignBits < 0 || ABIAlignBits % 8 != 0) {
+      unsigned ABIAlignBits = getInt(Split.first);
+      if (ABIAlignBits % 8 != 0) {
         return std::string("invalid ") + field +"-abi-alignment field, "
-               "must be a positive 8-bit multiple";
+               "must be an 8-bit multiple";
       }
       unsigned ABIAlign = ABIAlignBits / 8;
 
       Split = Split.second.split(':');
 
-      int PrefAlignBits = getInt(Split.first);
-      if (PrefAlignBits < 0 || PrefAlignBits % 8 != 0) {
+      unsigned PrefAlignBits = getInt(Split.first);
+      if (PrefAlignBits % 8 != 0) {
         return std::string("invalid ") + field +"-preferred-alignment field, "
-               "must be a positive 8-bit multiple";
+               "must be an 8-bit multiple";
       }
       unsigned PrefAlign = PrefAlignBits / 8;
       if (PrefAlign == 0)
@@ -286,23 +285,22 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
     case 'n':  // Native integer types.
       Specifier = Specifier.substr(1);
       do {
-        int Width = getInt(Specifier);
-        if (Width <= 0) {
+        unsigned Width = getInt(Specifier);
+        if (Width == 0) {
           return std::string("invalid native integer size \'") +
-            Specifier.str() + "\', must be a positive integer.";
+            Specifier.str() + "\', must be a non-zero integer.";
         }
-        if (Width != 0)
-          LegalIntWidths.push_back(Width);
+        LegalIntWidths.push_back(Width);
         Split = Token.split(':');
         Specifier = Split.first;
         Token = Split.second;
       } while (!Specifier.empty() || !Token.empty());
       break;
     case 'S': { // Stack natural alignment.
-      int StackNaturalAlignBits = getInt(Specifier.substr(1));
-      if (StackNaturalAlignBits < 0 || StackNaturalAlignBits % 8 != 0) {
+      unsigned StackNaturalAlignBits = getInt(Specifier.substr(1));
+      if (StackNaturalAlignBits % 8 != 0) {
         return "invalid natural stack alignment (S-field), "
-               "must be a positive 8-bit multiple";
+               "must be an 8-bit multiple";
       }
       StackNaturalAlign = StackNaturalAlignBits / 8;
       break;
