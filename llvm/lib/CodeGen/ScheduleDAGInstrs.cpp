@@ -67,7 +67,7 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
       // regular getUnderlyingObjectFromInt.
       if (U->getOpcode() == Instruction::PtrToInt)
         return U->getOperand(0);
-      // If we find an add of a constant or a multiplied value, it's
+      // If we find an add of a constant, a multiplied value, or a phi, it's
       // likely that the other operand will lead us to the base
       // object. We don't have to worry about the case where the
       // object address is somehow being computed by the multiply,
@@ -75,7 +75,8 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
       // identifiable object.
       if (U->getOpcode() != Instruction::Add ||
           (!isa<ConstantInt>(U->getOperand(1)) &&
-           Operator::getOpcode(U->getOperand(1)) != Instruction::Mul))
+           Operator::getOpcode(U->getOperand(1)) != Instruction::Mul &&
+           !isa<PHINode>(U->getOperand(1))))
         return V;
       V = U->getOperand(0);
     } else {
