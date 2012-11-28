@@ -31,6 +31,8 @@ protected:
                                           /*isVarArg=*/false);
     F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
     BB = BasicBlock::Create(getGlobalContext(), "", F);
+    GV = new GlobalVariable(Type::getFloatTy(getGlobalContext()), true,
+                            GlobalValue::ExternalLinkage);
   }
 
   virtual void TearDown() {
@@ -41,6 +43,7 @@ protected:
   OwningPtr<Module> M;
   Function *F;
   BasicBlock *BB;
+  GlobalVariable *GV;
 };
 
 TEST_F(IRBuilderTest, Lifetime) {
@@ -106,6 +109,61 @@ TEST_F(IRBuilderTest, GetIntTy) {
   IntegerType *IntPtrTy = Builder.getIntPtrTy(DL);
   unsigned IntPtrBitSize =  DL->getPointerSizeInBits(0);
   EXPECT_EQ(IntPtrTy, IntegerType::get(getGlobalContext(), IntPtrBitSize));
+}
+
+TEST_F(IRBuilderTest, FastMathFlags) {
+  IRBuilder<> Builder(BB);
+  Value *F;
+  Instruction *FDiv, *FAdd;
+
+  F = Builder.CreateLoad(GV);
+  F = Builder.CreateFAdd(F, F);
+
+  EXPECT_FALSE(Builder.GetFastMathFlags().any());
+  ASSERT_TRUE(isa<Instruction>(F));
+  FAdd = cast<Instruction>(F);
+  EXPECT_FALSE(FAdd->hasNoNaNs());
+
+  FastMathFlags FMF;
+  Builder.SetFastMathFlags(FMF);
+
+  F = Builder.CreateFAdd(F, F);
+  EXPECT_FALSE(Builder.GetFastMathFlags().any());
+
+  FMF.UnsafeAlgebra = true;
+  Builder.SetFastMathFlags(FMF);
+
+  F = Builder.CreateFAdd(F, F);
+  EXPECT_TRUE(Builder.GetFastMathFlags().any());
+  ASSERT_TRUE(isa<Instruction>(F));
+  FAdd = cast<Instruction>(F);
+  EXPECT_TRUE(FAdd->hasNoNaNs());
+
+  F = Builder.CreateFDiv(F, F);
+  EXPECT_TRUE(Builder.GetFastMathFlags().any());
+  EXPECT_TRUE(Builder.GetFastMathFlags().UnsafeAlgebra);
+  ASSERT_TRUE(isa<Instruction>(F));
+  FDiv = cast<Instruction>(F);
+  EXPECT_TRUE(FDiv->hasAllowReciprocal());
+
+  Builder.ClearFastMathFlags();
+
+  F = Builder.CreateFDiv(F, F);
+  ASSERT_TRUE(isa<Instruction>(F));
+  FDiv = cast<Instruction>(F);
+  EXPECT_FALSE(FDiv->hasAllowReciprocal());
+
+  FMF.clear();
+  FMF.AllowReciprocal = true;
+  Builder.SetFastMathFlags(FMF);
+
+  F = Builder.CreateFDiv(F, F);
+  EXPECT_TRUE(Builder.GetFastMathFlags().any());
+  EXPECT_TRUE(Builder.GetFastMathFlags().AllowReciprocal);
+  ASSERT_TRUE(isa<Instruction>(F));
+  FDiv = cast<Instruction>(F);
+  EXPECT_TRUE(FDiv->hasAllowReciprocal());
+
 }
 
 }
