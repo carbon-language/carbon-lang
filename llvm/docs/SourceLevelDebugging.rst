@@ -231,9 +231,8 @@ produced it.
 
 Compile unit descriptors provide the root context for objects declared in a
 specific compilation unit.  File descriptors are defined using this context.
-These descriptors are collected by a named metadata ``!llvm.dbg.cu``.  Compile
-unit descriptor keeps track of subprograms, global variables and type
-information.
+These descriptors are collected by a named metadata ``!llvm.dbg.cu``.  They
+keep track of subprograms, global variables and type information.
 
 .. _format_files:
 
@@ -278,7 +277,7 @@ Global variable descriptors
     {}*       ;; Reference to the global variable
   }
 
-These descriptors provide debug information about globals variables.  The
+These descriptors provide debug information about globals variables.  They
 provide details such as name, type and where the variable is defined.  All
 global variables are collected inside the named metadata ``!llvm.dbg.cu``.
 
