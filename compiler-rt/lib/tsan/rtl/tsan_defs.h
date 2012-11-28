@@ -25,8 +25,12 @@
 namespace __tsan {
 
 #ifdef TSAN_GO
+const bool kGoMode = true;
+const bool kCppMode = false;
 const char *const kTsanOptionsEnv = "GORACE";
 #else
+const bool kGoMode = false;
+const bool kCppMode = true;
 const char *const kTsanOptionsEnv = "TSAN_OPTIONS";
 #endif
 

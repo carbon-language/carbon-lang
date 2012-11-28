@@ -568,8 +568,8 @@ extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
                                         EventType typ, uptr addr) {
   StatInc(thr, StatEvents);
-  u64 epoch = fs.GetTracePos();
-  if (UNLIKELY((epoch % kTracePartSize) == 0)) {
+  u64 pos = fs.GetTracePos();
+  if (UNLIKELY((pos % kTracePartSize) == 0)) {
 #ifndef TSAN_GO
     HACKY_CALL(__tsan_trace_switch);
 #else
@@ -577,7 +577,7 @@ void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
 #endif
   }
   Event *trace = (Event*)GetThreadTrace(fs.tid());
-  Event *evp = &trace[epoch];
+  Event *evp = &trace[pos];
   Event ev = (u64)addr | ((u64)typ << 61);
   *evp = ev;
 }

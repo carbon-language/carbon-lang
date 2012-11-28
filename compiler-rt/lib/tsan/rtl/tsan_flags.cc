@@ -56,11 +56,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->stop_on_start = false;
   f->running_on_valgrind = false;
   f->external_symbolizer_path = "";
-  f->history_size = 2;
-
-#ifdef TSAN_GO
-  f->history_size = 1;  // There are a lot of goroutines.
-#endif
+  f->history_size = kGoMode ? 1 : 2;  // There are a lot of goroutines in Go.
 
   // Let a frontend override.
   OverrideFlags(f);

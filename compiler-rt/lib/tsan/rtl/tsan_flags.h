@@ -69,7 +69,7 @@ struct Flags {
   // Path to external symbolizer.
   const char *external_symbolizer_path;
   // Per-thread history size, controls how many previous memory accesses
-  // is remembered per thread.  Possible values are [0..7].
+  // are remembered per thread.  Possible values are [0..7].
   // history_size=0 amounts to 32K memory accesses.  Each next value doubles
   // the amount of memory accesses, up to history_size=7 that amounts to
   // 4M memory accesses.  The default value is 2 (128K memory accesses).
