@@ -581,8 +581,10 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     
     for (InitListExpr::const_reverse_iterator it = IE->rbegin(),
          ei = IE->rend(); it != ei; ++it) {
-      vals = getBasicVals().consVals(state->getSVal(cast<Expr>(*it), LCtx),
-                                     vals);
+      SVal V = state->getSVal(cast<Expr>(*it), LCtx);
+      if (dyn_cast_or_null<CXXTempObjectRegion>(V.getAsRegion()))
+        V = UnknownVal();
+      vals = getBasicVals().consVals(V, vals);
     }
     
     B.generateNode(IE, Pred,

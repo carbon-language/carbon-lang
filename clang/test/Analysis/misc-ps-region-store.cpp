@@ -656,3 +656,41 @@ unsigned RDar12753384() {
   return w.x;
 }
 
+// This testcase tests whether we treat the anonymous union and union
+// the same way.  This previously resulted in a "return of stack address"
+// warning because the anonymous union resulting in a temporary object
+// getting put into the initializer.  We still aren't handling this correctly,
+// but now if a temporary object appears in an initializer we just ignore it.
+// Fixes <rdar://problem/12755044>.
+
+struct Rdar12755044_foo
+{
+    struct Rdar12755044_bar
+    {
+        union baz
+        {
+            int   i;
+        };
+    } aBar;
+};
+
+struct Rdar12755044_foo_anon
+{
+    struct Rdar12755044_bar
+    {
+        union
+        {
+            int   i;
+        };
+    } aBar;
+};
+
+const Rdar12755044_foo_anon *radar12755044_anon() {
+  static const Rdar12755044_foo_anon Rdar12755044_foo_list[] = { { { } } };
+  return Rdar12755044_foo_list; // no-warning
+}
+
+const Rdar12755044_foo *radar12755044() {
+  static const Rdar12755044_foo Rdar12755044_foo_list[] = { { { } } };
+  return Rdar12755044_foo_list; // no-warning
+}
