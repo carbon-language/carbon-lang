@@ -159,7 +159,8 @@ static void addBoundsCheckingPass(const PassManagerBuilder &Builder,
 
 static void addAddressSanitizerPass(const PassManagerBuilder &Builder,
                                     PassManagerBase &PM) {
-  PM.add(createAddressSanitizerPass());
+  PM.add(createAddressSanitizerFunctionPass());
+  PM.add(createAddressSanitizerModulePass());
 }
 
 static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
