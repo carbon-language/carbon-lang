@@ -51,7 +51,7 @@ Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
   MachineBasicBlock *MBB = Tail->getParent();
   ARMFunctionInfo *AFI = MBB->getParent()->getInfo<ARMFunctionInfo>();
   if (!AFI->hasITBlocks()) {
-    TargetInstrInfoImpl::ReplaceTailWithBranchTo(Tail, NewDest);
+    TargetInstrInfo::ReplaceTailWithBranchTo(Tail, NewDest);
     return;
   }
 
@@ -65,7 +65,7 @@ Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
     --MBBI;
 
   // Actually replace the tail.
-  TargetInstrInfoImpl::ReplaceTailWithBranchTo(Tail, NewDest);
+  TargetInstrInfo::ReplaceTailWithBranchTo(Tail, NewDest);
 
   // Fix up IT.
   if (CC != ARMCC::AL) {

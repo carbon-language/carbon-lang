@@ -976,9 +976,6 @@ private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
 
-// Temporary typedef until all TargetInstrInfoImpl references are gone.
-typedef TargetInstrInfo TargetInstrInfoImpl;
-
 } // End llvm namespace
 
 #endif

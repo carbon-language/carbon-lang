@@ -106,7 +106,7 @@ CreateTargetHazardRecognizer(const TargetMachine *TM,
     const InstrItineraryData *II = TM->getInstrItineraryData();
     return new ScoreboardHazardRecognizer(II, DAG, "pre-RA-sched");
   }
-  return TargetInstrInfoImpl::CreateTargetHazardRecognizer(TM, DAG);
+  return TargetInstrInfo::CreateTargetHazardRecognizer(TM, DAG);
 }
 
 ScheduleHazardRecognizer *ARMBaseInstrInfo::
@@ -115,7 +115,7 @@ CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
   if (Subtarget.isThumb2() || Subtarget.hasVFP2())
     return (ScheduleHazardRecognizer *)
       new ARMHazardRecognizer(II, *this, getRegisterInfo(), Subtarget, DAG);
-  return TargetInstrInfoImpl::CreateTargetPostRAHazardRecognizer(II, DAG);
+  return TargetInstrInfo::CreateTargetPostRAHazardRecognizer(II, DAG);
 }
 
 MachineInstr *
@@ -1269,7 +1269,7 @@ reMaterialize(MachineBasicBlock &MBB,
 
 MachineInstr *
 ARMBaseInstrInfo::duplicate(MachineInstr *Orig, MachineFunction &MF) const {
-  MachineInstr *MI = TargetInstrInfoImpl::duplicate(Orig, MF);
+  MachineInstr *MI = TargetInstrInfo::duplicate(Orig, MF);
   switch(Orig->getOpcode()) {
   case ARM::tLDRpci_pic:
   case ARM::t2LDRpci_pic: {
@@ -1604,7 +1604,7 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     // MOVCC AL can't be inverted. Shouldn't happen.
     if (CC == ARMCC::AL || PredReg != ARM::CPSR)
       return NULL;
-    MI = TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
+    MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
     if (!MI)
       return NULL;
     // After swapping the MOVCC operands, also invert the condition.
@@ -1613,7 +1613,7 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     return MI;
   }
   }
-  return TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
+  return TargetInstrInfo::commuteInstruction(MI, NewMI);
 }
 
 /// Identify instructions that can be folded into a MOVCC instruction, and
