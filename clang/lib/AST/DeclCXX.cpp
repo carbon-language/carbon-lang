@@ -1007,12 +1007,13 @@ static void CollectVisibleConversions(ASTContext &Context,
 
   // Collect the direct conversions and figure out which conversions
   // will be hidden in the subclasses.
-  UnresolvedSetImpl &Cs = *Record->getConversionFunctions();
-  if (!Cs.empty()) {
+  CXXRecordDecl::conversion_iterator ConvI = Record->conversion_begin();
+  CXXRecordDecl::conversion_iterator ConvE = Record->conversion_end();
+  if (ConvI != ConvE) {
     HiddenTypesBuffer = ParentHiddenTypes;
     HiddenTypes = &HiddenTypesBuffer;
 
-    for (UnresolvedSetIterator I = Cs.begin(), E = Cs.end(); I != E; ++I) {
+    for (CXXRecordDecl::conversion_iterator I = ConvI; I != ConvE; ++I) {
       CanQualType ConvType(GetConversionType(Context, I.getDecl()));
       bool Hidden = ParentHiddenTypes.count(ConvType);
       if (!Hidden)
@@ -1073,10 +1074,11 @@ static void CollectVisibleConversions(ASTContext &Context,
 
   // Go ahead and collect the direct conversions and add them to the
   // hidden-types set.
-  UnresolvedSetImpl &Cs = *Record->getConversionFunctions();
-  Output.append(Cs.begin(), Cs.end());
-  for (UnresolvedSetIterator I = Cs.begin(), E = Cs.end(); I != E; ++I)
-    HiddenTypes.insert(GetConversionType(Context, I.getDecl()));
+  CXXRecordDecl::conversion_iterator ConvI = Record->conversion_begin();
+  CXXRecordDecl::conversion_iterator ConvE = Record->conversion_end();
+  Output.append(ConvI, ConvE);
+  for (; ConvI != ConvE; ++ConvI)
+    HiddenTypes.insert(GetConversionType(Context, ConvI.getDecl()));
 
   // Recursively collect conversions from base classes.
   for (CXXRecordDecl::base_class_iterator
@@ -1099,16 +1101,18 @@ static void CollectVisibleConversions(ASTContext &Context,
 
 /// getVisibleConversionFunctions - get all conversion functions visible
 /// in current class; including conversion function templates.
-const UnresolvedSetImpl *CXXRecordDecl::getVisibleConversionFunctions() {
+std::pair<CXXRecordDecl::conversion_iterator,CXXRecordDecl::conversion_iterator>
+CXXRecordDecl::getVisibleConversionFunctions() {
   // If root class, all conversions are visible.
   if (bases_begin() == bases_end())
-    return &data().Conversions;
+    return std::make_pair(data().Conversions.begin(), data().Conversions.end());
   // If visible conversion list is already evaluated, return it.
-  if (data().ComputedVisibleConversions)
-    return &data().VisibleConversions;
-  CollectVisibleConversions(getASTContext(), this, data().VisibleConversions);
-  data().ComputedVisibleConversions = true;
-  return &data().VisibleConversions;
+  if (!data().ComputedVisibleConversions) {
+    CollectVisibleConversions(getASTContext(), this, data().VisibleConversions);
+    data().ComputedVisibleConversions = true;
+  }
+  return std::make_pair(data().VisibleConversions.begin(),
+                        data().VisibleConversions.end());
 }
 
 void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
@@ -1123,7 +1127,7 @@ void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
   // with sufficiently large numbers of directly-declared conversions
   // that asymptotic behavior matters.
 
-  UnresolvedSetImpl &Convs = *getConversionFunctions();
+  UnresolvedSetImpl &Convs = data().Conversions;
   for (unsigned I = 0, E = Convs.size(); I != E; ++I) {
     if (Convs[I].getDecl() == ConvDecl) {
       Convs.erase(I);

@@ -1018,21 +1018,12 @@ public:
     return isLambda() ? captures_begin() + getLambdaData().NumCaptures : NULL;
   }
 
-  /// getConversions - Retrieve the overload set containing all of the
-  /// conversion functions in this class.
-  UnresolvedSetImpl *getConversionFunctions() {
-    return &data().Conversions;
-  }
-  const UnresolvedSetImpl *getConversionFunctions() const {
-    return &data().Conversions;
-  }
-
-  typedef UnresolvedSetImpl::iterator conversion_iterator;
+  typedef UnresolvedSetIterator conversion_iterator;
   conversion_iterator conversion_begin() const {
-    return getConversionFunctions()->begin();
+    return data().Conversions.begin();
   }
   conversion_iterator conversion_end() const {
-    return getConversionFunctions()->end();
+    return data().Conversions.end();
   }
 
   /// Removes a conversion function from this class.  The conversion
@@ -1042,7 +1033,8 @@ public:
 
   /// getVisibleConversionFunctions - get all conversion functions visible
   /// in current class; including conversion function templates.
-  const UnresolvedSetImpl *getVisibleConversionFunctions();
+  std::pair<conversion_iterator, conversion_iterator>
+    getVisibleConversionFunctions();
 
   /// isAggregate - Whether this class is an aggregate (C++
   /// [dcl.init.aggr]), which is a class with no user-declared
