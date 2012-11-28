@@ -12,6 +12,41 @@
 // Platform-specific code.
 //===----------------------------------------------------------------------===//
 
+/*
+C++ linux memory layout:
+0000 0000 0000 - 03c0 0000 0000: protected
+03c0 0000 0000 - 1000 0000 0000: shadow
+1000 0000 0000 - 7d00 0000 0000: protected
+7d00 0000 0000 - 7e00 0000 0000: heap
+7e00 0000 0000 - 7fff ffff ffff: modules and main thread stack
+
+C++ COMPAT linux memory layout:
+0000 0000 0000 - 0400 0000 0000: protected
+0400 0000 0000 - 1000 0000 0000: shadow
+1000 0000 0000 - 2900 0000 0000: protected
+2900 0000 0000 - 2c00 0000 0000: modules
+2c00 0000 0000 - 7d00 0000 0000: -
+7d00 0000 0000 - 7e00 0000 0000: heap
+7e00 0000 0000 - 7f00 0000 0000: -
+7f00 0000 0000 - 7fff ffff ffff: main thread stack
+
+Go linux and darwin memory layout:
+0000 0000 0000 - 0000 1000 0000: executable
+0000 1000 0000 - 00f8 0000 0000: -
+00f8 0000 0000 - 0118 0000 0000: heap
+0118 0000 0000 - 1000 0000 0000: -
+1000 0000 0000 - 1460 0000 0000: shadow
+1460 0000 0000 - 7fff ffff ffff: -
+
+Go windows memory layout:
+0000 0000 0000 - 0000 1000 0000: executable
+0000 1000 0000 - 00f8 0000 0000: -
+00f8 0000 0000 - 0118 0000 0000: heap
+0118 0000 0000 - 0100 0000 0000: -
+0100 0000 0000 - 0560 0000 0000: shadow
+0560 0000 0000 - 07ff ffff ffff: -
+*/
+
 #ifndef TSAN_PLATFORM_H
 #define TSAN_PLATFORM_H
 
