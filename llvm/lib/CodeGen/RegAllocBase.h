@@ -37,8 +37,8 @@
 #ifndef LLVM_CODEGEN_REGALLOCBASE
 #define LLVM_CODEGEN_REGALLOCBASE
 
-#include "LiveIntervalUnion.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
+#include "llvm/CodeGen/LiveIntervalUnion.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace llvm {

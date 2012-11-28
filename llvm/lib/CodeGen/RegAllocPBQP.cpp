@@ -32,7 +32,6 @@
 #define DEBUG_TYPE "regalloc"
 
 #include "Spiller.h"
-#include "VirtRegMap.h"
 #include "RegisterCoalescer.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -49,6 +48,7 @@
 #include "llvm/CodeGen/PBQP/Graph.h"
 #include "llvm/CodeGen/PBQP/Heuristics/Briggs.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"

@@ -15,9 +15,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "AllocationOrder.h"
-#include "VirtRegMap.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 
 using namespace llvm;
 
