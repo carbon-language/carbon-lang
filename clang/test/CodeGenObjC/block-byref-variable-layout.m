@@ -1,5 +1,14 @@
 // RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-runtime-has-weak -triple x86_64-apple-darwin -O0 -emit-llvm %s -o - | FileCheck %s
 
+// rdar://12759433
+@class NSString;
+
+void Test12759433() {
+ __block __unsafe_unretained NSString *uuByref = (__bridge NSString *)(void*)0x102030405060708;
+ void (^block)() = ^{ uuByref = 0; };
+ block();
+}
+// CHECK: %struct.__block_byref_uuByref = type { i8*, %struct.__block_byref_uuByref*, i32, i32, [[ZERO:%.*]]* }
 int main() {
   __block __weak id wid;
   __block long XXX;

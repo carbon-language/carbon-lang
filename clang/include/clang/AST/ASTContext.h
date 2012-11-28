@@ -860,11 +860,8 @@ public:
     return cudaConfigureCallDecl;
   }
 
-  /// Builds the struct used for __block variables.
-  QualType BuildByRefType(StringRef DeclName, QualType Ty) const;
-
   /// Returns true iff we need copy/dispose helpers for the given type.
-  bool BlockRequiresCopying(QualType Ty) const;
+  bool BlockRequiresCopying(QualType Ty, const VarDecl *D);
   
   
   /// Returns true, if given type has a known lifetime. HasByrefExtendedLayout is set
