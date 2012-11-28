@@ -637,6 +637,17 @@ NOINLINE void LongJmpFunc1(jmp_buf buf) {
   longjmp(buf, 1);
 }
 
+NOINLINE void BuiltinLongJmpFunc1(jmp_buf buf) {
+  // create three red zones for these two stack objects.
+  int a;
+  int b;
+
+  int *A = Ident(&a);
+  int *B = Ident(&b);
+  *A = *B;
+  __builtin_longjmp((void**)buf, 1);
+}
+
 NOINLINE void UnderscopeLongJmpFunc1(jmp_buf buf) {
   // create three red zones for these two stack objects.
   int a;
@@ -672,6 +683,16 @@ TEST(AddressSanitizer, LongJmpTest) {
   static jmp_buf buf;
   if (!setjmp(buf)) {
     LongJmpFunc1(buf);
+  } else {
+    TouchStackFunc();
+  }
+}
+
+// http://code.google.com/p/address-sanitizer/issues/detail?id=129
+TEST(AddressSanitizer, DISABLED_BuiltinLongJmpTest) {
+  static jmp_buf buf;
+  if (!setjmp(buf)) {
+    BuiltinLongJmpFunc1(buf);
   } else {
     TouchStackFunc();
   }
