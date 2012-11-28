@@ -119,61 +119,6 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   F = Builder.CreateLoad(GV);
   F = Builder.CreateFAdd(F, F);
 
-  EXPECT_FALSE(Builder.GetFastMathFlags().any());
-  ASSERT_TRUE(isa<Instruction>(F));
-  FAdd = cast<Instruction>(F);
-  EXPECT_FALSE(FAdd->hasNoNaNs());
-
-  FastMathFlags FMF;
-  Builder.SetFastMathFlags(FMF);
-
-  F = Builder.CreateFAdd(F, F);
-  EXPECT_FALSE(Builder.GetFastMathFlags().any());
-
-  FMF.UnsafeAlgebra = true;
-  Builder.SetFastMathFlags(FMF);
-
-  F = Builder.CreateFAdd(F, F);
-  EXPECT_TRUE(Builder.GetFastMathFlags().any());
-  ASSERT_TRUE(isa<Instruction>(F));
-  FAdd = cast<Instruction>(F);
-  EXPECT_TRUE(FAdd->hasNoNaNs());
-
-  F = Builder.CreateFDiv(F, F);
-  EXPECT_TRUE(Builder.GetFastMathFlags().any());
-  EXPECT_TRUE(Builder.GetFastMathFlags().UnsafeAlgebra);
-  ASSERT_TRUE(isa<Instruction>(F));
-  FDiv = cast<Instruction>(F);
-  EXPECT_TRUE(FDiv->hasAllowReciprocal());
-
-  Builder.ClearFastMathFlags();
-
-  F = Builder.CreateFDiv(F, F);
-  ASSERT_TRUE(isa<Instruction>(F));
-  FDiv = cast<Instruction>(F);
-  EXPECT_FALSE(FDiv->hasAllowReciprocal());
-
-  FMF.clear();
-  FMF.AllowReciprocal = true;
-  Builder.SetFastMathFlags(FMF);
-
-  F = Builder.CreateFDiv(F, F);
-  EXPECT_TRUE(Builder.GetFastMathFlags().any());
-  EXPECT_TRUE(Builder.GetFastMathFlags().AllowReciprocal);
-  ASSERT_TRUE(isa<Instruction>(F));
-  FDiv = cast<Instruction>(F);
-  EXPECT_TRUE(FDiv->hasAllowReciprocal());
-
-}
-
-TEST_F(IRBuilderTest, FastMathFlags) {
-  IRBuilder<> Builder(BB);
-  Value *F;
-  Instruction *FDiv, *FAdd;
-
-  F = Builder.CreateLoad(GV);
-  F = Builder.CreateFAdd(F, F);
-
   EXPECT_FALSE(Builder.getFastMathFlags().any());
   ASSERT_TRUE(isa<Instruction>(F));
   FAdd = cast<Instruction>(F);
