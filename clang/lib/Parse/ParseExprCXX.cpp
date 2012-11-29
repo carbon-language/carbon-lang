@@ -99,7 +99,7 @@ void Parser::CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectType,
 /// \brief Emits an error for a left parentheses after a double colon.
 ///
 /// When a '(' is found after a '::', emit an error.  Attempt to fix the token
-/// stream by removing the '(', and the matching ')' if it found.
+/// stream by removing the '(', and the matching ')' if found.
 void Parser::CheckForLParenAfterColonColon() {
   if (!Tok.is(tok::l_paren))
     return;
