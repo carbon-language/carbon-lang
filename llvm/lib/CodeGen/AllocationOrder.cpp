@@ -42,7 +42,7 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   if (HintPair.first) {
     const TargetRegisterInfo &TRI = VRM.getTargetRegInfo();
     // The remaining allocation order may depend on the hint.
-    ArrayRef<uint16_t> Order =
+    ArrayRef<MCPhysReg> Order =
       TRI.getRawAllocationOrder(RC, HintPair.first, Hint,
                                 VRM.getMachineFunction());
     if (Order.empty())
@@ -50,7 +50,7 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
 
     // Copy the allocation order with reserved registers removed.
     OwnedBegin = true;
-    unsigned *P = new unsigned[Order.size()];
+    MCPhysReg *P = new MCPhysReg[Order.size()];
     Begin = P;
     for (unsigned i = 0; i != Order.size(); ++i)
       if (!MRI.isReserved(Order[i]))
@@ -63,7 +63,7 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   } else {
     // If there is no hint or just a normal hint, use the cached allocation
     // order from RegisterClassInfo.
-    ArrayRef<unsigned> O = RCI.getOrder(RC);
+    ArrayRef<MCPhysReg> O = RCI.getOrder(RC);
     Begin = O.begin();
     End = O.end();
   }

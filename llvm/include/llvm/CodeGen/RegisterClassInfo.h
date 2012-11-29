@@ -29,10 +29,10 @@ class RegisterClassInfo {
     unsigned Tag;
     unsigned NumRegs;
     bool ProperSubClass;
-    OwningArrayPtr<unsigned> Order;
+    OwningArrayPtr<MCPhysReg> Order;
 
     RCInfo() : Tag(0), NumRegs(0), ProperSubClass(false) {}
-    operator ArrayRef<unsigned>() const {
+    operator ArrayRef<MCPhysReg>() const {
       return makeArrayRef(Order.get(), NumRegs);
     }
   };
@@ -84,7 +84,7 @@ public:
   /// getOrder - Returns the preferred allocation order for RC. The order
   /// contains no reserved registers, and registers that alias callee saved
   /// registers come last.
-  ArrayRef<unsigned> getOrder(const TargetRegisterClass *RC) const {
+  ArrayRef<MCPhysReg> getOrder(const TargetRegisterClass *RC) const {
     return get(RC);
   }
 

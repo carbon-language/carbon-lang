@@ -17,15 +17,17 @@
 #ifndef LLVM_CODEGEN_ALLOCATIONORDER_H
 #define LLVM_CODEGEN_ALLOCATIONORDER_H
 
+#include "llvm/MC/MCRegisterInfo.h"
+
 namespace llvm {
 
 class RegisterClassInfo;
 class VirtRegMap;
 
 class AllocationOrder {
-  const unsigned *Begin;
-  const unsigned *End;
-  const unsigned *Pos;
+  const MCPhysReg *Begin;
+  const MCPhysReg *End;
+  const MCPhysReg *Pos;
   const RegisterClassInfo &RCI;
   unsigned Hint;
   bool OwnedBegin;
