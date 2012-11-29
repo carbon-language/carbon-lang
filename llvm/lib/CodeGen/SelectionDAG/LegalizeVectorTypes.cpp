@@ -1080,46 +1080,42 @@ SDValue DAGTypeLegalizer::SplitVecOp_VSELECT(SDNode *N, unsigned OpNo) {
 
   SDValue Lo, Hi;
   GetSplitVector(N->getOperand(0), Lo, Hi);
+  assert(Lo.getValueType() == Hi.getValueType() &&
+         "Lo and Hi have differing types");;
 
   unsigned LoNumElts = Lo.getValueType().getVectorNumElements();
   unsigned HiNumElts = Hi.getValueType().getVectorNumElements();
   assert(LoNumElts == HiNumElts && "Asymmetric vector split?");
 
-  EVT LoOpVT = EVT::getVectorVT(*DAG.getContext(),
-                                Src0.getValueType().getVectorElementType(),
-                                LoNumElts);
-  EVT LoMaskVT = EVT::getVectorVT(*DAG.getContext(),
-                                  MaskVT.getVectorElementType(),
-                                  LoNumElts);
-  EVT HiOpVT = EVT::getVectorVT(*DAG.getContext(),
-                                Src0.getValueType().getVectorElementType(),
-                                HiNumElts);
-  EVT HiMaskVT = EVT::getVectorVT(*DAG.getContext(),
-                                  MaskVT.getVectorElementType(),
-                                  HiNumElts);
+  LLVMContext &Ctx = *DAG.getContext();
+  SDValue Zero = DAG.getIntPtrConstant(0);
+  SDValue LoElts = DAG.getIntPtrConstant(LoNumElts);
+  EVT Src0VT = Src0.getValueType();
+  EVT Src0EltTy = Src0VT.getVectorElementType();
+  EVT MaskEltTy = MaskVT.getVectorElementType();
 
-  SDValue LoOp0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, LoOpVT, Src0,
-                              DAG.getIntPtrConstant(0));
-  SDValue LoOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, LoOpVT, Src1,
-                              DAG.getIntPtrConstant(0));
+  EVT LoOpVT = EVT::getVectorVT(Ctx, Src0EltTy, LoNumElts);
+  EVT LoMaskVT = EVT::getVectorVT(Ctx, MaskEltTy, LoNumElts);
+  EVT HiOpVT = EVT::getVectorVT(Ctx, Src0EltTy, HiNumElts);
+  EVT HiMaskVT = EVT::getVectorVT(Ctx, MaskEltTy, HiNumElts);
 
-  SDValue HiOp0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HiOpVT, Src0,
-                              DAG.getIntPtrConstant(LoNumElts));
-  SDValue HiOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HiOpVT, Src1,
-                              DAG.getIntPtrConstant(LoNumElts));
+  SDValue LoOp0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, LoOpVT, Src0, Zero);
+  SDValue LoOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, LoOpVT, Src1, Zero);
 
-  SDValue LoMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, LoMaskVT, Mask,
-                               DAG.getIntPtrConstant(0));
-  SDValue HiMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HiMaskVT, Mask,
-                               DAG.getIntPtrConstant(LoNumElts));
+  SDValue HiOp0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HiOpVT, Src0, LoElts);
+  SDValue HiOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HiOpVT, Src1, LoElts);
 
-  SDValue LoSelect = DAG.getNode(ISD::VSELECT, DL, LoOpVT, LoMask, LoOp0,
-                                 LoOp1);
-  SDValue HiSelect = DAG.getNode(ISD::VSELECT, DL, HiOpVT, HiMask, HiOp0,
-                                 HiOp1);
+  SDValue LoMask =
+    DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, LoMaskVT, Mask, Zero);
+  SDValue HiMask =
+    DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HiMaskVT, Mask, LoElts);
 
-  return DAG.getNode(ISD::CONCAT_VECTORS, DL, Src0.getValueType(), LoSelect,
-                     HiSelect);
+  SDValue LoSelect =
+    DAG.getNode(ISD::VSELECT, DL, LoOpVT, LoMask, LoOp0, LoOp1);
+  SDValue HiSelect =
+    DAG.getNode(ISD::VSELECT, DL, HiOpVT, HiMask, HiOp0, HiOp1);
+
+  return DAG.getNode(ISD::CONCAT_VECTORS, DL, Src0VT, LoSelect, HiSelect);
 }
 
 SDValue DAGTypeLegalizer::SplitVecOp_UnaryOp(SDNode *N) {
