@@ -37,7 +37,7 @@ OPTIONS
  Pass all arguments specified after **--args** to the test program whenever it runs.
  Note that if any of the *program args* start with a "``-``", you should use:
 
- .. code-block:: perl
+ .. code-block:: bash
 
       bugpoint [bugpoint args] --args -- [program args]
 
@@ -51,7 +51,7 @@ OPTIONS
  (**llc**, **lli**, etc.) whenever it runs.  You should use this option in the
  following way:
 
- .. code-block:: perl
+ .. code-block:: bash
 
       bugpoint [bugpoint args] --tool-args -- [tool args]
 
@@ -108,7 +108,7 @@ OPTIONS
  optimizations, use the **-help** and **--load** options together; for example:
 
 
- .. code-block:: perl
+ .. code-block:: bash
 
       bugpoint --load myNewPass.so -help
 
