@@ -694,3 +694,14 @@ const Rdar12755044_foo *radar12755044() {
   static const Rdar12755044_foo Rdar12755044_foo_list[] = { { { } } };
   return Rdar12755044_foo_list; // no-warning
 }
+
+// Test the correct handling of integer to bool conversions.  Previously
+// this resulted in a false positive because integers were being truncated
+// and not tested for non-zero.
+void rdar12759044() {
+  int flag = 512;
+  if (!(flag & 512)) {
+   int *p = 0;
+   *p = 0xDEADBEEF; // no-warning
+  }
+}
