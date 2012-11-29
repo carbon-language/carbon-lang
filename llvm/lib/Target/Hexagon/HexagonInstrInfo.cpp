@@ -314,7 +314,7 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
   if (Hexagon::DoubleRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::TFR_64), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(Hexagon::TFR64), DestReg).addReg(SrcReg);
     return;
   }
   if (Hexagon::PredRegsRegClass.contains(SrcReg, DestReg)) {

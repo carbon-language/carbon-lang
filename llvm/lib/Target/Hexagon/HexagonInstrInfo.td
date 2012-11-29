@@ -286,22 +286,104 @@ def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
             "$dst = sub(#$src1, $src2)",
             [(set IntRegs:$dst, (sub s10ImmPred:$src1, IntRegs:$src2))]>;
 
-// Transfer immediate.
-let isMoveImm = 1, isReMaterializable = 1, isPredicable = 1 in
-def TFRI : ALU32_ri<(outs IntRegs:$dst), (ins s16Imm:$src1),
-           "$dst = #$src1",
-           [(set (i32 IntRegs:$dst), s16ImmPred:$src1)]>;
 
-// Transfer register.
-let neverHasSideEffects = 1, isPredicable = 1 in
-def TFR : ALU32_ri<(outs IntRegs:$dst), (ins IntRegs:$src1),
-          "$dst = $src1",
-          []>;
+multiclass TFR_Pred<bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    def _c#NAME# : ALU32_rr<(outs IntRegs:$dst),
+                            (ins PredRegs:$src1, IntRegs:$src2),
+            !if(PredNot, "if (!$src1", "if ($src1")#") $dst = $src2",
+            []>;
+    // Predicate new
+    let PNewValue = "new" in
+    def _cdn#NAME# : ALU32_rr<(outs IntRegs:$dst),
+                              (ins PredRegs:$src1, IntRegs:$src2),
+            !if(PredNot, "if (!$src1", "if ($src1")#".new) $dst = $src2",
+            []>;
+  }
+}
 
-let neverHasSideEffects = 1, isPredicable = 1 in
-def TFR64 : ALU32_ri<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
-          "$dst = $src1",
-          []>;
+let InputType = "reg", neverHasSideEffects = 1 in
+multiclass TFR_base<string CextOp> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp in {
+    let isPredicable = 1 in
+    def #NAME# : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
+            "$dst = $src1",
+            []>;
+
+    let  isPredicated = 1 in {
+      defm Pt : TFR_Pred<0>;
+      defm NotPt : TFR_Pred<1>;
+    }
+  }
+}
+
+multiclass TFR64_Pred<bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    def _c#NAME# : ALU32_rr<(outs DoubleRegs:$dst),
+                            (ins PredRegs:$src1, DoubleRegs:$src2),
+            !if(PredNot, "if (!$src1", "if ($src1")#") $dst = $src2",
+            []>;
+    // Predicate new
+    let PNewValue = "new" in
+    def _cdn#NAME# : ALU32_rr<(outs DoubleRegs:$dst),
+                              (ins PredRegs:$src1, DoubleRegs:$src2),
+            !if(PredNot, "if (!$src1", "if ($src1")#".new) $dst = $src2",
+            []>;
+  }
+}
+
+let InputType = "reg", neverHasSideEffects = 1 in
+multiclass TFR64_base<string CextOp> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp in {
+    let isPredicable = 1 in
+    def #NAME# : ALU32_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
+            "$dst = $src1",
+            []>;
+
+    let  isPredicated = 1 in {
+      defm Pt : TFR64_Pred<0>;
+      defm NotPt : TFR64_Pred<1>;
+    }
+  }
+}
+
+
+multiclass TFRI_Pred<bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    def _c#NAME# : ALU32_ri<(outs IntRegs:$dst),
+                            (ins PredRegs:$src1, s12Ext:$src2),
+            !if(PredNot, "if (!$src1", "if ($src1")#") $dst = #$src2",
+            []>;
+
+    // Predicate new
+    let PNewValue = "new" in
+    def _cdn#NAME# : ALU32_rr<(outs IntRegs:$dst),
+                              (ins PredRegs:$src1, s12Ext:$src2),
+            !if(PredNot, "if (!$src1", "if ($src1")#".new) $dst = #$src2",
+            []>;
+  }
+}
+
+let InputType = "imm", isExtendable = 1, isExtentSigned = 1 in
+multiclass TFRI_base<string CextOp> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#I in {
+    let opExtendable = 1, opExtentBits = 16, isMoveImm = 1, isPredicable = 1,
+    isReMaterializable = 1 in
+    def #NAME# : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
+            "$dst = #$src1",
+            [(set (i32 IntRegs:$dst), s16ExtPred:$src1)]>;
+
+    let opExtendable = 2,  opExtentBits = 12, neverHasSideEffects = 1,
+    isPredicated = 1 in {
+      defm Pt    : TFRI_Pred<0>;
+      defm NotPt : TFRI_Pred<1>;
+    }
+  }
+}
+
+defm TFRI : TFRI_base<"TFR">, ImmRegRel, PredNewRel;
+defm TFR : TFR_base<"TFR">, ImmRegRel, PredNewRel;
+defm TFR64 : TFR64_base<"TFR64">, ImmRegRel, PredNewRel;
 
 // Transfer control register.
 let neverHasSideEffects = 1 in
@@ -432,65 +514,6 @@ def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             "if (!$src1.new) $dst = combine($src2, $src3)",
             []>;
 
-// Conditional transfer.
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFR_cPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1, IntRegs:$src2),
-              "if ($src1) $dst = $src2",
-              []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFR_cNotPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                    IntRegs:$src2),
-                 "if (!$src1) $dst = $src2",
-                 []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFR64_cPt : ALU32_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
-                                                   DoubleRegs:$src2),
-              "if ($src1) $dst = $src2",
-              []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFR64_cNotPt : ALU32_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
-                                                    DoubleRegs:$src2),
-                 "if (!$src1) $dst = $src2",
-                 []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFRI_cPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1, s12Imm:$src2),
-               "if ($src1) $dst = #$src2",
-               []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFRI_cNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                     s12Imm:$src2),
-                  "if (!$src1) $dst = #$src2",
-                  []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFR_cdnPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                   IntRegs:$src2),
-                "if ($src1.new) $dst = $src2",
-                []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFR_cdnNotPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                      IntRegs:$src2),
-                   "if (!$src1.new) $dst = $src2",
-                   []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFRI_cdnPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                    s12Imm:$src2),
-                 "if ($src1.new) $dst = #$src2",
-                 []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def TFRI_cdnNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                       s12Imm:$src2),
-                    "if (!$src1.new) $dst = #$src2",
-                    []>;
-
 // Compare.
 defm CMPGTU : CMP32_rr_ri_u9<"cmp.gtu", setugt>;
 defm CMPGT : CMP32_rr_ri_s10<"cmp.gt", setgt>;
@@ -615,11 +638,6 @@ def SUB64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
 
 // Subtract halfword.
 
-// Transfer register.
-let neverHasSideEffects = 1 in
-def TFR_64 : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
-             "$dst = $src1",
-             []>;
 //===----------------------------------------------------------------------===//
 // ALU64/ALU -
 //===----------------------------------------------------------------------===//
