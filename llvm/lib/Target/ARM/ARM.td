@@ -132,6 +132,11 @@ def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
 include "ARMSchedule.td"
 
 // ARM processor families.
+def ProcA5      : SubtargetFeature<"a5", "ARMProcFamily", "CortexA5",
+                                   "Cortex-A5 ARM processors",
+                                   [FeatureSlowFPBrcc, FeatureNEONForFP,
+                                    FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
+                                    FeatureT2XtPk]>;
 def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
                                    "Cortex-A8 ARM processors",
                                    [FeatureSlowFPBrcc, FeatureNEONForFP,
@@ -219,6 +224,11 @@ def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [HasV6T2Ops, FeatureVFP2,
                                                        FeatureDSPThumb2]>;
 
 // V7a Processors.
+// FIXME: A5 has currently the same Schedule model as A8
+def : ProcessorModel<"cortex-a5",   CortexA8Model,
+                                    [ProcA5, HasV7Ops, FeatureNEON, FeatureDB,
+                                     FeatureVFP4, FeatureDSPThumb2,
+                                     FeatureHasRAS]>;
 def : ProcessorModel<"cortex-a8",   CortexA8Model,
                                     [ProcA8, HasV7Ops, FeatureNEON, FeatureDB,
                                      FeatureDSPThumb2, FeatureHasRAS]>;
