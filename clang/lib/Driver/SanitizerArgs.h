@@ -28,7 +28,7 @@ class SanitizerArgs {
 #define SANITIZER(NAME, ID) ID = 1 << SO_##ID,
 #define SANITIZER_GROUP(NAME, ID, ALIAS) ID = ALIAS,
 #include "clang/Basic/Sanitizers.def"
-    NeedsAsanRt = Address,
+    NeedsAsanRt = AddressFull,
     NeedsTsanRt = Thread,
     NeedsUbsanRt = (Undefined & ~Bounds) | Integer
   };
@@ -44,7 +44,7 @@ class SanitizerArgs {
   bool needsUbsanRt() const { return Kind & NeedsUbsanRt; }
 
   bool sanitizesVptr() const { return Kind & Vptr; }
-  
+
   void addArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
     if (!Kind)
       return;

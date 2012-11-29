@@ -135,6 +135,17 @@ public:
   void EmitAssembly(BackendAction Action, raw_ostream *OS);
 };
 
+// We need this wrapper to access LangOpts from extension functions that
+// we add to the PassManagerBuilder.
+class PassManagerBuilderWrapper : public PassManagerBuilder {
+public:
+  PassManagerBuilderWrapper(const LangOptions &LangOpts)
+      : PassManagerBuilder(), LangOpts(LangOpts) {}
+  const LangOptions &getLangOpts() const { return LangOpts; }
+private:
+  const LangOptions &LangOpts;
+};
+
 }
 
 static void addObjCARCAPElimPass(const PassManagerBuilder &Builder, PassManagerBase &PM) {
@@ -157,10 +168,15 @@ static void addBoundsCheckingPass(const PassManagerBuilder &Builder,
   PM.add(createBoundsCheckingPass());
 }
 
-static void addAddressSanitizerPass(const PassManagerBuilder &Builder,
-                                    PassManagerBase &PM) {
-  PM.add(createAddressSanitizerFunctionPass());
-  PM.add(createAddressSanitizerModulePass());
+static void addAddressSanitizerPasses(const PassManagerBuilder &Builder,
+                                      PassManagerBase &PM) {
+  const PassManagerBuilderWrapper &BuilderWrapper =
+      static_cast<const PassManagerBuilderWrapper&>(Builder);
+  const LangOptions &LangOpts = BuilderWrapper.getLangOpts();
+  PM.add(createAddressSanitizerFunctionPass(LangOpts.SanitizeInitOrder,
+                                            LangOpts.SanitizeUseAfterReturn,
+                                            LangOpts.SanitizeUseAfterScope));
+  PM.add(createAddressSanitizerModulePass(LangOpts.SanitizeInitOrder));
 }
 
 static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
@@ -178,8 +194,8 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
     OptLevel = 0;
     Inlining = CodeGenOpts.NoInlining;
   }
-  
-  PassManagerBuilder PMBuilder;
+
+  PassManagerBuilderWrapper PMBuilder(LangOpts);
   PMBuilder.OptLevel = OptLevel;
   PMBuilder.SizeLevel = CodeGenOpts.OptimizeSize;
 
@@ -206,9 +222,9 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
 
   if (LangOpts.SanitizeAddress) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
-                           addAddressSanitizerPass);
+                           addAddressSanitizerPasses);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
-                           addAddressSanitizerPass);
+                           addAddressSanitizerPasses);
   }
 
   if (LangOpts.SanitizeThread) {

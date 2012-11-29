@@ -10,6 +10,9 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=thread,undefined -fno-thread-sanitizer -fno-sanitize=float-cast-overflow,vptr %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-PARTIAL-UNDEFINED
 // CHECK-PARTIAL-UNDEFINED: "-fsanitize={{((signed-integer-overflow|integer-divide-by-zero|float-divide-by-zero|shift|unreachable|return|vla-bound|alignment|null|object-size|bounds),?){11}"}}
 
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=address-full %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-FULL
+// CHECK-ASAN-FULL: "-fsanitize={{((address|init-order|use-after-return|use-after-scope),?){4}"}}
+
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=vptr -fno-rtti %s -c -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-VPTR-NO-RTTI
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=undefined -fno-rtti %s -c -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-VPTR-NO-RTTI
 // CHECK-VPTR-NO-RTTI: '-fsanitize=vptr' not allowed with '-fno-rtti'
@@ -19,6 +22,9 @@
 
 // RUN: %clang -target x86_64-linux-gnu -faddress-sanitizer -fthread-sanitizer -fno-rtti %s -c -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-TSAN
 // CHECK-ASAN-TSAN: '-faddress-sanitizer' not allowed with '-fthread-sanitizer'
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=init-order %s -c -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-ONLY-EXTRA-ASAN
+// CHECK-ONLY-EXTRA-ASAN: argument '-fsanitize=init-order' only allowed with '-fsanitize=address'
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize=alignment -fsanitize=vptr -fno-sanitize=vptr %s -c -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-UBSAN-ASAN
 // CHECK-UBSAN-ASAN: '-fsanitize=address' not allowed with '-fsanitize=alignment'

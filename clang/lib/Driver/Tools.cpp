@@ -1474,6 +1474,13 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
     D.Diag(diag::err_drv_argument_not_allowed_with)
       << lastArgumentForKind(D, Args, NeedsAsan ? NeedsAsanRt : NeedsTsanRt)
       << lastArgumentForKind(D, Args, NeedsUbsan ? NeedsUbsanRt : NeedsTsanRt);
+
+  // If -fsanitize contains extra features of ASan, it should also
+  // explicitly contain -fsanitize=address.
+  if (NeedsAsan && ((Kind & Address) == 0))
+    D.Diag(diag::err_drv_argument_only_allowed_with)
+      << lastArgumentForKind(D, Args, NeedsAsanRt)
+      << "-fsanitize=address";
 }
 
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).

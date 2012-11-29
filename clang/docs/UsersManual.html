@@ -886,6 +886,8 @@ main checks are:
 <li id="opt_fsanitize_address"><tt>-fsanitize=address</tt>:
     <a href="AddressSanitizer.html">AddressSanitizer</a>, a memory error
     detector.</li>
+<li id="opt_fsanitize_address_full"><tt>-fsanitize=address-full</tt>:
+    AddressSanitizer with all the experimental features listed below.
 <li id="opt_fsanitize_integer"><tt>-fsanitize=integer</tt>:
     Enables checks for undefined or suspicious integer behavior.</li>
 <li id="opt_fsanitize_thread"><tt>-fsanitize=thread</tt>:
@@ -939,6 +941,20 @@ The following more fine-grained checks are also available:
     Use of an object whose vptr indicates that it is of the wrong dynamic type,
     or that its lifetime has not begun or has ended. Incompatible with
     <tt>-fno-rtti</tt>.</li>
+</ul>
+
+Experimental features of AddressSanitizer (not ready for widespread use,
+require explicit <tt>-fsanitize=address</tt>):
+
+<ul>
+<li id="opt_fsanitize_init_order"><tt>-fsanitize=init-order</tt>:
+Check for dynamic initialization order problems.</li>
+<li id="opt_fsanitize_use_after_return"><tt>-fsanitize=use-after-return</tt>:
+Check for use-after-return errors (accessing local variable after the function
+exit).
+<li id="opt_fsanitize_use_after_scope"><tt>-fsanitize=use-after-scope</tt>:
+Check for use-after-scope errors (accesing local variable after it went out of
+scope).
 </ul>
 
 The <tt>-fsanitize=</tt> argument must also be provided when linking, in order
