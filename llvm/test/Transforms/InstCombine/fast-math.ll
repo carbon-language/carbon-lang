@@ -23,7 +23,7 @@ notfold:
 }
 
 define float @fold2(float %a) {
-notfold2:
+fold2:
 ; CHECK: fold2
 ; CHECK: fmul float %a, 0x4006147AE0000000
   %mul = fmul float %a, 0x3FF3333340000000
