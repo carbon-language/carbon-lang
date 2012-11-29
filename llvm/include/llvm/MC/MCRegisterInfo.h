@@ -22,11 +22,15 @@
 
 namespace llvm {
 
+/// An unsigned integer type large enough to represent all physical registers,
+/// but not necessarily virtual registers.
+typedef uint16_t MCPhysReg;
+
 /// MCRegisterClass - Base class of TargetRegisterClass.
 class MCRegisterClass {
 public:
-  typedef const uint16_t* iterator;
-  typedef const uint16_t* const_iterator;
+  typedef const MCPhysReg* iterator;
+  typedef const MCPhysReg* const_iterator;
 
   const char *Name;
   const iterator RegsBegin;
@@ -152,7 +156,7 @@ private:
   unsigned NumClasses;                        // Number of entries in the array
   unsigned NumRegUnits;                       // Number of regunits.
   const uint16_t (*RegUnitRoots)[2];          // Pointer to regunit root table.
-  const uint16_t *DiffLists;                  // Pointer to the difflists array
+  const MCPhysReg *DiffLists;                 // Pointer to the difflists array
   const char *RegStrings;                     // Pointer to the string table.
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
                                               // array.
@@ -177,7 +181,7 @@ public:
   /// defined below.
   class DiffListIterator {
     uint16_t Val;
-    const uint16_t *List;
+    const MCPhysReg *List;
 
   protected:
     /// Create an invalid iterator. Call init() to point to something useful.
@@ -186,7 +190,7 @@ public:
     /// init - Point the iterator to InitVal, decoding subsequent values from
     /// DiffList. The iterator will initially point to InitVal, sub-classes are
     /// responsible for skipping the seed value if it is not part of the list.
-    void init(uint16_t InitVal, const uint16_t *DiffList) {
+    void init(MCPhysReg InitVal, const MCPhysReg *DiffList) {
       Val = InitVal;
       List = DiffList;
     }
@@ -196,7 +200,7 @@ public:
     /// is the caller's responsibility (by checking for a 0 return value).
     unsigned advance() {
       assert(isValid() && "Cannot move off the end of the list.");
-      uint16_t D = *List++;
+      MCPhysReg D = *List++;
       Val += D;
       return D;
     }
@@ -231,7 +235,7 @@ public:
                           const MCRegisterClass *C, unsigned NC,
                           const uint16_t (*RURoots)[2],
                           unsigned NRU,
-                          const uint16_t *DL,
+                          const MCPhysReg *DL,
                           const char *Strings,
                           const uint16_t *SubIndices,
                           unsigned NumIndices,

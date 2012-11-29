@@ -34,8 +34,8 @@ class raw_ostream;
 
 class TargetRegisterClass {
 public:
-  typedef const uint16_t* iterator;
-  typedef const uint16_t* const_iterator;
+  typedef const MCPhysReg* iterator;
+  typedef const MCPhysReg* const_iterator;
   typedef const MVT::SimpleValueType* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 
@@ -45,7 +45,7 @@ public:
   const uint32_t *SubClassMask;
   const uint16_t *SuperRegIndices;
   const sc_iterator SuperClasses;
-  ArrayRef<uint16_t> (*OrderFunc)(const MachineFunction&);
+  ArrayRef<MCPhysReg> (*OrderFunc)(const MachineFunction&);
 
   /// getID() - Return the register class ID number.
   ///
@@ -190,7 +190,7 @@ public:
   ///
   /// By default, this method returns all registers in the class.
   ///
-  ArrayRef<uint16_t> getRawAllocationOrder(const MachineFunction &MF) const {
+  ArrayRef<MCPhysReg> getRawAllocationOrder(const MachineFunction &MF) const {
     return OrderFunc ? OrderFunc(MF) : makeArrayRef(begin(), getNumRegs());
   }
 };
@@ -407,7 +407,7 @@ public:
   /// order of desired callee-save stack frame offset. The first register is
   /// closest to the incoming stack pointer if stack grows down, and vice versa.
   ///
-  virtual const uint16_t* getCalleeSavedRegs(const MachineFunction *MF = 0)
+  virtual const MCPhysReg* getCalleeSavedRegs(const MachineFunction *MF = 0)
                                                                       const = 0;
 
   /// getCallPreservedMask - Return a mask of call-preserved registers for the
@@ -619,7 +619,7 @@ public:
   ///
   /// Register allocators need only call this function to resolve
   /// target-dependent hints, but it should work without hinting as well.
-  virtual ArrayRef<uint16_t>
+  virtual ArrayRef<MCPhysReg>
   getRawAllocationOrder(const TargetRegisterClass *RC,
                         unsigned HintType, unsigned HintReg,
                         const MachineFunction &MF) const {
