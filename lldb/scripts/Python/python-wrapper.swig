@@ -964,6 +964,10 @@ LLDBSwigPythonCallModuleInit
 #include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBDebugger.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 size_t
 LLDBSwigPythonCallSBInputReaderCallback(void *baton,
                                         lldb::SBInputReader *reader,
@@ -972,6 +976,10 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
                                         size_t bytes_len);
 
 void LLDBSwigPythonCallPythonLogOutputCallback(const char *str, void *baton);
+
+#ifdef __cplusplus
+}
+#endif
 %}
 
 %wrapper %{
