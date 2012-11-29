@@ -233,3 +233,28 @@ entry:
 ; CHECK: udiv
 ; CHECK-NOT: icmp
 ; CHECK: }
+
+
+; Check that loads from shadow have the same aligment as the original loads.
+
+define i32 @ShadowLoadAlignmentLarge() nounwind uwtable {
+  %y = alloca i32, align 64
+  %1 = load volatile i32* %y, align 64
+  ret i32 %1
+}
+
+; CHECK: define i32 @ShadowLoadAlignmentLarge
+; CHECK: load i32* {{.*}} align 64
+; CHECK: load volatile i32* {{.*}} align 64
+; CHECK: }
+
+define i32 @ShadowLoadAlignmentSmall() nounwind uwtable {
+  %y = alloca i32, align 2
+  %1 = load volatile i32* %y, align 2
+  ret i32 %1
+}
+
+; CHECK: define i32 @ShadowLoadAlignmentSmall
+; CHECK: load i32* {{.*}} align 2
+; CHECK: load volatile i32* {{.*}} align 2
+; CHECK: }
