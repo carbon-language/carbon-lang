@@ -1281,7 +1281,13 @@ static DecodeStatus DecodeBitfieldMaskOperand(MCInst &Inst, unsigned Val,
   unsigned lsb = fieldFromInstruction(Val, 0, 5);
 
   DecodeStatus S = MCDisassembler::Success;
-  if (lsb > msb) Check(S, MCDisassembler::SoftFail);
+  if (lsb > msb) {
+    Check(S, MCDisassembler::SoftFail);
+    // The check above will cause the warning for the "potentially undefined
+    // instruction encoding" but we can't build a bad MCOperand value here
+    // with a lsb > msb or else printing the MCInst will cause a crash.
+    lsb = msb;
+  }
 
   uint32_t msb_mask = 0xFFFFFFFF;
   if (msb != 31) msb_mask = (1U << (msb+1)) - 1;
