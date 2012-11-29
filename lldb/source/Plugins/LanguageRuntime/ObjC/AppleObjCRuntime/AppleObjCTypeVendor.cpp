@@ -422,6 +422,8 @@ private:
                 clang::QualType target_type = BuildType(ast_ctx, type+1);
                 if (target_type.isNull())
                     return clang::QualType();
+                else if (target_type == ast_ctx.UnknownAnyTy)
+                    return ast_ctx.UnknownAnyTy;
                 else
                     return ast_ctx.getConstType(target_type);
             }
@@ -430,6 +432,8 @@ private:
             clang::QualType target_type = BuildType(ast_ctx, type+1);
             if (target_type.isNull())
                 return clang::QualType();
+            else if (target_type == ast_ctx.UnknownAnyTy)
+                return ast_ctx.UnknownAnyTy;
             else
                 return ast_ctx.getPointerType(target_type);
         }
