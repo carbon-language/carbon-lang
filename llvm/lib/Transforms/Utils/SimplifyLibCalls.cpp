@@ -1502,6 +1502,81 @@ struct SPrintFOpt : public LibCallOptimization {
   }
 };
 
+struct FPrintFOpt : public LibCallOptimization {
+  Value *optimizeFixedFormatString(Function *Callee, CallInst *CI,
+                                   IRBuilder<> &B) {
+    // All the optimizations depend on the format string.
+    StringRef FormatStr;
+    if (!getConstantStringInfo(CI->getArgOperand(1), FormatStr))
+      return 0;
+
+    // fprintf(F, "foo") --> fwrite("foo", 3, 1, F)
+    if (CI->getNumArgOperands() == 2) {
+      for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
+        if (FormatStr[i] == '%')  // Could handle %% -> % if we cared.
+          return 0; // We found a format specifier.
+
+      // These optimizations require DataLayout.
+      if (!TD) return 0;
+
+      Value *NewCI = EmitFWrite(CI->getArgOperand(1),
+                                ConstantInt::get(TD->getIntPtrType(*Context),
+                                                 FormatStr.size()),
+                                CI->getArgOperand(0), B, TD, TLI);
+      return NewCI ? ConstantInt::get(CI->getType(), FormatStr.size()) : 0;
+    }
+
+    // The remaining optimizations require the format string to be "%s" or "%c"
+    // and have an extra operand.
+    if (FormatStr.size() != 2 || FormatStr[0] != '%' ||
+        CI->getNumArgOperands() < 3)
+      return 0;
+
+    // Decode the second character of the format string.
+    if (FormatStr[1] == 'c') {
+      // fprintf(F, "%c", chr) --> fputc(chr, F)
+      if (!CI->getArgOperand(2)->getType()->isIntegerTy()) return 0;
+      Value *NewCI = EmitFPutC(CI->getArgOperand(2), CI->getArgOperand(0), B,
+                               TD, TLI);
+      return NewCI ? ConstantInt::get(CI->getType(), 1) : 0;
+    }
+
+    if (FormatStr[1] == 's') {
+      // fprintf(F, "%s", str) --> fputs(str, F)
+      if (!CI->getArgOperand(2)->getType()->isPointerTy() || !CI->use_empty())
+        return 0;
+      return EmitFPutS(CI->getArgOperand(2), CI->getArgOperand(0), B, TD, TLI);
+    }
+    return 0;
+  }
+
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require two fixed paramters as pointers and integer result.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    if (Value *V = optimizeFixedFormatString(Callee, CI, B)) {
+      return V;
+    }
+
+    // fprintf(stream, format, ...) -> fiprintf(stream, format, ...) if no
+    // floating point arguments.
+    if (TLI->has(LibFunc::fiprintf) && !callHasFloatingPointArgument(CI)) {
+      Module *M = B.GetInsertBlock()->getParent()->getParent();
+      Constant *FIPrintFFn =
+        M->getOrInsertFunction("fiprintf", FT, Callee->getAttributes());
+      CallInst *New = cast<CallInst>(CI->clone());
+      New->setCalledFunction(FIPrintFFn);
+      B.Insert(New);
+      return New;
+    }
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1558,6 +1633,7 @@ class LibCallSimplifierImpl {
   // Formatting and IO library call optimizations.
   PrintFOpt PrintF;
   SPrintFOpt SPrintF;
+  FPrintFOpt FPrintF;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1683,6 +1759,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   // Formatting and IO library call optimizations.
   addOpt(LibFunc::printf, &PrintF);
   addOpt(LibFunc::sprintf, &SPrintF);
+  addOpt(LibFunc::fprintf, &FPrintF);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
