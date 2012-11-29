@@ -2212,7 +2212,7 @@ const SCEVConstant *getConstantPart(const SCEVMulExpr *Product) {
 //
 // It occurs to me that the presence of loop-invariant variables
 // changes the nature of the test from "greatest common divisor"
-// to "a common divisor!"
+// to "a common divisor".
 bool DependenceAnalysis::gcdMIVtest(const SCEV *Src,
                                     const SCEV *Dst,
                                     FullDependence &Result) const {
@@ -3555,7 +3555,7 @@ Dependence *DependenceAnalysis::depends(Instruction *Src,
     }
   }
 
-  // make sure Scalar flags are set correctly
+  // Make sure the Scalar flags are set correctly.
   SmallBitVector CompleteLoops(MaxLevels + 1);
   for (unsigned SI = 0; SI < Pairs; ++SI)
     CompleteLoops |= Pair[SI].Loops;
@@ -3580,8 +3580,8 @@ Dependence *DependenceAnalysis::depends(Instruction *Src,
     bool AllEqual = true;
     for (unsigned II = 1; II <= CommonLevels; ++II) {
       if (Result.getDirection(II) != Dependence::DVEntry::EQ) {
-	AllEqual = false;
-	break;
+        AllEqual = false;
+        break;
       }
     }
     if (AllEqual)
