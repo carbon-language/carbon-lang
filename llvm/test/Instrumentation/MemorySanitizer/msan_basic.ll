@@ -235,6 +235,53 @@ entry:
 ; CHECK: }
 
 
+; Check that we propagate shadow for x<0, x>=0, etc (i.e. sign bit tests)
+
+define zeroext i1 @ICmpSLT(i32 %x) nounwind uwtable readnone {
+  %1 = icmp slt i32 %x, 0
+  ret i1 %1
+}
+
+; CHECK: define zeroext i1 @ICmpSLT
+; CHECK: icmp slt
+; CHECK: icmp slt
+; CHECK-NOT: br
+; CHECK: }
+
+define zeroext i1 @ICmpSGE(i32 %x) nounwind uwtable readnone {
+  %1 = icmp sge i32 %x, 0
+  ret i1 %1
+}
+
+; CHECK: define zeroext i1 @ICmpSGE
+; CHECK: icmp slt
+; CHECK: icmp sge
+; CHECK-NOT: br
+; CHECK: }
+
+define zeroext i1 @ICmpSGT(i32 %x) nounwind uwtable readnone {
+  %1 = icmp sgt i32 0, %x
+  ret i1 %1
+}
+
+; CHECK: define zeroext i1 @ICmpSGT
+; CHECK: icmp slt
+; CHECK: icmp sgt
+; CHECK-NOT: br
+; CHECK: }
+
+define zeroext i1 @ICmpSLE(i32 %x) nounwind uwtable readnone {
+  %1 = icmp sle i32 0, %x
+  ret i1 %1
+}
+
+; CHECK: define zeroext i1 @ICmpSLE
+; CHECK: icmp slt
+; CHECK: icmp sle
+; CHECK-NOT: br
+; CHECK: }
+
+
 ; Check that loads from shadow have the same aligment as the original loads.
 
 define i32 @ShadowLoadAlignmentLarge() nounwind uwtable {

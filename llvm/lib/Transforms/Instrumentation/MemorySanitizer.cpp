@@ -949,9 +949,39 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setOriginForNaryOp(I);
   }
 
+  /// \brief Instrument signed relational comparisons.
+  ///
+  /// Handle (x<0) and (x>=0) comparisons (essentially, sign bit tests) by
+  /// propagating the highest bit of the shadow. Everything else is delegated
+  /// to handleShadowOr().
+  void handleSignedRelationalComparison(ICmpInst &I) {
+    Constant *constOp0 = dyn_cast<Constant>(I.getOperand(0));
+    Constant *constOp1 = dyn_cast<Constant>(I.getOperand(1));
+    Value* op = NULL;
+    CmpInst::Predicate pre = I.getPredicate();
+    if (constOp0 && constOp0->isNullValue() &&
+        (pre == CmpInst::ICMP_SGT || pre == CmpInst::ICMP_SLE)) {
+      op = I.getOperand(1);
+    } else if (constOp1 && constOp1->isNullValue() &&
+               (pre == CmpInst::ICMP_SLT || pre == CmpInst::ICMP_SGE)) {
+      op = I.getOperand(0);
+    }
+    if (op) {
+      IRBuilder<> IRB(&I);
+      Value* Shadow =
+        IRB.CreateICmpSLT(getShadow(op), getCleanShadow(op), "_msprop_icmpslt");
+      setShadow(&I, Shadow);
+      setOrigin(&I, getOrigin(op));
+    } else {
+      handleShadowOr(I);
+    }
+  }
+
   void visitICmpInst(ICmpInst &I) {
     if (ClHandleICmp && I.isEquality())
       handleEqualityComparison(I);
+    else if (ClHandleICmp && I.isSigned() && I.isRelational())
+      handleSignedRelationalComparison(I);
     else
       handleShadowOr(I);
   }
