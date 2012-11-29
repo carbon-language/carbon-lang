@@ -2117,6 +2117,8 @@ public:
   virtual void registerRoots() {
     DFSResult.compute(ReadyQ);
     ScheduledTrees.resize(DFSResult.getNumSubtrees());
+    // Restore the heap in ReadyQ with the updated DFS results.
+    std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
 
   /// Implement MachineSchedStrategy interface.
