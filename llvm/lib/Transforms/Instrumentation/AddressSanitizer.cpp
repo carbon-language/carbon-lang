@@ -136,6 +136,10 @@ static cl::opt<bool> ClOptSameTemp("asan-opt-same-temp",
 static cl::opt<bool> ClOptGlobals("asan-opt-globals",
        cl::desc("Don't instrument scalar globals"), cl::Hidden, cl::init(true));
 
+static cl::opt<bool> ClCheckLifetime("asan-check-lifetime",
+       cl::desc("Use llvm.lifetime intrinsics to insert extra checks"),
+       cl::Hidden, cl::init(false));
+
 // Debug flags.
 static cl::opt<int> ClDebug("asan-debug", cl::desc("debug"), cl::Hidden,
                             cl::init(0));
@@ -186,7 +190,13 @@ static size_t RedzoneSize() {
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public FunctionPass {
-  AddressSanitizer();
+  AddressSanitizer(bool CheckInitOrder = false,
+                   bool CheckUseAfterReturn = false,
+                   bool CheckLifetime = false)
+      : FunctionPass(ID),
+        CheckInitOrder(CheckInitOrder || ClInitializers),
+        CheckUseAfterReturn(CheckUseAfterReturn || ClUseAfterReturn),
+        CheckLifetime(CheckLifetime || ClCheckLifetime) {}
   virtual const char *getPassName() const {
     return "AddressSanitizerFunctionPass";
   }
@@ -232,6 +242,9 @@ struct AddressSanitizer : public FunctionPass {
   bool LooksLikeCodeInBug11395(Instruction *I);
   void FindDynamicInitializers(Module &M);
 
+  bool CheckInitOrder;
+  bool CheckUseAfterReturn;
+  bool CheckLifetime;
   LLVMContext *C;
   DataLayout *TD;
   uint64_t MappingOffset;
@@ -251,9 +264,11 @@ struct AddressSanitizer : public FunctionPass {
 
 class AddressSanitizerModule : public ModulePass {
  public:
+  AddressSanitizerModule(bool CheckInitOrder = false)
+      : ModulePass(ID),
+        CheckInitOrder(CheckInitOrder || ClInitializers) {}
   bool runOnModule(Module &M);
   static char ID;  // Pass identification, replacement for typeid
-  AddressSanitizerModule() : ModulePass(ID) { }
   virtual const char *getPassName() const {
     return "AddressSanitizerModule";
   }
@@ -262,6 +277,7 @@ class AddressSanitizerModule : public ModulePass {
   void createInitializerPoisonCalls(Module &M, Value *FirstAddr,
                                     Value *LastAddr);
 
+  bool CheckInitOrder;
   OwningPtr<BlackList> BL;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
   Type *IntptrTy;
@@ -275,17 +291,18 @@ char AddressSanitizer::ID = 0;
 INITIALIZE_PASS(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
-AddressSanitizer::AddressSanitizer() : FunctionPass(ID) { }
-FunctionPass *llvm::createAddressSanitizerFunctionPass() {
-  return new AddressSanitizer();
+FunctionPass *llvm::createAddressSanitizerFunctionPass(
+    bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime) {
+  return new AddressSanitizer(CheckInitOrder, CheckUseAfterReturn,
+                              CheckLifetime);
 }
 
 char AddressSanitizerModule::ID = 0;
 INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
     "ModulePass", false, false)
-ModulePass *llvm::createAddressSanitizerModulePass() {
-  return new AddressSanitizerModule();
+ModulePass *llvm::createAddressSanitizerModulePass(bool CheckInitOrder) {
+  return new AddressSanitizerModule(CheckInitOrder);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -396,7 +413,7 @@ void AddressSanitizer::instrumentMop(Instruction *I) {
     if (GlobalVariable *G = dyn_cast<GlobalVariable>(Addr)) {
       // If initialization order checking is disabled, a simple access to a
       // dynamically initialized global is always valid.
-      if (!ClInitializers)
+      if (!CheckInitOrder)
         return;
       // If a global variable does not have dynamic initialization we don't
       // have to instrument it.  However, if a global does not have initailizer
@@ -690,7 +707,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
         NULL);
 
     // Populate the first and last globals declared in this TU.
-    if (ClInitializers && GlobalHasDynamicInitializer) {
+    if (CheckInitOrder && GlobalHasDynamicInitializer) {
       LastDynamic = ConstantExpr::getPointerCast(NewGlobal, IntptrTy);
       if (FirstDynamic == 0)
         FirstDynamic = LastDynamic;
@@ -705,7 +722,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
       ConstantArray::get(ArrayOfGlobalStructTy, Initializers), "");
 
   // Create calls for poisoning before initializers run and unpoisoning after.
-  if (ClInitializers && FirstDynamic && LastDynamic)
+  if (CheckInitOrder && FirstDynamic && LastDynamic)
     createInitializerPoisonCalls(M, FirstDynamic, LastDynamic);
 
   Function *AsanRegisterGlobals = checkInterfaceFunction(M.getOrInsertFunction(
@@ -1081,7 +1098,7 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
 
   uint64_t LocalStackSize = TotalSize + (AllocaVec.size() + 1) * RedzoneSize();
 
-  bool DoStackMalloc = ClUseAfterReturn
+  bool DoStackMalloc = CheckUseAfterReturn
       && LocalStackSize <= kMaxStackMallocSize;
 
   Instruction *InsBefore = AllocaVec[0];

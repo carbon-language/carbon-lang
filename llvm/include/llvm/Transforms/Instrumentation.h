@@ -34,8 +34,10 @@ ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
                                    bool UseExtraChecksum = false);
 
 // Insert AddressSanitizer (address sanity checking) instrumentation
-FunctionPass *createAddressSanitizerFunctionPass();
-ModulePass *createAddressSanitizerModulePass();
+FunctionPass *createAddressSanitizerFunctionPass(
+    bool CheckInitOrder = false, bool CheckUseAfterReturn = false,
+    bool CheckLifetime = false);
+ModulePass *createAddressSanitizerModulePass(bool CheckInitOrder = false);
 // Insert MemorySanitizer instrumentation (detection of uninitialized reads)
 FunctionPass *createMemorySanitizerPass();
 // Insert ThreadSanitizer (race detection) instrumentation
