@@ -688,10 +688,9 @@ TEST(AddressSanitizer, LongJmpTest) {
   }
 }
 
-// http://code.google.com/p/address-sanitizer/issues/detail?id=129
-TEST(AddressSanitizer, DISABLED_BuiltinLongJmpTest) {
+TEST(AddressSanitizer, BuiltinLongJmpTest) {
   static jmp_buf buf;
-  if (!setjmp(buf)) {
+  if (!__builtin_setjmp((void**)buf)) {
     BuiltinLongJmpFunc1(buf);
   } else {
     TouchStackFunc();
