@@ -2402,6 +2402,12 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
   if (getLangOpts().CPlusPlus)
     return MergeCXXFunctionDecl(New, Old, S);
 
+  // Merge the function types so the we get the composite types for the return
+  // and argument types.
+  QualType Merged = Context.mergeTypes(Old->getType(), New->getType());
+  if (!Merged.isNull())
+    New->setType(Merged);
+
   return false;
 }
 

@@ -6486,13 +6486,13 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (lbaseInfo.getProducesResult() != rbaseInfo.getProducesResult())
     return QualType();
 
-  // functypes which return are preferred over those that do not.
-  if (lbaseInfo.getNoReturn() && !rbaseInfo.getNoReturn())
-    allLTypes = false;
-  else if (!lbaseInfo.getNoReturn() && rbaseInfo.getNoReturn())
-    allRTypes = false;
   // FIXME: some uses, e.g. conditional exprs, really want this to be 'both'.
   bool NoReturn = lbaseInfo.getNoReturn() || rbaseInfo.getNoReturn();
+
+  if (lbaseInfo.getNoReturn() != NoReturn)
+    allLTypes = false;
+  if (rbaseInfo.getNoReturn() != NoReturn)
+    allRTypes = false;
 
   FunctionType::ExtInfo einfo = lbaseInfo.withNoReturn(NoReturn);
 
