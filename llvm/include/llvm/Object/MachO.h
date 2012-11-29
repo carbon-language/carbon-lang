@@ -44,7 +44,7 @@ public:
   virtual unsigned getArch() const;
   virtual StringRef getLoadName() const;
 
-  MachOObject *getObject() { return MachOObj; }
+  MachOObject *getObject() { return MachOObj.get(); }
 
   static inline bool classof(const Binary *v) {
     return v->isMachO();
@@ -104,7 +104,7 @@ protected:
   virtual error_code getLibraryPath(DataRefImpl LibData, StringRef &Res) const;
 
 private:
-  MachOObject *MachOObj;
+  OwningPtr<MachOObject> MachOObj;
   mutable uint32_t RegisteredStringTable;
   typedef SmallVector<DataRefImpl, 1> SectionList;
   SectionList Sections;
