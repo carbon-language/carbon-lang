@@ -114,19 +114,29 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_sym_ctx.SetSymbolContext(&frame->GetSymbolContext (resolve_scope));
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_sym_ctx.SetSymbolContext(&frame->GetSymbolContext (resolve_scope));
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetVariables () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetSymbolContext () => error: process is running", frame);
+                log->Printf ("SBFrame::GetSymbolContext () => error: process is running");
         }
     }
 
@@ -146,20 +156,30 @@ SBFrame::GetModule () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            module_sp = frame->GetSymbolContext (eSymbolContextModule).module_sp;
-            sb_module.SetSP (module_sp);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                module_sp = frame->GetSymbolContext (eSymbolContextModule).module_sp;
+                sb_module.SetSP (module_sp);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetModule () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetModule () => error: process is running", frame);
+                log->Printf ("SBFrame::GetModule () => error: process is running");
         }
     }
 
@@ -178,19 +198,29 @@ SBFrame::GetCompileUnit () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_comp_unit.reset (frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_comp_unit.reset (frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetCompileUnit () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetCompileUnit () => error: process is running", frame);
+                log->Printf ("SBFrame::GetCompileUnit () => error: process is running");
         }
     }
     if (log)
@@ -208,19 +238,29 @@ SBFrame::GetFunction () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_function.reset(frame->GetSymbolContext (eSymbolContextFunction).function);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_function.reset(frame->GetSymbolContext (eSymbolContextFunction).function);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetFunction () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetFunction () => error: process is running", frame);
+                log->Printf ("SBFrame::GetFunction () => error: process is running");
         }
     }
     if (log)
@@ -238,19 +278,29 @@ SBFrame::GetSymbol () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_symbol.reset(frame->GetSymbolContext (eSymbolContextSymbol).symbol);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_symbol.reset(frame->GetSymbolContext (eSymbolContextSymbol).symbol);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetSymbol () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetSymbol () => error: process is running", frame);
+                log->Printf ("SBFrame::GetSymbol () => error: process is running");
         }
     }
     if (log)
@@ -267,14 +317,24 @@ SBFrame::GetBlock () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_block.SetPtr (frame->GetSymbolContext (eSymbolContextBlock).block);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_block.SetPtr (frame->GetSymbolContext (eSymbolContextBlock).block);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetBlock () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
@@ -295,20 +355,30 @@ SBFrame::GetFrameBlock () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_block.SetPtr(frame->GetFrameBlock ());
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_block.SetPtr(frame->GetFrameBlock ());
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetFrameBlock () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetFrameBlock () => error: process is running", frame);
+                log->Printf ("SBFrame::GetFrameBlock () => error: process is running");
         }
     }
     if (log)
@@ -325,19 +395,29 @@ SBFrame::GetLineEntry () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_line_entry.SetLineEntry (frame->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_line_entry.SetLineEntry (frame->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetLineEntry () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetLineEntry () => error: process is running", frame);
+                log->Printf ("SBFrame::GetLineEntry () => error: process is running");
         }
     }
     if (log)
@@ -371,19 +451,29 @@ SBFrame::GetPC () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetPC () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetPC () => error: process is running", frame);
+                log->Printf ("SBFrame::GetPC () => error: process is running");
         }
     }
 
@@ -401,19 +491,29 @@ SBFrame::SetPC (addr_t new_pc)
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            ret_val = frame->GetRegisterContext()->SetPC (new_pc);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                ret_val = frame->GetRegisterContext()->SetPC (new_pc);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::SetPC () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::SetPC () => error: process is running", frame);
+                log->Printf ("SBFrame::SetPC () => error: process is running");
         }
     }
 
@@ -432,19 +532,29 @@ SBFrame::GetSP () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            addr = frame->GetRegisterContext()->GetSP();
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                addr = frame->GetRegisterContext()->GetSP();
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetSP () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetSP () => error: process is running", frame);
+                log->Printf ("SBFrame::GetSP () => error: process is running");
         }
     }
     if (log)
@@ -462,19 +572,29 @@ SBFrame::GetFP () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            addr = frame->GetRegisterContext()->GetFP();
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                addr = frame->GetRegisterContext()->GetFP();
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetFP () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetFP () => error: process is running", frame);
+                log->Printf ("SBFrame::GetFP () => error: process is running");
         }
     }
 
@@ -494,17 +614,27 @@ SBFrame::GetPCAddress () const
 
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            sb_addr.SetAddress (&frame->GetFrameCodeAddress());
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                sb_addr.SetAddress (&frame->GetFrameCodeAddress());
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetPCAddress () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetPCAddress () => error: process is running", frame);
+                log->Printf ("SBFrame::GetPCAddress () => error: process is running");
         }
     }
     if (log)
@@ -538,29 +668,46 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
 {
     SBValue sb_value;
     Mutex::Locker api_locker;
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (var_path == NULL || var_path[0] == '\0')
+    {
+        if (log)
+            log->Printf ("SBFrame::GetValueForVariablePath called with empty variable path.");
+        return sb_value;
+    }
+    
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target && var_path && var_path[0])
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            VariableSP var_sp;
-            Error error;
-            ValueObjectSP value_sp (frame->GetValueForVariableExpressionPath (var_path,
-                                                                              eNoDynamicValues,
-                                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember | StackFrame::eExpressionPathOptionsAllowDirectIVarAccess,
-                                                                              var_sp,
-                                                                              error));
-            sb_value.SetSP(value_sp, use_dynamic);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                VariableSP var_sp;
+                Error error;
+                ValueObjectSP value_sp (frame->GetValueForVariableExpressionPath (var_path,
+                                                                                  eNoDynamicValues,
+                                                                                  StackFrame::eExpressionPathOptionCheckPtrVsMember | StackFrame::eExpressionPathOptionsAllowDirectIVarAccess,
+                                                                                  var_sp,
+                                                                                  error));
+                sb_value.SetSP(value_sp, use_dynamic);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetValueForVariablePath () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
-            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBFrame(%p)::GetValueForVariablePath () => error: process is running", frame);
+                log->Printf ("SBFrame::GetValueForVariablePath () => error: process is running");
         }
     }
     return sb_value;
@@ -588,45 +735,63 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     VariableSP var_sp;
     SBValue sb_value;
+
+    if (name == NULL || name[0] == '\0')
+    {
+        if (log)
+            log->Printf ("SBFrame::FindVariable called with empty name");
+        return sb_value;
+    }
+    
     ValueObjectSP value_sp;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target && name && name[0])
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            VariableList variable_list;
-            SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
-
-            if (sc.block)
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
             {
-                const bool can_create = true;
-                const bool get_parent_variables = true;
-                const bool stop_if_block_is_inlined_function = true;
-                
-                if (sc.block->AppendVariables (can_create, 
-                                               get_parent_variables,
-                                               stop_if_block_is_inlined_function,
-                                               &variable_list))
+                VariableList variable_list;
+                SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
+
+                if (sc.block)
                 {
-                    var_sp = variable_list.FindVariable (ConstString(name));
+                    const bool can_create = true;
+                    const bool get_parent_variables = true;
+                    const bool stop_if_block_is_inlined_function = true;
+                    
+                    if (sc.block->AppendVariables (can_create, 
+                                                   get_parent_variables,
+                                                   stop_if_block_is_inlined_function,
+                                                   &variable_list))
+                    {
+                        var_sp = variable_list.FindVariable (ConstString(name));
+                    }
+                }
+
+                if (var_sp)
+                {
+                    value_sp = frame->GetValueObjectForFrameVariable(var_sp, eNoDynamicValues);
+                    sb_value.SetSP(value_sp, use_dynamic);
                 }
             }
-
-            if (var_sp)
+            else
             {
-                value_sp = frame->GetValueObjectForFrameVariable(var_sp, eNoDynamicValues);
-                sb_value.SetSP(value_sp, use_dynamic);
+                if (log)
+                    log->Printf ("SBFrame::FindVariable () => error: could not reconstruct frame object for this SBFrame.");
             }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::FindVariable () => error: process is running", frame);
+                log->Printf ("SBFrame::FindVariable () => error: process is running");
         }
     }
     
@@ -657,119 +822,137 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBValue sb_value;
+    
+    if (name == NULL || name[0] == '\0')
+    {
+        if (log)
+            log->Printf ("SBFrame::FindValue called with empty name.");
+        return sb_value;
+    }
+    
     ValueObjectSP value_sp;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target && name && name[0])
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            switch (value_type)
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
             {
-            case eValueTypeVariableGlobal:      // global variable
-            case eValueTypeVariableStatic:      // static variable
-            case eValueTypeVariableArgument:    // function argument variables
-            case eValueTypeVariableLocal:       // function local variables
+                switch (value_type)
                 {
-                    VariableList *variable_list = frame->GetVariableList(true);
+                case eValueTypeVariableGlobal:      // global variable
+                case eValueTypeVariableStatic:      // static variable
+                case eValueTypeVariableArgument:    // function argument variables
+                case eValueTypeVariableLocal:       // function local variables
+                    {
+                        VariableList *variable_list = frame->GetVariableList(true);
 
-                    SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
+                        SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
 
-                    const bool can_create = true;
-                    const bool get_parent_variables = true;
-                    const bool stop_if_block_is_inlined_function = true;
+                        const bool can_create = true;
+                        const bool get_parent_variables = true;
+                        const bool stop_if_block_is_inlined_function = true;
 
-                    if (sc.block && sc.block->AppendVariables (can_create, 
-                                                               get_parent_variables,
-                                                               stop_if_block_is_inlined_function,
-                                                               variable_list))
+                        if (sc.block && sc.block->AppendVariables (can_create, 
+                                                                   get_parent_variables,
+                                                                   stop_if_block_is_inlined_function,
+                                                                   variable_list))
+                        {
+                            ConstString const_name(name);
+                            const uint32_t num_variables = variable_list->GetSize();
+                            for (uint32_t i = 0; i < num_variables; ++i)
+                            {
+                                VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
+                                if (variable_sp && 
+                                    variable_sp->GetScope() == value_type &&
+                                    variable_sp->GetName() == const_name)
+                                {
+                                    value_sp = frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues);
+                                    sb_value.SetSP (value_sp, use_dynamic);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case eValueTypeRegister:            // stack frame register value
+                    {
+                        RegisterContextSP reg_ctx (frame->GetRegisterContext());
+                        if (reg_ctx)
+                        {
+                            const uint32_t num_regs = reg_ctx->GetRegisterCount();
+                            for (uint32_t reg_idx = 0; reg_idx < num_regs; ++reg_idx)
+                            {
+                                const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_idx);
+                                if (reg_info && 
+                                    ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
+                                     (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
+                                {
+                                    value_sp = ValueObjectRegister::Create (frame, reg_ctx, reg_idx);
+                                    sb_value.SetSP (value_sp);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case eValueTypeRegisterSet:         // A collection of stack frame register values
+                    {
+                        RegisterContextSP reg_ctx (frame->GetRegisterContext());
+                        if (reg_ctx)
+                        {
+                            const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
+                            for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
+                            {
+                                const RegisterSet *reg_set = reg_ctx->GetRegisterSet (set_idx);
+                                if (reg_set && 
+                                    ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
+                                     (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
+                                {
+                                    value_sp = ValueObjectRegisterSet::Create (frame, reg_ctx, set_idx);
+                                    sb_value.SetSP (value_sp);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case eValueTypeConstResult:         // constant result variables
                     {
                         ConstString const_name(name);
-                        const uint32_t num_variables = variable_list->GetSize();
-                        for (uint32_t i = 0; i < num_variables; ++i)
+                        ClangExpressionVariableSP expr_var_sp (target->GetPersistentVariables().GetVariable (const_name));
+                        if (expr_var_sp)
                         {
-                            VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
-                            if (variable_sp && 
-                                variable_sp->GetScope() == value_type &&
-                                variable_sp->GetName() == const_name)
-                            {
-                                value_sp = frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues);
-                                sb_value.SetSP (value_sp, use_dynamic);
-                                break;
-                            }
+                            value_sp = expr_var_sp->GetValueObject();
+                            sb_value.SetSP (value_sp, use_dynamic);
                         }
                     }
-                }
-                break;
+                    break;
 
-            case eValueTypeRegister:            // stack frame register value
-                {
-                    RegisterContextSP reg_ctx (frame->GetRegisterContext());
-                    if (reg_ctx)
-                    {
-                        const uint32_t num_regs = reg_ctx->GetRegisterCount();
-                        for (uint32_t reg_idx = 0; reg_idx < num_regs; ++reg_idx)
-                        {
-                            const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_idx);
-                            if (reg_info && 
-                                ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
-                                 (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
-                            {
-                                value_sp = ValueObjectRegister::Create (frame, reg_ctx, reg_idx);
-                                sb_value.SetSP (value_sp);
-                                break;
-                            }
-                        }
-                    }
+                default:
+                    break;
                 }
-                break;
-
-            case eValueTypeRegisterSet:         // A collection of stack frame register values
-                {
-                    RegisterContextSP reg_ctx (frame->GetRegisterContext());
-                    if (reg_ctx)
-                    {
-                        const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
-                        for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
-                        {
-                            const RegisterSet *reg_set = reg_ctx->GetRegisterSet (set_idx);
-                            if (reg_set && 
-                                ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
-                                 (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
-                            {
-                                value_sp = ValueObjectRegisterSet::Create (frame, reg_ctx, set_idx);
-                                sb_value.SetSP (value_sp);
-                                break;
-                            }
-                        }
-                    }
-                }
-                break;
-
-            case eValueTypeConstResult:         // constant result variables
-                {
-                    ConstString const_name(name);
-                    ClangExpressionVariableSP expr_var_sp (target->GetPersistentVariables().GetVariable (const_name));
-                    if (expr_var_sp)
-                    {
-                        value_sp = expr_var_sp->GetValueObject();
-                        sb_value.SetSP (value_sp, use_dynamic);
-                    }
-                }
-                break;
-
-            default:
-                break;
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::FindValue () => error: could not reconstruct frame object for this SBFrame.");
             }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::FindValue () => error: process is running", frame);
+                log->Printf ("SBFrame::FindValue () => error: process is running");
         }
     }
     
@@ -831,19 +1014,29 @@ SBFrame::Disassemble () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            disassembly = frame->Disassemble();
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                disassembly = frame->Disassemble();
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::Disassemble () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::Disassemble () => error: process is running", frame);
+                log->Printf ("SBFrame::Disassemble () => error: process is running");
         }            
     }
 
@@ -885,74 +1078,82 @@ SBFrame::GetVariables (bool arguments,
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
 
     if (log)
-        log->Printf ("SBFrame(%p)::GetVariables (arguments=%i, locals=%i, statics=%i, in_scope_only=%i)", 
-                     frame, 
+        log->Printf ("SBFrame::GetVariables (arguments=%i, locals=%i, statics=%i, in_scope_only=%i)", 
                      arguments,
                      locals,
                      statics,
                      in_scope_only);
     
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-
-            size_t i;
-            VariableList *variable_list = NULL;
-            variable_list = frame->GetVariableList(true);
-            if (variable_list)
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
             {
-                const size_t num_variables = variable_list->GetSize();
-                if (num_variables)
+                size_t i;
+                VariableList *variable_list = NULL;
+                variable_list = frame->GetVariableList(true);
+                if (variable_list)
                 {
-                    for (i = 0; i < num_variables; ++i)
+                    const size_t num_variables = variable_list->GetSize();
+                    if (num_variables)
                     {
-                        VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
-                        if (variable_sp)
+                        for (i = 0; i < num_variables; ++i)
                         {
-                            bool add_variable = false;
-                            switch (variable_sp->GetScope())
+                            VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
+                            if (variable_sp)
                             {
-                            case eValueTypeVariableGlobal:
-                            case eValueTypeVariableStatic:
-                                add_variable = statics;
-                                break;
+                                bool add_variable = false;
+                                switch (variable_sp->GetScope())
+                                {
+                                case eValueTypeVariableGlobal:
+                                case eValueTypeVariableStatic:
+                                    add_variable = statics;
+                                    break;
 
-                            case eValueTypeVariableArgument:
-                                add_variable = arguments;
-                                break;
+                                case eValueTypeVariableArgument:
+                                    add_variable = arguments;
+                                    break;
 
-                            case eValueTypeVariableLocal:
-                                add_variable = locals;
-                                break;
+                                case eValueTypeVariableLocal:
+                                    add_variable = locals;
+                                    break;
 
-                            default:
-                                break;
-                            }
-                            if (add_variable)
-                            {
-                                if (in_scope_only && !variable_sp->IsInScope(frame))
-                                    continue;
+                                default:
+                                    break;
+                                }
+                                if (add_variable)
+                                {
+                                    if (in_scope_only && !variable_sp->IsInScope(frame))
+                                        continue;
 
-                                ValueObjectSP valobj_sp(frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues));
-                                SBValue value_sb;
-                                value_sb.SetSP(valobj_sp,use_dynamic);
-                                value_list.Append(value_sb);
+                                    ValueObjectSP valobj_sp(frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues));
+                                    SBValue value_sb;
+                                    value_sb.SetSP(valobj_sp,use_dynamic);
+                                    value_list.Append(value_sb);
+                                }
                             }
                         }
                     }
                 }
             }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetVariables () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetVariables () => error: process is running", frame);
+                log->Printf ("SBFrame::GetVariables () => error: process is running");
         }            
     }
 
@@ -974,27 +1175,37 @@ SBFrame::GetRegisters ()
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            RegisterContextSP reg_ctx (frame->GetRegisterContext());
-            if (reg_ctx)
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
             {
-                const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
-                for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
+                RegisterContextSP reg_ctx (frame->GetRegisterContext());
+                if (reg_ctx)
                 {
-                    value_list.Append(ValueObjectRegisterSet::Create (frame, reg_ctx, set_idx));
+                    const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
+                    for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
+                    {
+                        value_list.Append(ValueObjectRegisterSet::Create (frame, reg_ctx, set_idx));
+                    }
                 }
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetRegisters () => error: could not reconstruct frame object for this SBFrame.");
             }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::GetRegisters () => error: process is running", frame);
+                log->Printf ("SBFrame::GetRegisters () => error: process is running");
         }            
     }
 
@@ -1007,25 +1218,35 @@ SBFrame::GetRegisters ()
 bool
 SBFrame::GetDescription (SBStream &description)
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Stream &strm = description.ref();
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            frame->DumpUsingSettingsFormat (&strm);
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                frame->DumpUsingSettingsFormat (&strm);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetDescription () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
-            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBFrame(%p)::GetDescription () => error: process is running", frame);
+                log->Printf ("SBFrame::GetDescription () => error: process is running");
         }            
 
     }
@@ -1080,40 +1301,59 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
 
     ExecutionResults exe_results = eExecutionSetupError;
     SBValue expr_result;
+    
+    if (expr == NULL || expr[0] == '\0')
+    {
+        if (log)
+            log->Printf ("SBFrame::EvaluateExpression called with an empty expression");
+        return expr_result;
+    }
+    
     ValueObjectSP expr_value_sp;
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
-    Target *target = exe_ctx.GetTargetPtr();
     if (log)
-        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", frame, expr);
+        log->Printf ("SBFrame()::EvaluateExpression (expr=\"%s\")...", expr);
 
-    if (frame && target)
-    {            
+    StackFrame *frame = NULL;
+    Target *target = exe_ctx.GetTargetPtr();
+    Process *process = exe_ctx.GetProcessPtr();
+    
+    if (target && process)
+    {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
 #ifdef LLDB_CONFIGURATION_DEBUG
-            StreamString frame_description;
-            frame->DumpUsingSettingsFormat (&frame_description);
-            Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
-                                                 expr, options.GetFetchDynamicValue(), frame_description.GetString().c_str());
+                StreamString frame_description;
+                frame->DumpUsingSettingsFormat (&frame_description);
+                Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
+                                                     expr, options.GetFetchDynamicValue(), frame_description.GetString().c_str());
 #endif
-            exe_results = target->EvaluateExpression (expr, 
-                                                      frame,
-                                                      expr_value_sp,
-                                                      options.ref());
-            expr_result.SetSP(expr_value_sp,options.GetFetchDynamicValue());
+                exe_results = target->EvaluateExpression (expr, 
+                                                          frame,
+                                                          expr_value_sp,
+                                                          options.ref());
+                expr_result.SetSP(expr_value_sp, options.GetFetchDynamicValue());
 #ifdef LLDB_CONFIGURATION_DEBUG
-            Host::SetCrashDescription (NULL);
+                Host::SetCrashDescription (NULL);
 #endif
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::EvaluateExpression () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame(%p)::EvaluateExpression () => error: process is running", frame);
+                log->Printf ("SBFrame::EvaluateExpression () => error: process is running");
         }            
     }
 
@@ -1137,24 +1377,34 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
 bool
 SBFrame::IsInlined()
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx(m_opaque_sp.get());
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
 
-            Block *block = frame->GetSymbolContext(eSymbolContextBlock).block;
-            if (block)
-                return block->GetContainingInlinedBlock () != NULL;
+                Block *block = frame->GetSymbolContext(eSymbolContextBlock).block;
+                if (block)
+                    return block->GetContainingInlinedBlock () != NULL;
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::IsInlined () => error: could not reconstruct frame object for this SBFrame.");
+            }
         }
         else
         {
-            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBFrame(%p)::IsInlined () => error: process is running", frame);
+                log->Printf ("SBFrame::IsInlined () => error: process is running");
         }            
 
     }
@@ -1164,43 +1414,53 @@ SBFrame::IsInlined()
 const char *
 SBFrame::GetFunctionName()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *name = NULL;
     ExecutionContext exe_ctx(m_opaque_sp.get());
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    if (frame && target)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
     {
         Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        if (stop_locker.TryLock(&process->GetRunLock()))
         {
-            SymbolContext sc (frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
-            if (sc.block)
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
             {
-                Block *inlined_block = sc.block->GetContainingInlinedBlock ();
-                if (inlined_block)
+                SymbolContext sc (frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
+                if (sc.block)
                 {
-                    const InlineFunctionInfo* inlined_info = inlined_block->GetInlinedFunctionInfo();
-                    name = inlined_info->GetName().AsCString();
+                    Block *inlined_block = sc.block->GetContainingInlinedBlock ();
+                    if (inlined_block)
+                    {
+                        const InlineFunctionInfo* inlined_info = inlined_block->GetInlinedFunctionInfo();
+                        name = inlined_info->GetName().AsCString();
+                    }
+                }
+                
+                if (name == NULL)
+                {
+                    if (sc.function)
+                        name = sc.function->GetName().GetCString();
+                }
+
+                if (name == NULL)
+                {
+                    if (sc.symbol)
+                        name = sc.symbol->GetName().GetCString();
                 }
             }
-            
-            if (name == NULL)
+            else
             {
-                if (sc.function)
-                    name = sc.function->GetName().GetCString();
-            }
-
-            if (name == NULL)
-            {
-                if (sc.symbol)
-                    name = sc.symbol->GetName().GetCString();
+                if (log)
+                    log->Printf ("SBFrame::GetFunctionName () => error: could not reconstruct frame object for this SBFrame.");
             }
         }
         else
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBFrame(%p)::GetFunctionName() => error: process is running", frame);
+                log->Printf ("SBFrame::GetFunctionName() => error: process is running");
 
         }
     }
