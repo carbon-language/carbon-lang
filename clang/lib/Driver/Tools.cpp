@@ -2508,7 +2508,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     StringRef alignment = Args.getLastArgValue(options::OPT_mstack_alignment);
     CmdArgs.push_back(Args.MakeArgString("-mstack-alignment=" + alignment));
   }
-  if (Args.hasArg(options::OPT_mstrict_align)) {
+  // -mkernel implies -mstrict-align; don't add the redundant option.
+  if (Args.hasArg(options::OPT_mstrict_align) && !KernelOrKext) {
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-arm-strict-align");
   }
