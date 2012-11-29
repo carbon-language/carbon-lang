@@ -1,9 +1,13 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-apple-darwin9 -fms-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-apple-darwin9 -fms-extensions %s -DHAVE
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-linux-gnu -fms-extensions %s -DHAVE_NOT
+
+#ifdef HAVE
 typedef int i128 __attribute__((__mode__(TI)));
 typedef unsigned u128 __attribute__((__mode__(TI)));
 
 int a[((i128)-1 ^ (i128)-2) == 1 ? 1 : -1];
 int a[(u128)-1 > 1LL ? 1 : -1];
+int a[__SIZEOF_INT128__ == 16 ? 1 : -1];
 
 // PR5435
 __uint128_t b = (__uint128_t)-1;
@@ -36,4 +40,12 @@ void test(int *buf)
 {
   MPI_Send(buf, 0x10000000000000001i128); // expected-warning {{implicit conversion from '__int128' to 'int' changes value}}
 }
+#else
 
+__int128 n; // expected-error {{__int128 is not supported on this target}}
+
+#if defined(__SIZEOF_INT128__)
+#error __SIZEOF_INT128__ should not be defined
+#endif
+
+#endif

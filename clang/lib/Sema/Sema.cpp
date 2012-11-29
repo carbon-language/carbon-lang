@@ -128,7 +128,7 @@ void Sema::Initialize() {
     ExternalSema->InitializeSema(*this);
 
   // Initialize predefined 128-bit integer types, if needed.
-  if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
+  if (PP.getTargetInfo().hasInt128Type()) {
     // If either of the 128-bit integer types are unavailable to name lookup,
     // define them now.
     DeclarationName Int128 = &Context.Idents.get("__int128_t");

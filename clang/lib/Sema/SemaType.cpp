@@ -742,6 +742,8 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     break;
   }
   case DeclSpec::TST_int128:
+    if (!S.PP.getTargetInfo().hasInt128Type())
+      S.Diag(DS.getTypeSpecTypeLoc(), diag::err_int128_unsupported);
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unsigned)
       Result = Context.UnsignedInt128Ty;
     else

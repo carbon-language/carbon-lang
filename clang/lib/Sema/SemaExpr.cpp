@@ -2841,7 +2841,10 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
     unsigned MaxWidth = Context.getTargetInfo().getIntMaxTWidth();
     // The microsoft literal suffix extensions support 128-bit literals, which
     // may be wider than [u]intmax_t.
-    if (Literal.isMicrosoftInteger && MaxWidth < 128)
+    // FIXME: Actually, they don't. We seem to have accidentally invented the
+    //        i128 suffix.
+    if (Literal.isMicrosoftInteger && MaxWidth < 128 &&
+        PP.getTargetInfo().hasInt128Type())
       MaxWidth = 128;
     llvm::APInt ResultVal(MaxWidth, 0);
 
@@ -2911,7 +2914,8 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
         
       // If it doesn't fit in unsigned long long, and we're using Microsoft
       // extensions, then its a 128-bit integer literal.
-      if (Ty.isNull() && Literal.isMicrosoftInteger) {
+      if (Ty.isNull() && Literal.isMicrosoftInteger &&
+          PP.getTargetInfo().hasInt128Type()) {
         if (Literal.isUnsigned)
           Ty = Context.UnsignedInt128Ty;
         else
