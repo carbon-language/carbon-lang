@@ -1632,6 +1632,31 @@ struct FPutsOpt : public LibCallOptimization {
   }
 };
 
+struct PutsOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require one fixed pointer argument and an integer/void result.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
+        !(FT->getReturnType()->isIntegerTy() ||
+          FT->getReturnType()->isVoidTy()))
+      return 0;
+
+    // Check for a constant string.
+    StringRef Str;
+    if (!getConstantStringInfo(CI->getArgOperand(0), Str))
+      return 0;
+
+    if (Str.empty() && CI->use_empty()) {
+      // puts("") -> putchar('\n')
+      Value *Res = EmitPutChar(B.getInt32('\n'), B, TD, TLI);
+      if (CI->use_empty() || !Res) return Res;
+      return B.CreateIntCast(Res, CI->getType(), true);
+    }
+
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1691,6 +1716,7 @@ class LibCallSimplifierImpl {
   FPrintFOpt FPrintF;
   FWriteOpt FWrite;
   FPutsOpt FPuts;
+  PutsOpt Puts;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1819,6 +1845,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::fprintf, &FPrintF);
   addOpt(LibFunc::fwrite, &FWrite);
   addOpt(LibFunc::fputs, &FPuts);
+  addOpt(LibFunc::puts, &Puts);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {

@@ -81,41 +81,6 @@ public:
 } // End anonymous namespace.
 
 
-namespace {
-//===----------------------------------------------------------------------===//
-// Formatting and IO Optimizations
-//===----------------------------------------------------------------------===//
-
-//===---------------------------------------===//
-// 'puts' Optimizations
-
-struct PutsOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Require one fixed pointer argument and an integer/void result.
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
-        !(FT->getReturnType()->isIntegerTy() ||
-          FT->getReturnType()->isVoidTy()))
-      return 0;
-
-    // Check for a constant string.
-    StringRef Str;
-    if (!getConstantStringInfo(CI->getArgOperand(0), Str))
-      return 0;
-
-    if (Str.empty() && CI->use_empty()) {
-      // puts("") -> putchar('\n')
-      Value *Res = EmitPutChar(B.getInt32('\n'), B, TD, TLI);
-      if (CI->use_empty() || !Res) return Res;
-      return B.CreateIntCast(Res, CI->getType(), true);
-    }
-
-    return 0;
-  }
-};
-
-} // end anonymous namespace.
-
 //===----------------------------------------------------------------------===//
 // SimplifyLibCalls Pass Implementation
 //===----------------------------------------------------------------------===//
@@ -127,8 +92,6 @@ namespace {
     TargetLibraryInfo *TLI;
 
     StringMap<LibCallOptimization*> Optimizations;
-    // Formatting and IO Optimizations
-    PutsOpt Puts;
 
     bool Modified;  // This is only used by doInitialization.
   public:
@@ -183,8 +146,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// Optimizations - Populate the Optimizations map with all the optimizations
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
-  // Formatting and IO Optimizations
-  Optimizations["puts"] = &Puts;
 }
 
 
