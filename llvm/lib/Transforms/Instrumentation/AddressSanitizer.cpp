@@ -620,6 +620,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   if (!TD)
     return false;
   BL.reset(new BlackList(ClBlackListFile));
+  if (BL->isIn(M)) return false;
   DynamicallyInitializedGlobals.Init(M);
   C = &(M.getContext());
   IntptrTy = Type::getIntNTy(*C, TD->getPointerSizeInBits());
@@ -870,8 +871,7 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
 static bool isNoReturnCall(CallInst *CI) {
   if (CI->doesNotReturn()) return true;
   Function *F = CI->getCalledFunction();
-  if (F && F->doesNotReturn()) return true;
-  return false;
+  return (F && F->doesNotReturn());
 }
 
 bool AddressSanitizer::runOnFunction(Function &F) {
