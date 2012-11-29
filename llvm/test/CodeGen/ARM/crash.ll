@@ -69,3 +69,26 @@ bb:
   store <4 x float> %tmp154, <4 x float>* undef, align 16
   ret void
 }
+
+; <rdar://problem/12721258>
+%A = type { %B }
+%B = type { i32 }
+
+define void @_Z3Foov() ssp {
+entry:
+  br i1 true, label %exit, label %false
+
+false:
+  invoke void undef(%A* undef)
+          to label %exit unwind label %lpad
+
+lpad:
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+          catch i8* null
+  unreachable
+
+exit:
+  ret void
+}
+
+declare i32 @__gxx_personality_sj0(...)
