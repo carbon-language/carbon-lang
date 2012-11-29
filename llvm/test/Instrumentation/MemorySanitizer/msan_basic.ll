@@ -25,6 +25,8 @@ declare void @foo(...)
 ; CHECK: = load
 ; CHECK: = load
 ; CHECK: call void @__msan_warning_noreturn()
+; CHECK-NEXT: call void asm sideeffect
+; CHECK-NEXT: unreachable
 ; CHECK: }
 
 ; Check that we store the shadow for the retval.
