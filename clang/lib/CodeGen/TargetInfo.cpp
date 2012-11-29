@@ -266,9 +266,15 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
 }
 
 static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
+  // Treat complex types as the element type.
+  if (const ComplexType *CTy = Ty->getAs<ComplexType>())
+    Ty = CTy->getElementType();
+
+  // Check for a type which we know has a simple scalar argument-passing
+  // convention without any padding.  (We're specifically looking for 32
+  // and 64-bit integer and integer-equivalents, float, and double.)
   if (!Ty->getAs<BuiltinType>() && !Ty->hasPointerRepresentation() &&
-      !Ty->isAnyComplexType() && !Ty->isEnumeralType() &&
-      !Ty->isBlockPointerType())
+      !Ty->isEnumeralType() && !Ty->isBlockPointerType())
     return false;
 
   uint64_t Size = Context.getTypeSize(Ty);

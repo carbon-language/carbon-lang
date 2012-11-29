@@ -337,3 +337,8 @@ T66 f66(int i, ...) {
   __builtin_va_end(ap);
   return v;
 }
+
+// PR14453
+struct s67 { _Complex unsigned short int a; };
+void f67(struct s67 x) {}
+// CHECK: define void @f67(%struct.s67* byval align 4 %x)
