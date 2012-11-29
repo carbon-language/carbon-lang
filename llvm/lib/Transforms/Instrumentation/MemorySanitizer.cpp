@@ -503,15 +503,16 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// address.
   ///
   /// OriginAddr = (ShadowAddr + OriginOffset) & ~3ULL
-  ///            = Addr & (~ShadowMask & ~3ULL) + OriginOffset
   Value *getOriginPtr(Value *Addr, IRBuilder<> &IRB) {
     Value *ShadowLong =
       IRB.CreateAnd(IRB.CreatePointerCast(Addr, MS.IntptrTy),
-                    ConstantInt::get(MS.IntptrTy, ~MS.ShadowMask & ~3ULL));
+                    ConstantInt::get(MS.IntptrTy, ~MS.ShadowMask));
     Value *Add =
       IRB.CreateAdd(ShadowLong,
                     ConstantInt::get(MS.IntptrTy, MS.OriginOffset));
-    return IRB.CreateIntToPtr(Add, PointerType::get(IRB.getInt32Ty(), 0));
+    Value *SecondAnd =
+      IRB.CreateAnd(Add, ConstantInt::get(MS.IntptrTy, ~3ULL));
+    return IRB.CreateIntToPtr(SecondAnd, PointerType::get(IRB.getInt32Ty(), 0));
   }
 
   /// \brief Compute the shadow address for a given function argument.
