@@ -688,6 +688,7 @@ TEST(AddressSanitizer, LongJmpTest) {
   }
 }
 
+#if not defined(__ANDROID__)
 TEST(AddressSanitizer, BuiltinLongJmpTest) {
   static jmp_buf buf;
   if (!__builtin_setjmp((void**)buf)) {
@@ -696,6 +697,7 @@ TEST(AddressSanitizer, BuiltinLongJmpTest) {
     TouchStackFunc();
   }
 }
+#endif  // not defined(__ANDROID__)
 
 TEST(AddressSanitizer, UnderscopeLongJmpTest) {
   static jmp_buf buf;
