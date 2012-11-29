@@ -54,7 +54,6 @@ MachTask::MachTask(MachProcess *process) :
     m_exception_port (MACH_PORT_NULL)
 {
     memset(&m_exc_port_info, 0, sizeof(m_exc_port_info));
-
 }
 
 //----------------------------------------------------------------------
@@ -277,19 +276,20 @@ static void update_used_time(task_t task, int &num_threads, uint64_t **threads_i
     kr = mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
 }
 
-const char *
-MachTask::GetProfileDataAsCString ()
+std::string
+MachTask::GetProfileData ()
 {
+    std::string result;
     task_t task = TaskPort();
     if (task == TASK_NULL)
-        return NULL;
+        return result;
     
     struct task_basic_info task_info;
     DNBError err;
     err = BasicInfo(task, &task_info);
     
     if (!err.Success())
-        return NULL;
+        return result;
     
     uint64_t elapsed_usec = 0;
     uint64_t task_used_usec = 0;
@@ -347,19 +347,15 @@ MachTask::GetProfileDataAsCString ()
         profile_data_stream << "vprvt:" << vprvt << ';';
         profile_data_stream << "vsize:" << vsize << ';';
         profile_data_stream << "dirty:" << dirty_size << ';';
-        profile_data_stream << "$";
+        profile_data_stream << "end;";
         
-        m_profile_data = profile_data_stream.str();
-    }
-    else
-    {
-        m_profile_data.clear();
+        result = profile_data_stream.str();
     }
     
     free(threads_id);
     free(threads_used_usec);
     
-    return m_profile_data.c_str();
+    return result;
 }
 
 

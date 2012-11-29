@@ -234,7 +234,7 @@ RNBRemote::SendAsyncProfileData ()
     if (m_ctx.HasValidProcessID())
     {
         nub_process_t pid = m_ctx.ProcessID();
-        char buf[256];
+        char buf[1024];
         nub_size_t count;
         do
         {
@@ -3467,10 +3467,10 @@ RNBRemote::HandlePacket_GetProfileData (const char *p)
     if (pid == INVALID_NUB_PROCESS)
         return SendPacket ("OK");
 
-    const char *data = DNBProcessGetProfileDataAsCString(pid);
-    if (data)
+    std::string data = DNBProcessGetProfileData(pid);
+    if (!data.empty())
     {
-        return SendPacket (data);
+        return SendPacket (data.c_str());
     }
     else
     {

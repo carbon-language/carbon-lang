@@ -282,7 +282,7 @@ private:
     uint64_t                    m_profile_interval_usec;    // If enable, the profiling interval in microseconds
     pthread_t                   m_profile_thread;           // Thread ID for the thread that profiles the inferior
     PThreadMutex                m_profile_data_mutex;       // Multithreaded protection for profile info data
-    std::string                 m_profile_data;             // Profile data, must be protected by m_profile_data_mutex
+    std::vector<std::string>    m_profile_data;             // Profile data, must be protected by m_profile_data_mutex
     
     DNBThreadResumeActions      m_thread_actions;           // The thread actions for the current MachProcess::Resume() call
     MachException::Message::collection

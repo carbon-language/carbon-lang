@@ -4009,7 +4009,7 @@ void
 Process::BroadcastAsyncProfileData(const char *s, size_t len)
 {
     Mutex::Locker locker (m_profile_data_comm_mutex);
-    m_profile_data.append (s, len);
+    m_profile_data.push_back(s);
     BroadcastEventIfUnique (eBroadcastBitProfileData, new ProcessEventData (shared_from_this(), GetState()));
 }
 
@@ -4017,7 +4017,10 @@ size_t
 Process::GetAsyncProfileData (char *buf, size_t buf_size, Error &error)
 {
     Mutex::Locker locker(m_profile_data_comm_mutex);
-    size_t bytes_available = m_profile_data.size();
+    if (m_profile_data.empty())
+        return 0;
+
+    size_t bytes_available = m_profile_data.front().size();
     if (bytes_available > 0)
     {
         LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
@@ -4025,14 +4028,14 @@ Process::GetAsyncProfileData (char *buf, size_t buf_size, Error &error)
             log->Printf ("Process::GetProfileData (buf = %p, size = %" PRIu64 ")", buf, (uint64_t)buf_size);
         if (bytes_available > buf_size)
         {
-            memcpy(buf, m_profile_data.c_str(), buf_size);
-            m_profile_data.erase(0, buf_size);
+            memcpy(buf, m_profile_data.front().data(), buf_size);
+            m_profile_data.front().erase(0, buf_size);
             bytes_available = buf_size;
         }
         else
         {
-            memcpy(buf, m_profile_data.c_str(), bytes_available);
-            m_profile_data.clear();
+            memcpy(buf, m_profile_data.front().data(), bytes_available);
+            m_profile_data.erase(m_profile_data.begin());
         }
     }
     return bytes_available;

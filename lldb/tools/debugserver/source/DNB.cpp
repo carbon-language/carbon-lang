@@ -1217,14 +1217,14 @@ DNBProcessMemoryRegionInfo (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *r
     return -1;
 }
 
-const char *
-DNBProcessGetProfileDataAsCString (nub_process_t pid)
+std::string
+DNBProcessGetProfileData (nub_process_t pid)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-        return procSP->Task().GetProfileDataAsCString();
+        return procSP->Task().GetProfileData();
     
-    return NULL;
+    return std::string("");
 }
 
 nub_bool_t
