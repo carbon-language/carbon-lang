@@ -977,9 +977,9 @@
 		2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PseudoTerminal.h; path = include/lldb/Utility/PseudoTerminal.h; sourceTree = "<group>"; };
 		2682F284115EF3A700CCFF99 /* SBError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBError.cpp; path = source/API/SBError.cpp; sourceTree = "<group>"; };
 		2682F286115EF3BD00CCFF99 /* SBError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBError.h; path = include/lldb/API/SBError.h; sourceTree = "<group>"; };
-		268648C116531BF800F04704 /* com.apple.debugserver.posix.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = com.apple.debugserver.posix.plist; path = tools/debugserver/source/com.apple.debugserver.posix.plist; sourceTree = "<group>"; };
-		268648C216531BF800F04704 /* com.apple.debugserver.applist.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = com.apple.debugserver.applist.internal.plist; path = tools/debugserver/source/com.apple.debugserver.applist.internal.plist; sourceTree = "<group>"; };
-		268648C316531BF800F04704 /* com.apple.debugserver.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = com.apple.debugserver.internal.plist; path = tools/debugserver/source/com.apple.debugserver.internal.plist; sourceTree = "<group>"; };
+		268648C116531BF800F04704 /* com.apple.debugserver.posix.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.posix.plist; path = tools/debugserver/source/com.apple.debugserver.posix.plist; sourceTree = "<group>"; };
+		268648C216531BF800F04704 /* com.apple.debugserver.applist.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.applist.internal.plist; path = tools/debugserver/source/com.apple.debugserver.applist.internal.plist; sourceTree = "<group>"; };
+		268648C316531BF800F04704 /* com.apple.debugserver.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.internal.plist; path = tools/debugserver/source/com.apple.debugserver.internal.plist; sourceTree = "<group>"; };
 		2686536B1370ACB200D186A3 /* OptionGroupBoolean.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupBoolean.cpp; path = source/Interpreter/OptionGroupBoolean.cpp; sourceTree = "<group>"; };
 		2686536D1370ACC600D186A3 /* OptionGroupBoolean.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupBoolean.h; path = include/lldb/Interpreter/OptionGroupBoolean.h; sourceTree = "<group>"; };
 		2686536E1370AE5A00D186A3 /* OptionGroupUInt64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupUInt64.h; path = include/lldb/Interpreter/OptionGroupUInt64.h; sourceTree = "<group>"; };
@@ -1764,9 +1764,6 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				268648C116531BF800F04704 /* com.apple.debugserver.posix.plist */,
-				268648C216531BF800F04704 /* com.apple.debugserver.applist.internal.plist */,
-				268648C316531BF800F04704 /* com.apple.debugserver.internal.plist */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				264E8576159BE51A00E9D7A2 /* Resources */,
 				08FB7795FE84155DC02AAC07 /* Source */,
@@ -2241,6 +2238,9 @@
 			isa = PBXGroup;
 			children = (
 				AF90106315AB7C5700FF120D /* lldb.1 */,
+				268648C116531BF800F04704 /* com.apple.debugserver.posix.plist */,
+				268648C216531BF800F04704 /* com.apple.debugserver.applist.internal.plist */,
+				268648C316531BF800F04704 /* com.apple.debugserver.internal.plist */,
 				AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */,
 				AFF87C8C150FF680000E1742 /* com.apple.debugserver.applist.plist */,
 				AFF87C8A150FF677000E1742 /* com.apple.debugserver.applist.plist */,
@@ -4803,6 +4803,7 @@
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
 					"-Wl,-rpath,@loader_path/../../../SharedFrameworks",
 					"-Wl,-rpath,@loader_path/../../System/Library/PrivateFrameworks",
+					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks",
 				);
 				PRODUCT_NAME = lldb;
 				STRIP_INSTALLED_PRODUCT = YES;
