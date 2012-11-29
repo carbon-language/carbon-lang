@@ -205,7 +205,7 @@ namespace llvm {
     /// Note: This option only controls formation of fused ops by the
     /// optimizers.  Fused operations that are explicitly specified (e.g. FMA
     /// via the llvm.fma.* intrinsic) will always be honored, regardless of
-    ///  the value of this option.
+    /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
 
   };
