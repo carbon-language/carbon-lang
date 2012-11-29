@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.apple.debugserver</string>
+	<string>com.apple.debugserver.posix</string>
 	<key>UserName</key>
 	<string>mobile</string>
 	<key>ProgramArguments</key>
