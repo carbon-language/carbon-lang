@@ -1,7 +1,7 @@
 // Test AddressSanitizer ld flags.
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -faddress-sanitizer \
+// RUN:     -target i386-unknown-linux -fsanitize=address \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LINUX %s
 //
