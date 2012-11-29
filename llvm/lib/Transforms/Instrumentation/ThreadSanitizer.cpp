@@ -78,6 +78,7 @@ struct ThreadSanitizer : public FunctionPass {
   static char ID;  // Pass identification, replacement for typeid.
 
  private:
+  void initializeCallbacks(Module &M);
   bool instrumentLoadOrStore(Instruction *I);
   bool instrumentAtomic(Instruction *I);
   void chooseInstructionsToInstrument(SmallVectorImpl<Instruction*> &Local,
@@ -130,18 +131,8 @@ static Function *checkInterfaceFunction(Constant *FuncOrBitcast) {
   report_fatal_error("ThreadSanitizer interface function redefined");
 }
 
-bool ThreadSanitizer::doInitialization(Module &M) {
-  TD = getAnalysisIfAvailable<DataLayout>();
-  if (!TD)
-    return false;
-  BL.reset(new BlackList(ClBlackListFile));
-
-  // Always insert a call to __tsan_init into the module's CTORs.
+void ThreadSanitizer::initializeCallbacks(Module &M) {
   IRBuilder<> IRB(M.getContext());
-  Value *TsanInit = M.getOrInsertFunction("__tsan_init",
-                                          IRB.getVoidTy(), NULL);
-  appendToGlobalCtors(M, cast<Function>(TsanInit), 0);
-
   // Initialize the callbacks.
   TsanFuncEntry = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_func_entry", IRB.getVoidTy(), IRB.getInt8PtrTy(), NULL));
@@ -209,6 +200,20 @@ bool ThreadSanitizer::doInitialization(Module &M) {
       "__tsan_atomic_thread_fence", IRB.getVoidTy(), OrdTy, NULL));
   TsanAtomicSignalFence = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_atomic_signal_fence", IRB.getVoidTy(), OrdTy, NULL));
+}
+
+bool ThreadSanitizer::doInitialization(Module &M) {
+  TD = getAnalysisIfAvailable<DataLayout>();
+  if (!TD)
+    return false;
+  BL.reset(new BlackList(ClBlackListFile));
+
+  // Always insert a call to __tsan_init into the module's CTORs.
+  IRBuilder<> IRB(M.getContext());
+  Value *TsanInit = M.getOrInsertFunction("__tsan_init",
+                                          IRB.getVoidTy(), NULL);
+  appendToGlobalCtors(M, cast<Function>(TsanInit), 0);
+
   return true;
 }
 
@@ -299,6 +304,7 @@ static bool isAtomic(Instruction *I) {
 bool ThreadSanitizer::runOnFunction(Function &F) {
   if (!TD) return false;
   if (BL->isIn(F)) return false;
+  initializeCallbacks(*F.getParent());
   SmallVector<Instruction*, 8> RetVec;
   SmallVector<Instruction*, 8> AllLoadsAndStores;
   SmallVector<Instruction*, 8> LocalLoadsAndStores;

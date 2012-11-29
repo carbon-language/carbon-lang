@@ -211,6 +211,7 @@ struct AddressSanitizer : public FunctionPass {
   static char ID;  // Pass identification, replacement for typeid
 
  private:
+  void initializeCallbacks(Module &M);
   uint64_t getAllocaSizeInBytes(AllocaInst *AI) {
     Type *Ty = AI->getAllocatedType();
     uint64_t SizeInBytes = TD->getTypeAllocSize(Ty);
@@ -738,32 +739,8 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   return true;
 }
 
-// virtual
-bool AddressSanitizer::doInitialization(Module &M) {
-  // Initialize the private fields. No one has accessed them before.
-  TD = getAnalysisIfAvailable<DataLayout>();
-
-  if (!TD)
-    return false;
-  BL.reset(new BlackList(ClBlackListFile));
-  DynamicallyInitializedGlobals.Init(M);
-
-  C = &(M.getContext());
-  LongSize = TD->getPointerSizeInBits();
-  IntptrTy = Type::getIntNTy(*C, LongSize);
-  IntptrPtrTy = PointerType::get(IntptrTy, 0);
-
-  AsanCtorFunction = Function::Create(
-      FunctionType::get(Type::getVoidTy(*C), false),
-      GlobalValue::InternalLinkage, kAsanModuleCtorName, &M);
-  BasicBlock *AsanCtorBB = BasicBlock::Create(*C, "", AsanCtorFunction);
-  // call __asan_init in the module ctor.
-  IRBuilder<> IRB(ReturnInst::Create(*C, AsanCtorBB));
-  AsanInitFunction = checkInterfaceFunction(
-      M.getOrInsertFunction(kAsanInitName, IRB.getVoidTy(), NULL));
-  AsanInitFunction->setLinkage(Function::ExternalLinkage);
-  IRB.CreateCall(AsanInitFunction);
-
+void AddressSanitizer::initializeCallbacks(Module &M) {
+  IRBuilder<> IRB(*C);
   // Create __asan_report* callbacks.
   for (size_t AccessIsWrite = 0; AccessIsWrite <= 1; AccessIsWrite++) {
     for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
@@ -790,6 +767,33 @@ bool AddressSanitizer::doInitialization(Module &M) {
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
                             /*hasSideEffects=*/true);
+}
+
+// virtual
+bool AddressSanitizer::doInitialization(Module &M) {
+  // Initialize the private fields. No one has accessed them before.
+  TD = getAnalysisIfAvailable<DataLayout>();
+
+  if (!TD)
+    return false;
+  BL.reset(new BlackList(ClBlackListFile));
+  DynamicallyInitializedGlobals.Init(M);
+
+  C = &(M.getContext());
+  LongSize = TD->getPointerSizeInBits();
+  IntptrTy = Type::getIntNTy(*C, LongSize);
+  IntptrPtrTy = PointerType::get(IntptrTy, 0);
+
+  AsanCtorFunction = Function::Create(
+      FunctionType::get(Type::getVoidTy(*C), false),
+      GlobalValue::InternalLinkage, kAsanModuleCtorName, &M);
+  BasicBlock *AsanCtorBB = BasicBlock::Create(*C, "", AsanCtorFunction);
+  // call __asan_init in the module ctor.
+  IRBuilder<> IRB(ReturnInst::Create(*C, AsanCtorBB));
+  AsanInitFunction = checkInterfaceFunction(
+      M.getOrInsertFunction(kAsanInitName, IRB.getVoidTy(), NULL));
+  AsanInitFunction->setLinkage(Function::ExternalLinkage);
+  IRB.CreateCall(AsanInitFunction);
 
   llvm::Triple targetTriple(M.getTargetTriple());
   bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::Android;
@@ -857,6 +861,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
   DEBUG(dbgs() << "ASAN instrumenting:\n" << F << "\n");
+  initializeCallbacks(*F.getParent());
 
   // If needed, insert __asan_init before checking for AddressSafety attr.
   maybeInsertAsanInitAtFunctionEntry(F);
