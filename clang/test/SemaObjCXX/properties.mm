@@ -28,7 +28,7 @@ struct X {
 - (int) z;
 @end
 void test2(Test2 *a) {
-  auto y = a.y; // expected-error {{expected getter method not found on object of type 'Test2 *'}}
+  auto y = a.y; // expected-error {{no getter method for read from property}}
   auto z = a.z;
 }
 

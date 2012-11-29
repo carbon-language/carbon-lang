@@ -4182,7 +4182,7 @@ def err_property_not_found : Error<
 def err_invalid_property_name : Error<
   "%0 is not a valid property name (accessing an object of type %1)">;
 def err_getter_not_found : Error<
-  "expected getter method not found on object of type %0">;
+  "no getter method for read from property">;
 def err_objc_subscript_method_not_found : Error<
   "expected method to %select{read|write}1 %select{dictionary|array}2 element not "
   "found on object of type %0">;
