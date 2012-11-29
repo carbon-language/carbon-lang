@@ -742,13 +742,17 @@ void MicrosoftCXXNameMangler::mangleTemplateInstantiationName(
   // Always start with the unqualified name.
 
   // Templates have their own context for back references.
-  BackRefMap TemplateContext;
-  NameBackReferences.swap(TemplateContext);
+  ArgBackRefMap OuterArgsContext;
+  BackRefMap OuterTemplateContext;
+  NameBackReferences.swap(OuterTemplateContext);
+  TypeBackReferences.swap(OuterArgsContext);
 
   mangleUnscopedTemplateName(TD);
   mangleTemplateArgs(TemplateArgs);
 
-  NameBackReferences.swap(TemplateContext);
+  // Restore the previous back reference contexts.
+  NameBackReferences.swap(OuterTemplateContext);
+  TypeBackReferences.swap(OuterArgsContext);
 }
 
 void

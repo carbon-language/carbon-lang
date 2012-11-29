@@ -13,6 +13,8 @@ void foo_abb(A<char, B<char>, B<char> >) {}
 // CHECK: "\01?foo_abb@@YAXV?$A@DV?$B@D@@V1@@@@Z"
 void foo_abc(A<char, B<char>, C<char> >) {}
 // CHECK: "\01?foo_abc@@YAXV?$A@DV?$B@D@@V?$C@D@@@@@Z"
+void foo_bt(bool a, B<bool(bool)> b) {}
+// CHECK: "\01?foo_bt@@YAX_NV?$B@$$A6A_N_N@Z@@@Z"
 
 namespace N {
 template<class X, class Y, class Z>
