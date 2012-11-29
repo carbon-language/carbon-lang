@@ -87,42 +87,6 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
-// 'fwrite' Optimizations
-
-struct FWriteOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Require a pointer, an integer, an integer, a pointer, returning integer.
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 4 || !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isIntegerTy() ||
-        !FT->getParamType(2)->isIntegerTy() ||
-        !FT->getParamType(3)->isPointerTy() ||
-        !FT->getReturnType()->isIntegerTy())
-      return 0;
-
-    // Get the element size and count.
-    ConstantInt *SizeC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
-    ConstantInt *CountC = dyn_cast<ConstantInt>(CI->getArgOperand(2));
-    if (!SizeC || !CountC) return 0;
-    uint64_t Bytes = SizeC->getZExtValue()*CountC->getZExtValue();
-
-    // If this is writing zero records, remove the call (it's a noop).
-    if (Bytes == 0)
-      return ConstantInt::get(CI->getType(), 0);
-
-    // If this is writing one byte, turn it into fputc.
-    // This optimisation is only valid, if the return value is unused.
-    if (Bytes == 1 && CI->use_empty()) {  // fwrite(S,1,1,F) -> fputc(S[0],F)
-      Value *Char = B.CreateLoad(CastToCStr(CI->getArgOperand(0), B), "char");
-      Value *NewCI = EmitFPutC(Char, CI->getArgOperand(3), B, TD, TLI);
-      return NewCI ? ConstantInt::get(CI->getType(), 1) : 0;
-    }
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
 // 'fputs' Optimizations
 
 struct FPutsOpt : public LibCallOptimization {
@@ -189,7 +153,7 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Formatting and IO Optimizations
-    FWriteOpt FWrite; FPutsOpt FPuts;
+    FPutsOpt FPuts;
     PutsOpt Puts;
 
     bool Modified;  // This is only used by doInitialization.
@@ -246,7 +210,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // Formatting and IO Optimizations
-  AddOpt(LibFunc::fwrite, &FWrite);
   AddOpt(LibFunc::fputs, &FPuts);
   Optimizations["puts"] = &Puts;
 }

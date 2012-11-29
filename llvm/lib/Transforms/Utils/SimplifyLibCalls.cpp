@@ -1577,6 +1577,39 @@ struct FPrintFOpt : public LibCallOptimization {
   }
 };
 
+struct FWriteOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require a pointer, an integer, an integer, a pointer, returning integer.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 4 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isIntegerTy() ||
+        !FT->getParamType(2)->isIntegerTy() ||
+        !FT->getParamType(3)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    // Get the element size and count.
+    ConstantInt *SizeC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
+    ConstantInt *CountC = dyn_cast<ConstantInt>(CI->getArgOperand(2));
+    if (!SizeC || !CountC) return 0;
+    uint64_t Bytes = SizeC->getZExtValue()*CountC->getZExtValue();
+
+    // If this is writing zero records, remove the call (it's a noop).
+    if (Bytes == 0)
+      return ConstantInt::get(CI->getType(), 0);
+
+    // If this is writing one byte, turn it into fputc.
+    // This optimisation is only valid, if the return value is unused.
+    if (Bytes == 1 && CI->use_empty()) {  // fwrite(S,1,1,F) -> fputc(S[0],F)
+      Value *Char = B.CreateLoad(CastToCStr(CI->getArgOperand(0), B), "char");
+      Value *NewCI = EmitFPutC(Char, CI->getArgOperand(3), B, TD, TLI);
+      return NewCI ? ConstantInt::get(CI->getType(), 1) : 0;
+    }
+
+    return 0;
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1634,6 +1667,7 @@ class LibCallSimplifierImpl {
   PrintFOpt PrintF;
   SPrintFOpt SPrintF;
   FPrintFOpt FPrintF;
+  FWriteOpt FWrite;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1760,6 +1794,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::printf, &PrintF);
   addOpt(LibFunc::sprintf, &SPrintF);
   addOpt(LibFunc::fprintf, &FPrintF);
+  addOpt(LibFunc::fwrite, &FWrite);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
