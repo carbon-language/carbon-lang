@@ -159,6 +159,11 @@ public:
 
   virtual bool isSelectSupported(SelectSupportKind kind) const { return true; }
 
+  /// shouldSplitVectorElementType - Return true if a vector of the given type
+  /// should be split (TypeSplitVector) instead of promoted
+  /// (TypePromoteInteger) during type legalization.
+  virtual bool shouldSplitVectorElementType(EVT VT) const { return false; }
+
   /// isIntDivCheap() - Return true if integer divide is usually cheaper than
   /// a sequence of several shifts, adds, and multiplies for this target.
   bool isIntDivCheap() const { return IntDivIsCheap; }
