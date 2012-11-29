@@ -587,9 +587,9 @@ bool isNoAliasCall(const Value *V);
 /// isIdentifiedObject - Return true if this pointer refers to a distinct and
 /// identifiable object.  This returns true for:
 ///    Global Variables and Functions (but not Global Aliases)
-///    Allocas and Mallocs
+///    Allocas
 ///    ByVal and NoAlias Arguments
-///    NoAlias returns
+///    NoAlias returns (e.g. calls to malloc)
 ///
 bool isIdentifiedObject(const Value *V);
 
