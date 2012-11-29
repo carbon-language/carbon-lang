@@ -1065,10 +1065,19 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Instruction &I = *CS.getInstruction();
     assert((CS.isCall() || CS.isInvoke()) && "Unknown type of CallSite");
     if (CS.isCall()) {
+      CallInst *Call = cast<CallInst>(&I);
+
+      // For inline asm, do the usual thing: check argument shadow and mark all
+      // outputs as clean. Note that any side effects of the inline asm that are
+      // not immediately visible in its constraints are not handled.
+      if (Call->isInlineAsm()) {
+        visitInstruction(I);
+        return;
+      }
+
       // Allow only tail calls with the same types, otherwise
       // we may have a false positive: shadow for a non-void RetVal
       // will get propagated to a void RetVal.
-      CallInst *Call = cast<CallInst>(&I);
       if (Call->isTailCall() && Call->getType() != Call->getParent()->getType())
         Call->setTailCall(false);
       if (isa<IntrinsicInst>(&I)) {
