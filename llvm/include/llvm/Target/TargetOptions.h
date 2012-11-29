@@ -24,7 +24,7 @@ namespace llvm {
   // Possible float ABI settings. Used with FloatABIType in TargetOptions.h.
   namespace FloatABI {
     enum ABIType {
-      Default, // Target-specific (either soft or hard depending on triple, etc).
+      Default, // Target-specific (either soft or hard depending on triple,etc).
       Soft, // Soft float.
       Hard  // Hard float.
     };
@@ -50,7 +50,7 @@ namespace llvm {
           GuaranteedTailCallOpt(false), DisableTailCalls(false),
           StackAlignmentOverride(0), RealignStack(true), EnableFastISel(false),
           PositionIndependentExecutable(false), EnableSegmentedStacks(false),
-          UseInitArray(false), TrapFuncName(""), FloatABIType(FloatABI::Default),
+          UseInitArray(false), TrapFuncName(""),FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard)
     {}
 
@@ -202,10 +202,10 @@ namespace llvm {
     /// Strict mode - allow fusion only if/when it can be proven that the excess
     /// precision won't effect the result.
     ///
-    /// Note: This option only controls formation of fused ops by the optimizers.
-    /// Fused operations that are explicitly specified (e.g. FMA via the
-    /// llvm.fma.* intrinsic) will always be honored, regardless of the value of
-    /// this option.
+    /// Note: This option only controls formation of fused ops by the
+    /// optimizers.  Fused operations that are explicitly specified (e.g. FMA
+    /// via the llvm.fma.* intrinsic) will always be honored, regardless of
+    ///  the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
 
   };
