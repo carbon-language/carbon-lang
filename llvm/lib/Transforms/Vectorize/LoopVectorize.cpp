@@ -516,6 +516,17 @@ Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
   LLVMContext &C = V->getContext();
   Type *VTy = VectorType::get(V->getType(), VF);
   Type *I32 = IntegerType::getInt32Ty(C);
+
+  // Save the current insertion location.
+  Instruction *Loc = Builder.GetInsertPoint();
+
+  // We need to place the broadcast of invariant variables outside the loop.
+  bool Invariant = (OrigLoop->isLoopInvariant(V) && V != Induction);
+
+  // Place the code for broadcasting invariant variables in the new preheader.
+  if (Invariant)
+    Builder.SetInsertPoint(LoopVectorPreHeader->getTerminator());
+
   Constant *Zero = ConstantInt::get(I32, 0);
   Value *Zeros = ConstantAggregateZero::get(VectorType::get(I32, VF));
   Value *UndefVal = UndefValue::get(VTy);
@@ -524,10 +535,11 @@ Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
   // Broadcast the scalar into all locations in the vector.
   Value *Shuf = Builder.CreateShuffleVector(SingleElem, UndefVal, Zeros,
                                              "broadcast");
-  // We are accessing the induction variable. Make sure to promote the
-  // index for each consecutive SIMD lane. This adds 0,1,2 ... to all lanes.
-  if (V == Induction)
-    return getConsecutiveVector(Shuf);
+
+  // Restore the builder insertion point.
+  if (Invariant)
+    Builder.SetInsertPoint(Loc);
+
   return Shuf;
 }
 
@@ -571,7 +583,7 @@ bool LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     if (!SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), TheLoop))
       return false;
 
-  // We can emit wide load/stores only of the last index is the induction
+  // We can emit wide load/stores only if the last index is the induction
   // variable.
   const SCEV *Last = SE->getSCEV(LastIndex);
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Last)) {
@@ -591,6 +603,7 @@ bool LoopVectorizationLegality::isUniform(Value *V) {
 }
 
 Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
+  assert(V != Induction && "The new induction variable should not be used.");
   assert(!V->getType()->isVectorTy() && "Can't widen a vector");
   // If we saved a vectorized copy of V, use it.
   Value *&MapEntry = WidenMap[V];
@@ -619,7 +632,7 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
 
     // If we are accessing the old induction variable, use the new one.
     if (SrcOp == OldInduction) {
-      Params.push_back(getVectorValue(Induction));
+      Params.push_back(getVectorValue(SrcOp));
       continue;
     }
 
@@ -697,7 +710,7 @@ SingleBlockLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   // Use this type for pointer arithmetic.
   Type* PtrArithTy = PtrRtCheck->Pointers[0]->getType();
 
-  for (unsigned i=0; i < NumPointers; ++i) {
+  for (unsigned i = 0; i < NumPointers; ++i) {
     Value *Ptr = PtrRtCheck->Pointers[i];
     const SCEV *Sc = SE->getSCEV(Ptr);
 
@@ -1016,7 +1029,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
 
   // In order to support reduction variables we need to be able to vectorize
   // Phi nodes. Phi nodes have cycles, so we need to vectorize them in two
-  // steages. First, we create a new vector PHI node with no incoming edges.
+  // stages. First, we create a new vector PHI node with no incoming edges.
   // We use this value when we vectorize all of the instructions that use the
   // PHI. Next, after all of the instructions in the block are complete we
   // add the new incoming edges to the PHI. At this point all of the
@@ -1052,7 +1065,12 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
 
         if (P->getType()->isIntegerTy()) {
           assert(P == OldInduction && "Unexpected PHI");
-          WidenMap[Inst] = getBroadcastInstrs(Induction);
+          Value *Broadcasted = getBroadcastInstrs(Induction);
+          // After broadcasting the induction variable we need to make the
+          // vector consecutive by adding 0, 1, 2 ...
+          Value *ConsecutiveInduction = getConsecutiveVector(Broadcasted);
+           
+          WidenMap[OldInduction] = ConsecutiveInduction;
           continue;
         }
 
@@ -1387,7 +1405,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
 }
 
 void SingleBlockLoopVectorizer::updateAnalysis() {
-  // The original basic block.
+  // Forget the original basic block.
   SE->forgetLoop(OrigLoop);
 
   // Update the dominator tree information.
@@ -1575,7 +1593,7 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
     Uniforms.insert(I);
 
     // Insert all operands.
-    for (int i=0, Op = I->getNumOperands(); i < Op; ++i) {
+    for (int i = 0, Op = I->getNumOperands(); i < Op; ++i) {
       Worklist.push_back(I->getOperand(i));
     }
   }
