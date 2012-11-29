@@ -2442,13 +2442,22 @@ public:
         CommandObjectParsed (interpreter,
                              "target modules add",
                              "Add a new module to the current target's modules.",
-                             "target modules add [<module>]")
+                             "target modules add [<module>]"),
+        m_option_group (interpreter)
     {
+        m_option_group.Append (&m_uuid_option_group, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Finalize();
     }
     
     virtual
     ~CommandObjectTargetModulesAdd ()
     {
+    }
+        
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_option_group;
     }
     
     int
@@ -2476,6 +2485,11 @@ public:
     }
 
 protected:
+    
+    OptionGroupOptions m_option_group;
+    OptionGroupUUID m_uuid_option_group;
+    
+
     virtual bool
     DoExecute (Args& args,
              CommandReturnObject &result)
@@ -2492,9 +2506,66 @@ protected:
             const size_t argc = args.GetArgumentCount();
             if (argc == 0)
             {
-                result.AppendError ("one or more executable image paths must be specified");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
+                if (m_uuid_option_group.GetOptionValue ().OptionWasSet())
+                {
+                    // We are given a UUID only, go locate the file
+                    ModuleSpec module_spec;
+                    module_spec.GetUUID() = m_uuid_option_group.GetOptionValue ().GetCurrentValue();
+                    if (Symbols::DownloadObjectAndSymbolFile (module_spec))
+                    {
+                        ModuleSP module_sp (target->GetSharedModule (module_spec));
+                        if (module_sp)
+                        {
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                            return true;
+                        }
+                        else
+                        {
+                            StreamString strm;
+                            module_spec.GetUUID().Dump (&strm);
+                            if (module_spec.GetFileSpec())
+                            {
+                                if (module_spec.GetSymbolFileSpec())
+                                {
+                                    result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s with path %s/%s and symbol file %s/%s",
+                                                                  strm.GetString().c_str(),
+                                                                  module_spec.GetFileSpec().GetDirectory().GetCString(),
+                                                                  module_spec.GetFileSpec().GetFilename().GetCString(),
+                                                                  module_spec.GetSymbolFileSpec().GetDirectory().GetCString(),
+                                                                  module_spec.GetSymbolFileSpec().GetFilename().GetCString());
+                                }
+                                else
+                                {
+                                    result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s with path %s/%s",
+                                                                  strm.GetString().c_str(),
+                                                                  module_spec.GetFileSpec().GetDirectory().GetCString(),
+                                                                  module_spec.GetFileSpec().GetFilename().GetCString());
+                                }
+                            }
+                            else
+                            {
+                                result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s",
+                                                              strm.GetString().c_str());
+                            }
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        StreamString strm;
+                        module_spec.GetUUID().Dump (&strm);
+                        result.AppendErrorWithFormat ("Unable to locate the executable or symbol file with UUID %s", strm.GetString().c_str());
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                }
+                else
+                {
+                    result.AppendError ("one or more executable image paths must be specified");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
             }
             else
             {
@@ -2507,10 +2578,18 @@ protected:
                         if (file_spec.Exists())
                         {
                             ModuleSpec module_spec (file_spec);
-                            ModuleSP module_sp (target->GetSharedModule (module_spec));
+                            if (m_uuid_option_group.GetOptionValue ().OptionWasSet())
+                                module_spec.GetUUID() = m_uuid_option_group.GetOptionValue ().GetCurrentValue();
+
+                            Error error;
+                            ModuleSP module_sp (target->GetSharedModule (module_spec, &error));
                             if (!module_sp)
                             {
-                                result.AppendError ("one or more executable image paths must be specified");
+                                const char *error_cstr = error.AsCString();
+                                if (error_cstr)
+                                    result.AppendError (error_cstr);
+                                else
+                                    result.AppendErrorWithFormat ("unsupported module: %s", path);
                                 result.SetStatus (eReturnStatusFailed);
                                 return false;
                             }

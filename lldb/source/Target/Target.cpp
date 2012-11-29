@@ -1460,38 +1460,63 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
         // module in the list already, and if there was, let's remove it.
         if (module_sp)
         {
-            // GetSharedModule is not guaranteed to find the old shared module, for instance
-            // in the common case where you pass in the UUID, it is only going to find the one
-            // module matching the UUID.  In fact, it has no good way to know what the "old module"
-            // relevant to this target is, since there might be many copies of a module with this file spec
-            // in various running debug sessions, but only one of them will belong to this target.
-            // So let's remove the UUID from the module list, and look in the target's module list.
-            // Only do this if there is SOMETHING else in the module spec...
-            if (!old_module_sp)
+            ObjectFile *objfile = module_sp->GetObjectFile();
+            if (objfile)
             {
-                if (module_spec.GetUUID().IsValid() && !module_spec.GetFileSpec().GetFilename().IsEmpty() && !module_spec.GetFileSpec().GetDirectory().IsEmpty())
+                switch (objfile->GetType())
                 {
-                    ModuleSpec module_spec_copy(module_spec.GetFileSpec());
-                    module_spec_copy.GetUUID().Clear();
-                    
-                    ModuleList found_modules;
-                    size_t num_found = m_images.FindModules (module_spec_copy, found_modules);
-                    if (num_found == 1)
+                    case ObjectFile::eTypeCoreFile:      /// A core file that has a checkpoint of a program's execution state
+                    case ObjectFile::eTypeExecutable:    /// A normal executable
+                    case ObjectFile::eTypeDynamicLinker: /// The platform's dynamic linker executable
+                    case ObjectFile::eTypeObjectFile:    /// An intermediate object file
+                    case ObjectFile::eTypeSharedLibrary: /// A shared library that can be used during execution
+                        break;
+                    case ObjectFile::eTypeDebugInfo:     /// An object file that contains only debug information
+                        if (error_ptr)
+                            error_ptr->SetErrorString("debug info files aren't valid target modules, please specify an executable");
+                        return ModuleSP();
+                    case ObjectFile::eTypeStubLibrary:   /// A library that can be linked against but not used for execution
+                        if (error_ptr)
+                            error_ptr->SetErrorString("stub libraries aren't valid target modules, please specify an executable");
+                        return ModuleSP();
+                    default:
+                        if (error_ptr)
+                            error_ptr->SetErrorString("unsupported file type, please specify an executable");
+                        return ModuleSP();
+                }
+                // GetSharedModule is not guaranteed to find the old shared module, for instance
+                // in the common case where you pass in the UUID, it is only going to find the one
+                // module matching the UUID.  In fact, it has no good way to know what the "old module"
+                // relevant to this target is, since there might be many copies of a module with this file spec
+                // in various running debug sessions, but only one of them will belong to this target.
+                // So let's remove the UUID from the module list, and look in the target's module list.
+                // Only do this if there is SOMETHING else in the module spec...
+                if (!old_module_sp)
+                {
+                    if (module_spec.GetUUID().IsValid() && !module_spec.GetFileSpec().GetFilename().IsEmpty() && !module_spec.GetFileSpec().GetDirectory().IsEmpty())
                     {
-                        old_module_sp = found_modules.GetModuleAtIndex(0);
+                        ModuleSpec module_spec_copy(module_spec.GetFileSpec());
+                        module_spec_copy.GetUUID().Clear();
+                        
+                        ModuleList found_modules;
+                        size_t num_found = m_images.FindModules (module_spec_copy, found_modules);
+                        if (num_found == 1)
+                        {
+                            old_module_sp = found_modules.GetModuleAtIndex(0);
+                        }
                     }
                 }
+                
+                if (old_module_sp && m_images.GetIndexForModule (old_module_sp.get()) != LLDB_INVALID_INDEX32)
+                {
+                    m_images.ReplaceModule(old_module_sp, module_sp);
+                    Module *old_module_ptr = old_module_sp.get();
+                    old_module_sp.reset();
+                    ModuleList::RemoveSharedModuleIfOrphaned (old_module_ptr);
+                }
+                else
+                    m_images.Append(module_sp);
             }
-            
-            if (old_module_sp && m_images.GetIndexForModule (old_module_sp.get()) != LLDB_INVALID_INDEX32)
-            {
-                m_images.ReplaceModule(old_module_sp, module_sp);
-                Module *old_module_ptr = old_module_sp.get();
-                old_module_sp.reset();
-                ModuleList::RemoveSharedModuleIfOrphaned (old_module_ptr);
-            }
-            else
-                m_images.Append(module_sp);
         }
     }
     if (error_ptr)
