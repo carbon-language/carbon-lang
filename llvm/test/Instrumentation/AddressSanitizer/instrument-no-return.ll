@@ -7,11 +7,22 @@ target triple = "x86_64-unknown-linux-gnu"
 
 declare void @MyNoReturnFunc(i32) noreturn
 
-define i32 @_Z5ChildPv(i8* nocapture %arg) uwtable address_safety {
+define i32 @Call1(i8* nocapture %arg) uwtable address_safety {
 entry:
-  call void @MyNoReturnFunc(i32 1) noreturn
+  call void @MyNoReturnFunc(i32 1) noreturn  ; The call insn has noreturn attr.
+; CHECK:        @Call1
+; CHECK:        call void @__asan_handle_no_return
+; CHECK-NEXT:   call void @MyNoReturnFunc
+; CHECK-NEXT: unreachable
   unreachable
 }
 
+define i32 @Call2(i8* nocapture %arg) uwtable address_safety {
+entry:
+  call void @MyNoReturnFunc(i32 1)  ; No noreturn attribure on the call.
+; CHECK:        @Call2
 ; CHECK:        call void @__asan_handle_no_return
 ; CHECK-NEXT:   call void @MyNoReturnFunc
+; CHECK-NEXT: unreachable
+  unreachable
+}
