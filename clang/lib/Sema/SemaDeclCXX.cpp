@@ -6987,6 +6987,36 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(SourceLocation Loc,
   return ExceptSpec;
 }
 
+namespace {
+/// RAII object to register a special member as being currently declared.
+struct DeclaringSpecialMember {
+  Sema &S;
+  Sema::SpecialMemberDecl D;
+  bool WasAlreadyBeingDeclared;
+
+  DeclaringSpecialMember(Sema &S, CXXRecordDecl *RD, Sema::CXXSpecialMember CSM)
+    : S(S), D(RD, CSM) {
+    WasAlreadyBeingDeclared = !S.SpecialMembersBeingDeclared.insert(D);
+    if (WasAlreadyBeingDeclared)
+      // This almost never happens, but if it does, ensure that our cache
+      // doesn't contain a stale result.
+      S.SpecialMemberCache.clear();
+
+    // FIXME: Register a note to be produced if we encounter an error while
+    // declaring the special member.
+  }
+  ~DeclaringSpecialMember() {
+    if (!WasAlreadyBeingDeclared)
+      S.SpecialMembersBeingDeclared.erase(D);
+  }
+
+  /// \brief Are we already trying to declare this special member?
+  bool isAlreadyBeingDeclared() const {
+    return WasAlreadyBeingDeclared;
+  }
+};
+}
+
 CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                                      CXXRecordDecl *ClassDecl) {
   // C++ [class.ctor]p5:
@@ -6997,6 +7027,10 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   //   is an inline public member of its class.
   assert(ClassDecl->needsImplicitDefaultConstructor() && 
          "Should not build implicit default constructor!");
+
+  DeclaringSpecialMember DSM(*this, ClassDecl, CXXDefaultConstructor);
+  if (DSM.isAlreadyBeingDeclared())
+    return 0;
 
   bool Constexpr = defaultedSpecialMemberIsConstexpr(*this, ClassDecl,
                                                      CXXDefaultConstructor,
@@ -7309,6 +7343,10 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   //   declared implicitly. An implicitly-declared destructor is an
   //   inline public member of its class.
   assert(!ClassDecl->hasDeclaredDestructor());
+
+  DeclaringSpecialMember DSM(*this, ClassDecl, CXXDestructor);
+  if (DSM.isAlreadyBeingDeclared())
+    return 0;
 
   // Create the actual destructor declaration.
   CanQualType ClassType
@@ -7793,6 +7831,10 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // operators taking an object instead of a reference are allowed.
   assert(!ClassDecl->hasDeclaredCopyAssignment());
 
+  DeclaringSpecialMember DSM(*this, ClassDecl, CXXCopyAssignment);
+  if (DSM.isAlreadyBeingDeclared())
+    return 0;
+
   QualType ArgType = Context.getTypeDeclType(ClassDecl);
   QualType RetType = Context.getLValueReferenceType(ArgType);
   if (ClassDecl->implicitCopyAssignmentHasConstParam())
@@ -8212,6 +8254,10 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   //   - [first 4 bullets]
   assert(ClassDecl->needsImplicitMoveAssignment());
 
+  DeclaringSpecialMember DSM(*this, ClassDecl, CXXMoveAssignment);
+  if (DSM.isAlreadyBeingDeclared())
+    return 0;
+
   // [Checked after we build the declaration]
   //   - the move assignment operator would not be implicitly defined as
   //     deleted,
@@ -8569,6 +8615,10 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   //   constructor, one is declared implicitly.
   assert(!ClassDecl->hasDeclaredCopyConstructor());
 
+  DeclaringSpecialMember DSM(*this, ClassDecl, CXXCopyConstructor);
+  if (DSM.isAlreadyBeingDeclared())
+    return 0;
+
   QualType ClassType = Context.getTypeDeclType(ClassDecl);
   QualType ArgType = ClassType;
   bool Const = ClassDecl->implicitCopyConstructorHasConstParam();
@@ -8738,6 +8788,10 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
   //
   //   - [first 4 bullets]
   assert(ClassDecl->needsImplicitMoveConstructor());
+
+  DeclaringSpecialMember DSM(*this, ClassDecl, CXXMoveConstructor);
+  if (DSM.isAlreadyBeingDeclared())
+    return 0;
 
   // [Checked after we build the declaration]
   //   - the move assignment operator would not be implicitly defined as
