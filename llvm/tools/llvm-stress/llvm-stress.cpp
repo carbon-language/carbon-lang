@@ -713,9 +713,7 @@ int main(int argc, char **argv) {
   PassManager Passes;
   Passes.add(createVerifierPass());
   Passes.add(createPrintModulePass(&Out->os()));
-  Passes.doInitialization();
   Passes.run(*M.get());
-  Passes.doFinalization();
   Out->keep();
 
   return 0;
