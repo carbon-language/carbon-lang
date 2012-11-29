@@ -126,3 +126,64 @@ define void @test9(i64* %ptr, i64 %val) {
   store atomic i64 %val, i64* %ptr seq_cst, align 8
   ret void
 }
+
+define i64 @test10(i64* %ptr, i64 %val) {
+; CHECK: test10:
+; CHECK: dmb ish
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
+; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
+; CHECK: ble
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
+; CHECK: cmp
+; CHECK: bne
+; CHECK: dmb ish
+  %r = atomicrmw min i64* %ptr, i64 %val seq_cst
+  ret i64 %r
+}
+
+define i64 @test11(i64* %ptr, i64 %val) {
+; CHECK: test11:
+; CHECK: dmb ish
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
+; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
+; CHECK: bls
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
+; CHECK: cmp
+; CHECK: bne
+; CHECK: dmb ish
+  %r = atomicrmw umin i64* %ptr, i64 %val seq_cst
+  ret i64 %r
+}
+
+define i64 @test12(i64* %ptr, i64 %val) {
+; CHECK: test12:
+; CHECK: dmb ish
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
+; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
+; CHECK: bge
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
+; CHECK: cmp
+; CHECK: bne
+; CHECK: dmb ish
+  %r = atomicrmw max i64* %ptr, i64 %val seq_cst
+  ret i64 %r
+}
+
+define i64 @test13(i64* %ptr, i64 %val) {
+; CHECK: test13:
+; CHECK: dmb ish
+; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
+; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
+; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
+; CHECK: bhs
+; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
+; CHECK: cmp
+; CHECK: bne
+; CHECK: dmb ish
+  %r = atomicrmw umax i64* %ptr, i64 %val seq_cst
+  ret i64 %r
+}
+

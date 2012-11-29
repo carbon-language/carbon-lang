@@ -3327,6 +3327,15 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     return SelectAtomic64(N, ARM::ATOMSWAP6432);
   case ARMISD::ATOMCMPXCHG64_DAG:
     return SelectAtomic64(N, ARM::ATOMCMPXCHG6432);
+
+  case ARMISD::ATOMMIN64_DAG:
+    return SelectAtomic64(N, ARM::ATOMMIN6432);
+  case ARMISD::ATOMUMIN64_DAG:
+    return SelectAtomic64(N, ARM::ATOMUMIN6432);
+  case ARMISD::ATOMMAX64_DAG:
+    return SelectAtomic64(N, ARM::ATOMMAX6432);
+  case ARMISD::ATOMUMAX64_DAG:
+    return SelectAtomic64(N, ARM::ATOMUMAX6432);
   }
 
   return SelectCode(N);

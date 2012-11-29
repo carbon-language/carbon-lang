@@ -232,7 +232,11 @@ namespace llvm {
       ATOMAND64_DAG,
       ATOMNAND64_DAG,
       ATOMSWAP64_DAG,
-      ATOMCMPXCHG64_DAG
+      ATOMCMPXCHG64_DAG,
+      ATOMMIN64_DAG,
+      ATOMUMIN64_DAG,
+      ATOMMAX64_DAG,
+      ATOMUMAX64_DAG
     };
   }
 
@@ -532,7 +536,9 @@ namespace llvm {
                                           unsigned Op1,
                                           unsigned Op2,
                                           bool NeedsCarry = false,
-                                          bool IsCmpxchg = false) const;
+                                          bool IsCmpxchg = false,
+                                          bool IsMinMax = false,
+                                          ARMCC::CondCodes CC = ARMCC::AL) const;
     MachineBasicBlock * EmitAtomicBinaryMinMax(MachineInstr *MI,
                                                MachineBasicBlock *BB,
                                                unsigned Size,
