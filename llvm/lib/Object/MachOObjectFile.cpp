@@ -56,7 +56,8 @@ ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   // not a copy of the memory itself), so just make a new copy here for
   // the MachOObjectFile.
   MemoryBuffer *NewBuffer =
-    MemoryBuffer::getMemBuffer(Buffer->getBuffer(), "", false);
+    MemoryBuffer::getMemBuffer(Buffer->getBuffer(),
+                               Buffer->getBufferIdentifier(), false);
   return new MachOObjectFile(NewBuffer, MachOObj, ec);
 }
 
