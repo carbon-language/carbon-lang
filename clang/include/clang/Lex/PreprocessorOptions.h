@@ -13,6 +13,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 #include <cassert>
 #include <string>
 #include <utility>
@@ -126,7 +127,29 @@ public:
   /// to do so (e.g., if on-demand module construction moves out-of-process),
   /// we can add a cc1-level option to do so.
   SmallVector<std::string, 2> ModuleBuildPath;
+
+  /// \brief Records the set of modules
+  class FailedModulesSet : public llvm::RefCountedBase<FailedModulesSet> {
+    llvm::StringSet<> Failed;
+
+  public:
+    bool hasAlreadyFailed(StringRef module) {
+      return Failed.count(module) > 0;
+    }
+
+    void addFailed(StringRef module) {
+      Failed.insert(module);
+    }
+  };
   
+  /// \brief The set of modules that failed to build.
+  ///
+  /// This pointer will be shared among all of the compiler instances created
+  /// to (re)build modules, so that once a module fails to build anywhere,
+  /// other instances will see that the module has failed and won't try to
+  /// build it again.
+  llvm::IntrusiveRefCntPtr<FailedModulesSet> FailedModules;
+
   typedef std::vector<std::pair<std::string, std::string> >::iterator
     remapped_file_iterator;
   typedef std::vector<std::pair<std::string, std::string> >::const_iterator

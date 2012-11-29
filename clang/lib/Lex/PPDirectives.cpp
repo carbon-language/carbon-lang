@@ -1483,7 +1483,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     // If this was an #__include_macros directive, only make macros visible.
     Module::NameVisibilityKind Visibility 
       = (IncludeKind == 3)? Module::MacrosVisible : Module::AllVisible;
-    Module *Imported
+    ModuleLoadResult Imported
       = TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
                                    /*IsIncludeDirective=*/true);
     assert((Imported == 0 || Imported == SuggestedModule) &&
@@ -1496,6 +1496,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
                                       FilenameRange, File,
                                       SearchPath, RelativePath, Imported);
       }
+      return;
+    }
+
+    // If we failed to find a submodule that we expected to find, we can
+    // continue. Otherwise, there's an error in the included file, so we
+    // don't want to include it.
+    if (!BuildingImportedModule && !Imported.isMissingExpected()) {
       return;
     }
   }

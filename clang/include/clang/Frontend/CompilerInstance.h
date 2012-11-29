@@ -94,7 +94,7 @@ class CompilerInstance : public ModuleLoader {
 
   /// \brief The semantic analysis object.
   OwningPtr<Sema> TheSema;
-  
+
   /// \brief The frontend timer
   OwningPtr<llvm::Timer> FrontendTimer;
 
@@ -111,7 +111,7 @@ class CompilerInstance : public ModuleLoader {
   
   /// \brief The result of the last module import.
   ///
-  Module *LastModuleImportResult;
+  ModuleLoadResult LastModuleImportResult;
   
   /// \brief Holds information about the output file.
   ///
@@ -645,9 +645,10 @@ public:
 
   /// }
   
-  virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
-                             Module::NameVisibilityKind Visibility,
-                             bool IsInclusionDirective);
+  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc,
+                                      ModuleIdPath Path,
+                                      Module::NameVisibilityKind Visibility,
+                                      bool IsInclusionDirective);
 };
 
 } // end namespace clang

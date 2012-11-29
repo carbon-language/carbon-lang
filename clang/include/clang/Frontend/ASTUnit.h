@@ -830,11 +830,12 @@ public:
   /// \returns True if an error occurred, false otherwise.
   bool serialize(raw_ostream &OS);
   
-  virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
-                             Module::NameVisibilityKind Visibility,
-                             bool IsInclusionDirective) {
+  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc,
+                                      ModuleIdPath Path,
+                                      Module::NameVisibilityKind Visibility,
+                                      bool IsInclusionDirective) {
     // ASTUnit doesn't know how to load modules (not that this matters).
-    return 0;
+    return ModuleLoadResult();
   }
 };
 

@@ -801,6 +801,15 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // can detect cycles in the module graph.
   PPOpts.ModuleBuildPath.push_back(Module->getTopLevelModuleName());
 
+  // Make sure that the failed-module structure has been allocated in
+  // the importing instance, and propagate the pointer to the newly-created
+  // instance.
+  PreprocessorOptions &ImportingPPOpts
+    = ImportingInstance.getInvocation().getPreprocessorOpts();
+  if (!ImportingPPOpts.FailedModules)
+    ImportingPPOpts.FailedModules = new PreprocessorOptions::FailedModulesSet;
+  PPOpts.FailedModules = ImportingPPOpts.FailedModules;
+
   // If there is a module map file, build the module using the module map.
   // Set up the inputs/outputs so that we build the module from its umbrella
   // header.
@@ -872,10 +881,11 @@ static void compileModule(CompilerInstance &ImportingInstance,
     llvm::sys::Path(TempModuleMapFileName).eraseFromDisk();
 }
 
-Module *CompilerInstance::loadModule(SourceLocation ImportLoc, 
-                                     ModuleIdPath Path,
-                                     Module::NameVisibilityKind Visibility,
-                                     bool IsInclusionDirective) {
+ModuleLoadResult
+CompilerInstance::loadModule(SourceLocation ImportLoc,
+                             ModuleIdPath Path,
+                             Module::NameVisibilityKind Visibility,
+                             bool IsInclusionDirective) {
   // If we've already handled this import, just return the cached result.
   // This one-element cache is important to eliminate redundant diagnostics
   // when both the preprocessor and parser see the same import declaration.
@@ -910,14 +920,14 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(Module);
     else
       ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(ModuleName);
-    
+
     if (ModuleFileName.empty()) {
       getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
         << ModuleName
         << SourceRange(ImportLoc, ModuleNameLoc);
       LastModuleImportLoc = ImportLoc;
-      LastModuleImportResult = 0;
-      return 0;
+      LastModuleImportResult = ModuleLoadResult();
+      return LastModuleImportResult;
     }
     
     const FileEntry *ModuleFile
@@ -943,7 +953,18 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
 
         getDiagnostics().Report(ModuleNameLoc, diag::err_module_cycle)
           << ModuleName << CyclePath;
-        return 0;
+        return ModuleLoadResult();
+      }
+
+      // Check whether we have already attempted to build this module (but
+      // failed).
+      if (getPreprocessorOpts().FailedModules &&
+          getPreprocessorOpts().FailedModules->hasAlreadyFailed(ModuleName)) {
+        getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_built)
+          << ModuleName
+          << SourceRange(ImportLoc, ModuleNameLoc);
+
+        return ModuleLoadResult();
       }
 
       getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
@@ -951,6 +972,9 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       BuildingModule = true;
       compileModule(*this, Module, ModuleFileName);
       ModuleFile = FileMgr->getFile(ModuleFileName);
+
+      if (!ModuleFile)
+        getPreprocessorOpts().FailedModules->addFailed(ModuleName);
     }
 
     if (!ModuleFile) {
@@ -959,7 +983,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
                                             : diag::err_module_not_found)
         << ModuleName
         << SourceRange(ImportLoc, ModuleNameLoc);
-      return 0;
+      return ModuleLoadResult();
     }
 
     // If we don't already have an ASTReader, create one now.
@@ -1004,6 +1028,18 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       getFileManager().invalidateCache(ModuleFile);
       bool Existed;
       llvm::sys::fs::remove(ModuleFileName, Existed);
+
+      // Check whether we have already attempted to build this module (but
+      // failed).
+      if (getPreprocessorOpts().FailedModules &&
+          getPreprocessorOpts().FailedModules->hasAlreadyFailed(ModuleName)) {
+        getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_built)
+          << ModuleName
+          << SourceRange(ImportLoc, ModuleNameLoc);
+
+        return ModuleLoadResult();
+      }
+
       compileModule(*this, Module, ModuleFileName);
 
       // Try loading the module again.
@@ -1012,8 +1048,9 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
           ModuleManager->ReadAST(ModuleFileName,
                                  serialization::MK_Module, ImportLoc,
                                  ASTReader::ARR_None) != ASTReader::Success) {
+        getPreprocessorOpts().FailedModules->addFailed(ModuleName);
         KnownModules[Path[0].first] = 0;
-        return 0;
+        return ModuleLoadResult();
       }
 
       // Okay, we've rebuilt and now loaded the module.
@@ -1026,12 +1063,12 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       // FIXME: The ASTReader will already have complained, but can we showhorn
       // that diagnostic information into a more useful form?
       KnownModules[Path[0].first] = 0;
-      return 0;
+      return ModuleLoadResult();
 
     case ASTReader::Failure:
       // Already complained, but note now that we failed.
       KnownModules[Path[0].first] = 0;
-      return 0;
+      return ModuleLoadResult();
     }
     
     if (!Module) {
@@ -1050,7 +1087,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   
   // If we never found the module, fail.
   if (!Module)
-    return 0;
+    return ModuleLoadResult();
   
   // Verify that the rest of the module path actually corresponds to
   // a submodule.
@@ -1120,7 +1157,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
         << Module->getFullModuleName()
         << SourceRange(Path.front().second, Path.back().second);
       
-      return 0;
+      return ModuleLoadResult(0, true);
     }
 
     // Check whether this module is available.
@@ -1131,8 +1168,8 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
         << Feature
         << SourceRange(Path.front().second, Path.back().second);
       LastModuleImportLoc = ImportLoc;
-      LastModuleImportResult = 0;
-      return 0;
+      LastModuleImportResult = ModuleLoadResult();
+      return ModuleLoadResult();
     }
 
     ModuleManager->makeModuleVisible(Module, Visibility);
@@ -1151,6 +1188,6 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   }
   
   LastModuleImportLoc = ImportLoc;
-  LastModuleImportResult = Module;
-  return Module;
+  LastModuleImportResult = ModuleLoadResult(Module, false);
+  return LastModuleImportResult;
 }

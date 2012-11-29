@@ -17,16 +17,37 @@
 #include "clang/Basic/Module.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
 
 class IdentifierInfo;
-  
+class Module;
+
 /// \brief A sequence of identifier/location pairs used to describe a particular
 /// module or submodule, e.g., std.vector.
 typedef llvm::ArrayRef<std::pair<IdentifierInfo*, SourceLocation> > 
   ModuleIdPath;
-  
+
+/// \brief Describes the result of attempting to load a module.
+class ModuleLoadResult {
+  llvm::PointerIntPair<Module *, 1, bool> Storage;
+
+public:
+  ModuleLoadResult() : Storage() { }
+
+  ModuleLoadResult(Module *module, bool missingExpected)
+    : Storage(module, missingExpected) { }
+
+  operator Module *() const { return Storage.getPointer(); }
+
+  /// \brief Determines whether the module, which failed to load, was
+  /// actually a submodule that we expected to see (based on implying the
+  /// submodule from header structure), but didn't materialize in the actual
+  /// module.
+  bool isMissingExpected() const { return Storage.getInt(); }
+};
+
 /// \brief Abstract interface for a module loader.
 ///
 /// This abstract interface describes a module loader, which is responsible
@@ -55,9 +76,10 @@ public:
   ///
   /// \returns If successful, returns the loaded module. Otherwise, returns 
   /// NULL to indicate that the module could not be loaded.
-  virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
-                             Module::NameVisibilityKind Visibility,
-                             bool IsInclusionDirective) = 0;
+  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc,
+                                      ModuleIdPath Path,
+                                      Module::NameVisibilityKind Visibility,
+                                      bool IsInclusionDirective) = 0;
 };
   
 }
