@@ -4,6 +4,7 @@ add_llvm_library(LLVMInstrumentation
   BoundsChecking.cpp
   EdgeProfiling.cpp
   GCOVProfiling.cpp
+  MemorySanitizer.cpp
   Instrumentation.cpp
   OptimalEdgeProfiling.cpp
   PathProfiling.cpp
