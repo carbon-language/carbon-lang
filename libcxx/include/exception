@@ -143,7 +143,7 @@ public:
         {return !(__x == __y);}
 
     friend exception_ptr current_exception() _NOEXCEPT;
-    _LIBCPP_NORETURN friend void rethrow_exception(exception_ptr);
+    friend void rethrow_exception(exception_ptr);
 };
 
 template<class _Ep>
