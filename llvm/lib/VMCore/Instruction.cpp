@@ -468,6 +468,20 @@ bool Instruction::isAssociative(unsigned Opcode) {
          Opcode == Add || Opcode == Mul;
 }
 
+bool Instruction::isAssociative() const {
+  unsigned Opcode = getOpcode();
+  if (isAssociative(Opcode))
+    return true;
+
+  switch (Opcode) {
+  case FMul:
+  case FAdd:
+    return cast<FPMathOperator>(this)->hasUnsafeAlgebra();
+  default:
+    return false;
+  }
+}
+
 /// isCommutative - Return true if the instruction is commutative:
 ///
 ///   Commutative operators satisfy: (x op y) === (y op x)
