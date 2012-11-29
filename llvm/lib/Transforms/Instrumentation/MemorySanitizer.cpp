@@ -183,6 +183,8 @@ private:
   MDNode *ColdCallWeights;
   /// \brief The blacklist.
   OwningPtr<BlackList> BL;
+  /// \brief An empty volatile inline asm that prevents callback merge.
+  InlineAsm *EmptyAsm;
 
   friend class MemorySanitizerVisitor;
   friend class VarArgAMD64Helper;
@@ -295,6 +297,11 @@ bool MemorySanitizer::doInitialization(Module &M) {
   OriginTLS = new GlobalVariable(
     M, IRB.getInt32Ty(), false, GlobalVariable::ExternalLinkage, 0,
     "__msan_origin_tls", 0, GlobalVariable::GeneralDynamicTLSModel);
+
+  // We insert an empty inline asm after __msan_report* to avoid callback merge.
+  EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
+                            StringRef(""), StringRef(""),
+                            /*hasSideEffects=*/true);
   return true;
 }
 
@@ -391,6 +398,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       }
       CallInst *Call = IRB.CreateCall(MS.WarningFn);
       Call->setDebugLoc(OrigIns->getDebugLoc());
+      IRB.CreateCall(MS.EmptyAsm);
       DEBUG(dbgs() << "  CHECK: " << *Cmp << "\n");
     }
     DEBUG(dbgs() << "DONE:\n" << F);
