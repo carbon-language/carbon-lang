@@ -3,6 +3,7 @@
 // RUN: %clang -DSUB_I128 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=SUB_I128
 
 #include <stdint.h>
+#include <stdio.h>
 
 int main() {
   // These promote to 'int'.
@@ -11,7 +12,7 @@ int main() {
 
 #ifdef SUB_I32
   (void)(uint32_t(1) - uint32_t(2));
-  // CHECK-SUB_I32: usub-overflow.cpp:13:22: fatal error: unsigned integer overflow: 1 - 2 cannot be represented in type 'unsigned int'
+  // CHECK-SUB_I32: usub-overflow.cpp:[[@LINE-1]]:22: fatal error: unsigned integer overflow: 1 - 2 cannot be represented in type 'unsigned int'
 #endif
 
 #ifdef SUB_I64
@@ -20,7 +21,11 @@ int main() {
 #endif
 
 #ifdef SUB_I128
+# ifdef __SIZEOF_INT128__
   (void)((__uint128_t(1) << 126) - (__uint128_t(1) << 127));
-  // CHECK-SUB_I128: 0x40000000000000000000000000000000 - 0x80000000000000000000000000000000 cannot be represented in type 'unsigned __int128'
+# else
+  puts("__int128 not supported\n");
+# endif
+  // CHECK-SUB_I128: {{0x40000000000000000000000000000000 - 0x80000000000000000000000000000000 cannot be represented in type 'unsigned __int128'|__int128 not supported}}
 #endif
 }

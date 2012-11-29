@@ -3,6 +3,7 @@
 // RUN: %clang -DADD_I128 -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ADD_I128
 
 #include <stdint.h>
+#include <stdio.h>
 
 int main() {
   // These promote to 'int'.
@@ -12,7 +13,7 @@ int main() {
 #ifdef ADD_I32
   uint32_t k = 0x87654321;
   k += 0xedcba987;
-  // CHECK-ADD_I32: uadd-overflow.cpp:14:5: fatal error: unsigned integer overflow: 2271560481 + 3989547399 cannot be represented in type 'uint32_t' (aka 'unsigned int')
+  // CHECK-ADD_I32: uadd-overflow.cpp:[[@LINE-1]]:5: fatal error: unsigned integer overflow: 2271560481 + 3989547399 cannot be represented in type 'uint32_t' (aka 'unsigned int')
 #endif
 
 #ifdef ADD_I64
@@ -21,7 +22,11 @@ int main() {
 #endif
 
 #ifdef ADD_I128
+# ifdef __SIZEOF_INT128__
   (void)((__uint128_t(1) << 127) + (__uint128_t(1) << 127));
-  // CHECK-ADD_I128: 0x80000000000000000000000000000000 + 0x80000000000000000000000000000000 cannot be represented in type 'unsigned __int128'
+# else
+  puts("__int128 not supported");
+# endif
+  // CHECK-ADD_I128: {{0x80000000000000000000000000000000 \+ 0x80000000000000000000000000000000 cannot be represented in type 'unsigned __int128'|__int128 not supported}}
 #endif
 }

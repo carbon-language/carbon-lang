@@ -14,6 +14,7 @@
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 float Inf;
@@ -30,8 +31,10 @@ int main(int argc, char **argv) {
   float MaxFloatRepresentableAsUInt = 0xffffff00u;
   (unsigned int)MaxFloatRepresentableAsUInt; // ok
 
+#ifdef __SIZEOF_INT128__
   unsigned __int128 FloatMaxAsUInt128 = -((unsigned __int128)1 << 104);
   (void)(float)FloatMaxAsUInt128; // ok
+#endif
 
   // Build a '+Inf'.
   char InfVal[] = { 0x00, 0x00, 0x80, 0x7f };
@@ -71,8 +74,13 @@ int main(int argc, char **argv) {
 
     // Integer -> floating point overflow.
   case '6':
-    // CHECK-6: fatal error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'
+    // CHECK-6: {{fatal error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'|__int128 not supported}}
+#ifdef __SIZEOF_INT128__
     return (float)(FloatMaxAsUInt128 + 1);
+#else
+    puts("__int128 not supported");
+    return 0;
+#endif
   // FIXME: The backend cannot lower __fp16 operations on x86 yet.
   //case '7':
   //  (__fp16)65504; // ok
