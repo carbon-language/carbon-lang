@@ -170,8 +170,8 @@ private:
   Value *MsanSetAllocaOriginFn;
   /// \brief Run-time helper that poisons stack on function entry.
   Value *MsanPoisonStackFn;
-  /// \brief The actual "memmove" function.
-  Value *MemmoveFn;
+  /// \brief MSan runtime replacements for memmove, memcpy and memset.
+  Value *MemmoveFn, *MemcpyFn, *MemsetFn;
 
   /// \brief Address mask used in application-to-shadow address calculation.
   /// ShadowAddr is computed as ApplicationAddr & ~ShadowMask.
@@ -266,7 +266,13 @@ bool MemorySanitizer::doInitialization(Module &M) {
   MsanPoisonStackFn = M.getOrInsertFunction(
     "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy, NULL);
   MemmoveFn = M.getOrInsertFunction(
-    "memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    "__msan_memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IntptrTy, NULL);
+  MemcpyFn = M.getOrInsertFunction(
+    "__msan_memcpy", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IntptrTy, NULL);
+  MemsetFn = M.getOrInsertFunction(
+    "__msan_memset", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt32Ty(),
     IntptrTy, NULL);
 
   // Create globals.
@@ -969,35 +975,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   void visitAShr(BinaryOperator &I) { handleShift(I); }
   void visitLShr(BinaryOperator &I) { handleShift(I); }
 
-  void visitMemSetInst(MemSetInst &I) {
-    IRBuilder<> IRB(&I);
-    Value *Ptr = I.getArgOperand(0);
-    Value *Val = I.getArgOperand(1);
-    Value *ShadowPtr = getShadowPtr(Ptr, Val->getType(), IRB);
-    Value *ShadowVal = getCleanShadow(Val);
-    Value *Size = I.getArgOperand(2);
-    unsigned Align = I.getAlignment();
-    bool isVolatile = I.isVolatile();
-
-    IRB.CreateMemSet(ShadowPtr, ShadowVal, Size, Align, isVolatile);
-  }
-
-  void visitMemCpyInst(MemCpyInst &I) {
-    IRBuilder<> IRB(&I);
-    Value *Dst = I.getArgOperand(0);
-    Value *Src = I.getArgOperand(1);
-    Type *ElementType = dyn_cast<PointerType>(Dst->getType())->getElementType();
-    Value *ShadowDst = getShadowPtr(Dst, ElementType, IRB);
-    Value *ShadowSrc = getShadowPtr(Src, ElementType, IRB);
-    Value *Size = I.getArgOperand(2);
-    unsigned Align = I.getAlignment();
-    bool isVolatile = I.isVolatile();
-
-    IRB.CreateMemCpy(ShadowDst, ShadowSrc, Size, Align, isVolatile);
-    if (ClTrackOrigins)
-      IRB.CreateCall3(MS.MsanCopyOriginFn, Dst, Src, Size);
-  }
-
   /// \brief Instrument llvm.memmove
   ///
   /// At this point we don't know if llvm.memmove will be inlined or not.
@@ -1007,14 +984,38 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// we will memove the shadow twice: which is bad in case
   /// of overlapping regions. So, we simply lower the intrinsic to a call.
   ///
-  /// Similar situation exists for memcpy and memset, but for those functions
-  /// calling instrumentation twice does not lead to incorrect results.
+  /// Similar situation exists for memcpy and memset.
   void visitMemMoveInst(MemMoveInst &I) {
     IRBuilder<> IRB(&I);
     IRB.CreateCall3(
       MS.MemmoveFn,
       IRB.CreatePointerCast(I.getArgOperand(0), IRB.getInt8PtrTy()),
       IRB.CreatePointerCast(I.getArgOperand(1), IRB.getInt8PtrTy()),
+      IRB.CreateIntCast(I.getArgOperand(2), MS.IntptrTy, false));
+    I.eraseFromParent();
+  }
+
+  // Similar to memmove: avoid copying shadow twice.
+  // This is somewhat unfortunate as it may slowdown small constant memcpys.
+  // FIXME: consider doing manual inline for small constant sizes and proper
+  // alignment.
+  void visitMemCpyInst(MemCpyInst &I) {
+    IRBuilder<> IRB(&I);
+    IRB.CreateCall3(
+      MS.MemcpyFn,
+      IRB.CreatePointerCast(I.getArgOperand(0), IRB.getInt8PtrTy()),
+      IRB.CreatePointerCast(I.getArgOperand(1), IRB.getInt8PtrTy()),
+      IRB.CreateIntCast(I.getArgOperand(2), MS.IntptrTy, false));
+    I.eraseFromParent();
+  }
+
+  // Same as memcpy.
+  void visitMemSetInst(MemSetInst &I) {
+    IRBuilder<> IRB(&I);
+    IRB.CreateCall3(
+      MS.MemsetFn,
+      IRB.CreatePointerCast(I.getArgOperand(0), IRB.getInt8PtrTy()),
+      IRB.CreateIntCast(I.getArgOperand(1), IRB.getInt32Ty(), false),
       IRB.CreateIntCast(I.getArgOperand(2), MS.IntptrTy, false));
     I.eraseFromParent();
   }
