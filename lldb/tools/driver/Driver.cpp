@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <inttypes.h>
 
 #include <string>
 
@@ -919,7 +920,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
         case eStateDetached:
             {
                 char message[1024];
-                int message_len = ::snprintf (message, sizeof(message), "Process %llu %s\n", process.GetProcessID(),
+                int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " %s\n", process.GetProcessID(),
                                               m_debugger.StateAsCString (event_state));
                 m_io_channel_ap->OutWrite(message, message_len, ASYNC);
             }
@@ -946,7 +947,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             {
                 // FIXME: Do we want to report this, or would that just be annoyingly chatty?
                 char message[1024];
-                int message_len = ::snprintf (message, sizeof(message), "Process %llu stopped and was programmatically restarted.\n",
+                int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " stopped and was programmatically restarted.\n",
                                               process.GetProcessID());
                 m_io_channel_ap->OutWrite(message, message_len, ASYNC);
             }
@@ -1423,7 +1424,7 @@ Driver::MainLoop ()
                 {
                     command_str.append("-p ");
                     char pid_buffer[32];
-                    ::snprintf (pid_buffer, sizeof(pid_buffer), "%llu", m_option_data.m_process_pid);
+                    ::snprintf (pid_buffer, sizeof(pid_buffer), "%" PRIu64, m_option_data.m_process_pid);
                     command_str.append(pid_buffer);
                 }
                 else 

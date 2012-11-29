@@ -322,7 +322,7 @@ SBData::GetUnsignedInt64 (lldb::SBError& error, uint32_t offset)
     }
     if (log)
         log->Printf ("SBData::GetUnsignedInt64 (error=%p,offset=%d) => "
-                     "(%lld)", error.get(), offset, value);
+                     "(%" PRId64 ")", error.get(), offset, value);
     return value;
 }
 
@@ -410,7 +410,7 @@ SBData::GetSignedInt64 (lldb::SBError& error, uint32_t offset)
     }
     if (log)
         log->Printf ("SBData::GetSignedInt64 (error=%p,offset=%d) => "
-                     "(%lld)", error.get(), offset, value);
+                     "(%" PRId64 ")", error.get(), offset, value);
     return value;
 }
 

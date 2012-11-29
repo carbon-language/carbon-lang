@@ -273,7 +273,7 @@ ObjectContainerBSDArchive::CreateInstance
     if (file && data_sp && ObjectContainerBSDArchive::MagicBytesMatch(data))
     {
         Timer scoped_timer (__PRETTY_FUNCTION__,
-                            "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%8.8llx, file_size = 0x%8.8llx)",
+                            "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%8.8" PRIx64 ", file_size = 0x%8.8" PRIx64 ")",
                             module_sp->GetFileSpec().GetDirectory().AsCString(),
                             module_sp->GetFileSpec().GetFilename().AsCString(),
                             file, (uint64_t) offset, (uint64_t) length);

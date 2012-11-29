@@ -92,7 +92,7 @@ GDBRemoteCommunication::History::Dump (lldb_private::Stream &strm) const
         const Entry &entry = m_packets[idx];
         if (entry.type == ePacketTypeInvalid || entry.packet.empty())
             break;
-        strm.Printf ("history[%u] tid=0x%4.4llx <%4u> %s packet: %s\n",
+        strm.Printf ("history[%u] tid=0x%4.4" PRIx64 " <%4u> %s packet: %s\n",
                      entry.packet_idx,
                      entry.tid,
                      entry.bytes_transmitted,
@@ -116,7 +116,7 @@ GDBRemoteCommunication::History::Dump (lldb_private::Log *log) const
             const Entry &entry = m_packets[idx];
             if (entry.type == ePacketTypeInvalid || entry.packet.empty())
                 break;
-            log->Printf ("history[%u] tid=0x%4.4llx <%4u> %s packet: %s",
+            log->Printf ("history[%u] tid=0x%4.4" PRIx64 " <%4u> %s packet: %s",
                          entry.packet_idx,
                          entry.tid,
                          entry.bytes_transmitted,
@@ -298,7 +298,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
         
         if (log)
-            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %llu",
+            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %" PRIu64,
                          __PRETTY_FUNCTION__,
                          timeout_usec, 
                          Communication::ConnectionStatusAsCString (status),

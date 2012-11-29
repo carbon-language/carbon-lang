@@ -1298,7 +1298,7 @@ StackFrame::Dump (Stream *strm, bool show_frame_index, bool show_fullpaths)
         strm->Printf("frame #%u: ", m_frame_index);
     ExecutionContext exe_ctx (shared_from_this());
     Target *target = exe_ctx.GetTargetPtr();
-    strm->Printf("0x%0*llx ", 
+    strm->Printf("0x%0*" PRIx64 " ",
                  target ? (target->GetArchitecture().GetAddressByteSize() * 2) : 16,
                  GetFrameCodeAddress().GetLoadAddress(target));
     GetSymbolContext(eSymbolContextEverything);

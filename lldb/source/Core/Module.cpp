@@ -103,7 +103,7 @@ namespace lldb {
         Mutex::Locker locker (Module::GetAllocationModuleCollectionMutex());
         ModuleCollection &modules = GetModuleCollection();
         const size_t count = modules.size();
-        printf ("%s: %llu modules:\n", __PRETTY_FUNCTION__, (uint64_t)count);
+        printf ("%s: %" PRIu64 " modules:\n", __PRETTY_FUNCTION__, (uint64_t)count);
         for (size_t i=0; i<count; ++i)
         {
             
@@ -263,7 +263,7 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
                 if (m_objfile_sp)
                 {
                     StreamString s;
-                    s.Printf("0x%16.16llx", header_addr);
+                    s.Printf("0x%16.16" PRIx64, header_addr);
                     m_object_name.SetCString (s.GetData());
 
                     // Once we get the object file, update our module with the object file's
@@ -429,7 +429,7 @@ bool
 Module::ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr)
 {
     Mutex::Locker locker (m_mutex);
-    Timer scoped_timer(__PRETTY_FUNCTION__, "Module::ResolveFileAddress (vm_addr = 0x%llx)", vm_addr);
+    Timer scoped_timer(__PRETTY_FUNCTION__, "Module::ResolveFileAddress (vm_addr = 0x%" PRIx64 ")", vm_addr);
     ObjectFile* ofile = GetObjectFile();
     if (ofile)
         return so_addr.ResolveAddressUsingFileSections(vm_addr, ofile->GetSectionList());

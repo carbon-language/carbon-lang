@@ -71,7 +71,7 @@ print_dwarf_exp_op (Stream &s,
     {
         uint = data.GetULEB128(offset_ptr);
         sint = data.GetSLEB128(offset_ptr);
-        s.Printf("%llu %lli", uint, sint);
+        s.Printf("%" PRIu64 " %" PRIi64, uint, sint);
         return 0;
     }
     if (opcode_class != DRC_ONEOPERAND)
@@ -156,16 +156,16 @@ print_dwarf_exp_op (Stream &s,
 
     switch (size)
     {
-    case -1:    sint = (int8_t)     data.GetU8(offset_ptr);     s.Printf("%+lli", sint); break;
-    case -2:    sint = (int16_t)    data.GetU16(offset_ptr);    s.Printf("%+lli", sint); break;
-    case -4:    sint = (int32_t)    data.GetU32(offset_ptr);    s.Printf("%+lli", sint); break;
-    case -8:    sint = (int64_t)    data.GetU64(offset_ptr);    s.Printf("%+lli", sint); break;
-    case -128:  sint = data.GetSLEB128(offset_ptr);             s.Printf("%+lli", sint); break;
-    case 1:     uint = data.GetU8(offset_ptr);                  s.Printf("0x%2.2llx", uint); break;
-    case 2:     uint = data.GetU16(offset_ptr);                 s.Printf("0x%4.4llx", uint); break;
-    case 4:     uint = data.GetU32(offset_ptr);                 s.Printf("0x%8.8llx", uint); break;
-    case 8:     uint = data.GetU64(offset_ptr);                 s.Printf("0x%16.16llx", uint); break;
-    case 128:   uint = data.GetULEB128(offset_ptr);             s.Printf("0x%llx", uint); break;
+    case -1:    sint = (int8_t)     data.GetU8(offset_ptr);     s.Printf("%+" PRIi64, sint); break;
+    case -2:    sint = (int16_t)    data.GetU16(offset_ptr);    s.Printf("%+" PRIi64, sint); break;
+    case -4:    sint = (int32_t)    data.GetU32(offset_ptr);    s.Printf("%+" PRIi64, sint); break;
+    case -8:    sint = (int64_t)    data.GetU64(offset_ptr);    s.Printf("%+" PRIi64, sint); break;
+    case -128:  sint = data.GetSLEB128(offset_ptr);             s.Printf("%+" PRIi64, sint); break;
+    case 1:     uint = data.GetU8(offset_ptr);                  s.Printf("0x%2.2" PRIx64, uint); break;
+    case 2:     uint = data.GetU16(offset_ptr);                 s.Printf("0x%4.4" PRIx64, uint); break;
+    case 4:     uint = data.GetU32(offset_ptr);                 s.Printf("0x%8.8" PRIx64, uint); break;
+    case 8:     uint = data.GetU64(offset_ptr);                 s.Printf("0x%16.16" PRIx64, uint); break;
+    case 128:   uint = data.GetULEB128(offset_ptr);             s.Printf("0x%" PRIx64, uint); break;
     }
 
     return 0;

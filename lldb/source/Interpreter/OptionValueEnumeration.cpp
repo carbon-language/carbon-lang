@@ -50,7 +50,7 @@ OptionValueEnumeration::DumpValue (const ExecutionContext *exe_ctx, Stream &strm
                 return;
             }
         }
-        strm.Printf("%llu", (uint64_t)m_current_value);
+        strm.Printf("%" PRIu64, (uint64_t)m_current_value);
     }
 }
 

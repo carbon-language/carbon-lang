@@ -186,7 +186,7 @@ ClangFunction::CompileFunction (Stream &errors)
         char arg_buf[32];
         args_buffer.append ("    ");
         args_buffer.append (type_name);
-        snprintf(arg_buf, 31, "arg_%llu", (uint64_t)i);
+        snprintf(arg_buf, 31, "arg_%" PRIu64, (uint64_t)i);
         args_buffer.push_back (' ');
         args_buffer.append (arg_buf);
         args_buffer.append (";\n");
@@ -389,7 +389,7 @@ ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_add
 
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
-        log->Printf ("Call Address: 0x%llx Struct Address: 0x%llx.\n", m_jit_start_addr, args_addr_ref);
+        log->Printf ("Call Address: 0x%" PRIx64 " Struct Address: 0x%" PRIx64 ".\n", m_jit_start_addr, args_addr_ref);
         
     return true;
 }

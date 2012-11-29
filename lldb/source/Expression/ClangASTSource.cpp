@@ -1431,14 +1431,14 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
     {
         log->Printf("LRT[%u] returned:", current_id);
         log->Printf("LRT[%u]   Original = (RecordDecl*)%p", current_id, origin_record.decl);
-        log->Printf("LRT[%u]   Size = %lld", current_id, size);
-        log->Printf("LRT[%u]   Alignment = %lld", current_id, alignment);
+        log->Printf("LRT[%u]   Size = %" PRId64, current_id, size);
+        log->Printf("LRT[%u]   Alignment = %" PRId64, current_id, alignment);
         log->Printf("LRT[%u]   Fields:", current_id);
         for (RecordDecl::field_iterator fi = record->field_begin(), fe = record->field_end();
              fi != fe;
              ++fi)
         {
-            log->Printf("LRT[%u]     (FieldDecl*)%p, Name = '%s', Offset = %lld bits",
+            log->Printf("LRT[%u]     (FieldDecl*)%p, Name = '%s', Offset = %" PRId64 " bits",
                         current_id,
                         *fi,
                         fi->getNameAsString().c_str(),
@@ -1459,7 +1459,7 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
                 DeclFromParser <RecordDecl> base_record(base_record_type->getDecl());
                 DeclFromParser <CXXRecordDecl> base_cxx_record = DynCast<CXXRecordDecl>(base_record);
                 
-                log->Printf("LRT[%u]     %s(CXXRecordDecl*)%p, Name = '%s', Offset = %lld chars",
+                log->Printf("LRT[%u]     %s(CXXRecordDecl*)%p, Name = '%s', Offset = %" PRId64 " chars",
                             current_id,
                             (is_virtual ? "Virtual " : ""),
                             base_cxx_record.decl,

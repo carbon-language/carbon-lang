@@ -787,7 +787,7 @@ ObjectFilePECOFF::DumpOptCOFFHeader(Stream *s, const coff_opt_header_t& header)
     s->Printf ("  entry                   = 0x%8.8x\n", header.entry);
     s->Printf ("  code_offset             = 0x%8.8x\n", header.code_offset);
     s->Printf ("  data_offset             = 0x%8.8x\n", header.data_offset);
-    s->Printf ("  image_base              = 0x%16.16llx\n", header.image_base);
+    s->Printf ("  image_base              = 0x%16.16" PRIx64 "\n", header.image_base);
     s->Printf ("  sect_alignment          = 0x%8.8x\n", header.sect_alignment);
     s->Printf ("  file_alignment          = 0x%8.8x\n", header.file_alignment);
     s->Printf ("  major_os_system_version = 0x%4.4x\n", header.major_os_system_version);
@@ -802,10 +802,10 @@ ObjectFilePECOFF::DumpOptCOFFHeader(Stream *s, const coff_opt_header_t& header)
     s->Printf ("  checksum                = 0x%8.8x\n", header.checksum);
     s->Printf ("  subsystem               = 0x%4.4x\n", header.subsystem);
     s->Printf ("  dll_flags               = 0x%4.4x\n", header.dll_flags);
-    s->Printf ("  stack_reserve_size      = 0x%16.16llx\n", header.stack_reserve_size);
-    s->Printf ("  stack_commit_size       = 0x%16.16llx\n", header.stack_commit_size);
-    s->Printf ("  heap_reserve_size       = 0x%16.16llx\n", header.heap_reserve_size);
-    s->Printf ("  heap_commit_size        = 0x%16.16llx\n", header.heap_commit_size);
+    s->Printf ("  stack_reserve_size      = 0x%16.16" PRIx64 "\n", header.stack_reserve_size);
+    s->Printf ("  stack_commit_size       = 0x%16.16" PRIx64 "\n", header.stack_commit_size);
+    s->Printf ("  heap_reserve_size       = 0x%16.16" PRIx64 "\n", header.heap_reserve_size);
+    s->Printf ("  heap_commit_size        = 0x%16.16" PRIx64 "\n", header.heap_commit_size);
     s->Printf ("  loader_flags            = 0x%8.8x\n", header.loader_flags);
     s->Printf ("  num_data_dir_entries    = 0x%8.8zx\n", header.data_dirs.size());
     uint32_t i;

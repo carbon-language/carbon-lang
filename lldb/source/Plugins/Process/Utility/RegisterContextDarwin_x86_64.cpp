@@ -491,7 +491,7 @@ RegisterContextDarwin_x86_64::LogGPR(Log *log, const char *format, ...)
         for (uint32_t i=0; i<k_num_gpr_registers; i++)
         {
             uint32_t reg = gpr_rax + i;
-            log->Printf("%12s = 0x%16.16llx", g_register_infos[reg].name, (&gpr.rax)[reg]);
+            log->Printf("%12s = 0x%16.16" PRIx64, g_register_infos[reg].name, (&gpr.rax)[reg]);
         }
     }
 }

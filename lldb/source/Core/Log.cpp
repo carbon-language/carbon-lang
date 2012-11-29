@@ -100,12 +100,12 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_TIMESTAMP))
         {
             struct timeval tv = TimeValue::Now().GetAsTimeVal();
-            header.Printf ("%9ld.%6.6d ", tv.tv_sec, tv.tv_usec);
+            header.Printf ("%9ld.%6.6ld ", tv.tv_sec, tv.tv_usec);
         }
 
         // Add the process and thread if requested
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD))
-            header.Printf ("[%4.4x/%4.4llx]: ", getpid(), Host::GetCurrentThreadID());
+            header.Printf ("[%4.4x/%4.4" PRIx64 "]: ", getpid(), Host::GetCurrentThreadID());
 
         // Add the process and thread if requested
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_THREAD_NAME))

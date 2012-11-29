@@ -215,14 +215,14 @@ StopInfoMachException::GetDescription ()
         if (exc_desc)
             strm.PutCString(exc_desc);
         else
-            strm.Printf("EXC_??? (%llu)", m_value);
+            strm.Printf("EXC_??? (%" PRIu64 ")", m_value);
 
         if (m_exc_data_count >= 1)
         {
             if (code_desc)
                 strm.Printf(" (%s=%s", code_label, code_desc);
             else
-                strm.Printf(" (%s=%llu", code_label, m_exc_code);
+                strm.Printf(" (%s=%" PRIu64, code_label, m_exc_code);
         }
 
         if (m_exc_data_count >= 2)
@@ -230,7 +230,7 @@ StopInfoMachException::GetDescription ()
             if (subcode_desc)
                 strm.Printf(", %s=%s", subcode_label, subcode_desc);
             else
-                strm.Printf(", %s=0x%llx", subcode_label, m_exc_subcode);
+                strm.Printf(", %s=0x%" PRIx64, subcode_label, m_exc_subcode);
         }
         
         if (m_exc_data_count > 0)

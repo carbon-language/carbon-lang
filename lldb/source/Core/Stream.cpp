@@ -14,6 +14,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <inttypes.h>
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -85,7 +87,7 @@ Stream::PutSLEB128 (int64_t sval)
     }
     else
     {
-        bytes_written = Printf ("0x%lli", sval);
+        bytes_written = Printf ("0x%" PRIi64, sval);
     }
 
     return bytes_written;
@@ -117,7 +119,7 @@ Stream::PutULEB128 (uint64_t uval)
     }
     else
     {
-        bytes_written = Printf ("0x%llx", uval);
+        bytes_written = Printf ("0x%" PRIx64, uval);
     }
     return bytes_written;
 }
@@ -157,8 +159,8 @@ Stream::Address (uint64_t addr, int addr_size, const char *prefix, const char *s
     if (suffix == NULL)
         suffix = "";
 //    int addr_width = m_addr_size << 1;
-//    Printf ("%s0x%0*llx%s", prefix, addr_width, addr, suffix);
-    Printf ("%s0x%0*llx%s", prefix, addr_size * 2, (uint64_t)addr, suffix);
+//    Printf ("%s0x%0*" PRIx64 "%s", prefix, addr_width, addr, suffix);
+    Printf ("%s0x%0*" PRIx64 "%s", prefix, addr_size * 2, (uint64_t)addr, suffix);
 }
 
 //------------------------------------------------------------------
@@ -364,7 +366,7 @@ Stream::operator<< (int32_t sval)
 Stream&
 Stream::operator<< (int64_t sval)
 {
-    Printf ("%lli", sval);
+    Printf ("%" PRIi64, sval);
     return *this;
 }
 

@@ -469,7 +469,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                         else
                         {
                             Host::SystemLog (Host::eSystemLogWarning, 
-                                             "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                             "warning: unable to find and load segment named '%s' at 0x%" PRIx64 " in '%s/%s' in macosx dynamic loader plug-in.\n",
                                              info.segments[i].name.AsCString("<invalid>"),
                                              (uint64_t)new_section_load_addr,
                                              image_object_file->GetFileSpec().GetDirectory().AsCString(),
@@ -795,7 +795,7 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
     {
         if (log)
         {
-            log->Printf ("Adding new image at address=0x%16.16llx.", image_infos[idx].address);
+            log->Printf ("Adding new image at address=0x%16.16" PRIx64 ".", image_infos[idx].address);
             image_infos[idx].PutToLog (log.get());
         }
         
@@ -907,7 +907,7 @@ DynamicLoaderMacOSXDYLD::RemoveModulesUsingImageInfosAddress (lldb::addr_t image
     {        
         if (log)
         {
-            log->Printf ("Removing module at address=0x%16.16llx.", image_infos[idx].address);
+            log->Printf ("Removing module at address=0x%16.16" PRIx64 ".", image_infos[idx].address);
             image_infos[idx].PutToLog (log.get());
         }
             
@@ -1376,12 +1376,12 @@ DynamicLoaderMacOSXDYLD::Segment::PutToLog (Log *log, lldb::addr_t slide) const
     if (log)
     {
         if (slide == 0)
-            log->Printf ("\t\t%16s [0x%16.16llx - 0x%16.16llx)", 
+            log->Printf ("\t\t%16s [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")",
                          name.AsCString(""), 
                          vmaddr + slide, 
                          vmaddr + slide + vmsize);
         else
-            log->Printf ("\t\t%16s [0x%16.16llx - 0x%16.16llx) slide = 0x%llx", 
+            log->Printf ("\t\t%16s [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ") slide = 0x%" PRIx64,
                          name.AsCString(""), 
                          vmaddr + slide, 
                          vmaddr + slide + vmsize, 
@@ -1416,7 +1416,7 @@ DynamicLoaderMacOSXDYLD::DYLDImageInfo::PutToLog (Log *log) const
     {
         if (u)
         {
-            log->Printf("\t                           modtime=0x%8.8llx uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s/%s' (UNLOADED)",
+            log->Printf("\t                           modtime=0x%8.8" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s/%s' (UNLOADED)",
                         mod_date,
                         u[ 0], u[ 1], u[ 2], u[ 3],
                         u[ 4], u[ 5], u[ 6], u[ 7],
@@ -1426,7 +1426,7 @@ DynamicLoaderMacOSXDYLD::DYLDImageInfo::PutToLog (Log *log) const
                         file_spec.GetFilename().AsCString());
         }
         else
-            log->Printf("\t                           modtime=0x%8.8llx path='%s/%s' (UNLOADED)",
+            log->Printf("\t                           modtime=0x%8.8" PRIx64 " path='%s/%s' (UNLOADED)",
                         mod_date,
                         file_spec.GetDirectory().AsCString(),
                         file_spec.GetFilename().AsCString());
@@ -1435,7 +1435,7 @@ DynamicLoaderMacOSXDYLD::DYLDImageInfo::PutToLog (Log *log) const
     {
         if (u)
         {
-            log->Printf("\taddress=0x%16.16llx modtime=0x%8.8llx uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s/%s'",
+            log->Printf("\taddress=0x%16.16" PRIx64 " modtime=0x%8.8" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s/%s'",
                         address,
                         mod_date,
                         u[ 0], u[ 1], u[ 2], u[ 3],
@@ -1447,7 +1447,7 @@ DynamicLoaderMacOSXDYLD::DYLDImageInfo::PutToLog (Log *log) const
         }
         else
         {
-            log->Printf("\taddress=0x%16.16llx modtime=0x%8.8llx path='%s/%s'",
+            log->Printf("\taddress=0x%16.16" PRIx64 " modtime=0x%8.8" PRIx64 " path='%s/%s'",
                         address,
                         mod_date,
                         file_spec.GetDirectory().AsCString(),
@@ -1470,7 +1470,7 @@ DynamicLoaderMacOSXDYLD::PutToLog(Log *log) const
         return;
 
     Mutex::Locker locker(m_mutex);
-    log->Printf("dyld_all_image_infos = { version=%d, count=%d, addr=0x%8.8llx, notify=0x%8.8llx }",
+    log->Printf("dyld_all_image_infos = { version=%d, count=%d, addr=0x%8.8" PRIx64 ", notify=0x%8.8" PRIx64 " }",
                     m_dyld_all_image_infos.version,
                     m_dyld_all_image_infos.dylib_info_count,
                     (uint64_t)m_dyld_all_image_infos.dylib_info_addr,

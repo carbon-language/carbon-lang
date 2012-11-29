@@ -46,7 +46,7 @@ Opcode::Dump (Stream *s, uint32_t min_byte_width)
         break;
 
     case Opcode::eType64:
-        bytes_written = s->Printf ("0x%16.16llx", m_data.inst64); 
+        bytes_written = s->Printf ("0x%16.16" PRIx64, m_data.inst64);
         break;
 
     case Opcode::eTypeBytes:

@@ -1186,9 +1186,9 @@ ObjectFileELF::DumpELFHeader(Stream *s, const ELFHeader &header)
     DumpELFHeader_e_type(s, header.e_type);
     s->Printf("\ne_machine   = 0x%4.4x\n", header.e_machine);
     s->Printf("e_version   = 0x%8.8x\n", header.e_version);
-    s->Printf("e_entry     = 0x%8.8llx\n", header.e_entry);
-    s->Printf("e_phoff     = 0x%8.8llx\n", header.e_phoff);
-    s->Printf("e_shoff     = 0x%8.8llx\n", header.e_shoff);
+    s->Printf("e_entry     = 0x%8.8" PRIx64 "\n", header.e_entry);
+    s->Printf("e_phoff     = 0x%8.8" PRIx64 "\n", header.e_phoff);
+    s->Printf("e_shoff     = 0x%8.8" PRIx64 "\n", header.e_shoff);
     s->Printf("e_flags     = 0x%8.8x\n", header.e_flags);
     s->Printf("e_ehsize    = 0x%4.4x\n", header.e_ehsize);
     s->Printf("e_phentsize = 0x%4.4x\n", header.e_phentsize);
@@ -1246,11 +1246,11 @@ void
 ObjectFileELF::DumpELFProgramHeader(Stream *s, const ELFProgramHeader &ph)
 {
     DumpELFProgramHeader_p_type(s, ph.p_type);
-    s->Printf(" %8.8llx %8.8llx %8.8llx", ph.p_offset, ph.p_vaddr, ph.p_paddr);
-    s->Printf(" %8.8llx %8.8llx %8.8x (", ph.p_filesz, ph.p_memsz, ph.p_flags);
+    s->Printf(" %8.8" PRIx64 " %8.8" PRIx64 " %8.8" PRIx64, ph.p_offset, ph.p_vaddr, ph.p_paddr);
+    s->Printf(" %8.8" PRIx64 " %8.8" PRIx64 " %8.8x (", ph.p_filesz, ph.p_memsz, ph.p_flags);
 
     DumpELFProgramHeader_p_flags(s, ph.p_flags);
-    s->Printf(") %8.8llx", ph.p_align);
+    s->Printf(") %8.8" PRIx64, ph.p_align);
 }
 
 //----------------------------------------------------------------------
@@ -1331,11 +1331,11 @@ ObjectFileELF::DumpELFSectionHeader(Stream *s, const ELFSectionHeader &sh)
 {
     s->Printf("%8.8x ", sh.sh_name);
     DumpELFSectionHeader_sh_type(s, sh.sh_type);
-    s->Printf(" %8.8llx (", sh.sh_flags);
+    s->Printf(" %8.8" PRIx64 " (", sh.sh_flags);
     DumpELFSectionHeader_sh_flags(s, sh.sh_flags);
-    s->Printf(") %8.8llx %8.8llx %8.8llx", sh.sh_addr, sh.sh_offset, sh.sh_size);
+    s->Printf(") %8.8" PRIx64 " %8.8" PRIx64 " %8.8" PRIx64, sh.sh_addr, sh.sh_offset, sh.sh_size);
     s->Printf(" %8.8x %8.8x", sh.sh_link, sh.sh_info);
-    s->Printf(" %8.8llx %8.8llx", sh.sh_addralign, sh.sh_entsize);
+    s->Printf(" %8.8" PRIx64 " %8.8" PRIx64, sh.sh_addralign, sh.sh_entsize);
 }
 
 //----------------------------------------------------------------------

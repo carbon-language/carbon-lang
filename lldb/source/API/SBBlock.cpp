@@ -183,7 +183,7 @@ SBBlock::GetDescription (SBStream &description)
     if (m_opaque_ptr)
     {
         lldb::user_id_t id = m_opaque_ptr->GetID();
-        strm.Printf ("Block: {id: %llu} ", id);
+        strm.Printf ("Block: {id: %" PRIu64 "} ", id);
         if (IsInlined())
         {
             strm.Printf (" (inlined, '%s') ", GetInlinedName());

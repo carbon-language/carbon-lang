@@ -1408,7 +1408,7 @@ DataExtractor::Dump (Stream *s,
                 s->EOL();
             }
             if (base_addr != LLDB_INVALID_ADDRESS)
-                s->Printf ("0x%8.8llx: ", (uint64_t)(base_addr + (offset - start_offset)));
+                s->Printf ("0x%8.8" PRIx64 ": ", (uint64_t)(base_addr + (offset - start_offset)));
             line_start_offset = offset;
         }
         else
@@ -1498,7 +1498,7 @@ DataExtractor::Dump (Stream *s,
                         if (item_byte_size == 1)
                             s->Printf ("\\x%2.2x", (uint8_t)ch); 
                         else
-                            s->Printf ("%llu", ch); 
+                            s->Printf ("%" PRIu64, ch);
                         break;
                     }
                 }
@@ -1516,7 +1516,7 @@ DataExtractor::Dump (Stream *s,
         case eFormatEnum:       // Print enum value as a signed integer when we don't get the enum type
         case eFormatDecimal:
             if (item_byte_size <= 8)
-                s->Printf ("%lld", GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
+                s->Printf ("%" PRId64, GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             else
             {
                 const bool is_signed = true;
@@ -1527,7 +1527,7 @@ DataExtractor::Dump (Stream *s,
 
         case eFormatUnsigned:
             if (item_byte_size <= 8)
-                s->Printf ("%llu", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
+                s->Printf ("%" PRIu64, GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             else
             {
                 const bool is_signed = false;
@@ -1538,7 +1538,7 @@ DataExtractor::Dump (Stream *s,
 
         case eFormatOctal:
             if (item_byte_size <= 8)
-                s->Printf ("0%llo", GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
+                s->Printf ("0%" PRIo64, GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             else
             {
                 const bool is_signed = false;
@@ -1632,8 +1632,8 @@ DataExtractor::Dump (Stream *s,
                 
                 if (complex_int_byte_size <= 8)
                 {
-                    s->Printf("%llu", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
-                    s->Printf(" + %llui", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
+                    s->Printf("%" PRIu64, GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
+                    s->Printf(" + %" PRIu64 "i", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
                 }
                 else
                 {
@@ -1682,7 +1682,7 @@ DataExtractor::Dump (Stream *s,
                 bool wantsuppercase  = (item_format == eFormatHexUppercase);
                 if (item_byte_size <= 8)
                 {
-                    s->Printf(wantsuppercase ? "0x%*.*llX" : "0x%*.*llx", 2 * item_byte_size, 2 * item_byte_size, GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
+                    s->Printf(wantsuppercase ? "0x%*.*" PRIX64 : "0x%*.*" PRIx64, 2 * item_byte_size, 2 * item_byte_size, GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
                 }
                 else
                 {
@@ -1746,7 +1746,7 @@ DataExtractor::Dump (Stream *s,
         case eFormatAddressInfo:
             {
                 addr_t addr = GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset);
-                s->Printf("0x%*.*llx", 2 * item_byte_size, 2 * item_byte_size, addr);
+                s->Printf("0x%*.*" PRIx64, 2 * item_byte_size, 2 * item_byte_size, addr);
                 if (exe_scope)
                 {
                     TargetSP target_sp (exe_scope->CalculateTarget());
@@ -1923,7 +1923,7 @@ DataExtractor::PutToLog
             }
             // Reset string offset and fill the current line string with address:
             if (base_addr != LLDB_INVALID_ADDRESS)
-                sstr.Printf("0x%8.8llx:", (uint64_t)(base_addr + (offset - start_offset)));
+                sstr.Printf("0x%8.8" PRIx64 ":", (uint64_t)(base_addr + (offset - start_offset)));
         }
 
         switch (type)
@@ -1938,10 +1938,10 @@ DataExtractor::PutToLog
                 break;
             case TypeUInt16:  sstr.Printf (format ? format : " %4.4x",       GetU16(&offset)); break;
             case TypeUInt32:  sstr.Printf (format ? format : " %8.8x",       GetU32(&offset)); break;
-            case TypeUInt64:  sstr.Printf (format ? format : " %16.16llx",   GetU64(&offset)); break;
-            case TypePointer: sstr.Printf (format ? format : " 0x%llx",      GetAddress(&offset)); break;
-            case TypeULEB128: sstr.Printf (format ? format : " 0x%llx",      GetULEB128(&offset)); break;
-            case TypeSLEB128: sstr.Printf (format ? format : " %lld",        GetSLEB128(&offset)); break;
+            case TypeUInt64:  sstr.Printf (format ? format : " %16.16" PRIx64,   GetU64(&offset)); break;
+            case TypePointer: sstr.Printf (format ? format : " 0x%" PRIx64,      GetAddress(&offset)); break;
+            case TypeULEB128: sstr.Printf (format ? format : " 0x%" PRIx64,      GetULEB128(&offset)); break;
+            case TypeSLEB128: sstr.Printf (format ? format : " %" PRId64,        GetSLEB128(&offset)); break;
         }
     }
 

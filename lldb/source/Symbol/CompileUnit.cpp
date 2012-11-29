@@ -78,7 +78,7 @@ void
 CompileUnit::DumpSymbolContext(Stream *s)
 {
     GetModule()->DumpSymbolContext(s);
-    s->Printf(", CompileUnit{0x%8.8llx}", GetID());
+    s->Printf(", CompileUnit{0x%8.8" PRIx64 "}", GetID());
 }
 
 

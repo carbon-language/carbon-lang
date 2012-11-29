@@ -1499,7 +1499,7 @@ ClangExpressionDeclMap::DoMaterialize
         
         if (mem == LLDB_INVALID_ADDRESS)
         {
-            err.SetErrorStringWithFormat("Couldn't allocate 0x%llx bytes for materialized argument struct", 
+            err.SetErrorStringWithFormat("Couldn't allocate 0x%llx bytes for materialized argument struct",
                                          (unsigned long long)(m_struct_vars->m_struct_alignment + m_struct_vars->m_struct_size));
             return false;
         }
@@ -1683,7 +1683,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                 mem = var_sp->m_live_sp->GetValue().GetScalar().ULongLong();
                 
                 if (log)
-                    log->Printf("Dematerializing %s from 0x%llx (size = %u)", var_sp->GetName().GetCString(), (uint64_t)mem, (unsigned)pvar_byte_size);
+                    log->Printf("Dematerializing %s from 0x%" PRIx64 " (size = %u)", var_sp->GetName().GetCString(), (uint64_t)mem, (unsigned)pvar_byte_size);
                 
                 // Read the contents of the spare memory area
                                 
@@ -1758,7 +1758,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
             }
             
             if (log)
-                log->Printf("Allocated %s (0x%llx) sucessfully", var_sp->GetName().GetCString(), mem);
+                log->Printf("Allocated %s (0x%" PRIx64 ") sucessfully", var_sp->GetName().GetCString(), mem);
             
             // Put the location of the spare memory into the live data of the ValueObject.
             
@@ -3398,7 +3398,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
             // We failed to copy the type we found
             if (log)
             {
-                log->Printf ("  Failed to import the function type '%s' {0x%8.8llx} into the expression parser AST contenxt",
+                log->Printf ("  Failed to import the function type '%s' {0x%8.8" PRIx64 "} into the expression parser AST contenxt",
                              fun_type->GetName().GetCString(), 
                              fun_type->GetID());
             }

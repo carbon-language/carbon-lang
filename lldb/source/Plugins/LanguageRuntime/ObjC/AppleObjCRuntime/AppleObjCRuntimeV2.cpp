@@ -1800,7 +1800,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
                     {
                         lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
                         if (log)
-                            log->Printf("0x%llx: AppleObjCRuntimeV2::GetClassDescriptor() ISA was not in class descriptor cache 0x%llx",
+                            log->Printf("0x%" PRIx64 ": AppleObjCRuntimeV2::GetClassDescriptor() ISA was not in class descriptor cache 0x%" PRIx64,
                                         isa_pointer,
                                         isa);
                     }
@@ -1875,7 +1875,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                     ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second));
                     
                     if (log && log->GetVerbose())
-                        log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
+                        log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
                     
                     m_isa_to_descriptor_cache[elt.second] = descriptor_sp;
                 }
@@ -1915,7 +1915,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                                             ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
                                             
                                             if (log && log->GetVerbose())
-                                                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%llx (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
+                                                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
                                             
                                             m_isa_to_descriptor_cache[objc_isa] = descriptor_sp;
                                         }

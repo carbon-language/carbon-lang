@@ -370,7 +370,7 @@ Function::Dump(Stream *s, bool show_context) const
     }
     else if (m_type_uid != LLDB_INVALID_UID)
     {
-        s->Printf(", type_uid = 0x%8.8llx", m_type_uid);
+        s->Printf(", type_uid = 0x%8.8" PRIx64, m_type_uid);
     }
 
     s->EOL();
@@ -426,7 +426,7 @@ void
 Function::DumpSymbolContext(Stream *s)
 {
     m_comp_unit->DumpSymbolContext(s);
-    s->Printf(", Function{0x%8.8llx}", GetID());
+    s->Printf(", Function{0x%8.8" PRIx64 "}", GetID());
 }
 
 size_t

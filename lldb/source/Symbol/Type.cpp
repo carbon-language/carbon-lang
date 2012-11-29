@@ -150,7 +150,7 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
     {
-        s->Printf(", type_uid = 0x%8.8llx", m_encoding_uid);
+        s->Printf(", type_uid = 0x%8.8" PRIx64, m_encoding_uid);
         switch (m_encoding_uid_type)
         {
         case eEncodingInvalid: break;
@@ -257,7 +257,7 @@ Type::DumpValue
         {
             s->PutChar('(');
             if (verbose)
-                s->Printf("Type{0x%8.8llx} ", GetID());
+                s->Printf("Type{0x%8.8" PRIx64 "} ", GetID());
             DumpTypeName (s);
             s->PutCString(") ");
         }

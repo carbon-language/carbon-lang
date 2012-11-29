@@ -620,7 +620,7 @@ RegisterContext_i386::LogGPR(const char *title)
         for (uint32_t i=0; i<k_num_gpr_registers; i++)
         {
             uint32_t reg = gpr_eax + i;
-            log->Printf("%12s = 0x%8.8x", g_register_infos[reg].name, (&user.regs)[reg]);
+            log->Printf("%12s = 0x%8.8" PRIx64, g_register_infos[reg].name, ((uint64_t*)&user.regs)[reg]);
         }
     }
 }

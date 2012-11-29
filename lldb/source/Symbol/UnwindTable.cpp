@@ -140,7 +140,7 @@ UnwindTable::Dump (Stream &s)
     const_iterator end = m_unwinds.end();
     for (const_iterator pos = begin; pos != end; ++pos)
     {
-        s.Printf ("[%u] 0x%16.16llx\n", (unsigned)std::distance (begin, pos), pos->first);
+        s.Printf ("[%u] 0x%16.16" PRIx64 "\n", (unsigned)std::distance (begin, pos), pos->first);
     }
     s.EOL();
 }

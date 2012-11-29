@@ -361,7 +361,7 @@ EmulateInstruction::ReadMemoryDefault (EmulateInstruction *instruction,
                                        size_t length)
 {
     StreamFile strm (stdout, false);
-    strm.Printf ("    Read from Memory (address = 0x%llx, length = %llu, context = ", addr, (uint64_t)length);
+    strm.Printf ("    Read from Memory (address = 0x%" PRIx64 ", length = %" PRIu64 ", context = ", addr, (uint64_t)length);
     context.Dump (strm, instruction);    
     strm.EOL();
     *((uint64_t *) dst) = 0xdeadbeef;
@@ -377,7 +377,7 @@ EmulateInstruction::WriteMemoryDefault (EmulateInstruction *instruction,
                                         size_t length)
 {
     StreamFile strm (stdout, false);
-    strm.Printf ("    Write to Memory (address = 0x%llx, length = %llu, context = ", addr, (uint64_t)length);
+    strm.Printf ("    Write to Memory (address = 0x%" PRIx64 ", length = %" PRIu64 ", context = ", addr, (uint64_t)length);
     context.Dump (strm, instruction);    
     strm.EOL();
     return length;
@@ -503,7 +503,7 @@ EmulateInstruction::Context::Dump (Stream &strm,
     {
     case eInfoTypeRegisterPlusOffset:
         {
-            strm.Printf (" (reg_plus_offset = %s%+lld)",
+            strm.Printf (" (reg_plus_offset = %s%+" PRId64 ")",
                          info.RegisterPlusOffset.reg.name,
                          info.RegisterPlusOffset.signed_offset);
         }
@@ -519,7 +519,7 @@ EmulateInstruction::Context::Dump (Stream &strm,
 
     case eInfoTypeRegisterToRegisterPlusOffset:
         {
-            strm.Printf (" (base_and_imm_offset = %s%+lld, data_reg = %s)", 
+            strm.Printf (" (base_and_imm_offset = %s%+" PRId64 ", data_reg = %s)",
                          info.RegisterToRegisterPlusOffset.base_reg.name, 
                          info.RegisterToRegisterPlusOffset.offset,
                          info.RegisterToRegisterPlusOffset.data_reg.name);
@@ -544,7 +544,7 @@ EmulateInstruction::Context::Dump (Stream &strm,
         break;
 
     case eInfoTypeOffset:
-        strm.Printf (" (signed_offset = %+lld)", info.signed_offset);
+        strm.Printf (" (signed_offset = %+" PRId64 ")", info.signed_offset);
         break;
         
     case eInfoTypeRegister:
@@ -552,19 +552,19 @@ EmulateInstruction::Context::Dump (Stream &strm,
         break;
         
     case eInfoTypeImmediate:
-        strm.Printf (" (unsigned_immediate = %llu (0x%16.16llx))", 
+        strm.Printf (" (unsigned_immediate = %" PRIu64 " (0x%16.16" PRIx64 "))",
                      info.unsigned_immediate, 
                      info.unsigned_immediate);
         break;
 
     case eInfoTypeImmediateSigned:
-        strm.Printf (" (signed_immediate = %+lld (0x%16.16llx))", 
+        strm.Printf (" (signed_immediate = %+" PRId64 " (0x%16.16" PRIx64 "))",
                      info.signed_immediate, 
                      info.signed_immediate);
         break;
         
     case eInfoTypeAddress:
-        strm.Printf (" (address = 0x%llx)", info.address);
+        strm.Printf (" (address = 0x%" PRIx64 ")", info.address);
         break;
         
     case eInfoTypeISAAndImmediate:

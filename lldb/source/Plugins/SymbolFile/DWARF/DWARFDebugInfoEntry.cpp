@@ -1077,7 +1077,7 @@ DWARFDebugInfoEntry::DumpAttribute
     {
     case DW_AT_stmt_list:
         if ( verbose ) s.PutCString(" ( ");
-        s.Printf( "0x%8.8llx", form_value.Unsigned());
+        s.Printf( "0x%8.8" PRIx64, form_value.Unsigned());
         if ( verbose ) s.PutCString(" )");
         break;
 
@@ -1761,7 +1761,7 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
                 hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
             if (hi_pc != DW_INVALID_ADDRESS)
             {
-            //  printf("BuildAddressRangeTable() 0x%8.8x: [0x%16.16llx - 0x%16.16llx)\n", m_offset, lo_pc, hi_pc); // DEBUG ONLY
+            //  printf("BuildAddressRangeTable() 0x%8.8x: [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", m_offset, lo_pc, hi_pc); // DEBUG ONLY
                 debug_aranges->AppendRange (GetOffset(), lo_pc, hi_pc);
             }
         }

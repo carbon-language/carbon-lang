@@ -627,7 +627,7 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
                     if (metadata)
                         isa_value = metadata->GetISAPtr();
                     
-                    log->Printf("AOCTV::FT [%u] Found %s (isa 0x%llx) in the ASTContext",
+                    log->Printf("AOCTV::FT [%u] Found %s (isa 0x%" PRIx64 ") in the ASTContext",
                                 current_id,
                                 dumper.GetCString(),
                                 isa_value);
@@ -670,7 +670,7 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
         if (!iface_decl)
         {
             if (log)
-                log->Printf("AOCTV::FT [%u] Couldn't get the Objective-C interface for isa 0x%llx",
+                log->Printf("AOCTV::FT [%u] Couldn't get the Objective-C interface for isa 0x%" PRIx64,
                             current_id,
                             (uint64_t)isa);
             
@@ -682,7 +682,7 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
         if (log)
         {
             ASTDumper dumper(new_iface_type);
-            log->Printf("AOCTV::FT [%u] Created %s (isa 0x%llx)",
+            log->Printf("AOCTV::FT [%u] Created %s (isa 0x%" PRIx64 ")",
                         current_id,
                         dumper.GetCString(),
                         (uint64_t)isa);

@@ -190,7 +190,7 @@ ThreadPlanStepRange::InRange ()
     }
 
     if (!ret_value && log)
-        log->Printf ("Step range plan out of range to 0x%llx", pc_load_addr);
+        log->Printf ("Step range plan out of range to 0x%" PRIx64, pc_load_addr);
 
     return ret_value;
 }

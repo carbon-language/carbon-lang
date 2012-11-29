@@ -89,7 +89,7 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
     const Block* parent_block = GetParent();
     if (parent_block)
     {
-        s->Printf(", parent = {0x%8.8llx}", parent_block->GetID());
+        s->Printf(", parent = {0x%8.8" PRIx64 "}", parent_block->GetID());
     }
     if (m_inlineInfoSP.get() != NULL)
     {
@@ -194,7 +194,7 @@ Block::DumpSymbolContext(Stream *s)
     Function *function = CalculateSymbolContextFunction();
     if (function)
         function->DumpSymbolContext(s);
-    s->Printf(", Block{0x%8.8llx}", GetID());
+    s->Printf(", Block{0x%8.8" PRIx64 "}", GetID());
 }
 
 void
@@ -408,7 +408,7 @@ Block::AddRange (const Range& range)
             const Declaration &func_decl = func_type->GetDeclaration();
             if (func_decl.GetLine())
             {
-                log->Printf ("warning: %s/%s:%u block {0x%8.8llx} has range[%u] [0x%llx - 0x%llx) which is not contained in parent block {0x%8.8llx} in function {0x%8.8llx} from %s/%s",
+                log->Printf ("warning: %s/%s:%u block {0x%8.8" PRIx64 "} has range[%u] [0x%" PRIx64 " - 0x%" PRIx64 ") which is not contained in parent block {0x%8.8" PRIx64 "} in function {0x%8.8" PRIx64 "} from %s/%s",
                              func_decl.GetFile().GetDirectory().GetCString(),
                              func_decl.GetFile().GetFilename().GetCString(),
                              func_decl.GetLine(),
@@ -423,7 +423,7 @@ Block::AddRange (const Range& range)
             }
             else
             {
-                log->Printf ("warning: block {0x%8.8llx} has range[%u] [0x%llx - 0x%llx) which is not contained in parent block {0x%8.8llx} in function {0x%8.8llx} from %s/%s",
+                log->Printf ("warning: block {0x%8.8" PRIx64 "} has range[%u] [0x%" PRIx64 " - 0x%" PRIx64 ") which is not contained in parent block {0x%8.8" PRIx64 "} in function {0x%8.8" PRIx64 "} from %s/%s",
                              GetID(),
                              (uint32_t)m_ranges.GetSize(),
                              block_start_addr,

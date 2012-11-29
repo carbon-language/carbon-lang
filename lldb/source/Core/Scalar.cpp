@@ -10,6 +10,7 @@
 #include "lldb/Core/Scalar.h"
 
 #include <math.h>
+#include <inttypes.h>
 
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Error.h"
@@ -1833,7 +1834,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
             if (!success)
                 error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value", value_str);
             else if (!UIntValueIsValidForSize (uval64, byte_size))
-                error.SetErrorStringWithFormat ("value 0x%llx is too large to fit in a %u byte unsigned integer value", uval64, byte_size);
+                error.SetErrorStringWithFormat ("value 0x%" PRIx64 " is too large to fit in a %u byte unsigned integer value", uval64, byte_size);
             else
             {
                 m_type = Scalar::GetValueTypeForUnsignedIntegerWithByteSize (byte_size);
@@ -1862,7 +1863,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
             if (!success)
                 error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value", value_str);
             else if (!SIntValueIsValidForSize (sval64, byte_size))
-                error.SetErrorStringWithFormat ("value 0x%llx is too large to fit in a %u byte signed integer value", sval64, byte_size);
+                error.SetErrorStringWithFormat ("value 0x%" PRIx64 " is too large to fit in a %u byte signed integer value", sval64, byte_size);
             else
             {
                 m_type = Scalar::GetValueTypeForSignedIntegerWithByteSize (byte_size);

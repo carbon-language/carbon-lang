@@ -157,7 +157,7 @@ SymbolContext::DumpStopContext
             if (function_offset)
             {
                 dumped_something = true;
-                s->Printf(" + %llu", function_offset);                
+                s->Printf(" + %" PRIu64, function_offset);
             }
         }
 
@@ -174,7 +174,7 @@ SymbolContext::DumpStopContext
                 const addr_t inlined_function_offset = addr.GetOffset() - block_range.GetBaseAddress().GetOffset();
                 if (inlined_function_offset)
                 {
-                    s->Printf(" + %llu", inlined_function_offset);                
+                    s->Printf(" + %" PRIu64, inlined_function_offset);
                 }
             }
             const Declaration &call_site = inlined_block_info->GetCallSite();
@@ -217,7 +217,7 @@ SymbolContext::DumpStopContext
             if (symbol_offset)
             {
                 dumped_something = true;
-                s->Printf(" + %llu", symbol_offset);                
+                s->Printf(" + %" PRIu64, symbol_offset);
             }
         }
     }
@@ -496,7 +496,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
 
                 if (log)
                 {
-                    log->Printf ("warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx", 
+                    log->Printf ("warning: inlined block 0x%8.8" PRIx64 " doesn't have a range that contains file address 0x%" PRIx64,
                                  curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
                 }
 #ifdef LLDB_CONFIGURATION_DEBUG
@@ -516,7 +516,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                     if (objfile)
                     {
                         Host::SystemLog (Host::eSystemLogWarning, 
-                                         "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx in %s/%s\n", 
+                                         "warning: inlined block 0x%8.8" PRIx64 " doesn't have a range that contains file address 0x%" PRIx64 " in %s/%s\n",
                                          curr_inlined_block->GetID(), 
                                          curr_frame_pc.GetFileAddress(),
                                          objfile->GetFileSpec().GetDirectory().GetCString(),
@@ -525,7 +525,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                     else
                     {
                         Host::SystemLog (Host::eSystemLogWarning, 
-                                         "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx\n", 
+                                         "warning: inlined block 0x%8.8" PRIx64 " doesn't have a range that contains file address 0x%" PRIx64 "\n",
                                          curr_inlined_block->GetID(), 
                                          curr_frame_pc.GetFileAddress());
                     }

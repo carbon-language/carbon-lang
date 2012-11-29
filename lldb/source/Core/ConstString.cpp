@@ -294,7 +294,7 @@ ConstString::DumpDebug(Stream *s) const
     size_t cstr_len = GetLength();
     // Only print the parens if we have a non-NULL string
     const char *parens = cstr ? "\"" : "";
-    s->Printf("%*p: ConstString, string = %s%s%s, length = %llu", (int)sizeof(void*) * 2, this, parens, cstr, parens, (uint64_t)cstr_len);
+    s->Printf("%*p: ConstString, string = %s%s%s, length = %" PRIu64, (int)sizeof(void*) * 2, this, parens, cstr, parens, (uint64_t)cstr_len);
 }
 
 void

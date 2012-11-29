@@ -548,7 +548,7 @@ protected:
                     //  }
                     process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
+                    result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -723,7 +723,7 @@ public:
                             thread->SetResumeState (eStateSuspended);
                         }
                     }
-                    result.AppendMessageWithFormat ("in process %llu\n", process->GetID());
+                    result.AppendMessageWithFormat ("in process %" PRIu64 "\n", process->GetID());
                 }
             }
             else
@@ -741,7 +741,7 @@ public:
                     Thread *thread = process->GetThreadList().GetThreadAtIndex(idx).get();
                     if (thread == current_thread)
                     {
-                        result.AppendMessageWithFormat ("Resuming thread 0x%4.4llx in process %llu\n", thread->GetID(), process->GetID());
+                        result.AppendMessageWithFormat ("Resuming thread 0x%4.4" PRIx64 " in process %" PRIu64 "\n", thread->GetID(), process->GetID());
                         thread->SetResumeState (eStateRunning);
                     }
                     else
@@ -754,13 +754,13 @@ public:
             Error error (process->Resume());
             if (error.Success())
             {
-                result.AppendMessageWithFormat ("Process %llu resuming\n", process->GetID());
+                result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
                     state = process->WaitForProcessToStop (NULL);
                     
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
+                    result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -1082,13 +1082,13 @@ protected:
             Error error (process->Resume ());
             if (error.Success())
             {
-                result.AppendMessageWithFormat ("Process %llu resuming\n", process->GetID());
+                result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
                     StateType state = process->WaitForProcessToStop (NULL);
 
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
+                    result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else

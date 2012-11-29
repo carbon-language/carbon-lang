@@ -205,7 +205,7 @@ StackFrameList::ResetCurrentInlinedDepth ()
                                     m_current_inlined_depth = num_inlined_functions + 1;
                                     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                                     if (log && log->GetVerbose())
-                                        log->Printf ("ResetCurrentInlinedDepth: setting inlined depth: %d 0x%llx.\n", m_current_inlined_depth, curr_pc);
+                                        log->Printf ("ResetCurrentInlinedDepth: setting inlined depth: %d 0x%" PRIx64 ".\n", m_current_inlined_depth, curr_pc);
                                     
                                 }
                                 break;
@@ -370,7 +370,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
             
             //curr_frames->m_current_inlined_depth = prev_frames->m_current_inlined_depth;
             //curr_frames->m_current_inlined_pc = prev_frames->m_current_inlined_pc;
-            //printf ("GetFramesUpTo: Copying current inlined depth: %d 0x%llx.\n", curr_frames->m_current_inlined_depth, curr_frames->m_current_inlined_pc);
+            //printf ("GetFramesUpTo: Copying current inlined depth: %d 0x%" PRIx64 ".\n", curr_frames->m_current_inlined_depth, curr_frames->m_current_inlined_pc);
 
 #if defined (DEBUG_STACK_FRAMES)
             s.PutCString("\nprev_frames:\n");

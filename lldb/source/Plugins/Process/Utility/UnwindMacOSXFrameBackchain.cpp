@@ -176,7 +176,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_i386 (const ExecutionContext &exe_
 //    printf("      ------------------ ------------------ \n");
 //    for (i=0; i<m_cursors.size(); ++i)
 //    {
-//        printf("[%3u] 0x%16.16llx 0x%16.16llx\n", i, m_cursors[i].pc, m_cursors[i].fp);
+//        printf("[%3u] 0x%16.16" PRIx64 " 0x%16.16" PRIx64 "\n", i, m_cursors[i].pc, m_cursors[i].fp);
 //    }
     return m_cursors.size();
 }

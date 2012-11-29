@@ -271,7 +271,7 @@ public:
                             const uint64_t uval64 = data.GetU64(&offset);
                             m_opcode.SetOpcode64(uval64);
                             m_opcode_name.assign (".quad");
-                            mnemonic_strm.Printf("0x%16.16llx", uval64);
+                            mnemonic_strm.Printf("0x%16.16" PRIx64, uval64);
                         }
                         break;
                     default:
@@ -644,7 +644,7 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t value,
                     m_inst->AppendComment(ss.GetString());
                 }
             }
-            //printf ("DisassemblerLLVMC::SymbolLookup (value=0x%16.16llx, type=%llu, pc=0x%16.16llx, name=\"%s\") m_exe_ctx=%p, m_inst=%p\n", value, *type_ptr, pc, remove_this_prior_to_checkin.c_str(), m_exe_ctx, m_inst);
+            //printf ("DisassemblerLLVMC::SymbolLookup (value=0x%16.16" PRIx64 ", type=%" PRIu64 ", pc=0x%16.16" PRIx64 ", name=\"%s\") m_exe_ctx=%p, m_inst=%p\n", value, *type_ptr, pc, remove_this_prior_to_checkin.c_str(), m_exe_ctx, m_inst);
         }
     }
 

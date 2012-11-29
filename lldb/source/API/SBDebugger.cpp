@@ -800,7 +800,7 @@ SBDebugger::DispatchInput (const void *data, size_t data_len)
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
-        log->Printf ("SBDebugger(%p)::DispatchInput (data=\"%.*s\", size_t=%llu)",
+        log->Printf ("SBDebugger(%p)::DispatchInput (data=\"%.*s\", size_t=%" PRIu64 ")",
                      m_opaque_sp.get(),
                      (int) data_len,
                      (const char *) data,
@@ -1049,7 +1049,7 @@ SBDebugger::GetDescription (SBStream &description)
     {
         const char *name = m_opaque_sp->GetInstanceName().AsCString();
         user_id_t id = m_opaque_sp->GetID();
-        strm.Printf ("Debugger (instance: \"%s\", id: %llu)", name, id);
+        strm.Printf ("Debugger (instance: \"%s\", id: %" PRIu64 ")", name, id);
     }
     else
         strm.PutCString ("No value");

@@ -811,7 +811,7 @@ ClangASTType::DumpValue
             }
             // If we have gotten here we didn't get find the enumerator in the
             // enum decl, so just print the integer.
-            s->Printf("%lli", enum_value);
+            s->Printf("%" PRIi64, enum_value);
         }
         return;
 
@@ -1010,7 +1010,7 @@ ClangASTType::DumpTypeValue (clang::ASTContext *ast_context,
                 // If we have gotten here we didn't get find the enumerator in the
                 // enum decl, so just print the integer.
                 
-                s->Printf("%lli", enum_value);
+                s->Printf("%" PRIi64, enum_value);
                 return true;
             }
             // format was not enum, just fall through and dump the value as requested....

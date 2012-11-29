@@ -60,11 +60,11 @@ ThreadPlanShouldStopHere::InvokeShouldStopHereCallback ()
             {
                 StreamString s;
                 return_plan->GetDescription (&s, lldb::eDescriptionLevelFull);
-                log->Printf ("ShouldStopHere callback found a step out plan from 0x%llx: %s.", current_addr, s.GetData()); 
+                log->Printf ("ShouldStopHere callback found a step out plan from 0x%" PRIx64 ": %s.", current_addr, s.GetData());
             }
             else
             {
-                log->Printf ("ShouldStopHere callback didn't find a step out plan from: 0x%llx.", current_addr);
+                log->Printf ("ShouldStopHere callback didn't find a step out plan from: 0x%" PRIx64 ".", current_addr);
             }
         }
         return return_plan;

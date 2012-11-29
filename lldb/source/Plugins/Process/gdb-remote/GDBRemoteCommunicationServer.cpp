@@ -280,7 +280,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
 static void
 CreateProcessInfoResponse (const ProcessInstanceInfo &proc_info, StreamString &response)
 {
-    response.Printf ("pid:%llu;ppid:%llu;uid:%i;gid:%i;euid:%i;egid:%i;", 
+    response.Printf ("pid:%" PRIu64 ";ppid:%" PRIu64 ";uid:%i;gid:%i;euid:%i;egid:%i;",
                      proc_info.GetProcessID(),
                      proc_info.GetParentProcessID(),
                      proc_info.GetUserID(),
@@ -646,7 +646,7 @@ GDBRemoteCommunicationServer::Handle_qC (StringExtractorGDBRemote &packet)
 {
     lldb::pid_t pid = m_process_launch_info.GetProcessID();
     StreamString response;
-    response.Printf("QC%llx", pid);
+    response.Printf("QC%" PRIx64, pid);
     if (m_is_platform)
     {
         // If we launch a process and this GDB server is acting as a platform, 
@@ -712,7 +712,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                         {
                             uint16_t port = (intptr_t)accept_thread_result;
                             char response[256];
-                            const int response_len = ::snprintf (response, sizeof(response), "pid:%llu;port:%u;", debugserver_pid, port);
+                            const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
                             assert (response_len < sizeof(response));
                             //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
                             success = SendPacketNoLock (response, response_len) > 0;

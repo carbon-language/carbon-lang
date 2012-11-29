@@ -318,7 +318,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
-        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  func_addr = 0x%llx\n  return_addr = 0x%llx\n  arg1_ptr = %p (0x%llx)\n  arg2_ptr = %p (0x%llx)\n  arg3_ptr = %p (0x%llx)\n)",
+        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%" PRIx64 "\n  func_addr = 0x%" PRIx64 "\n  return_addr = 0x%" PRIx64 "\n  arg1_ptr = %p (0x%" PRIx64 ")\n  arg2_ptr = %p (0x%" PRIx64 ")\n  arg3_ptr = %p (0x%" PRIx64 ")\n)",
                     (void*)&thread,
                     (uint64_t)sp,
                     (uint64_t)func_addr,
@@ -336,7 +336,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     {
         reg_info = reg_ctx->GetRegisterInfoByName("rdi", 0);
         if (log)
-            log->Printf("About to write arg1 (0x%llx) into %s", (uint64_t)*arg1_ptr, reg_info->name);
+            log->Printf("About to write arg1 (0x%" PRIx64 ") into %s", (uint64_t)*arg1_ptr, reg_info->name);
 
         if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg1_ptr))
             return false;
@@ -345,7 +345,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
         {
             reg_info = reg_ctx->GetRegisterInfoByName("rsi", 0);
             if (log)
-                log->Printf("About to write arg2 (0x%llx) into %s", (uint64_t)*arg2_ptr, reg_info->name);
+                log->Printf("About to write arg2 (0x%" PRIx64 ") into %s", (uint64_t)*arg2_ptr, reg_info->name);
             if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg2_ptr))
                 return false;
 
@@ -353,7 +353,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
             {
                 reg_info = reg_ctx->GetRegisterInfoByName("rdx", 0);
                 if (log)
-                    log->Printf("About to write arg3 (0x%llx) into %s", (uint64_t)*arg3_ptr, reg_info->name);
+                    log->Printf("About to write arg3 (0x%" PRIx64 ") into %s", (uint64_t)*arg3_ptr, reg_info->name);
                 if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg3_ptr))
                     return false;
 
@@ -361,7 +361,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                 {
                     reg_info = reg_ctx->GetRegisterInfoByName("rcx", 0);
                     if (log)
-                        log->Printf("About to write arg4 (0x%llx) into %s", (uint64_t)*arg4_ptr, reg_info->name);
+                        log->Printf("About to write arg4 (0x%" PRIx64 ") into %s", (uint64_t)*arg4_ptr, reg_info->name);
                     if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg4_ptr))
                         return false;
 
@@ -369,7 +369,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                     {
                         reg_info = reg_ctx->GetRegisterInfoByName("r8", 0);
                         if (log)
-                            log->Printf("About to write arg5 (0x%llx) into %s", (uint64_t)*arg5_ptr, reg_info->name);
+                            log->Printf("About to write arg5 (0x%" PRIx64 ") into %s", (uint64_t)*arg5_ptr, reg_info->name);
                         if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg5_ptr))
                             return false;
 
@@ -377,7 +377,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                         {
                             reg_info = reg_ctx->GetRegisterInfoByName("r9", 0);
                             if (log)
-                                log->Printf("About to write arg6 (0x%llx) into %s", (uint64_t)*arg6_ptr, reg_info->name);
+                                log->Printf("About to write arg6 (0x%" PRIx64 ") into %s", (uint64_t)*arg6_ptr, reg_info->name);
                             if (!reg_ctx->WriteRegisterFromUnsigned (reg_info, *arg6_ptr))
                                 return false;
                         }
@@ -391,7 +391,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     // First, align the SP
 
     if (log)
-        log->Printf("16-byte aligning SP: 0x%llx to 0x%llx", (uint64_t)sp, (uint64_t)(sp & ~0xfull));
+        log->Printf("16-byte aligning SP: 0x%" PRIx64 " to 0x%" PRIx64, (uint64_t)sp, (uint64_t)(sp & ~0xfull));
 
     sp &= ~(0xfull); // 16-byte alignment
 
@@ -402,7 +402,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     reg_value.SetUInt64 (return_addr);
 
     if (log)
-        log->Printf("Pushing the return address onto the stack: new SP 0x%llx, return address 0x%llx", (uint64_t)sp, (uint64_t)return_addr);
+        log->Printf("Pushing the return address onto the stack: new SP 0x%" PRIx64 ", return address 0x%" PRIx64, (uint64_t)sp, (uint64_t)return_addr);
 
     const RegisterInfo *pc_reg_info = reg_ctx->GetRegisterInfoByName("rip");
     Error error (reg_ctx->WriteRegisterValueToMemory(pc_reg_info, sp, pc_reg_info->byte_size, reg_value));
@@ -412,7 +412,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     // %rsp is set to the actual stack value.
 
     if (log)
-        log->Printf("Writing SP (0x%llx) down", (uint64_t)sp);
+        log->Printf("Writing SP (0x%" PRIx64 ") down", (uint64_t)sp);
     
     if (!reg_ctx->WriteRegisterFromUnsigned (reg_ctx->GetRegisterInfoByName("rsp"), sp))
         return false;
@@ -420,7 +420,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     // %rip is set to the address of the called function.
     
     if (log)
-        log->Printf("Writing new IP (0x%llx) down", (uint64_t)func_addr);
+        log->Printf("Writing new IP (0x%" PRIx64 ") down", (uint64_t)func_addr);
 
     if (!reg_ctx->WriteRegisterFromUnsigned (pc_reg_info, func_addr))
         return false;

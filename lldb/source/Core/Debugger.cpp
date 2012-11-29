@@ -1187,7 +1187,7 @@ ScanBracketedRange (const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = *index_lower;
             if (log)
-                log->Printf("[ScanBracketedRange] [%lld] detected, high index is same", *index_lower);
+                log->Printf("[ScanBracketedRange] [%" PRId64 "] detected, high index is same", *index_lower);
         }
         else if (*close_bracket_position && *close_bracket_position < var_name_end)
         {
@@ -1195,7 +1195,7 @@ ScanBracketedRange (const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = ::strtoul (*separator_position+1, &end, 0);
             if (log)
-                log->Printf("[ScanBracketedRange] [%lld-%lld] detected", *index_lower, *index_higher);
+                log->Printf("[ScanBracketedRange] [%" PRId64 "-%" PRId64 "] detected", *index_lower, *index_higher);
         }
         else
         {
@@ -1642,7 +1642,7 @@ Debugger::FormatPrompt
                                         if (!item)
                                         {
                                             if (log)
-                                                log->Printf("[Debugger::FormatPrompt] ERROR in getting child item at index %lld", index_lower);
+                                                log->Printf("[Debugger::FormatPrompt] ERROR in getting child item at index %" PRId64, index_lower);
                                         }
                                         else
                                         {
@@ -1898,7 +1898,7 @@ Debugger::FormatPrompt
                                         var_name_begin += ::strlen ("process.");
                                         if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                         {
-                                            s.Printf("%llu", process->GetID());
+                                            s.Printf("%" PRIu64, process->GetID());
                                             var_success = true;
                                         }
                                         else if ((::strncmp (var_name_begin, "name}", strlen("name}")) == 0) ||
@@ -1936,7 +1936,7 @@ Debugger::FormatPrompt
                                         var_name_begin += ::strlen ("thread.");
                                         if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                         {
-                                            s.Printf("0x%4.4llx", thread->GetID());
+                                            s.Printf("0x%4.4" PRIx64, thread->GetID());
                                             var_success = true;
                                         }
                                         else if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
@@ -2144,7 +2144,7 @@ Debugger::FormatPrompt
                                     if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                     {
                                         if (sc->function)
-                                            s.Printf("function{0x%8.8llx}", sc->function->GetID());
+                                            s.Printf("function{0x%8.8" PRIx64 "}", sc->function->GetID());
                                         else
                                             s.Printf("symbol[%u]", sc->symbol->GetID());
 
@@ -2430,9 +2430,9 @@ Debugger::FormatPrompt
                                             addr_t func_file_addr = func_addr.GetFileAddress();
                                             addr_t addr_file_addr = format_addr.GetFileAddress();
                                             if (addr_file_addr > func_file_addr)
-                                                s.Printf(" + %llu", addr_file_addr - func_file_addr);
+                                                s.Printf(" + %" PRIu64, addr_file_addr - func_file_addr);
                                             else if (addr_file_addr < func_file_addr)
-                                                s.Printf(" - %llu", func_file_addr - addr_file_addr);
+                                                s.Printf(" - %" PRIu64, func_file_addr - addr_file_addr);
                                             var_success = true;
                                         }
                                         else
@@ -2443,9 +2443,9 @@ Debugger::FormatPrompt
                                                 addr_t func_load_addr = func_addr.GetLoadAddress (target);
                                                 addr_t addr_load_addr = format_addr.GetLoadAddress (target);
                                                 if (addr_load_addr > func_load_addr)
-                                                    s.Printf(" + %llu", addr_load_addr - func_load_addr);
+                                                    s.Printf(" + %" PRIu64, addr_load_addr - func_load_addr);
                                                 else if (addr_load_addr < func_load_addr)
-                                                    s.Printf(" - %llu", func_load_addr - addr_load_addr);
+                                                    s.Printf(" - %" PRIu64, func_load_addr - addr_load_addr);
                                                 var_success = true;
                                             }
                                         }
@@ -2465,7 +2465,7 @@ Debugger::FormatPrompt
                                         int addr_width = target->GetArchitecture().GetAddressByteSize() * 2;
                                         if (addr_width == 0)
                                             addr_width = 16;
-                                        s.Printf("0x%*.*llx", addr_width, addr_width, vaddr);
+                                        s.Printf("0x%*.*" PRIx64, addr_width, addr_width, vaddr);
                                         var_success = true;
                                     }
                                 }

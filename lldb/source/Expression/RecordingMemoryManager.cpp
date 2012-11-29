@@ -89,7 +89,7 @@ RecordingMemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
     
     if (m_log)
     {
-        m_log->Printf("RecordingMemoryManager::allocateSpace(Size=%llu, Alignment=%u) = %p",
+        m_log->Printf("RecordingMemoryManager::allocateSpace(Size=%" PRIu64 ", Alignment=%u) = %p",
                       (uint64_t)Size, Alignment, return_value);
         allocation.dump(m_log);
     }
@@ -113,7 +113,7 @@ RecordingMemoryManager::allocateCodeSection(uintptr_t Size, unsigned Alignment, 
     
     if (m_log)
     {
-        m_log->Printf("RecordingMemoryManager::allocateCodeSection(Size=0x%llx, Alignment=%u, SectionID=%u) = %p",
+        m_log->Printf("RecordingMemoryManager::allocateCodeSection(Size=0x%" PRIx64 ", Alignment=%u, SectionID=%u) = %p",
                       (uint64_t)Size, Alignment, SectionID, return_value);
         allocation.dump(m_log);
     }
@@ -136,7 +136,7 @@ RecordingMemoryManager::allocateDataSection(uintptr_t Size, unsigned Alignment, 
     
     if (m_log)
     {
-        m_log->Printf("RecordingMemoryManager::allocateDataSection(Size=0x%llx, Alignment=%u, SectionID=%u) = %p",
+        m_log->Printf("RecordingMemoryManager::allocateDataSection(Size=0x%" PRIx64 ", Alignment=%u, SectionID=%u) = %p",
                       (uint64_t)Size, Alignment, SectionID, return_value);
         allocation.dump(m_log);
     }
@@ -158,7 +158,7 @@ RecordingMemoryManager::allocateGlobal(uintptr_t Size, unsigned Alignment)
     
     if (m_log)
     {
-        m_log->Printf("RecordingMemoryManager::allocateGlobal(Size=0x%llx, Alignment=%u) = %p",
+        m_log->Printf("RecordingMemoryManager::allocateGlobal(Size=0x%" PRIx64 ", Alignment=%u) = %p",
                       (uint64_t)Size, Alignment, return_value);
         allocation.dump(m_log);
     }

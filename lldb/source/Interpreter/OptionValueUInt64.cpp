@@ -39,7 +39,7 @@ OptionValueUInt64::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uin
     {
         if (dump_mask & eDumpOptionType)
             strm.PutCString (" = ");
-        strm.Printf ("%llu", m_current_value);
+        strm.Printf ("%" PRIu64, m_current_value);
     }
 }
 

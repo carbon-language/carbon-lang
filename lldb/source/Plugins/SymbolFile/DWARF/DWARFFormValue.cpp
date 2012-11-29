@@ -295,7 +295,7 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
             switch (m_form)
             {
             case DW_FORM_exprloc:
-            case DW_FORM_block:  s.Printf("<0x%llx> ", uvalue);                break;
+            case DW_FORM_block:  s.Printf("<0x%" PRIx64 "> ", uvalue);                break;
             case DW_FORM_block1: s.Printf("<0x%2.2x> ", (uint8_t)uvalue);      break;
             case DW_FORM_block2: s.Printf("<0x%4.4x> ", (uint16_t)uvalue);     break;
             case DW_FORM_block4: s.Printf("<0x%8.8x> ", (uint32_t)uvalue);     break;
@@ -343,8 +343,8 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
     case DW_FORM_ref1:      cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%2.2x", (uint8_t)uvalue); break;
     case DW_FORM_ref2:      cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%4.4x", (uint16_t)uvalue); break;
     case DW_FORM_ref4:      cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%4.4x", (uint32_t)uvalue); break;
-    case DW_FORM_ref8:      cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%8.8llx", uvalue); break;
-    case DW_FORM_ref_udata: cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%llx", uvalue); break;
+    case DW_FORM_ref8:      cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%8.8" PRIx64, uvalue); break;
+    case DW_FORM_ref_udata: cu_relative_offset = true;  if (verbose) s.Printf("cu + 0x%" PRIx64, uvalue); break;
 
     // All DW_FORM_indirect attributes should be resolved prior to calling this function
     case DW_FORM_indirect:  s.PutCString("DW_FORM_indirect"); break;
@@ -359,7 +359,7 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
         if (verbose)
             s.PutCString(" => ");
 
-        s.Printf("{0x%8.8llx}", (uvalue + (cu ? cu->GetOffset() : 0)));
+        s.Printf("{0x%8.8" PRIx64 "}", (uvalue + (cu ? cu->GetOffset() : 0)));
     }
 }
 

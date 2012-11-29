@@ -177,7 +177,7 @@ DoReadMemory(lldb::pid_t pid,
     if (log)
         ProcessPOSIXLog::IncNestLevel();
     if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
-        log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
+        log->Printf ("ProcessMonitor::%s(%" PRIu64 ", %d, %p, %p, %zd, _)", __FUNCTION__,
                      pid, word_size, (void*)vm_addr, buf, size);
 
     assert(sizeof(data) >= word_size);
@@ -232,7 +232,7 @@ DoWriteMemory(lldb::pid_t pid,
     if (log)
         ProcessPOSIXLog::IncNestLevel();
     if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
-        log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
+        log->Printf ("ProcessMonitor::%s(%" PRIu64 ", %d, %p, %p, %zd, _)", __FUNCTION__,
                      pid, word_size, (void*)vm_addr, buf, size);
 
     for (bytes_written = 0; bytes_written < size; bytes_written += remainder)
@@ -434,7 +434,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
         m_result = true;
     }
     if (log)
-        log->Printf ("ProcessMonitor::%s() reg %s: 0x%x", __FUNCTION__,
+        log->Printf ("ProcessMonitor::%s() reg %s: 0x%" PRIx64, __FUNCTION__,
                      POSIXThread::GetRegisterNameFromOffset(m_offset), data);
 }
 
@@ -1098,7 +1098,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     // FIXME: by using pids instead of tids, we can only support one thread.
     inferior.reset(new POSIXThread(process, pid));
     if (log)
-        log->Printf ("ProcessMonitor::%s() adding pid = %i", __FUNCTION__, pid);
+        log->Printf ("ProcessMonitor::%s() adding pid = %" PRIu64, __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
 
     // Let our process instance know the thread has stopped.
@@ -1183,7 +1183,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     // Update the process thread list with the attached thread.
     inferior.reset(new POSIXThread(process, pid));
     if (log)
-        log->Printf ("ProcessMonitor::%s() adding tid = %i", __FUNCTION__, pid);
+        log->Printf ("ProcessMonitor::%s() adding tid = %" PRIu64, __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
 
     // Let our process instance know the thread has stopped.

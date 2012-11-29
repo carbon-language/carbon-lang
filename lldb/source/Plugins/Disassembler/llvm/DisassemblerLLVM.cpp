@@ -232,7 +232,7 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (const ExecutionContext* ex
                                 
                                 if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, &rra))
                                 {
-                                    comment.Printf("0x%*.*llx ", addr_nibble_size, addr_nibble_size, operand_value);                                    
+                                    comment.Printf("0x%*.*" PRIx64 " ", addr_nibble_size, addr_nibble_size, operand_value);
                                     AddSymbolicInfo (exe_ctx, comment, operand_value, GetAddress());
                                 }
                             }
@@ -257,7 +257,7 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (const ExecutionContext* ex
             {
                 uint64_t operand_value = PC + atoi(++pos);
                 // Put the address value into the operands.
-                comment.Printf("0x%*.*llx ", addr_nibble_size, addr_nibble_size, operand_value);
+                comment.Printf("0x%*.*" PRIx64 " ", addr_nibble_size, addr_nibble_size, operand_value);
                 AddSymbolicInfo (exe_ctx, comment, operand_value, GetAddress());
             }
         }
@@ -278,7 +278,7 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (const ExecutionContext* ex
                 }
                 uint64_t operand_value = PC + atoi(++pos);
                 // Put the address value into the comment.
-                comment.Printf("0x%*.*llx ", addr_nibble_size, addr_nibble_size, operand_value);
+                comment.Printf("0x%*.*" PRIx64 " ", addr_nibble_size, addr_nibble_size, operand_value);
                 // And the original token string into the operands.
 //                llvm::StringRef Str(pos - 1);
 //                RStrip(Str, '\n');

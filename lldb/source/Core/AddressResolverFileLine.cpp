@@ -77,7 +77,7 @@ AddressResolverFileLine::SearchCallback
             else
             {
                 if (log)
-                  log->Printf ("error: Unable to resolve address at file address 0x%llx for %s:%d\n",
+                  log->Printf ("error: Unable to resolve address at file address 0x%" PRIx64 " for %s:%d\n",
                                line_start.GetFileAddress(),
                                m_file_spec.GetFilename().AsCString("<Unknown>"),
                                m_line_number);

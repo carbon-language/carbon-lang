@@ -148,7 +148,7 @@ ThreadPlanStepOut::GetDescription (Stream *s, lldb::DescriptionLevel level)
         else if (m_step_through_inline_plan_sp)
             s->Printf ("Stepping out by stepping through inlined function.");
         else
-            s->Printf ("Stepping out from address 0x%llx to return address 0x%llx using breakpoint site %d",
+            s->Printf ("Stepping out from address 0x%" PRIx64 " to return address 0x%" PRIx64 " using breakpoint site %d",
                        (uint64_t)m_step_from_insn,
                        (uint64_t)m_return_addr,
                        m_return_bp_id);

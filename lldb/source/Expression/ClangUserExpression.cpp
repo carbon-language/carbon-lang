@@ -463,19 +463,19 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 #if 0
 		// jingham: look here
         StreamFile logfile ("/tmp/exprs.txt", "a");
-        logfile.Printf("0x%16.16llx: thread = 0x%4.4x, expr = '%s'\n", m_jit_start_addr, exe_ctx.thread ? exe_ctx.thread->GetID() : -1, m_expr_text.c_str());
+        logfile.Printf("0x%16.16" PRIx64 ": thread = 0x%4.4x, expr = '%s'\n", m_jit_start_addr, exe_ctx.thread ? exe_ctx.thread->GetID() : -1, m_expr_text.c_str());
 #endif
         
         if (log)
         {
             log->Printf("-- [ClangUserExpression::PrepareToExecuteJITExpression] Materializing for execution --");
             
-            log->Printf("  Function address  : 0x%llx", (uint64_t)m_jit_start_addr);
+            log->Printf("  Function address  : 0x%" PRIx64, (uint64_t)m_jit_start_addr);
             
             if (m_needs_object_ptr)
-                log->Printf("  Object pointer    : 0x%llx", (uint64_t)object_ptr);
+                log->Printf("  Object pointer    : 0x%" PRIx64, (uint64_t)object_ptr);
             
-            log->Printf("  Structure address : 0x%llx", (uint64_t)struct_address);
+            log->Printf("  Structure address : 0x%" PRIx64, (uint64_t)struct_address);
                     
             StreamString args;
             

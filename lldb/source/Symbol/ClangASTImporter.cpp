@@ -66,12 +66,12 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
                     user_id = metadata->GetUserID();
                 
                 if (NamedDecl *named_decl = dyn_cast<NamedDecl>(decl))
-                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s', metadata 0x%llx",
+                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s', metadata 0x%" PRIx64,
                                 decl->getDeclKindName(),
                                 named_decl->getNameAsString().c_str(),
                                 user_id);
                 else
-                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s, metadata 0x%llx",
+                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s, metadata 0x%" PRIx64,
                                 decl->getDeclKindName(),
                                 user_id);
             }
@@ -467,7 +467,7 @@ clang::Decl
             from_named_decl->printName(name_stream);
             name_stream.flush();
             
-            log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p, named %s (from (Decl*)%p), metadata 0x%llx",
+            log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p, named %s (from (Decl*)%p), metadata 0x%" PRIx64,
                         from->getDeclKindName(),
                         to,
                         name_string.c_str(),
@@ -476,7 +476,7 @@ clang::Decl
         }
         else
         {
-            log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p (from (Decl*)%p), metadata 0x%llx",
+            log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p (from (Decl*)%p), metadata 0x%" PRIx64,
                         from->getDeclKindName(),
                         to,
                         from,

@@ -133,7 +133,7 @@ OperatingSystemPython::GetDynamicRegisterInfo ()
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         
         if (log)
-            log->Printf ("OperatingSystemPython::GetDynamicRegisterInfo() fetching thread register definitions from python for pid %llu", m_process->GetID());
+            log->Printf ("OperatingSystemPython::GetDynamicRegisterInfo() fetching thread register definitions from python for pid %" PRIu64, m_process->GetID());
         
         auto object_sp = m_interpreter->OSPlugin_QueryForRegisterInfo(m_interpreter->MakeScriptObject(m_python_object));
         if (!object_sp)
@@ -180,7 +180,7 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     
     if (log)
-        log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %llu", m_process->GetID());
+        log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %" PRIu64, m_process->GetID());
 
     auto object_sp = m_interpreter->OSPlugin_QueryForThreadsInfo(m_interpreter->MakeScriptObject(m_python_object));
     if (!object_sp)
@@ -255,7 +255,7 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, lldb::add
         // The registers data is in contiguous memory, just create the register
         // context using the address provided
         if (log)
-            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%llx, reg_data_addr = 0x%llx) creating memory register context", thread->GetID(), reg_data_addr);
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ", reg_data_addr = 0x%" PRIx64 ") creating memory register context", thread->GetID(), reg_data_addr);
         reg_ctx_sp.reset (new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), reg_data_addr));
     }
     else
@@ -263,7 +263,7 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, lldb::add
         // No register data address is provided, query the python plug-in to let
         // it make up the data as it sees fit
         if (log)
-            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%llx) fetching register data from python", thread->GetID());
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ") fetching register data from python", thread->GetID());
 
         auto object_sp = m_interpreter->OSPlugin_QueryForRegisterContextData (m_interpreter->MakeScriptObject(m_python_object),
                                                                               thread->GetID());

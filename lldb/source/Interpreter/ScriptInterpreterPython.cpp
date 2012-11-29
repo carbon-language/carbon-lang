@@ -334,7 +334,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
                 if (IS_VALID_LLDB_HOST_THREAD(embedded_interpreter_thread))
                 {
                     if (log)
-                        log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Activate, succeeded in creating thread (thread_t = %p)", embedded_interpreter_thread);
+                        log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Activate, succeeded in creating thread (thread_t = %p)", (void *)embedded_interpreter_thread);
                     Error detach_error;
                     Host::ThreadDetach (embedded_interpreter_thread, &detach_error);
                 }
@@ -493,7 +493,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         Debugger::Terminate();
 
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %llu; pydoc.pager = pydoc.plainpager')", m_dictionary_name.c_str(),
+    run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %" PRIu64 "; pydoc.pager = pydoc.plainpager')", m_dictionary_name.c_str(),
                        interpreter.GetDebugger().GetID());
     PyRun_SimpleString (run_string.GetData());
     
@@ -614,8 +614,8 @@ ScriptInterpreterPython::EnterSession ()
 
     StreamString run_string;
 
-    run_string.Printf (    "run_one_line (%s, 'lldb.debugger_unique_id = %llu", m_dictionary_name.c_str(), GetCommandInterpreter().GetDebugger().GetID());
-    run_string.Printf (    "; lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%llu)", GetCommandInterpreter().GetDebugger().GetID());
+    run_string.Printf (    "run_one_line (%s, 'lldb.debugger_unique_id = %" PRIu64, m_dictionary_name.c_str(), GetCommandInterpreter().GetDebugger().GetID());
+    run_string.Printf (    "; lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%" PRIu64 ")", GetCommandInterpreter().GetDebugger().GetID());
     run_string.PutCString ("; lldb.target = lldb.debugger.GetSelectedTarget()");
     run_string.PutCString ("; lldb.process = lldb.target.GetProcess()");
     run_string.PutCString ("; lldb.thread = lldb.process.GetSelectedThread ()");
@@ -859,7 +859,7 @@ ScriptInterpreterPython::InputReaderCallback
                 if (IS_VALID_LLDB_HOST_THREAD(embedded_interpreter_thread))
                 {
                     if (log)
-                        log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in creating thread (thread_t = %p)", embedded_interpreter_thread);
+                        log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in creating thread (thread_t = %p)", (void *)embedded_interpreter_thread);
                     Error detach_error;
                     Host::ThreadDetach (embedded_interpreter_thread, &detach_error);
                 }

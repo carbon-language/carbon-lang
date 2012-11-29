@@ -478,7 +478,7 @@ SBFrame::GetPC () const
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::GetPC () => 0x%llx", frame, addr);
+        log->Printf ("SBFrame(%p)::GetPC () => 0x%" PRIx64, frame, addr);
 
     return addr;
 }
@@ -518,7 +518,7 @@ SBFrame::SetPC (addr_t new_pc)
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::SetPC (new_pc=0x%llx) => %i", 
+        log->Printf ("SBFrame(%p)::SetPC (new_pc=0x%" PRIx64 ") => %i",
                      frame, new_pc, ret_val);
 
     return ret_val;
@@ -558,7 +558,7 @@ SBFrame::GetSP () const
         }
     }
     if (log)
-        log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", frame, addr);
+        log->Printf ("SBFrame(%p)::GetSP () => 0x%" PRIx64, frame, addr);
 
     return addr;
 }
@@ -599,7 +599,7 @@ SBFrame::GetFP () const
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::GetFP () => 0x%llx", frame, addr);
+        log->Printf ("SBFrame(%p)::GetFP () => 0x%" PRIx64, frame, addr);
     return addr;
 }
 

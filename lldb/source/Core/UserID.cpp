@@ -10,6 +10,8 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/Stream.h"
 
+#include <inttypes.h>
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -20,6 +22,6 @@ UserID::~UserID ()
 Stream&
 lldb_private::operator << (Stream& strm, const UserID& uid)
 {
-    strm.Printf("{0x%8.8llx}", uid.GetID());
+    strm.Printf("{0x%8.8" PRIx64 "}", uid.GetID());
     return strm;
 }

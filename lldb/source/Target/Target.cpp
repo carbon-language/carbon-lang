@@ -527,7 +527,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
-        log->Printf("Target::%s (addr = 0x%8.8llx size = %llu type = %u)\n",
+        log->Printf("Target::%s (addr = 0x%8.8" PRIx64 " size = %" PRIu64 " type = %u)\n",
                     __FUNCTION__, addr, (uint64_t)size, kind);
 
     WatchpointSP wp_sp;
@@ -541,7 +541,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         if (size == 0)
             error.SetErrorString("cannot set a watchpoint with watch_size of 0");
         else
-            error.SetErrorStringWithFormat("invalid watch address: %llu", addr);
+            error.SetErrorStringWithFormat("invalid watch address: %" PRIu64, addr);
         return wp_sp;
     }
 
@@ -1244,12 +1244,12 @@ Target::ReadMemory (const Address& addr,
         {
             ModuleSP addr_module_sp (resolved_addr.GetModule());
             if (addr_module_sp && addr_module_sp->GetFileSpec())
-                error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded", 
+                error.SetErrorStringWithFormat("%s[0x%" PRIx64 "] can't be resolved, %s in not currently loaded",
                                                addr_module_sp->GetFileSpec().GetFilename().AsCString(), 
                                                resolved_addr.GetFileAddress(),
                                                addr_module_sp->GetFileSpec().GetFilename().AsCString());
             else
-                error.SetErrorStringWithFormat("0x%llx can't be resolved", resolved_addr.GetFileAddress());
+                error.SetErrorStringWithFormat("0x%" PRIx64 " can't be resolved", resolved_addr.GetFileAddress());
         }
         else
         {
@@ -1259,9 +1259,9 @@ Target::ReadMemory (const Address& addr,
                 if (error.Success())
                 {
                     if (bytes_read == 0)
-                        error.SetErrorStringWithFormat("read memory from 0x%llx failed", load_addr);
+                        error.SetErrorStringWithFormat("read memory from 0x%" PRIx64 " failed", load_addr);
                     else
-                        error.SetErrorStringWithFormat("only %llu of %llu bytes were read from memory at 0x%llx", (uint64_t)bytes_read, (uint64_t)dst_len, load_addr);
+                        error.SetErrorStringWithFormat("only %" PRIu64 " of %" PRIu64 " bytes were read from memory at 0x%" PRIx64, (uint64_t)bytes_read, (uint64_t)dst_len, load_addr);
                 }
             }
             if (bytes_read)
@@ -2015,9 +2015,9 @@ Target::RunStopHooks ()
                                        cur_hook_sp->GetCommands().GetStringAtIndex(0) :
                                        NULL);
                     if (cmd)
-                        result.AppendMessageWithFormat("\n- Hook %llu (%s)\n", cur_hook_sp->GetID(), cmd);
+                        result.AppendMessageWithFormat("\n- Hook %" PRIu64 " (%s)\n", cur_hook_sp->GetID(), cmd);
                     else
-                        result.AppendMessageWithFormat("\n- Hook %llu\n", cur_hook_sp->GetID());
+                        result.AppendMessageWithFormat("\n- Hook %" PRIu64 "\n", cur_hook_sp->GetID());
                     any_thread_matched = true;
                 }
                 
@@ -2042,7 +2042,7 @@ Target::RunStopHooks ()
                 if ((result.GetStatus() == eReturnStatusSuccessContinuingNoResult) || 
                     (result.GetStatus() == eReturnStatusSuccessContinuingResult))
                 {
-                    result.AppendMessageWithFormat ("Aborting stop hooks, hook %llu set the program running.", cur_hook_sp->GetID());
+                    result.AppendMessageWithFormat ("Aborting stop hooks, hook %" PRIu64 " set the program running.", cur_hook_sp->GetID());
                     keep_going = false;
                 }
             }
@@ -2100,7 +2100,7 @@ Target::StopHook::GetDescription (Stream *s, lldb::DescriptionLevel level) const
 
     s->SetIndentLevel(indent_level + 2);
 
-    s->Printf ("Hook: %llu\n", GetID());
+    s->Printf ("Hook: %" PRIu64 "\n", GetID());
     if (m_active)
         s->Indent ("State: enabled\n");
     else

@@ -206,14 +206,14 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target)
             }
         }
         else
-            s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
+            s->Printf (", value = 0x%16.16" PRIx64, m_addr_range.GetBaseAddress().GetOffset());
     }
     else
     {
         if (m_size_is_sibling)                
-            s->Printf (", sibling = %5llu", m_addr_range.GetBaseAddress().GetOffset());
+            s->Printf (", sibling = %5" PRIu64, m_addr_range.GetBaseAddress().GetOffset());
         else
-            s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
+            s->Printf (", value = 0x%16.16" PRIx64, m_addr_range.GetBaseAddress().GetOffset());
     }
     if (m_mangled.GetDemangledName())
         s->Printf(", name=\"%s\"", m_mangled.GetDemangledName().AsCString());
@@ -251,7 +251,7 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
 
         const char *format = m_size_is_sibling ?
                             " Sibling -> [%5llu] 0x%8.8x %s\n":
-                            " 0x%16.16llx 0x%8.8x %s\n";
+                            " 0x%16.16" PRIx64 " 0x%8.8x %s\n";
         s->Printf(  format,
                     GetByteSize(),
                     m_flags,
@@ -260,8 +260,8 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
     else
     {
         const char *format = m_size_is_sibling ?
-                            "0x%16.16llx                    Sibling -> [%5llu] 0x%8.8x %s\n":
-                            "0x%16.16llx                    0x%16.16llx 0x%8.8x %s\n";
+                            "0x%16.16" PRIx64 "                    Sibling -> [%5llu] 0x%8.8x %s\n":
+                            "0x%16.16" PRIx64 "                    0x%16.16" PRIx64 " 0x%8.8x %s\n";
         s->Printf(  format,
                     m_addr_range.GetBaseAddress().GetOffset(),
                     GetByteSize(),

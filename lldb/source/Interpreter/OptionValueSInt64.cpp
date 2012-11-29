@@ -22,7 +22,7 @@ using namespace lldb_private;
 void
 OptionValueSInt64::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask)
 {
-    //printf ("%p: DumpValue (exe_ctx=%p, strm, mask) m_current_value = %lli\n", this, exe_ctx, m_current_value);
+    //printf ("%p: DumpValue (exe_ctx=%p, strm, mask) m_current_value = %" PRIi64 "\n", this, exe_ctx, m_current_value);
     if (dump_mask & eDumpOptionType)
         strm.Printf ("(%s)", GetTypeAsCString ());
 //    if (dump_mask & eDumpOptionName)
@@ -31,7 +31,7 @@ OptionValueSInt64::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uin
     {
         if (dump_mask & eDumpOptionType)
             strm.PutCString (" = ");
-        strm.Printf ("%lli", m_current_value);
+        strm.Printf ("%" PRIi64, m_current_value);
     }
 }
 
@@ -59,7 +59,7 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
                         m_current_value = value;
                     }
                     else
-                        error.SetErrorStringWithFormat ("%lli is out of range, valid values must be between %lli and %lli.",
+                        error.SetErrorStringWithFormat ("%" PRIi64 " is out of range, valid values must be between %" PRIi64 " and %" PRIi64 ".",
                                                         value,
                                                         m_min_value,
                                                         m_max_value);

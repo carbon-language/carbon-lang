@@ -140,7 +140,7 @@ ThreadSpec::GetDescription (Stream *s, lldb::DescriptionLevel level) const
         else
         {
             if (GetTID() != LLDB_INVALID_THREAD_ID)
-                s->Printf("tid: 0x%llx ", GetTID());
+                s->Printf("tid: 0x%" PRIx64 " ", GetTID());
                 
             if (GetIndex() != UINT32_MAX)
                 s->Printf("index: %d ", GetIndex());

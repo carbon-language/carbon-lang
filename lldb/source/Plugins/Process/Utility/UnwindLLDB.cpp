@@ -53,7 +53,7 @@ UnwindLLDB::DoGetFrameCount()
             {
                 TimeValue now(TimeValue::Now());
                 uint64_t delta_t = now - time_value;
-                printf ("%u frames in %llu.%09llu ms (%g frames/sec)\n", 
+                printf ("%u frames in %" PRIu64 ".%09llu ms (%g frames/sec)\n",
                         FRAME_COUNT,
                         delta_t / TimeValue::NanoSecPerSec, 
                         delta_t % TimeValue::NanoSecPerSec,

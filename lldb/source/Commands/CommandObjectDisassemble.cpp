@@ -424,7 +424,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
             }
             else
             {
-                result.AppendErrorWithFormat ("Failed to disassemble memory at 0x%8.8llx.\n", m_options.start_addr);
+                result.AppendErrorWithFormat ("Failed to disassemble memory at 0x%8.8" PRIx64 ".\n", m_options.start_addr);
                 result.SetStatus (eReturnStatusFailed);            
             }
         }
@@ -470,7 +470,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
             }
             else
             {
-                result.AppendErrorWithFormat ("Failed to disassemble memory at 0x%8.8llx.\n", m_options.start_addr);
+                result.AppendErrorWithFormat ("Failed to disassemble memory at 0x%8.8" PRIx64 ".\n", m_options.start_addr);
                 result.SetStatus (eReturnStatusFailed);            
             }
         }

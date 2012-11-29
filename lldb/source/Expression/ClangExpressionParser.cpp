@@ -733,7 +733,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     }
     
     if (log)
-        log->Printf("Found function, has local address 0x%llx and remote address 0x%llx", (uint64_t)func_local_addr, (uint64_t)func_remote_addr);
+        log->Printf("Found function, has local address 0x%" PRIx64 " and remote address 0x%" PRIx64, (uint64_t)func_local_addr, (uint64_t)func_remote_addr);
     
     std::pair <lldb::addr_t, lldb::addr_t> func_range;
     
@@ -747,7 +747,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     }
     
     if (log)
-        log->Printf("Function's code range is [0x%llx+0x%llx]", func_range.first, func_range.second);
+        log->Printf("Function's code range is [0x%" PRIx64 "+0x%" PRIx64 "]", func_range.first, func_range.second);
     
     Target *target = exe_ctx.GetTargetPtr();
     if (!target)

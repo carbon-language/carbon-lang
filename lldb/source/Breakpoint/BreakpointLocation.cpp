@@ -378,7 +378,7 @@ BreakpointLocation::ResolveBreakpointSite ()
     {
         LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log)
-            log->Warning ("Tried to add breakpoint site at 0x%llx but it was already present.\n",
+            log->Warning ("Tried to add breakpoint site at 0x%" PRIx64 " but it was already present.\n",
                           m_address.GetOpcodeLoadAddress (&m_owner.GetTarget()));
         return false;
     }
@@ -537,7 +537,7 @@ BreakpointLocation::Dump(Stream *s) const
     if (s == NULL)
         return;
 
-    s->Printf("BreakpointLocation %u: tid = %4.4llx  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  "
+    s->Printf("BreakpointLocation %u: tid = %4.4" PRIx64 "  load addr = 0x%8.8" PRIx64 "  state = %s  type = %s breakpoint  "
               "hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
               GetID(),
               GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),

@@ -133,7 +133,7 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
         if (addr == LLDB_INVALID_ADDRESS)
             log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => LLDB_INVALID_ADDRESS", target_sp.get());
         else
-            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%llx", target_sp.get(), addr);
+            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%" PRIx64, target_sp.get(), addr);
     }
 
     return addr;

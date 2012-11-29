@@ -402,7 +402,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
         {
             char uuidbuf[64];
             s->Printf ("Kernel UUID: %s\n", module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
-            s->Printf ("Load Address: 0x%llx\n", address);
+            s->Printf ("Load Address: 0x%" PRIx64 "\n", address);
             if (module_sp->GetFileSpec().GetDirectory().IsEmpty())
             {
                 s->Printf ("Loaded kernel file %s\n", module_sp->GetFileSpec().GetFilename().AsCString());
@@ -723,7 +723,7 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
             {
                 image_infos[i].reference_list = 0;
             }
-//            printf ("[%3u] %*.*s: address=0x%16.16llx, size=0x%16.16llx, version=0x%16.16llx, load_tag=0x%8.8x, flags=0x%8.8x\n", 
+//            printf ("[%3u] %*.*s: address=0x%16.16" PRIx64 ", size=0x%16.16" PRIx64 ", version=0x%16.16" PRIx64 ", load_tag=0x%8.8x, flags=0x%8.8x\n",
 //                    i,
 //                    KERNEL_MODULE_MAX_NAME, KERNEL_MODULE_MAX_NAME,  (char *)name_data, 
 //                    image_infos[i].address, 
@@ -793,7 +793,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
     {
         if (u)
         {
-            log->Printf("\taddr=0x%16.16llx size=0x%16.16llx version=0x%16.16llx load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16llx uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name=\"%s\"",
+            log->Printf("\taddr=0x%16.16" PRIx64 " size=0x%16.16" PRIx64 " version=0x%16.16" PRIx64 " load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name=\"%s\"",
                         address, size, version, load_tag, flags, reference_list,
                         u[ 0], u[ 1], u[ 2], u[ 3], u[ 4], u[ 5], u[ 6], u[ 7],
                         u[ 8], u[ 9], u[10], u[11], u[12], u[13], u[14], u[15],
@@ -801,7 +801,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
         }
         else
         {
-            log->Printf("\t[0x%16.16llx - 0x%16.16llx) version=0x%16.16llx load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16llx name=\"%s\"",
+            log->Printf("\t[0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ") version=0x%16.16" PRIx64 " load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16" PRIx64 " name=\"%s\"",
                         address, address+size, version, load_tag, flags, reference_list,
                         name);
         }
@@ -819,7 +819,7 @@ DynamicLoaderDarwinKernel::PutToLog(Log *log) const
         return;
 
     Mutex::Locker locker(m_mutex);
-    log->Printf("gLoadedKextSummaries = 0x%16.16llx { version=%u, entry_size=%u, entry_count=%u }",
+    log->Printf("gLoadedKextSummaries = 0x%16.16" PRIx64 " { version=%u, entry_size=%u, entry_count=%u }",
                 m_kext_summary_header_addr.GetFileAddress(),
                 m_kext_summary_header.version,
                 m_kext_summary_header.entry_size,

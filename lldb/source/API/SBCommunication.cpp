@@ -139,7 +139,7 @@ SBCommunication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connect
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBCommunication(%p)::Read (dst=%p, dst_len=%llu, timeout_usec=%u, &status)...", 
+        log->Printf ("SBCommunication(%p)::Read (dst=%p, dst_len=%" PRIu64 ", timeout_usec=%u, &status)...",
                      m_opaque,
                      dst,
                      (uint64_t)dst_len,
@@ -151,7 +151,7 @@ SBCommunication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connect
         status = eConnectionStatusNoConnection;
 
     if (log)
-        log->Printf ("SBCommunication(%p)::Read (dst=%p, dst_len=%llu, timeout_usec=%u, &status=%s) => %llu", 
+        log->Printf ("SBCommunication(%p)::Read (dst=%p, dst_len=%" PRIu64 ", timeout_usec=%u, &status=%s) => %" PRIu64,
                      m_opaque,
                      dst,
                      (uint64_t)dst_len,
@@ -173,7 +173,7 @@ SBCommunication::Write (const void *src, size_t src_len, ConnectionStatus &statu
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBCommunication(%p)::Write (src=%p, src_len=%llu, &status=%s) => %llu", 
+        log->Printf ("SBCommunication(%p)::Write (src=%p, src_len=%" PRIu64 ", &status=%s) => %" PRIu64,
                      m_opaque, src, (uint64_t)src_len, Communication::ConnectionStatusAsCString (status), (uint64_t)bytes_written);
 
     return 0;

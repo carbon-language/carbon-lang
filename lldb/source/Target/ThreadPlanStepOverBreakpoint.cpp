@@ -48,7 +48,7 @@ ThreadPlanStepOverBreakpoint::~ThreadPlanStepOverBreakpoint ()
 void
 ThreadPlanStepOverBreakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
-    s->Printf("Single stepping past breakpoint site %llu at 0x%llx", m_breakpoint_site_id, (uint64_t)m_breakpoint_addr);
+    s->Printf("Single stepping past breakpoint site %" PRIu64 " at 0x%" PRIx64, m_breakpoint_site_id, (uint64_t)m_breakpoint_addr);
 }
 
 bool

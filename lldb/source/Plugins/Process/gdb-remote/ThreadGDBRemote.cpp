@@ -97,7 +97,7 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     int signo = GetResumeSignal();
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_THREAD));
     if (log)
-        log->Printf ("Resuming thread: %4.4llx with state: %s.", GetID(), StateAsCString(resume_state));
+        log->Printf ("Resuming thread: %4.4" PRIx64 " with state: %s.", GetID(), StateAsCString(resume_state));
 
     ProcessSP process_sp (GetProcess());
     if (process_sp)

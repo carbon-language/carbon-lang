@@ -64,7 +64,7 @@ SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t l
     if (log)
     {
         const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
-        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16llx)",
+        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16" PRIx64 ")",
                      __FUNCTION__,
                      section.get(),
                      module_file_spec.GetDirectory().AsCString(),
@@ -112,7 +112,7 @@ SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t l
                 ModuleSP curr_module_sp (ats_pos->second->GetModule());
                 if (curr_module_sp)
                 {
-                    module_sp->ReportWarning ("address 0x%16.16llx maps to more than one section: %s.%s and %s.%s",
+                    module_sp->ReportWarning ("address 0x%16.16" PRIx64 " maps to more than one section: %s.%s and %s.%s",
                                               load_addr, 
                                               module_sp->GetFileSpec().GetFilename().GetCString(), 
                                               section->GetName().GetCString(),
@@ -174,7 +174,7 @@ SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp, addr_t l
     if (log)
     {
         const FileSpec &module_file_spec (section_sp->GetModule()->GetFileSpec());
-        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16llx)",
+        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16" PRIx64 ")",
                      __FUNCTION__,
                      section_sp.get(),
                      module_file_spec.GetDirectory().AsCString(),
@@ -254,7 +254,7 @@ SectionLoadList::Dump (Stream &s, Target *target)
     addr_to_sect_collection::const_iterator pos, end;
     for (pos = m_addr_to_sect.begin(), end = m_addr_to_sect.end(); pos != end; ++pos)
     {
-        s.Printf("addr = 0x%16.16llx, section = %p: ", pos->first, pos->second.get());
+        s.Printf("addr = 0x%16.16" PRIx64 ", section = %p: ", pos->first, pos->second.get());
         pos->second->Dump (&s, target, 0);
     }
 }

@@ -166,7 +166,7 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
         return 0;
         
     if (log)
-        log->Printf ("SBCommandInterpreter(%p)::HandleCompletion (current_line=\"%s\", cursor at: %lld, last char at: %lld, match_start_point: %d, max_return_elements: %d)",
+        log->Printf ("SBCommandInterpreter(%p)::HandleCompletion (current_line=\"%s\", cursor at: %" PRId64 ", last char at: %" PRId64 ", match_start_point: %d, max_return_elements: %d)",
                      m_opaque_ptr, current_line, (uint64_t) (cursor - current_line), (uint64_t) (last_char - current_line), match_start_point, max_return_elements);
                      
     if (m_opaque_ptr)

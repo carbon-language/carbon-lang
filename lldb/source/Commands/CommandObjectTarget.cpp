@@ -91,7 +91,7 @@ DumpTargetInfo (uint32_t target_idx, Target *target, const char *prefix_cstr, bo
             show_process_status = StateIsStoppedState(state, true);
         const char *state_cstr = StateAsCString (state);
         if (pid != LLDB_INVALID_PROCESS_ID)
-            strm.Printf ("%spid=%llu", properties++ > 0 ? ", " : " ( ", pid);
+            strm.Printf ("%spid=%" PRIu64, properties++ > 0 ? ", " : " ( ", pid);
         strm.Printf ("%sstate=%s", properties++ > 0 ? ", " : " ( ", state_cstr);
     }
     if (properties > 0)
@@ -2664,7 +2664,7 @@ protected:
                                                     {
                                                         if (target->GetSectionLoadList().SetSectionLoadAddress (section_sp, load_addr))
                                                             changed = true;
-                                                        result.AppendMessageWithFormat("section '%s' loaded at 0x%llx\n", sect_name, load_addr);
+                                                        result.AppendMessageWithFormat("section '%s' loaded at 0x%" PRIx64 "\n", sect_name, load_addr);
                                                     }
                                                 }
                                                 else
@@ -2918,13 +2918,13 @@ protected:
                         }
                         else
                         {
-                            result.AppendError ("Couldn't find module matching address: 0x%llx.", m_options.m_module_addr);
+                            result.AppendError ("Couldn't find module matching address: 0x%" PRIx64 ".", m_options.m_module_addr);
                             result.SetStatus (eReturnStatusFailed);
                         }
                     }
                     else
                     {
-                        result.AppendError ("Couldn't find module containing address: 0x%llx.", m_options.m_module_addr);
+                        result.AppendError ("Couldn't find module containing address: 0x%" PRIx64 ".", m_options.m_module_addr);
                         result.SetStatus (eReturnStatusFailed);
                     }
                 }
@@ -3102,12 +3102,12 @@ protected:
                                         if (format_char == 'o')
                                         {
                                             // Show the offset of slide for the image
-                                            strm.Printf ("0x%*.*llx", addr_nibble_width, addr_nibble_width, header_load_addr - header_addr.GetFileAddress());
+                                            strm.Printf ("0x%*.*" PRIx64, addr_nibble_width, addr_nibble_width, header_load_addr - header_addr.GetFileAddress());
                                         }
                                         else
                                         {
                                             // Show the load address of the image
-                                            strm.Printf ("0x%*.*llx", addr_nibble_width, addr_nibble_width, header_load_addr);
+                                            strm.Printf ("0x%*.*" PRIx64, addr_nibble_width, addr_nibble_width, header_load_addr);
                                         }
                                     }
                                     break;
@@ -3399,14 +3399,14 @@ protected:
                 Address first_non_prologue_insn (func_unwinders_sp->GetFirstNonPrologueInsn(*target));
                 if (first_non_prologue_insn.IsValid())
                 {
-                    result.GetOutputStream().Printf("First non-prologue instruction is at address 0x%llx or offset %lld into the function.\n", first_non_prologue_insn.GetLoadAddress(target), first_non_prologue_insn.GetLoadAddress(target) - start_addr);
+                    result.GetOutputStream().Printf("First non-prologue instruction is at address 0x%" PRIx64 " or offset %" PRId64 " into the function.\n", first_non_prologue_insn.GetLoadAddress(target), first_non_prologue_insn.GetLoadAddress(target) - start_addr);
                     result.GetOutputStream().Printf ("\n");
                 }
 
                 UnwindPlanSP non_callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtNonCallSite(*thread.get());
                 if (non_callsite_unwind_plan.get())
                 {
-                    result.GetOutputStream().Printf("Asynchronous (not restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    result.GetOutputStream().Printf("Asynchronous (not restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
                     non_callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
                     result.GetOutputStream().Printf ("\n");
                 }
@@ -3414,7 +3414,7 @@ protected:
                 UnwindPlanSP callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(-1);
                 if (callsite_unwind_plan.get())
                 {
-                    result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
                     callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
                     result.GetOutputStream().Printf ("\n");
                 }
@@ -3422,7 +3422,7 @@ protected:
                 UnwindPlanSP arch_default_unwind_plan = func_unwinders_sp->GetUnwindPlanArchitectureDefault(*thread.get());
                 if (arch_default_unwind_plan.get())
                 {
-                    result.GetOutputStream().Printf("Architecture default UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    result.GetOutputStream().Printf("Architecture default UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
                     arch_default_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
                     result.GetOutputStream().Printf ("\n");
                 }
@@ -3430,7 +3430,7 @@ protected:
                 UnwindPlanSP fast_unwind_plan = func_unwinders_sp->GetUnwindPlanFastUnwind(*thread.get());
                 if (fast_unwind_plan.get())
                 {
-                    result.GetOutputStream().Printf("Fast UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    result.GetOutputStream().Printf("Fast UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
                     fast_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
                     result.GetOutputStream().Printf ("\n");
                 }
@@ -4604,7 +4604,7 @@ public:
         case eInputReaderDone:
             if (!got_interrupted && !batch_mode)
             {
-                out_stream->Printf ("Stop hook #%llu added.\n", new_stop_hook->GetID());
+                out_stream->Printf ("Stop hook #%" PRIu64 " added.\n", new_stop_hook->GetID());
                 out_stream->Flush();
             }
             break;
@@ -4690,7 +4690,7 @@ protected:
             {
                 // Use one-liner.
                 new_hook_sp->GetCommandPointer()->AppendString (m_options.m_one_liner.c_str());
-                result.AppendMessageWithFormat("Stop hook #%llu added.\n", new_hook_sp->GetID());
+                result.AppendMessageWithFormat("Stop hook #%" PRIu64 " added.\n", new_hook_sp->GetID());
             }
             else
             {

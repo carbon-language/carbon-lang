@@ -89,7 +89,7 @@ Host::StartMonitoringChildProcess
     info_ptr->monitor_signals = monitor_signals;
     
     char thread_name[256];
-    ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%i)>", pid);
+    ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%" PRIu64 ")>", pid);
     thread = ThreadCreate (thread_name,
                            MonitorChildProcessThreadFunction,
                            info_ptr,
@@ -149,7 +149,7 @@ MonitorChildProcessThreadFunction (void *arg)
     {
         log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
         if (log)
-            log->Printf("%s ::wait_pid (pid = %i, &status, options = %i)...", function, pid, options);
+            log->Printf("%s ::wait_pid (pid = %" PRIu64 ", &status, options = %i)...", function, pid, options);
 
         // Wait for all child processes
         ::pthread_testcancel ();
@@ -198,7 +198,7 @@ MonitorChildProcessThreadFunction (void *arg)
 
                 log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
                 if (log)
-                    log->Printf ("%s ::waitpid (pid = %i, &status, options = %i) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_state = %i",
+                    log->Printf ("%s ::waitpid (pid = %" PRIu64 ", &status, options = %i) => pid = %" PRIu64 ", status = 0x%8.8x (%s), signal = %i, exit_state = %i",
                                  function,
                                  wait_pid,
                                  options,

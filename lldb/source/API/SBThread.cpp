@@ -715,7 +715,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
 
 
     if (log)
-        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%llx)", exe_ctx.GetThreadPtr(), addr);
+        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%" PRIx64 ")", exe_ctx.GetThreadPtr(), addr);
     
     if (exe_ctx.HasThreadScope())
     {
@@ -1185,7 +1185,7 @@ SBThread::GetDescription (SBStream &description) const
     ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        strm.Printf("SBThread: tid = 0x%4.4llx", exe_ctx.GetThreadPtr()->GetID());
+        strm.Printf("SBThread: tid = 0x%4.4" PRIx64, exe_ctx.GetThreadPtr()->GetID());
     }
     else
         strm.PutCString ("No value");

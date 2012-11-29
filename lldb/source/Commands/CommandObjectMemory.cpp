@@ -190,7 +190,7 @@ public:
                 if (byte_size_option_set)
                 {
                     if (byte_size_value > 1)
-                        error.SetErrorStringWithFormat ("display format (bytes/bytes with ascii) conflicts with the specified byte size %llu\n"
+                        error.SetErrorStringWithFormat ("display format (bytes/bytes with ascii) conflicts with the specified byte size %" PRIu64 "\n"
                                                         "\tconsider using a different display format or don't specify the byte size",
                                                         byte_size_value.GetCurrentValue());
                 }
@@ -620,13 +620,13 @@ protected:
             }
             else if (end_addr <= addr)
             {
-                result.AppendErrorWithFormat("end address (0x%llx) must be greater that the start address (0x%llx).\n", end_addr, addr);
+                result.AppendErrorWithFormat("end address (0x%" PRIx64 ") must be greater that the start address (0x%" PRIx64 ").\n", end_addr, addr);
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
             else if (m_format_options.GetCountValue().OptionWasSet())
             {
-                result.AppendErrorWithFormat("specify either the end address (0x%llx) or the count (--count %lu), not both.\n", end_addr, item_count);
+                result.AppendErrorWithFormat("specify either the end address (0x%" PRIx64 ") or the count (--count %lu), not both.\n", end_addr, item_count);
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
@@ -658,14 +658,14 @@ protected:
                 }
                 else
                 {
-                    result.AppendErrorWithFormat("failed to read memory from 0x%llx.\n", addr);
+                    result.AppendErrorWithFormat("failed to read memory from 0x%" PRIx64 ".\n", addr);
                 }
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
             
             if (bytes_read < total_byte_size)
-                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
+                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".\n", bytes_read, total_byte_size, addr);
             else
             {
                 m_next_addr = addr + bytes_read;
@@ -705,7 +705,7 @@ protected:
                     }
                     else 
                     {
-                        result.AppendErrorWithFormat("Failed to write %llu bytes to '%s'.\n", (uint64_t)bytes_read, path);
+                        result.AppendErrorWithFormat("Failed to write %" PRIu64 " bytes to '%s'.\n", (uint64_t)bytes_read, path);
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
@@ -738,7 +738,7 @@ protected:
                 addr_t item_addr = addr + (i * item_byte_size);
                 Address address (item_addr);
                 StreamString name_strm;
-                name_strm.Printf ("0x%llx", item_addr);
+                name_strm.Printf ("0x%" PRIx64, item_addr);
                 ValueObjectSP valobj_sp (ValueObjectMemory::Create (exe_scope, 
                                                                     name_strm.GetString().c_str(), 
                                                                     address, 
@@ -1044,18 +1044,18 @@ protected:
                     if (bytes_written == length)
                     {
                         // All bytes written
-                        result.GetOutputStream().Printf("%llu bytes were written to 0x%llx\n", (uint64_t)bytes_written, addr);
+                        result.GetOutputStream().Printf("%" PRIu64 " bytes were written to 0x%" PRIx64 "\n", (uint64_t)bytes_written, addr);
                         result.SetStatus(eReturnStatusSuccessFinishResult);
                     }
                     else if (bytes_written > 0)
                     {
                         // Some byte written
-                        result.GetOutputStream().Printf("%llu bytes of %llu requested were written to 0x%llx\n", (uint64_t)bytes_written, (uint64_t)length, addr);
+                        result.GetOutputStream().Printf("%" PRIu64 " bytes of %" PRIu64 " requested were written to 0x%" PRIx64 "\n", (uint64_t)bytes_written, (uint64_t)length, addr);
                         result.SetStatus(eReturnStatusSuccessFinishResult);
                     }
                     else 
                     {
-                        result.AppendErrorWithFormat ("Memory write to 0x%llx failed: %s.\n", addr, error.AsCString());
+                        result.AppendErrorWithFormat ("Memory write to 0x%" PRIx64 " failed: %s.\n", addr, error.AsCString());
                         result.SetStatus(eReturnStatusFailed);
                     }
                 }
@@ -1133,7 +1133,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value 0x%llx is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value 0x%" PRIx64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1161,7 +1161,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value 0x%llx is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value 0x%" PRIx64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1184,7 +1184,7 @@ protected:
                     }
                     else
                     {
-                        result.AppendErrorWithFormat ("Memory write to 0x%llx failed: %s.\n", addr, error.AsCString());
+                        result.AppendErrorWithFormat ("Memory write to 0x%" PRIx64 " failed: %s.\n", addr, error.AsCString());
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
@@ -1201,7 +1201,7 @@ protected:
                 }
                 else if (!SIntValueIsValidForSize (sval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %lli is too large or small to fit in a %lu byte signed integer value.\n", sval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %" PRIi64 " is too large or small to fit in a %lu byte signed integer value.\n", sval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1218,7 +1218,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %llu is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %" PRIu64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1235,7 +1235,7 @@ protected:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %llo is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %" PRIo64 " is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1251,7 +1251,7 @@ protected:
                 return true;
             else
             {
-                result.AppendErrorWithFormat ("Memory write to 0x%llx failed: %s.\n", addr, error.AsCString());
+                result.AppendErrorWithFormat ("Memory write to 0x%" PRIx64 " failed: %s.\n", addr, error.AsCString());
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }

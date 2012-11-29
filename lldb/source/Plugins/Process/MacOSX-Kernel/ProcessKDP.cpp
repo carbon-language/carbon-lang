@@ -448,7 +448,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     // locker will keep a mutex locked until it goes out of scope
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_THREAD));
     if (log && log->GetMask().Test(KDP_LOG_VERBOSE))
-        log->Printf ("ProcessKDP::%s (pid = %llu)", __FUNCTION__, GetID());
+        log->Printf ("ProcessKDP::%s (pid = %" PRIu64 ")", __FUNCTION__, GetID());
     
     // Even though there is a CPU mask, it doesn't mean to can see each CPU
     // indivudually, there is really only one. Lets call this thread 1.
@@ -744,7 +744,7 @@ ProcessKDP::AsyncThread (void *arg)
 
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %llu) thread starting...", arg, pid);
+        log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64 ") thread starting...", arg, pid);
     
     Listener listener ("ProcessKDP::AsyncThread");
     EventSP event_sp;
@@ -758,13 +758,13 @@ ProcessKDP::AsyncThread (void *arg)
         while (!done)
         {
             if (log)
-                log->Printf ("ProcessKDP::AsyncThread (pid = %llu) listener.WaitForEvent (NULL, event_sp)...",
+                log->Printf ("ProcessKDP::AsyncThread (pid = %" PRIu64 ") listener.WaitForEvent (NULL, event_sp)...",
                              pid);
             if (listener.WaitForEvent (NULL, event_sp))
             {
                 uint32_t event_type = event_sp->GetType();
                 if (log)
-                    log->Printf ("ProcessKDP::AsyncThread (pid = %llu) Got an event of type: %d...",
+                    log->Printf ("ProcessKDP::AsyncThread (pid = %" PRIu64 ") Got an event of type: %d...",
                                  pid,
                                  event_type);
                 
@@ -806,7 +806,7 @@ ProcessKDP::AsyncThread (void *arg)
                             
                     case eBroadcastBitAsyncThreadShouldExit:
                         if (log)
-                            log->Printf ("ProcessKDP::AsyncThread (pid = %llu) got eBroadcastBitAsyncThreadShouldExit...",
+                            log->Printf ("ProcessKDP::AsyncThread (pid = %" PRIu64 ") got eBroadcastBitAsyncThreadShouldExit...",
                                          pid);
                         done = true;
                         is_running = false;
@@ -814,7 +814,7 @@ ProcessKDP::AsyncThread (void *arg)
                             
                     default:
                         if (log)
-                            log->Printf ("ProcessKDP::AsyncThread (pid = %llu) got unknown event 0x%8.8x",
+                            log->Printf ("ProcessKDP::AsyncThread (pid = %" PRIu64 ") got unknown event 0x%8.8x",
                                          pid,
                                          event_type);
                         done = true;
@@ -826,7 +826,7 @@ ProcessKDP::AsyncThread (void *arg)
             else
             {
                 if (log)
-                    log->Printf ("ProcessKDP::AsyncThread (pid = %llu) listener.WaitForEvent (NULL, event_sp) => false",
+                    log->Printf ("ProcessKDP::AsyncThread (pid = %" PRIu64 ") listener.WaitForEvent (NULL, event_sp) => false",
                                  pid);
                 done = true;
             }
@@ -834,7 +834,7 @@ ProcessKDP::AsyncThread (void *arg)
     }
     
     if (log)
-        log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %llu) thread exiting...",
+        log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64 ") thread exiting...",
                      arg,
                      pid);
     
@@ -965,7 +965,7 @@ public:
                 }
                 else
                 {
-                    result.AppendErrorWithFormat ("invalid command byte 0x%llx, valid values are 1 - 255", command_byte);
+                    result.AppendErrorWithFormat ("invalid command byte 0x%" PRIx64 ", valid values are 1 - 255", command_byte);
                     result.SetStatus (eReturnStatusFailed);
                 }
             }

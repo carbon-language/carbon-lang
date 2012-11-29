@@ -83,7 +83,7 @@ BreakpointSite::Dump(Stream *s) const
     if (s == NULL)
         return;
 
-    s->Printf("BreakpointSite %u: addr = 0x%8.8llx  type = %s breakpoint  hw_index = %i  hit_count = %-4u",
+    s->Printf("BreakpointSite %u: addr = 0x%8.8" PRIx64 "  type = %s breakpoint  hw_index = %i  hit_count = %-4u",
             GetID(),
             (uint64_t)m_addr,
             IsHardware() ? "hardware" : "software",
@@ -95,7 +95,7 @@ void
 BreakpointSite::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     if (level != lldb::eDescriptionLevelBrief)
-        s->Printf ("breakpoint site: %d at 0x%8.8llx", GetID(), GetLoadAddress());
+        s->Printf ("breakpoint site: %d at 0x%8.8" PRIx64, GetID(), GetLoadAddress());
     m_owners.GetDescription (s, level);
 }
 

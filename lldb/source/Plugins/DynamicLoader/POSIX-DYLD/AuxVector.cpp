@@ -113,7 +113,7 @@ AuxVector::DumpToLog(LogSP log) const
     log->PutCString("AuxVector: ");
     for (iterator I = begin(); I != end(); ++I)
     {
-        log->Printf("   %s [%llu]: %llx", GetEntryName(*I), I->type, I->value);
+        log->Printf("   %s [%" PRIu64 "]: %" PRIx64, GetEntryName(*I), I->type, I->value);
     }
 }
 

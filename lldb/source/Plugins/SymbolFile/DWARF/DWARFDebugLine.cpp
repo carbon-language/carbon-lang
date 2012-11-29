@@ -100,7 +100,7 @@ DumpStateToFile (dw_offset_t offset, const DWARFDebugLine::State& state, void* u
     }
     else
     {
-        log->Printf( "0x%16.16llx %6u %6u %6u%s\n", state.address, state.line, state.column, state.file, state.end_sequence ? " END" : "");
+        log->Printf( "0x%16.16" PRIx64 " %6u %6u %6u%s\n", state.address, state.line, state.column, state.file, state.end_sequence ? " END" : "");
     }
 }
 
@@ -236,7 +236,7 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_d
                     case DW_LNE_set_address     :
                         {
                             row.address = debug_line_data.GetMaxU64(&offset, arg_size);
-                            log->Printf( "0x%8.8x: DW_LNE_set_address (0x%llx)", op_offset, row.address);
+                            log->Printf( "0x%8.8x: DW_LNE_set_address (0x%" PRIx64 ")", op_offset, row.address);
                         }
                         break;
 
@@ -314,7 +314,7 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_d
                 {
                     uint8_t adjust_opcode = 255 - prologue.opcode_base;
                     dw_addr_t addr_offset = (adjust_opcode / prologue.line_range) * prologue.min_inst_length;
-                    log->Printf( "0x%8.8x: DW_LNS_const_add_pc (0x%8.8llx)", op_offset, addr_offset);
+                    log->Printf( "0x%8.8x: DW_LNS_const_add_pc (0x%8.8" PRIx64 ")", op_offset, addr_offset);
                     row.address += addr_offset;
                 }
                 break;
@@ -362,7 +362,7 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_d
                     uint8_t adjust_opcode = opcode - prologue.opcode_base;
                     dw_addr_t addr_offset = (adjust_opcode / prologue.line_range) * prologue.min_inst_length;
                     int32_t line_offset = prologue.line_base + (adjust_opcode % prologue.line_range);
-                    log->Printf("0x%8.8x: address += 0x%llx,  line += %i\n", op_offset, (uint64_t)addr_offset, line_offset);
+                    log->Printf("0x%8.8x: address += 0x%" PRIx64 ",  line += %i\n", op_offset, (uint64_t)addr_offset, line_offset);
                     row.address += addr_offset;
                     row.line += line_offset;
                     row.Dump (log);
@@ -1122,7 +1122,7 @@ DWARFDebugLine::Row::Reset(bool default_is_stmt)
 void
 DWARFDebugLine::Row::Dump(Log *log) const
 {
-    log->Printf( "0x%16.16llx %6u %6u %6u %3u %s%s%s%s%s",
+    log->Printf( "0x%16.16" PRIx64 " %6u %6u %6u %3u %s%s%s%s%s",
                 address,
                 line,
                 column,

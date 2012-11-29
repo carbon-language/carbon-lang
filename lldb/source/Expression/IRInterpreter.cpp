@@ -389,7 +389,7 @@ public:
 
         lldb_private::Value base = GetAccessTarget(region.m_base);
         
-        ss.Printf("%llx [%s - %s %llx]",
+        ss.Printf("%" PRIx64 " [%s - %s %llx]",
                   region.m_base,
                   lldb_private::Value::GetValueTypeAsCString(base.GetValueType()),
                   lldb_private::Value::GetContextTypeAsCString(base.GetContextType()),

@@ -68,7 +68,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
     if (!error.Success())
     {
         if (log)
-            log->Printf ("ThreadPlanCallFunction(%p): Trying to put the stack in unreadable memory at: 0x%llx.", this, m_function_sp);
+            log->Printf ("ThreadPlanCallFunction(%p): Trying to put the stack in unreadable memory at: 0x%" PRIx64 ".", this, m_function_sp);
         return false;
     }
     
@@ -283,7 +283,7 @@ ThreadPlanCallFunction::DoTakedown (bool success)
             }
         }
         if (log)
-            log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
+            log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called for thread 0x%4.4" PRIx64 ", m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
         m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
         m_real_stop_info_sp = GetPrivateStopReason();
@@ -297,7 +297,7 @@ ThreadPlanCallFunction::DoTakedown (bool success)
     else
     {
         if (log)
-            log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called as no-op for thread 0x%4.4llx, m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
+            log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called as no-op for thread 0x%4.4" PRIx64 ", m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
     }
 }
 
@@ -317,7 +317,7 @@ ThreadPlanCallFunction::GetDescription (Stream *s, DescriptionLevel level)
     else
     {
         TargetSP target_sp (m_thread.CalculateTarget());
-        s->Printf("Thread plan to call 0x%llx", m_function_addr.GetLoadAddress(target_sp.get()));
+        s->Printf("Thread plan to call 0x%" PRIx64, m_function_addr.GetLoadAddress(target_sp.get()));
     }
 }
 

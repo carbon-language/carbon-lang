@@ -362,7 +362,7 @@ ConnectionFileDescriptor::Read (void *dst,
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %llu)...",
+        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %" PRIu64 ")...",
                      this, m_fd_recv, dst, (uint64_t)dst_len);
 
     Mutex::Locker locker;
@@ -411,7 +411,7 @@ ConnectionFileDescriptor::Read (void *dst,
     }
 
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %llu) => %lli, error = %s",
+        log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %" PRIu64 ") => %" PRIi64 ", error = %s",
                      this, 
                      m_fd_recv, 
                      dst, 
@@ -475,7 +475,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf ("%p ConnectionFileDescriptor::Write (src = %p, src_len = %llu)", this, src, (uint64_t)src_len);
+        log->Printf ("%p ConnectionFileDescriptor::Write (src = %p, src_len = %" PRIu64 ")", this, src, (uint64_t)src_len);
 
     if (!IsConnected ())
     {
@@ -530,7 +530,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
         switch (m_fd_send_type)
         {
             case eFDTypeFile:       // Other FD requireing read/write
-                log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %llu) => %lli (error = %s)",
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %" PRIu64 ") => %" PRIi64 " (error = %s)",
                              this, 
                              m_fd_send, 
                              src, 
@@ -540,7 +540,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
                 break;
                 
             case eFDTypeSocket:     // Socket requiring send/recv
-                log->Printf ("%p ConnectionFileDescriptor::Write()  ::send (socket = %i, src = %p, src_len = %llu, flags = 0) => %lli (error = %s)",
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::send (socket = %i, src = %p, src_len = %" PRIu64 ", flags = 0) => %" PRIi64 " (error = %s)",
                              this, 
                              m_fd_send, 
                              src, 
@@ -550,7 +550,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
                 break;
                 
             case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
-                log->Printf ("%p ConnectionFileDescriptor::Write()  ::sendto (socket = %i, src = %p, src_len = %llu, flags = 0) => %lli (error = %s)",
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::sendto (socket = %i, src = %p, src_len = %" PRIu64 ", flags = 0) => %" PRIi64 " (error = %s)",
                              this, 
                              m_fd_send, 
                              src, 

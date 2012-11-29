@@ -166,7 +166,7 @@ CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packe
             return true;
         
         if (log)
-            log->Printf ("error: failed to send packet entire packet %llu of %llu bytes sent", (uint64_t)bytes_written, (uint64_t)packet_size);
+            log->Printf ("error: failed to send packet entire packet %" PRIu64 " of %" PRIu64 " bytes sent", (uint64_t)bytes_written, (uint64_t)packet_size);
     }
     return false;
 }
@@ -210,7 +210,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (DataExtractor &pac
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
         
         if (log)
-            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %llu",
+            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %" PRIu64,
                          __PRETTY_FUNCTION__,
                          timeout_usec, 
                          Communication::ConnectionStatusAsCString (status),
@@ -876,7 +876,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                                 const addr_t region_addr = packet.GetPointer (&offset);
                                 const uint32_t region_size = packet.GetU32 (&offset);
                                 const uint32_t region_prot = packet.GetU32 (&offset);
-                                s.Printf("\n\tregion[%llu] = { range = [0x%16.16llx - 0x%16.16llx), size = 0x%8.8x, prot = %s }", region_addr, region_addr, region_addr + region_size, region_size, GetPermissionsAsCString (region_prot)); 
+                                s.Printf("\n\tregion[%" PRIu64 "] = { range = [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 "), size = 0x%8.8x, prot = %s }", region_addr, region_addr, region_addr + region_size, region_size, GetPermissionsAsCString (region_prot));
                             }
                         }
                         break;
@@ -997,7 +997,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
-                            s.Printf(" (addr = 0x%16.16llx, size = %u)", addr, size);
+                            s.Printf(" (addr = 0x%16.16" PRIx64 ", size = %u)", addr, size);
                             m_last_read_memory_addr = addr;
                         }
                         break;
@@ -1006,7 +1006,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
-                            s.Printf(" (addr = 0x%16.16llx, size = %u, bytes = \n", addr, size);
+                            s.Printf(" (addr = 0x%16.16" PRIx64 ", size = %u, bytes = \n", addr, size);
                             if (size > 0)
                                 DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, size), size, 32, addr);
                         }
@@ -1051,7 +1051,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                     case KDP_BREAKPOINT_REMOVE64:
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
-                            s.Printf(" (addr = 0x%16.16llx)", addr);
+                            s.Printf(" (addr = 0x%16.16" PRIx64 ")", addr);
                         }
                         break;
 

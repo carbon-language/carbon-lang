@@ -322,10 +322,10 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_const2s: s->Printf("DW_OP_const2s(0x%4.4x) ", m_data.GetU16(&offset)); break;      // 0x0b 1 2-byte constant
         case DW_OP_const4u: s->Printf("DW_OP_const4u(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0c 1 4-byte constant
         case DW_OP_const4s: s->Printf("DW_OP_const4s(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0d 1 4-byte constant
-        case DW_OP_const8u: s->Printf("DW_OP_const8u(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0e 1 8-byte constant
-        case DW_OP_const8s: s->Printf("DW_OP_const8s(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0f 1 8-byte constant
-        case DW_OP_constu:  s->Printf("DW_OP_constu(0x%llx) ", m_data.GetULEB128(&offset)); break;    // 0x10 1 ULEB128 constant
-        case DW_OP_consts:  s->Printf("DW_OP_consts(0x%lld) ", m_data.GetSLEB128(&offset)); break;    // 0x11 1 SLEB128 constant
+        case DW_OP_const8u: s->Printf("DW_OP_const8u(0x%16.16" PRIx64 ") ", m_data.GetU64(&offset)); break;  // 0x0e 1 8-byte constant
+        case DW_OP_const8s: s->Printf("DW_OP_const8s(0x%16.16" PRIx64 ") ", m_data.GetU64(&offset)); break;  // 0x0f 1 8-byte constant
+        case DW_OP_constu:  s->Printf("DW_OP_constu(0x%" PRIx64 ") ", m_data.GetULEB128(&offset)); break;    // 0x10 1 ULEB128 constant
+        case DW_OP_consts:  s->Printf("DW_OP_consts(0x%" PRId64 ") ", m_data.GetSLEB128(&offset)); break;    // 0x11 1 SLEB128 constant
         case DW_OP_dup:     s->PutCString("DW_OP_dup"); break;                                        // 0x12
         case DW_OP_drop:    s->PutCString("DW_OP_drop"); break;                                       // 0x13
         case DW_OP_over:    s->PutCString("DW_OP_over"); break;                                       // 0x14
@@ -344,7 +344,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_or:      s->PutCString("DW_OP_or"); break;                                         // 0x21
         case DW_OP_plus:    s->PutCString("DW_OP_plus"); break;                                       // 0x22
         case DW_OP_plus_uconst:                                                                 // 0x23 1 ULEB128 addend
-            s->Printf("DW_OP_plus_uconst(0x%llx) ", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_plus_uconst(0x%" PRIx64 ") ", m_data.GetULEB128(&offset));
             break;
 
         case DW_OP_shl:     s->PutCString("DW_OP_shl"); break;                                        // 0x24
@@ -490,17 +490,17 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
                     {
                         if (reg_info.name)
                         {
-                            s->Printf("[%s%+lli]", reg_info.name, reg_offset); 
+                            s->Printf("[%s%+" PRIi64 "]", reg_info.name, reg_offset);
                             break;
                         }
                         else if (reg_info.alt_name)
                         {
-                            s->Printf("[%s%+lli]", reg_info.alt_name, reg_offset); 
+                            s->Printf("[%s%+" PRIi64 "]", reg_info.alt_name, reg_offset);
                             break;
                         }
                     }
                 }
-                s->Printf("DW_OP_breg%i(0x%llx)", reg_num, reg_offset); 
+                s->Printf("DW_OP_breg%i(0x%" PRIx64 ")", reg_num, reg_offset);
             }
             break;
 
@@ -524,11 +524,11 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
                         }
                     }
                 }
-                s->Printf("DW_OP_regx(%llu)", reg_num); break; 
+                s->Printf("DW_OP_regx(%" PRIu64 ")", reg_num); break;
             }
             break;
         case DW_OP_fbreg:                                                   // 0x91 1 SLEB128 offset
-            s->Printf("DW_OP_fbreg(%lli)",m_data.GetSLEB128(&offset));
+            s->Printf("DW_OP_fbreg(%" PRIi64 ")",m_data.GetSLEB128(&offset));
             break;
         case DW_OP_bregx:                                                   // 0x92 2 ULEB128 register followed by SLEB128 offset
             {
@@ -541,21 +541,21 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
                     {
                         if (reg_info.name)
                         {
-                            s->Printf("[%s%+lli]", reg_info.name, reg_offset); 
+                            s->Printf("[%s%+" PRIi64 "]", reg_info.name, reg_offset);
                             break;
                         }
                         else if (reg_info.alt_name)
                         {
-                            s->Printf("[%s%+lli]", reg_info.alt_name, reg_offset); 
+                            s->Printf("[%s%+" PRIi64 "]", reg_info.alt_name, reg_offset);
                             break;
                         }
                     }
                 }
-                s->Printf("DW_OP_bregx(reg=%u,offset=%lli)", reg_num, reg_offset); 
+                s->Printf("DW_OP_bregx(reg=%u,offset=%" PRIi64 ")", reg_num, reg_offset);
             }
             break;
         case DW_OP_piece:                                                   // 0x93 1 ULEB128 size of piece addressed
-            s->Printf("DW_OP_piece(0x%llx)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_piece(0x%" PRIx64 ")", m_data.GetULEB128(&offset));
             break;
         case DW_OP_deref_size:                                              // 0x94 1 1-byte size of data retrieved
             s->Printf("DW_OP_deref_size(0x%2.2x)", m_data.GetU8(&offset));
@@ -572,7 +572,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
             s->Printf("DW_OP_call4(0x%8.8x)", m_data.GetU32(&offset));
             break;
         case DW_OP_call_ref:                                                // 0x9a DWARF3 1 4- or 8-byte offset of DIE
-            s->Printf("DW_OP_call_ref(0x%8.8llx)", m_data.GetAddress(&offset));
+            s->Printf("DW_OP_call_ref(0x%8.8" PRIx64 ")", m_data.GetAddress(&offset));
             break;
 //      case DW_OP_form_tls_address: s << "form_tls_address"; break;        // 0x9b DWARF3
 //      case DW_OP_call_frame_cfa: s << "call_frame_cfa"; break;            // 0x9c DWARF3
@@ -582,7 +582,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 //      case DW_OP_lo_user:     s->PutCString("DW_OP_lo_user"); break;                        // 0xe0
 //      case DW_OP_hi_user:     s->PutCString("DW_OP_hi_user"); break;                        // 0xff
 //        case DW_OP_APPLE_extern:
-//            s->Printf("DW_OP_APPLE_extern(%llu)", m_data.GetULEB128(&offset));
+//            s->Printf("DW_OP_APPLE_extern(%" PRIu64 ")", m_data.GetULEB128(&offset));
 //            break;
 //        case DW_OP_APPLE_array_ref:
 //            s->PutCString("DW_OP_APPLE_array_ref");
@@ -603,7 +603,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 //            s->PutCString("DW_OP_APPLE_deref_type");
 //            break;
 //        case DW_OP_APPLE_expr_local:    // 0xF5 - ULEB128 expression local index
-//            s->Printf("DW_OP_APPLE_expr_local(%llu)", m_data.GetULEB128(&offset));
+//            s->Printf("DW_OP_APPLE_expr_local(%" PRIu64 ")", m_data.GetULEB128(&offset));
 //            break;
 //        case DW_OP_APPLE_constf:        // 0xF6 - 1 byte float size, followed by constant float data
 //            {
@@ -1345,7 +1345,7 @@ DWARFExpression::Evaluate
             for (size_t i=0; i<count; ++i)
             {
                 StreamString new_value;
-                new_value.Printf("[%llu]", (uint64_t)i);
+                new_value.Printf("[%" PRIu64 "]", (uint64_t)i);
                 stack[i].Dump(&new_value);
                 log->Printf("  %s", new_value.GetData());
             }
@@ -1438,7 +1438,7 @@ DWARFExpression::Evaluate
                             else
                             {
                                 if (error_ptr)
-                                    error_ptr->SetErrorStringWithFormat ("Failed to dereference pointer from 0x%llx for DW_OP_deref: %s\n", 
+                                    error_ptr->SetErrorStringWithFormat ("Failed to dereference pointer from 0x%" PRIx64 " for DW_OP_deref: %s\n",
                                                                          pointer_addr,
                                                                          error.AsCString());
                                 return false;
@@ -1536,7 +1536,7 @@ DWARFExpression::Evaluate
                             else
                             {
                                 if (error_ptr)
-                                    error_ptr->SetErrorStringWithFormat ("Failed to dereference pointer from 0x%llx for DW_OP_deref: %s\n", 
+                                    error_ptr->SetErrorStringWithFormat ("Failed to dereference pointer from 0x%" PRIx64 " for DW_OP_deref: %s\n",
                                                                          pointer_addr,
                                                                          error.AsCString());
                                 return false;
@@ -2709,7 +2709,7 @@ DWARFExpression::Evaluate
                 if (size && (index >= size || index < 0))
                 {
                     if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat("Out of bounds array access.  %lld is not in [0, %llu]", index, size);
+                        error_ptr->SetErrorStringWithFormat("Out of bounds array access.  %" PRId64 " is not in [0, %" PRIu64 "]", index, size);
                     return false;
                 }
                 
@@ -2892,7 +2892,7 @@ DWARFExpression::Evaluate
                                                                           new_value))
                                     {
                                         if (error_ptr)
-                                            error_ptr->SetErrorStringWithFormat ("Failed to write value to memory at 0x%llx.\n", addr);
+                                            error_ptr->SetErrorStringWithFormat ("Failed to write value to memory at 0x%" PRIx64 ".\n", addr);
                                         return false;
                                     }
                                 }
@@ -3186,7 +3186,7 @@ DWARFExpression::Evaluate
         for (size_t i=0; i<count; ++i)
         {
             StreamString new_value;
-            new_value.Printf("[%llu]", (uint64_t)i);
+            new_value.Printf("[%" PRIu64 "]", (uint64_t)i);
             stack[i].Dump(&new_value);
             log->Printf("  %s", new_value.GetData());
         }

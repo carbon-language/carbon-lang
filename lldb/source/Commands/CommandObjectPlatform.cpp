@@ -519,7 +519,7 @@ protected:
                         }
                         else
                         {
-                            result.AppendErrorWithFormat ("no process found with pid = %llu\n", pid);
+                            result.AppendErrorWithFormat ("no process found with pid = %" PRIu64 "\n", pid);
                             result.SetStatus (eReturnStatusFailed);
                         }
                     }
@@ -796,12 +796,12 @@ protected:
                             ProcessInstanceInfo proc_info;
                             if (platform_sp->GetProcessInfo (pid, proc_info))
                             {
-                                ostrm.Printf ("Process information for process %llu:\n", pid);
+                                ostrm.Printf ("Process information for process %" PRIu64 ":\n", pid);
                                 proc_info.Dump (ostrm, platform_sp.get());
                             }
                             else
                             {
-                                ostrm.Printf ("error: no process information is available for process %llu\n", pid);
+                                ostrm.Printf ("error: no process information is available for process %" PRIu64 "\n", pid);
                             }
                             ostrm.EOL();
                         }
