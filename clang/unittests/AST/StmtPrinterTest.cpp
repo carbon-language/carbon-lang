@@ -154,8 +154,6 @@ TEST(StmtPrinter, TestMSIntegerLiteral) {
     "1L , -1L , 1UL , "
     "1LL , -1LL , 1ULL"));
     // Should be: with semicolon
-    // WRONG; all 128-bit literals should be printed as 128-bit.
-    // (This is because currently we do semantic analysis incorrectly.)
 }
 
 TEST(StmtPrinter, TestFloatingPointLiteral) {
@@ -165,4 +163,3 @@ TEST(StmtPrinter, TestFloatingPointLiteral) {
     "1.F , -1.F , 1. , -1. , 1.L , -1.L"));
     // Should be: with semicolon
 }
-
