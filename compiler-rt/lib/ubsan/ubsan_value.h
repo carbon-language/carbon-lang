@@ -23,7 +23,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 
 // FIXME: Move this out to a config header.
-#if defined(__clang__) || __SIZEOF_INT128__
+#if __SIZEOF_INT128__
 typedef __int128 s128;
 typedef unsigned __int128 u128;
 #define HAVE_INT128_T 1
