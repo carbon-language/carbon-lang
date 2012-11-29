@@ -842,15 +842,16 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   ///
   /// This is a general case of origin propagation. For an Nary operation,
   /// is set to the origin of an argument that is not entirely initialized.
+  /// If there is more than one such arguments, the rightmost of them is picked.
   /// It does not matter which one is picked if all arguments are initialized.
   void setOriginForNaryOp(Instruction &I) {
     if (!ClTrackOrigins) return;
     IRBuilder<> IRB(&I);
     Value *Origin = getOrigin(&I, 0);
     for (unsigned Op = 1, n = I.getNumOperands(); Op < n; ++Op) {
-      Value *S = convertToShadowTyNoVec(getShadow(&I, Op - 1), IRB);
+      Value *S = convertToShadowTyNoVec(getShadow(&I, Op), IRB);
       Origin = IRB.CreateSelect(IRB.CreateICmpNE(S, getCleanShadow(S)),
-                                Origin, getOrigin(&I, Op));
+                                getOrigin(&I, Op), Origin);
     }
     setOrigin(&I, Origin);
   }
