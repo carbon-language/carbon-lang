@@ -3,10 +3,10 @@
 // RUN: FileCheck %s < %t
 
 // FIXME: This testcase shouldn't rely on assembly emission.
-//CHECK: Lpubtypes_begin1:
+//CHECK: Lpubtypes_begin[[SECNUM:[0-9]:]]
 //CHECK:         .asciz   "G"
 //CHECK-NEXT:    .long   0
-//CHECK-NEXT: Lpubtypes_end1:
+//CHECK-NEXT: Lpubtypes_end[[SECNUM]]
 
 class G {
 public:
