@@ -17670,6 +17670,17 @@ FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
   return -1;
 }
 
+ScalarTargetTransformInfo::PopcntHwSupport
+X86ScalarTargetTransformImpl::getPopcntHwSupport(unsigned TyWidth) const {
+  assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
+  const X86Subtarget &ST = TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+
+  // TODO: Currently the __builtin_popcount() implementation using SSE3
+  //   instructions is inefficient. Once the problem is fixed, we should
+  //   call ST.hasSSE3() instead of ST.hasSSE4().
+  return ST.hasSSE41() ? Fast : None;
+}
+
 unsigned
 X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {
