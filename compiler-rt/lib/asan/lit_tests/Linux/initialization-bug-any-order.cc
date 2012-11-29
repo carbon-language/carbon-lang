@@ -3,10 +3,10 @@
 // independently on order in which we list source files.
 
 // RUN: %clangxx_asan -m64 -O0 %s %p/../Helpers/initialization-bug-extra.cc\
-// RUN:   -mllvm -asan-initialization-order -o %t && %t 2>&1 \
+// RUN:   -fsanitize=init-order -o %t && %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
 // RUN: %clangxx_asan -m64 -O0 %p/../Helpers/initialization-bug-extra.cc %s\
-// RUN:   -mllvm -asan-initialization-order -o %t && %t 2>&1 \
+// RUN:   -fsanitize=init-order -o %t && %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
 
 // Do not test with optimization -- the error may be optimized away.

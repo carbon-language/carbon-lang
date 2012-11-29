@@ -1,10 +1,10 @@
 // Test to make sure basic initialization order errors are caught.
 
 // RUN: %clangxx_asan -m64 -O0 %s %p/Helpers/initialization-bug-extra2.cc\
-// RUN:   -mllvm -asan-initialization-order -o %t && %t 2>&1 \
+// RUN:   -fsanitize=init-order -o %t && %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
 // RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-bug-extra2.cc\
-// RUN:   -mllvm -asan-initialization-order -o %t && %t 2>&1 \
+// RUN:   -fsanitize=init-order -o %t && %t 2>&1 \
 // RUN:     | %symbolize | FileCheck %s
 
 // Do not test with optimization -- the error may be optimized away.

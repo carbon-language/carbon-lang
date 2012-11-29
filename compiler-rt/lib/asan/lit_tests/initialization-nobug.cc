@@ -2,23 +2,23 @@
 // order checking.  If successful, this will just return 0.
 
 // RUN: %clangxx_asan -m64 -O0 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m64 -O1 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m64 -O2 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m64 -O3 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m32 -O1 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m32 -O2 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 // RUN: %clangxx_asan -m32 -O3 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -mllvm -asan-initialization-order -o %t && %t 2>&1
+// RUN:   --std=c++11 -fsanitize=init-order -o %t && %t 2>&1
 
 // Simple access:
 // Make sure that accessing a global in the same TU is safe
