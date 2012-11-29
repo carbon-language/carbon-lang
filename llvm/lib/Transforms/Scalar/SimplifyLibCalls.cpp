@@ -87,31 +87,6 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
-// 'fputs' Optimizations
-
-struct FPutsOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require DataLayout.
-    if (!TD) return 0;
-
-    // Require two pointers.  Also, we can't optimize if return value is used.
-    FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        !CI->use_empty())
-      return 0;
-
-    // fputs(s,F) --> fwrite(s,1,strlen(s),F)
-    uint64_t Len = GetStringLength(CI->getArgOperand(0));
-    if (!Len) return 0;
-    // Known to have no uses (see above).
-    return EmitFWrite(CI->getArgOperand(0),
-                      ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
-                      CI->getArgOperand(1), B, TD, TLI);
-  }
-};
-
-//===---------------------------------------===//
 // 'puts' Optimizations
 
 struct PutsOpt : public LibCallOptimization {
@@ -153,7 +128,6 @@ namespace {
 
     StringMap<LibCallOptimization*> Optimizations;
     // Formatting and IO Optimizations
-    FPutsOpt FPuts;
     PutsOpt Puts;
 
     bool Modified;  // This is only used by doInitialization.
@@ -210,7 +184,6 @@ void SimplifyLibCalls::AddOpt(LibFunc::Func F1, LibFunc::Func F2,
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
   // Formatting and IO Optimizations
-  AddOpt(LibFunc::fputs, &FPuts);
   Optimizations["puts"] = &Puts;
 }
 

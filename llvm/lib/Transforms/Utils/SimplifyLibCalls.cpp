@@ -1610,6 +1610,28 @@ struct FWriteOpt : public LibCallOptimization {
   }
 };
 
+struct FPutsOpt : public LibCallOptimization {
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require DataLayout.
+    if (!TD) return 0;
+
+    // Require two pointers.  Also, we can't optimize if return value is used.
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !CI->use_empty())
+      return 0;
+
+    // fputs(s,F) --> fwrite(s,1,strlen(s),F)
+    uint64_t Len = GetStringLength(CI->getArgOperand(0));
+    if (!Len) return 0;
+    // Known to have no uses (see above).
+    return EmitFWrite(CI->getArgOperand(0),
+                      ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
+                      CI->getArgOperand(1), B, TD, TLI);
+  }
+};
+
 } // End anonymous namespace.
 
 namespace llvm {
@@ -1668,6 +1690,7 @@ class LibCallSimplifierImpl {
   SPrintFOpt SPrintF;
   FPrintFOpt FPrintF;
   FWriteOpt FWrite;
+  FPutsOpt FPuts;
 
   void initOptimizations();
   void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1795,6 +1818,7 @@ void LibCallSimplifierImpl::initOptimizations() {
   addOpt(LibFunc::sprintf, &SPrintF);
   addOpt(LibFunc::fprintf, &FPrintF);
   addOpt(LibFunc::fwrite, &FWrite);
+  addOpt(LibFunc::fputs, &FPuts);
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {

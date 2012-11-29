@@ -38,13 +38,14 @@ define void @test_simplify2(%FILE* %fp) {
 }
 
 ; Check fprintf(fp, "%s", str) -> fputs(str, fp).
+; NOTE: The fputs simplifier simplifies this further to fwrite.
 
 define void @test_simplify3(%FILE* %fp) {
 ; CHECK: @test_simplify3
   %fmt = getelementptr [3 x i8]* @percent_s, i32 0, i32 0
   %str = getelementptr [13 x i8]* @hello_world, i32 0, i32 0
   call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt, i8* %str)
-; CHECK-NEXT: call i32 @fputs(i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0), %FILE* %fp)
+; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0), i32 12, i32 1, %FILE* %fp)
   ret void
 ; CHECK-NEXT: ret void
 }
