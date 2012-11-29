@@ -227,6 +227,9 @@ public:
   /// these flats.
   FastMathFlags getFastMathFlags() const;
 
+  /// Copy I's fast-math flags
+  void copyFastMathFlags(const Instruction *I);
+
 private:
   /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side
   /// metadata hash.

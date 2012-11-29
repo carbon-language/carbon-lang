@@ -177,6 +177,12 @@ FastMathFlags Instruction::getFastMathFlags() const {
   return cast<FPMathOperator>(this)->getFastMathFlags();
 }
 
+/// Copy I's fast-math flags
+void Instruction::copyFastMathFlags(const Instruction *I) {
+  setFastMathFlags(I->getFastMathFlags());
+}
+
+
 const char *Instruction::getOpcodeName(unsigned OpCode) {
   switch (OpCode) {
   // Terminators

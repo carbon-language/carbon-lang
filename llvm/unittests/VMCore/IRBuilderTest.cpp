@@ -164,6 +164,15 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   FDiv = cast<Instruction>(F);
   EXPECT_TRUE(FDiv->hasAllowReciprocal());
 
+  Builder.clearFastMathFlags();
+
+  F = Builder.CreateFDiv(F, F);
+  ASSERT_TRUE(isa<Instruction>(F));
+  FDiv = cast<Instruction>(F);
+  EXPECT_FALSE(FDiv->getFastMathFlags().any());
+  FDiv->copyFastMathFlags(FAdd);
+  EXPECT_TRUE(FDiv->hasNoNaNs());
+
 }
 
 }
