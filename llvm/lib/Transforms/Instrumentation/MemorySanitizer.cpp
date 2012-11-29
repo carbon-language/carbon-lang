@@ -601,6 +601,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *Shadow = ShadowMap[V];
       if (!Shadow) {
         DEBUG(dbgs() << "No shadow: " << *V << "\n" << *(I->getParent()));
+        (void)I;
         assert(Shadow && "No shadow for a value");
       }
       return Shadow;
@@ -608,6 +609,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (UndefValue *U = dyn_cast<UndefValue>(V)) {
       Value *AllOnes = getPoisonedShadow(getShadowTy(V));
       DEBUG(dbgs() << "Undef: " << *U << " ==> " << *AllOnes << "\n");
+      (void)U;
       return AllOnes;
     }
     if (Argument *A = dyn_cast<Argument>(V)) {
@@ -636,6 +638,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
               getShadowPtr(V, EntryIRB.getInt8Ty(), EntryIRB),
               Base, Size, AI->getParamAlignment());
             DEBUG(dbgs() << "  ByValCpy: " << *Cpy << "\n");
+            (void)Cpy;
             *ShadowPtr = getCleanShadow(V);
           } else {
             *ShadowPtr = EntryIRB.CreateLoad(Base);
@@ -689,9 +692,11 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (!InsertChecks) return;
     Instruction *Shadow = dyn_cast_or_null<Instruction>(getShadow(Val));
     if (!Shadow) return;
+#ifndef NDEBUG
     Type *ShadowTy = Shadow->getType();
     assert((isa<IntegerType>(ShadowTy) || isa<VectorType>(ShadowTy)) &&
            "Can only insert checks for integer and vector shadow types");
+#endif
     Instruction *Origin = dyn_cast_or_null<Instruction>(getOrigin(Val));
     InstrumentationList.push_back(
       ShadowOriginAndInsertPoint(Shadow, Origin, OrigIns));
@@ -704,8 +709,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// Loads the corresponding shadow and (optionally) origin.
   /// Optionally, checks that the load address is fully defined.
   void visitLoadInst(LoadInst &I) {
-    Type *LoadTy = I.getType();
-    assert(LoadTy->isSized() && "Load type must have size");
+    assert(I.getType()->isSized() && "Load type must have size");
     IRBuilder<> IRB(&I);
     Type *ShadowTy = getShadowTy(&I);
     Value *Addr = I.getPointerOperand();
@@ -733,6 +737,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     StoreInst *NewSI = IRB.CreateAlignedStore(Shadow, ShadowPtr, I.getAlignment());
     DEBUG(dbgs() << "  STORE: " << *NewSI << "\n");
+    (void)NewSI;
     // If the store is volatile, add a check.
     if (I.isVolatile())
       insertCheck(Val, &I);
