@@ -312,6 +312,8 @@ class DwarfDebug {
   // Holders for the various debug information flags that we might need to
   // have exposed. See accessor functions below for description.
   bool IsDarwinGDBCompat;
+
+  // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasDwarfFission;
 private:
