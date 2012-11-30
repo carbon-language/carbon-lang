@@ -114,9 +114,8 @@ public:
   /// Ctor.
   SingleBlockLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
                             DominatorTree *Dt, DataLayout *Dl,
-                            LPPassManager *Lpm,
                             unsigned VecWidth):
-  OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), LPM(Lpm), VF(VecWidth),
+  OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), VF(VecWidth),
   Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
   // Perform the actual loop widening (vectorization).
@@ -181,8 +180,6 @@ private:
   DominatorTree *DT;
   // Data Layout.
   DataLayout *DL;
-  // Loop Pass Manager;
-  LPPassManager *LPM;
   // The vectorization factor to use.
   unsigned VF;
 
@@ -491,7 +488,7 @@ struct LoopVectorize : public LoopPass {
           "\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
-    SingleBlockLoopVectorizer LB(L, SE, LI, DT, DL, &LPM, VF);
+    SingleBlockLoopVectorizer LB(L, SE, LI, DT, DL, VF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -969,18 +966,21 @@ SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   // Get ready to start creating new instructions into the vectorized body.
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
-  // Register the new loop.
+  // Create and register the new vector loop.
   Loop* Lp = new Loop();
-  LPM->insertLoop(Lp, OrigLoop->getParentLoop());
-
-  Lp->addBasicBlockToLoop(VecBody, LI->getBase());
-
   Loop *ParentLoop = OrigLoop->getParentLoop();
+
+  // Insert the new loop into the loop nest and register the new basic blocks.
   if (ParentLoop) {
+    ParentLoop->addChildLoop(Lp);
     ParentLoop->addBasicBlockToLoop(ScalarPH, LI->getBase());
     ParentLoop->addBasicBlockToLoop(VectorPH, LI->getBase());
     ParentLoop->addBasicBlockToLoop(MiddleBlock, LI->getBase());
+  } else {
+    LI->addTopLevelLoop(Lp);
   }
+
+  Lp->addBasicBlockToLoop(VecBody, LI->getBase());
 
   // Save the state.
   LoopVectorPreHeader = VectorPH;
