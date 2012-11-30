@@ -109,8 +109,11 @@ protected:
   const MCSection *DwarfAccelTypesSection;
 
   /// These are used for the Fission separate debug information files.
-  /// DwarfInfoDWOSection
   const MCSection *DwarfInfoDWOSection;
+  const MCSection *DwarfAbbrevDWOSection;
+  const MCSection *DwarfStrDWOSection;
+  const MCSection *DwarfLineDWOSection;
+  const MCSection *DwarfLocDWOSection;
 
   // Extra TLS Variable Data section.  If the target needs to put additional
   // information for a TLS variable, it'll go here.
@@ -231,6 +234,18 @@ public:
   }
   const MCSection *getDwarfInfoDWOSection() const {
     return DwarfInfoDWOSection;
+  }
+  const MCSection *getDwarfAbbrevDWOSection() const {
+    return DwarfAbbrevDWOSection;
+  }
+  const MCSection *getDwarfStrDWOSection() const {
+    return DwarfStrDWOSection;
+  }
+  const MCSection *getDwarfLineDWOSection() const {
+    return DwarfLineDWOSection;
+  }
+  const MCSection *getDwarfLocDWOSection() const {
+    return DwarfLocDWOSection;
   }
 
   const MCSection *getTLSExtraDataSection() const {

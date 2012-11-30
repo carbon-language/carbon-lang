@@ -413,6 +413,19 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfInfoDWOSection =
     Ctx->getELFSection(".debug_info.dwo", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
+  DwarfAbbrevDWOSection =
+    Ctx->getELFSection(".debug_abbrev.dwo", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
+  DwarfStrDWOSection =
+    Ctx->getELFSection(".debug_str.dwo", ELF::SHT_PROGBITS,
+                       ELF::SHF_MERGE | ELF::SHF_STRINGS,
+                       SectionKind::getMergeable1ByteCString());
+  DwarfLineDWOSection =
+    Ctx->getELFSection(".debug_line.dwo", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
+  DwarfLocDWOSection =
+    Ctx->getELFSection(".debug_loc.dwo", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
 }
 
 
