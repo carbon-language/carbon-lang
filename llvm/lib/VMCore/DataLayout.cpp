@@ -174,35 +174,51 @@ void DataLayout::init(StringRef Desc) {
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
   setPointerAlignment(0, 8, 8, 8);
 
-  std::string errMsg = parseSpecifier(Desc);
-  assert(errMsg == "" && "Invalid target data layout string.");
-  (void)errMsg;
+  parseSpecifier(Desc);
+}
+
+/// Checked version of split, to ensure mandatory subparts.
+static std::pair<StringRef, StringRef> split(StringRef Str, char Separator) {
+  assert(!Str.empty() && "parse error, string can't be empty here");
+  std::pair<StringRef, StringRef> Split = Str.split(Separator);
+  assert((!Split.second.empty() || Split.first == Str) &&
+         "a trailing separator is not allowed");
+  return Split;
 }
 
 /// Get an unsinged integer, including error checks.
 static unsigned getInt(StringRef R) {
-  if (R.empty())
-    return 0;
   unsigned Result;
   bool error = R.getAsInteger(10, Result); (void)error;
   assert(!error && "not a number, or does not fit in an unsigned int");
   return Result;
 }
 
-std::string DataLayout::parseSpecifier(StringRef Desc) {
+/// Convert bits into bytes. Assert if not a byte width multiple.
+static unsigned inBytes(unsigned Bits) {
+  assert(Bits % 8 == 0 && "number of bits must be a byte width multiple");
+  return Bits / 8;
+}
+
+void DataLayout::parseSpecifier(StringRef Desc) {
 
   while (!Desc.empty()) {
-    std::pair<StringRef, StringRef> Split = Desc.split('-');
-    StringRef Token = Split.first;
+
+    // Split at '-'.
+    std::pair<StringRef, StringRef> Split = split(Desc, '-');
     Desc = Split.second;
 
-    Split = Token.split(':');
-    StringRef Specifier = Split.first;
-    Token = Split.second;
+    // Split at ':'.
+    Split = split(Split.first, ':');
 
-    assert(!Specifier.empty() && "Can't be empty here");
+    // Aliases used below.
+    StringRef &Tok  = Split.first;  // Current token.
+    StringRef &Rest = Split.second; // The rest of the string.
 
-    switch (Specifier[0]) {
+    char Specifier = Tok.front();
+    Tok = Tok.substr(1);
+
+    switch (Specifier) {
     case 'E':
       LittleEndian = false;
       break;
@@ -210,37 +226,28 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
       LittleEndian = true;
       break;
     case 'p': {
-      unsigned AddrSpace = 0;
-      if (Specifier.size() > 1) {
-        AddrSpace = getInt(Specifier.substr(1));
-        if (AddrSpace > (1 << 24))
-          return "Invalid address space, must be a 24bit integer";
-      }
-      Split = Token.split(':');
-      unsigned PointerMemSizeBits = getInt(Split.first);
-      if (PointerMemSizeBits % 8 != 0)
-        return "invalid pointer size, must be an 8-bit multiple";
+      // Address space.
+      unsigned AddrSpace = Tok.empty() ? 0 : getInt(Tok);
+      assert(AddrSpace < 1 << 24 &&
+             "Invalid address space, must be a 24bit integer");
 
-      // Pointer ABI alignment.
-      Split = Split.second.split(':');
-      unsigned PointerABIAlignBits = getInt(Split.first);
-      if (PointerABIAlignBits % 8 != 0) {
-        return "invalid pointer ABI alignment, "
-               "must be an 8-bit multiple";
-      }
+      // Size.
+      Split = split(Rest, ':');
+      unsigned PointerMemSize = inBytes(getInt(Tok));
 
-      // Pointer preferred alignment.
-      Split = Split.second.split(':');
-      unsigned PointerPrefAlignBits = getInt(Split.first);
-      if (PointerPrefAlignBits % 8 != 0) {
-        return "invalid pointer preferred alignment, "
-               "must be an 8-bit multiple";
+      // ABI alignment.
+      Split = split(Rest, ':');
+      unsigned PointerABIAlign = inBytes(getInt(Tok));
+
+      // Preferred alignment.
+      unsigned PointerPrefAlign = PointerABIAlign;
+      if (!Rest.empty()) {
+        Split = split(Rest, ':');
+        PointerPrefAlign = inBytes(getInt(Tok));
       }
 
-      if (PointerPrefAlignBits == 0)
-        PointerPrefAlignBits = PointerABIAlignBits;
-      setPointerAlignment(AddrSpace, PointerABIAlignBits/8,
-                          PointerPrefAlignBits/8, PointerMemSizeBits/8);
+      setPointerAlignment(AddrSpace, PointerABIAlign, PointerPrefAlign,
+                          PointerMemSize);
       break;
     }
     case 'i':
@@ -249,8 +256,7 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
     case 'a':
     case 's': {
       AlignTypeEnum AlignType;
-      char field = Specifier[0];
-      switch (field) {
+      switch (Specifier) {
       default:
       case 'i': AlignType = INTEGER_ALIGN; break;
       case 'v': AlignType = VECTOR_ALIGN; break;
@@ -258,59 +264,44 @@ std::string DataLayout::parseSpecifier(StringRef Desc) {
       case 'a': AlignType = AGGREGATE_ALIGN; break;
       case 's': AlignType = STACK_ALIGN; break;
       }
-      unsigned Size = getInt(Specifier.substr(1));
 
-      Split = Token.split(':');
-      unsigned ABIAlignBits = getInt(Split.first);
-      if (ABIAlignBits % 8 != 0) {
-        return std::string("invalid ") + field +"-abi-alignment field, "
-               "must be an 8-bit multiple";
+      // Bit size.
+      unsigned Size = Tok.empty() ? 0 : getInt(Tok);
+
+      // ABI alignment.
+      Split = split(Rest, ':');
+      unsigned ABIAlign = inBytes(getInt(Tok));
+
+      // Preferred alignment.
+      unsigned PrefAlign = ABIAlign;
+      if (!Rest.empty()) {
+        Split = split(Rest, ':');
+        PrefAlign = inBytes(getInt(Tok));
       }
-      unsigned ABIAlign = ABIAlignBits / 8;
 
-      Split = Split.second.split(':');
-
-      unsigned PrefAlignBits = getInt(Split.first);
-      if (PrefAlignBits % 8 != 0) {
-        return std::string("invalid ") + field +"-preferred-alignment field, "
-               "must be an 8-bit multiple";
-      }
-      unsigned PrefAlign = PrefAlignBits / 8;
-      if (PrefAlign == 0)
-        PrefAlign = ABIAlign;
       setAlignment(AlignType, ABIAlign, PrefAlign, Size);
 
       break;
     }
     case 'n':  // Native integer types.
-      Specifier = Specifier.substr(1);
-      do {
-        unsigned Width = getInt(Specifier);
-        if (Width == 0) {
-          return std::string("invalid native integer size \'") +
-            Specifier.str() + "\', must be a non-zero integer.";
-        }
+      for (;;) {
+        unsigned Width = getInt(Tok);
+        assert(Width != 0 && "width must be non-zero");
         LegalIntWidths.push_back(Width);
-        Split = Token.split(':');
-        Specifier = Split.first;
-        Token = Split.second;
-      } while (!Specifier.empty() || !Token.empty());
+        if (Rest.empty())
+          break;
+        Split = split(Rest, ':');
+      }
       break;
     case 'S': { // Stack natural alignment.
-      unsigned StackNaturalAlignBits = getInt(Specifier.substr(1));
-      if (StackNaturalAlignBits % 8 != 0) {
-        return "invalid natural stack alignment (S-field), "
-               "must be an 8-bit multiple";
-      }
-      StackNaturalAlign = StackNaturalAlignBits / 8;
+      StackNaturalAlign = inBytes(getInt(Tok));
       break;
     }
     default:
+      llvm_unreachable("Unknown specifier in datalayout string");
       break;
     }
   }
-
-  return "";
 }
 
 /// Default ctor.

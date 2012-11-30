@@ -148,9 +148,9 @@ private:
     return &align != &InvalidPointerElem;
   }
 
-  /// Parses a target data specification string. Returns an error message
-  /// if the string is malformed, or the empty string on success.
-  std::string parseSpecifier(StringRef LayoutDescription);
+  /// Parses a target data specification string. Assert if the string is
+  /// malformed.
+  void parseSpecifier(StringRef LayoutDescription);
 
 public:
   /// Default ctor.
