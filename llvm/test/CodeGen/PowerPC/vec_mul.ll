@@ -41,6 +41,6 @@ define <4 x float> @test_float(<4 x float>* %X, <4 x float>* %Y) {
 ; all bits set and shifting it 31 bits to left, resulting a an vector of 
 ; 4 x 0x80000000 (-0.0 as float).
 ; CHECK: test_float:
-; CHECK: vspltisw [[ZNEG:[0-9]+]], -1
-; CHECK: vslw     {{[0-9]+}}, [[ZNEG]], [[ZNEG]]
+; CHECK: vspltisw [[ZNEG:v[0-9]+]], -1
+; CHECK: vslw     {{v[0-9]+}}, [[ZNEG]], [[ZNEG]]
 ; CHECK: vmaddfp
