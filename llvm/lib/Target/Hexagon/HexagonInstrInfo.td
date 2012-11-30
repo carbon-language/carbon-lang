@@ -843,13 +843,72 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicated = 1,
 // LD +
 //===----------------------------------------------------------------------===//
 ///
-///
-// Load doubleword.
-let isPredicable = 1 in
-def LDrid : LDInst<(outs DoubleRegs:$dst),
-            (ins MEMri:$addr),
-            "$dst = memd($addr)",
-            [(set (i64 DoubleRegs:$dst), (i64 (load ADDRriS11_3:$addr)))]>;
+// Load -- MEMri operand
+multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
+                          bit isNot, bit isPredNew> {
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME# : LDInst2<(outs RC:$dst),
+                       (ins PredRegs:$src1, MEMri:$addr),
+            #!if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#"$dst = "#mnemonic#"($addr)",
+            []>;
+}
+
+multiclass LD_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    defm _c#NAME# : LD_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME# : LD_MEMri_Pbase<mnemonic, RC, PredNot, 1>;
+  }
+}
+
+let isExtendable = 1, neverHasSideEffects = 1 in
+multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
+                    bits<5> ImmBits, bits<5> PredImmBits> {
+
+  let CextOpcode = CextOp, BaseOpcode = CextOp in {
+    let opExtendable = 2, isExtentSigned = 1, opExtentBits = ImmBits,
+        isPredicable = 1 in
+      def #NAME# : LDInst2<(outs RC:$dst), (ins MEMri:$addr),
+                   "$dst = "#mnemonic#"($addr)",
+                   []>;
+
+    let opExtendable = 3, isExtentSigned = 0, opExtentBits = PredImmBits,
+        isPredicated = 1 in {
+      defm Pt : LD_MEMri_Pred<mnemonic, RC, 0 >;
+      defm NotPt : LD_MEMri_Pred<mnemonic, RC, 1 >;
+    }
+  }
+}
+
+let addrMode = BaseImmOffset, isMEMri = "true" in {
+  defm LDrib: LD_MEMri < "memb", "LDrib", IntRegs, 11, 6>, AddrModeRel;
+  defm LDriub: LD_MEMri < "memub" , "LDriub", IntRegs, 11, 6>, AddrModeRel;
+  defm LDrih: LD_MEMri < "memh", "LDrih", IntRegs, 12, 7>, AddrModeRel;
+  defm LDriuh: LD_MEMri < "memuh", "LDriuh", IntRegs, 12, 7>, AddrModeRel;
+  defm LDriw: LD_MEMri < "memw", "LDriw", IntRegs, 13, 8>, AddrModeRel;
+  defm LDrid: LD_MEMri < "memd", "LDrid", DoubleRegs, 14, 9>, AddrModeRel;
+}
+
+def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
+            (LDrib ADDRriS11_0:$addr) >;
+
+def : Pat < (i32 (zextloadi8 ADDRriS11_0:$addr)),
+            (LDriub ADDRriS11_0:$addr) >;
+
+def : Pat < (i32 (sextloadi16 ADDRriS11_1:$addr)),
+            (LDrih ADDRriS11_1:$addr) >;
+
+def : Pat < (i32 (zextloadi16 ADDRriS11_1:$addr)),
+            (LDriuh ADDRriS11_1:$addr) >;
+
+def : Pat < (i32 (load ADDRriS11_2:$addr)),
+            (LDriw ADDRriS11_2:$addr) >;
+
+def : Pat < (i64 (load ADDRriS11_3:$addr)),
+            (LDrid ADDRriS11_3:$addr) >;
+
+
 
 let isPredicable = 1, AddedComplexity = 20 in
 def LDrid_indexed : LDInst<(outs DoubleRegs:$dst),
@@ -935,19 +994,6 @@ let hasCtrlDep = 1, neverHasSideEffects = 1 in {
 
 // Load doubleword conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrid_cPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1) $dst = memd($addr)",
-            []>;
-
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrid_cNotPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1) $dst = memd($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_indexed_cPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if ($src1) $dst = memd($src2+#$src3)",
@@ -957,18 +1003,6 @@ let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_indexed_cNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if (!$src1) $dst = memd($src2+#$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrid_cdnPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1.new) $dst = memd($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrid_cdnNotPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1.new) $dst = memd($addr)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -982,14 +1016,6 @@ def LDrid_indexed_cdnNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if (!$src1.new) $dst = memd($src2+#$src3)",
             []>;
-
-
-// Load byte.
-let isPredicable = 1 in
-def LDrib : LDInst<(outs IntRegs:$dst),
-            (ins MEMri:$addr),
-            "$dst = memb($addr)",
-            [(set (i32 IntRegs:$dst), (i32 (sextloadi8 ADDRriS11_0:$addr)))]>;
 
 // Load byte any-extend.
 def : Pat < (i32 (extloadi8 ADDRriS11_0:$addr)),
@@ -1032,18 +1058,6 @@ def LDub_GP : LDInst2<(outs IntRegs:$dst),
 
 // Load byte conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrib_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1) $dst = memb($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrib_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1) $dst = memb($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if ($src1) $dst = memb($src2+#$src3)",
@@ -1053,18 +1067,6 @@ let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1) $dst = memb($src2+#$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrib_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1.new) $dst = memb($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrib_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1.new) $dst = memb($addr)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -1081,12 +1083,6 @@ def LDrib_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 
 // Load halfword.
-let isPredicable = 1 in
-def LDrih : LDInst<(outs IntRegs:$dst),
-            (ins MEMri:$addr),
-            "$dst = memh($addr)",
-            [(set (i32 IntRegs:$dst), (i32 (sextloadi16 ADDRriS11_1:$addr)))]>;
-
 let isPredicable = 1, AddedComplexity = 20 in
 def LDrih_indexed : LDInst<(outs IntRegs:$dst),
             (ins IntRegs:$src1, s11_1Imm:$offset),
@@ -1125,18 +1121,6 @@ def LDuh_GP : LDInst2<(outs IntRegs:$dst),
 
 // Load halfword conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrih_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1) $dst = memh($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrih_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1) $dst = memh($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if ($src1) $dst = memh($src2+#$src3)",
@@ -1146,18 +1130,6 @@ let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1) $dst = memh($src2+#$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrih_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1.new) $dst = memh($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDrih_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1.new) $dst = memh($addr)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -1173,12 +1145,6 @@ def LDrih_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             []>;
 
 // Load unsigned byte.
-let isPredicable = 1 in
-def LDriub : LDInst<(outs IntRegs:$dst),
-            (ins MEMri:$addr),
-            "$dst = memub($addr)",
-            [(set (i32 IntRegs:$dst), (i32 (zextloadi8 ADDRriS11_0:$addr)))]>;
-
 def : Pat < (i32 (zextloadi1 ADDRriS11_0:$addr)),
             (i32 (LDriub ADDRriS11_0:$addr))>;
 
@@ -1203,18 +1169,6 @@ def LDriub_GP : LDInst2<(outs IntRegs:$dst),
 
 // Load unsigned byte conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriub_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1) $dst = memub($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriub_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1) $dst = memub($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if ($src1) $dst = memub($src2+#$src3)",
@@ -1224,18 +1178,6 @@ let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1) $dst = memub($src2+#$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriub_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1.new) $dst = memub($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriub_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1.new) $dst = memub($addr)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -1251,12 +1193,6 @@ def LDriub_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             []>;
 
 // Load unsigned halfword.
-let isPredicable = 1 in
-def LDriuh : LDInst<(outs IntRegs:$dst),
-            (ins MEMri:$addr),
-            "$dst = memuh($addr)",
-            [(set (i32 IntRegs:$dst), (i32 (zextloadi16 ADDRriS11_1:$addr)))]>;
-
 // Indexed load unsigned halfword.
 let isPredicable = 1, AddedComplexity = 20 in
 def LDriuh_indexed : LDInst<(outs IntRegs:$dst),
@@ -1275,18 +1211,6 @@ def LDriuh_GP : LDInst2<(outs IntRegs:$dst),
 
 // Load unsigned halfword conditionally.
 let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriuh_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1) $dst = memuh($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriuh_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1) $dst = memuh($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if ($src1) $dst = memuh($src2+#$src3)",
@@ -1296,18 +1220,6 @@ let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1) $dst = memuh($src2+#$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriuh_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1.new) $dst = memuh($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriuh_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1.new) $dst = memuh($addr)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
@@ -1324,11 +1236,6 @@ def LDriuh_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 
 // Load word.
-let isPredicable = 1 in
-def LDriw : LDInst<(outs IntRegs:$dst),
-            (ins MEMri:$addr), "$dst = memw($addr)",
-            [(set IntRegs:$dst, (i32 (load ADDRriS11_2:$addr)))]>;
-
 // Load predicate.
 let Defs = [R10,R11,D5], neverHasSideEffects = 1 in
 def LDriw_pred : LDInst<(outs PredRegs:$dst),
@@ -1359,19 +1266,6 @@ def LDw_GP : LDInst2<(outs IntRegs:$dst),
             Requires<[NoV4T]>;
 
 // Load word conditionally.
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriw_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1) $dst = memw($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriw_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1) $dst = memw($addr)",
-            []>;
-
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
@@ -1382,18 +1276,6 @@ let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
             "if (!$src1) $dst = memw($src2+#$src3)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriw_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if ($src1.new) $dst = memw($addr)",
-            []>;
-
-let neverHasSideEffects = 1, isPredicated = 1 in
-def LDriw_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, MEMri:$addr),
-            "if (!$src1.new) $dst = memw($addr)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
