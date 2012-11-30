@@ -470,7 +470,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
 ///
 /// The syntax is:
 /// \code
-///   \#pragma comment(linker, "foo")
+///   #pragma comment(linker, "foo")
 /// \endcode
 /// 'linker' is one of five identifiers: compiler, exestr, lib, linker, user.
 /// "foo" is a string, which is fully macro expanded, and permits string
@@ -532,11 +532,11 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
 /// HandlePragmaMessage - Handle the microsoft and gcc \#pragma message
 /// extension.  The syntax is:
 /// \code
-///   \#pragma message(string)
+///   #pragma message(string)
 /// \endcode
 /// OR, in GCC mode:
 /// \code
-///   \#pragma message string
+///   #pragma message string
 /// \endcode
 /// string is a string, which is fully macro expanded, and permits string
 /// concatenation, embedded escape characters, etc... See MSDN for more details.
@@ -640,7 +640,7 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
 ///
 /// The syntax is:
 /// \code
-///   \#pragma push_macro("macro")
+///   #pragma push_macro("macro")
 /// \endcode
 void Preprocessor::HandlePragmaPushMacro(Token &PushMacroTok) {
   // Parse the pragma directive and get the macro IdentifierInfo*.
@@ -1207,8 +1207,8 @@ struct PragmaARCCFCodeAuditedHandler : public PragmaHandler {
   ///
   /// The syntax is
   /// \code
-  ///   \#pragma region [optional name]
-  ///   \#pragma endregion [optional comment]
+  ///   #pragma region [optional name]
+  ///   #pragma endregion [optional comment]
   /// \endcode
   /// 
   /// \note This is 
