@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -32,6 +33,7 @@ STATISTIC(NumDeletes, "Number of dead copies deleted");
 namespace {
   class MachineCopyPropagation : public MachineFunctionPass {
     const TargetRegisterInfo *TRI;
+    const TargetInstrInfo *TII;
     MachineRegisterInfo *MRI;
 
   public:
@@ -50,6 +52,7 @@ namespace {
                                  SourceMap &SrcMap,
                                  DenseMap<unsigned, MachineInstr*> &AvailCopyMap);
     bool CopyPropagateBlock(MachineBasicBlock &MBB);
+    void removeCopy(MachineInstr *MI);
   };
 }
 char MachineCopyPropagation::ID = 0;
@@ -123,6 +126,16 @@ static bool isNopCopy(MachineInstr *CopyMI, unsigned Def, unsigned Src,
   return false;
 }
 
+// Remove MI from the function because it has been determined it is dead.
+// Turn it into a noop KILL instruction if it has super-register liveness
+// adjustments.
+void MachineCopyPropagation::removeCopy(MachineInstr *MI) {
+  if (MI->getNumOperands() == 2)
+    MI->eraseFromParent();
+  else
+    MI->setDesc(TII->get(TargetOpcode::KILL));
+}
+
 bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
   SmallSetVector<MachineInstr*, 8> MaybeDeadCopies;  // Candidates for deletion
   DenseMap<unsigned, MachineInstr*> AvailCopyMap;    // Def -> available copies map
@@ -168,7 +181,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
           for (MachineBasicBlock::iterator I = CopyMI, E = MI; I != E; ++I)
             I->clearRegisterKills(Def, TRI);
 
-          MI->eraseFromParent();
+          removeCopy(MI);
           Changed = true;
           ++NumDeletes;
           continue;
@@ -261,7 +274,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         unsigned Reg = (*DI)->getOperand(0).getReg();
         if (MRI->isReserved(Reg) || !MaskMO.clobbersPhysReg(Reg))
           continue;
-        (*DI)->eraseFromParent();
+        removeCopy(*DI);
         Changed = true;
         ++NumDeletes;
       }
@@ -297,7 +310,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
            DI = MaybeDeadCopies.begin(), DE = MaybeDeadCopies.end();
          DI != DE; ++DI) {
       if (!MRI->isReserved((*DI)->getOperand(0).getReg())) {
-        (*DI)->eraseFromParent();
+        removeCopy(*DI);
         Changed = true;
         ++NumDeletes;
       }
@@ -311,6 +324,7 @@ bool MachineCopyPropagation::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
 
   TRI = MF.getTarget().getRegisterInfo();
+  TII = MF.getTarget().getInstrInfo();
   MRI = &MF.getRegInfo();
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
