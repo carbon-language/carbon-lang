@@ -41,7 +41,7 @@
 namespace std
 {
 
-#if !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
+#if !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION) && !defined(__GLIBCXX__)
 
 // libcxxrt provides implementations of these functions itself.
 unexpected_handler
@@ -99,7 +99,7 @@ terminate() _NOEXCEPT
 }
 #endif // !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
 
-#ifndef LIBCXXRT
+#if !defined(LIBCXXRT) && !defined(__GLIBCXX__)
 bool uncaught_exception() _NOEXCEPT
 {
 #if __APPLE__ || defined(_LIBCPPABI_VERSION)
@@ -124,7 +124,7 @@ const char* exception::what() const _NOEXCEPT
 
 #endif  // _LIBCPPABI_VERSION
 #endif //LIBCXXRT
-#ifndef _LIBCPPABI_VERSION
+#if !defined(_LIBCPPABI_VERSION) && !defined(__GLIBCXX__)
 
 bad_exception::~bad_exception() _NOEXCEPT
 {

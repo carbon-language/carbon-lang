@@ -31,7 +31,10 @@ else()
     )
 endif()
 
+add_dependencies(cxx ${LIBCXX_CXX_ABI_DEPS})
+
 # Generate library list.
+set(libraries ${LIBCXX_CXX_ABI_LIBRARIES})
 append_if(libraries LIBCXX_HAS_PTHREAD_LIB pthread)
 append_if(libraries LIBCXX_HAS_C_LIB c)
 append_if(libraries LIBCXX_HAS_M_LIB m)

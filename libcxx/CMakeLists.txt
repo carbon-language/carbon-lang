@@ -39,6 +39,11 @@ option(LIBCXX_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBCXX_ENABLE_CXX0X "Enable -std=c++0x and use of c++0x language features if the compiler supports it." ON)
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 
+set(CXXABIS none libcxxabi libcxxrt libsupc++)
+set(LIBCXX_CXX_ABI "${LIBCXX_CXX_ABI}" CACHE STRING
+    "Specify C++ ABI library to use." FORCE)
+set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS "";${CXXABIS})
+
 #===============================================================================
 # Configure System
 #===============================================================================
@@ -57,6 +62,54 @@ get_target_triple(LIBCXX_TARGET_TRIPLE
   LIBCXX_TARGET_OS
   )
 set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
+
+if (${LIBCXX_CXX_ABI} STREQUAL "libsupc++")
+  set(LIBCXX_LIBSUPCXX_INCLUDE_PATHS "" CACHE STRINGS
+      "Paths to libsupc++ include directories. Separate by system separator")
+  set(LIBCXX_CXX_ABI_LIBRARIES stdc++)
+  set(LIBCXX_LIBSUPCXX_FILES
+      cxxabi.h
+      bits/c++config.h
+      bits/os_defines.h
+      bits/cpu_defines.h
+      bits/cxxabi_tweaks.h
+      bits/cxxabi_forced.h
+      )
+  set(LIBCXX_LIBSUPCXX_FILE_PATHS)
+  foreach(path ${LIBCXX_LIBSUPCXX_FILES})
+    set(found FALSE)
+    foreach(incpath ${LIBCXX_LIBSUPCXX_INCLUDE_PATHS})
+      if (EXISTS "${incpath}/${path}")
+        set(found TRUE)
+        get_filename_component(dstdir ${path} PATH)
+        get_filename_component(file ${path} NAME)
+        add_custom_command(
+          OUTPUT "${CMAKE_BINARY_DIR}/include/${dstdir}/${file}"
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${incpath}/${path}"
+                    "${CMAKE_BINARY_DIR}/include/${dstdir}"
+          MAIN_DEPENDENCY "${incpath}/${path}"
+          )
+        list(APPEND LIBCXX_CXX_ABI_DEPS
+                    "${CMAKE_BINARY_DIR}/include/${dstdir}/${file}")
+      endif()
+    endforeach()
+    if (NOT found)
+      message(FATAL_ERROR "Failed to find ${path}")
+    endif()
+  endforeach()
+  add_custom_target(supcxx_headers DEPENDS ${LIBCXX_CXX_ABI_DEPS})
+  set(LIBCXX_CXX_ABI_DEPS supcxx_headers)
+  include_directories("${CMAKE_BINARY_DIR}/include")
+  install(DIRECTORY "${CMAKE_BINARY_DIR}/include/"
+    DESTINATION include/c++/v1
+    FILES_MATCHING
+    PATTERN "*"
+    )
+elseif (${LIBCXX_CXX_ABI} NOT STREQUAL "none")
+  message(FATAL_ERROR
+          "Currently only none and libsupc++ are supported for c++ abi.")
+endif ()
 
 # Configure compiler.
 include(config-ix)
