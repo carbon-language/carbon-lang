@@ -19,7 +19,7 @@
 #include "llvm/Support/Compiler.h"
 #include <cassert>
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
 #include <utility>
 #endif
 
@@ -33,7 +33,7 @@ public:
   explicit Optional() : x(), hasVal(false) {}
   Optional(const T &y) : x(y), hasVal(true) {}
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   Optional(T &&y) : x(std::forward<T>(y)), hasVal(true) {}
 #endif
 

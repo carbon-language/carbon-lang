@@ -274,7 +274,7 @@ public:
       initSlowCase(that);
   }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   /// @brief Move Constructor.
   APInt(APInt&& that) : BitWidth(that.BitWidth), VAL(that.VAL) {
     that.BitWidth = 0;
@@ -601,7 +601,7 @@ public:
     return AssignSlowCase(RHS);
   }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   /// @brief Move assignment operator.
   APInt& operator=(APInt&& that) {
     if (!isSingleWord())

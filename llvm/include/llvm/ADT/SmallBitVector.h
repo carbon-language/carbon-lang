@@ -153,7 +153,7 @@ public:
       switchToLarge(new BitVector(*RHS.getPointer()));
   }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   SmallBitVector(SmallBitVector &&RHS) : X(RHS.X) {
     RHS.X = 1;
   }
@@ -472,7 +472,7 @@ public:
     return *this;
   }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   const SmallBitVector &operator=(SmallBitVector &&RHS) {
     if (this != &RHS) {
       clear();

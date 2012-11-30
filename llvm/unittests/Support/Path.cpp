@@ -375,7 +375,7 @@ TEST_F(FileSystemTest, FileMapping) {
   
   // Unmap temp file
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   fs::mapped_file_region m(Twine(TempPath),
                              fs::mapped_file_region::readonly,
                              0,
