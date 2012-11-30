@@ -400,12 +400,16 @@ void TargetPassConfig::addPassesToHandleExceptions() {
   }
 }
 
+/// Add pass to prepare the LLVM IR for code generation. This should be done
+/// before exception handling preparation passes.
+void TargetPassConfig::addCodeGenPrepare() {
+  if (getOptLevel() != CodeGenOpt::None && !DisableCGP)
+    addPass(createCodeGenPreparePass(getTargetLowering()));
+}
+
 /// Add common passes that perform LLVM IR to IR transforms in preparation for
 /// instruction selection.
 void TargetPassConfig::addISelPrepare() {
-  if (getOptLevel() != CodeGenOpt::None && !DisableCGP)
-    addPass(createCodeGenPreparePass(getTargetLowering()));
-
   addPass(createStackProtectorPass(getTargetLowering()));
 
   addPreISel();

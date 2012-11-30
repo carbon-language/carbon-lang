@@ -141,6 +141,10 @@ public:
   /// Add passes to lower exception handling for the code generator.
   void addPassesToHandleExceptions();
 
+  /// Add pass to prepare the LLVM IR for code generation. This should be done
+  /// before exception handling preparation passes.
+  virtual void addCodeGenPrepare();
+
   /// Add common passes that perform LLVM IR to IR transforms in preparation for
   /// instruction selection.
   virtual void addISelPrepare();

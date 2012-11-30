@@ -96,6 +96,8 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 
   PassConfig->addIRPasses();
 
+  PassConfig->addCodeGenPrepare();
+
   PassConfig->addPassesToHandleExceptions();
 
   PassConfig->addISelPrepare();

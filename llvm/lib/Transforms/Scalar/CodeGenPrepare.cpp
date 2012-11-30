@@ -22,7 +22,6 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
@@ -184,12 +183,8 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (!DisableBranchOpts) {
     MadeChange = false;
     SmallPtrSet<BasicBlock*, 8> WorkList;
-    SmallPtrSet<BasicBlock*, 8> LPadList;
-    SmallVector<BasicBlock*, 8> ReturnList;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
       SmallVector<BasicBlock*, 2> Successors(succ_begin(BB), succ_end(BB));
-      if (BB->isLandingPad()) LPadList.insert(BB);
-      if (isa<ReturnInst>(BB->getTerminator())) ReturnList.push_back(BB);
       MadeChange |= ConstantFoldTerminator(BB, true);
       if (!MadeChange) continue;
 
@@ -200,11 +195,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     }
 
     // Delete the dead blocks and any of their dead successors.
-    bool HadLPads = !LPadList.empty();
     while (!WorkList.empty()) {
       BasicBlock *BB = *WorkList.begin();
       WorkList.erase(BB);
-      LPadList.erase(BB);
       SmallVector<BasicBlock*, 2> Successors(succ_begin(BB), succ_end(BB));
 
       DeleteDeadBlock(BB);
@@ -213,74 +206,6 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
              II = Successors.begin(), IE = Successors.end(); II != IE; ++II)
         if (pred_begin(*II) == pred_end(*II))
           WorkList.insert(*II);
-    }
-
-    if (HadLPads && LPadList.empty()) {
-      // All of the landing pads were removed. Get rid of the SjLj EH context
-      // code.
-      Module *M = F.getParent();
-
-      // These functions must exist if we have SjLj EH code to clean up.
-      Constant *RegisterFn = M->getFunction("_Unwind_SjLj_Register");
-      Constant *UnregisterFn = M->getFunction("_Unwind_SjLj_Unregister");
-
-      if (RegisterFn) {
-        Constant *LSDAAddrFn =
-          Intrinsic::getDeclaration(M, Intrinsic::eh_sjlj_lsda);
-        Constant *FrameAddrFn =
-          Intrinsic::getDeclaration(M, Intrinsic::frameaddress);
-        Constant *StackAddrFn =
-          Intrinsic::getDeclaration(M, Intrinsic::stacksave);
-        Constant *BuiltinSetjmpFn =
-          Intrinsic::getDeclaration(M, Intrinsic::eh_sjlj_setjmp);
-        Constant *FuncCtxFn =
-          Intrinsic::getDeclaration(M, Intrinsic::eh_sjlj_functioncontext);
-
-        BasicBlock &Entry = F.getEntryBlock();
-        SmallVector<Instruction*, 8> DeadInsts;
-        for (BasicBlock::iterator I = Entry.begin(), E = Entry.end();
-             I != E; ++I) {
-          if (CallInst *CI = dyn_cast<CallInst>(I)) {
-            Value *Callee = CI->getCalledValue();
-            bool IsDead = true;
-            if (Callee != LSDAAddrFn && Callee != FrameAddrFn &&
-                Callee != StackAddrFn && Callee != BuiltinSetjmpFn &&
-                Callee != FuncCtxFn && Callee != RegisterFn)
-              IsDead = false;
-
-            if (IsDead) {
-              Type *Ty = CI->getType();
-              if (!Ty->isVoidTy())
-                CI->replaceAllUsesWith(UndefValue::get(Ty));
-              DeadInsts.push_back(CI);
-            }
-          }
-        }
-
-        // Find and remove the unregister calls.
-        for (SmallVectorImpl<BasicBlock*>::iterator I = ReturnList.begin(),
-               E = ReturnList.end(); I != E; ++I) {
-          BasicBlock *BB = *I;
-          typedef BasicBlock::InstListType::reverse_iterator reverse_iterator;
-
-          for (reverse_iterator II = BB->getInstList().rbegin(),
-                 IE = BB->getInstList().rend(); II != IE; ++II) {
-            if (CallInst *CI = dyn_cast<CallInst>(&*II)) {
-              Value *Callee = CI->getCalledValue();
-
-              if (Callee == UnregisterFn) {
-                DeadInsts.push_back(CI);
-                break;
-              }
-            }
-          }
-        }
-
-        // Kill the dead instructions.
-        for (SmallVectorImpl<Instruction*>::iterator I = DeadInsts.begin(),
-               E = DeadInsts.end(); I != E; ++I)
-          (*I)->eraseFromParent();
-      }
     }
 
     // Merge pairs of basic blocks with unconditional branches, connected by
