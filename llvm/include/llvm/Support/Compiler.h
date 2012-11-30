@@ -30,6 +30,18 @@
 #define LLVM_USE_RVALUE_REFERENCES 0
 #endif
 
+/// \brief Does the compiler support r-value reference *this?
+///
+/// Sadly, this is separate from just r-value reference support because GCC
+/// implemented everything but this thus far. No release of GCC yet has support
+/// for this feature so it is enabled with Clang only.
+/// FIXME: This should change to a version check when GCC grows support for it.
+#if __has_feature(cxx_rvalue_references)
+#define LLVM_HAS_RVALUE_REFERENCE_THIS 1
+#else
+#define LLVM_HAS_RVALUE_REFERENCE_THIS 0
+#endif
+
 /// llvm_move - Expands to ::std::move if the compiler supports
 /// r-value references; otherwise, expands to the argument.
 #if LLVM_USE_RVALUE_REFERENCES
@@ -41,8 +53,8 @@
 /// Expands to '&' if r-value references are supported.
 ///
 /// This can be used to provide l-value/r-value overrides of member functions.
-/// The r-value override should be guarded by LLVM_USE_RVALUE_REFERENCES
-#if LLVM_USE_RVALUE_REFERENCES
+/// The r-value override should be guarded by LLVM_HAS_RVALUE_REFERENCE_THIS
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
 #define LLVM_LVALUE_FUNCTION &
 #else
 #define LLVM_LVALUE_FUNCTION

@@ -55,7 +55,7 @@ public:
   const T* operator->() const { return getPointer(); }
   const T& operator*() const LLVM_LVALUE_FUNCTION { assert(hasVal); return x; }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
   T&& getValue() && { assert(hasVal); return std::move(x); }
   T&& operator*() && { assert(hasVal); return std::move(x); } 
 #endif
