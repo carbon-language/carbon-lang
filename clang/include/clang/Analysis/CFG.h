@@ -83,11 +83,13 @@ public:
 
   operator bool() const { return isValid(); }
 
-  template<class ElemTy> const ElemTy *getAs() const {
-    if (llvm::isa<ElemTy>(this))
-      return static_cast<const ElemTy*>(this);
-    return 0;
+  template<class ElemTy> const ElemTy *getAs() const LLVM_LVALUE_FUNCTION {
+    return dyn_cast<ElemTy>(this);
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  template<class ElemTy> void getAs() && LLVM_DELETED_FUNCTION;
+#endif
 };
 
 class CFGStmt : public CFGElement {
