@@ -252,6 +252,42 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+//
+// Detect pattern:
+//
+// log2(Y*0.5)
+//
+// And check for corresponding fast math flags
+//
+
+static void detectLog2OfHalf(Value *&Op, Value *&Y, IntrinsicInst *&Log2) {
+   if (Op->hasOneUse()) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op)) {
+      if (II->getIntrinsicID() == Intrinsic::log2 &&
+          II->hasUnsafeAlgebra()) {
+        Log2 = II;
+        Value *OpLog2Of = II->getArgOperand(0);
+        if (OpLog2Of->hasOneUse()) {
+          if (Instruction *I = dyn_cast<Instruction>(OpLog2Of)) {
+            if (I->getOpcode() == Instruction::FMul &&
+                I->hasUnsafeAlgebra()) {
+              ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
+              if (CFP && CFP->isExactlyValue(0.5)) {
+                Y = I->getOperand(1);
+              } else {
+                CFP = dyn_cast<ConstantFP>(I->getOperand(1));
+                if (CFP && CFP->isExactlyValue(0.5)) {
+                  Y = I->getOperand(0);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 
+
 Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -290,70 +326,20 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     Value *OpX = NULL;
     Value *OpY = NULL;
     IntrinsicInst *Log2;
-    if (Op0->hasOneUse()) {
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
-        if (II->getIntrinsicID() == Intrinsic::log2 && 
-            II->hasUnsafeAlgebra())
-        {
-          Log2 = II;
-          Value *OpLog2Of = II->getArgOperand(0);
-          if (OpLog2Of->hasOneUse()) {
-            if (Instruction *I = dyn_cast<Instruction>(OpLog2Of)) {
-              if (I->getOpcode() == Instruction::FMul &&
-                  I->hasUnsafeAlgebra())
-              {
-                ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
-                if (CFP && CFP->isExactlyValue(0.5)) {
-                  OpY = I->getOperand(1);
-                  OpX = Op1;
-                } else {
-                  CFP = dyn_cast<ConstantFP>(I->getOperand(1));
-                  if (CFP && CFP->isExactlyValue(0.5)) {
-                    OpY = I->getOperand(0);
-                    OpX = Op1;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    if (Op1->hasOneUse()) {
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op1)) {
-        if (II->getIntrinsicID() == Intrinsic::log2 &&
-            II->hasUnsafeAlgebra()) 
-        {
-          Log2 = II;
-          Value *OpLog2Of = II->getArgOperand(0);
-          if (OpLog2Of->hasOneUse()) {
-            if (Instruction *I = dyn_cast<Instruction>(OpLog2Of)) {
-              if (I->getOpcode() == Instruction::FMul &&
-                  I->hasUnsafeAlgebra()) 
-              {
-                ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
-                if (CFP && CFP->isExactlyValue(0.5)) {
-                  OpY = I->getOperand(1);
-                  OpX = Op0;
-                } else {
-                  CFP = dyn_cast<ConstantFP>(I->getOperand(1));
-                  if (CFP && CFP->isExactlyValue(0.5)) {
-                    OpY = I->getOperand(0);
-                    OpX = Op0;
-                  }
-                }
-              }
-            }
-          }
-        }
+    detectLog2OfHalf(Op0, OpY, Log2);
+    if (OpY) {
+      OpX = Op1;
+    } else {
+      detectLog2OfHalf(Op1, OpY, Log2);
+      if (OpY) {
+        OpX = Op0;
       }
     }
     // if pattern detected emit alternate sequence
     if (OpX && OpY) {
       Log2->setArgOperand(0, OpY);
       Value *FMulVal = Builder->CreateFMul(OpX, Log2);
-      Instruction *FMul = dyn_cast<Instruction>(FMulVal);
-      assert(FMul && "Must be instruction as Log2 is instruction");
+      Instruction *FMul = cast<Instruction>(FMulVal);
       FMul->copyFastMathFlags(Log2);
       Instruction *FSub = BinaryOperator::CreateFSub(FMulVal, OpX);
       FSub->copyFastMathFlags(Log2);
