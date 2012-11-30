@@ -1,4 +1,4 @@
-; RUN: llc < %s -mattr=+altivec | FileCheck %s
+; RUN: llc < %s -march=ppc32 -mattr=+altivec | FileCheck %s
 
 define <4 x i32> @test_v4i32(<4 x i32>* %X, <4 x i32>* %Y) {
 	%tmp = load <4 x i32>* %X		; <<4 x i32>> [#uses=1]
