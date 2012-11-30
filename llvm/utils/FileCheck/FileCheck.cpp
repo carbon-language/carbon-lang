@@ -83,6 +83,10 @@ public:
 
   Pattern(bool matchEOF = false) : MatchEOF(matchEOF) { }
 
+  /// ParsePattern - Parse the given string into the Pattern.  SM provides the
+  /// SourceMgr used for error reports, and LineNumber is the line number in
+  /// the input file from which the pattern string was read.
+  /// Returns true in case of an error, false otherwise.
   bool ParsePattern(StringRef PatternStr, SourceMgr &SM, unsigned LineNumber);
 
   /// Match - Match the pattern string against the input buffer Buffer.  This
@@ -150,8 +154,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
   while (!PatternStr.empty()) {
     // RegEx matches.
     if (PatternStr.startswith("{{")) {
-
-      // Otherwise, this is the start of a regex match.  Scan for the }}.
+      // This is the start of a regex match.  Scan for the }}.
       size_t End = PatternStr.find("}}");
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
@@ -554,9 +557,9 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
 
 /// ReadCheckFile - Read the check file, which specifies the sequence of
 /// expected strings.  The strings are added to the CheckStrings vector.
+/// Returns true in case of an error, false otherwise.
 static bool ReadCheckFile(SourceMgr &SM,
                           std::vector<CheckString> &CheckStrings) {
-  // Open the check file, and tell SourceMgr about it.
   OwningPtr<MemoryBuffer> File;
   if (error_code ec =
         MemoryBuffer::getFileOrSTDIN(CheckFilename.c_str(), File)) {
@@ -575,9 +578,10 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
-
   std::vector<std::pair<SMLoc, Pattern> > NotMatches;
 
+  // LineNumber keeps track of the line on which CheckPrefix instances are
+  // found.
   unsigned LineNumber = 1;
 
   while (1) {
@@ -587,7 +591,6 @@ static bool ReadCheckFile(SourceMgr &SM,
     if (PrefixLoc == StringRef::npos)
       break;
 
-    // Recalculate line number.
     LineNumber += Buffer.substr(0, PrefixLoc).count('\n');
 
     Buffer = Buffer.substr(PrefixLoc);
@@ -631,7 +634,6 @@ static bool ReadCheckFile(SourceMgr &SM,
 
     Buffer = Buffer.substr(EOL);
 
-
     // Verify that CHECK-NEXT lines have at least one CHECK line before them.
     if (IsCheckNext && CheckStrings.empty()) {
       SM.PrintMessage(SMLoc::getFromPointer(CheckPrefixStart),
@@ -647,7 +649,6 @@ static bool ReadCheckFile(SourceMgr &SM,
                                           P));
       continue;
     }
-
 
     // Okay, add the string we captured to the output vector and move on.
     CheckStrings.push_back(CheckString(P,
