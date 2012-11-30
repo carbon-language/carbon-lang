@@ -47,11 +47,11 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;

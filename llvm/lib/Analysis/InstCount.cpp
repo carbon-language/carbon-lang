@@ -13,11 +13,11 @@
 
 #define DEBUG_TYPE "instcount"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;

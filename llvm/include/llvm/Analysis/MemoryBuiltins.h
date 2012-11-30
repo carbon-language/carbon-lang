@@ -16,11 +16,11 @@
 #define LLVM_ANALYSIS_MEMORYBUILTINS_H
 
 #include "llvm/IRBuilder.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/Operator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/TargetFolder.h"
 #include "llvm/Support/ValueHandle.h"
 

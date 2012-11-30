@@ -14,10 +14,10 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
-#include "llvm/Support/InstVisitor.h"
 
 using namespace llvm;
 
