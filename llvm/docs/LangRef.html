@@ -55,6 +55,7 @@
       <li><a href="#volatile">Volatile Memory Accesses</a></li>
       <li><a href="#memmodel">Memory Model for Concurrent Operations</a></li>
       <li><a href="#ordering">Atomic Memory Ordering Constraints</a></li>
+      <li><a href="#fastmath">Fast-Math Flags</a></li>
     </ol>
   </li>
   <li><a href="#typesystem">Type System</a>
@@ -1748,6 +1749,54 @@ to the C++0x/C1x <code>memory_order_seq_cst</code> and Java volatile.</dd>
 it only <i>synchronizes with</i> or participates in modification and seq_cst
 total orderings with other operations running in the same thread (for example,
 in signal handlers).</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+      <a name="fastmath">Fast-Math Flags</a>
+</h3>
+
+<div>
+
+<p> LLVM IR floating-point binary ops (<a href="#i_fadd"><code>fadd</code></a>,
+<a href="#i_fsub"><code>fsub</code></a>, <a
+ href="#i_fmul"><code>fmul</code></a>, <a href="#i_fdiv"><code>fdiv</code></a>,
+<a href="#i_frem"><code>frem</code></a>) instructions have the following flags
+that can set to enable otherwise unsafe floating point operations</p>
+
+<dt><code>nnan</dt></code>
+<dd>
+  No NaNs - Allow optimizations to assume the arguments and result are not
+NaN. Such optimizations are required to retain defined behavior over NaNs, but
+the value of the result is undefined.
+</dd>
+
+<dt><code>ninf</code></dt>
+<dd>
+  No Infs - Allow optimizations to assume the arguments and result are not
++/-Inf. Such optimizations are required to retain defined behavior over +/-Inf,
+but the value of the result is undefined.
+</dd>
+
+<dt><code>nsz</code></dt>
+<dd>
+  No Signed Zeros - Allow optimizations to treat the sign of a zero argument or
+result as insignificant.
+</dd>
+
+<dt><code>arcp</code></dt>
+<dd>
+  Allow Reciprocal - Allow optimizations to use the reciprocal of an argument
+rather than perform division.
+</dd>
+
+<dt><code>fast</code></TD>
+<dd>
+  Fast - Allow algebraically equivalent transformations that may dramatically
+change results in floating point (e.g. reassociate). This flag implies all the
+others.
+</dd>
 
 </div>
 
@@ -3982,28 +4031,10 @@ IfUnequal:
    floating point values. Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point sum of the two operands. This
-  instruction can also take any number of fast-math flags, which are
-  optimization hints to enable otherwise unsafe floating point
-  optimizations:</p>
-<ol>
-
-  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
-  result are not NaN. Such optimizations are required to retain defined behavior
-  over NaNs, but the value of the result is undefined.</li>
-
-  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
-  result are not +/-Inf. Such optimizations are required to retain defined
-  behavior over +/-Inf, but the value of the result is undefined.</li>
-
-  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
-  sign of a zero argument or result as insignificant. </li>
-
-  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
-  dramatically change results in floating point (e.g. reassociate). This flag
-  implies all the others.</li>
-
-</ol>
+  <p>The value produced is the floating point sum of the two operands.  This
+  instruction can also take any number of <a href="#fastmath">fast-math
+  flags</a>, which are optimization hints to enable otherwise unsafe floating
+  point optimizations:</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4090,28 +4121,10 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point difference of the two operands.  This
-  instruction can also take any number of fast-math flags, which are
-  optimization hints to enable otherwise unsafe floating point
-  optimizations:</p>
-<ol>
-
-  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
-  result are not NaN. Such optimizations are required to retain defined behavior
-  over NaNs, but the value of the result is undefined.</li>
-
-  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
-  result are not +/-Inf. Such optimizations are required to retain defined
-  behavior over +/-Inf, but the value of the result is undefined.</li>
-
-  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
-  sign of a zero argument or result as insignificant. </li>
-
-  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
-  dramatically change results in floating point (e.g. reassociate). This flag
-  implies all the others.</li>
-
-</ol>
+  <p>The value produced is the floating point difference of the two operands.
+  This instruction can also take any number of <a href="#fastmath">fast-math
+  flags</a>, which are optimization hints to enable otherwise unsafe floating
+  point optimizations:</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4192,28 +4205,10 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point product of the two operands.  This
-  instruction can also take any number of fast-math flags, which are
-  optimization hints to enable otherwise unsafe floating point
-  optimizations:</p>
-<ol>
-
-  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
-  result are not NaN. Such optimizations are required to retain defined behavior
-  over NaNs, but the value of the result is undefined.</li>
-
-  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
-  result are not +/-Inf. Such optimizations are required to retain defined
-  behavior over +/-Inf, but the value of the result is undefined.</li>
-
-  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
-  sign of a zero argument or result as insignificant. </li>
-
-  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
-  dramatically change results in floating point (e.g. reassociate). This flag
-  implies all the others.</li>
-
-</ol>
+  <p>The value produced is the floating point product of the two operands.  This
+  instruction can also take any number of <a href="#fastmath">fast-math
+  flags</a>, which are optimization hints to enable otherwise unsafe floating
+  point optimizations:</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4327,31 +4322,10 @@ IfUnequal:
    floating point values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
-<p>The value produced is the floating point quotient of the two operands. This
-  instruction can also take any number of fast-math flags, which are
-  optimization hints to enable otherwise unsafe floating point
-  optimizations:</p>
-<ol>
-
-  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
-  result are not NaN. Such optimizations are required to retain defined behavior
-  over NaNs, but the value of the result is undefined.</li>
-
-  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
-  result are not +/-Inf. Such optimizations are required to retain defined
-  behavior over +/-Inf, but the value of the result is undefined.</li>
-
-  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
-  sign of a zero argument or result as insignificant. </li>
-
-  <li><tt>arcp</tt>: Allow Reciprocal: Allow optimizations to use the reciprocal
-  of an argument rather than perform division. </li>
-
-  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
-  dramatically change results in floating point (e.g. reassociate). This flag
-  implies all the others.</li>
-
-</ol>
+  <p>The value produced is the floating point quotient of the two operands. This
+  instruction can also take any number of <a href="#fastmath">fast-math
+  flags</a>, which are optimization hints to enable otherwise unsafe floating
+  point optimizations:</p>
 </p>
 
 <h5>Example:</h5>
@@ -4474,30 +4448,8 @@ IfUnequal:
 <h5>Semantics:</h5>
   <p>This instruction returns the <i>remainder</i> of a division.  The remainder
    has the same sign as the dividend.  This instruction can also take any number
-   of fast-math flags, which are optimization hints to enable otherwise unsafe
-   floating point optimizations:</p>
-
-<ol>
-
-  <li><tt>nnan</tt>: No NaNs - Allow optimizations to assume the arguments and
-  result are not NaN. Such optimizations are required to retain defined behavior
-  over NaNs, but the value of the result is undefined.</li>
-
-  <li><tt>ninf</tt>: No Inf - Allow optimizations to assume the arguments and
-  result are not +/-Inf. Such optimizations are required to retain defined
-  behavior over +/-Inf, but the value of the result is undefined.</li>
-
-  <li><tt>nsz</tt>: No Signed Zeros: Allow optimizations to treat the
-  sign of a zero argument or result as insignificant. </li>
-
-  <li><tt>arcp</tt>: Allow Reciprocal: Allow optimizations to use the reciprocal
-  of an argument rather than perform division. </li>
-
-  <li><tt>fast</tt>: Allow algebraically equivalent transformations that may
-  dramatically change results in floating point (e.g. reassociate). This flag
-  implies all the others.</li>
-
-</ol>
+   of <a href="#fastmath">fast-math flags</a>, which are optimization hints to
+   enable otherwise unsafe floating point optimizations:</p>
 
 <h5>Example:</h5>
 <pre>
