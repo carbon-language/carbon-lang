@@ -129,6 +129,8 @@ NOINLINE void uaf_test(int size, int off) {
 TEST(AddressSanitizer, HasFeatureAddressSanitizerTest) {
 #if defined(__has_feature) && __has_feature(address_sanitizer)
   bool asan = 1;
+#elif defined(__SANITIZE_ADDRESS__)
+  bool asan = 1;
 #else
   bool asan = 0;
 #endif
@@ -974,6 +976,7 @@ TEST(AddressSanitizer, StrLenOOBTest) {
   size_t length = Ident(10);
   char *heap_string = Ident((char*)malloc(length + 1));
   char stack_string[10 + 1];
+  break_optimization(&stack_string);
   for (size_t i = 0; i < length; i++) {
     heap_string[i] = 'a';
     stack_string[i] = 'b';

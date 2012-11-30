@@ -40,7 +40,7 @@ typedef __int64          int64_t;
 #define __has_feature(x) 0
 #endif
 
-#if __has_feature(address_sanitizer)
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
 # define ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS \
     __attribute__((no_address_safety_analysis))
 #else

@@ -21,7 +21,11 @@
 #include <string>
 #include <map>
 
-#include "gtest/gtest.h"
+#if ASAN_USE_DEJAGNU_GTEST
+# include "dejagnu-gtest.h"
+#else
+# include "gtest/gtest.h"
+#endif
 
 using std::string;
 using std::vector;
