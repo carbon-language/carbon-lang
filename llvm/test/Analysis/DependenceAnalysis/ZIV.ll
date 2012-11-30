@@ -15,7 +15,7 @@ entry:
   store i32 0, i32* %arrayidx, align 4
 
 ; CHECK: da analyze - none!
-; CHECK: da analyze - consistent flow!
+; CHECK: da analyze - consistent flow [|<]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -61,7 +61,7 @@ entry:
   store i32 0, i32* %arrayidx, align 4
 
 ; CHECK: da analyze - none!
-; CHECK: da analyze - flow!
+; CHECK: da analyze - flow [|<]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!

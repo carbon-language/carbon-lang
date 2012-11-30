@@ -201,7 +201,7 @@ entry:
   br label %for.body
 
 ; CHECK: da analyze - none!
-; CHECK: da analyze - flow!
+; CHECK: da analyze - flow [|<]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!
@@ -388,7 +388,7 @@ entry:
   br label %for.body
 
 ; CHECK: da analyze - none!
-; CHECK: da analyze - flow!
+; CHECK: da analyze - flow [|<]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 ; CHECK: da analyze - confused!

@@ -583,42 +583,40 @@ void Dependence::dump(raw_ostream &OS) const {
     else if (isInput())
       OS << "input";
     unsigned Levels = getLevels();
-    if (Levels) {
-      OS << " [";
-      for (unsigned II = 1; II <= Levels; ++II) {
-        if (isSplitable(II))
-          Splitable = true;
-        if (isPeelFirst(II))
-          OS << 'p';
-        const SCEV *Distance = getDistance(II);
-        if (Distance)
-          OS << *Distance;
-        else if (isScalar(II))
-          OS << "S";
+    OS << " [";
+    for (unsigned II = 1; II <= Levels; ++II) {
+      if (isSplitable(II))
+        Splitable = true;
+      if (isPeelFirst(II))
+        OS << 'p';
+      const SCEV *Distance = getDistance(II);
+      if (Distance)
+        OS << *Distance;
+      else if (isScalar(II))
+        OS << "S";
+      else {
+        unsigned Direction = getDirection(II);
+        if (Direction == DVEntry::ALL)
+          OS << "*";
         else {
-          unsigned Direction = getDirection(II);
-          if (Direction == DVEntry::ALL)
-            OS << "*";
-          else {
-            if (Direction & DVEntry::LT)
-              OS << "<";
-            if (Direction & DVEntry::EQ)
-              OS << "=";
-            if (Direction & DVEntry::GT)
-              OS << ">";
-          }
+          if (Direction & DVEntry::LT)
+            OS << "<";
+          if (Direction & DVEntry::EQ)
+            OS << "=";
+          if (Direction & DVEntry::GT)
+            OS << ">";
         }
-        if (isPeelLast(II))
-          OS << 'p';
-        if (II < Levels)
-          OS << " ";
       }
-      if (isLoopIndependent())
-        OS << "|<";
-      OS << "]";
-      if (Splitable)
-        OS << " splitable";
+      if (isPeelLast(II))
+        OS << 'p';
+      if (II < Levels)
+        OS << " ";
     }
+    if (isLoopIndependent())
+      OS << "|<";
+    OS << "]";
+    if (Splitable)
+      OS << " splitable";
   }
   OS << "!\n";
 }
