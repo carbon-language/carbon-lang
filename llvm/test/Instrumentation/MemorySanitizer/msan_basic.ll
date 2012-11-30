@@ -305,3 +305,40 @@ define i32 @ShadowLoadAlignmentSmall() nounwind uwtable {
 ; CHECK: load i32* {{.*}} align 2
 ; CHECK: load volatile i32* {{.*}} align 2
 ; CHECK: }
+
+
+; Test vector manipulation instructions.
+
+define i32 @ExtractElement(<4 x i32> %vec, i32 %idx) {
+  %x = extractelement <4 x i32> %vec, i32 %idx
+  ret i32 %x
+}
+
+; CHECK: define i32 @ExtractElement
+; CHECK: extractelement
+; CHECK: br
+; CHECK: extractelement
+; CHECK: }
+
+define <4 x i32> @InsertElement(<4 x i32> %vec, i32 %idx, i32 %x) {
+  %vec1 = insertelement <4 x i32> %vec, i32 %x, i32 %idx
+  ret <4 x i32> %vec1
+}
+
+; CHECK: define <4 x i32> @InsertElement
+; CHECK: insertelement
+; CHECK: br
+; CHECK: insertelement
+; CHECK: }
+
+define <4 x i32> @ShuffleVector(<4 x i32> %vec, <4 x i32> %vec1) {
+  %vec2 = shufflevector <4 x i32> %vec, <4 x i32> %vec1,
+                        <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i32> %vec2
+}
+
+; CHECK: define <4 x i32> @ShuffleVector
+; CHECK: shufflevector
+; CHECK-NOT: br
+; CHECK: shufflevector
+; CHECK: }
