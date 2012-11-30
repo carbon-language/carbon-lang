@@ -729,13 +729,13 @@ int main(int argc, char **argv) {
         MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
     errs() << "Could not open input file '" << InputFilename << "': "
            << ec.message() << '\n';
-    return true;
+    return 2;
   }
   MemoryBuffer *F = File.take();
 
   if (F->getBufferSize() == 0) {
     errs() << "FileCheck error: '" << InputFilename << "' is empty.\n";
-    return 1;
+    return 2;
   }
   
   // Remove duplicate spaces in the input file if requested.
