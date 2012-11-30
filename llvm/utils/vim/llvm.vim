@@ -29,7 +29,7 @@ syn keyword llvmStatement icmp fcmp
 syn keyword llvmStatement eq ne ugt uge ult ule sgt sge slt sle
 syn keyword llvmStatement oeq ogt oge olt ole one ord ueq ugt uge
 syn keyword llvmStatement ult ule une uno
-syn keyword llvmStatement nuw nsw exact inbounds
+syn keyword llvmStatement nuw nsw exact inbounds nnan ninf nsz arcp fast
 syn keyword llvmStatement phi call select shl lshr ashr va_arg
 syn keyword llvmStatement trunc zext sext
 syn keyword llvmStatement fptrunc fpext fptoui fptosi uitofp sitofp
