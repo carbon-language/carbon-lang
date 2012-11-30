@@ -3513,14 +3513,10 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
                                    const DataLayout *TD,
                                    const TargetTransformInfo *TTI,
                             const SmallDenseMap<PHINode*, Type*>& ResultTypes) {
-  // The table density should be at least 40%. This is the same criterion as for
-  // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
-  // FIXME: Find the best cut-off.
   if (SI->getNumCases() > TableSize || TableSize >= UINT64_MAX / 10)
     return false; // TableSize overflowed, or mul below might overflow.
 
-  // If each table would fit in a register, we should build it anyway.
-  bool AllFit = true;
+  bool AllTablesFitInRegister = true;
   bool HasIllegalType = false;
   for (SmallDenseMap<PHINode*, Type*>::const_iterator I = ResultTypes.begin(),
        E = ResultTypes.end(); I != E; ++I) {
@@ -3528,12 +3524,23 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
     if (!TTI->getScalarTargetTransformInfo()->isTypeLegal(Ty))
       HasIllegalType = true;
     if (!SwitchLookupTable::WouldFitInRegister(TD, TableSize, Ty)) {
-      AllFit = false;
+      AllTablesFitInRegister = false;
       break;
     }
   }
 
-  return AllFit || (!HasIllegalType && (SI->getNumCases() * 10 >= TableSize * 4));
+  // If each table would fit in a register, we should build it anyway.
+  if (AllTablesFitInRegister)
+    return true;
+
+  // Don't build a table that doesn't fit in-register if it has illegal types.
+  if (HasIllegalType)
+    return false;
+
+  // The table density should be at least 40%. This is the same criterion as for
+  // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
+  // FIXME: Find the best cut-off.
+  return SI->getNumCases() * 10 >= TableSize * 4;
 }
 
 /// SwitchToLookupTable - If the switch is only used to initialize one or more
