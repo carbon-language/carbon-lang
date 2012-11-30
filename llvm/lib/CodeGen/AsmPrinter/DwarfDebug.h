@@ -205,6 +205,9 @@ class DwarfDebug {
 
   CompileUnit *FirstCU;
 
+  // The CU left in the original object file for Fission debug info.
+  CompileUnit *FissionCU;
+
   // Maps MDNode with its corresponding CompileUnit.
   DenseMap <const MDNode *, CompileUnit *> CUMap;
 
@@ -369,6 +372,9 @@ private:
   /// open.
   void endSections();
 
+  /// \brief Emit all of the compile units to the target section.
+  void emitCompileUnits(const MCSection *);
+
   /// \brief Emit the debug info section.
   void emitDebugInfo();
 
@@ -412,6 +418,17 @@ private:
 
   /// \brief Emit inline info using custom format.
   void emitDebugInlineInfo();
+
+  /// DWARF 5 Experimental Fission Emitters
+
+  /// \brief Construct the fission compile unit for the debug info section.
+  CompileUnit *constructFissionCU(const MDNode *);
+
+  /// \brief Emit the fission debug info section.
+  void emitFissionSkeletonCU(const MCSection *);
+
+  /// \brief Emit the debug info dwo section.
+  void emitDebugInfoDWO();
 
   /// \brief Create new CompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
