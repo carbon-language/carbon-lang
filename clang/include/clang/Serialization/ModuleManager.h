@@ -92,6 +92,8 @@ public:
   ///
   /// \param Type The kind of module being loaded.
   ///
+  /// \param ImportLoc The location at which the module is imported.
+  ///
   /// \param ImportedBy The module that is importing this module, or NULL if
   /// this module is imported directly by the user.
   ///
@@ -103,8 +105,9 @@ public:
   /// \return A pointer to the module that corresponds to this file name,
   /// and a boolean indicating whether the module was newly added.
   std::pair<ModuleFile *, bool> 
-  addModule(StringRef FileName, ModuleKind Type, ModuleFile *ImportedBy,
-            unsigned Generation, std::string &ErrorStr);
+  addModule(StringRef FileName, ModuleKind Type, SourceLocation ImportLoc,
+            ModuleFile *ImportedBy, unsigned Generation,
+            std::string &ErrorStr);
 
   /// \brief Remove the given set of modules.
   void removeModules(ModuleIterator first, ModuleIterator last);

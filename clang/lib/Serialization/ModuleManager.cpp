@@ -34,9 +34,9 @@ llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
 }
 
 std::pair<ModuleFile *, bool>
-ModuleManager::addModule(StringRef FileName, ModuleKind Type, 
-                         ModuleFile *ImportedBy, unsigned Generation,
-                         std::string &ErrorStr) {
+ModuleManager::addModule(StringRef FileName, ModuleKind Type,
+                         SourceLocation ImportLoc, ModuleFile *ImportedBy,
+                         unsigned Generation, std::string &ErrorStr) {
   const FileEntry *Entry = FileMgr.getFile(FileName);
   if (!Entry && FileName != "-") {
     ErrorStr = "file not found";
@@ -51,10 +51,11 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     ModuleFile *New = new ModuleFile(Type, Generation);
     New->FileName = FileName.str();
     New->File = Entry;
+    New->ImportLoc = ImportLoc;
     Chain.push_back(New);
     NewModule = true;
     ModuleEntry = New;
-    
+
     // Load the contents of the module
     if (llvm::MemoryBuffer *Buffer = lookupBuffer(FileName)) {
       // The buffer was already provided for us.
@@ -82,6 +83,9 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     ModuleEntry->ImportedBy.insert(ImportedBy);
     ImportedBy->Imports.insert(ModuleEntry);
   } else {
+    if (!ModuleEntry->DirectlyImported)
+      ModuleEntry->ImportLoc = ImportLoc;
+    
     ModuleEntry->DirectlyImported = true;
   }
   

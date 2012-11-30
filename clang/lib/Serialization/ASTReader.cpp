@@ -2818,8 +2818,9 @@ ASTReader::ReadASTCore(StringRef FileName,
   ModuleFile *M;
   bool NewModule;
   std::string ErrorStr;
-  llvm::tie(M, NewModule) = ModuleMgr.addModule(FileName, Type, ImportedBy,
-                                                CurrentGeneration, ErrorStr);
+  llvm::tie(M, NewModule) = ModuleMgr.addModule(FileName, Type, ImportLoc,
+                                                ImportedBy, CurrentGeneration,
+                                                ErrorStr);
 
   if (!M) {
     // We couldn't load the module.
