@@ -519,6 +519,7 @@ void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryAccessRange(thr, pc, addr, size, true);
   Shadow s(thr->fast_state);
+  s.ClearIgnoreBit();
   s.MarkAsFreed();
   s.SetWrite(true);
   s.SetAddr0AndSizeLog(0, 3);
@@ -527,6 +528,7 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   Shadow s(thr->fast_state);
+  s.ClearIgnoreBit();
   s.SetWrite(true);
   s.SetAddr0AndSizeLog(0, 3);
   MemoryRangeSet(thr, pc, addr, size, s.raw());
