@@ -712,7 +712,7 @@ SingleBlockLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
     const SCEV *Sc = SE->getSCEV(Ptr);
 
     if (SE->isLoopInvariant(Sc, OrigLoop)) {
-      DEBUG(dbgs() << "LV1: Adding RT check for a loop invariant ptr:" <<
+      DEBUG(dbgs() << "LV: Adding RT check for a loop invariant ptr:" <<
             *Ptr <<"\n");
       Starts.push_back(Ptr);
       Ends.push_back(Ptr);
@@ -1423,11 +1423,7 @@ void SingleBlockLoopVectorizer::updateAnalysis() {
 }
 
 bool LoopVectorizationLegality::canVectorize() {
-  if (!TheLoop->getLoopPreheader()) {
-    assert(false && "No preheader!!");
-    DEBUG(dbgs() << "LV: Loop not normalized." << "\n");
-    return false;
-  }
+  assert(TheLoop->getLoopPreheader() && "No preheader!!");
 
   // We can only vectorize single basic block loops.
   unsigned NumBlocks = TheLoop->getNumBlocks();
@@ -2008,9 +2004,8 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::AShr:
     case Instruction::And:
     case Instruction::Or:
-    case Instruction::Xor: {
+    case Instruction::Xor:
       return VTTI->getArithmeticInstrCost(I->getOpcode(), VectorTy);
-    }
     case Instruction::Select: {
       SelectInst *SI = cast<SelectInst>(I);
       const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
