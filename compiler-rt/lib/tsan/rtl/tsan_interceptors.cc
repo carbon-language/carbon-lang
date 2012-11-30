@@ -1349,6 +1349,35 @@ TSAN_INTERCEPTOR(int, gettimeofday, void *tv, void *tz) {
   return REAL(gettimeofday)(tv, tz);
 }
 
+// Linux kernel has a bug that leads to kernel deadlock if a process
+// maps TBs of memory and then calls mlock().
+static void MlockIsUnsupported() {
+  static atomic_uint8_t printed;
+  if (atomic_exchange(&printed, 1, memory_order_relaxed))
+    return;
+  Printf("INFO: ThreadSanitizer ignores mlock/mlockall/munlock/munlockall\n");
+}
+
+TSAN_INTERCEPTOR(int, mlock, const void *addr, uptr len) {
+  MlockIsUnsupported();
+  return 0;
+}
+
+TSAN_INTERCEPTOR(int, munlock, const void *addr, uptr len) {
+  MlockIsUnsupported();
+  return 0;
+}
+
+TSAN_INTERCEPTOR(int, mlockall, int flags) {
+  MlockIsUnsupported();
+  return 0;
+}
+
+TSAN_INTERCEPTOR(int, munlockall, void) {
+  MlockIsUnsupported();
+  return 0;
+}
+
 namespace __tsan {
 
 void ProcessPendingSignals(ThreadState *thr) {
@@ -1525,6 +1554,11 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(usleep);
   TSAN_INTERCEPT(nanosleep);
   TSAN_INTERCEPT(gettimeofday);
+
+  TSAN_INTERCEPT(mlock);
+  TSAN_INTERCEPT(munlock);
+  TSAN_INTERCEPT(mlockall);
+  TSAN_INTERCEPT(munlockall);
 
   atexit_ctx = new(internal_alloc(MBlockAtExit, sizeof(AtExitContext)))
       AtExitContext();

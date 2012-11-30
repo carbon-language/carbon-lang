@@ -52,7 +52,7 @@ struct Flags {
   // Write logs to "log_path.pid".
   // The special values are "stdout" and "stderr".
   // The default is "stderr".
-  const char *log_path;  
+  const char *log_path;
   // Sleep in main thread before exiting for that many ms
   // (useful to catch "at exit" races).
   int atexit_sleep_ms;
