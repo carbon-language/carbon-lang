@@ -385,6 +385,39 @@ bool IsFiredSuppression(Context *ctx,
   return false;
 }
 
+// On programs that use Java we see weird reports like:
+// WARNING: ThreadSanitizer: data race (pid=22512)
+//   Read of size 8 at 0x7d2b00084318 by thread 100:
+//     #0 memcpy tsan_interceptors.cc:406 (foo+0x00000d8dfae3)
+//     #1 <null> <null>:0 (0x7f7ad9b40193)
+//   Previous write of size 8 at 0x7d2b00084318 by thread 105:
+//     #0 strncpy tsan_interceptors.cc:501 (foo+0x00000d8e0919)
+//     #1 <null> <null>:0 (0x7f7ad9b42707)
+static bool IsJavaNonsense(const ReportDesc *rep) {
+  for (uptr i = 0; i < rep->mops.Size(); i++) {
+    ReportMop *mop = rep->mops[i];
+    ReportStack *frame = mop->stack;
+    if (frame != 0 && frame->func != 0
+        && (internal_strcmp(frame->func, "memset") == 0
+        || internal_strcmp(frame->func, "memcpy") == 0
+        || internal_strcmp(frame->func, "strcmp") == 0
+        || internal_strcmp(frame->func, "strncpy") == 0
+        || internal_strcmp(frame->func, "pthread_mutex_lock") == 0)) {
+      frame = frame->next;
+      if (frame == 0
+          || (frame->func == 0 && frame->file == 0 && frame->line == 0
+            && frame->module == 0)) {
+        if (frame) {
+          FiredSuppression supp = {rep->typ, frame->pc};
+          CTX()->fired_suppressions.PushBack(supp);
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void ReportRace(ThreadState *thr) {
   if (!flags()->report_bugs)
     return;
@@ -431,6 +464,9 @@ void ReportRace(ThreadState *thr) {
     Shadow s(thr->racy_state[i]);
     rep.AddMemoryAccess(addr, s, &traces[i]);
   }
+
+  if (flags()->suppress_java && IsJavaNonsense(rep.GetReport()))
+    return;
 
   for (uptr i = 0; i < kMop; i++) {
     FastState s(thr->racy_state[i]);

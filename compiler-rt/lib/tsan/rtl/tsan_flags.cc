@@ -40,6 +40,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->enable_annotations = true;
   f->suppress_equal_stacks = true;
   f->suppress_equal_addresses = true;
+  f->suppress_java = false;
   f->report_bugs = true;
   f->report_thread_leaks = true;
   f->report_destroy_locked = true;
@@ -65,6 +66,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->enable_annotations, "enable_annotations");
   ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
   ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
+  ParseFlag(env, &f->suppress_java, "suppress_java");
   ParseFlag(env, &f->report_bugs, "report_bugs");
   ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
   ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked");

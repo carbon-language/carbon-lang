@@ -312,7 +312,7 @@ TSAN_INTERCEPTOR(void*, malloc, uptr size) {
 
 TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
   SCOPED_TSAN_INTERCEPTOR(__libc_memalign, align, sz);
-  return user_alloc(thr, pc, sz, align); 
+  return user_alloc(thr, pc, sz, align);
 }
 
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
