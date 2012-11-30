@@ -884,6 +884,17 @@ void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
     OS << "In included file:\n"; 
 }
 
+void TextDiagnostic::emitBuildingModuleLocation(SourceLocation Loc,
+                                                PresumedLoc PLoc,
+                                                StringRef ModuleName,
+                                                const SourceManager &SM) {
+  if (DiagOpts->ShowLocation)
+    OS << "While building module '" << ModuleName << "' imported from "
+      << PLoc.getFilename() << ':' << PLoc.getLine() << ":\n";
+  else
+    OS << "While building module '" << ModuleName << "':\n";
+}
+
 /// \brief Emit a code snippet and caret line.
 ///
 /// This routine emits a single line's code snippet and caret line..

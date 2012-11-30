@@ -103,6 +103,10 @@ protected:
   virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
                                    const SourceManager &SM);
 
+  virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                          StringRef ModuleName,
+                                          const SourceManager &SM);
+
 private:
   void emitSnippetAndCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,
                            SmallVectorImpl<CharSourceRange>& Ranges,

@@ -762,6 +762,7 @@ static void doCompileMapModule(void *UserData) {
 /// \brief Compile a module file for the given module, using the options 
 /// provided by the importing compiler instance.
 static void compileModule(CompilerInstance &ImportingInstance,
+                          SourceLocation ImportLoc,
                           Module *Module,
                           StringRef ModuleFileName) {
   llvm::LockFileManager Locked(ModuleFileName);
@@ -796,10 +797,6 @@ static void compileModule(CompilerInstance &ImportingInstance,
 
   // Note the name of the module we're building.
   Invocation->getLangOpts()->CurrentModule = Module->getTopLevelModuleName();
-
-  // Note that this module is part of the module build path, so that we
-  // can detect cycles in the module graph.
-  PPOpts.ModuleBuildPath.push_back(Module->getTopLevelModuleName());
 
   // Make sure that the failed-module structure has been allocated in
   // the importing instance, and propagate the pointer to the newly-created
@@ -861,7 +858,18 @@ static void compileModule(CompilerInstance &ImportingInstance,
                              &ImportingInstance.getDiagnosticClient(),
                              /*ShouldOwnClient=*/true,
                              /*ShouldCloneClient=*/true);
-  
+
+  // Note that this module is part of the module build path, so that we
+  // can detect cycles in the module graph.
+  Instance.createFileManager(); // FIXME: Adopt file manager from importer?
+  Instance.createSourceManager(Instance.getFileManager());
+  SourceManager &SourceMgr = Instance.getSourceManager();
+  SourceMgr.setModuleBuildPath(
+    ImportingInstance.getSourceManager().getModuleBuildPath());
+  SourceMgr.appendModuleBuildPath(Module->getTopLevelModuleName(),
+    FullSourceLoc(ImportLoc, ImportingInstance.getSourceManager()));
+
+
   // Construct a module-generating action.
   GenerateModuleAction CreateModuleAction;
   
@@ -939,14 +947,17 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       // build the module.
 
       // Check whether there is a cycle in the module graph.
-      SmallVectorImpl<std::string> &ModuleBuildPath
-        = getPreprocessorOpts().ModuleBuildPath;
-      SmallVectorImpl<std::string>::iterator Pos
-        = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(), ModuleName);
-      if (Pos != ModuleBuildPath.end()) {
+      ModuleBuildPath Path = getSourceManager().getModuleBuildPath();
+      ModuleBuildPath::iterator Pos = Path.begin(), PosEnd = Path.end();
+      for (; Pos != PosEnd; ++Pos) {
+        if (Pos->first == ModuleName)
+          break;
+      }
+
+      if (Pos != PosEnd) {
         SmallString<256> CyclePath;
-        for (; Pos != ModuleBuildPath.end(); ++Pos) {
-          CyclePath += *Pos;
+        for (; Pos != PosEnd; ++Pos) {
+          CyclePath += Pos->first;
           CyclePath += " -> ";
         }
         CyclePath += ModuleName;
@@ -970,7 +981,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
         << ModuleName;
       BuildingModule = true;
-      compileModule(*this, Module, ModuleFileName);
+      compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
       ModuleFile = FileMgr->getFile(ModuleFileName);
 
       if (!ModuleFile)
@@ -1040,7 +1051,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         return ModuleLoadResult();
       }
 
-      compileModule(*this, Module, ModuleFileName);
+      compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
 
       // Try loading the module again.
       ModuleFile = FileMgr->getFile(ModuleFileName);

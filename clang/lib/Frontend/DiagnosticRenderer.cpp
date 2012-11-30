@@ -205,8 +205,10 @@ void DiagnosticRenderer::emitIncludeStack(SourceLocation Loc,
 /// on the way back down.
 void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
                                                      const SourceManager &SM) {
-  if (Loc.isInvalid())
+  if (Loc.isInvalid()) {
+    emitModuleBuildPath(SM);
     return;
+  }
   
   PresumedLoc PLoc = SM.getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
   if (PLoc.isInvalid())
@@ -217,6 +219,21 @@ void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
   
   // Emit the inclusion text/note.
   emitIncludeLocation(Loc, PLoc, SM);
+}
+
+/// \brief Emit the module build path, for cases where a module is (re-)built
+/// on demand.
+void DiagnosticRenderer::emitModuleBuildPath(const SourceManager &SM) {
+  ModuleBuildPath Path = SM.getModuleBuildPath();
+  for (unsigned I = 0, N = Path.size(); I != N; ++I) {
+    const SourceManager &CurSM = Path[I].second.getManager();
+    SourceLocation CurLoc = Path[I].second;
+    emitBuildingModuleLocation(CurLoc,
+                               CurSM.getPresumedLoc(CurLoc,
+                                                    DiagOpts->ShowPresumedLoc),
+                               Path[I].first,
+                               CurSM);
+  }
 }
 
 // Helper function to fix up source ranges.  It takes in an array of ranges,
@@ -389,6 +406,20 @@ void DiagnosticNoteRenderer::emitIncludeLocation(SourceLocation Loc,
           << PLoc.getLine() << ":";
   emitNote(Loc, Message.str(), &SM);
 }
+
+void
+DiagnosticNoteRenderer::emitBuildingModuleLocation(SourceLocation Loc,
+                                                   PresumedLoc PLoc,
+                                                   StringRef ModuleName,
+                                                   const SourceManager &SM) {
+  // Generate a note indicating the include location.
+  SmallString<200> MessageStorage;
+  llvm::raw_svector_ostream Message(MessageStorage);
+  Message << "while building module '" << ModuleName << "' imported from "
+          << PLoc.getFilename() << ':' << PLoc.getLine() << ":";
+  emitNote(Loc, Message.str(), &SM);
+}
+
 
 void DiagnosticNoteRenderer::emitBasicNote(StringRef Message) {
   emitNote(SourceLocation(), Message, 0);  

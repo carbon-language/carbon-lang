@@ -3,10 +3,11 @@
 // FIXME: When we have a syntax for modules in C, use that.
 @__experimental_modules_import MutuallyRecursive1;
 
-// FIXME: Lots of redundant diagnostics here, because the preprocessor
-// can't currently tell the parser not to try to load the module again.
-
+// CHECK: While building module 'MutuallyRecursive1' imported from
+// CHECK: While building module 'MutuallyRecursive2' imported from
 // CHECK: MutuallyRecursive2.h:3:32: fatal error: cyclic dependency in module 'MutuallyRecursive1': MutuallyRecursive1 -> MutuallyRecursive2 -> MutuallyRecursive1
+// CHECK: While building module 'MutuallyRecursive1' imported from
 // CHECK: MutuallyRecursive1.h:2:32: fatal error: could not build module 'MutuallyRecursive2'
 // CHECK: cycles.c:4:32: fatal error: could not build module 'MutuallyRecursive1'
+// CHECK-NOT: error:
 

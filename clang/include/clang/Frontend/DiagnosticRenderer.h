@@ -92,7 +92,10 @@ protected:
   
   virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
                                    const SourceManager &SM) = 0;
-  
+  virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                          StringRef ModuleName,
+                                          const SourceManager &SM) = 0;
+
   virtual void beginDiagnostic(DiagOrStoredDiag D,
                                DiagnosticsEngine::Level Level) {}
   virtual void endDiagnostic(DiagOrStoredDiag D,
@@ -103,6 +106,7 @@ private:
   void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level,
                         const SourceManager &SM);
   void emitIncludeStackRecursively(SourceLocation Loc, const SourceManager &SM);
+  void emitModuleBuildPath(const SourceManager &SM);
   void emitMacroExpansionsAndCarets(SourceLocation Loc,
                                     DiagnosticsEngine::Level Level,
                                     SmallVectorImpl<CharSourceRange>& Ranges,
@@ -149,7 +153,11 @@ public:
   virtual void emitIncludeLocation(SourceLocation Loc,
                                    PresumedLoc PLoc,
                                    const SourceManager &SM);
-  
+
+  virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                          StringRef ModuleName,
+                                          const SourceManager &SM);
+
   virtual void emitNote(SourceLocation Loc, StringRef Message,
                         const SourceManager *SM) = 0;
 };

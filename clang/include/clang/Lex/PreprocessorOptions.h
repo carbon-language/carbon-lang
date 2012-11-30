@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOROPTIONS_H_
 #define LLVM_CLANG_LEX_PREPROCESSOROPTIONS_H_
 
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -120,14 +121,6 @@ public:
   /// with support for lifetime-qualified pointers.
   ObjCXXARCStandardLibraryKind ObjCXXARCStandardLibrary;
     
-  /// \brief The path of modules being build, which is used to detect
-  /// cycles in the module dependency graph as modules are being built.
-  ///
-  /// There is no way to set this value from the command line. If we ever need
-  /// to do so (e.g., if on-demand module construction moves out-of-process),
-  /// we can add a cc1-level option to do so.
-  SmallVector<std::string, 2> ModuleBuildPath;
-
   /// \brief Records the set of modules
   class FailedModulesSet : public llvm::RefCountedBase<FailedModulesSet> {
     llvm::StringSet<> Failed;
