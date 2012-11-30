@@ -120,6 +120,15 @@ TerminalState::~TerminalState()
 {
 }
 
+void
+TerminalState::Clear ()
+{
+    m_tty.Clear();
+    m_tflags = -1;
+    m_termios_ap.reset();
+    m_process_group = -1;
+}
+
 //----------------------------------------------------------------------
 // Save the current state of the TTY for the file descriptor "fd"
 // and if "save_process_group" is true, attempt to save the process

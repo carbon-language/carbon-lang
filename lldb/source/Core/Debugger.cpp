@@ -548,6 +548,7 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     m_input_file (),
     m_output_file (),
     m_error_file (),
+    m_terminal_state (),
     m_target_list (*this),
     m_platform_list (),
     m_listener ("lldb.Debugger"),
@@ -615,6 +616,7 @@ Debugger::Clear()
     
     // Close the input file _before_ we close the input read communications class
     // as it does NOT own the input file, our m_input_file does.
+    m_terminal_state.Clear();
     GetInputFile().Close ();
     // Now that we have closed m_input_file, we can now tell our input communication
     // class to close down. Its read thread should quickly exit after we close
@@ -662,7 +664,10 @@ Debugger::SetInputFileHandle (FILE *fh, bool tranfer_ownership)
     // want to objects trying to own and close a file descriptor.
     m_input_comm.SetConnection (new ConnectionFileDescriptor (in_file.GetDescriptor(), false));
     m_input_comm.SetReadThreadBytesReceivedCallback (Debugger::DispatchInputCallback, this);
-
+    
+    // Save away the terminal state if that is relevant, so that we can restore it in RestoreInputState.
+    SaveInputTerminalState ();
+    
     Error error;
     if (m_input_comm.StartReadThread (&error) == false)
     {
@@ -696,6 +701,20 @@ Debugger::SetErrorFileHandle (FILE *fh, bool tranfer_ownership)
     err_file.SetStream (fh, tranfer_ownership);
     if (err_file.IsValid() == false)
         err_file.SetStream (stderr, false);
+}
+
+void
+Debugger::SaveInputTerminalState ()
+{
+    File &in_file = GetInputFile();
+    if (in_file.GetDescriptor() != File::kInvalidDescriptor)
+        m_terminal_state.Save(in_file.GetDescriptor(), true);
+}
+
+void
+Debugger::RestoreInputTerminalState ()
+{
+    m_terminal_state.Restore();
 }
 
 ExecutionContext

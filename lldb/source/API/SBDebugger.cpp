@@ -291,6 +291,20 @@ SBDebugger::GetErrorFileHandle ()
     return NULL;
 }
 
+void
+SBDebugger::SaveInputTerminalState()
+{
+    if (m_opaque_sp)
+        m_opaque_sp->SaveInputTerminalState();
+}
+
+void
+SBDebugger::RestoreInputTerminalState()
+{
+    if (m_opaque_sp)
+        m_opaque_sp->RestoreInputTerminalState();
+
+}
 SBCommandInterpreter
 SBDebugger::GetCommandInterpreter ()
 {

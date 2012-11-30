@@ -78,7 +78,7 @@ public:
 
     void
     SetErrorFileHandle (FILE *f, bool transfer_ownership);
-
+    
     FILE *
     GetInputFileHandle ();
 
@@ -87,6 +87,12 @@ public:
 
     FILE *
     GetErrorFileHandle ();
+
+    void
+    SaveInputTerminalState();
+    
+    void
+    RestoreInputTerminalState();
 
     lldb::SBCommandInterpreter
     GetCommandInterpreter ();
