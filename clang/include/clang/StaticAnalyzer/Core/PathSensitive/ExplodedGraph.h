@@ -159,7 +159,7 @@ public:
     return dyn_cast<T>(&Location);
   }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
   template <typename T>
   void getLocationAs() && LLVM_DELETED_FUNCTION;
 #endif

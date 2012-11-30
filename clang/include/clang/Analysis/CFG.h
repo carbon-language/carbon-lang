@@ -87,7 +87,7 @@ public:
     return dyn_cast<ElemTy>(this);
   }
 
-#if LLVM_USE_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
   template<class ElemTy> void getAs() && LLVM_DELETED_FUNCTION;
 #endif
 };
