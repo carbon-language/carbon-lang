@@ -248,6 +248,14 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_property_attribute:   return "DW_AT_APPLE_property_attribute";
   case DW_AT_APPLE_property:             return "DW_AT_APPLE_property";
   case DW_AT_APPLE_objc_complete_type:   return "DW_AT_APPLE_objc_complete_type";
+
+    // DWARF5 Fission Extension Attributes
+  case DW_AT_GNU_dwo_name:               return "DW_AT_GNU_dwo_name";
+  case DW_AT_GNU_dwo_id:                 return "DW_AT_GNU_dwo_id";
+  case DW_AT_GNU_ranges_base:            return "DW_AT_GNU_ranges_base";
+  case DW_AT_GNU_addr_base:              return "DW_AT_GNU_addr_base";
+  case DW_AT_GNU_pubnames:               return "DW_AT_GNU_pubnames";
+  case DW_AT_GNU_pubtypes:               return "DW_AT_GNU_pubtypes";
   }
   return 0;
 }
@@ -281,6 +289,10 @@ const char *llvm::dwarf::FormEncodingString(unsigned Encoding) {
   case DW_FORM_exprloc:                  return "DW_FORM_exprloc";
   case DW_FORM_flag_present:             return "DW_FORM_flag_present";
   case DW_FORM_ref_sig8:                 return "DW_FORM_ref_sig8";
+
+    // DWARF5 Fission Extension Forms
+  case DW_FORM_GNU_addr_index:           return "DW_FORM_GNU_addr_index";
+  case DW_FORM_GNU_str_index:            return "DW_FORM_GNU_str_index";
   }
   return 0;
 }
@@ -445,6 +457,10 @@ const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
   case DW_OP_stack_value:                return "DW_OP_stack_value";
   case DW_OP_lo_user:                    return "DW_OP_lo_user";
   case DW_OP_hi_user:                    return "DW_OP_hi_user";
+
+    // DWARF5 Fission Proposal Op Extensions
+  case DW_OP_GNU_addr_index:             return "DW_OP_GNU_addr_index";
+  case DW_OP_GNU_const_index:            return "DW_OP_GNU_const_index";
   }
   return 0;
 }
