@@ -1203,6 +1203,29 @@ struct PragmaARCCFCodeAuditedHandler : public PragmaHandler {
   }
 };
 
+  /// \brief Handle "\#pragma region [...]"
+  ///
+  /// The syntax is
+  /// \code
+  ///   \#pragma region [optional name]
+  ///   \#pragma endregion [optional comment]
+  /// \endcode
+  /// 
+  /// \note This is 
+  /// <a href="http://msdn.microsoft.com/en-us/library/b6xkz944(v=vs.80).aspx">editor-only</a>
+  /// pragma, just skipped by compiler.
+  struct PragmaRegionHandler : public PragmaHandler {
+    PragmaRegionHandler(const char *pragma) : PragmaHandler(pragma) { }
+
+    virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                              Token &NameTok) {
+      // #pragma region: endregion matches can be verified
+      // __pragma(region): no sense, but ignored by msvc
+      // _Pragma is not valid for MSVC, but there isn't any point
+      // to handle a _Pragma differently.
+    }
+  };
+
 }  // end anonymous namespace
 
 
@@ -1236,5 +1259,7 @@ void Preprocessor::RegisterBuiltinPragmas() {
   if (LangOpts.MicrosoftExt) {
     AddPragmaHandler(new PragmaCommentHandler());
     AddPragmaHandler(new PragmaIncludeAliasHandler());
+    AddPragmaHandler(new PragmaRegionHandler("region"));
+    AddPragmaHandler(new PragmaRegionHandler("endregion"));
   }
 }
