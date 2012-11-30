@@ -460,11 +460,13 @@ class LargeMmapAllocator {
   };
 
   Header *GetHeader(uptr p) {
+    CHECK_EQ(p % page_size_, 0);
     return reinterpret_cast<Header*>(p - page_size_);
   }
   Header *GetHeader(void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
 
   void *GetUser(Header *h) {
+    CHECK_EQ((uptr)h % page_size_, 0);
     return reinterpret_cast<void*>(reinterpret_cast<uptr>(h) + page_size_);
   }
 
