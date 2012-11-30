@@ -4346,7 +4346,6 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
          && "comparison with non-integer type");
 
   bool ConstantSigned = ConstantT->isSignedIntegerType();
-  bool OtherSigned = OtherT->isSignedIntegerType();
   bool CommonSigned = CommonT->isSignedIntegerType();
 
   bool EqualityOnly = false;
@@ -4358,7 +4357,7 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   
   if (CommonSigned) {
     // The common type is signed, therefore no signed to unsigned conversion.
-    if (OtherSigned) {
+    if (!OtherRange.NonNegative) {
       // Check that the constant is representable in type OtherT.
       if (ConstantSigned) {
         if (OtherWidth >= Value.getMinSignedBits())
@@ -4379,10 +4378,10 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
       }
     }
   } else {  // !CommonSigned
-    if (!OtherSigned) {
+    if (OtherRange.NonNegative) {
       if (OtherWidth >= Value.getActiveBits())
         return;
-    } else if (OtherSigned && !ConstantSigned) {
+    } else if (!OtherRange.NonNegative && !ConstantSigned) {
       // Check to see if the constant is representable in OtherT.
       if (OtherWidth > Value.getActiveBits())
         return;
