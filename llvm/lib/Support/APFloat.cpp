@@ -2761,9 +2761,11 @@ APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
   // normalize against the "double" minExponent first, and only *then*
   // truncate the mantissa.  The result of that second conversion
   // may be inexact, but should never underflow.
-  APFloat extended(*this);
+  // Declare fltSemantics before APFloat that uses it (and
+  // saves pointer to it) to ensure correct destruction order.
   fltSemantics extendedSemantics = *semantics;
   extendedSemantics.minExponent = IEEEdouble.minExponent;
+  APFloat extended(*this);
   fs = extended.convert(extendedSemantics, rmNearestTiesToEven, &losesInfo);
   assert(fs == opOK && !losesInfo);
   (void)fs;
