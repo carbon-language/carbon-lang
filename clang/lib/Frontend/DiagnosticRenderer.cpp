@@ -242,20 +242,40 @@ static void mapDiagnosticRanges(
     SourceLocation Begin = I->getBegin(), End = I->getEnd();
     bool IsTokenRange = I->isTokenRange();
 
-    // Search the macro caller chain for the beginning of the range.
-    while (Begin.isMacroID() && SM->getFileID(Begin) != CaretLocFileID)
-      Begin = SM->getImmediateMacroCallerLoc(Begin);
+    FileID BeginFileID = SM->getFileID(Begin);
+    FileID EndFileID = SM->getFileID(End);
 
-    // Search the macro caller chain for the beginning of the range.
-    while (End.isMacroID() && SM->getFileID(End) != CaretLocFileID) {
-      // The computation of the next End is an inlined version of
-      // getImmediateMacroCallerLoc, except it chooses the end of an
-      // expansion range.
-      if (SM->isMacroArgExpansion(End)) {
+    // Find the common parent for the beginning and end of the range.
+
+    // First, crawl the expansion chain for the beginning of the range.
+    llvm::SmallDenseMap<FileID, SourceLocation> BeginLocsMap;
+    while (Begin.isMacroID() && BeginFileID != EndFileID) {
+      BeginLocsMap[BeginFileID] = Begin;
+      Begin = SM->getImmediateExpansionRange(Begin).first;
+      BeginFileID = SM->getFileID(Begin);
+    }
+
+    // Then, crawl the expansion chain for the end of the range.
+    if (BeginFileID != EndFileID) {
+      while (End.isMacroID() && !BeginLocsMap.count(EndFileID)) {
+        End = SM->getImmediateExpansionRange(End).second;
+        EndFileID = SM->getFileID(End);
+      }
+      if (End.isMacroID()) {
+        Begin = BeginLocsMap[EndFileID];
+        BeginFileID = EndFileID;
+      }
+    }
+
+    while (Begin.isMacroID() && BeginFileID != CaretLocFileID) {
+      if (SM->isMacroArgExpansion(Begin)) {
+        Begin = SM->getImmediateSpellingLoc(Begin);
         End = SM->getImmediateSpellingLoc(End);
       } else {
+        Begin = SM->getImmediateExpansionRange(Begin).first;
         End = SM->getImmediateExpansionRange(End).second;
       }
+      BeginFileID = SM->getFileID(Begin);
     }
 
     // Return the spelling location of the beginning and end of the range.

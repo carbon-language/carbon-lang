@@ -163,3 +163,17 @@ int y = Y;
 // CHECK-NEXT:    {{.*}}:134:15: note: expanded from macro 'QMARK'
 // CHECK-NEXT:    #define QMARK ?
 // CHECK-NEXT: {{^              \^}}
+
+// PR14399
+void iequals(int,int,int);
+void foo_aa()
+{
+#define /* */ BARC(c, /* */b, a, ...) (a+b+/* */c + __VA_ARGS__ +0)
+  iequals(__LINE__, BARC(4,3,2,6,8), 8);
+}
+// CHECK:         {{.*}}:172:21: warning: expression result unused
+// CHECK-NEXT:      iequals(__LINE__, BARC(4,3,2,6,8), 8);
+// CHECK-NEXT: {{^                    \^~~~~~~~~~~~~~~}}
+// CHECK-NEXT:    {{.*}}:171:51: note: expanded from macro 'BARC'
+// CHECK-NEXT:    #define /* */ BARC(c, /* */b, a, ...) (a+b+/* */c + __VA_ARGS__ +0)
+// CHECK-NEXT: {{^                                       ~~~~~~~~~~ \^}}
