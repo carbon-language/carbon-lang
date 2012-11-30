@@ -514,10 +514,10 @@ public:
 
 };
 
-/// \brief The path used when building modules on demand, which is used
+/// \brief The stack used when building modules on demand, which is used
 /// to provide a link between the source managers of the different compiler
 /// instances.
-typedef llvm::ArrayRef<std::pair<std::string, FullSourceLoc> > ModuleBuildPath;
+typedef llvm::ArrayRef<std::pair<std::string, FullSourceLoc> > ModuleBuildStack;
 
 /// \brief This class handles loading and caching of source files into memory.
 ///
@@ -656,14 +656,14 @@ class SourceManager : public RefCountedBase<SourceManager> {
 
   mutable llvm::DenseMap<FileID, MacroArgsMap *> MacroArgsCacheMap;
 
-  /// \brief The path of modules being built, which is used to detect
+  /// \brief The stack of modules being built, which is used to detect
   /// cycles in the module dependency graph as modules are being built, as
-  /// well as to describe 
+  /// well as to describe why we're rebuilding a particular module.
   ///
   /// There is no way to set this value from the command line. If we ever need
   /// to do so (e.g., if on-demand module construction moves out-of-process),
   /// we can add a cc1-level option to do so.
-  SmallVector<std::pair<std::string, FullSourceLoc>, 2> StoredModuleBuildPath;
+  SmallVector<std::pair<std::string, FullSourceLoc>, 2> StoredModuleBuildStack;
 
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&) LLVM_DELETED_FUNCTION;
@@ -689,20 +689,20 @@ public:
   /// (likely to change while trying to use them).
   bool userFilesAreVolatile() const { return UserFilesAreVolatile; }
 
-  /// \brief Retrieve the module build path.
-  ModuleBuildPath getModuleBuildPath() const {
-    return StoredModuleBuildPath;
+  /// \brief Retrieve the module build stack.
+  ModuleBuildStack getModuleBuildStack() const {
+    return StoredModuleBuildStack;
   }
 
-  /// \brief Set the module build path.
-  void setModuleBuildPath(ModuleBuildPath path) {
-    StoredModuleBuildPath.clear();
-    StoredModuleBuildPath.append(path.begin(), path.end());
+  /// \brief Set the module build stack.
+  void setModuleBuildStack(ModuleBuildStack stack) {
+    StoredModuleBuildStack.clear();
+    StoredModuleBuildStack.append(stack.begin(), stack.end());
   }
 
-  /// \brief Append an entry to the module build path.
-  void appendModuleBuildPath(StringRef moduleName, FullSourceLoc importLoc) {
-    StoredModuleBuildPath.push_back(std::make_pair(moduleName.str(),importLoc));
+  /// \brief Push an entry to the module build stack.
+  void pushModuleBuildStack(StringRef moduleName, FullSourceLoc importLoc) {
+    StoredModuleBuildStack.push_back(std::make_pair(moduleName.str(),importLoc));
   }
 
   /// \brief Create the FileID for a memory buffer that will represent the

@@ -113,7 +113,7 @@ private:
   void emitImportStack(SourceLocation Loc, const SourceManager &SM);
   void emitImportStackRecursively(SourceLocation Loc, StringRef ModuleName,
                                   const SourceManager &SM);
-  void emitModuleBuildPath(const SourceManager &SM);
+  void emitModuleBuildStack(const SourceManager &SM);
   void emitMacroExpansionsAndCarets(SourceLocation Loc,
                                     DiagnosticsEngine::Level Level,
                                     SmallVectorImpl<CharSourceRange>& Ranges,

@@ -205,7 +205,7 @@ void DiagnosticRenderer::emitIncludeStack(SourceLocation Loc,
   if (IncludeLoc.isValid())
     emitIncludeStackRecursively(IncludeLoc, SM);
   else {
-    emitModuleBuildPath(SM);
+    emitModuleBuildStack(SM);
     emitImportStack(Loc, SM);
   }
 }
@@ -215,7 +215,7 @@ void DiagnosticRenderer::emitIncludeStack(SourceLocation Loc,
 void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
                                                      const SourceManager &SM) {
   if (Loc.isInvalid()) {
-    emitModuleBuildPath(SM);
+    emitModuleBuildStack(SM);
     return;
   }
   
@@ -244,7 +244,7 @@ void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
 void DiagnosticRenderer::emitImportStack(SourceLocation Loc,
                                          const SourceManager &SM) {
   if (Loc.isInvalid()) {
-    emitModuleBuildPath(SM);
+    emitModuleBuildStack(SM);
     return;
   }
 
@@ -275,17 +275,17 @@ void DiagnosticRenderer::emitImportStackRecursively(SourceLocation Loc,
   emitImportLocation(Loc, PLoc, ModuleName, SM);
 }
 
-/// \brief Emit the module build path, for cases where a module is (re-)built
+/// \brief Emit the module build stack, for cases where a module is (re-)built
 /// on demand.
-void DiagnosticRenderer::emitModuleBuildPath(const SourceManager &SM) {
-  ModuleBuildPath Path = SM.getModuleBuildPath();
-  for (unsigned I = 0, N = Path.size(); I != N; ++I) {
-    const SourceManager &CurSM = Path[I].second.getManager();
-    SourceLocation CurLoc = Path[I].second;
+void DiagnosticRenderer::emitModuleBuildStack(const SourceManager &SM) {
+  ModuleBuildStack Stack = SM.getModuleBuildStack();
+  for (unsigned I = 0, N = Stack.size(); I != N; ++I) {
+    const SourceManager &CurSM = Stack[I].second.getManager();
+    SourceLocation CurLoc = Stack[I].second;
     emitBuildingModuleLocation(CurLoc,
                                CurSM.getPresumedLoc(CurLoc,
                                                     DiagOpts->ShowPresumedLoc),
-                               Path[I].first,
+                               Stack[I].first,
                                CurSM);
   }
 }

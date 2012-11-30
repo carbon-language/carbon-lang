@@ -859,14 +859,14 @@ static void compileModule(CompilerInstance &ImportingInstance,
                              /*ShouldOwnClient=*/true,
                              /*ShouldCloneClient=*/true);
 
-  // Note that this module is part of the module build path, so that we
+  // Note that this module is part of the module build stack, so that we
   // can detect cycles in the module graph.
   Instance.createFileManager(); // FIXME: Adopt file manager from importer?
   Instance.createSourceManager(Instance.getFileManager());
   SourceManager &SourceMgr = Instance.getSourceManager();
-  SourceMgr.setModuleBuildPath(
-    ImportingInstance.getSourceManager().getModuleBuildPath());
-  SourceMgr.appendModuleBuildPath(Module->getTopLevelModuleName(),
+  SourceMgr.setModuleBuildStack(
+    ImportingInstance.getSourceManager().getModuleBuildStack());
+  SourceMgr.pushModuleBuildStack(Module->getTopLevelModuleName(),
     FullSourceLoc(ImportLoc, ImportingInstance.getSourceManager()));
 
 
@@ -947,8 +947,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       // build the module.
 
       // Check whether there is a cycle in the module graph.
-      ModuleBuildPath Path = getSourceManager().getModuleBuildPath();
-      ModuleBuildPath::iterator Pos = Path.begin(), PosEnd = Path.end();
+      ModuleBuildStack Path = getSourceManager().getModuleBuildStack();
+      ModuleBuildStack::iterator Pos = Path.begin(), PosEnd = Path.end();
       for (; Pos != PosEnd; ++Pos) {
         if (Pos->first == ModuleName)
           break;
