@@ -38,6 +38,16 @@
 #define llvm_move(value) (value)
 #endif
 
+/// Expands to '&' if r-value references are supported.
+///
+/// This can be used to provide l-value/r-value overrides of member functions.
+/// The r-value override should be guarded by LLVM_USE_RVALUE_REFERENCES
+#if LLVM_USE_RVALUE_REFERENCES
+#define LLVM_LVALUE_FUNCTION &
+#else
+#define LLVM_LVALUE_FUNCTION
+#endif
+
 /// LLVM_DELETED_FUNCTION - Expands to = delete if the compiler supports it.
 /// Use to mark functions as uncallable. Member functions with this should
 /// be declared private so that some behavior is kept in C++03 mode.

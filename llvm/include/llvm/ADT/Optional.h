@@ -48,12 +48,17 @@ public:
   }
   
   const T* getPointer() const { assert(hasVal); return &x; }
-  const T& getValue() const { assert(hasVal); return x; }
+  const T& getValue() const LLVM_LVALUE_FUNCTION { assert(hasVal); return x; }
 
   operator bool() const { return hasVal; }
   bool hasValue() const { return hasVal; }
   const T* operator->() const { return getPointer(); }
-  const T& operator*() const { assert(hasVal); return x; }
+  const T& operator*() const LLVM_LVALUE_FUNCTION { assert(hasVal); return x; }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  T&& getValue() && { assert(hasVal); return std::move(x); }
+  T&& operator*() && { assert(hasVal); return std::move(x); } 
+#endif
 };
 
 template<typename T> struct simplify_type;
