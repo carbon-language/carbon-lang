@@ -8,6 +8,10 @@ void t1(int x, char y) {
                    "mrc p15, 0, %0, c9, c13, 2;"
                    : "=r" (x)
                    : "r" (bar())); // no warning
+  __asm__ volatile("foo %0, %1"
+                   : "+r" (x),
+                     "+r" (y)
+                   :);
 }
 
 // <rdar://problem/12284092>
