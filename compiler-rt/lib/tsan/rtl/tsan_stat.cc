@@ -100,6 +100,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_longjmp]                  = "  longjmp                         ";
   name[StatInt_siglongjmp]               = "  siglongjmp                      ";
   name[StatInt_malloc]                   = "  malloc                          ";
+  name[StatInt___libc_memalign]          = "  __libc_memalign                 ";
   name[StatInt_calloc]                   = "  calloc                          ";
   name[StatInt_realloc]                  = "  realloc                         ";
   name[StatInt_free]                     = "  free                            ";

@@ -310,6 +310,11 @@ TSAN_INTERCEPTOR(void*, malloc, uptr size) {
   return p;
 }
 
+TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
+  SCOPED_TSAN_INTERCEPTOR(__libc_memalign, align, sz);
+  return user_alloc(thr, pc, sz, align); 
+}
+
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   void *p = 0;
   {
@@ -1439,6 +1444,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(siglongjmp);
 
   TSAN_INTERCEPT(malloc);
+  TSAN_INTERCEPT(__libc_memalign);
   TSAN_INTERCEPT(calloc);
   TSAN_INTERCEPT(realloc);
   TSAN_INTERCEPT(free);
