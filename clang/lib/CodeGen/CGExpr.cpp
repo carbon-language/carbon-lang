@@ -1950,7 +1950,7 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
   if (T->isIntegerType()) {
     TypeKind = 0;
     TypeInfo = (llvm::Log2_32(getContext().getTypeSize(T)) << 1) |
-               T->isSignedIntegerType() ? 1 : 0;
+               (T->isSignedIntegerType() ? 1 : 0);
   } else if (T->isFloatingType()) {
     TypeKind = 1;
     TypeInfo = getContext().getTypeSize(T);
