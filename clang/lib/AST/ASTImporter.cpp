@@ -1908,11 +1908,7 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     struct CXXRecordDecl::DefinitionData &ToData = ToCXX->data();
     struct CXXRecordDecl::DefinitionData &FromData = FromCXX->data();
     ToData.UserDeclaredConstructor = FromData.UserDeclaredConstructor;
-    ToData.UserDeclaredCopyConstructor = FromData.UserDeclaredCopyConstructor;
-    ToData.UserDeclaredMoveConstructor = FromData.UserDeclaredMoveConstructor;
-    ToData.UserDeclaredCopyAssignment = FromData.UserDeclaredCopyAssignment;
-    ToData.UserDeclaredMoveAssignment = FromData.UserDeclaredMoveAssignment;
-    ToData.UserDeclaredDestructor = FromData.UserDeclaredDestructor;
+    ToData.UserDeclaredSpecialMembers = FromData.UserDeclaredSpecialMembers;
     ToData.Aggregate = FromData.Aggregate;
     ToData.PlainOldData = FromData.PlainOldData;
     ToData.Empty = FromData.Empty;
@@ -1926,30 +1922,20 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.HasMutableFields = FromData.HasMutableFields;
     ToData.HasOnlyCMembers = FromData.HasOnlyCMembers;
     ToData.HasInClassInitializer = FromData.HasInClassInitializer;
-    ToData.HasTrivialDefaultConstructor = FromData.HasTrivialDefaultConstructor;
+    ToData.HasTrivialSpecialMembers = FromData.HasTrivialSpecialMembers;
+    ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasConstexprNonCopyMoveConstructor
       = FromData.HasConstexprNonCopyMoveConstructor;
     ToData.DefaultedDefaultConstructorIsConstexpr
       = FromData.DefaultedDefaultConstructorIsConstexpr;
     ToData.HasConstexprDefaultConstructor
       = FromData.HasConstexprDefaultConstructor;
-    ToData.HasTrivialCopyConstructor = FromData.HasTrivialCopyConstructor;
-    ToData.HasTrivialMoveConstructor = FromData.HasTrivialMoveConstructor;
-    ToData.HasTrivialCopyAssignment = FromData.HasTrivialCopyAssignment;
-    ToData.HasTrivialMoveAssignment = FromData.HasTrivialMoveAssignment;
-    ToData.HasTrivialDestructor = FromData.HasTrivialDestructor;
-    ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasNonLiteralTypeFieldsOrBases
       = FromData.HasNonLiteralTypeFieldsOrBases;
     // ComputedVisibleConversions not imported.
     ToData.UserProvidedDefaultConstructor
       = FromData.UserProvidedDefaultConstructor;
-    ToData.DeclaredDefaultConstructor = FromData.DeclaredDefaultConstructor;
-    ToData.DeclaredCopyConstructor = FromData.DeclaredCopyConstructor;
-    ToData.DeclaredMoveConstructor = FromData.DeclaredMoveConstructor;
-    ToData.DeclaredCopyAssignment = FromData.DeclaredCopyAssignment;
-    ToData.DeclaredMoveAssignment = FromData.DeclaredMoveAssignment;
-    ToData.DeclaredDestructor = FromData.DeclaredDestructor;
+    ToData.DeclaredSpecialMembers = FromData.DeclaredSpecialMembers;
     ToData.ImplicitCopyConstructorHasConstParam
       = FromData.ImplicitCopyConstructorHasConstParam;
     ToData.ImplicitCopyAssignmentHasConstParam

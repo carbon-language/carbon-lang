@@ -272,32 +272,25 @@ class CXXRecordDecl : public RecordDecl {
 
   friend void TagDecl::startDefinition();
 
+  /// Values used in DefinitionData fields to represent special members.
+  enum SpecialMemberFlags {
+    SMF_DefaultConstructor = 0x1,
+    SMF_CopyConstructor = 0x2,
+    SMF_MoveConstructor = 0x4,
+    SMF_CopyAssignment = 0x8,
+    SMF_MoveAssignment = 0x10,
+    SMF_Destructor = 0x20,
+    SMF_All = 0x3f
+  };
+
   struct DefinitionData {
     DefinitionData(CXXRecordDecl *D);
 
-    /// UserDeclaredConstructor - True when this class has a
-    /// user-declared constructor.
+    /// \brief True if this class has any user-declared constructors.
     bool UserDeclaredConstructor : 1;
 
-    /// UserDeclaredCopyConstructor - True when this class has a
-    /// user-declared copy constructor.
-    bool UserDeclaredCopyConstructor : 1;
-
-    /// UserDeclareMoveConstructor - True when this class has a
-    /// user-declared move constructor.
-    bool UserDeclaredMoveConstructor : 1;
-
-    /// UserDeclaredCopyAssignment - True when this class has a
-    /// user-declared copy assignment operator.
-    bool UserDeclaredCopyAssignment : 1;
-
-    /// UserDeclareMoveAssignment - True when this class has a
-    /// user-declared move assignment.
-    bool UserDeclaredMoveAssignment : 1;
-
-    /// UserDeclaredDestructor - True when this class has a
-    /// user-declared destructor.
-    bool UserDeclaredDestructor : 1;
+    /// The user-declared special members which this class has.
+    unsigned UserDeclaredSpecialMembers : 6;
 
     /// Aggregate - True when this class is an aggregate.
     bool Aggregate : 1;
@@ -360,21 +353,14 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief True if any field has an in-class initializer.
     bool HasInClassInitializer : 1;
 
-    /// HasTrivialDefaultConstructor - True when, if this class has a default
-    /// constructor, this default constructor is trivial.
-    ///
-    /// C++0x [class.ctor]p5
-    ///    A default constructor is trivial if it is not user-provided and if
-    ///     -- its class has no virtual functions and no virtual base classes,
-    ///        and
-    ///     -- no non-static data member of its class has a
-    ///        brace-or-equal-initializer, and
-    ///     -- all the direct base classes of its class have trivial
-    ///        default constructors, and
-    ///     -- for all the nonstatic data members of its class that are of class
-    ///        type (or array thereof), each such class has a trivial
-    ///        default constructor.
-    bool HasTrivialDefaultConstructor : 1;
+    /// \brief The trivial special members which this class has, per
+    /// C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25,
+    /// C++11 [class.dtor]p5.
+    unsigned HasTrivialSpecialMembers : 6;
+
+    /// HasIrrelevantDestructor - True when this class has a destructor with no
+    /// semantic effect.
+    bool HasIrrelevantDestructor : 1;
 
     /// HasConstexprNonCopyMoveConstructor - True when this class has at least
     /// one user-declared constexpr constructor which is neither the copy nor
@@ -389,80 +375,6 @@ class CXXRecordDecl : public RecordDecl {
     /// default constructor (either user-declared or implicitly declared).
     bool HasConstexprDefaultConstructor : 1;
 
-    /// HasTrivialCopyConstructor - True when this class has a trivial copy
-    /// constructor.
-    ///
-    /// C++0x [class.copy]p13:
-    ///   A copy/move constructor for class X is trivial if it is neither
-    ///   user-provided and if
-    ///    -- class X has no virtual functions and no virtual base classes, and
-    ///    -- the constructor selected to copy/move each direct base class
-    ///       subobject is trivial, and
-    ///    -- for each non-static data member of X that is of class type (or an
-    ///       array thereof), the constructor selected to copy/move that member
-    ///       is trivial;
-    ///   otherwise the copy/move constructor is non-trivial.
-    bool HasTrivialCopyConstructor : 1;
-
-    /// HasTrivialMoveConstructor - True when this class has a trivial move
-    /// constructor.
-    ///
-    /// C++0x [class.copy]p13:
-    ///   A copy/move constructor for class X is trivial if it is neither
-    ///   user-provided and if
-    ///    -- class X has no virtual functions and no virtual base classes, and
-    ///    -- the constructor selected to copy/move each direct base class
-    ///       subobject is trivial, and
-    ///    -- for each non-static data member of X that is of class type (or an
-    ///       array thereof), the constructor selected to copy/move that member
-    ///       is trivial;
-    ///   otherwise the copy/move constructor is non-trivial.
-    bool HasTrivialMoveConstructor : 1;
-
-    /// HasTrivialCopyAssignment - True when this class has a trivial copy
-    /// assignment operator.
-    ///
-    /// C++0x [class.copy]p27:
-    ///   A copy/move assignment operator for class X is trivial if it is
-    ///   neither user-provided nor deleted and if
-    ///    -- class X has no virtual functions and no virtual base classes, and
-    ///    -- the assignment operator selected to copy/move each direct base
-    ///       class subobject is trivial, and
-    ///    -- for each non-static data member of X that is of class type (or an
-    ///       array thereof), the assignment operator selected to copy/move
-    ///       that member is trivial;
-    ///   otherwise the copy/move assignment operator is non-trivial.
-    bool HasTrivialCopyAssignment : 1;
-
-    /// HasTrivialMoveAssignment - True when this class has a trivial move
-    /// assignment operator.
-    ///
-    /// C++0x [class.copy]p27:
-    ///   A copy/move assignment operator for class X is trivial if it is
-    ///   neither user-provided nor deleted and if
-    ///    -- class X has no virtual functions and no virtual base classes, and
-    ///    -- the assignment operator selected to copy/move each direct base
-    ///       class subobject is trivial, and
-    ///    -- for each non-static data member of X that is of class type (or an
-    ///       array thereof), the assignment operator selected to copy/move
-    ///       that member is trivial;
-    ///   otherwise the copy/move assignment operator is non-trivial.
-    bool HasTrivialMoveAssignment : 1;
-
-    /// HasTrivialDestructor - True when this class has a trivial destructor.
-    ///
-    /// C++ [class.dtor]p3.  A destructor is trivial if it is an
-    /// implicitly-declared destructor and if:
-    /// * all of the direct base classes of its class have trivial destructors
-    ///   and
-    /// * for all of the non-static data members of its class that are of class
-    ///   type (or array thereof), each such class has a trivial destructor.
-    bool HasTrivialDestructor : 1;
-
-    /// HasIrrelevantDestructor - True when this class has a destructor with no
-    /// semantic effect.
-    bool HasIrrelevantDestructor : 1;
-
     /// HasNonLiteralTypeFieldsOrBases - True when this class contains at least
     /// one non-static data member or base class of non-literal or volatile
     /// type.
@@ -472,27 +384,13 @@ class CXXRecordDecl : public RecordDecl {
     /// already computed and are available.
     bool ComputedVisibleConversions : 1;
 
-    /// \brief Whether we have a C++0x user-provided default constructor (not
+    /// \brief Whether we have a C++11 user-provided default constructor (not
     /// explicitly deleted or defaulted).
     bool UserProvidedDefaultConstructor : 1;
 
-    /// \brief Whether we have already declared the default constructor.
-    bool DeclaredDefaultConstructor : 1;
-
-    /// \brief Whether we have already declared the copy constructor.
-    bool DeclaredCopyConstructor : 1;
-
-    /// \brief Whether we have already declared the move constructor.
-    bool DeclaredMoveConstructor : 1;
-
-    /// \brief Whether we have already declared the copy-assignment operator.
-    bool DeclaredCopyAssignment : 1;
-
-    /// \brief Whether we have already declared the move-assignment operator.
-    bool DeclaredMoveAssignment : 1;
-
-    /// \brief Whether we have already declared a destructor within the class.
-    bool DeclaredDestructor : 1;
+    /// \brief The special members which have been declared for this class,
+    /// either by the user or implicitly.
+    unsigned DeclaredSpecialMembers : 6;
 
     /// \brief Whether an implicit copy constructor would have a const-qualified
     /// parameter.
@@ -824,8 +722,7 @@ public:
 
   /// \brief Determine whether this class has any default constructors.
   bool hasDefaultConstructor() const {
-    return !data().UserDeclaredConstructor ||
-           data().DeclaredDefaultConstructor;
+    return !data().UserDeclaredConstructor || hasDeclaredDefaultConstructor();
   }
 
   /// \brief Determine if we need to declare a default constructor for
@@ -833,14 +730,13 @@ public:
   ///
   /// This value is used for lazy creation of default constructors.
   bool needsImplicitDefaultConstructor() const {
-    return !data().UserDeclaredConstructor &&
-           !data().DeclaredDefaultConstructor;
+    return !data().UserDeclaredConstructor && !hasDeclaredDefaultConstructor();
   }
 
   /// \brief Determine whether any default constructors have been declared for
   /// this class (either explicitly or implicitly).
   bool hasDeclaredDefaultConstructor() const {
-    return data().DeclaredDefaultConstructor;
+    return data().DeclaredSpecialMembers & SMF_DefaultConstructor;
   }
 
   /// hasConstCopyConstructor - Determines whether this class has a
@@ -886,7 +782,7 @@ public:
   /// user-declared copy constructor. When false, a copy constructor
   /// will be implicitly declared.
   bool hasUserDeclaredCopyConstructor() const {
-    return data().UserDeclaredCopyConstructor;
+    return data().UserDeclaredSpecialMembers & SMF_CopyConstructor;
   }
 
   /// \brief Determine whether this class has had its copy constructor
@@ -894,7 +790,7 @@ public:
   ///
   /// This value is used for lazy creation of copy constructors.
   bool hasDeclaredCopyConstructor() const {
-    return data().DeclaredCopyConstructor;
+    return data().DeclaredSpecialMembers & SMF_CopyConstructor;
   }
 
   /// \brief Determine whether an implicit copy constructor for this type
@@ -915,20 +811,20 @@ public:
   /// declared move constructor or assignment operator. When false, a
   /// move constructor and assignment operator may be implicitly declared.
   bool hasUserDeclaredMoveOperation() const {
-    return data().UserDeclaredMoveConstructor ||
-           data().UserDeclaredMoveAssignment;
+    return data().UserDeclaredSpecialMembers &
+             (SMF_MoveConstructor | SMF_MoveAssignment);
   }
 
   /// \brief Determine whether this class has had a move constructor
   /// declared by the user.
   bool hasUserDeclaredMoveConstructor() const {
-    return data().UserDeclaredMoveConstructor;
+    return data().UserDeclaredSpecialMembers & SMF_MoveConstructor;
   }
 
   /// \brief Determine whether this class has had a move constructor
   /// declared.
   bool hasDeclaredMoveConstructor() const {
-    return data().DeclaredMoveConstructor;
+    return data().DeclaredSpecialMembers & SMF_MoveConstructor;
   }
 
   /// \brief Determine whether implicit move constructor generation for this
@@ -962,7 +858,7 @@ public:
   /// user-declared copy assignment operator. When false, a copy
   /// assigment operator will be implicitly declared.
   bool hasUserDeclaredCopyAssignment() const {
-    return data().UserDeclaredCopyAssignment;
+    return data().UserDeclaredSpecialMembers & SMF_CopyAssignment;
   }
 
   /// \brief Determine whether this class has had its copy assignment operator
@@ -970,7 +866,7 @@ public:
   ///
   /// This value is used for lazy creation of copy assignment operators.
   bool hasDeclaredCopyAssignment() const {
-    return data().DeclaredCopyAssignment;
+    return data().DeclaredSpecialMembers & SMF_CopyAssignment;
   }
 
   /// \brief Determine whether an implicit copy assignment operator for this
@@ -991,13 +887,13 @@ public:
   /// \brief Determine whether this class has had a move assignment
   /// declared by the user.
   bool hasUserDeclaredMoveAssignment() const {
-    return data().UserDeclaredMoveAssignment;
+    return data().UserDeclaredSpecialMembers & SMF_MoveAssignment;
   }
 
   /// hasDeclaredMoveAssignment - Whether this class has a
   /// declared move assignment operator.
   bool hasDeclaredMoveAssignment() const {
-    return data().DeclaredMoveAssignment;
+    return data().DeclaredSpecialMembers & SMF_MoveAssignment;
   }
 
   /// \brief Determine whether implicit move assignment generation for this
@@ -1031,14 +927,16 @@ public:
   /// user-declared destructor. When false, a destructor will be
   /// implicitly declared.
   bool hasUserDeclaredDestructor() const {
-    return data().UserDeclaredDestructor;
+    return data().UserDeclaredSpecialMembers & SMF_Destructor;
   }
 
   /// \brief Determine whether this class has had its destructor declared,
   /// either via the user or via an implicit declaration.
   ///
   /// This value is used for lazy creation of destructors.
-  bool hasDeclaredDestructor() const { return data().DeclaredDestructor; }
+  bool hasDeclaredDestructor() const {
+    return data().DeclaredSpecialMembers & SMF_Destructor;
+  }
 
   /// \brief Determine whether this class describes a lambda function object.
   bool isLambda() const { return hasDefinition() && data().IsLambda; }
@@ -1127,13 +1025,15 @@ public:
   /// (C++11 [class.ctor]p5).
   /// FIXME: This can be wrong when the class has multiple default constructors.
   bool hasTrivialDefaultConstructor() const {
-    return hasDefaultConstructor() && data().HasTrivialDefaultConstructor;
+    return hasDefaultConstructor() &&
+           (data().HasTrivialSpecialMembers & SMF_DefaultConstructor);
   }
 
   /// \brief Determine whether this class has a non-trivial default constructor
   /// (C++11 [class.ctor]p5).
   bool hasNonTrivialDefaultConstructor() const {
-    return hasDefaultConstructor() && !data().HasTrivialDefaultConstructor;
+    return hasDefaultConstructor() &&
+           !(data().HasTrivialSpecialMembers & SMF_DefaultConstructor);
   }
 
   /// \brief Determine whether this class has at least one constexpr constructor
@@ -1162,13 +1062,13 @@ public:
   /// (C++ [class.copy]p6, C++11 [class.copy]p12)
   /// FIXME: This can be wrong if the class has multiple copy constructors.
   bool hasTrivialCopyConstructor() const {
-    return data().HasTrivialCopyConstructor;
+    return data().HasTrivialSpecialMembers & SMF_CopyConstructor;
   }
 
   /// \brief Determine whether this class has a non-trivial copy constructor
   /// (C++ [class.copy]p6, C++11 [class.copy]p12)
   bool hasNonTrivialCopyConstructor() const {
-    return !data().HasTrivialCopyConstructor;
+    return !(data().HasTrivialSpecialMembers & SMF_CopyConstructor);
   }
 
   /// \brief Determine whether this class has a trivial move constructor
@@ -1176,7 +1076,7 @@ public:
   /// FIXME: This can be wrong if the class has multiple move constructors,
   /// or if the implicit move constructor would be deleted.
   bool hasTrivialMoveConstructor() const {
-    return data().HasTrivialMoveConstructor &&
+    return (data().HasTrivialSpecialMembers & SMF_MoveConstructor) &&
            (hasDeclaredMoveConstructor() || needsImplicitMoveConstructor());
   }
 
@@ -1185,7 +1085,7 @@ public:
   /// FIXME: This can be wrong if the implicit move constructor would be
   /// deleted.
   bool hasNonTrivialMoveConstructor() const {
-    return !data().HasTrivialMoveConstructor &&
+    return !(data().HasTrivialSpecialMembers & SMF_MoveConstructor) &&
            (hasDeclaredMoveConstructor() || needsImplicitMoveConstructor());
   }
 
@@ -1194,13 +1094,13 @@ public:
   /// FIXME: This can be wrong if the class has multiple copy assignment
   /// operators.
   bool hasTrivialCopyAssignment() const {
-    return data().HasTrivialCopyAssignment;
+    return data().HasTrivialSpecialMembers & SMF_CopyAssignment;
   }
 
   /// \brief Determine whether this class has a non-trivial copy assignment
   /// operator (C++ [class.copy]p11, C++11 [class.copy]p25)
   bool hasNonTrivialCopyAssignment() const {
-    return !data().HasTrivialCopyAssignment;
+    return !(data().HasTrivialSpecialMembers & SMF_CopyAssignment);
   }
 
   /// \brief Determine whether this class has a trivial move assignment operator
@@ -1208,7 +1108,7 @@ public:
   /// FIXME: This can be wrong if the class has multiple move assignment
   /// operators, or if the implicit move assignment operator would be deleted.
   bool hasTrivialMoveAssignment() const {
-    return data().HasTrivialMoveAssignment &&
+    return (data().HasTrivialSpecialMembers & SMF_MoveAssignment) &&
            (hasDeclaredMoveAssignment() || needsImplicitMoveAssignment());
   }
 
@@ -1216,17 +1116,21 @@ public:
   /// operator (C++11 [class.copy]p25)
   /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasNonTrivialMoveAssignment() const {
-    return !data().HasTrivialMoveAssignment &&
+    return !(data().HasTrivialSpecialMembers & SMF_MoveAssignment) &&
            (hasDeclaredMoveAssignment() || needsImplicitMoveAssignment());
   }
 
   /// \brief Determine whether this class has a trivial destructor
   /// (C++ [class.dtor]p3)
-  bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
+  bool hasTrivialDestructor() const {
+    return data().HasTrivialSpecialMembers & SMF_Destructor;
+  }
 
   /// \brief Determine whether this class has a non-trivial destructor
   /// (C++ [class.dtor]p3)
-  bool hasNonTrivialDestructor() const { return !data().HasTrivialDestructor; }
+  bool hasNonTrivialDestructor() const {
+    return !(data().HasTrivialSpecialMembers & SMF_Destructor);
+  }
 
   // hasIrrelevantDestructor - Whether this class has a destructor which has no
   // semantic effect. Any such destructor will be trivial, public, defaulted

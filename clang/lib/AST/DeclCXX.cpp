@@ -36,26 +36,19 @@ AccessSpecDecl *AccessSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
 }
 
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
-  : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
-    UserDeclaredMoveConstructor(false), UserDeclaredCopyAssignment(false),
-    UserDeclaredMoveAssignment(false), UserDeclaredDestructor(false),
+  : UserDeclaredConstructor(false), UserDeclaredSpecialMembers(0),
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
     HasMutableFields(false), HasOnlyCMembers(true),
     HasInClassInitializer(false),
-    HasTrivialDefaultConstructor(true),
+    HasTrivialSpecialMembers(SMF_All),
+    HasIrrelevantDestructor(true),
     HasConstexprNonCopyMoveConstructor(false),
     DefaultedDefaultConstructorIsConstexpr(true),
-    HasConstexprDefaultConstructor(false), HasTrivialCopyConstructor(true),
-    HasTrivialMoveConstructor(true), HasTrivialCopyAssignment(true),
-    HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
-    HasIrrelevantDestructor(true),
+    HasConstexprDefaultConstructor(false),
     HasNonLiteralTypeFieldsOrBases(false), ComputedVisibleConversions(false),
-    UserProvidedDefaultConstructor(false), DeclaredDefaultConstructor(false),
-    DeclaredCopyConstructor(false), DeclaredMoveConstructor(false),
-    DeclaredCopyAssignment(false), DeclaredMoveAssignment(false),
-    DeclaredDestructor(false),
+    UserProvidedDefaultConstructor(false), DeclaredSpecialMembers(0),
     ImplicitCopyConstructorHasConstParam(true),
     ImplicitCopyAssignmentHasConstParam(true),
     HasDeclaredCopyConstructorWithConstParam(false),
@@ -212,25 +205,12 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       //    T is a class type, but not a union type, with ... no virtual base
       //    classes
       data().Empty = false;
-      
-      // C++ [class.ctor]p5:
-      //   A default constructor is trivial [...] if:
-      //    -- its class has [...] no virtual bases
-      data().HasTrivialDefaultConstructor = false;
 
-      // C++0x [class.copy]p13:
-      //   A copy/move constructor for class X is trivial if it is neither
-      //   user-provided nor deleted and if
-      //    -- class X has no virtual functions and no virtual base classes, and
-      data().HasTrivialCopyConstructor = false;
-      data().HasTrivialMoveConstructor = false;
-
-      // C++0x [class.copy]p27:
-      //   A copy/move assignment operator for class X is trivial if it is
-      //   neither user-provided nor deleted and if
-      //    -- class X has no virtual functions and no virtual base classes, and
-      data().HasTrivialCopyAssignment = false;
-      data().HasTrivialMoveAssignment = false;
+      // C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25:
+      //   A [default constructor, copy/move constructor, or copy/move assignment
+      //   operator for a class X] is trivial [...] if:
+      //    -- class X has [...] no virtual base classes
+      data().HasTrivialSpecialMembers &= SMF_Destructor;
 
       // C++0x [class]p7:
       //   A standard-layout class is a class that: [...]
@@ -247,8 +227,8 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       //    -- all the direct base classes of its class have trivial default
       //       constructors.
       if (!BaseClassDecl->hasTrivialDefaultConstructor())
-        data().HasTrivialDefaultConstructor = false;
-      
+        data().HasTrivialSpecialMembers &= ~SMF_DefaultConstructor;
+
       // C++0x [class.copy]p13:
       //   A copy/move constructor for class X is trivial if [...]
       //    [...]
@@ -258,9 +238,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // instead of all of them. For now, we treat a move constructor as being
       // non-trivial if it calls anything other than a trivial move constructor.
       if (!BaseClassDecl->hasTrivialCopyConstructor())
-        data().HasTrivialCopyConstructor = false;
+        data().HasTrivialSpecialMembers &= ~SMF_CopyConstructor;
       if (!BaseClassDecl->hasTrivialMoveConstructor())
-        data().HasTrivialMoveConstructor = false;
+        data().HasTrivialSpecialMembers &= ~SMF_MoveConstructor;
 
       // C++0x [class.copy]p27:
       //   A copy/move assignment operator for class X is trivial if [...]
@@ -270,9 +250,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // FIXME: C++0x: We need to only consider the selected operator instead
       // of all of them.
       if (!BaseClassDecl->hasTrivialCopyAssignment())
-        data().HasTrivialCopyAssignment = false;
+        data().HasTrivialSpecialMembers &= ~SMF_CopyAssignment;
       if (!BaseClassDecl->hasTrivialMoveAssignment())
-        data().HasTrivialMoveAssignment = false;
+        data().HasTrivialSpecialMembers &= ~SMF_MoveAssignment;
 
       // C++11 [class.ctor]p6:
       //   If that user-written default constructor would satisfy the
@@ -286,7 +266,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     //   A destructor is trivial if all the direct base classes of its class
     //   have trivial destructors.
     if (!BaseClassDecl->hasTrivialDestructor())
-      data().HasTrivialDestructor = false;
+      data().HasTrivialSpecialMembers &= ~SMF_Destructor;
 
     if (!BaseClassDecl->hasIrrelevantDestructor())
       data().HasIrrelevantDestructor = false;
@@ -529,24 +509,13 @@ void CXXRecordDecl::addedMember(Decl *D) {
       //   A class that declares or inherits a virtual function is called a 
       //   polymorphic class.
       data().Polymorphic = true;
-      
-      // C++0x [class.ctor]p5
-      //   A default constructor is trivial [...] if:
-      //    -- its class has no virtual functions [...]
-      data().HasTrivialDefaultConstructor = false;
 
-      // C++0x [class.copy]p13:
-      //   A copy/move constructor for class X is trivial if [...]
+      // C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25:
+      //   A [default constructor, copy/move constructor, or copy/move
+      //   assignment operator for a class X] is trivial [...] if:
       //    -- class X has no virtual functions [...]
-      data().HasTrivialCopyConstructor = false;
-      data().HasTrivialMoveConstructor = false;
+      data().HasTrivialSpecialMembers &= SMF_Destructor;
 
-      // C++0x [class.copy]p27:
-      //   A copy/move assignment operator for class X is trivial if [...]
-      //    -- class X has no virtual functions [...]
-      data().HasTrivialCopyAssignment = false;
-      data().HasTrivialMoveAssignment = false;
-            
       // C++0x [class]p7:
       //   A standard-layout class is a class that: [...]
       //    -- has no virtual functions
@@ -559,6 +528,9 @@ void CXXRecordDecl::addedMember(Decl *D) {
   if (!isBeingDefined() && D->isImplicit())
     if (ASTMutationListener *L = getASTMutationListener())
       L->AddedCXXImplicitMember(data().Definition, D);
+
+  // The kind of special member this declaration is, if any.
+  unsigned SMKind = 0;
 
   // Handle constructors.
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
@@ -579,45 +551,23 @@ void CXXRecordDecl::addedMember(Decl *D) {
     bool UserProvided = Constructor->isUserProvided();
 
     if (Constructor->isDefaultConstructor()) {
-      data().DeclaredDefaultConstructor = true;
-      if (UserProvided) {
-        // C++0x [class.ctor]p5:
-        //   A default constructor is trivial if it is not user-provided [...]
-        data().HasTrivialDefaultConstructor = false;
+      SMKind |= SMF_DefaultConstructor;
+
+      if (UserProvided)
         data().UserProvidedDefaultConstructor = true;
-      }
       if (Constructor->isConstexpr())
         data().HasConstexprDefaultConstructor = true;
     }
 
-    // Note when we have a user-declared copy or move constructor, which will
-    // suppress the implicit declaration of those constructors.
     if (!FunTmpl) {
       unsigned Quals;
       if (Constructor->isCopyConstructor(Quals)) {
-        if (!Constructor->isImplicit())
-          data().UserDeclaredCopyConstructor = true;
-        data().DeclaredCopyConstructor = true;
-
-        // C++0x [class.copy]p13:
-        //   A copy/move constructor for class X is trivial if it is not
-        //   user-provided [...]
-        if (UserProvided)
-          data().HasTrivialCopyConstructor = false;
+        SMKind |= SMF_CopyConstructor;
 
         if (Quals & Qualifiers::Const)
           data().HasDeclaredCopyConstructorWithConstParam = true;
-      } else if (Constructor->isMoveConstructor()) {
-        if (!Constructor->isImplicit())
-          data().UserDeclaredMoveConstructor = true;
-        data().DeclaredMoveConstructor = true;
-
-        // C++0x [class.copy]p13:
-        //   A copy/move constructor for class X is trivial if it is not
-        //   user-provided [...]
-        if (UserProvided)
-          data().HasTrivialMoveConstructor = false;
-      }
+      } else if (Constructor->isMoveConstructor())
+        SMKind |= SMF_MoveConstructor;
     }
 
     // Record if we see any constexpr constructors which are neither copy
@@ -634,57 +584,25 @@ void CXXRecordDecl::addedMember(Decl *D) {
     if (getASTContext().getLangOpts().CPlusPlus0x
           ? UserProvided : !Constructor->isImplicit())
       data().Aggregate = false;
-
-    return;
   }
 
   // Handle destructors.
   if (CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D)) {
-    data().DeclaredDestructor = true;
+    SMKind |= SMF_Destructor;
 
-    if (!DD->isImplicit()) {
-      data().UserDeclaredDestructor = true;
+    if (!DD->isImplicit())
       data().HasIrrelevantDestructor = false;
 
-      // C++ [class]p4:
-      //   A POD-struct is an aggregate class that has [...] no user-defined
-      //   destructor.
-      // This bit is the C++03 POD bit, not the 0x one.
-      data().PlainOldData = false;
-    }
-
     // C++11 [class.dtor]p5:
-    //   A destructor is trivial if it is not user-provided and if
-    //    -- the destructor is not virtual.
-    if (DD->isUserProvided() || DD->isVirtual())
-      data().HasTrivialDestructor = false;
-
-    return;
+    //   A destructor is trivial if [...] the destructor is not virtual.
+    if (DD->isVirtual())
+      data().HasTrivialSpecialMembers &= ~SMF_Destructor;
   }
 
   // Handle member functions.
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
     if (Method->isCopyAssignmentOperator()) {
-      // Suppress the implicit declaration of a copy constructor.
-      data().DeclaredCopyAssignment = true;
-
-      if (!Method->isImplicit()) {
-        data().UserDeclaredCopyAssignment = true;
-
-        // C++ [class]p4:
-        //   A POD-struct is an aggregate class that [...] has no user-defined
-        //   copy assignment operator [...].
-        // This is the C++03 bit only.
-        data().PlainOldData = false;
-
-        // C++11 [class.copy]p25:
-        //   A copy/move assignment operator for class X is trivial if it is
-        //   not user-provided [...]
-        // FIXME: This is bogus. Having one user-provided copy assignment
-        // doesn't stop another one from being trivial.
-        if (Method->isUserProvided())
-          data().HasTrivialCopyAssignment = false;
-      }
+      SMKind |= SMF_CopyAssignment;
 
       const ReferenceType *ParamTy =
         Method->getParamDecl(0)->getType()->getAs<ReferenceType>();
@@ -692,34 +610,16 @@ void CXXRecordDecl::addedMember(Decl *D) {
         data().HasDeclaredCopyAssignmentWithConstParam = true;
     }
 
-    if (Method->isMoveAssignmentOperator()) {
-      data().DeclaredMoveAssignment = true;
-
-      if (!Method->isImplicit()) {
-        data().UserDeclaredMoveAssignment = true;
-
-        // This is an extension in C++03 mode, but we'll keep consistency by
-        // taking a move assignment operator to induce non-POD-ness
-        data().PlainOldData = false;
-
-        // C++0x [class.copy]p27:
-        //   A copy/move assignment operator for class X is trivial if it is
-        //   neither user-provided nor deleted [...]
-        if (Method->isUserProvided())
-          data().HasTrivialMoveAssignment = false;
-      }
-    }
+    if (Method->isMoveAssignmentOperator())
+      SMKind |= SMF_MoveAssignment;
 
     // Keep the list of conversion functions up-to-date.
     if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
-      // We don't record specializations.
-      if (Conversion->getPrimaryTemplate())
-        return;
-
       // FIXME: We intentionally don't use the decl's access here because it
       // hasn't been set yet.  That's really just a misdesign in Sema.
-
-      if (FunTmpl) {
+      if (Conversion->getPrimaryTemplate()) {
+        // We don't record specializations.
+      } else if (FunTmpl) {
         if (FunTmpl->getPreviousDecl())
           data().Conversions.replace(FunTmpl->getPreviousDecl(),
                                      FunTmpl);
@@ -734,9 +634,40 @@ void CXXRecordDecl::addedMember(Decl *D) {
       }
     }
 
+    if (SMKind) {
+      // Note when we have declared a declared special member, and suppress the
+      // implicit declaration of this special member.
+      data().DeclaredSpecialMembers |= SMKind;
+
+      if (!Method->isImplicit()) {
+        data().UserDeclaredSpecialMembers |= SMKind;
+
+        // C++03 [class]p4:
+        //   A POD-struct is an aggregate class that has [...] no user-defined
+        //   copy assignment operator and no user-defined destructor.
+        //
+        // Since the POD bit is meant to be C++03 POD-ness, and in C++03,
+        // aggregates could not have any constructors, clear it even for an
+        // explicitly defaulted or deleted constructor.
+        // type is technically an aggregate in C++0x since it wouldn't be in 03.
+        //
+        // Also, a user-declared move assignment operator makes a class non-POD.
+        // This is an extension in C++03.
+        data().PlainOldData = false;
+      }
+
+      // C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25,
+      // C++11 [class.dtor]p5:
+      //   A [special member] is trivial if it is not user-provided [...]
+      // FIXME: This is bogus. A class can have both (say) a trivial copy
+      // constructor *and* a user-provided copy constructor.
+      if (Method->isUserProvided())
+        data().HasTrivialSpecialMembers &= ~SMKind;
+    }
+
     return;
   }
-  
+
   // Handle non-static data members.
   if (FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
     // C++ [class.bit]p2:
@@ -796,7 +727,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       data().PlainOldData = false;
     
     if (T->isReferenceType()) {
-      data().HasTrivialDefaultConstructor = false;
+      data().HasTrivialSpecialMembers &= ~SMF_DefaultConstructor;
 
       // C++0x [class]p7:
       //   A standard-layout class is a class that:
@@ -814,7 +745,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++11 [class]p5:
       //   A default constructor is trivial if [...] no non-static data member
       //   of its class has a brace-or-equal-initializer.
-      data().HasTrivialDefaultConstructor = false;
+      data().HasTrivialSpecialMembers &= ~SMF_DefaultConstructor;
 
       // C++11 [dcl.init.aggr]p1:
       //   An aggregate is a [...] class with [...] no
@@ -835,7 +766,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
         //       class type (or array thereof), each such class has a trivial
         //       default constructor.
         if (!FieldRec->hasTrivialDefaultConstructor())
-          data().HasTrivialDefaultConstructor = false;
+          data().HasTrivialSpecialMembers &= ~SMF_DefaultConstructor;
 
         // C++0x [class.copy]p13:
         //   A copy/move constructor for class X is trivial if [...]
@@ -845,9 +776,9 @@ void CXXRecordDecl::addedMember(Decl *D) {
         //       member is trivial;
         // FIXME: C++0x: We don't correctly model 'selected' constructors.
         if (!FieldRec->hasTrivialCopyConstructor())
-          data().HasTrivialCopyConstructor = false;
+          data().HasTrivialSpecialMembers &= ~SMF_CopyConstructor;
         if (!FieldRec->hasTrivialMoveConstructor())
-          data().HasTrivialMoveConstructor = false;
+          data().HasTrivialSpecialMembers &= ~SMF_MoveConstructor;
 
         // C++0x [class.copy]p27:
         //   A copy/move assignment operator for class X is trivial if [...]
@@ -857,12 +788,12 @@ void CXXRecordDecl::addedMember(Decl *D) {
         //       copy/move that member is trivial;
         // FIXME: C++0x: We don't correctly model 'selected' operators.
         if (!FieldRec->hasTrivialCopyAssignment())
-          data().HasTrivialCopyAssignment = false;
+          data().HasTrivialSpecialMembers &= ~SMF_CopyAssignment;
         if (!FieldRec->hasTrivialMoveAssignment())
-          data().HasTrivialMoveAssignment = false;
+          data().HasTrivialSpecialMembers &= ~SMF_MoveAssignment;
 
         if (!FieldRec->hasTrivialDestructor())
-          data().HasTrivialDestructor = false;
+          data().HasTrivialSpecialMembers &= ~SMF_Destructor;
         if (!FieldRec->hasIrrelevantDestructor())
           data().HasIrrelevantDestructor = false;
         if (FieldRec->hasObjectMember())
@@ -1254,12 +1185,7 @@ void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
     //   non-trivial.
     struct DefinitionData &Data = data();
     Data.PlainOldData = false;
-    Data.HasTrivialDefaultConstructor = false;
-    Data.HasTrivialCopyConstructor = false;
-    Data.HasTrivialMoveConstructor = false;
-    Data.HasTrivialCopyAssignment = false;
-    Data.HasTrivialMoveAssignment = false;
-    Data.HasTrivialDestructor = false;
+    Data.HasTrivialSpecialMembers = 0;
     Data.HasIrrelevantDestructor = false;
   }
   
