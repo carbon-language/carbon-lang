@@ -3521,12 +3521,20 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
   for (SmallDenseMap<PHINode*, Type*>::const_iterator I = ResultTypes.begin(),
        E = ResultTypes.end(); I != E; ++I) {
     Type *Ty = I->second;
-    if (!TTI->getScalarTargetTransformInfo()->isTypeLegal(Ty))
-      HasIllegalType = true;
-    if (!SwitchLookupTable::WouldFitInRegister(TD, TableSize, Ty)) {
-      AllTablesFitInRegister = false;
+
+    // Saturate this flag to true.
+    HasIllegalType = HasIllegalType ||
+      !TTI->getScalarTargetTransformInfo()->isTypeLegal(Ty);
+
+    // Saturate this flag to false.
+    AllTablesFitInRegister = AllTablesFitInRegister &&
+      SwitchLookupTable::WouldFitInRegister(TD, TableSize, Ty);
+
+    // If both flags saturate, we're done. NOTE: This *only* works with
+    // saturating flags, and all flags have to saturate first due to the
+    // non-deterministic behavior of iterating over a dense map.
+    if (HasIllegalType && !AllTablesFitInRegister)
       break;
-    }
   }
 
   // If each table would fit in a register, we should build it anyway.
