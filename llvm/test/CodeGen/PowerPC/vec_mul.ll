@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 -mattr=+altivec | FileCheck %s
+; RUN: llc < %s -mtriple=powerpc-unknown-linux-gnu -march=ppc32 -mattr=+altivec | FileCheck %s
 
 define <4 x i32> @test_v4i32(<4 x i32>* %X, <4 x i32>* %Y) {
 	%tmp = load <4 x i32>* %X		; <<4 x i32>> [#uses=1]
@@ -41,6 +41,6 @@ define <4 x float> @test_float(<4 x float>* %X, <4 x float>* %Y) {
 ; all bits set and shifting it 31 bits to left, resulting a an vector of 
 ; 4 x 0x80000000 (-0.0 as float).
 ; CHECK: test_float:
-; CHECK: vspltisw [[ZNEG:v[0-9]+]], -1
-; CHECK: vslw     {{v[0-9]+}}, [[ZNEG]], [[ZNEG]]
+; CHECK: vspltisw [[ZNEG:[0-9]+]], -1
+; CHECK: vslw     {{[0-9]+}}, [[ZNEG]], [[ZNEG]]
 ; CHECK: vmaddfp
