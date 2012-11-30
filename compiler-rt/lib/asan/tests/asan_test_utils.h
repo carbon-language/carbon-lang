@@ -53,8 +53,10 @@ typedef __int64          int64_t;
 #  define SANITIZER_WORDSIZE 32
 #endif
 
-// Make the compiler think that something is going on there.
-extern "C" void break_optimization(void *arg);
+// Make the compiler thinks that something is going on there.
+inline void break_optimization(void *arg) {
+  __asm__ __volatile__ ("" : : "r" (arg) : "memory");
+}
 
 // This function returns its parameter but in such a way that compiler
 // can not prove it.
