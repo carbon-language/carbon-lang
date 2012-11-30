@@ -14,10 +14,13 @@
 #include "InstCombine.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/DataLayout.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
+
+STATISTIC(NumSimplified, "Number of library calls simplified");
 
 /// getPromotedType - Return the specified type promoted as it would be to pass
 /// though a va_arg area.
@@ -785,8 +788,10 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
 Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const DataLayout *TD) {
   if (CI->getCalledFunction() == 0) return 0;
 
-  if (Value *With = Simplifier->optimizeCall(CI))
+  if (Value *With = Simplifier->optimizeCall(CI)) {
+    ++NumSimplified;
     return CI->use_empty() ? CI : ReplaceInstUsesWith(*CI, With);
+  }
 
   return 0;
 }

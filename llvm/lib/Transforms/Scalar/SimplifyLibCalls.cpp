@@ -35,7 +35,6 @@
 #include "llvm/Config/config.h"            // FIXME: Shouldn't depend on host!
 using namespace llvm;
 
-STATISTIC(NumSimplified, "Number of library calls simplified");
 STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 
 //===----------------------------------------------------------------------===//
@@ -193,7 +192,6 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
 
       // Something changed!
       Changed = true;
-      ++NumSimplified;
 
       // Inspect the instruction after the call (which was potentially just
       // added) next.
