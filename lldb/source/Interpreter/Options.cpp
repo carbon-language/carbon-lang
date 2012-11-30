@@ -274,16 +274,20 @@ Options::GetLongOptions ()
         m_getopt_table.resize(num_options + 1);
         for (i = 0, j = 0; i < num_options; ++i)
         {
-            char short_opt = opt_defs[i].short_option;
+            const char short_opt = opt_defs[i].short_option;
 
             if (option_seen.test(short_opt) == false)
             {
                 m_getopt_table[j].name    = opt_defs[i].long_option;
                 m_getopt_table[j].has_arg = opt_defs[i].option_has_arg;
                 m_getopt_table[j].flag    = NULL;
-                m_getopt_table[j].val     = opt_defs[i].short_option;
+                m_getopt_table[j].val     = short_opt;
                 option_seen.set(short_opt);
                 ++j;
+            }
+            else
+            {
+                assert (!"duplicate short option character");
             }
         }
 

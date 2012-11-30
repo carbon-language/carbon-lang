@@ -155,7 +155,9 @@ public:
         m_option_group (interpreter),
         m_arch_option (),
         m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
-        m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename, "Fullpath to a core file to use for this target.")
+        m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename, "Fullpath to a core file to use for this target."),
+        m_symbol_file (LLDB_OPT_SET_1, false, "symfile", 's', 0, eArgTypeFilename, "Fullpath to a stand alone debug symbols file for when debug symbols are not in the executable."),
+        m_add_dependents (LLDB_OPT_SET_1, false, "no-dependents", 'd', "Don't load dependent files when creating the target, just add the specified executable.", true, true)
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;
@@ -173,6 +175,8 @@ public:
         m_option_group.Append (&m_arch_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_core_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_symbol_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_add_dependents, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
 
@@ -219,12 +223,25 @@ protected:
 
         if (argc == 1 || core_file)
         {
+            FileSpec symfile (m_symbol_file.GetOptionValue().GetCurrentValue());
+            if (symfile)
+            {
+                if (!symfile.Exists())
+                {
+                    char symfile_path[PATH_MAX];
+                    symfile.GetPath(symfile_path, sizeof(symfile_path));
+                    result.AppendErrorWithFormat("invalid symbol file path '%s'", symfile_path);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+
             const char *file_path = command.GetArgumentAtIndex(0);
             Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) target create '%s'", file_path);
             TargetSP target_sp;
             Debugger &debugger = m_interpreter.GetDebugger();
             const char *arch_cstr = m_arch_option.GetArchitectureName();
-            const bool get_dependent_files = true;
+            const bool get_dependent_files = m_add_dependents.GetOptionValue().GetCurrentValue();
             Error error (debugger.GetTargetList().CreateTarget (debugger,
                                                                 file_path,
                                                                 arch_cstr,
@@ -234,6 +251,13 @@ protected:
 
             if (target_sp)
             {
+                if (symfile)
+                {
+                    ModuleSP module_sp (target_sp->GetExecutableModule());
+                    if (module_sp)
+                        module_sp->SetSymbolFileFileSpec(symfile);
+                }
+                
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());
                 if (core_file)
                 {
@@ -303,7 +327,8 @@ private:
     OptionGroupArchitecture m_arch_option;
     OptionGroupPlatform m_platform_options;
     OptionGroupFile m_core_file;
-
+    OptionGroupFile m_symbol_file;
+    OptionGroupBoolean m_add_dependents;
 };
 
 #pragma mark CommandObjectTargetList
@@ -2443,9 +2468,11 @@ public:
                              "target modules add",
                              "Add a new module to the current target's modules.",
                              "target modules add [<module>]"),
-        m_option_group (interpreter)
+        m_option_group (interpreter),
+        m_symbol_file (LLDB_OPT_SET_1, false, "symfile", 's', 0, eArgTypeFilename, "Fullpath to a stand alone debug symbols file for when debug symbols are not in the executable.")
     {
         m_option_group.Append (&m_uuid_option_group, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_symbol_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
     
@@ -2488,6 +2515,7 @@ protected:
     
     OptionGroupOptions m_option_group;
     OptionGroupUUID m_uuid_option_group;
+    OptionGroupFile m_symbol_file;
     
 
     virtual bool
@@ -2511,6 +2539,8 @@ protected:
                     // We are given a UUID only, go locate the file
                     ModuleSpec module_spec;
                     module_spec.GetUUID() = m_uuid_option_group.GetOptionValue ().GetCurrentValue();
+                    if (m_symbol_file.GetOptionValue().OptionWasSet())
+                        module_spec.GetSymbolFileSpec() = m_symbol_file.GetOptionValue().GetCurrentValue();
                     if (Symbols::DownloadObjectAndSymbolFile (module_spec))
                     {
                         ModuleSP module_sp (target->GetSharedModule (module_spec));
@@ -2580,7 +2610,8 @@ protected:
                             ModuleSpec module_spec (file_spec);
                             if (m_uuid_option_group.GetOptionValue ().OptionWasSet())
                                 module_spec.GetUUID() = m_uuid_option_group.GetOptionValue ().GetCurrentValue();
-
+                            if (m_symbol_file.GetOptionValue().OptionWasSet())
+                                module_spec.GetSymbolFileSpec() = m_symbol_file.GetOptionValue().GetCurrentValue();
                             Error error;
                             ModuleSP module_sp (target->GetSharedModule (module_spec, &error));
                             if (!module_sp)
