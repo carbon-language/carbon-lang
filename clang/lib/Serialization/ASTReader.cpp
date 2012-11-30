@@ -1000,6 +1000,25 @@ bool ASTReader::ReadSLocEntry(int ID) {
   return false;
 }
 
+std::pair<SourceLocation, StringRef> ASTReader::getModuleImportLoc(int ID) {
+  if (ID == 0)
+    return std::make_pair(SourceLocation(), "");
+
+  if (unsigned(-ID) - 2 >= getTotalNumSLocs() || ID > 0) {
+    Error("source location entry ID out-of-range for AST file");
+    return std::make_pair(SourceLocation(), "");
+  }
+
+  // Find which module file this entry lands in.
+  ModuleFile *M = GlobalSLocEntryMap.find(-ID)->second;
+  if (M->Kind != MK_Module)
+    return std::make_pair(SourceLocation(), "");
+
+  // FIXME: Can we map this down to a particular submodule? That would be
+  // ideal.
+  return std::make_pair(M->ImportLoc, llvm::sys::path::stem(M->FileName));
+}
+
 /// \brief Find the location where the module F is imported.
 SourceLocation ASTReader::getImportLocation(ModuleFile *F) {
   if (F->ImportLoc.isValid())

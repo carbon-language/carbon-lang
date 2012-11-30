@@ -884,6 +884,16 @@ void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
     OS << "In included file:\n"; 
 }
 
+void TextDiagnostic::emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                        StringRef ModuleName,
+                                        const SourceManager &SM) {
+  if (DiagOpts->ShowLocation)
+    OS << "In module '" << ModuleName << "' imported from "
+       << PLoc.getFilename() << ':' << PLoc.getLine() << ":\n";
+  else
+    OS << "In module " << ModuleName << "':\n";
+}
+
 void TextDiagnostic::emitBuildingModuleLocation(SourceLocation Loc,
                                                 PresumedLoc PLoc,
                                                 StringRef ModuleName,

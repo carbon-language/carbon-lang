@@ -132,7 +132,7 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
   
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    emitIncludeStack(PLoc.getIncludeLoc(), Level, *SM);
+    emitIncludeStack(Loc, PLoc, Level, *SM);
   }
   
   // Next, emit the actual diagnostic message.
@@ -184,21 +184,30 @@ void DiagnosticRenderer::emitStoredDiagnostic(StoredDiagnostic &Diag) {
 /// repeated warnings occur within the same file. It also handles the logic
 /// of customizing the formatting and display of the include stack.
 ///
+/// \param Loc   The diagnostic location.
+/// \param PLoc  The presumed location of the diagnostic location.
 /// \param Level The diagnostic level of the message this stack pertains to.
-/// \param Loc   The include location of the current file (not the diagnostic
-///              location).
 void DiagnosticRenderer::emitIncludeStack(SourceLocation Loc,
+                                          PresumedLoc PLoc,
                                           DiagnosticsEngine::Level Level,
                                           const SourceManager &SM) {
+  SourceLocation IncludeLoc = PLoc.getIncludeLoc();
+
   // Skip redundant include stacks altogether.
-  if (LastIncludeLoc == Loc)
+  if (LastIncludeLoc == IncludeLoc)
     return;
-  LastIncludeLoc = Loc;
+  
+  LastIncludeLoc = IncludeLoc;
   
   if (!DiagOpts->ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
     return;
-  
-  emitIncludeStackRecursively(Loc, SM);
+
+  if (IncludeLoc.isValid())
+    emitIncludeStackRecursively(IncludeLoc, SM);
+  else {
+    emitModuleBuildPath(SM);
+    emitImportStack(Loc, SM);
+  }
 }
 
 /// \brief Helper to recursivly walk up the include stack and print each layer
@@ -213,12 +222,57 @@ void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
   PresumedLoc PLoc = SM.getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
   if (PLoc.isInvalid())
     return;
-  
+
+  // If this source location was imported from a module, print the module
+  // import stack rather than the 
+  // FIXME: We want submodule granularity here.
+  std::pair<SourceLocation, StringRef> Imported = SM.getModuleImportLoc(Loc);
+  if (Imported.first.isValid()) {
+    // This location was imported by a module. Emit the module import stack.
+    emitImportStackRecursively(Imported.first, Imported.second, SM);
+    return;
+  }
+
   // Emit the other include frames first.
   emitIncludeStackRecursively(PLoc.getIncludeLoc(), SM);
   
   // Emit the inclusion text/note.
   emitIncludeLocation(Loc, PLoc, SM);
+}
+
+/// \brief Emit the module import stack associated with the current location.
+void DiagnosticRenderer::emitImportStack(SourceLocation Loc,
+                                         const SourceManager &SM) {
+  if (Loc.isInvalid()) {
+    emitModuleBuildPath(SM);
+    return;
+  }
+
+  std::pair<SourceLocation, StringRef> NextImportLoc
+    = SM.getModuleImportLoc(Loc);
+  emitImportStackRecursively(NextImportLoc.first, NextImportLoc.second, SM);
+}
+
+/// \brief Helper to recursivly walk up the import stack and print each layer
+/// on the way back down.
+void DiagnosticRenderer::emitImportStackRecursively(SourceLocation Loc,
+                                                    StringRef ModuleName,
+                                                    const SourceManager &SM) {
+  if (Loc.isInvalid()) {
+    return;
+  }
+
+  PresumedLoc PLoc = SM.getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
+  if (PLoc.isInvalid())
+    return;
+
+  // Emit the other import frames first.
+  std::pair<SourceLocation, StringRef> NextImportLoc
+    = SM.getModuleImportLoc(Loc);
+  emitImportStackRecursively(NextImportLoc.first, NextImportLoc.second, SM);
+
+  // Emit the inclusion text/note.
+  emitImportLocation(Loc, PLoc, ModuleName, SM);
 }
 
 /// \brief Emit the module build path, for cases where a module is (re-)built
@@ -404,6 +458,18 @@ void DiagnosticNoteRenderer::emitIncludeLocation(SourceLocation Loc,
   llvm::raw_svector_ostream Message(MessageStorage);
   Message << "in file included from " << PLoc.getFilename() << ':'
           << PLoc.getLine() << ":";
+  emitNote(Loc, Message.str(), &SM);
+}
+
+void DiagnosticNoteRenderer::emitImportLocation(SourceLocation Loc,
+                                                PresumedLoc PLoc,
+                                                StringRef ModuleName,
+                                                const SourceManager &SM) {
+  // Generate a note indicating the include location.
+  SmallString<200> MessageStorage;
+  llvm::raw_svector_ostream Message(MessageStorage);
+  Message << "in module '" << ModuleName << "' imported from "
+          << PLoc.getFilename() << ':' << PLoc.getLine() << ":";
   emitNote(Loc, Message.str(), &SM);
 }
 

@@ -103,6 +103,10 @@ protected:
   virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
                                    const SourceManager &SM);
 
+  virtual void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                  StringRef ModuleName,
+                                  const SourceManager &SM);
+
   virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
                                           StringRef ModuleName,
                                           const SourceManager &SM);

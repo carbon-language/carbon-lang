@@ -430,6 +430,11 @@ public:
   /// \returns true if an error occurred that prevented the source-location
   /// entry from being loaded.
   virtual bool ReadSLocEntry(int ID) = 0;
+
+  /// \brief Retrieve the module import location and name for the given ID, if
+  /// in fact it was loaded from a module (rather than, say, a precompiled
+  /// header).
+  virtual std::pair<SourceLocation, StringRef> getModuleImportLoc(int ID) = 0;
 };
 
 
@@ -988,6 +993,21 @@ public:
       return SourceLocation();
 
     return Entry.getFile().getIncludeLoc();
+  }
+
+  // \brief Returns the import location if the given source location is
+  // located within a module, or an invalid location if the source location
+  // is within the current translation unit.
+  std::pair<SourceLocation, StringRef>
+  getModuleImportLoc(SourceLocation Loc) const {
+    FileID FID = getFileID(Loc);
+
+    // Positive file IDs are in the current translation unit, and -1 is a
+    // placeholder.
+    if (FID.ID >= -1)
+      return std::make_pair(SourceLocation(), "");
+
+    return ExternalSLocEntries->getModuleImportLoc(FID.ID);
   }
 
   /// \brief Given a SourceLocation object \p Loc, return the expansion

@@ -1546,6 +1546,10 @@ public:
   /// \brief Read the source location entry with index ID.
   virtual bool ReadSLocEntry(int ID);
 
+  /// \brief Retrieve the module import location and module name for the
+  /// given source manager entry ID.
+  virtual std::pair<SourceLocation, StringRef> getModuleImportLoc(int ID);
+
   /// \brief Retrieve the global submodule ID given a module and its local ID
   /// number.
   serialization::SubmoduleID 
