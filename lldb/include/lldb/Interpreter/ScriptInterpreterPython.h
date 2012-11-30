@@ -241,6 +241,12 @@ private:
             Py_XINCREF(m_object);
         }
         
+        operator bool ()
+        {
+            return m_object && m_object != Py_None;
+        }
+        
+        
         virtual
         ~ScriptInterpreterPythonObject()
         {

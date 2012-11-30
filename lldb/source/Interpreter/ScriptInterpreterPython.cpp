@@ -2383,6 +2383,63 @@ ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance (const lldb::Scr
     return ret_val;
 }
 
+static std::string
+ReadPythonBacktrace (PyObject* py_backtrace)
+{
+    PyObject* traceback_module = NULL,
+    *stringIO_module = NULL,
+    *stringIO_builder = NULL,
+    *stringIO_buffer = NULL,
+    *printTB = NULL,
+    *printTB_args = NULL,
+    *printTB_result = NULL,
+    *stringIO_getvalue = NULL,
+    *printTB_string = NULL;
+
+    std::string retval("backtrace unavailable");
+    
+    if (py_backtrace && py_backtrace != Py_None)
+    {
+        traceback_module = PyImport_ImportModule("traceback");
+        stringIO_module = PyImport_ImportModule("StringIO");
+        
+        if (traceback_module && traceback_module != Py_None && stringIO_module && stringIO_module != Py_None)
+        {
+            stringIO_builder = PyObject_GetAttrString(stringIO_module, "StringIO");
+            if (stringIO_builder && stringIO_builder != Py_None)
+            {
+                stringIO_buffer = PyObject_CallObject(stringIO_builder, NULL);
+                if (stringIO_buffer && stringIO_buffer != Py_None)
+                {
+                    printTB = PyObject_GetAttrString(traceback_module, "print_tb");
+                    if (printTB && printTB != Py_None)
+                    {
+                        printTB_args = Py_BuildValue("OOO",py_backtrace,Py_None,stringIO_buffer);
+                        printTB_result = PyObject_CallObject(printTB, printTB_args);
+                        stringIO_getvalue = PyObject_GetAttrString(stringIO_buffer, "getvalue");
+                        if (stringIO_getvalue && stringIO_getvalue != Py_None)
+                        {
+                            printTB_string = PyObject_CallObject (stringIO_getvalue,NULL);
+                            if (printTB_string && printTB_string != Py_None && PyString_Check(printTB_string))
+                                retval.assign(PyString_AsString(printTB_string));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Py_XDECREF(traceback_module);
+    Py_XDECREF(stringIO_module);
+    Py_XDECREF(stringIO_builder);
+    Py_XDECREF(stringIO_buffer);
+    Py_XDECREF(printTB);
+    Py_XDECREF(printTB_args);
+    Py_XDECREF(printTB_result);
+    Py_XDECREF(stringIO_getvalue);
+    Py_XDECREF(printTB_string);
+    return retval;
+}
+
 bool
 ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                                               bool can_reload,
@@ -2467,34 +2524,30 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         {
             if (py_error) // if we have a Python error..
             {
+                PyObject *type = NULL,*value = NULL,*traceback = NULL;
+                PyErr_Fetch (&type,&value,&traceback);
+
                 if (PyErr_GivenExceptionMatches (py_error, PyExc_ImportError)) // and it is an ImportError
                 {
-                    PyObject *type,*value,*traceback;
-                    PyErr_Fetch (&type,&value,&traceback);
-                    
                     if (value && value != Py_None)
                         error.SetErrorString(PyString_AsString(PyObject_Str(value)));
                     else
                         error.SetErrorString("ImportError raised by imported module");
-                    
-                    Py_XDECREF(type);
-                    Py_XDECREF(value);
-                    Py_XDECREF(traceback);
                 }
                 else // any other error
                 {
-                    PyObject *type,*value,*traceback;
-                    PyErr_Fetch (&type,&value,&traceback);
+                    // get the backtrace
+                    std::string bt = ReadPythonBacktrace(traceback);
                     
                     if (value && value != Py_None)
-                        error.SetErrorStringWithFormat("Python error raised while importing module: %s", PyString_AsString(PyObject_Str(value)));
+                        error.SetErrorStringWithFormat("Python error raised while importing module: %s - traceback: %s", PyString_AsString(PyObject_Str(value)),bt.c_str());
                     else
-                        error.SetErrorString("Python raised an error while importing module");
-                    
-                    Py_XDECREF(type);
-                    Py_XDECREF(value);
-                    Py_XDECREF(traceback);
+                        error.SetErrorStringWithFormat("Python raised an error while importing module - traceback: %s",bt.c_str());
                 }
+                
+                Py_XDECREF(type);
+                Py_XDECREF(value);
+                Py_XDECREF(traceback);
             }
             else // we failed but have no error to explain why
             {

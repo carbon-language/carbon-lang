@@ -41,6 +41,11 @@ public:
         return m_object;
     }
     
+    operator bool ()
+    {
+        return m_object != NULL;
+    }
+    
     ScriptInterpreterObject&
     operator = (const ScriptInterpreterObject& rhs)
     {
