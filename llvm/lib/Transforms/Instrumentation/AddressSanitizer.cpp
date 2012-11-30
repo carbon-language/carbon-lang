@@ -867,13 +867,6 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   return false;
 }
 
-// Check both the call and the callee for doesNotReturn().
-static bool isNoReturnCall(CallInst *CI) {
-  if (CI->doesNotReturn()) return true;
-  Function *F = CI->getCalledFunction();
-  return (F && F->doesNotReturn());
-}
-
 bool AddressSanitizer::runOnFunction(Function &F) {
   if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
@@ -915,7 +908,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
         if (CallInst *CI = dyn_cast<CallInst>(BI)) {
           // A call inside BB.
           TempsToInstrument.clear();
-          if (isNoReturnCall(CI)) {
+          if (CI->doesNotReturn()) {
             NoReturnCalls.push_back(CI);
           }
         }
