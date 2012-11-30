@@ -133,9 +133,14 @@ void display(__node* x, int indent = 0)
     {
         for (int i = 0; i < 2*indent; ++i)
             printf(" ");
-        char* buf = (char*)malloc(x->size());
+        size_t sz = x->size();
+        char* buf = (char*)calloc(sz+10, 1);
         x->get_demangled_name(buf);
-        printf("%s %s, %p\n", typeid(*x).name(), buf, x);
+        printf("%s [%ld] %s, %p\n", typeid(*x).name(), sz, buf, x);
+        if (strlen(buf) != sz)
+        {
+            printf("strlen(buf) = %ld and size = %ld\n", strlen(buf), sz);
+        }
         free(buf);
         display(x->__left_, indent+1);
         display(x->__right_, indent+1);
@@ -3822,10 +3827,14 @@ public:
     }
     virtual bool ends_with_template(bool parsing = false) const
     {
-        if (__right_ != NULL)
+        if (__right_ && __right_->size() > 0)
+        {
             return __right_->ends_with_template(parsing);
-        if (__left_ != NULL)
+        }
+        else if (__left_ && __left_->size() > 0)
+        {
             return __left_->ends_with_template(parsing);
+        }
         return false;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
@@ -6969,50 +6978,62 @@ __demangle_tree::__parse_unnamed_type_name(const char* first, const char* last)
         {
         case 't':
         case 'l':
-            first += 2;
-
+            {
+            const char* t = first + 2;
+            __node* params = 0;
             if (type == 'l')
             {
-                __root_ = 0;
-                if (first[0] == 'v')
+                if (*t == 'v')
                 {
                     // void lambda
-                    ++first;
-                    if (first[0] == 'E')
-                        ++first;
+                    ++t;
+                    if (t != last && *t == 'E')
+                        ++t;
                     else
                         return first;
                 }
                 else
                 {
-                    while (first[0] && first[0] != 'E')
-                    {
-                        const char *old = first;
-                        first = __parse_type(first, last);
-                        if (first == old)
-                            break;
-                    }
-                    if (first[0] == 'E')
-                        ++first;
-                    else
+                    const char* t1 = __parse_type(t, last);
+                    if (t1 == t || !__make<__list>(__root_))
                         return first;
+                    params = __root_;
+                    __node* prev = params;
+                    t = t1;
+                    while (true)
+                    {
+                        t1 = __parse_type(t, last);
+                        if (t1 == t)
+                            break;
+                        if (!__make<__list>(__root_))
+                            return first;
+                        t = t1;
+                        prev->__right_ = __root_;
+                        __root_->__size_ = prev->__size_ + 1;
+                        prev = __root_;
+                    }
+                    if (t == last || *t != 'E')
+                        return first;
+                    ++t;
                 }
             }
-            const char *number_start = first;
-            first = __parse_number(first, last);
-            const char *number_end = first;
-            if (first[0] == '_')
+            const char* number_start = t;
+            const char* number_end = __parse_number(t, last);
+            if (number_end == last || *number_end != '_')
+                return first;
+            t = number_end + 1;
+            if (type == 'l')
             {
-                ++first;
+                if (!__make<__lambda_node>(params, number_start, static_cast<size_t>(number_end - number_start)))
+                    return first;
             }
             else
-                return first;
-              
-            if (type == 'l')
-                __make<__lambda_node>(__root_, number_start, static_cast<size_t>(number_end - number_start));
-            else
-                __make<__unnamed>(number_start, static_cast<size_t>(number_end - number_start));
-            
+            {
+                if (!__make<__unnamed>(number_start, static_cast<size_t>(number_end - number_start)))
+                    return first;
+            }
+            first = t;
+            }
             break;
         }
     }
