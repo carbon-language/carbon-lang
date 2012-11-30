@@ -261,31 +261,35 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 //
 
 static void detectLog2OfHalf(Value *&Op, Value *&Y, IntrinsicInst *&Log2) {
-   if (Op->hasOneUse()) {
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op)) {
-      if (II->getIntrinsicID() == Intrinsic::log2 &&
-          II->hasUnsafeAlgebra()) {
-        Log2 = II;
-        Value *OpLog2Of = II->getArgOperand(0);
-        if (OpLog2Of->hasOneUse()) {
-          if (Instruction *I = dyn_cast<Instruction>(OpLog2Of)) {
-            if (I->getOpcode() == Instruction::FMul &&
-                I->hasUnsafeAlgebra()) {
-              ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
-              if (CFP && CFP->isExactlyValue(0.5)) {
-                Y = I->getOperand(1);
-              } else {
-                CFP = dyn_cast<ConstantFP>(I->getOperand(1));
-                if (CFP && CFP->isExactlyValue(0.5)) {
-                  Y = I->getOperand(0);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+
+   if (!Op->hasOneUse())
+     return;
+
+   IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op);
+   if (!II)
+     return;
+   if (II->getIntrinsicID() != Intrinsic::log2 || !II->hasUnsafeAlgebra())
+     return;
+   Log2 = II;
+
+   Value *OpLog2Of = II->getArgOperand(0);
+   if (!OpLog2Of->hasOneUse())
+     return;
+
+   Instruction *I = dyn_cast<Instruction>(OpLog2Of);
+   if (!I)
+     return;
+   if (I->getOpcode() != Instruction::FMul || !I->hasUnsafeAlgebra())
+     return;
+              
+   ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
+   if (CFP && CFP->isExactlyValue(0.5)) {
+     Y = I->getOperand(1);
+     return;
+   }
+   CFP = dyn_cast<ConstantFP>(I->getOperand(1));
+   if (CFP && CFP->isExactlyValue(0.5))
+     Y = I->getOperand(0);
 } 
 
 Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
