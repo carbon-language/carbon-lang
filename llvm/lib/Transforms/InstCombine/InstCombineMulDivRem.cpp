@@ -284,6 +284,83 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     if (Value *Op1v = dyn_castFNegVal(Op1))
       return BinaryOperator::CreateFMul(Op0v, Op1v);
 
+  // Under unsafe algebra do:
+  // X * log2(0.5*Y) = X*log2(Y) - X
+  if (I.hasUnsafeAlgebra()) {
+    Value *OpX = NULL;
+    Value *OpY = NULL;
+    IntrinsicInst *Log2;
+    if (Op0->hasOneUse()) {
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
+        if (II->getIntrinsicID() == Intrinsic::log2 && 
+            II->hasUnsafeAlgebra())
+        {
+          Log2 = II;
+          Value *OpLog2Of = II->getArgOperand(0);
+          if (OpLog2Of->hasOneUse()) {
+            if (Instruction *I = dyn_cast<Instruction>(OpLog2Of)) {
+              if (I->getOpcode() == Instruction::FMul &&
+                  I->hasUnsafeAlgebra())
+              {
+                ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
+                if (CFP && CFP->isExactlyValue(0.5)) {
+                  OpY = I->getOperand(1);
+                  OpX = Op1;
+                } else {
+                  CFP = dyn_cast<ConstantFP>(I->getOperand(1));
+                  if (CFP && CFP->isExactlyValue(0.5)) {
+                    OpY = I->getOperand(0);
+                    OpX = Op1;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if (Op1->hasOneUse()) {
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op1)) {
+        if (II->getIntrinsicID() == Intrinsic::log2 &&
+            II->hasUnsafeAlgebra()) 
+        {
+          Log2 = II;
+          Value *OpLog2Of = II->getArgOperand(0);
+          if (OpLog2Of->hasOneUse()) {
+            if (Instruction *I = dyn_cast<Instruction>(OpLog2Of)) {
+              if (I->getOpcode() == Instruction::FMul &&
+                  I->hasUnsafeAlgebra()) 
+              {
+                ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(0));
+                if (CFP && CFP->isExactlyValue(0.5)) {
+                  OpY = I->getOperand(1);
+                  OpX = Op0;
+                } else {
+                  CFP = dyn_cast<ConstantFP>(I->getOperand(1));
+                  if (CFP && CFP->isExactlyValue(0.5)) {
+                    OpY = I->getOperand(0);
+                    OpX = Op0;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // if pattern detected emit alternate sequence
+    if (OpX && OpY) {
+      Log2->setArgOperand(0, OpY);
+      Value *FMulVal = Builder->CreateFMul(OpX, Log2);
+      Instruction *FMul = dyn_cast<Instruction>(FMulVal);
+      assert(FMul && "Must be instruction as Log2 is instruction");
+      FMul->copyFastMathFlags(Log2);
+      Instruction *FSub = BinaryOperator::CreateFSub(FMulVal, OpX);
+      FSub->copyFastMathFlags(Log2);
+      return FSub;
+    }
+  }
+
   return Changed ? &I : 0;
 }
 
