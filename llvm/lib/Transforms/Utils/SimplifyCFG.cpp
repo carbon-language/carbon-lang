@@ -3511,22 +3511,29 @@ bool SwitchLookupTable::WouldFitInRegister(const DataLayout *TD,
 static bool ShouldBuildLookupTable(SwitchInst *SI,
                                    uint64_t TableSize,
                                    const DataLayout *TD,
+                                   const TargetTransformInfo *TTI,
                             const SmallDenseMap<PHINode*, Type*>& ResultTypes) {
   // The table density should be at least 40%. This is the same criterion as for
   // jump tables, see SelectionDAGBuilder::handleJTSwitchCase.
   // FIXME: Find the best cut-off.
   if (SI->getNumCases() > TableSize || TableSize >= UINT64_MAX / 10)
     return false; // TableSize overflowed, or mul below might overflow.
-  if (SI->getNumCases() * 10 >= TableSize * 4)
-    return true;
 
   // If each table would fit in a register, we should build it anyway.
+  bool AllFit = true;
+  bool HasIllegalType = false;
   for (SmallDenseMap<PHINode*, Type*>::const_iterator I = ResultTypes.begin(),
        E = ResultTypes.end(); I != E; ++I) {
-    if (!SwitchLookupTable::WouldFitInRegister(TD, TableSize, I->second))
-      return false;
+    Type *Ty = I->second;
+    if (!TTI->getScalarTargetTransformInfo()->isTypeLegal(Ty))
+      HasIllegalType = true;
+    if (!SwitchLookupTable::WouldFitInRegister(TD, TableSize, Ty)) {
+      AllFit = false;
+      break;
+    }
   }
-  return true;
+
+  return AllFit || (!HasIllegalType && (SI->getNumCases() * 10 >= TableSize * 4));
 }
 
 /// SwitchToLookupTable - If the switch is only used to initialize one or more
@@ -3607,7 +3614,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
 
   APInt RangeSpread = MaxCaseVal->getValue() - MinCaseVal->getValue();
   uint64_t TableSize = RangeSpread.getLimitedValue() + 1;
-  if (!ShouldBuildLookupTable(SI, TableSize, TD, ResultTypes))
+  if (!ShouldBuildLookupTable(SI, TableSize, TD, TTI, ResultTypes))
     return false;
 
   // Create the BB that does the lookups.

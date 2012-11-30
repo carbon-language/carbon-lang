@@ -777,3 +777,29 @@ return:
 ; CHECK: switch.lookup:
 ; CHECK: getelementptr inbounds [5 x i32]* @switch.table6, i32 0, i32 %switch.tableidx
 }
+
+; Don't create a table with illegal type
+; rdar://12779436
+define i96 @illegaltype(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 42, label %return
+    i32 43, label %sw.bb1
+    i32 44, label %sw.bb2
+    i32 45, label %sw.bb3
+    i32 46, label %sw.bb4
+  ]
+
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.bb4: br label %return
+sw.default: br label %return
+return:
+  %retval.0 = phi i96 [ 15, %sw.default ], [ 27, %sw.bb4 ], [ -1, %sw.bb3 ], [ 0, %sw.bb2 ], [ 123, %sw.bb1 ], [ 55, %entry ]
+  ret i96 %retval.0
+
+; CHECK: @illegaltype
+; CHECK-NOT: @switch.table
+; CHECK: switch i32 %c
+}
