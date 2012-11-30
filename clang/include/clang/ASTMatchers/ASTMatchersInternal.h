@@ -537,6 +537,8 @@ public:
                              Matcher, Builder, MatchMode);
   }
 
+  virtual ASTContext &getASTContext() const = 0;
+
 protected:
   virtual bool matchesChildOf(const ast_type_traits::DynTypedNode &Node,
                               const DynTypedMatcher &Matcher,

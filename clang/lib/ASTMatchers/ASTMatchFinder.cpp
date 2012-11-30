@@ -475,6 +475,9 @@ public:
     return false;
   }
 
+  // Implements ASTMatchFinder::getASTContext.
+  virtual ASTContext &getASTContext() const { return *ActiveASTContext; }
+
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitImplicitCode() const { return true; }
   // Disables data recursion. We intercept Traverse* methods in the RAV, which
