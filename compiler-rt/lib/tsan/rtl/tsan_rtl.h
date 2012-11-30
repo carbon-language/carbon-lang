@@ -94,6 +94,11 @@ class FastState {
   }
 
   u64 tid() const {
+    u64 res = (x_ & ~kIgnoreBit) >> kTidShift;
+    return res;
+  }
+
+  u64 TidWithIgnore() const {
     u64 res = x_ >> kTidShift;
     return res;
   }
@@ -182,7 +187,7 @@ class Shadow : public FastState {
 
   static inline bool TidsAreEqual(const Shadow s1, const Shadow s2) {
     u64 shifted_xor = (s1.x_ ^ s2.x_) >> kTidShift;
-    DCHECK_EQ(shifted_xor == 0, s1.tid() == s2.tid());
+    DCHECK_EQ(shifted_xor == 0, s1.TidWithIgnore() == s2.TidWithIgnore());
     return shifted_xor == 0;
   }
 

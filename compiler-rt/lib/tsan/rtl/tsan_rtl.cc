@@ -359,7 +359,7 @@ static inline bool OldIsInSameSynchEpoch(Shadow old, ThreadState *thr) {
 }
 
 static inline bool HappensBefore(Shadow old, ThreadState *thr) {
-  return thr->clock.get(old.tid()) >= old.epoch();
+  return thr->clock.get(old.TidWithIgnore()) >= old.epoch();
 }
 
 ALWAYS_INLINE
