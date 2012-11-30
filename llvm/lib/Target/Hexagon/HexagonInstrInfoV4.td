@@ -1557,26 +1557,6 @@ def STrid_shl_V4 : STInst<(outs),
 // if (Pv.new) memd(Rs+#u6:3)=Rtt
 let AddedComplexity = 10, neverHasSideEffects = 1,
     isPredicated = 1 in
-def STrid_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, DoubleRegs:$src2),
-            "if ($src1.new) memd($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memd(Rs+#u6:3)=Rtt
-// if (!Pv.new) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrid_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, DoubleRegs:$src2),
-            "if (!$src1.new) memd($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv) memd(Rs+#u6:3)=Rtt
-// if (Pv.new) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
 def STrid_indexed_cdnPt_V4 : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
                  DoubleRegs:$src4),
@@ -1738,26 +1718,6 @@ def STrib_imm_cdnNotPt_V4 : STInst2<(outs),
             Requires<[HasV4T]>;
 
 // if ([!]Pv[.new]) memb(Rs+#u6:0)=Rt
-// if (Pv) memb(Rs+#u6:0)=Rt
-// if (Pv.new) memb(Rs+#u6:0)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1.new) memb($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memb(Rs+#u6:0)=Rt
-// if (!Pv.new) memb(Rs+#u6:0)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1.new) memb($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
 // if (Pv) memb(Rs+#u6:0)=Rt
 // if (!Pv) memb(Rs+#u6:0)=Rt
 // if (Pv.new) memb(Rs+#u6:0)=Rt
@@ -1932,26 +1892,6 @@ def STrih_imm_cdnNotPt_V4 : STInst2<(outs),
 // TODO: needs to be implemented.
 
 // if ([!]Pv[.new]) memh(Rs+#u6:1)=Rt
-// if (Pv) memh(Rs+#u6:1)=Rt
-// if (Pv.new) memh(Rs+#u6:1)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1.new) memh($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memh(Rs+#u6:1)=Rt
-// if (!Pv.new) memh(Rs+#u6:1)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1.new) memh($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
 // if (Pv.new) memh(Rs+#u6:1)=Rt
 let neverHasSideEffects = 1,
     isPredicated = 1 in
@@ -2127,26 +2067,6 @@ def STriw_imm_cdnNotPt_V4 : STInst2<(outs),
             Requires<[HasV4T]>;
 
 // if ([!]Pv[.new]) memw(Rs+#u6:2)=Rt
-// if (Pv) memw(Rs+#u6:2)=Rt
-// if (Pv.new) memw(Rs+#u6:2)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1.new) memw($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memw(Rs+#u6:2)=Rt
-// if (!Pv.new) memw(Rs+#u6:2)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1.new) memw($addr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-
 // if (Pv) memw(Rs+#u6:2)=Rt
 // if (!Pv) memw(Rs+#u6:2)=Rt
 // if (Pv.new) memw(Rs+#u6:2)=Rt
