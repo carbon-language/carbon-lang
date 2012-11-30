@@ -112,3 +112,7 @@ D: DragonEgg
 N: Andrew Trick
 E: atrick@apple.com
 D: Instruction Scheduling
+
+N: Bill Wendling
+E: wendling@apple.com
+D: LTO
