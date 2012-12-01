@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTMatchersTest.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Tooling.h"
