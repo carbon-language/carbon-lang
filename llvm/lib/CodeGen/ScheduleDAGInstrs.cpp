@@ -210,7 +210,8 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
         Uses[Reg].push_back(PhysRegSUOper(&ExitSU, -1));
       else {
         assert(!IsPostRA && "Virtual register encountered after regalloc.");
-        addVRegUseDeps(&ExitSU, i);
+        if (MO.readsReg()) // ignore undef operands
+          addVRegUseDeps(&ExitSU, i);
       }
     }
   } else {
