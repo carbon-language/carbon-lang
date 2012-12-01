@@ -31,6 +31,9 @@ __all__ = [
 lib = get_library()
 callbacks = {}
 
+# Constants for set_options
+Option_UseMarkup = 1
+
 class Disassembler(LLVMObject):
     """Represents a disassembler instance.
 
@@ -113,6 +116,10 @@ class Disassembler(LLVMObject):
             address += result
             offset += result
 
+    def set_options(self, options):
+        if not lib.LLVMSetDisasmOptions(self, options):
+            raise Exception('Unable to set all disassembler options in %i' % options)
+
 
 def register_library(library):
     library.LLVMCreateDisasm.argtypes = [c_char_p, c_void_p, c_int,
@@ -124,6 +131,10 @@ def register_library(library):
     library.LLVMDisasmInstruction.argtypes = [Disassembler, POINTER(c_ubyte),
             c_uint64, c_uint64, c_char_p, c_size_t]
     library.LLVMDisasmInstruction.restype = c_size_t
+
+    library.LLVMSetDisasmOptions.argtypes = [Disassembler, c_uint64]
+    library.LLVMSetDisasmOptions.restype = c_int
+
 
 callbacks['op_info'] = CFUNCTYPE(c_int, c_void_p, c_uint64, c_uint64, c_uint64,
                                  c_int, c_void_p)
