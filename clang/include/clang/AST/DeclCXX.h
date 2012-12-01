@@ -722,7 +722,8 @@ public:
 
   /// \brief Determine whether this class has any default constructors.
   bool hasDefaultConstructor() const {
-    return !data().UserDeclaredConstructor || hasDeclaredDefaultConstructor();
+    return (data().DeclaredSpecialMembers & SMF_DefaultConstructor) ||
+           needsImplicitDefaultConstructor();
   }
 
   /// \brief Determine if we need to declare a default constructor for
@@ -730,13 +731,8 @@ public:
   ///
   /// This value is used for lazy creation of default constructors.
   bool needsImplicitDefaultConstructor() const {
-    return !data().UserDeclaredConstructor && !hasDeclaredDefaultConstructor();
-  }
-
-  /// \brief Determine whether any default constructors have been declared for
-  /// this class (either explicitly or implicitly).
-  bool hasDeclaredDefaultConstructor() const {
-    return data().DeclaredSpecialMembers & SMF_DefaultConstructor;
+    return !data().UserDeclaredConstructor &&
+           !(data().DeclaredSpecialMembers & SMF_DefaultConstructor);
   }
 
   /// hasConstCopyConstructor - Determines whether this class has a
@@ -785,12 +781,10 @@ public:
     return data().UserDeclaredSpecialMembers & SMF_CopyConstructor;
   }
 
-  /// \brief Determine whether this class has had its copy constructor
-  /// declared, either via the user or via an implicit declaration.
-  ///
-  /// This value is used for lazy creation of copy constructors.
-  bool hasDeclaredCopyConstructor() const {
-    return data().DeclaredSpecialMembers & SMF_CopyConstructor;
+  /// \brief Determine whether this class needs an implicit copy
+  /// constructor to be lazily declared.
+  bool needsImplicitCopyConstructor() const {
+    return !(data().DeclaredSpecialMembers & SMF_CopyConstructor);
   }
 
   /// \brief Determine whether an implicit copy constructor for this type
@@ -803,7 +797,7 @@ public:
   /// a parameter type which is a reference to a const-qualified type.
   bool hasCopyConstructorWithConstParam() const {
     return data().HasDeclaredCopyConstructorWithConstParam ||
-           (!hasDeclaredCopyConstructor() &&
+           (needsImplicitCopyConstructor() &&
             implicitCopyConstructorHasConstParam());
   }
 
@@ -821,10 +815,12 @@ public:
     return data().UserDeclaredSpecialMembers & SMF_MoveConstructor;
   }
 
-  /// \brief Determine whether this class has had a move constructor
-  /// declared.
-  bool hasDeclaredMoveConstructor() const {
-    return data().DeclaredSpecialMembers & SMF_MoveConstructor;
+  /// \brief Determine whether this class has a move constructor.
+  /// FIXME: This can be wrong if the implicit move constructor would be
+  /// deleted.
+  bool hasMoveConstructor() const {
+    return (data().DeclaredSpecialMembers & SMF_MoveConstructor) ||
+           needsImplicitMoveConstructor();
   }
 
   /// \brief Determine whether implicit move constructor generation for this
@@ -847,7 +843,7 @@ public:
   /// result.
   bool needsImplicitMoveConstructor() const {
     return !hasFailedImplicitMoveConstructor() &&
-           !hasDeclaredMoveConstructor() &&
+           !(data().DeclaredSpecialMembers & SMF_MoveConstructor) &&
            !hasUserDeclaredCopyConstructor() &&
            !hasUserDeclaredCopyAssignment() &&
            !hasUserDeclaredMoveAssignment() &&
@@ -861,12 +857,10 @@ public:
     return data().UserDeclaredSpecialMembers & SMF_CopyAssignment;
   }
 
-  /// \brief Determine whether this class has had its copy assignment operator
-  /// declared, either via the user or via an implicit declaration.
-  ///
-  /// This value is used for lazy creation of copy assignment operators.
-  bool hasDeclaredCopyAssignment() const {
-    return data().DeclaredSpecialMembers & SMF_CopyAssignment;
+  /// \brief Determine whether this class needs an implicit copy
+  /// assignment operator to be lazily declared.
+  bool needsImplicitCopyAssignment() const {
+    return !(data().DeclaredSpecialMembers & SMF_CopyAssignment);
   }
 
   /// \brief Determine whether an implicit copy assignment operator for this
@@ -880,7 +874,7 @@ public:
   /// a reference..
   bool hasCopyAssignmentWithConstParam() const {
     return data().HasDeclaredCopyAssignmentWithConstParam ||
-           (!hasDeclaredCopyAssignment() &&
+           (needsImplicitCopyAssignment() &&
             implicitCopyAssignmentHasConstParam());
   }
 
@@ -890,10 +884,11 @@ public:
     return data().UserDeclaredSpecialMembers & SMF_MoveAssignment;
   }
 
-  /// hasDeclaredMoveAssignment - Whether this class has a
-  /// declared move assignment operator.
-  bool hasDeclaredMoveAssignment() const {
-    return data().DeclaredSpecialMembers & SMF_MoveAssignment;
+  /// \brief Determine whether this class has a move assignment operator.
+  /// FIXME: This can be wrong if the implicit move assignment would be deleted.
+  bool hasMoveAssignment() const {
+    return (data().DeclaredSpecialMembers & SMF_MoveAssignment) ||
+           needsImplicitMoveAssignment();
   }
 
   /// \brief Determine whether implicit move assignment generation for this
@@ -916,7 +911,7 @@ public:
   /// constructor wouldn't be deleted.
   bool needsImplicitMoveAssignment() const {
     return !hasFailedImplicitMoveAssignment() &&
-           !hasDeclaredMoveAssignment() &&
+           !(data().DeclaredSpecialMembers & SMF_MoveAssignment) &&
            !hasUserDeclaredCopyConstructor() &&
            !hasUserDeclaredCopyAssignment() &&
            !hasUserDeclaredMoveConstructor() &&
@@ -930,12 +925,10 @@ public:
     return data().UserDeclaredSpecialMembers & SMF_Destructor;
   }
 
-  /// \brief Determine whether this class has had its destructor declared,
-  /// either via the user or via an implicit declaration.
-  ///
-  /// This value is used for lazy creation of destructors.
-  bool hasDeclaredDestructor() const {
-    return data().DeclaredSpecialMembers & SMF_Destructor;
+  /// \brief Determine whether this class needs an implicit destructor to
+  /// be lazily declared.
+  bool needsImplicitDestructor() const {
+    return !(data().DeclaredSpecialMembers & SMF_Destructor);
   }
 
   /// \brief Determine whether this class describes a lambda function object.
@@ -1076,8 +1069,8 @@ public:
   /// FIXME: This can be wrong if the class has multiple move constructors,
   /// or if the implicit move constructor would be deleted.
   bool hasTrivialMoveConstructor() const {
-    return (data().HasTrivialSpecialMembers & SMF_MoveConstructor) &&
-           (hasDeclaredMoveConstructor() || needsImplicitMoveConstructor());
+    return hasMoveConstructor() &&
+           (data().HasTrivialSpecialMembers & SMF_MoveConstructor);
   }
 
   /// \brief Determine whether this class has a non-trivial move constructor
@@ -1085,8 +1078,8 @@ public:
   /// FIXME: This can be wrong if the implicit move constructor would be
   /// deleted.
   bool hasNonTrivialMoveConstructor() const {
-    return !(data().HasTrivialSpecialMembers & SMF_MoveConstructor) &&
-           (hasDeclaredMoveConstructor() || needsImplicitMoveConstructor());
+    return hasMoveConstructor() &&
+           !(data().HasTrivialSpecialMembers & SMF_MoveConstructor);
   }
 
   /// \brief Determine whether this class has a trivial copy assignment operator
@@ -1108,16 +1101,16 @@ public:
   /// FIXME: This can be wrong if the class has multiple move assignment
   /// operators, or if the implicit move assignment operator would be deleted.
   bool hasTrivialMoveAssignment() const {
-    return (data().HasTrivialSpecialMembers & SMF_MoveAssignment) &&
-           (hasDeclaredMoveAssignment() || needsImplicitMoveAssignment());
+    return hasMoveAssignment() &&
+           (data().HasTrivialSpecialMembers & SMF_MoveAssignment);
   }
 
   /// \brief Determine whether this class has a non-trivial move assignment
   /// operator (C++11 [class.copy]p25)
   /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasNonTrivialMoveAssignment() const {
-    return !(data().HasTrivialSpecialMembers & SMF_MoveAssignment) &&
-           (hasDeclaredMoveAssignment() || needsImplicitMoveAssignment());
+    return hasMoveAssignment() &&
+           !(data().HasTrivialSpecialMembers & SMF_MoveAssignment);
   }
 
   /// \brief Determine whether this class has a trivial destructor

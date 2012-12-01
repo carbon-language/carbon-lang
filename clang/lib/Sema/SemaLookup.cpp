@@ -546,11 +546,11 @@ void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
     DeclareImplicitDefaultConstructor(Class);
 
   // If the copy constructor has not yet been declared, do so now.
-  if (!Class->hasDeclaredCopyConstructor())
+  if (Class->needsImplicitCopyConstructor())
     DeclareImplicitCopyConstructor(Class);
 
   // If the copy assignment operator has not yet been declared, do so now.
-  if (!Class->hasDeclaredCopyAssignment())
+  if (Class->needsImplicitCopyAssignment())
     DeclareImplicitCopyAssignment(Class);
 
   if (getLangOpts().CPlusPlus0x) {
@@ -564,7 +564,7 @@ void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
   }
 
   // If the destructor has not yet been declared, do so now.
-  if (!Class->hasDeclaredDestructor())
+  if (Class->needsImplicitDestructor())
     DeclareImplicitDestructor(Class);
 }
 
@@ -601,7 +601,7 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
         CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(Record);
         if (Record->needsImplicitDefaultConstructor())
           S.DeclareImplicitDefaultConstructor(Class);
-        if (!Record->hasDeclaredCopyConstructor())
+        if (Record->needsImplicitCopyConstructor())
           S.DeclareImplicitCopyConstructor(Class);
         if (S.getLangOpts().CPlusPlus0x &&
             Record->needsImplicitMoveConstructor())
@@ -611,7 +611,7 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
 
   case DeclarationName::CXXDestructorName:
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
-      if (Record->getDefinition() && !Record->hasDeclaredDestructor() &&
+      if (Record->getDefinition() && Record->needsImplicitDestructor() &&
           CanDeclareSpecialMemberFunction(Record))
         S.DeclareImplicitDestructor(const_cast<CXXRecordDecl *>(Record));
     break;
@@ -623,7 +623,7 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC)) {
       if (Record->getDefinition() && CanDeclareSpecialMemberFunction(Record)) {
         CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(Record);
-        if (!Record->hasDeclaredCopyAssignment())
+        if (Record->needsImplicitCopyAssignment())
           S.DeclareImplicitCopyAssignment(Class);
         if (S.getLangOpts().CPlusPlus0x &&
             Record->needsImplicitMoveAssignment())
@@ -2257,7 +2257,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
   SpecialMemberCache.InsertNode(Result, InsertPoint);
 
   if (SM == CXXDestructor) {
-    if (!RD->hasDeclaredDestructor())
+    if (RD->needsImplicitDestructor())
       DeclareImplicitDestructor(RD);
     CXXDestructorDecl *DD = RD->getDestructor();
     assert(DD && "record without a destructor");
@@ -2286,13 +2286,13 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
   } else {
     if (SM == CXXCopyConstructor || SM == CXXMoveConstructor) {
       Name = Context.DeclarationNames.getCXXConstructorName(CanTy);
-      if (!RD->hasDeclaredCopyConstructor())
+      if (RD->needsImplicitCopyConstructor())
         DeclareImplicitCopyConstructor(RD);
       if (getLangOpts().CPlusPlus0x && RD->needsImplicitMoveConstructor())
         DeclareImplicitMoveConstructor(RD);
     } else {
       Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-      if (!RD->hasDeclaredCopyAssignment())
+      if (RD->needsImplicitCopyAssignment())
         DeclareImplicitCopyAssignment(RD);
       if (getLangOpts().CPlusPlus0x && RD->needsImplicitMoveAssignment())
         DeclareImplicitMoveAssignment(RD);
@@ -2446,7 +2446,7 @@ DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   if (CanDeclareSpecialMemberFunction(Class)) {
     if (Class->needsImplicitDefaultConstructor())
       DeclareImplicitDefaultConstructor(Class);
-    if (!Class->hasDeclaredCopyConstructor())
+    if (Class->needsImplicitCopyConstructor())
       DeclareImplicitCopyConstructor(Class);
     if (getLangOpts().CPlusPlus0x && Class->needsImplicitMoveConstructor())
       DeclareImplicitMoveConstructor(Class);

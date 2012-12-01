@@ -7342,7 +7342,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   //   If a class has no user-declared destructor, a destructor is
   //   declared implicitly. An implicitly-declared destructor is an
   //   inline public member of its class.
-  assert(!ClassDecl->hasDeclaredDestructor());
+  assert(ClassDecl->needsImplicitDestructor());
 
   DeclaringSpecialMember DSM(*this, ClassDecl, CXXDestructor);
   if (DSM.isAlreadyBeingDeclared())
@@ -7829,7 +7829,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // constructor rules. Note that virtual bases are not taken into account
   // for determining the argument type of the operator. Note also that
   // operators taking an object instead of a reference are allowed.
-  assert(!ClassDecl->hasDeclaredCopyAssignment());
+  assert(ClassDecl->needsImplicitCopyAssignment());
 
   DeclaringSpecialMember DSM(*this, ClassDecl, CXXCopyAssignment);
   if (DSM.isAlreadyBeingDeclared())
@@ -8203,14 +8203,18 @@ hasMoveOrIsTriviallyCopyable(Sema &S, QualType Type, bool IsConstructor) {
     return true;
 
   if (IsConstructor) {
+    // FIXME: Need this because otherwise hasMoveConstructor isn't guaranteed to
+    // give the right answer.
     if (ClassDecl->needsImplicitMoveConstructor())
       S.DeclareImplicitMoveConstructor(ClassDecl);
-    return ClassDecl->hasDeclaredMoveConstructor();
+    return ClassDecl->hasMoveConstructor();
   }
 
+  // FIXME: Need this because otherwise hasMoveAssignment isn't guaranteed to
+  // give the right answer.
   if (ClassDecl->needsImplicitMoveAssignment())
     S.DeclareImplicitMoveAssignment(ClassDecl);
-  return ClassDecl->hasDeclaredMoveAssignment();
+  return ClassDecl->hasMoveAssignment();
 }
 
 /// Determine whether all non-static data members and direct or virtual bases
@@ -8613,7 +8617,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   // C++ [class.copy]p4:
   //   If the class definition does not explicitly declare a copy
   //   constructor, one is declared implicitly.
-  assert(!ClassDecl->hasDeclaredCopyConstructor());
+  assert(ClassDecl->needsImplicitCopyConstructor());
 
   DeclaringSpecialMember DSM(*this, ClassDecl, CXXCopyConstructor);
   if (DSM.isAlreadyBeingDeclared())

@@ -2865,9 +2865,7 @@ static void TryConstructorInitialization(Sema &S,
 
     // If the initializer list has no elements and T has a default constructor,
     // the first phase is omitted.
-    if (ILE->getNumInits() != 0 ||
-        (!DestRecordDecl->hasDeclaredDefaultConstructor() &&
-         !DestRecordDecl->needsImplicitDefaultConstructor()))
+    if (ILE->getNumInits() != 0 || !DestRecordDecl->hasDefaultConstructor())
       Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
                                           CandidateSet, Ctors, Best,
                                           CopyInitialization, AllowExplicit,
@@ -3077,8 +3075,7 @@ static void TryListInitialization(Sema &S,
         //     value-initialized.
         if (InitList->getNumInits() == 0) {
           CXXRecordDecl *RD = DestType->getAsCXXRecordDecl();
-          if (RD->hasDeclaredDefaultConstructor() ||
-              RD->needsImplicitDefaultConstructor()) {
+          if (RD->hasDefaultConstructor()) {
             TryValueInitialization(S, Entity, Kind, Sequence, InitList);
             return;
           }
