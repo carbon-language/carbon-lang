@@ -674,6 +674,8 @@ void ScheduleDAGMI::placeDebugValues() {
     std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
     MachineInstr *DbgValue = P.first;
     MachineBasicBlock::iterator OrigPrevMI = P.second;
+    if (&*RegionBegin == DbgValue)
+      ++RegionBegin;
     BB->splice(++OrigPrevMI, BB, DbgValue);
     if (OrigPrevMI == llvm::prior(RegionEnd))
       RegionEnd = DbgValue;
