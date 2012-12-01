@@ -659,8 +659,9 @@ DIArray DICompileUnit::getSubprograms() const {
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(12)))
-    if (MDNode *A = dyn_cast_or_null<MDNode>(N->getOperand(0)))
-      return DIArray(A);
+    if (N->getNumOperands() > 0)
+      if (MDNode *A = dyn_cast_or_null<MDNode>(N->getOperand(0)))
+        return DIArray(A);
   return DIArray();
 }
 
