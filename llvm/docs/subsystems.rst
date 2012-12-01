@@ -21,6 +21,7 @@ Subsystem Documentation
    HowToUseInstrMappings
    SystemLibrary
    SourceLevelDebugging
+   WritingAnLLVMBackend
 
 .. FIXME: once LangRef is Sphinxified, HowToUseInstrMappings should be put
    under LangRef's toctree instead of this page's toctree.
@@ -29,8 +30,8 @@ Subsystem Documentation
     
    Information on how to write LLVM transformations and analyses.
     
-* `Writing an LLVM Backend <WritingAnLLVMBackend.html>`_
-    
+* :doc:`WritingAnLLVMBackend`
+
    Information on how to write LLVM backends for machine targets.
 
 * :ref:`code_generator`

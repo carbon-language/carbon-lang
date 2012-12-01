@@ -250,6 +250,8 @@ operations.  Among other things, this class indicates:
 * various high-level characteristics, like whether it is profitable to turn
   division by a constant into a multiplication sequence.
 
+.. _TargetRegisterInfo:
+
 The ``TargetRegisterInfo`` class
 --------------------------------
 
@@ -770,6 +772,8 @@ operations and supported types.  On a 32-bit PowerPC, for example, a DAG with a
 value of type i1, i8, i16, or i64 would be illegal, as would a DAG that uses a
 SREM or UREM operation.  The `legalize types`_ and `legalize operations`_ phases
 are responsible for turning an illegal DAG into a legal DAG.
+
+.. _SelectionDAG-Process:
 
 SelectionDAG Instruction Selection Process
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
