@@ -248,6 +248,7 @@ static void columnToByte(StringRef SourceLine, unsigned TabStop,
   out.back() = i;
 }
 
+namespace {
 struct SourceColumnMap {
   SourceColumnMap(StringRef SourceLine, unsigned TabStop)
   : m_SourceLine(SourceLine) {
@@ -313,14 +314,13 @@ private:
 };
 
 // used in assert in selectInterestingSourceRegion()
-namespace {
 struct char_out_of_range {
   const char lower,upper;
   char_out_of_range(char lower, char upper) :
     lower(lower), upper(upper) {}
   bool operator()(char c) { return c < lower || upper < c; }
 };
-}
+} // end anonymous namespace
 
 /// \brief When the source code line we want to print is too long for
 /// the terminal, select the "interesting" region.
@@ -905,6 +905,157 @@ void TextDiagnostic::emitBuildingModuleLocation(SourceLocation Loc,
     OS << "While building module '" << ModuleName << "':\n";
 }
 
+/// \brief Highlight a SourceRange (with ~'s) for any characters on LineNo.
+static void highlightRange(const CharSourceRange &R,
+                           unsigned LineNo, FileID FID,
+                           const SourceColumnMap &map,
+                           std::string &CaretLine,
+                           const SourceManager &SM,
+                           const LangOptions &LangOpts) {
+  if (!R.isValid()) return;
+
+  SourceLocation Begin = R.getBegin();
+  SourceLocation End = R.getEnd();
+
+  unsigned StartLineNo = SM.getExpansionLineNumber(Begin);
+  if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
+    return;  // No intersection.
+
+  unsigned EndLineNo = SM.getExpansionLineNumber(End);
+  if (EndLineNo < LineNo || SM.getFileID(End) != FID)
+    return;  // No intersection.
+
+  // Compute the column number of the start.
+  unsigned StartColNo = 0;
+  if (StartLineNo == LineNo) {
+    StartColNo = SM.getExpansionColumnNumber(Begin);
+    if (StartColNo) --StartColNo;  // Zero base the col #.
+  }
+
+  // Compute the column number of the end.
+  unsigned EndColNo = map.getSourceLine().size();
+  if (EndLineNo == LineNo) {
+    EndColNo = SM.getExpansionColumnNumber(End);
+    if (EndColNo) {
+      --EndColNo;  // Zero base the col #.
+
+      // Add in the length of the token, so that we cover multi-char tokens if
+      // this is a token range.
+      if (R.isTokenRange())
+        EndColNo += Lexer::MeasureTokenLength(End, SM, LangOpts);
+    } else {
+      EndColNo = CaretLine.size();
+    }
+  }
+
+  assert(StartColNo <= EndColNo && "Invalid range!");
+
+  // Check that a token range does not highlight only whitespace.
+  if (R.isTokenRange()) {
+    // Pick the first non-whitespace column.
+    while (StartColNo < map.getSourceLine().size() &&
+           (map.getSourceLine()[StartColNo] == ' ' ||
+            map.getSourceLine()[StartColNo] == '\t'))
+      StartColNo = map.startOfNextColumn(StartColNo);
+
+    // Pick the last non-whitespace column.
+    if (EndColNo > map.getSourceLine().size())
+      EndColNo = map.getSourceLine().size();
+    while (EndColNo-1 &&
+           (map.getSourceLine()[EndColNo-1] == ' ' ||
+            map.getSourceLine()[EndColNo-1] == '\t'))
+      EndColNo = map.startOfPreviousColumn(EndColNo);
+
+    // If the start/end passed each other, then we are trying to highlight a
+    // range that just exists in whitespace, which must be some sort of other
+    // bug.
+    assert(StartColNo <= EndColNo && "Trying to highlight whitespace??");
+  }
+
+  assert(StartColNo <= map.getSourceLine().size() && "Invalid range!");
+  assert(EndColNo <= map.getSourceLine().size() && "Invalid range!");
+
+  // Fill the range with ~'s.
+  StartColNo = map.byteToContainingColumn(StartColNo);
+  EndColNo = map.byteToContainingColumn(EndColNo);
+
+  assert(StartColNo <= EndColNo && "Invalid range!");
+  if (CaretLine.size() < EndColNo)
+    CaretLine.resize(EndColNo,' ');
+  std::fill(CaretLine.begin()+StartColNo,CaretLine.begin()+EndColNo,'~');
+}
+
+static std::string buildFixItInsertionLine(unsigned LineNo,
+                                           const SourceColumnMap &map,
+                                           ArrayRef<FixItHint> Hints,
+                                           const SourceManager &SM,
+                                           const DiagnosticOptions *DiagOpts) {
+  std::string FixItInsertionLine;
+  if (Hints.empty() || !DiagOpts->ShowFixits)
+    return FixItInsertionLine;
+  unsigned PrevHintEndCol = 0;
+
+  for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
+       I != E; ++I) {
+    if (!I->CodeToInsert.empty()) {
+      // We have an insertion hint. Determine whether the inserted
+      // code contains no newlines and is on the same line as the caret.
+      std::pair<FileID, unsigned> HintLocInfo
+        = SM.getDecomposedExpansionLoc(I->RemoveRange.getBegin());
+      if (LineNo == SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) &&
+          StringRef(I->CodeToInsert).find_first_of("\n\r") == StringRef::npos) {
+        // Insert the new code into the line just below the code
+        // that the user wrote.
+        // Note: When modifying this function, be very careful about what is a
+        // "column" (printed width, platform-dependent) and what is a
+        // "byte offset" (SourceManager "column").
+        unsigned HintByteOffset
+          = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second) - 1;
+
+        // The hint must start inside the source or right at the end
+        assert(HintByteOffset < static_cast<unsigned>(map.bytes())+1);
+        unsigned HintCol = map.byteToContainingColumn(HintByteOffset);
+
+        // If we inserted a long previous hint, push this one forwards, and add
+        // an extra space to show that this is not part of the previous
+        // completion. This is sort of the best we can do when two hints appear
+        // to overlap.
+        //
+        // Note that if this hint is located immediately after the previous
+        // hint, no space will be added, since the location is more important.
+        if (HintCol < PrevHintEndCol)
+          HintCol = PrevHintEndCol + 1;
+
+        // FIXME: This function handles multibyte characters in the source, but
+        // not in the fixits. This assertion is intended to catch unintended
+        // use of multibyte characters in fixits. If we decide to do this, we'll
+        // have to track separate byte widths for the source and fixit lines.
+        assert((size_t)llvm::sys::locale::columnWidth(I->CodeToInsert) ==
+               I->CodeToInsert.size());
+
+        // This relies on one byte per column in our fixit hints.
+        // This should NOT use HintByteOffset, because the source might have
+        // Unicode characters in earlier columns.
+        unsigned LastColumnModified = HintCol + I->CodeToInsert.size();
+        if (LastColumnModified > FixItInsertionLine.size())
+          FixItInsertionLine.resize(LastColumnModified, ' ');
+
+        std::copy(I->CodeToInsert.begin(), I->CodeToInsert.end(),
+                  FixItInsertionLine.begin() + HintCol);
+
+        PrevHintEndCol = LastColumnModified;
+      } else {
+        FixItInsertionLine.clear();
+        break;
+      }
+    }
+  }
+
+  expandTabs(FixItInsertionLine, DiagOpts->TabStop);
+
+  return FixItInsertionLine;
+}
+
 /// \brief Emit a code snippet and caret line.
 ///
 /// This routine emits a single line's code snippet and caret line..
@@ -970,7 +1121,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
                                                   E = Ranges.end();
        I != E; ++I)
-    highlightRange(*I, LineNo, FID, sourceColMap, CaretLine, SM);
+    highlightRange(*I, LineNo, FID, sourceColMap, CaretLine, SM, LangOpts);
 
   // Next, insert the caret itself.
   ColNo = sourceColMap.byteToContainingColumn(ColNo-1);
@@ -980,7 +1131,8 @@ void TextDiagnostic::emitSnippetAndCaret(
 
   std::string FixItInsertionLine = buildFixItInsertionLine(LineNo,
                                                            sourceColMap,
-                                                           Hints, SM);
+                                                           Hints, SM,
+                                                           DiagOpts.getPtr());
 
   // If the source line is too long for our terminal, select only the
   // "interesting" source region within that line.
@@ -1060,157 +1212,6 @@ void TextDiagnostic::emitSnippet(StringRef line) {
     OS.resetColor();
   
   OS << '\n';
-}
-
-/// \brief Highlight a SourceRange (with ~'s) for any characters on LineNo.
-void TextDiagnostic::highlightRange(const CharSourceRange &R,
-                                    unsigned LineNo, FileID FID,
-                                    const SourceColumnMap &map,
-                                    std::string &CaretLine,
-                                    const SourceManager &SM) {
-  if (!R.isValid()) return;
-
-  SourceLocation Begin = R.getBegin();
-  SourceLocation End = R.getEnd();
-
-  unsigned StartLineNo = SM.getExpansionLineNumber(Begin);
-  if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
-    return;  // No intersection.
-
-  unsigned EndLineNo = SM.getExpansionLineNumber(End);
-  if (EndLineNo < LineNo || SM.getFileID(End) != FID)
-    return;  // No intersection.
-
-  // Compute the column number of the start.
-  unsigned StartColNo = 0;
-  if (StartLineNo == LineNo) {
-    StartColNo = SM.getExpansionColumnNumber(Begin);
-    if (StartColNo) --StartColNo;  // Zero base the col #.
-  }
-
-  // Compute the column number of the end.
-  unsigned EndColNo = map.getSourceLine().size();
-  if (EndLineNo == LineNo) {
-    EndColNo = SM.getExpansionColumnNumber(End);
-    if (EndColNo) {
-      --EndColNo;  // Zero base the col #.
-
-      // Add in the length of the token, so that we cover multi-char tokens if
-      // this is a token range.
-      if (R.isTokenRange())
-        EndColNo += Lexer::MeasureTokenLength(End, SM, LangOpts);
-    } else {
-      EndColNo = CaretLine.size();
-    }
-  }
-
-  assert(StartColNo <= EndColNo && "Invalid range!");
-
-  // Check that a token range does not highlight only whitespace.
-  if (R.isTokenRange()) {
-    // Pick the first non-whitespace column.
-    while (StartColNo < map.getSourceLine().size() &&
-           (map.getSourceLine()[StartColNo] == ' ' ||
-            map.getSourceLine()[StartColNo] == '\t'))
-      StartColNo = map.startOfNextColumn(StartColNo);
-
-    // Pick the last non-whitespace column.
-    if (EndColNo > map.getSourceLine().size())
-      EndColNo = map.getSourceLine().size();
-    while (EndColNo-1 &&
-           (map.getSourceLine()[EndColNo-1] == ' ' ||
-            map.getSourceLine()[EndColNo-1] == '\t'))
-      EndColNo = map.startOfPreviousColumn(EndColNo);
-
-    // If the start/end passed each other, then we are trying to highlight a
-    // range that just exists in whitespace, which must be some sort of other
-    // bug.
-    assert(StartColNo <= EndColNo && "Trying to highlight whitespace??");
-  }
-
-  assert(StartColNo <= map.getSourceLine().size() && "Invalid range!");
-  assert(EndColNo <= map.getSourceLine().size() && "Invalid range!");
-
-  // Fill the range with ~'s.
-  StartColNo = map.byteToContainingColumn(StartColNo);
-  EndColNo = map.byteToContainingColumn(EndColNo);
-
-  assert(StartColNo <= EndColNo && "Invalid range!");
-  if (CaretLine.size() < EndColNo)
-    CaretLine.resize(EndColNo,' ');
-  std::fill(CaretLine.begin()+StartColNo,CaretLine.begin()+EndColNo,'~');
-}
-
-std::string TextDiagnostic::buildFixItInsertionLine(
-  unsigned LineNo,
-  const SourceColumnMap &map,
-  ArrayRef<FixItHint> Hints,
-  const SourceManager &SM) {
-
-  std::string FixItInsertionLine;
-  if (Hints.empty() || !DiagOpts->ShowFixits)
-    return FixItInsertionLine;
-  unsigned PrevHintEndCol = 0;
-
-  for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
-       I != E; ++I) {
-    if (!I->CodeToInsert.empty()) {
-      // We have an insertion hint. Determine whether the inserted
-      // code contains no newlines and is on the same line as the caret.
-      std::pair<FileID, unsigned> HintLocInfo
-        = SM.getDecomposedExpansionLoc(I->RemoveRange.getBegin());
-      if (LineNo == SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) &&
-          StringRef(I->CodeToInsert).find_first_of("\n\r") == StringRef::npos) {
-        // Insert the new code into the line just below the code
-        // that the user wrote.
-        // Note: When modifying this function, be very careful about what is a
-        // "column" (printed width, platform-dependent) and what is a
-        // "byte offset" (SourceManager "column").
-        unsigned HintByteOffset
-          = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second) - 1;
-
-        // The hint must start inside the source or right at the end
-        assert(HintByteOffset < static_cast<unsigned>(map.bytes())+1);
-        unsigned HintCol = map.byteToContainingColumn(HintByteOffset);
-
-        // If we inserted a long previous hint, push this one forwards, and add
-        // an extra space to show that this is not part of the previous
-        // completion. This is sort of the best we can do when two hints appear
-        // to overlap.
-        //
-        // Note that if this hint is located immediately after the previous
-        // hint, no space will be added, since the location is more important.
-        if (HintCol < PrevHintEndCol)
-          HintCol = PrevHintEndCol + 1;
-
-        // FIXME: This function handles multibyte characters in the source, but
-        // not in the fixits. This assertion is intended to catch unintended
-        // use of multibyte characters in fixits. If we decide to do this, we'll
-        // have to track separate byte widths for the source and fixit lines.
-        assert((size_t)llvm::sys::locale::columnWidth(I->CodeToInsert) ==
-               I->CodeToInsert.size());
-
-        // This relies on one byte per column in our fixit hints.
-        // This should NOT use HintByteOffset, because the source might have
-        // Unicode characters in earlier columns.
-        unsigned LastColumnModified = HintCol + I->CodeToInsert.size();
-        if (LastColumnModified > FixItInsertionLine.size())
-          FixItInsertionLine.resize(LastColumnModified, ' ');
-
-        std::copy(I->CodeToInsert.begin(), I->CodeToInsert.end(),
-                  FixItInsertionLine.begin() + HintCol);
-
-        PrevHintEndCol = LastColumnModified;
-      } else {
-        FixItInsertionLine.clear();
-        break;
-      }
-    }
-  }
-
-  expandTabs(FixItInsertionLine, DiagOpts->TabStop);
-
-  return FixItInsertionLine;
 }
 
 void TextDiagnostic::emitParseableFixits(ArrayRef<FixItHint> Hints,

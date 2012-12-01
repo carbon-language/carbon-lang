@@ -418,6 +418,7 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
   return false;
 }
 
+namespace {
 // A wrapper for a file stream that atomically overwrites the target.
 //
 // Creates a file output stream for a temporary file in the constructor,
@@ -472,6 +473,7 @@ private:
   OwningPtr<llvm::raw_fd_ostream> FileStream;
   bool &AllWritten;
 };
+} // end anonymous namespace
 
 bool Rewriter::overwriteChangedFiles() {
   bool AllWritten = true;
