@@ -10832,13 +10832,14 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
             // actually requires the destructor.
             if (isa<ParmVarDecl>(Var))
               FinalizeVarWithDestructor(Var, Record);
-            
+
             // According to the blocks spec, the capture of a variable from
             // the stack requires a const copy constructor.  This is not true
             // of the copy/move done to move a __block variable to the heap.
-            Expr *DeclRef = new (Context) DeclRefExpr(Var, false,
+            Expr *DeclRef = new (Context) DeclRefExpr(Var, Nested,
                                                       DeclRefType.withConst(), 
                                                       VK_LValue, Loc);
+            
             ExprResult Result
               = PerformCopyInitialization(
                   InitializedEntity::InitializeBlock(Var->getLocation(),
@@ -10923,7 +10924,7 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
     if (BuildAndDiagnose) {
       ExprResult Result = captureInLambda(*this, LSI, Var, CaptureType,
                                           DeclRefType, Loc,
-                                          I == N-1);
+                                          Nested);
       if (!Result.isInvalid())
         CopyExpr = Result.take();
     }

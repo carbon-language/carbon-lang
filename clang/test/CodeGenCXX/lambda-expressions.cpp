@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10.0.0 -emit-llvm -o - %s -fexceptions -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10.0.0 -fblocks -emit-llvm -o - %s -fexceptions -std=c++11 | FileCheck %s
 
 // CHECK-NOT: @unused
 auto unused = [](int i) { return i+1; };
@@ -89,3 +89,14 @@ int g() {
 // CHECK-NEXT: ret i32
 
 // CHECK: define internal void @"_ZZ1e1ES_bEN3$_4D2Ev"
+
+// <rdar://problem/12778708>
+struct XXX {};
+void nestedCapture () {
+  XXX localKey;
+  ^() {
+    [&]() {
+      ^{ XXX k = localKey; };
+    };
+  };
+}
