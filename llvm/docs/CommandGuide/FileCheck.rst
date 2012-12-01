@@ -223,9 +223,9 @@ FileCheck Variables
 
 It is often useful to match a pattern and then verify that it occurs again
 later in the file.  For codegen tests, this can be useful to allow any register,
-but verify that that register is used consistently later.  To do this, FileCheck
-allows named variables to be defined and substituted into patterns.  Here is a
-simple example:
+but verify that that register is used consistently later.  To do this,
+:program:`FileCheck` allows named variables to be defined and substituted into
+patterns.  Here is a simple example:
 
 .. code-block:: llvm
 
@@ -235,20 +235,21 @@ simple example:
 
 The first check line matches a regex ``%[a-z]+`` and captures it into the
 variable ``REGISTER``.  The second line verifies that whatever is in
-``REGISTER`` occurs later in the file after an "``andw``".  FileCheck variable
-references are always contained in ``[[ ]]`` pairs, and their names can be
-formed with the regex ``[a-zA-Z][a-zA-Z0-9]*``.  If a colon follows the name,
+``REGISTER`` occurs later in the file after an "``andw``".  :program:`FileCheck`
+variable references are always contained in ``[[ ]]`` pairs, and their names can
+be formed with the regex ``[a-zA-Z][a-zA-Z0-9]*``.  If a colon follows the name,
 then it is a definition of the variable; otherwise, it is a use.
 
-FileCheck variables can be defined multiple times, and uses always get the
-latest value.  Note that variables are all read at the start of a "``CHECK``"
-line and are all defined at the end.  This means that if you have something
-like "``CHECK: [[XYZ:.*]]x[[XYZ]]``", the check line will read the previous
-value of the ``XYZ`` variable and define a new one after the match is
-performed.  If you need to do something like this you can probably take
-advantage of the fact that FileCheck is not actually line-oriented when it
-matches, this allows you to define two separate "``CHECK``" lines that match on
-the same line.
+:program:`FileCheck` variables can be defined multiple times, and uses always
+get the latest value.  Variables can also be used later on the same line they
+were defined on. For example:
+
+.. code-block:: llvm
+
+    ; CHECK: op [[REG:r[0-9]+]], [[REG]]
+
+Can be useful if you want the operands of ``op`` to be the same register,
+and don't care exactly which register it is.
 
 FileCheck Expressions
 ~~~~~~~~~~~~~~~~~~~~~
