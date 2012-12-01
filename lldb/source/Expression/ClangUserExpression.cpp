@@ -106,31 +106,56 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 void
 ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (log)
+        log->Printf("ClangUserExpression::ScanContext()");
+    
     m_target = exe_ctx.GetTargetPtr();
     
     if (!(m_allow_cxx || m_allow_objc))
+    {
+        if (log)
+            log->Printf("  [CUE::SC] Settings inhibit C++ and Objective-C");
         return;
+    }
     
     StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
+    {
+        if (log)
+            log->Printf("  [CUE::SC] Null stack frame");
         return;
+    }
     
     SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction | lldb::eSymbolContextBlock);
     
     if (!sym_ctx.function)
+    {
+        if (log)
+            log->Printf("  [CUE::SC] Null function");
         return;
+    }
     
     // Find the block that defines the function represented by "sym_ctx"
     Block *function_block = sym_ctx.GetFunctionBlock();
     
     if (!function_block)
+    {
+        if (log)
+            log->Printf("  [CUE::SC] Null function block");
         return;
+    }
 
     clang::DeclContext *decl_context = function_block->GetClangDeclContext();
 
     if (!decl_context)
+    {
+        if (log)
+            log->Printf("  [CUE::SC] Null decl context");
         return;
-            
+    }
+    
     if (clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context))
     {
         if (m_allow_cxx && method_decl->isInstance())
