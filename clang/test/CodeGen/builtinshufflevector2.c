@@ -16,14 +16,14 @@ void clang_shufflevector_v_v( float4* A, float4 x, uint4 mask ) {
 
 // CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 1
 // CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i32 [[I]]
-// CHECK: [[V:%.*]] = insertelement <4 x float> [[V]], float [[E]], i32 1
+// CHECK: [[V2:%.*]] = insertelement <4 x float> [[V]], float [[E]], i32 1
 // CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 2
 // CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i32 [[I]]
-// CHECK: [[V:%.*]] = insertelement <4 x float> [[V]], float [[E]], i32 2
+// CHECK: [[V3:%.*]] = insertelement <4 x float> [[V2]], float [[E]], i32 2
 // CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 3
 // CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i32 [[I]]
-// CHECK: [[V:%.*]] = insertelement <4 x float> [[V]], float [[E]], i32 3
-// CHECK: store <4 x float> [[V]], <4 x float>* {{%.*}},
+// CHECK: [[V4:%.*]] = insertelement <4 x float> [[V3]], float [[E]], i32 3
+// CHECK: store <4 x float> [[V4]], <4 x float>* {{%.*}},
   *A = __builtin_shufflevector( x, mask );
 }
 
