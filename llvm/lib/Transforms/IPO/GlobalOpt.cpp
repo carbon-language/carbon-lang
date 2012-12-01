@@ -36,6 +36,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -2398,7 +2399,8 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
 /// initializer.  This returns 'Init' modified to reflect 'Val' stored into it.
 /// At this point, the GEP operands of Addr [0, OpNo) have been stepped into.
 static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
-                                   ConstantExpr *Addr, unsigned OpNo) {
+                                   ConstantExpr *Addr, unsigned OpNo,
+                                   SetVector<Constant*>& Obsolete) {
   // Base case of the recursion.
   if (OpNo == Addr->getNumOperands()) {
     assert(Val->getType() == Init->getType() && "Type mismatch!");
@@ -2415,7 +2417,9 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     ConstantInt *CU = cast<ConstantInt>(Addr->getOperand(OpNo));
     unsigned Idx = CU->getZExtValue();
     assert(Idx < STy->getNumElements() && "Struct index out of range!");
-    Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1);
+    if (Elts[Idx]->getType()->isAggregateType())
+      Obsolete.insert(Elts[Idx]);
+    Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1, Obsolete);
 
     // Return the modified struct.
     return ConstantStruct::get(STy, Elts);
@@ -2435,8 +2439,11 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     Elts.push_back(Init->getAggregateElement(i));
 
   assert(CI->getZExtValue() < NumElts);
+  Constant *OrigElem = Elts[CI->getZExtValue()];
+  if (OrigElem->getType()->isAggregateType())
+    Obsolete.insert(OrigElem);
   Elts[CI->getZExtValue()] =
-    EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1);
+    EvaluateStoreInto(OrigElem, Val, Addr, OpNo+1, Obsolete);
 
   if (Init->getType()->isArrayTy())
     return ConstantArray::get(cast<ArrayType>(InitTy), Elts);
@@ -2452,9 +2459,20 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
     return;
   }
 
+  // Collect obsolete constants created in previous CommitValueTo() invoke.
+  SetVector<Constant*> Obsolete;
   ConstantExpr *CE = cast<ConstantExpr>(Addr);
   GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-  GV->setInitializer(EvaluateStoreInto(GV->getInitializer(), Val, CE, 2));
+  Constant *OrigInit = GV->getInitializer();
+  if (OrigInit->getType()->isAggregateType())
+    Obsolete.insert(OrigInit);
+  Constant *Init = EvaluateStoreInto(OrigInit, Val, CE, 2, Obsolete);
+  GV->setInitializer(Init);
+
+  for (unsigned i = 0; i < Obsolete.size(); ++i) {
+    if (Obsolete[i]->use_empty())
+      Obsolete[i]->destroyConstant();
+  }
 }
 
 namespace {
