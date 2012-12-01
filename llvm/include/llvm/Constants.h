@@ -1082,8 +1082,7 @@ public:
   /// A better approach to this could be to have a constructor for Instruction
   /// which would take a ConstantExpr parameter, but that would have spread 
   /// implementation details of ConstantExpr outside of Constants.cpp, which 
-  /// would make it harder to remove ConstantExprs altogether
-  /// (http://llvm.org/bugs/show_bug.cgi?id=10368).
+  /// would make it harder to remove ConstantExprs altogether.
   Instruction *getAsInstruction();
 
   virtual void destroyConstant();
