@@ -78,11 +78,14 @@ struct MacroInstantiation {
   /// The location of the instantiation.
   SMLoc InstantiationLoc;
 
+  /// The buffer where parsing should resume upon instantiation completion.
+  int ExitBuffer;
+
   /// The location where parsing should resume upon instantiation completion.
   SMLoc ExitLoc;
 
 public:
-  MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
+  MacroInstantiation(const Macro *M, SMLoc IL, int EB, SMLoc EL,
                      MemoryBuffer *I);
 };
 
@@ -252,7 +255,10 @@ private:
   /// \brief Reset the current lexer position to that given by \p Loc. The
   /// current token is not set; clients should ensure Lex() is called
   /// subsequently.
-  void JumpToLoc(SMLoc Loc);
+  ///
+  /// \param InBuffer If not -1, should be the known buffer id that contains the
+  /// location.
+  void JumpToLoc(SMLoc Loc, int InBuffer=-1);
 
   virtual void EatToEndOfStatement();
 
@@ -556,8 +562,12 @@ bool AsmParser::ProcessIncbinFile(const std::string &Filename) {
   return false;
 }
 
-void AsmParser::JumpToLoc(SMLoc Loc) {
-  CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
+void AsmParser::JumpToLoc(SMLoc Loc, int InBuffer) {
+  if (InBuffer != -1) {
+    CurBuffer = InBuffer;
+  } else {
+    CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
+  }
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer), Loc.getPointer());
 }
 
@@ -1642,9 +1652,11 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
   return false;
 }
 
-MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
+MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL,
+                                       int EB, SMLoc EL,
                                        MemoryBuffer *I)
-  : TheMacro(M), Instantiation(I), InstantiationLoc(IL), ExitLoc(EL)
+  : TheMacro(M), Instantiation(I), InstantiationLoc(IL), ExitBuffer(EB),
+    ExitLoc(EL)
 {
 }
 
@@ -1840,6 +1852,7 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   // Create the macro instantiation object and add to the current macro
   // instantiation stack.
   MacroInstantiation *MI = new MacroInstantiation(M, NameLoc,
+                                                  CurBuffer,
                                                   getTok().getLoc(),
                                                   Instantiation);
   ActiveMacros.push_back(MI);
@@ -1854,7 +1867,7 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
 
 void AsmParser::HandleMacroExit() {
   // Jump to the EndOfStatement we should return to, and consume it.
-  JumpToLoc(ActiveMacros.back()->ExitLoc);
+  JumpToLoc(ActiveMacros.back()->ExitLoc, ActiveMacros.back()->ExitBuffer);
   Lex();
 
   // Pop the instantiation entry.
@@ -3490,6 +3503,7 @@ void AsmParser::InstantiateMacroLikeBody(Macro *M, SMLoc DirectiveLoc,
   // Create the macro instantiation object and add to the current macro
   // instantiation stack.
   MacroInstantiation *MI = new MacroInstantiation(M, DirectiveLoc,
+                                                  CurBuffer,
                                                   getTok().getLoc(),
                                                   Instantiation);
   ActiveMacros.push_back(MI);
