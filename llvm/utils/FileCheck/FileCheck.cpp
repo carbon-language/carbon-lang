@@ -29,6 +29,9 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include <algorithm>
+#include <map>
+#include <string>
+#include <vector>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -73,11 +76,10 @@ class Pattern {
   /// value of bar at offset 3.
   std::vector<std::pair<StringRef, unsigned> > VariableUses;
 
-  /// VariableDefs - Entries in this vector map to definitions of a variable in
-  /// the pattern, e.g. "foo[[bar:.*]]baz".  In this case, the RegExStr will
-  /// contain "foo(.*)baz" and VariableDefs will contain the pair "bar",1.  The
-  /// index indicates what parenthesized value captures the variable value.
-  std::vector<std::pair<StringRef, unsigned> > VariableDefs;
+  /// VariableDefs - Maps definitions of variables to their parenthesized
+  /// capture numbers.
+  /// E.g. for the pattern "foo[[bar:.*]]baz", VariableDefs will map "bar" to 1.
+  std::map<StringRef, unsigned> VariableDefs;
 
 public:
 
@@ -105,7 +107,8 @@ public:
 
 private:
   static void AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr);
-  bool AddRegExToRegEx(StringRef RegExStr, unsigned &CurParen, SourceMgr &SM);
+  bool AddRegExToRegEx(StringRef RS, unsigned &CurParen, SourceMgr &SM);
+  void AddBackrefToRegEx(unsigned BackrefNum);
 
   /// ComputeMatchDistance - Compute an arbitrary estimate for the quality of
   /// matching this pattern at the start of \arg Buffer; a distance of zero
@@ -238,12 +241,25 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
 
       // Handle [[foo]].
       if (NameEnd == StringRef::npos) {
-        VariableUses.push_back(std::make_pair(Name, RegExStr.size()));
+        // Handle variables that were defined earlier on the same line by
+        // emitting a backreference.
+        if (VariableDefs.find(Name) != VariableDefs.end()) {
+          unsigned VarParenNum = VariableDefs[Name];
+          if (VarParenNum < 1 || VarParenNum > 9) {
+            SM.PrintMessage(SMLoc::getFromPointer(Name.data()),
+                            SourceMgr::DK_Error,
+                            "Can't back-reference more than 9 variables");
+            return true;
+          }
+          AddBackrefToRegEx(VarParenNum);
+        } else {
+          VariableUses.push_back(std::make_pair(Name, RegExStr.size()));
+        }
         continue;
       }
 
       // Handle [[foo:.*]].
-      VariableDefs.push_back(std::make_pair(Name, CurParen));
+      VariableDefs[Name] = CurParen;
       RegExStr += '(';
       ++CurParen;
 
@@ -291,19 +307,26 @@ void Pattern::AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr) {
   }
 }
 
-bool Pattern::AddRegExToRegEx(StringRef RegexStr, unsigned &CurParen,
+bool Pattern::AddRegExToRegEx(StringRef RS, unsigned &CurParen,
                               SourceMgr &SM) {
-  Regex R(RegexStr);
+  Regex R(RS);
   std::string Error;
   if (!R.isValid(Error)) {
-    SM.PrintMessage(SMLoc::getFromPointer(RegexStr.data()), SourceMgr::DK_Error,
+    SM.PrintMessage(SMLoc::getFromPointer(RS.data()), SourceMgr::DK_Error,
                     "invalid regex: " + Error);
     return true;
   }
 
-  RegExStr += RegexStr.str();
+  RegExStr += RS.str();
   CurParen += R.getNumMatches();
   return false;
+}
+
+void Pattern::AddBackrefToRegEx(unsigned BackrefNum) {
+  assert(BackrefNum >= 1 && BackrefNum <= 9 && "Invalid backref number");
+  std::string Backref = std::string("\\") +
+                        std::string(1, '0' + BackrefNum);
+  RegExStr += Backref;
 }
 
 bool Pattern::EvaluateExpression(StringRef Expr, std::string &Value) const {
@@ -388,10 +411,11 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
   StringRef FullMatch = MatchInfo[0];
 
   // If this defines any variables, remember their values.
-  for (unsigned i = 0, e = VariableDefs.size(); i != e; ++i) {
-    assert(VariableDefs[i].second < MatchInfo.size() &&
-           "Internal paren error");
-    VariableTable[VariableDefs[i].first] = MatchInfo[VariableDefs[i].second];
+  for (std::map<StringRef, unsigned>::const_iterator I = VariableDefs.begin(),
+                                                     E = VariableDefs.end();
+       I != E; ++I) {
+    assert(I->second < MatchInfo.size() && "Internal paren error");
+    VariableTable[I->first] = MatchInfo[I->second];
   }
 
   MatchLen = FullMatch.size();
