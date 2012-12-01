@@ -558,6 +558,7 @@ public:
                 default:
                     return false;
                 case Instruction::IntToPtr:
+                case Instruction::PtrToInt:
                 case Instruction::BitCast:
                     return ResolveConstantValue(value, constant_expr->getOperand(0));
                 case Instruction::GetElementPtr:
@@ -991,6 +992,7 @@ IRInterpreter::supportsFunction (Function &llvm_function,
                 }
                 break;
             case Instruction::IntToPtr:
+            case Instruction::PtrToInt:
             case Instruction::Load:
             case Instruction::Mul:
             case Instruction::Ret:
@@ -1503,6 +1505,42 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     log->Printf("Interpreted an IntToPtr");
                     log->Printf("  Src : %s", frame.SummarizeValue(src_operand).c_str());
                     log->Printf("  =   : %s", frame.SummarizeValue(inst).c_str()); 
+                }
+            }
+            break;
+        case Instruction::PtrToInt:
+            {
+                const PtrToIntInst *ptr_to_int_inst = dyn_cast<PtrToIntInst>(inst);
+                
+                if (!ptr_to_int_inst)
+                {
+                    if (log)
+                        log->Printf("getOpcode() returns PtrToInt, but instruction is not an PtrToIntInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
+                    return false;
+                }
+                
+                Value *src_operand = ptr_to_int_inst->getOperand(0);
+                
+                lldb_private::Scalar I;
+                
+                if (!frame.EvaluateValue(I, src_operand, llvm_module))
+                {
+                    if (log)
+                        log->Printf("Couldn't evaluate %s", PrintValue(src_operand).c_str());
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
+                    return false;
+                }
+                
+                frame.AssignValue(inst, I, llvm_module);
+                
+                if (log)
+                {
+                    log->Printf("Interpreted a PtrToInt");
+                    log->Printf("  Src : %s", frame.SummarizeValue(src_operand).c_str());
+                    log->Printf("  =   : %s", frame.SummarizeValue(inst).c_str());
                 }
             }
             break;
