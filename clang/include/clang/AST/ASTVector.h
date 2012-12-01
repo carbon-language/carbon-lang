@@ -18,6 +18,7 @@
 #ifndef LLVM_CLANG_AST_VECTOR
 #define LLVM_CLANG_AST_VECTOR
 
+#include "clang/AST/ASTContext.h"
 #include "llvm/Support/type_traits.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/PointerIntPair.h"

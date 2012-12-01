@@ -16,12 +16,13 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/TypeLoc.h"
-#include "clang/AST/Stmt.h"
+#include "clang/AST/ASTMutationListener.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "clang/AST/ASTMutationListener.h"
+#include "clang/AST/Stmt.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Module.h"
@@ -2843,6 +2844,14 @@ LabelDecl *LabelDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
 }
 
 void ValueDecl::anchor() { }
+
+bool ValueDecl::isWeak() const {
+  for (attr_iterator I = attr_begin(), E = attr_end(); I != E; ++I)
+    if (isa<WeakAttr>(*I) || isa<WeakRefAttr>(*I))
+      return true;
+
+  return isWeakImported();
+}
 
 void ImplicitParamDecl::anchor() { }
 

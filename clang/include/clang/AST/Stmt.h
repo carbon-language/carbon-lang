@@ -14,13 +14,14 @@
 #ifndef LLVM_CLANG_AST_STMT_H
 #define LLVM_CLANG_AST_STMT_H
 
-#include "clang/Basic/LLVM.h"
-#include "clang/Basic/SourceLocation.h"
+#include "clang/AST/DeclGroup.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtIterator.h"
-#include "clang/AST/DeclGroup.h"
-#include "clang/AST/Attr.h"
+#include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/LLVM.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Token.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -32,12 +33,13 @@ namespace llvm {
 
 namespace clang {
   class ASTContext;
-  class Expr;
+  class Attr;
   class Decl;
-  class ParmVarDecl;
-  class QualType;
+  class Expr;
   class IdentifierInfo;
   class LabelDecl;
+  class ParmVarDecl;
+  class QualType;
   class SourceManager;
   class StringLiteral;
   class SwitchStmt;
@@ -302,14 +304,10 @@ public:
   // Only allow allocation of Stmts using the allocator in ASTContext
   // or by doing a placement new.
   void* operator new(size_t bytes, ASTContext& C,
-                     unsigned alignment = 8) throw() {
-    return ::operator new(bytes, C, alignment);
-  }
+                     unsigned alignment = 8) throw();
 
   void* operator new(size_t bytes, ASTContext* C,
-                     unsigned alignment = 8) throw() {
-    return ::operator new(bytes, *C, alignment);
-  }
+                     unsigned alignment = 8) throw();
 
   void* operator new(size_t bytes, void* mem) throw() {
     return mem;

@@ -19,9 +19,10 @@
 
 namespace clang {
 
+class LangOptions;
+class SourceManager;
 class Stmt;
 class TagDecl;
-class LangOptions;
 
 class PrinterHelper {
 public:

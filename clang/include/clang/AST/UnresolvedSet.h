@@ -15,9 +15,11 @@
 #ifndef LLVM_CLANG_AST_UNRESOLVEDSET_H
 #define LLVM_CLANG_AST_UNRESOLVEDSET_H
 
-#include <iterator>
-#include "llvm/ADT/SmallVector.h"
 #include "clang/AST/DeclAccessPair.h"
+#include "clang/Basic/LLVM.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+#include <iterator>
 
 namespace clang {
 

@@ -30,6 +30,7 @@ class CXXDestructorDecl;
 class CXXMethodDecl;
 class CXXTemporary;
 class TemplateArgumentListInfo;
+class UuidAttr;
 
 //===--------------------------------------------------------------------===//
 // C++ Expressions.

@@ -924,28 +924,12 @@ public:
 
   /// isArcWeakrefUnavailable - Checks for a class or one of its super classes
   /// to be incompatible with __weak references. Returns true if it is.
-  bool isArcWeakrefUnavailable() const {
-    const ObjCInterfaceDecl *Class = this;
-    while (Class) {
-      if (Class->hasAttr<ArcWeakrefUnavailableAttr>())
-        return true;
-      Class = Class->getSuperClass();
-   }
-   return false;
-  }
+  bool isArcWeakrefUnavailable() const;
 
   /// isObjCRequiresPropertyDefs - Checks that a class or one of its super 
   /// classes must not be auto-synthesized. Returns class decl. if it must not
   /// be; 0, otherwise.
-  const ObjCInterfaceDecl *isObjCRequiresPropertyDefs() const {
-    const ObjCInterfaceDecl *Class = this;
-    while (Class) {
-      if (Class->hasAttr<ObjCRequiresPropertyDefsAttr>())
-        return Class;
-      Class = Class->getSuperClass();
-   }
-   return 0;
-  }
+  const ObjCInterfaceDecl *isObjCRequiresPropertyDefs() const;
 
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName,
                                        ObjCInterfaceDecl *&ClassDeclared);

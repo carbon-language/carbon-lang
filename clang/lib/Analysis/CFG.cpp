@@ -12,20 +12,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/SaveAndRestore.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/StmtVisitor.h"
-#include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/CharUnits.h"
-#include "clang/Basic/AttrKinds.h"
-#include "llvm/Support/GraphWriter.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/StmtVisitor.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Format.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 

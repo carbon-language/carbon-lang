@@ -28,6 +28,7 @@
 #include "Transforms.h"
 #include "Internals.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/Basic/SourceManager.h"
 
 using namespace clang;

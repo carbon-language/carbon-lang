@@ -19,12 +19,13 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DependentDiagnostic.h"
-#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Type.h"
+#include "clang/AST/ASTMutationListener.h"
+#include "clang/AST/Attr.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
-#include "clang/AST/ASTMutationListener.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/raw_ostream.h"
@@ -251,6 +252,19 @@ ASTContext &Decl::getASTContext() const {
 
 ASTMutationListener *Decl::getASTMutationListener() const {
   return getASTContext().getASTMutationListener();
+}
+
+unsigned Decl::getMaxAlignment() const {
+  if (!hasAttrs())
+    return 0;
+
+  unsigned Align = 0;
+  const AttrVec &V = getAttrs();
+  ASTContext &Ctx = getASTContext();
+  specific_attr_iterator<AlignedAttr> I(V.begin()), E(V.end());
+  for (; I != E; ++I)
+    Align = std::max(Align, I->getAlignment(Ctx));
+  return Align;
 }
 
 bool Decl::isUsed(bool CheckUsedAttr) const { 

@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/CommentSema.h"
-#include "clang/AST/CommentDiagnostic.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/AST/CommentDiagnostic.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/SourceManager.h"

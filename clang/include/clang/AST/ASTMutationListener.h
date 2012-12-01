@@ -16,18 +16,19 @@
 #include "clang/Basic/SourceLocation.h"
 
 namespace clang {
-  class Decl;
-  class DeclContext;
-  class TagDecl;
   class CXXRecordDecl;
   class ClassTemplateDecl;
   class ClassTemplateSpecializationDecl;
+  class Decl;
+  class DeclContext;
   class FunctionDecl;
   class FunctionTemplateDecl;
   class ObjCCategoryDecl;
-  class ObjCInterfaceDecl;
   class ObjCContainerDecl;
+  class ObjCInterfaceDecl;
   class ObjCPropertyDecl;
+  class TagDecl;
+  class VarDecl;
 
 /// \brief An abstract interface that should be implemented by listeners
 /// that want to be notified when an AST entity gets modified after its

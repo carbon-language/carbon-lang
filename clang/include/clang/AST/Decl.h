@@ -538,9 +538,7 @@ public:
 
   /// \brief Determine whether this symbol is weakly-imported,
   ///        or declared with the weak or weak-ref attr.
-  bool isWeak() const {
-    return hasAttr<WeakAttr>() || hasAttr<WeakRefAttr>() || isWeakImported();
-  }
+  bool isWeak() const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

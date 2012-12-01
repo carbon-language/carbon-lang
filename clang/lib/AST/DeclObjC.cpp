@@ -13,8 +13,9 @@
 
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Stmt.h"
 #include "clang/AST/ASTMutationListener.h"
+#include "clang/AST/Attr.h"
+#include "clang/AST/Stmt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
@@ -203,6 +204,26 @@ void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM) const {
   // Note, the properties declared only in class extensions are still copied
   // into the main @interface's property list, and therefore we don't
   // explicitly, have to search class extension properties.
+}
+
+bool ObjCInterfaceDecl::isArcWeakrefUnavailable() const {
+  const ObjCInterfaceDecl *Class = this;
+  while (Class) {
+    if (Class->hasAttr<ArcWeakrefUnavailableAttr>())
+      return true;
+    Class = Class->getSuperClass();
+  }
+  return false;
+}
+
+const ObjCInterfaceDecl *ObjCInterfaceDecl::isObjCRequiresPropertyDefs() const {
+  const ObjCInterfaceDecl *Class = this;
+  while (Class) {
+    if (Class->hasAttr<ObjCRequiresPropertyDefsAttr>())
+      return Class;
+    Class = Class->getSuperClass();
+  }
+  return 0;
 }
 
 void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
