@@ -1640,18 +1640,6 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 
     OnTheFlyManagers[P] = FPP;
   }
-
-  // If RequiredPass is an analysis pass and it is available then do not
-  // generate the analysis again. Stale analysis info should not be
-  // available at this point.
-  const PassInfo *PI =
-    PassRegistry::getPassRegistry()->getPassInfo(RequiredPass->getPassID());
-  if (PI && PI->isAnalysis() && 
-      FPP->getTopLevelManager()->findAnalysisPass(RequiredPass->getPassID())) {
-    delete RequiredPass;
-    return;
-  }
-
   FPP->add(RequiredPass);
 
   // Register P as the last user of RequiredPass.
