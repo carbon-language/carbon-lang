@@ -603,7 +603,11 @@ void ScheduleDAGMI::initQueues() {
 
   SchedImpl->registerRoots();
 
+  // Advance past initial DebugValues.
+  assert(TopRPTracker.getPos() == RegionBegin && "bad initial Top tracker");
   CurrentTop = nextIfDebug(RegionBegin, RegionEnd);
+  TopRPTracker.setPos(CurrentTop);
+
   CurrentBottom = RegionEnd;
 }
 

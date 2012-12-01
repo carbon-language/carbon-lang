@@ -150,7 +150,8 @@ class RegPressureTracker {
   bool RequireIntervals;
 
   /// Register pressure corresponds to liveness before this instruction
-  /// iterator. It may point to the end of the block rather than an instruction.
+  /// iterator. It may point to the end of the block or a DebugValue rather than
+  /// an instruction.
   MachineBasicBlock::const_iterator CurrPos;
 
   /// Pressure map indexed by pressure set ID, not class ID.
@@ -183,6 +184,10 @@ public:
   // CurrPos. Since the pressure is computed before CurrPos, the iterator
   // position changes while pressure does not.
   void setPos(MachineBasicBlock::const_iterator Pos) { CurrPos = Pos; }
+
+  /// \brief Get the SlotIndex for the first nondebug instruction including or
+  /// after the current position.
+  SlotIndex getCurrSlot() const;
 
   /// Recede across the previous instruction.
   bool recede();

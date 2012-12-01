@@ -713,17 +713,17 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   addSchedBarrierDeps();
 
   // Walk the list of instructions, from bottom moving up.
-  MachineInstr *PrevMI = NULL;
+  MachineInstr *DbgMI = NULL;
   for (MachineBasicBlock::iterator MII = RegionEnd, MIE = RegionBegin;
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
-    if (MI && PrevMI) {
-      DbgValues.push_back(std::make_pair(PrevMI, MI));
-      PrevMI = NULL;
+    if (MI && DbgMI) {
+      DbgValues.push_back(std::make_pair(DbgMI, MI));
+      DbgMI = NULL;
     }
 
     if (MI->isDebugValue()) {
-      PrevMI = MI;
+      DbgMI = MI;
       continue;
     }
     if (RPTracker) {
@@ -917,8 +917,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       }
     }
   }
-  if (PrevMI)
-    FirstDbgValue = PrevMI;
+  if (DbgMI)
+    FirstDbgValue = DbgMI;
 
   Defs.clear();
   Uses.clear();
