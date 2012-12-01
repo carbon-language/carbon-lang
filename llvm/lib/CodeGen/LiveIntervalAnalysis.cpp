@@ -1292,7 +1292,11 @@ private:
       MachineBasicBlock::iterator MII(MI);
       ++MII;
       MachineBasicBlock* MBB = MI->getParent();
-      for (; MII != MBB->end() && LIS.getInstructionIndex(MII) < OldIdx; ++MII){
+      for (; MII != MBB->end(); ++MII){
+        if (MII->isDebugValue())
+          continue;
+        if (LIS.getInstructionIndex(MII) < OldIdx)
+          break;
         for (MachineInstr::mop_iterator MOI = MII->operands_begin(),
                                         MOE = MII->operands_end();
              MOI != MOE; ++MOI) {
