@@ -1033,7 +1033,7 @@ public:
   /// other than the copy or move constructors.
   bool hasConstexprNonCopyMoveConstructor() const {
     return data().HasConstexprNonCopyMoveConstructor ||
-           (!hasUserDeclaredConstructor() &&
+           (needsImplicitDefaultConstructor() &&
             defaultedDefaultConstructorIsConstexpr());
   }
 
@@ -1047,7 +1047,7 @@ public:
   /// \brief Determine whether this class has a constexpr default constructor.
   bool hasConstexprDefaultConstructor() const {
     return data().HasConstexprDefaultConstructor ||
-           (!data().UserDeclaredConstructor &&
+           (needsImplicitDefaultConstructor() &&
             defaultedDefaultConstructorIsConstexpr());
   }
 
