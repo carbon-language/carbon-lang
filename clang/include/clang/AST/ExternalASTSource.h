@@ -24,7 +24,9 @@ class ASTConsumer;
 class CXXBaseSpecifier;
 class DeclarationName;
 class ExternalSemaSource; // layering violation required for downcasting
+class FieldDecl;
 class NamedDecl;
+class RecordDecl;
 class Selector;
 class Stmt;
 class TagDecl;

@@ -16,33 +16,34 @@
 
 #include "clang/AST/APValue.h"
 #include "clang/AST/DeclBase.h"
-#include "clang/AST/Redeclarable.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/AST/Redeclarable.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/Linkage.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
+struct ASTTemplateArgumentListInfo;
 class CXXTemporary;
+class CompoundStmt;
+class DependentFunctionTemplateSpecializationInfo;
 class Expr;
 class FunctionTemplateDecl;
-class Stmt;
-class CompoundStmt;
-class StringLiteral;
-class NestedNameSpecifier;
-class TemplateParameterList;
-class TemplateArgumentList;
-struct ASTTemplateArgumentListInfo;
-class MemberSpecializationInfo;
 class FunctionTemplateSpecializationInfo;
-class DependentFunctionTemplateSpecializationInfo;
+class LabelStmt;
+class MemberSpecializationInfo;
+class Module;
+class NestedNameSpecifier;
+class Stmt;
+class StringLiteral;
+class TemplateArgumentList;
+class TemplateParameterList;
 class TypeLoc;
 class UnresolvedSetImpl;
-class LabelStmt;
-class Module;
-  
+
 /// \brief A container of type source information.
 ///
 /// A client can read the relevant info using TypeLoc wrappers, e.g:

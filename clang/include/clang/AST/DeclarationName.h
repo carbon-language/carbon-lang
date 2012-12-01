@@ -14,8 +14,6 @@
 #define LLVM_CLANG_AST_DECLARATIONNAME_H
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/AST/Type.h"
-#include "clang/AST/CanonicalType.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/Support/Compiler.h"
 
@@ -24,14 +22,20 @@ namespace llvm {
 }
 
 namespace clang {
-  class CXXSpecialName;
-  class CXXOperatorIdName;
+  class ASTContext;
   class CXXLiteralOperatorIdName;
+  class CXXOperatorIdName;
+  class CXXSpecialName;
   class DeclarationNameExtra;
   class IdentifierInfo;
   class MultiKeywordSelector;
-  class UsingDirectiveDecl;
+  class QualType;
+  class Type;
   class TypeSourceInfo;
+  class UsingDirectiveDecl;
+
+  template <typename> class CanQual;
+  typedef CanQual<Type> CanQualType;
 
 /// DeclarationName - The name of a declaration. In the common case,
 /// this just stores an IdentifierInfo pointer to a normal
@@ -349,23 +353,15 @@ public:
 
   /// getCXXConstructorName - Returns the name of a C++ constructor
   /// for the given Type.
-  DeclarationName getCXXConstructorName(CanQualType Ty) {
-    return getCXXSpecialName(DeclarationName::CXXConstructorName, 
-                             Ty.getUnqualifiedType());
-  }
+  DeclarationName getCXXConstructorName(CanQualType Ty);
 
   /// getCXXDestructorName - Returns the name of a C++ destructor
   /// for the given Type.
-  DeclarationName getCXXDestructorName(CanQualType Ty) {
-    return getCXXSpecialName(DeclarationName::CXXDestructorName, 
-                             Ty.getUnqualifiedType());
-  }
+  DeclarationName getCXXDestructorName(CanQualType Ty);
 
   /// getCXXConversionFunctionName - Returns the name of a C++
   /// conversion function for the given Type.
-  DeclarationName getCXXConversionFunctionName(CanQualType Ty) {
-    return getCXXSpecialName(DeclarationName::CXXConversionFunctionName, Ty);
-  }
+  DeclarationName getCXXConversionFunctionName(CanQualType Ty);
 
   /// getCXXSpecialName - Returns a declaration name for special kind
   /// of C++ name, e.g., for a constructor, destructor, or conversion

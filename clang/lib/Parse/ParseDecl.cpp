@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/OpenCL.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"

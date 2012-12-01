@@ -24,6 +24,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
 using namespace arcmt;

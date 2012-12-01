@@ -22,7 +22,6 @@
 #include "clang/AST/OperationKinds.h"
 #include "clang/AST/ASTVector.h"
 #include "clang/AST/TemplateBase.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TypeTraits.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
@@ -32,21 +31,22 @@
 #include <cctype>
 
 namespace clang {
-  class ASTContext;
   class APValue;
+  class ASTContext;
+  class BlockDecl;
+  class CXXBaseSpecifier;
+  class CXXMemberCallExpr;
+  class CXXOperatorCallExpr;
   class CastExpr;
   class Decl;
   class IdentifierInfo;
-  class ParmVarDecl;
-  class NamedDecl;
-  class ValueDecl;
-  class BlockDecl;
-  class CXXBaseSpecifier;
-  class CXXOperatorCallExpr;
   class MaterializeTemporaryExpr;
-  class CXXMemberCallExpr;
+  class NamedDecl;
   class ObjCPropertyRefExpr;
   class OpaqueValueExpr;
+  class ParmVarDecl;
+  class TargetInfo;
+  class ValueDecl;
 
 /// \brief A simple array of base specifiers.
 typedef SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;

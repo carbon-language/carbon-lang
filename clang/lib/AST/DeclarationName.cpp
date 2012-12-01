@@ -364,6 +364,21 @@ DeclarationNameTable::~DeclarationNameTable() {
   delete LiteralNames;
 }
 
+DeclarationName DeclarationNameTable::getCXXConstructorName(CanQualType Ty) {
+  return getCXXSpecialName(DeclarationName::CXXConstructorName,
+                           Ty.getUnqualifiedType());
+}
+
+DeclarationName DeclarationNameTable::getCXXDestructorName(CanQualType Ty) {
+  return getCXXSpecialName(DeclarationName::CXXDestructorName,
+                           Ty.getUnqualifiedType());
+}
+
+DeclarationName
+DeclarationNameTable::getCXXConversionFunctionName(CanQualType Ty) {
+  return getCXXSpecialName(DeclarationName::CXXConversionFunctionName, Ty);
+}
+
 DeclarationName
 DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
                                         CanQualType Ty) {
