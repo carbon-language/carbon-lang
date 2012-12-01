@@ -990,6 +990,13 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
                    options::OPT_mdspr2, options::OPT_mno_dspr2,
                    "dspr2");
 
+  if (Arg *A = Args.getLastArg(options::OPT_mxgot, options::OPT_mno_xgot)) {
+    if (A->getOption().matches(options::OPT_mxgot)) {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-mxgot");
+    }
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_G)) {
     StringRef v = A->getValue();
     CmdArgs.push_back("-mllvm");
