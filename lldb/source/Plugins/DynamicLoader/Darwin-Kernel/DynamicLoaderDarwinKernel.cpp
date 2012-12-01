@@ -321,6 +321,16 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                 {
                     module_sp = target.GetSharedModule (module_spec);
                 }
+
+                // If we managed to find a module, append it to the target's list of images
+                if (module_sp && module_sp->GetUUID() == memory_module_sp->GetUUID())
+                {
+                    target.GetImages().Append(module_sp);
+                    if (memory_module_is_kernel && target.GetExecutableModulePointer() != module_sp.get())
+                    {
+                        target.SetExecutableModule (module_sp, false);
+                    }
+                }
             }
         }
     }
@@ -330,12 +340,6 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
     {
         if (module_sp->GetUUID() == memory_module_sp->GetUUID())
         {
-            target.GetImages().Append(module_sp);
-            if (memory_module_is_kernel && target.GetExecutableModulePointer() != module_sp.get())
-            {
-                target.SetExecutableModule (module_sp, false);
-            }
-
             ObjectFile *ondisk_object_file = module_sp->GetObjectFile();
             ObjectFile *memory_object_file = memory_module_sp->GetObjectFile();
             if (memory_object_file && ondisk_object_file)
@@ -723,14 +727,6 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
             {
                 image_infos[i].reference_list = 0;
             }
-//            printf ("[%3u] %*.*s: address=0x%16.16" PRIx64 ", size=0x%16.16" PRIx64 ", version=0x%16.16" PRIx64 ", load_tag=0x%8.8x, flags=0x%8.8x\n",
-//                    i,
-//                    KERNEL_MODULE_MAX_NAME, KERNEL_MODULE_MAX_NAME,  (char *)name_data, 
-//                    image_infos[i].address, 
-//                    image_infos[i].size,
-//                    image_infos[i].version,
-//                    image_infos[i].load_tag,
-//                    image_infos[i].flags);
         }
         if (i < image_infos.size())
             image_infos.resize(i);
