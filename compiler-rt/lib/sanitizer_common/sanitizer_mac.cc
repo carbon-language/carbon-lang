@@ -162,6 +162,15 @@ void MemoryMappingLayout::Reset() {
   current_filetype_ = 0;
 }
 
+// static
+void MemoryMappingLayout::CacheMemoryMappings() {
+  // No-op on Mac for now.
+}
+
+void MemoryMappingLayout::LoadFromCache() {
+  // No-op on Mac for now.
+}
+
 // Next and NextSegmentLoad were inspired by base/sysinfo.cc in
 // Google Perftools, http://code.google.com/p/google-perftools.
 

@@ -16,6 +16,7 @@
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_mutex.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 
@@ -217,13 +218,23 @@ void ReExec() {
 }
 
 // ----------------- sanitizer_procmaps.h
+char *MemoryMappingLayout::cached_proc_self_maps_buff_ = NULL;
+uptr MemoryMappingLayout::cached_proc_self_maps_buff_mmaped_size_ = 0;
+uptr MemoryMappingLayout::cached_proc_self_maps_buff_len_ = 0;
+StaticSpinMutex MemoryMappingLayout::cache_lock_;
+
 MemoryMappingLayout::MemoryMappingLayout() {
   proc_self_maps_buff_len_ =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,
                        &proc_self_maps_buff_mmaped_size_, 1 << 26);
-  CHECK_GT(proc_self_maps_buff_len_, 0);
+  if (proc_self_maps_buff_mmaped_size_ == 0) {
+    LoadFromCache();
+    CHECK_GT(proc_self_maps_buff_len_, 0);
+  }
   // internal_write(2, proc_self_maps_buff_, proc_self_maps_buff_len_);
   Reset();
+  // FIXME: in the future we may want to cache the mappings on demand only.
+  CacheMemoryMappings();
 }
 
 MemoryMappingLayout::~MemoryMappingLayout() {
@@ -232,6 +243,39 @@ MemoryMappingLayout::~MemoryMappingLayout() {
 
 void MemoryMappingLayout::Reset() {
   current_ = proc_self_maps_buff_;
+}
+
+// static
+void MemoryMappingLayout::CacheMemoryMappings() {
+  SpinMutexLock l(&cache_lock_);
+  // Don't invalidate the cache if the mappings are unavailable.
+  char *old_proc_self_maps_buff_ = cached_proc_self_maps_buff_;
+  uptr old_proc_self_maps_buff_mmaped_size_ =
+      cached_proc_self_maps_buff_mmaped_size_;
+  uptr old_proc_self_maps_buff_len_ = cached_proc_self_maps_buff_len_;
+  cached_proc_self_maps_buff_len_ =
+      ReadFileToBuffer("/proc/self/maps", &cached_proc_self_maps_buff_,
+                       &cached_proc_self_maps_buff_mmaped_size_, 1 << 26);
+  if (cached_proc_self_maps_buff_mmaped_size_ == 0) {
+    cached_proc_self_maps_buff_ = old_proc_self_maps_buff_;
+    cached_proc_self_maps_buff_mmaped_size_ =
+        old_proc_self_maps_buff_mmaped_size_;
+    cached_proc_self_maps_buff_len_ = old_proc_self_maps_buff_len_;
+  } else {
+    if (old_proc_self_maps_buff_mmaped_size_) {
+      UnmapOrDie(old_proc_self_maps_buff_,
+                 old_proc_self_maps_buff_mmaped_size_);
+    }
+  }
+}
+
+void MemoryMappingLayout::LoadFromCache() {
+  SpinMutexLock l(&cache_lock_);
+  if (cached_proc_self_maps_buff_) {
+    proc_self_maps_buff_ = cached_proc_self_maps_buff_;
+    proc_self_maps_buff_len_ = cached_proc_self_maps_buff_len_;
+    proc_self_maps_buff_mmaped_size_ = cached_proc_self_maps_buff_mmaped_size_;
+  }
 }
 
 // Parse a hex value in str and update str.
