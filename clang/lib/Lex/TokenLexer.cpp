@@ -647,6 +647,12 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     StartLoc = getExpansionLocForMacroDefLoc(StartLoc);
   if (EndLoc.isFileID())
     EndLoc = getExpansionLocForMacroDefLoc(EndLoc);
+  FileID MacroFID = SM.getFileID(MacroExpansionStart);
+  while (SM.getFileID(StartLoc) != MacroFID)
+    StartLoc = SM.getImmediateExpansionRange(StartLoc).first;
+  while (SM.getFileID(EndLoc) != MacroFID)
+    EndLoc = SM.getImmediateExpansionRange(EndLoc).second;
+    
   Tok.setLocation(SM.createExpansionLoc(Tok.getLocation(), StartLoc, EndLoc,
                                         Tok.getLength()));
 
