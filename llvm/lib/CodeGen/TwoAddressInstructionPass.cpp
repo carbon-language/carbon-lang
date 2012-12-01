@@ -92,10 +92,6 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   // virtual registers. e.g. r1 = move v1024.
   DenseMap<unsigned, unsigned> DstRegMap;
 
-  /// RegSequences - Keep track the list of REG_SEQUENCE instructions seen
-  /// during the initial walk of the machine function.
-  SmallVector<MachineInstr*, 16> RegSequences;
-
   bool sink3AddrInstruction(MachineInstr *MI, unsigned Reg,
                             MachineBasicBlock::iterator OldPos);
 
@@ -135,11 +131,7 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   typedef SmallDenseMap<unsigned, TiedPairList> TiedOperandMap;
   bool collectTiedOperands(MachineInstr *MI, TiedOperandMap&);
   void processTiedPairs(MachineInstr *MI, TiedPairList&, unsigned &Dist);
-
-  /// eliminateRegSequences - Eliminate REG_SEQUENCE instructions as part of
-  /// the de-ssa process. This replaces sources of REG_SEQUENCE as sub-register
-  /// references of the register defined by REG_SEQUENCE.
-  bool eliminateRegSequences();
+  void eliminateRegSequence(MachineBasicBlock::iterator&);
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -1375,9 +1367,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
         continue;
       }
 
-      // Remember REG_SEQUENCE instructions, we'll deal with them later.
+      // Expand REG_SEQUENCE instructions. This will position mi at the first
+      // expanded instruction.
       if (mi->isRegSequence())
-        RegSequences.push_back(&*mi);
+        eliminateRegSequence(mi);
 
       DistanceMap.insert(std::make_pair(mi, ++Dist));
 
@@ -1444,192 +1437,81 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
     }
   }
 
-  // Eliminate REG_SEQUENCE instructions. Their whole purpose was to preseve
-  // SSA form. It's now safe to de-SSA.
-  MadeChange |= eliminateRegSequences();
-
   return MadeChange;
 }
 
-static void UpdateRegSequenceSrcs(unsigned SrcReg,
-                                  unsigned DstReg, unsigned SubIdx,
-                                  MachineRegisterInfo *MRI,
-                                  const TargetRegisterInfo &TRI) {
-  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
-         RE = MRI->reg_end(); RI != RE; ) {
-    MachineOperand &MO = RI.getOperand();
-    ++RI;
-    MO.substVirtReg(DstReg, SubIdx, TRI);
-  }
-}
-
-// Find the first def of Reg, assuming they are all in the same basic block.
-static MachineInstr *findFirstDef(unsigned Reg, MachineRegisterInfo *MRI) {
-  SmallPtrSet<MachineInstr*, 8> Defs;
-  MachineInstr *First = 0;
-  for (MachineRegisterInfo::def_iterator RI = MRI->def_begin(Reg);
-       MachineInstr *MI = RI.skipInstruction(); Defs.insert(MI))
-    First = MI;
-  if (!First)
-    return 0;
-
-  MachineBasicBlock *MBB = First->getParent();
-  MachineBasicBlock::iterator A = First, B = First;
-  bool Moving;
-  do {
-    Moving = false;
-    if (A != MBB->begin()) {
-      Moving = true;
-      --A;
-      if (Defs.erase(A)) First = A;
-    }
-    if (B != MBB->end()) {
-      Defs.erase(B);
-      ++B;
-      Moving = true;
-    }
-  } while (Moving && !Defs.empty());
-  assert(Defs.empty() && "Instructions outside basic block!");
-  return First;
-}
-
-static bool HasOtherRegSequenceUses(unsigned Reg, MachineInstr *RegSeq,
-                                    MachineRegisterInfo *MRI) {
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
-    MachineInstr *UseMI = &*UI;
-    if (UseMI != RegSeq && UseMI->isRegSequence())
-      return true;
-  }
-  return false;
-}
-
-/// eliminateRegSequences - Eliminate REG_SEQUENCE instructions as part
-/// of the de-ssa process. This replaces sources of REG_SEQUENCE as
-/// sub-register references of the register defined by REG_SEQUENCE. e.g.
+/// Eliminate a REG_SEQUENCE instruction as part of the de-ssa process.
 ///
-/// %reg1029<def>, %reg1030<def> = VLD1q16 %reg1024<kill>, ...
-/// %reg1031<def> = REG_SEQUENCE %reg1029<kill>, 5, %reg1030<kill>, 6
-/// =>
-/// %reg1031:5<def>, %reg1031:6<def> = VLD1q16 %reg1024<kill>, ...
-bool TwoAddressInstructionPass::eliminateRegSequences() {
-  if (RegSequences.empty())
-    return false;
-
-  for (unsigned i = 0, e = RegSequences.size(); i != e; ++i) {
-    MachineInstr *MI = RegSequences[i];
-    unsigned DstReg = MI->getOperand(0).getReg();
-    if (MI->getOperand(0).getSubReg() ||
-        TargetRegisterInfo::isPhysicalRegister(DstReg) ||
-        !(MI->getNumOperands() & 1)) {
-      DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
-      llvm_unreachable(0);
-    }
-
-    bool IsImpDef = true;
-    SmallVector<unsigned, 4> RealSrcs;
-    SmallSet<unsigned, 4> Seen;
-    for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
-      // Nothing needs to be inserted for <undef> operands.
-      if (MI->getOperand(i).isUndef()) {
-        MI->getOperand(i).setReg(0);
-        continue;
-      }
-      unsigned SrcReg = MI->getOperand(i).getReg();
-      unsigned SrcSubIdx = MI->getOperand(i).getSubReg();
-      unsigned SubIdx = MI->getOperand(i+1).getImm();
-      // DefMI of NULL means the value does not have a vreg in this block
-      // i.e., its a physical register or a subreg.
-      // In either case we force a copy to be generated.
-      MachineInstr *DefMI = NULL;
-      if (!MI->getOperand(i).getSubReg() &&
-          !TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
-        DefMI = MRI->getUniqueVRegDef(SrcReg);
-      }
-
-      if (DefMI && DefMI->isImplicitDef()) {
-        DefMI->eraseFromParent();
-        continue;
-      }
-      IsImpDef = false;
-
-      // Remember COPY sources. These might be candidate for coalescing.
-      if (DefMI && DefMI->isCopy() && DefMI->getOperand(1).getSubReg())
-        RealSrcs.push_back(DefMI->getOperand(1).getReg());
-
-      bool isKill = MI->getOperand(i).isKill();
-      if (!DefMI || !Seen.insert(SrcReg) ||
-          MI->getParent() != DefMI->getParent() ||
-          !isKill || HasOtherRegSequenceUses(SrcReg, MI, MRI) ||
-          !TRI->getMatchingSuperRegClass(MRI->getRegClass(DstReg),
-                                         MRI->getRegClass(SrcReg), SubIdx)) {
-        // REG_SEQUENCE cannot have duplicated operands, add a copy.
-        // Also add an copy if the source is live-in the block. We don't want
-        // to end up with a partial-redef of a livein, e.g.
-        // BB0:
-        // reg1051:10<def> =
-        // ...
-        // BB1:
-        // ... = reg1051:10
-        // BB2:
-        // reg1051:9<def> =
-        // LiveIntervalAnalysis won't like it.
-        //
-        // If the REG_SEQUENCE doesn't kill its source, keeping live variables
-        // correctly up to date becomes very difficult. Insert a copy.
-
-        // Defer any kill flag to the last operand using SrcReg. Otherwise, we
-        // might insert a COPY that uses SrcReg after is was killed.
-        if (isKill)
-          for (unsigned j = i + 2; j < e; j += 2)
-            if (MI->getOperand(j).getReg() == SrcReg) {
-              MI->getOperand(j).setIsKill();
-              isKill = false;
-              break;
-            }
-
-        MachineBasicBlock::iterator InsertLoc = MI;
-        MachineInstr *CopyMI = BuildMI(*MI->getParent(), InsertLoc,
-                                MI->getDebugLoc(), TII->get(TargetOpcode::COPY))
-            .addReg(DstReg, RegState::Define, SubIdx)
-            .addReg(SrcReg, getKillRegState(isKill), SrcSubIdx);
-        MI->getOperand(i).setReg(0);
-        if (LV && isKill && !TargetRegisterInfo::isPhysicalRegister(SrcReg))
-          LV->replaceKillInstruction(SrcReg, MI, CopyMI);
-        DEBUG(dbgs() << "Inserted: " << *CopyMI);
-      }
-    }
-
-    for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
-      unsigned SrcReg = MI->getOperand(i).getReg();
-      if (!SrcReg) continue;
-      unsigned SubIdx = MI->getOperand(i+1).getImm();
-      UpdateRegSequenceSrcs(SrcReg, DstReg, SubIdx, MRI, *TRI);
-    }
-
-    // Set <def,undef> flags on the first DstReg def in the basic block.
-    // It marks the beginning of the live range. All the other defs are
-    // read-modify-write.
-    if (MachineInstr *Def = findFirstDef(DstReg, MRI)) {
-      for (unsigned i = 0, e = Def->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO = Def->getOperand(i);
-        if (MO.isReg() && MO.isDef() && MO.getReg() == DstReg)
-          MO.setIsUndef();
-      }
-      DEBUG(dbgs() << "First def: " << *Def);
-    }
-
-    if (IsImpDef) {
-      DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");
-      MI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
-      for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
-        MI->RemoveOperand(j);
-    } else {
-      DEBUG(dbgs() << "Eliminated: " << *MI);
-      MI->eraseFromParent();
-    }
+/// The instruction is turned into a sequence of sub-register copies:
+///
+///   %dst = REG_SEQUENCE %v1, ssub0, %v2, ssub1
+///
+/// Becomes:
+///
+///   %dst:ssub0<def,undef> = COPY %v1
+///   %dst:ssub1<def> = COPY %v2
+///
+void TwoAddressInstructionPass::
+eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
+  MachineInstr *MI = MBBI;
+  unsigned DstReg = MI->getOperand(0).getReg();
+  if (MI->getOperand(0).getSubReg() ||
+      TargetRegisterInfo::isPhysicalRegister(DstReg) ||
+      !(MI->getNumOperands() & 1)) {
+    DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
+    llvm_unreachable(0);
   }
 
-  RegSequences.clear();
-  return true;
+  bool DefEmitted = false;
+  for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
+    MachineOperand &UseMO = MI->getOperand(i);
+    unsigned SrcReg = UseMO.getReg();
+    unsigned SubIdx = MI->getOperand(i+1).getImm();
+    // Nothing needs to be inserted for <undef> operands.
+    if (UseMO.isUndef())
+      continue;
+
+    // Defer any kill flag to the last operand using SrcReg. Otherwise, we
+    // might insert a COPY that uses SrcReg after is was killed.
+    bool isKill = UseMO.isKill();
+    if (isKill)
+      for (unsigned j = i + 2; j < e; j += 2)
+        if (MI->getOperand(j).getReg() == SrcReg) {
+          MI->getOperand(j).setIsKill();
+          UseMO.setIsKill(false);
+          isKill = false;
+          break;
+        }
+
+    // Insert the sub-register copy.
+    MachineInstr *CopyMI = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+                                   TII->get(TargetOpcode::COPY))
+      .addReg(DstReg, RegState::Define, SubIdx)
+      .addOperand(UseMO);
+
+    // The first def needs an <undef> flag because there is no live register
+    // before it.
+    if (!DefEmitted) {
+      CopyMI->getOperand(0).setIsUndef(true);
+      // Return an iterator pointing to the first inserted instr.
+      MBBI = CopyMI;
+    }
+    DefEmitted = true;
+
+    // Update LiveVariables' kill info.
+    if (LV && isKill && !TargetRegisterInfo::isPhysicalRegister(SrcReg))
+      LV->replaceKillInstruction(SrcReg, MI, CopyMI);
+
+    DEBUG(dbgs() << "Inserted: " << *CopyMI);
+  }
+
+  if (!DefEmitted) {
+    DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");
+    MI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
+    for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
+      MI->RemoveOperand(j);
+  } else {
+    DEBUG(dbgs() << "Eliminated: " << *MI);
+    MI->eraseFromParent();
+  }
 }
