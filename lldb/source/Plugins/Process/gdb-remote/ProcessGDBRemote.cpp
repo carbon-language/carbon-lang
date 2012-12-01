@@ -564,7 +564,7 @@ ProcessGDBRemote::CheckForKernel (Stream *strm)
         if (DoReadMemory (0xffffff8000002010ULL, buf, 8, error) == 8)
         {   
             uint32_t offset = 0; 
-            kernel_addr = data8.GetU32(&offset);
+            kernel_addr = data8.GetU64(&offset);
             memory_module_sp = ReadModuleFromMemory (FileSpec("mach_kernel", false), kernel_addr, false, false);
             if (!memory_module_sp.get()
                 || !memory_module_sp->GetUUID().IsValid()
