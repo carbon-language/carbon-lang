@@ -24,6 +24,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 using namespace ento;
