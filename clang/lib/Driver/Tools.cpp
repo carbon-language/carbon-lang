@@ -1466,14 +1466,12 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
   }
 
   // Only one runtime library can be used at once.
-  // FIXME: Allow Ubsan to be combined with the other two.
   bool NeedsAsan = needsAsanRt();
   bool NeedsTsan = needsTsanRt();
-  bool NeedsUbsan = needsUbsanRt();
-  if (NeedsAsan + NeedsTsan + NeedsUbsan > 1)
+  if (NeedsAsan && NeedsTsan)
     D.Diag(diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForKind(D, Args, NeedsAsan ? NeedsAsanRt : NeedsTsanRt)
-      << lastArgumentForKind(D, Args, NeedsUbsan ? NeedsUbsanRt : NeedsTsanRt);
+      << lastArgumentForKind(D, Args, NeedsAsanRt)
+      << lastArgumentForKind(D, Args, NeedsTsanRt);
 
   // If -fsanitize contains extra features of ASan, it should also
   // explicitly contain -fsanitize=address.
@@ -1545,6 +1543,7 @@ static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
                              TC.getArchName() + ".a"));
     CmdArgs.push_back(Args.MakeArgString(LibUbsan));
     CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-export-dynamic");
   }
 }
 
