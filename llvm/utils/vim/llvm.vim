@@ -14,50 +14,47 @@ syn case match
 " Types.
 " Types also include struct, array, vector, etc. but these don't
 " benefit as much from having dedicated highlighting rules.
-syn keyword llvmType void float double half
-syn keyword llvmType x86_fp80 fp128 ppc_fp128
+syn keyword llvmType void half float double x86_fp80 fp128 ppc_fp128
+syn keyword llvmType label metadata x86_mmx
 syn keyword llvmType type label opaque
 syn match   llvmType /\<i\d\+\>/
 
 " Instructions.
 " The true and false tokens can be used for comparison opcodes, but it's
 " much more common for these tokens to be used for boolean constants.
-syn keyword llvmStatement add fadd sub fsub mul fmul
-syn keyword llvmStatement sdiv udiv fdiv srem urem frem
-syn keyword llvmStatement and or xor
-syn keyword llvmStatement icmp fcmp
-syn keyword llvmStatement eq ne ugt uge ult ule sgt sge slt sle
-syn keyword llvmStatement oeq ogt oge olt ole one ord ueq ugt uge
-syn keyword llvmStatement ult ule une uno
-syn keyword llvmStatement nuw nsw exact inbounds nnan ninf nsz arcp fast
-syn keyword llvmStatement phi call select shl lshr ashr va_arg
-syn keyword llvmStatement trunc zext sext
-syn keyword llvmStatement fptrunc fpext fptoui fptosi uitofp sitofp
-syn keyword llvmStatement ptrtoint inttoptr bitcast
-syn keyword llvmStatement ret br indirectbr switch invoke unwind unreachable
-syn keyword llvmStatement malloc alloca free load store getelementptr
-syn keyword llvmStatement extractelement insertelement shufflevector
-syn keyword llvmStatement extractvalue insertvalue
+syn keyword llvmStatement add alloca and arcp ashr atomicrmw bitcast br call
+syn keyword llvmStatement cmpxchg eq exact extractelement extractvalue fadd fast
+syn keyword llvmStatement fcmp fdiv fence fmul fpext fptosi fptoui fptrunc free
+syn keyword llvmStatement frem fsub getelementptr icmp inbounds indirectbr
+syn keyword llvmStatement insertelement insertvalue inttoptr invoke landingpad
+syn keyword llvmStatement load lshr malloc max min mul nand ne ninf nnan nsw nsz
+syn keyword llvmStatement nuw oeq oge ogt ole olt one or ord phi ptrtoint resume
+syn keyword llvmStatement ret sdiv select sext sge sgt shl shufflevector sitofp
+syn keyword llvmStatement sle slt srem store sub switch trunc udiv ueq uge ugt
+syn keyword llvmStatement uitofp ule ult umax umin une uno unreachable unwind
+syn keyword llvmStatement urem va_arg xchg xor zext
 
 " Keywords.
-syn keyword llvmKeyword define declare global constant
-syn keyword llvmKeyword internal external private
-syn keyword llvmKeyword linkonce linkonce_odr weak weak_odr appending
-syn keyword llvmKeyword common extern_weak
-syn keyword llvmKeyword thread_local dllimport dllexport
-syn keyword llvmKeyword hidden protected default
-syn keyword llvmKeyword except deplibs
-syn keyword llvmKeyword volatile fastcc coldcc cc ccc
-syn keyword llvmKeyword x86_stdcallcc x86_fastcallcc
-syn keyword llvmKeyword ptx_kernel ptx_device
-syn keyword llvmKeyword signext zeroext inreg sret nounwind noreturn
-syn keyword llvmKeyword nocapture byval nest readnone readonly noalias uwtable
-syn keyword llvmKeyword inlinehint noinline alwaysinline optsize ssp sspreq
-syn keyword llvmKeyword noredzone noimplicitfloat naked alignstack
-syn keyword llvmKeyword module asm align tail to
-syn keyword llvmKeyword addrspace section alias sideeffect c gc
-syn keyword llvmKeyword target datalayout triple
-syn keyword llvmKeyword blockaddress
+syn keyword llvmKeyword acq_rel acquire address_safety addrspace alias align
+syn keyword llvmKeyword alignstack alwaysinline appending arm_aapcs_vfpcc
+syn keyword llvmKeyword arm_aapcscc arm_apcscc asm atomic available_externally
+syn keyword llvmKeyword blockaddress byval c catch cc ccc cleanup coldcc common
+syn keyword llvmKeyword constant datalayout declare default define deplibs
+syn keyword llvmKeyword dllexport dllimport except extern_weak external fastcc
+syn keyword llvmKeyword filter gc global hidden initialexec inlinehint inreg
+syn keyword llvmKeyword intel_ocl_bicc inteldialect internal linker_private
+syn keyword llvmKeyword linker_private_weak linker_private_weak_def_auto
+syn keyword llvmKeyword linkonce linkonce_odr linkonce_odr_auto_hide
+syn keyword llvmKeyword localdynamic localexec minsize module monotonic
+syn keyword llvmKeyword msp430_intrcc naked nest noalias nocapture
+syn keyword llvmKeyword noimplicitfloat noinline nonlazybind noredzone noreturn
+syn keyword llvmKeyword nounwind optsize personality private protected
+syn keyword llvmKeyword ptx_device ptx_kernel readnone readonly release
+syn keyword llvmKeyword returns_twice section seq_cst sideeffect signext
+syn keyword llvmKeyword singlethread spir_func spir_kernel sret ssp sspreq tail
+syn keyword llvmKeyword target thread_local to triple unnamed_addr unordered
+syn keyword llvmKeyword uwtable volatile weak weak_odr x86_fastcallcc
+syn keyword llvmKeyword x86_stdcallcc x86_thiscallcc zeroext
 
 " Obsolete keywords.
 syn keyword llvmError  getresult begin end
