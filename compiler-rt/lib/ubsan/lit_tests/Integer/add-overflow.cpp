@@ -13,7 +13,7 @@ int main() {
 #ifdef ADD_I32
   int32_t k = 0x12345678;
   k += 0x789abcde;
-  // CHECK-ADD_I32: add-overflow.cpp:[[@LINE-1]]:5: fatal error: signed integer overflow: 305419896 + 2023406814 cannot be represented in type 'int32_t' (aka 'int')
+  // CHECK-ADD_I32: add-overflow.cpp:[[@LINE-1]]:5: runtime error: signed integer overflow: 305419896 + 2023406814 cannot be represented in type 'int32_t' (aka 'int')
 #endif
 
 #ifdef ADD_I64

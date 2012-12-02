@@ -12,7 +12,7 @@ int main() {
 
 #ifdef SUB_I32
   (void)(uint32_t(1) - uint32_t(2));
-  // CHECK-SUB_I32: usub-overflow.cpp:[[@LINE-1]]:22: fatal error: unsigned integer overflow: 1 - 2 cannot be represented in type 'unsigned int'
+  // CHECK-SUB_I32: usub-overflow.cpp:[[@LINE-1]]:22: runtime error: unsigned integer overflow: 1 - 2 cannot be represented in type 'unsigned int'
 #endif
 
 #ifdef SUB_I64

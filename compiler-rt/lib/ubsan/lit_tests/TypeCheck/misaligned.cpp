@@ -22,21 +22,21 @@ int main(int, char **argv) {
 
   switch (argv[1][0]) {
   case 'l':
-    // CHECK-LOAD: misaligned.cpp:26:12: fatal error: load of misaligned address 0x{{[0-9a-f]*}} for type 'int', which requires 4 byte alignment
+    // CHECK-LOAD: misaligned.cpp:26:12: runtime error: load of misaligned address 0x{{[0-9a-f]*}} for type 'int', which requires 4 byte alignment
     return *p;
   case 's':
-    // CHECK-STORE: misaligned.cpp:29:5: fatal error: store to misaligned address 0x{{[0-9a-f]*}} for type 'int', which requires 4 byte alignment
+    // CHECK-STORE: misaligned.cpp:29:5: runtime error: store to misaligned address 0x{{[0-9a-f]*}} for type 'int', which requires 4 byte alignment
     *p = 1;
     break;
   case 'r':
-    // CHECK-REFERENCE: misaligned.cpp:33:15: fatal error: reference binding to misaligned address 0x{{[0-9a-f]*}} for type 'int', which requires 4 byte alignment
+    // CHECK-REFERENCE: misaligned.cpp:33:15: runtime error: reference binding to misaligned address 0x{{[0-9a-f]*}} for type 'int', which requires 4 byte alignment
     {int &r = *p;}
     break;
   case 'm':
-    // CHECK-MEMBER: misaligned.cpp:37:15: fatal error: member access within misaligned address 0x{{[0-9a-f]*}} for type 'S', which requires 4 byte alignment
+    // CHECK-MEMBER: misaligned.cpp:37:15: runtime error: member access within misaligned address 0x{{[0-9a-f]*}} for type 'S', which requires 4 byte alignment
     return s->k;
   case 'f':
-    // CHECK-MEMFUN: misaligned.cpp:40:12: fatal error: member call on misaligned address 0x{{[0-9a-f]*}} for type 'S', which requires 4 byte alignment
+    // CHECK-MEMFUN: misaligned.cpp:40:12: runtime error: member call on misaligned address 0x{{[0-9a-f]*}} for type 'S', which requires 4 byte alignment
     return s->f();
   }
 }

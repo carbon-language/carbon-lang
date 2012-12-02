@@ -60,7 +60,7 @@ Diag::~Diag() {
   }
   if (UseAnsiColor)
     RawWrite("\033[31m");
-  RawWrite(" fatal error: ");
+  RawWrite(" runtime error: ");
   if (UseAnsiColor)
     RawWrite("\033[0;1m");
   for (const char *Msg = Message; *Msg; ++Msg) {

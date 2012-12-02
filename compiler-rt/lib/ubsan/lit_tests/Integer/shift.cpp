@@ -20,18 +20,18 @@ int main() {
   b <<= 1; // still ok, unsigned
 
 #ifdef LSH_OVERFLOW
-  // CHECK-LSH_OVERFLOW: shift.cpp:24:5: fatal error: left shift of negative value -2147483648
+  // CHECK-LSH_OVERFLOW: shift.cpp:24:5: runtime error: left shift of negative value -2147483648
   a OP 1;
 #endif
 
 #ifdef TOO_LOW
-  // CHECK-TOO_LOW: shift.cpp:29:5: fatal error: shift exponent -3 is negative
+  // CHECK-TOO_LOW: shift.cpp:29:5: runtime error: shift exponent -3 is negative
   a OP (-3);
 #endif
 
 #ifdef TOO_HIGH
   a = 0;
-  // CHECK-TOO_HIGH: shift.cpp:35:5: fatal error: shift exponent 32 is too large for 32-bit type 'int'
+  // CHECK-TOO_HIGH: shift.cpp:35:5: runtime error: shift exponent 32 is too large for 32-bit type 'int'
   a OP 32;
 #endif
 }

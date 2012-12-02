@@ -10,6 +10,6 @@ typedef long long intmax;
 #endif
 
 int main() {
-  // CHECK: div-zero.cpp:[[@LINE+1]]:12: fatal error: division by zero
+  // CHECK: div-zero.cpp:[[@LINE+1]]:12: runtime error: division by zero
   DIVIDEND / 0;
 }

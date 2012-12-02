@@ -13,7 +13,7 @@ int main() {
 #ifdef ADD_I32
   uint32_t k = 0x87654321;
   k += 0xedcba987;
-  // CHECK-ADD_I32: uadd-overflow.cpp:[[@LINE-1]]:5: fatal error: unsigned integer overflow: 2271560481 + 3989547399 cannot be represented in type 'uint32_t' (aka 'unsigned int')
+  // CHECK-ADD_I32: uadd-overflow.cpp:[[@LINE-1]]:5: runtime error: unsigned integer overflow: 2271560481 + 3989547399 cannot be represented in type 'uint32_t' (aka 'unsigned int')
 #endif
 
 #ifdef ADD_I64

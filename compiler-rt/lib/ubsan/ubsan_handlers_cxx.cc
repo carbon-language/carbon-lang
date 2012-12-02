@@ -36,7 +36,7 @@ void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
     << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer << Data->Type;
   // FIXME: If possible, say what type it actually points to. Produce a note
   //        pointing out the vptr:
-  // lib/VMCore/Instructions.cpp:2020:10: fatal error: member call on address
+  // lib/VMCore/Instructions.cpp:2020:10: runtime error: member call on address
   //       0xb7a4440 which does not point to an object of type
   //       'llvm::OverflowingBinaryOperator'
   //   return cast<OverflowingBinaryOperator>(this)->hasNoSignedWrap();

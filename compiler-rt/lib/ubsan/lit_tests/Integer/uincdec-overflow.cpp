@@ -10,7 +10,7 @@ int main() {
   n++;
   n++;
   unsigned m = 0;
-  // CHECK-INC: uincdec-overflow.cpp:15:3: fatal error: unsigned integer overflow: 4294967295 + 1 cannot be represented in type 'unsigned int'
-  // CHECK-DEC: uincdec-overflow.cpp:15:3: fatal error: unsigned integer overflow: 0 - 1 cannot be represented in type 'unsigned int'
+  // CHECK-INC: uincdec-overflow.cpp:15:3: runtime error: unsigned integer overflow: 4294967295 + 1 cannot be represented in type 'unsigned int'
+  // CHECK-DEC: uincdec-overflow.cpp:15:3: runtime error: unsigned integer overflow: 0 - 1 cannot be represented in type 'unsigned int'
   OP;
 }

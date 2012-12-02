@@ -12,7 +12,7 @@ int main() {
 
 #ifdef SUB_I32
   (void)(int32_t(-2) - int32_t(0x7fffffff));
-  // CHECK-SUB_I32: sub-overflow.cpp:[[@LINE-1]]:22: fatal error: signed integer overflow: -2 - 2147483647 cannot be represented in type 'int'
+  // CHECK-SUB_I32: sub-overflow.cpp:[[@LINE-1]]:22: runtime error: signed integer overflow: -2 - 2147483647 cannot be represented in type 'int'
 #endif
 
 #ifdef SUB_I64

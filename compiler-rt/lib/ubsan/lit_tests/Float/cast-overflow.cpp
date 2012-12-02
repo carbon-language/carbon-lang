@@ -53,28 +53,28 @@ int main(int argc, char **argv) {
   case '0':
     // Note that values between 0x7ffffe00 and 0x80000000 may or may not
     // successfully round-trip, depending on the rounding mode.
-    // CHECK-0: fatal error: value 2.14748{{.*}} is outside the range of representable values of type 'int'
+    // CHECK-0: runtime error: value 2.14748{{.*}} is outside the range of representable values of type 'int'
     return MaxFloatRepresentableAsInt + 0x80;
   case '1':
-    // CHECK-1: fatal error: value -2.14748{{.*}} is outside the range of representable values of type 'int'
+    // CHECK-1: runtime error: value -2.14748{{.*}} is outside the range of representable values of type 'int'
     return MinFloatRepresentableAsInt - 0x100;
   case '2':
-    // CHECK-2: fatal error: value -0.001 is outside the range of representable values of type 'unsigned int'
+    // CHECK-2: runtime error: value -0.001 is outside the range of representable values of type 'unsigned int'
     return (unsigned)-0.001;
   case '3':
-    // CHECK-3: fatal error: value 4.2949{{.*}} is outside the range of representable values of type 'unsigned int'
+    // CHECK-3: runtime error: value 4.2949{{.*}} is outside the range of representable values of type 'unsigned int'
     return (unsigned)(MaxFloatRepresentableAsUInt + 0x100);
 
   case '4':
-    // CHECK-4: fatal error: value {{.*}} is outside the range of representable values of type 'int'
+    // CHECK-4: runtime error: value {{.*}} is outside the range of representable values of type 'int'
     return Inf;
   case '5':
-    // CHECK-5: fatal error: value {{.*}} is outside the range of representable values of type 'int'
+    // CHECK-5: runtime error: value {{.*}} is outside the range of representable values of type 'int'
     return NaN;
 
     // Integer -> floating point overflow.
   case '6':
-    // CHECK-6: {{fatal error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'|__int128 not supported}}
+    // CHECK-6: {{runtime error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'|__int128 not supported}}
 #ifdef __SIZEOF_INT128__
     return (float)(FloatMaxAsUInt128 + 1);
 #else
@@ -84,15 +84,15 @@ int main(int argc, char **argv) {
   // FIXME: The backend cannot lower __fp16 operations on x86 yet.
   //case '7':
   //  (__fp16)65504; // ok
-  //  // CHECK-7: fatal error: value 65505 is outside the range of representable values of type '__fp16'
+  //  // CHECK-7: runtime error: value 65505 is outside the range of representable values of type '__fp16'
   //  return (__fp16)65505;
 
     // Floating point -> floating point overflow.
   case '8':
-    // CHECK-8: fatal error: value 1e+39 is outside the range of representable values of type 'float'
+    // CHECK-8: runtime error: value 1e+39 is outside the range of representable values of type 'float'
     return (float)1e39;
   case '9':
-    // CHECK-9: fatal error: value {{.*}} is outside the range of representable values of type 'double'
+    // CHECK-9: runtime error: value {{.*}} is outside the range of representable values of type 'double'
     return (double)Inf;
   }
 }
