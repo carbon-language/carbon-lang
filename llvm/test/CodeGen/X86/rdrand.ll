@@ -39,7 +39,7 @@ define i32 @_rdrand64_step(i64* %random_val) {
   %isvalid = extractvalue {i64, i32} %call, 1
   ret i32 %isvalid
 ; CHECK: _rdrand64_step:
-; CHECK: rdrandq	%r[[T1:[[a-z]+]]
+; CHECK: rdrandq	%r[[T1:[a-z]+]]
 ; CHECK: movq	%r[[T1]], (%r[[A0]])
 ; CHECK: movl	$1, %eax
 ; CHECK: cmovael	%e[[T1]], %eax
