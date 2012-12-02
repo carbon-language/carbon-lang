@@ -69,7 +69,9 @@ void member_access(S *p) {
   // CHECK-NEXT: icmp eq i64 %[[CACHEVAL]], %[[HASH]]
   // CHECK-NEXT: br i1
 
-  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss({{.*}}, i64 %{{.*}}, i64 %[[HASH]])
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss_abort({{.*}}, i64 %{{.*}}, i64 %[[HASH]])
+  // CHECK-NOT: unreachable
+  // CHECK: {{.*}}:
 
   // (2) Check 'p->b' is appropriately sized and aligned for a load.
 
@@ -102,7 +104,9 @@ void member_access(S *p) {
   // [...]
   // CHECK: getelementptr inbounds [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %
   // CHECK: br i1
-  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss({{.*}}, i64 %{{.*}}, i64 %{{.*}})
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss_abort({{.*}}, i64 %{{.*}}, i64 %{{.*}})
+  // CHECK-NOT: unreachable
+  // CHECK: {{.*}}:
 
   k = p->f();
 }

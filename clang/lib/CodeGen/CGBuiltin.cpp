@@ -409,7 +409,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     if (getLangOpts().SanitizeUnreachable)
       EmitCheck(Builder.getFalse(), "builtin_unreachable",
                 EmitCheckSourceLocation(E->getExprLoc()),
-                llvm::ArrayRef<llvm::Value *>());
+                llvm::ArrayRef<llvm::Value *>(), CRK_Unrecoverable);
     else
       Builder.CreateUnreachable();
 

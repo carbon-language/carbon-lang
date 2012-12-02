@@ -551,7 +551,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     if (getLangOpts().SanitizeReturn)
       EmitCheck(Builder.getFalse(), "missing_return",
                 EmitCheckSourceLocation(FD->getLocation()),
-                llvm::ArrayRef<llvm::Value*>());
+                llvm::ArrayRef<llvm::Value*>(), CRK_Unrecoverable);
     else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
       Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
     Builder.CreateUnreachable();
@@ -1141,7 +1141,8 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
               EmitCheckTypeDescriptor(size->getType())
             };
             EmitCheck(Builder.CreateICmpSGT(Size, Zero),
-                      "vla_bound_not_positive", StaticArgs, Size);
+                      "vla_bound_not_positive", StaticArgs, Size,
+                      CRK_Recoverable);
           }
 
           // Always zexting here would be wrong if it weren't

@@ -645,7 +645,8 @@ void ScalarExprEmitter::EmitFloatConversionCheck(Value *OrigSrc,
     CGF.EmitCheckTypeDescriptor(OrigSrcType),
     CGF.EmitCheckTypeDescriptor(DstType)
   };
-  CGF.EmitCheck(Check, "float_cast_overflow", StaticArgs, OrigSrc);
+  CGF.EmitCheck(Check, "float_cast_overflow", StaticArgs, OrigSrc,
+                CodeGenFunction::CRK_Recoverable);
 }
 
 /// EmitScalarConversion - Emit a conversion from the specified type to the
@@ -850,7 +851,8 @@ void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
     DynamicData.push_back(Info.RHS);
   }
 
-  CGF.EmitCheck(Check, CheckName, StaticData, DynamicData);
+  CGF.EmitCheck(Check, CheckName, StaticData, DynamicData,
+                CodeGenFunction::CRK_Recoverable);
 }
 
 //===----------------------------------------------------------------------===//

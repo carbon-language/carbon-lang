@@ -201,6 +201,8 @@ def mconstructor_aliases : Flag<["-"], "mconstructor-aliases">,
   HelpText<"Emit complete constructors and destructors as aliases when possible">;
 def mlink_bitcode_file : Separate<["-"], "mlink-bitcode-file">,
   HelpText<"Link the given bitcode file before performing optimizations.">;
+def fsanitize_recover : Flag<["-"], "fsanitize-recover">,
+  HelpText<"Attempt to recover from failed sanitizer checks when possible">;
 
 //===----------------------------------------------------------------------===//
 // Dependency Output Options
