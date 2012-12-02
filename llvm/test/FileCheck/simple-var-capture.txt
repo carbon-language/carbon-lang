@@ -2,11 +2,12 @@
 
 op1 r1
 op2 r1, r2
-; CHECK:        op1 [[REG:r[0-9]+]]
+; CHECK:        op1 [[REG:r[0-9]]]
 ; CHECK-NEXT:   op2 [[REG]]
 
 op3 r16, r18, r21
 op4 r30, r18, r21
 ; CHECK:        op3 {{r[0-9]+}}, [[REGa:r[0-9]+]], [[REGb:r[0-9]+]]
 ; CHECK-NEXT:   op4 {{r[0-9]+}}, [[REGa]], [[REGb]]
+
 

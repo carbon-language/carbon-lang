@@ -119,6 +119,13 @@ private:
   /// \brief Evaluates expression and stores the result to \p Value.
   /// \return true on success. false when the expression has invalid syntax.
   bool EvaluateExpression(StringRef Expr, std::string &Value) const;
+
+  /// \brief Finds the closing sequence of a regex variable usage or
+  /// definition. Str has to point in the beginning of the definition
+  /// (right after the opening sequence).
+  /// \return offset of the closing sequence within Str, or npos if it was not
+  /// found.
+  size_t FindRegexVarEnd(StringRef Str);
 };
 
 
@@ -187,8 +194,10 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
     // itself must be of the form "[a-zA-Z_][0-9a-zA-Z_]*", otherwise we reject
     // it.  This is to catch some common errors.
     if (PatternStr.startswith("[[")) {
-      // Verify that it is terminated properly.
-      size_t End = PatternStr.find("]]");
+      // Find the closing bracket pair ending the match.  End is going to be an
+      // offset relative to the beginning of the match string.
+      size_t End = FindRegexVarEnd(PatternStr.substr(2));
+
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
                         SourceMgr::DK_Error,
@@ -196,8 +205,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
         return true;
       }
 
-      StringRef MatchStr = PatternStr.substr(2, End-2);
-      PatternStr = PatternStr.substr(End+2);
+      StringRef MatchStr = PatternStr.substr(2, End);
+      PatternStr = PatternStr.substr(End+4);
 
       // Get the regex name (e.g. "foo").
       size_t NameEnd = MatchStr.find(':');
@@ -518,6 +527,40 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
     // failed, as it can be hard to spot simple one character differences.
   }
 }
+
+size_t Pattern::FindRegexVarEnd(StringRef Str) {
+  // Offset keeps track of the current offset within the input Str
+  size_t Offset = 0;
+  // [...] Nesting depth
+  size_t BracketDepth = 0;
+
+  while (!Str.empty()) {
+    if (Str.startswith("]]") && BracketDepth == 0)
+      return Offset;
+    if (Str[0] == '\\') {
+      // Backslash escapes the next char within regexes, so skip them both.
+      Str = Str.substr(2);
+      Offset += 2;
+    } else {
+      switch (Str[0]) {
+        default:
+          break;
+        case '[':
+          BracketDepth++;
+          break;
+        case ']':
+          assert(BracketDepth > 0 && "Invalid regex");
+          BracketDepth--;
+          break;
+      }
+      Str = Str.substr(1);
+      Offset++;
+    }
+  }
+
+  return StringRef::npos;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Check Strings.
