@@ -8157,8 +8157,21 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
   // Only perform this optimization before the types are legal, because we
   // don't want to perform this optimization on every DAGCombine invocation.
-  if (!LegalTypes && MergeConsecutiveStores(ST))
-    return SDValue(N, 0);
+  if (!LegalTypes) {
+    bool EverChanged = false;
+
+    do {
+      // There can be multiple store sequences on the same chain.
+      // Keep trying to merge store sequences until we are unable to do so
+      // or until we merge the last store on the chain.
+      bool Changed = MergeConsecutiveStores(ST);
+      EverChanged |= Changed;
+      if (!Changed) break;
+    } while (ST->getOpcode() != ISD::DELETED_NODE);
+
+    if (EverChanged)
+      return SDValue(N, 0);
+  }
 
   return ReduceLoadOpStoreWidth(N);
 }
