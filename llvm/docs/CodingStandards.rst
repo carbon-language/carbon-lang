@@ -284,17 +284,10 @@ listed.  We prefer these ``#include``\s to be listed in this order:
 
 #. Main Module Header
 #. Local/Private Headers
-#. ``llvm/*``
-#. ``llvm/Analysis/*``
-#. ``llvm/Assembly/*``
-#. ``llvm/Bitcode/*``
-#. ``llvm/CodeGen/*``
-#. ...
-#. ``llvm/Support/*``
-#. ``llvm/Config/*``
+#. ``llvm/...``
 #. System ``#include``\s
 
-and each category should be sorted by name.
+and each category should be sorted lexicographically by the full path.
 
 The `Main Module Header`_ file applies to ``.cpp`` files which implement an
 interface defined by a ``.h`` file.  This ``#include`` should always be included
