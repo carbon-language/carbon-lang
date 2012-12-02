@@ -30,6 +30,8 @@ struct DynamicTypeCacheMissData {
 /// cache; this does not necessarily imply the existence of a bug.
 extern "C" void __ubsan_handle_dynamic_type_cache_miss(
   DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash);
+extern "C" void __ubsan_handle_dynamic_type_cache_miss_abort(
+  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash);
 
 }
 

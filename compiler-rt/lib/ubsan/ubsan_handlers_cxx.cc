@@ -26,8 +26,9 @@ namespace __ubsan {
   extern const char *TypeCheckKinds[];
 }
 
-void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
-  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
+static void HandleDynamicTypeCacheMiss(
+  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash,
+  bool abort) {
   if (checkDynamicType((void*)Pointer, Data->TypeInfo, Hash))
     // Just a cache miss. The type matches after all.
     return;
@@ -45,5 +46,15 @@ void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
   //   00 00 00 00  e0 f7 c5 09 00 00 00 00  20 00 00 00
   //                ^~~~~~~~~~~
   //                vptr for 'llvm::BinaryOperator'
-  Die();
+  if (abort)
+    Die();
+}
+
+void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
+  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
+  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, false);
+}
+void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
+  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
+  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, true);
 }

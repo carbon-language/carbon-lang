@@ -24,11 +24,14 @@ struct TypeMismatchData {
   unsigned char TypeCheckKind;
 };
 
+#define RECOVERABLE(checkname, ...) \
+  extern "C" void __ubsan_handle_ ## checkname( __VA_ARGS__ ); \
+  extern "C" void __ubsan_handle_ ## checkname ## _abort( __VA_ARGS__ );
+
 /// \brief Handle a runtime type check failure, caused by either a misaligned
 /// pointer, a null pointer, or a pointer to insufficient storage for the
 /// type.
-extern "C" void __ubsan_handle_type_mismatch(TypeMismatchData *Data,
-                                             ValueHandle Pointer);
+RECOVERABLE(type_mismatch, TypeMismatchData *Data, ValueHandle Pointer)
 
 struct OverflowData {
   SourceLocation Loc;
@@ -36,24 +39,20 @@ struct OverflowData {
 };
 
 /// \brief Handle an integer addition overflow.
-extern "C" void __ubsan_handle_add_overflow(OverflowData *Data,
-                                            ValueHandle LHS,
-                                            ValueHandle RHS);
+RECOVERABLE(add_overflow, OverflowData *Data, ValueHandle LHS, ValueHandle RHS)
+
 /// \brief Handle an integer subtraction overflow.
-extern "C" void __ubsan_handle_sub_overflow(OverflowData *Data,
-                                            ValueHandle LHS,
-                                            ValueHandle RHS);
+RECOVERABLE(sub_overflow, OverflowData *Data, ValueHandle LHS, ValueHandle RHS)
+
 /// \brief Handle an integer multiplication overflow.
-extern "C" void __ubsan_handle_mul_overflow(OverflowData *Data,
-                                            ValueHandle LHS,
-                                            ValueHandle RHS);
+RECOVERABLE(mul_overflow, OverflowData *Data, ValueHandle LHS, ValueHandle RHS)
+
 /// \brief Handle a signed integer overflow for a unary negate operator.
-extern "C" void __ubsan_handle_negate_overflow(OverflowData *Data,
-                                               ValueHandle OldVal);
+RECOVERABLE(negate_overflow, OverflowData *Data, ValueHandle OldVal)
+
 /// \brief Handle an INT_MIN/-1 overflow or division by zero.
-extern "C" void __ubsan_handle_divrem_overflow(OverflowData *Data,
-                                               ValueHandle LHS,
-                                               ValueHandle RHS);
+RECOVERABLE(divrem_overflow, OverflowData *Data,
+            ValueHandle LHS, ValueHandle RHS)
 
 struct ShiftOutOfBoundsData {
   SourceLocation Loc;
@@ -63,9 +62,8 @@ struct ShiftOutOfBoundsData {
 
 /// \brief Handle a shift where the RHS is out of bounds or a left shift where
 /// the LHS is negative or overflows.
-extern "C" void __ubsan_handle_shift_out_of_bounds(ShiftOutOfBoundsData *Data,
-                                                   ValueHandle LHS,
-                                                   ValueHandle RHS);
+RECOVERABLE(shift_out_of_bounds, ShiftOutOfBoundsData *Data,
+            ValueHandle LHS, ValueHandle RHS)
 
 struct UnreachableData {
   SourceLocation Loc;
@@ -82,8 +80,7 @@ struct VLABoundData {
 };
 
 /// \brief Handle a VLA with a non-positive bound.
-extern "C" void __ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
-                                                      ValueHandle Bound);
+RECOVERABLE(vla_bound_not_positive, VLABoundData *Data, ValueHandle Bound)
 
 struct FloatCastOverflowData {
   // FIXME: SourceLocation Loc;
@@ -92,8 +89,7 @@ struct FloatCastOverflowData {
 };
 
 /// \brief Handle overflow in a conversion to or from a floating-point type.
-extern "C" void __ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
-                                                   ValueHandle From);
+RECOVERABLE(float_cast_overflow, FloatCastOverflowData *Data, ValueHandle From)
 
 }
 
