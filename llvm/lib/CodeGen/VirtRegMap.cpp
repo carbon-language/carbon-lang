@@ -88,6 +88,15 @@ unsigned VirtRegMap::getRegAllocPref(unsigned virtReg) {
   return TRI->ResolveRegAllocHint(Hint.first, physReg, *MF);
 }
 
+bool VirtRegMap::hasKnownPreference(unsigned VirtReg) {
+  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(VirtReg);
+  if (TargetRegisterInfo::isPhysicalRegister(Hint.second))
+    return true;
+  if (TargetRegisterInfo::isVirtualRegister(Hint.second))
+    return hasPhys(Hint.second);
+  return false;
+}
+
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
   assert(TargetRegisterInfo::isVirtualRegister(virtReg));
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&

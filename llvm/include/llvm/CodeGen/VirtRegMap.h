@@ -134,6 +134,11 @@ namespace llvm {
       return getPhys(VirtReg) == getRegAllocPref(VirtReg);
     }
 
+    /// @brief returns true if VirtReg has a known preferred register.
+    /// This returns false if VirtReg has a preference that is a virtual
+    /// register that hasn't been assigned yet.
+    bool hasKnownPreference(unsigned VirtReg);
+
     /// @brief records virtReg is a split live interval from SReg.
     void setIsSplitFromReg(unsigned virtReg, unsigned SReg) {
       Virt2SplitMap[virtReg] = SReg;

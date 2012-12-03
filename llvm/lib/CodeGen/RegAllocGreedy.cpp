@@ -413,7 +413,7 @@ void RAGreedy::enqueue(LiveInterval *LI) {
     Prio = (1u << 31) + Size;
 
     // Boost ranges that have a physical register hint.
-    if (TargetRegisterInfo::isPhysicalRegister(VRM->getRegAllocPref(Reg)))
+    if (VRM->hasKnownPreference(Reg))
       Prio |= (1u << 30);
   }
 
