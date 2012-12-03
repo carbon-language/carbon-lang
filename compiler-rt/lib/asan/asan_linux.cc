@@ -158,7 +158,9 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
   stack->trace[0] = pc;
   if ((max_s) > 1) {
     stack->max_size = max_s;
-#if defined(__arm__) || defined(__powerpc__) || defined(__powerpc64__)
+#if defined(__arm__) || \
+    defined(__powerpc__) || defined(__powerpc64__) || \
+    defined(__sparc__)
     _Unwind_Backtrace(Unwind_Trace, stack);
     // Pop off the two ASAN functions from the backtrace.
     stack->PopStackFrames(2);
