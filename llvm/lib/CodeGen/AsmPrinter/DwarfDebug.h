@@ -316,6 +316,9 @@ class DwarfDebug {
   // have exposed. See accessor functions below for description.
   bool IsDarwinGDBCompat;
 
+  // Counter for assigning globally unique IDs for CUs.
+  unsigned GlobalCUIndexCount;
+
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasDwarfFission;

@@ -32,9 +32,9 @@ class DbgVariable;
 /// CompileUnit - This dwarf writer support class manages information associated
 /// with a source file.
 class CompileUnit {
-  /// ID - File identifier for source.
+  /// UniqueID - a numeric ID unique among all CUs in the module
   ///
-  unsigned ID;
+  unsigned UniqueID;
 
   /// Language - The DW_AT_language of the compile unit
   ///
@@ -80,11 +80,11 @@ class CompileUnit {
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
 public:
-  CompileUnit(unsigned I, unsigned L, DIE *D, AsmPrinter *A, DwarfDebug *DW);
+  CompileUnit(unsigned UID, unsigned L, DIE *D, AsmPrinter *A, DwarfDebug *DW);
   ~CompileUnit();
 
   // Accessors.
-  unsigned getID()                  const { return ID; }
+  unsigned getUniqueID()            const { return UniqueID; }
   unsigned getLanguage()            const { return Language; }
   DIE* getCUDie()                   const { return CUDie.get(); }
   const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
