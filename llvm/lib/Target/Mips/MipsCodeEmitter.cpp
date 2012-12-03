@@ -85,7 +85,7 @@ class MipsCodeEmitter : public MachineFunctionPass {
 
   private:
 
-    void emitWordLE(unsigned Word);
+    void emitWord(unsigned Word);
 
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the relocation stage.
@@ -127,7 +127,7 @@ bool MipsCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MCPEs = &MF.getConstantPool()->getConstants();
   MJTEs = 0;
   if (MF.getJumpTableInfo()) MJTEs = &MF.getJumpTableInfo()->getJumpTables();
-  JTI->Initialize(MF, IsPIC);
+  JTI->Initialize(MF, IsPIC, Subtarget->isLittle());
   MCE.setModuleInfo(&getAnalysis<MachineModuleInfo> ());
 
   do {
@@ -274,16 +274,19 @@ void MipsCodeEmitter::emitInstruction(const MachineInstr &MI) {
   if ((MI.getDesc().TSFlags & MipsII::FormMask) == MipsII::Pseudo)
     return;
 
-  emitWordLE(getBinaryCodeForInstr(MI));
+  emitWord(getBinaryCodeForInstr(MI));
   ++NumEmitted;  // Keep track of the # of mi's emitted
 
   MCE.processDebugLoc(MI.getDebugLoc(), false);
 }
 
-void MipsCodeEmitter::emitWordLE(unsigned Word) {
+void MipsCodeEmitter::emitWord(unsigned Word) {
   DEBUG(errs() << "  0x";
         errs().write_hex(Word) << "\n");
-  MCE.emitWordLE(Word);
+  if (Subtarget->isLittle())
+    MCE.emitWordLE(Word);
+  else
+    MCE.emitWordBE(Word);
 }
 
 /// createMipsJITCodeEmitterPass - Return a pass that emits the collected Mips
