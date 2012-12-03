@@ -118,8 +118,7 @@ class InnerLoopVectorizer {
 public:
   /// Ctor.
   InnerLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
-                            DominatorTree *Dt, DataLayout *Dl,
-                            unsigned VecWidth):
+                      DominatorTree *Dt, DataLayout *Dl, unsigned VecWidth):
   OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), VF(VecWidth),
   Builder(Se->getContext()), Induction(0), OldInduction(0) { }
 
@@ -343,12 +342,12 @@ private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
   /// and we only need to check individual instructions.
-  bool canVectorizeInstrs(BasicBlock &BB);
+  bool canVectorizeInstrs();
 
   /// When we vectorize loops we may change the order in which
   /// we read and write from memory. This method checks if it is
   /// legal to vectorize the code, considering only memory constrains.
-  /// Returns true if BB is vectorizable
+  /// Returns true if the loop is vectorizable
   bool canVectorizeMemory();
 
   /// Return true if we can vectorize this loop using the IF-conversion
@@ -358,7 +357,7 @@ private:
   /// Collect the variables that need to stay uniform after vectorization.
   void collectLoopUniforms();
 
-  /// return true if all of the instructions in the block can be speculatively
+  /// Return true if all of the instructions in the block can be speculatively
   /// executed.
   bool blockCanBePredicated(BasicBlock *BB);
 
@@ -1463,7 +1462,7 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
     if (Preds > 2)
       return false;
 
-    // We must be able to predicate all blocks that needs to be predicated.
+    // We must be able to predicate all blocks that need to be predicated.
     if (blockNeedsPredication(BB) && !blockCanBePredicated(BB))
       return false;
   }
@@ -1516,7 +1515,7 @@ bool LoopVectorizationLegality::canVectorize() {
   }
 
   // Check if we can vectorize the instructions and CFG in this loop.
-  if (!canVectorizeInstrs(*Header)) {
+  if (!canVectorizeInstrs()) {
     DEBUG(dbgs() << "LV: Can't vectorize the instructions or CFG\n");
     return false;
   }
@@ -1527,7 +1526,7 @@ bool LoopVectorizationLegality::canVectorize() {
     return false;
   }
 
-  // Collect all of the variables that remain  uniform after vectorization.
+  // Collect all of the variables that remain uniform after vectorization.
   collectLoopUniforms();
 
   DEBUG(dbgs() << "LV: We can vectorize this loop" <<
@@ -1540,19 +1539,19 @@ bool LoopVectorizationLegality::canVectorize() {
   return true;
 }
 
-bool LoopVectorizationLegality::canVectorizeInstrs(BasicBlock &BB) {
+bool LoopVectorizationLegality::canVectorizeInstrs() {
   BasicBlock *PreHeader = TheLoop->getLoopPreheader();
   BasicBlock *Header = TheLoop->getHeader();
 
-  // For each block in the loop
+  // For each block in the loop.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
        be = TheLoop->block_end(); bb != be; ++bb) {
 
     // Scan the instructions in the block and look for hazards.
-    for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
-      Instruction *I = it;
+    for (BasicBlock::iterator it = (*bb)->begin(), e = (*bb)->end(); it != e;
+         ++it) {
 
-      if (PHINode *Phi = dyn_cast<PHINode>(I)) {
+      if (PHINode *Phi = dyn_cast<PHINode>(it)) {
         // This should not happen because the loop should be normalized.
         if (Phi->getNumIncomingValues() != 2) {
           DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
@@ -1561,9 +1560,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs(BasicBlock &BB) {
 
         // If this PHINode is not in the header block, then we know that we
         // can convert it to select during if-conversion.
-        if (*bb != Header) {
+        if (*bb != Header)
           continue;
-        }
 
         // This is the value coming from the preheader.
         Value *StartValue = Phi->getIncomingValueForBlock(PreHeader);
@@ -1615,26 +1613,26 @@ bool LoopVectorizationLegality::canVectorizeInstrs(BasicBlock &BB) {
       }// end of PHI handling
 
       // We still don't handle functions.
-      CallInst *CI = dyn_cast<CallInst>(I);
+      CallInst *CI = dyn_cast<CallInst>(it);
       if (CI) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
         return false;
       }
 
       // We do not re-vectorize vectors.
-      if (!VectorType::isValidElementType(I->getType()) &&
-          !I->getType()->isVoidTy()) {
+      if (!VectorType::isValidElementType(it->getType()) &&
+          !it->getType()->isVoidTy()) {
         DEBUG(dbgs() << "LV: Found unvectorizable type." << "\n");
         return false;
       }
 
       // Reduction instructions are allowed to have exit users.
       // All other instructions must not have external users.
-      if (!AllowedExit.count(I))
+      if (!AllowedExit.count(it))
         //Check that all of the users of the loop are inside the BB.
-        for (Value::use_iterator it = I->use_begin(), e = I->use_end();
-             it != e; ++it) {
-          Instruction *U = cast<Instruction>(*it);
+        for (Value::use_iterator I = it->use_begin(), E = it->use_end();
+             I != E; ++I) {
+          Instruction *U = cast<Instruction>(*I);
           // This user may be a reduction exit value.
           if (!TheLoop->contains(U)) {
             DEBUG(dbgs() << "LV: Found an outside user for : "<< *U << "\n");
@@ -1657,7 +1655,6 @@ void LoopVectorizationLegality::collectLoopUniforms() {
   // We now know that the loop is vectorizable!
   // Collect variables that will remain uniform after vectorization.
   std::vector<Value*> Worklist;
-
   BasicBlock *Latch = TheLoop->getLoopLatch();
 
   // Start with the conditional branch and walk up the block.
@@ -1669,8 +1666,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 
     // Look at instructions inside this loop.
     // Stop when reaching PHI nodes.
-    // TODO: we need to prevent loops but we do need to follow PHIs inside this
-    // loop.
+    // TODO: we need to follow values all over the loop, not only in this block.
     if (!I || !TheLoop->contains(I) || isa<PHINode>(I))
       continue;
 
