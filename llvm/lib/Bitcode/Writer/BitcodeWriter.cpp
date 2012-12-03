@@ -1939,7 +1939,7 @@ static void EmitDarwinBCHeaderAndTrailer(SmallVectorImpl<char> &Buffer,
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
 void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
-  SmallVector<char, 1024> Buffer;
+  SmallVector<char, 0> Buffer;
   Buffer.reserve(256*1024);
 
   // If this is darwin or another generic macho target, reserve space for the
