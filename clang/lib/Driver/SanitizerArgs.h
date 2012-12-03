@@ -30,6 +30,7 @@ class SanitizerArgs {
 #include "clang/Basic/Sanitizers.def"
     NeedsAsanRt = AddressFull,
     NeedsTsanRt = Thread,
+    NeedsMsanRt = Memory,
     NeedsUbsanRt = (Undefined & ~Bounds) | Integer
   };
   unsigned Kind;
@@ -41,6 +42,7 @@ class SanitizerArgs {
 
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
+  bool needsMsanRt() const { return Kind & NeedsMsanRt; }
   bool needsUbsanRt() const { return Kind & NeedsUbsanRt; }
 
   bool sanitizesVptr() const { return Kind & Vptr; }

@@ -48,6 +48,9 @@ SANITIZER("use-after-scope", UseAfterScope)
 SANITIZER_GROUP("address-full", AddressFull,
                 Address | InitOrder | UseAfterReturn | UseAfterScope)
 
+// MemorySanitizer
+SANITIZER("memory", Memory)
+
 // ThreadSanitizer
 SANITIZER("thread", Thread)
 
