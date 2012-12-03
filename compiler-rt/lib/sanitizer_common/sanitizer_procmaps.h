@@ -30,6 +30,14 @@ class MemoryMappingLayout {
 };
 
 #else  // _WIN32
+#if defined(__linux__)
+struct ProcSelfMapsBuff {
+  char *data;
+  uptr mmaped_size;
+  uptr len;
+};
+#endif  // defined(__linux__)
+
 class MemoryMappingLayout {
  public:
   MemoryMappingLayout();
@@ -79,16 +87,12 @@ class MemoryMappingLayout {
   }
 
 # if defined __linux__
-  char *proc_self_maps_buff_;
-  uptr proc_self_maps_buff_mmaped_size_;
-  uptr proc_self_maps_buff_len_;
+  ProcSelfMapsBuff proc_self_maps_;
   char *current_;
 
   // Static mappings cache.
-  static char *cached_proc_self_maps_buff_;
-  static uptr cached_proc_self_maps_buff_mmaped_size_;
-  static uptr cached_proc_self_maps_buff_len_;
-  static StaticSpinMutex cache_lock_;  // protects the cache contents.
+  static ProcSelfMapsBuff cached_proc_self_maps_;
+  static StaticSpinMutex cache_lock_;  // protects cached_proc_self_maps_.
 # elif defined __APPLE__
   template<u32 kLCSegment, typename SegmentCommand>
   bool NextSegmentLoad(uptr *start, uptr *end, uptr *offset,
