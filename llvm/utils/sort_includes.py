@@ -48,7 +48,7 @@ def sort_includes(f):
     # mixed with includes, the order might be sensitive.
     if headers_begin != 0:
       break
-    if l.startswith('//') or l.startswith('#define'):
+    if l.startswith('//') or l.startswith('#define') or l.startswith('#ifndef'):
       continue
     break
   if headers_begin == 0:
