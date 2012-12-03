@@ -321,6 +321,10 @@ public:
   /// Returns the induction variables found in the loop.
   InductionList *getInductionVars() { return &Inductions; }
 
+  /// Return true if the block BB needs to be predicated in order for the loop
+  /// to be vectorized.
+  bool blockNeedsPredication(BasicBlock *BB);
+
   /// Check if this  pointer is consecutive when vectorizing. This happens
   /// when the last index of the GEP is the induction variable, or that the
   /// pointer itself is an induction variable.
@@ -353,10 +357,6 @@ private:
 
   /// Collect the variables that need to stay uniform after vectorization.
   void collectLoopUniforms();
-
-  /// Return true if the block BB needs to be predicated in order for the loop
-  /// to be vectorized.
-  bool blockNeedsPredication(BasicBlock *BB);
 
   /// return true if all of the instructions in the block can be speculatively
   /// executed.
@@ -2064,19 +2064,29 @@ LoopVectorizationCostModel::findBestVectorizationFactor(unsigned VF) {
 }
 
 unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
-  // We can only estimate the cost of single basic block loops.
-  assert(1 == TheLoop->getNumBlocks() && "Too many blocks in loop");
-
-  BasicBlock *BB = TheLoop->getHeader();
   unsigned Cost = 0;
 
-  // For each instruction in the old loop.
-  for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-    Instruction *Inst = it;
-    unsigned C = getInstructionCost(Inst, VF);
-    Cost += C;
-    DEBUG(dbgs() << "LV: Found an estimated cost of "<< C <<" for VF "<< VF <<
-          " For instruction: "<< *Inst << "\n");
+  // For each block.
+  for (Loop::block_iterator bb = TheLoop->block_begin(),
+       be = TheLoop->block_end(); bb != be; ++bb) {
+    unsigned BlockCost = 0;
+    BasicBlock *BB = *bb;
+    
+    // For each instruction in the old loop.
+    for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+
+      unsigned C = getInstructionCost(it, VF);
+      Cost += C;
+      DEBUG(dbgs() << "LV: Found an estimated cost of "<< C <<" for VF " <<
+            VF << " For instruction: "<< *it << "\n");
+    }
+
+    // TODO: if-converted blocks can have a high-nest level. We need to
+    // calculate the loop nest level and multiply the cost accordingly.
+    if (Legal->blockNeedsPredication(*bb))
+      BlockCost *= 2;
+    
+    Cost += BlockCost;
   }
 
   return Cost;
@@ -2106,6 +2116,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       return VTTI->getCFInstrCost(I->getOpcode());
     }
     case Instruction::PHI:
+      //TODO: IF-converted IFs become selects.
       return 0;
     case Instruction::Add:
     case Instruction::FAdd:
