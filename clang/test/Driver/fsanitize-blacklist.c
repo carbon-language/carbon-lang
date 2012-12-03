@@ -13,3 +13,6 @@
 // Driver barks on unexisting blacklist files.
 // RUN: %clang -fno-sanitize-blacklist -fsanitize-blacklist=unexisting.txt %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-NO-SUCH-FILE
 // CHECK-NO-SUCH-FILE: error: no such file or directory: 'unexisting.txt'
+
+// PR12920
+// XFAIL: cygwin,mingw32
