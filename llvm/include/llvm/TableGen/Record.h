@@ -19,9 +19,9 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 

@@ -15,11 +15,11 @@
 #ifndef LLVM_OBJECT_MACHO_H
 #define LLVM_OBJECT_MACHO_H
 
-#include "llvm/Object/ObjectFile.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Object/MachOObject.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 namespace object {

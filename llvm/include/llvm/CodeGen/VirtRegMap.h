@@ -17,9 +17,9 @@
 #ifndef LLVM_CODEGEN_VIRTREGMAP_H
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/IndexedMap.h"
 
 namespace llvm {
   class MachineInstr;

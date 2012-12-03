@@ -15,12 +15,12 @@
 #define LLVM_SUPPORT_ALLOCATOR_H
 
 #include "llvm/Support/AlignOf.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cassert>
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 namespace llvm {
 template <typename T> struct ReferenceAdder { typedef T& result; };

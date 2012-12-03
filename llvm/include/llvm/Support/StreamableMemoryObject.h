@@ -13,8 +13,8 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/DataStream.h"
+#include "llvm/Support/MemoryObject.h"
 #include <vector>
 
 namespace llvm {

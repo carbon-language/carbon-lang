@@ -16,9 +16,9 @@
 #define LLVM_LOOP_PASS_H
 
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManagers.h"
-#include "llvm/Function.h"
 #include <deque>
 
 namespace llvm {

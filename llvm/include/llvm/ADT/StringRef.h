@@ -11,7 +11,6 @@
 #define LLVM_ADT_STRINGREF_H
 
 #include "llvm/Support/type_traits.h"
-
 #include <algorithm>
 #include <cassert>
 #include <cstring>

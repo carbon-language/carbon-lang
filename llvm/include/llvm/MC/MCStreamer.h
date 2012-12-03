@@ -14,12 +14,12 @@
 #ifndef LLVM_MC_MCSTREAMER_H
 #define LLVM_MC_MCSTREAMER_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCWin64EH.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class MCAsmBackend;

@@ -15,14 +15,14 @@
 #ifndef LLVM_IRBUILDER_H
 #define LLVM_IRBUILDER_H
 
-#include "llvm/Instructions.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/DataLayout.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Operator.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/ConstantFolder.h"
 
 namespace llvm {

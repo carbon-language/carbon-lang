@@ -16,13 +16,13 @@
 #ifndef LLVM_CODEGEN_SCHEDULEDAG_H
 #define LLVM_CODEGEN_SCHEDULEDAG_H
 
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
   class AliasAnalysis;

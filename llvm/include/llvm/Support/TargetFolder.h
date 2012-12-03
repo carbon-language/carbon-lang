@@ -19,10 +19,10 @@
 #ifndef LLVM_SUPPORT_TARGETFOLDER_H
 #define LLVM_SUPPORT_TARGETFOLDER_H
 
-#include "llvm/Constants.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Constants.h"
+#include "llvm/InstrTypes.h"
 
 namespace llvm {
 

@@ -10,8 +10,8 @@
 #ifndef LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
 #define LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
 
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/Dominators.h"
 
 //===----------------------------------------------------------------------===//
 //

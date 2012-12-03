@@ -16,8 +16,8 @@
 #ifndef SUPPORT_SOURCEMGR_H
 #define SUPPORT_SOURCEMGR_H
 
-#include "llvm/Support/SMLoc.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/SMLoc.h"
 #include <string>
 
 namespace llvm {

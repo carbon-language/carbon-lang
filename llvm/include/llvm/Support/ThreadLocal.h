@@ -14,8 +14,8 @@
 #ifndef LLVM_SYSTEM_THREAD_LOCAL_H
 #define LLVM_SYSTEM_THREAD_LOCAL_H
 
-#include "llvm/Support/Threading.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Threading.h"
 #include <cassert>
 
 namespace llvm {

@@ -14,8 +14,8 @@
 #ifndef LLVM_OBJECT_ARCHIVE_H
 #define LLVM_OBJECT_ARCHIVE_H
 
-#include "llvm/Object/Binary.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Object/Binary.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

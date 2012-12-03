@@ -14,8 +14,8 @@
 #ifndef LLVM_ADT_IMLIST_H
 #define LLVM_ADT_IMLIST_H
 
-#include "llvm/Support/Allocator.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 

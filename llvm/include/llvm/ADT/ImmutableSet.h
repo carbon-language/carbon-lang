@@ -14,9 +14,9 @@
 #ifndef LLVM_ADT_IMSET_H
 #define LLVM_ADT_IMSET_H
 
-#include "llvm/Support/Allocator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>

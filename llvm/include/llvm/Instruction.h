@@ -15,9 +15,9 @@
 #ifndef LLVM_INSTRUCTION_H
 #define LLVM_INSTRUCTION_H
 
-#include "llvm/User.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/DebugLoc.h"
+#include "llvm/User.h"
 
 namespace llvm {
 

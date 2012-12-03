@@ -17,8 +17,8 @@
 #ifndef LLVM_TARGET_TARGETJITINFO_H
 #define LLVM_TARGET_TARGETJITINFO_H
 
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 
 namespace llvm {

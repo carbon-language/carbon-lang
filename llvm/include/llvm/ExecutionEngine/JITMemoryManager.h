@@ -12,7 +12,6 @@
 
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Support/DataTypes.h"
-
 #include <string>
 
 namespace llvm {

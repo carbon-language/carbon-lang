@@ -40,9 +40,9 @@
 #ifndef LLVM_ANALYSIS_DEPENDENCEANALYSIS_H
 #define LLVM_ANALYSIS_DEPENDENCEANALYSIS_H
 
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/SmallBitVector.h"
 
 namespace llvm {
   class AliasAnalysis;

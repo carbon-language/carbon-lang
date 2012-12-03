@@ -14,9 +14,9 @@
 #ifndef LLVM_MC_MCSECTIONCOFF_H
 #define LLVM_MC_MCSECTIONCOFF_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/Support/COFF.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 

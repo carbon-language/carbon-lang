@@ -21,11 +21,11 @@
 #ifndef LLVM_CONSTANTS_H
 #define LLVM_CONSTANTS_H
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Constant.h"
 #include "llvm/OperandTraits.h"
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 

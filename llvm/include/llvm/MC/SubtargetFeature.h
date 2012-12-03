@@ -18,9 +18,9 @@
 #ifndef LLVM_MC_SUBTARGETFEATURE_H
 #define LLVM_MC_SUBTARGETFEATURE_H
 
-#include <vector>
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
+#include <vector>
 
 namespace llvm {
   class raw_ostream;

@@ -18,11 +18,10 @@
 #ifndef CONSTANTRANGESSET_H_
 #define CONSTANTRANGESSET_H_
 
-#include <list>
-
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
+#include <list>
 
 namespace llvm {
 

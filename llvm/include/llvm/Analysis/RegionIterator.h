@@ -12,8 +12,8 @@
 #define LLVM_ANALYSIS_REGION_ITERATOR_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/raw_ostream.h"

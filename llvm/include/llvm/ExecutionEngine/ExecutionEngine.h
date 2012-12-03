@@ -15,19 +15,19 @@
 #ifndef LLVM_EXECUTION_ENGINE_H
 #define LLVM_EXECUTION_ENGINE_H
 
-#include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ValueMap.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace llvm {
 

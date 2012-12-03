@@ -15,8 +15,8 @@
 #ifndef LLVM_TARGET_TARGET_TRANSFORMATION_IMPL_H
 #define LLVM_TARGET_TARGET_TRANSFORMATION_IMPL_H
 
-#include "llvm/TargetTransformInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/TargetTransformInfo.h"
 
 namespace llvm {
 

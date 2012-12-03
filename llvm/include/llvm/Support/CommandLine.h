@@ -20,10 +20,10 @@
 #ifndef LLVM_SUPPORT_COMMANDLINE_H
 #define LLVM_SUPPORT_COMMANDLINE_H
 
-#include "llvm/Support/type_traits.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/type_traits.h"
 #include <cassert>
 #include <climits>
 #include <cstdarg>

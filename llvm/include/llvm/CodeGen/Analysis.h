@@ -14,12 +14,12 @@
 #ifndef LLVM_CODEGEN_ANALYSIS_H
 #define LLVM_CODEGEN_ANALYSIS_H
 
-#include "llvm/Instructions.h"
-#include "llvm/InlineAsm.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
+#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
 
 namespace llvm {

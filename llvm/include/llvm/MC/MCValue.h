@@ -14,8 +14,8 @@
 #ifndef LLVM_MC_MCVALUE_H
 #define LLVM_MC_MCVALUE_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {

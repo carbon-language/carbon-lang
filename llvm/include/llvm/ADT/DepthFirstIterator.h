@@ -34,8 +34,8 @@
 #define LLVM_ADT_DEPTHFIRSTITERATOR_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <set>
 #include <vector>
 

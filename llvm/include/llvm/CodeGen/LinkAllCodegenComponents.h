@@ -15,9 +15,9 @@
 #ifndef LLVM_CODEGEN_LINKALLCODEGENCOMPONENTS_H
 #define LLVM_CODEGEN_LINKALLCODEGENCOMPONENTS_H
 
+#include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
-#include "llvm/CodeGen/GCs.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cstdlib>
 

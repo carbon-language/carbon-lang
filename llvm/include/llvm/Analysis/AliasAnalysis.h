@@ -37,8 +37,8 @@
 #ifndef LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 #define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 
-#include "llvm/Support/CallSite.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/CallSite.h"
 
 namespace llvm {
 

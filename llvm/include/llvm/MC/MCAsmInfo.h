@@ -16,8 +16,8 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
-#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCDirectives.h"
+#include "llvm/MC/MachineLocation.h"
 #include <cassert>
 #include <vector>
 

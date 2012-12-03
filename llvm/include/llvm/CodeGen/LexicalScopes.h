@@ -17,11 +17,11 @@
 #ifndef LLVM_CODEGEN_LEXICALSCOPES_H
 #define LLVM_CODEGEN_LEXICALSCOPES_H
 
-#include "llvm/Metadata.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/ValueHandle.h"
 #include <utility>

@@ -14,8 +14,8 @@
 #ifndef LLVM_SUPPORT_DATAFLOW_H
 #define LLVM_SUPPORT_DATAFLOW_H
 
-#include "llvm/User.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/User.h"
 
 namespace llvm {
 

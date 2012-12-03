@@ -15,10 +15,10 @@
 #ifndef LLVM_GLOBAL_ALIAS_H
 #define LLVM_GLOBAL_ALIAS_H
 
+#include "llvm/ADT/Twine.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/OperandTraits.h"
-#include "llvm/ADT/ilist_node.h"
-#include "llvm/ADT/Twine.h"
 
 namespace llvm {
 

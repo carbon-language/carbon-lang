@@ -16,10 +16,10 @@
 #ifndef LLVM_INSTRUCTION_TYPES_H
 #define LLVM_INSTRUCTION_TYPES_H
 
+#include "llvm/ADT/Twine.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/OperandTraits.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/ADT/Twine.h"
 
 namespace llvm {
 

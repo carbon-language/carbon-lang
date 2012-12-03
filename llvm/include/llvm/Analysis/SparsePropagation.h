@@ -17,8 +17,8 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace llvm {
   class Value;

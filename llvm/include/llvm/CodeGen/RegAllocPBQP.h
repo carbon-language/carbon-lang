@@ -20,7 +20,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/PBQP/Graph.h"
 #include "llvm/CodeGen/PBQP/Solution.h"
-
 #include <map>
 #include <set>
 

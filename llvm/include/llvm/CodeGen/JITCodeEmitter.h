@@ -17,11 +17,11 @@
 #ifndef LLVM_CODEGEN_JITCODEEMITTER_H
 #define LLVM_CODEGEN_JITCODEEMITTER_H
 
-#include <string>
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/ADT/DenseMap.h"
+#include <string>
 
 namespace llvm {
 

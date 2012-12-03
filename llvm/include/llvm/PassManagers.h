@@ -14,13 +14,13 @@
 #ifndef LLVM_PASSMANAGERS_H
 #define LLVM_PASSMANAGERS_H
 
-#include "llvm/Pass.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include <vector>
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Pass.h"
 #include <map>
+#include <vector>
 
 //===----------------------------------------------------------------------===//
 // Overview:

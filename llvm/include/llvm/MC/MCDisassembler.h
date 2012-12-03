@@ -9,8 +9,8 @@
 #ifndef MCDISASSEMBLER_H
 #define MCDISASSEMBLER_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm-c/Disassembler.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

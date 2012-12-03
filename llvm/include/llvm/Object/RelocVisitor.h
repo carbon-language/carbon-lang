@@ -16,11 +16,11 @@
 #ifndef _LLVM_OBJECT_RELOCVISITOR
 #define _LLVM_OBJECT_RELOCVISITOR
 
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Object/ELF.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Object/ObjectFile.h"
-#include "llvm/Object/ELF.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 namespace object {

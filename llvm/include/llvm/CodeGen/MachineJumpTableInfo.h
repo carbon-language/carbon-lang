@@ -20,8 +20,8 @@
 #ifndef LLVM_CODEGEN_MACHINEJUMPTABLEINFO_H
 #define LLVM_CODEGEN_MACHINEJUMPTABLEINFO_H
 
-#include <vector>
 #include <cassert>
+#include <vector>
 
 namespace llvm {
 

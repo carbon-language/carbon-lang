@@ -15,8 +15,8 @@
 #ifndef LLVM_ATTRIBUTES_H
 #define LLVM_ATTRIBUTES_H
 
-#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <string>
 

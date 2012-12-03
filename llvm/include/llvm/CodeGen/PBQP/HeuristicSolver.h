@@ -18,8 +18,8 @@
 
 #include "Graph.h"
 #include "Solution.h"
-#include <vector>
 #include <limits>
+#include <vector>
 
 namespace PBQP {
 

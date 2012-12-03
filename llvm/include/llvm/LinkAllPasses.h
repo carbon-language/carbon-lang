@@ -19,20 +19,20 @@
 #include "llvm/Analysis/DomPrinter.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/IntervalPartition.h"
+#include "llvm/Analysis/Lint.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/RegionPrinter.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/Lint.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
-#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Vectorize.h"
 #include <cstdlib>
 
 namespace {

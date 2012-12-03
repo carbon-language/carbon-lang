@@ -10,8 +10,8 @@
 #ifndef LLVM_TARGET_TARGETLIBRARYINFO_H
 #define LLVM_TARGET_TARGETLIBRARYINFO_H
 
-#include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
   class Triple;

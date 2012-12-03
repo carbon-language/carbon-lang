@@ -19,10 +19,10 @@
 #ifndef LLVM_SUPPORT_TARGETREGISTRY_H
 #define LLVM_SUPPORT_TARGETREGISTRY_H
 
-#include "llvm/Support/CodeGen.h"
 #include "llvm/ADT/Triple.h"
-#include <string>
+#include "llvm/Support/CodeGen.h"
 #include <cassert>
+#include <string>
 
 namespace llvm {
   class AsmPrinter;

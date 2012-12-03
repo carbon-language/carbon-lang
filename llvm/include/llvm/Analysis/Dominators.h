@@ -15,13 +15,13 @@
 #ifndef LLVM_ANALYSIS_DOMINATORS_H
 #define LLVM_ANALYSIS_DOMINATORS_H
 
-#include "llvm/Pass.h"
-#include "llvm/Function.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Function.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"

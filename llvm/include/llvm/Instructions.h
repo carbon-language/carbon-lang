@@ -16,15 +16,15 @@
 #ifndef LLVM_INSTRUCTIONS_H
 #define LLVM_INSTRUCTIONS_H
 
-#include "llvm/InstrTypes.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Attributes.h"
-#include "llvm/CallingConv.h"
-#include "llvm/Support/IntegersSubset.h"
-#include "llvm/Support/IntegersSubsetMapping.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Attributes.h"
+#include "llvm/CallingConv.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/IntegersSubset.h"
+#include "llvm/Support/IntegersSubsetMapping.h"
 #include <iterator>
 
 namespace llvm {

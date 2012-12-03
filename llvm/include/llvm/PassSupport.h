@@ -22,8 +22,8 @@
 #define LLVM_PASS_SUPPORT_H
 
 #include "Pass.h"
-#include "llvm/PassRegistry.h"
 #include "llvm/InitializePasses.h"
+#include "llvm/PassRegistry.h"
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/Valgrind.h"
 #include <vector>

@@ -15,13 +15,13 @@
 #ifndef LLVM_SUPPORT_TIMER_H
 #define LLVM_SUPPORT_TIMER_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace llvm {
 

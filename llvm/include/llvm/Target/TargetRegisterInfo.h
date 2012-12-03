@@ -16,11 +16,11 @@
 #ifndef LLVM_TARGET_TARGETREGISTERINFO_H
 #define LLVM_TARGET_TARGETREGISTERINFO_H
 
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/CallingConv.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include <cassert>
 #include <functional>
 

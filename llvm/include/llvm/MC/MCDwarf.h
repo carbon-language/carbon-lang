@@ -16,9 +16,9 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/raw_ostream.h"
 #include <vector>
 
 namespace llvm {

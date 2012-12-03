@@ -16,10 +16,10 @@
 #ifndef LLVM_CODEGEN_LIVESTACK_ANALYSIS_H
 #define LLVM_CODEGEN_LIVESTACK_ANALYSIS_H
 
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveInterval.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <map>
 
 namespace llvm {

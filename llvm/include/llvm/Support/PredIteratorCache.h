@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/CFG.h"
 
 #ifndef LLVM_SUPPORT_PREDITERATORCACHE_H
 #define LLVM_SUPPORT_PREDITERATORCACHE_H

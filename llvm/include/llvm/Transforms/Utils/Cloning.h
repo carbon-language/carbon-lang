@@ -18,9 +18,9 @@
 #ifndef LLVM_TRANSFORMS_UTILS_CLONING_H
 #define LLVM_TRANSFORMS_UTILS_CLONING_H
 
-#include "llvm/ADT/ValueMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/ValueMap.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 

@@ -14,10 +14,10 @@
 #ifndef STRINGMATCHER_H
 #define STRINGMATCHER_H
 
-#include <vector>
+#include "llvm/ADT/StringRef.h"
 #include <string>
 #include <utility>
-#include "llvm/ADT/StringRef.h"
+#include <vector>
 
 namespace llvm {
   class raw_ostream;

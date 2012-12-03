@@ -14,9 +14,9 @@
 #ifndef LLVM_MC_MCSECTIONELF_H
 #define LLVM_MC_MCSECTIONELF_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 

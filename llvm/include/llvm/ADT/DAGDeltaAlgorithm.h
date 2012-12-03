@@ -9,8 +9,8 @@
 #ifndef LLVM_ADT_DAGDELTAALGORITHM_H
 #define LLVM_ADT_DAGDELTAALGORITHM_H
 
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace llvm {
 

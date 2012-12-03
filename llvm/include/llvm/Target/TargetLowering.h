@@ -22,14 +22,14 @@
 #ifndef LLVM_TARGET_TARGETLOWERING_H
 #define LLVM_TARGET_TARGETLOWERING_H
 
-#include "llvm/AddressingMode.h"
-#include "llvm/CallingConv.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Attributes.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/AddressingMode.h"
+#include "llvm/Attributes.h"
+#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/Target/TargetMachine.h"

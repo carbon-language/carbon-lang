@@ -15,11 +15,11 @@
 #ifndef LLVM_MDBUILDER_H
 #define LLVM_MDBUILDER_H
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
-#include "llvm/ADT/APInt.h"
 
 namespace llvm {
 

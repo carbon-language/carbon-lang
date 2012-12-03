@@ -21,8 +21,8 @@
 #ifndef LLVM_ADT_SCCITERATOR_H
 #define LLVM_ADT_SCCITERATOR_H
 
-#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/GraphTraits.h"
 #include <vector>
 
 namespace llvm {

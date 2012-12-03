@@ -22,8 +22,8 @@
 #ifndef LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 #define LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 
-#include "llvm/Pass.h"
 #include "llvm/AddressingMode.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Type.h"
 

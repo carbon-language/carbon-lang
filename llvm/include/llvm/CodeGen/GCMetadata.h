@@ -33,9 +33,9 @@
 #ifndef LLVM_CODEGEN_GCMETADATA_H
 #define LLVM_CODEGEN_GCMETADATA_H
 
-#include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/DebugLoc.h"
 
 namespace llvm {

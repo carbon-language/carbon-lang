@@ -14,8 +14,8 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPRESSIONS_H
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPRESSIONS_H
 
-#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {

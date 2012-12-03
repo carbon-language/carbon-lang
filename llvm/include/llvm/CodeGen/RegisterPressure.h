@@ -15,9 +15,9 @@
 #ifndef LLVM_CODEGEN_REGISTERPRESSURE_H
 #define LLVM_CODEGEN_REGISTERPRESSURE_H
 
+#include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/SparseSet.h"
 
 namespace llvm {
 

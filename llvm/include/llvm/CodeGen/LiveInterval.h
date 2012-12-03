@@ -22,9 +22,9 @@
 #define LLVM_CODEGEN_LIVEINTERVAL_H
 
 #include "llvm/ADT/IntEqClasses.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/AlignOf.h"
 #include "llvm/CodeGen/SlotIndexes.h"
+#include "llvm/Support/AlignOf.h"
+#include "llvm/Support/Allocator.h"
 #include <cassert>
 #include <climits>
 

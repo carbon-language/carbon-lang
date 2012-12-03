@@ -14,8 +14,8 @@
 #ifndef LLVM_MC_MCSECTIONMACHO_H
 #define LLVM_MC_MCSECTIONMACHO_H
 
-#include "llvm/MC/MCSection.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCSection.h"
 
 namespace llvm {
 

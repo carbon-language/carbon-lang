@@ -10,10 +10,10 @@
 #ifndef LLVM_MC_MCCONTEXT_H
 #define LLVM_MC_MCCONTEXT_H
 
-#include "llvm/MC/SectionKind.h"
-#include "llvm/MC/MCDwarf.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"

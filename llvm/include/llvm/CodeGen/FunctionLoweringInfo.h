@@ -15,8 +15,6 @@
 #ifndef LLVM_CODEGEN_FUNCTIONLOWERINGINFO_H
 #define LLVM_CODEGEN_FUNCTIONLOWERINGINFO_H
 
-#include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -24,9 +22,11 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>

@@ -18,8 +18,8 @@
 #define RESOURCE_PRIORITY_QUEUE_H
 
 #include "llvm/CodeGen/DFAPacketizer.h"
-#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"

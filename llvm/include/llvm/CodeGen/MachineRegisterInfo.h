@@ -14,10 +14,10 @@
 #ifndef LLVM_CODEGEN_MACHINEREGISTERINFO_H
 #define LLVM_CODEGEN_MACHINEREGISTERINFO_H
 
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>
 
 namespace llvm {

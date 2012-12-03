@@ -17,11 +17,9 @@
 #define LLVM_REGION_PASS_H
 
 #include "llvm/Analysis/RegionInfo.h"
-
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManagers.h"
-#include "llvm/Function.h"
-
 #include <deque>
 
 namespace llvm {

@@ -18,7 +18,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
-
 #include <vector>
 
 namespace llvm {

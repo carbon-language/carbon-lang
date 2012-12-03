@@ -27,10 +27,9 @@
 #define LLVM_ADT_VALUEMAP_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/type_traits.h"
-#include "llvm/Support/Mutex.h"
-
 #include <iterator>
 
 namespace llvm {

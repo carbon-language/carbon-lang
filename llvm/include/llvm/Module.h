@@ -15,11 +15,11 @@
 #ifndef LLVM_MODULE_H
 #define LLVM_MODULE_H
 
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/GlobalAlias.h"
-#include "llvm/Metadata.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalAlias.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

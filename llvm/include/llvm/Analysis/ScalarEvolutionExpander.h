@@ -14,9 +14,9 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 
-#include "llvm/IRBuilder.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ScalarEvolutionNormalization.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Support/TargetFolder.h"
 #include "llvm/Support/ValueHandle.h"
 #include <set>

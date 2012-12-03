@@ -15,8 +15,8 @@
 #ifndef LLVM_SUPPORT_GETELEMENTPTRTYPE_H
 #define LLVM_SUPPORT_GETELEMENTPTRTYPE_H
 
-#include "llvm/User.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/User.h"
 
 namespace llvm {
   template<typename ItTy = User::const_op_iterator>

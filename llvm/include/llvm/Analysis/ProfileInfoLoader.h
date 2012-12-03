@@ -16,9 +16,9 @@
 #ifndef LLVM_ANALYSIS_PROFILEINFOLOADER_H
 #define LLVM_ANALYSIS_PROFILEINFOLOADER_H
 
-#include <vector>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace llvm {
 

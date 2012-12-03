@@ -18,9 +18,9 @@
 #ifndef LLVM_DERIVED_TYPES_H
 #define LLVM_DERIVED_TYPES_H
 
-#include "llvm/Type.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/DataTypes.h"
+#include "llvm/Type.h"
 
 namespace llvm {
 

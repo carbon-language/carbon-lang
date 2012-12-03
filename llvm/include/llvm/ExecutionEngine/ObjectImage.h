@@ -14,8 +14,8 @@
 #ifndef LLVM_EXECUTIONENGINE_OBJECTIMAGE_H
 #define LLVM_EXECUTIONENGINE_OBJECTIMAGE_H
 
-#include "llvm/Object/ObjectFile.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
+#include "llvm/Object/ObjectFile.h"
 
 namespace llvm {
 

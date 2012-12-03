@@ -14,10 +14,10 @@
 #ifndef LLVM_ANALYSIS_BRANCHPROBABILITYINFO_H
 #define LLVM_ANALYSIS_BRANCHPROBABILITYINFO_H
 
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
 
 namespace llvm {

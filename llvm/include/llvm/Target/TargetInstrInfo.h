@@ -15,9 +15,9 @@
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
 

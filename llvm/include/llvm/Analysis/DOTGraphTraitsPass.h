@@ -14,8 +14,8 @@
 #ifndef LLVM_ANALYSIS_DOT_GRAPHTRAITS_PASS_H
 #define LLVM_ANALYSIS_DOT_GRAPHTRAITS_PASS_H
 
-#include "llvm/Pass.h"
 #include "llvm/Analysis/CFGPrinter.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
 template <class Analysis, bool Simple>

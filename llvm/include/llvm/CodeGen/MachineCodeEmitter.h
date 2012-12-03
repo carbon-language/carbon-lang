@@ -19,7 +19,6 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
-
 #include <string>
 
 namespace llvm {

@@ -10,11 +10,11 @@
 #ifndef LLVM_OBJECT_MACHOOBJECT_H
 #define LLVM_OBJECT_MACHOOBJECT_H
 
-#include <string>
 #include "llvm/ADT/InMemoryStruct.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/MachOFormat.h"
+#include <string>
 
 namespace llvm {
 

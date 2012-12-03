@@ -51,13 +51,13 @@
 #ifndef LLVM_ANALYSIS_CALLGRAPH_H
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Function.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/IncludeFile.h"
+#include "llvm/Support/ValueHandle.h"
 #include <map>
 
 namespace llvm {

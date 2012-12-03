@@ -15,14 +15,14 @@
 #ifndef SCHEDULEDAGINSTRS_H
 #define SCHEDULEDAGINSTRS_H
 
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SparseSet.h"
 #include <map>
 
 namespace llvm {

@@ -14,8 +14,8 @@
 #ifndef LLVM_MC_MCSUBTARGET_H
 #define LLVM_MC_MCSUBTARGET_H
 
-#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include <string>
 
 namespace llvm {

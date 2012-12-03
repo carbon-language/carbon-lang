@@ -19,13 +19,13 @@
 #ifndef LLVM_CODEGEN_SLOTINDEXES_H
 #define LLVM_CODEGEN_SLOTINDEXES_H
 
-#include "llvm/CodeGen/MachineInstrBundle.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/ilist.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/Support/Allocator.h"
 
 namespace llvm {

@@ -18,7 +18,6 @@
 
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/Support/DataTypes.h"
-
 #include <cassert>
 #include <cstring>
 

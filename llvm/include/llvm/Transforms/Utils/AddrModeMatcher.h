@@ -19,8 +19,8 @@
 #ifndef LLVM_TRANSFORMS_UTILS_ADDRMODEMATCHER_H
 #define LLVM_TRANSFORMS_UTILS_ADDRMODEMATCHER_H
 
-#include "llvm/AddressingMode.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/AddressingMode.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {

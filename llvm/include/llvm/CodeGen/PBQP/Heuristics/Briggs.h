@@ -18,9 +18,8 @@
 #ifndef LLVM_CODEGEN_PBQP_HEURISTICS_BRIGGS_H
 #define LLVM_CODEGEN_PBQP_HEURISTICS_BRIGGS_H
 
-#include "../HeuristicSolver.h"
 #include "../HeuristicBase.h"
-
+#include "../HeuristicSolver.h"
 #include <limits>
 
 namespace PBQP {

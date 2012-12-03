@@ -18,10 +18,10 @@
 #ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/ilist.h"
-#include "llvm/Support/DebugLoc.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/Recycler.h"
 
 namespace llvm {

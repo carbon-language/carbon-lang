@@ -17,8 +17,8 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Dwarf.h"
 

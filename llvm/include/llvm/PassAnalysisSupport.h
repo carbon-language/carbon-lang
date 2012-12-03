@@ -19,9 +19,9 @@
 #ifndef LLVM_PASS_ANALYSIS_SUPPORT_H
 #define LLVM_PASS_ANALYSIS_SUPPORT_H
 
-#include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Pass.h"
 #include <vector>
 
 namespace llvm {

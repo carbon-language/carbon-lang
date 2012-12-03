@@ -14,8 +14,8 @@
 #ifndef LLVM_CODEGEN_MACHINEBASICBLOCK_H
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/DataTypes.h"
 #include <functional>
 

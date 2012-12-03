@@ -24,9 +24,9 @@
 #ifndef LLVM_CODEGEN_LIVEREGMATRIX_H
 #define LLVM_CODEGEN_LIVEREGMATRIX_H
 
-#include "llvm/CodeGen/LiveIntervalUnion.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/CodeGen/LiveIntervalUnion.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {

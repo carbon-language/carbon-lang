@@ -16,17 +16,17 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/ilist.h"
-#include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/DebugLoc.h"
+#include "llvm/Target/TargetOpcodes.h"
 #include <vector>
 
 namespace llvm {

@@ -14,11 +14,11 @@
 #ifndef LLVM_ANALYSIS_INLINECOST_H
 #define LLVM_ANALYSIS_INLINECOST_H
 
-#include "llvm/Function.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Function.h"
 #include <cassert>
 #include <climits>
 #include <vector>

@@ -23,8 +23,8 @@
 #ifndef LLVM_SUPPORT_PASS_NAME_PARSER_H
 #define LLVM_SUPPORT_PASS_NAME_PARSER_H
 
-#include "llvm/Pass.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"

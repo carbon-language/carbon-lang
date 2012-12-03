@@ -14,20 +14,20 @@
 #ifndef LLVM_ADT_DENSEMAP_H
 #define LLVM_ADT_DENSEMAP_H
 
-#include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/AlignOf.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/type_traits.h"
-#include "llvm/ADT/DenseMapInfo.h"
 #include <algorithm>
-#include <iterator>
-#include <new>
-#include <utility>
 #include <cassert>
 #include <climits>
 #include <cstddef>
 #include <cstring>
+#include <iterator>
+#include <new>
+#include <utility>
 
 namespace llvm {
 

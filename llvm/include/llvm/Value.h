@@ -14,9 +14,9 @@
 #ifndef LLVM_VALUE_H
 #define LLVM_VALUE_H
 
-#include "llvm/Use.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Use.h"
 
 namespace llvm {
 

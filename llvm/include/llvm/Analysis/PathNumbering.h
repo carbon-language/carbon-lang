@@ -26,11 +26,11 @@
 #ifndef LLVM_PATH_NUMBERING_H
 #define LLVM_PATH_NUMBERING_H
 
+#include "llvm/Analysis/ProfileInfoTypes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Analysis/ProfileInfoTypes.h"
 #include <map>
 #include <stack>
 #include <vector>

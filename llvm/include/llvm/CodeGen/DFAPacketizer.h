@@ -26,8 +26,8 @@
 #ifndef LLVM_CODEGEN_DFAPACKETIZER_H
 #define LLVM_CODEGEN_DFAPACKETIZER_H
 
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include <map>
 
 namespace llvm {

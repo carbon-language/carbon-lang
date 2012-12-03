@@ -10,13 +10,13 @@
 #ifndef LLVM_MC_MCASSEMBLER_H
 #define LLVM_MC_MCASSEMBLER_H
 
-#include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCInst.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector> // FIXME: Shouldn't be needed.

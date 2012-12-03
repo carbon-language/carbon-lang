@@ -16,10 +16,10 @@
 #ifndef LLVM_TARGET_TARGETSCHEDMODEL_H
 #define LLVM_TARGET_TARGETSCHEDMODEL_H
 
-#include "llvm/Target/TargetSubtargetInfo.h"
-#include "llvm/MC/MCSchedule.h"
-#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/MC/MCSchedule.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 namespace llvm {
 

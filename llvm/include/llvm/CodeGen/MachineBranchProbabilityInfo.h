@@ -15,8 +15,8 @@
 #ifndef LLVM_CODEGEN_MACHINEBRANCHPROBABILITYINFO_H
 #define LLVM_CODEGEN_MACHINEBRANCHPROBABILITYINFO_H
 
-#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
 #include <climits>
 

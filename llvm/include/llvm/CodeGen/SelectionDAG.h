@@ -15,16 +15,16 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAG_H
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
-#include "llvm/ADT/ilist.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace llvm {
 

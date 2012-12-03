@@ -13,8 +13,8 @@
 
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"

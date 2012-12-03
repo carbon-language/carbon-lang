@@ -26,8 +26,8 @@
 #ifndef LLVM_SUPPORT_CALLSITE_H
 #define LLVM_SUPPORT_CALLSITE_H
 
-#include "llvm/Attributes.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Attributes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Instructions.h"

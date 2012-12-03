@@ -14,10 +14,10 @@
 #ifndef LLVM_ARGUMENT_H
 #define LLVM_ARGUMENT_H
 
-#include "llvm/Value.h"
-#include "llvm/Attributes.h"
-#include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/ilist_node.h"
+#include "llvm/Attributes.h"
+#include "llvm/Value.h"
 
 namespace llvm {
 

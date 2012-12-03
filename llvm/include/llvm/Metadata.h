@@ -16,10 +16,10 @@
 #ifndef LLVM_METADATA_H
 #define LLVM_METADATA_H
 
-#include "llvm/Value.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/Value.h"
 
 namespace llvm {
 class Constant;

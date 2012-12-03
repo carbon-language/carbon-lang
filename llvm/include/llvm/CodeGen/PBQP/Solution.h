@@ -14,9 +14,8 @@
 #ifndef LLVM_CODEGEN_PBQP_SOLUTION_H
 #define LLVM_CODEGEN_PBQP_SOLUTION_H
 
-#include "Math.h"
 #include "Graph.h"
-
+#include "Math.h"
 #include <map>
 
 namespace PBQP {

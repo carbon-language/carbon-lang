@@ -16,11 +16,11 @@
 #define LLVM_CODEGEN_CALLINGCONVLOWER_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetCallingConv.h"
-#include "llvm/CallingConv.h"
 
 namespace llvm {
   class TargetRegisterInfo;
