@@ -167,13 +167,14 @@ private:
         State.Column = State.Column - Previous.Tok.getLength();
       else if (Previous.Tok.is(tok::equal) && ParenLevel != 0)
         State.Column = State.Indent[ParenLevel] + 4;
-      else
+      else if (ParenLevel < State.Indent.size())
         State.Column = State.Indent[ParenLevel];
       if (!DryRun)
         replaceWhitespace(Current, 1, State.Column);
 
       State.Column += Current.Tok.getLength();
-      State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
+      if (ParenLevel < State.LastSpace.size())
+        State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
       if (Current.Tok.is(tok::colon) &&
           Annotations[Index].Type != TokenAnnotation::TT_ConditionalExpr) {
         State.Indent[ParenLevel] += 2;
@@ -189,20 +190,23 @@ private:
       if (Previous.Tok.is(tok::l_paren))
         State.Indent[ParenLevel] = State.Column;
       if (Previous.Tok.is(tok::less) &&
-          Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener)
+          Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener &&
+          ParenLevel < State.Indent.size())
         State.Indent[ParenLevel] = State.Column;
       if (Current.Tok.is(tok::colon)) {
         State.Indent[ParenLevel] = State.Column + 3;
         State.InCtorInitializer = true;
       }
       // Top-level spaces are exempt as that mostly leads to better results.
-      if (Spaces > 0 && ParenLevel != 0)
+      if (Spaces > 0 && ParenLevel != 0 &&
+          ParenLevel < State.LastSpace.size())
         State.LastSpace[ParenLevel] = State.Column + Spaces;
       State.Column += Current.Tok.getLength() + Spaces;
     }
 
-    if (Current.Tok.is(tok::r_paren) || Current.Tok.is(tok::r_square) ||
-        Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener) {
+    if (!DryRun &&
+        (Current.Tok.is(tok::r_paren) || Current.Tok.is(tok::r_square) ||
+         Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener)) {
       State.Indent.pop_back();
       State.LastSpace.pop_back();
     }
@@ -341,11 +345,9 @@ public:
   /// into template parameter lists.
   class AnnotatingParser {
   public:
-    AnnotatingParser(const SourceManager &SourceMgr,
-                     const SmallVector<FormatToken, 16> &Tokens,
+    AnnotatingParser(const SmallVector<FormatToken, 16> &Tokens,
                      std::vector<TokenAnnotation> &Annotations)
-        : SourceMgr(SourceMgr),
-          Tokens(Tokens),
+        : Tokens(Tokens),
           Annotations(Annotations),
           Index(0) {
     }
@@ -457,7 +459,6 @@ public:
     }
 
   private:
-    const SourceManager &SourceMgr;
     const SmallVector<FormatToken, 16> &Tokens;
     std::vector<TokenAnnotation> &Annotations;
     unsigned Index;
@@ -469,7 +470,7 @@ public:
       Annotations.push_back(TokenAnnotation());
     }
 
-    AnnotatingParser Parser(SourceMgr, Line.Tokens, Annotations);
+    AnnotatingParser Parser(Line.Tokens, Annotations);
     Parser.parseLine();
 
     determineTokenTypes();
