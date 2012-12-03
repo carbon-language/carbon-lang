@@ -480,6 +480,15 @@ let PrintMethod = "printExtOperand" in {
   def s11_1Ext : Operand<i32>;
   def s11_2Ext : Operand<i32>;
   def s11_3Ext : Operand<i32>;
+  def u6Ext : Operand<i32>;
+  def u7Ext : Operand<i32>;
+  def u8Ext : Operand<i32>;
+  def u9Ext : Operand<i32>;
+  def u10Ext : Operand<i32>;
+  def u6_0Ext : Operand<i32>;
+  def u6_1Ext : Operand<i32>;
+  def u6_2Ext : Operand<i32>;
+  def u6_3Ext : Operand<i32>;
 }
 
 let PrintMethod = "printImmOperand" in
@@ -669,5 +678,124 @@ def s11_3ExtPred  : PatLeaf<(i32 imm), [{
     // Return true if extending this immediate is profitable and the low 3-bits
     // are zero (8-byte aligned).
     return isConstExtProfitable(Node)  && isInt<32>(v) && ((v % 8) == 0);
+  }
+}]>;
+
+def u0AlwaysExtPred : PatLeaf<(i32 imm), [{
+  // Predicate for an unsigned 32-bit value that always needs to be extended.
+  if (Subtarget.hasV4TOps()) {
+    if (isConstExtProfitable(Node)) {
+      int64_t v = (int64_t)N->getSExtValue();
+      return isUInt<32>(v);
+    }
+  }
+  return false;
+}]>;
+
+def u6ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 6-bit unsigned field.
+    return isUInt<6>(v);
+  else {
+    if (isUInt<6>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v);
+  }
+}]>;
+
+def u7ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 7-bit unsigned field.
+    return isUInt<7>(v);
+  else {
+    if (isUInt<7>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v);
+  }
+}]>;
+
+def u8ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 8-bit unsigned field.
+    return isUInt<8>(v);
+  else {
+    if (isUInt<8>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v);
+  }
+}]>;
+
+def u9ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 9-bit unsigned field.
+    return isUInt<9>(v);
+  else {
+    if (isUInt<9>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v);
+  }
+}]>;
+
+def u6_1ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 7-bit unsigned field and
+    // is 2-byte aligned.
+    return isShiftedUInt<6,1>(v);
+  else {
+    if (isUInt<7>(v))
+      return isShiftedUInt<6,1>(v);
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v) && ((v % 2) == 0);
+  }
+}]>;
+
+def u6_2ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 8-bit unsigned field and
+    // is 4-byte aligned.
+    return isShiftedUInt<6,2>(v);
+  else {
+    if (isUInt<8>(v))
+      return isShiftedUInt<6,2>(v);
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v) && ((v % 4) == 0);
+  }
+}]>;
+
+def u6_3ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 9-bit unsigned field and
+    // is 8-byte aligned.
+    return isShiftedUInt<6,3>(v);
+  else {
+    if (isUInt<9>(v))
+      return isShiftedUInt<6,3>(v);
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    return isConstExtProfitable(Node) && isUInt<32>(v) && ((v % 8) == 0);
   }
 }]>;
