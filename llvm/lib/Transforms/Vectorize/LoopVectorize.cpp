@@ -80,6 +80,10 @@ static cl::opt<unsigned>
 VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
           cl::desc("Set the default vectorization width. Zero is autoselect."));
 
+static cl::opt<bool>
+EnableIfConversion("enable-if-conversion", cl::init(false), cl::Hidden,
+                   cl::desc("Enable if-conversion during vectorization."));
+
 /// We don't vectorize loops with a known constant trip count below this number.
 const unsigned TinyTripCountThreshold = 16;
 
@@ -219,16 +223,17 @@ private:
 /// * Memory checks - The code in canVectorizeMemory checks if vectorization
 ///   will change the order of memory accesses in a way that will change the
 ///   correctness of the program.
-/// * Scalars checks - The code in canVectorizeBlock checks for a number
-///   of different conditions, such as the availability of a single induction
-///   variable, that all types are supported and vectorize-able, etc.
-/// This code reflects the capabilities of SingleBlockLoopVectorizer.
+/// * Scalars checks - The code in canVectorizeInstrs and canVectorizeMemory
+/// checks for a number of different conditions, such as the availability of a
+/// single induction variable, that all types are supported and vectorize-able,
+/// etc. This code reflects the capabilities of SingleBlockLoopVectorizer.
 /// This class is also used by SingleBlockLoopVectorizer for identifying
 /// induction variable and the different reduction variables.
 class LoopVectorizationLegality {
 public:
-  LoopVectorizationLegality(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl):
-  TheLoop(Lp), SE(Se), DL(Dl), Induction(0) { }
+  LoopVectorizationLegality(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl,
+                              DominatorTree *Dt):
+  TheLoop(Lp), SE(Se), DL(Dl), DT(Dt), Induction(0) { }
 
   /// This represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -277,7 +282,7 @@ public:
       const SCEV *Sc = SE->getSCEV(Ptr);
       const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
       assert(AR && "Invalid addrec expression");
-      const SCEV *Ex = SE->getExitCount(Lp, Lp->getHeader());
+      const SCEV *Ex = SE->getExitCount(Lp, Lp->getLoopLatch());
       const SCEV *ScEnd = AR->evaluateAtIteration(Ex, *SE);
       Pointers.push_back(Ptr);
       Starts.push_back(AR->getStart());
@@ -334,13 +339,28 @@ private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
   /// and we only need to check individual instructions.
-  bool canVectorizeBlock(BasicBlock &BB);
+  bool canVectorizeInstrs(BasicBlock &BB);
 
   /// When we vectorize loops we may change the order in which
   /// we read and write from memory. This method checks if it is
   /// legal to vectorize the code, considering only memory constrains.
   /// Returns true if BB is vectorizable
-  bool canVectorizeMemory(BasicBlock &BB);
+  bool canVectorizeMemory();
+
+  /// Return true if we can vectorize this loop using the IF-conversion
+  /// transformation.
+  bool canVectorizeWithIfConvert();
+
+  /// Collect the variables that need to stay uniform after vectorization.
+  void collectLoopUniforms();
+
+  /// Return true if the block BB needs to be predicated in order for the loop
+  /// to be vectorized.
+  bool blockNeedsPredication(BasicBlock *BB);
+
+  /// return true if all of the instructions in the block can be speculatively
+  /// executed.
+  bool blockCanBePredicated(BasicBlock *BB);
 
   /// Returns True, if 'Phi' is the kind of reduction variable for type
   /// 'Kind'. If this is a reduction variable, it adds it to ReductionList.
@@ -359,6 +379,8 @@ private:
   ScalarEvolution *SE;
   /// DataLayout analysis.
   DataLayout *DL;
+  // Dominators.
+  DominatorTree *DT;
 
   //  ---  vectorization state --- //
 
@@ -458,7 +480,7 @@ struct LoopVectorize : public LoopPass {
           L->getHeader()->getParent()->getName() << "\"\n");
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL);
+    LoopVectorizationLegality LVL(L, SE, DL, DT);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing.\n");
       return false;
@@ -1423,40 +1445,90 @@ void SingleBlockLoopVectorizer::updateAnalysis() {
   DEBUG(DT->verifyAnalysis());
 }
 
+
+bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
+  if (!EnableIfConversion)
+    return false;
+
+  assert(TheLoop->getNumBlocks() > 1 && "Single block loops are vectorizable");
+  std::vector<BasicBlock*> &LoopBlocks = TheLoop->getBlocksVector();
+
+  // Collect the blocks that need predication.
+  for (unsigned i = 0, e = LoopBlocks.size(); i < e; ++i) {
+    BasicBlock *BB = LoopBlocks[i];
+
+    // We must have at most two predecessors because we need to convert
+    // all PHIs to selects.
+    unsigned Preds = std::distance(pred_begin(BB), pred_end(BB));
+    if (Preds > 2)
+      return false;
+
+    // We must be able to predicate all blocks that needs to be predicated.
+    if (blockNeedsPredication(BB) && !blockCanBePredicated(BB))
+      return false;
+  }
+
+  // We can if-convert this loop.
+  return true;
+}
+
 bool LoopVectorizationLegality::canVectorize() {
   assert(TheLoop->getLoopPreheader() && "No preheader!!");
 
-  // We can only vectorize single basic block loops.
+  // We can only vectorize innermost loops.
+  if (TheLoop->getSubLoopsVector().size())
+    return false;
+
+  // We must have a single backedge.
+  if (TheLoop->getNumBackEdges() != 1)
+    return false;
+
+  // We must have a single exiting block.
+  if (!TheLoop->getExitingBlock())
+    return false;
+
   unsigned NumBlocks = TheLoop->getNumBlocks();
-  if (NumBlocks != 1) {
-    DEBUG(dbgs() << "LV: Too many blocks:" << NumBlocks << "\n");
+
+  // Check if we can if-convert non single-bb loops.
+  if (NumBlocks != 1 && !canVectorizeWithIfConvert()) {
+    DEBUG(dbgs() << "LV: Can't if-convert the loop.\n");
     return false;
   }
 
   // We need to have a loop header.
-  BasicBlock *BB = TheLoop->getHeader();
-  DEBUG(dbgs() << "LV: Found a loop: " << BB->getName() << "\n");
+  BasicBlock *Header = TheLoop->getHeader();
+  BasicBlock *Latch = TheLoop->getLoopLatch();
+  DEBUG(dbgs() << "LV: Found a loop: " << Header->getName() << "\n");
 
   // ScalarEvolution needs to be able to find the exit count.
-  const SCEV *ExitCount = SE->getExitCount(TheLoop, BB);
+  const SCEV *ExitCount = SE->getExitCount(TheLoop, Latch);
   if (ExitCount == SE->getCouldNotCompute()) {
     DEBUG(dbgs() << "LV: SCEV could not compute the loop exit count.\n");
     return false;
   }
 
   // Do not loop-vectorize loops with a tiny trip count.
-  unsigned TC = SE->getSmallConstantTripCount(TheLoop, BB);
+  unsigned TC = SE->getSmallConstantTripCount(TheLoop, Latch);
   if (TC > 0u && TC < TinyTripCountThreshold) {
     DEBUG(dbgs() << "LV: Found a loop with a very small trip count. " <<
           "This loop is not worth vectorizing.\n");
     return false;
   }
 
-  // Go over each instruction and look at memory deps.
-  if (!canVectorizeBlock(*BB)) {
-    DEBUG(dbgs() << "LV: Can't vectorize this loop header\n");
+  // Check if we can vectorize the instructions and CFG in this loop.
+  if (!canVectorizeInstrs(*Header)) {
+    DEBUG(dbgs() << "LV: Can't vectorize the instructions or CFG\n");
     return false;
   }
+
+  // Go over each instruction and look at memory deps.
+  if (!canVectorizeMemory()) {
+    DEBUG(dbgs() << "LV: Can't vectorize due to memory conflicts\n");
+    return false;
+  }
+
+  // Collect all of the variables that remain  uniform after vectorization.
+  collectLoopUniforms();
 
   DEBUG(dbgs() << "LV: We can vectorize this loop" <<
         (PtrRtCheck.Need ? " (with a runtime bound check)" : "")
@@ -1468,122 +1540,138 @@ bool LoopVectorizationLegality::canVectorize() {
   return true;
 }
 
-bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
-
+bool LoopVectorizationLegality::canVectorizeInstrs(BasicBlock &BB) {
   BasicBlock *PreHeader = TheLoop->getLoopPreheader();
+  BasicBlock *Header = TheLoop->getHeader();
 
-  // Scan the instructions in the block and look for hazards.
-  for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
-    Instruction *I = it;
+  // For each block in the loop
+  for (Loop::block_iterator bb = TheLoop->block_begin(),
+       be = TheLoop->block_end(); bb != be; ++bb) {
 
-    if (PHINode *Phi = dyn_cast<PHINode>(I)) {
-      // This should not happen because the loop should be normalized.
-      if (Phi->getNumIncomingValues() != 2) {
-        DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
+    // Scan the instructions in the block and look for hazards.
+    for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
+      Instruction *I = it;
+
+      if (PHINode *Phi = dyn_cast<PHINode>(I)) {
+        // This should not happen because the loop should be normalized.
+        if (Phi->getNumIncomingValues() != 2) {
+          DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
+          return false;
+        }
+
+        // If this PHINode is not in the header block, then we know that we
+        // can convert it to select during if-conversion.
+        if (*bb != Header) {
+          continue;
+        }
+
+        // This is the value coming from the preheader.
+        Value *StartValue = Phi->getIncomingValueForBlock(PreHeader);
+
+        // We only look at integer and pointer phi nodes.
+        if (Phi->getType()->isPointerTy() && isInductionVariable(Phi)) {
+          DEBUG(dbgs() << "LV: Found a pointer induction variable.\n");
+          Inductions[Phi] = StartValue;
+          continue;
+        } else if (!Phi->getType()->isIntegerTy()) {
+          DEBUG(dbgs() << "LV: Found an non-int non-pointer PHI.\n");
+          return false;
+        }
+
+        // Handle integer PHIs:
+        if (isInductionVariable(Phi)) {
+          if (Induction) {
+            DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
+            return false;
+          }
+          DEBUG(dbgs() << "LV: Found the induction PHI."<< *Phi <<"\n");
+          Induction = Phi;
+          Inductions[Phi] = StartValue;
+          continue;
+        }
+        if (AddReductionVar(Phi, IntegerAdd)) {
+          DEBUG(dbgs() << "LV: Found an ADD reduction PHI."<< *Phi <<"\n");
+          continue;
+        }
+        if (AddReductionVar(Phi, IntegerMult)) {
+          DEBUG(dbgs() << "LV: Found a MUL reduction PHI."<< *Phi <<"\n");
+          continue;
+        }
+        if (AddReductionVar(Phi, IntegerOr)) {
+          DEBUG(dbgs() << "LV: Found an OR reduction PHI."<< *Phi <<"\n");
+          continue;
+        }
+        if (AddReductionVar(Phi, IntegerAnd)) {
+          DEBUG(dbgs() << "LV: Found an AND reduction PHI."<< *Phi <<"\n");
+          continue;
+        }
+        if (AddReductionVar(Phi, IntegerXor)) {
+          DEBUG(dbgs() << "LV: Found a XOR reduction PHI."<< *Phi <<"\n");
+          continue;
+        }
+
+        DEBUG(dbgs() << "LV: Found an unidentified PHI."<< *Phi <<"\n");
+        return false;
+      }// end of PHI handling
+
+      // We still don't handle functions.
+      CallInst *CI = dyn_cast<CallInst>(I);
+      if (CI) {
+        DEBUG(dbgs() << "LV: Found a call site.\n");
         return false;
       }
 
-      // This is the value coming from the preheader.
-      Value *StartValue = Phi->getIncomingValueForBlock(PreHeader);
-
-      // We only look at integer and pointer phi nodes.
-      if (Phi->getType()->isPointerTy() && isInductionVariable(Phi)) {
-        DEBUG(dbgs() << "LV: Found a pointer induction variable.\n");
-        Inductions[Phi] = StartValue;
-        continue;
-      } else if (!Phi->getType()->isIntegerTy()) {
-        DEBUG(dbgs() << "LV: Found an non-int non-pointer PHI.\n");
+      // We do not re-vectorize vectors.
+      if (!VectorType::isValidElementType(I->getType()) &&
+          !I->getType()->isVoidTy()) {
+        DEBUG(dbgs() << "LV: Found unvectorizable type." << "\n");
         return false;
       }
 
-      // Handle integer PHIs:
-      if (isInductionVariable(Phi)) {
-        if (Induction) {
-          DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
-          return false;
+      // Reduction instructions are allowed to have exit users.
+      // All other instructions must not have external users.
+      if (!AllowedExit.count(I))
+        //Check that all of the users of the loop are inside the BB.
+        for (Value::use_iterator it = I->use_begin(), e = I->use_end();
+             it != e; ++it) {
+          Instruction *U = cast<Instruction>(*it);
+          // This user may be a reduction exit value.
+          if (!TheLoop->contains(U)) {
+            DEBUG(dbgs() << "LV: Found an outside user for : "<< *U << "\n");
+            return false;
+          }
         }
-        DEBUG(dbgs() << "LV: Found the induction PHI."<< *Phi <<"\n");
-        Induction = Phi;
-        Inductions[Phi] = StartValue;
-        continue;
-      }
-      if (AddReductionVar(Phi, IntegerAdd)) {
-        DEBUG(dbgs() << "LV: Found an ADD reduction PHI."<< *Phi <<"\n");
-        continue;
-      }
-      if (AddReductionVar(Phi, IntegerMult)) {
-        DEBUG(dbgs() << "LV: Found a MUL reduction PHI."<< *Phi <<"\n");
-        continue;
-      }
-      if (AddReductionVar(Phi, IntegerOr)) {
-        DEBUG(dbgs() << "LV: Found an OR reduction PHI."<< *Phi <<"\n");
-        continue;
-      }
-      if (AddReductionVar(Phi, IntegerAnd)) {
-        DEBUG(dbgs() << "LV: Found an AND reduction PHI."<< *Phi <<"\n");
-        continue;
-      }
-      if (AddReductionVar(Phi, IntegerXor)) {
-        DEBUG(dbgs() << "LV: Found a XOR reduction PHI."<< *Phi <<"\n");
-        continue;
-      }
+    } // next instr.
 
-      DEBUG(dbgs() << "LV: Found an unidentified PHI."<< *Phi <<"\n");
-      return false;
-    }// end of PHI handling
-
-    // We still don't handle functions.
-    CallInst *CI = dyn_cast<CallInst>(I);
-    if (CI) {
-      DEBUG(dbgs() << "LV: Found a call site.\n");
-      return false;
-    }
-
-    // We do not re-vectorize vectors.
-    if (!VectorType::isValidElementType(I->getType()) &&
-        !I->getType()->isVoidTy()) {
-      DEBUG(dbgs() << "LV: Found unvectorizable type." << "\n");
-      return false;
-    }
-
-    // Reduction instructions are allowed to have exit users.
-    // All other instructions must not have external users.
-    if (!AllowedExit.count(I))
-      //Check that all of the users of the loop are inside the BB.
-      for (Value::use_iterator it = I->use_begin(), e = I->use_end();
-           it != e; ++it) {
-        Instruction *U = cast<Instruction>(*it);
-        // This user may be a reduction exit value.
-        BasicBlock *Parent = U->getParent();
-        if (Parent != &BB) {
-          DEBUG(dbgs() << "LV: Found an outside user for : "<< *U << "\n");
-          return false;
-        }
-    }
-  } // next instr.
+  }
 
   if (!Induction) {
     DEBUG(dbgs() << "LV: Did not find one integer induction var.\n");
     assert(getInductionVars()->size() && "No induction variables");
   }
 
-  // Don't vectorize if the memory dependencies do not allow vectorization.
-  if (!canVectorizeMemory(BB))
-    return false;
+  return true;
+}
 
+void LoopVectorizationLegality::collectLoopUniforms() {
   // We now know that the loop is vectorizable!
   // Collect variables that will remain uniform after vectorization.
   std::vector<Value*> Worklist;
 
+  BasicBlock *Latch = TheLoop->getLoopLatch();
+
   // Start with the conditional branch and walk up the block.
-  Worklist.push_back(BB.getTerminator()->getOperand(0));
+  Worklist.push_back(Latch->getTerminator()->getOperand(0));
 
   while (Worklist.size()) {
     Instruction *I = dyn_cast<Instruction>(Worklist.back());
     Worklist.pop_back();
 
-    // Look at instructions inside this block. Stop when reaching PHI nodes.
-    if (!I || I->getParent() != &BB || isa<PHINode>(I))
+    // Look at instructions inside this loop.
+    // Stop when reaching PHI nodes.
+    // TODO: we need to prevent loops but we do need to follow PHIs inside this
+    // loop.
+    if (!I || !TheLoop->contains(I) || isa<PHINode>(I))
       continue;
 
     // This is a known uniform.
@@ -1594,11 +1682,9 @@ bool LoopVectorizationLegality::canVectorizeBlock(BasicBlock &BB) {
       Worklist.push_back(I->getOperand(i));
     }
   }
-
-  return true;
 }
 
-bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
+bool LoopVectorizationLegality::canVectorizeMemory() {
   typedef SmallVector<Value*, 16> ValueVector;
   typedef SmallPtrSet<Value*, 16> ValueSet;
   // Holds the Load and Store *instructions*.
@@ -1607,35 +1693,40 @@ bool LoopVectorizationLegality::canVectorizeMemory(BasicBlock &BB) {
   PtrRtCheck.Pointers.clear();
   PtrRtCheck.Need = false;
 
-  // Scan the BB and collect legal loads and stores.
-  for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
-    Instruction *I = it;
+  // For each block.
+  for (Loop::block_iterator bb = TheLoop->block_begin(),
+       be = TheLoop->block_end(); bb != be; ++bb) {
 
-    // If this is a load, save it. If this instruction can read from memory
-    // but is not a load, then we quit. Notice that we don't handle function
-    // calls that read or write.
-    if (I->mayReadFromMemory()) {
-      LoadInst *Ld = dyn_cast<LoadInst>(I);
-      if (!Ld) return false;
-      if (!Ld->isSimple()) {
-        DEBUG(dbgs() << "LV: Found a non-simple load.\n");
-        return false;
-      }
-      Loads.push_back(Ld);
-      continue;
-    }
+    // Scan the BB and collect legal loads and stores.
+    for (BasicBlock::iterator it = (*bb)->begin(), e = (*bb)->end(); it != e;
+         ++it) {
 
-    // Save store instructions. Abort if other instructions write to memory.
-    if (I->mayWriteToMemory()) {
-      StoreInst *St = dyn_cast<StoreInst>(I);
-      if (!St) return false;
-      if (!St->isSimple()) {
-        DEBUG(dbgs() << "LV: Found a non-simple store.\n");
-        return false;
+      // If this is a load, save it. If this instruction can read from memory
+      // but is not a load, then we quit. Notice that we don't handle function
+      // calls that read or write.
+      if (it->mayReadFromMemory()) {
+        LoadInst *Ld = dyn_cast<LoadInst>(it);
+        if (!Ld) return false;
+        if (!Ld->isSimple()) {
+          DEBUG(dbgs() << "LV: Found a non-simple load.\n");
+          return false;
+        }
+        Loads.push_back(Ld);
+        continue;
       }
-      Stores.push_back(St);
-    }
-  } // next instr.
+
+      // Save 'store' instructions. Abort if other instructions write to memory.
+      if (it->mayWriteToMemory()) {
+        StoreInst *St = dyn_cast<StoreInst>(it);
+        if (!St) return false;
+        if (!St->isSimple()) {
+          DEBUG(dbgs() << "LV: Found a non-simple store.\n");
+          return false;
+        }
+        Stores.push_back(St);
+      }
+    } // next instr.
+  } // next block.
 
   // Now we have two lists that hold the loads and the stores.
   // Next, we find the pointers that they use.
@@ -1906,6 +1997,34 @@ bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   assert(PhiTy->isPointerTy() && "The PHI must be a pointer");
   uint64_t Size = DL->getTypeAllocSize(PhiTy->getPointerElementType());
   return (C->getValue()->equalsInt(Size));
+}
+
+bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
+  assert(TheLoop->contains(BB) && "Unknown block used");
+
+  // Blocks that do not dominate the latch need predication.
+  BasicBlock* Latch = TheLoop->getLoopLatch();
+  return !DT->dominates(BB, Latch);
+}
+
+bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
+  for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+    // We don't predicate loads/stores at the moment.
+    if (it->mayReadFromMemory() || it->mayWriteToMemory() || it->mayThrow())
+      return false;
+
+    // The isntructions below can trap.
+    switch (it->getOpcode()) {
+      default: continue;
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::URem:
+      case Instruction::SRem:
+        return false;
+    }
+  }
+
+  return true;
 }
 
 bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
