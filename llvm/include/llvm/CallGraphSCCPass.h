@@ -39,6 +39,9 @@ public:
   /// corresponding to a CallGraph.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
 
+  using llvm::Pass::doInitialization;
+  using llvm::Pass::doFinalization;
+
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.
   virtual bool doInitialization(CallGraph &CG) {

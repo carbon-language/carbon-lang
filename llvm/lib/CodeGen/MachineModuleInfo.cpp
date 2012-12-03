@@ -281,21 +281,6 @@ MachineModuleInfo::~MachineModuleInfo() {
   AddrLabelSymbols = 0;
 }
 
-/// doInitialization - Initialize the state for a new module.
-///
-bool MachineModuleInfo::doInitialization() {
-  assert(AddrLabelSymbols == 0 && "Improperly initialized");
-  return false;
-}
-
-/// doFinalization - Tear down the state after completion of a module.
-///
-bool MachineModuleInfo::doFinalization() {
-  delete AddrLabelSymbols;
-  AddrLabelSymbols = 0;
-  return false;
-}
-
 /// EndFunction - Discard function meta information.
 ///
 void MachineModuleInfo::EndFunction() {

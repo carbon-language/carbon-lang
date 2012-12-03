@@ -133,16 +133,6 @@ Pass *FunctionPass::createPrinterPass(raw_ostream &O,
   return createPrintFunctionPass(Banner, &O);
 }
 
-bool FunctionPass::doInitialization(Module &) {
-  // By default, don't do anything.
-  return false;
-}
-
-bool FunctionPass::doFinalization(Module &) {
-  // By default, don't do anything.
-  return false;
-}
-
 PassManagerType FunctionPass::getPotentialPassManagerType() const {
   return PMT_FunctionPassManager;
 }
@@ -157,22 +147,12 @@ Pass *BasicBlockPass::createPrinterPass(raw_ostream &O,
   llvm_unreachable("BasicBlockPass printing unsupported.");
 }
 
-bool BasicBlockPass::doInitialization(Module &) {
-  // By default, don't do anything.
-  return false;
-}
-
 bool BasicBlockPass::doInitialization(Function &) {
   // By default, don't do anything.
   return false;
 }
 
 bool BasicBlockPass::doFinalization(Function &) {
-  // By default, don't do anything.
-  return false;
-}
-
-bool BasicBlockPass::doFinalization(Module &) {
   // By default, don't do anything.
   return false;
 }

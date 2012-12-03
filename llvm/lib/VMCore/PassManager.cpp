@@ -309,6 +309,9 @@ public:
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M);
 
+  using llvm::Pass::doInitialization;
+  using llvm::Pass::doFinalization;
+
   /// doInitialization - Run all of the initializers for the module passes.
   ///
   bool doInitialization();
@@ -401,6 +404,9 @@ public:
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool run(Module &M);
+
+  using llvm::Pass::doInitialization;
+  using llvm::Pass::doFinalization;
 
   /// doInitialization - Run all of the initializers for the module passes.
   ///
