@@ -115,4 +115,4 @@ D: Instruction Scheduling
 
 N: Bill Wendling
 E: wendling@apple.com
-D: libLTO & Linker
+D: libLTO & IR Linker
