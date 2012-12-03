@@ -10,7 +10,7 @@ CLANG_LEVEL := ..
 
 PARALLEL_DIRS = Headers Basic Lex Parse AST ASTMatchers Sema CodeGen Analysis \
                 StaticAnalyzer Edit Rewrite ARCMigrate Serialization Frontend \
-                FrontendTool Tooling Driver
+                FrontendTool Tooling Driver Format
 
 include $(CLANG_LEVEL)/Makefile
 
