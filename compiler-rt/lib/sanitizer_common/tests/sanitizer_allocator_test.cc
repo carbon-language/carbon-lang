@@ -22,14 +22,6 @@ TEST(Allocator, Basic) {
   char *p2 = (char*)InternalAlloc(20);
   EXPECT_NE(p2, (char*)0);
   EXPECT_NE(p2, p);
-  for (int i = 0; i < 10; i++) {
-    p[i] = 42;
-    EXPECT_EQ(p, InternalAllocBlock(p + i));
-  }
-  for (int i = 0; i < 20; i++) {
-    ((char*)p2)[i] = 42;
-    EXPECT_EQ(p2, InternalAllocBlock(p2 + i));
-  }
   InternalFree(p);
   InternalFree(p2);
 }
@@ -42,10 +34,6 @@ TEST(Allocator, Stress) {
     uptr sz = rand_r(&rnd) % 1000;
     char *p = (char*)InternalAlloc(sz);
     EXPECT_NE(p, (char*)0);
-    for (uptr j = 0; j < sz; j++) {
-      p[j] = 42;
-      EXPECT_EQ(p, InternalAllocBlock(p + j));
-    }
     ptrs[i] = p;
   }
   for (int i = 0; i < kCount; i++) {

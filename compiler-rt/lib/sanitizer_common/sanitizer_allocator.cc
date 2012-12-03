@@ -49,13 +49,6 @@ void InternalFree(void *addr) {
   LIBC_FREE(addr);
 }
 
-void *InternalAllocBlock(void *p) {
-  CHECK_NE(p, (void*)0);
-  u64 *pp = (u64*)((uptr)p & ~0x7);
-  for (; pp[0] != kBlockMagic; pp--) {}
-  return pp + 1;
-}
-
 // LowLevelAllocator
 static LowLevelAllocateCallback low_level_alloc_callback;
 
