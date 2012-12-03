@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "misched"
 
 #include "HexagonMachineScheduler.h"
-
 #include <queue>
 
 using namespace llvm;

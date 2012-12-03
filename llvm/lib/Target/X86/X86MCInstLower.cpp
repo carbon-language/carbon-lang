@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86AsmPrinter.h"
-#include "X86COFFMachineModuleInfo.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
-#include "llvm/Type.h"
+#include "X86COFFMachineModuleInfo.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -24,9 +24,9 @@
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/ADT/SmallString.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 namespace {

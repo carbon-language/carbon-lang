@@ -15,13 +15,13 @@
 #include "Hexagon.h"
 #include "HexagonISelLowering.h"
 #include "HexagonMachineScheduler.h"
-#include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 

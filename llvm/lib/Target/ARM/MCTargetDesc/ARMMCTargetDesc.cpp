@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMMCTargetDesc.h"
-#include "ARMMCAsmInfo.h"
 #include "ARMBaseInfo.h"
+#include "ARMMCAsmInfo.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrAnalysis.h"

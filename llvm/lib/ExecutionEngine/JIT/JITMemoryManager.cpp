@@ -16,20 +16,20 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Config/config.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Memory.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/Config/config.h"
-#include <vector>
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Memory.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <climits>
 #include <cstring>
+#include <vector>
 
 #if defined(__linux__)
 #if defined(HAVE_SYS_STAT_H)

@@ -15,22 +15,22 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-metadata-loader"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ProfileDataLoader.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/Module.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/MDBuilder.h"
 #include "llvm/Metadata.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/ProfileDataLoader.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(NumEdgesRead, "The # of edges read.");

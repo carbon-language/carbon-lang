@@ -12,22 +12,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "ValueEnumerator.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
-#include "ValueEnumerator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
-#include "llvm/ValueSymbolTable.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ValueSymbolTable.h"
 #include <cctype>
 #include <map>
 using namespace llvm;

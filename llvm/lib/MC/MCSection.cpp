@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 

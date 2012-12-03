@@ -13,14 +13,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-c/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm-c/Initialization.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/PassManager.h"
+#include "llvm-c/Transforms/Scalar.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/PassManager.h"
 
 using namespace llvm;
 

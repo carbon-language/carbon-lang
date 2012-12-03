@@ -11,12 +11,12 @@
 #include "ARM.h"
 #include "ARMMachineFunctionInfo.h"
 #include "Thumb2InstrInfo.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumITs,        "Number of IT blocks inserted");

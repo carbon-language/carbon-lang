@@ -23,9 +23,9 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cmath>
-#include <limits>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
+#include <limits>
 using namespace llvm;
 
 /// A utility function for allocating memory, checking for allocation failures,

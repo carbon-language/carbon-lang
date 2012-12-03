@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dyld"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/STLExtras.h"
 #include "RuntimeDyldMachO.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 using namespace llvm;
 using namespace llvm::object;
 

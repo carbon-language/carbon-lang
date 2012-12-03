@@ -13,12 +13,12 @@
 
 #include "ARMConstantPoolValue.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Constant.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/Type.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Type.h"
 #include <cstdlib>
 using namespace llvm;
 

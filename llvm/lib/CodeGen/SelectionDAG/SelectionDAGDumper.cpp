@@ -11,23 +11,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ScheduleDAGSDNodes.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "ScheduleDAGSDNodes.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/DebugInfo.h"
+#include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 std::string SDNode::getOperationName(const SelectionDAG *G) const {

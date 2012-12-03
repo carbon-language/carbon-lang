@@ -13,21 +13,21 @@
 
 #define DEBUG_TYPE "dwarfdebug"
 
-#include "DwarfAccelTable.h"
 #include "DwarfCompileUnit.h"
+#include "DwarfAccelTable.h"
 #include "DwarfDebug.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/Constants.h"
 #include "llvm/DIBuilder.h"
+#include "llvm/DataLayout.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 

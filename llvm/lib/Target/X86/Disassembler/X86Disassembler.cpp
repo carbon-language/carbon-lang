@@ -16,11 +16,10 @@
 
 #include "X86Disassembler.h"
 #include "X86DisassemblerDecoder.h"
-
 #include "llvm/MC/EDInstInfo.h"
-#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"

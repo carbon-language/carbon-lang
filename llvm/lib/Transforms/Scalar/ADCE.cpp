@@ -16,16 +16,16 @@
 
 #define DEBUG_TYPE "adce"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumRemoved, "Number of instructions removed");

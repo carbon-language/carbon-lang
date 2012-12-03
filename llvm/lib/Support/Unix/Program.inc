@@ -16,9 +16,9 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include <llvm/Config/config.h>
-#include "llvm/Support/FileSystem.h"
 #include "Unix.h"
+#include "llvm/Support/FileSystem.h"
+#include <llvm/Config/config.h>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif

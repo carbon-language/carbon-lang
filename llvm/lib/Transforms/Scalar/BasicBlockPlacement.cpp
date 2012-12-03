@@ -27,12 +27,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "block-placement"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Transforms/Scalar.h"
 #include <set>
 using namespace llvm;
 

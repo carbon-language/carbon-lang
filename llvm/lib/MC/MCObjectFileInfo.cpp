@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/ADT/Triple.h"
 using namespace llvm;
 
 void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {

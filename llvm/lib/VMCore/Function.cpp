@@ -11,22 +11,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/InstIterator.h"
-#include "llvm/Support/LeakDetector.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/StringPool.h"
-#include "llvm/Support/RWMutex.h"
-#include "llvm/Support/Threading.h"
+#include "llvm/Function.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Support/InstIterator.h"
+#include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/RWMutex.h"
+#include "llvm/Support/StringPool.h"
+#include "llvm/Support/Threading.h"
 using namespace llvm;
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods

@@ -9,7 +9,6 @@
 
 #include "Disassembler.h"
 #include "llvm-c/Disassembler.h"
-
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -18,9 +17,9 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 class Target;

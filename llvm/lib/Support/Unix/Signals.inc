@@ -15,9 +15,9 @@
 #include "Unix.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Mutex.h"
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 #if HAVE_EXECINFO_H
 # include <execinfo.h>         // For backtrace().
 #endif

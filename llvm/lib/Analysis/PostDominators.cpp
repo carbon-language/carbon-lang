@@ -14,13 +14,13 @@
 #define DEBUG_TYPE "postdomtree"
 
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SetOperations.h"
+#include "llvm/Analysis/DominatorInternals.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/SetOperations.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/Analysis/DominatorInternals.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

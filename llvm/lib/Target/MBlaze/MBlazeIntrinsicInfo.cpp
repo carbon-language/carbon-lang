@@ -16,9 +16,9 @@
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Type.h"
 #include <cstring>
 
 using namespace llvm;

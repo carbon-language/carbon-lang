@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCParser/AsmLexer.h"
-#include "llvm/Support/SMLoc.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SMLoc.h"
 #include <cctype>
 #include <cerrno>
 #include <cstdio>

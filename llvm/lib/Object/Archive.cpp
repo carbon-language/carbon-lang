@@ -13,8 +13,8 @@
 
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;

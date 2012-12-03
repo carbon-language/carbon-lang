@@ -16,20 +16,20 @@
 
 #define DEBUG_TYPE "globalsmodref-aa"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/Instructions.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SCCIterator.h"
 #include <set>
 using namespace llvm;
 

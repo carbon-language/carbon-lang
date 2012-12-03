@@ -12,18 +12,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGLexer.h"
-#include "llvm/TableGen/Error.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Config/config.h" // for strtoull()/strtoll() define
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/TableGen/Error.h"
 #include <cctype>
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cerrno>
-
-#include "llvm/Config/config.h" // for strtoull()/strtoll() define
 
 using namespace llvm;
 

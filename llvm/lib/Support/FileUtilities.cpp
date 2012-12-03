@@ -13,15 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
-#include <cctype>
 using namespace llvm;
 
 static bool isSignedChar(char C) {

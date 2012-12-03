@@ -12,13 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Instruction.h"
-#include "llvm/Type.h"
-#include "llvm/Instructions.h"
 #include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 Instruction::Instruction(Type *ty, unsigned it, Use *Ops, unsigned NumOps,

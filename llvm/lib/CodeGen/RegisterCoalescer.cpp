@@ -16,9 +16,6 @@
 #define DEBUG_TYPE "regalloc"
 #include "RegisterCoalescer.h"
 #include "LiveDebugVariables.h"
-
-#include "llvm/Pass.h"
-#include "llvm/Value.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -33,6 +30,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -42,6 +40,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Value.h"
 #include <algorithm>
 #include <cmath>
 using namespace llvm;

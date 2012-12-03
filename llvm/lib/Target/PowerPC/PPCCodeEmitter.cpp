@@ -12,15 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPCTargetMachine.h"
-#include "PPCRelocations.h"
 #include "PPC.h"
-#include "llvm/Module.h"
-#include "llvm/PassManager.h"
+#include "PPCRelocations.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"

@@ -13,28 +13,24 @@
 
 #define DEBUG_TYPE "WinCOFFObjectWriter"
 
-#include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCValue.h"
-#include "llvm/MC/MCAssembler.h"
-#include "llvm/MC/MCAsmLayout.h"
-#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCWinCOFFObjectWriter.h"
-
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-
+#include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSectionCOFF.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-
 #include "llvm/Support/TimeValue.h"
-
 #include <cstdio>
 
 using namespace llvm;

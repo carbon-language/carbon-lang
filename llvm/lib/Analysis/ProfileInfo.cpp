@@ -12,16 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-info"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfo.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/ADT/SmallSet.h"
-#include <set>
-#include <queue>
 #include <limits>
+#include <queue>
+#include <set>
 using namespace llvm;
 
 namespace llvm {

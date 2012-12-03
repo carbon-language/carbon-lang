@@ -19,19 +19,19 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "ScheduleDAGSDNodes.h"
-#include "llvm/CodeGen/LatencyPriorityQueue.h"
-#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
+#include "ScheduleDAGSDNodes.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/LatencyPriorityQueue.h"
+#include "llvm/CodeGen/ResourcePriorityQueue.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/ResourcePriorityQueue.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <climits>
 using namespace llvm;
 

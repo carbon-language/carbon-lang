@@ -12,17 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-verifier"
+#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/Debug.h"
 #include <set>
 using namespace llvm;
 

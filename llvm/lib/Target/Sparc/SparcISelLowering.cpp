@@ -13,11 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcISelLowering.h"
-#include "SparcTargetMachine.h"
 #include "SparcMachineFunctionInfo.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/Module.h"
+#include "SparcTargetMachine.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -25,6 +22,9 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 

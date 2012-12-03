@@ -17,22 +17,22 @@
 
 #define DEBUG_TYPE "simplify-libcalls"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/BuildLibCalls.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Pass.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Config/config.h"            // FIXME: Shouldn't depend on host!
+#include "llvm/DataLayout.h"
+#include "llvm/IRBuilder.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Config/config.h"            // FIXME: Shouldn't depend on host!
+#include "llvm/Transforms/Utils/BuildLibCalls.h"
 using namespace llvm;
 
 STATISTIC(NumAnnotated, "Number of attributes added to library functions");

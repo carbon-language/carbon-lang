@@ -17,11 +17,11 @@
 
 #define DEBUG_TYPE "globaldce"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumAliases  , "Number of global aliases removed");

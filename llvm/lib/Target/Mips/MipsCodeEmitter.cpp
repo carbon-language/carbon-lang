@@ -14,11 +14,11 @@
 
 #define DEBUG_TYPE "jit"
 #include "Mips.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsInstrInfo.h"
 #include "MipsRelocations.h"
 #include "MipsSubtarget.h"
 #include "MipsTargetMachine.h"
-#include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"

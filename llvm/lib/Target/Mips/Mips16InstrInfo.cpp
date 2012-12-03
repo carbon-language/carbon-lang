@@ -12,15 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips16InstrInfo.h"
-#include "MipsTargetMachine.h"
-#include "MipsMachineFunction.h"
 #include "InstPrinter/MipsInstPrinter.h"
+#include "MipsMachineFunction.h"
+#include "MipsTargetMachine.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
 
 using namespace llvm;
 

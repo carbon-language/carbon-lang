@@ -13,13 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-c/Transforms/Vectorize.h"
+#include "llvm/Transforms/Vectorize.h"
 #include "llvm-c/Initialization.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/PassManager.h"
+#include "llvm-c/Transforms/Vectorize.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Transforms/Vectorize.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/PassManager.h"
 
 using namespace llvm;
 

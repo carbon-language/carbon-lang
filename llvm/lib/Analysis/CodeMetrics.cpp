@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CodeMetrics.h"
-#include "llvm/Function.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/IntrinsicInst.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Function.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Support/CallSite.h"
 
 using namespace llvm;
 

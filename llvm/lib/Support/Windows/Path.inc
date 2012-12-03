@@ -17,8 +17,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
-#include <malloc.h>
 #include <cstdio>
+#include <malloc.h>
 
 // We need to undo a macro defined in Windows.h, otherwise we won't compile:
 #undef CopyFile

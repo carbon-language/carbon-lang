@@ -18,13 +18,13 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-edge-profiling"
 
+#include "llvm/Transforms/Instrumentation.h"
 #include "ProfilingUtils.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Instrumentation.h"
-#include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
 

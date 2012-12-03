@@ -16,10 +16,10 @@
 #define LLVM_CODEGEN_PBQP_GRAPH_H
 
 #include "Math.h"
-
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include <list>
 #include <map>
-#include <llvm/ADT/ilist.h>
 
 namespace PBQP {
 

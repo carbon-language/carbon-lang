@@ -15,9 +15,13 @@
 #ifndef LLVM_EXECUTION_ENGINE_JIT_DWARFEMITTER_H
 #define LLVM_EXECUTION_ENGINE_JIT_DWARFEMITTER_H
 
+#include "llvm/Support/DataTypes.h"
+#include <vector>
+
 namespace llvm {
 
 class Function;
+class JIT;
 class JITCodeEmitter;
 class MachineFunction;
 class MachineModuleInfo;

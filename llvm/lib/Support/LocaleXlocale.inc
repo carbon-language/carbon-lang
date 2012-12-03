@@ -1,5 +1,5 @@
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include <cassert>
 #include <xlocale.h>

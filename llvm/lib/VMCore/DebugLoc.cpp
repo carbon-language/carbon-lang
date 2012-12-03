@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/DebugLoc.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/ADT/DenseMapInfo.h"
 #include "LLVMContextImpl.h"
+#include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/DebugInfo.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

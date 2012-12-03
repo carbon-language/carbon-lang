@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "valuesymtab"
-#include "llvm/GlobalValue.h"
-#include "llvm/Type.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 // Class destructor

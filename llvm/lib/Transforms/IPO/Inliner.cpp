@@ -14,22 +14,22 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "inline"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/Transforms/IPO/InlinerPass.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Transforms/IPO/InlinerPass.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
 STATISTIC(NumInlined, "Number of functions inlined");

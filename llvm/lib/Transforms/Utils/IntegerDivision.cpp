@@ -15,11 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "integer-division"
+#include "llvm/Transforms/Utils/IntegerDivision.h"
 #include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/Transforms/Utils/IntegerDivision.h"
 
 using namespace llvm;
 

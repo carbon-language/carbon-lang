@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/Archive.h"
 #include "ArchiveInternals.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Module.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <cstdio>
 #include <cstdlib>
 #include <memory>

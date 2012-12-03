@@ -13,10 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;

@@ -13,13 +13,13 @@
 
 #define DEBUG_TYPE "nvptx-reg-info"
 
-#include "NVPTX.h"
 #include "NVPTXRegisterInfo.h"
+#include "NVPTX.h"
 #include "NVPTXSubtarget.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Target/TargetInstrInfo.h"
 

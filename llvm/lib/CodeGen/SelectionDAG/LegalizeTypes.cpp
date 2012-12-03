@@ -14,9 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DataLayout.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"

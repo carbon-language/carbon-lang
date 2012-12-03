@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Constant.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 using namespace llvm;
 

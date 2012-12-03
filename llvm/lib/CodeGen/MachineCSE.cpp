@@ -15,17 +15,17 @@
 
 #define DEBUG_TYPE "machine-cse"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/RecyclingAllocator.h"
+#include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
 STATISTIC(NumCoalesces, "Number of copies coalesced");

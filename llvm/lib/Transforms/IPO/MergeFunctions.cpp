@@ -45,7 +45,13 @@
 
 #define DEBUG_TYPE "mergefunc"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
@@ -53,17 +59,11 @@
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DataLayout.h"
 #include <vector>
 using namespace llvm;
 

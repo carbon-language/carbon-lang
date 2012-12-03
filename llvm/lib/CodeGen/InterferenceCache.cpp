@@ -13,9 +13,9 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "InterferenceCache.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
 

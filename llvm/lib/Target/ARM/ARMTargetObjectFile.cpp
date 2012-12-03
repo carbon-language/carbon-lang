@@ -9,14 +9,14 @@
 
 #include "ARMTargetObjectFile.h"
 #include "ARMSubtarget.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 using namespace dwarf;
 

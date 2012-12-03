@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMContextImpl.h"
 #include "llvm/Support/LeakDetector.h"
+#include "LLVMContextImpl.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"

@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Windows.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Process.h"
-#include "Windows.h"
 
 namespace {
 

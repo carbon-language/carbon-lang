@@ -13,9 +13,9 @@
 
 #include "Windows.h"
 #include <cstdio>
-#include <malloc.h>
-#include <io.h>
 #include <fcntl.h>
+#include <io.h>
+#include <malloc.h>
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code

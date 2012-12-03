@@ -12,16 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCFrameLowering.h"
-#include "PPCInstrInfo.h"
 #include "PPCInstrBuilder.h"
+#include "PPCInstrInfo.h"
 #include "PPCMachineFunctionInfo.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/Function.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;

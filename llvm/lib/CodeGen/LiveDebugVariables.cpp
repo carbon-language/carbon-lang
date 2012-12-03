@@ -21,10 +21,6 @@
 
 #define DEBUG_TYPE "livedebug"
 #include "LiveDebugVariables.h"
-#include "llvm/Constants.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/Metadata.h"
-#include "llvm/Value.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LexicalScopes.h"
@@ -35,11 +31,15 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/Constants.h"
+#include "llvm/DebugInfo.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Value.h"
 
 using namespace llvm;
 

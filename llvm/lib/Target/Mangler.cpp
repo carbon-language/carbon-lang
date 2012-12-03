@@ -12,14 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/Mangler.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
 using namespace llvm;
 
 static bool isAcceptableChar(char C, bool AllowPeriod, bool AllowUTF8) {

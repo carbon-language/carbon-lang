@@ -19,15 +19,15 @@
 
 #define DEBUG_TYPE "constmerge"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/DataLayout.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
+#include "llvm/Pass.h"
 using namespace llvm;
 
 STATISTIC(NumMerged, "Number of global constants merged");

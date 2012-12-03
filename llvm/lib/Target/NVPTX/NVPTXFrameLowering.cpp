@@ -17,9 +17,9 @@
 #include "NVPTXSubtarget.h"
 #include "NVPTXTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Target/TargetInstrInfo.h"
 

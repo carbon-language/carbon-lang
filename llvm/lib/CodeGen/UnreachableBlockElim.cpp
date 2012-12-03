@@ -21,22 +21,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Constant.h"
-#include "llvm/Instructions.h"
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
-#include "llvm/Type.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Constant.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 namespace {

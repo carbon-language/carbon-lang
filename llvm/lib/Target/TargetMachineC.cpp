@@ -11,17 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm-c/TargetMachine.h"
 #include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
-#include "llvm-c/TargetMachine.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/CodeGen.h"
-#include "llvm/Support/FormattedStream.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/CodeGen.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetMachine.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>

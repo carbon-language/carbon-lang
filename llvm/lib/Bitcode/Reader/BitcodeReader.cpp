@@ -13,19 +13,19 @@
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "BitcodeReader.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/AutoUpgrade.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
+#include "llvm/OperandTraits.h"
 #include "llvm/Operator.h"
-#include "llvm/AutoUpgrade.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/OperandTraits.h"
 using namespace llvm;
 
 enum {

@@ -15,13 +15,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 

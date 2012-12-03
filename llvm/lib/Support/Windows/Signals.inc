@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
+#include <algorithm>
 #include <stdio.h>
 #include <vector>
-#include <algorithm>
 
 #ifdef __MINGW32__
  #include <imagehlp.h>

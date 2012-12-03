@@ -13,15 +13,14 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "path-profile-info"
 
-#include "llvm/Module.h"
-#include "llvm/Pass.h"
+#include "llvm/Analysis/PathProfileInfo.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfoTypes.h"
-#include "llvm/Analysis/PathProfileInfo.h"
+#include "llvm/Module.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <cstdio>
 
 using namespace llvm;

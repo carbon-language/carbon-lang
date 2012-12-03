@@ -15,14 +15,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/SimplifyLibCalls.h"
-#include "llvm/DataLayout.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/Module.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 

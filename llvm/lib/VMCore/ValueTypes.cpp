@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Type.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 EVT EVT::changeExtendedVectorElementTypeToInteger() const {

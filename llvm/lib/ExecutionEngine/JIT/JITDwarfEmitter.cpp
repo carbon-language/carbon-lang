@@ -12,21 +12,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "JIT.h"
 #include "JITDwarfEmitter.h"
-#include "llvm/Function.h"
+#include "JIT.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/DataLayout.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
-#include "llvm/MC/MachineLocation.h"
+#include "llvm/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;

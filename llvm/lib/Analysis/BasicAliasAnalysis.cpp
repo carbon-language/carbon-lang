@@ -13,9 +13,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalAlias.h"
@@ -25,16 +32,9 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
-#include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include <algorithm>
 using namespace llvm;
 

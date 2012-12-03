@@ -12,16 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instruction.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/DataLayout.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/CallSite.h"
 
 using namespace llvm;
 using namespace llvm::PatternMatch;

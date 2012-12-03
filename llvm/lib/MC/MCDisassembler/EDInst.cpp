@@ -17,7 +17,6 @@
 #include "EDDisassembler.h"
 #include "EDOperand.h"
 #include "EDToken.h"
-
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCInst.h"
 

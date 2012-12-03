@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/DataLayout.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;

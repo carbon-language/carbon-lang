@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
-#include "llvm/ADT/DenseMap.h"
 using namespace llvm;
 
 /// DemoteRegToStack - This function takes a virtual register computed by an

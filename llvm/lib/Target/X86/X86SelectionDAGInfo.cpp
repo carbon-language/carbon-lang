@@ -13,8 +13,8 @@
 
 #define DEBUG_TYPE "x86-selectiondag-info"
 #include "X86TargetMachine.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/DerivedTypes.h"
 using namespace llvm;
 
 X86SelectionDAGInfo::X86SelectionDAGInfo(const X86TargetMachine &TM) :

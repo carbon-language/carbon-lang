@@ -21,13 +21,13 @@
 
 #define DEBUG_TYPE "scheduler"
 #include "llvm/CodeGen/ResourcePriorityQueue.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 

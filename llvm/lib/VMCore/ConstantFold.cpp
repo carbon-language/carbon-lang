@@ -18,14 +18,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "ConstantFold.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Constants.h"
-#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Instructions.h"
 #include "llvm/Operator.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"

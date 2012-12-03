@@ -14,19 +14,19 @@
 
 #define DEBUG_TYPE "iv-users"
 #include "llvm/Analysis/IVUsers.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Type.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Type.h"
 #include <algorithm>
 using namespace llvm;
 

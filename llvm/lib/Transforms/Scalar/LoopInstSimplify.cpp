@@ -12,17 +12,17 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-instsimplify"
-#include "llvm/Instructions.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Instructions.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumSimplified, "Number of redundant instructions simplified");

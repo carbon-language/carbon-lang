@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "hexagon-isel"
+#include "Hexagon.h"
 #include "HexagonISelLowering.h"
 #include "HexagonTargetMachine.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 

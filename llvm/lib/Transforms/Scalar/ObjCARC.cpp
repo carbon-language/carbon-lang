@@ -29,9 +29,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "objc-arc"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 // A handy option to enable/disable all optimizations in this file.
@@ -132,12 +132,12 @@ namespace {
 // ARC Utilities.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringSwitch.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/ADT/StringSwitch.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 namespace {
   /// InstructionClass - A simple classification for instructions.
@@ -660,9 +660,9 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
 // ARC AliasAnalysis.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Pass.h"
 
 namespace {
   /// ObjCARCAliasAnalysis - This is a simple alias analysis
@@ -912,8 +912,8 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 // ARC autorelease pool elimination.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Constants.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Constants.h"
 
 namespace {
   /// ObjCARCAPElim - Autorelease pool elimination.
@@ -1093,10 +1093,10 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
 
 // TODO: Delete release+retain pairs (rare).
 
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SmallPtrSet.h"
 
 STATISTIC(NumNoops,       "Number of no-op objc calls eliminated");
 STATISTIC(NumPartialNoops, "Number of partially no-op objc calls eliminated");
@@ -3756,9 +3756,9 @@ void ObjCARCOpt::releaseMemory() {
 // TODO: ObjCARCContract could insert PHI nodes when uses aren't
 // dominated by single calls.
 
-#include "llvm/Operator.h"
-#include "llvm/InlineAsm.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Operator.h"
 
 STATISTIC(NumStoreStrongs, "Number objc_storeStrong calls formed");
 

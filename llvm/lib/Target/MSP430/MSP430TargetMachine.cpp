@@ -13,9 +13,9 @@
 
 #include "MSP430TargetMachine.h"
 #include "MSP430.h"
-#include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 

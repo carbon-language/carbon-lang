@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 

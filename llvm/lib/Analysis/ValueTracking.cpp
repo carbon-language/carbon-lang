@@ -13,21 +13,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/GlobalVariable.h"
+#include "llvm/DataLayout.h"
 #include "llvm/GlobalAlias.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Operator.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include <cstring>
 using namespace llvm;
 using namespace llvm::PatternMatch;

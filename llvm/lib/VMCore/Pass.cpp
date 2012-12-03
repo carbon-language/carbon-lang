@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Pass.h"
-#include "llvm/PassRegistry.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/PassRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/raw_ostream.h"

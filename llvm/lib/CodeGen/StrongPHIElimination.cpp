@@ -39,17 +39,17 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "strongphielim"
-#include "PHIEliminationUtils.h"
 #include "llvm/CodeGen/Passes.h"
+#include "PHIEliminationUtils.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
 namespace {

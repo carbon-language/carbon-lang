@@ -8,17 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/MBlazeBaseInfo.h"
-
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCTargetAsmLexer.h"
-
 #include "llvm/Support/TargetRegistry.h"
-
-#include <string>
 #include <map>
+#include <string>
 
 using namespace llvm;
 

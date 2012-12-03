@@ -7,18 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/X86FixupKinds.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
-#include "llvm/MC/MCAssembler.h"
+#include "MCTargetDesc/X86FixupKinds.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/ADT/Twine.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Object/MachOFormat.h"
 
 using namespace llvm;
 using namespace llvm::object;

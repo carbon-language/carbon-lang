@@ -13,23 +13,23 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lazy-value-info"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LazyValueInfo.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/PatternMatch.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include <map>
 #include <stack>
 using namespace llvm;

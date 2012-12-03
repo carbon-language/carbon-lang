@@ -17,17 +17,17 @@
 
 #define DEBUG_TYPE "break-crit-edges"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 STATISTIC(NumBroken, "Number of blocks inserted");

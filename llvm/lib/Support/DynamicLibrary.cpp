@@ -13,11 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/Support/Mutex.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Mutex.h"
 #include <cstdio>
 #include <cstring>
 

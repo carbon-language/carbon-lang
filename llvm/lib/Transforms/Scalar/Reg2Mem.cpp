@@ -18,15 +18,15 @@
 
 #define DEBUG_TYPE "reg2mem"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Pass.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
+#include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instructions.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <list>
 using namespace llvm;
 

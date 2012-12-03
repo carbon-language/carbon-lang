@@ -13,16 +13,16 @@
 
 #define DEBUG_TYPE "interpreter"
 #include "Interpreter.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cmath>

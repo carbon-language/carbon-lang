@@ -16,15 +16,15 @@
 #include "Sparc.h"
 #include "SparcInstrInfo.h"
 #include "SparcTargetMachine.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/Mangler.h"
 using namespace llvm;
 
 namespace {

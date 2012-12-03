@@ -12,9 +12,9 @@
 
 #include "XCoreTargetMachine.h"
 #include "XCore.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 

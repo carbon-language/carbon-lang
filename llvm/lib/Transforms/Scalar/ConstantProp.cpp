@@ -20,14 +20,14 @@
 
 #define DEBUG_TYPE "constprop"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Constant.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include <set>
 using namespace llvm;
 

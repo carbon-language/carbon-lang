@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Transforms/Utils/CmpInstAnalysis.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Transforms/Utils/CmpInstAnalysis.h"
 using namespace llvm;
 using namespace PatternMatch;
 

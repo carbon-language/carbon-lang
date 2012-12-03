@@ -29,17 +29,17 @@
 
 #define DEBUG_TYPE "lcssa"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Constants.h"
-#include "llvm/Pass.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/Constants.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/PredIteratorCache.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 using namespace llvm;
 
 STATISTIC(NumLCSSA, "Number of live out of a loop variables");

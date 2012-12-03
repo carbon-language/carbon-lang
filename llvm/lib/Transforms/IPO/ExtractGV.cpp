@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Constants.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/ADT/SetVector.h"
 #include <algorithm>
 using namespace llvm;
 

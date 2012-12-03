@@ -16,12 +16,12 @@
 #include "MipsInstrInfo.h"
 #include "MipsRelocations.h"
 #include "MipsSubtarget.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
+#include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Memory.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 using namespace llvm;
 

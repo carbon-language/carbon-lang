@@ -23,12 +23,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
 DFAPacketizer::DFAPacketizer(const InstrItineraryData *I, const int (*SIT)[2],

@@ -17,16 +17,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DataLayout.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Mutex.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdlib>
 using namespace llvm;

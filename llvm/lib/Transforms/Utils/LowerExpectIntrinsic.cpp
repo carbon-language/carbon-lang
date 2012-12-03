@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lower-expect-intrinsic"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -21,8 +23,6 @@
 #include "llvm/MDBuilder.h"
 #include "llvm/Metadata.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include <vector>

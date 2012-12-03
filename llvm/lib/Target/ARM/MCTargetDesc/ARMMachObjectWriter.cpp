@@ -7,17 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMFixupKinds.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
-#include "llvm/MC/MCMachObjectWriter.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCMachOSymbolFlags.h"
+#include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"

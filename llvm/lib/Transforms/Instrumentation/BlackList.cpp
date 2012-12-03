@@ -13,9 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <utility>
-#include <string>
-
 #include "BlackList.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -28,6 +25,8 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include <string>
+#include <utility>
 
 namespace llvm {
 

@@ -12,12 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Constants.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/GlobalAlias.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/GlobalAlias.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;

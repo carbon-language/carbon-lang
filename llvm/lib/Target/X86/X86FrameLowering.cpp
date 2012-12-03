@@ -17,18 +17,18 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
-#include "llvm/Function.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
 

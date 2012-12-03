@@ -16,16 +16,16 @@
 
 #define DEBUG_TYPE "loop-extract"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/CodeExtractor.h"
-#include "llvm/ADT/Statistic.h"
 #include <fstream>
 #include <set>
 using namespace llvm;

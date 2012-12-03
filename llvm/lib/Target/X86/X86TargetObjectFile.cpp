@@ -15,9 +15,9 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Target/Mangler.h"
 using namespace llvm;
 using namespace dwarf;
 

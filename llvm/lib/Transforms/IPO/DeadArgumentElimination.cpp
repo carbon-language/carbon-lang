@@ -19,11 +19,15 @@
 
 #define DEBUG_TYPE "deadargelim"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constant.h"
+#include "llvm/DIBuilder.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/DIBuilder.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
@@ -32,10 +36,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include <map>
 #include <set>
 using namespace llvm;

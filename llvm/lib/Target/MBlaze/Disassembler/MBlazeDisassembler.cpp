@@ -12,9 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MBlaze.h"
 #include "MBlazeDisassembler.h"
-
+#include "MBlaze.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"

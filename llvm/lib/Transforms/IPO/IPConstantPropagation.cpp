@@ -17,14 +17,14 @@
 
 #define DEBUG_TYPE "ipconstprop"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 STATISTIC(NumArgumentsProped, "Number of args turned into constants");

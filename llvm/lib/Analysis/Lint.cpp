@@ -34,26 +34,26 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/Lint.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/Lint.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/Loads.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
+#include "llvm/Function.h"
 #include "llvm/InstVisitor.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;
 
 namespace {

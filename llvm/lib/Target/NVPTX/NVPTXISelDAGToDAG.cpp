@@ -12,14 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "llvm/Instructions.h"
-#include "llvm/Support/raw_ostream.h"
 #include "NVPTXISelDAGToDAG.h"
+#include "llvm/GlobalValue.h"
+#include "llvm/Instructions.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
-#include "llvm/GlobalValue.h"
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "nvptx-isel"

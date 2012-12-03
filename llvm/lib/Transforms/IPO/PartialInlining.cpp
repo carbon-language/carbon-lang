@@ -14,14 +14,14 @@
 
 #define DEBUG_TYPE "partialinlining"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/CodeExtractor.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CFG.h"
 using namespace llvm;
 
 STATISTIC(NumPartialInlined, "Number of functions partially inlined");

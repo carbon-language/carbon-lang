@@ -14,18 +14,18 @@
 
 #define DEBUG_TYPE "early-cse"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Instructions.h"
-#include "llvm/Pass.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Instructions.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/RecyclingAllocator.h"
+#include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <deque>
 using namespace llvm;
 

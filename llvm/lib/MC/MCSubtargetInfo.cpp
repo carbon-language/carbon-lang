@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCInstrItineraries.h"
-#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 

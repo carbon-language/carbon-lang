@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLParser.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/AutoUpgrade.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -20,10 +21,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
-#include "llvm/ValueSymbolTable.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ValueSymbolTable.h"
 using namespace llvm;
 
 static std::string getTypeString(Type *T) {

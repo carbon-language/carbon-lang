@@ -14,8 +14,8 @@
 #include "InstCombine.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;
 using namespace PatternMatch;
 

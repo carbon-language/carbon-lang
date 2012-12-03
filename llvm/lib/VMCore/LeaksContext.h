@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Value.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Value.h"
 
 namespace llvm {
 

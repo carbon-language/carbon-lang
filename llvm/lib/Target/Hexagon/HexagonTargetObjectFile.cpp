@@ -14,13 +14,13 @@
 #include "HexagonTargetObjectFile.h"
 #include "HexagonSubtarget.h"
 #include "HexagonTargetMachine.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Support/ELF.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ELF.h"
 
 using namespace llvm;
 

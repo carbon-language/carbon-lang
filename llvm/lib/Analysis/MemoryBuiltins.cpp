@@ -13,19 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "memory-builtins"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/DataLayout.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;

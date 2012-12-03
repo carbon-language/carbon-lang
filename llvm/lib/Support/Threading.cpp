@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Threading.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/Mutex.h"
-#include "llvm/Config/config.h"
 #include <cassert>
 
 using namespace llvm;

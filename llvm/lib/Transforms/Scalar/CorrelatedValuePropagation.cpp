@@ -13,15 +13,15 @@
 
 #define DEBUG_TYPE "correlated-value-propagation"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumPhis,      "Number of phis propagated");

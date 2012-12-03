@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/X86BaseInfo.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCTargetAsmLexer.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
 

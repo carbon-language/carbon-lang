@@ -14,11 +14,11 @@
 
 #include "llvm-c/Target.h"
 #include "llvm-c/Initialization.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/PassManager.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/PassManager.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include <cstring>
 
 using namespace llvm;

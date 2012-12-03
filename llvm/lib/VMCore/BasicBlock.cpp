@@ -12,15 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BasicBlock.h"
+#include "SymbolTableListTraitsImpl.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Type.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/LeakDetector.h"
-#include "SymbolTableListTraitsImpl.h"
+#include "llvm/Type.h"
 #include <algorithm>
 using namespace llvm;
 

@@ -15,12 +15,12 @@
 
 #define DEBUG_TYPE "livestacks"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <limits>
 using namespace llvm;
 

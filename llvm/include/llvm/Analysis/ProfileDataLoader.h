@@ -16,6 +16,7 @@
 #ifndef LLVM_ANALYSIS_PROFILEDATALOADER_H
 #define LLVM_ANALYSIS_PROFILEDATALOADER_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Debug.h"

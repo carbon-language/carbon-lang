@@ -12,20 +12,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GCs.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
-#include "llvm/Module.h"
+#include "llvm/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/SmallString.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
 #include <cctype>
 using namespace llvm;
 

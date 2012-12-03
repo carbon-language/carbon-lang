@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
+#include "LLVMContextImpl.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/SourceMgr.h"
-#include "LLVMContextImpl.h"
 #include <cctype>
 using namespace llvm;
 

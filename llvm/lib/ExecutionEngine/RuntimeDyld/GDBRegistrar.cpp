@@ -9,10 +9,10 @@
 
 #include "JITRegistrar.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/MutexGuard.h"
-#include "llvm/Support/Mutex.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/MutexGuard.h"
 
 using namespace llvm;
 

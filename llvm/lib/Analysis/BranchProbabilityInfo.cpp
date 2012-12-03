@@ -11,14 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/BranchProbabilityInfo.h"
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
-#include "llvm/Analysis/BranchProbabilityInfo.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 

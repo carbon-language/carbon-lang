@@ -15,14 +15,8 @@
 
 #define DEBUG_TYPE "asan"
 
+#include "llvm/Transforms/Instrumentation.h"
 #include "BlackList.h"
-#include "llvm/Function.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Type.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallSet.h"
@@ -30,19 +24,24 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-
-#include <string>
+#include "llvm/Type.h"
 #include <algorithm>
+#include <string>
 
 using namespace llvm;
 

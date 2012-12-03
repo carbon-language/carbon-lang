@@ -13,8 +13,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/ProfileInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
 #include "llvm/DIBuilder.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalAlias.h"
@@ -26,20 +34,12 @@
 #include "llvm/MDBuilder.h"
 #include "llvm/Metadata.h"
 #include "llvm/Operator.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
-#include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DataLayout.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

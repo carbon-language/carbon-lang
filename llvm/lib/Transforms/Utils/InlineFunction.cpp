@@ -13,8 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Attributes.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IRBuilder.h"
@@ -22,12 +27,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 

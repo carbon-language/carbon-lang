@@ -12,14 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-estimator"
-#include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ProfileInfo.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static cl::opt<double>

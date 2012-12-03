@@ -14,13 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/DataLayout.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
 

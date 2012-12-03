@@ -10,8 +10,8 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #if LLVM_ON_WIN32
 #include <windows.h>
 #endif

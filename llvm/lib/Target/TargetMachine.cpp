@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeGenInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 

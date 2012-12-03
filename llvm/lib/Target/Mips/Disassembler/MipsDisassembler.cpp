@@ -12,17 +12,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips.h"
-#include "MipsSubtarget.h"
 #include "MipsRegisterInfo.h"
+#include "MipsSubtarget.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCFixedLenDisassembler.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCInst.h"
-#include "llvm/Support/MathExtras.h"
 
+// Not a normal header, this must come last.
 #include "MipsGenEDInfo.inc"
 
 using namespace llvm;

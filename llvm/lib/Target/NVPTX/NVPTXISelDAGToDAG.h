@@ -18,8 +18,8 @@
 #include "NVPTXRegisterInfo.h"
 #include "NVPTXTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {

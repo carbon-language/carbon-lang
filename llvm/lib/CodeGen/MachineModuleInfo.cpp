@@ -8,18 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineModuleInfo.h"
-
+#include "llvm/ADT/PointerUnion.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Module.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/ADT/PointerUnion.h"
+#include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;

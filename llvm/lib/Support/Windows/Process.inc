@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
-#include <psapi.h>
-#include <malloc.h>
-#include <io.h>
 #include <direct.h>
+#include <io.h>
+#include <malloc.h>
+#include <psapi.h>
 
 #ifdef __MINGW32__
  #if (HAVE_LIBPSAPI != 1)

@@ -17,13 +17,13 @@
 
 #define DEBUG_TYPE "ppc-branch-select"
 #include "PPC.h"
+#include "MCTargetDesc/PPCPredicates.h"
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
-#include "MCTargetDesc/PPCPredicates.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 STATISTIC(NumExpanded, "Number of branches expanded to long format");

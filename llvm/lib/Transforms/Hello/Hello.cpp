@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "hello"
-#include "llvm/Pass.h"
-#include "llvm/Function.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(HelloCounter, "Counts number of functions greeted");

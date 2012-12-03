@@ -14,6 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/CodeExtractor.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Analysis/RegionIterator.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -21,18 +28,11 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/RegionInfo.h"
-#include "llvm/Analysis/RegionIterator.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;

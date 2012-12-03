@@ -11,6 +11,9 @@
 #define LLVM_MC_MCWINCOFFOBJECTWRITER_H
 
 namespace llvm {
+  class MCObjectWriter;
+  class raw_ostream;
+
   class MCWinCOFFObjectTargetWriter {
     const unsigned Machine;
 

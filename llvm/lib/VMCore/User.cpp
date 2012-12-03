@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/User.h"
 #include "llvm/Constant.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/User.h"
 #include "llvm/Operator.h"
 
 namespace llvm {

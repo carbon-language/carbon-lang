@@ -16,9 +16,11 @@
 
 #define DEBUG_TYPE "stack-protector"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Attributes.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -26,10 +28,8 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/Triple.h"
 using namespace llvm;
 
 namespace {

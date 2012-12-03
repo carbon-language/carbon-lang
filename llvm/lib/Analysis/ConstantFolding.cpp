@@ -17,22 +17,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Operator.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FEnv.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/FEnv.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;

@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGParser.h"
-#include "llvm/TableGen/Record.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/TableGen/Record.h"
 #include <algorithm>
 #include <sstream>
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

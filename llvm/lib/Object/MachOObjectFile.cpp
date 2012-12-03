@@ -12,12 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/Triple.h"
 #include "llvm/Object/MachO.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
-
 #include <cctype>
 #include <cstring>
 #include <limits>

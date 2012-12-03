@@ -17,19 +17,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Passes.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SetVector.h"
 using namespace llvm;
 
 static cl::opt<bool> PrintAll("print-all-alias-modref-info", cl::ReallyHidden);

@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Attributes.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 

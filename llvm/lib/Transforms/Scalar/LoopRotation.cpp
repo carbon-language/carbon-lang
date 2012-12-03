@@ -13,20 +13,20 @@
 
 #define DEBUG_TYPE "loop-rotate"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Function.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CodeMetrics.h"
-#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Function.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 using namespace llvm;
 
 #define MAX_HEADER_SIZE 16

@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/PPCFixupKinds.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
+#include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/MC/MCELFObjectWriter.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 

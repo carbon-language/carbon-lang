@@ -13,19 +13,19 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/MC/MachineLocation.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/DataLayout.h"
+#include "llvm/MC/MachineLocation.h"
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

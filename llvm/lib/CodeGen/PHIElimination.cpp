@@ -14,23 +14,23 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "phielim"
-#include "PHIEliminationUtils.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
+#include "PHIEliminationUtils.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 using namespace llvm;
 

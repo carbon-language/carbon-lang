@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/InstIterator.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/InstIterator.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {

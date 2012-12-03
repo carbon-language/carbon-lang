@@ -12,16 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/Program.h"
-#include "llvm/Support/Process.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/ADT/STLExtras.h"
 #include <cctype>
 #include <cerrno>
 #include <sys/stat.h>

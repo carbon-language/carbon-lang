@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Type.h"
 #include "LLVMContextImpl.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Module.h"
 #include <algorithm>
 #include <cstdarg>
-#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

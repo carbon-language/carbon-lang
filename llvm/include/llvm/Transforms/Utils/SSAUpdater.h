@@ -15,6 +15,7 @@
 #define LLVM_TRANSFORMS_UTILS_SSAUPDATER_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   class BasicBlock;

@@ -11,14 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Host.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Config/config.h"
 #include <string.h>
 
 // Include the platform-specific parts of this class.

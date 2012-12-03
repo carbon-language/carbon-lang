@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/InitializePasses.h"
-#include "llvm/Analysis/BlockFrequencyImpl.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
-#include "llvm/CodeGen/Passes.h"
+#include "llvm/Analysis/BlockFrequencyImpl.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/InitializePasses.h"
 
 using namespace llvm;
 

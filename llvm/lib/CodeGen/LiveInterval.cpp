@@ -19,15 +19,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LiveInterval.h"
+#include "RegisterCoalescer.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "RegisterCoalescer.h"
 #include <algorithm>
 using namespace llvm;
 

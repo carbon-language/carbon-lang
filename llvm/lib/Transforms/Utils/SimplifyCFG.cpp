@@ -13,6 +13,14 @@
 
 #define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
 #include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
@@ -25,15 +33,6 @@
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
-#include "llvm/Type.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
@@ -42,9 +41,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetTransformInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Type.h"
 #include <algorithm>
-#include <set>
 #include <map>
+#include <set>
 using namespace llvm;
 
 static cl::opt<unsigned>

@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetIntrinsicInfo.h"
-#include "llvm/Function.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Function.h"
 using namespace llvm;
 
 TargetIntrinsicInfo::TargetIntrinsicInfo() {

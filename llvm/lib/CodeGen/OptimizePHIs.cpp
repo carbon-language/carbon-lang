@@ -14,13 +14,13 @@
 
 #define DEBUG_TYPE "phi-opt"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
 STATISTIC(NumPHICycles, "Number of PHI cycles replaced");

@@ -20,19 +20,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
+#include "llvm/Config/config.h"     // Detect libffi
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Config/config.h"     // Detect libffi
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/DataLayout.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
+#include <cmath>
 #include <csignal>
 #include <cstdio>
-#include <map>
-#include <cmath>
 #include <cstring>
+#include <map>
 
 #ifdef HAVE_FFI_CALL
 #ifdef HAVE_FFI_H

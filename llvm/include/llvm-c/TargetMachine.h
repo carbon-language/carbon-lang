@@ -20,6 +20,7 @@
 #define LLVM_C_TARGETMACHINE_H
 
 #include "llvm-c/Core.h"
+#include "llvm-c/Target.h"
 
 #ifdef __cplusplus
 extern "C" {

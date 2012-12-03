@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/DataLayout.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 /// FoldPHIArgBinOpIntoPHI - If we have something like phi [add (a,b), add(a,c)]

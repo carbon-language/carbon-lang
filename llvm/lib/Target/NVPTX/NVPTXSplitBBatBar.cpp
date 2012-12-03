@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "NVPTXSplitBBatBar.h"
+#include "NVPTXUtilities.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/InstIterator.h"
-#include "NVPTXUtilities.h"
-#include "NVPTXSplitBBatBar.h"
 
 using namespace llvm;
 

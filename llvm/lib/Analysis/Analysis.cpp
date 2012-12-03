@@ -9,8 +9,8 @@
 
 #include "llvm-c/Analysis.h"
 #include "llvm-c/Initialization.h"
-#include "llvm/InitializePasses.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/InitializePasses.h"
 #include <cstring>
 
 using namespace llvm;

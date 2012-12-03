@@ -13,25 +13,25 @@
 //===----------------------------------------------------------------------===//
 
 #include "CPPTargetMachine.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CallingConv.h"
+#include "llvm/Config/config.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Module.h"
+#include "llvm/Pass.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Config/config.h"
 #include <algorithm>
 #include <cstdio>
 #include <map>

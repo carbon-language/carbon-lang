@@ -13,18 +13,18 @@
 
 
 #include "llvm/PassManagers.h"
-#include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/PassNameParser.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/PassNameParser.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;

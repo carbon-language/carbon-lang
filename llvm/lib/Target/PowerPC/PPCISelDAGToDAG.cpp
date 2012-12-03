@@ -14,23 +14,23 @@
 
 #define DEBUG_TYPE "ppc-codegen"
 #include "PPC.h"
-#include "PPCTargetMachine.h"
 #include "MCTargetDesc/PPCPredicates.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 namespace {

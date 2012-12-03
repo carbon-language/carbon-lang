@@ -11,18 +11,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/Archive.h"
 #include "ArchiveInternals.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 #include <fstream>
-#include <ostream>
 #include <iomanip>
+#include <ostream>
 using namespace llvm;
 
 // Write an integer using variable bit rate encoding. This saves a few bytes

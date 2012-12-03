@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/TypeFinder.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 void TypeFinder::run(const Module &M, bool onlyNamed) {

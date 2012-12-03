@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/Archive.h"
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Module.h"
@@ -19,8 +20,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/system_error.h"
-#include <memory>
 #include <cstring>
+#include <memory>
 using namespace llvm;
 
 // getMemberSize - compute the actual physical size of the file member as seen

@@ -13,9 +13,9 @@
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Memory.h"
 #include "llvm/Support/Recycler.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Memory.h"
 #include <cstring>
 
 namespace llvm {

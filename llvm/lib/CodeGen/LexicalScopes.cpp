@@ -16,10 +16,10 @@
 
 #define DEBUG_TYPE "lexicalscopes"
 #include "llvm/CodeGen/LexicalScopes.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/DebugInfo.h"
+#include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"

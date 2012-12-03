@@ -11,23 +11,24 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Value.h"
 #include "LLVMContextImpl.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Constant.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/Operator.h"
 #include "llvm/Module.h"
-#include "llvm/ValueSymbolTable.h"
-#include "llvm/ADT/SmallString.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ValueSymbolTable.h"
 #include <algorithm>
 using namespace llvm;
 

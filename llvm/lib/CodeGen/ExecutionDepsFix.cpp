@@ -21,15 +21,15 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "execution-fix"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 /// A DomainValue is a bit like LiveIntervals' ValNo, but it also keeps track

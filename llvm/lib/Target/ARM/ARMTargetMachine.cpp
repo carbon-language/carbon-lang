@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMTargetMachine.h"
-#include "ARMFrameLowering.h"
 #include "ARM.h"
-#include "llvm/PassManager.h"
+#include "ARMFrameLowering.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"

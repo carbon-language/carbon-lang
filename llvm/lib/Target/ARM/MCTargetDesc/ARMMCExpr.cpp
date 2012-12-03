@@ -9,8 +9,8 @@
 
 #define DEBUG_TYPE "armmcexpr"
 #include "ARMMCExpr.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCContext.h"
 using namespace llvm;
 
 const ARMMCExpr*

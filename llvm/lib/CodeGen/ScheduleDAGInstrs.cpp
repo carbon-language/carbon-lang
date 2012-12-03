@@ -13,7 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "misched"
-#include "llvm/Operator.h"
+#include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -23,19 +26,16 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/CodeGen/ScheduleDFS.h"
-#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/MC/MCInstrItineraries.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 static cl::opt<bool> EnableAASchedMI("enable-aa-sched-mi", cl::Hidden,

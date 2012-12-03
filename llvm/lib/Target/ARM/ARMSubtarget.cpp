@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMSubtarget.h"
-#include "ARMBaseRegisterInfo.h"
 #include "ARMBaseInstrInfo.h"
+#include "ARMBaseRegisterInfo.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR

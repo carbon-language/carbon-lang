@@ -45,24 +45,24 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-path-profiling"
 
-#include "llvm/DerivedTypes.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "ProfilingUtils.h"
 #include "llvm/Analysis/PathNumbering.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/TypeBuilder.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Instrumentation.h"
+#include "llvm/TypeBuilder.h"
 #include <vector>
 
 #define HASH_THRESHHOLD 100000

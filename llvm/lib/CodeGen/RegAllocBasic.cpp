@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "llvm/CodeGen/Passes.h"
 #include "AllocationOrder.h"
-#include "RegAllocBase.h"
 #include "LiveDebugVariables.h"
+#include "RegAllocBase.h"
 #include "Spiller.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/PassAnalysisSupport.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveRangeEdit.h"
@@ -28,15 +28,14 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/PassAnalysisSupport.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-
 #include <cstdlib>
 #include <queue>
 

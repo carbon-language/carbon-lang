@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "PHIEliminationUtils.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 // findCopyInsertPoint - Find a safe place in MBB to insert a copy from SrcReg

@@ -12,13 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"
 #include "llvm/Support/Disassembler.h"
-
+#include "llvm/Config/config.h"
 #include <cassert>
 #include <iomanip>
-#include <string>
 #include <sstream>
+#include <string>
 
 #if USE_UDIS86
 #include <udis86.h>

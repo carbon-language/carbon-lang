@@ -12,12 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "ssaupdater"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/CFG.h"
@@ -25,7 +26,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Transforms/Utils/SSAUpdaterImpl.h"
 
 using namespace llvm;

@@ -14,8 +14,8 @@
 
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Analysis/ProfileInfoTypes.h"
-#include "llvm/Module.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstdlib>

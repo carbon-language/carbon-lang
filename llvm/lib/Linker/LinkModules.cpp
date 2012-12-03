@@ -12,21 +12,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Linker.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/TypeFinder.h"
+#include "llvm-c/Linker.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm-c/Linker.h"
+#include "llvm/TypeFinder.h"
 #include <cctype>
 using namespace llvm;
 

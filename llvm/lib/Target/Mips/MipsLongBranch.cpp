@@ -19,8 +19,8 @@
 #define DEBUG_TYPE "mips-long-branch"
 
 #include "Mips.h"
-#include "MipsTargetMachine.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MipsTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

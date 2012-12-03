@@ -12,12 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dyld"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "ObjectImageCommon.h"
-#include "RuntimeDyldImpl.h"
 #include "RuntimeDyldELF.h"
+#include "RuntimeDyldImpl.h"
 #include "RuntimeDyldMachO.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 using namespace llvm::object;

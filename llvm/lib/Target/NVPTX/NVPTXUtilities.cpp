@@ -12,10 +12,10 @@
 
 #include "NVPTXUtilities.h"
 #include "NVPTX.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
-#include "llvm/Module.h"
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
 #include "llvm/Operator.h"
 #include <algorithm>
 #include <cstring>

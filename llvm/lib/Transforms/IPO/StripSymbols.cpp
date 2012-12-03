@@ -21,17 +21,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Constants.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/TypeFinder.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 namespace {

@@ -18,20 +18,20 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "instsimplify"
-#include "llvm/GlobalAlias.h"
-#include "llvm/Operator.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/DataLayout.h"
+#include "llvm/GlobalAlias.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/DataLayout.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 

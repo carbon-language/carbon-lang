@@ -9,19 +9,19 @@
 
 #define DEBUG_TYPE "machine-trace-metrics"
 #include "MachineTraceMetrics.h"
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/SparseSet.h"
 
 using namespace llvm;
 

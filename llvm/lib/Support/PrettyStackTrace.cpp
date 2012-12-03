@@ -12,12 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ThreadLocal.h"
-#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 
 #ifdef HAVE_CRASHREPORTERCLIENT_H
 #include <CrashReporterClient.h>

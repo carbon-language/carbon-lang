@@ -15,18 +15,18 @@
 
 #define DEBUG_TYPE "indvars"
 
-#include "llvm/Instructions.h"
+#include "llvm/Transforms/Utils/SimplifyIndVar.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/SimplifyIndVar.h"
-#include "llvm/DataLayout.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
 

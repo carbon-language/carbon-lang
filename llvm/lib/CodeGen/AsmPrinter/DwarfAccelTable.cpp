@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "DwarfAccelTable.h"
-#include "DwarfDebug.h"
 #include "DIE.h"
-#include "llvm/ADT/Twine.h"
+#include "DwarfDebug.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"

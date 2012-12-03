@@ -16,7 +16,6 @@
 #include "XCore.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreMachineFunctionInfo.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -24,8 +23,9 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/DataLayout.h"
-#include "llvm/Target/TargetOptions.h"
+#include "llvm/Function.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
 

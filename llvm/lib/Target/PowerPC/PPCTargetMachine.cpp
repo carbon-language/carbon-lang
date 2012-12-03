@@ -13,13 +13,13 @@
 
 #include "PPCTargetMachine.h"
 #include "PPC.h"
-#include "llvm/PassManager.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetOptions.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 static cl::

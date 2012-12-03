@@ -8,21 +8,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCSectionCOFF.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCLabel.h"
-#include "llvm/MC/MCDwarf.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/MCLabel.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSectionCOFF.h"
+#include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/SourceMgr.h"
 using namespace llvm;
 
 typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
