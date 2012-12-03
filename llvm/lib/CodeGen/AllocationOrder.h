@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_ALLOCATIONORDER_H
 
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 
@@ -25,15 +26,12 @@ class RegisterClassInfo;
 class VirtRegMap;
 
 class AllocationOrder {
-  const MCPhysReg *Begin;
-  const MCPhysReg *End;
-  const MCPhysReg *Pos;
-  const RegisterClassInfo &RCI;
-  unsigned Hint;
-  bool OwnedBegin;
-public:
+  SmallVector<MCPhysReg, 16> Hints;
+  ArrayRef<MCPhysReg> Order;
+  unsigned Pos;
 
-  /// AllocationOrder - Create a new AllocationOrder for VirtReg.
+public:
+  /// Create a new AllocationOrder for VirtReg.
   /// @param VirtReg      Virtual register to allocate for.
   /// @param VRM          Virtual register map for function.
   /// @param RegClassInfo Information about reserved and allocatable registers.
@@ -41,32 +39,19 @@ public:
                   const VirtRegMap &VRM,
                   const RegisterClassInfo &RegClassInfo);
 
-  ~AllocationOrder();
+  /// Return the next physical register in the allocation order, or 0.
+  /// It is safe to call next() again after it returned 0, it will keep
+  /// returning 0 until rewind() is called.
+  unsigned next();
 
-  /// next - Return the next physical register in the allocation order, or 0.
-  /// It is safe to call next again after it returned 0.
-  /// It will keep returning 0 until rewind() is called.
-  unsigned next() {
-    // First take the hint.
-    if (!Pos) {
-      Pos = Begin;
-      if (Hint)
-        return Hint;
-    }
-    // Then look at the order from TRI.
-    while (Pos != End) {
-      unsigned Reg = *Pos++;
-      if (Reg != Hint)
-        return Reg;
-    }
-    return 0;
-  }
-
-  /// rewind - Start over from the beginning.
+  /// Start over from the beginning.
   void rewind() { Pos = 0; }
 
-  /// isHint - Return true if PhysReg is a preferred register.
-  bool isHint(unsigned PhysReg) const { return PhysReg == Hint; }
+  /// Return true if the last register returned from next() was a preferred register.
+  bool isHint() const { return Pos <= Hints.size(); }
+
+  /// Return true if PhysReg is a preferred register.
+  bool isHint(unsigned PhysReg) const;
 };
 
 } // end namespace llvm

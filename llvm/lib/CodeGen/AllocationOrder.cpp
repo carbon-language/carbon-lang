@@ -14,10 +14,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "regalloc"
 #include "AllocationOrder.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -25,56 +30,36 @@ using namespace llvm;
 AllocationOrder::AllocationOrder(unsigned VirtReg,
                                  const VirtRegMap &VRM,
                                  const RegisterClassInfo &RegClassInfo)
-  : Begin(0), End(0), Pos(0), RCI(RegClassInfo), OwnedBegin(false) {
-  const TargetRegisterClass *RC = VRM.getRegInfo().getRegClass(VirtReg);
-  std::pair<unsigned, unsigned> HintPair =
-    VRM.getRegInfo().getRegAllocationHint(VirtReg);
-  const MachineRegisterInfo &MRI = VRM.getRegInfo();
+  : Pos(0) {
+  const MachineFunction &MF = VRM.getMachineFunction();
+  const TargetRegisterInfo *TRI = &VRM.getTargetRegInfo();
+  Order = RegClassInfo.getOrder(MF.getRegInfo().getRegClass(VirtReg));
+  TRI->getRegAllocationHints(VirtReg, Order, Hints, MF, &VRM);
 
-  // HintPair.second is a register, phys or virt.
-  Hint = HintPair.second;
-
-  // Translate to physreg, or 0 if not assigned yet.
-  if (TargetRegisterInfo::isVirtualRegister(Hint))
-    Hint = VRM.getPhys(Hint);
-
-  // The first hint pair component indicates a target-specific hint.
-  if (HintPair.first) {
-    const TargetRegisterInfo &TRI = VRM.getTargetRegInfo();
-    // The remaining allocation order may depend on the hint.
-    ArrayRef<MCPhysReg> Order =
-      TRI.getRawAllocationOrder(RC, HintPair.first, Hint,
-                                VRM.getMachineFunction());
-    if (Order.empty())
-      return;
-
-    // Copy the allocation order with reserved registers removed.
-    OwnedBegin = true;
-    MCPhysReg *P = new MCPhysReg[Order.size()];
-    Begin = P;
-    for (unsigned i = 0; i != Order.size(); ++i)
-      if (!MRI.isReserved(Order[i]))
-        *P++ = Order[i];
-    End = P;
-
-    // Target-dependent hints require resolution.
-    Hint = TRI.ResolveRegAllocHint(HintPair.first, Hint,
-                                   VRM.getMachineFunction());
-  } else {
-    // If there is no hint or just a normal hint, use the cached allocation
-    // order from RegisterClassInfo.
-    ArrayRef<MCPhysReg> O = RCI.getOrder(RC);
-    Begin = O.begin();
-    End = O.end();
-  }
-
-  // The hint must be a valid physreg for allocation.
-  if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || MRI.isReserved(Hint)))
-    Hint = 0;
+  DEBUG({
+    if (!Hints.empty()) {
+      dbgs() << "hints:";
+      for (unsigned I = 0, E = Hints.size(); I != E; ++I)
+        dbgs() << ' ' << PrintReg(Hints[I], TRI);
+      dbgs() << '\n';
+    }
+  });
 }
 
-AllocationOrder::~AllocationOrder() {
-  if (OwnedBegin)
-    delete [] Begin;
+bool AllocationOrder::isHint(unsigned PhysReg) const {
+  return std::find(Hints.begin(), Hints.end(), PhysReg) != Hints.end();
+}
+
+unsigned AllocationOrder::next() {
+  if (Pos < Hints.size())
+    return Hints[Pos++];
+  ArrayRef<MCPhysReg>::iterator I = Order.begin() + (Pos - Hints.size());
+  ArrayRef<MCPhysReg>::iterator E = Order.end();
+  while (I != E) {
+    unsigned Reg = *I++;
+    ++Pos;
+    if (!isHint(Reg))
+      return Reg;
+  }
+  return 0;
 }
