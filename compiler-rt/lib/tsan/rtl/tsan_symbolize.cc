@@ -52,7 +52,7 @@ static ReportStack *NewReportStackEntry(const AddressInfo &info) {
 }
 
 ReportStack *SymbolizeCode(uptr addr) {
-  if (0 != internal_strcmp(flags()->external_symbolizer_path, "")) {
+  if (flags()->external_symbolizer_path[0]) {
     static const uptr kMaxAddrFrames = 16;
     InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
     for (uptr i = 0; i < kMaxAddrFrames; i++)
@@ -79,6 +79,12 @@ ReportStack *SymbolizeCode(uptr addr) {
 }
 
 ReportStack *SymbolizeData(uptr addr) {
+  if (flags()->external_symbolizer_path[0]) {
+    AddressInfo frame;
+    if (!__sanitizer::SymbolizeData(addr, &frame))
+      return 0;
+    return NewReportStackEntry(frame);
+  }
   return SymbolizeDataAddr2Line(addr);
 }
 

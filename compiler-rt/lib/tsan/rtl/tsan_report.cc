@@ -80,8 +80,9 @@ static void PrintMop(const ReportMop *mop, bool first) {
 
 static void PrintLocation(const ReportLocation *loc) {
   if (loc->type == ReportLocationGlobal) {
-    Printf("  Location is global '%s' of size %zu at %zx %s:%d\n",
-               loc->name, loc->size, loc->addr, loc->file, loc->line);
+    Printf("  Location is global '%s' of size %zu at %zx %s:%d (%s+%p)\n\n",
+               loc->name, loc->size, loc->addr, loc->file, loc->line,
+               loc->module, loc->offset);
   } else if (loc->type == ReportLocationHeap) {
     Printf("  Location is heap block of size %zu at %p allocated",
         loc->size, loc->addr);
@@ -91,7 +92,7 @@ static void PrintLocation(const ReportLocation *loc) {
       Printf(" by thread %d:\n", loc->tid);
     PrintStack(loc->stack);
   } else if (loc->type == ReportLocationStack) {
-    Printf("  Location is stack of thread %d:\n", loc->tid);
+    Printf("  Location is stack of thread %d:\n\n", loc->tid);
   }
 }
 

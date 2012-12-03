@@ -256,6 +256,17 @@ class Symbolizer {
     // Otherwise, the data was filled by external symbolizer.
     return actual_frames;
   }
+
+  bool SymbolizeData(uptr addr, AddressInfo *frame) {
+    LoadedModule *module = FindModuleForAddress(addr);
+    if (module == 0)
+      return false;
+    const char *module_name = module->full_name();
+    uptr module_offset = addr - module->base_address();
+    frame->FillAddressAndModuleInfo(addr, module_name, module_offset);
+    return true;
+  }
+
   bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {
     int input_fd, output_fd;
     if (!StartSymbolizerSubprocess(path_to_symbolizer, &input_fd, &output_fd))
@@ -305,6 +316,10 @@ static Symbolizer symbolizer;  // Linker initialized.
 
 uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames) {
   return symbolizer.SymbolizeCode(address, frames, max_frames);
+}
+
+bool SymbolizeData(uptr address, AddressInfo *frame) {
+  return symbolizer.SymbolizeData(address, frame);
 }
 
 bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {
