@@ -328,7 +328,7 @@ error_code resize_file(const Twine &path, uint64_t size) {
                                   path_utf16))
     return ec;
 
-  int fd = ::_wopen(path_utf16.begin(), O_BINARY, S_IREAD | S_IWRITE);
+  int fd = ::_wopen(path_utf16.begin(), O_BINARY | _O_RDWR, S_IWRITE);
   if (fd == -1)
     return error_code(errno, generic_category());
 #ifdef HAVE__CHSIZE_S
