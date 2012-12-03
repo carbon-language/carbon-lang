@@ -75,6 +75,18 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
   return 0;
 }
 
+int64_t DIDescriptor::getInt64Field(unsigned Elt) const {
+  if (DbgNode == 0)
+    return 0;
+
+  if (Elt < DbgNode->getNumOperands())
+    if (ConstantInt *CI
+        = dyn_cast_or_null<ConstantInt>(DbgNode->getOperand(Elt)))
+      return CI->getSExtValue();
+
+  return 0;
+}
+
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
   if (DbgNode == 0)
     return DIDescriptor();

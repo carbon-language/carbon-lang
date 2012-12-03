@@ -71,6 +71,7 @@ namespace llvm {
       return (unsigned)getUInt64Field(Elt);
     }
     uint64_t getUInt64Field(unsigned Elt) const;
+    int64_t getInt64Field(unsigned Elt) const;
     DIDescriptor getDescriptorField(unsigned Elt) const;
 
     template <typename DescTy>
