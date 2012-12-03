@@ -68,4 +68,8 @@ static T Ident(T t) {
   return ret;
 }
 
+// Check that pthread_create/pthread_join return success.
+#define PTHREAD_CREATE(a, b, c, d) EXPECT_EQ(0, pthread_create(a, b, c, d))
+#define PTHREAD_JOIN(a, b) EXPECT_EQ(0, pthread_join(a, b))
+
 #endif  // ASAN_TEST_UTILS_H

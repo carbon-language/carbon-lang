@@ -296,8 +296,8 @@ TEST(AddressSanitizer, ThreadedQuarantineTest) {
   size_t mmaped1 = __asan_get_heap_size();
   for (int i = 0; i < n_threads; i++) {
     pthread_t t;
-    pthread_create(&t, NULL, ThreadedQuarantineTestWorker, 0);
-    pthread_join(t, 0);
+    PTHREAD_CREATE(&t, NULL, ThreadedQuarantineTestWorker, 0);
+    PTHREAD_JOIN(t, 0);
     size_t mmaped2 = __asan_get_heap_size();
     EXPECT_LT(mmaped2 - mmaped1, 320U * (1 << 20));
   }
@@ -325,10 +325,10 @@ TEST(AddressSanitizer, ThreadedOneSizeMallocStressTest) {
   const int kNumThreads = 4;
   pthread_t t[kNumThreads];
   for (int i = 0; i < kNumThreads; i++) {
-    pthread_create(&t[i], 0, ThreadedOneSizeMallocStress, 0);
+    PTHREAD_CREATE(&t[i], 0, ThreadedOneSizeMallocStress, 0);
   }
   for (int i = 0; i < kNumThreads; i++) {
-    pthread_join(t[i], 0);
+    PTHREAD_JOIN(t[i], 0);
   }
 }
 
@@ -504,11 +504,11 @@ TEST(AddressSanitizerInterface, ManyThreadsWithStatsStressTest) {
   pthread_t threads[kManyThreadsNumThreads];
   before_test = __asan_get_current_allocated_bytes();
   for (i = 0; i < kManyThreadsNumThreads; i++) {
-    pthread_create(&threads[i], 0,
+    PTHREAD_CREATE(&threads[i], 0,
                    (void* (*)(void *x))ManyThreadsWithStatsWorker, (void*)i);
   }
   for (i = 0; i < kManyThreadsNumThreads; i++) {
-    pthread_join(threads[i], 0);
+    PTHREAD_JOIN(threads[i], 0);
   }
   after_test = __asan_get_current_allocated_bytes();
   // ASan stats also reflect memory usage of internal ASan RTL structs,

@@ -210,8 +210,8 @@ void *TSDWorker(void *test_key) {
 void TSDDestructor(void *tsd) {
   // Spawning a thread will check that the current thread id is not -1.
   pthread_t th;
-  pthread_create(&th, NULL, TSDWorker, NULL);
-  pthread_join(th, NULL);
+  PTHREAD_CREATE(&th, NULL, TSDWorker, NULL);
+  PTHREAD_JOIN(th, NULL);
 }
 
 // This tests triggers the thread-specific data destruction fiasco which occurs
@@ -225,8 +225,8 @@ TEST(AddressSanitizer, DISABLED_TSDTest) {
   pthread_t th;
   pthread_key_t test_key;
   pthread_key_create(&test_key, TSDDestructor);
-  pthread_create(&th, NULL, TSDWorker, &test_key);
-  pthread_join(th, NULL);
+  PTHREAD_CREATE(&th, NULL, TSDWorker, &test_key);
+  PTHREAD_JOIN(th, NULL);
   pthread_key_delete(test_key);
 }
 
@@ -463,11 +463,11 @@ TEST(AddressSanitizer, ThreadedMallocStressTest) {
   const int kNumIterations = (ASAN_LOW_MEMORY) ? 10000 : 100000;
   pthread_t t[kNumThreads];
   for (int i = 0; i < kNumThreads; i++) {
-    pthread_create(&t[i], 0, (void* (*)(void *x))MallocStress,
+    PTHREAD_CREATE(&t[i], 0, (void* (*)(void *x))MallocStress,
         (void*)kNumIterations);
   }
   for (int i = 0; i < kNumThreads; i++) {
-    pthread_join(t[i], 0);
+    PTHREAD_JOIN(t[i], 0);
   }
 }
 
@@ -481,13 +481,14 @@ void *ManyThreadsWorker(void *a) {
 }
 
 TEST(AddressSanitizer, ManyThreadsTest) {
-  const size_t kNumThreads = SANITIZER_WORDSIZE == 32 ? 30 : 1000;
+  const size_t kNumThreads =
+      (SANITIZER_WORDSIZE == 32 || ASAN_AVOID_EXPENSIVE_TESTS) ? 30 : 1000;
   pthread_t t[kNumThreads];
   for (size_t i = 0; i < kNumThreads; i++) {
-    pthread_create(&t[i], 0, (void* (*)(void *x))ManyThreadsWorker, (void*)i);
+    PTHREAD_CREATE(&t[i], 0, ManyThreadsWorker, (void*)i);
   }
   for (size_t i = 0; i < kNumThreads; i++) {
-    pthread_join(t[i], 0);
+    PTHREAD_JOIN(t[i], 0);
   }
 }
 
@@ -761,10 +762,10 @@ void *ThreadStackReuseFunc2(void *unused) {
 
 TEST(AddressSanitizer, ThreadStackReuseTest) {
   pthread_t t;
-  pthread_create(&t, 0, ThreadStackReuseFunc1, 0);
-  pthread_join(t, 0);
-  pthread_create(&t, 0, ThreadStackReuseFunc2, 0);
-  pthread_join(t, 0);
+  PTHREAD_CREATE(&t, 0, ThreadStackReuseFunc1, 0);
+  PTHREAD_JOIN(t, 0);
+  PTHREAD_CREATE(&t, 0, ThreadStackReuseFunc2, 0);
+  PTHREAD_JOIN(t, 0);
 }
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -1639,12 +1640,12 @@ void *ThreadedTestUse(void *a) {
 void ThreadedTestSpawn() {
   pthread_t t;
   int *x;
-  pthread_create(&t, 0, ThreadedTestAlloc, &x);
-  pthread_join(t, 0);
-  pthread_create(&t, 0, ThreadedTestFree, &x);
-  pthread_join(t, 0);
-  pthread_create(&t, 0, ThreadedTestUse, &x);
-  pthread_join(t, 0);
+  PTHREAD_CREATE(&t, 0, ThreadedTestAlloc, &x);
+  PTHREAD_JOIN(t, 0);
+  PTHREAD_CREATE(&t, 0, ThreadedTestFree, &x);
+  PTHREAD_JOIN(t, 0);
+  PTHREAD_CREATE(&t, 0, ThreadedTestUse, &x);
+  PTHREAD_JOIN(t, 0);
 }
 
 TEST(AddressSanitizer, ThreadedTest) {
@@ -1802,10 +1803,10 @@ TEST(AddressSanitizer, ThreadedStressStackReuseTest) {
   const int kNumThreads = 20;
   pthread_t t[kNumThreads];
   for (int i = 0; i < kNumThreads; i++) {
-    pthread_create(&t[i], 0, (void* (*)(void *x))LotsOfStackReuse, 0);
+    PTHREAD_CREATE(&t[i], 0, (void* (*)(void *x))LotsOfStackReuse, 0);
   }
   for (int i = 0; i < kNumThreads; i++) {
-    pthread_join(t[i], 0);
+    PTHREAD_JOIN(t[i], 0);
   }
 }
 
@@ -1817,8 +1818,8 @@ static void *PthreadExit(void *a) {
 TEST(AddressSanitizer, PthreadExitTest) {
   pthread_t t;
   for (int i = 0; i < 1000; i++) {
-    pthread_create(&t, 0, PthreadExit, 0);
-    pthread_join(t, 0);
+    PTHREAD_CREATE(&t, 0, PthreadExit, 0);
+    PTHREAD_JOIN(t, 0);
   }
 }
 
@@ -1887,8 +1888,8 @@ TEST(AddressSanitizer, DISABLED_DemoStackTest) {
 
 TEST(AddressSanitizer, DISABLED_DemoThreadStackTest) {
   pthread_t t;
-  pthread_create(&t, 0, SimpleBugOnSTack, 0);
-  pthread_join(t, 0);
+  PTHREAD_CREATE(&t, 0, SimpleBugOnSTack, 0);
+  PTHREAD_JOIN(t, 0);
 }
 
 TEST(AddressSanitizer, DISABLED_DemoUAFLowIn) {
@@ -1978,8 +1979,8 @@ TEST(AddressSanitizerMac, CFAllocatorDefaultDoubleFree) {
 
 void CFAllocator_DoubleFreeOnPthread() {
   pthread_t child;
-  pthread_create(&child, NULL, CFAllocatorDefaultDoubleFree, NULL);
-  pthread_join(child, NULL);  // Shouldn't be reached.
+  PTHREAD_CREATE(&child, NULL, CFAllocatorDefaultDoubleFree, NULL);
+  PTHREAD_JOIN(child, NULL);  // Shouldn't be reached.
 }
 
 TEST(AddressSanitizerMac, CFAllocatorDefaultDoubleFree_ChildPhread) {
@@ -2004,10 +2005,10 @@ void *CFAllocatorDeallocateFromGlob(void *unused) {
 
 void CFAllocator_PassMemoryToAnotherThread() {
   pthread_t th1, th2;
-  pthread_create(&th1, NULL, CFAllocatorAllocateToGlob, NULL);
-  pthread_join(th1, NULL);
-  pthread_create(&th2, NULL, CFAllocatorDeallocateFromGlob, NULL);
-  pthread_join(th2, NULL);
+  PTHREAD_CREATE(&th1, NULL, CFAllocatorAllocateToGlob, NULL);
+  PTHREAD_JOIN(th1, NULL);
+  PTHREAD_CREATE(&th2, NULL, CFAllocatorDeallocateFromGlob, NULL);
+  PTHREAD_JOIN(th2, NULL);
 }
 
 TEST(AddressSanitizerMac, CFAllocator_PassMemoryToAnotherThread) {
@@ -2123,13 +2124,13 @@ TEST(AddressSanitizerMac, MallocIntrospectionLock) {
   for (iter = 0; iter < kNumIterations; iter++) {
     pthread_t workers[kNumWorkers], forker;
     for (i = 0; i < kNumWorkers; i++) {
-      pthread_create(&workers[i], 0, MallocIntrospectionLockWorker, 0);
+      PTHREAD_CREATE(&workers[i], 0, MallocIntrospectionLockWorker, 0);
     }
-    pthread_create(&forker, 0, MallocIntrospectionLockForker, 0);
+    PTHREAD_CREATE(&forker, 0, MallocIntrospectionLockForker, 0);
     for (i = 0; i < kNumWorkers; i++) {
-      pthread_join(workers[i], 0);
+      PTHREAD_JOIN(workers[i], 0);
     }
-    pthread_join(forker, 0);
+    PTHREAD_JOIN(forker, 0);
   }
 }
 
@@ -2145,8 +2146,8 @@ TEST(AddressSanitizerMac, DISABLED_TSDWorkqueueTest) {
   pthread_t th;
   pthread_key_t test_key;
   pthread_key_create(&test_key, CallFreeOnWorkqueue);
-  pthread_create(&th, NULL, TSDAllocWorker, &test_key);
-  pthread_join(th, NULL);
+  PTHREAD_CREATE(&th, NULL, TSDAllocWorker, &test_key);
+  PTHREAD_JOIN(th, NULL);
   pthread_key_delete(test_key);
 }
 
