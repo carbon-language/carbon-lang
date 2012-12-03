@@ -34,9 +34,10 @@ class SanitizerArgs {
     NeedsUbsanRt = (Undefined & ~Bounds) | Integer
   };
   unsigned Kind;
+  std::string BlacklistFile;
 
  public:
-  SanitizerArgs() : Kind(0) {}
+  SanitizerArgs() : Kind(0), BlacklistFile("") {}
   /// Parses the sanitizer arguments from an argument list.
   SanitizerArgs(const Driver &D, const ArgList &Args);
 
@@ -57,6 +58,11 @@ class SanitizerArgs {
 #include "clang/Basic/Sanitizers.def"
     SanitizeOpt.pop_back();
     CmdArgs.push_back(Args.MakeArgString(SanitizeOpt));
+    if (!BlacklistFile.empty()) {
+      llvm::SmallString<64> BlacklistOpt("-fsanitize-blacklist=");
+      BlacklistOpt += BlacklistFile;
+      CmdArgs.push_back(Args.MakeArgString(BlacklistOpt));
+    }
   }
 
  private:

@@ -105,6 +105,9 @@ public:
   /// The name of the relocation model to use.
   std::string RelocationModel;
 
+  /// Path to blacklist file for sanitizers.
+  std::string SanitizerBlacklistFile;
+
   /// If not an empty string, trap intrinsics are lowered to calls to this
   /// function instead of to trap instructions.
   std::string TrapFuncName;

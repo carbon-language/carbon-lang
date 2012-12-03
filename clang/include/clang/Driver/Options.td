@@ -391,6 +391,12 @@ def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
                             "address (memory errors) | thread (race detection) | "
                             "undefined (miscellaneous undefined behavior)">;
 def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>;
+def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
+                          Group<f_clang_Group>, Flags<[CC1Option]>,
+                          HelpText<"Path to blacklist file for sanitizers">;
+def fno_sanitize_blacklist : Flag<["-"], "fno-sanitize-blacklist">,
+                             Group<f_clang_Group>,
+                             HelpText<"Don't use blacklist file for sanitizers">;
 def funsafe_math_optimizations : Flag<["-"], "funsafe-math-optimizations">,
   Group<f_Group>;
 def fno_unsafe_math_optimizations : Flag<["-"], "fno-unsafe-math-optimizations">,

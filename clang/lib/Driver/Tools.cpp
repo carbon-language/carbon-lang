@@ -1486,6 +1486,19 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
     D.Diag(diag::err_drv_argument_only_allowed_with)
       << lastArgumentForKind(D, Args, NeedsAsanRt)
       << "-fsanitize=address";
+
+  // Parse -f(no-)sanitize-blacklist options.
+  if (Arg *BLArg = Args.getLastArg(options::OPT_fsanitize_blacklist,
+                                   options::OPT_fno_sanitize_blacklist)) {
+    if (BLArg->getOption().matches(options::OPT_fsanitize_blacklist)) {
+      std::string BLPath = BLArg->getValue();
+      bool BLExists = false;
+      if (!llvm::sys::fs::exists(BLPath, BLExists) && BLExists)
+        BlacklistFile = BLPath;
+      else
+        D.Diag(diag::err_drv_no_such_file) << BLPath;
+    }
+  }
 }
 
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
