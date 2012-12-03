@@ -1552,29 +1552,6 @@ def STrid_shl_V4 : STInst<(outs),
 // if ([!]Pv[.new]) memd(#u6)=Rtt
 // TODO: needs to be implemented.
 
-// if ([!]Pv[.new]) memd(Rs+#u6:3)=Rtt
-// if (Pv) memd(Rs+#u6:3)=Rtt
-// if (Pv.new) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrid_indexed_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
-                 DoubleRegs:$src4),
-            "if ($src1.new) memd($src2+#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memd(Rs+#u6:3)=Rtt
-// if (!Pv.new) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrid_indexed_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
-                 DoubleRegs:$src4),
-            "if (!$src1.new) memd($src2+#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
-
 // if ([!]Pv[.new]) memd(Rs+Ru<<#u2)=Rtt
 // if (Pv) memd(Rs+Ru<<#u2)=Rtt
 let AddedComplexity = 10, neverHasSideEffects = 1,
@@ -1714,27 +1691,6 @@ let neverHasSideEffects = 1,
 def STrib_imm_cdnNotPt_V4 : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, s6Imm:$src4),
             "if (!$src1.new) memb($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if ([!]Pv[.new]) memb(Rs+#u6:0)=Rt
-// if (Pv) memb(Rs+#u6:0)=Rt
-// if (!Pv) memb(Rs+#u6:0)=Rt
-// if (Pv.new) memb(Rs+#u6:0)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_indexed_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
-            "if ($src1.new) memb($src2+#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memb(Rs+#u6:0)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_indexed_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
-            "if (!$src1.new) memb($src2+#$src3) = $src4",
             []>,
             Requires<[HasV4T]>;
 
@@ -1891,25 +1847,6 @@ def STrih_imm_cdnNotPt_V4 : STInst2<(outs),
 // if ([!]Pv[.new]) memh(Rs+#u6:1)=Rt.H
 // TODO: needs to be implemented.
 
-// if ([!]Pv[.new]) memh(Rs+#u6:1)=Rt
-// if (Pv.new) memh(Rs+#u6:1)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_indexed_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
-            "if ($src1.new) memh($src2+#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memh(Rs+#u6:1)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_indexed_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
-            "if (!$src1.new) memh($src2+#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
-
 // if ([!]Pv[.new]) memh(Rs+Ru<<#u2)=Rt.H
 // if ([!]Pv[.new]) memh(Rs+Ru<<#u2)=Rt
 // if (Pv) memh(Rs+Ru<<#u2)=Rt
@@ -2063,27 +2000,6 @@ let neverHasSideEffects = 1,
 def STriw_imm_cdnNotPt_V4 : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, s6Imm:$src4),
             "if (!$src1.new) memw($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if ([!]Pv[.new]) memw(Rs+#u6:2)=Rt
-// if (Pv) memw(Rs+#u6:2)=Rt
-// if (!Pv) memw(Rs+#u6:2)=Rt
-// if (Pv.new) memw(Rs+#u6:2)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_indexed_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
-            "if ($src1.new) memw($src2+#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memw(Rs+#u6:2)=Rt
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_indexed_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
-            "if (!$src1.new) memw($src2+#$src3) = $src4",
             []>,
             Requires<[HasV4T]>;
 

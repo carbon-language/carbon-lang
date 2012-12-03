@@ -1386,13 +1386,6 @@ def SUBri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
 ///    last operand.
 ///
 // Store doubleword.
-// Indexed store double word.
-let AddedComplexity = 10, isPredicable = 1 in
-def STrid_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_3Imm:$src2,  DoubleRegs:$src3),
-            "memd($src1+#$src2) = $src3",
-            [(store (i64 DoubleRegs:$src3),
-                    (add (i32 IntRegs:$src1), s11_3ImmPred:$src2))]>;
 
 let neverHasSideEffects = 1 in
 def STrid_GP : STInst2<(outs),
@@ -1416,26 +1409,6 @@ def POST_STdri : STInstPI<(outs IntRegs:$dst),
             (post_store (i64 DoubleRegs:$src1), (i32 IntRegs:$src2),
                         s4_3ImmPred:$offset))],
             "$src2 = $dst">;
-
-// Store doubleword conditionally.
-// if ([!]Pv) memd(Rs+#u6:3)=Rtt
-// if (Pv) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrid_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
-                 DoubleRegs:$src4),
-            "if ($src1) memd($src2+#$src3) = $src4",
-            []>;
-
-// if (!Pv) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrid_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
-                 DoubleRegs:$src4),
-            "if (!$src1) memd($src2+#$src3) = $src4",
-            []>;
 
 // if ([!]Pv) memd(Rx++#s4:3)=Rtt
 // if (Pv) memd(Rx++#s4:3)=Rtt
@@ -1523,14 +1496,84 @@ def : Pat<(store (i64 DoubleRegs:$src1), ADDRriS11_3:$addr),
           (STrid ADDRriS11_3:$addr, (i64 DoubleRegs:$src1))>;
 
 
-// Store byte.
-// memb(Rs+#s11:0)=Rt
-let AddedComplexity = 10, isPredicable = 1 in
-def STrib_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_0Imm:$src2, IntRegs:$src3),
-            "memb($src1+#$src2) = $src3",
-            [(truncstorei8 (i32 IntRegs:$src3), (add (i32 IntRegs:$src1),
-                                                     s11_0ImmPred:$src2))]>;
+//===----------------------------------------------------------------------===//
+// multiclass for the store instructions with base+immediate offset
+// addressing mode
+//===----------------------------------------------------------------------===//
+multiclass ST_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
+                        bit isNot, bit isPredNew> {
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME# : STInst2<(outs),
+            (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3, RC: $src4),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#mnemonic#"($src2+#$src3) = $src4",
+            []>;
+}
+
+multiclass ST_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
+                        bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true"), isPredicated = 1 in {
+    defm _c#NAME# : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
+
+    // Predicate new
+    let validSubTargets = HasV4SubT, Predicates = [HasV4T] in
+    defm _cdn#NAME#_V4 : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 1>;
+  }
+}
+
+let isExtendable = 1, isNVStorable = 1, neverHasSideEffects = 1 in
+multiclass ST_Idxd<string mnemonic, string CextOp, RegisterClass RC,
+                   Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
+                   bits<5> PredImmBits> {
+
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
+    let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
+         isPredicable = 1 in
+    def #NAME# : STInst2<(outs),
+            (ins IntRegs:$src1, ImmOp:$src2, RC:$src3),
+            #mnemonic#"($src1+#$src2) = $src3",
+            []>;
+
+    let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits in {
+      defm Pt : ST_Idxd_Pred<mnemonic, RC, predImmOp, 0>;
+      defm NotPt : ST_Idxd_Pred<mnemonic, RC, predImmOp, 1>;
+    }
+  }
+}
+
+let addrMode = BaseImmOffset, InputType = "reg" in {
+  defm STrib_indexed: ST_Idxd < "memb", "STrib", IntRegs, s11_0Ext,
+                                u6_0Ext, 11, 6>, AddrModeRel, ImmRegRel;
+  defm STrih_indexed: ST_Idxd < "memh", "STrih", IntRegs, s11_1Ext,
+                                u6_1Ext, 12, 7>, AddrModeRel, ImmRegRel;
+  defm STriw_indexed: ST_Idxd < "memw", "STriw", IntRegs, s11_2Ext,
+                                u6_2Ext, 13, 8>, AddrModeRel, ImmRegRel;
+  let isNVStorable = 0 in
+  defm STrid_indexed: ST_Idxd < "memd", "STrid", DoubleRegs, s11_3Ext,
+                                u6_3Ext, 14, 9>, AddrModeRel;
+}
+
+let AddedComplexity = 10 in {
+def : Pat<(truncstorei8 (i32 IntRegs:$src1), (add IntRegs:$src2,
+                                                  s11_0ExtPred:$offset)),
+          (STrib_indexed IntRegs:$src2, s11_0ImmPred:$offset,
+                         (i32 IntRegs:$src1))>;
+
+def : Pat<(truncstorei16 (i32 IntRegs:$src1), (add IntRegs:$src2,
+                                                   s11_1ExtPred:$offset)),
+          (STrih_indexed IntRegs:$src2, s11_1ImmPred:$offset,
+                         (i32 IntRegs:$src1))>;
+
+def : Pat<(store (i32 IntRegs:$src1), (add IntRegs:$src2,
+                                           s11_2ExtPred:$offset)),
+          (STriw_indexed IntRegs:$src2, s11_2ImmPred:$offset,
+                         (i32 IntRegs:$src1))>;
+
+def : Pat<(store (i64 DoubleRegs:$src1), (add IntRegs:$src2,
+                                              s11_3ExtPred:$offset)),
+          (STrid_indexed IntRegs:$src2, s11_3ImmPred:$offset,
+                         (i64 DoubleRegs:$src1))>;
+}
 
 // memb(gp+#u16:0)=Rt
 let neverHasSideEffects = 1 in
@@ -1559,22 +1602,6 @@ def POST_STbri : STInstPI<(outs IntRegs:$dst), (ins IntRegs:$src1,
                             s4_0ImmPred:$offset))],
             "$src2 = $dst">;
 
-// Store byte conditionally.
-// if ([!]Pv) memb(Rs+#u6:0)=Rt
-// if (Pv) memb(Rs+#u6:0)=Rt
-let neverHasSideEffects = 1, isPredicated = 1 in
-def STrib_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
-            "if ($src1) memb($src2+#$src3) = $src4",
-            []>;
-
-// if (!Pv) memb(Rs+#u6:0)=Rt
-let neverHasSideEffects = 1, isPredicated = 1 in
-def STrib_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
-            "if (!$src1) memb($src2+#$src3) = $src4",
-            []>;
-
 // if ([!]Pv) memb(Rx++#s4:0)=Rt
 // if (Pv) memb(Rx++#s4:0)=Rt
 let hasCtrlDep = 1, isPredicated = 1 in
@@ -1589,16 +1616,6 @@ def POST_STbri_cNotPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
             "if (!$src1) memb($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
-
-
-// Store halfword.
-// memh(Rs+#s11:1)=Rt
-let AddedComplexity = 10, isPredicable = 1 in
-def STrih_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_1Imm:$src2,  IntRegs:$src3),
-            "memh($src1+#$src2) = $src3",
-            [(truncstorei16 (i32 IntRegs:$src3), (add (i32 IntRegs:$src1),
-                                                      s11_1ImmPred:$src2))]>;
 
 let neverHasSideEffects = 1 in
 def STrih_GP : STInst2<(outs),
@@ -1625,22 +1642,6 @@ def POST_SThri : STInstPI<(outs IntRegs:$dst),
                              s4_1ImmPred:$offset))],
             "$src2 = $dst">;
 
-// Store halfword conditionally.
-// if ([!]Pv) memh(Rs+#u6:1)=Rt
-// if (Pv) memh(Rs+#u6:1)=Rt
-let neverHasSideEffects = 1, isPredicated = 1 in
-def STrih_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
-            "if ($src1) memh($src2+#$src3) = $src4",
-            []>;
-
-// if (!Pv) memh(Rs+#u6:1)=Rt
-let neverHasSideEffects = 1, isPredicated = 1 in
-def STrih_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
-            "if (!$src1) memh($src2+#$src3) = $src4",
-            []>;
-
 // if ([!]Pv) memh(Rx++#s4:1)=Rt
 // if (Pv) memh(Rx++#s4:1)=Rt
 let hasCtrlDep = 1, isPredicated = 1 in
@@ -1665,14 +1666,6 @@ def STriw_pred : STInst2<(outs),
             "Error; should not emit",
             []>;
 
-// memw(Rs+#s11:2)=Rt
-let AddedComplexity = 10, isPredicable = 1 in
-def STriw_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_2Imm:$src2, IntRegs:$src3),
-            "memw($src1+#$src2) = $src3",
-            [(store (i32 IntRegs:$src3),
-                    (add (i32 IntRegs:$src1), s11_2ImmPred:$src2))]>;
-
 let neverHasSideEffects = 1 in
 def STriw_GP : STInst2<(outs),
             (ins globaladdress:$global, u16Imm:$offset, IntRegs:$src),
@@ -1695,22 +1688,6 @@ def POST_STwri : STInstPI<(outs IntRegs:$dst),
             (post_store (i32 IntRegs:$src1), (i32 IntRegs:$src2),
                         s4_2ImmPred:$offset))],
             "$src2 = $dst">;
-
-// Store word conditionally.
-// if ([!]Pv) memw(Rs+#u6:2)=Rt
-// if (Pv) memw(Rs+#u6:2)=Rt
-let neverHasSideEffects = 1, isPredicated = 1 in
-def STriw_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
-            "if ($src1) memw($src2+#$src3) = $src4",
-            []>;
-
-// if (!Pv) memw(Rs+#u6:2)=Rt
-let neverHasSideEffects = 1, isPredicated = 1 in
-def STriw_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
-            "if (!$src1) memw($src2+#$src3) = $src4",
-            []>;
 
 // if ([!]Pv) memw(Rx++#s4:2)=Rt
 // if (Pv) memw(Rx++#s4:2)=Rt
