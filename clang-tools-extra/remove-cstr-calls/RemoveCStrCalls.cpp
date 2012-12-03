@@ -92,9 +92,9 @@ static std::string getText(const SourceManager &SourceManager, const T &Node) {
   return std::string(Text, End.second - Start.second);
 }
 
-// Return true if expr needs to be put in parens when it is an
-// argument of a prefix unary operator, e.g. when it is a binary or
-// ternary operator syntactically.
+// Return true if expr needs to be put in parens when it is an argument of a
+// prefix unary operator, e.g. when it is a binary or ternary operator
+// syntactically.
 static bool needParensAfterUnaryOperator(const Expr &ExprNode) {
   if (dyn_cast<clang::BinaryOperator>(&ExprNode) ||
       dyn_cast<clang::ConditionalOperator>(&ExprNode)) {
