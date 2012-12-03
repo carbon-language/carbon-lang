@@ -2493,10 +2493,13 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         // strip .py or .pyc extension
         ConstString extension = target_file.GetFileNameExtension();
-        if (::strcmp(extension.GetCString(), "py") == 0)
-            basename.resize(basename.length()-3);
-        else if(::strcmp(extension.GetCString(), "pyc") == 0)
-            basename.resize(basename.length()-4);
+        if (extension)
+        {
+            if (::strcmp(extension.GetCString(), "py") == 0)
+                basename.resize(basename.length()-3);
+            else if(::strcmp(extension.GetCString(), "pyc") == 0)
+                basename.resize(basename.length()-4);
+        }
         
         // check if the module is already import-ed
         command_stream.Clear();
