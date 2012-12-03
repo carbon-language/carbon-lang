@@ -1,4 +1,4 @@
-##===- clang/lib/Tooling/Makefile ---------------------------*- Makefile -*-===##
+##===- clang/lib/Format/Makefile ---------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
-LIBRARYNAME := clangTooling
+LIBRARYNAME := clangFormat
 
 include $(CLANG_LEVEL)/Makefile
