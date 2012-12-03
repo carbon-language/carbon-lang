@@ -444,7 +444,7 @@ namespace {
 static ManagedStatic<sys::SmartMutex<true> > TimingInfoMutex;
 
 class TimingInfo {
-  DenseMap<AnalysisID, Timer*> TimingData;
+  DenseMap<Pass*, Timer*> TimingData;
   TimerGroup TG;
 public:
   // Use 'create' member to get this.
@@ -454,7 +454,7 @@ public:
   ~TimingInfo() {
     // Delete all of the timers, which accumulate their info into the
     // TimerGroup.
-    for (DenseMap<AnalysisID, Timer*>::iterator I = TimingData.begin(),
+    for (DenseMap<Pass*, Timer*>::iterator I = TimingData.begin(),
          E = TimingData.end(); I != E; ++I)
       delete I->second;
     // TimerGroup is deleted next, printing the report.
@@ -471,7 +471,7 @@ public:
       return 0;
 
     sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
-    Timer *&T = TimingData[P->getPassID()];
+    Timer *&T = TimingData[P];
     if (T == 0)
       T = new Timer(P->getPassName(), TG);
     return T;
