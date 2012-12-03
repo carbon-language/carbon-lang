@@ -13,6 +13,9 @@
 
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -245,4 +248,39 @@ getCommonSuperRegClass(const TargetRegisterClass *RCA, unsigned SubA,
     }
   }
   return BestRC;
+}
+
+// Compute target-independent register allocator hints to help eliminate copies.
+void
+TargetRegisterInfo::getRegAllocationHints(unsigned VirtReg,
+                                          ArrayRef<MCPhysReg> Order,
+                                          SmallVectorImpl<MCPhysReg> &Hints,
+                                          const MachineFunction &MF,
+                                          const VirtRegMap *VRM) const {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  std::pair<unsigned, unsigned> Hint = MRI.getRegAllocationHint(VirtReg);
+
+  // Hints with HintType != 0 were set by target-dependent code.
+  // Such targets must provide their own implementation of
+  // TRI::getRegAllocationHints to interpret those hint types.
+  assert(Hint.first == 0 && "Target must implement TRI::getRegAllocationHints");
+
+  // Target-independent hints are either a physical or a virtual register.
+  unsigned Phys = Hint.second;
+  if (VRM && isVirtualRegister(Phys))
+    Phys = VRM->getPhys(Phys);
+
+  // Check that Phys is a valid hint in VirtReg's register class.
+  if (!isPhysicalRegister(Phys))
+    return;
+  if (MRI.isReserved(Phys))
+    return;
+  // Check that Phys is in the allocation order. We shouldn't heed hints
+  // from VirtReg's register class if they aren't in the allocation order. The
+  // target probably has a reason for removing the register.
+  if (std::find(Order.begin(), Order.end(), Phys) == Order.end())
+    return;
+
+  // All clear, tell the register allocator to prefer this register.
+  Hints.push_back(Phys);
 }
