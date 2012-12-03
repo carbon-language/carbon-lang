@@ -108,6 +108,7 @@ void BoundsChecking::emitBranchToTrap(Value *Cmp) {
     else
       Cmp = 0; // unconditional branch
   }
+  ++ChecksAdded;
 
   Instruction *Inst = Builder->GetInsertPoint();
   BasicBlock *OldBB = Inst->getParent();
@@ -162,7 +163,6 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   }
   emitBranchToTrap(Or);
 
-  ++ChecksAdded;
   return true;
 }
 
