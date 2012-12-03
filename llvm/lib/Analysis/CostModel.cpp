@@ -40,7 +40,7 @@ namespace {
     /// Returns -1 if the cost is unknown.
     /// Note, this method does not cache the cost calculation and it
     /// can be expensive in some cases.
-    unsigned getInstructionCost(Instruction *I) const;
+    unsigned getInstructionCost(const Instruction *I) const;
 
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -82,7 +82,7 @@ CostModelAnalysis::runOnFunction(Function &F) {
  return false;
 }
 
-unsigned CostModelAnalysis::getInstructionCost(Instruction *I) const {
+unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   if (!VTTI)
     return -1;
 
@@ -113,7 +113,7 @@ unsigned CostModelAnalysis::getInstructionCost(Instruction *I) const {
     return VTTI->getArithmeticInstrCost(I->getOpcode(), I->getType());
   }
   case Instruction::Select: {
-    SelectInst *SI = cast<SelectInst>(I);
+    const SelectInst *SI = cast<SelectInst>(I);
     Type *CondTy = SI->getCondition()->getType();
     return VTTI->getCmpSelInstrCost(I->getOpcode(), I->getType(), CondTy);
   }
@@ -123,14 +123,14 @@ unsigned CostModelAnalysis::getInstructionCost(Instruction *I) const {
     return VTTI->getCmpSelInstrCost(I->getOpcode(), ValTy);
   }
   case Instruction::Store: {
-    StoreInst *SI = cast<StoreInst>(I);
+    const StoreInst *SI = cast<StoreInst>(I);
     Type *ValTy = SI->getValueOperand()->getType();
     return VTTI->getMemoryOpCost(I->getOpcode(), ValTy,
                                  SI->getAlignment(),
                                  SI->getPointerAddressSpace());
   }
   case Instruction::Load: {
-    LoadInst *LI = cast<LoadInst>(I);
+    const LoadInst *LI = cast<LoadInst>(I);
     return VTTI->getMemoryOpCost(I->getOpcode(), I->getType(),
                                  LI->getAlignment(),
                                  LI->getPointerAddressSpace());
@@ -151,7 +151,7 @@ unsigned CostModelAnalysis::getInstructionCost(Instruction *I) const {
     return VTTI->getCastInstrCost(I->getOpcode(), I->getType(), SrcTy);
   }
   case Instruction::ExtractElement: {
-    ExtractElementInst * EEI = cast<ExtractElementInst>(I);
+    const ExtractElementInst * EEI = cast<ExtractElementInst>(I);
     ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1));
     unsigned Idx = -1;
     if (CI)
@@ -160,7 +160,7 @@ unsigned CostModelAnalysis::getInstructionCost(Instruction *I) const {
                                     EEI->getOperand(0)->getType(), Idx);
   }
   case Instruction::InsertElement: {
-      InsertElementInst * IE = cast<InsertElementInst>(I);
+      const InsertElementInst * IE = cast<InsertElementInst>(I);
       ConstantInt *CI = dyn_cast<ConstantInt>(IE->getOperand(2));
       unsigned Idx = -1;
       if (CI)
