@@ -576,3 +576,134 @@ def s8_16ExtPred  : PatLeaf<(i32 imm), [{
       return false;
   }
 }]>;
+
+def s6ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 6-bit sign extended field.
+    return isInt<6>(v);
+  else {
+    if (isInt<6>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit unsigned field.
+    if (isConstExtProfitable(Node) && isInt<32>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s6_16ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate fits in a 6-bit sign extended field.
+    return isInt<6>(v);
+  else {
+    if (isInt<6>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can't fit in a 16-bit signed field. This is required to avoid
+    // unnecessary constant extenders.
+    if (isConstExtProfitable(Node) && !isInt<16>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s6_10ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 6-bit sign extended field.
+    return isInt<6>(v);
+  else {
+    if (isInt<6>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can't fit in a 10-bit signed field. This is required to avoid
+    // unnecessary constant extenders.
+    if (isConstExtProfitable(Node) && !isInt<10>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s11_0ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 11-bit sign extended field.
+    return isShiftedInt<11,0>(v);
+  else {
+    if (isInt<11>(v))
+      return true;
+
+    // Return true if extending this immediate is profitable and the value
+    // can fit in a 32-bit signed field.
+    if (isConstExtProfitable(Node) && isInt<32>(v))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s11_1ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 12-bit sign extended field and
+    // is 2 byte aligned.
+    return isShiftedInt<11,1>(v);
+  else {
+    if (isInt<12>(v))
+      return isShiftedInt<11,1>(v);
+
+    // Return true if extending this immediate is profitable and the low 1 bit
+    // is zero (2-byte aligned).
+    if (isConstExtProfitable(Node) && isInt<32>(v) && ((v % 2) == 0))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s11_2ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 13-bit sign extended field and
+    // is 4-byte aligned.
+    return isShiftedInt<11,2>(v);
+  else {
+    if (isInt<13>(v))
+      return isShiftedInt<11,2>(v);
+
+    // Return true if extending this immediate is profitable and the low 2-bits
+    // are zero (4-byte aligned).
+    if (isConstExtProfitable(Node)  && isInt<32>(v) && ((v % 4) == 0))
+      return true;
+    else
+      return false;
+  }
+}]>;
+
+def s11_3ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (!Subtarget.hasV4TOps())
+    // Return true if the immediate can fit in a 14-bit sign extended field and
+    // is 8-byte aligned.
+    return isShiftedInt<11,3>(v);
+  else {
+    if (isInt<14>(v))
+     return isShiftedInt<11,3>(v);
+
+    // Return true if extending this immediate is profitable and the low 3-bits
+    // are zero (8-byte aligned).
+    if (isConstExtProfitable(Node)  && isInt<32>(v) && ((v % 8) == 0))
+      return true;
+    else
+      return false;
+  }
+}]>;
