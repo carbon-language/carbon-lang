@@ -30,7 +30,10 @@
 namespace __sanitizer {
 
 // Maps size class id to size and back.
-class DefaultSizeClassMap {
+template <uptr l0, uptr l1, uptr l2, uptr l3, uptr l4, uptr l5,
+          uptr s0, uptr s1, uptr s2, uptr s3, uptr s4,
+          uptr c0, uptr c1, uptr c2, uptr c3, uptr c4>
+class SplineSizeClassMap {
  private:
   // Here we use a spline composed of 5 polynomials of oder 1.
   // The first size class is l0, then the classes go with step s0
@@ -38,31 +41,11 @@ class DefaultSizeClassMap {
   // Steps should be powers of two for cheap division.
   // The size of the last size class should be a power of two.
   // There should be at most 256 size classes.
-  static const uptr l0 = 1 << 4;
-  static const uptr l1 = 1 << 9;
-  static const uptr l2 = 1 << 12;
-  static const uptr l3 = 1 << 15;
-  static const uptr l4 = 1 << 18;
-  static const uptr l5 = 1 << 21;
-
-  static const uptr s0 = 1 << 4;
-  static const uptr s1 = 1 << 6;
-  static const uptr s2 = 1 << 9;
-  static const uptr s3 = 1 << 12;
-  static const uptr s4 = 1 << 15;
-
   static const uptr u0 = 0  + (l1 - l0) / s0;
   static const uptr u1 = u0 + (l2 - l1) / s1;
   static const uptr u2 = u1 + (l3 - l2) / s2;
   static const uptr u3 = u2 + (l4 - l3) / s3;
   static const uptr u4 = u3 + (l5 - l4) / s4;
-
-  // Max cached in local cache blocks.
-  static const uptr c0 = 256;
-  static const uptr c1 = 64;
-  static const uptr c2 = 16;
-  static const uptr c3 = 4;
-  static const uptr c4 = 1;
 
  public:
   static const uptr kNumClasses = u4 + 1;
@@ -99,12 +82,27 @@ class DefaultSizeClassMap {
   }
 };
 
+class DefaultSizeClassMap: public SplineSizeClassMap<
+  /* l: */1 << 4, 1 << 9,  1 << 12, 1 << 15, 1 << 18, 1 << 21,
+  /* s: */1 << 4, 1 << 6,  1 << 9,  1 << 12, 1 << 15,
+  /* c: */256,    64,      16,      4,       1> {
+ private:
+  COMPILER_CHECK(kNumClasses == 256);
+};
+
+class CompactSizeClassMap: public SplineSizeClassMap<
+  /* l: */1 << 3, 1 << 4,  1 << 7, 1 << 8, 1 << 12, 1 << 15,
+  /* s: */1 << 3, 1 << 4,  1 << 7, 1 << 8, 1 << 12,
+  /* c: */256,    64,      16,      4,       1> {
+ private:
+  COMPILER_CHECK(kNumClasses <= 32);
+};
+
 struct AllocatorListNode {
   AllocatorListNode *next;
 };
 
 typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
-
 
 // Space: a portion of address space of kSpaceSize bytes starting at
 // a fixed address (kSpaceBeg). Both constants are powers of two and

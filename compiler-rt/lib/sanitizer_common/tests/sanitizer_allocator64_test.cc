@@ -23,15 +23,16 @@ typedef
 typedef SizeClassAllocatorLocalCache<Allocator::kNumClasses, Allocator>
   AllocatorCache;
 
-TEST(SanitizerCommon, DefaultSizeClassMap) {
+template <class SizeClassMap>
+void TestSizeClassMap() {
+  typedef SizeClassMap SCMap;
 #if 0
   for (uptr i = 0; i < SCMap::kNumClasses; i++) {
-    printf("c%ld => %ld cached=%ld(%ld)\n",
-        i, SCMap::Size(i), SCMap::MaxCached(i) * SCMap::Size(i),
+    printf("c%ld => %ld (%lx) cached=%ld(%ld)\n",
+        i, SCMap::Size(i), SCMap::Size(i), SCMap::MaxCached(i) * SCMap::Size(i),
         SCMap::MaxCached(i));
   }
 #endif
-
   for (uptr c = 0; c < SCMap::kNumClasses; c++) {
     uptr s = SCMap::Size(c);
     CHECK_EQ(SCMap::ClassID(s), c);
@@ -50,6 +51,14 @@ TEST(SanitizerCommon, DefaultSizeClassMap) {
     if (c > 0)
       CHECK_LT(SCMap::Size(c-1), s);
   }
+}
+
+TEST(SanitizerCommon, DefaultSizeClassMap) {
+  TestSizeClassMap<DefaultSizeClassMap>();
+}
+
+TEST(SanitizerCommon, CompactSizeClassMap) {
+  TestSizeClassMap<CompactSizeClassMap>();
 }
 
 TEST(SanitizerCommon, SizeClassAllocator64) {
