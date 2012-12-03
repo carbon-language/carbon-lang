@@ -2068,11 +2068,11 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
   // Checks that have two variants use a suffix to differentiate them
   bool NeedsAbortSuffix = (RecoverKind != CRK_Unrecoverable) &&
                            !CGM.getCodeGenOpts().SanitizeRecover;
-  Twine FunctionName = "__ubsan_handle_" + CheckName +
-                       Twine(NeedsAbortSuffix? "_abort" : "");
-  llvm::Value *Fn = CGM.CreateRuntimeFunction(FnType, FunctionName.str(),
-                                         llvm::Attributes::get(getLLVMContext(),
-                                                               B));
+  std::string FunctionName = ("__ubsan_handle_" + CheckName +
+                              (NeedsAbortSuffix? "_abort" : "")).str();
+  llvm::Value *Fn =
+    CGM.CreateRuntimeFunction(FnType, FunctionName,
+                              llvm::Attributes::get(getLLVMContext(), B));
   llvm::CallInst *HandlerCall = Builder.CreateCall(Fn, Args);
   if (Recover) {
     Builder.CreateBr(Cont);
