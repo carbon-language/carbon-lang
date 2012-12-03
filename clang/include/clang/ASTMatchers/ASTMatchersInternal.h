@@ -373,13 +373,15 @@ public:
   }
 
 private:
-  /// \brief Extracts the CXXRecordDecl of a QualType and returns whether the
-  /// inner matcher matches on it.
+  /// \brief Extracts the CXXRecordDecl or EnumDecl of a QualType and returns
+  /// whether the inner matcher matches on it.
   bool matchesSpecialized(const QualType &Node, ASTMatchFinder *Finder,
                           BoundNodesTreeBuilder *Builder) const {
     /// FIXME: Add other ways to convert...
     if (Node.isNull())
       return false;
+    if (const EnumType *AsEnum = dyn_cast<EnumType>(Node.getTypePtr()))
+      return matchesDecl(AsEnum->getDecl(), Finder, Builder);
     return matchesDecl(Node->getAsCXXRecordDecl(), Finder, Builder);
   }
 

@@ -779,6 +779,12 @@ TEST(Matcher, BindsIDForMemoizedResults) {
       new VerifyIdIsBoundTo<Decl>("x", 2)));
 }
 
+TEST(HasDeclaration, HasDeclarationOfEnumType) {
+  EXPECT_TRUE(matches("enum X {}; void y(X *x) { x; }",
+                      expr(hasType(pointsTo(
+                          qualType(hasDeclaration(enumDecl(hasName("X")))))))));
+}
+
 TEST(HasType, TakesQualTypeMatcherAndMatchesExpr) {
   TypeMatcher ClassX = hasDeclaration(recordDecl(hasName("X")));
   EXPECT_TRUE(
