@@ -112,9 +112,8 @@ static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
        cl::desc("Handle memset/memcpy/memmove"), cl::Hidden, cl::init(true));
-// This flag may need to be replaced with -fasan-blacklist.
-static cl::opt<std::string>  ClBlackListFile("asan-blacklist",
-       cl::desc("File containing the list of functions to ignore "
+static cl::opt<std::string> ClBlacklistFile("asan-blacklist",
+       cl::desc("File containing the list of objects to ignore "
                 "during instrumentation"), cl::Hidden);
 
 // These flags allow to change the shadow mapping.
@@ -191,11 +190,14 @@ static size_t RedzoneSize() {
 struct AddressSanitizer : public FunctionPass {
   AddressSanitizer(bool CheckInitOrder = false,
                    bool CheckUseAfterReturn = false,
-                   bool CheckLifetime = false)
+                   bool CheckLifetime = false,
+                   StringRef BlacklistFile = StringRef())
       : FunctionPass(ID),
         CheckInitOrder(CheckInitOrder || ClInitializers),
         CheckUseAfterReturn(CheckUseAfterReturn || ClUseAfterReturn),
-        CheckLifetime(CheckLifetime || ClCheckLifetime) {}
+        CheckLifetime(CheckLifetime || ClCheckLifetime),
+        BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
+                                            : BlacklistFile) {}
   virtual const char *getPassName() const {
     return "AddressSanitizerFunctionPass";
   }
@@ -254,6 +256,7 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanInitFunction;
   Function *AsanStackMallocFunc, *AsanStackFreeFunc;
   Function *AsanHandleNoReturnFunc;
+  SmallString<64> BlacklistFile;
   OwningPtr<BlackList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
@@ -263,9 +266,12 @@ struct AddressSanitizer : public FunctionPass {
 
 class AddressSanitizerModule : public ModulePass {
  public:
-  AddressSanitizerModule(bool CheckInitOrder = false)
+  AddressSanitizerModule(bool CheckInitOrder = false,
+                         StringRef BlacklistFile = StringRef())
       : ModulePass(ID),
-        CheckInitOrder(CheckInitOrder || ClInitializers) {}
+        CheckInitOrder(CheckInitOrder || ClInitializers),
+        BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
+                                            : BlacklistFile) {}
   bool runOnModule(Module &M);
   static char ID;  // Pass identification, replacement for typeid
   virtual const char *getPassName() const {
@@ -277,6 +283,7 @@ class AddressSanitizerModule : public ModulePass {
                                     Value *LastAddr);
 
   bool CheckInitOrder;
+  SmallString<64> BlacklistFile;
   OwningPtr<BlackList> BL;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
   Type *IntptrTy;
@@ -291,17 +298,19 @@ INITIALIZE_PASS(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
 FunctionPass *llvm::createAddressSanitizerFunctionPass(
-    bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime) {
+    bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime,
+    StringRef BlacklistFile) {
   return new AddressSanitizer(CheckInitOrder, CheckUseAfterReturn,
-                              CheckLifetime);
+                              CheckLifetime, BlacklistFile);
 }
 
 char AddressSanitizerModule::ID = 0;
 INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
     "ModulePass", false, false)
-ModulePass *llvm::createAddressSanitizerModulePass(bool CheckInitOrder) {
-  return new AddressSanitizerModule(CheckInitOrder);
+ModulePass *llvm::createAddressSanitizerModulePass(
+    bool CheckInitOrder, StringRef BlacklistFile) {
+  return new AddressSanitizerModule(CheckInitOrder, BlacklistFile);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -618,7 +627,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   TD = getAnalysisIfAvailable<DataLayout>();
   if (!TD)
     return false;
-  BL.reset(new BlackList(ClBlackListFile));
+  BL.reset(new BlackList(BlacklistFile));
   if (BL->isIn(M)) return false;
   DynamicallyInitializedGlobals.Init(M);
   C = &(M.getContext());
@@ -793,7 +802,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
 
   if (!TD)
     return false;
-  BL.reset(new BlackList(ClBlackListFile));
+  BL.reset(new BlackList(BlacklistFile));
   DynamicallyInitializedGlobals.Init(M);
 
   C = &(M.getContext());
