@@ -57,11 +57,13 @@ class PointerIntPair {
   };
 public:
   PointerIntPair() : Value(0) {}
-  PointerIntPair(PointerTy Ptr, IntType Int) : Value(0) {
+  PointerIntPair(PointerTy Ptr, IntType Int) {
     assert(IntBits <= PtrTraits::NumLowBitsAvailable &&
            "PointerIntPair formed with integer size too large for pointer");
-    setPointer(Ptr);
-    setInt(Int);
+    setPointerAndInt(Ptr, Int);
+  }
+  explicit PointerIntPair(PointerTy Ptr) {
+    initWithPointer(Ptr);
   }
 
   PointerTy getPointer() const {
@@ -89,6 +91,25 @@ public:
     // Preserve all bits other than the ones we are updating.
     Value &= ~ShiftedIntMask;     // Remove integer field.
     Value |= IntVal << IntShift;  // Set new integer.
+  }
+
+  void initWithPointer(PointerTy Ptr) {
+    intptr_t PtrVal
+      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(Ptr));
+    assert((PtrVal & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+           "Pointer is not sufficiently aligned");
+    Value = PtrVal;
+  }
+
+  void setPointerAndInt(PointerTy Ptr, IntType Int) {
+    intptr_t PtrVal
+      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(Ptr));
+    assert((PtrVal & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+           "Pointer is not sufficiently aligned");
+    intptr_t IntVal = Int;
+    assert(IntVal < (1 << IntBits) && "Integer too large for field");
+
+    Value = PtrVal | (IntVal << IntShift);
   }
 
   PointerTy const *getAddrOfPointer() const {

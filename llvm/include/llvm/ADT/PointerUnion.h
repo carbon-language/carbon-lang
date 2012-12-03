@@ -95,15 +95,11 @@ namespace llvm {
   public:
     PointerUnion() {}
     
-    PointerUnion(PT1 V) {
-      Val.setPointer(
-         const_cast<void *>(PointerLikeTypeTraits<PT1>::getAsVoidPointer(V)));
-      Val.setInt(0);
+    PointerUnion(PT1 V) : Val(
+      const_cast<void *>(PointerLikeTypeTraits<PT1>::getAsVoidPointer(V))) {
     }
-    PointerUnion(PT2 V) {
-      Val.setPointer(
-         const_cast<void *>(PointerLikeTypeTraits<PT2>::getAsVoidPointer(V)));
-      Val.setInt(1);
+    PointerUnion(PT2 V) : Val(
+      const_cast<void *>(PointerLikeTypeTraits<PT2>::getAsVoidPointer(V)), 1) {
     }
     
     /// isNull - Return true if the pointer held in the union is null,
@@ -160,15 +156,14 @@ namespace llvm {
     /// Assignment operators - Allow assigning into this union from either
     /// pointer type, setting the discriminator to remember what it came from.
     const PointerUnion &operator=(const PT1 &RHS) {
-      Val.setPointer(
+      Val.initWithPointer(
          const_cast<void *>(PointerLikeTypeTraits<PT1>::getAsVoidPointer(RHS)));
-      Val.setInt(0);
       return *this;
     }
     const PointerUnion &operator=(const PT2 &RHS) {
-      Val.setPointer(
-        const_cast<void *>(PointerLikeTypeTraits<PT2>::getAsVoidPointer(RHS)));
-      Val.setInt(1);
+      Val.setPointerAndInt(
+        const_cast<void *>(PointerLikeTypeTraits<PT2>::getAsVoidPointer(RHS)),
+        1);
       return *this;
     }
     
