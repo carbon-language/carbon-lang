@@ -46,23 +46,15 @@ Regression tests
 ----------------
 
 The regression tests are small pieces of code that test a specific
-feature of LLVM or trigger a specific bug in LLVM. They are usually
-written in LLVM assembly language, but can be written in other languages
-if the test targets a particular language front end (and the appropriate
-``--with-llvmgcc`` options were used at ``configure`` time of the
-``llvm`` module). These tests are driven by the 'lit' testing tool,
-which is part of LLVM.
-
-These code fragments are not complete programs. The code generated from
-them is never executed to determine correct behavior.
-
-These code fragment tests are located in the ``llvm/test`` directory.
+feature of LLVM or trigger a specific bug in LLVM. The language they are
+written in depends on the part of LLVM being tested. These tests are driven by
+the :doc:`Lit <CommandGuide/lit>` testing tool (which is part of LLVM), and
+are located in the ``llvm/test`` directory.
 
 Typically when a bug is found in LLVM, a regression test containing just
 enough code to reproduce the problem should be written and placed
-somewhere underneath this directory. In most cases, this will be a small
-piece of LLVM assembly language code, often distilled from an actual
-application or benchmark.
+somewhere underneath this directory. For example, it can be a small
+piece of LLVM IR distilled from an actual application or benchmark.
 
 ``test-suite``
 --------------
@@ -100,8 +92,8 @@ Quick start
 
 The tests are located in two separate Subversion modules. The
 regressions tests are in the main "llvm" module under the directory
-``llvm/test`` (so you get these tests for free with the main llvm tree).
-Use "make check-all" to run the regression tests after building LLVM.
+``llvm/test`` (so you get these tests for free with the main LLVM tree).
+Use ``make check-all`` to run the regression tests after building LLVM.
 
 The more comprehensive test suite that includes whole programs in C and C++
 is in the ``test-suite`` module. See :ref:`test-suite Quickstart
@@ -110,38 +102,37 @@ is in the ``test-suite`` module. See :ref:`test-suite Quickstart
 Regression tests
 ----------------
 
-To run all of the LLVM regression tests, use master Makefile in the
-``llvm/test`` directory:
+To run all of the LLVM regression tests, use the master Makefile in the
+``llvm/test`` directory. LLVM Makefiles require GNU Make (read the :doc:`LLVM
+Makefile Guide <MakefileGuide>` for more details):
 
 .. code-block:: bash
 
-    % gmake -C llvm/test
+    % make -C llvm/test
 
-or
+or:
 
 .. code-block:: bash
 
-    % gmake check
+    % make check
 
 If you have `Clang <http://clang.llvm.org/>`_ checked out and built, you
 can run the LLVM and Clang tests simultaneously using:
 
-or
-
 .. code-block:: bash
 
-    % gmake check-all
+    % make check-all
 
 To run the tests with Valgrind (Memcheck by default), just append
 ``VG=1`` to the commands above, e.g.:
 
 .. code-block:: bash
 
-    % gmake check VG=1
+    % make check VG=1
 
-To run individual tests or subsets of tests, you can use the 'llvm-lit'
+To run individual tests or subsets of tests, you can use the ``llvm-lit``
 script which is built as part of LLVM. For example, to run the
-'Integer/BitPacked.ll' test by itself you can run:
+``Integer/BitPacked.ll`` test by itself you can run:
 
 .. code-block:: bash
 
@@ -153,8 +144,8 @@ or to run all of the ARM CodeGen tests:
 
     % llvm-lit ~/llvm/test/CodeGen/ARM
 
-For more information on using the 'lit' tool, see 'llvm-lit --help' or
-the 'lit' man page.
+For more information on using the :program:`lit` tool, see ``llvm-lit --help``
+or the :doc:`lit man page <CommandGuide/lit>`.
 
 Debugging Information tests
 ---------------------------
@@ -172,7 +163,7 @@ These tests are already set up to run as part of clang regression tests.
 Regression test structure
 =========================
 
-The LLVM regression tests are driven by 'lit' and are located in the
+The LLVM regression tests are driven by :program:`lit` and are located in the
 ``llvm/test`` directory.
 
 This directory contains a large array of small tests that exercise
