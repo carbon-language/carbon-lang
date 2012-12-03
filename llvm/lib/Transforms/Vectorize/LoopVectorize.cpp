@@ -20,7 +20,7 @@
 // 1. The main loop pass that drives the different parts.
 // 2. LoopVectorizationLegality - A unit that checks for the legality
 //    of the vectorization.
-// 3. SingleBlockLoopVectorizer - A unit that performs the actual
+// 3. InnerLoopVectorizer - A unit that performs the actual
 //    widening of instructions.
 // 4. LoopVectorizationCostModel - A unit that checks for the profitability
 //    of vectorization. It decides on the optimal vector width, which
@@ -100,7 +100,7 @@ namespace {
 class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
 
-/// SingleBlockLoopVectorizer vectorizes loops which contain only one basic
+/// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
 /// This class performs the widening of scalars into vectors, or multiple
 /// scalars. This class also implements the following features:
@@ -109,15 +109,15 @@ class LoopVectorizationCostModel;
 /// * It handles the code generation for reduction variables.
 /// * Scalarization (implementation using scalars) of un-vectorizable
 ///   instructions.
-/// SingleBlockLoopVectorizer does not perform any vectorization-legality
+/// InnerLoopVectorizer does not perform any vectorization-legality
 /// checks, and relies on the caller to check for the different legality
-/// aspects. The SingleBlockLoopVectorizer relies on the
+/// aspects. The InnerLoopVectorizer relies on the
 /// LoopVectorizationLegality class to provide information about the induction
 /// and reduction variables that were found to a given vectorization factor.
-class SingleBlockLoopVectorizer {
+class InnerLoopVectorizer {
 public:
   /// Ctor.
-  SingleBlockLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
+  InnerLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
                             DominatorTree *Dt, DataLayout *Dl,
                             unsigned VecWidth):
   OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), VF(VecWidth),
@@ -226,8 +226,8 @@ private:
 /// * Scalars checks - The code in canVectorizeInstrs and canVectorizeMemory
 /// checks for a number of different conditions, such as the availability of a
 /// single induction variable, that all types are supported and vectorize-able,
-/// etc. This code reflects the capabilities of SingleBlockLoopVectorizer.
-/// This class is also used by SingleBlockLoopVectorizer for identifying
+/// etc. This code reflects the capabilities of InnerLoopVectorizer.
+/// This class is also used by InnerLoopVectorizer for identifying
 /// induction variable and the different reduction variables.
 class LoopVectorizationLegality {
 public:
@@ -511,7 +511,7 @@ struct LoopVectorize : public LoopPass {
           "\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
-    SingleBlockLoopVectorizer LB(L, SE, LI, DT, DL, VF);
+    InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -531,7 +531,7 @@ struct LoopVectorize : public LoopPass {
 
 };
 
-Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
+Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
   // Create the types.
   LLVMContext &C = V->getContext();
   Type *VTy = VectorType::get(V->getType(), VF);
@@ -563,7 +563,7 @@ Value *SingleBlockLoopVectorizer::getBroadcastInstrs(Value *V) {
   return Shuf;
 }
 
-Value *SingleBlockLoopVectorizer::getConsecutiveVector(Value* Val) {
+Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val) {
   assert(Val->getType()->isVectorTy() && "Must be a vector");
   assert(Val->getType()->getScalarType()->isIntegerTy() &&
          "Elem must be an integer");
@@ -622,7 +622,7 @@ bool LoopVectorizationLegality::isUniform(Value *V) {
   return (SE->isLoopInvariant(SE->getSCEV(V), TheLoop));
 }
 
-Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
+Value *InnerLoopVectorizer::getVectorValue(Value *V) {
   assert(V != Induction && "The new induction variable should not be used.");
   assert(!V->getType()->isVectorTy() && "Can't widen a vector");
   // If we saved a vectorized copy of V, use it.
@@ -637,11 +637,11 @@ Value *SingleBlockLoopVectorizer::getVectorValue(Value *V) {
 }
 
 Constant*
-SingleBlockLoopVectorizer::getUniformVector(unsigned Val, Type* ScalarTy) {
+InnerLoopVectorizer::getUniformVector(unsigned Val, Type* ScalarTy) {
   return ConstantVector::getSplat(VF, ConstantInt::get(ScalarTy, Val, true));
 }
 
-void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
+void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
   assert(!Instr->getType()->isAggregateType() && "Can't handle vectors");
   // Holds vector parameters or scalars, in case of uniform vals.
   SmallVector<Value*, 8> Params;
@@ -712,7 +712,7 @@ void SingleBlockLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
 }
 
 Value*
-SingleBlockLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
+InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
                                            Instruction *Loc) {
   LoopVectorizationLegality::RuntimePointerCheck *PtrRtCheck =
     Legal->getRuntimePointerCheck();
@@ -773,7 +773,7 @@ SingleBlockLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
 }
 
 void
-SingleBlockLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
+InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   /*
    In this function we generate a new loop. The new loop will contain
    the vectorized instructions while the old loop will continue to run the
@@ -1037,7 +1037,7 @@ getReductionIdentity(LoopVectorizationLegality::ReductionKind K) {
 }
 
 void
-SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
+InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   //===------------------------------------------------===//
   //
   // Notice: any optimization or new instruction that go
@@ -1427,7 +1427,7 @@ SingleBlockLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   }// end of for each redux variable.
 }
 
-void SingleBlockLoopVectorizer::updateAnalysis() {
+void InnerLoopVectorizer::updateAnalysis() {
   // Forget the original basic block.
   SE->forgetLoop(OrigLoop);
 
