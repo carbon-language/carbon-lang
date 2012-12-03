@@ -709,7 +709,7 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
 
   // Write metadata kinds
   // METADATA_KIND - [n x [id, name]]
-  SmallVector<StringRef, 4> Names;
+  SmallVector<StringRef, 8> Names;
   M->getMDKindNames(Names);
 
   if (Names.empty()) return;
