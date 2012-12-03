@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -170,6 +171,64 @@ ARMBaseRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case ARM::SPRRegClassID:  // Currently not used as 'rep' register class.
   case ARM::DPRRegClassID:
     return 32 - 10;
+  }
+}
+
+// Get the other register in a GPRPair.
+static unsigned getPairedGPR(unsigned Reg, bool Odd, const MCRegisterInfo *RI) {
+  for (MCSuperRegIterator Supers(Reg, RI); Supers.isValid(); ++Supers)
+    if (ARM::GPRPairRegClass.contains(*Supers))
+      return RI->getSubReg(*Supers, Odd ? ARM::gsub_1 : ARM::gsub_0);
+  return 0;
+}
+
+// Resolve the RegPairEven / RegPairOdd register allocator hints.
+void
+ARMBaseRegisterInfo::getRegAllocationHints(unsigned VirtReg,
+                                           ArrayRef<MCPhysReg> Order,
+                                           SmallVectorImpl<MCPhysReg> &Hints,
+                                           const MachineFunction &MF,
+                                           const VirtRegMap *VRM) const {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  std::pair<unsigned, unsigned> Hint = MRI.getRegAllocationHint(VirtReg);
+
+  unsigned Odd;
+  switch (Hint.first) {
+  case ARMRI::RegPairEven:
+    Odd = 0;
+    break;
+  case ARMRI::RegPairOdd:
+    Odd = 1;
+    break;
+  default:
+    TargetRegisterInfo::getRegAllocationHints(VirtReg, Order, Hints, MF, VRM);
+    return;
+  }
+
+  // This register should preferably be even (Odd == 0) or odd (Odd == 1).
+  // Check if the other part of the pair has already been assigned, and provide
+  // the paired register as the first hint.
+  unsigned PairedPhys = 0;
+  if (VRM && VRM->hasPhys(Hint.second)) {
+    PairedPhys = getPairedGPR(VRM->getPhys(Hint.second), Odd, this);
+    if (PairedPhys && MRI.isReserved(PairedPhys))
+      PairedPhys = 0;
+  }
+
+  // First prefer the paired physreg.
+  if (PairedPhys)
+    Hints.push_back(PairedPhys);
+
+  // Then prefer even or odd registers.
+  for (unsigned I = 0, E = Order.size(); I != E; ++I) {
+    unsigned Reg = Order[I];
+    if (Reg == PairedPhys || (getEncodingValue(Reg) & 1) != Odd)
+      continue;
+    // Don't provide hints that are paired to a reserved register.
+    unsigned Paired = getPairedGPR(Reg, !Odd, this);
+    if (!Paired || MRI.isReserved(Paired))
+      continue;
+    Hints.push_back(Reg);
   }
 }
 

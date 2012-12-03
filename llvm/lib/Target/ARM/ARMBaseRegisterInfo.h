@@ -115,6 +115,12 @@ public:
                                            unsigned HintType, unsigned HintReg,
                                            const MachineFunction &MF) const;
 
+  void getRegAllocationHints(unsigned VirtReg,
+                             ArrayRef<MCPhysReg> Order,
+                             SmallVectorImpl<MCPhysReg> &Hints,
+                             const MachineFunction &MF,
+                             const VirtRegMap *VRM) const;
+
   unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
                                const MachineFunction &MF) const;
 
