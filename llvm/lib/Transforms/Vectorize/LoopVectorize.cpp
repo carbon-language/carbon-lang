@@ -90,7 +90,7 @@ const unsigned TinyTripCountThreshold = 16;
 
 /// When performing a runtime memory check, do not check more than this
 /// number of pointers. Notice that the check is quadratic!
-const unsigned RuntimeMemoryCheckThreshold = 2;
+const unsigned RuntimeMemoryCheckThreshold = 4;
 
 /// This is the highest vector width that we try to generate.
 const unsigned MaxVectorSize = 8;
