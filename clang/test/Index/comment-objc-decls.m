@@ -80,6 +80,21 @@
 // CHECK: <Declaration>@property ( readwrite,copy,atomic ) id PropertyMyClass</Declaration
 
 /**
+ * \brief - This is class extension of MyClass
+*/
+@interface MyClass()
+{
+/**
+ * \brief IvarMyClassExtension - IvarMyClassExtension private to class extension
+*/
+  id IvarMyClassExtension;
+}
+@end
+// CHECK: <Declaration>@interface MyClass()\n{\n    id IvarMyClassExtension;\n}\n@end</Declaration>
+// CHECK: <Declaration>id IvarMyClassExtension</Declaration>
+
+
+/**
  * \brief MyClass (Category) is private to MyClass.
 */
 @interface MyClass (Category)
