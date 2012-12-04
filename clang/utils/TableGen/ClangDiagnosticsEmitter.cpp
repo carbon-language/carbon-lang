@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/TableGen/Error.h"
