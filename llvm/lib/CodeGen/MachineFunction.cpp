@@ -445,6 +445,50 @@ MCSymbol *MachineFunction::getPICBaseSymbol() const {
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
 
+/// ensureMaxAlignment - Make sure the function is at least Align bytes
+/// aligned.
+void MachineFrameInfo::ensureMaxAlignment(unsigned Align) {
+  if (MaxAlignment < Align) MaxAlignment = Align;
+}
+
+/// CreateStackObject - Create a new statically sized stack object, returning
+/// a nonnegative identifier to represent it.
+///
+int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
+                      bool isSS, bool MayNeedSP, const AllocaInst *Alloca) {
+  assert(Size != 0 && "Cannot allocate zero size stack objects!");
+  Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, MayNeedSP,
+                                Alloca));
+  int Index = (int)Objects.size() - NumFixedObjects - 1;
+  assert(Index >= 0 && "Bad frame index!");
+  ensureMaxAlignment(Alignment);
+  return Index;
+}
+
+/// CreateSpillStackObject - Create a new statically sized stack object that
+/// represents a spill slot, returning a nonnegative identifier to represent
+/// it.
+///
+int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
+                                             unsigned Alignment) {
+  CreateStackObject(Size, Alignment, true, false);
+  int Index = (int)Objects.size() - NumFixedObjects - 1;
+  ensureMaxAlignment(Alignment);
+  return Index;
+}
+
+/// CreateVariableSizedObject - Notify the MachineFrameInfo object that a
+/// variable sized object has been created.  This must be created whenever a
+/// variable sized object is created, whether or not the index returned is
+/// actually used.
+///
+int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment) {
+  HasVarSizedObjects = true;
+  Objects.push_back(StackObject(0, Alignment, 0, false, false, true, 0));
+  ensureMaxAlignment(Alignment);
+  return (int)Objects.size()-NumFixedObjects-1;
+}
+
 /// CreateFixedObject - Create a new object at a fixed location on the stack.
 /// All fixed objects should be created before other objects are created for
 /// efficiency. By default, fixed objects are immutable. This returns an

@@ -432,9 +432,7 @@ public:
 
   /// ensureMaxAlignment - Make sure the function is at least Align bytes
   /// aligned.
-  void ensureMaxAlignment(unsigned Align) {
-    if (MaxAlignment < Align) MaxAlignment = Align;
-  }
+  void ensureMaxAlignment(unsigned Align);
 
   /// AdjustsStack - Return true if this function adjusts the stack -- e.g.,
   /// when calling another function. This is only valid during and after
@@ -496,26 +494,13 @@ public:
   /// a nonnegative identifier to represent it.
   ///
   int CreateStackObject(uint64_t Size, unsigned Alignment, bool isSS,
-                        bool MayNeedSP = false, const AllocaInst *Alloca = 0) {
-    assert(Size != 0 && "Cannot allocate zero size stack objects!");
-    Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, MayNeedSP,
-                                  Alloca));
-    int Index = (int)Objects.size() - NumFixedObjects - 1;
-    assert(Index >= 0 && "Bad frame index!");
-    ensureMaxAlignment(Alignment);
-    return Index;
-  }
+                        bool MayNeedSP = false, const AllocaInst *Alloca = 0);
 
   /// CreateSpillStackObject - Create a new statically sized stack object that
   /// represents a spill slot, returning a nonnegative identifier to represent
   /// it.
   ///
-  int CreateSpillStackObject(uint64_t Size, unsigned Alignment) {
-    CreateStackObject(Size, Alignment, true, false);
-    int Index = (int)Objects.size() - NumFixedObjects - 1;
-    ensureMaxAlignment(Alignment);
-    return Index;
-  }
+  int CreateSpillStackObject(uint64_t Size, unsigned Alignment);
 
   /// RemoveStackObject - Remove or mark dead a statically sized stack object.
   ///
@@ -529,12 +514,7 @@ public:
   /// variable sized object is created, whether or not the index returned is
   /// actually used.
   ///
-  int CreateVariableSizedObject(unsigned Alignment) {
-    HasVarSizedObjects = true;
-    Objects.push_back(StackObject(0, Alignment, 0, false, false, true, 0));
-    ensureMaxAlignment(Alignment);
-    return (int)Objects.size()-NumFixedObjects-1;
-  }
+  int CreateVariableSizedObject(unsigned Alignment);
 
   /// getCalleeSavedInfo - Returns a reference to call saved info vector for the
   /// current function.
