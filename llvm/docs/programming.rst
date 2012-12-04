@@ -12,6 +12,7 @@ Programming Documentation
    CompilerWriterInfo
    ExtendingLLVM
    HowToSetUpLLVMStyleRTTI
+   ProgrammersManual
 
 * `LLVM Language Reference Manual <LangRef.html>`_
 
@@ -22,7 +23,7 @@ Programming Documentation
 
   Information about LLVM's concurrency model.
 
-* `The LLVM Programmers Manual <ProgrammersManual.html>`_
+* :doc:`ProgrammersManual`
 
   Introduction to the general layout of the LLVM sourcebase, important classes
   and APIs, and some tips & tricks.
