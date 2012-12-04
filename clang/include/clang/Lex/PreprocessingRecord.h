@@ -304,18 +304,18 @@ namespace clang {
     std::vector<PreprocessedEntity *> LoadedPreprocessedEntities;
 
     bool RecordCondDirectives;
-    unsigned CondDirectiveNextIdx;
-    SmallVector<unsigned, 6> CondDirectiveStack; 
+    SmallVector<SourceLocation, 6> CondDirectiveStack;
 
     class CondDirectiveLoc {
       SourceLocation Loc;
-      unsigned Idx;
+      SourceLocation RegionLoc;
 
     public:
-      CondDirectiveLoc(SourceLocation Loc, unsigned Idx) : Loc(Loc), Idx(Idx) {}
+      CondDirectiveLoc(SourceLocation Loc, SourceLocation RegionLoc)
+        : Loc(Loc), RegionLoc(RegionLoc) {}
 
       SourceLocation getLoc() const { return Loc; }
-      unsigned getIdx() const { return Idx; }
+      SourceLocation getRegionLoc() const { return RegionLoc; }
 
       class Comp {
         SourceManager &SM;
@@ -339,7 +339,7 @@ namespace clang {
     CondDirectiveLocsTy CondDirectiveLocs;
 
     void addCondDirectiveLoc(CondDirectiveLoc DirLoc);
-    unsigned findCondDirectiveIdx(SourceLocation Loc) const;
+    SourceLocation findCondDirectiveRegionLoc(SourceLocation Loc) const;
 
     /// \brief Global (loaded or local) ID for a preprocessed entity.
     /// Negative values are used to indicate preprocessed entities
@@ -597,7 +597,7 @@ namespace clang {
     /// separated by conditional directive blocks.
     bool areInDifferentConditionalDirectiveRegion(SourceLocation LHS,
                                                   SourceLocation RHS) const {
-      return findCondDirectiveIdx(LHS) != findCondDirectiveIdx(RHS);
+      return findCondDirectiveRegionLoc(LHS) != findCondDirectiveRegionLoc(RHS);
     }
 
     /// \brief Set the external source for preprocessed entities.

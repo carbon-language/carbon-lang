@@ -41,11 +41,11 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
 PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
                                          bool RecordConditionalDirectives)
   : SourceMgr(SM),
-    RecordCondDirectives(RecordConditionalDirectives), CondDirectiveNextIdx(0),
+    RecordCondDirectives(RecordConditionalDirectives),
     ExternalSource(0)
 {
   if (RecordCondDirectives)
-    CondDirectiveStack.push_back(CondDirectiveNextIdx++);
+    CondDirectiveStack.push_back(SourceLocation());
 }
 
 /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
@@ -455,25 +455,24 @@ bool PreprocessingRecord::rangeIntersectsConditionalDirective(
   CondDirectiveLocsTy::const_iterator
     upp = std::upper_bound(low, CondDirectiveLocs.end(),
                            Range.getEnd(), CondDirectiveLoc::Comp(SourceMgr));
-  unsigned uppIdx;
+  SourceLocation uppRegion;
   if (upp != CondDirectiveLocs.end())
-    uppIdx = upp->getIdx();
-  else
-    uppIdx = 0;
+    uppRegion = upp->getRegionLoc();
 
-  return low->getIdx() != uppIdx;
+  return low->getRegionLoc() != uppRegion;
 }
 
-unsigned PreprocessingRecord::findCondDirectiveIdx(SourceLocation Loc) const {
+SourceLocation
+PreprocessingRecord::findCondDirectiveRegionLoc(SourceLocation Loc) const {
   if (Loc.isInvalid())
-    return 0;
+    return SourceLocation();
 
   CondDirectiveLocsTy::const_iterator
     low = std::lower_bound(CondDirectiveLocs.begin(), CondDirectiveLocs.end(),
                            Loc, CondDirectiveLoc::Comp(SourceMgr));
   if (low == CondDirectiveLocs.end())
-    return 0;
-  return low->getIdx();
+    return SourceLocation();
+  return low->getRegionLoc();
 }
 
 void PreprocessingRecord::addCondDirectiveLoc(CondDirectiveLoc DirLoc) {
@@ -490,33 +489,37 @@ void PreprocessingRecord::addCondDirectiveLoc(CondDirectiveLoc DirLoc) {
 void PreprocessingRecord::If(SourceLocation Loc, SourceRange ConditionRange) {
   if (RecordCondDirectives) {
     addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.push_back(CondDirectiveNextIdx++);
+    CondDirectiveStack.push_back(Loc);
   }
 }
 
 void PreprocessingRecord::Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
   if (RecordCondDirectives) {
     addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.push_back(CondDirectiveNextIdx++);
+    CondDirectiveStack.push_back(Loc);
   }
 }
 
 void PreprocessingRecord::Ifndef(SourceLocation Loc,const Token &MacroNameTok) {
   if (RecordCondDirectives) {
     addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.push_back(CondDirectiveNextIdx++);
+    CondDirectiveStack.push_back(Loc);
   }
 }
 
 void PreprocessingRecord::Elif(SourceLocation Loc, SourceRange ConditionRange,
                                SourceLocation IfLoc) {
-  if (RecordCondDirectives)
+  if (RecordCondDirectives) {
     addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
+    CondDirectiveStack.back() = Loc;
+  }
 }
 
 void PreprocessingRecord::Else(SourceLocation Loc, SourceLocation IfLoc) {
-  if (RecordCondDirectives)
+  if (RecordCondDirectives) {
     addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
+    CondDirectiveStack.back() = Loc;
+  }
 }
 
 void PreprocessingRecord::Endif(SourceLocation Loc, SourceLocation IfLoc) {
