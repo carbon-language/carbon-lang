@@ -90,6 +90,8 @@ namespace {
       AU.addRequired<TargetLibraryInfo>();
     }
 
+    using llvm::Pass::doFinalization;
+
     bool doFinalization() {
       assert(LoopToAliasSetMap.empty() && "Didn't free loop alias sets");
       return false;

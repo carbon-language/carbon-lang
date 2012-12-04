@@ -44,6 +44,10 @@ namespace {
     }
     static char ID; // Pass identification, replacement for typeid
     virtual InlineCost getInlineCost(CallSite CS);
+
+    using llvm::Pass::doInitialization;
+    using llvm::Pass::doFinalization;
+
     virtual bool doFinalization(CallGraph &CG) {
       return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/true);
     }

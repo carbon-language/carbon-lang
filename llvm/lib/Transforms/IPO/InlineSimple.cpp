@@ -42,6 +42,7 @@ namespace {
     InlineCost getInlineCost(CallSite CS) {
       return CA.getInlineCost(CS, getInlineThreshold(CS));
     }
+    using llvm::Pass::doInitialization;
     virtual bool doInitialization(CallGraph &CG);
   };
 }

@@ -42,6 +42,7 @@ struct Inliner : public CallGraphSCCPass {
   // Pass class.
   virtual bool runOnSCC(CallGraphSCC &SCC);
 
+  using llvm::Pass::doFinalization;
   // doFinalization - Remove now-dead linkonce functions at the end of
   // processing to avoid breaking the SCC traversal.
   virtual bool doFinalization(CallGraph &CG);

@@ -148,6 +148,8 @@ namespace llvm {
     template<typename T, typename P>
     struct PassTest : public PassTestBase<P> {
     public:
+      using llvm::Pass::doInitialization;
+      using llvm::Pass::doFinalization;
       virtual bool doInitialization(T &t) {
         EXPECT_FALSE(PassTestBase<P>::initialized);
         PassTestBase<P>::initialized = true;
@@ -198,6 +200,8 @@ namespace llvm {
         EXPECT_EQ(run, initcount);
         EXPECT_EQ(finalized, fincount);
       }
+      using llvm::Pass::doInitialization;
+      using llvm::Pass::doFinalization;
       virtual bool doInitialization(Loop* L, LPPassManager &LPM) {
         initialized = true;
         initcount++;
