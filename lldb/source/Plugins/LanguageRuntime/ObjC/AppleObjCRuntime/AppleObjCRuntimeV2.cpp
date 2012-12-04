@@ -958,10 +958,10 @@ public:
 private:
     // The constructor should only be invoked by the runtime as it builds its caches
     // or populates them.  A ClassDescriptorV2 should only ever exist in a cache.
-    ClassDescriptorV2 (AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa) :
+    ClassDescriptorV2 (AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa, const char *name) :
         m_runtime (runtime),
         m_objc_class_ptr (isa),
-        m_name ()
+        m_name (name)
     {
     }
     
@@ -1093,7 +1093,7 @@ public:
         
         if (class_method_func)
         {
-            ClassDescriptorV2 metaclass(m_runtime, objc_class->m_isa); // The metaclass is not in the cache
+            ClassDescriptorV2 metaclass(m_runtime, objc_class->m_isa, NULL); // The metaclass is not in the cache
             
             // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
             // our class methods.
@@ -1873,7 +1873,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                     if (m_isa_to_descriptor_cache.count(elt.second))
                         continue;
                     
-                    ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second));
+                    ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, elt.second, elt.first.AsCString()));
                     
                     if (log && log->GetVerbose())
                         log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from dynamic table to isa->descriptor cache", elt.second, elt.first.AsCString());
@@ -1913,7 +1913,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                                             if (m_isa_to_descriptor_cache.count(objc_isa))
                                                 continue;
                                             
-                                            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa));
+                                            ClassDescriptorSP descriptor_sp = ClassDescriptorSP(new ClassDescriptorV2(*this, objc_isa, NULL));
                                             
                                             if (log && log->GetVerbose())
                                                 log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from static table to isa->descriptor cache", objc_isa, descriptor_sp->GetClassName().AsCString());
