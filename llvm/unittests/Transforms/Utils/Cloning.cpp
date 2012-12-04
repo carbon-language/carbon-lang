@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "llvm/Instructions.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Argument.h"
 #include "llvm/Constant.h"
-#include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/STLExtras.h"
+#include "gtest/gtest.h"
 
 using namespace llvm;
 

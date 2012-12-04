@@ -7,10 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IRBuilder.h"
 #include "llvm/MDBuilder.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Operator.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

@@ -8,14 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ValueHandle.h"
-
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/ADT/OwningPtr.h"
-
 #include "gtest/gtest.h"
-
 #include <memory>
 
 using namespace llvm;

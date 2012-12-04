@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Type.h"
+#include "gtest/gtest.h"
 using namespace llvm;
 
 namespace {

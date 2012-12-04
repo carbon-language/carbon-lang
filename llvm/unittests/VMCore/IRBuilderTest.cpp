@@ -7,16 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/IRBuilder.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Function.h"
-#include "llvm/IRBuilder.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/MDBuilder.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/OwningPtr.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

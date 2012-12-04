@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
-#include <stdarg.h>
+#include "gtest/gtest.h"
 #include <list>
+#include <stdarg.h>
 
 using namespace llvm;
 

@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <limits.h>
-#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "gtest/gtest.h"
+#include <limits.h>
 
 using namespace llvm;
 

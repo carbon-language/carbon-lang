@@ -13,7 +13,6 @@
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

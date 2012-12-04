@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/FormattedStream.h"
+#include "gtest/gtest.h"
 
 using namespace llvm;
 

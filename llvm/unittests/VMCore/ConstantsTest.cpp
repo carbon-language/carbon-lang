@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
-#include "llvm/Instruction.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Instruction.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "gtest/gtest.h"

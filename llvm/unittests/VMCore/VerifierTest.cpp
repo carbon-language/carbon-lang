@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -15,8 +17,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/Analysis/Verifier.h"
 #include "gtest/gtest.h"
 
 namespace llvm {

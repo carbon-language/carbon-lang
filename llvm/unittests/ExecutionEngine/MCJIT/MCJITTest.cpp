@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "MCJITTestBase.h"
+#include "gtest/gtest.h"
 
 using namespace llvm;
 

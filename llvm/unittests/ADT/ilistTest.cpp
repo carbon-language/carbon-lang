@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <ostream>
-#include "gtest/gtest.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "gtest/gtest.h"
+#include <ostream>
 
 using namespace llvm;
 

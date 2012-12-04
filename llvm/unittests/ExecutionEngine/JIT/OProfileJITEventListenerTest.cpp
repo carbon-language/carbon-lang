@@ -7,12 +7,11 @@
 //
 //===--------------------------------------------------------------------------------------===//
 
-#include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
 #include "JITEventListenerTestCommon.h"
-
-#include <map>
+#include "llvm/ExecutionEngine/JITEventListener.h"
 #include <list>
+#include <map>
 
 using namespace llvm;
 

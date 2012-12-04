@@ -8,9 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/TypeBuilder.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/ADT/ArrayRef.h"
-
+#include "llvm/LLVMContext.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

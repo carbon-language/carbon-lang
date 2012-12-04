@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <ostream>
-#include <string>
-#include "llvm/Support/raw_ostream.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/raw_ostream.h"
+#include "gtest/gtest.h"
+#include <ostream>
+#include <string>
 
 using namespace llvm;
 

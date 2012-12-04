@@ -1,9 +1,9 @@
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Assembly/Parser.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Assembly/Parser.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 

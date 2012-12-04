@@ -9,7 +9,6 @@
 
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Instructions.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

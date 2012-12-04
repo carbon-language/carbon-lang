@@ -8,13 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileOutputBuffer.h"
-
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV2.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

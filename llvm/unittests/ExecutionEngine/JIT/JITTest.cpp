@@ -7,28 +7,27 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Assembly/Parser.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Constant.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/TypeBuilder.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Assembly/Parser.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
-
+#include "llvm/Type.h"
+#include "llvm/TypeBuilder.h"
 #include "gtest/gtest.h"
 #include <vector>
 

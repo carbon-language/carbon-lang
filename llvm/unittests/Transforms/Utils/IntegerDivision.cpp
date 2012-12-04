@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "llvm/Transforms/Utils/IntegerDivision.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/Module.h"
-#include "llvm/Transforms/Utils/IntegerDivision.h"
+#include "gtest/gtest.h"
 
 using namespace llvm;
 

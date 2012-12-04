@@ -7,12 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/APInt.h"
 #include "llvm/Support/IntegersSubset.h" 
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/IntegersSubsetMapping.h"
-
 #include "gtest/gtest.h"
-
 #include <vector>
 
 using namespace llvm;

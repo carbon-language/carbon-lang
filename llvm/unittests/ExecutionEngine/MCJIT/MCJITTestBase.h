@@ -17,8 +17,8 @@
 #ifndef MCJIT_TEST_BASE_H
 #define MCJIT_TEST_BASE_H
 
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"

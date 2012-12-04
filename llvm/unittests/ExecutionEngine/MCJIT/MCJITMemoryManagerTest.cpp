@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ExecutionEngine/JIT.h"
+#include "gtest/gtest.h"
 
 using namespace llvm;
 
