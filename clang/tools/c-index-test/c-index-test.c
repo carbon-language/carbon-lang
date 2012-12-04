@@ -1140,10 +1140,11 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
 
 static enum CXChildVisitResult PrintBitWidth(CXCursor cursor, CXCursor p,
                                              CXClientData d) {
+  int Bitwidth;
   if (clang_getCursorKind(cursor) != CXCursor_FieldDecl)
     return CXChildVisit_Recurse;
 
-  int Bitwidth = clang_getFieldDeclBitWidth(cursor);
+  Bitwidth = clang_getFieldDeclBitWidth(cursor);
   if (Bitwidth >= 0) {
     PrintCursor(cursor, NULL);
     printf(" bitwidth=%d\n", Bitwidth);
