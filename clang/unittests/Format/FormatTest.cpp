@@ -315,6 +315,9 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
 
 TEST_F(FormatTest, UndestandsUnaryOperators) {
   verifyFormat("int a = -2;");
+  verifyFormat("f(-1, -2, -3);");
+  verifyFormat("a[-1] = 5;");
+  verifyFormat("int a = 5 + -2;");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {
@@ -331,6 +334,13 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("int a = *b;");
   // verifyFormat("int a = *b * c;");
   // verifyFormat("int a = b * *c;");
+}
+
+TEST_F(FormatTest, HandlesIncludeDirectives) {
+  EXPECT_EQ("#include <string>\n", format("#include <string>\n"));
+  EXPECT_EQ("#include \"a/b/string\"\n", format("#include \"a/b/string\"\n"));
+  EXPECT_EQ("#include \"string.h\"\n", format("#include \"string.h\"\n"));
+  EXPECT_EQ("#include \"string.h\"\n", format("#include \"string.h\"\n"));
 }
 
 //TEST_F(FormatTest, IncorrectDerivedClass) {

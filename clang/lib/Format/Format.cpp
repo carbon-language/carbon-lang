@@ -21,6 +21,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 
+#include <string>
+
 namespace clang {
 namespace format {
 
@@ -486,13 +488,11 @@ public:
         Annotation.SpaceRequiredBefore = false;
       } else if (Annotation.Type == TokenAnnotation::TT_UnaryOperator) {
         Annotation.SpaceRequiredBefore =
-            Line.Tokens[i - 1].Tok.isNot(tok::l_paren);
+            Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&
+            Line.Tokens[i - 1].Tok.isNot(tok::l_square);
       } else if (Line.Tokens[i - 1].Tok.is(tok::greater) &&
                  Line.Tokens[i].Tok.is(tok::greater)) {
-        if (Annotation.Type == TokenAnnotation::TT_TemplateOpener &&
-            Annotations[i - 1].Type == TokenAnnotation::TT_TemplateOpener)
-          Annotation.SpaceRequiredBefore = Style.SplitTemplateClosingGreater;
-        else if (Annotation.Type == TokenAnnotation::TT_TemplateCloser &&
+        if (Annotation.Type == TokenAnnotation::TT_TemplateCloser &&
                  Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser)
           Annotation.SpaceRequiredBefore = Style.SplitTemplateClosingGreater;
         else
@@ -505,6 +505,9 @@ public:
           Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser &&
           Line.Tokens[i].Tok.is(tok::l_paren)) {
         Annotation.SpaceRequiredBefore = false;
+      } else if (Line.Tokens[i].Tok.is(tok::less) &&
+                 Line.Tokens[0].Tok.is(tok::hash)) {
+        Annotation.SpaceRequiredBefore = true;
       } else {
         Annotation.SpaceRequiredBefore =
             spaceRequiredBetween(Line.Tokens[i - 1].Tok, Line.Tokens[i].Tok);
@@ -533,7 +536,7 @@ private:
 
       if (Tok.Tok.is(tok::star) || Tok.Tok.is(tok::amp))
         Annotation.Type = determineStarAmpUsage(i);
-      else if (Tok.Tok.is(tok::minus) && Line.Tokens[i - 1].Tok.is(tok::equal))
+      else if (isUnaryOperator(i))
         Annotation.Type = TokenAnnotation::TT_UnaryOperator;
       else if (isBinaryOperator(Line.Tokens[i]))
         Annotation.Type = TokenAnnotation::TT_BinaryOperator;
@@ -546,6 +549,17 @@ private:
           Annotation.Type = TokenAnnotation::TT_BlockComment;
       }
     }
+  }
+
+  bool isUnaryOperator(unsigned Index) {
+    const Token &Tok = Line.Tokens[Index].Tok;
+    if (Tok.isNot(tok::minus) && Tok.isNot(tok::plus))
+      return false;
+    const Token &PreviousTok = Line.Tokens[Index - 1].Tok;
+    if (PreviousTok.is(tok::equal) || PreviousTok.is(tok::l_paren) ||
+        PreviousTok.is(tok::comma) || PreviousTok.is(tok::l_square))
+      return true;
+    return Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator;
   }
 
   bool isBinaryOperator(const FormatToken &Tok) {
