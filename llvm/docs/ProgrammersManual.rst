@@ -62,8 +62,8 @@ the subject that you can get, so it will not be discussed in this document.
 
 Here are some useful links:
 
-#. `Dinkumware C++ Library reference
-   <http://www.dinkumware.com/manuals/#Standard C++ Library>`_ - an excellent
+#. `cppreference.com
+   <http://en.cppreference.com/w/>`_ - an excellent
    reference for the STL and other parts of the standard C++ library.
 
 #. `C++ In a Nutshell <http://www.tempest-sw.com/cpp/>`_ - This is an O'Reilly
