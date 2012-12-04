@@ -13,13 +13,13 @@
 #ifndef LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H
 #define LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H
 
-#include "clang/AST/Type.h"
+#include "clang-c/Index.h"
 #include "clang/AST/CanonicalType.h"
+#include "clang/AST/Type.h"
 #include "clang/Sema/CodeCompleteOptions.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
-#include "clang-c/Index.h"
 #include <string>
 
 namespace clang {

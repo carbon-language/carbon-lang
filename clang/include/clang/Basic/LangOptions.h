@@ -15,11 +15,11 @@
 #ifndef LLVM_CLANG_LANGOPTIONS_H
 #define LLVM_CLANG_LANGOPTIONS_H
 
-#include <string>
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Visibility.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include <string>
 
 namespace clang {
 

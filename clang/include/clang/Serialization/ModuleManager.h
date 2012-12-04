@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_SERIALIZATION_MODULE_MANAGER_H
 #define LLVM_CLANG_SERIALIZATION_MODULE_MANAGER_H
 
-#include "clang/Serialization/Module.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Serialization/Module.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace clang { 

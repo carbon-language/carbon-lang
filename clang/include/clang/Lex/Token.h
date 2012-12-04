@@ -14,10 +14,10 @@
 #ifndef LLVM_CLANG_TOKEN_H
 #define LLVM_CLANG_TOKEN_H
 
+#include "clang/Basic/OperatorKinds.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TokenKinds.h"
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/OperatorKinds.h"
 #include <cstdlib>
 
 namespace clang {

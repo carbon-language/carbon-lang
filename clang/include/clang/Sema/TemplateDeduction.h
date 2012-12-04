@@ -13,8 +13,8 @@
 #ifndef LLVM_CLANG_SEMA_TEMPLATE_DEDUCTION_H
 #define LLVM_CLANG_SEMA_TEMPLATE_DEDUCTION_H
 
-#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {

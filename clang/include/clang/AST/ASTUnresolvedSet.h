@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_AST_ASTUNRESOLVEDSET_H
 #define LLVM_CLANG_AST_ASTUNRESOLVEDSET_H
 
-#include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/ASTVector.h"
+#include "clang/AST/UnresolvedSet.h"
 
 namespace clang {
 

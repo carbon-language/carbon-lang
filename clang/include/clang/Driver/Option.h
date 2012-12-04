@@ -10,10 +10,10 @@
 #ifndef CLANG_DRIVER_OPTION_H_
 #define CLANG_DRIVER_OPTION_H_
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/OptTable.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "clang/Basic/LLVM.h"
 
 namespace clang {
 namespace driver {

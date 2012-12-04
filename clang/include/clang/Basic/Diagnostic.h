@@ -23,9 +23,8 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/type_traits.h"
-
-#include <vector>
 #include <list>
+#include <vector>
 
 namespace clang {
   class DiagnosticConsumer;

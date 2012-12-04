@@ -23,14 +23,14 @@
 #ifndef LLVM_CLANG_SEMA_DECLSPEC_H
 #define LLVM_CLANG_SEMA_DECLSPEC_H
 
-#include "clang/Sema/AttributeList.h"
-#include "clang/Sema/Ownership.h"
 #include "clang/AST/NestedNameSpecifier.h"
-#include "clang/Lex/Token.h"
 #include "clang/Basic/ExceptionSpecificationType.h"
 #include "clang/Basic/Lambda.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Lex/Token.h"
+#include "clang/Sema/AttributeList.h"
+#include "clang/Sema/Ownership.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"

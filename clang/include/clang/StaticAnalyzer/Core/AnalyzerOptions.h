@@ -15,12 +15,12 @@
 #ifndef LLVM_CLANG_ANALYZEROPTIONS_H
 #define LLVM_CLANG_ANALYZEROPTIONS_H
 
+#include "clang/Basic/LLVM.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringMap.h"
 #include <string>
 #include <vector>
-#include "clang/Basic/LLVM.h"
-#include "llvm/ADT/Optional.h"
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/StringMap.h"
 
 namespace clang {
 class ASTConsumer;

@@ -15,11 +15,11 @@
 #ifndef LLVM_CLANG_SEMA_ATTRLIST_H
 #define LLVM_CLANG_SEMA_ATTRLIST_H
 
-#include "llvm/Support/Allocator.h"
-#include "llvm/ADT/SmallVector.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/VersionTuple.h"
 #include "clang/Sema/Ownership.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 #include <cassert>
 
 namespace clang {

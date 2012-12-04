@@ -20,10 +20,10 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/StoreRef.h"
-#include "llvm/Support/DataTypes.h"
-#include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 class BumpPtrAllocator;

@@ -15,9 +15,9 @@
 #define LLVM_CLANG_AST_TEMPLATENAME_H
 
 #include "clang/Basic/LLVM.h"
+#include "clang/Basic/OperatorKinds.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
-#include "clang/Basic/OperatorKinds.h"
 
 namespace clang {
   

@@ -15,10 +15,9 @@
 #define LLVM_CLANG_REWRITEROPE_H
 
 #include "llvm/Support/Compiler.h"
-
-#include <cstring>
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <iterator>
 
 namespace clang {

@@ -15,15 +15,15 @@
 #ifndef LLVM_CLANG_CFG_H
 #define LLVM_CLANG_CFG_H
 
-#include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/GraphTraits.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/DenseMap.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Casting.h"
 #include <bitset>
 #include <cassert>
 #include <iterator>

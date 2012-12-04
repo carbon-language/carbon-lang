@@ -16,10 +16,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include <cassert>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
-#include <set>
 
 namespace llvm {
   class MemoryBuffer;

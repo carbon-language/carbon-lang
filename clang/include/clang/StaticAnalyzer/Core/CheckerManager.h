@@ -14,12 +14,12 @@
 #ifndef LLVM_CLANG_SA_CORE_CHECKERMANAGER_H
 #define LLVM_CLANG_SA_CORE_CHECKERMANAGER_H
 
+#include "clang/Analysis/ProgramPoint.h"
 #include "clang/Basic/LangOptions.h"
-#include "llvm/ADT/SmallVector.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
-#include "clang/Analysis/ProgramPoint.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 
 namespace clang {

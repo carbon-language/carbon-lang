@@ -16,8 +16,8 @@
 #ifndef LLVM_CLANG_TYPE_ORDERING_H
 #define LLVM_CLANG_TYPE_ORDERING_H
 
-#include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
+#include "clang/AST/Type.h"
 #include <functional>
 
 namespace clang {

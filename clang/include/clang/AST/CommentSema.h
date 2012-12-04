@@ -14,12 +14,12 @@
 #ifndef LLVM_CLANG_AST_COMMENT_SEMA_H
 #define LLVM_CLANG_AST_COMMENT_SEMA_H
 
+#include "clang/AST/Comment.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/AST/Comment.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 
 namespace clang {

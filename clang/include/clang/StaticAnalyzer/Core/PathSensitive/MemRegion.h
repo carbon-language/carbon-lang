@@ -22,8 +22,8 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <string>
 
 namespace llvm {

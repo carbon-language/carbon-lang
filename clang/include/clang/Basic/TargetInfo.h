@@ -15,20 +15,20 @@
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
+#include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/LLVM.h"
+#include "clang/Basic/Specifiers.h"
+#include "clang/Basic/TargetOptions.h"
+#include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
-#include "clang/Basic/AddressSpaces.h"
-#include "clang/Basic/TargetOptions.h"
-#include "clang/Basic/VersionTuple.h"
-#include "clang/Basic/Specifiers.h"
 #include <cassert>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace llvm {
 struct fltSemantics;

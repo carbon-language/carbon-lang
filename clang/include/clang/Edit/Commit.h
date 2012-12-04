@@ -11,8 +11,8 @@
 #define LLVM_CLANG_EDIT_COMMIT_H
 
 #include "clang/Edit/FileOffset.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace clang {
   class LangOptions;

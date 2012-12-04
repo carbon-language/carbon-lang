@@ -16,12 +16,12 @@
 #define LLVM_CLANG_SOURCELOCATION_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/Compiler.h"
-#include <utility>
-#include <functional>
+#include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
+#include <functional>
 #include <string>
+#include <utility>
 
 namespace llvm {
   class MemoryBuffer;

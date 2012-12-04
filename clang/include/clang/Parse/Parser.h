@@ -15,10 +15,10 @@
 #define LLVM_CLANG_PARSE_PARSER_H
 
 #include "clang/Basic/Specifiers.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/CodeCompletionHandler.h"
-#include "clang/Sema/Sema.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Sema.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"

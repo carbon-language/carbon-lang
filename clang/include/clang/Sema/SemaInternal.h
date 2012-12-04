@@ -15,9 +15,9 @@
 #ifndef LLVM_CLANG_SEMA_SEMA_INTERNAL_H
 #define LLVM_CLANG_SEMA_SEMA_INTERNAL_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
-#include "clang/AST/ASTContext.h"
 
 namespace clang {
 

@@ -18,7 +18,6 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-
 #include <string>
 #include <vector>
 

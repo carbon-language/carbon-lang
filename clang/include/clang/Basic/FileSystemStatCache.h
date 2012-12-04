@@ -18,8 +18,8 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 namespace clang {
 

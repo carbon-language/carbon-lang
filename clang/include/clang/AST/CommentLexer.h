@@ -15,9 +15,9 @@
 #define LLVM_CLANG_AST_COMMENT_LEXER_H
 
 #include "clang/Basic/SourceManager.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 

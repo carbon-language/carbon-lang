@@ -17,10 +17,10 @@
 #ifndef LLVM_CLANG_ANALYSIS_CFG_REC_STMT_DECL_VISITOR_H
 #define LLVM_CLANG_ANALYSIS_CFG_REC_STMT_DECL_VISITOR_H
 
-#include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 
 #define DISPATCH_CASE(CLASS)                                  \
 case Decl::CLASS:                                             \

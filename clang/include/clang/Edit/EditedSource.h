@@ -11,9 +11,9 @@
 #define LLVM_CLANG_EDIT_EDITEDSOURCE_H
 
 #include "clang/Edit/FileOffset.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 #include <map>
 
 namespace clang {

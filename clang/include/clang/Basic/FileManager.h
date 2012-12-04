@@ -18,10 +18,10 @@
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>

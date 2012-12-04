@@ -14,12 +14,12 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSINGRECORD_H
 #define LLVM_CLANG_LEX_PREPROCESSINGRECORD_H
 
-#include "clang/Lex/PPCallbacks.h"
-#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "llvm/ADT/SmallVector.h"
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/PPCallbacks.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include <vector>

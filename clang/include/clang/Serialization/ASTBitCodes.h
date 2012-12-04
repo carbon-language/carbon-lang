@@ -18,9 +18,9 @@
 #define LLVM_CLANG_FRONTEND_PCHBITCODES_H
 
 #include "clang/AST/Type.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Bitcode/BitCodes.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
   namespace serialization {

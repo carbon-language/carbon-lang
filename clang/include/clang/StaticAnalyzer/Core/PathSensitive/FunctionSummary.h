@@ -14,11 +14,11 @@
 #ifndef LLVM_CLANG_GR_FUNCTIONSUMMARY_H
 #define LLVM_CLANG_GR_FUNCTIONSUMMARY_H
 
-#include <deque>
 #include "clang/AST/Decl.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/BitVector.h"
+#include <deque>
 
 namespace clang {
 namespace ento {

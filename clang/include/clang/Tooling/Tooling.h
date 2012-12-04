@@ -30,14 +30,14 @@
 #ifndef LLVM_CLANG_TOOLING_TOOLING_H
 #define LLVM_CLANG_TOOLING_TOOLING_H
 
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/Twine.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/Util.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CompilationDatabase.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Twine.h"
 #include <string>
 #include <vector>
 

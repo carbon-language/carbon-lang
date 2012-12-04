@@ -17,8 +17,8 @@
 #define LLVM_CLANG_AST_COMMENT_COMMAND_TRAITS_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 

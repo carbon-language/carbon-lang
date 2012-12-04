@@ -14,9 +14,9 @@
 #ifndef LLVM_CLANG_AST_TYPELOC_H
 #define LLVM_CLANG_AST_TYPELOC_H
 
-#include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TemplateBase.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/Support/Compiler.h"
 

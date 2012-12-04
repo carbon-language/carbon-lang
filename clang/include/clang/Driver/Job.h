@@ -10,9 +10,9 @@
 #ifndef CLANG_DRIVER_JOB_H_
 #define CLANG_DRIVER_JOB_H_
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
-#include "clang/Basic/LLVM.h"
 
 namespace clang {
 namespace driver {

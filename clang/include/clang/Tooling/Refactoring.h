@@ -19,9 +19,9 @@
 #ifndef LLVM_CLANG_TOOLING_REFACTORING_H
 #define LLVM_CLANG_TOOLING_REFACTORING_H
 
-#include "llvm/ADT/StringRef.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/StringRef.h"
 #include <set>
 #include <string>
 

@@ -16,8 +16,8 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/TemplateBase.h"
+#include "clang/AST/UnresolvedSet.h"
 #include "clang/Basic/ExpressionTraits.h"
 #include "clang/Basic/Lambda.h"
 #include "clang/Basic/TypeTraits.h"

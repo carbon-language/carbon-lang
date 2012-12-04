@@ -14,11 +14,11 @@
 #ifndef LLVM_CLANG_LEXER_H
 #define LLVM_CLANG_LEXER_H
 
-#include "clang/Lex/PreprocessorLexer.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Lex/PreprocessorLexer.h"
 #include "llvm/ADT/SmallVector.h"
-#include <string>
 #include <cassert>
+#include <string>
 
 namespace clang {
 class DiagnosticsEngine;

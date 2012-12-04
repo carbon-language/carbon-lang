@@ -16,8 +16,8 @@
 #define CLANG_FRONTEND_MULTIPLEXCONSUMER_H
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Sema/SemaConsumer.h"
 #include "clang/Basic/LLVM.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <vector>
 

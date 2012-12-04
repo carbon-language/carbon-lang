@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_GR_CONSTRAINT_MANAGER_H
 #define LLVM_CLANG_GR_CONSTRAINT_MANAGER_H
 
-#include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "llvm/Support/SaveAndRestore.h"
 
 namespace llvm {

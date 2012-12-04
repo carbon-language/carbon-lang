@@ -17,15 +17,15 @@
 
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/Casting.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
-#include <utility>
 #include <string>
+#include <utility>
 
 namespace clang {
 

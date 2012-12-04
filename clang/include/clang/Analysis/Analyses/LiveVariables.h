@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_LIVEVARIABLES_H
 #define LLVM_CLANG_LIVEVARIABLES_H
 
-#include "clang/Analysis/AnalysisContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/Analysis/AnalysisContext.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ImmutableSet.h"
 

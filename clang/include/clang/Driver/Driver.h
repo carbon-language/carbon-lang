@@ -11,11 +11,9 @@
 #define CLANG_DRIVER_DRIVER_H_
 
 #include "clang/Basic/Diagnostic.h"
-
 #include "clang/Driver/Phases.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
-
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"

@@ -15,10 +15,10 @@
 #ifndef LLVM_CLANG_LEX_PPCALLBACKS_H
 #define LLVM_CLANG_LEX_PPCALLBACKS_H
 
+#include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Lex/ModuleLoader.h"
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/DiagnosticIDs.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 

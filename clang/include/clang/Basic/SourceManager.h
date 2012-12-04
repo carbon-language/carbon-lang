@@ -35,22 +35,22 @@
 #ifndef LLVM_CLANG_SOURCEMANAGER_H
 #define LLVM_CLANG_SOURCEMANAGER_H
 
-#include "clang/Basic/LLVM.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/PointerUnion.h"
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <cassert>
 #include <map>
 #include <vector>
-#include <cassert>
 
 namespace clang {
 

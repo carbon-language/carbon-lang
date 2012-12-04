@@ -19,12 +19,12 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporterVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/ImmutableSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/ADT/ImmutableSet.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallSet.h"
 
 namespace clang {
 

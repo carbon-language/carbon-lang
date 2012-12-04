@@ -11,7 +11,6 @@
 #define LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-
 #include <string>
 #include <vector>
 

@@ -19,9 +19,9 @@
 #ifndef LLVM_CLANG_BUMP_VECTOR
 #define LLVM_CLANG_BUMP_VECTOR
 
-#include "llvm/Support/type_traits.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cstring>
 #include <iterator>

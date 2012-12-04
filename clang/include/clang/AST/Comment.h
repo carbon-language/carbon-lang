@@ -14,10 +14,10 @@
 #ifndef LLVM_CLANG_AST_COMMENT_H
 #define LLVM_CLANG_AST_COMMENT_H
 
-#include "clang/Basic/SourceLocation.h"
-#include "clang/AST/Type.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/Type.h"
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 

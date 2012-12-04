@@ -22,7 +22,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang/AST/Type.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/Type.h"
 
 #endif

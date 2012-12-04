@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_AST_TEMPLATEBASE_H
 #define LLVM_CLANG_AST_TEMPLATEBASE_H
 
-#include "clang/AST/Type.h"
 #include "clang/AST/TemplateName.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"

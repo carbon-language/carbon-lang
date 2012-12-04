@@ -14,12 +14,12 @@
 #ifndef LLVM_CLANG_PATH_DIAGNOSTIC_H
 #define LLVM_CLANG_PATH_DIAGNOSTIC_H
 
-#include "clang/Basic/SourceLocation.h"
 #include "clang/Analysis/ProgramPoint.h"
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/PointerUnion.h"
 #include <deque>
 #include <iterator>
 #include <string>

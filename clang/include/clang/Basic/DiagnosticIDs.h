@@ -15,9 +15,9 @@
 #ifndef LLVM_CLANG_DIAGNOSTICIDS_H
 #define LLVM_CLANG_DIAGNOSTICIDS_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
-#include "clang/Basic/LLVM.h"
 
 namespace llvm {
   template<typename T, unsigned> class SmallVector;

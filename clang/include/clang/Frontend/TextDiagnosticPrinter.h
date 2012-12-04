@@ -17,8 +17,8 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
 class DiagnosticOptions;

@@ -17,10 +17,10 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/AnalysisContext.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/FunctionSummary.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/WorkList.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {

@@ -14,20 +14,20 @@
 #ifndef LLVM_CLANG_FRONTEND_AST_WRITER_H
 #define LLVM_CLANG_FRONTEND_AST_WRITER_H
 
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/TemplateBase.h"
-#include "clang/AST/ASTMutationListener.h"
 #include "clang/Lex/PPMutationListener.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
-#include "clang/Sema/SemaConsumer.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <map>
 #include <queue>

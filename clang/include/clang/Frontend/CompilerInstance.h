@@ -10,15 +10,15 @@
 #ifndef LLVM_CLANG_FRONTEND_COMPILERINSTANCE_H_
 #define LLVM_CLANG_FRONTEND_COMPILERINSTANCE_H_
 
-#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <list>
 #include <string>

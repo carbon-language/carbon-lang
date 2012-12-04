@@ -15,9 +15,7 @@
 
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Weak.h"
-
 #include "llvm/ADT/SmallVector.h"
-
 #include <utility>
 
 namespace clang {

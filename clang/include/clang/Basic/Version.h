@@ -16,9 +16,8 @@
 #ifndef LLVM_CLANG_BASIC_VERSION_H
 #define LLVM_CLANG_BASIC_VERSION_H
 
-#include "llvm/ADT/StringRef.h"
-
 #include "clang/Basic/Version.inc"
+#include "llvm/ADT/StringRef.h"
 
 /// \brief Helper macro for CLANG_VERSION_STRING.
 #define CLANG_MAKE_VERSION_STRING2(X) #X

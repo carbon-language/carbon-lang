@@ -18,11 +18,11 @@
 #ifndef LLVM_CLANG_AST_DEPENDENT_DIAGNOSTIC_H
 #define LLVM_CLANG_AST_DEPENDENT_DIAGNOSTIC_H
 
-#include "clang/Basic/PartialDiagnostic.h"
-#include "clang/Basic/SourceLocation.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/SourceLocation.h"
 
 namespace clang {
 

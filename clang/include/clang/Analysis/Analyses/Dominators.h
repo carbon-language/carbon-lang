@@ -15,12 +15,11 @@
 #define LLVM_CLANG_DOMINATORS_H
 
 #include "clang/Analysis/AnalysisContext.h"
-
-#include "llvm/Module.h"
-#include "llvm/ADT/GraphTraits.h"
 #include "clang/Analysis/CFG.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/Analysis/DominatorInternals.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Module.h"
 
 namespace clang {
 

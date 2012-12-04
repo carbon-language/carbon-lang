@@ -15,8 +15,8 @@
 #define LLVM_CLANG_AST_APVALUE_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 

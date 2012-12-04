@@ -10,8 +10,8 @@
 #ifndef LLVM_CLANG_STATICANALYZER_CORE_CHECKERREGISTRY_H
 #define LLVM_CLANG_STATICANALYZER_CORE_CHECKERREGISTRY_H
 
-#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/Basic/LLVM.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include <vector>
 
 // FIXME: move this information to an HTML file in docs/.

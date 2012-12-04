@@ -14,10 +14,10 @@
 #ifndef LLVM_CLANG_PTHMANAGER_H
 #define LLVM_CLANG_PTHMANAGER_H
 
-#include "clang/Lex/PTHLexer.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Lex/PTHLexer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
 #include <string>

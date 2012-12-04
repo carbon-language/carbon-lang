@@ -10,8 +10,8 @@
 #ifndef CLANG_DRIVER_TOOLCHAIN_H_
 #define CLANG_DRIVER_TOOLCHAIN_H_
 
-#include "clang/Driver/Util.h"
 #include "clang/Driver/Types.h"
+#include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Path.h"

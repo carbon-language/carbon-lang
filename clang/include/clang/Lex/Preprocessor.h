@@ -14,23 +14,23 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
-#include "clang/Lex/MacroInfo.h"
-#include "clang/Lex/Lexer.h"
-#include "clang/Lex/PTHLexer.h"
-#include "clang/Lex/PPCallbacks.h"
-#include "clang/Lex/PPMutationListener.h"
-#include "clang/Lex/TokenLexer.h"
-#include "clang/Lex/PTHManager.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/Lexer.h"
+#include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/PPCallbacks.h"
+#include "clang/Lex/PPMutationListener.h"
+#include "clang/Lex/PTHLexer.h"
+#include "clang/Lex/PTHManager.h"
+#include "clang/Lex/TokenLexer.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 

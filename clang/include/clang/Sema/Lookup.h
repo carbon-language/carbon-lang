@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_SEMA_LOOKUP_H
 #define LLVM_CLANG_SEMA_LOOKUP_H
 
-#include "clang/Sema/Sema.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/Sema/Sema.h"
 
 namespace clang {
 
