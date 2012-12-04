@@ -38,14 +38,9 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
   this->FileName = StringRef(Memory, FileName.size());
 }
 
-PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
-                                         bool RecordConditionalDirectives)
+PreprocessingRecord::PreprocessingRecord(SourceManager &SM)
   : SourceMgr(SM),
-    RecordCondDirectives(RecordConditionalDirectives),
-    ExternalSource(0)
-{
-  if (RecordCondDirectives)
-    CondDirectiveStack.push_back(SourceLocation());
+    ExternalSource(0) {
 }
 
 /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
@@ -436,98 +431,6 @@ void PreprocessingRecord::InclusionDirective(
                                             (bool)Imported,
                                             File, SourceRange(HashLoc, EndLoc));
   addPreprocessedEntity(ID);
-}
-
-bool PreprocessingRecord::rangeIntersectsConditionalDirective(
-                                                      SourceRange Range) const {
-  if (Range.isInvalid())
-    return false;
-
-  CondDirectiveLocsTy::const_iterator
-    low = std::lower_bound(CondDirectiveLocs.begin(), CondDirectiveLocs.end(),
-                           Range.getBegin(), CondDirectiveLoc::Comp(SourceMgr));
-  if (low == CondDirectiveLocs.end())
-    return false;
-
-  if (SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), low->getLoc()))
-    return false;
-
-  CondDirectiveLocsTy::const_iterator
-    upp = std::upper_bound(low, CondDirectiveLocs.end(),
-                           Range.getEnd(), CondDirectiveLoc::Comp(SourceMgr));
-  SourceLocation uppRegion;
-  if (upp != CondDirectiveLocs.end())
-    uppRegion = upp->getRegionLoc();
-
-  return low->getRegionLoc() != uppRegion;
-}
-
-SourceLocation
-PreprocessingRecord::findCondDirectiveRegionLoc(SourceLocation Loc) const {
-  if (Loc.isInvalid())
-    return SourceLocation();
-
-  CondDirectiveLocsTy::const_iterator
-    low = std::lower_bound(CondDirectiveLocs.begin(), CondDirectiveLocs.end(),
-                           Loc, CondDirectiveLoc::Comp(SourceMgr));
-  if (low == CondDirectiveLocs.end())
-    return SourceLocation();
-  return low->getRegionLoc();
-}
-
-void PreprocessingRecord::addCondDirectiveLoc(CondDirectiveLoc DirLoc) {
-  // Ignore directives in system headers.
-  if (SourceMgr.isInSystemHeader(DirLoc.getLoc()))
-    return;
-
-  assert(CondDirectiveLocs.empty() ||
-         SourceMgr.isBeforeInTranslationUnit(CondDirectiveLocs.back().getLoc(),
-                                             DirLoc.getLoc()));
-  CondDirectiveLocs.push_back(DirLoc);
-}
-
-void PreprocessingRecord::If(SourceLocation Loc, SourceRange ConditionRange) {
-  if (RecordCondDirectives) {
-    addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.push_back(Loc);
-  }
-}
-
-void PreprocessingRecord::Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
-  if (RecordCondDirectives) {
-    addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.push_back(Loc);
-  }
-}
-
-void PreprocessingRecord::Ifndef(SourceLocation Loc,const Token &MacroNameTok) {
-  if (RecordCondDirectives) {
-    addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.push_back(Loc);
-  }
-}
-
-void PreprocessingRecord::Elif(SourceLocation Loc, SourceRange ConditionRange,
-                               SourceLocation IfLoc) {
-  if (RecordCondDirectives) {
-    addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.back() = Loc;
-  }
-}
-
-void PreprocessingRecord::Else(SourceLocation Loc, SourceLocation IfLoc) {
-  if (RecordCondDirectives) {
-    addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    CondDirectiveStack.back() = Loc;
-  }
-}
-
-void PreprocessingRecord::Endif(SourceLocation Loc, SourceLocation IfLoc) {
-  if (RecordCondDirectives) {
-    addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
-    assert(!CondDirectiveStack.empty());
-    CondDirectiveStack.pop_back();
-  }
 }
 
 size_t PreprocessingRecord::getTotalMemory() const {

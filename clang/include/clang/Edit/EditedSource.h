@@ -18,7 +18,7 @@
 
 namespace clang {
   class LangOptions;
-  class PreprocessingRecord;
+  class PPConditionalDirectiveRecord;
 
 namespace edit {
   class Commit;
@@ -27,7 +27,7 @@ namespace edit {
 class EditedSource {
   const SourceManager &SourceMgr;
   const LangOptions &LangOpts;
-  const PreprocessingRecord *PPRec;
+  const PPConditionalDirectiveRecord *PPRec;
 
   struct FileEdit {
     StringRef Text;
@@ -45,13 +45,15 @@ class EditedSource {
 
 public:
   EditedSource(const SourceManager &SM, const LangOptions &LangOpts,
-               const PreprocessingRecord *PPRec = 0)
+               const PPConditionalDirectiveRecord *PPRec = 0)
     : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec),
       StrAlloc(/*size=*/512) { }
 
   const SourceManager &getSourceManager() const { return SourceMgr; }
   const LangOptions &getLangOpts() const { return LangOpts; }
-  const PreprocessingRecord *getPreprocessingRecord() const { return PPRec; }
+  const PPConditionalDirectiveRecord *getPPCondDirectiveRecord() const {
+    return PPRec;
+  }
 
   bool canInsertInOffset(SourceLocation OrigLoc, FileOffset Offs);
 

@@ -10,7 +10,7 @@
 #include "clang/Edit/Commit.h"
 #include "clang/Edit/EditedSource.h"
 #include "clang/Lex/Lexer.h"
-#include "clang/Lex/PreprocessingRecord.h"
+#include "clang/Lex/PPConditionalDirectiveRecord.h"
 #include "clang/Basic/SourceManager.h"
 
 using namespace clang;
@@ -37,7 +37,7 @@ CharSourceRange Commit::Edit::getInsertFromRange(SourceManager &SM) const {
 
 Commit::Commit(EditedSource &Editor)
   : SourceMgr(Editor.getSourceManager()), LangOpts(Editor.getLangOpts()),
-    PPRec(Editor.getPreprocessingRecord()),
+    PPRec(Editor.getPPCondDirectiveRecord()),
     Editor(&Editor), IsCommitable(true) { }
 
 bool Commit::insert(SourceLocation loc, StringRef text,

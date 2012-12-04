@@ -260,7 +260,7 @@ void CompilerInstance::createPreprocessor() {
   }
 
   if (PPOpts.DetailedRecord)
-    PP->createPreprocessingRecord(PPOpts.DetailedRecordConditionalDirectives);
+    PP->createPreprocessingRecord();
 
   InitializePreprocessor(*PP, PPOpts, getHeaderSearchOpts(), getFrontendOpts());
 

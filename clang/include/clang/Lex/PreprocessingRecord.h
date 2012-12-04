@@ -303,44 +303,6 @@ namespace clang {
     /// and are referenced by the iterator using negative indices.
     std::vector<PreprocessedEntity *> LoadedPreprocessedEntities;
 
-    bool RecordCondDirectives;
-    SmallVector<SourceLocation, 6> CondDirectiveStack;
-
-    class CondDirectiveLoc {
-      SourceLocation Loc;
-      SourceLocation RegionLoc;
-
-    public:
-      CondDirectiveLoc(SourceLocation Loc, SourceLocation RegionLoc)
-        : Loc(Loc), RegionLoc(RegionLoc) {}
-
-      SourceLocation getLoc() const { return Loc; }
-      SourceLocation getRegionLoc() const { return RegionLoc; }
-
-      class Comp {
-        SourceManager &SM;
-      public:
-        explicit Comp(SourceManager &SM) : SM(SM) {}
-        bool operator()(const CondDirectiveLoc &LHS,
-                        const CondDirectiveLoc &RHS) {
-          return SM.isBeforeInTranslationUnit(LHS.getLoc(), RHS.getLoc());
-        }
-        bool operator()(const CondDirectiveLoc &LHS, SourceLocation RHS) {
-          return SM.isBeforeInTranslationUnit(LHS.getLoc(), RHS);
-        }
-        bool operator()(SourceLocation LHS, const CondDirectiveLoc &RHS) {
-          return SM.isBeforeInTranslationUnit(LHS, RHS.getLoc());
-        }
-      };
-    };
-
-    typedef std::vector<CondDirectiveLoc> CondDirectiveLocsTy; 
-    /// \brief The locations of conditional directives in source order.
-    CondDirectiveLocsTy CondDirectiveLocs;
-
-    void addCondDirectiveLoc(CondDirectiveLoc DirLoc);
-    SourceLocation findCondDirectiveRegionLoc(SourceLocation Loc) const;
-
     /// \brief Global (loaded or local) ID for a preprocessed entity.
     /// Negative values are used to indicate preprocessed entities
     /// loaded from the external source while non-negative values are used to
@@ -398,7 +360,7 @@ namespace clang {
     
   public:
     /// \brief Construct a new preprocessing record.
-    PreprocessingRecord(SourceManager &SM, bool RecordConditionalDirectives);
+    explicit PreprocessingRecord(SourceManager &SM);
     
     /// \brief Allocate memory in the preprocessing record.
     void *Allocate(unsigned Size, unsigned Align = 8) {
@@ -582,24 +544,6 @@ namespace clang {
     /// \brief Add a new preprocessed entity to this record.
     PPEntityID addPreprocessedEntity(PreprocessedEntity *Entity);
 
-    /// \brief Returns true if this PreprocessingRecord is keeping track of
-    /// conditional directives locations.
-    bool isRecordingConditionalDirectives() const {
-      return RecordCondDirectives;
-    }
-
-    /// \brief Returns true if the given range intersects with a conditional
-    /// directive. if a \#if/\#endif block is fully contained within the range,
-    /// this function will return false.
-    bool rangeIntersectsConditionalDirective(SourceRange Range) const;
-
-    /// \brief Returns true if the given locations are in different regions,
-    /// separated by conditional directive blocks.
-    bool areInDifferentConditionalDirectiveRegion(SourceLocation LHS,
-                                                  SourceLocation RHS) const {
-      return findCondDirectiveRegionLoc(LHS) != findCondDirectiveRegionLoc(RHS);
-    }
-
     /// \brief Set the external source for preprocessed entities.
     void SetExternalSource(ExternalPreprocessingRecordSource &Source);
 
@@ -626,13 +570,6 @@ namespace clang {
                                     StringRef SearchPath,
                                     StringRef RelativePath,
                                     const Module *Imported);
-    virtual void If(SourceLocation Loc, SourceRange ConditionRange);
-    virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
-                      SourceLocation IfLoc);
-    virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok);
-    virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok);
-    virtual void Else(SourceLocation Loc, SourceLocation IfLoc);
-    virtual void Endif(SourceLocation Loc, SourceLocation IfLoc);
 
     /// \brief Cached result of the last \see getPreprocessedEntitiesInRange
     /// query.

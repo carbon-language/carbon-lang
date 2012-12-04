@@ -53,10 +53,6 @@ public:
   unsigned DetailedRecord : 1; /// Whether we should maintain a detailed
                                /// record of all macro definitions and
                                /// expansions.
-  unsigned DetailedRecordConditionalDirectives : 1; /// Whether in the
-                               /// preprocessing record we should also keep
-                               /// track of locations of conditional directives
-                               /// in non-system files.
   
   /// The implicit PCH included at the start of the translation unit, or empty.
   std::string ImplicitPCHInclude;
@@ -179,7 +175,6 @@ public:
   
 public:
   PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
-                          DetailedRecordConditionalDirectives(false),
                           DisablePCHValidation(false),
                           AllowPCHWithCompilerErrors(false),
                           DumpDeserializedPCHDecls(false),

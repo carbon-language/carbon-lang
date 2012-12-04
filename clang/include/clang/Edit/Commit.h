@@ -16,7 +16,7 @@
 
 namespace clang {
   class LangOptions;
-  class PreprocessingRecord;
+  class PPConditionalDirectiveRecord;
 
 namespace edit {
   class EditedSource;
@@ -46,7 +46,7 @@ public:
 private:
   const SourceManager &SourceMgr;
   const LangOptions &LangOpts;
-  const PreprocessingRecord *PPRec;
+  const PPConditionalDirectiveRecord *PPRec;
   EditedSource *Editor;
 
   bool IsCommitable;
@@ -55,7 +55,7 @@ private:
 public:
   explicit Commit(EditedSource &Editor);
   Commit(const SourceManager &SM, const LangOptions &LangOpts,
-         const PreprocessingRecord *PPRec = 0)
+         const PPConditionalDirectiveRecord *PPRec = 0)
     : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec), Editor(0),
       IsCommitable(true) { }
 

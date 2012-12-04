@@ -765,11 +765,10 @@ CommentHandler::~CommentHandler() { }
 
 CodeCompletionHandler::~CodeCompletionHandler() { }
 
-void Preprocessor::createPreprocessingRecord(bool RecordConditionalDirectives) {
+void Preprocessor::createPreprocessingRecord() {
   if (Record)
     return;
   
-  Record = new PreprocessingRecord(getSourceManager(),
-                                   RecordConditionalDirectives);
+  Record = new PreprocessingRecord(getSourceManager());
   addPPCallbacks(Record);
 }
