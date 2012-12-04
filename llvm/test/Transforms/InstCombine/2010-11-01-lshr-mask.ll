@@ -5,8 +5,8 @@
 define i32 @main(i32 %argc) nounwind ssp {
 entry:
   %tmp3151 = trunc i32 %argc to i8
-; CHECK: %tmp3163 = shl i8 %tmp3162, 6
-; CHECK: and i8 %tmp3163, 64
+; CHECK: %tmp3162 = shl i8 %tmp3151, 5
+; CHECK: and i8 %tmp3162, 64
 ; CHECK-NOT: shl
 ; CHECK-NOT: shr
   %tmp3161 = or i8 %tmp3151, -17

@@ -659,3 +659,79 @@ define i32 @test53(i32 %x) {
 ; CHECK-NEXT: %B = shl nuw i32 %x, 2
 ; CHECK-NEXT: ret i32 %B
 }
+
+define i32 @test54(i32 %x) {
+  %shr2 = lshr i32 %x, 1
+  %shl = shl i32 %shr2, 4
+  %and = and i32 %shl, 16
+  ret i32 %and
+; CHECK: @test54
+; CHECK: shl i32 %x, 3
+}
+
+
+define i32 @test55(i32 %x) {
+  %shr2 = lshr i32 %x, 1
+  %shl = shl i32 %shr2, 4
+  %or = or i32 %shl, 8
+  ret i32 %or
+; CHECK: @test55
+; CHECK: shl i32 %x, 3
+}
+
+define i32 @test56(i32 %x) {
+  %shr2 = lshr i32 %x, 1
+  %shl = shl i32 %shr2, 4
+  %or = or i32 %shl, 7
+  ret i32 %or
+; CHECK: @test56
+; CHECK: shl i32 %shr2, 4
+}
+
+
+define i32 @test57(i32 %x) {
+  %shr = lshr i32 %x, 1
+  %shl = shl i32 %shr, 4
+  %and = and i32 %shl, 16
+  ret i32 %and
+; CHECK: @test57
+; CHECK: shl i32 %x, 3
+}
+
+define i32 @test58(i32 %x) {
+  %shr = lshr i32 %x, 1
+  %shl = shl i32 %shr, 4
+  %or = or i32 %shl, 8
+  ret i32 %or
+; CHECK: @test58
+; CHECK: shl i32 %x, 3
+}
+
+define i32 @test59(i32 %x) {
+  %shr = ashr i32 %x, 1
+  %shl = shl i32 %shr, 4
+  %or = or i32 %shl, 7
+  ret i32 %or
+; CHECK: @test59
+; CHECK: %shl = shl i32 %shr1, 4
+}
+
+
+define i32 @test60(i32 %x) {
+  %shr = ashr i32 %x, 4
+  %shl = shl i32 %shr, 1
+  %or = or i32 %shl, 1
+  ret i32 %or
+; CHECK: @test60
+; CHECK: lshr i32 %x, 3
+}
+
+
+define i32 @test61(i32 %x) {
+  %shr = ashr i32 %x, 4
+  %shl = shl i32 %shr, 1
+  %or = or i32 %shl, 2
+  ret i32 %or
+; CHECK: @test61
+; CHECK: ashr i32 %x, 4
+}

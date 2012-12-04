@@ -327,6 +327,11 @@ private:
   bool SimplifyDemandedBits(Use &U, APInt DemandedMask, 
                             APInt& KnownZero, APInt& KnownOne,
                             unsigned Depth=0);
+  /// Helper routine of SimplifyDemandedUseBits. It tries to simplify demanded
+  /// bit for "r1 = shr x, c1; r2 = shl r1, c2" instruction sequence.
+  Value *SimplifyShrShlDemandedBits(Instruction *Lsr, Instruction *Sftl,
+                                    APInt DemandedMask, APInt &KnownZero,
+                                    APInt &KnownOne);
       
   /// SimplifyDemandedInstructionBits - Inst is an integer instruction that
   /// SimplifyDemandedBits knows about.  See if the instruction has any

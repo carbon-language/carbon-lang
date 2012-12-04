@@ -82,6 +82,6 @@ entry:
   %sub = add i32 %xor, -67108864                  ; <i32> [#uses=1]
   ret i32 %sub
 ; CHECK: @test8
-; CHECK: %shr = ashr i32 %x, 5
-; CHECK: ret i32 %shr
+; CHECK: %sub = ashr i32 %x, 5
+; CHECK: ret i32 %sub
 }
