@@ -27,7 +27,7 @@ static char *ReadFile(const char *filename) {
   if (filename == 0 || filename[0] == 0)
     return 0;
   InternalScopedBuffer<char> tmp(4*1024);
-  if (filename[0] == '/')
+  if (filename[0] == '/' || GetPwd() == 0)
     internal_snprintf(tmp.data(), tmp.size(), "%s", filename);
   else
     internal_snprintf(tmp.data(), tmp.size(), "%s/%s", GetPwd(), filename);
