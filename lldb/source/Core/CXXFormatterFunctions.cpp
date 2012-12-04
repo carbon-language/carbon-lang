@@ -37,10 +37,8 @@ lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
         return false;
     if (!selector || !*selector)
         return false;
-    StreamString expr_path_stream;
-    valobj.GetExpressionPath(expr_path_stream, false);
     StreamString expr;
-    expr.Printf("(%s)[%s %s]",target_type,expr_path_stream.GetData(),selector);
+    expr.Printf("(%s)[(id)0x%llx %s]",target_type,valobj.GetPointerValue(),selector);
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
     lldb::ValueObjectSP result_sp;
     Target* target = exe_ctx.GetTargetPtr();
@@ -51,8 +49,7 @@ lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
     EvaluateExpressionOptions options;
     options.SetCoerceToId(false)
     .SetUnwindOnError(true)
-    .SetKeepInMemory(true)
-    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+    .SetKeepInMemory(true);
     
     target->EvaluateExpression(expr.GetData(),
                                stack_frame,
