@@ -37,6 +37,12 @@ def memrs : Operand<iPTR> {   // memri where the immediate is a symbolLo64
   let EncoderMethod = "getMemRIXEncoding";
   let MIOperandInfo = (ops symbolLo64:$off, ptr_rc:$reg);
 }
+def tlsaddr : Operand<i64> {
+  let EncoderMethod = "getTLSOffsetEncoding";
+}
+def tlsreg : Operand<i64> {
+  let EncoderMethod = "getTLSRegEncoding";
+}
 
 //===----------------------------------------------------------------------===//
 // 64-bit transformation functions.
@@ -364,6 +370,11 @@ def XORIS8  : DForm_4<27, (outs G8RC:$dst), (ins G8RC:$src1, u16imm:$src2),
 def ADD8  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntSimple,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
+// ADD8 has a special form: reg = ADD8(reg, sym@tls) for use by the
+// initial-exec thread-local storage model.
+def ADD8TLS  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, tlsreg:$rB),
+                        "add $rT, $rA, $rB", IntSimple,
+                        [(set G8RC:$rT, (add G8RC:$rA, tglobaltlsaddr:$rB))]>;
                      
 let Defs = [CARRY] in {
 def ADDC8 : XOForm_1<31, 10, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
@@ -696,6 +707,15 @@ def ADDItocL: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
                      "#ADDItocL",
                      [(set G8RC:$rD,
                        (PPCaddiTocL G8RC:$reg, tglobaladdr:$disp))]>, isPPC64;
+
+// Support for thread-local storage.
+def LDgotTPREL: Pseudo<(outs G8RC:$rD), (ins tlsaddr:$disp, G8RC:$reg),
+                       "#LDgotTPREL",
+                       [(set G8RC:$rD,
+                         (PPCldGotTprel G8RC:$reg, tglobaltlsaddr:$disp))]>,
+                      isPPC64;
+def : Pat<(PPCaddTls G8RC:$in, tglobaltlsaddr:$g),
+          (ADD8TLS G8RC:$in, tglobaltlsaddr:$g)>;
 
 let PPC970_Unit = 2 in {
 // Truncating stores.                       

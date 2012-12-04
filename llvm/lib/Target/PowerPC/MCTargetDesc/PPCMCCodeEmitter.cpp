@@ -62,6 +62,10 @@ public:
                             SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getTLSOffsetEncoding(const MCInst &MI, unsigned OpNo,
+                                SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -192,6 +196,31 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
     Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                      (MCFixupKind)PPC::fixup_ppc_lo14));
   return RegBits;
+}
+
+
+unsigned PPCMCCodeEmitter::getTLSOffsetEncoding(const MCInst &MI, unsigned OpNo,
+                                       SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  
+  // Add a fixup for the GOT displacement to the TLS block offset.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_toc16_ds));
+  return 0;
+}
+
+
+unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
+                                       SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg()) return getMachineOpValue(MI, MO, Fixups);
+  
+  // Add a fixup for the TLS register, which simply provides a relocation
+  // hint to the linker that this statement is part of a relocation sequence.
+  // Return the thread-pointer register's encoding.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_tlsreg));
+  return getPPCRegisterNumbering(PPC::X13);
 }
 
 

@@ -65,13 +65,16 @@ namespace llvm {
     MO_NLP_HIDDEN_FLAG = 16,
 
     /// The next are not flags but distinct values.
-    MO_ACCESS_MASK = 224,
+    MO_ACCESS_MASK = 0xe0,
 
     /// MO_LO16, MO_HA16 - lo16(symbol) and ha16(symbol)
-    MO_LO16 = 32, MO_HA16 = 64,
+    MO_LO16 = 1 << 5,
+    MO_HA16 = 2 << 5,
 
-    MO_TPREL16_HA = 96,
-    MO_TPREL16_LO = 128
+    MO_TPREL16_HA = 3 << 5,
+    MO_TPREL16_LO = 4 << 5,
+    MO_GOT_TPREL16_DS = 5 << 5,
+    MO_TLS = 6 << 5
   };
   } // end namespace PPCII
   

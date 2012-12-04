@@ -476,7 +476,9 @@ enum {
   R_PPC64_TOC16_HA            = 50,
   R_PPC64_TOC                 = 51,
   R_PPC64_TOC16_DS            = 63,
-  R_PPC64_TOC16_LO_DS         = 64
+  R_PPC64_TOC16_LO_DS         = 64,
+  R_PPC64_TLS                 = 67,
+  R_PPC64_GOT_TPREL16_DS      = 87
 };
 
 // ARM Specific e_flags

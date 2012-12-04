@@ -178,6 +178,20 @@ namespace llvm {
       CR6SET,
       CR6UNSET,
 
+      /// G8RC = LD_GOT_TPREL Symbol, G8RReg - Used by the initial-exec
+      /// TLS model, produces a LD instruction with base register G8RReg
+      /// and offset sym@got@tprel.  The latter identifies the GOT entry
+      /// containing the offset of "sym" relative to the thread pointer.
+      LD_GOT_TPREL,
+
+      /// G8RC = ADD_TLS G8RReg, Symbol - Used by the initial-exec TLS
+      /// model, produces an ADD instruction that adds the contents of
+      /// G8RReg to the thread pointer.  Symbol contains a relocation
+      /// sym@tls which is to be replaced by the thread pointer and
+      /// identifies to the linker that the instruction is part of a
+      /// TLS sequence.
+      ADD_TLS,
+
       /// STD_32 - This is the STD instruction for use with "32-bit" registers.
       STD_32 = ISD::FIRST_TARGET_MEMORY_OPCODE,
 

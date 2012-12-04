@@ -1311,6 +1311,11 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(PPC::ADDItocL, dl, MVT::i64,
                                   SDValue(Tmp, 0), GA);
   }
+  case PPCISD::LD_GOT_TPREL: {
+    assert (PPCSubTarget.isPPC64() && "Only supported for 64-bit ABI");
+    return CurDAG->getMachineNode(PPC::LDgotTPREL, dl, MVT::i64, 
+                                  N->getOperand(0), N->getOperand(1));
+  }
   }
 
   return SelectCode(N);

@@ -578,6 +578,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::ADDIS_TOC_HA:    return "PPCISD::ADDIS_TOC_HA";
   case PPCISD::LD_TOC_L:        return "PPCISD::LD_TOC_L";
   case PPCISD::ADDI_TOC_L:      return "PPCISD::ADDI_TOC_L";
+  case PPCISD::LD_GOT_TPREL:    return "PPCISD::LD_GOT_TPREL";
+  case PPCISD::ADD_TLS:         return "PPCISD::ADD_TLS";
   }
 }
 
@@ -1324,19 +1326,34 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
   EVT PtrVT = getPointerTy();
   bool is64bit = PPCSubTarget.isPPC64();
 
-  TLSModel::Model model = getTargetMachine().getTLSModel(GV);
+  TLSModel::Model Model = getTargetMachine().getTLSModel(GV);
 
-  SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                             PPCII::MO_TPREL16_HA);
-  SDValue TGALo = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                             PPCII::MO_TPREL16_LO);
+  if (Model == TLSModel::LocalExec) {
+    SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                               PPCII::MO_TPREL16_HA);
+    SDValue TGALo = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                               PPCII::MO_TPREL16_LO);
+    SDValue TLSReg = DAG.getRegister(is64bit ? PPC::X13 : PPC::R2,
+                                     is64bit ? MVT::i64 : MVT::i32);
+    SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, TGAHi, TLSReg);
+    return DAG.getNode(PPCISD::Lo, dl, PtrVT, TGALo, Hi);
+  }
 
-  if (model != TLSModel::LocalExec)
-    llvm_unreachable("only local-exec TLS mode supported");
-  SDValue TLSReg = DAG.getRegister(is64bit ? PPC::X13 : PPC::R2,
+  if (!is64bit)
+    llvm_unreachable("only local-exec is currently supported for ppc32");
+
+  if (Model != TLSModel::InitialExec)
+    llvm_unreachable("only local-exec and initial-exec TLS modes supported");
+
+  SDValue GOTOffset = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                                 PPCII::MO_GOT_TPREL16_DS);
+  SDValue TPReg = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                             PPCII::MO_TLS);
+  SDValue GOTReg = DAG.getRegister(is64bit ? PPC::X2  : PPC::R2,
                                    is64bit ? MVT::i64 : MVT::i32);
-  SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, TGAHi, TLSReg);
-  return DAG.getNode(PPCISD::Lo, dl, PtrVT, TGALo, Hi);
+  SDValue TPOffset = DAG.getNode(PPCISD::LD_GOT_TPREL, dl, PtrVT,
+                                 GOTOffset, GOTReg);
+  return DAG.getNode(PPCISD::ADD_TLS, dl, PtrVT, TPOffset, TPReg);
 }
 
 SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,

@@ -91,6 +91,9 @@ def PPCtoc_entry: SDNode<"PPCISD::TOC_ENTRY", SDTIntBinOp, [SDNPMayLoad]>;
 def PPCvmaddfp  : SDNode<"PPCISD::VMADDFP", SDTFPTernaryOp, []>;
 def PPCvnmsubfp : SDNode<"PPCISD::VNMSUBFP", SDTFPTernaryOp, []>;
 
+def PPCldGotTprel : SDNode<"PPCISD::LD_GOT_TPREL", SDTIntBinOp, [SDNPMayLoad]>;
+def PPCaddTls     : SDNode<"PPCISD::ADD_TLS", SDTIntBinOp, []>;
+
 def PPCvperm    : SDNode<"PPCISD::VPERM", SDT_PPCvperm, []>;
 
 // These nodes represent the 32-bit PPC shifts that operate on 6-bit shift

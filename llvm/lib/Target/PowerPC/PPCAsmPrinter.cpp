@@ -513,6 +513,23 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
+  case PPC::LDgotTPREL: {
+    // Transform %Xd = LDgotTPREL <ga:@sym>, %Xs
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+
+    // Change the opcode to LDrs, which is a form of LD with the offset
+    // specified by a SymbolLo.
+    TmpInst.setOpcode(PPC::LDrs);
+    const MachineOperand &MO = MI->getOperand(1);
+    const GlobalValue *GValue = MO.getGlobal();
+    MCSymbol *MOSymbol = Mang->getSymbol(GValue);
+    const MCExpr *Exp =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TPREL16_DS,
+                              OutContext);
+    TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case PPC::MFCRpseud:
   case PPC::MFCR8pseud:
     // Transform: %R3 = MFCRpseud %CR7
