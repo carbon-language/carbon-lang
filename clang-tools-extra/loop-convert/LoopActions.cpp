@@ -13,7 +13,6 @@
 #include "LoopActions.h"
 #include "LoopMatchers.h"
 #include "VariableNaming.h"
-
 #include "clang/Lex/Lexer.h"
 
 namespace clang {

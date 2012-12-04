@@ -23,12 +23,11 @@
 
 #include "LoopActions.h"
 #include "LoopMatchers.h"
-
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Tooling/Tooling.h"
 #include "clang/Tooling/Refactoring.h"
+#include "clang/Tooling/Tooling.h"
 
 using clang::ast_matchers::MatchFinder;
 namespace cl = llvm::cl;

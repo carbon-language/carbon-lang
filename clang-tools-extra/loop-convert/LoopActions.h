@@ -14,10 +14,10 @@
 #define _LLVM_TOOLS_CLANG_TOOLS_EXTRA_LOOP_CONVERT_LOOPACTIONS_H_
 
 #include "StmtAncestor.h"
-#include "clang/Tooling/Refactoring.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/Tooling/Refactoring.h"
 
 namespace clang {
 namespace loop_migrate {
