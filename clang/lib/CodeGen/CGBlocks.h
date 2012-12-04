@@ -211,6 +211,14 @@ public:
   const BlockExpr *BlockExpression;
   CharUnits BlockSize;
   CharUnits BlockAlign;
+  
+  // Offset of the gap caused by block header having a smaller
+  // alignment than the alignment of the block descriptor. This
+  // is the gap offset before the first capturued field.
+  CharUnits BlockHeaderForcedGapOffset;
+  // Gap size caused by aligning first field after block header.
+  // This could be zero if no forced alignment is required.
+  CharUnits BlockHeaderForcedGapSize;
 
   /// An instruction which dominates the full-expression that the
   /// block is inside.

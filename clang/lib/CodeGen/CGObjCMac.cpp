@@ -2424,7 +2424,10 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
   
   // Ignore the optional 'this' capture: C++ objects are not assumed
   // to be GC'ed.
-  
+  if (blockInfo.BlockHeaderForcedGapSize != CharUnits::Zero())
+    UpdateRunSkipBlockVars(false, Qualifiers::OCL_None,
+                           blockInfo.BlockHeaderForcedGapOffset,
+                           blockInfo.BlockHeaderForcedGapSize);
   // Walk the captured variables.
   for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
        ce = blockDecl->capture_end(); ci != ce; ++ci) {

@@ -970,6 +970,17 @@ void DeclPrinter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
 
 void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
   Out << "@interface " << *PID->getClassInterface() << '(' << *PID << ")\n";
+  if (PID->ivar_size() > 0) {
+    Out << "{\n";
+    Indentation += Policy.Indentation;
+    for (ObjCCategoryDecl::ivar_iterator I = PID->ivar_begin(),
+         E = PID->ivar_end(); I != E; ++I) {
+      Indent() << I->getType().getAsString(Policy) << ' ' << **I << ";\n";
+    }
+    Indentation -= Policy.Indentation;
+    Out << "}\n";
+  }
+  
   VisitDeclContext(PID, false);
   Out << "@end";
 
