@@ -1512,7 +1512,7 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
     llvm::sys::path::append(LibAsan, "lib", "linux",
         (Twine("libclang_rt.asan-") +
             TC.getArchName() + "-android.so"));
-    CmdArgs.push_back(Args.MakeArgString(LibAsan));
+    CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
   } else {
     if (!Args.hasArg(options::OPT_shared)) {
       // LibAsan is "libclang_rt.asan-<ArchName>.a" in the Linux library
@@ -1521,7 +1521,11 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
       llvm::sys::path::append(LibAsan, "lib", "linux",
                               (Twine("libclang_rt.asan-") +
                                TC.getArchName() + ".a"));
-      CmdArgs.push_back(Args.MakeArgString(LibAsan));
+      // The ASan runtime needs to come before -lstdc++ (or -lc++, libstdc++.a,
+      // etc.) so that the linker picks ASan's versions of the global 'operator
+      // new' and 'operator delete' symbols. We take the extreme (but simple)
+      // strategy of inserting it at the front of the link command.
+      CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
       CmdArgs.push_back("-lpthread");
       CmdArgs.push_back("-ldl");
       CmdArgs.push_back("-export-dynamic");
