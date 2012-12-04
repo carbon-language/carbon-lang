@@ -11,9 +11,8 @@
 #include "CXCursor.h"
 #include "CXSourceLocation.h"
 #include "CXTranslationUnit.h"
-
-#include "clang/Frontend/ASTUnit.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Frontend/ASTUnit.h"
 
 using namespace clang;
 using namespace cxcursor;

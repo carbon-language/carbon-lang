@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexingContext.h"
-
 #include "RecursiveASTVisitor.h"
 
 using namespace clang;

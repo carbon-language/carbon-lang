@@ -16,8 +16,8 @@
 
 #include "clang-c/Index.h"
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace clang {
 namespace cxstring {

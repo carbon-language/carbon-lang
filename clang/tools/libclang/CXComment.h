@@ -14,11 +14,10 @@
 #ifndef LLVM_CLANG_CXCOMMENT_H
 #define LLVM_CLANG_CXCOMMENT_H
 
-#include "clang-c/Index.h"
 #include "CXTranslationUnit.h"
-
-#include "clang/AST/Comment.h"
+#include "clang-c/Index.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Comment.h"
 #include "clang/Frontend/ASTUnit.h"
 
 namespace clang {

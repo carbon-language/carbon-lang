@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexingContext.h"
-
 #include "clang/AST/DeclVisitor.h"
 
 using namespace clang;

@@ -12,12 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/ASTUnit.h"
-
 #include "CIndexer.h"
-#include "CXString.h"
-#include "CXSourceLocation.h"
-#include "CXTranslationUnit.h"
 #include "CXLoadedDiagnostic.h"
+#include "CXSourceLocation.h"
+#include "CXString.h"
+#include "CXTranslationUnit.h"
 
 using namespace clang;
 using namespace clang::cxstring;

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
-
 #include "CXString.h"
 #include "clang/ARCMigrate/ARCMT.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"

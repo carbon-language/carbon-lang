@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CIndexer.h"
-#include "CXTranslationUnit.h"
 #include "CXSourceLocation.h"
+#include "CXTranslationUnit.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/SmallString.h"

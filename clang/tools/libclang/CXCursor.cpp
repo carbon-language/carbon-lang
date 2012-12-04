@@ -15,9 +15,9 @@
 
 #include "CXTranslationUnit.h"
 #include "CXCursor.h"
-#include "CXType.h"
 #include "CXString.h"
-#include "clang/Frontend/ASTUnit.h"
+#include "CXType.h"
+#include "clang-c/Index.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -25,7 +25,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang-c/Index.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;

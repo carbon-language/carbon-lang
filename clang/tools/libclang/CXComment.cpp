@@ -12,19 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
-#include "CXString.h"
 #include "CXComment.h"
 #include "CXCursor.h"
-
-#include "clang/AST/PrettyPrinter.h"
-#include "clang/AST/CommentVisitor.h"
+#include "CXString.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/AST/CommentVisitor.h"
 #include "clang/AST/Decl.h"
-
+#include "clang/AST/PrettyPrinter.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <climits>
 
 using namespace clang;

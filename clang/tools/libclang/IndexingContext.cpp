@@ -8,12 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexingContext.h"
-#include "CXTranslationUnit.h"
 #include "CIndexDiagnostic.h"
-
-#include "clang/Frontend/ASTUnit.h"
+#include "CXTranslationUnit.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/Frontend/ASTUnit.h"
 
 using namespace clang;
 using namespace cxindex;

@@ -7,11 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Index_Internal.h"
 #include "CXCursor.h"
-
-#include "clang/AST/DeclObjC.h"
+#include "Index_Internal.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/DenseSet.h"
 #include <deque>
 

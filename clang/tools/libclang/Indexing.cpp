@@ -8,25 +8,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexingContext.h"
-#include "CXCursor.h"
-#include "CXSourceLocation.h"
-#include "CXTranslationUnit.h"
-#include "CXString.h"
 #include "CIndexDiagnostic.h"
 #include "CIndexer.h"
-
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendAction.h"
-#include "clang/Frontend/Utils.h"
-#include "clang/Sema/SemaConsumer.h"
+#include "CXCursor.h"
+#include "CXSourceLocation.h"
+#include "CXString.h"
+#include "CXTranslationUnit.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclVisitor.h"
-#include "clang/Lex/Preprocessor.h"
+#include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Lex/PPCallbacks.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "llvm/Support/CrashRecoveryContext.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace clang;
 using namespace cxstring;

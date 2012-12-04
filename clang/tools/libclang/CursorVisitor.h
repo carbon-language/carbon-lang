@@ -10,10 +10,9 @@
 #ifndef LLVM_CLANG_LIBCLANG_CURSORVISITOR_H
 #define LLVM_CLANG_LIBCLANG_CURSORVISITOR_H
 
-#include "Index_Internal.h"
 #include "CXCursor.h"
 #include "CXTranslationUnit.h"
-
+#include "Index_Internal.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeLocVisitor.h"
 
