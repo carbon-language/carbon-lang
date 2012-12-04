@@ -3,3 +3,8 @@ add_lld_library(lldMachO
   WriterOptionsMachO.cpp
   ReferenceKinds.cpp
   )
+
+target_link_libraries(lldMachO
+  lldReaderWriter
+  lldPasses
+  )

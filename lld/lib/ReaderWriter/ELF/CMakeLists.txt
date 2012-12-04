@@ -7,3 +7,7 @@ add_lld_library(lldELF
   X86Reference.cpp
   WriterOptionsELF.cpp
   )
+
+target_link_libraries(lldELF
+  lldReaderWriter
+  )

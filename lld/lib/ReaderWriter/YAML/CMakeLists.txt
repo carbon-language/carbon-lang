@@ -3,3 +3,7 @@ add_lld_library(lldYAML
   ReaderYAML.cpp
   WriterYAML.cpp
   )
+
+target_link_libraries(lldYAML
+  lldReaderWriter
+  )
