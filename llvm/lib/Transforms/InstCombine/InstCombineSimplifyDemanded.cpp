@@ -876,7 +876,8 @@ Value *InstCombiner::SimplifyShrShlDemandedBits(Instruction *Shr,
       New->setHasNoUnsignedWrap(Orig->hasNoUnsignedWrap());
     } else {
       Constant *Amt = ConstantInt::get(VarX->getType(), ShrAmt - ShlAmt);
-      New = BinaryOperator::CreateLShr(VarX, Amt);
+      New = isLshr ? BinaryOperator::CreateLShr(VarX, Amt) :
+                     BinaryOperator::CreateAShr(VarX, Amt);
     }
 
     return InsertNewInstWith(New, *Shl);

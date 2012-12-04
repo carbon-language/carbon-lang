@@ -723,7 +723,7 @@ define i32 @test60(i32 %x) {
   %or = or i32 %shl, 1
   ret i32 %or
 ; CHECK: @test60
-; CHECK: lshr i32 %x, 3
+; CHECK: ashr i32 %x, 3
 }
 
 
