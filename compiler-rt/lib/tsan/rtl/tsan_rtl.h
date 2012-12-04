@@ -37,6 +37,10 @@
 #include "tsan_report.h"
 #include "tsan_platform.h"
 
+#if SANITIZER_WORDSIZE != 64
+# error "ThreadSanitizer is supported only on 64-bit platforms"
+#endif
+
 namespace __tsan {
 
 // Descriptor of user's memory block.
