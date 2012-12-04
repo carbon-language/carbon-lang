@@ -334,17 +334,50 @@ def TFCR : CRInst<(outs CRRegs:$dst), (ins IntRegs:$src1),
 //===----------------------------------------------------------------------===//
 
 // Combine.
-let isPredicable = 1, neverHasSideEffects = 1 in
-def COMBINE_rr : ALU32_rr<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = combine($src1, $src2)",
-            []>;
 
-let neverHasSideEffects = 1 in
-def COMBINE_ii : ALU32_ii<(outs DoubleRegs:$dst),
-            (ins s8Imm:$src1, s8Imm:$src2),
-            "$dst = combine(#$src1, #$src2)",
-            []>;
+def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
+  [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
+
+def HexagonWrapperCombineII :
+  SDNode<"HexagonISD::WrapperCombineII", SDTHexagonI64I32I32>;
+def HexagonWrapperCombineRR :
+  SDNode<"HexagonISD::WrapperCombineRR", SDTHexagonI64I32I32>;
+
+// Combines the two integer registers SRC1 and SRC2 into a double register.
+let isPredicable = 1 in
+def COMBINE_rr : ALU32_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src1,
+                                                       IntRegs:$src2),
+  "$dst = combine($src1, $src2)",
+  [(set (i64 DoubleRegs:$dst),
+        (i64 (HexagonWrapperCombineRR (i32 IntRegs:$src1),
+                                      (i32 IntRegs:$src2))))]>;
+
+// Rd=combine(Rt.[HL], Rs.[HL])
+class COMBINE_halves<string A, string B>: ALU32_rr<(outs IntRegs:$dst),
+                                                   (ins IntRegs:$src1,
+                                                        IntRegs:$src2),
+  "$dst = combine($src1."# A #", $src2."# B #")", []>;
+
+let isPredicable = 1 in {
+  def COMBINE_hh : COMBINE_halves<"H", "H">;
+  def COMBINE_hl : COMBINE_halves<"H", "L">;
+  def COMBINE_lh : COMBINE_halves<"L", "H">;
+  def COMBINE_ll : COMBINE_halves<"L", "L">;
+}
+
+def : Pat<(i32 (trunc (i64 (srl (i64 DoubleRegs:$a), (i32 16))))),
+  (COMBINE_lh (EXTRACT_SUBREG (i64 DoubleRegs:$a), subreg_hireg),
+              (EXTRACT_SUBREG (i64 DoubleRegs:$a), subreg_loreg))>;
+
+// Combines the two immediates SRC1 and SRC2 into a double register.
+class COMBINE_imm<Operand imm1, Operand imm2, PatLeaf pat1, PatLeaf pat2> :
+  ALU32_ii<(outs DoubleRegs:$dst), (ins imm1:$src1, imm2:$src2),
+  "$dst = combine(#$src1, #$src2)",
+  [(set (i64 DoubleRegs:$dst),
+        (i64 (HexagonWrapperCombineII (i32 pat1:$src1), (i32 pat2:$src2))))]>;
+
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8 in
+def COMBINE_Ii : COMBINE_imm<s8Ext, s8Imm, s8ExtPred, s8ImmPred>;
 
 // Mux.
 def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
@@ -429,7 +462,6 @@ def ZXTH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
 //===----------------------------------------------------------------------===//
 
 // Conditional combine.
-
 let neverHasSideEffects = 1, isPredicated = 1 in
 def COMBINE_rr_cPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
@@ -462,6 +494,33 @@ defm CMPLTU : CMP32_rr<"cmp.ltu", setult>;
 defm CMPEQ : CMP32_rr_ri_s10<"cmp.eq", "CMPEQ", seteq>, ImmRegRel;
 defm CMPGE : CMP32_ri_s8<"cmp.ge", setge>;
 defm CMPGEU : CMP32_ri_u8<"cmp.geu", setuge>;
+
+def CTLZ_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1),
+    "$dst = cl0($src1)",
+    [(set (i32 IntRegs:$dst), (ctlz (i32 IntRegs:$src1)))]>;
+
+def CTTZ_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1),
+    "$dst = ct0($src1)",
+    [(set (i32 IntRegs:$dst), (cttz (i32 IntRegs:$src1)))]>;
+
+def CTLZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
+    "$dst = cl0($src1)",
+    [(set (i32 IntRegs:$dst), (i32 (trunc (ctlz (i64 DoubleRegs:$src1)))))]>;
+
+def CTTZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
+    "$dst = ct0($src1)",
+    [(set (i32 IntRegs:$dst), (i32 (trunc (cttz (i64 DoubleRegs:$src1)))))]>;
+
+def TSTBIT_rr : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+    "$dst = tstbit($src1, $src2)",
+    [(set (i1 PredRegs:$dst),
+          (setne (and (shl 1, (i32 IntRegs:$src2)), (i32 IntRegs:$src1)), 0))]>;
+
+def TSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+    "$dst = tstbit($src1, $src2)",
+    [(set (i1 PredRegs:$dst),
+          (setne (and (shl 1, (u5ImmPred:$src2)), (i32 IntRegs:$src1)), 0))]>;
+
 //===----------------------------------------------------------------------===//
 // ALU32/PRED -
 //===----------------------------------------------------------------------===//

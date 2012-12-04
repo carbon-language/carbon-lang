@@ -276,19 +276,31 @@ def TFR_FI_immext_V4 : ALU32_ri<(outs IntRegs:$dst),
 
 // Combine
 // Rdd=combine(Rs, #s8)
-let neverHasSideEffects = 1 in
-def COMBINE_ri_V4 : ALU32_ri<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, s8Imm:$src2),
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8,
+    neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+def COMBINE_rI_V4 : ALU32_ri<(outs DoubleRegs:$dst),
+            (ins IntRegs:$src1, s8Ext:$src2),
             "$dst = combine($src1, #$src2)",
             []>,
             Requires<[HasV4T]>;
+
 // Rdd=combine(#s8, Rs)
-let neverHasSideEffects = 1 in
-def COMBINE_ir_V4 : ALU32_ir<(outs DoubleRegs:$dst),
-            (ins s8Imm:$src1, IntRegs:$src2),
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8,
+    neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+def COMBINE_Ir_V4 : ALU32_ir<(outs DoubleRegs:$dst),
+            (ins s8Ext:$src1, IntRegs:$src2),
             "$dst = combine(#$src1, $src2)",
             []>,
             Requires<[HasV4T]>;
+
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 6,
+    neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+def COMBINE_iI_V4 : ALU32_ii<(outs DoubleRegs:$dst),
+            (ins s8Imm:$src1, u6Ext:$src2),
+            "$dst = combine(#$src1, #$src2)",
+            []>,
+            Requires<[HasV4T]>;
+
 //===----------------------------------------------------------------------===//
 // ALU32/PERM +
 //===----------------------------------------------------------------------===//

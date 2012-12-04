@@ -50,6 +50,15 @@ namespace llvm {
       BARRIER,     // Memory barrier.
       WrapperJT,
       WrapperCP,
+      WrapperCombineII,
+      WrapperCombineRR,
+      WrapperPackhl,
+      WrapperSplatB,
+      WrapperSplatH,
+      WrapperShuffEB,
+      WrapperShuffEH,
+      WrapperShuffOB,
+      WrapperShuffOH,
       TC_RETURN
     };
   }
