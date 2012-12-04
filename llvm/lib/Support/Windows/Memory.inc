@@ -15,6 +15,8 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Process.h"
+
+// The Windows.h header must be the last one included.
 #include "Windows.h"
 
 namespace {
