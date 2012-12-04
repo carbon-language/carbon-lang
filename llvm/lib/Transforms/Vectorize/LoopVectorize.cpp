@@ -1133,8 +1133,8 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // Reductions do not have to start at zero. They can start with
     // any loop invariant values.
     VecRdxPhi->addIncoming(VectorStart, VecPreheader);
-    unsigned SelfEdgeIdx = (RdxPhi)->getBasicBlockIndex(LoopScalarBody);
-    Value *Val = getVectorValue(RdxPhi->getIncomingValue(SelfEdgeIdx));
+    Value *Val =
+    getVectorValue(RdxPhi->getIncomingValueForBlock(OrigLoop->getLoopLatch()));
     VecRdxPhi->addIncoming(Val, LoopVectorBody);
 
     // Before each round, move the insertion point right between
@@ -1201,8 +1201,11 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
 
     // Fix the scalar loop reduction variable with the incoming reduction sum
     // from the vector body and from the backedge value.
-    int IncomingEdgeBlockIdx = (RdxPhi)->getBasicBlockIndex(LoopScalarBody);
-    int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1); // The other block.
+    int IncomingEdgeBlockIdx =
+    (RdxPhi)->getBasicBlockIndex(OrigLoop->getLoopLatch());
+    assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
+    // Pick the other block.
+    int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
     (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, Scalar0);
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
@@ -1961,11 +1964,13 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   if (Phi->getNumIncomingValues() != 2)
     return false;
 
-  // Find the possible incoming reduction variable.
-  BasicBlock *BB = Phi->getParent();
-  int SelfEdgeIdx = Phi->getBasicBlockIndex(BB);
-  int InEdgeBlockIdx = (SelfEdgeIdx ? 0 : 1); // The other entry.
-  Value *RdxStart = Phi->getIncomingValue(InEdgeBlockIdx);
+  // Reduction variables are only found in the loop header block.
+  if (Phi->getParent() != TheLoop->getHeader())
+    return false;
+
+  // Obtain the reduction start value from the value that comes from the loop
+  // preheader.
+  Value *RdxStart = Phi->getIncomingValueForBlock(TheLoop->getLoopPreheader());
 
   // ExitInstruction is the single value which is used outside the loop.
   // We only allow for a single reduction value to be used outside the loop.
@@ -2003,9 +2008,17 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
         FoundStartPHI = true;
         continue;
       }
+
+      // We allow in-loop PHINodes which are not the original reduction PHI
+      // node. If this PHI is the only user of Iter (happens in IF w/ no ELSE
+      // structure) then don't skip this PHI.
+      if (isa<PHINode>(U) && U->getParent() != TheLoop->getHeader() &&
+          TheLoop->contains(U->getParent()) && Iter->getNumUses() > 1)
+        continue;
+
       // Check if we found the exit user.
       BasicBlock *Parent = U->getParent();
-      if (Parent != BB) {
+      if (!TheLoop->contains(Parent)) {
         // We must have a single exit instruction.
         if (ExitInstruction != 0)
           return false;
