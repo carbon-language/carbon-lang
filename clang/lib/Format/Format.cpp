@@ -35,10 +35,6 @@ struct TokenAnnotation {
 
   TokenType Type;
 
-  /// \brief The current parenthesis level, i.e. the number of opening minus
-  /// the number of closing parenthesis left of the current position.
-  unsigned ParenLevel;
-
   bool SpaceRequiredBefore;
   bool CanBreakBefore;
   bool MustBreakBefore;
@@ -103,7 +99,7 @@ public:
     for (unsigned i = 1, n = Line.Tokens.size(); i != n; ++i) {
       unsigned NoBreak = calcPenalty(State, false, UINT_MAX);
       unsigned Break = calcPenalty(State, true, NoBreak);
-      addToken(Break < NoBreak, false, State);
+      addTokenToState(Break < NoBreak, false, State);
     }
   }
 
@@ -149,27 +145,31 @@ private:
     }
   };
 
-  /// Append the next token to \p State.
-  void addToken(bool Newline, bool DryRun, IndentState &State) {
+  /// \brief Appends the next token to \p State and updates information
+  /// necessary for indentation.
+  ///
+  /// Puts the token on the current line if \p Newline is \c true and adds a
+  /// line break and necessary indentation otherwise.
+  ///
+  /// If \p DryRun is \c false, also creates and stores the required
+  /// \c Replacement.
+  void addTokenToState(bool Newline, bool DryRun, IndentState &State) {
     unsigned Index = State.ConsumedTokens;
     const FormatToken &Current = Line.Tokens[Index];
     const FormatToken &Previous = Line.Tokens[Index - 1];
-    unsigned ParenLevel = Annotations[Index].ParenLevel;
-
-    if (Current.Tok.is(tok::l_paren) || Current.Tok.is(tok::l_square) ||
-        Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener) {
-      State.Indent.push_back(4 + State.LastSpace.back());
-      State.LastSpace.push_back(State.LastSpace.back());
-    }
+    unsigned ParenLevel = State.Indent.size() - 1;
 
     if (Newline) {
       if (Current.Tok.is(tok::string_literal) &&
           Previous.Tok.is(tok::string_literal))
         State.Column = State.Column - Previous.Tok.getLength();
       else if (Previous.Tok.is(tok::equal) && ParenLevel != 0)
+        // Indent and extra 4 spaces after '=' as it continues an expression.
+        // Don't do that on the top level, as we already indent 4 there.
         State.Column = State.Indent[ParenLevel] + 4;
       else
         State.Column = State.Indent[ParenLevel];
+
       if (!DryRun)
         replaceWhitespace(Current, 1, State.Column);
 
@@ -185,11 +185,12 @@ private:
       unsigned Spaces = Annotations[Index].SpaceRequiredBefore ? 1 : 0;
       if (Annotations[Index].Type == TokenAnnotation::TT_LineComment)
         Spaces = 2;
+
       if (!DryRun)
         replaceWhitespace(Current, 0, Spaces);
-      if (Previous.Tok.is(tok::l_paren))
-        State.Indent[ParenLevel] = State.Column;
-      if (Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener)
+
+      if (Previous.Tok.is(tok::l_paren) ||
+          Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener)
         State.Indent[ParenLevel] = State.Column;
       if (Current.Tok.is(tok::colon)) {
         State.Indent[ParenLevel] = State.Column + 3;
@@ -200,7 +201,25 @@ private:
         State.LastSpace[ParenLevel] = State.Column + Spaces;
       State.Column += Current.Tok.getLength() + Spaces;
     }
+    moveStateToNextToken(State);
+  }
 
+  /// \brief Mark the next token as consumed in \p State and modify its stacks
+  /// accordingly.
+  void moveStateToNextToken(IndentState &State) {
+    unsigned Index = State.ConsumedTokens;
+    const FormatToken &Current = Line.Tokens[Index];
+
+    // If we encounter an opening (, [ or <, we add a level to our stacks to
+    // prepare for the following tokens.
+    if (Current.Tok.is(tok::l_paren) || Current.Tok.is(tok::l_square) ||
+        Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener) {
+      State.Indent.push_back(4 + State.LastSpace.back());
+      State.LastSpace.push_back(State.LastSpace.back());
+    }
+
+    // If we encounter a closing ), ] or >, we can remove a level from our
+    // stacks.
     if (Current.Tok.is(tok::r_paren) || Current.Tok.is(tok::r_square) ||
         Annotations[Index].Type == TokenAnnotation::TT_TemplateCloser) {
       State.Indent.pop_back();
@@ -252,7 +271,7 @@ private:
     if (NewLine && State.InCtorInitializer && !State.CtorInitializerOnNewLine)
       return UINT_MAX;
 
-    addToken(NewLine, true, State);
+    addTokenToState(NewLine, true, State);
 
     // Exceeding column limit is bad.
     if (State.Column > Style.ColumnLimit)
@@ -260,8 +279,7 @@ private:
 
     unsigned CurrentPenalty = 0;
     if (NewLine) {
-      CurrentPenalty += Parameters.PenaltyIndentLevel *
-          Annotations[State.ConsumedTokens - 1].ParenLevel +
+      CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
           Parameters.PenaltyExtraLine +
           splitPenalty(Line.Tokens[State.ConsumedTokens - 2]);
     }
@@ -348,11 +366,10 @@ public:
           Index(0) {
     }
 
-    bool parseAngle(unsigned Level) {
+    bool parseAngle() {
       while (Index < Tokens.size()) {
         if (Tokens[Index].Tok.is(tok::greater)) {
           Annotations[Index].Type = TokenAnnotation::TT_TemplateCloser;
-          Annotations[Index].ParenLevel = Level;
           next();
           return true;
         }
@@ -364,67 +381,63 @@ public:
             Tokens[Index].Tok.is(tok::question) ||
             Tokens[Index].Tok.is(tok::colon))
           return false;
-        consumeToken(Level);
+        consumeToken();
       }
       return false;
     }
 
-    bool parseParens(unsigned Level) {
+    bool parseParens() {
       while (Index < Tokens.size()) {
         if (Tokens[Index].Tok.is(tok::r_paren)) {
-          Annotations[Index].ParenLevel = Level;
           next();
           return true;
         }
         if (Tokens[Index].Tok.is(tok::r_square))
           return false;
-        consumeToken(Level);
+        consumeToken();
       }
       return false;
     }
 
-    bool parseSquare(unsigned Level) {
+    bool parseSquare() {
       while (Index < Tokens.size()) {
         if (Tokens[Index].Tok.is(tok::r_square)) {
-          Annotations[Index].ParenLevel = Level;
           next();
           return true;
         }
         if (Tokens[Index].Tok.is(tok::r_paren))
           return false;
-        consumeToken(Level);
+        consumeToken();
       }
       return false;
     }
 
-    bool parseConditional(unsigned Level) {
+    bool parseConditional() {
       while (Index < Tokens.size()) {
         if (Tokens[Index].Tok.is(tok::colon)) {
           Annotations[Index].Type = TokenAnnotation::TT_ConditionalExpr;
           next();
           return true;
         }
-        consumeToken(Level);
+        consumeToken();
       }
       return false;
     }
 
-    void consumeToken(unsigned Level) {
-      Annotations[Index].ParenLevel = Level;
+    void consumeToken() {
       unsigned CurrentIndex = Index;
       next();
       switch (Tokens[CurrentIndex].Tok.getKind()) {
       case tok::l_paren:
-        parseParens(Level + 1);
+        parseParens();
         break;
       case tok::l_square:
-        parseSquare(Level + 1);
+        parseSquare();
         break;
       case tok::less:
-        if (parseAngle(Level + 1))
+        if (parseAngle())
           Annotations[CurrentIndex].Type = TokenAnnotation::TT_TemplateOpener;
         else {
-          Annotations[CurrentIndex].ParenLevel = Level;
           Annotations[CurrentIndex].Type = TokenAnnotation::TT_BinaryOperator;
           Index = CurrentIndex + 1;
         }
@@ -438,7 +451,7 @@ public:
         next();
         break;
       case tok::question:
-        parseConditional(Level);
+        parseConditional();
         break;
       default:
         break;
@@ -447,7 +460,7 @@ public:
 
     void parseLine() {
       while (Index < Tokens.size()) {
-        consumeToken(0);
+        consumeToken();
       }
     }
 
@@ -493,7 +506,7 @@ public:
       } else if (Line.Tokens[i - 1].Tok.is(tok::greater) &&
                  Line.Tokens[i].Tok.is(tok::greater)) {
         if (Annotation.Type == TokenAnnotation::TT_TemplateCloser &&
-                 Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser)
+            Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser)
           Annotation.SpaceRequiredBefore = Style.SplitTemplateClosingGreater;
         else
           Annotation.SpaceRequiredBefore = false;
