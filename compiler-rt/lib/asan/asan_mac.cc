@@ -385,7 +385,7 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                asan_dispatch_call_block_and_release);
 }
 
-#if MAC_INTERPOSE_FUNCTIONS
+#if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
 // dispatch_async, dispatch_group_async and others tailcall the corresponding
 // dispatch_*_f functions. When wrapping functions with mach_override, those
 // dispatch_*_f are intercepted automatically. But with dylib interposition
