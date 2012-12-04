@@ -14,59 +14,6 @@
 include "HexagonInstrFormats.td"
 include "HexagonOperands.td"
 
-// Addressing modes.
-def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
-def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
-def ADDRriS11_0 : ComplexPattern<i32, 2, "SelectADDRriS11_0", [frameindex], []>;
-def ADDRriS11_1 : ComplexPattern<i32, 2, "SelectADDRriS11_1", [frameindex], []>;
-def ADDRriS11_2 : ComplexPattern<i32, 2, "SelectADDRriS11_2", [frameindex], []>;
-def ADDRriS11_3 : ComplexPattern<i32, 2, "SelectADDRriS11_3", [frameindex], []>;
-def ADDRriU6_0 : ComplexPattern<i32, 2, "SelectADDRriU6_0", [frameindex], []>;
-def ADDRriU6_1 : ComplexPattern<i32, 2, "SelectADDRriU6_1", [frameindex], []>;
-def ADDRriU6_2 : ComplexPattern<i32, 2, "SelectADDRriU6_2", [frameindex], []>;
-
-// Address operands.
-def MEMrr : Operand<i32> {
-  let PrintMethod = "printMEMrrOperand";
-  let MIOperandInfo = (ops IntRegs, IntRegs);
-}
-
-// Address operands
-def MEMri : Operand<i32> {
-  let PrintMethod = "printMEMriOperand";
-  let MIOperandInfo = (ops IntRegs, IntRegs);
-}
-
-def MEMri_s11_2 : Operand<i32>,
-  ComplexPattern<i32, 2, "SelectMEMriS11_2", []> {
-  let PrintMethod = "printMEMriOperand";
-  let MIOperandInfo = (ops IntRegs, s11Imm);
-}
-
-def FrameIndex : Operand<i32> {
-  let PrintMethod = "printFrameIndexOperand";
-  let MIOperandInfo = (ops IntRegs, s11Imm);
-}
-
-let PrintMethod = "printGlobalOperand" in
-  def globaladdress : Operand<i32>;
-
-let PrintMethod = "printJumpTable" in
- def jumptablebase : Operand<i32>;
-
-def brtarget : Operand<OtherVT>;
-def calltarget : Operand<i32>;
-
-def bblabel : Operand<i32>;
-def bbl   : SDNode<"ISD::BasicBlock", SDTPtrLeaf   , [], "BasicBlockSDNode">;
-
-def symbolHi32 : Operand<i32> {
-  let PrintMethod = "printSymbolHi";
-}
-def symbolLo32 : Operand<i32> {
-  let PrintMethod = "printSymbolLo";
-}
-
 // Multi-class for logical operators.
 multiclass ALU32_rr_ri<string OpcStr, SDNode OpNode> {
   def rr : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
