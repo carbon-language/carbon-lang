@@ -47,11 +47,12 @@ private:
   unsigned StackAlignment;
   unsigned TransientStackAlignment;
   int LocalAreaOffset;
+  bool StackRealignable;
 public:
   TargetFrameLowering(StackDirection D, unsigned StackAl, int LAO,
-                      unsigned TransAl = 1)
+                      unsigned TransAl = 1, bool StackReal = true)
     : StackDir(D), StackAlignment(StackAl), TransientStackAlignment(TransAl),
-      LocalAreaOffset(LAO) {}
+      LocalAreaOffset(LAO), StackRealignable(StackReal) {}
 
   virtual ~TargetFrameLowering();
 
@@ -74,6 +75,12 @@ public:
   ///
   unsigned getTransientStackAlignment() const {
     return TransientStackAlignment;
+  }
+
+  /// isStackRealignable - This method returns whether the stack can be
+  /// realigned.
+  bool isStackRealignable() const {
+    return StackRealignable;
   }
 
   /// getOffsetOfLocalArea - This method returns the offset of the local area

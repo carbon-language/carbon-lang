@@ -221,8 +221,11 @@ class MachineFrameInfo {
   /// just allocate them normally.
   bool UseLocalStackAllocationBlock;
 
+  /// Whether the "realign-stack" option is on.
+  bool RealignOption;
 public:
-    explicit MachineFrameInfo(const TargetFrameLowering &tfi) : TFI(tfi) {
+    explicit MachineFrameInfo(const TargetFrameLowering &tfi, bool RealignOpt)
+    : TFI(tfi), RealignOption(RealignOpt) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
