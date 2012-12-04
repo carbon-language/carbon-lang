@@ -176,12 +176,12 @@ Writing new regression tests
 
 The regression test structure is very simple, but does require some
 information to be set. This information is gathered via ``configure``
-and is written to a file, ``lit.site.cfg`` in ``llvm/test``. The
-``llvm/test`` Makefile does this work for you.
+and is written to a file, ``test/lit.site.cfg`` in the build directory.
+The ``llvm/test`` Makefile does this work for you.
 
 In order for the regression tests to work, each directory of tests must
-have a ``lit.local.cfg`` file. Lit looks for this file to determine how
-to run the tests. This file is just Python code and thus is very
+have a ``lit.local.cfg`` file. :program:`lit` looks for this file to determine
+how to run the tests. This file is just Python code and thus is very
 flexible, but we've standardized it for the LLVM regression tests. If
 you're adding a directory of tests, just copy ``lit.local.cfg`` from
 another directory to get running. The standard ``lit.local.cfg`` simply
@@ -189,28 +189,24 @@ specifies which files to look in for tests. Any directory that contains
 only directories does not need the ``lit.local.cfg`` file. Read the :doc:`Lit
 documentation <CommandGuide/lit>` for more information.
 
-The ``llvm-runtests`` function looks at each file that is passed to it
-and gathers any lines together that match "RUN:". These are the "RUN"
-lines that specify how the test is to be run. So, each test script must
-contain RUN lines if it is to do anything. If there are no RUN lines,
-the ``llvm-runtests`` function will issue an error and the test will
-fail.
+Each test file must contain lines starting with "RUN:" that tell :program:`lit`
+how to run it. If there are no RUN lines, :program:`lit` will issue an error
+while running a test.
 
 RUN lines are specified in the comments of the test program using the
 keyword ``RUN`` followed by a colon, and lastly the command (pipeline)
-to execute. Together, these lines form the "script" that
-``llvm-runtests`` executes to run the test case. The syntax of the RUN
-lines is similar to a shell's syntax for pipelines including I/O
-redirection and variable substitution. However, even though these lines
-may *look* like a shell script, they are not. RUN lines are interpreted
-directly by the Tcl ``exec`` command. They are never executed by a
-shell. Consequently the syntax differs from normal shell script syntax
-in a few ways. You can specify as many RUN lines as needed.
+to execute. Together, these lines form the "script" that :program:`lit`
+executes to run the test case. The syntax of the RUN lines is similar to a
+shell's syntax for pipelines including I/O redirection and variable
+substitution. However, even though these lines may *look* like a shell
+script, they are not. RUN lines are interpreted by :program:`lit`.
+Consequently, the syntax differs from shell in a few ways. You can specify
+as many RUN lines as needed.
 
-lit performs substitution on each RUN line to replace LLVM tool names
+:program:`lit` performs substitution on each RUN line to replace LLVM tool names
 with the full paths to the executable built for each tool (in
-$(LLVM\_OBJ\_ROOT)/$(BuildMode)/bin). This ensures that lit does not
-invoke any stray LLVM tools in the user's path during testing.
+``$(LLVM_OBJ_ROOT)/$(BuildMode)/bin)``. This ensures that :program:`lit` does
+not invoke any stray LLVM tools in the user's path during testing.
 
 Each RUN line is executed on its own, distinct from other lines unless
 its last character is ``\``. This continuation character causes the RUN
@@ -218,8 +214,8 @@ line to be concatenated with the next one. In this way you can build up
 long pipelines of commands without making huge line lengths. The lines
 ending in ``\`` are concatenated until a RUN line that doesn't end in
 ``\`` is found. This concatenated set of RUN lines then constitutes one
-execution. Tcl will substitute variables and arrange for the pipeline to
-be executed. If any process in the pipeline fails, the entire line (and
+execution. :program:`lit` will substitute variables and arrange for the pipeline
+to be executed. If any process in the pipeline fails, the entire line (and
 test case) fails too.
 
 Below is an example of legal RUN lines in a ``.ll`` file:
@@ -230,103 +226,65 @@ Below is an example of legal RUN lines in a ``.ll`` file:
     ; RUN: llvm-dis < %s.bc-13 > %t2
     ; RUN: diff %t1 %t2
 
-As with a Unix shell, the RUN: lines permit pipelines and I/O
+As with a Unix shell, the RUN lines permit pipelines and I/O
 redirection to be used. However, the usage is slightly different than
-for Bash. To check what's legal, see the documentation for the `Tcl
-exec <http://www.tcl.tk/man/tcl8.5/TclCmd/exec.htm#M2>`_ command and the
-`tutorial <http://www.tcl.tk/man/tcl8.5/tutorial/Tcl26.html>`_. The
-major differences are:
+for Bash. In general, it's useful to read the code of other tests to figure out
+what you can use in yours. The major differences are:
 
--  You can't do ``2>&1``. That will cause Tcl to write to a file named
-   ``&1``. Usually this is done to get stderr to go through a pipe. You
-   can do that in tcl with ``|&`` so replace this idiom:
+-  You can't do ``2>&1``. That will cause :program:`lit` to write to a file
+   named ``&1``. Usually this is done to get stderr to go through a pipe. You
+   can do that with ``|&`` so replace this idiom:
    ``... 2>&1 | grep`` with ``... |& grep``
 -  You can only redirect to a file, not to another descriptor and not
    from a here document.
--  tcl supports redirecting to open files with the @ syntax but you
-   shouldn't use that here.
 
 There are some quoting rules that you must pay attention to when writing
-your RUN lines. In general nothing needs to be quoted. Tcl won't strip
-off any quote characters so they will get passed to the invoked program.
+your RUN lines. In general nothing needs to be quoted. :program:`lit` won't
+strip off any quote characters so they will get passed to the invoked program.
 For example:
 
 .. code-block:: bash
 
     ... | grep 'find this string'
 
-This will fail because the ' characters are passed to grep. This would
-instruction grep to look for ``'find`` in the files ``this`` and
-``string'``. To avoid this use curly braces to tell Tcl that it should
-treat everything enclosed as one value. So our example would become:
+This will fail because the ``'`` characters are passed to ``grep``. This would
+make ``grep`` to look for ``'find`` in the files ``this`` and
+``string'``. To avoid this use curly braces to tell :program:`lit` that it
+should treat everything enclosed as one value. So our example would become:
 
 .. code-block:: bash
 
     ... | grep {find this string}
 
-Additionally, the characters ``[`` and ``]`` are treated specially by
-Tcl. They tell Tcl to interpret the content as a command to execute.
-Since these characters are often used in regular expressions this can
-have disastrous results and cause the entire test run in a directory to
-fail. For example, a common idiom is to look for some basicblock number:
-
-.. code-block:: bash
-
-    ... | grep bb[2-8]
-
-This, however, will cause Tcl to fail because its going to try to
-execute a program named "2-8". Instead, what you want is this:
-
-.. code-block:: bash
-
-    ... | grep {bb\[2-8\]}
-
-Finally, if you need to pass the ``\`` character down to a program, then
-it must be doubled. This is another Tcl special character. So, suppose
-you had:
-
-.. code-block:: bash
-
-    ... | grep 'i32\*'
-
-This will fail to match what you want (a pointer to i32). First, the
-``'`` do not get stripped off. Second, the ``\`` gets stripped off by
-Tcl so what grep sees is: ``'i32*'``. That's not likely to match
-anything. To resolve this you must use ``\\`` and the ``{}``, like this:
-
-.. code-block:: bash
-
-    ... | grep {i32\\*}
-
-If your system includes GNU ``grep``, make sure that ``GREP_OPTIONS`` is
-not set in your environment. Otherwise, you may get invalid results
-(both false positives and false negatives).
+In general, you should strive to keep your RUN lines as simple as possible,
+using them only to run tools that generate the output you can then examine. The
+recommended way to examine output to figure out if the test passes it using the
+:doc:`FileCheck tool <CommandGuide/FileCheck>`. The usage of ``grep`` in RUN
+lines is discouraged.
 
 The FileCheck utility
 ---------------------
 
-A powerful feature of the RUN: lines is that it allows any arbitrary
+A powerful feature of the RUN lines is that it allows any arbitrary
 commands to be executed as part of the test harness. While standard
-(portable) unix tools like 'grep' work fine on run lines, as you see
-above, there are a lot of caveats due to interaction with Tcl syntax,
+(portable) unix tools like ``grep`` work fine on run lines, as you see
+above, there are a lot of caveats due to interaction with shell syntax,
 and we want to make sure the run lines are portable to a wide range of
-systems. Another major problem is that grep is not very good at checking
+systems. Another major problem is that ``grep`` is not very good at checking
 to verify that the output of a tools contains a series of different
-output in a specific order. The FileCheck tool was designed to help with
-these problems.
+output in a specific order. The :program:`FileCheck` tool was designed to
+help with these problems.
 
-FileCheck is designed to read a file to check from standard input, and the set
-of things to verify from a file specified as a command line argument.
-FileCheck is described in :doc:`the FileCheck man page
+:program:`FileCheck` is designed to read a file to check from standard input,
+and the set of things to verify from a file specified as a command line
+argument. :program:`FileCheck` is described in :doc:`the FileCheck man page
 <CommandGuide/FileCheck>`.
 
 Variables and substitutions
 ---------------------------
 
 With a RUN line there are a number of substitutions that are permitted.
-In general, any Tcl variable that is available in the ``substitute``
-function (in ``test/lib/llvm.exp``) can be substituted into a RUN line.
-To make a substitution just write the variable's name preceded by a $.
+To make a substitution just write the variable's name preceded by a ``$``.
 Additionally, for compatibility reasons with previous versions of the
 test library, certain names can be accessed with an alternate syntax: a
 % prefix. These alternates are deprecated and may go away in a future
@@ -337,15 +295,15 @@ parentheses.
 
 ``$test`` (``%s``)
    The full path to the test case's source. This is suitable for passing on
-   the command line as the input to an llvm tool.
+   the command line as the input to an LLVM tool.
 
 ``%(line)``, ``%(line+<number>)``, ``%(line-<number>)``
    The number of the line where this variable is used, with an optional
-   integer offset. This can be used in tests with multiple RUN: lines,
+   integer offset. This can be used in tests with multiple RUN lines,
    which reference test file's line numbers.
 
 ``$srcdir``
-   The source directory from where the "``make check``" was run.
+   The source directory from where the ``make check`` was run.
 
 ``objdir``
    The object directory that corresponds to the ``$srcdir``.
@@ -378,23 +336,18 @@ parentheses.
 
 ``link`` (``%link``)
    This full link command used to link LLVM executables. This has all the
-   configured -I, -L and -l options.
+   configured ``-I``, ``-L`` and ``-l`` options.
 
 ``shlibext`` (``%shlibext``)
-   The suffix for the host platforms share library (dll) files. This
+   The suffix for the host platforms shared library (DLL) files. This
    includes the period as the first character.
 
-To add more variables, two things need to be changed. First, add a line
-in the ``test/Makefile`` that creates the ``site.exp`` file. This will
-"set" the variable as a global in the site.exp file. Second, in the
-``test/lib/llvm.exp`` file, in the substitute proc, add the variable
-name to the list of "global" declarations at the beginning of the proc.
-That's it, the variable can then be used in test scripts.
+To add more variables, look at ``test/lit.cfg``.
 
 Other Features
 --------------
 
-To make RUN line writing easier, there are several shell scripts located
+To make RUN line writing easier, there are several helper scripts and programs
 in the ``llvm/test/Scripts`` directory. This directory is in the PATH
 when running tests, so you can just call these scripts using their name.
 For example:
@@ -408,9 +361,7 @@ For example:
    purposefully ignoring the result code of the tool
 ``not``
    This script runs its arguments and then inverts the result code from it.
-   Zero result codes become 1. Non-zero result codes become 0. This is
-   useful to invert the result of a grep. For example "not grep X" means
-   succeed only if you don't find X in the input.
+   Zero result codes become 1. Non-zero result codes become 0.
 
 Sometimes it is necessary to mark a test case as "expected fail" or
 XFAIL. You can easily mark a test as XFAIL just by including ``XFAIL:``
@@ -430,7 +381,7 @@ line:
 
     ; XFAIL: darwin,sun
 
-To make the output more useful, the ``llvm_runtest`` function wil scan
+To make the output more useful, :program:`lit` will scan
 the lines of the test case for ones that contain a pattern that matches
 ``PR[0-9]+``. This is the syntax for specifying a PR (Problem Report) number
 that is related to the test case. The number after "PR" specifies the
