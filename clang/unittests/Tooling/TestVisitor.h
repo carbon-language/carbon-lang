@@ -15,15 +15,14 @@
 #ifndef LLVM_CLANG_TEST_VISITOR_H
 #define LLVM_CLANG_TEST_VISITOR_H
 
-#include <vector>
-
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/Tooling.h"
 #include "gtest/gtest.h"
+#include <vector>
 
 namespace clang {
 

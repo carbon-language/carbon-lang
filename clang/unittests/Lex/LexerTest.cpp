@@ -1,4 +1,4 @@
-//===- unittests/Basic/LexerTest.cpp ------ Lexer tests -------------------===//
+//===- unittests/Lex/LexerTest.cpp ------ Lexer tests ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,20 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
-#include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Lex/ModuleLoader.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/Config/config.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

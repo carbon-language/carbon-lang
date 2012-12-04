@@ -7,16 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Frontend/FrontendAction.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/FrontendAction.h"
-
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/MemoryBuffer.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;

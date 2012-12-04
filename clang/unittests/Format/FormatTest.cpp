@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Format/Format.h"
 #include "../Tooling/RewriterTestContext.h"
 #include "clang/Lex/Lexer.h"
-#include "clang/Format/Format.h"
 #include "gtest/gtest.h"
 
 namespace clang {

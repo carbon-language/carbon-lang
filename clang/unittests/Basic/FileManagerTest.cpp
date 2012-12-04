@@ -7,10 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/FileSystemStatCache.h"
-#include "clang/Basic/FileManager.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;
