@@ -244,6 +244,21 @@ TEST_F(FormatTest, DoWhile) {
                "while (something());");
 }
 
+TEST_F(FormatTest, Enum) {
+  verifyFormat("enum {\n"
+               "  Zero,\n"
+               "  One = 1,\n"
+               "  Two = One + 1,\n"
+               "  Three = (One + Two),\n"
+               "  Four = (Zero && (One ^ Two)) | (One << Two),\n"
+               "  Five = (One, Two, Three, Four, 5)\n"
+               "};");
+  verifyFormat("enum Enum {\n"
+               "};");
+  verifyFormat("enum {\n"
+               "};");
+}
+
 TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("if (aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
                "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"

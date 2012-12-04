@@ -99,19 +99,38 @@ void UnwrappedLineParser::parseComment() {
 }
 
 void UnwrappedLineParser::parseStatement() {
-  if (FormatTok.Tok.is(tok::kw_public) || FormatTok.Tok.is(tok::kw_protected) ||
-      FormatTok.Tok.is(tok::kw_private)) {
+  switch (FormatTok.Tok.getKind()) {
+  case tok::kw_public:
+  case tok::kw_protected:
+  case tok::kw_private:
     parseAccessSpecifier();
     return;
-  }
-  if (FormatTok.Tok.is(tok::kw_enum)) {
-    parseEnum();
+  case tok::kw_if:
+    parseIfThenElse();
     return;
+  case tok::kw_do:
+    parseDoWhile();
+    return;
+  case tok::kw_switch:
+    parseSwitch();
+    return;
+  case tok::kw_default:
+    nextToken();
+    parseLabel();
+    return;
+  case tok::kw_case:
+    parseCaseLabel();
+    return;
+  default:
+    break;
   }
   int TokenNumber = 0;
   do {
     ++TokenNumber;
     switch (FormatTok.Tok.getKind()) {
+    case tok::kw_enum:
+      parseEnum();
+      return;
     case tok::semi:
       nextToken();
       addUnwrappedLine();
@@ -123,31 +142,15 @@ void UnwrappedLineParser::parseStatement() {
       parseBlock();
       addUnwrappedLine();
       return;
-    case tok::kw_if:
-      parseIfThenElse();
-      return;
-    case tok::kw_do:
-      parseDoWhile();
-      return;
-    case tok::kw_switch:
-      parseSwitch();
-      return;
-    case tok::kw_default:
-      nextToken();
-      parseLabel();
-      return;
-    case tok::kw_case:
-      parseCaseLabel();
-      return;
-    case tok::raw_identifier:
-      nextToken();
-      break;
-    default:
+    case tok::identifier:
       nextToken();
       if (TokenNumber == 1 && FormatTok.Tok.is(tok::colon)) {
         parseLabel();
         return;
       }
+      break;
+    default:
+      nextToken();
       break;
     }
   } while (!eof());
@@ -265,12 +268,35 @@ void UnwrappedLineParser::parseAccessSpecifier() {
 }
 
 void UnwrappedLineParser::parseEnum() {
+  bool HasContents = false;
   do {
-    nextToken();
-    if (FormatTok.Tok.is(tok::semi)) {
+    switch (FormatTok.Tok.getKind()) {
+    case tok::l_brace:
+      nextToken();
+      addUnwrappedLine();
+      ++Line.Level;
+      break;
+    case tok::l_paren:
+      parseParens();
+      break;
+    case tok::comma:
+      nextToken();
+      addUnwrappedLine();
+      break;
+    case tok::r_brace:
+      if (HasContents)
+        addUnwrappedLine();
+      --Line.Level;
+      nextToken();
+      break;
+    case tok::semi:
       nextToken();
       addUnwrappedLine();
       return;
+    default:
+      HasContents = true;
+      nextToken();
+      break;
     }
   } while (!eof());
 }
