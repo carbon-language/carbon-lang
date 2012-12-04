@@ -21,13 +21,13 @@ if.end:                                           ; preds = %entry, %if.then
 
 declare void @foo(...)
 
-; CHECK: define void @LoadAndCmp
+; CHECK: @LoadAndCmp
 ; CHECK: = load
 ; CHECK: = load
 ; CHECK: call void @__msan_warning_noreturn()
 ; CHECK-NEXT: call void asm sideeffect
 ; CHECK-NEXT: unreachable
-; CHECK: }
+; CHECK: ret void
 
 ; Check that we store the shadow for the retval.
 define i32 @ReturnInt() nounwind uwtable readnone {
@@ -35,9 +35,9 @@ entry:
   ret i32 123
 }
 
-; CHECK: define i32 @ReturnInt()
+; CHECK: @ReturnInt
 ; CHECK: store i32 0,{{.*}}__msan_retval_tls
-; CHECK: }
+; CHECK: ret i32
 
 ; Check that we get the shadow for the retval.
 define void @CopyRetVal(i32* nocapture %a) nounwind uwtable {
@@ -47,11 +47,11 @@ entry:
   ret void
 }
 
-; CHECK: define void @CopyRetVal
+; CHECK: @CopyRetVal
 ; CHECK: load{{.*}}__msan_retval_tls
 ; CHECK: store
 ; CHECK: store
-; CHECK: }
+; CHECK: ret void
 
 
 ; Check that we generate PHIs for shadow.
@@ -74,12 +74,12 @@ entry:
   ret void
 }
 
-; CHECK: define void @FuncWithPhi
+; CHECK: @FuncWithPhi
 ; CHECK: = phi
 ; CHECK-NEXT: = phi
 ; CHECK: store
 ; CHECK: store
-; CHECK: }
+; CHECK: ret void
 
 ; Compute shadow for "x << 10"
 define void @ShlConst(i32* nocapture %x) nounwind uwtable {
@@ -90,14 +90,14 @@ entry:
   ret void
 }
 
-; CHECK: define void @ShlConst
+; CHECK: @ShlConst
 ; CHECK: = load
 ; CHECK: = load
 ; CHECK: shl
 ; CHECK: shl
 ; CHECK: store
 ; CHECK: store
-; CHECK: }
+; CHECK: ret void
 
 ; Compute shadow for "10 << x": it should have 'sext i1'.
 define void @ShlNonConst(i32* nocapture %x) nounwind uwtable {
@@ -108,13 +108,13 @@ entry:
   ret void
 }
 
-; CHECK: define void @ShlNonConst
+; CHECK: @ShlNonConst
 ; CHECK: = load
 ; CHECK: = load
 ; CHECK: = sext i1
 ; CHECK: store
 ; CHECK: store
-; CHECK: }
+; CHECK: ret void
 
 ; SExt
 define void @SExt(i32* nocapture %a, i16* nocapture %b) nounwind uwtable {
@@ -125,14 +125,14 @@ entry:
   ret void
 }
 
-; CHECK: define void @SExt
+; CHECK: @SExt
 ; CHECK: = load
 ; CHECK: = load
 ; CHECK: = sext
 ; CHECK: = sext
 ; CHECK: store
 ; CHECK: store
-; CHECK: }
+; CHECK: ret void
 
 
 ; memset
@@ -144,9 +144,9 @@ entry:
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-; CHECK: define void @MemSet
+; CHECK: @MemSet
 ; CHECK: call i8* @__msan_memset
-; CHECK: }
+; CHECK: ret void
 
 
 ; memcpy
@@ -158,9 +158,9 @@ entry:
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
-; CHECK: define void @MemCpy
+; CHECK: @MemCpy
 ; CHECK: call i8* @__msan_memcpy
-; CHECK: }
+; CHECK: ret void
 
 
 ; memmove is lowered to a call
@@ -172,9 +172,9 @@ entry:
 
 declare void @llvm.memmove.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
-; CHECK: define void @MemMove
+; CHECK: @MemMove
 ; CHECK: call i8* @__msan_memmove
-; CHECK: }
+; CHECK: ret void
 
 
 ; Check that we propagate shadow for "select"
@@ -186,10 +186,10 @@ entry:
   ret i32 %cond
 }
 
-; CHECK: define i32 @Select
+; CHECK: @Select
 ; CHECK: select
 ; CHECK-NEXT: select
-; CHECK: }
+; CHECK: ret i32
 
 
 define i8* @IntToPtr(i64 %x) nounwind uwtable readnone {
@@ -198,11 +198,11 @@ entry:
   ret i8* %0
 }
 
-; CHECK: define i8* @IntToPtr
+; CHECK: @IntToPtr
 ; CHECK: load i64*{{.*}}__msan_param_tls
 ; CHECK-NEXT: inttoptr
 ; CHECK-NEXT: store i64{{.*}}__msan_retval_tls
-; CHECK: }
+; CHECK: ret i8
 
 
 define i8* @IntToPtr_ZExt(i16 %x) nounwind uwtable readnone {
@@ -211,10 +211,10 @@ entry:
   ret i8* %0
 }
 
-; CHECK: define i8* @IntToPtr_ZExt
+; CHECK: @IntToPtr_ZExt
 ; CHECK: zext
 ; CHECK-NEXT: inttoptr
-; CHECK: }
+; CHECK: ret i8
 
 
 ; Check that we insert exactly one check on udiv
@@ -226,13 +226,13 @@ entry:
   ret i32 %div
 }
 
-; CHECK: define i32 @Div
+; CHECK: @Div
 ; CHECK: icmp
-; CHECK: br
+; CHECK: call void @__msan_warning
 ; CHECK-NOT: icmp
 ; CHECK: udiv
 ; CHECK-NOT: icmp
-; CHECK: }
+; CHECK: ret i32
 
 
 ; Check that we propagate shadow for x<0, x>=0, etc (i.e. sign bit tests)
@@ -242,44 +242,48 @@ define zeroext i1 @ICmpSLT(i32 %x) nounwind uwtable readnone {
   ret i1 %1
 }
 
-; CHECK: define zeroext i1 @ICmpSLT
+; CHECK: @ICmpSLT
 ; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp slt
-; CHECK-NOT: br
-; CHECK: }
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
 
 define zeroext i1 @ICmpSGE(i32 %x) nounwind uwtable readnone {
   %1 = icmp sge i32 %x, 0
   ret i1 %1
 }
 
-; CHECK: define zeroext i1 @ICmpSGE
+; CHECK: @ICmpSGE
 ; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sge
-; CHECK-NOT: br
-; CHECK: }
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
 
 define zeroext i1 @ICmpSGT(i32 %x) nounwind uwtable readnone {
   %1 = icmp sgt i32 0, %x
   ret i1 %1
 }
 
-; CHECK: define zeroext i1 @ICmpSGT
+; CHECK: @ICmpSGT
 ; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sgt
-; CHECK-NOT: br
-; CHECK: }
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
 
 define zeroext i1 @ICmpSLE(i32 %x) nounwind uwtable readnone {
   %1 = icmp sle i32 0, %x
   ret i1 %1
 }
 
-; CHECK: define zeroext i1 @ICmpSLE
+; CHECK: @ICmpSLE
 ; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sle
-; CHECK-NOT: br
-; CHECK: }
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
 
 
 ; Check that loads from shadow have the same aligment as the original loads.
@@ -290,10 +294,10 @@ define i32 @ShadowLoadAlignmentLarge() nounwind uwtable {
   ret i32 %1
 }
 
-; CHECK: define i32 @ShadowLoadAlignmentLarge
+; CHECK: @ShadowLoadAlignmentLarge
 ; CHECK: load i32* {{.*}} align 64
 ; CHECK: load volatile i32* {{.*}} align 64
-; CHECK: }
+; CHECK: ret i32
 
 define i32 @ShadowLoadAlignmentSmall() nounwind uwtable {
   %y = alloca i32, align 2
@@ -301,35 +305,37 @@ define i32 @ShadowLoadAlignmentSmall() nounwind uwtable {
   ret i32 %1
 }
 
-; CHECK: define i32 @ShadowLoadAlignmentSmall
+; CHECK: @ShadowLoadAlignmentSmall
 ; CHECK: load i32* {{.*}} align 2
 ; CHECK: load volatile i32* {{.*}} align 2
-; CHECK: }
+; CHECK: ret i32
 
 
 ; Test vector manipulation instructions.
+; Check that the same bit manipulation is applied to the shadow values.
+; Check that there is a zero test of the shadow of %idx argument, where present.
 
 define i32 @ExtractElement(<4 x i32> %vec, i32 %idx) {
   %x = extractelement <4 x i32> %vec, i32 %idx
   ret i32 %x
 }
 
-; CHECK: define i32 @ExtractElement
+; CHECK: @ExtractElement
 ; CHECK: extractelement
-; CHECK: br
+; CHECK: call void @__msan_warning
 ; CHECK: extractelement
-; CHECK: }
+; CHECK: ret i32
 
 define <4 x i32> @InsertElement(<4 x i32> %vec, i32 %idx, i32 %x) {
   %vec1 = insertelement <4 x i32> %vec, i32 %x, i32 %idx
   ret <4 x i32> %vec1
 }
 
-; CHECK: define <4 x i32> @InsertElement
+; CHECK: @InsertElement
 ; CHECK: insertelement
-; CHECK: br
+; CHECK: call void @__msan_warning
 ; CHECK: insertelement
-; CHECK: }
+; CHECK: ret <4 x i32>
 
 define <4 x i32> @ShuffleVector(<4 x i32> %vec, <4 x i32> %vec1) {
   %vec2 = shufflevector <4 x i32> %vec, <4 x i32> %vec1,
@@ -337,8 +343,8 @@ define <4 x i32> @ShuffleVector(<4 x i32> %vec, <4 x i32> %vec1) {
   ret <4 x i32> %vec2
 }
 
-; CHECK: define <4 x i32> @ShuffleVector
+; CHECK: @ShuffleVector
 ; CHECK: shufflevector
-; CHECK-NOT: br
+; CHECK-NOT: call void @__msan_warning
 ; CHECK: shufflevector
-; CHECK: }
+; CHECK: ret <4 x i32>
