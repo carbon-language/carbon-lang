@@ -35,6 +35,7 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   const TargetRegisterInfo *TRI = &VRM.getTargetRegInfo();
   Order = RegClassInfo.getOrder(MF.getRegInfo().getRegClass(VirtReg));
   TRI->getRegAllocationHints(VirtReg, Order, Hints, MF, &VRM);
+  rewind();
 
   DEBUG({
     if (!Hints.empty()) {
@@ -44,22 +45,4 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
       dbgs() << '\n';
     }
   });
-}
-
-bool AllocationOrder::isHint(unsigned PhysReg) const {
-  return std::find(Hints.begin(), Hints.end(), PhysReg) != Hints.end();
-}
-
-unsigned AllocationOrder::next() {
-  if (Pos < Hints.size())
-    return Hints[Pos++];
-  ArrayRef<MCPhysReg>::iterator I = Order.begin() + (Pos - Hints.size());
-  ArrayRef<MCPhysReg>::iterator E = Order.end();
-  while (I != E) {
-    unsigned Reg = *I++;
-    ++Pos;
-    if (!isHint(Reg))
-      return Reg;
-  }
-  return 0;
 }

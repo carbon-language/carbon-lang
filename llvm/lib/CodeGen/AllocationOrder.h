@@ -28,7 +28,7 @@ class VirtRegMap;
 class AllocationOrder {
   SmallVector<MCPhysReg, 16> Hints;
   ArrayRef<MCPhysReg> Order;
-  unsigned Pos;
+  int Pos;
 
 public:
   /// Create a new AllocationOrder for VirtReg.
@@ -42,16 +42,27 @@ public:
   /// Return the next physical register in the allocation order, or 0.
   /// It is safe to call next() again after it returned 0, it will keep
   /// returning 0 until rewind() is called.
-  unsigned next();
+  unsigned next() {
+    if (Pos < 0)
+      return Hints.end()[Pos++];
+    while (Pos < int(Order.size())) {
+      unsigned Reg = Order[Pos++];
+      if (!isHint(Reg))
+        return Reg;
+    }
+    return 0;
+  }
 
   /// Start over from the beginning.
-  void rewind() { Pos = 0; }
+  void rewind() { Pos = -int(Hints.size()); }
 
   /// Return true if the last register returned from next() was a preferred register.
-  bool isHint() const { return Pos <= Hints.size(); }
+  bool isHint() const { return Pos <= 0; }
 
   /// Return true if PhysReg is a preferred register.
-  bool isHint(unsigned PhysReg) const;
+  bool isHint(unsigned PhysReg) const {
+    return std::find(Hints.begin(), Hints.end(), PhysReg) != Hints.end();
+  }
 };
 
 } // end namespace llvm

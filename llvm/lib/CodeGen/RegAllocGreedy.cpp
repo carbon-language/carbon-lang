@@ -442,7 +442,7 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
   while ((PhysReg = Order.next()))
     if (!Matrix->checkInterference(VirtReg, PhysReg))
       break;
-  if (!PhysReg || Order.isHint(PhysReg))
+  if (!PhysReg || Order.isHint())
     return PhysReg;
 
   // PhysReg is available, but there may be a better choice.
@@ -661,7 +661,7 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
     BestPhys = PhysReg;
 
     // Stop if the hint can be used.
-    if (Order.isHint(PhysReg))
+    if (Order.isHint())
       break;
   }
 
