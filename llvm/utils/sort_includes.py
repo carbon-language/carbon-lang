@@ -13,6 +13,11 @@ import os
 
 def sort_includes(f):
   """Sort the #include lines of a specific file."""
+
+  # Skip files which are under INPUTS trees or test trees.
+  if 'INPUTS/' in f.name or 'test/' in f.name:
+    return
+
   lines = f.readlines()
   look_for_api_header = os.path.splitext(f.name)[1] == '.cpp'
   found_headers = False
