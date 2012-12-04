@@ -232,6 +232,17 @@ TEST(DeclarationMatcher, ClassIsDerived) {
       "template <> class Z<void> {};"
       "template <typename T> class Z : public Z<void>, public X {};",
       ZIsDerivedFromX));
+  EXPECT_TRUE(
+      notMatches("template<int> struct X;"
+                 "template<int i> struct X : public X<i-1> {};",
+                 recordDecl(isDerivedFrom(recordDecl(hasName("Some"))))));
+  EXPECT_TRUE(matches(
+      "struct A {};"
+      "template<int> struct X;"
+      "template<int i> struct X : public X<i-1> {};"
+      "template<> struct X<0> : public A {};"
+      "struct B : public X<42> {};",
+      recordDecl(hasName("B"), isDerivedFrom(recordDecl(hasName("A"))))));
 
   // FIXME: Once we have better matchers for template type matching,
   // get rid of the Variable(...) matching and match the right template

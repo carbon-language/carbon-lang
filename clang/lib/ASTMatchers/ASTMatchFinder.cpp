@@ -605,7 +605,12 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
       ClassDecl = TypeNode->getAsCXXRecordDecl();
     }
     assert(ClassDecl != NULL);
-    assert(ClassDecl != Declaration);
+    if (ClassDecl == Declaration) {
+      // This can happen for recursive template definitions; if the
+      // current declaration did not match, we can safely return false.
+      assert(TemplateType);
+      return false;
+    }
     if (Base.matches(*ClassDecl, this, Builder))
       return true;
     if (classIsDerivedFrom(ClassDecl, Base, Builder))
